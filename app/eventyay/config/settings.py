@@ -203,8 +203,11 @@ class BaseSettings(_BaseSettings):
     upload_size_other: int = 10
     response_size_webhook: int = 1
 
-    # Maximum seconds to wait for a webhook endpoint to respond (connect + read).
-    # Operators can override this via TOML or environment variable.
+    # Timeout in seconds for outgoing webhook HTTP requests.
+    # requests applies this value independently to the connect phase and to each
+    # read chunk — it is NOT a combined total budget.  To set separate values,
+    # configure WEBHOOK_TIMEOUT as a tuple in code (the TOML field supplies the
+    # single-value default).  Operators can override via TOML or environment variable.
     webhook_timeout: int = 30
 
 
@@ -1369,8 +1372,9 @@ BYTES_IN_MB = 1024 * 1024
 MAX_SIZE_CONFIG = {key: BYTES_IN_MB * cast(int, getattr(conf, key)) for key in SizeKey}
 
 # Timeout (seconds) for outgoing webhook HTTP requests.
-# Covers both the TCP connect phase and each read chunk.
-# Set via `webhook_timeout` in eventyay.toml or the WEBHOOK_TIMEOUT env variable.
+# When an integer, requests applies this value independently to the connect
+# phase and to each read chunk — it is NOT a combined total.
+# Set via `webhook_timeout` in eventyay.toml or the EVY_WEBHOOK_TIMEOUT env variable.
 WEBHOOK_TIMEOUT: int = conf.webhook_timeout
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'

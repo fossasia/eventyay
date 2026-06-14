@@ -294,21 +294,29 @@ def notify_webhooks(logentry_ids: list):
 
 def _read_bounded_response(resp, max_bytes: int) -> str:
     """Read at most *max_bytes* bytes from a streaming response and return them
-    as a decoded string.  The response is always closed in a finally block so
-    the underlying connection is returned to the pool even when the loop exits
-    early due to the size cap.
+    as a decoded string.
+
+    The final chunk is trimmed to the remaining byte budget before being
+    appended, so the raw byte total never exceeds *max_bytes* regardless of
+    chunk size.  Decoding is performed on the already-bounded bytes, so
+    multi-byte UTF-8 sequences cannot cause the result to exceed the budget
+    when re-encoded.  The response is always closed in a finally block so the
+    underlying connection is returned to the pool even when the loop exits early.
     """
     chunks: list[bytes] = []
     bytes_read = 0
     try:
         for chunk in resp.iter_content(chunk_size=4096, decode_unicode=False):
+            remaining = max_bytes - bytes_read
+            if len(chunk) > remaining:
+                chunk = chunk[:remaining]
             chunks.append(chunk)
             bytes_read += len(chunk)
             if bytes_read >= max_bytes:
                 break
     finally:
         resp.close()
-    return b"".join(chunks).decode("utf-8", errors="replace")[:max_bytes]
+    return b"".join(chunks).decode("utf-8", errors="replace")
 
 
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
@@ -336,6 +344,8 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     webhook.target_url,
                     json=payload,
                     allow_redirects=False,
+                    # requests interprets a tuple as (connect_timeout, read_timeout).
+                    # Each applies independently; this is not a combined budget.
                     timeout=settings.WEBHOOK_TIMEOUT,
                     stream=True,
                 )
