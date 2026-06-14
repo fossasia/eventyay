@@ -573,7 +573,7 @@ class Event(
     CURRENCY_CHOICES = [(c.alpha_3, c.alpha_3 + ' - ' + c.name) for c in settings.CURRENCIES]
     organizer = models.ForeignKey(Organizer, related_name='events', on_delete=models.PROTECT)
     testmode = models.BooleanField(default=False)
-    private_testmode = models.BooleanField(default=True)
+    private_testmode = models.BooleanField(default=False)
     name = I18nCharField(
         max_length=200,
         verbose_name=_('Event name'),
@@ -928,8 +928,8 @@ class Event(
         self.settings.invoice_email_attachment = True
         self.settings.name_scheme = 'given_family'
         self.settings.ticket_download = True
-        self.settings.private_testmode_tickets = True
-        self.settings.private_testmode_talks = True
+        self.settings.private_testmode_tickets = False
+        self.settings.private_testmode_talks = False
 
     @property
     def social_image(self):

@@ -78,6 +78,9 @@ urlpatterns = [
                     auth.RecoverView.as_view(),
                     name="event.auth.recover",
                 ),
+                # Legacy talk-component status page; redirects to the central
+                # eventyay_common status control page which now owns the
+                # publish/test-mode workflow for talks and tickets.
                 path('live', event.EventLive.as_view(), name='event.live'),
                 path('', dashboard.EventDashboardView.as_view(), name='event.dashboard'),
                 path('history/', event.EventHistory.as_view(), name='event.history'),
