@@ -35,6 +35,18 @@ affected_keys = [
     'theme_color_danger',
 ]
 
+SYSTEM_FONTS = {
+    'Open Sans': '"Open Sans", "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif',
+    'System-UI': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
+    'Arial': 'Arial, "Helvetica Neue", Helvetica, sans-serif',
+    'Helvetica': '"Helvetica Neue", Helvetica, Arial, sans-serif',
+    'Georgia': 'Georgia, Cambria, "Times New Roman", Times, serif',
+    'Verdana': 'Verdana, Geneva, sans-serif',
+    'Times New Roman': '"Times New Roman", Times, Baskerville, Georgia, serif',
+    'Trebuchet MS': '"Trebuchet MS", "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Tahoma, sans-serif',
+    'Courier New': '"Courier New", Courier, monospace',
+}
+
 
 def compile_scss(object, file='main.scss', fonts=True):
     sassdir = os.path.join(settings.STATIC_ROOT, 'pretixpresale/scss')
@@ -72,18 +84,37 @@ def compile_scss(object, file='main.scss', fonts=True):
         sassrules.append('$border-radius-small: 0;')
 
     font = object.settings.get('primary_font')
-    if font != 'Open Sans' and fonts and font:
-        sassrules.append(get_font_stylesheet(font))
-        sassrules.append(
-            '$font-family-sans-serif: "{}", "Open Sans", "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif '
-            '!default'.format(font)
-        )
+    font_family_value = None
+    if font and fonts:
+        if font in SYSTEM_FONTS:
+            font_family_value = SYSTEM_FONTS[font]
+            sassrules.append(
+                '$font-family-sans-serif: {};'.format(font_family_value)
+            )
+        else:
+            font_family_value = '"{}", "Open Sans", "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif'.format(font)
+            sassrules.append(get_font_stylesheet(font))
+            sassrules.append(
+                '$font-family-sans-serif: {};'.format(font_family_value)
+            )
 
     if isinstance(object, Event):
         for recv, resp in sass_preamble.send(object, filename=file):
             sassrules.append(resp)
 
     sassrules.append('@import "{}";'.format(file))
+
+    # Override the --font-family CSS custom property defined in _fonts.css.
+    # That file sets body { font-family: var(--font-family) } and is loaded
+    # outside the compiled SCSS, so it wins over $font-family-sans-serif.
+    # Injecting :root { --font-family: ... } after the @import ensures our
+    # font choice takes precedence via source order.
+    if font_family_value:
+        sassrules.append(
+            ':root {{ --font-family: {}; --font-family-title: {}; }}'.format(
+                font_family_value, font_family_value
+            )
+        )
 
     if isinstance(object, Event):
         for recv, resp in sass_postamble.send(object, filename=file):
