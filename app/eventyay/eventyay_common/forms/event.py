@@ -13,12 +13,11 @@ from pytz import common_timezones
 from eventyay.base.forms import I18nModelForm, SettingsForm
 from eventyay.base.models import Event
 from eventyay.base.settings import validate_event_settings
+from eventyay.control.forms import MultipleLanguagesWidget, SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.urls import get_file_url_path, is_http_url, normalize_url_scheme
-from eventyay.control.forms import SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
 from eventyay.helpers.image_optimize import optimize_uploaded_image
 from eventyay.multidomain.models import KnownDomain
-from eventyay.control.forms import MultipleLanguagesWidget
 
 logger = logging.getLogger(__name__)
 

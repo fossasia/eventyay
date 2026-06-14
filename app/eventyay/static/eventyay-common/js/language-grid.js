@@ -73,7 +73,8 @@
 
         for (var j = 0; j < cells.length; j++) {
           var label = (cells[j].getAttribute('data-language-name') || '').toLowerCase();
-          var matches = !query || label.indexOf(query) !== -1;
+          var code = (checkboxes[j] && checkboxes[j].value || '').toLowerCase();
+          var matches = !query || label.indexOf(query) !== -1 || code.indexOf(query) !== -1;
           if (matches) {
             cells[j].classList.remove('is-hidden');
             visibleCount++;
