@@ -35,8 +35,10 @@ affected_keys = [
     'theme_color_danger',
 ]
 
+BASE_SANS_STACK = '"Open Sans", "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif'
+
 SYSTEM_FONTS = {
-    'Open Sans': '"Open Sans", "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif',
+    'Open Sans': BASE_SANS_STACK,
     'System-UI': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
     'Arial': 'Arial, "Helvetica Neue", Helvetica, sans-serif',
     'Helvetica': '"Helvetica Neue", Helvetica, Arial, sans-serif',
@@ -46,6 +48,11 @@ SYSTEM_FONTS = {
     'Trebuchet MS': '"Trebuchet MS", "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Tahoma, sans-serif',
     'Courier New': '"Courier New", Courier, monospace',
 }
+
+SYSTEM_FONT_CHOICES = [
+    (font_key, 'System UI (Default Stack)' if font_key == 'System-UI' else font_key)
+    for font_key in SYSTEM_FONTS.keys()
+]
 
 
 def compile_scss(object, file='main.scss', fonts=True):
@@ -88,12 +95,24 @@ def compile_scss(object, file='main.scss', fonts=True):
     if font and fonts:
         if font in SYSTEM_FONTS:
             font_family_value = SYSTEM_FONTS[font]
+            # We explicitly do not use !default here because we want to override
+            # any default variables declared in Bootstrap/our stylesheets.
+            sassrules.append(
+                '$font-family-sans-serif: {};'.format(font_family_value)
+            )
+        elif font in get_fonts():
+            font_family_value = '"{}", {}'.format(font, BASE_SANS_STACK)
+            sassrules.append(get_font_stylesheet(font))
+            # We explicitly do not use !default here because we want to override
+            # any default variables declared in Bootstrap/our stylesheets.
             sassrules.append(
                 '$font-family-sans-serif: {};'.format(font_family_value)
             )
         else:
-            font_family_value = '"{}", "Open Sans", "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif'.format(font)
-            sassrules.append(get_font_stylesheet(font))
+            # Fallback for old or invalid font values: treat as Open Sans
+            font_family_value = SYSTEM_FONTS['Open Sans']
+            # We explicitly do not use !default here because we want to override
+            # any default variables declared in Bootstrap/our stylesheets.
             sassrules.append(
                 '$font-family-sans-serif: {};'.format(font_family_value)
             )

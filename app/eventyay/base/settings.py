@@ -162,6 +162,14 @@ def validate_event_settings(event, settings_dict):
     from eventyay.base.models import Event
     from eventyay.base.signals import validate_event_settings
 
+    primary_font = settings_dict.get('primary_font')
+    if primary_font:
+        from eventyay.presale.style import SYSTEM_FONTS, get_fonts
+        if primary_font not in SYSTEM_FONTS and primary_font not in get_fonts():
+            raise ValidationError(
+                {'primary_font': _('The selected font is not allowed.')}
+            )
+
     default_locale = settings_dict.get('locale')
     locales = settings_dict.get('locales', [])
     if not isinstance(locales, list):
@@ -213,12 +221,13 @@ def validate_event_settings(event, settings_dict):
 
 
 def validate_organizer_settings(organizer, settings_dict):
-    # This is not doing anything for the time being.
-    # But earlier we called validate_event_settings for the organizer, too - and that didn't do anything for
-    # organizer-settings either.
-    #
-    # N.B.: When actually fleshing out this stub, adding it to the OrganizerUpdateForm should be considered.
-    pass
+    primary_font = settings_dict.get('primary_font')
+    if primary_font:
+        from eventyay.presale.style import SYSTEM_FONTS, get_fonts
+        if primary_font not in SYSTEM_FONTS and primary_font not in get_fonts():
+            raise ValidationError(
+                {'primary_font': _('The selected font is not allowed.')}
+            )
 
 
 def global_settings_object(holder):
