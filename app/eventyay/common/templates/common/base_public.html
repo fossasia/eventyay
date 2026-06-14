@@ -20,7 +20,7 @@
         <meta name="description" content="{% block meta_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
         <meta name="application-name" content="{{ site_name }}">
         <meta name="generator" content="{{ site_name }}">
-        <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% elif request.organizer %}{{ organizer.name }}, {{ organizer.slug }},{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
+        <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% elif request.organizer %}{{ request.organizer.name }}, {{ request.organizer.slug }},{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
         {% if current_event and current_event.display_settings.meta_noindex %}
             <meta name="robots" content="noindex, nofollow">
         {% else %}
@@ -131,11 +131,11 @@
             <header>
                 {% block presale_back_navigation %}
                     {% if current_event and not is_html_export %}
-                        {% if current_event.settings.organizer_link_back %}
-                            <a href="{% eventurl current_event.organizer "presale:organizer.index" %}" class="event-home-back d-print-none" aria-label="{% blocktranslate trimmed with name=current_event.organizer.name %}Back to {{ name }}{% endblocktranslate %}">
+                        {% if request.event.settings.organizer_link_back %}
+                            <a href="{% eventurl request.organizer "presale:organizer.index" %}" class="event-home-back d-print-none" aria-label="{% blocktranslate trimmed with name=request.organizer.name %}Back to {{ name }}{% endblocktranslate %}">
                                 <span class="event-home-back-pill">
                                     <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
-                                    <span class="event-home-back-label" aria-hidden="true">{% blocktranslate trimmed with name=current_event.organizer.name %}{{ name }}{% endblocktranslate %}</span>
+                                    <span class="event-home-back-label" aria-hidden="true">{% blocktranslate trimmed with name=request.organizer.name %}{{ name }}{% endblocktranslate %}</span>
                                 </span>
                             </a>
                         {% else %}
@@ -150,7 +150,7 @@
                 {% endblock presale_back_navigation %}
                 <div class="event-hero">
                     <div class="event-hero-overlay">
-                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% elif request.organizer and organizer_logo %} event-brand--has-logo{% endif %}{% if request.organizer and organizer.settings.organizer_logo_image_large %} event-brand--logo-large{% endif %}">
+                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% elif request.organizer and organizer_logo %} event-brand--has-logo{% endif %}{% if request.organizer and request.organizer.settings.organizer_logo_image_large %} event-brand--logo-large{% endif %}">
                             <div class="event-logo">
                                 <a href="{% block nav_link %}{% endblock nav_link %}">
                                     {% block event_logo %}

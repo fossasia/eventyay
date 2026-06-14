@@ -1,0 +1,39 @@
+{% load i18n %}
+{% load eventurl %}
+<div class="organizer-community-bar">
+    {% if show_follower_count %}
+        <span class="organizer-follower-count" id="organizer-follower-count">
+            <span class="fa fa-users" aria-hidden="true"></span>
+            <strong>{{ follower_count }}</strong>
+            {% blocktrans count count=follower_count %}follower{% plural %}followers{% endblocktrans %}
+        </span>
+    {% endif %}
+    {% if follow_enabled %}
+        {% if request.user.is_authenticated %}
+            {% if is_following %}
+                <form method="post" action="{% eventurl request.organizer "presale:organizer.unfollow" %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button id="organizer-unfollow-btn" type="submit" class="btn btn-danger">
+                        <span class="fa fa-heart" aria-hidden="true"></span>
+                        {% trans "Unfollow" %}
+                    </button>
+                </form>
+            {% else %}
+                <form method="post" action="{% eventurl request.organizer "presale:organizer.follow" %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button id="organizer-follow-btn" type="submit" class="btn btn-primary">
+                        <span class="fa fa-heart-o" aria-hidden="true"></span>
+                        {% trans "Follow" %}
+                    </button>
+                </form>
+            {% endif %}
+        {% else %}
+            <a id="organizer-follow-login-link" href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}" class="btn btn-primary">
+                <span class="fa fa-heart-o" aria-hidden="true"></span>
+                {% trans "Follow" %}
+            </a>
+        {% endif %}
+    {% endif %}
+</div>

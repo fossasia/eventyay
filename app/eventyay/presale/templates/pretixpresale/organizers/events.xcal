@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='utf-8' ?>
+{% load xmlescape %}
+<iCalendar xmlns:pentabarf='http://pentabarf.org' xmlns:xCal='urn:ietf:params:xml:ns:xcal'>
+    <vcalendar>
+        <version>2.0</version>
+        <prodid>-//eventyay//{{ data.organizer.slug|xmlescape }}//EN</prodid>
+        <x-wr-caldesc>{{ data.conference.title|xmlescape }}</x-wr-caldesc>
+        <x-wr-calname>{{ data.conference.title|xmlescape }}</x-wr-calname>
+        {% for day in data.days %}{% for room in day.rooms %}{% for entry in room.entries %}
+        <vevent>
+            <method>PUBLISH</method>
+            <uid>{{ entry.uid|xmlescape }}@{{ data.domain|xmlescape }}</uid>
+            <pentabarf:event-slug>{{ entry.slug|xmlescape }}</pentabarf:event-slug>
+            <pentabarf:title>{{ entry.name|xmlescape }}</pentabarf:title>
+            <dtstart>{{ entry.start|date:"Ymd\THis" }}</dtstart>
+            <dtend>{{ entry.end|date:"Ymd\THis" }}</dtend>
+            <duration>{{ entry.pentabarf_export_duration }}</duration>
+            <summary>{{ entry.name|xmlescape }}</summary>
+            <class>PUBLIC</class>
+            <status>CONFIRMED</status>
+            <category>Event</category>
+            <url>{{ entry.url|xmlescape }}</url>
+            <location>{{ room.name|xmlescape }}{% if entry.location %} – {{ entry.location|xmlescape }}{% endif %}</location>
+        </vevent>
+        {% endfor %}{% endfor %}{% endfor %}
+    </vcalendar>
+</iCalendar>
