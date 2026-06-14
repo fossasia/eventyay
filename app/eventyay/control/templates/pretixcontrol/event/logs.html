@@ -50,7 +50,7 @@
                             </span>
                         {% endif %}
                     </div>
-                    <div class="col-lg-2 col-sm-6 col-xs-12">
+                    <div class="col-lg-2 col-sm-6 col-xs-12 log-break-word">
                         {% if log.user %}
                             {% if log.user.is_staff %}
                                 <span class="fa fa-id-card fa-danger fa-fw"
@@ -73,7 +73,7 @@
                             {{ log.api_token.name }}
                         {% endif %}
                     </div>
-                    <div class="col-lg-2 col-sm-12 col-xs-12">
+                    <div class="col-lg-2 col-sm-12 col-xs-12 log-break-word">
                         {% if log.display_object %}
                             <span class="fa fa-flag"></span> {{ log.display_object|safe }}
                         {% endif %}

@@ -1197,3 +1197,7 @@ h1 .label {
         background-image: url(static('leaflet/images/marker-icon.png'));
     }
 }
+.log-break-word {
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
