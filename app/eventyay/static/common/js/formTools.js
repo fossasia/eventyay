@@ -782,12 +782,14 @@ const initFormButton = (form) => {
         if (submitButton.hasAttribute('data-no-loading') || submitButton.id === 'button-sudo' || submitButton.id === 'button-shop') return;
         const submitButtonText = submitButton.textContent
         let lastSubmit = 0
-        form.addEventListener("submit", () => {
-            // We can't disable the button immediately, because then, the browser will
-            // not send the button's value to the server. Instead, we'll just delay the
-            // disabling a bit.
-            submitButton.innerHTML = `<i class="fa fa-spinner fa-spin pr-0"></i> ${submitButtonText}`
+        form.addEventListener("submit", (event) => {
+            if (event.submitter !== submitButton) return
+
+            submitButton.innerHTML =
+                `<i class="fa fa-spinner fa-spin pr-0"></i> ${submitButtonText}`
+
             lastSubmit = Date.now()
+
             setTimeout(() => {
                 submitButton.classList.add("disabled")
             }, 1)
