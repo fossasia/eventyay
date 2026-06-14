@@ -211,7 +211,7 @@ dependencies = [
     "websockets>=15.0.1",
     "xmlschema>=3.4.3",
     "yarl>=1.24.2",
-    "zipp>=3.23.1",
+    "zipp>=4.1.0",
     "zxcvbn>=4.4.28",
 ]
 
