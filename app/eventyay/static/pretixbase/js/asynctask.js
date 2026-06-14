@@ -45,6 +45,7 @@ function async_task_check_callback(data, jqXHR, status) {
     "use strict";
     if (data.ready && data.redirect) {
         waitingDialog.hide();
+        ajaxErrDialog.hide();
         if (async_task_is_download && data.success) {
             _restore_async_old_url_once();
         }
@@ -114,6 +115,7 @@ function async_task_check_error(jqXHR, textStatus, errorThrown) {
 function async_task_callback(data, jqXHR, status) {
     "use strict";
     $("body").data('ajaxing', false);
+    ajaxErrDialog.hide();
     if (data.redirect) {
         waitingDialog.hide();
         if (async_task_is_download && data.success) {
@@ -205,22 +207,29 @@ $(function () {
     "use strict";
     $("body").on('submit', 'form[data-asynctask]', function (e) {
         e.preventDefault();
-        $(this).removeClass("dirty");  // Avoid problems with are-you-sure.js
+        var $form = $(this);
+        $form.removeClass("dirty");  // Avoid problems with are-you-sure.js
         if ($("body").data('ajaxing')) {
             return;
         }
         async_task_id = null;
-        async_task_is_download = $(this).is("[data-asynctask-download]");
-        async_task_is_long = $(this).is("[data-asynctask-long]");
+        async_task_is_download = $form.is("[data-asynctask-download]");
+        async_task_is_long = $form.is("[data-asynctask-long]");
         async_task_old_url = location.href;
         $("body").data('ajaxing', true);
-        if ($(this).is("[data-asynctask-headline]")) {
-            waitingDialog.show($(this).attr("data-asynctask-headline"));
+        ajaxErrDialog.hide();
+        // Clear only validation errors rendered by the shared form error partials.
+        var $validationAlerts = $form.find(".alert-danger[data-validation-error='true']");
+        $validationAlerts.fadeOut('fast', function () {
+            $(this).remove();
+        });
+        if ($form.is("[data-asynctask-headline]")) {
+            waitingDialog.show($form.attr("data-asynctask-headline"));
         } else {
             waitingDialog.show(gettext('We are processing your request …'));
         }
-        if ($(this).is("[data-asynctask-text]")) {
-            $("#loadingmodal p.text").text($(this).attr("data-asynctask-text")).show();
+        if ($form.is("[data-asynctask-text]")) {
+            $("#loadingmodal p.text").text($form.attr("data-asynctask-text")).show();
         } else {
             $("#loadingmodal p.text").hide();
         }
@@ -233,8 +242,8 @@ $(function () {
         $.ajax(
             {
                 'type': 'POST',
-                'url': $(this).attr('action'),
-                'data': $(this).serialize() + '&ajax=1',
+                'url': $form.attr('action'),
+                'data': $form.serialize() + '&ajax=1',
                 'success': async_task_callback,
                 'error': async_task_error,
                 'context': this,
@@ -269,5 +278,6 @@ var ajaxErrDialog = {
     hide: function () {
         "use strict";
         $("body").removeClass("ajaxerr");
+        $("#ajaxerr").html("");
     }
 };

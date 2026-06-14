@@ -27,11 +27,11 @@ def cfp_locale_switch_url(context, locale_code):
     request = context.get('request')
     event = getattr(request, 'event', None)
     if not request or not event:
-        logger.warning("cfp_locale_switch_url called without request.event")
+        logger.warning('cfp_locale_switch_url called without request.event')
         return ''
     if not event.organizer:
         logger.warning(
-            "cfp_locale_switch_url called with event %s missing organizer",
+            'cfp_locale_switch_url called with event %s missing organizer',
             getattr(event, 'slug', '<unknown>'),
         )
         return ''
@@ -42,7 +42,7 @@ def cfp_locale_switch_url(context, locale_code):
     query = QueryDict(mutable=True)
     query['locale'] = locale_code
     query['next'] = request.get_full_path()
-    return f"{base}?{query.urlencode()}"
+    return f'{base}?{query.urlencode()}'
 
 
 @register.filter
@@ -148,6 +148,11 @@ def tickets_tab_visible(context, event=None):
         return False
     if request and not event.user_can_view_tickets(getattr(request, 'user', None), request=request):
         return False
+
+    target_event = context.get('ev') or context.get('subevent') or event
+    if target_event and not target_event.presale_is_running and not event.settings.show_products_outside_presale_period:
+        return False
+
     productnum = context.get('productnum')
     if productnum is not None:
         try:
@@ -211,6 +216,19 @@ def private_testmode_talks_enabled(context, event=None):
     if not event:
         return False
     return event.private_testmode and event.settings.get('private_testmode_talks', False, as_type=bool)
+
+
+@register.simple_tag(takes_context=True)
+def has_organizer_access(context, organizer=None):
+    """Return True if the user may access organizer management for this organizer."""
+    request = context.get('request')
+    organizer = organizer or getattr(request, 'organizer', None)
+    user = getattr(request, 'user', None)
+    if not organizer or not user or not user.is_authenticated:
+        return False
+    if user.is_administrator:
+        return True
+    return user.has_organizer_permission(organizer, request=request)
 
 
 @register.simple_tag(takes_context=True)

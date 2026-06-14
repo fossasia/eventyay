@@ -16,9 +16,14 @@ from django.utils.html import escape
 from lxml import etree
 from yarl import URL
 
-from eventyay.base.models import BBBServer, BBBCall
+from eventyay.base.models import BBBCall, BBBServer
+
 
 logger = logging.getLogger(__name__)
+
+
+class BBBServerUnavailable(Exception):
+    pass
 
 
 def get_url(operation, params, base_url, secret):
@@ -33,6 +38,24 @@ def get_url(operation, params, base_url, secret):
 def escape_name(name):
     # Some things break BBB apparently…
     return name.replace(":", "")
+
+
+def get_absolute_presentation_url(presentation):
+    """Return a BBB-downloadable absolute URL for an initial presentation."""
+    presentation = presentation.strip()
+    if not presentation:
+        return ""
+    return urljoin(settings.SITE_URL, presentation)
+
+
+def get_presentation_xml(presentation):
+    """Build BBB's initial-presentation XML with an absolute document URL."""
+    presentation = get_absolute_presentation_url(presentation)
+    return (
+        '<modules><module name="presentation"><document url="{}" /></module></modules>'.format(
+            escape(presentation)
+        )
+    )
 
 
 def choose_server(event, room=None, prefer_server=None):
@@ -90,13 +113,23 @@ def choose_server(event, room=None, prefer_server=None):
         return server
 
 
+def choose_server_or_raise(event, room=None, prefer_server=None, call_id=None):
+    server = choose_server(event=event, room=room, prefer_server=prefer_server)
+    if server is None:
+        context = f"room={room.pk}" if room else f"call={call_id}"
+        message = f"No active BBB server available for event {event.pk} ({context})."
+        logger.warning(message)
+        raise BBBServerUnavailable(message)
+    return server
+
+
 @database_sync_to_async
 @transaction.atomic
 def get_create_params_for_call_id(call_id, record, user):
     try:
         call = BBBCall.objects.get(id=call_id, invited_members__in=[user])
         if not call.server.active:
-            call.server = choose_server(event=call.event)
+            call.server = choose_server_or_raise(event=call.event, call_id=call.id)
             call.save(update_fields=["server"])
     except BBBCall.DoesNotExist:
         return None, None
@@ -131,7 +164,7 @@ def get_create_params_for_room(
     try:
         call = BBBCall.objects.get(room=room)
         if not call.server.active:
-            call.server = choose_server(event=room.event, room=room)
+            call.server = choose_server_or_raise(event=room.event, room=room)
             call.save(update_fields=["server"])
         if call.guest_policy != guest_policy:
             call.guest_policy = guest_policy
@@ -143,7 +176,7 @@ def get_create_params_for_room(
         call = BBBCall.objects.create(
             room=room,
             event=room.event,
-            server=choose_server(
+            server=choose_server_or_raise(
                 event=room.event, room=room, prefer_server=prefer_server
             ),
             voice_bridge=voice_bridge,
@@ -158,6 +191,7 @@ def get_create_params_for_room(
         "attendeePW": call.attendee_pw,
         "moderatorPW": call.moderator_pw,
         "record": "true" if record else "false",
+        "allowRequestsWithoutSession": "true",
         "meta_Source": "eventyay",
         "meta_Event": room.event_id,
         "meta_Room": str(room.id),
@@ -248,12 +282,8 @@ class BBBService:
         create_url = get_url("create", create_params, server.url, server.secret)
 
         presentation = config.get("presentation", None)
-        if presentation:
-            xml = "<modules>"
-            xml += '<module name="presentation"><document url="{}" /></module>'.format(
-                escape(presentation)
-            )
-            xml += "</modules>"
+        if presentation and presentation.strip():
+            xml = get_presentation_xml(presentation)
             req = await self._post(create_url, xml)
         else:
             req = await self._get(create_url)
@@ -303,8 +333,7 @@ class BBBService:
                 "userdata-bbb_skip_video_preview": (
                     "true" if config.get("auto_camera", False) else "false"
                 ),
-                # For some reason, bbb_auto_swap_layout does what you expect from bbb_hide_presentation
-                "userdata-bbb_auto_swap_layout": (
+                "userdata-bbb_hide_presentation_on_join": (
                     "true" if config.get("hide_presentation", False) else "false"
                 ),
             },

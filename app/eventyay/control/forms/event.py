@@ -100,20 +100,13 @@ def clean_organizer_email(email):
 class EventWizardFoundationForm(forms.Form):
     locales = forms.MultipleChoiceField(
         choices=settings.LANGUAGES,
-        label=_('Active languages'),
+        label=_('Event languages'),
         widget=MultipleLanguagesWidget,
         help_text=_(
             "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
             "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
             "event's default language instead."
         ),
-    )
-    content_locales = forms.MultipleChoiceField(
-        choices=settings.LANGUAGES,
-        label=_('Content languages'),
-        widget=MultipleLanguagesWidget,
-        required=False,
-        help_text=_('Users will be able to submit proposals in these languages.'),
     )
     has_subevents = forms.BooleanField(
         label=_('This is an event series'),
@@ -132,7 +125,6 @@ class EventWizardFoundationForm(forms.Form):
         super().__init__(*args, **kwargs)
         localized_language_choices = get_language_choices_native_with_ui_name()
         self.fields['locales'].choices = localized_language_choices
-        self.fields['content_locales'].choices = localized_language_choices
         qs = Organizer.objects.all()
         if not self.user.has_active_staff_session(self.session.session_key):
             qs = qs.filter(id__in=self.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
@@ -150,7 +142,7 @@ class EventWizardFoundationForm(forms.Form):
                     'data-placeholder': _('Organizer'),
                 }
             ),
-            empty_label=None,
+            empty_label=_('Organizer') if is_required else None,
             required=is_required,
         )
         self.fields['organizer'].widget.choices = self.fields['organizer'].choices
@@ -163,12 +155,6 @@ class EventWizardFoundationForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         locales = cleaned_data.get('locales', [])
-        content_locales = cleaned_data.get('content_locales')
-
-        if content_locales and set(content_locales) - set(locales):
-            raise ValidationError({
-                'content_locales': _('Content languages must be a subset of the active languages.')
-            })
 
         gs = GlobalSettingsObject()
         series_enabled = gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
@@ -250,17 +236,22 @@ class EventWizardBasicsForm(I18nModelForm):
         self.has_subevents = kwargs.pop('has_subevents')
         self.is_video_creation = kwargs.pop('is_video_creation')
         self.user = kwargs.pop('user')
+        self.restrict_locale_choices = kwargs.pop('restrict_locale_choices', True)
         kwargs.pop('session')
         kwargs.pop('content_locales', None)
         super().__init__(*args, **kwargs)
         if 'timezone' not in self.initial:
             self.initial['timezone'] = get_current_timezone_name()
-        self.fields['locale'].choices = [(a, b) for a, b in settings.LANGUAGES if a in self.locales]
+        if self.restrict_locale_choices:
+            self.fields['locale'].choices = [(a, b) for a, b in settings.LANGUAGES if a in self.locales]
+        else:
+            self.fields['locale'].choices = settings.LANGUAGES
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
         self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
+        self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
         self.fields['email'].required = False
         self.fields['email'].label = _('Organizer email address')
         self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")

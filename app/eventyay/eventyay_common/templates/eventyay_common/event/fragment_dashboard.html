@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n eventsignal %}
 <div class="dashboard custom">
     <div class="panel panel-default items widget-container widget-full no-padding">
         <div class="panel-heading">
@@ -20,6 +20,7 @@
     {% include "pretixcontrol/event/fragment_info_box.html" %}
 </div>
 <div class="dashboard custom">
+    {% if has_ticket_access %}
     <div class="panel panel-default widget-container widget-small no-padding column">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -28,14 +29,16 @@
         </div>
         <div class="panel-body">
             <p>
-                {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
+                {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees, design custom badges, and streamline event marketing by sending targeted emails." %}
             </p>
             <p>
-                {% trans "Go to" %} <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
+                {% trans "Go to" %}
+                <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
             </p>
         </div>
     </div>
-    <div class="panel panel-default widget-container widget-small no-padding column">
+    {% endif %}
+    <div class="panel panel-default widget-container widget-small no-padding {% if not has_video_access %}last-column{% else %}column{% endif %}">
         <div class="panel-heading">
             <h3 class="panel-title">
                 {% trans "Talks and Speakers" %}
@@ -56,6 +59,7 @@
             {% endif %}
         </div>
     </div>
+    {% if has_video_access %}
     <div class="panel panel-default widget-container widget-small no-padding last-column">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -72,6 +76,8 @@
             </p>
         </div>
     </div>
+    {% endif %}
+    {% eventsignal request.event "eventyay.control.signals.event_dashboard_components" request=request %}
 
     <div class="modal popup-modal" id="alert-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">

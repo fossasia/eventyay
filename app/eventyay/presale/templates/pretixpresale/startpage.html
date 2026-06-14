@@ -73,7 +73,7 @@
             <div class="navbar-header">
                 <a class="navbar-brand" href="{% url "presale:index" %}">
                     <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
-                    {{ site_name }}
+                    <span class="hidden-xs">{{ site_name }}</span>
                 </a>
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
@@ -98,6 +98,7 @@
                                 id="startpage-search-results"
                                 role="listbox"
                                 data-empty-text="{% trans "No matching events" %}"
+                                data-search-url="{% url 'presale:index' %}"
                             ></div>
                         </div>
                     </form>
@@ -116,15 +117,17 @@
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.get_full_path|urlencode }}" method="post">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-link" id="button-sudo">
-                                <i class="fa fa-id-card"></i> {% trans "Admin mode" %}
+                            <button type="submit" class="btn btn-link" id="button-sudo" aria-label="{% trans 'Admin mode' %}">
+                                <i class="fa fa-id-card" aria-hidden="true"></i>
+                                <span class="hidden-xs">{% trans 'Admin mode' %}</span>
                             </button>
                         </form>
                     </li>
                 {% elif request.user.is_staff and staff_session %}
                     <li>
-                        <a href="{% url 'control:user.sudo.stop' %}" class="danger">
-                            <i class="fa fa-id-card"></i> {% trans "End admin session" %}
+                        <a href="{% url 'control:user.sudo.stop' %}" class="danger" aria-label="{% trans 'End admin session' %}">
+                            <i class="fa fa-id-card" aria-hidden="true"></i>
+                            <span class="hidden-xs">{% trans 'End admin session' %}</span>
                         </a>
                     </li>
                 {% endif %}
@@ -133,8 +136,8 @@
                     {% include "common/fragment_profile_dropdown.html" %}
                 {% else %}
                     <li>
-                        <a href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}">
-                            <i class="fa fa-sign-in"></i> {% trans "Login" %}
+                        <a href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}" aria-label="{% trans 'Login' %}">
+                            <i class="fa fa-sign-in"></i> <span class="hidden-xs">{% trans "Login" %}</span>
                         </a>
                     </li>
                 {% endif %}

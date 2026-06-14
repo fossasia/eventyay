@@ -17,8 +17,9 @@ from eventyay.base.models import (
     OrderPosition,
     User,
 )
-from eventyay.base.orderimport import get_all_columns
+from eventyay.base.orderimport import NewImportProduct, NewImportVariation, ProductColumn, Variation, get_all_columns
 from eventyay.base.services.invoices import generate_invoice, invoice_qualified
+from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.base.signals import order_paid, order_placed
 from eventyay.celery_app import app
@@ -66,16 +67,24 @@ def setif(record, obj, attr, setting):
         setattr(obj, attr, record[setting[4:]] or '')
 
 
-@app.task(base=ProfiledEventTask, throws=(DataImportError,))
-def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) -> None:
+IMPORT_LOCK_TIMEOUT = 30
+
+
+@app.task(
+    base=ProfiledEventTask,
+    bind=True,
+    autoretry_for=(LockTimeoutException,),
+    retry_backoff=True,
+    retry_kwargs={'max_retries': 5},
+    throws=(DataImportError,),
+)
+def import_orders(self, event: Event, fileid: str, settings: dict, locale: str, user) -> None:
     # TODO: quotacheck?
     cf = CachedFile.objects.get(id=fileid)
     user = User.objects.get(pk=user)
     with language(locale, event.settings.region):
-        cols = get_all_columns(event)
+        cols = get_all_columns(event, settings)
         parsed = parse_csv(cf.file)
-        orders = []
-        order = None
         data = []
 
         # Run validation
@@ -98,36 +107,67 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
                     )
             data.append(values)
 
-        # Prepare model objects. Yes, this might consume lots of RAM, but allows us to make the actual SQL transaction
-        # shorter. We'll see what works better in reality…
-        for i, record in enumerate(data):
-            try:
-                if order is None or settings['orders'] == 'many':
-                    order = Order(
-                        event=event,
-                        testmode=settings['testmode'],
-                    )
-                    order.meta_info = {}
-                    order._positions = []
-                    order._address = InvoiceAddress()
-                    order._address.name_parts = {'_scheme': event.settings.name_scheme}
-                    orders.append(order)
-
-                position = OrderPosition(positionid=len(order._positions) + 1)
-                position.attendee_name_parts = {'_scheme': event.settings.name_scheme}
-                position.meta_info = {}
-                order._positions.append(position)
-                position.assign_pseudonymization_id()
-
-                for c in cols:
-                    c.assign(record.get(c.identifier), order, position, order._address)
-
-            except ImportError as e:
-                raise ImportError(_('Invalid data in row {row}: {message}').format(row=i, message=str(e)))
+        product_columns = [c for c in cols if isinstance(c, ProductColumn)]
+        variation_columns = [c for c in cols if isinstance(c, Variation)]
+        orders = []
 
         # quota check?
-        with event.lock():
+        with event.lock(blocking=True, blocking_timeout=IMPORT_LOCK_TIMEOUT):
             with transaction.atomic():
+                for column in product_columns:
+                    try:
+                        product_map = column.materialize_pending_products()
+                    except ValidationError as e:
+                        raise DataImportError(
+                            _('Error while creating products: {message}').format(message=e.message)
+                        )
+                    for record in data:
+                        product = record.get(column.identifier)
+                        if isinstance(product, NewImportProduct):
+                            record[column.identifier] = product_map[product.name]
+                            
+                for column in variation_columns:
+                    try:
+                        variation_map = column.materialize_pending_variations(product_map)
+                    except ValidationError as e:
+                        raise DataImportError(
+                            _('Error while creating product variations: {message}').format(message=e.message)
+                        )
+                    for record in data:
+                        variation = record.get(column.identifier)
+                        if isinstance(variation, NewImportVariation):
+                            key = (variation.value, variation.product_name, variation.product_id)
+                            record[column.identifier] = variation_map[key]
+
+                # Build and persist orders in the same transaction as product materialization so
+                # newly created products are rolled back if the import fails.
+                orders.clear()
+                order = None
+                for i, record in enumerate(data):
+                    try:
+                        if order is None or settings['orders'] == 'many':
+                            order = Order(
+                                event=event,
+                                testmode=settings['testmode'],
+                            )
+                            order.meta_info = {}
+                            order._positions = []
+                            order._address = InvoiceAddress()
+                            order._address.name_parts = {'_scheme': event.settings.name_scheme}
+                            orders.append(order)
+
+                        position = OrderPosition(positionid=len(order._positions) + 1)
+                        position.attendee_name_parts = {'_scheme': event.settings.name_scheme}
+                        position.meta_info = {}
+                        order._positions.append(position)
+                        position.assign_pseudonymization_id()
+
+                        for c in cols:
+                            c.assign(record.get(c.identifier), order, position, order._address)
+
+                    except ImportError as e:
+                        raise ImportError(_('Invalid data in row {row}: {message}').format(row=i, message=str(e)))
+
                 for o in orders:
                     o.total = sum([c.price for c in o._positions])  # currently no support for fees
                     if o.total == Decimal('0.00'):
@@ -170,20 +210,20 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
                         data={'source': 'import'},
                     )
 
-            for o in orders:
-                with language(o.locale, event.settings.region):
-                    order_placed.send(event, order=o)
-                    if o.status == Order.STATUS_PAID:
-                        order_paid.send(event, order=o)
+        for o in orders:
+            with language(o.locale, event.settings.region):
+                order_placed.send(event, order=o)
+                if o.status == Order.STATUS_PAID:
+                    order_paid.send(event, order=o)
 
-                    gen_invoice = (
-                        invoice_qualified(o)
-                        and (
-                            (event.settings.get('invoice_generate') == 'True')
-                            or (event.settings.get('invoice_generate') == 'paid' and o.status == Order.STATUS_PAID)
-                        )
-                        and not o.invoices.last()
+                gen_invoice = (
+                    invoice_qualified(o)
+                    and (
+                        (event.settings.get('invoice_generate') == 'True')
+                        or (event.settings.get('invoice_generate') == 'paid' and o.status == Order.STATUS_PAID)
                     )
-                    if gen_invoice:
-                        generate_invoice(o, trigger_pdf=True)
+                    and not o.invoices.last()
+                )
+                if gen_invoice:
+                    generate_invoice(o, trigger_pdf=True)
     cf.delete()

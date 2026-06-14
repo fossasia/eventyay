@@ -18,9 +18,17 @@ body {
 }
 
 #page-wrapper {
+  --sidebar-width: 45px;
+
   display: flex;
   flex-direction: row;
+  margin-top: var(--navbar-height);
   max-width: 100%;
+}
+
+#page-wrapper:has(aside.sidebar:hover),
+#page-wrapper:has(aside.sidebar.sidebar-uncollapsed) {
+  --sidebar-width: 250px;
 }
 
 #page-content {
@@ -28,8 +36,7 @@ body {
   flex-grow: 1;
   max-width: 100%;
   padding: 18px 44px;
-  margin: 0;
-  margin-top: var(--navbar-height);
+  margin-left: var(--sidebar-width);
   min-height: calc(100vh - var(--navbar-height));
   overflow-x: hidden;
   overflow-y: visible;
@@ -194,21 +201,18 @@ details.card {
 aside.sidebar {
   background-color: var(--color-grey-ultralight);
   box-shadow: var(--shadow-lighter);
-  width: 45px;
-  align-self: stretch;
-  min-height: calc(100vh - var(--navbar-height));
-  height: auto;
+  width: var(--sidebar-width);
+  position: fixed;
+  height: calc(100vh - var(--navbar-height));
   display: flex;
   font-size: 14px;
-  flex-grow: 0;
-  flex-shrink: 0;
   flex-wrap: nowrap;
   z-index: 150;
   padding-left: 0;
-  margin-top: var(--navbar-height);
   margin-bottom: 0;
+  overflow-x: hidden;
   overflow-y: auto;
-
+  
   &.sidebar-uncollapsed,
   &:hover {
     width: 250px;
@@ -478,6 +482,7 @@ aside.sidebar {
   flex-wrap: wrap;
   font-weight: 200;
   margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 #main-title .navigation-button {
@@ -1687,7 +1692,7 @@ h2 .user-name-display img {
 
 @media (max-width: 768px) {
   aside.sidebar {
-    position: absolute;
+    position: fixed;
     top: var(--navbar-height);
     margin-top: 0;
     height: calc(100vh - var(--navbar-height));
@@ -1704,8 +1709,8 @@ h2 .user-name-display img {
   }
 
   #page-content {
+    flex: 1;
     padding: 4px 8px;
-    flex-grow: 0;
     width: 100%;
     margin-left: 0;
   }

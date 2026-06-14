@@ -2,8 +2,8 @@ import json
 import logging
 import os
 from mimetypes import guess_type
-from pathlib import Path
-from typing import cast
+from urllib.request import urlopen
+
 from django.shortcuts import redirect
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
@@ -25,9 +25,10 @@ from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.agenda.views.utils import build_public_schedule_exporters
+from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
+from eventyay.consts import SizeKey
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
-VIDEO_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'video'
 logger = logging.getLogger(__name__)
 
 
@@ -56,7 +57,9 @@ class VideoSPAView(View):
                 return HttpResponse('Event not found', status=404)
 
         index_path = VIDEO_DIST_DIR / 'index.html'
-        if index_path.is_file():
+        if settings.VITE_DEV_MODE:
+            html_content = fetch_vite_html(VIDEO_DEV_SERVER)
+        elif index_path.is_file():
             html_content = index_path.read_text()
         else:
             html_content = '<!-- /video build missing: {} -->'.format(index_path)
@@ -110,6 +113,7 @@ class VideoSPAView(View):
                         event.pk,
                     ),
                     'upload': safe_reverse('storage:upload', event_id=event.pk) or '',
+                    'uploadMaxSize': settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER],
                     'scheduleImport': safe_reverse('storage:schedule_import', event_id=event.pk) or '',
                     'systemlog': safe_reverse('live:systemlog') or '',
                 },
@@ -223,7 +227,7 @@ class VideoSPAView(View):
             # Event identifier provided but not found -> 404
             return HttpResponse('Event not found', status=404)
 
-        if '<base ' not in html_content.lower():
+        if not settings.VITE_DEV_MODE and '<base ' not in html_content.lower():
             # Ensure assets resolve correctly regardless of nested route
             html_content = html_content.replace('<head>', f'<head><base href="{base_href}">', 1)
 
@@ -234,6 +238,17 @@ class VideoSPAView(View):
 
 class VideoAssetView(View):
     def get(self, request, path='', *args, **kwargs):
+        if settings.VITE_DEV_MODE:
+            try:
+                with urlopen(f'{VIDEO_DEV_SERVER}/{path}', timeout=5) as resp:
+                    content = resp.read()
+                    ctype = resp.headers.get('Content-Type', guess_type(path)[0] or 'application/octet-stream')
+                    r = HttpResponse(content, content_type=ctype)
+                    r._csp_ignore = True
+                    return r
+            except OSError:
+                logger.warning('Video asset not found via Vite dev server: %s', path)
+                raise Http404()
         # Accept empty path -> index handling done by SPA view
         candidate_paths = (
             [

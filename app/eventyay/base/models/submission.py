@@ -21,10 +21,12 @@ from rest_framework import serializers
 
 from eventyay.base.models import Choices, User
 from eventyay.common.exceptions import SubmissionError
+from eventyay.common.language import LANGUAGE_NAMES
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.text.serialize import serialize_duration
 from eventyay.common.urls import EventUrls
+from eventyay.submission.constants import AUTO_DRAFT_TITLE
 from eventyay.submission.signals import submission_state_change
 from eventyay.talk_rules.agenda import (
     event_uses_feedback,
@@ -723,7 +725,10 @@ class Submission(GenerateCode, PretalxModel):
         return self.event.locale
 
     def get_content_locale_display(self):
-        return str(dict(self.event.named_content_locales)[self.content_locale])
+        locales = dict(self.event.named_content_locales)
+        if self.content_locale in locales:
+            return str(locales[self.content_locale])
+        return str(LANGUAGE_NAMES.get(self.content_locale, self.content_locale))
 
     def send_state_mail(self):
         from .mail import MailTemplateRoles
@@ -875,9 +880,15 @@ class Submission(GenerateCode, PretalxModel):
         """Helper method for a consistent speaker name display."""
         return ', '.join(speaker.get_display_name() for speaker in self.speakers.all())
 
+    @property
+    def display_title(self):
+        if self.title == AUTO_DRAFT_TITLE:
+            return _('Untitled draft')
+        return self.title
+
     @cached_property
     def display_title_with_speakers(self):
-        title = f'{phrases.base.quotation_open}{self.title}{phrases.base.quotation_close}'
+        title = f'{phrases.base.quotation_open}{self.display_title}{phrases.base.quotation_close}'
         if not self.speakers.exists():
             return title
         return _('{title_in_quotes} by {list_of_speakers}').format(

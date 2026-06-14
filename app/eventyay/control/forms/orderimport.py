@@ -21,9 +21,18 @@ class ProcessForm(forms.Form):
         ),
     )
     testmode = forms.BooleanField(label=_('Create orders as test mode orders'), required=False)
+    create_missing_products = forms.BooleanField(
+        label=_('Automatically create missing products'),
+        help_text=_(
+            'If a product referenced in the CSV does not exist, it will be created automatically '
+            'as an inactive product that is not listed in the ticket shop. Review and activate it '
+            'before selling. Existing products are matched by product name, internal name, or ID.'
+        ),
+        required=False,
+    )
 
     # Names of the non-mapping fields rendered separately in the "Import settings" panel.
-    _SETTINGS_FIELDS = frozenset({'orders', 'status', 'testmode'})
+    _SETTINGS_FIELDS = frozenset({'orders', 'status', 'testmode', 'create_missing_products'})
 
     def __init__(self, *args, **kwargs):
         headers = kwargs.pop('headers')

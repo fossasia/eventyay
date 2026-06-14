@@ -1,0 +1,11 @@
+{% load i18n %}{% autoescape off %}{% trans "New event from" %} {{ organizer_name }}: {{ event_name }}
+
+{{ event_url }}
+
+{% blocktrans trimmed with organizer=organizer_name %}
+You are receiving this email because you follow {{ organizer }} on {{ site }}.
+{% endblocktrans %}
+
+{% trans "To unfollow and stop receiving these emails, visit the organizer page:" %}
+{{ organizer_url }}
+{% endautoescape %}
