@@ -99,154 +99,24 @@ class EventDetail(EventSettingsPermission, ActionFromUrl, UpdateView):
         return result
 
 
-class EventLive(EventSettingsPermission, TemplateView):
-    template_name = 'orga/event/live.html'
-
-    def get_context_data(self, **kwargs):
-        result = super().get_context_data(**kwargs)
-        warnings = []
-        suggestions = []
-        # TODO: move to signal
-        if not self.request.event.cfp.text or len(str(self.request.event.cfp.text)) < 50:
-            warnings.append(
-                {
-                    'text': _('The CfP doesn’t have a full text yet.'),
-                    'url': self.request.event.cfp.urls.text,
-                }
-            )
-        # TODO: test that mails can be sent
-        if (
-            self.request.event.get_feature_flag('use_tracks')
-            and self.request.event.cfp.request_track
-            and self.request.event.tracks.count() < 2
-        ):
-            suggestions.append(
-                {
-                    'text': _(
-                        'You want submitters to choose the tracks for their proposals, but you do not offer tracks for selection. Add at least one track!'
-                    ),
-                    'url': self.request.event.cfp.urls.tracks,
-                }
-            )
-        if self.request.event.submission_types.count() == 1:
-            suggestions.append(
-                {
-                    'text': _('You have configured only one session type so far.'),
-                    'url': self.request.event.cfp.urls.types,
-                }
-            )
-        if not self.request.event.talkquestions.exists():
-            suggestions.append(
-                {
-                    'text': _('You have configured no custom fields yet.'),
-                    'url': self.request.event.cfp.urls.new_question,
-                }
-            )
-        result['warnings'] = warnings
-        result['suggestions'] = suggestions
-        result['private_testmode_talks'] = self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
-        result['talks_testmode'] = self.request.event.settings.get('talks_testmode', False, as_type=bool)
-        result['talks_published'] = self.request.event.talks_published
-        return result
+class EventLive(View):
+    def get(self, request, *args, **kwargs):
+        return self._redirect_to_central_status(request)
 
     def post(self, request, *args, **kwargs):
-        event = request.event
-        if request.POST.get('talks_published') == 'true':
-            if not event.live:
-                messages.error(self.request, _('Publish the event before publishing talks.'))
-                return redirect(event.orga_urls.live)
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.talks_published = True
-                event.settings.private_testmode_talks = False
-                event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
-                event.save()
-                if previous_private != event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.deactivated',
-                        user=self.request.user,
-                        data={},
-                    )
-            messages.success(self.request, _('Talk pages are now published.'))
-        elif request.POST.get('talks_published') == 'false':
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.talks_published = False
-                event.settings.private_testmode_talks = True
-                event.private_testmode = True
-                if event.settings.get('talks_testmode', False, as_type=bool):
-                    event.settings.talks_testmode = False
-                event.save()
-                if previous_private != event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.activated',
-                        user=self.request.user,
-                        data={},
-                    )
-            messages.success(self.request, _('Talk pages have been unpublished.'))
-        elif request.POST.get('talk_testmode') == 'true':
-            if not event.talks_published:
-                messages.error(
-                    self.request,
-                    _('Talk pages must be published before enabling talk test mode.'),
-                )
-                return redirect(event.orga_urls.live)
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.settings.talks_testmode = True
-                if event.startpage_visible or event.startpage_featured:
-                    event.startpage_visible = False
-                    event.startpage_featured = False
-                if event.settings.get('private_testmode_talks', False, as_type=bool):
-                    event.settings.private_testmode_talks = False
-                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
-                event.save()
-                if previous_private and not event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.deactivated',
-                        user=self.request.user,
-                        data={},
-                    )
-                self.request.event.log_action('eventyay.event.talk_testmode.activated', user=self.request.user, data={})
-            messages.success(self.request, _('Talk pages are now in test mode!'))
-        elif request.POST.get('talk_testmode') == 'false':
-            with transaction.atomic():
-                event.settings.talks_testmode = False
-                event.save()
-                self.request.event.log_action('eventyay.event.talk_testmode.deactivated', user=self.request.user, data={})
-            messages.success(self.request, _('Talk pages are now in production mode.'))
-        elif request.POST.get('private_testmode_talks_action'):
-            enable = request.POST.get('private_testmode_talks_action') == 'enable'
-            if enable and event.talks_published:
-                messages.error(self.request, _('Private test mode cannot be enabled while talks are published.'))
-                return redirect(event.orga_urls.live)
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.settings.private_testmode_talks = enable
-                if enable:
-                    event.private_testmode = True
-                    event.settings.talks_testmode = False
-                else:
-                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
-                if event.private_testmode and event.testmode:
-                    event.testmode = False
-                    self.request.event.log_action(
-                        'eventyay.event.testmode.deactivated',
-                        user=self.request.user,
-                        data={'delete': False},
-                    )
-                event.save()
-                if previous_private != event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.activated' if event.private_testmode else 'eventyay.event.private_testmode.deactivated',
-                        user=self.request.user,
-                        data={},
-                    )
-            messages.success(
-                self.request,
-                _('Private test mode is now enabled for talks.') if enable else _('Private test mode is now disabled for talks.'),
+        return self._redirect_to_central_status(request)
+
+    @staticmethod
+    def _redirect_to_central_status(request):
+        return redirect(
+            reverse(
+                'eventyay_common:event.live',
+                kwargs={
+                    'organizer': request.event.organizer.slug,
+                    'event': request.event.slug,
+                },
             )
-        return redirect(event.orga_urls.live)
+        )
 
 
 class EventHistory(EventSettingsPermission, ListView):
