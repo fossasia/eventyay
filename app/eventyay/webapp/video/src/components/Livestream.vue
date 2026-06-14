@@ -90,6 +90,7 @@ export default {
 			theme,
 			isLive: null,
 			playing: true,
+			playbackRequested: true,
 			buffering: true,
 			seeking: false,
 			offline: false,
@@ -111,7 +112,9 @@ export default {
 			showCaptionsChooser: false,
 			// Alternative sources
 			showSourceChooser: false,
-			chosenAlternative: null
+			chosenAlternative: null,
+			nativeMetadataHandler: null,
+			retryTimers: new Set()
 		}
 	},
 	computed: {
@@ -182,6 +185,7 @@ export default {
 	},
 	created() {
 		this.playing = this.autoplay
+		this.playbackRequested = this.autoplay
 		if (localStorage[`livestream.native.alternative:${this.room.id}`]) {
 			this.chosenAlternative = localStorage[`livestream.native.alternative:${this.room.id}`]
 		}
@@ -201,27 +205,71 @@ export default {
 		this.initializePlayer()
 	},
 	beforeUnmount() {
-		this.player?.destroy()
+		this.destroyPlayer()
 		document.removeEventListener('fullscreenchange', this.onFullscreenchange)
 		this.$refs.video.textTracks.removeEventListener('addtrack', this.onTextTracksChanged)
 		this.$refs.video.textTracks.removeEventListener('change', this.onTextTracksChanged)
 		this.$refs.video.textTracks.removeEventListener('removetrack', this.onTextTracksChanged)
 	},
 	methods: {
+		destroyPlayer() {
+			for (const timer of this.retryTimers) {
+				clearTimeout(timer)
+			}
+			this.retryTimers.clear()
+			const player = this.player
+			this.player = null
+			player?.destroy()
+
+			const video = this.$refs.video
+			if (video) {
+				if (this.nativeMetadataHandler) {
+					video.removeEventListener('loadedmetadata', this.nativeMetadataHandler)
+				}
+				video.pause()
+				video.removeAttribute('src')
+				video.load()
+			}
+			this.nativeMetadataHandler = null
+
+			this.isLive = null
+			this.buffering = false
+			this.seeking = false
+			this.currentTime = 0
+			this.duration = 0
+			this.bufferedRanges = null
+			this.hoveredProgress = null
+			this.levels = null
+			this.autoLevel = null
+			this.manualLevel = null
+			this.showLevelChooser = false
+			this.textTracks = []
+			this.showCaptionsChooser = false
+		},
+		scheduleRetry(player, callback, delay) {
+			const timer = setTimeout(() => {
+				this.retryTimers.delete(timer)
+				if (this.player === player) {
+					callback()
+				}
+			}, delay)
+			this.retryTimers.add(timer)
+		},
 		initializePlayer() {
 			const url = this.hlsUrl
+			const shouldPlay = this.playbackRequested
+			this.destroyPlayer()
+			const video = this.$refs.video
+
 			if (!url || (typeof url === 'string' && url.trim() === '')) {
 				this.offline = true
-				this.buffering = false
 				return
 			}
-			this.player?.destroy()
 			this.buffering = true
-			const video = this.$refs.video
 			const start = async() => {
 				this.offline = false
 				this.buffering = false
-				if (!this.playing) return
+				if (!shouldPlay) return
 				try {
 					await video.play()
 				} catch (e) {
@@ -233,7 +281,7 @@ export default {
 			}
 			if (Hls.isSupported()) {
 				const hlsConfig = Object.assign({}, HLS_DEFAULT_CONFIG, config.video_player?.['hls.js'], {
-					autoStartLoad: this.playing
+					autoStartLoad: shouldPlay
 				})
 				const player = new Hls(hlsConfig)
 				let started = false
@@ -274,13 +322,13 @@ export default {
 					} else if ([Hls.ErrorDetails.MANIFEST_LOAD_ERROR, Hls.ErrorDetails.LEVEL_LOAD_ERROR].includes(data.details)) {
 						if (!started) {
 							this.offline = true
-							setTimeout(load, RETRY_INTERVAL)
+							this.scheduleRetry(player, load, RETRY_INTERVAL)
 						} else if (data.response.code === 404) {
 							this.initializePlayer()
 						}
 					} else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
 						this.buffering = true
-						setTimeout(() => player.startLoad(), 250)
+						this.scheduleRetry(player, () => player.startLoad(), 250)
 					}
 				})
 
@@ -290,9 +338,10 @@ export default {
 			} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
 				if (this.hlsUrl) {
 					video.src = this.hlsUrl
-					video.addEventListener('loadedmetadata', function() {
+					this.nativeMetadataHandler = () => {
 						start()
-					})
+					}
+					video.addEventListener('loadedmetadata', this.nativeMetadataHandler, {once: true})
 				}
 			}
 			if (this.$features.enabled('muxdata') && (this.module.config.mux_env_key || config.mux?.env_key)) {
@@ -320,12 +369,14 @@ export default {
 				if (!this.$refs.video.paused) return
 			}
 			if (this.$refs.video.paused) {
+				this.playbackRequested = true
 				this.$refs.video.play()
 				this.player.startLoad()
 				// force live edge after unpausing
 				// TODO make this less yarring
 				this.$refs.video.currentTime = this.$refs.video.buffered.end(this.$refs.video.buffered.length - 1)
 			} else {
+				this.playbackRequested = false
 				this.$refs.video.pause()
 				this.player.stopLoad()
 			}
@@ -432,7 +483,7 @@ export default {
 			this.seeking = false
 		},
 		onEnded() {
-			this.player?.destroy()
+			this.destroyPlayer()
 			this.offline = true
 		},
 		onFullscreenchange() {
