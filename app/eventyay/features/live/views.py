@@ -1,8 +1,7 @@
 import json
 import os
 import re
-from pathlib import Path
-from typing import cast
+from contextlib import suppress
 from urllib.parse import urljoin, urlparse
 
 from channels.db import database_sync_to_async
@@ -21,21 +20,29 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
 from eventyay.base.models import SystemLog, Event
+from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.base.models.auth import ShortToken
+from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
+from eventyay.consts import SizeKey
 from eventyay.base.models.room import AnonymousInvite
-
-VIDEO_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'video'
 
 
 class SourceCache:
     @cached_property
     def source(self):
+        if settings.VITE_DEV_MODE:
+            return fetch_vite_html(VIDEO_DEV_SERVER)
         wapath = VIDEO_DIST_DIR / 'index.html'
         try:
             with open(wapath) as f:
                 return f.read()
         except OSError:
             return f"<!-- {wapath} not found --><body></body>"
+
+    def bust_cache(self):
+        """Clear the cached source so the next access re-fetches from Vite."""
+        with suppress(KeyError):
+            del self.__dict__['source']
 
 
 sh = SourceCache()
@@ -150,15 +157,18 @@ class AppView(View):
                                 request.get_host(),
                                 event.pk,
                             ),
-                            "upload": reverse("storage:upload"),
-                            "scheduleImport": reverse("storage:schedule_import"),
+                            "upload": reverse("storage:upload", kwargs={"event_id": event.pk}),
+                            "uploadMaxSize": settings.MAX_SIZE_CONFIG[
+                                SizeKey.UPLOAD_SIZE_OTHER
+                            ],
+                            "scheduleImport": reverse("storage:schedule_import", kwargs={"event_id": event.pk}),
                             "systemlog": reverse("live:systemlog"),
                         },
                         "features": event.feature_flags,
                         "externalAuthUrl": event.external_auth_url,
                         "locale": event.locale,
                         "date_locale": event.config.get("date_locale", "en-ie"),
-                        "theme": event.config.get("theme", {}),
+                        "theme": build_video_theme_for_event(event),
                         "video_player": event.config.get("video_player", {}),
                         "mux": event.config.get("mux", {}),
                     }

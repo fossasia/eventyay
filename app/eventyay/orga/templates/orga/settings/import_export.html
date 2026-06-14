@@ -1,0 +1,417 @@
+{% extends 'orga/settings/base.html' %}
+
+{% load i18n %}
+{% load static %}
+
+{% block extra_title %}{% translate 'Import/Export' %} :: {% endblock extra_title %}
+
+{% block settings_content %}
+  <h2>{% translate 'Import/Export' %}</h2>
+
+  {% include 'orga/includes/tablist.html' %}
+
+  <section role='tabpanel' id='tabpanel-import' aria-labelledby='tab-import' tabindex='0' {% if active_tab == 'export' %}aria-hidden='true'{% else %}aria-hidden='false'{% endif %}>
+    <p>
+      {% blocktranslate trimmed %}
+        Upload a CSV file and choose whether the file contains speakers or schedule.
+        In the next step you will map CSV columns to fields and preview the data.
+      {% endblocktranslate %}
+    </p>
+
+    <form method='post' enctype='multipart/form-data' class='mb-4' action='{{ request.path }}#tab-import'>
+      {% csrf_token %}
+      <input type='hidden' name='action' value='import'>
+
+      {% if import_form.non_field_errors %}
+        <div class='alert alert-danger'>
+          {{ import_form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <div class='form-group d-flex align-items-center'>
+        <label class='mb-0 mr-3 font-weight-bold' style='min-width: 120px;' for='id_import_target'>{% translate 'Import target' %}</label>
+        <select id='id_import_target' name='import_target' class='form-control w-50'>
+          {% for value, label in import_choices %}
+            <option value='{{ value }}' {% if import_target == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% for field in import_form %}
+        <div class='form-group d-flex align-items-center'>
+          <label class='mb-0 mr-3 font-weight-bold' style='min-width: 120px;' for='{{ field.id_for_label }}'>{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+          <div class='w-50'>
+            {{ field }}
+            {% if field.help_text %}
+              <small class='form-text text-muted'>{{ field.help_text }}</small>
+            {% endif %}
+            {% for error in field.errors %}
+              <div class='invalid-feedback d-block'>{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+
+      <div class="submit-group panel">
+        <span></span>
+        <span>
+          <button type='submit' class='btn btn-success btn-lg'>
+            <i class='fa fa-upload'></i>
+            {% translate 'Upload and continue' %}
+          </button>
+        </span>
+      </div>
+    </form>
+  </section>
+
+  <section role='tabpanel' id='tabpanel-export' aria-labelledby='tab-export' tabindex='0' {% if active_tab == 'export' %}aria-hidden='false'{% else %}aria-hidden='true'{% endif %}>
+    <p>
+      {% blocktranslate trimmed %}
+        Choose whether to export speaker data or schedule data, then select fields and format.
+      {% endblocktranslate %}
+    </p>
+
+    <div id='unified-export' data-export-target='{{ export_target }}'>
+      <div class='form-group d-flex align-items-center'>
+        <label class='mb-0 mr-3 font-weight-bold' for='id_export_target'>{% translate 'Export target' %}</label>
+        <select id='id_export_target' class='form-control w-25' data-export-target-select>
+          {% for value, label in import_choices %}
+            <option value='{{ value }}' {% if export_target == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div data-export-panel='speaker'>
+        <form method='post' action='{{ request.path }}#tab-export'>
+          {% csrf_token %}
+          <input type='hidden' name='action' value='export'>
+          <input type='hidden' name='export_target' value='speaker'>
+
+          {% if speaker_export_form.non_field_errors %}
+            <div class='alert alert-danger'>
+              {{ speaker_export_form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <fieldset>
+            <legend>{% translate 'Dataset' %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right'>
+                {{ speaker_export_form.target.label }}
+                {% if speaker_export_form.target.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {% for radio in speaker_export_form.target %}
+                  <div class='form-check form-check-inline'>
+                    {{ radio.tag }}
+                    <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                      {{ radio.choice_label }}
+                    </label>
+                  </div>
+                {% endfor %}
+                {% for error in speaker_export_form.target.errors %}
+                  <div class='invalid-feedback d-block'>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>{% translate 'Data fields' %}</legend>
+            <div class='d-flex justify-content-end mb-2'>
+              <div class='form-check'>
+                <input type='checkbox' class='form-check-input' id='select-all-speaker' data-select-all>
+                <label class='form-check-label' for='select-all-speaker'>{% translate 'Select all' %}</label>
+              </div>
+            </div>
+            {% for field in speaker_export_form.export_fields %}
+              {{ field.as_field_group }}
+            {% endfor %}
+          </fieldset>
+
+          <fieldset>
+            <legend>{% translate 'Export settings' %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right'>
+                {{ speaker_export_form.export_format.label }}
+                {% if speaker_export_form.export_format.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {% for radio in speaker_export_form.export_format %}
+                  <div class='form-check form-check-inline'>
+                    {{ radio.tag }}
+                    <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                      {{ radio.choice_label }}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div data-delimiter-group>
+              <div class='form-group row'>
+                <label class='col-md-3 col-form-label text-md-right'>
+                  {{ speaker_export_form.data_delimiter.label }}
+                </label>
+                <div class='col-md-9'>
+                  {% for radio in speaker_export_form.data_delimiter %}
+                    <div class='form-check form-check-inline'>
+                      {{ radio.tag }}
+                      <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                        {{ radio.choice_label }}
+                      </label>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="submit-group panel">
+            <span></span>
+            <span>
+              <button type='submit' class='btn btn-success btn-lg'>
+                <i class='fa fa-download'></i>
+                {% translate 'Export speakers' %}
+              </button>
+            </span>
+          </div>
+        </form>
+
+        <hr class="mt-5">
+        <h3>{% translate "More exports" %}</h3>
+        <p>
+            {% blocktranslate trimmed %}
+                eventyay provides a range of exports. If none of these match what you are looking
+                for, you can also provide a custom plugin to export the data – please ask
+                your administrator to install the plugin.
+            {% endblocktranslate %}
+        </p>
+        <ul class="mt-3">
+            {% for exporter in speaker_exporters %}
+                <li class="mb-2">
+                    <a href="{{ exporter.urls.base }}">
+                        {% if exporter.icon|slice:":3" == "fa-" %}
+                            <i class="fa {{ exporter.icon }}"></i>
+                        {% else %}
+                            {{ exporter.icon }}
+                        {% endif %}
+                        {{ exporter.verbose_name }}
+                        {% if exporter.show_qrcode %}
+                            <span class="export-qrcode">
+                                <i class="fa fa-qrcode"></i>
+                                <div class="export-qrcode-image">{{ exporter.get_qrcode }}</div>
+                            </span>
+                        {% endif %}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <hr class="mt-5">
+        <h3>{% translate "API" %}</h3>
+        <p>{% translate "You can also use the API to export or use data." %}</p>
+        <p>
+            {% blocktranslate trimmed %}
+                Some of the general exports are only accessible for organisers, or include
+                more information when accessed with your organiser account. If you want to
+                access the organiser version in automatic integrations, you’ll have to
+                provide your authentication token just like in the API, like this:
+            {% endblocktranslate %}
+        </p>
+        <pre> curl -H "Authorization: Token {{ request.user.auth_token.key }}" {{ request.event.api_urls.speakers.full }} </pre>
+        <div class="submit-group"><span></span><span>
+            <a class="btn btn-lg btn-info" href="https://docs.eventyay.com/api/fundamentals" target="_blank" rel="noopener noreferrer">
+                <i class="fa fa-book"></i>
+                {% translate "Documentation" %}
+            </a>
+            <a class="btn btn-lg btn-success" href="{{ request.event.api_urls.base }}">
+                {% translate "Go to API" %}
+            </a>
+        </span>
+        </div>
+      </div>
+
+      <div data-export-panel='session'>
+        <form method='post' action='{{ request.path }}#tab-export'>
+          {% csrf_token %}
+          <input type='hidden' name='action' value='export'>
+          <input type='hidden' name='export_target' value='session'>
+
+          {% if session_export_form.non_field_errors %}
+            <div class='alert alert-danger'>
+              {{ session_export_form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <fieldset>
+            <legend>{% translate 'Dataset' %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right' for='{{ session_export_form.target.id_for_label }}'>
+                {{ session_export_form.target.label }}
+                {% if session_export_form.target.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {{ session_export_form.target }}
+                {% for error in session_export_form.target.errors %}
+                  <div class='invalid-feedback d-block'>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>{% translate 'Data fields' %}</legend>
+            <div class='d-flex justify-content-end mb-2'>
+              <div class='form-check'>
+                <input type='checkbox' class='form-check-input' id='select-all-session' data-select-all>
+                <label class='form-check-label' for='select-all-session'>{% translate 'Select all' %}</label>
+              </div>
+            </div>
+            {% for field in session_export_form.export_fields %}
+              {{ field.as_field_group }}
+            {% endfor %}
+          </fieldset>
+
+          <fieldset>
+            <legend>{% translate 'Export settings' %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right'>
+                {{ session_export_form.export_format.label }}
+                {% if session_export_form.export_format.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {% for radio in session_export_form.export_format %}
+                  <div class='form-check form-check-inline'>
+                    {{ radio.tag }}
+                    <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                      {{ radio.choice_label }}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div data-delimiter-group>
+              <div class='form-group row'>
+                <label class='col-md-3 col-form-label text-md-right'>
+                  {{ session_export_form.data_delimiter.label }}
+                </label>
+                <div class='col-md-9'>
+                  {% for radio in session_export_form.data_delimiter %}
+                    <div class='form-check form-check-inline'>
+                      {{ radio.tag }}
+                      <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                        {{ radio.choice_label }}
+                      </label>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="submit-group panel">
+            <span></span>
+            <span>
+              <button type='submit' class='btn btn-success btn-lg'>
+                <i class='fa fa-download'></i>
+                {% translate 'Export schedule' %}
+              </button>
+            </span>
+          </div>
+        </form>
+
+        <hr class="mt-5">
+        <h3>{% translate "More exports" %}</h3>
+        <p>
+            {% blocktranslate trimmed %}
+                eventyay provides a range of exports. If none of these match what you are looking
+                for, you can also provide a custom plugin to export the data – please ask
+                your administrator to install the plugin.
+            {% endblocktranslate %}
+        </p>
+        {% if not request.event.current_schedule %}
+            <div class="alert alert-warning mt-2">
+                {% blocktranslate trimmed %}
+                    You haven’t released a schedule yet – many of these data exporters only work on a released schedule.
+                {% endblocktranslate %}
+            </div>
+        {% endif %}
+        <ul class="mt-3">
+            {% for exporter in session_exporters %}
+                <li class="mb-2">
+                    <a href="{{ exporter.urls.base }}">
+                        {% if exporter.icon|slice:":3" == "fa-" %}
+                            <i class="fa {{ exporter.icon }}"></i>
+                        {% else %}
+                            {{ exporter.icon }}
+                        {% endif %}
+                        {{ exporter.verbose_name }}
+                        {% if exporter.show_qrcode %}
+                            <span class="export-qrcode">
+                                <i class="fa fa-qrcode"></i>
+                                <div class="export-qrcode-image">{{ exporter.get_qrcode }}</div>
+                            </span>
+                        {% endif %}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <hr class="mt-5">
+        <h3>{% translate "HTML Export" %}</h3>
+        <p>
+            {% blocktranslate trimmed %}
+                The event schedule can be exported to a static HTML dump, so you can upload it
+                to a normal file-serving web server like nginx.
+            {% endblocktranslate %}
+            {% if request.export_html_on_release %}
+                {% blocktranslate trimmed %}
+                    This is done automatically on
+                    schedule release, but you can also trigger that action here.
+                {% endblocktranslate %}
+            {% endif %}
+        </p>
+        <div class="submit-group"><span></span><span>
+            <a href="{{ request.event.orga_urls.import_export_schedule_export_download }}" class="btn btn-lg btn-info">
+                <i class="fa fa-download"></i>
+                {% translate "Download ZIP" %}
+            </a>
+            <form action="{{ request.event.orga_urls.import_export_schedule_export_trigger }}" method="POST" class="d-inline-block">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-lg btn-success">
+                    <i class="fa fa-refresh"></i>
+                    {% translate "Regenerate Export" %}
+                </button>
+            </form>
+        </span>
+        </div>
+
+        <hr class="mt-5">
+        <h3>{% translate "API" %}</h3>
+        <p>{% translate "You can also use the API to export or use data." %}</p>
+        <p>
+            {% blocktranslate trimmed %}
+                Some of the general exports are only accessible for organisers, or include
+                more information when accessed with your organiser account. If you want to
+                access the organiser version in automatic integrations, you’ll have to
+                provide your authentication token just like in the API, like this:
+            {% endblocktranslate %}
+        </p>
+        <pre> curl -H "Authorization: Token {{ request.user.auth_token.key }}" {{ request.event.urls.frab_xml.full }}
+ curl -H "Authorization: Token {{ request.user.auth_token.key }}" {{ request.event.api_urls.submissions.full }} </pre>
+        <div class="submit-group"><span></span><span>
+            <a class="btn btn-lg btn-info" href="https://docs.eventyay.com/api/fundamentals" target="_blank" rel="noopener noreferrer">
+                <i class="fa fa-book"></i>
+                {% translate "Documentation" %}
+            </a>
+            <a class="btn btn-lg btn-success" href="{{ request.event.api_urls.base }}">
+                {% translate "Go to API" %}
+            </a>
+        </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script defer src="{% static 'orga/js/import_export_settings.js' %}"></script>
+{% endblock settings_content %}

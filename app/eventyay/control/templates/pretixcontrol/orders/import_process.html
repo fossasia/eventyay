@@ -44,12 +44,42 @@
             </div>
             <div class="panel-body">
                 {% bootstrap_form_errors form %}
-                {% bootstrap_form form layout="horizontal" %}
+                {% bootstrap_field form.orders layout="horizontal" %}
+                {% bootstrap_field form.status layout="horizontal" %}
+                {% bootstrap_field form.testmode layout="horizontal" %}
+                {% bootstrap_field form.create_missing_products layout="horizontal" %}
                 <div class="alert alert-warning">
                     {% blocktrans trimmed %}
                         The import will be performed regardless of your quotas, so it will be possible to overbook your event using this option.
                     {% endblocktrans %}
                 </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    {% trans "Column mapping" %}
+                </h3>
+            </div>
+            <div class="panel-body">
+                <p class="text-muted">
+                    {% blocktrans trimmed %}
+                        For each field below, select which CSV column provides the data.
+                        Fields with a "Keep empty" option can be left unmapped; fields without it are required.
+                        Selections have been pre-filled automatically where your CSV headers match known field names.
+                    {% endblocktrans %}
+                </p>
+                {% for field in form.mapping_fields %}
+                    {% bootstrap_field field layout="horizontal" %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="panel panel-default" id="product-import-preview">
+            <div class="panel-heading">
+                <h3 class="panel-title">{% trans "Product preview" %}</h3>
+            </div>
+            <div class="panel-body">
+                {% include "pretixcontrol/orders/includes/product_import_preview.html" %}
             </div>
         </div>
         <div class="form-group submit-group">
@@ -58,4 +88,7 @@
             </button>
         </div>
     </form>
+    {{ product_preview.by_mapping|json_script:"product-import-preview-data" }}
+    {{ product_preview_labels|json_script:"product-import-preview-labels" }}
+    <script type="text/javascript" src="{% static 'pretixcontrol/js/order_import_product_preview.js' %}" defer></script>
 {% endblock %}

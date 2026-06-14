@@ -25,7 +25,8 @@ export default defineConfig(({ mode }) => {
   const currentYear = new Date().getFullYear()
   const env = loadEnv(mode, process.cwd(), '')
 
-  // Use an absolute base during development for dev-server convenience.
+  // Use full Vite dev server URL during development so CSS url() references
+  // (fonts, images) resolve against Vite, not the Django proxy.
   // Production builds fall back to a relative base so the bundle works from nested paths.
   const base = mode === 'development' ? '/' : './'
 
@@ -34,8 +35,9 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0',
       port: 8880,
+      origin: mode === 'development' ? 'http://localhost:8880' : undefined,
       hmr: {
-        host: 'wikimedia.eventyay.com',
+        host: 'localhost',
         port: 8880
       },
       allowedHosts: [
@@ -135,6 +137,11 @@ export default defineConfig(({ mode }) => {
         'moment-timezone': path.resolve(__dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js'),
         // Ensure schedule component imports resolve from video's node_modules
         'markdown-it': path.resolve(__dirname, 'node_modules/markdown-it'),
+        'markdown-it-multimd-table': path.resolve(
+          __dirname,
+          'node_modules/markdown-it-multimd-table'
+        ),
+        dompurify: path.resolve(__dirname, 'node_modules/dompurify'),
         // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
         sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
       }
@@ -153,7 +160,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
-      outDir: env.OUT_DIR ? `${env.OUT_DIR}/video` : 'dist',
+      outDir: process.env.OUT_DIR ? `${process.env.OUT_DIR}/video` : 'dist',
       emptyOutDir: false,
       target: 'esnext',
       sourcemap: true, // Added for debugging vendor-webrtc issue
@@ -195,7 +202,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('uuid')) return 'vendor-uuid'
               if (id.includes('register-service-worker')) return 'vendor-sw'
               if (id.includes('mux-embed') || id.includes('mux.js')) return 'vendor-mux'
-              if (id.includes('qrcode')) return 'vendor-qrcode'
               if (id.includes('random-js')) return 'vendor-randomjs'
               if (id.includes('web-animations-js')) return 'vendor-webanimations'
               return 'vendor'

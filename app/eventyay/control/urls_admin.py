@@ -42,6 +42,7 @@ urlpatterns = [
     ),
     url(r'^users/(?P<id>\d+)/anonymize', users.UserAnonymizeView.as_view(), name='admin.users.anonymize'),
     url(r'^global/settings/$', global_settings.GlobalSettingsView.as_view(), name='admin.global.settings'),
+    path('global/settings/test-email/', global_settings.GlobalSettingsTestEmailView.as_view(), name='admin.global.settings.test_email'),
     url(r'^global/update/$', global_settings.UpdateCheckView.as_view(), name='admin.global.update'),
     url(r'^global/message/$', global_settings.MessageView.as_view(), name='admin.global.message'),
     path('startpage/', global_settings.StartPageSettingsView.as_view(), name='admin.startpage'),

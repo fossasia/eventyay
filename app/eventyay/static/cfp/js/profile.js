@@ -52,20 +52,36 @@ const updateGravatarInput = async (ev) => {
     const imagePreview = form.querySelector('.form-image-preview');
 
     if (checkbox.checked) {
-        const gravatarCheckUrl = `https://www.gravatar.com/avatar/${gravatarHash}?d=404`;
-        const response = await fetch(gravatarCheckUrl);
+        const helpText = form.querySelector(".form-text");
+        if (!helpText.dataset.originalText) {
+            helpText.dataset.originalText = helpText.innerText;
+        }
 
-        if (response.status === 404) {
+        checkbox.disabled = true;
+        helpText.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Checking for Gravatar...';
+
+        const gravatarCheckUrl = `https://www.gravatar.com/avatar/${gravatarHash}?d=404`;
+        try {
+            const response = await fetch(gravatarCheckUrl);
+            if (response.status === 404) {
+                checkbox.checked = false;
+                helpText.classList.add("text-warning");
+                helpText.classList.remove("text-muted");
+                helpText.innerText = "We couldn't find a Gravatar image associated with your email address.";
+                checkbox.parentElement.querySelector("label").classList.add("text-muted");
+            } else {
+                checkbox.disabled = false;
+                helpText.innerText = helpText.dataset.originalText;
+                form.querySelector('input[type=file]').value = '';
+                setImage(`https://www.gravatar.com/avatar/${gravatarHash}?s=512`);
+                form.querySelector(".avatar-upload").classList.add("d-none");
+            }
+        } catch (error) {
             checkbox.checked = false;
-            checkbox.disabled = true;
-            const helpText = checkbox.parentElement.querySelector(".form-text")
-            helpText.classList.add("text-warning")
-            helpText.classList.remove("text-muted")
-            checkbox.parentElement.querySelector("label").classList.add("text-muted")
-        } else {
-            form.querySelector('input[type=file]').value = '';
-            setImage(`https://www.gravatar.com/avatar/${gravatarHash}?s=512`);
-            form.querySelector(".avatar-upload").classList.add("d-none")
+            checkbox.disabled = false;
+            helpText.classList.add("text-warning");
+            helpText.classList.remove("text-muted");
+            helpText.innerText = "Failed to check Gravatar. Please try again later.";
         }
     }
     if (!checkbox.checked) {

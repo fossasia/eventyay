@@ -21,6 +21,7 @@ from rest_framework import serializers
 from eventyay.api.serializers.fields import (
     ListMultipleChoiceField,
     UploadedFileField,
+    UploadedFileOrURLField,
 )
 from eventyay.api.serializers.i18n import I18nField, I18nURLField
 from eventyay.base.configurations.lazy_i18n_string_list_base import (
@@ -61,6 +62,28 @@ def primary_font_kwargs():
     }
 
 
+def hex_color_field_config(label, default='', help_text=None, widget_class='colorpickerfield'):
+    validator = RegexValidator(
+        regex='^#[0-9a-fA-F]{6}$',
+        message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
+    )
+    form_kwargs = dict(
+        label=label,
+        validators=[validator],
+        widget=forms.TextInput(attrs={'class': widget_class}),
+    )
+    if help_text:
+        form_kwargs['help_text'] = help_text
+    return {
+        'default': default,
+        'type': str,
+        'form_class': forms.CharField,
+        'serializer_class': serializers.CharField,
+        'serializer_kwargs': dict(validators=[validator]),
+        'form_kwargs': form_kwargs,
+    }
+
+
 DEFAULT_SETTINGS = {
     'max_products_per_order': {
         'default': '10',
@@ -87,6 +110,10 @@ DEFAULT_SETTINGS = {
         ),
     },
     'system_question_order': {
+        'default': {},
+        'type': dict,
+    },
+    'system_question_product_overrides': {
         'default': {},
         'type': dict,
     },
@@ -489,7 +516,7 @@ DEFAULT_SETTINGS = {
         ),
     },
     'redirect_to_checkout_directly': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'serializer_class': serializers.BooleanField,
         'form_class': forms.BooleanField,
@@ -895,9 +922,9 @@ DEFAULT_SETTINGS = {
             choices=settings.LANGUAGES,
             widget=MultipleLanguagesWidget,
             required=True,
-            label=_('Active languages'),
+            label=_('Event languages'),
             help_text=_(
-                "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+                'Users will be able to use eventyay in these languages, and you will be able to provide all texts in '
                 "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
                 "event's default language instead."
             ),
@@ -1292,7 +1319,7 @@ DEFAULT_SETTINGS = {
             )
         ),
         'form_kwargs': dict(
-            label=_("Allow customers to modify their information"),
+            label=_('Allow customers to modify their information'),
             widget=forms.RadioSelect,
             choices=(
                 ('no', _('No modifications after order was submitted')),
@@ -1326,15 +1353,6 @@ DEFAULT_SETTINGS = {
                 'answers to questions. If you use the event series feature and an order contains tickets for '
                 'multiple event dates, the earliest date will be used.'
             ),
-        ),
-    },
-    'change_allow_user_variation': {
-        'default': 'False',
-        'type': bool,
-        'form_class': forms.BooleanField,
-        'serializer_class': serializers.BooleanField,
-        'form_kwargs': dict(
-            label=_('Customers can change the variation of the products they purchased'),
         ),
     },
     'change_allow_user_price': {
@@ -1625,6 +1643,16 @@ DEFAULT_SETTINGS = {
         'form_kwargs': dict(
             label=_('Sender address'),
             help_text=_('Sender address for outgoing emails'),
+        ),
+    },
+    'mail_reply_to': {
+        'default': None,
+        'type': str,
+        'form_class': forms.EmailField,
+        'serializer_class': serializers.EmailField,
+        'form_kwargs': dict(
+            label=_('Reply-to address'),
+            help_text=_('User replies will be sent to this address.'),
         ),
     },
     'mail_from_name': {
@@ -1994,128 +2022,33 @@ Your {event} team"""
     'smtp_password': {'default': '', 'type': str},
     'smtp_use_tls': {'default': 'True', 'type': bool},
     'smtp_use_ssl': {'default': 'False', 'type': bool},
-    'primary_color': {
-        'default': settings.EVENTYAY_PRIMARY_COLOR,
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Primary color'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
-        ),
-    },
-    'theme_color_success': {
-        'default': '#50a167',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Accent color for success'),
-            help_text=_('We strongly suggest to use a shade of green.'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
-        ),
-    },
-    'theme_color_danger': {
-        'default': '#c44f4f',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Accent color for errors'),
-            help_text=_('We strongly suggest to use a shade of red.'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
-        ),
-    },
-    'theme_color_background': {
-        'default': '#f5f5f5',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Page background color'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield no-contrast'}),
-        ),
-    },
-    'hover_button_color': {
-        'default': '#2185d0',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Scroll-over color'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield no-contrast'}),
-        ),
-    },
+    'primary_color': hex_color_field_config(
+        _('Primary color'),
+        default=settings.EVENTYAY_PRIMARY_COLOR,
+    ),
+    'header_background_color': hex_color_field_config(_('Header background color')),
+    'header_text_color': hex_color_field_config(_('Header text color')),
+    'navigation_text_color': hex_color_field_config(_('Navigation text color')),
+    'theme_color_success': hex_color_field_config(
+        _('Accent color for success'),
+        default='#50a167',
+        help_text=_('We strongly suggest to use a shade of green.'),
+    ),
+    'theme_color_danger': hex_color_field_config(
+        _('Accent color for errors'),
+        default='#c44f4f',
+        help_text=_('We strongly suggest to use a shade of red.'),
+    ),
+    'theme_color_background': hex_color_field_config(
+        _('Page background color'),
+        default='#f5f5f5',
+        widget_class='colorpickerfield no-contrast',
+    ),
+    'hover_button_color': hex_color_field_config(
+        _('Scroll-over color'),
+        default='#2185d0',
+        widget_class='colorpickerfield no-contrast',
+    ),
     'theme_round_borders': {
         'default': 'True',
         'type': bool,
@@ -2148,17 +2081,17 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Header image'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'This image appears at the top of all event pages, replacing the default color or pattern. '
-                'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
-                'We recommend an image at least 1170 px wide and 120 px in height for best results.'
+                'Upload a banner image shown at the top of all event pages. Accepted formats: PNG, JPEG, WebP. '
+                'The banner is cropped to a 320 px tall strip by default. Keep important content (title, logo, key visual) in the center of the image — the sides are cropped on narrow screens. '
+                'Recommended size: 1920 × 640 px (the center 1920 × 320 px will always be visible). Images will be automatically optimized to max 3000 px wide on save.'
             ),
         ),
-        'serializer_class': UploadedFileField,
+        'serializer_class': UploadedFileOrURLField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },
@@ -2168,17 +2101,17 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Logo'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'When you upload a logo, the event name and date will not appear in the header. '
-                'The logo scales to 140 px in height while maintaining aspect ratio. '
-                'We recommend not using small details as it will be resized on smaller screens.'
+                'Upload your event logo. Accepted formats: PNG, JPEG, GIF, SVG, WebP. '
+                'The logo is displayed at up to 160 px tall (max-height), width proportional. We recommend a minimum of 320 px in height for crisp display on retina screens. '
+                'The logo will be automatically optimized on save (max 1000 px wide), except for SVG and animated images which remain unmodified.'
             ),
         ),
-        'serializer_class': UploadedFileField,
+        'serializer_class': UploadedFileOrURLField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },
@@ -2436,8 +2369,9 @@ Your {event} team"""
     'banner_message_detail': {'default': '', 'type': LazyI18nString},
     'opencagedata_apikey': {'default': None, 'type': str},
     'mapquest_apikey': {'default': None, 'type': str},
-    'leaflet_tiles': {'default': None, 'type': str},
-    'leaflet_tiles_attribution': {'default': None, 'type': str},
+    'nominatim_geocoding_enabled': {'default': False, 'type': bool},
+    'leaflet_tiles': {'default': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 'type': str},
+    'leaflet_tiles_attribution': {'default': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', 'type': str},
     'frontpage_subevent_ordering': {
         'default': 'date_ascending',
         'type': str,
@@ -2482,6 +2416,30 @@ Your {event} team"""
             help_text=_('This will be displayed on the organizer homepage.'),
         ),
     },
+    'community_follow_enabled': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Allow users to follow this organizer'),
+            help_text=_(
+                'When enabled, logged-in users can follow your organizer profile and receive '
+                'notifications when you publish new public events.'
+            ),
+        ),
+    },
+    'community_show_follower_count': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Show follower count publicly'),
+            help_text=_('Display the number of followers on the public organizer profile page.'),
+        ),
+    },
+
     'name_scheme': {'default': 'full', 'type': str},
     'giftcard_length': {
         'default': settings.ENTROPY['giftcard_secret'],
@@ -2580,10 +2538,45 @@ Your {event} team"""
             help_text=_('Short text displayed on the public start page banner.'),
         ),
     },
+    'menu_label_tickets': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Tickets'),
+            widget=I18nTextInput,
+            help_text=_(
+                'Custom label for the "Tickets" menu item. Leave empty to use the default label or '
+                'locale-specific translation.'
+            ),
+            widget_kwargs={'attrs': {'placeholder': _('Register')}},
+            required=False,
+        ),
+    },
+    'menu_label_join_video': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Join Live Event'),
+            widget=I18nTextInput,
+            help_text=_(
+                'Custom label for the "Join online video" menu item. Leave empty to use the default label or '
+                'locale-specific translation.'
+            ),
+            widget_kwargs={'attrs': {'placeholder': _('Live Video')}},
+            required=False,
+        ),
+    },
 }
 
 CSS_SETTINGS = {
     'primary_color',
+    'header_background_color',
+    'header_text_color',
+    'navigation_text_color',
     'theme_color_success',
     'theme_color_danger',
     'primary_font',

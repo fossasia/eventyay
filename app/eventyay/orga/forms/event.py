@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
 from django.forms import inlineformset_factory
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -66,11 +67,14 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         label=_('Show featured sessions'),
         choices=(
             ('never', _('Never')),
-            ('pre_schedule', _('Until the first schedule is released')),
+            ('after_schedule', _('Once the first schedule version is published'),),
             ('always', _('Always')),
         ),
         help_text=_(
-            'Marking sessions as “featured” is a good way to show them before the first schedule release, or to highlight them once the schedule is visible.'
+            'Never: the featured page and nav entry are always hidden. '
+            '"Once the first schedule version is published": featured sessions are hidden until you '
+            'release a schedule version; after the first release the featured page and tab appear. '
+            'Always: the featured page and tab are always visible (even before a schedule is released).'
         ),
         required=True,
     )
@@ -126,6 +130,12 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             + str(_('You can find the page <a {href}>here</a>.')).format(href=f'href="{self.instance.urls.featured}"')
         )
 
+    def clean_show_featured(self):
+        value = self.cleaned_data.get('show_featured', '')
+        if value == 'pre_schedule':
+            return 'after_schedule'
+        return value
+
     def clean_custom_css(self):
         if self.cleaned_data.get('custom_css') or self.files.get('custom_css'):
             css = self.cleaned_data['custom_css'] or self.files['custom_css']
@@ -166,7 +176,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         fields = [
             'email',
             'custom_css',
-            'featured_sessions_text',
         ]
         json_fields = {
             'imprint_url': 'display_settings',
@@ -199,8 +208,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     )
     signature = forms.CharField(
         label=_('Mail signature'),
-        help_text=_('The signature will be added to outgoing mails, preceded by “-- ”. ')
-        + phrases.base.use_markdown,
+        help_text='',
         required=False,
         widget=forms.Textarea,
     )
@@ -246,6 +254,11 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['signature'].help_text = format_lazy(
+            '{} <span class="markdown-hint">{}</span>',
+            _('The signature will be added to outgoing mails, preceded by “-- ”. '),
+            _('You can use Markdown in this field.'),
+        )
         if self.fields['smtp_password'].initial:
             self.fields['smtp_password'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
 
@@ -555,6 +568,7 @@ class EventExtraLinkForm(I18nModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['label'].required = True
         for fname in ('label', 'url'):
             if fname in self.fields:
                 widget = self.fields[fname].widget

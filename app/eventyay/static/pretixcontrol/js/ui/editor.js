@@ -225,8 +225,11 @@ var editor = {
             o.downward = d.downward || false;
             o.content = editor._normalize_text_content(d.content);
             o.set('textAlign', d.align);
-            if (d.rotation) {
-                o.rotate(d.rotation);
+            var rotationVal = parseFloat(d.rotation);
+            if (!isNaN(rotationVal)) {
+                o.rotate(rotationVal);
+            } else {
+                o.rotate(0);
             }
             if (o.content === "other") {
                 o.set('text', d.text);
@@ -238,7 +241,8 @@ var editor = {
             } else if (d.text) {
                 o.set('text', d.text);
             }
-            o.set('width', editor._mm2px(d.width));
+            var widthVal = parseFloat(d.width);
+            o.set('width', editor._mm2px(isNaN(widthVal) ? 50 : widthVal));
             if (d.locale) {
                 // The data format allows to set the locale per text field but we currently only expose a global field
                 $("#pdf-info-locale").val(d.locale);
@@ -498,50 +502,60 @@ var editor = {
             return;
         }
         editor._toolbox_update_in_progress = true;
+
+        var setVal = function (selector, val) {
+            var el = $(selector);
+            if (!el.is(":focus")) {
+                el.val(val);
+            }
+        };
+
         var bottom = editor.pdf_viewport.height - o.height * o.scaleY - o.top;
         if (o.downward) {
             bottom = editor.pdf_viewport.height - o.top;
         }
-        $("#toolbox-position-x").val(editor._px2mm(o.left).toFixed(2));
-        $("#toolbox-position-y").val(editor._px2mm(bottom).toFixed(2));
+        setVal("#toolbox-position-x", editor._px2mm(o.left).toFixed(2));
+        setVal("#toolbox-position-y", editor._px2mm(bottom).toFixed(2));
 
         if (o.type === "barcodearea") {
-            $("#toolbox-squaresize").val(editor._px2mm(o.height * o.scaleY).toFixed(2));
+            setVal("#toolbox-squaresize", editor._px2mm(o.height * o.scaleY).toFixed(2));
         } else if (o.type === "imagearea") {
-            $("#toolbox-height").val(editor._px2mm(o.height * o.scaleY).toFixed(2));
-            $("#toolbox-width").val(editor._px2mm(o.width * o.scaleX).toFixed(2));
-            $("#toolbox-imagecontent").val(o.content);
+            setVal("#toolbox-height", editor._px2mm(o.height * o.scaleY).toFixed(2));
+            setVal("#toolbox-width", editor._px2mm(o.width * o.scaleX).toFixed(2));
+            setVal("#toolbox-imagecontent", o.content);
         } else if (o.type === "poweredby") {
-            $("#toolbox-squaresize").val(editor._px2mm(o.height * o.scaleY).toFixed(2));
-            $("#toolbox-poweredby-style").val(o.content);
+            setVal("#toolbox-squaresize", editor._px2mm(o.height * o.scaleY).toFixed(2));
+            setVal("#toolbox-poweredby-style", o.content);
         } else if (o.type === "text" || o.type === "textarea") {
             var col = (new fabric.Color(o.fill))._source;
             var hexColor = "#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2]).toString(16).slice(1);
-            $("#toolbox-col").val(hexColor);
+            setVal("#toolbox-col", hexColor);
             // Update colorpicker's internal state and preview
             var $colorInput = $("#toolbox-col");
             if ($colorInput.data('colorpicker')) {
                 $colorInput.colorpicker('setValue', hexColor);
             }
             $colorInput.closest('.colorpicker-preview-group').find('.colorpicker-preview').css('background-color', hexColor);
-            $("#toolbox-fontsize").val(editor._px2pt(o.fontSize).toFixed(1));
+            setVal("#toolbox-fontsize", editor._px2pt(o.fontSize).toFixed(1));
             //$("#toolbox-lineheight").val(o.lineHeight);
-            $("#toolbox-fontfamily").val(o.fontFamily);
+            setVal("#toolbox-fontfamily", o.fontFamily);
             $("#toolbox").find("button[data-action=bold]").toggleClass('active', o.fontWeight === 'bold');
             $("#toolbox").find("button[data-action=italic]").toggleClass('active', o.fontStyle === 'italic');
             $("#toolbox").find("button[data-action=downward]").toggleClass('active', o.downward || false);
             $("#toolbox").find("button[data-action=left]").toggleClass('active', o.textAlign === 'left');
             $("#toolbox").find("button[data-action=center]").toggleClass('active', o.textAlign === 'center');
             $("#toolbox").find("button[data-action=right]").toggleClass('active', o.textAlign === 'right');
-            $("#toolbox-textwidth").val(editor._px2mm(o.width).toFixed(2));
-            $("#toolbox-textrotation").val((o.angle || 0.0).toFixed(1));
+            var pxWidth = editor._px2mm(o.width);
+            setVal("#toolbox-textwidth", isNaN(pxWidth) ? "13.00" : pxWidth.toFixed(2));
+            var angleVal = typeof o.angle === "number" ? o.angle : 0.0;
+            setVal("#toolbox-textrotation", isNaN(angleVal) ? "0.0" : angleVal.toFixed(1));
             if (o.type === "textarea") {
                 editor._set_toolbox_content_value(o.content, o.text);
                 $("#toolbox-content-other").toggle($("#toolbox-content").val() === "other");
                 if (o.content === "other") {
-                    $("#toolbox-content-other").val(o.text);
+                    setVal("#toolbox-content-other", o.text);
                 } else {
-                    $("#toolbox-content-other").val("");
+                    setVal("#toolbox-content-other", "");
                 }
             }
         }
@@ -611,14 +625,27 @@ var editor = {
             if (align) {
                 o.set('textAlign', align);
             }
-            o.setWidth(editor._mm2px($("#toolbox-textwidth").val()));
+            var w = parseFloat($("#toolbox-textwidth").val());
+            if (!isNaN(w)) {
+                o.set('width', editor._mm2px(w));
+                o.set('scaleX', 1);
+                o.set('scaleY', 1);
+                if (o.initDimensions) o.initDimensions();
+                if (o._clearCache) o._clearCache();
+                o.dirty = true;
+            }
             o.downward = $("#toolbox").find("button[data-action=downward]").is('.active');
-            o.rotate(parseFloat($("#toolbox-textrotation").val()));
+            var r = parseFloat($("#toolbox-textrotation").val());
+            if (!isNaN(r)) {
+                o.rotate(r);
+                o.dirty = true;
+            }
             editor._apply_text_content_to_object(o);
         }
 
         o.setCoords();
         editor.fabric.renderAll();
+        editor._update_toolbox_values();
     },
 
     _update_toolbox: function () {
@@ -660,6 +687,7 @@ var editor = {
             top: 100,
             width: editor._mm2px(50),
             lockRotation: false,
+            centeredRotation: true,
             fontFamily: 'Open Sans',
             lineHeight: 1,
             content: 'event_name',

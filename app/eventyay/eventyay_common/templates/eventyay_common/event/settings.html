@@ -4,20 +4,22 @@
 {% load static %}
 {% load hierarkey_form %}
 {% load formset_tags %}
+{% load presale_locale %}
 {% block title %}{% trans "General settings" %}{% endblock %}
 {% block custom_header %}
 {{ block.super }}
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
+<script defer src="{% static 'eventyay-common/js/event-image-source.js' %}"></script>
 {{ sform.media }}
 {% endblock %}
 {% block inside %}
 <nav id="event-nav" class="header-nav">
     <div class="navigation">
         <div class="navigation-title">
-            <h1>{{ request.event.name }} {% trans "- Settings" %}</h1>
+            <h1>{{ request.event.name|event_localize }} {% trans "- Settings" %}</h1>
         </div>
         <div class="navigation-button">
-            <a href="#" class="header-nav btn btn-outline-success active">
+            <a href="{% url 'eventyay_common:event.index' organizer=request.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
                 <i class="fa fa-home"></i> {% trans "Home" %}
             </a>
             <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
@@ -158,7 +160,6 @@
         <fieldset>
             <legend>{% trans "Localization" %}</legend>
             {% bootstrap_field sform.locales layout="control" %}
-            {% if sform.content_locales %}{% bootstrap_field sform.content_locales layout="control" %}{% endif %}
             {% bootstrap_field sform.locale layout="control" %}
             {% bootstrap_field sform.timezone layout="control" %}
             {% bootstrap_field sform.region layout="control" %}
@@ -166,17 +167,56 @@
         <fieldset>
             <legend>{{ _('Texts') }}</legend>
             {% bootstrap_field sform.frontpage_text layout="control" %}
+            {% bootstrap_field sform.menu_label_tickets layout="control" %}
+            {% bootstrap_field sform.menu_label_join_video layout="control" %}
         </fieldset>
         <fieldset>
             <legend>{{ _('Design') }}</legend>
-            {% bootstrap_field sform.event_logo_image layout="control" %}
+            <div
+                data-image-source-pair
+                data-file-input-id="{{ sform.event_logo_image.id_for_label }}"
+                data-url-input-id="{{ sform.event_logo_image_url.id_for_label }}"
+                data-has-current-file="{{ sform.image_source_states.event_logo_image.has_uploaded_file|yesno:'true,false' }}"
+            >
+                {% bootstrap_field sform.event_logo_image layout="control" %}
+                {% bootstrap_field sform.event_logo_image_url layout="control" %}
+                <div class="form-group" data-image-url-preview hidden>
+                    <label class="col-md-3 control-label">{% trans "Logo preview" %}</label>
+                    <div class="col-md-9">
+                        <a data-image-url-preview-link href="" target="_blank" rel="noopener noreferrer">
+                            <img loading="lazy" data-image-url-preview-image class="img-responsive img-thumbnail" alt="{% trans 'Logo preview' %}" hidden>
+                        </a>
+                        <p class="help-block text-danger" data-image-url-preview-error hidden>{% trans "We could not load this image preview." %}</p>
+                    </div>
+                </div>
+            </div>
             {% bootstrap_field sform.logo_show_title layout="control" %}
-            {% bootstrap_field sform.logo_image layout="control" %}
+            <div
+                data-image-source-pair
+                data-file-input-id="{{ sform.logo_image.id_for_label }}"
+                data-url-input-id="{{ sform.logo_image_url.id_for_label }}"
+                data-has-current-file="{{ sform.image_source_states.logo_image.has_uploaded_file|yesno:'true,false' }}"
+            >
+                {% bootstrap_field sform.logo_image layout="control" %}
+                {% bootstrap_field sform.logo_image_url layout="control" %}
+                <div class="form-group" data-image-url-preview hidden>
+                    <label class="col-md-3 control-label">{% trans "Header image preview" %}</label>
+                    <div class="col-md-9">
+                        <a data-image-url-preview-link href="" target="_blank" rel="noopener noreferrer">
+                            <img loading="lazy" data-image-url-preview-image class="img-responsive img-thumbnail" alt="{% trans 'Header image preview' %}" hidden>
+                        </a>
+                        <p class="help-block text-danger" data-image-url-preview-error hidden>{% trans "We could not load this image preview." %}</p>
+                    </div>
+                </div>
+            </div>
             {% bootstrap_field sform.logo_image_large layout="control" %}
             {% bootstrap_field sform.og_image layout="control" %}
             {% url "eventyay_common:organizer.edit" organizer=request.organizer.slug as org_url %}
-            {% propagated request.event org_url "primary_color" "primary_font" "theme_color_success" "theme_color_danger" %}
+            {% propagated request.event org_url "primary_color" "header_background_color" "header_text_color" "navigation_text_color" "primary_font" "theme_color_success" "theme_color_danger" %}
             {% bootstrap_field sform.primary_color layout="control" %}
+            {% bootstrap_field sform.header_background_color layout="control" %}
+            {% bootstrap_field sform.header_text_color layout="control" %}
+            {% bootstrap_field sform.navigation_text_color layout="control" %}
             {% bootstrap_field sform.theme_color_success layout="control" %}
             {% bootstrap_field sform.theme_color_danger layout="control" %}
             {% bootstrap_field sform.theme_color_background layout="control" %}

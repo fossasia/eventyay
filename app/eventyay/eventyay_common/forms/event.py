@@ -1,33 +1,65 @@
-from django import forms
-from django.utils.translation import gettext_lazy as _
-from pytz import common_timezones
-from django.core.exceptions import ValidationError
-from django.conf import settings as django_settings
+import logging
+import os
 from urllib.parse import urlparse
 
-from eventyay.base.forms import SettingsForm
-from eventyay.base.settings import validate_event_settings
+from django import forms
+from django.conf import settings as django_settings
+from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import UploadedFile
+from django.utils.translation import gettext_lazy as _
+from pytz import common_timezones
+
+from eventyay.base.forms import I18nModelForm, SettingsForm
 from eventyay.base.models import Event
+from eventyay.base.settings import validate_event_settings
 from eventyay.common.language import get_language_choices_native_with_ui_name
-from eventyay.orga.forms.widgets import MultipleLanguagesWidget
-from eventyay.control.forms import (
-     SplitDateTimeField,
-     SplitDateTimePickerWidget,
-     SlugWidget,
-    )
-from eventyay.base.forms import I18nModelForm
+from eventyay.common.urls import get_file_url_path, is_http_url, normalize_url_scheme
+from eventyay.control.forms import SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
+from eventyay.helpers.image_optimize import optimize_uploaded_image
 from eventyay.multidomain.models import KnownDomain
+from eventyay.orga.forms.widgets import MultipleLanguagesWidget
+
+logger = logging.getLogger(__name__)
+
+
+def is_external_image_url(value: str) -> bool:
+    return is_http_url(value)
 
 
 class EventCommonSettingsForm(SettingsForm):
+    event_logo_image_url = forms.URLField(
+        label=_('Logo URL'),
+        required=False,
+        help_text=_('Use an external image URL instead of uploading a logo file.'),
+    )
+    logo_image_url = forms.URLField(
+        label=_('Header image URL'),
+        required=False,
+        help_text=_('Use an external image URL instead of uploading a header image file.'),
+    )
     timezone = forms.ChoiceField(
         choices=((a, a) for a in common_timezones),
         label=_('Event timezone'),
     )
 
+    image_url_fields = {
+        'event_logo_image': 'event_logo_image_url',
+        'logo_image': 'logo_image_url',
+    }
+
+    @property
+    def image_source_states(self):
+        states = {}
+        for image_field in self.image_url_fields:
+            current_value = self.event.settings.get(image_field, as_type=str, default='') or ''
+            states[image_field] = {
+                'has_uploaded_file': bool(current_value and not is_external_image_url(current_value)),
+            }
+        return states
+
     auto_fields = [
         'locales',
-        'content_locales',
         'locale',
         'region',
         'imprint_url',
@@ -37,6 +69,9 @@ class EventCommonSettingsForm(SettingsForm):
         'logo_show_title',
         'og_image',
         'primary_color',
+        'header_background_color',
+        'header_text_color',
+        'navigation_text_color',
         'theme_color_success',
         'theme_color_danger',
         'theme_color_background',
@@ -44,18 +79,108 @@ class EventCommonSettingsForm(SettingsForm):
         'theme_round_borders',
         'primary_font',
         'frontpage_text',
+        'menu_label_tickets',
+        'menu_label_join_video',
     ]
 
     def clean(self):
         data = super().clean()
-        settings_dict = self.event.settings.freeze()
-        settings_dict.update(data)
-        validate_event_settings(self.event, data)
+
+        for image_field, url_field in self.image_url_fields.items():
+            image_url = data.get(url_field) or ''
+            submitted_image = self.fields[image_field].widget.value_from_datadict(
+                self.data,
+                self.files,
+                self.add_prefix(image_field),
+            )
+            has_new_upload = isinstance(submitted_image, UploadedFile)
+            if image_url and has_new_upload:
+                message = _('Either upload a file or enter an external URL, not both.')
+                self.add_error(image_field, message)
+                self.add_error(url_field, message)
+                continue
+
+            current_value = self.event.settings.get(image_field, as_type=str, default='') or ''
+            if image_url:
+                data[image_field] = normalize_url_scheme(image_url)
+            elif is_external_image_url(current_value) and not has_new_upload:
+                data[image_field] = None
+
+        settings_dict = self.get_initial_settings()
+        settings_dict.update({k: v for k, v in data.items() if k not in self.image_url_fields.values()})
+        validate_event_settings(self.event, settings_dict)
         return data
+
+    def save(self):
+        for image_field, url_field in self.image_url_fields.items():
+            current_value = self.event.settings.get(image_field, as_type=str, default='') or ''
+            new_value = self.cleaned_data.get(image_field)
+            if is_external_image_url(current_value) and (isinstance(new_value, UploadedFile) or not new_value):
+                del self.event.settings[image_field]
+            current_file = get_file_url_path(current_value)
+            if type(new_value) is str and current_file and current_value != new_value:
+                default_storage.delete(current_file)
+                
+                base_path, _ = os.path.splitext(current_file)
+                orig_ext = self.event.settings.get(f'{image_field}_original_ext', as_type=str)
+                if orig_ext:
+                    default_storage.delete(f'{base_path}_original.{orig_ext}')
+            self.cleaned_data[url_field] = None
+
+            if isinstance(new_value, UploadedFile):
+                self.cleaned_data[image_field] = self._save_optimized(new_value, image_field)
+
+        return super().save()
+
+    def _save_optimized(self, uploaded: UploadedFile, setting_key: str) -> str | UploadedFile:
+        """
+        Resize and re-encode *uploaded*, persist the original alongside it,
+        and return the path to the optimized file so that the settings form
+        stores the optimized variant.
+        """
+        try:
+            result = optimize_uploaded_image(uploaded, setting_key)
+        except (OSError, ValueError):
+            logger.exception(
+                'Image optimization failed for %s; storing original unmodified',
+                setting_key,
+            )
+            uploaded.seek(0)
+            return uploaded
+
+        new_filename = self.get_new_filename(uploaded.name or setting_key)
+        base_path, _ = os.path.splitext(new_filename)
+
+        # Persist the optimized file.
+        optimized_name = f'{base_path}.{result.optimized_ext}'
+        try:
+            optimized_path = default_storage.save(optimized_name, result.optimized)
+            logger.info('Stored optimized image at %s', optimized_path)
+        except OSError:
+            logger.exception('Could not store optimized image for %s', setting_key)
+            return uploaded
+
+        # Persist the original file alongside it.
+        original_name = f'{base_path}_original.{result.original_ext}'
+        try:
+            original_path = default_storage.save(original_name, result.original)
+            logger.info('Stored original image at %s', original_path)
+            # Store the original extension so PR2 can easily find it later
+            self.event.settings.set(f'{setting_key}_original_ext', result.original_ext)
+        except OSError:
+            logger.exception('Could not store original image for %s', setting_key)
+
+        # Return a string so Hierarkey stores this path directly instead of wrapping it again
+        return f"file://{optimized_path}"
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs['obj']
         super().__init__(*args, **kwargs)
+        for image_field, url_field in self.image_url_fields.items():
+            current_value = self.event.settings.get(image_field, as_type=str, default='') or ''
+            if is_external_image_url(current_value):
+                self.initial[image_field] = None
+                self.initial[url_field] = current_value
         localized_language_choices = get_language_choices_native_with_ui_name()
         for fname in ('locales', 'content_locales'):
             if fname in self.fields:
@@ -93,7 +218,7 @@ class EventUpdateForm(I18nModelForm):
             self.fields['slug'].widget.attrs['readonly'] = 'readonly'
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
-        
+
         # Configure email field with canonical label and help text
         self.fields['email'].required = True
         self.fields['email'].label = _('Organizer email address')
@@ -150,11 +275,21 @@ class EventUpdateForm(I18nModelForm):
     class Meta:
         model = Event
         fields = [
-            'name', 'slug', 'date_from', 'date_to', 'date_admission',
-            'is_public', 'location', 'geo_lat', 'geo_lon', 'email',
+            'name',
+            'slug',
+            'date_from',
+            'date_to',
+            'date_admission',
+            'is_public',
+            'location',
+            'geo_lat',
+            'geo_lon',
+            'email',
         ]
         field_classes = {
-            'date_from': SplitDateTimeField, 'date_to': SplitDateTimeField, 'date_admission': SplitDateTimeField,
+            'date_from': SplitDateTimeField,
+            'date_to': SplitDateTimeField,
+            'date_admission': SplitDateTimeField,
         }
         widgets = {
             'slug': SlugWidget(attrs={'data-slug-source': 'name'}),

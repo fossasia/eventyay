@@ -6,6 +6,7 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.base.import_utils import match_header
 from eventyay.base.models.question import TalkQuestionTarget
 from eventyay.consts import SizeKey
 
@@ -21,23 +22,6 @@ def _normalize_initial(initial: object) -> dict[str, str]:
         if isinstance(data, Mapping):
             return {str(key): str(value) for key, value in data.items()}
     return {}
-
-
-def _normalize_header_value(value: str | None) -> str:
-    if not value:
-        return ''
-    value = value.lower().replace('-', ' ').replace('_', ' ')
-    value = value.replace('\u2019', "'").replace('\u2018', "'").replace('\u201c', '"').replace('\u201d', '"')
-    return ''.join(value.split()).rstrip('.')
-
-
-def _match_header(headers: Iterable[str], candidates: Iterable[str]) -> str | None:
-    header_map = {_normalize_header_value(header): header for header in headers}
-    for candidate in candidates:
-        normalized = _normalize_header_value(candidate)
-        if normalized in header_map:
-            return header_map[normalized]
-    return None
 
 
 class CSVImportForm(forms.Form):
@@ -101,6 +85,12 @@ SPEAKER_IMPORT_FIELDS: list[ImportField] = [
         identifier='biography',
         label=_('Biography'),
         suggestions=['biography', 'bio'],
+    ),
+    ImportField(
+        identifier='avatar_url',
+        label=_('Profile picture URL'),
+        help_text=_('A URL pointing to the speaker\'s profile picture. The image will be downloaded and saved.'),
+        suggestions=['picture', 'avatar', 'profile picture', 'profile picture url', 'avatar url', 'image', 'image url', 'photo', 'photo url'],
     ),
     ImportField(
         identifier='avatar_source',
@@ -177,7 +167,7 @@ class SpeakerImportProcessForm(forms.Form):
             self.fields[field_spec.identifier] = field
 
     def _find_suggestion(self, field_spec: ImportField) -> str | None:
-        match = _match_header(self.headers, field_spec.suggestions or [])
+        match = match_header(self.headers, field_spec.suggestions or [])
         if match:
             return f'csv:{match}'
         return None
@@ -232,7 +222,7 @@ SESSION_IMPORT_FIELDS: list[ImportField] = [
     ImportField(
         identifier='track',
         label=_('Track'),
-        help_text=_('Must match an existing track name or ID.'),
+        help_text=_('Must match an existing track name or ID. A new track will be created automatically if no match is found.'),
         suggestions=['track', 'category'],
     ),
     ImportField(
@@ -365,7 +355,7 @@ class SessionImportProcessForm(forms.Form):
         self._add_question_fields()
 
     def _find_suggestion(self, field_spec: ImportField) -> str | None:
-        match = _match_header(self.headers, field_spec.suggestions or [])
+        match = match_header(self.headers, field_spec.suggestions or [])
         if match:
             return f'csv:{match}'
         return None
@@ -391,7 +381,7 @@ class SessionImportProcessForm(forms.Form):
             if existing_initial:
                 field.initial = existing_initial
             else:
-                suggestion = _match_header(self.headers, [str(question.question)])
+                suggestion = match_header(self.headers, [str(question.question)])
                 if suggestion:
                     field.initial = f'csv:{suggestion}'
             self.fields[identifier] = field

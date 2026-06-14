@@ -15,7 +15,6 @@
 @import "mails.scss";
 @import "../../pretixbase/scss/webfont.scss";
 @import "../../fileupload/jquery.fileupload.scss";
-@import "../../leaflet/leaflet.scss";
 @import "../../select2/select2.scss";
 @import "../../select2/select2_bootstrap.scss";
 @import "../../colorpicker/bootstrap-colorpicker.scss";
@@ -25,6 +24,13 @@
 /* See https://github.com/pretix/pretix/pull/761 */
 .bootstrap-datetimepicker-widget table td span {
     line-height: 1.8em;
+}
+
+/* Keep date picker overlays above Leaflet controls in settings forms. */
+.bootstrap-datetimepicker-widget.dropdown-menu,
+.datepicker.dropdown-menu,
+.datepicker.datepicker-dropdown {
+    z-index: 1101;
 }
 
 footer {
@@ -517,6 +523,19 @@ body.loading #wrapper {
     padding: 6px 10px;
     color: white !important;
     font-weight: normal;
+}
+
+.navbar-inverse .navbar-toggle.mobile-navbar-view-link,
+.navbar-inverse .mobile-navbar-view-form button.navbar-toggle {
+    border-color: transparent;
+    background-color: transparent;
+
+    &:hover,
+    &:focus,
+    &:active {
+        background-color: transparent;
+        border-color: transparent;
+    }
 }
 
 @media (min-width: $screen-md-min) {
@@ -1068,22 +1087,13 @@ h1 .label {
     }
 }
 
-#page-wrapper {
-    height: calc(100vh - var(--navbar-height, 50px));
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    contain: content;
+@media (min-width: $screen-sm-min) {
+    body[data-event] #page-wrapper > .container-fluid {
+        margin-top: 8px;
+    }
 }
 
 @media (max-width: $screen-sm-max) {
-    nav.navbar {
-        position: static;
-    }
-
-    #wrapper {
-        padding-top: 0;
-    }
-
     #page-wrapper {
         height: auto;
         overflow-y: visible;
@@ -1147,11 +1157,133 @@ h1 .label {
 #event-nav .navigation-title,
 .header-nav .navigation-title {
     text-align: left;
-    flex: 0 1 75%;
+    flex: 1 1 auto;
     min-width: 0;
 
+    h1,
     h2 {
-        word-wrap: break-word;
+        font-size: 30px;
+        line-height: 1.2;
+        margin-top: 10px;
+        margin-bottom: .5rem;
         overflow-wrap: break-word;
+    }
+
+    h2 small {
+        white-space: nowrap;
+    }
+}
+
+@media (min-width: $screen-sm-min) {
+    #event-nav .navigation,
+    .header-nav .navigation {
+        flex-wrap: nowrap;
+        align-items: flex-start;
+    }
+
+    #event-nav .navigation .navigation-button,
+    .header-nav .navigation .navigation-button {
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+}
+
+/* Leaflet image path overrides for compressed leaflet.css */
+.leaflet-container {
+    .leaflet-control-layers-toggle {
+        background-image: url(static('leaflet/images/layers.png'));
+    }
+
+    &.leaflet-retina .leaflet-control-layers-toggle {
+        background-image: url(static('leaflet/images/layers-2x.png'));
+    }
+
+    .leaflet-default-icon-path {
+        background-image: url(static('leaflet/images/marker-icon.png'));
+    }
+}
+
+@media (max-width: $screen-xs-max) {
+    nav.navbar.navbar-inverse {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 50px;
+        min-height: 50px;
+        padding: 0 10px;
+
+        .navbar-header {
+            display: flex;
+            align-items: center;
+            margin: 0;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            height: 50px;
+            padding: 0;
+            margin: 0;
+
+            img {
+                height: 30px;
+                margin: 0 5px 0 0;
+            }
+        }
+
+        #sidebar-toggle {
+            margin: 4px 10px 3px 0;
+            padding: 5px;
+            height: auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-top-links {
+            display: flex;
+            align-items: center;
+            height: 50px;
+            margin: 0 0 0 auto;
+            padding: 0;
+            gap: 4px;
+
+            li {
+                margin: 0;
+                height: 50px;
+                display: flex;
+                align-items: center;
+                min-height: 50px;
+
+                a,
+                form button.btn-link,
+                #profile-dropdown > summary,
+                #language-dropdown > summary {
+                    display: flex;
+                    align-items: center;
+                    height: 50px;
+                    min-height: 50px;
+                    font-size: 13px;
+                    padding: 0 8px;
+                    font-weight: normal;
+                    margin: 0;
+                    border: none;
+                    background: transparent;
+                }
+            }
+        }
+
+        .language-form {
+            margin: 0;
+        }
+
+        #button-sudo,
+        #button-shop {
+            font-size: 13px;
+            padding: 0 8px;
+        }
+    }
+
+    nav.navbar {
+        padding-bottom: 0;
     }
 }

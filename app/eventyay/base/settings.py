@@ -1,7 +1,7 @@
+import datetime as dt
 import json
 import operator
 from typing import Any
-import datetime as dt
 
 from django.core.exceptions import ValidationError
 from django.db.models import Model
@@ -21,6 +21,7 @@ from eventyay.base.configurations.lazy_i18n_string_list_base import (
     LazyI18nStringList,
 )
 from eventyay.base.reldate import RelativeDateWrapper
+
 
 DEFAULTS = DEFAULT_SETTINGS.copy()
 SETTINGS_AFFECTING_CSS = CSS_SETTINGS.copy()
@@ -95,6 +96,20 @@ class GlobalSettingsObject(GlobalSettingsBase):
     slug = '_global'
 
 
+EVENT_SERIES_CREATION_ENABLED = 'event_series_creation_enabled'
+
+
+def is_event_series_creation_enabled(request=None) -> bool:
+    _cache_attr = '_event_series_creation_enabled'
+    if request is not None and hasattr(request, _cache_attr):
+        return getattr(request, _cache_attr)
+    gs = GlobalSettingsObject()
+    result = gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
+    if request is not None:
+        setattr(request, _cache_attr, result)
+    return result
+
+
 class SettingsSandbox:
     """
     Transparently proxied access to event settings, handling your prefixes for you.
@@ -110,10 +125,10 @@ class SettingsSandbox:
         self._key = key
 
     def get_prefix(self):
-        return '%s_%s_' % (self._type, self._key)
+        return f'{self._type}_{self._key}_'
 
     def _convert_key(self, key: str) -> str:
-        return '%s_%s_%s' % (self._type, self._key, key)
+        return f'{self._type}_{self._key}_{key}'
 
     def __setitem__(self, key: str, value: Any) -> None:
         self.set(key, value)
@@ -152,14 +167,6 @@ def validate_event_settings(event, settings_dict):
         locales = list(locales)
     if default_locale and default_locale not in locales:
         raise ValidationError({'locale': _('Your default locale must also be enabled for your event (see box above).')})
-    content_locales = settings_dict.get('content_locales')
-    if content_locales is None:
-        content_locales = locales
-    elif not isinstance(content_locales, list):
-        content_locales = list(content_locales)
-    if content_locales:
-        if invalid_content_locales := set(content_locales) - set(locales):
-            raise ValidationError({'content_locales': _('Content languages must be a subset of the active languages.')})
     if settings_dict.get('attendee_names_required') and not settings_dict.get('attendee_names_asked'):
         raise ValidationError(
             {'attendee_names_required': _('You cannot require specifying attendee names if you do not ask for them.')}

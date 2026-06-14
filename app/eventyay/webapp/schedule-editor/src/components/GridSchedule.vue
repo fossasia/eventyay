@@ -140,6 +140,34 @@ const hiddenRooms = ref<Room[]>([])
 const timesliceRefs = ref<HTMLElement[]>([])
 
 let observer: IntersectionObserver | null = null
+const layoutObservers: ResizeObserver[] = []
+let windowResizeListener: (() => void) | null = null
+let gridOffsetFrame: number | null = null
+
+const refreshGridOffset = () => {
+  if (grid.value) {
+    gridOffset.value = grid.value.getBoundingClientRect().left
+  }
+}
+
+const scheduleRefreshGridOffset = () => {
+  if (gridOffsetFrame !== null) {
+    return
+  }
+  gridOffsetFrame = requestAnimationFrame(() => {
+    gridOffsetFrame = null
+    refreshGridOffset()
+  })
+}
+
+const observeElementResize = (element: HTMLElement | null) => {
+  if (!element || typeof ResizeObserver === 'undefined') {
+    return
+  }
+  const resizeObserver = new ResizeObserver(scheduleRefreshGridOffset)
+  resizeObserver.observe(element)
+  layoutObservers.push(resizeObserver)
+}
 
 const hasValidPosition = (session: SessionDatum): boolean => {
   return !!(session.room && session.start && session.end)
@@ -220,7 +248,9 @@ const timeslices = computed<Timeslice[]>(() => {
     const endingMins = end.minute() % minimumSliceMins
 
     for (let i = 1; i <= mins / minimumSliceMins; i++) {
-      halfHourSlices.push(start.clone().add(startingMins + minimumSliceMins * i, 'minutes'))
+      const sliceDate = start.clone().add(startingMins + minimumSliceMins * i, 'minutes')
+      if (sliceDate.isAfter(end)) break
+      halfHourSlices.push(sliceDate)
     }
 
     if (endingMins) {
@@ -433,6 +463,7 @@ const setTimesliceRef = (el: HTMLElement | null) => {
 }
 
 const startDragging = ({ session, event }: DragEventPayload) => {
+  refreshGridOffset()
   dragStart.value = {
     x: event.clientX,
     y: event.clientY,
@@ -554,7 +585,6 @@ const getSessionStyle = (session: SessionDatum | Availability): Record<string, s
   }
 }
 
-const getOffsetTop = (): number => staticOffsetTop.value + window.scrollY
 
 const getSliceClasses = (slice: Timeslice): Record<string, boolean> => ({
   datebreak: slice.datebreak || false,
@@ -588,7 +618,10 @@ const changeDay = (day: Moment | null) => {
 
   const el = timesliceRefs.value.find(el => el.dataset?.slice === day.format())
   if (!el) return
-  const offset = el.offsetTop + getOffsetTop()
+  const roomEl = rootEl.value?.querySelector('.room')
+  const controlsEl = rootEl.value?.parentElement?.querySelector('.schedule-controls')
+  const headerHeight = (roomEl?.getBoundingClientRect().height || 52) + (controlsEl?.getBoundingClientRect().height || 48)
+  const offset = Math.max(0, el.offsetTop - headerHeight)
   scrollTo(offset)
   scrolledDay.value = day
   emit('changeDay', day)
@@ -648,9 +681,16 @@ watch(() => props.currentDay, (day) => changeDay(day))
 
 onMounted(async () => {
   await nextTick()
-  
-  if (grid.value) {
-    gridOffset.value = grid.value.getBoundingClientRect().left
+
+  refreshGridOffset()
+  observeElementResize(rootEl.value)
+  const layoutRoot = rootEl.value?.closest('#page-content') ?? rootEl.value?.closest('.pretalx-schedule')
+  if (layoutRoot instanceof HTMLElement && layoutRoot !== rootEl.value) {
+    observeElementResize(layoutRoot)
+  }
+  if (typeof ResizeObserver === 'undefined') {
+    windowResizeListener = scheduleRefreshGridOffset
+    window.addEventListener('resize', windowResizeListener)
   }
 
   observer = new IntersectionObserver(onIntersect, {
@@ -659,13 +699,23 @@ onMounted(async () => {
   })
 
   timesliceRefs.value.forEach(el => {
-    if (!el.dataset?.slice || !el.dataset.slice.endsWith('00-00')) return
+    if (!el.dataset?.slice || !el.classList.contains('datebreak')) return
     observer?.observe(el)
   })
 })
 
 onUnmounted(() => {
   timesliceRefs.value = []
+  if (gridOffsetFrame !== null) {
+    cancelAnimationFrame(gridOffsetFrame)
+    gridOffsetFrame = null
+  }
+  layoutObservers.forEach((resizeObserver) => resizeObserver.disconnect())
+  layoutObservers.length = 0
+  if (windowResizeListener) {
+    window.removeEventListener('resize', windowResizeListener)
+    windowResizeListener = null
+  }
   if (observer) {
     observer.disconnect()
     observer = null

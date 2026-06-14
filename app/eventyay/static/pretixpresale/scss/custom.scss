@@ -179,20 +179,32 @@
     scroll-margin-top: 72px;
 }
 
+#main-card > main .alert {
+    margin-inline: 0;
+}
+
 /* Desktop: hide icons that are mobile-only (globe + user in nav dropdowns) */
 .nav-icon-mobile {
     display: none;
 }
 
-/* Align the hero title/logo horizontal edge with the content text below */
-.event-hero-overlay {
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
 /* Desktop: hide mobile-only CfS abbreviation */
 .cfs-short {
     display: none;
+}
+
+/* Desktop: keep hero overlay full-width so floating Join Video aligns to page edge. */
+@media (min-width: 769px) {
+    .event-hero-overlay {
+        display: flex;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .header-join-video-floating-mobile {
+        right: 0;
+    }
 }
 
 @media (max-width: 768px) {
@@ -280,26 +292,6 @@
         display: inline;
     }
 
-    /* "Join online video" as a full-width button below the nav row */
-    .join-video-link {
-        display: block;
-        width: 100%;
-        text-align: center;
-        padding: 8px 12px;
-        margin: 4px 0 0;
-        background: var(--color-primary);
-        color: white !important;
-        border-radius: var(--size-border-radius, 4px);
-        border-bottom: none !important;
-        font-size: 0.88rem;
-        font-weight: 500;
-    }
-
-    .join-video-link:hover {
-        background: var(--color-primary-dark, var(--color-primary));
-        text-decoration: none;
-        opacity: 0.9;
-    }
 
     /* Logged-out login link: icon-only on mobile, like the icon dropdowns */
     .login-link {
@@ -315,8 +307,7 @@
         opacity: 0.85;
     }
 
-    /* Align hero title/logo and description text with same horizontal padding on mobile.
-     * Force event-hero-overlay to full width so text-align: center doesn't shift the left edge. */
+    /* Mobile: hero overlay width + horizontal padding */
     .event-hero-overlay {
         display: flex;
         width: 100%;
@@ -324,23 +315,24 @@
         padding-right: 12px;
     }
 
-    /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
+    /* Presale event index: full-bleed hero overlay */
+    #main-container.page-presale-event-index .event-hero-overlay {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     #main-card {
         margin-left: 0;
         margin-right: 0;
     }
 
-    /* Target only the OUTER <main> (direct child of #main-card) so we apply padding once.
-     * The presale event page has TWO nested <main> elements; without >, both get padded
-     * and the content double-indents. */
+    /* Outer main only (presale nests two <main> — avoid double horizontal padding) */
     #main-card>main {
         padding-top: 0.15rem;
         padding-left: 12px;
         padding-right: 12px;
     }
 
-    /* Zero the INNER <main aria-label> so its inherited 1rem from _layout.css
-     * does not add to the outer main's 12px, keeping description exactly at 12px. */
     #main-card>main>main {
         padding-left: 0;
         padding-right: 0;

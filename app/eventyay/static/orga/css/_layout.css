@@ -1,6 +1,7 @@
 body {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
 
   /* Match common/control (Bootstrap) typography defaults */
   font-size: 14px;
@@ -17,9 +18,17 @@ body {
 }
 
 #page-wrapper {
+  --sidebar-width: 45px;
+
   display: flex;
   flex-direction: row;
+  margin-top: var(--navbar-height);
   max-width: 100%;
+}
+
+#page-wrapper:has(aside.sidebar:hover),
+#page-wrapper:has(aside.sidebar.sidebar-uncollapsed) {
+  --sidebar-width: 250px;
 }
 
 #page-content {
@@ -27,11 +36,10 @@ body {
   flex-grow: 1;
   max-width: 100%;
   padding: 18px 44px;
-  margin: 0;
-  margin-top: var(--navbar-height);
-  height: calc(100vh - var(--navbar-height));
+  margin-left: var(--sidebar-width);
+  min-height: calc(100vh - var(--navbar-height));
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: visible;
   scroll-padding-top: var(--navbar-height);
   display: flex;
   flex-direction: column;
@@ -193,19 +201,18 @@ details.card {
 aside.sidebar {
   background-color: var(--color-grey-ultralight);
   box-shadow: var(--shadow-lighter);
-  width: 45px;
+  width: var(--sidebar-width);
+  position: fixed;
   height: calc(100vh - var(--navbar-height));
   display: flex;
   font-size: 14px;
-  flex-grow: 0;
-  flex-shrink: 0;
   flex-wrap: nowrap;
   z-index: 150;
   padding-left: 0;
-  margin-top: var(--navbar-height);
   margin-bottom: 0;
+  overflow-x: hidden;
   overflow-y: auto;
-
+  
   &.sidebar-uncollapsed,
   &:hover {
     width: 250px;
@@ -475,10 +482,16 @@ aside.sidebar {
   flex-wrap: wrap;
   font-weight: 200;
   margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 #main-title .navigation-button {
   margin-left: auto;
+}
+
+#main-title .navigation-button .header-nav.active {
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  border-color: var(--color-primary-hover);
 }
 
 #main-title .navigation-title {
@@ -499,6 +512,23 @@ aside.sidebar {
   font-size: 65%;
   font-weight: 400;
   line-height: 1;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  #main-title {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+
+  #main-title .navigation-title {
+    flex: 1 1 auto;
+  }
+
+  #main-title .navigation-button {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
 }
 
 .speaker-info {
@@ -1635,6 +1665,10 @@ h2 .user-name-display img {
   }
 }
 
+#page-content .orga-widget-preview pretalx-schedule {
+  --pretalx-sticky-top-offset: -18px;
+}
+
 @media (max-width: 640px) {
   .timeline {
     margin-right: 8px;
@@ -1658,7 +1692,7 @@ h2 .user-name-display img {
 
 @media (max-width: 768px) {
   aside.sidebar {
-    position: absolute;
+    position: fixed;
     top: var(--navbar-height);
     margin-top: 0;
     height: calc(100vh - var(--navbar-height));
@@ -1675,8 +1709,8 @@ h2 .user-name-display img {
   }
 
   #page-content {
+    flex: 1;
     padding: 4px 8px;
-    flex-grow: 0;
     width: 100%;
     margin-left: 0;
   }
@@ -1725,4 +1759,54 @@ h2 .user-name-display img {
       }
     }
   }
+}
+
+
+.import-preview-cell {
+  max-height: 150px;
+  overflow-y: auto;
+  min-width: 150px;
+  max-width: 500px;
+  word-break: break-word;
+  padding-bottom: 4px;
+}
+
+.table-responsive.import-preview-table {
+  overflow-x: auto;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  margin-bottom: 1rem;
+}
+
+.import-preview-table table {
+  width: 100%;
+  min-width: 1200px;
+  margin-bottom: 1rem; /* Ensure space for scrollbar */
+}
+
+.import-preview-table th {
+  white-space: nowrap;
+}
+
+.avatar-license-text {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.form-group:has([data-question-dependency]).dependency-hidden {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin-bottom: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.3s ease, margin-bottom 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.form-group:has([data-question-dependency]):not(.dependency-hidden) {
+  max-height: 10000px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease, margin-bottom 0.3s ease, visibility 0s linear 0s;
 }

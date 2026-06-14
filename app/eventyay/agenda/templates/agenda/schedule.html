@@ -1,6 +1,7 @@
 {% extends "agenda/base.html" %}
 
 {% load compress %}
+{% load vite %}
 {% load html_signal %}
 {% load i18n %}
 {% load static %}
@@ -9,7 +10,7 @@
 {% block container_width %} main-schedule{% if show_talk_list %} list-schedule{% endif %}{% endblock container_width %}
 
 {% block agenda_custom_header %}
-<script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+<script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
 {% endblock agenda_custom_header %}
 
 {% block header_right %}
@@ -19,12 +20,11 @@
 {% block agenda_content %}
 {% html_signal "eventyay.agenda.signals.html_above_schedule_pages" sender=request.event request=request %}
 <div id="fahrplan" class="{% if show_talk_list %}list{% else %}grid{% endif %}">
-    <script id="pretalx-schedule-data" type="application/json">{{ schedule_json|safe }}</script>
     <script id="pretalx-schedule-meta" type="application/json">{{ schedule_meta_json|safe }}</script>
-    <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+    {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback='schedule/pretalx-schedule.js' %}
 
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
-    <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule.url_version }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" {% if is_sessions_page %}view="sessions"{% elif show_talk_list %}format="list"{% endif %} {% if request.event.is_video_creation %}join-room-base-url="{{ request.event.urls.video_base }}rooms/"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
+    <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule.url_version }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" enrich-data {% if is_sessions_page %}view="sessions"{% elif show_talk_list %}format="list"{% endif %} {% if request.event.is_video_creation %}join-room-base-url="{{ request.event.urls.video_base }}rooms/"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
     {% endwith %}
     <noscript class="d-block">
         <div class="alert alert-info m-4">

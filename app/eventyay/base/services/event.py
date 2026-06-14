@@ -20,6 +20,7 @@ from eventyay.core.permissions import Permission
 # Add missing imports for models referenced in this module
 from eventyay.base.models.chat import Channel
 from eventyay.base.models.audit import AuditLog
+from eventyay.base.services.video_theme import build_video_theme_for_event
 
 
 class EventConfigSerializer(serializers.Serializer):
@@ -79,17 +80,10 @@ class EventConfigSerializer(serializers.Serializer):
 
 @database_sync_to_async
 def _get_event(event_id):
-    """Retrieve Event by primary key or slug.
-    Frontend passes <event_identifier> in /video/<event_identifier>/ and websocket /ws/event/<event_identifier>/.
-    Previously only numeric primary key worked; now also accept slug.
-    """
-    # Try numeric ID first if it looks like one
+    """Retrieve Event by primary key or slug."""
     if isinstance(event_id, str) and event_id.isdigit():
-        evt = Event.objects.filter(id=int(event_id)).first()
-        if evt:
-            return evt
-    # Fallback: match by slug OR (string) id (covers atypical string PK setups)
-    return Event.objects.filter(Q(slug=event_id) | Q(id=event_id)).first()
+        return Event.objects.filter(Q(slug=event_id) | Q(id=int(event_id))).first()
+    return Event.objects.filter(slug=event_id).first()
 
 
 async def get_event(event_id):
@@ -100,6 +94,7 @@ async def get_event(event_id):
 def get_rooms(event, user):
     qs = (
         event.rooms.filter(deleted=False)
+        .order_by('sorting_priority', 'id')
         .prefetch_related("channel")
         .annotate(
             current_roomviews=Subquery(
@@ -184,8 +179,13 @@ def get_room_config(room, permissions):
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
             module_config["config"] = {}
-        elif module["type"] == "chat.native" and getattr(room, "channel", None):
-            module_config["channel_id"] = str(room.channel.id)
+        elif module["type"] == "chat.native":
+            # Strip webhook secrets — these are server-side only
+            cfg = module_config.get("config")
+            if isinstance(cfg, dict):
+                cfg.pop("webhook_hmac_secret", None)
+            if getattr(room, "channel", None):
+                module_config["channel_id"] = str(room.channel.id)
         room_config["modules"].append(module_config)
     return room_config
 
@@ -204,6 +204,8 @@ def get_event_config_for_user(event, user):
         "slug": getattr(event, "slug", str(event.id)),
         "organizer_slug": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
         "timezone": event.timezone,
+        "visible_logo_url": event.visible_logo_url,
+        "visible_header_image_url": event.visible_header_image_url,
         "pretalx": pretalx_public,
         "profile_fields": cfg.get("profile_fields", []),
         "social_logins": cfg.get("social_logins", []),
@@ -414,7 +416,7 @@ def _config_serializer(event, *args, **kwargs):
     cfg = event.config or {}
     return EventConfigSerializer(
         instance={
-            "theme": cfg.get("theme", {}),
+            "theme": build_video_theme_for_event(event),
             "title": getattr(event, "title", getattr(event, "name", "")),
             "locale": event.locale,
             "date_locale": cfg.get("date_locale", "en-ie"),

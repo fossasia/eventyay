@@ -1,5 +1,7 @@
 import logging
+from urllib.parse import quote, urlsplit
 
+from django.conf import settings
 from django import template
 from django.http import QueryDict
 from django.urls import reverse
@@ -7,6 +9,9 @@ from django.urls import reverse
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Order, OrderPosition
+from eventyay.common.urls import is_http_url
+from eventyay.common.permissions import user_has_cfp_submissions
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 register = template.Library()
 logger = logging.getLogger(__name__)
@@ -22,11 +27,11 @@ def cfp_locale_switch_url(context, locale_code):
     request = context.get('request')
     event = getattr(request, 'event', None)
     if not request or not event:
-        logger.warning("cfp_locale_switch_url called without request.event")
+        logger.warning('cfp_locale_switch_url called without request.event')
         return ''
     if not event.organizer:
         logger.warning(
-            "cfp_locale_switch_url called with event %s missing organizer",
+            'cfp_locale_switch_url called with event %s missing organizer',
             getattr(event, 'slug', '<unknown>'),
         )
         return ''
@@ -37,7 +42,7 @@ def cfp_locale_switch_url(context, locale_code):
     query = QueryDict(mutable=True)
     query['locale'] = locale_code
     query['next'] = request.get_full_path()
-    return f"{base}?{query.urlencode()}"
+    return f'{base}?{query.urlencode()}'
 
 
 @register.filter
@@ -115,6 +120,27 @@ def startswith(value, arg):
 
 
 @register.simple_tag(takes_context=True)
+def append_si(context, url: str | None, signature: str | None) -> str:
+    if not url:
+        return ''
+    if not signature:
+        return url
+
+    if is_http_url(url):
+        url_netloc = urlsplit(url).netloc.lower()
+        site_netloc = urlsplit(settings.SITE_URL).netloc.lower()
+        request = context.get('request')
+        request_netloc = request.get_host().lower() if request else ''
+        if url_netloc and url_netloc not in {site_netloc, request_netloc}:
+            return url
+    elif urlsplit(url).scheme:
+        return url
+
+    separator = '&' if '?' in url else '?'
+    return f"{url}{separator}si={quote(str(signature))}"
+
+
+@register.simple_tag(takes_context=True)
 def tickets_tab_visible(context, event=None):
     request = context.get('request')
     event = event or getattr(request, 'event', None)
@@ -122,6 +148,11 @@ def tickets_tab_visible(context, event=None):
         return False
     if request and not event.user_can_view_tickets(getattr(request, 'user', None), request=request):
         return False
+
+    target_event = context.get('ev') or context.get('subevent') or event
+    if target_event and not target_event.presale_is_running and not event.settings.show_products_outside_presale_period:
+        return False
+
     productnum = context.get('productnum')
     if productnum is not None:
         try:
@@ -152,6 +183,24 @@ def can_view_talks(context, event=None):
 
 
 @register.simple_tag(takes_context=True)
+def can_view_featured_sessions_public(context, event=None):
+    """Whether public UI may link to featured sessions (same gate as :class:`FeaturedView`).
+
+    Uses ``are_featured_submissions_visible`` so org setting "Show featured sessions" applies
+    to everyone (including organizers on the public site). ``has_perm('list_featured')`` is
+    intentionally not used here: it always passes for orga via ``orga_can_change_submissions``.
+    """
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not request or not event:
+        return False
+    user = getattr(request, 'user', None)
+    if user is None:
+        return False
+    return are_featured_submissions_visible(user, event)
+
+
+@register.simple_tag(takes_context=True)
 def private_testmode_tickets_enabled(context, event=None):
     request = context.get('request')
     event = event or getattr(request, 'event', None)
@@ -170,6 +219,19 @@ def private_testmode_talks_enabled(context, event=None):
 
 
 @register.simple_tag(takes_context=True)
+def has_organizer_access(context, organizer=None):
+    """Return True if the user may access organizer management for this organizer."""
+    request = context.get('request')
+    organizer = organizer or getattr(request, 'organizer', None)
+    user = getattr(request, 'user', None)
+    if not organizer or not user or not user.is_authenticated:
+        return False
+    if user.is_administrator:
+        return True
+    return user.has_organizer_permission(organizer, request=request)
+
+
+@register.simple_tag(takes_context=True)
 def is_event_team_member(context, event=None):
     request = context.get('request')
     event = event or getattr(request, 'event', None)
@@ -177,3 +239,18 @@ def is_event_team_member(context, event=None):
     if not event or not user or user.is_anonymous:
         return False
     return user.has_event_permission(event.organizer, event, request=request)
+
+
+@register.simple_tag(takes_context=True)
+def user_has_submissions(context, event=None):
+    """Return True if the authenticated user has submitted proposals for this event."""
+    request = context.get('request')
+    if not request:
+        return False
+    user = request.user
+    if not user.is_authenticated:
+        return False
+    event = event or getattr(request, 'event', None)
+    if not event:
+        return False
+    return user_has_cfp_submissions(request, event)

@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-speakers-list(v-scrollbar.y="")
-	.speakers-toolbar
+	.speakers-toolbar(v-if="!hideToolbar")
 		.search-box
 			svg.search-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				circle(cx="11", cy="11", r="8")
@@ -96,13 +96,19 @@
 			@click="onSpeakerClick($event, speaker)"
 		)
 			.speaker-avatar
-				img(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url", :alt="speaker.name")
+				img(
+					v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+					:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+					:alt="speaker.name",
+					loading="lazy"
+				)
 				.avatar-placeholder(v-else)
 					svg(viewBox="0 0 24 24")
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 			.speaker-info
 				.name {{ speaker.name || t.speaker_fallback }}
-				.biography(v-if="speaker.biography") {{ speaker.biography }}
+				.biography(v-if="speaker.biography")
+					markdown-content(:markdown="speaker.biography")
 				.sessions-list(v-if="speaker.sessions && speaker.sessions.length")
 					span.session-title(v-for="(session, idx) in speaker.sessions", :key="session.id")
 						| {{ getLocalizedString(session.title) }}
@@ -124,7 +130,7 @@
 									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 							.caption.text-center
 								h4 {{ speaker.name || t.speaker_fallback }}
-								p.featured-speaker-preview-bio(v-if="speaker.biography") {{ speaker.biography }}
+								markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography")
 					.featured-speaker-details
 						template(v-if="speaker.sessions && speaker.sessions.length")
 							hr.featured-speaker-divider
@@ -149,6 +155,7 @@
 <script>
 import moment from 'moment-timezone'
 import { getLocalizedString } from '../utils'
+import MarkdownContent from './MarkdownContent'
 
 function normalizeLocaleCode (code) {
 	if (!code || typeof code !== 'string') return null
@@ -171,6 +178,7 @@ function localesMatch (filterValue, sessionValue) {
 
 export default {
 	name: 'SpeakersList',
+	components: { MarkdownContent },
 	inject: {
 		scheduleData: { default: null },
 		eventUrl: { default: '' },
@@ -195,6 +203,10 @@ export default {
 		speakers: {
 			type: Array,
 			default: () => []
+		},
+		hideToolbar: {
+			type: Boolean,
+			default: false
 		}
 	},
 	data() {
@@ -285,35 +297,56 @@ export default {
 			if (this.speakers?.length) return this.speakers
 			if (!this.scheduleData) return []
 			const schedule = this.scheduleData.schedule
-			const talks = this.resolvedSessions.length ? this.resolvedSessions : this.rawTalks
-			return (schedule?.speakers || []).map(speaker => {
-				const speakerTalks = this.resolvedSessions.length
-					? talks.filter(sess => (sess.speakers || []).some(sp => this.speakerCodeFromAny(sp) === speaker.code))
-					: talks.filter(t => (t.speakers || []).some(sp => this.speakerCodeFromAny(sp) === speaker.code))
-				return {
-					...speaker,
-					sessions: speakerTalks,
-				}
-			})
+			let sessionsBySpeaker = this.scheduleData.sessionsBySpeaker || {}
+			if (!Object.keys(sessionsBySpeaker).length) {
+				const talks = this.resolvedSessions.length ? this.resolvedSessions : this.rawTalks
+				sessionsBySpeaker = talks
+					.flatMap((talk) => (talk.speakers || []).map((sp) => [this.speakerCodeFromAny(sp), talk]))
+					.reduce((acc, [code, talk]) => {
+						if (!code) return acc
+						if (!acc[code]) acc[code] = []
+						acc[code].push(talk)
+						return acc
+					}, {})
+			}
+			return (schedule?.speakers || []).map(speaker => ({
+				...speaker,
+				sessions: sessionsBySpeaker[speaker.code] || [],
+			}))
 		},
 		viewToggleTitle() {
 			return this.viewMode === 'list' ? this.t.view_details : this.t.view_list
 		},
 		trackFilteredSpeakers() {
 			if (!this.selectedTracks.length) return this.resolvedSpeakers
-			return this.resolvedSpeakers.filter(speaker =>
-				(speaker.sessions || []).some(s => this.selectedTracks.includes(s?.track?.id ?? s?.track))
-			)
+			const trackSet = new Set(this.selectedTracks)
+			return this.resolvedSpeakers.filter(speaker => {
+				for (const s of (speaker.sessions || [])) {
+					if (trackSet.has(s?.track?.id ?? s?.track)) return true
+				}
+				return false
+			})
 		},
 		languageFilteredSpeakers() {
 			if (!this.selectedLanguages.length) return this.trackFilteredSpeakers
 			const fallbackLocale = this.scheduleData?.schedule?.content_locales?.[0] || null
+			const selectedExact = new Set(this.selectedLanguages.map(normalizeLocaleCode).filter(Boolean))
+			const selectedPrimary = new Set(
+				this.selectedLanguages
+					.map(localePrimary)
+					.filter(Boolean)
+			)
 			return this.trackFilteredSpeakers.filter(speaker => {
-				return (speaker.sessions || []).some(s => {
+				for (const s of (speaker.sessions || [])) {
 					const sessionLocale = s?.content_locale || fallbackLocale
-					if (!sessionLocale) return false
-					return this.selectedLanguages.some(sel => localesMatch(sel, sessionLocale))
-				})
+					if (!sessionLocale) continue
+					const normalized = normalizeLocaleCode(sessionLocale)
+					if (!normalized) continue
+					if (selectedExact.has(normalized)) return true
+					const primary = localePrimary(normalized)
+					if (primary && selectedPrimary.has(primary)) return true
+				}
+				return false
 			})
 		},
 		sortedSpeakers() {
@@ -622,6 +655,8 @@ export default {
 			.dropdown-menu
 				left: auto
 				right: 0
+				width: max-content
+				min-width: unset
 			.dropdown-actions
 				border-top: 1px solid #eee
 				padding: 4px 8px
@@ -707,16 +742,33 @@ export default {
 						line-height: 1.35
 						display: -webkit-box
 						-webkit-line-clamp: 2
+						line-clamp: 2
 						-webkit-box-orient: vertical
 						overflow: hidden
 						overflow-wrap: anywhere
+						text-overflow: ellipsis
+						&.c-markdown-content
+							font-size: inherit
+							line-height: inherit
+							color: inherit
+							p, ul, ol, table, pre
+								margin-top: 0.25em
+								margin-bottom: 0.25em
+								&:first-child
+									margin-top: 0
+								&:last-child
+									margin-bottom: 0
 
 		.featured-speaker-card[open] .featured-speaker-summary .thumbnail .caption .featured-speaker-preview-bio
 			display: block
 			-webkit-line-clamp: unset
+			line-clamp: unset
 			-webkit-box-orient: unset
 			overflow: visible
-			white-space: pre-wrap
+			white-space: normal
+			text-overflow: clip
+			&.c-markdown-content
+				display: block
 
 		.avatar-placeholder
 			width: 100%
@@ -839,10 +891,23 @@ export default {
 			font-size: 14px
 			color: $clr-secondary-text-light
 			display: -webkit-box
-			-webkit-line-clamp: 3
+			-webkit-line-clamp: 1
+			line-clamp: 1
 			-webkit-box-orient: vertical
 			overflow: hidden
+			overflow-wrap: anywhere
+			text-overflow: ellipsis
 			margin-bottom: 4px
+			.c-markdown-content
+				font-size: inherit
+				color: inherit
+				line-height: 1.4
+				p, ul, ol
+					margin: 0.15em 0
+					&:first-child
+						margin-top: 0
+					&:last-child
+						margin-bottom: 0
 		.sessions-list
 			font-size: 13px
 			color: $clr-secondary-text-light

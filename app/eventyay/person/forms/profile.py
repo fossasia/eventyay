@@ -1,3 +1,5 @@
+from functools import partial
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
@@ -8,6 +10,10 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from i18nfield.forms import I18nModelForm
 
+from eventyay.base.models import Event, SpeakerProfile, TalkQuestion, TalkQuestionTarget, User
+from eventyay.base.models.cfp import default_fields
+from eventyay.base.models.information import SpeakerInformation
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import (
     ImageField,
@@ -32,12 +38,13 @@ from eventyay.common.forms.widgets import (
 )
 from eventyay.common.text.phrases import phrases
 from eventyay.consts import SizeKey
-from eventyay.base.models import Event
-from eventyay.base.models import SpeakerProfile, User
-from eventyay.base.models.information import SpeakerInformation
 from eventyay.schedule.forms import AvailabilitiesFormMixin
-from eventyay.base.models import TalkQuestion, TalkQuestionTarget
-from eventyay.base.models.submission import SubmissionStates
+
+
+AVATAR_LICENSE_TEXT_WORD_LIMIT = 3000
+AVATAR_LICENSE_TEXT_VALIDATION_ERROR = _(
+    'Please keep this field below %(word_limit)s words. Do not paste image files or encoded image data here.'
+) % {'word_limit': AVATAR_LICENSE_TEXT_WORD_LIMIT}
 
 
 def get_email_address_error():
@@ -46,6 +53,17 @@ def get_email_address_error():
         + ' '
         + _('Please choose a different email address.')
     )
+
+
+def validate_avatar_license_text(value):
+    if not value:
+        return value
+    if value.lstrip().startswith('data:image/'):
+        raise ValidationError(AVATAR_LICENSE_TEXT_VALIDATION_ERROR)
+    words = value.split(maxsplit=AVATAR_LICENSE_TEXT_WORD_LIMIT + 1)
+    if len(words) > AVATAR_LICENSE_TEXT_WORD_LIMIT:
+        raise ValidationError(AVATAR_LICENSE_TEXT_VALIDATION_ERROR)
+    return value
 
 
 class SpeakerProfileForm(
@@ -115,18 +133,58 @@ class SpeakerProfileForm(
 
         for field_name in ('fullname', 'email'):
             if field_name in self.fields:
-                self.fields[field_name].required = True
+                self.fields[field_name].required = not self.not_strict
                 if hasattr(self.fields[field_name].widget, 'is_required'):
-                    self.fields[field_name].widget.is_required = True
+                    self.fields[field_name].widget.is_required = not self.not_strict
+
+        cfp_defaults = default_fields()
+        count_length_in = self.event.cfp.settings.get('count_length_in', 'chars')
+        count_chars = count_length_in == 'chars'
+        for key in ('avatar_source', 'avatar_license'):
+            if key not in self.fields:
+                continue
+            default_config = cfp_defaults.get(key, {})
+            config = self.event.cfp.fields.get(key, default_config)
+            visibility = config.get('visibility', default_config.get('visibility', 'optional'))
+            if visibility == 'do_not_ask':
+                self.fields.pop(key, None)
+                continue
+            field = self.fields[key]
+            field.required = visibility == 'required'
+            if hasattr(field.widget, 'is_required'):
+                field.widget.is_required = field.required
+            min_value = config.get('min_length')
+            max_value = config.get('max_length')
+            if min_value or max_value:
+                if min_value and count_chars:
+                    field.widget.attrs['minlength'] = min_value
+                if max_value and count_chars:
+                    field.widget.attrs['maxlength'] = max_value
+                field.validators.append(
+                    partial(
+                        self.validate_field_length,
+                        min_length=min_value,
+                        max_length=max_value,
+                        count_in=count_length_in,
+                    )
+                )
+                field.original_help_text = getattr(field, 'original_help_text', field.help_text)
+                field.added_help_text = self.get_help_text('', min_value, max_value, count_length_in)
+                field.help_text = ' '.join(
+                    part for part in (field.original_help_text, field.added_help_text) if part
+                )
 
         if not self.event.cfp.request_avatar:
             self.fields.pop('avatar', None)
             self.fields.pop('avatar_source', None)
             self.fields.pop('avatar_license', None)
             self.fields.pop('get_gravatar', None)
-        elif 'avatar' in self.fields:
-            self.fields['avatar'].required = False
-            self.fields['avatar'].widget.is_required = False
+        else:
+            if not self.event.cfp.enable_gravatar:
+                self.fields.pop('get_gravatar', None)
+            if 'avatar' in self.fields:
+                self.fields['avatar'].required = False
+                self.fields['avatar'].widget.is_required = False
 
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
@@ -164,15 +222,21 @@ class SpeakerProfileForm(
             raise ValidationError(get_email_address_error())
         return email
 
+    def clean_avatar_source(self):
+        return validate_avatar_license_text(self.cleaned_data.get('avatar_source'))
+
+    def clean_avatar_license(self):
+        return validate_avatar_license_text(self.cleaned_data.get('avatar_license'))
+
     def clean(self):
         data = super().clean()
-        if self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
-            self.add_error(
-                'avatar',
-                forms.ValidationError(
-                    _('Please provide a profile picture or allow us to load your picture from gravatar!')
-                ),
-            )
+        if not getattr(self, 'not_strict', False) and self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
+            if self.event.cfp.enable_gravatar:
+                msg = _('Please provide a profile picture or allow us to load your picture from gravatar!')
+            else:
+                msg = _('Please provide a profile picture!')
+            self.add_error('avatar', forms.ValidationError(msg))
+
         fullname = self.cleaned_data.get('fullname')
         if (
             self.enforce_account_name_match
@@ -207,10 +271,15 @@ class SpeakerProfileForm(
                     self.user.avatar_thumbnail_tiny = None
                     self.user.avatar = value
             elif value is None and user_attribute == 'get_gravatar':
-                self.user.get_gravatar = False
+                # Only reset get_gravatar if the field was actually present on
+                # the form (i.e. Gravatar is enabled). If the field was popped
+                # because enable_gravatar is False, we must not touch the
+                # user's saved preference.
+                if 'get_gravatar' in self.fields:
+                    self.user.get_gravatar = False
             else:
                 setattr(self.user, user_attribute, value)
-            
+
             # Add thumbnail fields to update_fields when avatar changes
             update_fields = [user_attribute]
             if user_attribute == 'avatar':

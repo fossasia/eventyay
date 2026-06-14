@@ -38,6 +38,8 @@
             <link rel="stylesheet" type="text/css" href="{% static "cfp/css/_layout.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_agenda.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_speaker.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_navbar.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/startpage.scss" %}" />
         {% endcompress %}
         {% if css_file %}
@@ -47,6 +49,7 @@
             <script defer src="{% static 'common/js/base.js' %}"></script>
             <script defer src="{% static 'common/js/lightbox.js' %}"></script>
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
+            <script type="module" src="{% static 'pretixpresale/js/startpage-sidebar.js' %}"></script>
             <script defer src="{% static 'pretixpresale/js/startpage.js' %}"></script>
         {% endcompress %}
         {% if DEBUG %}
@@ -55,16 +58,22 @@
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
     </head>
-    <body class="startpage-body {% if search_query %}startpage-search-results-page{% endif %}" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
+    <body class="startpage-body {% if search_query %}startpage-search-results-page{% endif %}{% if request.user.is_authenticated %} startpage-auth{% endif %}" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         {{ base_path|json_script:"base_path" }}
         {{ staff_session|json_script:"is_admin_mode" }}
         {{ html_page_header|safe }}
 
         <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+            {% if request.user.is_authenticated %}
+                <button type="button" class="navbar-toggle-sidebar navbar-toggle" id="sidebar-toggle" data-toggle="sidebar" aria-controls="startpage-sidebar" aria-expanded="false">
+                    <span class="sr-only">{% trans "Toggle sidebar" %}</span>
+                    <i class="fa fa-bars fa-lg" aria-hidden="true"></i>
+                </button>
+            {% endif %}
             <div class="navbar-header">
                 <a class="navbar-brand" href="{% url "presale:index" %}">
                     <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
-                    {{ site_name }}
+                    <span class="hidden-xs">{{ site_name }}</span>
                 </a>
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
@@ -89,6 +98,7 @@
                                 id="startpage-search-results"
                                 role="listbox"
                                 data-empty-text="{% trans "No matching events" %}"
+                                data-search-url="{% url 'presale:index' %}"
                             ></div>
                         </div>
                     </form>
@@ -107,15 +117,17 @@
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.get_full_path|urlencode }}" method="post">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-link" id="button-sudo">
-                                <i class="fa fa-id-card"></i> {% trans "Admin mode" %}
+                            <button type="submit" class="btn btn-link" id="button-sudo" aria-label="{% trans 'Admin mode' %}">
+                                <i class="fa fa-id-card" aria-hidden="true"></i>
+                                <span class="hidden-xs">{% trans 'Admin mode' %}</span>
                             </button>
                         </form>
                     </li>
                 {% elif request.user.is_staff and staff_session %}
                     <li>
-                        <a href="{% url 'control:user.sudo.stop' %}" class="danger">
-                            <i class="fa fa-id-card"></i> {% trans "End admin session" %}
+                        <a href="{% url 'control:user.sudo.stop' %}" class="danger" aria-label="{% trans 'End admin session' %}">
+                            <i class="fa fa-id-card" aria-hidden="true"></i>
+                            <span class="hidden-xs">{% trans 'End admin session' %}</span>
                         </a>
                     </li>
                 {% endif %}
@@ -124,13 +136,47 @@
                     {% include "common/fragment_profile_dropdown.html" %}
                 {% else %}
                     <li>
-                        <a href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}">
-                            <i class="fa fa-sign-in"></i> {% trans "Login" %}
+                        <a href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}" aria-label="{% trans 'Login' %}">
+                            <i class="fa fa-sign-in"></i> <span class="hidden-xs">{% trans "Login" %}</span>
                         </a>
                     </li>
                 {% endif %}
             </ul>
         </nav>
+        {% if request.user.is_authenticated %}
+            <aside class="startpage-sidebar" id="startpage-sidebar" aria-label="{% trans 'Main navigation' %}" aria-hidden="true" inert>
+                <div class="startpage-sidebar-inner">
+                    <div class="startpage-sidebar-context">
+                        <a href="{% url 'eventyay_common:dashboard' %}" class="dropdown-toggle">
+                            <span class="fa-stack fa-lg" aria-hidden="true">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-dashboard fa-stack-1x fa-inverse"></i>
+                            </span>
+                            <div class="context-indicator">
+                                <span class="context-name">{% trans "Main dashboard" %}</span>
+                            </div>
+                        </a>
+                    </div>
+                    <ul class="startpage-sidebar-nav">
+                        {% for nav in nav_items %}
+                            <li>
+                                <a href="{{ nav.url }}" {% if nav.active %}class="active"{% endif %}{% if nav.external %} target="_blank"{% endif %}>
+                                    {% if nav.icon %}
+                                        {% if "<svg" in nav.icon %}
+                                            {{ nav.icon|safe }}
+                                        {% else %}
+                                            <span class="fa fa-fw fa-{{ nav.icon }}" aria-hidden="true"></span>
+                                        {% endif %}
+                                    {% endif %}
+                                    <span class="sidebar-text">{{ nav.label }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </aside>
+            <div class="startpage-sidebar-backdrop" hidden></div>
+        {% endif %}
 
         <div id="top-bg" class="header startpage-header">
             {% if startpage_header_image_url %}
@@ -243,8 +289,41 @@
                 </ul>
             </footer>
         </div>
+        <dialog id="share-dialog" role="dialog" aria-labelledby="share-dialog-label" class="startpage-share-dialog">
+            <div class="modal-card">
+                <div class="modal-card-content">
+                    <div class="share-header">
+                        <h3 id="share-dialog-label">{% trans "Share this event" %}</h3>
+                        <button type="button" id="share-dialog-close" class="btn btn-default btn-xs" aria-label="{% trans 'Close' %}">
+                            <i class="fa fa-times" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="share-body">
+                        <div class="share-social-links">
+                            <a id="share-facebook" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-facebook" aria-label="{% trans 'Share on Facebook' %}"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+                            <a id="share-x" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-x" aria-label="{% trans 'Share on X' %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: middle;" aria-hidden="true" focusable="false">
+                                  <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865l8.875 11.633Z"/>
+                                </svg>
+                            </a>
+                            <a id="share-linkedin" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-linkedin" aria-label="{% trans 'Share on LinkedIn' %}"><i class="fa fa-linkedin" aria-hidden="true"></i></a>
+                            <a id="share-reddit" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-reddit" aria-label="{% trans 'Share on Reddit' %}"><i class="fa fa-reddit-alien" aria-hidden="true"></i></a>
+                            <button type="button" id="share-native" class="btn btn-native" aria-label="{% trans 'More share options' %}"><i class="fa fa-ellipsis-h" aria-hidden="true"></i></button>
+                        </div>
+                        <div class="input-group share-input-group">
+                            <label for="share-url-input" class="sr-only">{% trans 'Event link' %}</label>
+                            <input type="text" id="share-url-input" class="form-control" readonly>
+                            <span class="input-group-btn">
+                                <button id="share-copy-btn" class="btn btn-inverse" type="button" data-copied-label="{% trans 'Copied!' %}">
+                                    {% trans 'Copy' %} <i class="fa fa-copy" aria-hidden="true"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </dialog>
         {% include "common/includes/modals.html" %}
         {{ html_foot|safe }}
     </body>
 </html>
-

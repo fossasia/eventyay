@@ -5,18 +5,25 @@
 			.talk-header(:class="{'has-actions': talkExportOptions.length || loggedIn}")
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
 				.header-actions
-					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions")
+					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl")
 					.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
 						fav-button(@toggleFav="toggleFav")
-			.info {{ datetime }} {{ roomName }}
-			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
-			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
-			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
-				h2 {{ t.downloads }}
-				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank")
-					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
-					.filename {{ description }}
-
+			.info
+				span.info-main {{ datetime }} {{ roomName }}
+				span.session-language(v-if="sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
+			.field-section.abstract-section(v-if="resolvedTalk.abstract")
+				h2.field-heading Abstract
+				.field-content
+					markdown-content(:markdown="resolvedTalk.abstract")
+			.field-section.description-section(v-if="resolvedTalk.description")
+				h2.field-heading Description
+				.field-content
+					markdown-content(:markdown="resolvedTalk.description")
+			.public-answers(v-if="visibleAnswers.length > 0")
+				.field-section(v-for="answer in visibleAnswers", :key="answer.question_id")
+					h2.field-heading {{ answer.question }}
+					.field-content
+						markdown-content(:markdown="answer.answer")
 			.video-stream(v-if="resolvedTalk.stream_url && computedJoinRoomLink && isLive")
 				a.view-video-btn(:href="computedJoinRoomLink")
 					svg(viewBox="0 0 24 24", width="18", height="18", fill="currentColor")
@@ -29,12 +36,23 @@
 			.speakers-list
 				.speaker(v-for="speaker of resolvedTalk.speakers", :key="speaker.code")
 					a.speaker-link(:href="getSpeakerLink(speaker)", @click="onSpeakerClick($event, speaker)")
-						img.avatar-circle(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
+						img.avatar-circle(
+							v-if="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							:src="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							loading="lazy",
+							decoding="async"
+						)
 						.avatar-placeholder.avatar-circle(v-else)
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || t.speaker_name_not_provided }}
 					markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
+		.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
+			.header {{ t.downloads }}
+			.downloads-list
+				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
+					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
+					.filename {{ description }}
 		.starrers(v-if="popularityFeatureEnabled && loggedIn && starrers && starrers.total > 0")
 			.header
 				span {{ t.starred_by }} ({{ starrers.total }})
@@ -126,6 +144,11 @@ export default {
 		}
 	},
 	computed: {
+		talkQrcodesUrl() {
+			if (!this.baseUrl || !this.resolvedTalk?.id) return ''
+			const base = this.baseUrl.replace(/\/?$/, '/')
+			return `${base}schedule/widgets/qrcodes/talk/${this.resolvedTalk.id}.json`
+		},
 		t() {
 			const m = this.translationMessages || {}
 			return {
@@ -138,6 +161,26 @@ export default {
 				anonymous_attendee: m.anonymous_attendee || 'Anonymous (name not shared)',
 				view_all: m.view_all || 'View all',
 				hide_list: m.hide_list || 'Hide',
+				session_language: m.session_language || 'Language',
+			}
+		},
+		uiLocale () {
+			if (typeof document === 'undefined') return 'en'
+			return (document.documentElement.lang || 'en').trim().split(',')[0] || 'en'
+		},
+		sessionLanguageLabel () {
+			const code = this.resolvedTalk?.content_locale
+			if (!code || typeof code !== 'string') return ''
+			const tag = code.replace(/_/g, '-')
+			try {
+				return new Intl.DisplayNames([this.uiLocale], { type: 'language' }).of(tag) || code
+			} catch {
+				try {
+					const primary = tag.split('-')[0] || tag
+					return new Intl.DisplayNames([this.uiLocale], { type: 'language' }).of(primary) || code
+				} catch {
+					return code
+				}
 			}
 		},
 		inlineStarrersLimit() {
@@ -158,10 +201,22 @@ export default {
 		resolvedTalk() {
 			if (this.talk) return this.talk
 			if (this.talkId && this.scheduleData) {
+				const lu = this.scheduleData.sessionsLookup
+				if (lu && lu[this.talkId]) return lu[this.talkId]
 				const sessions = this.scheduleData.sessions || []
-				return sessions.find(s => s.id === this.talkId) || null
+				for (let i = 0; i < sessions.length; i++) {
+					if (sessions[i].id === this.talkId) return sessions[i]
+				}
+				return null
 			}
 			return null
+		},
+		visibleAnswers() {
+			const answers = this.resolvedTalk?.answers || []
+			if (!this.resolvedTalk?.resources?.length) return answers
+
+			const downloadsLabel = (this.t.downloads || '').trim().toLowerCase()
+			return answers.filter((answer) => (answer.question || '').trim().toLowerCase() !== downloadsLabel)
 		},
 		computedJoinRoomLink() {
 			if (!this.resolvedTalk) return ''
@@ -169,6 +224,8 @@ export default {
 		},
 		isFaved() {
 			if (!this.resolvedTalk) return false
+			const favSet = this.scheduleData?.favSet
+			if (favSet && typeof favSet.has === 'function') return favSet.has(this.resolvedTalk.id)
 			const favs = this.scheduleData?.favs || []
 			return favs.includes(this.resolvedTalk.id)
 		},
@@ -329,34 +386,27 @@ export default {
 		.info
 			font-size: 18px
 			color: $clr-secondary-text-light
-		.abstract
+			.session-language
+				white-space: nowrap
+		.field-section
 			margin: 16px 0 0 0
-			font-size: 16px
-			font-weight: 600
-		.downloads
-			border: border-separator()
-			border-radius: 4px
-			display: flex
-			flex-direction: column
-			margin-top: 16px
-			h2
-				margin: 4px 8px
-			.download
-				display: flex
-				align-items: center
-				height: 56px
-				font-weight: 600
-				font-size: 16px
-				border-top: border-separator()
-				text-decoration: none
-				color: $clr-primary-text-light
-				&:hover
-					background-color: $clr-grey-100
-					text-decoration: underline
-				.mdi
-					font-size: 36px
-					margin: 0 4px
-
+			.field-heading
+				margin: 0 0 6px 0
+				font-size: 14px
+				font-weight: 700
+				color: $clr-secondary-text-light
+			.field-content
+				padding: 8px 12px
+				p
+					margin: 0.25em 0
+					&:first-child
+						margin-top: 0
+					&:last-child
+						margin-bottom: 0
+			&.abstract-section
+				.field-content
+					font-size: 16px
+					font-weight: 600
 		.video-stream
 			margin-top: 16px
 			.view-video-btn
@@ -523,8 +573,39 @@ export default {
 				&.no-name
 					color: $clr-secondary-text-light
 					font-style: italic
+	.downloads
+		margin: 0 16px 32px
+		display: flex
+		flex-direction: column
+		border: border-separator()
+		border-radius: 4px
+		.header
+			border-bottom: border-separator()
+			padding: 8px
+		.download
+			display: flex
+			align-items: center
+			gap: 8px
+			padding: 8px
+			text-decoration: none
+			color: $clr-primary-text-light
+			border-top: border-separator()
+			&:first-child
+				border-top: none
+			&:hover
+				background-color: $clr-grey-100
+				.filename
+					text-decoration: underline
+					color: var(--clr-primary)
+			.mdi
+				font-size: 24px
+				flex-shrink: 0
+			.filename
+				font-weight: 600
 	@media (max-width: 768px)
 		.speakers
+			margin: 0 16px 16px
+		.downloads
 			margin: 0 16px 16px
 		.starrers
 			margin: 0 16px 16px
@@ -545,6 +626,8 @@ export default {
 			.abstract
 				font-size: 14px
 		.speakers
+			margin: 0 10px 12px
+		.downloads
 			margin: 0 10px 12px
 		.starrers
 			margin: 0 10px 12px

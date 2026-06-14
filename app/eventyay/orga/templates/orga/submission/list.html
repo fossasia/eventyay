@@ -65,6 +65,7 @@
 
     {% include "orga/includes/submission_filter_form.html" %}
 
+    <div data-ajax-results-region>
     <div class="table-responsive-sm">
         <table class="table table-sm table-flip table-sticky">
             <thead>
@@ -165,7 +166,7 @@
                                 <i class="done fa fa-check d-none text-success"></i>
                                 <i class="fail fa fa-times d-none"></i>
                             </td>
-                            <td class="text-right">
+                            <td class="action-column">
                                 <a href="{{ submission.orga_urls.edit }}" title="{{ phrases.base.edit }}" class="btn btn-sm btn-info">
                                     <i class="fa fa-edit"></i>
                                 </a>
@@ -181,5 +182,6 @@
     </div>
 
     {% include "orga/includes/pagination.html" %}
+    </div>
 
 {% endblock content %}

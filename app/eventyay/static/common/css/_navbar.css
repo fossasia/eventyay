@@ -208,7 +208,7 @@ nav.navbar.navbar-inverse .navbar-brand img,
   height: 30px;
   width: auto;
   margin-top: 2px;
-  margin-right: 4px;
+  margin-right: 0.2em;
 }
 
 nav.navbar.navbar-inverse .navbar-brand:hover,
@@ -234,6 +234,7 @@ nav.navbar.navbar-inverse .navbar-brand:focus,
 
 .navbar-top-links.navbar-right {
   float: right !important;
+  margin-right: 2px;
 }
 
 .navbar-top-links.navbar-left {
@@ -382,6 +383,48 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   padding: 0;
 }
 
+.mobile-navbar-view-form button {
+  position: relative;
+  margin-right: 15px;
+  padding: 6px 10px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  background-color: transparent;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-weight: normal;
+}
+
+.mobile-navbar-view-link {
+  padding: 6px 10px;
+  color: white;
+  font-weight: normal;
+}
+
+.navbar-inverse .navbar-toggle.mobile-navbar-view-link,
+.navbar-inverse .mobile-navbar-view-form button.navbar-toggle {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.navbar-inverse .navbar-toggle.mobile-navbar-view-link:hover,
+.navbar-inverse .navbar-toggle.mobile-navbar-view-link:focus,
+.navbar-inverse .navbar-toggle.mobile-navbar-view-link:active,
+.navbar-inverse .mobile-navbar-view-form button.navbar-toggle:hover,
+.navbar-inverse .mobile-navbar-view-form button.navbar-toggle:focus,
+.navbar-inverse .mobile-navbar-view-form button.navbar-toggle:active {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+@media (min-width: 768px) {
+  .navbar-header .mobile-navbar-view-link,
+  .navbar-header .mobile-navbar-view-form {
+    display: none;
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -396,52 +439,96 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
 
 @media (max-width: 767px) {
   :root {
-    --navbar-height: 60px;
+    --navbar-height: 50px;
   }
 
   .hidden-xs {
     display: none !important;
   }
 
+  nav.navbar.navbar-inverse {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 50px;
+    min-height: 50px;
+    padding: 0px 16px 0px 10px;
+  }
+
   nav.navbar {
-    padding-bottom: 10px;
+    padding-bottom: 0;
   }
 
-  .navbar-top-links.navbar-right {
-    float: left !important;
+  nav.navbar.navbar-inverse .navbar-header {
+    display: flex;
+    align-items: center;
+    margin: 0;
   }
 
-  .navbar-top-links li {
-    min-height: var(--navbar-height);
+  nav.navbar.navbar-inverse .navbar-brand {
+    display: flex;
+    align-items: center;
+    height: 50px;
+    padding: 0;
+    margin: 0;
+  }
+
+  nav.navbar.navbar-inverse .navbar-brand img {
+    height: 30px;
+    margin: 0 5px 0 0;
+  }
+
+  nav.navbar.navbar-inverse #sidebar-toggle {
+    margin: 0 10px 2px 0;
+    padding: 5px;
+    height: auto;
     display: flex;
     align-items: center;
   }
 
-  .navbar-top-links li a,
-  .navbar-top-links li form button.btn-link {
-    padding: 15px;
-    min-height: var(--navbar-height);
-    font-size: 14px;
-    white-space: nowrap;
+  nav.navbar.navbar-inverse .navbar-top-links {
+    display: flex;
+    align-items: center;
+    height: 50px;
+    margin: 0 0 0 auto;
+    padding: 0;
+    gap: 4px;
   }
 
-  .navbar-top-links li form {
-    display: inline;
+  nav.navbar.navbar-inverse .navbar-top-links li {
     margin: 0;
-    padding: 0;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    min-height: 50px;
+  }
+
+  nav.navbar.navbar-inverse .navbar-top-links li a,
+  nav.navbar.navbar-inverse .navbar-top-links li form button.btn-link,
+  nav.navbar.navbar-inverse .navbar-top-links #profile-dropdown > summary,
+  nav.navbar.navbar-inverse .navbar-top-links #language-dropdown > summary {
+    display: flex;
+    align-items: center;
+    height: 50px;
+    min-height: 50px;
+    font-size: 13px;
+    padding: 0 8px;
+    font-weight: normal;
+    margin: 0;
+    border: none;
+    background: transparent;
+  }
+
+  nav.navbar.navbar-inverse .language-form {
+    margin: 0;
   }
 
   nav.navbar.navbar-inverse #button-sudo,
-  .navbar-inverse #button-sudo {
-    padding: 15px;
-    min-height: var(--navbar-height);
-    font-size: 14px;
-    line-height: 20px;
-    display: block;
-    white-space: nowrap;
+  nav.navbar.navbar-inverse #button-shop,
+  .navbar-inverse #button-sudo,
+  .navbar-inverse #button-shop {
+    font-size: 13px;
+    padding: 0 8px;
   }
 
-  #main-title {
-    margin-top: calc(var(--navbar-height) + 10px);
-  }
 }

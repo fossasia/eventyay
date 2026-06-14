@@ -15,8 +15,14 @@
 
             <a href='{% url "eventyay_common:events.add" %}' class="btn btn-primary btn-lg">
                 <span class="fa fa-plus"></span>
-                {% trans "Create a new event" %}
+                {% trans "Create Event" %}
             </a>
+            {% if event_series_creation_enabled %}
+            <a href='{% url "eventyay_common:events.add" %}?series=1' class="btn btn-default btn-lg">
+                {% include "eventyay_common/includes/icon_calendar_series.html" %}
+                {% trans "Create Event Series" %}
+            </a>
+            {% endif %}
         </div>
     {% else %}
         <div class="panel panel-default">
@@ -42,15 +48,22 @@
                 </form>
             </div>
         </div>
-        <p>
-            <a href='{% url "eventyay_common:events.add" %}' class="btn btn-default">
-                <span class="fa fa-plus"></span>
-                {% trans "Create a new event" %}
-            </a>
-        </p>
-        <table class="table table-condensed table-hover">
-            <thead>
-            <tr>
+        <div data-ajax-results-region>
+            <p>
+                <a href='{% url "eventyay_common:events.add" %}' class="btn btn-default">
+                    <span class="fa fa-plus"></span>
+                    {% trans "Create Event" %}
+                </a>
+                {% if event_series_creation_enabled %}
+                <a href='{% url "eventyay_common:events.add" %}?series=1' class="btn btn-default">
+                    {% include "eventyay_common/includes/icon_calendar_series.html" %}
+                    {% trans "Create Event Series" %}
+                </a>
+                {% endif %}
+            </p>
+            <table class="table table-condensed table-hover">
+                <thead>
+                <tr>
                 <th>
                     {% trans "Event name" %}
                 </th>
@@ -84,11 +97,11 @@
                 <th class="text-right flip">
                     {% trans "Actions" %}
                 </th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for e in events %}
-                <tr>
+                </tr>
+                </thead>
+                <tbody>
+                {% for e in events %}
+                    <tr>
                     <td class="event-name-col">
                         <strong><a href='{% url "eventyay_common:event.index" organizer=e.organizer.slug event=e.slug %}'>{{ e.name }}</a></strong>
                     </td>
@@ -150,10 +163,11 @@
                             <span class="fa fa-edit"></span>
                         </a>
                     </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        {% include "pretixcontrol/pagination.html" %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% include "pretixcontrol/pagination.html" %}
+        </div>
     {% endif %}
 {% endblock %}

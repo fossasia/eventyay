@@ -2,30 +2,45 @@ server {
 	server_name <SERVER_NAME>;
 
 	access_log /var/log/nginx/<SERVER_NAME>-access.log;
-    error_log /var/log/nginx/<SERVER_NAME>-error.log;
+	error_log /var/log/nginx/<SERVER_NAME>-error.log;
+
+	client_max_body_size 10m;
+
+	gzip on;
+	gzip_vary on;
+	gzip_proxied any;
+	gzip_comp_level 6;
+	gzip_types
+		text/plain
+		text/css
+		text/javascript
+		application/javascript
+		application/json
+		image/svg+xml;
+	gzip_min_length 1024;
 	
 	set $cors_origin "";
-    set $cors_allowed_origin 0;
-    if ($http_origin ~* ^https://access\.eventyay\.com$) {
-        set $cors_origin $http_origin;
-        set $cors_allowed_origin 1;
-    }
+	set $cors_allowed_origin 0;
+	if ($http_origin ~* ^https://access\.eventyay\.com$) {
+		set $cors_origin $http_origin;
+		set $cors_allowed_origin 1;
+	}
 
-    set $cors_preflight 0;
-    if ($request_method = OPTIONS) {
-        set $cors_preflight 1;
-    }
-    if ($http_access_control_request_method = "") {
-        set $cors_preflight 0;
-    }
+	set $cors_preflight 0;
+	if ($request_method = OPTIONS) {
+		set $cors_preflight 1;
+	}
+	if ($http_access_control_request_method = "") {
+		set $cors_preflight 0;
+	}
 
-    set $cors_reject_preflight 0;
-    if ($cors_preflight = 1) {
-        set $cors_reject_preflight 1;
-    }
-    if ($cors_allowed_origin = 1) {
-        set $cors_reject_preflight 0;
-    }
+	set $cors_reject_preflight 0;
+	if ($cors_preflight = 1) {
+		set $cors_reject_preflight 1;
+	}
+	if ($cors_allowed_origin = 1) {
+		set $cors_reject_preflight 0;
+	}
 
 	# WebSocket connections - route to daphne
 	location /ws/ {
@@ -42,32 +57,45 @@ server {
 		proxy_read_timeout 86400;
 	}
 
-    # Regular HTTP requests - route to gunicorn
-    location / {
-        add_header Referrer-Policy same-origin always;
+	location ~ ^/e/(.*)$ {
+		return 301 /ev/$1;
+	}
 
-        if ($cors_reject_preflight = 1) {
-            return 403;
-        }
+	# Widget embedded API requests - route to gunicorn without stripping CORS
+	location ~ /widgets?/ {
+		proxy_pass http://127.0.0.1:8000;
+		proxy_set_header Host $http_host;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_redirect off;
+	}
+
+	# Regular HTTP requests - route to gunicorn
+	location / {
+		add_header Referrer-Policy same-origin always;
+
+		if ($cors_reject_preflight = 1) {
+			return 403;
+		}
 
 		if ($cors_preflight = 1) {
-            add_header Access-Control-Allow-Origin $cors_origin always;
-            add_header Access-Control-Allow-Credentials 'true' always;
-            add_header Access-Control-Allow-Headers 'exhibitor, Authorization, Content-Type, DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Range' always;
-            add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS, PUT, DELETE' always;
-            add_header Access-Control-Expose-Headers 'Content-Length, Content-Range' always;
-            add_header Vary Origin always;
-            return 204;
-        }
+			add_header Access-Control-Allow-Origin $cors_origin always;
+			add_header Access-Control-Allow-Credentials 'true' always;
+			add_header Access-Control-Allow-Headers 'exhibitor, Authorization, Content-Type, DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Range' always;
+			add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS, PUT, DELETE' always;
+			add_header Access-Control-Expose-Headers 'Content-Length, Content-Range' always;
+			add_header Vary Origin always;
+			return 204;
+		}
 
-        if ($cors_allowed_origin = 1) {
-            add_header Referrer-Policy same-origin always;
-            add_header Access-Control-Allow-Origin $cors_origin always;
-            add_header Access-Control-Allow-Credentials 'true' always;
-            add_header Access-Control-Allow-Headers 'exhibitor, Authorization, Content-Type, DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Range' always;
-            add_header Access-Control-Expose-Headers 'Content-Length, Content-Range' always;
-            add_header Vary Origin always;
-        }
+		if ($cors_allowed_origin = 1) {
+			add_header Referrer-Policy same-origin always;
+			add_header Access-Control-Allow-Origin $cors_origin always;
+			add_header Access-Control-Allow-Credentials 'true' always;
+			add_header Access-Control-Allow-Headers 'exhibitor, Authorization, Content-Type, DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Range' always;
+			add_header Access-Control-Expose-Headers 'Content-Length, Content-Range' always;
+			add_header Vary Origin always;
+		}
 
 		proxy_hide_header Access-Control-Allow-Origin;
 		proxy_hide_header Access-Control-Allow-Credentials;
@@ -81,8 +109,18 @@ server {
 		proxy_redirect off;
   	}
 
+	location ~* "^/static/.+\.[0-9a-f]{8,}\.(js|woff2?|ttf|eot|png|svg|ico)$" {
+		root <PATH_TO>/data;
+		access_log off;
+		add_header Cache-Control "public, max-age=31536000, immutable" always;
+		add_header Access-Control-Allow-Origin "*" always;
+	}
+
 	location /static/ {
 		alias <PATH_TO>/data/static/;
+		access_log off;
+		add_header Cache-Control "public, max-age=3600" always;
+		add_header Access-Control-Allow-Origin "*" always;
 	}
 
 	location /media/ {

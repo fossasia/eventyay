@@ -312,11 +312,32 @@ class Product(LoggedModel):
         default=False,
         verbose_name=_('Free price input'),
         help_text=_(
-            'If this option is active, your users can choose the price themselves. The price configured above '
-            'is then interpreted as the minimum price a user has to enter. You could use this e.g. to collect '
-            'additional donations for your event. This is currently not supported for products that are '
-            'bought as an add-on to other products.'
+            'If this option is active, your users can choose the price themselves. The minimum '
+            'and maximum prices can be configured below. If not configured, the default price '
+            'is used as the minimum. You could use this e.g. to collect additional donations for '
+            'your event. This is currently not supported for products that are bought as an add-on '
+            'to other products.'
         ),
+    )
+    free_price_min = models.DecimalField(
+        verbose_name=_('Minimum price'),
+        help_text=_(
+            'The minimum price a user has to enter. If left empty, the default price will be used as the minimum.'
+        ),
+        max_digits=7,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    free_price_max = models.DecimalField(
+        verbose_name=_('Maximum price'),
+        help_text=_(
+            'The maximum price a user can enter. If left empty, there is no upper limit.'
+        ),
+        max_digits=7,
+        decimal_places=2,
+        null=True,
+        blank=True,
     )
     tax_rule = models.ForeignKey(
         'TaxRule',
@@ -418,6 +439,13 @@ class Product(LoggedModel):
         help_text=_(
             'If this is checked, the usual cancellation and order change settings of this event apply. '
             'If this is unchecked, orders containing this product can not be canceled by users but only by you.'
+        ),
+    )
+    allow_user_variation_change = models.BooleanField(
+        verbose_name=_('Allow customers to change product variations'),
+        default=False,
+        help_text=_(
+            'If this is checked, customers can switch between variations of this product in their order details.'
         ),
     )
     min_per_order = models.IntegerField(

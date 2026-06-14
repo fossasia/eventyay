@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 from io import BytesIO
 from pathlib import Path
@@ -9,6 +10,8 @@ from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
 from PIL import Image, ImageOps
 from PIL.Image import MAX_IMAGE_PIXELS, DecompressionBombError, Resampling
+
+logger = logging.getLogger(__name__)
 
 THUMBNAIL_SIZES = {
     'tiny': (64, 64),
@@ -39,7 +42,8 @@ def validate_image(f):
 
     try:
         try:
-            image = Image.open(file, formats=settings.PILLOW_FORMATS_QUESTIONS_IMAGE)
+            formats = getattr(settings, 'PILLOW_FORMATS_QUESTIONS_IMAGE', None)
+            image = Image.open(file, formats=formats)
             # verify() must be called immediately after the constructor.
             image.verify()
         except DecompressionBombError:
@@ -77,6 +81,7 @@ def process_image(*, image, generate_thumbnail=False):
     try:
         img = Image.open(image)
     except Exception:
+        logger.exception("Failed to process image")
         return
 
     extension = '.jpg'
@@ -120,6 +125,8 @@ def create_thumbnail(image, size):
         img = Image.open(image, formats=('PNG', 'JPEG', 'GIF'))
         img.load()
     except Exception:
+        logger.exception("Thumbnail creation failed")
+
         return None
     img.thumbnail(THUMBNAIL_SIZES[size], resample=Resampling.LANCZOS)
     thumbnail_field = getattr(image.instance, thumbnail_field_name)

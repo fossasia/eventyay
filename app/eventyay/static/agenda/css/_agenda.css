@@ -1,5 +1,103 @@
 /* This file contains styles for the schedule and other attendee-facing components */
 
+body.page-agenda #main-container > header {
+  margin-top: 24px;
+}
+
+/* Featured page typography */
+body.page-agenda .featured-page {
+  --featured-intro-size: 0.9375rem;
+  --featured-body-size: 0.9375rem;
+  --featured-meta-size: 0.875rem;
+}
+
+body.page-agenda .featured-page > .talk-title.featured-page-title {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+body.page-agenda .featured-page .featured-custom-intro {
+  font-size: var(--featured-intro-size);
+  line-height: 1.55;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+body.page-agenda .featured-page .featured-custom-intro :is(h1, h2, h3, h4, h5, h6) {
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 0.65rem;
+  margin-bottom: 0.35rem;
+  color: var(--color-text);
+}
+
+body.page-agenda .featured-page .featured-custom-intro h1 {
+  font-size: 1.25rem;
+}
+
+body.page-agenda .featured-page .featured-custom-intro h2 {
+  font-size: 1.15rem;
+}
+
+body.page-agenda .featured-page .featured-custom-intro h3 {
+  font-size: 1.05rem;
+}
+
+body.page-agenda .featured-page .featured-custom-intro h4,
+body.page-agenda .featured-page .featured-custom-intro h5,
+body.page-agenda .featured-page .featured-custom-intro h6 {
+  font-size: 1rem;
+}
+
+body.page-agenda .featured-page .featured-custom-intro h1:first-child,
+body.page-agenda .featured-page .featured-custom-intro h2:first-child,
+body.page-agenda .featured-page .featured-custom-intro h3:first-child {
+  margin-top: 0;
+}
+
+body.page-agenda .featured-page > p {
+  font-size: var(--featured-intro-size);
+  line-height: 1.55;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+body.page-agenda .featured-page #featured-talks {
+  margin-top: 0.35rem;
+}
+
+body.page-agenda .featured-page #featured-talks section > .featured-talk-abstract {
+  font-size: var(--featured-body-size);
+  line-height: 1.6;
+  margin-top: 0.35rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+body.page-agenda .featured-page #featured-talks section > .featured-talk-abstract :is(ul, ol) {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+  padding-left: 1.25rem;
+}
+
+body.page-agenda .featured-page #featured-talks section > .featured-talk-abstract li {
+  margin-bottom: 0.25rem;
+}
+
+body.page-agenda .featured-page #featured-talks section :is(ul, ol) {
+  font-size: var(--featured-body-size);
+  line-height: 1.6;
+  margin-top: 0.35rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+/* Featured list: session meta smaller than global .talk-title small */
+body.page-agenda .featured-page #featured-talks .talk-title small {
+  font-size: var(--featured-meta-size);
+  line-height: 1.4;
+}
+
 #main-container.list-schedule {
   min-width: 0;
 }
@@ -72,6 +170,7 @@
 }
 
 #main-container.main-schedule {
+  overflow-x: clip;
   margin: 0 auto;
   #main-card {
     margin: 0 auto;

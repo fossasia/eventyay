@@ -156,6 +156,8 @@ class BaseSettings(_BaseSettings):
     admin_audit_comments_asked: bool = False
     # To select a variant from CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.
     call_for_speaker_login_button_label: str = 'default'
+    # Set to 1 to enable Vite dev servers with HMR for live frontend development.
+    npm_dev: bool = False
 
     @classmethod
     def settings_customise_sources(
@@ -195,7 +197,6 @@ class BaseSettings(_BaseSettings):
     upload_size_image: int = 10
     upload_size_pdf: int = 10
     upload_size_xlsx: int = 2
-    upload_size_favicon: int = 1
     upload_size_attachment: int = 10
     upload_size_mail: int = 4
     upload_size_question: int = 20
@@ -303,7 +304,6 @@ _LIBRARY_APPS = (
     'django_celery_beat',
     'django.forms',
     'djangoformsetjs',
-    'django_pdb',
     'jquery',
     'rest_framework.authtoken',
     'rules.apps.AutodiscoverRulesConfig',
@@ -325,6 +325,9 @@ if DEBUG and importlib.util.find_spec('django_extensions'):
 
 if DEBUG and importlib.util.find_spec('debug_toolbar'):
     _LIBRARY_APPS += ('debug_toolbar',)
+
+if DEBUG and importlib.util.find_spec('django_pdb'):
+    _LIBRARY_APPS += ('django_pdb',)
 
 _OURS_APPS = (
     'eventyay.agenda',
@@ -393,6 +396,20 @@ CORE_MODULES = (
         'eventyay.plugins.checkinlists',
         'eventyay.plugins.reports',
     )
+)
+
+# Widgets are public embeds served to any origin, so all origins must be allowed.
+# CORS_URLS_REGEX restricts which URL paths receive the header — only widget and
+# event-CSS endpoints.
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_URLS_REGEX = (
+    r"^(?:"
+    r".*/widget[s]?/.*|"
+    r".*/schedule/widget/.*|"
+    r".*/static/event\.css|"
+    r".*/static/schedule/.*\.js"
+    r")$"
 )
 
 # TODO: This list is only for display. It should not be here.
@@ -512,9 +529,12 @@ TEMPLATES = (
     },
 )
 
+# See: https://django-allauth.readthedocs.io/en/latest/configuration.html
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
     'django.contrib.auth.backends.ModelBackend',
+    # To support multiple email addresses per user, we use django-allauth's authentication backend.
+    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
 # Password validation
@@ -1230,8 +1250,17 @@ LOGGING = {
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+# 'mandatory' means allauth's own login view (/accounts/login/) will block unverified users.
+# Existing users who registered before email verification was enforced may be affected if they
+# use that URL. Our custom login view (eventyay_common:auth.login) does not enforce this,
+# so those users remain unaffected. After signup, allauth redirects to
+# account_email_verification_sent (not to the login page), so ACCOUNT_SIGNUP_REDIRECT_URL
+# below is only reached when the user is already verified (e.g. social auth signup).
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 # Prefer Jinja2 templates for django-allauth
 ACCOUNT_TEMPLATE_EXTENSION = 'jinja'
+ACCOUNT_ADAPTER = 'eventyay.eventyay_common.adapter.CustomAccountAdapter'
+ACCOUNT_SIGNUP_REDIRECT_URL = 'eventyay_common:auth.login'
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/common/account/email'
 
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
@@ -1242,8 +1271,14 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 SOCIALACCOUNT_PROVIDERS = {
-    # We need this to tell django-allauth that user email address is verified and not make password unusable.
-    'mediawiki': {'VERIFIED_EMAIL': True},
+    'mediawiki': {
+        # VERIFIED_EMAIL=True trusts the email even when confirmed_email=False.
+        # No custom SCOPE — WikiMedia's default scope returns the full profile.
+        # Email may be null if the OAuth consumer lacks "View email" permission;
+        # the username fallback in CustomSocialAccountAdapter handles that case.
+        'VERIFIED_EMAIL': True,
+        'provider_class': 'eventyay.plugins.socialauth.mediawiki_provider.EventyayMediaWikiProvider',
+    },
 }
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'api.OAuthApplication'
@@ -1459,10 +1494,13 @@ LINKEDIN_CLIENT_ID = conf.linkedin_client_id
 LINKEDIN_CLIENT_SECRET = conf.linkedin_client_secret
 
 FRONTEND_DIR = BASE_DIR / 'webapp'
-VITE_DEV_SERVER_PORT = 8080
-VITE_DEV_SERVER = f'http://localhost:{VITE_DEV_SERVER_PORT}'
-VITE_DEV_MODE = False  # Set to False to use static files instead of dev server
-VITE_IGNORE = False  # Used to ignore `collectstatic`/`rebuild`
+VITE_DEV_MODE = conf.npm_dev
+VITE_DEV_SERVER_PORTS = {
+    'schedule-editor': 'http://localhost:8080',
+    'video': 'http://localhost:8880',
+    'webcheckin': 'http://localhost:8081',
+    'schedule': 'http://localhost:8082',
+}
 
 # Not sure if they need to be configurable.
 ENTROPY = {
@@ -1488,6 +1526,3 @@ if IS_DEVELOPMENT:
         ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
     # Trust standard local and emulator origins for CSRF
     CSRF_TRUSTED_ORIGINS += ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://10.0.2.2:8000', 'http://10.0.3.2:8000']
-    # Use relative URLs to remain host-agnostic
-    if 'localhost' in SITE_URL: SITE_URL = ''
-    if 'localhost' in TALK_HOSTNAME: TALK_HOSTNAME = ''

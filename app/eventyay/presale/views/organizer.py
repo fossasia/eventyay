@@ -6,12 +6,17 @@ from urllib.parse import quote
 import isoweek
 import pytz
 from django.conf import settings
-from django.db.models import Exists, Max, Min, OuterRef, Q
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Exists, Max, Min, OuterRef, Q, Value
 from django.db.models.functions import Coalesce, Greatest
 from django.http import Http404, HttpResponse
+from django.shortcuts import redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.decorators import method_decorator
 from django.utils.formats import date_format, get_format
 from django.utils.timezone import get_current_timezone, now
+from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, TemplateView
@@ -21,6 +26,8 @@ from eventyay.base.i18n import language
 from eventyay.base.models import (
     Event,
     EventMetaValue,
+    Organizer,
+    OrganizerFollower,
     Quota,
     SubEvent,
     SubEventMetaValue,
@@ -315,15 +322,10 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
     def get(self, request, *args, **kwargs):
         style = request.GET.get('style', request.organizer.settings.event_list_type)
         if style == 'calendar':
-            cv = CalendarView()
-            cv.request = request
-            return cv.get(request, *args, **kwargs)
-        elif style == 'week':
-            cv = WeekCalendarView()
-            cv.request = request
-            return cv.get(request, *args, **kwargs)
-        else:
-            return super().get(request, *args, **kwargs)
+            return CalendarView.as_view()(request, *args, **kwargs)
+        if style == 'week':
+            return WeekCalendarView.as_view()(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         return self._get_event_queryset()
@@ -337,6 +339,24 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
                     event.min_from.astimezone(event.tzname),
                     (event.max_fromto or event.max_to or event.max_from).astimezone(event.tzname),
                 )
+        organizer = self.request.organizer
+        follow_enabled = organizer.settings.get('community_follow_enabled', as_type=bool, default=True)
+        ctx['follow_enabled'] = follow_enabled
+        ctx['show_follower_count'] = organizer.settings.get('community_show_follower_count', as_type=bool, default=True)
+
+        qs = Organizer.objects.filter(pk=organizer.pk).annotate(
+            follower_count=Count('followers')
+        )
+        if self.request.user.is_authenticated:
+            qs = qs.annotate(
+                is_following=Exists(OrganizerFollower.objects.filter(organizer=OuterRef('pk'), user=self.request.user))
+            )
+        else:
+            qs = qs.annotate(is_following=Value(False))
+
+        org_data = qs.values('follower_count', 'is_following').first()
+        ctx['follower_count'] = org_data['follower_count'] if org_data else 0
+        ctx['is_following'] = org_data['is_following'] if org_data else False
         return ctx
 
 
@@ -778,3 +798,35 @@ class OrganizerIcalDownload(OrganizerViewMixin, View):
         resp = HttpResponse(cal.serialize(), content_type='text/calendar')
         resp['Content-Disposition'] = 'attachment; filename="{}.ics"'.format(request.organizer.slug)
         return resp
+
+
+def _safe_redirect_back(request, organizer):
+    url = request.POST.get('next') or request.GET.get('next') or request.META.get('HTTP_REFERER', '')
+    if url and url_has_allowed_host_and_scheme(url, allowed_hosts=[request.get_host()]):
+        return redirect(url)
+    return redirect(eventreverse(organizer, 'presale:organizer.index'))
+
+
+@method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
+class OrganizerFollow(OrganizerViewMixin, View):
+    def post(self, request, *args, **kwargs):
+        organizer = request.organizer
+        if not request.user.is_active:
+            messages.error(request, _('Your account is not active.'))
+            return redirect(eventreverse(organizer, 'presale:organizer.index'))
+        if not organizer.settings.get('community_follow_enabled', as_type=bool, default=True):
+            messages.error(request, _('Following is not enabled for this organizer.'))
+            return redirect(eventreverse(organizer, 'presale:organizer.index'))
+
+        OrganizerFollower.objects.get_or_create(user=request.user, organizer=organizer)
+        messages.success(request, _('You are now following {organizer}.').format(organizer=organizer.name))
+        return _safe_redirect_back(request, organizer)
+
+
+@method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
+class OrganizerUnfollow(OrganizerViewMixin, View):
+    def post(self, request, *args, **kwargs):
+        organizer = request.organizer
+        OrganizerFollower.objects.filter(user=request.user, organizer=organizer).delete()
+        messages.success(request, _('You have unfollowed {organizer}.').format(organizer=organizer.name))
+        return _safe_redirect_back(request, organizer)

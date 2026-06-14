@@ -60,6 +60,8 @@ class SubmitWizard(EventPageMixin, View):
         result = handler(request)
 
         if request.method == 'POST' and request.POST.get('action', 'submit') == 'draft':
+            if getattr(result, 'status_code', 200) != 302:
+                return result
             return self.done(
                 request,
                 draft=True,

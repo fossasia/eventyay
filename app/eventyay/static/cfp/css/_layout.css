@@ -11,17 +11,12 @@
   cursor: pointer;
 }
 
-/* Add padding to username for visual match */
-.presale-sticky-tabs .header-row-right details.dropdown summary .mobile-hide-text {
-  padding-left: 6px;
-  padding-right: 6px;
-}
 body {
   background: var(--color-grey-lightest);
 }
 
 #top-bg {
-  background-color: var(--color-primary);
+  background-color: var(--color-header-background);
   position: fixed;
   top: 0;
   left: 0;
@@ -37,10 +32,10 @@ body {
 }
 
 h1 a {
-  color: white;
+  color: var(--color-header-text);
 
   &:hover {
-    color: white;
+    color: var(--color-header-text);
     text-decoration: none;
   }
 }
@@ -75,19 +70,22 @@ header {
     padding-bottom: 6px;
     flex-shrink: 0;
     a.header-tab {
+      color: var(--color-header-navigation);
       padding: 8px 10px 4px 10px;
       border-bottom: 2px solid transparent;
       &:hover {
+        color: var(--color-header-navigation);
         text-decoration: none;
         border-bottom: 2px dotted var(--color-primary);
       }
       &.active {
+        color: var(--color-header-navigation);
         border-bottom: 2px solid var(--color-primary);
       }
     }
   }
   .header-row-right {
-    color: var(--color-primary);
+    color: var(--color-header-navigation);
     margin-left: auto;
 	margin-right: 10px;
     display: flex;
@@ -98,8 +96,8 @@ header {
     gap: 10px;
 
     .header-nav {
-      color: var(--color-primary);
-      border-color: var(--color-primary);
+      color: var(--color-header-navigation);
+      border-color: var(--color-header-navigation);
       background: transparent;
     }
 
@@ -118,7 +116,7 @@ header {
     }
 
     .locale-link {
-      color: var(--color-primary);
+      color: var(--color-header-navigation);
       text-decoration: none;
       font-size: 0.9rem;
       opacity: 0.85;
@@ -141,11 +139,11 @@ header {
       
       summary {
         cursor: pointer;
-        color: var(--color-primary);
+        color: var(--color-header-navigation);
       }
       
       summary:focus-visible {
-        outline: 2px solid var(--color-primary);
+        outline: 2px solid var(--color-header-navigation);
         border-radius: var(--size-border-radius);
       }
       
@@ -213,22 +211,25 @@ header {
 }
 
 .presale-sticky-tabs a.header-tab {
+  color: var(--color-header-navigation);
   padding: 8px 10px 4px 10px;
   border-bottom: 2px solid transparent;
 }
 
 .presale-sticky-tabs a.header-tab:hover {
+  color: var(--color-header-navigation);
   text-decoration: none;
   border-bottom: 2px dotted var(--color-primary);
 }
 
 .presale-sticky-tabs a.header-tab.active,
 .presale-sticky-tabs a.header-tab.underline {
+  color: var(--color-header-navigation);
   border-bottom: 2px solid var(--color-primary);
 }
 
 .presale-sticky-tabs .header-row-right {
-  color: var(--color-primary);
+  color: var(--color-header-navigation);
   margin-left: auto;
   margin-right: 10px;
   display: flex;
@@ -240,8 +241,8 @@ header {
 }
 
 .presale-sticky-tabs .header-row-right .header-nav {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  color: var(--color-header-navigation);
+  border-color: var(--color-header-navigation);
   background: transparent;
 }
 
@@ -273,22 +274,118 @@ header {
   padding-left: 1.75rem;
 }
 
+.event-brand--logo-large {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.event-brand--logo-large .organizer-logo {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+@media (min-width: 769px) {
+  /* Presale info / tickets: align logo block with tab content (tighter than agenda & CFP) */
+  #main-container.presale-container .event-brand--has-logo {
+    padding-left: 0.75rem;
+  }
+}
+
 .event-hero-overlay {
   display: inline-flex;
   border-radius: 14px;
   background: transparent;
+  position: relative;
+}
+
+/* Join online video: button on the event hero (all breakpoints). Nav tab duplicate is hidden. */
+#header-tabs .join-video-link {
+  display: none;
+}
+
+.header-join-video-floating-mobile {
+  position: absolute;
+  bottom: -27.5px;
+  right: 7.5px;
+  z-index: 1050;
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 6px;
+  height: 28px;
+  min-width: 0;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+@media (max-width: 319px) {
+  .header-join-video-floating-mobile .btn-join-video-icon-only {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+  }
+
+  .header-join-video-floating-mobile .btn-join-video-icon-only .join-video-text {
+    display: none;
+  }
+
+  .header-join-video-floating-mobile .btn-join-video-icon-only i {
+    font-size: 0.95rem;
+  }
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only .join-video-text {
+  display: inline-block;
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only:hover,
+.header-join-video-floating-mobile .btn-join-video-icon-only:focus {
+  transform: scale(1.02);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  color: white !important;
+  background-color: var(--color-primary);
+  filter: none;
+}
+
+@media (min-width: 769px) {
+  body.page-agenda .event-hero-overlay,
+  body.page-cfp .event-hero-overlay {
+    display: flex;
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body.page-agenda .header-join-video-floating-mobile,
+  body.page-cfp .header-join-video-floating-mobile {
+    right: 0;
+  }
 }
 
 .event-hero-text {
-  color: white;
+  color: var(--color-header-text);
   display: flex;
   flex-direction: column;
 }
 
 header > .event-home-back {
   align-self: flex-start;
-  margin: 0 0 0.35rem;
-  padding-left: 1.75rem;
+  margin: 0 0 6px;
+  padding-left: 28px;
   box-sizing: border-box;
   display: inline-block;
   text-decoration: none;
@@ -306,7 +403,7 @@ header > .event-home-back {
   align-items: center;
   justify-content: center;
   gap: 0;
-  min-height: 2rem;
+  min-height: 32px;
   padding: 0 11px;
   background: rgba(0, 0, 0, 0.45);
   border-radius: 8px;
@@ -329,14 +426,15 @@ header > .event-home-back {
   outline-offset: 2px;
 }
 
-.event-home-back-icon {
-  font-size: 1.35rem;
+/* px: presale root font-size differs from agenda/CFP */
+.event-home-back .event-home-back-icon {
+  font-size: 22px;
   line-height: 1;
   flex-shrink: 0;
 }
 
-.event-home-back-label {
-  font-size: 0.9rem;
+.event-home-back .event-home-back-label {
+  font-size: 14px;
   font-weight: 600;
   line-height: 1;
   max-width: 0;
@@ -630,81 +728,24 @@ footer {
     padding-left: 12px;
   }
 
+  header > .event-home-back {
+    padding-left: 12px;
+  }
+
   .event-hero-text .event-title {
     font-size: 2rem;
   }
 
-  .event-home-back-icon {
-    font-size: 1.2rem;
+  .event-home-back .event-home-back-icon {
+    font-size: 19px;
   }
 
-  .event-home-back-label {
-    font-size: 0.85rem;
+  .event-home-back .event-home-back-label {
+    font-size: 13.5px;
   }
 
   .event-date-line {
     font-size: 0.9rem;
-  }
-
-  /* Hide the navbar join link on mobile, as it is now floating below the hero */
-  #header-tabs .join-video-link {
-    display: none !important;
-  }
-
-  .header-join-video-floating-mobile {
-    position: absolute;
-    bottom: -27.5px;
-    right: 7.5px;
-    z-index: 1050;
-    
-    /* Button for mobile/tablet: compact with icon + text */
-    .btn-join-video-icon-only {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 2px 6px;
-      height: 28px;
-      min-width: 0;
-      border-radius: 6px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.18);
-      background-color: var(--Color-primary, var(--color-primary));
-      color: white;
-      border: none;
-      font-size: 0.82rem;
-      font-weight: 500;
-      line-height: 1;
-    }
-
-    /* Very small screens (phones): make it a compact circular icon-only button */
-    /* Restrict the icon-only behavior to < 320px so 320px devices show the text */
-    @media (max-width: 319px) {
-      .btn-join-video-icon-only {
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        border-radius: 50%;
-        border: none;
-      }
-      .btn-join-video-icon-only .join-video-text {
-        display: none;
-      }
-      .btn-join-video-icon-only i {
-        font-size: 0.95rem;
-      }
-    }
-
-    .btn-join-video-icon-only .join-video-text {
-      display: inline-block;
-    }
-
-    .btn-join-video-icon-only:hover, .btn-join-video-icon-only:focus {
-      transform: scale(1.02);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
-      color: white !important;
-      background-color: var(--color-primary);
-      filter: none;
-    }
   }
 
   .event-hero-overlay {
@@ -738,13 +779,7 @@ footer {
     font-size: 1.6rem;
   }
 
-  .event-home-back-icon {
-    font-size: 1.2rem;
-  }
-
-  .event-home-back-label {
-    font-size: 0.8rem;
-  }
+  /* Home control: use same icon/label sizes as @media (max-width: 768px); do not shrink further here */
 
   .event-brand {
     gap: 0.75rem;
@@ -754,13 +789,9 @@ footer {
     padding-left: 12px;
   }
 
-  header > .event-home-back {
-    padding-left: 12px;
-  }
-
   #main-container {
     padding: 0;
-    padding-top: 20px;
+    padding-top: 24px;
     width: 100%;
     margin-top: 1.5rem;
 
@@ -849,15 +880,19 @@ footer {
       }
     }
   }
+
+  /* Agenda uses its own spacing (e.g. header margin); skip presale-style top padding */
+  body.page-agenda #main-container {
+    padding-top: 0;
+  }
 }
 
-/* Hide mobile-only navbar icons, CfS short text, and floating join button on desktop */
-.nav-icon-mobile, .cfs-short, .header-join-video-floating-mobile {
+.nav-icon-mobile, .cfs-short {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .nav-icon-mobile, .header-join-video-floating-mobile {
+  .nav-icon-mobile {
     display: block;
   }
   .nav-icon-mobile {
@@ -883,4 +918,22 @@ footer {
   aside .row-voucher .btn {
     margin-top: 0;
   }
+}
+
+.form-group:has([data-question-dependency]).dependency-hidden {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin-bottom: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.3s ease, margin-bottom 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.form-group:has([data-question-dependency]):not(.dependency-hidden) {
+  max-height: 10000px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease, margin-bottom 0.3s ease, visibility 0s linear 0s;
 }

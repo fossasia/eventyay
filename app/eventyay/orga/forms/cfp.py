@@ -10,6 +10,16 @@ from i18nfield.forms import I18nFormMixin, I18nModelForm
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.forms import I18nMarkdownTextarea
+from eventyay.base.models import (
+    AnswerOption,
+    SubmissionType,
+    SubmitterAccessCode,
+    TalkQuestion,
+    TalkQuestionVariant,
+    Track,
+)
+from eventyay.base.models.cfp import CfP, default_fields
+from eventyay.base.models.question import TalkQuestionRequired
 from eventyay.common.forms.fields import ColorField
 from eventyay.common.forms.mixins import I18nHelpText, JsonSubfieldMixin, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer
@@ -20,17 +30,9 @@ from eventyay.common.forms.widgets import (
     HtmlDateTimeInput,
     TextInputWithAddon,
 )
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
-from eventyay.base.models import (
-    AnswerOption,
-    TalkQuestion,
-    TalkQuestionVariant,
-    SubmissionType,
-    SubmitterAccessCode,
-    Track,
-)
-from eventyay.base.models.cfp import CfP, default_fields
-from eventyay.base.models.question import TalkQuestionRequired
+from eventyay.orga.forms.widgets import MultipleLanguagesWidget
 from eventyay.orga.utils.colors import generate_random_high_contrast_color
 
 
@@ -39,6 +41,7 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
     Form for general CfP settings stored in event.cfp.settings.
     requires an 'obj' argument in __init__ which must be an Event instance with a related 'cfp' object.
     """
+
     use_tracks = forms.BooleanField(
         label=_('Use tracks'),
         required=False,
@@ -52,7 +55,8 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
     mail_on_new_submission = forms.BooleanField(
         label=_('Send mail on new proposal'),
         help_text=_(
-            'If this setting is checked, you will receive an email to the organizer address for every received proposal.'
+            'If this setting is checked, you will receive an email to the organizer address '
+            'for every received proposal.'
         ),
         required=False,
     )
@@ -67,6 +71,11 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         widget=forms.RadioSelect(),
         required=False,
     )
+    cfp_enable_gravatar = forms.BooleanField(
+        label=_('Enable Gravatar'),
+        help_text=_('Allow speakers to use Gravatar for their profile picture.'),
+        required=False,
+    )
 
     def __init__(self, *args, obj, **kwargs):
         kwargs.pop('read_only')  # added in ActionFromUrl view mixin, but not needed here.
@@ -75,15 +84,22 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         if getattr(obj, 'email', None):
             self.fields['mail_on_new_submission'].help_text += f' (<a href="mailto:{obj.email}">{obj.email}</a>)'
         self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
+        self.initial['cfp_enable_gravatar'] = obj.cfp.enable_gravatar
 
     def save(self, *args, **kwargs):
-        current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
-        if 'count_length_in' in self.cleaned_data:
-            new_count_length_in = self.cleaned_data.get('count_length_in') or current_count_length_in
-        else:
-            new_count_length_in = current_count_length_in
-        self.instance.cfp.settings['count_length_in'] = new_count_length_in
-        self.instance.cfp.save()
+        persist_cfp = kwargs.pop('persist_cfp', True)
+        update_count_length_in = kwargs.pop('update_count_length_in', True)
+
+        if update_count_length_in:
+            current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
+            if 'count_length_in' in self.cleaned_data:
+                new_count_length_in = self.cleaned_data.get('count_length_in') or current_count_length_in
+            else:
+                new_count_length_in = current_count_length_in
+            self.instance.cfp.settings['count_length_in'] = new_count_length_in
+
+        if persist_cfp:
+            self.instance.cfp.save(update_fields=['settings'])
         super().save(*args, **kwargs)
 
     class Meta:
@@ -100,6 +116,16 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
     """
     Form for full CfP settings, including specific field requirements and custom questions.
     """
+
+    class Meta(CfPGeneralSettingsForm.Meta):
+        # The boolean feature-flag fields (use_tracks, present_multiple_times, etc.) are
+        # inherited from CfPGeneralSettingsForm but are NOT rendered on the Forms page
+        # template.  If JsonSubfieldMixin.save() were to process them here it would read
+        # False from the missing POST keys and silently overwrite the stored values.
+        # Override to empty so those flags are only written from CfPGeneralSettingsForm
+        # (the Content page), where the checkboxes are actually rendered.
+        json_fields = {}
+
     def __init__(self, *args, obj, **kwargs):
         super().__init__(*args, obj=obj, **kwargs)
         self.length_fields = [
@@ -122,10 +148,25 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'availabilities',
             'do_not_record',
             'image',
+            'slides',
+            'track',
+            'duration',
+            'slot_count',
+            'content_locale',
+            'fullname',
+        ]
+        self.public_fields = [
+            'title',
+            'abstract',
+            'description',
             'track',
             'duration',
             'content_locale',
+            'image',
+            'slides',
             'fullname',
+            'biography',
+            'avatar',
         ]
         for attribute in self.length_fields:
             field_name = f'cfp_{attribute}_min_length'
@@ -142,6 +183,13 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                 initial=obj.cfp.fields.get(attribute, {'max_length': None}).get('max_length'),
             )
             self.fields[field_name].widget.attrs['placeholder'] = ''
+        self.fields['cfp_slides_max_count'] = forms.IntegerField(
+            required=False,
+            min_value=1,
+            initial=obj.cfp.fields.get('slides', default_fields()['slides']).get('max_count', 1),
+            help_text=_('Maximum number of slide links or PDF files per proposal.'),
+        )
+        self.fields['cfp_slides_max_count'].widget.attrs['placeholder'] = ''
         for attribute in self.request_require_fields:
             field_name = f'cfp_ask_{attribute}'
             # Full Name is always required and always active
@@ -164,11 +212,17 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                         ('required', _('Ask and require input')),
                     ],
                 )
-        
+        for attribute in self.public_fields:
+            field_name = f'cfp_public_{attribute}'
+            self.fields[field_name] = forms.BooleanField(
+                required=False,
+                initial=obj.cfp.fields.get(attribute, default_fields()[attribute]).get('public', False),
+            )
+
         # Add fields for custom questions
         # We use all_objects because we want to include reviewer questions and inactive questions
         # (so they can be re-activated)
-        for question in TalkQuestion.all_objects.filter(event=obj):
+        for question in TalkQuestion.all_objects.filter(event=obj, is_imported=False):
             field_name = f'question_{question.pk}'
             initial = 'do_not_ask'
             if question.active:
@@ -176,7 +230,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                     initial = 'required'
                 else:
                     initial = 'optional'
-            
+
             self.fields[field_name] = forms.ChoiceField(
                 required=False,
                 initial=initial,
@@ -188,18 +242,49 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                 ],
             )
 
-        if not obj.is_multilingual:
-            self.fields.pop('cfp_ask_content_locale', None)
+        available_codes = [code for code, _ in obj.available_content_locales]
+        choices = get_language_choices_native_with_ui_name(codes=available_codes)
+        existing_codes = {c[0] for c in choices}
+        for code, name in obj.available_content_locales:
+            if code not in existing_codes:
+                choices.append((code, name))
+
+        self.fields['content_locales'] = forms.MultipleChoiceField(
+            choices=choices,
+            widget=MultipleLanguagesWidget(),
+            required=False,
+            initial=obj.settings.get('content_locales') or [],
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        ask_content_locale = cleaned_data.get('cfp_ask_content_locale')
+        content_locales = cleaned_data.get('content_locales')
+
+        if ask_content_locale and ask_content_locale != 'do_not_ask' and not content_locales:
+            self.add_error(
+                'content_locales',
+                forms.ValidationError(
+                    _('You must select at least one content language if the Content Locale field is active.')
+                )
+            )
+        return cleaned_data
 
     def save(self, *args, **kwargs):
         # Preserve fields_config (drag-drop order) before modifying settings
         fields_config = self.instance.cfp.settings.get('fields_config')
 
         self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
+        self.instance.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data.get('cfp_enable_gravatar', False)
 
         # Restore fields_config after setting other values (also when it is an empty dict)
         if fields_config is not None:
             self.instance.cfp.settings['fields_config'] = fields_config
+
+        if 'content_locales' in self.cleaned_data:
+            if 'cfp_ask_content_locale' in self.cleaned_data and self.cleaned_data.get('cfp_ask_content_locale') != 'do_not_ask':
+                self.instance.settings.set('content_locales', self.cleaned_data['content_locales'])
+
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]
@@ -208,13 +293,20 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                 self.instance.cfp.fields[key]['visibility'] = 'required'
             else:
                 self.instance.cfp.fields[key]['visibility'] = self.cleaned_data.get(f'cfp_ask_{key}')
-        
+
         for key in self.length_fields:
             self.instance.cfp.fields[key]['min_length'] = self.cleaned_data.get(f'cfp_{key}_min_length')
             self.instance.cfp.fields[key]['max_length'] = self.cleaned_data.get(f'cfp_{key}_max_length')
-            
+
+        self.instance.cfp.fields['slides']['max_count'] = self.cleaned_data.get('cfp_slides_max_count') or 1
+        for key in self.public_fields:
+            if key in {'title', 'track', 'duration', 'fullname'}:
+                self.instance.cfp.fields[key]['public'] = True
+            else:
+                self.instance.cfp.fields[key]['public'] = bool(self.cleaned_data.get(f'cfp_public_{key}'))
+
         # Save custom questions
-        for question in TalkQuestion.all_objects.filter(event=self.instance):
+        for question in TalkQuestion.all_objects.filter(event=self.instance, is_imported=False):
             field_name = f'question_{question.pk}'
             if field_name in self.cleaned_data:
                 value = self.cleaned_data[field_name]
@@ -228,7 +320,8 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                         question.question_required = TalkQuestionRequired.OPTIONAL
                 question.save()
 
-        super().save(*args, **kwargs)
+        super().save(*args, persist_cfp=False, update_count_length_in=False, **kwargs)
+        self.instance.cfp.save(update_fields=['settings', 'fields'])
 
 
 class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
@@ -240,7 +333,10 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     hide_after_deadline = forms.BooleanField(
         label=_('Do not show Call for Speakers on the menu after the deadline'),
         required=False,
-        help_text=_('If enabled, the Call for Speakers link will be hidden from navigation menus once the submission deadline has passed.'),
+        help_text=_(
+            'If enabled, the Call for Speakers link will be hidden from navigation menus '
+            'once the submission deadline has passed.'
+        ),
     )
 
     class Meta:
@@ -280,10 +376,10 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     )
 
     def __init__(self, *args, event=None, **kwargs):
+        instance = kwargs.get('instance')
         super().__init__(*args, **kwargs)
         self.fields['question'].required = True
         self.fields['question'].label = _('Custom question')
-        instance = getattr(self, 'instance', None)
         if not (instance and instance.pk):
             target = self.initial.get('target')
             if target and 'target' in self.fields:
@@ -299,6 +395,30 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             self.fields['submission_types'].queryset = event.submission_types.all()
         if instance and instance.pk and instance.answers.count() and not instance.is_public:
             self.fields['is_public'].disabled = True
+        
+        self.fields['dependency_question'].queryset = TalkQuestion.all_objects.filter(
+            event=event,
+            variant__in=(
+                TalkQuestionVariant.BOOLEAN,
+                TalkQuestionVariant.CHOICES,
+                TalkQuestionVariant.MULTIPLE,
+            ),
+        )
+        
+        if instance and instance.pk:
+            self.fields['dependency_question'].queryset = (
+                self.fields['dependency_question'].queryset.exclude(pk=instance.pk)
+            )
+            if instance.target:
+                self.fields['dependency_question'].queryset = (
+                    self.fields['dependency_question'].queryset.filter(target=instance.target)
+                )
+        elif 'target' in self.initial:
+            self.fields['dependency_question'].queryset = (
+                self.fields['dependency_question'].queryset.filter(target=self.initial['target'])
+            )
+        
+        self.fields['dependency_values'].required = False
 
     def clean_options(self):
         # read uploaded file, return list of strings or list of i18n strings
@@ -321,23 +441,60 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             options = content.split('\n')
             return [opt.strip() for opt in options if opt.strip()]
 
+    def clean_dependency_values(self):
+        if self.is_bound:
+            return self.data.getlist(self.add_prefix('dependency_values'))
+        return self.cleaned_data.get('dependency_values')
+
+    def clean_dependency_question(self):
+        dep = self.cleaned_data.get('dependency_question')
+        if dep:
+            seen_ids = {self.instance.pk} if self.instance else set()
+            while dep:
+                if dep.pk in seen_ids:
+                    raise forms.ValidationError(_('Circular dependency between questions detected.'))
+                seen_ids.add(dep.pk)
+                dep = dep.dependency_question
+        return self.cleaned_data.get('dependency_question')
+
     def clean(self):
-        deadline = self.cleaned_data['deadline']
-        question_required = self.cleaned_data['question_required']
+        d = super().clean()
+        deadline = d.get('deadline')
+        question_required = d.get('question_required')
         if (not deadline) and (question_required == TalkQuestionRequired.AFTER_DEADLINE):
             self.add_error(
                 'deadline',
                 forms.ValidationError(_('Please select a deadline after which the field should become mandatory.')),
             )
         if question_required in (TalkQuestionRequired.OPTIONAL, TalkQuestionRequired.REQUIRED):
-            self.cleaned_data['deadline'] = None
-        options = self.cleaned_data.get('options')
-        options_replace = self.cleaned_data.get('options_replace')
+            d['deadline'] = None
+        options = d.get('options')
+        options_replace = d.get('options_replace')
         if options_replace and not options:
             self.add_error(
                 'options_replace',
                 forms.ValidationError(_('You cannot replace options without uploading new ones.')),
             )
+        
+        dependency_question = d.get('dependency_question')
+        dependency_values = d.get('dependency_values')
+        target = d.get('target')
+        
+        if dependency_question and not dependency_values:
+            self.add_error('dependency_values', _('This field is required.'))
+        
+        if dependency_question and target and dependency_question.target != target:
+            self.add_error(
+                'dependency_question',
+                forms.ValidationError(
+                    _('The dependency field must have the same field type (per proposal/per speaker) as this field.')
+                ),
+            )
+        
+        if not dependency_question:
+            d['dependency_values'] = []
+        
+        return d
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
@@ -399,6 +556,8 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             'max_date',
             'min_datetime',
             'max_datetime',
+            'dependency_question',
+            'dependency_values',
         ]
         widgets = {
             'deadline': HtmlDateTimeInput,
@@ -410,11 +569,13 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             'max_date': HtmlDateInput,
             'tracks': EnhancedSelectMultiple,
             'submission_types': EnhancedSelectMultiple,
+            'dependency_values': forms.SelectMultiple,
         }
         field_classes = {
             'variant': SafeModelChoiceField,
             'tracks': SafeModelMultipleChoiceField,
             'submission_types': SafeModelMultipleChoiceField,
+            'dependency_question': SafeModelChoiceField,
         }
 
 
@@ -469,15 +630,9 @@ class TrackForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 if instance_color:
                     initial['color'] = instance_color
                 elif event:
-                    existing_colors = {
-                        color.lower()
-                        for color in event.tracks.values_list('color', flat=True)
-                        if color
-                    }
+                    existing_colors = {color.lower() for color in event.tracks.values_list('color', flat=True) if color}
                     try:
-                        initial['color'] = generate_random_high_contrast_color(
-                            exclude_colors=existing_colors
-                        )
+                        initial['color'] = generate_random_high_contrast_color(exclude_colors=existing_colors)
                     except ValueError:
                         # If we cannot generate a color, fall back to no initial color
                         pass
@@ -653,7 +808,7 @@ class QuestionFilterForm(forms.Form):
         answers = question.answers.filter(Q(person__in=speakers) | Q(submission__in=talks))
         result['answer_count'] = answers.count()
         result['missing_answers'] = question.missing_answers(filter_speakers=speakers, filter_talks=talks)
-        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
             grouped_answers = (
                 answers.order_by('options')
                 .values('options', 'options__answer')

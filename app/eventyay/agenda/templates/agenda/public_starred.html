@@ -1,6 +1,7 @@
 {% extends 'agenda/base.html' %}
 
 {% load compress %}
+{% load vite %}
 {% load html_signal %}
 {% load i18n %}
 {% load static %}
@@ -18,7 +19,7 @@
 <div>
     <h1>{{ page_title }}</h1>
     <script id="pretalx-schedule-data" type="application/json">{{ schedule_json|safe }}</script>
-    <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+    {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback='schedule/pretalx-schedule.js' %}
 
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule

@@ -10,7 +10,7 @@
 			.speaker-content-area
 				.speaker-title
 					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
-				export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions")
+				export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl")
 		markdown-content.biography(v-if="resolvedSpeaker.biography", :markdown="resolvedSpeaker.biography")
 		.speaker-sessions(v-if="resolvedSessions && resolvedSessions.length")
 			h3 {{ t.sessions }}
@@ -23,7 +23,7 @@
 				:timezone="resolvedTimezone",
 				:locale="locale",
 				:hasAmPm="resolvedHasAmPm",
-				:faved="s.id && resolvedFavs.includes(s.id)",
+				:faved="s.id && resolvedFavSet.has(s.id)",
 				:onHomeServer="onHomeServer",
 				@fav="onFav(s.id)",
 				@unfav="onUnfav(s.id)"
@@ -79,6 +79,12 @@ export default {
 	},
 	emits: ['fav', 'unfav'],
 	computed: {
+		speakerQrcodesUrl() {
+			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code
+			if (!code || !this.eventUrl) return ''
+			const base = this.eventUrl.replace(/\/?$/, '/')
+			return `${base}schedule/widgets/qrcodes/speaker/${code}.json`
+		},
 		t() {
 			const m = this.translationMessages || {}
 			return {
@@ -91,15 +97,21 @@ export default {
 		resolvedSpeaker() {
 			if (this.speaker) return this.speaker
 			if (this.speakerId && this.scheduleData) {
+				const lu = this.scheduleData.speakersLookup
+				if (lu && lu[this.speakerId]) return lu[this.speakerId]
 				const schedule = this.scheduleData.schedule
 				if (schedule?.speakers) {
-					return schedule.speakers.find(s => s.code === this.speakerId) || null
+					for (let i = 0; i < schedule.speakers.length; i++) {
+						if (schedule.speakers[i].code === this.speakerId) return schedule.speakers[i]
+					}
 				}
-				const sessions = this.scheduleData.sessions || []
-				for (const session of sessions) {
-					if (!session.speakers) continue
-					const found = session.speakers.find(s => s.code === this.speakerId)
-					if (found) return found
+				const bySpeaker = this.scheduleData.sessionsBySpeaker?.[this.speakerId]
+				if (bySpeaker?.length) {
+					const first = bySpeaker[0]
+					const speakers = first.speakers || []
+					for (let j = 0; j < speakers.length; j++) {
+						if (speakers[j].code === this.speakerId) return speakers[j]
+					}
 				}
 			}
 			return null
@@ -107,16 +119,35 @@ export default {
 		resolvedSessions() {
 			if (this.sessions?.length) return this.sessions
 			const id = this.speakerId || this.speaker?.code
+			if (id && this.scheduleData?.sessionsBySpeaker?.[id]) {
+				return this.scheduleData.sessionsBySpeaker[id]
+			}
 			if (id && this.scheduleData) {
-				return (this.scheduleData.sessions || []).filter(s =>
-					s.speakers?.some(sp => sp.code === id)
-				)
+				const list = this.scheduleData.sessions || []
+				const out = []
+				for (let i = 0; i < list.length; i++) {
+					const s = list[i]
+					const spk = s.speakers
+					if (!spk) continue
+					for (let j = 0; j < spk.length; j++) {
+						if (spk[j] && spk[j].code === id) {
+							out.push(s)
+							break
+						}
+					}
+				}
+				return out
 			}
 			return []
 		},
 		resolvedFavs() {
 			if (this.favs?.length) return this.favs
 			return this.scheduleData?.favs || []
+		},
+		resolvedFavSet() {
+			const favSet = this.scheduleData?.favSet
+			if (favSet && typeof favSet.has === 'function') return favSet
+			return new Set(this.resolvedFavs)
 		},
 		resolvedNow() {
 			return this.now || this.scheduleData?.now || moment()

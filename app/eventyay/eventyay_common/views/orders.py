@@ -5,22 +5,23 @@ from django.shortcuts import redirect
 from django.views.generic.list import ListView
 
 from eventyay.base.models import Order
+from eventyay.control.views import PaginationMixin
 
 from ..forms.filters import UserOrderFilterForm
 
 logger = getLogger(__name__)
 
 
-class MyOrdersView(ListView):
+class MyOrdersView(PaginationMixin, ListView):
     template_name = 'eventyay_common/orders/orders.html'
-    paginate_by = 20
+    paginate_by = 25
 
     def get_queryset(self):
         user = self.request.user
         qs = Order.objects.filter(Q(email__iexact=user.email)).select_related('event').order_by('-datetime')
 
         # Filter by event if provided
-        filter_form = UserOrderFilterForm(self.request.GET, user=user)
+        filter_form = UserOrderFilterForm(self.request.GET, user=user, request=self.request)
         if filter_form.is_valid():
             event = filter_form.cleaned_data['event']
             if event:
@@ -30,11 +31,11 @@ class MyOrdersView(ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['filter_form'] = UserOrderFilterForm(self.request.GET, user=self.request.user)
+        ctx['filter_form'] = UserOrderFilterForm(self.request.GET, user=self.request.user, request=self.request)
         return ctx
 
     def get(self, request, *args, **kwargs):
-        filter_form = UserOrderFilterForm(self.request.GET, user=self.request.user)
+        filter_form = UserOrderFilterForm(self.request.GET, user=self.request.user, request=self.request)
         # If filter form is invalid, strip the 'event' from URL and redirect to this new URL.
         if not filter_form.is_valid():
             new_url_query = request.GET.copy()

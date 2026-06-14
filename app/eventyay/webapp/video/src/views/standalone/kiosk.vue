@@ -7,7 +7,6 @@
 <script>
 import moment from 'lib/timetravelMoment'
 import PollSlide from './Poll'
-import VoteSlide from './Vote'
 import QuestionSlide from './Question'
 import NextSessionSlide from './NextSession'
 import ViewersSlide from './Viewers'
@@ -23,13 +22,6 @@ const SLIDES = [{
 	},
 	priority: 10,
 	component: PollSlide
-}, {
-	id: 'vote',
-	condition() {
-		return this.isSlideEnabled('pinned_poll_voting') && !!this.$store.getters['poll/pinnedPoll']
-	},
-	priority: 10,
-	component: VoteSlide
 }, {
 	id: 'question',
 	condition() {

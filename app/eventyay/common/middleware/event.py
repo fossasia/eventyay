@@ -30,6 +30,18 @@ from eventyay.common.utils.language import (
 logger = logging.getLogger(__name__)
 
 
+def _agenda_featured_allowed_without_talks_published(url, request, event):
+    """Let /featured/ load when org settings allow it, even if talks are not published yet."""
+    if 'agenda' not in url.namespaces or url.url_name != 'featured':
+        return False
+    from eventyay.talk_rules.submission import are_featured_submissions_visible
+
+    user = getattr(request, 'user', None)
+    if user is None:
+        return False
+    return are_featured_submissions_visible(user, event)
+
+
 def get_login_redirect(request):
     params = request.GET.copy()
     next_url = params.pop('next', None)
@@ -127,7 +139,8 @@ class EventPermissionMiddleware:
         if event and not event.user_can_view_talks(request.user, request=request):
             if 'agenda' in url.namespaces or 'cfp' in url.namespaces:
                 if url.url_name != 'event.css':
-                    raise Http404()
+                    if not _agenda_featured_allowed_without_talks_published(url, request, event):
+                        raise Http404()
         if event:
             with scope(event=event):
                 response = self.get_response(request)
@@ -168,6 +181,10 @@ class EventPermissionMiddleware:
                 request.event.organizer.slug,
             )
 
+            ui_language_in_event_locales = bool(
+                ui_language and strict_match_language(ui_language, event_supported)
+            )
+
             if request.event_language_enforce_ui:
                 strict_ui_language = strict_match_language(ui_language, event_supported)
                 if strict_ui_language:
@@ -175,21 +192,27 @@ class EventPermissionMiddleware:
 
             cookie_name = get_event_language_cookie_name(request.event.slug, request.event.organizer.slug)
             if not event_language:
-                event_language = self._language_from_cookie(request, event_supported, cookie_name)
-            if not event_language:
-                event_language = self._language_from_event(request, event_supported)
-            if not event_language and event_supported:
-                event_language = event_supported[0]
+                # When the UI language is outside event locales, prefer the event's
+                # default locale over a stale per-event language cookie.
+                if ui_language_in_event_locales:
+                    event_language = self._language_from_cookie(request, event_supported, cookie_name)
+                if not event_language:
+                    event_language = self._language_from_event(request, event_supported)
+                if not event_language and event_supported:
+                    event_language = event_supported[0]
+        else:
+            ui_language_in_event_locales = False
 
         if not event_language:
             event_language = ui_language
 
-        # Bidirectional sync: when enforce is ON, keep UI and event language aligned.
+        # Sync event → UI only when the user's global language is also an event locale.
         if (
             request.event_language_enforce_ui
             and event_language
             and event_language != ui_language
             and event_language in ui_supported
+            and ui_language_in_event_locales
         ):
             translation.activate(event_language)
             request.LANGUAGE_CODE = translation.get_language()

@@ -53,11 +53,11 @@ class PretalxViewSetMixin:
 
     def perform_create(self, serializer):
         super().perform_create(serializer)
-        serializer.instance.log_action(".create", person=self.request.user, orga=True)
+        serializer.instance.log_action(".create", person=self.request.user, auth=self.request.auth, orga=True)
 
     def perform_update(self, serializer):
         super().perform_update(serializer)
-        serializer.instance.log_action(".update", person=self.request.user, orga=True)
+        serializer.instance.log_action(".update", person=self.request.user, auth=self.request.auth, orga=True)
 
     @cached_property
     def event(self):
