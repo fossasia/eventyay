@@ -17,6 +17,7 @@
 
     {% include "common/includes/search_form.html" %}
 
+    <div data-ajax-results-region>
     <div class="table-responsive-md">
         <table class="table table-sm table-flip table-sticky">
             <thead>
@@ -57,5 +58,6 @@
     </div>
 
     {% include "orga/includes/pagination.html" %}
+    </div>
 
 {% endblock content %}

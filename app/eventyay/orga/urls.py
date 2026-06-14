@@ -129,6 +129,16 @@ urlpatterns = [
                     name='settings.import_export.submissions_import_process',
                 ),
                 path(
+                    'settings/import-export/schedule/export/trigger',
+                    schedule.ScheduleExportTriggerView.as_view(),
+                    name='settings.import_export.schedule_export_trigger',
+                ),
+                path(
+                    'settings/import-export/schedule/export/download',
+                    schedule.ScheduleExportDownloadView.as_view(),
+                    name='settings.import_export.schedule_export_download',
+                ),
+                path(
                     'cfp/',
                     RedirectView.as_view(pattern_name='orga:cfp.text.view'),
                     name='cfp',
@@ -220,16 +230,6 @@ urlpatterns = [
                     url_base='submissions/tags',
                     url_name='submissions.tags',
                     namespace='orga',
-                ),
-                path(
-                    'submissions/import/',
-                    submission.SubmissionImportView.as_view(),
-                    name='submissions.import',
-                ),
-                path(
-                    'submissions/import/<uuid:file>/',
-                    submission.SubmissionImportProcessView.as_view(),
-                    name='submissions.import.process',
                 ),
                 path(
                     'submissions/<code>/',
@@ -340,21 +340,6 @@ urlpatterns = [
                 ),
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
                 path(
-                    'speakers/export/',
-                    speaker.SpeakerExport.as_view(),
-                    name='speakers.export',
-                ),
-                path(
-                    'speakers/import/',
-                    speaker.SpeakerImportView.as_view(),
-                    name='speakers.import',
-                ),
-                path(
-                    'speakers/import/<uuid:file>/',
-                    speaker.SpeakerImportProcessView.as_view(),
-                    name='speakers.import.process',
-                ),
-                path(
                     'speakers/<code>/',
                     include(
                         [
@@ -417,21 +402,6 @@ urlpatterns = [
                     name='reviews.export',
                 ),
                 path('schedule/', schedule.ScheduleView.as_view(), name='schedule.main'),
-                path(
-                    'schedule/export/',
-                    schedule.ScheduleExportView.as_view(),
-                    name='schedule.export',
-                ),
-                path(
-                    'schedule/export/trigger',
-                    schedule.ScheduleExportTriggerView.as_view(),
-                    name='schedule.export.trigger',
-                ),
-                path(
-                    'schedule/export/download',
-                    schedule.ScheduleExportDownloadView.as_view(),
-                    name='schedule.export.download',
-                ),
                 path(
                     'schedule/release',
                     schedule.ScheduleReleaseView.as_view(),
