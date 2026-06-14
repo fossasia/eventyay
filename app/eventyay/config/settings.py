@@ -203,6 +203,10 @@ class BaseSettings(_BaseSettings):
     upload_size_other: int = 10
     response_size_webhook: int = 1
 
+    # Maximum seconds to wait for a webhook endpoint to respond (connect + read).
+    # Operators can override this via TOML or environment variable.
+    webhook_timeout: int = 30
+
 
 def discover_toml_files() -> list[Path]:
     """Discover TOML configuration files to be loaded.
@@ -1363,6 +1367,11 @@ BYTES_IN_MB = 1024 * 1024
 
 # Config for max size limits
 MAX_SIZE_CONFIG = {key: BYTES_IN_MB * cast(int, getattr(conf, key)) for key in SizeKey}
+
+# Timeout (seconds) for outgoing webhook HTTP requests.
+# Covers both the TCP connect phase and each read chunk.
+# Set via `webhook_timeout` in eventyay.toml or the WEBHOOK_TIMEOUT env variable.
+WEBHOOK_TIMEOUT: int = conf.webhook_timeout
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
 
