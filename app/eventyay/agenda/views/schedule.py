@@ -389,6 +389,7 @@ def schedule_messages(request, **kwargs):
         'featured_speakers': _('Featured Speakers'),
         'view_profile': _('View speaker profile'),
         'no_starred_sessions': _('No starred sessions.'),
+        'schedule_do_not_record': _('This session will not be recorded.'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(

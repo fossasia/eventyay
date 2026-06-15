@@ -23,13 +23,13 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="styl
 		.abstract(v-if="showAbstract", v-html="abstractText")
 		.bottom-info
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
-			.do_not_record(v-if="session.do_not_record", :title="doNotRecordTooltip", :aria-label="doNotRecordTooltip")
-				svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
-					g(transform="translate(-9.3465481,-5.441411)")
-						rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
-						path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
-						path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
+		.do_not_record(v-if="session.do_not_record", :title="doNotRecordTooltip", :aria-label="doNotRecordTooltip")
+			svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
+				g(transform="translate(-9.3465481,-5.441411)")
+					rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
+					path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
+					path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
 		.fav-count(v-if="loggedIn && showFavCount && session.fav_count > 0") {{ session.fav_count > 99 ? "99+" : session.fav_count }}
 	.stream-indicator(v-if="canOpenStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
@@ -176,10 +176,10 @@ export default {
 		},
 		doNotRecordTooltip () {
 			const m = this.translationMessages || {}
-			return m.schedule_do_not_record || m.do_not_record || 'This session will not be recorded.'
+			return m.schedule_do_not_record || 'This session will not be recorded.'
 		},
 		hasAnyRightIcons () {
-			return this.loggedIn || this.canOpenStream
+			return this.loggedIn || this.canOpenStream || this.session.do_not_record
 		}
 	},
 	methods: {
@@ -204,6 +204,7 @@ export default {
 .c-linear-schedule-session, .break
 	z-index: 10
 	display: flex
+	align-items: stretch
 	min-width: 300px
 	min-height: 96px
 	margin: 8px 0
@@ -264,6 +265,7 @@ export default {
 		.time-box
 			width: 88px
 	.info
+		position: relative
 		flex: auto
 		display: flex
 		flex-direction: column
@@ -316,16 +318,22 @@ export default {
 				flex: 1
 				color: var(--track-color)
 				ellipsis()
-			.do_not_record
-				flex: none
-				display: flex
-				align-items: center
-				line-height: 0
 			.room
 				flex: 1
 				text-align: right
 				color: $clr-secondary-text-light
 				ellipsis()
+		.do_not_record
+			position: absolute
+			bottom: 2px
+			right: 2px
+			width: 32px
+			height: 32px
+			display: flex
+			justify-content: center
+			align-items: center
+			line-height: 0
+			z-index: 5
 		.fav-count
 			border: 1px solid
 			border-radius: 50%
