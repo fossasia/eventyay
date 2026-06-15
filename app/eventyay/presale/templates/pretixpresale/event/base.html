@@ -104,8 +104,8 @@
 {% endblock %}
 
 {% block footernav %}
-    {% if request.event.settings.contact_mail or request.event.email %}
-        <button type="button" class="contact-organizer-btn">{% trans "Contact event organizer" %}</button> &middot;
+    {% if request.event.settings.contact_mail %}
+        <a href="mailto:{{ request.event.settings.contact_mail }}">{% trans "Contact event organizer" %}</a> &middot;
     {% endif %}
     {% if request.event.settings.imprint_url %}
         <a href="{% safelink request.event.settings.imprint_url %}" target="_blank" rel="noopener">{% trans "Imprint" %}</a>

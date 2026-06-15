@@ -254,7 +254,7 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
         self.fields['email'].required = False
         self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("Attendees will contact you through this email.")
+        self.fields['email'].help_text = _("Attendees can reach you through a contact form. Messages will be forwarded to this address.")
         email_initial = self.initial.get('email', self.fields['email'].initial)
         normalized_email = normalize_organizer_email_initial(email_initial)
         self.initial['email'] = normalized_email
@@ -416,7 +416,7 @@ class EventWizardDisplayForm(forms.Form):
     )
     email = forms.EmailField(
         label=_('Organizer email address'),
-        help_text=_("Attendees will contact you through this email."),
+        help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
         required=False,
     )
 

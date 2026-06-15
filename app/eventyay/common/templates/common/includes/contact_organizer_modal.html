@@ -1,7 +1,9 @@
 {% load i18n %}
 
 <dialog id="contact-organizer-dialog" class="contact-organizer-dialog"
-        role="dialog" aria-labelledby="contact-modal-title" aria-describedby="contact-modal-desc">
+        role="dialog" aria-labelledby="contact-modal-title" aria-describedby="contact-modal-desc"
+        data-msg-generic-error="{% translate 'Something went wrong.' %}"
+        data-msg-network-error="{% translate 'Something went wrong. Please try again.' %}">
     <div class="contact-modal-card">
         <button type="button" class="contact-modal-close" id="contact-modal-close"
                 aria-label="{% translate 'Close' %}">
