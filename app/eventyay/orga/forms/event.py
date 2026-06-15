@@ -165,6 +165,8 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
 
     def save(self, *args, **kwargs):
         result = super().save(*args, **kwargs)
+        if 'show_schedule' in self.cleaned_data:
+            self.instance.settings.talk_schedule_public = bool(self.cleaned_data['show_schedule'])
         css_text = self.cleaned_data.get('custom_css_text', '')
         if css_text and 'custom_css_text' in self.changed_data:
             self.instance.custom_css.save(self.instance.slug + '.css', ContentFile(css_text))
