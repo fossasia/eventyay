@@ -12,8 +12,8 @@
             <uid>{{ entry.uid|xmlescape }}@{{ data.domain|xmlescape }}</uid>
             <pentabarf:event-slug>{{ entry.slug|xmlescape }}</pentabarf:event-slug>
             <pentabarf:title>{{ entry.name|xmlescape }}</pentabarf:title>
-            <dtstart>{{ entry.start|date:"Ymd\THis" }}</dtstart>
-            <dtend>{{ entry.end|date:"Ymd\THis" }}</dtend>
+            <dtstart>{{ entry.start_utc|date:"Ymd\THis\Z" }}</dtstart>
+            <dtend>{{ entry.end_utc|date:"Ymd\THis\Z" }}</dtend>
             <duration>{{ entry.pentabarf_export_duration }}</duration>
             <summary>{{ entry.name|xmlescape }}</summary>
             <class>PUBLIC</class>

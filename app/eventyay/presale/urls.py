@@ -250,7 +250,7 @@ organizer_patterns = [
         name='organizer.export',
     ),
     path(
-        'events/export/<str:name>',
+        'events/export/<str:name>/',
         eventyay.presale.views.organizer.OrganizerExportDownload.as_view(),
         name='organizer.events.export',
     ),

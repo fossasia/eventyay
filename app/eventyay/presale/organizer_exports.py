@@ -28,6 +28,7 @@ def get_organizer_export_events(request):
                 sales_channels__contains=channel,
             ),
             request,
+            use_session=False,
         )
         .order_by('date_from')
         .prefetch_related('_settings_objects', 'organizer___settings_objects')
@@ -43,6 +44,7 @@ def get_organizer_export_events(request):
                 event__sales_channels__contains=channel,
             ),
             request,
+            use_session=False,
         )
         .prefetch_related('event___settings_objects', 'event__organizer___settings_objects')
         .order_by('date_from')
@@ -55,6 +57,9 @@ def _event_entry(ev):
     tz = pytz.timezone(event.settings.timezone)
     start = ev.date_from.astimezone(tz)
     end = ev.date_to.astimezone(tz) if event.settings.show_date_to and ev.date_to else start + timedelta(hours=1)
+    start_utc = ev.date_from.astimezone(pytz.utc)
+    end_utc = ev.date_to.astimezone(pytz.utc) if event.settings.show_date_to and ev.date_to else start_utc + timedelta(hours=1)
+
     if isinstance(ev, Event):
         url = build_absolute_uri(event, 'presale:event.index')
         slug = event.slug
@@ -74,6 +79,8 @@ def _event_entry(ev):
         'name': str(ev.name),
         'start': start,
         'end': end,
+        'start_utc': start_utc,
+        'end_utc': end_utc,
         'url': url,
         'slug': slug,
         'uid': uid,
@@ -240,7 +247,7 @@ def render_organizer_export(organizer, events, export_name, base_url):
     return None
 
 
-def filter_qs_by_attr(qs, request):
+def filter_qs_by_attr(qs, request, use_session=True):
     """
     We'll allow to filter the event list using attributes defined in the event meta data
     models in the format ?attr[meta_name]=meta_value
@@ -255,9 +262,9 @@ def filter_qs_by_attr(qs, request):
             attrs[k[5:-1]] = v
 
     skey = 'filter_qs_by_attr_{}_{}'.format(request.organizer.pk, request.event.pk if hasattr(request, 'event') else '')
-    if request.GET.get('attr_persist'):
+    if use_session and request.GET.get('attr_persist'):
         request.session[skey] = attrs
-    elif skey in request.session:
+    elif use_session and skey in request.session:
         attrs = request.session[skey]
 
     props = {p.name: p for p in request.organizer.meta_properties.filter(name__in=attrs.keys())}
@@ -321,6 +328,11 @@ def build_organizer_calendar_exporters(request):
             + query_suffix
         )
 
+    webcal_params = request.GET.copy()
+    webcal_params['locale'] = request.LANGUAGE_CODE
+    webcal_params.pop('page', None)
+    webcal_suffix = f'?{webcal_params.urlencode()}' if webcal_params else ''
+
     return [
         {
             'icon': 'fa-google',
@@ -340,7 +352,7 @@ def build_organizer_calendar_exporters(request):
                 'presale:organizer.export',
                 kwargs={'export_target': 'webcal'},
             )
-            + query_suffix,
+            + webcal_suffix,
         },
         {
             'icon': 'fa-calendar',
