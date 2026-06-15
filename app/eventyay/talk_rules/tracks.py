@@ -2,6 +2,8 @@
 
 from django.db.models import Q
 
+from eventyay.base.models import Track
+
 
 def applicable_talk_teams(event, user, *, reviewers_only=False):
     """Return teams that grant talk access to *user* for *event*."""
@@ -19,12 +21,13 @@ def applicable_talk_teams(event, user, *, reviewers_only=False):
 def get_allowed_tracks(event, user, *, reviewers_only=False):
     """Return track access for a user on an event.
 
-    * ``None`` — unlimited track access for the requested scope.
+    * ``None`` — unlimited track access for the requested scope (including
+      anonymous/public consumers).
     * ``set()`` — track limits apply but none match this event (no access).
     * non-empty ``set`` — allowed :class:`~eventyay.base.models.track.Track` instances.
     """
     if not user or user.is_anonymous:
-        return set()
+        return None
     if getattr(user, 'is_administrator', False):
         return None
 
@@ -32,13 +35,11 @@ def get_allowed_tracks(event, user, *, reviewers_only=False):
     if not teams:
         return None
 
-    if any(not team.limit_tracks.exists() for team in teams):
+    if any(not team.limit_tracks.all() for team in teams):
         return None
 
-    tracks = set()
-    for team in teams:
-        tracks.update(team.limit_tracks.filter(event=event))
-    return tracks
+    team_pks = [team.pk for team in teams]
+    return set(Track.objects.filter(event=event, team_set__pk__in=team_pks).distinct())
 
 
 def user_has_track_limits(event, user, *, reviewers_only=False):
@@ -71,6 +72,11 @@ def filter_schedule_talk_data(talks, allowed_tracks):
     filtered = []
     for talk in talks:
         track_id = talk.get('track')
-        if track_id is None or track_id in allowed_tracks:
+        if track_id is None:
+            # Breaks have no submission code; untracked submissions are excluded.
+            if 'code' not in talk:
+                filtered.append(talk)
+            continue
+        if track_id in allowed_tracks:
             filtered.append(talk)
     return filtered

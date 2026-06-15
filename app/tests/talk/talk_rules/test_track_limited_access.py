@@ -89,7 +89,8 @@ def test_reviewer_api_hides_speakers_when_team_force_hide(
     )
     assert response.status_code == 200, response.text
     content = json.loads(response.text)
-    assert content['results'][0]['speakers'] == []
+    submission_result = next(item for item in content['results'] if item['code'] == submission.code)
+    assert submission_result['speakers'] == []
 
 
 @pytest.mark.django_db

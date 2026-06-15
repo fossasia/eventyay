@@ -235,7 +235,7 @@ def has_reviewer_access(user, obj):
     if not obj.event or not obj.event.active_review_phase:
         return False
 
-    if user in obj.assigned_reviewers.all():
+    if obj.assigned_reviewers.filter(pk=user.pk).exists():
         return _submission_allowed_for_track_limits(obj, obj.event, user)
 
     phase = obj.event.active_review_phase
