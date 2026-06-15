@@ -49,6 +49,11 @@
                         {% bootstrap_field sform.organizer_link_back layout="control" %}
                     </fieldset>
                     <fieldset>
+                        <legend>{% trans "Community" %}</legend>
+                        {% bootstrap_field sform.community_follow_enabled layout="control" %}
+                        {% bootstrap_field sform.community_show_follower_count layout="control" %}
+                    </fieldset>
+                    <fieldset>
                         <legend>{% trans "Localization" %}</legend>
                         {% bootstrap_field sform.locales layout="control" %}
                         {% bootstrap_field sform.region layout="control" %}

@@ -16,6 +16,8 @@ class OrganizerSettingsForm(SettingsForm):
         'organizer_homepage_text',
         'organizer_link_back',
         'organizer_logo_image_large',
+        'community_follow_enabled',
+        'community_show_follower_count',
         'giftcard_length',
         'giftcard_expiry_years',
         'locales',

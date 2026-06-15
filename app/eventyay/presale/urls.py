@@ -245,6 +245,16 @@ organizer_patterns = [
         name='organizer.ical',
     ),
     path(
+        'follow',
+        eventyay.presale.views.organizer.OrganizerFollow.as_view(),
+        name='organizer.follow',
+    ),
+    path(
+        'unfollow',
+        eventyay.presale.views.organizer.OrganizerUnfollow.as_view(),
+        name='organizer.unfollow',
+    ),
+    path(
         'widget/product_list',
         eventyay.presale.views.widget.WidgetAPIProductList.as_view(),
         name='organizer.widget.productlist',
