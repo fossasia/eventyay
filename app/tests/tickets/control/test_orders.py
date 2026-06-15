@@ -351,8 +351,8 @@ def test_order_position_list_exporter_csv_render(env):
     filename, content_type, content = exporter.render({'_format': 'default', 'paid_only': True})
 
     assert filename == f'{event.slug}_orderpositions.csv'
-    assert content_type == 'text/csv'
-    assert b'Order code' in content
+    assert content_type.startswith('text/csv')
+    assert order.code in content.decode()
 
 
 @pytest.mark.django_db

@@ -69,6 +69,7 @@ class OrderListExporter(MultiSheetListExporter):
 
     @property
     def additional_form_fields(self):
+        prefix = f'#id_{self.identifier}'
         d = [
             (
                 'paid_only',
@@ -77,7 +78,7 @@ class OrderListExporter(MultiSheetListExporter):
                     initial=True,
                     required=False,
                     widget=forms.CheckboxInput(
-                        attrs={'data-inverse-dependency': '#id_orderlist-approval_pending_only'}
+                        attrs={'data-inverse-dependency': f'{prefix}-approval_pending_only'}
                     ),
                 ),
             ),
@@ -87,7 +88,7 @@ class OrderListExporter(MultiSheetListExporter):
                     label=_('Only approval pending orders'),
                     initial=False,
                     required=False,
-                    widget=forms.CheckboxInput(attrs={'data-inverse-dependency': '#id_orderlist-paid_only'}),
+                    widget=forms.CheckboxInput(attrs={'data-inverse-dependency': f'{prefix}-paid_only'}),
                 ),
             ),
             (
@@ -97,7 +98,7 @@ class OrderListExporter(MultiSheetListExporter):
                     initial=False,
                     required=False,
                     widget=forms.CheckboxInput(
-                        attrs={'data-inverse-dependency': '#id_orderlist-approval_pending_only'}
+                        attrs={'data-inverse-dependency': f'{prefix}-approval_pending_only'}
                     ),
                 ),
             ),
@@ -1047,7 +1048,7 @@ class OrderPositionListExporter(OrderListExporter):
             return '{}_orderpositions'.format(self.event.slug)
 
     def render(self, form_data: dict, output_file=None):
-        return ListExporter.render(self, form_data, output_file=output_file)
+        return super(OrderListExporter, self).render(form_data, output_file=output_file)
 
 
 class PaymentListExporter(ListExporter):
