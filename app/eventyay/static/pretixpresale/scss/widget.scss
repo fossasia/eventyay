@@ -2,6 +2,13 @@
 @import "../../bootstrap/scss/bootstrap/variables";
 @import "../../bootstrap/scss/bootstrap/mixins";
 
+$widget-alert-info-bg: #d9edf7;
+$widget-alert-info-border: #bce8f1;
+$widget-alert-info-text: #31708f;
+$widget-alert-danger-bg: #f2dede;
+$widget-alert-danger-border: #ebccd1;
+$widget-alert-danger-text: #a94442;
+
 .pretix-widget-hidden {
   display: none;
 }
@@ -29,8 +36,10 @@
   }
   h3 {
     font-size: $font-size-h3;
-    font-weight: bold;
-    padding: 0 15px;
+    font-weight: normal;
+    padding: 0 15px 10px;
+    margin-bottom: 0;
+    border-bottom: 2px solid #ccc;
   }
   button, input[type="button"] {
     overflow: visible;
@@ -47,6 +56,13 @@
     @include button-size($padding-base-vertical, $padding-base-horizontal, $font-size-base, $line-height-base, $btn-border-radius-base);
     @include user-select(none);
     @include button-variant($btn-primary-color, $btn-primary-bg, $btn-primary-border);
+    background-color: var(--color-primary, #{$btn-primary-bg});
+    border-color: var(--color-primary, #{$btn-primary-bg});
+
+    &:hover, &:focus {
+      background-color: color-mix(in srgb, var(--color-primary, #{$btn-primary-bg}) 90%, black);
+      border-color: color-mix(in srgb, var(--color-primary, #{$btn-primary-bg}) 90%, black);
+    }
 
     &,
     &:active,
@@ -97,10 +113,15 @@
 .pretix-widget {
   margin: 10px 0;
   padding: 0 10px;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  background-color: #fff;
   position: relative;
   min-height: 208px;
   border-radius: $input-border-radius;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
 
   .pretix-widget-resume-button {
     float: right;
@@ -115,9 +136,9 @@
     padding: 10px;
     text-align: left;
     margin: 10px 0;
-    background-color: white;
-    border: 2px solid $brand-info;
-    color: $brand-info;
+    background-color: $widget-alert-info-bg;
+    border: 1px solid $widget-alert-info-border;
+    color: $widget-alert-info-text;
     border-radius: $alert-border-radius;
   }
 
@@ -125,9 +146,9 @@
     padding: 10px;
     text-align: center;
     margin: 10px 0;
-    background-color: white;
-    border: 2px solid $brand-danger;
-    color: $brand-danger;
+    background-color: $widget-alert-danger-bg;
+    border: 1px solid $widget-alert-danger-border;
+    color: $widget-alert-danger-text;
     border-radius: $alert-border-radius;
   }
 
@@ -138,7 +159,9 @@
     width: 100%;
     height: 100%;
     background: rgba(255, 255, 255, .8);
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   @-moz-keyframes pretix-widget-spin {
@@ -161,7 +184,6 @@
   }
 
   .pretix-widget-loading svg {
-    margin: 40px;
     -webkit-animation: pretix-widget-spin 6s linear infinite;
     -moz-animation: pretix-widget-spin 6s linear infinite;
     animation: pretix-widget-spin 6s linear infinite;
@@ -173,10 +195,15 @@
 
   .pretix-widget-item-title {
     font-weight: bold;
+    font-size: 15px;
   }
 
   .pretix-widget-item-row {
     padding: 10px 0;
+  }
+
+  .pretix-widget-item + .pretix-widget-item {
+    border-top: 2px solid #ccc;
   }
 
   .pretix-widget-category {
@@ -238,6 +265,7 @@
   .pretix-widget-item-count-multiple {
     display: block;
     width: 100%;
+    margin-left: auto;
     box-sizing: border-box;
     padding: 5px;
     text-align: center;
@@ -270,14 +298,17 @@
   }
 
   .pretix-widget-action {
-    margin-left: 75%;
-    width: 25%;
-    padding: 0 15px;
+    margin-left: 65%;
+    width: 35%;
+    padding: 5px 15px 10px;
     box-sizing: border-box;
   }
 
   .pretix-widget-action button {
     width: 100%;
+    padding: 10px 16px;
+    font-size: 16px;
+    font-weight: bold;
   }
 
   .pretix-widget-voucher-headline {
@@ -689,6 +720,15 @@
 }
 
 .pretix-widget.pretix-widget-mobile {
+  button, input[type="button"] {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+  input[type="text"], input[type="number"] {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
   .pretix-widget-event-week-table {
     display: block;
 
