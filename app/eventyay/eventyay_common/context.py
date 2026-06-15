@@ -9,14 +9,11 @@ from django_scopes import scope
 
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.eventyay_common.navigation import (
-    get_event_navigation,
-    get_global_navigation,
-    get_organizer_navigation
-)
+from eventyay.eventyay_common.navigation import get_event_navigation, get_global_navigation, get_organizer_navigation
 
 from ..helpers.plugin_enable import is_video_enabled
 from ..multidomain.urlreverse import get_event_domain
+from .permissions import get_cached_event_dashboard_access
 from .views.event import EventCreatedFor
 
 logger = logging.getLogger(__name__)
@@ -34,7 +31,10 @@ def _default_context(request: HttpRequest):
     except Resolver404:
         return {}
 
-    if not request.path.startswith(f'{get_script_prefix()}common'):
+    if not (
+        request.path.startswith(f'{get_script_prefix()}common')
+        or request.path.startswith(f'{get_script_prefix()}social')
+    ):
         return {}
     ctx = {
         'url_name': url.url_name,
@@ -69,6 +69,7 @@ def _default_context(request: HttpRequest):
         return ctx
 
     from django.urls import reverse
+
     ctx['talk_edit_url'] = reverse('orga:event.dashboard', kwargs={'event': event.slug})
     ctx['is_video_enabled'] = is_video_enabled(event)
     ctx['is_talk_event_created'] = False
@@ -80,17 +81,19 @@ def _default_context(request: HttpRequest):
     if not organizer:
         return ctx
 
+    access = get_cached_event_dashboard_access(request, request.user, organizer, event)
     ctx['nav_items'] = get_event_navigation(request, event)
     ctx['has_domain'] = get_event_domain(event, fallback=True) is not None
+    ctx['has_ticket_access'] = access['has_ticket_access']
+    ctx['has_talk_access'] = access['has_talk_access']
+    ctx['has_video_access'] = access['has_video_access']
     if not event.testmode:
         with scope(organizer=organizer):
             complain_testmode_orders = event.cache.get('complain_testmode_orders')
             if complain_testmode_orders is None:
                 complain_testmode_orders = event.orders.filter(testmode=True).exists()
                 event.cache.set('complain_testmode_orders', complain_testmode_orders, 30)
-        ctx['complain_testmode_orders'] = complain_testmode_orders and request.user.has_event_permission(
-            organizer, event, 'can_view_orders', request=request
-        )
+        ctx['complain_testmode_orders'] = complain_testmode_orders and access['can_view_orders']
     else:
         ctx['complain_testmode_orders'] = False
 

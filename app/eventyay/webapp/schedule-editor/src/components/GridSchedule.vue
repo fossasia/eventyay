@@ -9,7 +9,7 @@
 			.timeseparator(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 		.room(:style="{'grid-area': `1 / 1 / auto / auto`}")
 		.room(v-for="(room, i) of visibleRooms", :key="room.id", :style="{'grid-area': `1 / ${i + 2} / auto / auto`}")
-			span {{ getLocalizedString(room.name) }}
+			span.room-name(:title="getLocalizedString(room.name)") {{ getLocalizedString(room.name) }}
 			.hide-room.no-print(v-if="visibleRooms.length > 1", @click="hiddenRooms = rooms.filter(r => hiddenRooms.includes(r) || r === room)")
 				i.fa.fa-eye-slash
 		session(v-if="draggedSession && hoverSlice", :style="getHoverSliceStyle()", :session="draggedSession", :isDragClone="true", :overrideStart="hoverSlice.time")
@@ -248,7 +248,9 @@ const timeslices = computed<Timeslice[]>(() => {
     const endingMins = end.minute() % minimumSliceMins
 
     for (let i = 1; i <= mins / minimumSliceMins; i++) {
-      halfHourSlices.push(start.clone().add(startingMins + minimumSliceMins * i, 'minutes'))
+      const sliceDate = start.clone().add(startingMins + minimumSliceMins * i, 'minutes')
+      if (sliceDate.isAfter(end)) break
+      halfHourSlices.push(sliceDate)
     }
 
     if (endingMins) {
@@ -353,7 +355,7 @@ const gridStyle = computed(() => {
   const scale = densityScale.value
   const minimumSliceMins = props.timeDensityMinutes || 30
   const baseSliceHeight = 60 * (minimumSliceMins / 30)
-  let rows = `[header] ${Math.round(52 * (minimumSliceMins / 30) * scale)}px `
+  let rows = `[header] ${Math.round(52 * scale)}px `
   rows += timeslices.value.map((slice, index) => {
     const next = timeslices.value[index + 1]
     let height = baseSliceHeight
@@ -539,8 +541,13 @@ const updateHoverSlice = (e: PointerEvent) => {
     dragScrollTimer.value = setInterval(dragOnScroll, 100)
   }
 
+  const scrollParentEl = scrollParent.value
+  if (!scrollParentEl) return
+  const scrollParentRect = scrollParentEl.getBoundingClientRect()
+  const queryX = scrollParentRect.left + 10
+
   let hoverSliceEl: HTMLElement | null = null
-  for (const element of document.elementsFromPoint(gridOffset.value, e.clientY)) {
+  for (const element of document.elementsFromPoint(queryX, e.clientY)) {
     if (
       element instanceof HTMLElement &&
       element.dataset.slice &&
@@ -554,8 +561,7 @@ const updateHoverSlice = (e: PointerEvent) => {
   if (!hoverSliceEl) return
   const roomEls = document.querySelectorAll('.grid .room')
   const roomWidth = roomEls[1]?.getBoundingClientRect().width || 200
-  const scrollOffset = scrollParent.value?.scrollLeft || 0
-  const roomIndex = Math.floor((e.clientX + scrollOffset - gridOffset.value - 80) / roomWidth)
+  const roomIndex = Math.floor((e.clientX - gridOffset.value - 80) / roomWidth)
 
   hoverSlice.value = {
     time: moment(hoverSliceEl.dataset.slice),
@@ -583,7 +589,6 @@ const getSessionStyle = (session: SessionDatum | Availability): Record<string, s
   }
 }
 
-const getOffsetTop = (): number => staticOffsetTop.value + window.scrollY
 
 const getSliceClasses = (slice: Timeslice): Record<string, boolean> => ({
   datebreak: slice.datebreak || false,
@@ -617,7 +622,10 @@ const changeDay = (day: Moment | null) => {
 
   const el = timesliceRefs.value.find(el => el.dataset?.slice === day.format())
   if (!el) return
-  const offset = el.offsetTop + getOffsetTop()
+  const roomEl = rootEl.value?.querySelector('.room')
+  const controlsEl = rootEl.value?.parentElement?.querySelector('.schedule-controls')
+  const headerHeight = (roomEl?.getBoundingClientRect().height || 52) + (controlsEl?.getBoundingClientRect().height || 48)
+  const offset = Math.max(0, el.offsetTop - headerHeight)
   scrollTo(offset)
   scrolledDay.value = day
   emit('changeDay', day)
@@ -695,7 +703,7 @@ onMounted(async () => {
   })
 
   timesliceRefs.value.forEach(el => {
-    if (!el.dataset?.slice || !el.dataset.slice.endsWith('00-00')) return
+    if (!el.dataset?.slice || !el.classList.contains('datebreak')) return
     observer?.observe(el)
   })
 })
@@ -747,6 +755,14 @@ onUnmounted(() => {
 			background-color: $clr-white
 			border-bottom: 1px solid $clr-dividers-light
 			z-index: 20
+			min-width: 0
+
+			.room-name
+				overflow: hidden
+				text-overflow: ellipsis
+				white-space: nowrap
+				min-width: 0
+				padding: 0 4px
 
 			.hide-room
 				color: $clr-secondary-text-light

@@ -79,30 +79,21 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
 
         @property
         def name(self):
-            if isinstance(self.file, str):
-                return self.file.split('/')[-1]
             if hasattr(self.file, 'display_name'):
                 return self.file.display_name
             return self.file.name
 
         @property
         def is_img(self):
-            if isinstance(self.file, str):
-                return False
-            name = self.name
-            return any(name.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif'))
+            return any(self.file.name.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif'))
 
         def __str__(self):
-            if isinstance(self.file, str):
-                return self.file.split('/')[-1]
             if hasattr(self.file, 'display_name'):
                 return self.file.display_name
             return os.path.basename(self.file.name).split('.', 1)[-1]
 
         @property
         def url(self):
-            if isinstance(self.file, str):
-                return self.file
             return self.file.url
 
     def get_context(self, name, value, attrs):
@@ -110,13 +101,6 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
         ctx['widget']['value'] = self.FakeFile(value)
         ctx['widget']['cachedfile'] = None
         return ctx
-
-    def is_initial(self, value):
-        # Backward-compat: plain string means a legacy external URL is stored.
-        # Treat it as an initial value so the template shows the link + clear checkbox.
-        if isinstance(value, str) and value:
-            return True
-        return super().is_initial(value)
 
 
 class CachedFileInput(forms.ClearableFileInput):

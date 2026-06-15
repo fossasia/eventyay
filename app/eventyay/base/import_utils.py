@@ -46,3 +46,13 @@ def match_header(
         if normalized in header_map:
             return header_map[normalized]
     return None
+
+
+def setting_is_truthy(value) -> bool:
+    if value is True:
+        return True
+    if value in (False, None, '', 0):
+        return False
+    if isinstance(value, str):
+        return value.lower() in ('true', '1', 'on', 'yes')
+    return bool(value)
