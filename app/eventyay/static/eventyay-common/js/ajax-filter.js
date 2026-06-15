@@ -182,6 +182,10 @@ const handleSubmit = function(event) {
         return;
     }
 
+    if (event.submitter && event.submitter.getAttribute('formaction')) {
+        return;
+    }
+
     event.preventDefault();
     fetchAndReplace(buildFormUrl(form), true, form);
 };
