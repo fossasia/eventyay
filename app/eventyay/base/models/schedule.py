@@ -222,6 +222,7 @@ class Schedule(PretalxModel):
             .filter(
                 room__isnull=False,
                 room__deleted=False,
+                room__is_unscheduled=False,
                 start__isnull=False,
                 is_visible=True,
                 submission__isnull=False,
@@ -231,7 +232,7 @@ class Schedule(PretalxModel):
 
     @cached_property
     def breaks(self):
-        return self.talks.select_related('room').filter(submission__isnull=True, room__deleted=False)
+        return self.talks.select_related('room').filter(submission__isnull=True, room__deleted=False, room__is_unscheduled=False)
 
     @cached_property
     def slots(self):
@@ -839,7 +840,7 @@ class Schedule(PretalxModel):
                     ss,
                 )
             )
-        rooms: set[Room] = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
+        rooms: set[Room] = set(self.event.rooms.filter(deleted=False, is_unscheduled=False)) if all_rooms else set()
         tracks: set[Track] = set()
         speakers: set[User] = set()
         result = {
@@ -869,8 +870,8 @@ class Schedule(PretalxModel):
                 if response and not isinstance(response, Exception) and getattr(response, 'get_recording', None):
                     recording_providers.append(response)
         for talk in talk_list:
-            # Only add room if it's not deleted
-            if talk.room and not talk.room.deleted:
+            # Only add room if it's not deleted and not unscheduled
+            if talk.room and not talk.room.deleted and not talk.room.is_unscheduled:
                 rooms.add(talk.room)
             if talk.submission:
                 tracks.add(talk.submission.track)

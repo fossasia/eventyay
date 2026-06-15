@@ -22,6 +22,7 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay.agenda.management.commands.export_schedule_html import get_export_zip_path
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.base.models import Availability, Room, TalkSlot
+from eventyay.base.models.room import rooms_for_talk_assignment
 from eventyay.common.language import get_current_language_information
 from eventyay.common.text.path import safe_filename
 from eventyay.common.text.phrases import phrases
@@ -406,7 +407,12 @@ class TalkUpdate(PermissionRequired, View):
                 talk.end = talk.start + dt.timedelta(minutes=duration or 30)
             else:
                 talk.end = talk.start + dt.timedelta(minutes=talk.submission.get_duration())
-            talk.room = request.event.rooms.filter(deleted=False).get(pk=data['room'] or getattr(talk.room, 'pk', None))
+            room_pk = data['room'] or getattr(talk.room, 'pk', None)
+            room = rooms_for_talk_assignment(
+                request.event,
+                has_submission=bool(talk.submission_id),
+            ).get(pk=room_pk)
+            talk.room = room
             if not talk.submission:
                 new_description = LazyI18nString(data.get('title', ''))
                 talk.description = new_description if str(new_description) else talk.description
