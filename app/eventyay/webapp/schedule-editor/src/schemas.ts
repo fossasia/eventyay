@@ -86,7 +86,8 @@ export const TalkSchema = z.object({
   updated: z.string().optional(),
   uncreated: z.boolean().optional(),
   availabilities: z.array(AvailabilityEntrySchema).optional().default([]),
-  duration: z.number().optional()
+  duration: z.number().optional(),
+  do_not_record: z.boolean().optional(),
 });
 
 export const WarningSchema = z.object({
