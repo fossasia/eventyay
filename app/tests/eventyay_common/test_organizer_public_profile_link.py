@@ -29,3 +29,4 @@ def test_common_organizer_base_header_shows_public_profile_link():
 
     assert 'Public profile' in rendered
     assert f'href="{eventreverse(organizer, "presale:organizer.index")}"' in rendered
+    assert 'target="_blank" rel="noopener noreferrer"' in rendered
