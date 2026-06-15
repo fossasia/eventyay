@@ -2,8 +2,6 @@
 
 from django.db.models import Q
 
-from eventyay.base.models import Track
-
 
 def applicable_talk_teams(event, user, *, reviewers_only=False):
     """Return teams that grant talk access to *user* for *event*."""
@@ -37,6 +35,8 @@ def get_allowed_tracks(event, user, *, reviewers_only=False):
 
     if any(not team.limit_tracks.all() for team in teams):
         return None
+
+    from eventyay.base.models import Track
 
     team_pks = [team.pk for team in teams]
     return set(Track.objects.filter(event=event, team_set__pk__in=team_pks).distinct())
