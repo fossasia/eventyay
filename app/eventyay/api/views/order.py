@@ -1155,8 +1155,8 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         order_modified.send(sender=serializer.instance.order.event, order=serializer.instance.order)
 
 
-def get_order_for_nested_route(request, order):
-    return get_object_or_404(Order, pk=order, event=request.event)
+def get_order_for_nested_route(request, order_id):
+    return get_object_or_404(Order, pk=order_id, event=request.event)
 
 
 class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
@@ -1197,7 +1197,7 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                         send_mail=send_mail,
                     )
                 except Quota.QuotaExceededException as e:
-                    raise ValidationError(str(e))
+                    raise ValidationError({'detail': str(e)})
                 except SendMailException:
                     pass
 
