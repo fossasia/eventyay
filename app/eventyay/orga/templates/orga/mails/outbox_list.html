@@ -29,22 +29,24 @@
                     {% translate "Discard all" %}
                 </button>
             </div>
-            <div>
-                {% if is_filtered %}
-                    <div class="text-right text-muted mt-2">
-                        <i class="fa fa-filter"></i>
-                        {% translate "The current filters will be used when sending/discarding emails." %}
-                    </div>
-                {% endif %}
-            </div>
         </div>
     </div>
     <div data-ajax-results-region>
-        {% if is_paginated and page_obj.paginator.num_pages > 1 %}
-            <div class="d-flex flex-column align-items-end mb-2">
-                <a href="{{ request.event.orga_urls.send_outbox }}?pks={% for mail in mails %}{{ mail.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">
-                    <button class="btn btn-outline-success">{% translate "Send all on this page" %}</button>
-                </a>
+        {% if is_filtered or is_paginated and page_obj.paginator.num_pages > 1 %}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    {% if is_filtered %}
+                        <span class="text-muted">
+                            <i class="fa fa-filter"></i>
+                            {% translate "The current filters will be used when sending/discarding emails." %}
+                        </span>
+                    {% endif %}
+                </div>
+                {% if is_paginated and page_obj.paginator.num_pages > 1 %}
+                    <a href="{{ request.event.orga_urls.send_outbox }}?pks={% for mail in mails %}{{ mail.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                        <button class="btn btn-outline-success">{% translate "Send all on this page" %}</button>
+                    </a>
+                {% endif %}
             </div>
         {% endif %}
     <div class="table-responsive-sm">
