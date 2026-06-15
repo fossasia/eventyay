@@ -158,6 +158,30 @@ function onPointerDown(event: PointerEvent): void {
 </script>
 
 <style lang="stylus">
+sessionTextClamp(lines)
+	min-width: 0
+	display: -webkit-box
+	-webkit-line-clamp: lines
+	line-clamp: lines
+	-webkit-box-orient: vertical
+	overflow: hidden
+	overflow-wrap: break-word
+	overflow-wrap: anywhere
+	word-break: break-word
+	text-overflow: ellipsis
+
+sessionTextExpand()
+	display: block
+	-webkit-line-clamp: unset
+	line-clamp: unset
+	-webkit-box-orient: unset
+	overflow: hidden
+	white-space: normal
+	overflow-wrap: break-word
+	overflow-wrap: anywhere
+	word-break: break-word
+	text-overflow: clip
+
 .c-linear-schedule-session
 	display: flex
 	min-width: 300px
@@ -251,14 +275,17 @@ function onPointerDown(event: PointerEvent): void {
 		min-width: 0
 		.title
 			font-weight: 500
+			sessionTextClamp(2)
 		.speakers
 			color: $clr-secondary-text-light
+			sessionTextClamp(1)
 		.bottom-info
 			flex: auto
 			display: flex
 			align-items: flex-end
 			.track
 				flex: 1
+				min-width: 0
 				color: var(--track-color)
 				ellipsis()
 				margin-right: 4px
@@ -276,6 +303,10 @@ function onPointerDown(event: PointerEvent): void {
 		font-size: 16px
 		.warning-icon span
 			padding-right: 4px
+	@media (hover: hover) and (pointer: fine)
+		&:hover:not(.dragging):not(.clone)
+			.title, .speakers
+				sessionTextExpand()
 @media print
 	.c-linear-schedule-session.isbreak
 		border: 2px solid $clr-grey-300 !important

@@ -197,6 +197,30 @@ export default {
 }
 </script>
 <style lang="stylus">
+sessionTextClamp(lines)
+	min-width: 0
+	display: -webkit-box
+	-webkit-line-clamp: lines
+	line-clamp: lines
+	-webkit-box-orient: vertical
+	overflow: hidden
+	overflow-wrap: break-word
+	overflow-wrap: anywhere
+	word-break: break-word
+	text-overflow: ellipsis
+
+sessionTextExpand()
+	display: block
+	-webkit-line-clamp: unset
+	line-clamp: unset
+	-webkit-box-orient: unset
+	overflow: hidden
+	white-space: normal
+	overflow-wrap: break-word
+	overflow-wrap: anywhere
+	word-break: break-word
+	text-overflow: clip
+
 .c-linear-schedule-session, .break
 	z-index: 10
 	display: flex
@@ -279,9 +303,11 @@ export default {
 			font-weight: 500
 			margin-bottom: 4px
 			margin-right: 0
+			sessionTextClamp(2)
 		.speakers
 			color: $clr-secondary-text-light
 			display: flex
+			min-width: 0
 			.avatars
 				flex: none
 				> *:not(:first-child)
@@ -295,24 +321,25 @@ export default {
 					object-fit: cover
 			.names
 				line-height: 24px
+				flex: 1
+				sessionTextClamp(1)
 		.abstract
 			margin: 8px 0 12px 0
 			// TODO make this take up more space if available?
-			display: -webkit-box
-			-webkit-line-clamp: 3
-			-webkit-box-orient: vertical
-			overflow: hidden
+			sessionTextClamp(3)
 		.bottom-info
 			flex: auto
 			display: flex
 			align-items: flex-end
 			.track
 				flex: 1
+				min-width: 0
 				color: var(--track-color)
 				ellipsis()
 				margin-right: 4px
 			.room
 				flex: 1
+				min-width: 0
 				text-align: right
 				color: $clr-secondary-text-light
 				ellipsis()
@@ -385,6 +412,10 @@ export default {
 			border-left: none
 			.title
 				color: var(--pretalx-clr-primary)
+	@media (hover: hover) and (pointer: fine)
+		&:hover
+			.title, .speakers .names
+				sessionTextExpand()
 @media(hover: none)
 	.c-linear-schedule-session .session-icons .btn-fav-container
 		display: inline-flex
@@ -411,6 +442,7 @@ export default {
 				font-size: 14px
 			.abstract
 				-webkit-line-clamp: 2
+				line-clamp: 2
 			.bottom-info
 				font-size: 12px
 	.c-linear-schedule-session.has-date
