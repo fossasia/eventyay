@@ -53,11 +53,7 @@
 
 {% block event_logo %}
     {% if organizer_logo %}
-        {% if organizer.settings.organizer_logo_image_large %}
-            <img loading="lazy" src="{{ organizer_logo|thumb:'1170x5000' }}" id="event-logo" alt="{{ organizer.name }}">
-        {% else %}
-            <img loading="lazy" src="{{ organizer_logo|thumb:'5000x140' }}" id="event-logo" alt="{{ organizer.name }}">
-        {% endif %}
+        <img loading="lazy" src="{{ organizer_logo|thumb:'1000x1000' }}" id="event-logo" alt="{{ organizer.name }}" class="organizer-logo">
     {% endif %}
 {% endblock %}
 

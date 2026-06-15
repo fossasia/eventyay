@@ -15,7 +15,7 @@ class OrganizerSettingsForm(SettingsForm):
         'event_list_availability',
         'organizer_homepage_text',
         'organizer_link_back',
-        'organizer_logo_image_large',
+        'organizer_header_image_large',
         'community_follow_enabled',
         'community_show_follower_count',
         'giftcard_length',
@@ -37,15 +37,24 @@ class OrganizerSettingsForm(SettingsForm):
     ]
 
     organizer_logo_image = ExtFileField(
+        label=_('Logo'),
+        ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        required=False,
+        help_text=_(
+            'Upload your organizer logo. Accepted formats: PNG, JPEG, GIF. '
+            'The logo is displayed in the page header.'
+        ),
+    )
+
+    organizer_header_image = ExtFileField(
         label=_('Header image'),
         ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
         max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         required=False,
         help_text=_(
-            'If you provide a logo image, we will by default not show your organization name '
-            'in the page header. By default, we show your logo with a size of up to 1140x120 pixels. You '
-            'can increase the size with the setting below. We recommend not using small details on the picture '
-            'as it will be resized on smaller screens.'
+            'This image appears at the top of all organizer pages, replacing the default color or pattern. '
+            'We recommend an image 1140 px wide and 120 px in height.'
         ),
     )
 

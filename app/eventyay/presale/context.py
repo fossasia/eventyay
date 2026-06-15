@@ -156,6 +156,7 @@ def _default_context(request):
         if request.organizer.settings.presale_css_file and not hasattr(request, 'event'):
             ctx['css_file'] = default_storage.url(request.organizer.settings.presale_css_file)
         ctx['organizer_logo'] = request.organizer.settings.get('organizer_logo_image', as_type=str, default='')[7:]
+        ctx['organizer_header'] = request.organizer.settings.get('organizer_header_image', as_type=str, default='')[7:]
         ctx['organizer_homepage_text'] = request.organizer.settings.get(
             'organizer_homepage_text', as_type=LazyI18nString
         )

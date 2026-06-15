@@ -9,6 +9,7 @@
 {% load static %}
 {% load eventurl %}
 {% load nav_tags %}
+{% load thumb %}
 
 {% with current_event=request.event|default:None %}
 <!DOCTYPE html>
@@ -92,10 +93,16 @@
     </head>
     <body {% block body_attrs %}data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}"{% endblock %}>
         {% block body_top %}{% endblock body_top %}
-        <div id="top-bg" class="header {{ current_event.display_settings.header_pattern|default:"bg-primary" }}">
+        <div id="top-bg" class="header {% if current_event %}{{ current_event.display_settings.header_pattern|default:"bg-primary" }}{% else %}bg-primary{% endif %}">
             {% if current_event and current_event.visible_header_image_url %}
                 {# not lazy-loading to avoid flash #}
                 <img src="{{ current_event.visible_header_image_url }}" id="header-image" alt="{{ current_event.name|event_localize }}">
+            {% elif request.organizer and organizer_header %}
+                {% if organizer.settings.organizer_header_image_large %}
+                    <img src="{{ organizer_header|thumb:'1920x5000' }}" id="header-image" alt="{{ organizer.name }}">
+                {% else %}
+                    <img src="{{ organizer_header|thumb:'1920x320' }}" id="header-image" alt="{{ organizer.name }}">
+                {% endif %}
             {% endif %}
             <div class="header-image-overlay"></div>
             {% block header_background %}{% endblock header_background %}
