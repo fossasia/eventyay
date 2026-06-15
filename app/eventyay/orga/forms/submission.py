@@ -7,6 +7,7 @@ from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceFie
 from eventyay.base.models import Submission, SubmissionStates, TalkSlot
 from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
+from eventyay.base.models.room import rooms_for_talk_assignment
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.mixins import ReadOnlyFlag, RequestRequire
 from eventyay.common.forms.renderers import InlineFormLabelRenderer, InlineFormRenderer
