@@ -16,6 +16,7 @@
         </h2>
         {% include "orga/event/component_link.html" %}
     </div>
+    <div data-ajax-results-region>
     <div class="submit-group">
         <div>
             {% include "common/includes/search_form.html" with omit_wrapper=True no_filter_form=True %}
@@ -115,5 +116,6 @@
     </div>
 
     {% include "orga/includes/pagination.html" %}
+    </div>
 
 {% endblock mail_content %}
