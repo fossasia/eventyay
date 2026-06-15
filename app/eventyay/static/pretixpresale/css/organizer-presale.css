@@ -1,0 +1,138 @@
+body.organizer-presale-page {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+body.organizer-presale-page .event-hero-text .event-title {
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+body.organizer-presale-page .event-date-line {
+  font-size: 16px;
+}
+
+body.organizer-presale-page #main-container > header {
+  margin-top: 24px;
+}
+
+body.organizer-presale-page .event-hero {
+  margin: 16px 0 56px;
+}
+
+body.organizer-presale-page #main-container.main-schedule #main-card > main {
+  padding: 24px 20px;
+}
+
+body.organizer-presale-page .presale-sticky-tabs-inner {
+  max-width: 100%;
+}
+
+body.organizer-presale-page .presale-sticky-tabs a.header-tab {
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 8px 10px 4px;
+  white-space: nowrap;
+  color: var(--color-primary);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+
+body.organizer-presale-page .presale-sticky-tabs a.header-tab:hover {
+  text-decoration: none;
+  border-bottom: 2px dotted var(--color-primary);
+}
+
+body.organizer-presale-page .presale-sticky-tabs a.header-tab.underline {
+  border-bottom: 2px solid var(--color-primary);
+  font-weight: 600;
+}
+
+body.organizer-presale-page .presale-sticky-tabs .header-row-right {
+  font-size: 16px;
+  gap: 12px;
+}
+
+body.organizer-presale-page .presale-sticky-tabs .header-row-right .login-link {
+  font-size: 16px;
+  padding: 6px 10px;
+}
+
+body.organizer-presale-page .presale-sticky-tabs .header-row-right .locale-link {
+  font-size: 16px;
+}
+
+body.organizer-presale-page .presale-sticky-tabs .header-row-right details.dropdown summary {
+  font-size: 16px;
+}
+
+body.organizer-presale-page #main-card,
+body.organizer-presale-page #main-card > main,
+body.organizer-presale-page .organizer-page-content {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--color-text);
+}
+
+.organizer-homepage-text {
+  margin-bottom: 1.5rem;
+}
+
+.organizer-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1em;
+}
+
+.organizer-section-header h3 {
+  margin: 0;
+}
+
+.organizer-community-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.organizer-follower-count {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  body.organizer-presale-page .event-hero {
+    margin: 8px 0 32px;
+  }
+
+  body.organizer-presale-page #main-container.main-schedule #main-card > main {
+    padding: 12px;
+  }
+
+  body.organizer-presale-page .event-hero-text .event-title {
+    font-size: 20px;
+  }
+
+  body.organizer-presale-page .presale-sticky-tabs a.header-tab {
+    font-size: 1rem;
+    padding: 8px 10px 4px;
+  }
+
+  body.organizer-presale-page .presale-sticky-tabs .header-row-right,
+  body.organizer-presale-page .presale-sticky-tabs .header-row-right .login-link,
+  body.organizer-presale-page .presale-sticky-tabs .header-row-right .locale-link,
+  body.organizer-presale-page .presale-sticky-tabs .header-row-right details.dropdown summary {
+    font-size: 16px;
+  }
+
+  body.organizer-presale-page .presale-sticky-tabs .header-row-right {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  body.organizer-presale-page .event-hero-text .event-title {
+    font-size: 18px;
+  }
+}

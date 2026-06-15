@@ -1,7 +1,7 @@
 .submission-content-view .form-group {
     display: flex;
     flex-wrap: wrap;
-    align-items: center; /* Align label and value vertically */
+    align-items: flex-start; /* Align label to the start/top */
     margin-bottom: 1rem;
 }
 
@@ -10,12 +10,17 @@
     margin-bottom: 0; /* Remove extra spacing */
     padding-right: 1rem;
     text-align: right; /* Align labels to the right */
+    padding-top: 0;
 }
 
 .submission-content-view .form-group .col-md-9 {
     display: flex;
     flex-wrap: wrap;
     align-items: center; /* Align inner content vertically */
+}
+
+.submission-content-view .form-group .col-md-9.custom-fields-container {
+    display: block;
 }
 
 .submission-content-view .badge {
@@ -33,4 +38,10 @@
 
 .submission-content-view i.fa {
     margin-right: 0.25rem;
+}
+
+#main-title .submission-readonly-badge .badge {
+    font-size: 14px;
+    padding: 0.3em 0.6em;
+    vertical-align: middle;
 }
