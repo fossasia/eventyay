@@ -157,7 +157,7 @@
                 {% endblock presale_back_navigation %}
                 <div class="event-hero">
                     <div class="event-hero-overlay">
-                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% elif request.organizer and organizer_logo %} event-brand--has-logo{% endif %}{% if request.organizer and organizer.settings.organizer_logo_image_large %} event-brand--logo-large{% endif %}">
+                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% elif request.organizer and organizer_logo %} event-brand--has-logo{% endif %}">
                             <div class="event-logo">
                                 <a href="{% block nav_link %}{% endblock nav_link %}">
                                     {% block event_logo %}
