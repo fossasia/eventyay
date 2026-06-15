@@ -2,9 +2,9 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
+    
     dependencies = [
-        ('base', '0029_organizerfollower'),
+        ('base', '0030_room_is_unscheduled_team_polls_questions'),
     ]
 
     operations = [
