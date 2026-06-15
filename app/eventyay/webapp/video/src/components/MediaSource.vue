@@ -89,12 +89,13 @@ const module = computed(() => {
 
 const shouldUseLivestream = computed(() => {
 	if (!props.room || !module.value) return false;
-	if (module.value.type !== 'livestream.native') return false;
 	const streamType = props.room?.currentStream?.stream_type;
-	if (streamType && streamType !== 'hls') {
-		return false;
+
+	if (streamType) {
+		return streamType === 'hls';
 	}
-	return true;
+
+	return module.value.type === 'livestream.native';
 });
 
 // When stream schedules are enabled, the backend returns 404 (mapped to null) if

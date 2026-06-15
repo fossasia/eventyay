@@ -74,7 +74,6 @@ export default {
 				{ id: 'vimeo', label: 'Vimeo' },
 				{ id: 'hls', label: 'HLS' },
 				{ id: 'iframe', label: 'Iframe' },
-				{ id: 'native', label: 'Native' },
 			],
 			formData: {
 				title: '',
