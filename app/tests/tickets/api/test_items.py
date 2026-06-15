@@ -1828,6 +1828,19 @@ def test_quota_availability(token_client, organizer, event, quota, item):
     } == resp.data
 
 
+@pytest.mark.django_db
+def test_quota_availability_counts_waiting_list_entries(token_client, organizer, event, quota, item):
+    event.waitinglistentries.create(item=item, email='waiting@example.com')
+
+    resp = token_client.get(
+        '/api/v1/organizers/{}/events/{}/quotas/{}/availability/'.format(organizer.slug, event.slug, quota.pk)
+    )
+
+    assert resp.status_code == 200
+    assert resp.data['pending_orders'] == 0
+    assert resp.data['waiting_list'] == 1
+
+
 @pytest.fixture
 def question(event, item):
     q = event.questions.create(

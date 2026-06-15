@@ -612,7 +612,7 @@ class QuotaViewSet(ConditionalListView, viewsets.ModelViewSet):
             'exited_orders': qa.count_exited_orders[quota],
             'blocking_vouchers': qa.count_vouchers[quota],
             'cart_positions': qa.count_cart[quota],
-            'waiting_list': qa.count_pending_orders[quota],
+            'waiting_list': qa.count_waitinglist[quota],
             'available_number': avail[1],
             'available': avail[0] == Quota.AVAILABILITY_OK,
             'total_size': quota.size,
