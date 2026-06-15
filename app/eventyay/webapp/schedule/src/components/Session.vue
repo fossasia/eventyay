@@ -441,8 +441,7 @@ sessionTextExpand()
 			.title
 				font-size: 14px
 			.abstract
-				-webkit-line-clamp: 2
-				line-clamp: 2
+				sessionTextClamp(2)
 			.bottom-info
 				font-size: 12px
 	.c-linear-schedule-session.has-date
