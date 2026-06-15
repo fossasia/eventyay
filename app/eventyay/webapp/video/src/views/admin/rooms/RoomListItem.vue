@@ -3,9 +3,13 @@ router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {
 	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? 'sorting is disabled while searching' : ''")
 	.name(v-html="$emojify($localize(room.name))")
 	.badge-cell
-		.room-type-badge(:class="badgeClass")
-			.mdi(:class="badgeIcon")
-			span {{ badgeLabel }}
+		.badges-wrapper
+			.room-type-badge.unscheduled-room-badge(v-if="room.is_unscheduled")
+				.mdi.mdi-calendar-remove
+				span Unscheduled
+			.room-type-badge(:class="badgeClass")
+				.mdi(:class="badgeIcon")
+				span {{ badgeLabel }}
 </template>
 <script>
 import { ElementMixin, HandleDirective } from 'vue-slicksort'
@@ -57,6 +61,11 @@ export default {
 		display: flex
 		align-items: center
 		justify-content: flex-end
+	.badges-wrapper
+		display: flex
+		flex-direction: row
+		align-items: center
+		gap: 8px
 	.room-type-badge
 		display: flex
 		align-items: center
@@ -83,6 +92,10 @@ export default {
 			background-color: $clr-orange-100
 			color: $clr-orange-900
 			border-color: $clr-orange-100
+		&.unscheduled-room-badge
+			background-color: $clr-cyan-100
+			color: $clr-cyan-900
+			border-color: $clr-cyan-100
 		&.type-stage
 			background-color: $clr-blue-50
 			color: $clr-blue-900

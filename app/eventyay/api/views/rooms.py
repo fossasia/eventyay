@@ -20,7 +20,7 @@ class RoomViewSet(viewsets.ModelViewSet):
     permission_classes = [ApiAccessRequiredPermission & RoomPermissions]
 
     def get_queryset(self):
-        return self.request.event.rooms.with_permission(
+        return self.request.event.rooms.with_has_linked_sessions().with_permission(
             traits=self.request.auth.get("traits"), event=self.request.event
         )
 

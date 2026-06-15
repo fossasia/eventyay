@@ -108,6 +108,7 @@ class TeamForm(forms.ModelForm):
             'can_video_view_users',
             'can_video_manage_users',
             'can_video_manage_rooms',
+            'can_video_manage_polls_questions',
             'can_video_manage_kiosks',
             'can_video_manage_configuration',
         ]
@@ -166,6 +167,7 @@ class TeamForm(forms.ModelForm):
             'can_video_view_users',
             'can_video_manage_users',
             'can_video_manage_rooms',
+            'can_video_manage_polls_questions',
             'can_video_manage_kiosks',
             'can_video_manage_configuration',
         )
