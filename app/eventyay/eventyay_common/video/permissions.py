@@ -24,6 +24,7 @@ VIDEO_PERMISSION_DEFINITIONS: dict[str, VideoPermissionDefinition] = {
     'can_video_view_users': VideoPermissionDefinition('can_video_view_users', 'video_user_viewer'),
     'can_video_manage_users': VideoPermissionDefinition('can_video_manage_users', 'video_user_moderator'),
     'can_video_manage_rooms': VideoPermissionDefinition('can_video_manage_rooms', 'video_room_manager'),
+    'can_video_manage_polls_questions': VideoPermissionDefinition('can_video_manage_polls_questions', 'video_poll_question_manager'),
     'can_video_manage_kiosks': VideoPermissionDefinition('can_video_manage_kiosks', 'video_kiosk_manager'),
     'can_video_manage_configuration': VideoPermissionDefinition('can_video_manage_configuration', 'video_config_manager'),
 }

@@ -130,6 +130,7 @@
 
     {% include "orga/includes/review_filter_form.html" %}
 
+    <div data-ajax-results-region>
     <form method="post">
         {% csrf_token %}
         <div class="table-responsive-sm">
@@ -321,4 +322,5 @@
         {% include "orga/includes/pagination.html" %}
 
     {% endif %}
+    </div>
 {% endblock content %}

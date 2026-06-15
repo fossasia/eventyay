@@ -92,26 +92,30 @@ async def get_event(event_id):
 
 
 def get_rooms(event, user):
-    qs = (
-        event.rooms.filter(deleted=False)
-        .order_by('sorting_priority', 'id')
-        .prefetch_related("channel")
-        .annotate(
-            current_roomviews=Subquery(
-                RoomView.objects.filter(room_id=OuterRef("pk"), end__isnull=True)
-                .values("room_id")
-                .order_by()
-                .annotate(
-                    # Count('user_id', distinct=True) would be more accurate, but might be slow, and we don't need accurate
-                    c=Count("user_id")
+    from django_scopes import scope
+
+    with scope(event=event):
+        qs = (
+            event.rooms.filter(deleted=False)
+            .with_has_linked_sessions()
+            .order_by('sorting_priority', 'id')
+            .prefetch_related("channel")
+            .annotate(
+                current_roomviews=Subquery(
+                    RoomView.objects.filter(room_id=OuterRef("pk"), end__isnull=True)
+                    .values("room_id")
+                    .order_by()
+                    .annotate(
+                        # Count('user_id', distinct=True) would be more accurate, but might be slow, and we don't need accurate
+                        c=Count("user_id")
+                    )
+                    .values("c")
                 )
-                .values("c")
             )
         )
-    )
-    if user:
-        qs = qs.with_permission(event=event, user=user)
-    return list(qs)
+        if user:
+            qs = qs.with_permission(event=event, user=user)
+        return list(qs)
 
 
 @database_sync_to_async

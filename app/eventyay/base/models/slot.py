@@ -89,6 +89,20 @@ class TalkSlot(PretalxModel):
             f'schedule={self.schedule.version})'
         )
 
+    def _validate_submission_room(self):
+        if self.room_id and self.submission_id:
+            from eventyay.base.models.room import validate_talk_slot_room
+
+            validate_talk_slot_room(self.room)
+
+    def clean(self):
+        super().clean()
+        self._validate_submission_room()
+
+    def save(self, *args, **kwargs):
+        self._validate_submission_room()
+        super().save(*args, **kwargs)
+
     @cached_property
     def event(self):
         return self.submission.event if self.submission else self.schedule.event
