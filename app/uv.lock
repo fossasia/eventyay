@@ -1183,6 +1183,11 @@ version = "1.0.0"
 source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#a6d9cbdd28ff567ac336cb0242d09a8e5aa0cd7c" }
 
 [[package]]
+name = "eventyay-socialmedia"
+version = "1.0.0"
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#19c9e3aae828973e247ff0200c2a2b119176c6ee" }
+
+[[package]]
 name = "eventyay-stripe"
 version = "1.0.1"
 source = { git = "https://github.com/fossasia/eventyay-stripe.git?rev=main#10007c4ca478cde2f2f347d8ec4930e2929086c9" }
@@ -1280,6 +1285,7 @@ dependencies = [
     { name = "et-xmlfile" },
     { name = "eventyay-bitpay" },
     { name = "eventyay-paypal" },
+    { name = "eventyay-socialmedia" },
     { name = "eventyay-stripe" },
     { name = "eventyay-teamshifts" },
     { name = "execnet" },
@@ -1514,6 +1520,7 @@ requires-dist = [
     { name = "et-xmlfile", specifier = ">=2.0.0" },
     { name = "eventyay-bitpay", git = "https://github.com/fossasia/eventyay-bitpay.git?rev=main" },
     { name = "eventyay-paypal", git = "https://github.com/fossasia/eventyay-paypal.git?rev=main" },
+    { name = "eventyay-socialmedia", git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main" },
     { name = "eventyay-stripe", git = "https://github.com/fossasia/eventyay-stripe.git?rev=main" },
     { name = "eventyay-teamshifts", git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main" },
     { name = "execnet", specifier = ">=2.1.2" },
