@@ -479,6 +479,21 @@ body.organizer-presale-page #main-card .week-calendar a.event.over {
     min-height: 6rem;
   }
 
+  body.organizer-presale-page #main-card .week-calendar .weekday.has-events {
+    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  body.organizer-presale-page #main-card .week-calendar .weekday.has-events:hover {
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+
+  body.organizer-presale-page #main-card .week-calendar .weekday.has-events h3 {
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
   body.organizer-presale-page .table-calendar td.day {
     min-height: 3.5rem;
   }
