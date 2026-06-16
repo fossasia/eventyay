@@ -14,7 +14,12 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay.base.models import SpeakerProfile, TalkSlot
 from eventyay.base.models.schedule import make_qr_svg
 from eventyay.common.views import conditional_cache_page
-from eventyay.talk_rules.agenda import is_widget_visible
+from eventyay.talk_rules.agenda import (
+    can_access_schedule_widget,
+    can_view_wip_schedule,
+    is_widget_visible,
+    wip_preview_build_data,
+)
 from eventyay.talk_rules.submission import (
     are_featured_submissions_visible,
     schedule_widget_featured_cache_key_part,
@@ -119,13 +124,13 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
         response['Access-Control-Allow-Headers'] = 'authorization,content-type'
         response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         return response
-    if not request.user.has_perm('base.view_widget_schedule', event):
+    if not can_access_schedule_widget(request.user, event):
         raise Http404()
 
     version = version or unquote(request.GET.get('v') or '')
     schedule = None
     if version and version == 'wip':
-        if not request.user.has_perm('base.orga_view_schedule', event):
+        if not can_view_wip_schedule(request.user, event):
             raise Http404()
         schedule = request.event.wip_schedule
     elif version:
@@ -137,11 +142,13 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
 
     enrich = request.GET.get('enrich') in {'1', 'true', 'True'}
     include_qrcodes = request.GET.get('qrcodes') in {'1', 'true', 'True'}
+    preview = wip_preview_build_data(request.user, event, schedule)
     result = schedule.build_data(
         all_talks=not schedule.version,
         enrich=enrich,
         include_featured_speaker_metadata=are_featured_submissions_visible(AnonymousUser(), event),
         include_qrcodes=include_qrcodes,
+        respect_public_visibility=not preview,
     )
     response = JsonResponse(result, encoder=I18nJSONEncoder)
     response['Access-Control-Allow-Headers'] = 'authorization,content-type'
@@ -169,13 +176,13 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
         response['Access-Control-Allow-Headers'] = 'authorization,content-type'
         response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         return response
-    if not request.user.has_perm('base.view_widget_schedule', event):
+    if not can_access_schedule_widget(request.user, event):
         raise Http404()
 
     version = version or unquote(request.GET.get('v') or '')
     schedule = None
     if version and version == 'wip':
-        if not request.user.has_perm('base.orga_view_schedule', event):
+        if not can_view_wip_schedule(request.user, event):
             raise Http404()
         schedule = request.event.wip_schedule
     elif version:
@@ -187,12 +194,10 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
     # Validate that the requested entity exists in this event/schedule to avoid
     # unbounded cache entries and unnecessary CPU work for random codes.
     if kind == 'talk':
-        exists = TalkSlot.objects.filter(
-            schedule=schedule,
-            is_visible=True,
-            submission__isnull=False,
-            submission__code__iexact=code,
-        ).exists()
+        talk_filter = {'schedule': schedule, 'submission__isnull': False, 'submission__code__iexact': code}
+        if not wip_preview_build_data(request.user, event, schedule):
+            talk_filter['is_visible'] = True
+        exists = TalkSlot.objects.filter(**talk_filter).exists()
         if not exists:
             raise Http404()
     elif kind == 'speaker':

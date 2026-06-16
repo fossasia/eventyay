@@ -2,6 +2,7 @@ from django.dispatch import Signal
 
 from eventyay.base.signals import DeprecatedSignal, EventPluginSignal
 
+
 html_page_start = Signal()
 """
 This signal allows you to put code in the beginning of the main page for every
@@ -45,6 +46,18 @@ in pretix.
 
 As with all plugin signals, the ``sender`` keyword argument will contain the event.
 """
+
+nav_event_common = EventPluginSignal()
+"""
+Arguments: ``request``
+
+This signal allows you to add additional views to the event common dashboard
+navigation. You will get the request as a keyword argument ``request``.
+Receivers are expected to return a list of dictionaries, similar to ``nav_event``.
+
+As with all plugin signals, the ``sender`` keyword argument will contain the event.
+"""
+
 
 nav_topbar = Signal()
 """

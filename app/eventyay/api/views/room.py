@@ -46,7 +46,7 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.event:
-            return self.event.rooms.all().select_related("event")
+            return self.event.rooms.with_has_linked_sessions().select_related("event")
         return Room.objects.none()
 
     def get_unversioned_serializer_class(self):

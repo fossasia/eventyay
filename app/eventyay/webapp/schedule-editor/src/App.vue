@@ -142,6 +142,7 @@ interface Talk {
   submission?: Record<string, unknown>
   uncreated?: boolean
   availabilities?: AvailabilityEntry[]
+  do_not_record?: boolean
 }
 
 interface SessionData {
@@ -159,6 +160,7 @@ interface SessionData {
   deletedRoom?: boolean
   uncreated?: boolean
   availabilities?: AvailabilityEntry[]
+  do_not_record?: boolean
 }
 
 interface SortMethod {
@@ -299,6 +301,7 @@ const unscheduled = computed<SessionData[]>(() => {
       track: tracksLookup.value[lookupKey(session.track)],
       duration: session.duration,
       state: session.state,
+      do_not_record: session.do_not_record,
     } as SessionData)
   }
   if (unassignedFilterString.value.length) {
@@ -350,6 +353,7 @@ const deletedRoomSessions = computed<SessionData[]>(() => {
       track: tracksLookup.value[lookupKey(session.track)],
       state: session.state,
       deletedRoom: true,
+      do_not_record: session.do_not_record,
     }))
 })
 
@@ -380,6 +384,7 @@ const sessions = computed<SessionData[]>(() => {
     track: tracksLookup.value[lookupKey(session.track)],
     state: session.state,
     room: roomsLookup.value[lookupKey(session.room)],
+    do_not_record: session.do_not_record,
   }))
 
   sessionList.sort((a, b) => a.start!.diff(b.start!))

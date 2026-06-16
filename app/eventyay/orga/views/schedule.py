@@ -22,6 +22,7 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay.agenda.management.commands.export_schedule_html import get_export_zip_path
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.base.models import Availability, Room, TalkSlot
+from eventyay.base.models.room import rooms_for_talk_assignment
 from eventyay.common.language import get_current_language_information
 from eventyay.common.text.path import safe_filename
 from eventyay.common.text.phrases import phrases
@@ -168,17 +169,26 @@ class ScheduleResetView(EventPermissionRequired, View):
 class ScheduleToggleView(EventPermissionRequired, View):
     permission_required = 'base.update_event'
 
+    @staticmethod
+    def _set_schedule_public(event, is_public):
+        """Persist talk schedule visibility for agenda and presale navigation."""
+        flags = dict(event.feature_flags)
+        flags['show_schedule'] = is_public
+        event.feature_flags = flags
+        event.settings.talk_schedule_public = is_public
+        event.save(update_fields=['feature_flags'])
+
     def dispatch(self, request, event):
         super().dispatch(request, event)
-        self.request.event.feature_flags['show_schedule'] = not self.request.event.get_feature_flag('show_schedule')
-        self.request.event.save()
+        is_public = not self.request.event.get_feature_flag('show_schedule')
+        self._set_schedule_public(self.request.event, is_public)
         # Trigger tickets to hidden/unhidden schedule menu
         try:
             from eventyay.orga.tasks import trigger_public_schedule
 
             trigger_public_schedule.apply_async(
                 kwargs={
-                    'is_show_schedule': self.request.event.feature_flags['show_schedule'],
+                    'is_show_schedule': is_public,
                     'event_slug': self.request.event.slug,
                     'organiser_slug': self.request.event.organiser.slug,
                     'user_email': self.request.user.email,
@@ -406,7 +416,12 @@ class TalkUpdate(PermissionRequired, View):
                 talk.end = talk.start + dt.timedelta(minutes=duration or 30)
             else:
                 talk.end = talk.start + dt.timedelta(minutes=talk.submission.get_duration())
-            talk.room = request.event.rooms.filter(deleted=False).get(pk=data['room'] or getattr(talk.room, 'pk', None))
+            room_pk = data['room'] or getattr(talk.room, 'pk', None)
+            room = rooms_for_talk_assignment(
+                request.event,
+                has_submission=bool(talk.submission_id),
+            ).get(pk=room_pk)
+            talk.room = room
             if not talk.submission:
                 new_description = LazyI18nString(data.get('title', ''))
                 talk.description = new_description if str(new_description) else talk.description

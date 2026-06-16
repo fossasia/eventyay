@@ -50,6 +50,7 @@ settings_hierarkey.add_default('venueless_issuer', '', str)
 settings_hierarkey.add_default('venueless_audience', '', str)
 settings_hierarkey.add_default('venueless_talk_schedule_url', '', str)
 settings_hierarkey.add_default('venueless_show_public_link', False, bool)
+settings_hierarkey.add_default('talk_schedule_public', None, bool)
 settings_hierarkey.add_default('create_for', 'all', str)
 
 # Telemetry settings for anonymous usage data collection

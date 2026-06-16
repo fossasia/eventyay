@@ -10,7 +10,7 @@
 			.speaker-content-area
 				.speaker-title
 					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
-				export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl")
+				export-dropdown.speaker-export(v-if="speakerExportOptions.length || isWipPreview", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl", :disabled="isWipPreview")
 		markdown-content.biography(v-if="resolvedSpeaker.biography", :markdown="resolvedSpeaker.biography")
 		.speaker-sessions(v-if="resolvedSessions && resolvedSessions.length")
 			h3 {{ t.sessions }}
@@ -55,7 +55,8 @@ export default {
 				return () => {}
 			}
 		},
-		translationMessages: { default: () => ({}) }
+		translationMessages: { default: () => ({}) },
+		isWipPreview: { default: false }
 	},
 	props: {
 		speaker: Object,

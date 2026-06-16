@@ -3,6 +3,7 @@ from urllib.parse import quote, urlsplit
 
 from django.conf import settings
 from django import template
+from django.contrib.auth.models import AnonymousUser
 from django.http import QueryDict
 from django.urls import reverse
 
@@ -10,7 +11,7 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.models import Order, OrderPosition
 from eventyay.common.urls import is_http_url
-from eventyay.common.permissions import user_has_cfp_submissions
+from eventyay.common.permissions import is_admin_mode_active, user_has_cfp_submissions
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 register = template.Library()
@@ -171,6 +172,27 @@ def can_view_tickets(context, event=None):
     if not event:
         return False
     return event.user_can_view_tickets(getattr(request, 'user', None), request=request)
+
+
+@register.simple_tag(takes_context=True)
+def can_list_schedule(context, event=None):
+    """Whether schedule-related navigation should be shown on public pages."""
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not request or not event:
+        return False
+
+    user = getattr(request, 'user', None) or AnonymousUser()
+    if getattr(user, 'is_authenticated', False):
+        if is_admin_mode_active(request):
+            return True
+        return user.has_perm('base.list_schedule', event)
+
+    return bool(
+        event.talks_published
+        and event.get_feature_flag('show_schedule')
+        and event.current_schedule
+    )
 
 
 @register.simple_tag(takes_context=True)

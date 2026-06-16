@@ -9,7 +9,7 @@
 			.timeseparator(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 		.room(:style="{'grid-area': `1 / 1 / auto / auto`}")
 		.room(v-for="(room, i) of visibleRooms", :key="room.id", :style="{'grid-area': `1 / ${i + 2} / auto / auto`}")
-			span {{ getLocalizedString(room.name) }}
+			span.room-name(:title="getLocalizedString(room.name)") {{ getLocalizedString(room.name) }}
 			.hide-room.no-print(v-if="visibleRooms.length > 1", @click="hiddenRooms = rooms.filter(r => hiddenRooms.includes(r) || r === room)")
 				i.fa.fa-eye-slash
 		session(v-if="draggedSession && hoverSlice", :style="getHoverSliceStyle()", :session="draggedSession", :isDragClone="true", :overrideStart="hoverSlice.time")
@@ -355,7 +355,7 @@ const gridStyle = computed(() => {
   const scale = densityScale.value
   const minimumSliceMins = props.timeDensityMinutes || 30
   const baseSliceHeight = 60 * (minimumSliceMins / 30)
-  let rows = `[header] ${Math.round(52 * (minimumSliceMins / 30) * scale)}px `
+  let rows = `[header] ${Math.round(52 * scale)}px `
   rows += timeslices.value.map((slice, index) => {
     const next = timeslices.value[index + 1]
     let height = baseSliceHeight
@@ -541,8 +541,13 @@ const updateHoverSlice = (e: PointerEvent) => {
     dragScrollTimer.value = setInterval(dragOnScroll, 100)
   }
 
+  const scrollParentEl = scrollParent.value
+  if (!scrollParentEl) return
+  const scrollParentRect = scrollParentEl.getBoundingClientRect()
+  const queryX = scrollParentRect.left + 10
+
   let hoverSliceEl: HTMLElement | null = null
-  for (const element of document.elementsFromPoint(gridOffset.value, e.clientY)) {
+  for (const element of document.elementsFromPoint(queryX, e.clientY)) {
     if (
       element instanceof HTMLElement &&
       element.dataset.slice &&
@@ -556,8 +561,7 @@ const updateHoverSlice = (e: PointerEvent) => {
   if (!hoverSliceEl) return
   const roomEls = document.querySelectorAll('.grid .room')
   const roomWidth = roomEls[1]?.getBoundingClientRect().width || 200
-  const scrollOffset = scrollParent.value?.scrollLeft || 0
-  const roomIndex = Math.floor((e.clientX + scrollOffset - gridOffset.value - 80) / roomWidth)
+  const roomIndex = Math.floor((e.clientX - gridOffset.value - 80) / roomWidth)
 
   hoverSlice.value = {
     time: moment(hoverSliceEl.dataset.slice),
@@ -751,6 +755,14 @@ onUnmounted(() => {
 			background-color: $clr-white
 			border-bottom: 1px solid $clr-dividers-light
 			z-index: 20
+			min-width: 0
+
+			.room-name
+				overflow: hidden
+				text-overflow: ellipsis
+				white-space: nowrap
+				min-width: 0
+				padding: 0 4px
 
 			.hide-room
 				color: $clr-secondary-text-light
@@ -766,6 +778,11 @@ onUnmounted(() => {
 		.c-linear-schedule-session
 			z-index: 10
 			transition: padding 0.2s ease, font-size 0.2s ease
+	.grid-viewport .grid
+		.c-linear-schedule-session, .break
+			margin: 6px
+			min-width: 0
+			box-sizing: border-box
 	.timeslice
 		color: $clr-secondary-text-light
 		padding: 8px 10px 0 10px
@@ -798,8 +815,12 @@ onUnmounted(() => {
 		.timeslice
 			padding: 4px 6px 0 6px
 			font-size: 12px
+		.grid-viewport .grid
+			.c-linear-schedule-session, .break
+				margin: 4px 3px
+				min-height: 48px
+				font-size: 12px
 		.c-linear-schedule-session
-			margin: 4px 3px
 			min-height: 48px
 			font-size: 12px
 			.time-box
@@ -826,8 +847,12 @@ onUnmounted(() => {
 		.timeslice
 			padding: 12px 14px 0 14px
 			font-size: 15px
+		.grid-viewport .grid
+			.c-linear-schedule-session, .break
+				margin: 12px 9px
+				min-height: 120px
+				font-size: 15px
 		.c-linear-schedule-session
-			margin: 12px 9px
 			min-height: 120px
 			font-size: 15px
 			.time-box

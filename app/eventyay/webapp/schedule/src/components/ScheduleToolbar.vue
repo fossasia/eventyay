@@ -1,8 +1,8 @@
 <template lang="pug">
 .c-schedule-toolbar(:class="{'mobile-filters-open': mobileFiltersOpen, 'mobile-more-open': mobileMoreOpen}")
-	.version-warning-banner(v-if="version && !isCurrent", ref="versionBanner")
+	.version-warning-banner(v-if="showVersionWarningBanner", ref="versionBanner")
 		span.version-warning-text {{ versionWarningText }}
-		a.current-version-link(v-if="currentScheduleUrl", :href="currentScheduleUrl")
+		a.current-version-link(v-if="currentScheduleUrl && !isWipPreview", :href="currentScheduleUrl")
 			|  {{ t.go_to_current_version }}
 	.toolbar-row
 		.toolbar-left
@@ -226,11 +226,12 @@
 								)
 									span {{ option.label }}
 				.timezone-label(v-else) {{ scheduleTimezone }}
-				.exporter-area(v-if="resolvedExporters.length")
+				.exporter-area(v-if="resolvedExporters.length || isWipPreview")
 					.exporter-dropdown(ref="exportDropdown")
-						button.toolbar-btn.icon-only(
-							@click="exportOpen = !exportOpen",
-							:aria-label="t.add_to_calendar",
+						button.toolbar-btn.icon-only.tooltip-align-right(
+							:class="{disabled: isWipPreview}",
+							@click="!isWipPreview && (exportOpen = !exportOpen)",
+							:aria-label="isWipPreview ? publicOnlyFeatureHint : t.add_to_calendar",
 							:aria-expanded="exportOpen ? 'true' : 'false'",
 							aria-haspopup="menu")
 							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
@@ -255,9 +256,13 @@
 								transition(name="fade")
 									.qr-hover(v-if="hoveredExporter === exp && exp.qrcode_svg", v-html="exp.qrcode_svg")
 			.toolbar-secondary(:class="{open: mobileMoreOpen}", ref="mobileMorePanel")
-				.version-area(v-if="versionOptions.length || changelogUrl")
+				.version-area(v-if="versionOptions.length || changelogUrl || isWipPreview")
 					.version-dropdown(ref="versionDropdown")
-						button.toolbar-btn.version-btn(@click="versionOpen = !versionOpen")
+						button.toolbar-btn.version-btn.tooltip-align-right(
+							:class="{disabled: isWipPreview}",
+							@click="!isWipPreview && (versionOpen = !versionOpen)",
+							:aria-label="isWipPreview ? publicOnlyFeatureHint : undefined"
+						)
 							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 								path(d="M12 8v4l3 3")
 								circle(cx="12", cy="12", r="10")
@@ -416,8 +421,10 @@ export default {
 				exit_fullscreen: m.exit_fullscreen || 'Exit Fullscreen',
 				latest: m.latest || 'Latest',
 				version_warning_editable: m.version_warning_editable || 'You are currently viewing the editable schedule version, which is unreleased and may change at any time.',
+				version_warning_wip: m.version_warning_wip || 'You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.',
 				version_warning_old: m.version_warning_old || 'You are currently viewing an older schedule version.',
 				add_to_calendar: m.add_to_calendar || 'Add to calendar',
+				public_schedule_only: m.public_schedule_only || 'Only available on the public schedule once a schedule is released and public.',
 				export: m.export || 'Export',
 				current: m.current || 'current',
 				list_view: m.list_view || 'List View',
@@ -491,6 +498,24 @@ export default {
 		resolvedExporters() {
 			return this.exporters || []
 		},
+		isWipPreview() {
+			if (this.version === 'wip') {
+				return true
+			}
+			if (typeof window !== 'undefined') {
+				return window.location.pathname.includes('/schedule/v/wip/')
+			}
+			return false
+		},
+		showVersionWarningBanner() {
+			if (this.isWipPreview) {
+				return true
+			}
+			return Boolean(this.version && !this.isCurrent)
+		},
+		publicOnlyFeatureHint() {
+			return this.t.public_schedule_only
+		},
 		languageGroup() {
 			return (this.filterGroups || []).find(g => g.refKey === 'language') || null
 		},
@@ -510,6 +535,9 @@ export default {
 			}))
 		},
 		versionWarningText() {
+			if (this.isWipPreview) {
+				return this.t.version_warning_wip
+			}
 			if (!this.version) {
 				return this.t.version_warning_editable
 			}
@@ -1468,6 +1496,33 @@ export default {
 				opacity: 1
 				transform: translateX(-50%) translateY(0)
 				transition: opacity 0.05s ease, transform 0.05s ease
+		&.disabled
+			opacity: 0.5
+			cursor: not-allowed
+			&[aria-label]
+				position: relative
+				&::after
+					content: attr(aria-label)
+					position: absolute
+					top: calc(100% + 6px)
+					right: 0
+					transform: translateY(-2px)
+					opacity: 0
+					pointer-events: none
+					background-color: rgba(0, 0, 0, 0.87)
+					color: #fff
+					padding: 6px 8px
+					border-radius: 4px
+					font-size: 12px
+					line-height: 1.3
+					white-space: normal
+					width: max-content
+					max-width: 280px
+					z-index: 1000
+				&:hover::after, &:focus-visible::after
+					opacity: 1
+					transform: translateY(0)
+					transition: opacity 0.05s ease, transform 0.05s ease
 		&.icon-only.tooltip-align-left[aria-label]
 			&::after
 				left: 0

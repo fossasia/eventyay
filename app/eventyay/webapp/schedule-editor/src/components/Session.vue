@@ -11,8 +11,14 @@
 		.pending-line(v-if="session.state === 'pending'")
 			i.fa.fa-exclamation-circle
 			span {{ $t('Pending proposal state') }}
-		.bottom-info(v-if="!isBreak")
+		.bottom-info(v-if="!isBreak && (session.track || session.do_not_record)")
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
+			.do_not_record.no-print(v-if="session.do_not_record", :title="$t('This session will not be recorded.')", :aria-label="$t('This session will not be recorded.')")
+				svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
+					g(transform="translate(-9.3465481,-5.441411)")
+						rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
+						path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
+						path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
 	.warning.no-print(v-if="warnings?.length")
 		.warning-icon.text-danger
 			span(v-if="warnings.length > 1") {{ warnings.length }}
@@ -49,6 +55,7 @@ interface Session {
   duration: number
   abstract?: string
   room?: string | number
+  do_not_record?: boolean
   [key: string]: string | number | boolean | Record<string, string> | Speaker[] | Track | Moment | null | undefined
 }
 
@@ -158,6 +165,30 @@ function onPointerDown(event: PointerEvent): void {
 </script>
 
 <style lang="stylus">
+sessionTextClamp(lines)
+	min-width: 0
+	display: -webkit-box
+	-webkit-line-clamp: lines
+	line-clamp: lines
+	-webkit-box-orient: vertical
+	overflow: hidden
+	overflow-wrap: break-word
+	overflow-wrap: anywhere
+	word-break: break-word
+	text-overflow: ellipsis
+
+sessionTextExpand()
+	display: block
+	-webkit-line-clamp: unset
+	line-clamp: unset
+	-webkit-box-orient: unset
+	overflow: hidden
+	white-space: normal
+	overflow-wrap: break-word
+	overflow-wrap: anywhere
+	word-break: break-word
+	text-overflow: clip
+
 .c-linear-schedule-session
 	display: flex
 	min-width: 300px
@@ -251,17 +282,26 @@ function onPointerDown(event: PointerEvent): void {
 		min-width: 0
 		.title
 			font-weight: 500
+			sessionTextClamp(2)
 		.speakers
 			color: $clr-secondary-text-light
+			sessionTextClamp(1)
 		.bottom-info
 			flex: auto
 			display: flex
 			align-items: flex-end
+			gap: 4px
+			min-width: 0
 			.track
 				flex: 1
+				min-width: 0
 				color: var(--track-color)
 				ellipsis()
-				margin-right: 4px
+			.do_not_record
+				flex: none
+				display: flex
+				align-items: center
+				line-height: 0
 	.pending-line
 		color: $clr-warning
 		.fa
@@ -276,6 +316,10 @@ function onPointerDown(event: PointerEvent): void {
 		font-size: 16px
 		.warning-icon span
 			padding-right: 4px
+	@media (hover: hover) and (pointer: fine)
+		&:hover:not(.dragging):not(.clone)
+			.title, .speakers
+				sessionTextExpand()
 @media print
 	.c-linear-schedule-session.isbreak
 		border: 2px solid $clr-grey-300 !important
