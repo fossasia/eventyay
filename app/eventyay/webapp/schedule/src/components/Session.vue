@@ -17,12 +17,6 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="styl
 					img(v-else-if="speaker.avatar_thumbnail_default", :src="speaker.avatar_thumbnail_default")
 					img(v-else-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
 			.names {{ session.speakers.map(s => s.name).join(', ') }}
-		.do_not_record(v-if="session.do_not_record")
-			svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg")
-				g(transform="translate(-9.3465481,-5.441411)")
-					rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
-					path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
-					path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
 		.tags-box(v-if="showTags && session.tags && session.tags.length")
 			.tags(v-for="tag_item of session.tags")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
@@ -30,12 +24,18 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="styl
 		.bottom-info
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
+		.do_not_record(v-if="session.do_not_record", :title="doNotRecordTooltip", :aria-label="doNotRecordTooltip")
+			svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
+				g(transform="translate(-9.3465481,-5.441411)")
+					rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
+					path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
+					path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
 		.fav-count(v-if="loggedIn && showFavCount && session.fav_count > 0") {{ session.fav_count > 99 ? "99+" : session.fav_count }}
 	.stream-indicator(v-if="canOpenStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
 			path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
-	.session-icons
-		fav-button(v-if="loggedIn", @toggleFav="toggleFav")
+	.session-icons(v-if="loggedIn")
+		fav-button(@toggleFav="toggleFav")
 
 </template>
 <script>
@@ -174,8 +174,12 @@ export default {
 		hasFavCount () {
 			return this.loggedIn && this.showFavCount && this.session.fav_count > 0
 		},
+		doNotRecordTooltip () {
+			const m = this.translationMessages || {}
+			return m.schedule_do_not_record || 'This session will not be recorded.'
+		},
 		hasAnyRightIcons () {
-			return this.loggedIn || this.canOpenStream
+			return this.loggedIn || this.canOpenStream || this.session.do_not_record
 		}
 	},
 	methods: {
@@ -224,6 +228,7 @@ sessionTextExpand()
 .c-linear-schedule-session, .break
 	z-index: 10
 	display: flex
+	align-items: stretch
 	min-width: 300px
 	min-height: 96px
 	margin: 8px 0
@@ -284,6 +289,7 @@ sessionTextExpand()
 		.time-box
 			width: 88px
 	.info
+		position: relative
 		flex: auto
 		display: flex
 		flex-direction: column
@@ -331,18 +337,30 @@ sessionTextExpand()
 			flex: auto
 			display: flex
 			align-items: flex-end
+			gap: 4px
+			min-width: 0
 			.track
 				flex: 1
 				min-width: 0
 				color: var(--track-color)
 				ellipsis()
-				margin-right: 4px
 			.room
 				flex: 1
 				min-width: 0
 				text-align: right
 				color: $clr-secondary-text-light
 				ellipsis()
+		.do_not_record
+			position: absolute
+			bottom: 2px
+			right: 2px
+			width: 32px
+			height: 32px
+			display: flex
+			justify-content: center
+			align-items: center
+			line-height: 0
+			z-index: 5
 		.fav-count
 			border: 1px solid
 			border-radius: 50%
@@ -357,8 +375,6 @@ sessionTextExpand()
 			text-align: center
 			background-color: var(--track-color)
 			color: $clr-primary-text-dark
-	.do_not_record
-		margin: 10px 0px
 	.tags-box
 		display: flex
 		flex-wrap: wrap
@@ -397,8 +413,6 @@ sessionTextExpand()
 		top: 2px
 		right: 2px
 		display: flex
-		.do-not-record
-			padding: 6px 6px 6px 0
 		.btn-fav-container
 			margin-top: 2px
 			display: inline-flex
