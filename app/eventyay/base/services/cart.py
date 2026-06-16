@@ -1137,7 +1137,19 @@ class CartManager:
 
         # If we have an email, also check existing orders for flagged products
         email = None
-        if hasattr(self, 'invoice_address') and self.invoice_address and self.invoice_address.email:
+        
+        # Try to get email from widget data if present
+        if hasattr(self, '_widget_data') and self._widget_data and self._widget_data.get('email'):
+            email = self._widget_data.get('email')
+        # Try to get email from existing cart positions
+        elif self.positions:
+            for p in self.positions:
+                if p.attendee_email:
+                    email = p.attendee_email
+                    break
+
+        # Fallback to invoice_address.email if it somehow gets monkey-patched
+        if not email and hasattr(self, 'invoice_address') and self.invoice_address and getattr(self.invoice_address, 'email', None):
             email = self.invoice_address.email
 
         if email and flagged_product_ids:
