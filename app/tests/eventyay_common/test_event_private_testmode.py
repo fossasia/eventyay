@@ -48,14 +48,29 @@ def test_user_cannot_view_talks_when_unpublished_and_no_private_mode(fresh_event
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
-def test_orga_live_url_redirects_to_central_status(organizer_client, event):
-    """The legacy talk-component status page now redirects to the central page."""
+def test_orga_live_page_renders(organizer_client, event):
+    """The orga talk-specific status page renders successfully."""
+    orga_url = reverse('orga:event.live', kwargs={'event': event.slug})
+    response = organizer_client.get(orga_url)
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
+def test_orga_private_testmode_talks_redirects_to_central(organizer_client, event):
+    """After toggling private test mode for talks on the orga page, redirect to central status."""
+    event.private_testmode = True
+    event.settings.set('private_testmode_talks', True)
+    event.save()
+
     orga_url = reverse('orga:event.live', kwargs={'event': event.slug})
     central_url = reverse(
         'eventyay_common:event.live',
         kwargs={'organizer': event.organizer.slug, 'event': event.slug},
     )
-    response = organizer_client.get(orga_url)
+    response = organizer_client.post(
+        orga_url, {'private_testmode_talks_action': 'disable'}
+    )
     assert response.status_code in {301, 302}
     assert response.headers['Location'].endswith(central_url)
 
