@@ -17,6 +17,7 @@
 		.offline-message(v-if="iframeOffline") {{ $t('Livestream:offline-message:text') }}
 		.offline-message(v-else) {{ $t('MediaSource:iframe-error:text') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
+	audio(ref="whepAudioEl", autoplay, style="display: none;")
 </template>
 <script setup>
 // TODO functional component?
@@ -31,6 +32,7 @@ import IframeBlocker from 'components/IframeBlocker';
 import JanusCall from 'components/JanusCall';
 import JanusChannelCall from 'components/JanusChannelCall';
 import Livestream from 'components/Livestream';
+import { WhepClient } from 'lib/webrtc/whep';
 
 // Props & Emits
 defineOptions({
@@ -57,6 +59,10 @@ const consentBlockedUrl = ref(null);
 // Prevents overlapping initializeIframe runs (e.g. store watcher + consent handler)
 // from both passing the iframeEl guard before the first await.
 let iframeInitInProgress = false;
+
+// WHEP audio client
+const whepAudioEl = ref(null);
+let whepClient = null;
 
 // Template refs
 const livestream = ref(null);
@@ -189,16 +195,43 @@ watch(
 	}
 )
 
-watch(youtubeTransUrl, (ytUrl) => {
+watch(youtubeTransUrl, async (audioSource) => {
 	if (!props.room) return;
 	const streamType = props.room?.currentStream?.stream_type;
 	const isYouTube = streamType === 'youtube' || module.value?.type === 'livestream.youtube';
 	if (!isYouTube) return;
 
-	// Handle translation: mute main player and create translation audio iframe
-	if (ytUrl) {
-		// Create hidden translation audio iframe first
-		languageIframeUrl.value = getLanguageIframeUrl(ytUrl);
+	// Teardown previous whep client
+	if (whepClient) {
+		whepClient.disconnect();
+		whepClient = null;
+	}
+
+	// Handle translation: mute main player and connect audio source
+	if (audioSource) {
+		let isWhep = false;
+		try {
+			new URL(audioSource);
+			if (!normalizeYoutubeVideoId(audioSource)) {
+				isWhep = true;
+			}
+		} catch (e) {
+			isWhep = false;
+		}
+
+		if (isWhep) {
+			languageIframeUrl.value = null;
+			whepClient = new WhepClient(audioSource, whepAudioEl.value);
+			try {
+				await whepClient.connect();
+			} catch (err) {
+				console.error('Failed to connect to WHEP translation source', err);
+			}
+		} else {
+			// Create hidden translation audio iframe first
+			languageIframeUrl.value = getLanguageIframeUrl(audioSource);
+		}
+		
 		// Mute the main player using postMessage after a short delay
 		setTimeout(() => {
 			muteYouTubePlayer();
@@ -221,6 +254,10 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
 	isUnmounted.value = true;
+	if (whepClient) {
+		whepClient.disconnect();
+		whepClient = null;
+	}
 	iframeEl.value?.remove();
 	if (api.socketState !== 'open') return;
 	// TODO move to store?
