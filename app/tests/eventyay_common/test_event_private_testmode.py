@@ -40,6 +40,27 @@ def test_set_defaults_does_not_enable_private_testmode(fresh_event):
 
 
 @pytest.mark.django_db
+def test_event_creation_path_private_testmode_disabled(fresh_event):
+    """Simulate the view creation path: set field to False then call set_defaults().
+
+    This covers the explicit assignment in EventCreateView.create_event()
+    followed by the set_defaults() call that configures settings.
+    """
+    fresh_event.private_testmode = False
+    fresh_event.save()
+    fresh_event.set_defaults()
+
+    fresh_event.refresh_from_db()
+    assert fresh_event.private_testmode is False
+    assert fresh_event.settings.get('private_testmode_tickets', as_type=bool) is False
+    assert fresh_event.settings.get('private_testmode_talks', as_type=bool) is False
+    assert fresh_event.private_testmode_tickets_enabled is False
+    assert fresh_event.private_testmode_talks_enabled is False
+    assert fresh_event.user_can_view_talks() is False
+    assert fresh_event.user_can_view_tickets() is False
+
+
+@pytest.mark.django_db
 def test_user_cannot_view_talks_when_unpublished_and_no_private_mode(fresh_event, user):
     """A fresh event hides talks from the public until the organiser publishes."""
     assert fresh_event.talks_published is False
