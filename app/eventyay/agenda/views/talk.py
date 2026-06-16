@@ -22,7 +22,13 @@ from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.signals import register_recording_provider
-from eventyay.agenda.views.utils import WipAgendaPreviewPageMixin, build_enriched_schedule_json, encode_email, is_email_like
+from eventyay.agenda.views.utils import (
+    WipAgendaPreviewPageMixin,
+    build_enriched_schedule_json,
+    build_talk_schedule_json,
+    encode_email,
+    is_email_like,
+)
 from eventyay.talk_rules.agenda import agenda_schedule_for_user, can_view_wip_schedule, filter_agenda_slots
 from eventyay.base.models import (
     Event,
@@ -181,7 +187,7 @@ class TalkView(TalkMixin, TemplateView):
 
     @context
     def schedule_json(self):
-        return build_enriched_schedule_json(self.request)
+        return build_talk_schedule_json(self.request, self.submission.code)
 
     @context
     def schedule_version(self):

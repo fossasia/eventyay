@@ -16,7 +16,12 @@ from django.views.generic import DetailView, ListView, TemplateView, View
 from django_context_decorator import context
 from i18nfield.utils import I18nJSONEncoder
 
-from eventyay.agenda.views.utils import WipAgendaPreviewPageMixin, is_public_speakers_empty, redirect_to_presale_with_warning
+from eventyay.agenda.views.utils import (
+    WipAgendaPreviewPageMixin,
+    build_speaker_schedule_json,
+    is_public_speakers_empty,
+    redirect_to_presale_with_warning,
+)
 from eventyay.talk_rules.agenda import agenda_speaker_talks
 from eventyay.base.models import SpeakerProfile, TalkQuestionTarget, User
 from eventyay.common.text.path import safe_filename
@@ -58,6 +63,10 @@ class SpeakerView(PermissionRequired, TemplateView):
     permission_required = 'base.view_speakerprofile'
     slug_field = 'code'
     wip_preview = False
+
+    @context
+    def schedule_json(self):
+        return build_speaker_schedule_json(self.request, self.kwargs['code'])
 
     def dispatch(self, request, *args, **kwargs):
         if not self.wip_preview and is_public_speakers_empty(request):

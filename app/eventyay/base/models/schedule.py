@@ -69,6 +69,32 @@ def make_qr_svg(url: str) -> str:
     return xml_tostring(image.get_image()).decode()
 
 
+def make_talk_qr_map(base_url: str, code: str) -> dict:
+    """Return the QR-code SVG dict for a single talk's export URLs."""
+    b = base_url.rstrip('/')
+    return {
+        'ics': make_qr_svg(f'{b}/talk/{code}.ics'),
+        'json': make_qr_svg(f'{b}/talk/{code}.json'),
+        'xml': make_qr_svg(f'{b}/talk/{code}.xml'),
+        'xcal': make_qr_svg(f'{b}/talk/{code}.xcal'),
+        'google_calendar': make_qr_svg(f'{b}/talk/{code}/export/google-calendar'),
+        'webcal': make_qr_svg(f'{b}/talk/{code}/export/webcal'),
+    }
+
+
+def make_speaker_qr_map(speaker_base_url: str) -> dict:
+    """Return the QR-code SVG dict for a speaker's talks export URLs."""
+    b = speaker_base_url.rstrip('/')
+    return {
+        'ics': make_qr_svg(f'{b}/talks.ics'),
+        'json': make_qr_svg(f'{b}/talks.json'),
+        'xml': make_qr_svg(f'{b}/talks.xml'),
+        'xcal': make_qr_svg(f'{b}/talks.xcal'),
+        'google_calendar': make_qr_svg(f'{b}/talks/export/google-calendar'),
+        'webcal': make_qr_svg(f'{b}/talks/export/webcal'),
+    }
+
+
 class Schedule(PretalxModel):
     """The Schedule model contains all scheduled.
 
@@ -757,6 +783,7 @@ class Schedule(PretalxModel):
         all_rooms=False,
         enrich=False,
         *,
+        submission_codes=None,
         include_featured_speaker_metadata=True,
         include_qrcodes=False,
         respect_public_visibility=True,
@@ -766,7 +793,11 @@ class Schedule(PretalxModel):
         ``include_featured_speaker_metadata``: when False, clears ``is_featured`` and
         ``featured_position`` on each speaker so clients respect org "show featured sessions"
         without duplicating that logic in the frontend.
+
         ``respect_public_visibility``: when False, keeps organizer-only field data.
+
+        ``submission_codes``: optional collection of submission codes; when given, only those
+        talks are included.  Useful for building per-talk or per-speaker slim payloads.
         """
         talks = self.talks.all()
         if not all_talks:
@@ -775,6 +806,8 @@ class Schedule(PretalxModel):
             talks = talks.filter(room__isnull=False).exclude(room__deleted=True)
         if filter_updated:
             talks = talks.filter(updated__gte=filter_updated)
+        if submission_codes is not None:
+            talks = talks.filter(submission__code__in=submission_codes)
         talks = talks.select_related(
             'submission',
             'room',
@@ -799,14 +832,14 @@ class Schedule(PretalxModel):
         talk_list = list(talks)
         fav_counts: dict[str, int] = {}
         if popularity_enabled:
-            submission_codes = [t.submission.code for t in talk_list if t.submission]
-            if submission_codes:
+            visible_codes = [t.submission.code for t in talk_list if t.submission]
+            if visible_codes:
                 with scope(event=self.event):
                     fav_counts = {
                         row['submission__code']: row['count']
                         for row in SubmissionFavourite.objects.filter(
                             submission__event=self.event,
-                            submission__code__in=submission_codes,
+                            submission__code__in=visible_codes,
                         )
                         .values('submission__code')
                         .annotate(count=Count('id'))
@@ -955,14 +988,7 @@ class Schedule(PretalxModel):
                         'webcal': webcal_url,
                     }
                     if include_qrcodes:
-                        talk_data['exporters']['qrcodes'] = {
-                            'ics': make_qr_svg(f'{full_base_url}talk/{code}.ics'),
-                            'json': make_qr_svg(f'{full_base_url}talk/{code}.json'),
-                            'xml': make_qr_svg(f'{full_base_url}talk/{code}.xml'),
-                            'xcal': make_qr_svg(f'{full_base_url}talk/{code}.xcal'),
-                            'google_calendar': make_qr_svg(f'{full_base_url}talk/{code}/export/google-calendar'),
-                            'webcal': make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
-                        }
+                        talk_data['exporters']['qrcodes'] = make_talk_qr_map(full_base_url, code)
                     # Recording iframe from provider plugins
                     recording_iframe = ''
                     for provider in recording_providers:
@@ -1051,14 +1077,7 @@ class Schedule(PretalxModel):
                     'webcal': spk_webcal,
                 }
                 if include_qrcodes:
-                    speaker_data['exporters']['qrcodes'] = {
-                        'ics': make_qr_svg(f'{spk_full_base}/talks.ics'),
-                        'json': make_qr_svg(f'{spk_full_base}/talks.json'),
-                        'xml': make_qr_svg(f'{spk_full_base}/talks.xml'),
-                        'xcal': make_qr_svg(f'{spk_full_base}/talks.xcal'),
-                        'google_calendar': make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
-                        'webcal': make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
-                    }
+                    speaker_data['exporters']['qrcodes'] = make_speaker_qr_map(spk_full_base)
             speaker_list.append(speaker_data)
         result['speakers'] = speaker_list
         return result

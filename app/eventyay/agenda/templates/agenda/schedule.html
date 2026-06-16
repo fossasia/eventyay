@@ -21,6 +21,7 @@
 {% html_signal "eventyay.agenda.signals.html_above_schedule_pages" sender=request.event request=request %}
 <div id="fahrplan" class="{% if show_talk_list %}list{% else %}grid{% endif %}">
     <script id="pretalx-schedule-meta" type="application/json">{{ schedule_meta_json|safe }}</script>
+    {% if schedule_data_json %}<script id="pretalx-schedule-data" type="application/json">{{ schedule_data_json|safe }}</script>{% endif %}
     {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback='schedule/pretalx-schedule.js' %}
 
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
