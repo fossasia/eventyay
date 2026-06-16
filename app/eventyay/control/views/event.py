@@ -355,7 +355,6 @@ class EventUpdate(
             if not form_data.get('DELETE', False)
         )
 
-
 class EventPlugins(
     EventSettingsViewMixin,
     EventPermissionRequiredMixin,

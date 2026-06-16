@@ -17,7 +17,7 @@
         <meta name="generator" content="{{site_name}}">
         <meta name="keywords" content="{% if request.event %}{{ request.event.name }}, {{ request.event.slug }}, {% if request.event.date_from %}{{ request.event.date_from.year }}, {% endif %}{% endif %}schedule, talks, cfp, call for papers, conference, submissions, organizer">
         {{ html_head|safe }}
-        {% if request.event and request.event.display_settings.meta_noindex %}
+        {% if request.event and request.event.settings.meta_noindex %}
             <meta name="robots" content="noindex, nofollow">
         {% else %}
             <meta name="robots" content="index, follow">

@@ -797,7 +797,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
-        'meta_noindex',
         'redirect_to_checkout_directly',
         'frontpage_subevent_ordering',
         'event_list_type',
@@ -815,8 +814,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         super().__init__(*args, **kwargs)
         self.fields.pop('name_scheme', None)
         self.fields.pop('name_scheme_titles', None)
-
-
 class OrderFormSettingsForm(EventSettingsForm):
     """
     Settings form used on the dedicated order-forms page.
