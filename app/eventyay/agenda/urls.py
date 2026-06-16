@@ -92,6 +92,9 @@ urlpatterns = [
     ),
     *get_schedule_urls('schedule'),
     *get_schedule_urls('schedule/v/<version>', 'versioned-'),
+    path('schedule/v/wip/talk/<slug>/', talk.WipTalkView.as_view(), name='versioned-wip-talk.detail'),
+    path('schedule/v/wip/speakers/', speaker.WipSpeakerList.as_view(), name='versioned-wip-speakers'),
+    path('schedule/v/wip/speakers/<code>/', speaker.WipSpeakerView.as_view(), name='versioned-wip-speaker'),
     path('featured/', featured.FeaturedView.as_view(), name='featured'),
     path('speakers/', speaker.SpeakerList.as_view(), name='speakers'),
     path(

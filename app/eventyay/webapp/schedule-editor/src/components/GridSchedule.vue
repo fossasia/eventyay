@@ -778,6 +778,11 @@ onUnmounted(() => {
 		.c-linear-schedule-session
 			z-index: 10
 			transition: padding 0.2s ease, font-size 0.2s ease
+	.grid-viewport .grid
+		.c-linear-schedule-session, .break
+			margin: 6px
+			min-width: 0
+			box-sizing: border-box
 	.timeslice
 		color: $clr-secondary-text-light
 		padding: 8px 10px 0 10px
@@ -810,8 +815,12 @@ onUnmounted(() => {
 		.timeslice
 			padding: 4px 6px 0 6px
 			font-size: 12px
+		.grid-viewport .grid
+			.c-linear-schedule-session, .break
+				margin: 4px 3px
+				min-height: 48px
+				font-size: 12px
 		.c-linear-schedule-session
-			margin: 4px 3px
 			min-height: 48px
 			font-size: 12px
 			.time-box
@@ -838,8 +847,12 @@ onUnmounted(() => {
 		.timeslice
 			padding: 12px 14px 0 14px
 			font-size: 15px
+		.grid-viewport .grid
+			.c-linear-schedule-session, .break
+				margin: 12px 9px
+				min-height: 120px
+				font-size: 15px
 		.c-linear-schedule-session
-			margin: 12px 9px
 			min-height: 120px
 			font-size: 15px
 			.time-box

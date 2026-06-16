@@ -28,9 +28,12 @@ from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
-from eventyay.talk_rules.agenda import can_view_schedule, is_agenda_visible, is_widget_visible
-from eventyay.talk_rules.orga import can_view_speaker_names
-from eventyay.talk_rules.person import is_reviewer
+from eventyay.talk_rules.agenda import (
+    can_view_schedule,
+    can_view_wip_schedule,
+    is_agenda_visible,
+    is_widget_visible,
+)
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
 from .auth import (
@@ -97,12 +100,10 @@ class Schedule(PretalxModel):
         ordering = ('-published',)
         unique_together = (('event', 'version'),)
         rules_permissions = {
-            'list': can_view_schedule,
-            'view_widget': is_widget_visible | orga_can_change_submissions,
-            'view': (~is_wip & is_agenda_visible)
-            | orga_can_change_submissions
-            | (is_reviewer & can_view_speaker_names),
-            'orga_view': orga_can_change_submissions | (is_reviewer & can_view_speaker_names),
+            'list': (~is_wip & can_view_schedule) | can_view_wip_schedule,
+            'view_widget': is_widget_visible | can_view_wip_schedule,
+            'view': (~is_wip & is_agenda_visible) | can_view_wip_schedule,
+            'orga_view': can_view_wip_schedule,
             'release': orga_can_change_submissions,
         }
 
@@ -222,6 +223,7 @@ class Schedule(PretalxModel):
             .filter(
                 room__isnull=False,
                 room__deleted=False,
+                room__is_unscheduled=False,
                 start__isnull=False,
                 is_visible=True,
                 submission__isnull=False,
@@ -231,7 +233,7 @@ class Schedule(PretalxModel):
 
     @cached_property
     def breaks(self):
-        return self.talks.select_related('room').filter(submission__isnull=True, room__deleted=False)
+        return self.talks.select_related('room').filter(submission__isnull=True, room__deleted=False, room__is_unscheduled=False)
 
     @cached_property
     def slots(self):
@@ -839,7 +841,7 @@ class Schedule(PretalxModel):
                     ss,
                 )
             )
-        rooms: set[Room] = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
+        rooms: set[Room] = set(self.event.rooms.filter(deleted=False, is_unscheduled=False)) if all_rooms else set()
         tracks: set[Track] = set()
         speakers: set[User] = set()
         result = {
@@ -869,8 +871,8 @@ class Schedule(PretalxModel):
                 if response and not isinstance(response, Exception) and getattr(response, 'get_recording', None):
                     recording_providers.append(response)
         for talk in talk_list:
-            # Only add room if it's not deleted
-            if talk.room and not talk.room.deleted:
+            # Only add room if it's not deleted and not unscheduled
+            if talk.room and not talk.room.deleted and not talk.room.is_unscheduled:
                 rooms.add(talk.room)
             if talk.submission:
                 tracks.add(talk.submission.track)

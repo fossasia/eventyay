@@ -296,3 +296,156 @@ def test_versioned_schedule_page(
     with django_assert_num_queries(queries_redirect):
         redirected_response = client.get(url, follow=True, HTTP_ACCEPT='text/html')
     assert redirected_response._request.path == response._request.path
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('other_slot')
+@pytest.mark.parametrize('version', ('js', 'nojs'))
+def test_anon_cannot_see_wip_schedule(client, event, slot, version):
+    with scope(event=event):
+        url = event.urls.schedule + 'v/wip/'
+        if version != 'js':
+            url += 'nojs'
+    response = client.get(url, follow=True, HTTP_ACCEPT='text/html')
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('slot')
+def test_anon_cannot_export_wip_schedule(client, event):
+    with scope(event=event):
+        url = event.urls.schedule + 'v/wip.json'
+    response = client.get(url, follow=True)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_anon_cannot_view_talk_scheduled_only_on_wip(client, unreleased_slot, event):
+    with scope(event=event):
+        event.feature_flags['show_schedule'] = False
+        event.save()
+        submission = unreleased_slot.submission
+        unreleased_slot.is_visible = False
+        unreleased_slot.save(update_fields=['is_visible'])
+        url = submission.urls.wip_public
+    response = client.get(url)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_reviewer_cannot_view_wip_talk_via_public_url(review_client, unreleased_slot, event):
+    with scope(event=event):
+        event.feature_flags['show_schedule'] = False
+        event.save()
+        submission = unreleased_slot.submission
+        unreleased_slot.is_visible = False
+        unreleased_slot.save(update_fields=['is_visible'])
+        url = submission.urls.public
+    response = review_client.get(url)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_orga_can_view_talk_scheduled_only_on_wip(orga_client, unreleased_slot, event):
+    with scope(event=event):
+        event.feature_flags['show_schedule'] = False
+        event.save()
+        submission = unreleased_slot.submission
+        unreleased_slot.is_visible = False
+        unreleased_slot.save(update_fields=['is_visible'])
+        url = submission.urls.wip_public
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    assert 'pretalx-schedule-data' in response.text
+    assert submission.code in response.text
+
+
+@pytest.mark.django_db
+def test_reviewer_can_view_talk_scheduled_only_on_wip(review_client, unreleased_slot, event):
+    with scope(event=event):
+        event.feature_flags['show_schedule'] = False
+        event.save()
+        submission = unreleased_slot.submission
+        unreleased_slot.is_visible = False
+        unreleased_slot.save(update_fields=['is_visible'])
+        url = submission.urls.wip_public
+    response = review_client.get(url)
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_reviewer_can_retrieve_wip_submission_via_api(review_client, unreleased_slot, event):
+    with scope(event=event):
+        event.feature_flags['show_schedule'] = False
+        event.save()
+        submission = unreleased_slot.submission
+        unreleased_slot.is_visible = False
+        unreleased_slot.save(update_fields=['is_visible'])
+        url = event.api_urls.submissions + f'{submission.code}/'
+    response = review_client.get(url, follow=True)
+    assert response.status_code == 200
+    assert response.json()['code'] == submission.code
+
+
+@pytest.mark.django_db
+def test_orga_talk_page_includes_wip_only_session_in_schedule_json(orga_client, unreleased_slot, event):
+    with scope(event=event):
+        submission = unreleased_slot.submission
+        unreleased_slot.is_visible = False
+        unreleased_slot.save(update_fields=['is_visible'])
+        url = submission.urls.wip_public
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    assert submission.code in response.text
+
+
+@pytest.mark.django_db
+def test_wip_pages_include_leave_preview_guard(orga_client, event):
+    with scope(event=event):
+        url = event.urls.schedule + 'v/wip/'
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    assert 'agenda-wip-preview-leave-dialog' in response.text
+    assert 'wip-preview-guard.js' in response.text
+    assert 'Leave schedule preview?' in response.text
+
+
+@pytest.mark.django_db
+def test_orga_can_view_wip_speakers_list(orga_client, event):
+    with scope(event=event):
+        url = reverse(
+            'agenda:versioned-wip-speakers',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+    response = orga_client.get(url)
+    assert response.status_code == 200
+    assert 'version="wip"' in response.text
+
+
+@pytest.mark.django_db
+def test_wip_nav_tabs_link_to_wip_schedule_and_speakers(orga_client, event, speaker):
+    with scope(event=event):
+        speaker_url = reverse(
+            'agenda:versioned-wip-speaker',
+            kwargs={
+                'organizer': event.organizer.slug,
+                'event': event.slug,
+                'code': speaker.code,
+            },
+        )
+        wip_schedule_url = reverse(
+            'agenda:versioned-schedule',
+            kwargs={
+                'organizer': event.organizer.slug,
+                'event': event.slug,
+                'version': 'wip',
+            },
+        )
+        wip_speakers_url = reverse(
+            'agenda:versioned-wip-speakers',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+    response = orga_client.get(speaker_url)
+    assert response.status_code == 200
+    assert wip_schedule_url in response.text
+    assert wip_speakers_url in response.text

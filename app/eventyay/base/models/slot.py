@@ -17,7 +17,7 @@ from i18nfield.fields import I18nCharField
 from eventyay.base.models import PretalxModel
 from eventyay.common.text.serialize import serialize_duration
 from eventyay.common.urls import get_base_url
-from eventyay.talk_rules.agenda import is_agenda_submission_visible, is_agenda_visible
+from eventyay.talk_rules.agenda import can_view_wip_schedule, is_agenda_submission_visible, is_agenda_visible
 from eventyay.talk_rules.submission import is_break, is_wip, orga_can_change_submissions
 
 
@@ -78,7 +78,8 @@ class TalkSlot(PretalxModel):
                 # is down to the API/view
                 & ((is_break & is_agenda_visible) | is_agenda_submission_visible)
             )
-            | orga_can_change_submissions,
+            | orga_can_change_submissions
+            | (is_wip & can_view_wip_schedule),
             'update': is_wip & orga_can_change_submissions,
         }
 
@@ -88,6 +89,20 @@ class TalkSlot(PretalxModel):
             f'TalkSlot(event={self.schedule.event.slug}, submission={getattr(self.submission, "title", None)}, '
             f'schedule={self.schedule.version})'
         )
+
+    def _validate_submission_room(self):
+        if self.room_id and self.submission_id:
+            from eventyay.base.models.room import validate_talk_slot_room
+
+            validate_talk_slot_room(self.room)
+
+    def clean(self):
+        super().clean()
+        self._validate_submission_room()
+
+    def save(self, *args, **kwargs):
+        self._validate_submission_room()
+        super().save(*args, **kwargs)
 
     @cached_property
     def event(self):

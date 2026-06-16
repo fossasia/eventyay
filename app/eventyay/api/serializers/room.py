@@ -1,3 +1,4 @@
+from rest_framework import serializers
 from rest_framework.serializers import UUIDField
 
 from eventyay.api.mixins import PretalxSerializer
@@ -6,11 +7,13 @@ from eventyay.api.serializers.availability import (
     AvailabilitySerializer,
 )
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
-from eventyay.base.models.room import Room
+from eventyay.base.models.room import Room, RoomLinkedSessionsSerializerMixin
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
-class RoomSerializer(AvailabilitiesMixin, PretalxSerializer):
+class RoomSerializer(
+    RoomLinkedSessionsSerializerMixin, AvailabilitiesMixin, PretalxSerializer
+):
     uuid = UUIDField(
         help_text="The uuid field is equal the the guid field if a guid has been set. Otherwise, it will contain a computed (stable) UUID.",
         read_only=True,
@@ -26,6 +29,8 @@ class RoomSerializer(AvailabilitiesMixin, PretalxSerializer):
             "guid",
             "capacity",
             "position",
+            "is_unscheduled",
+            "has_linked_sessions",
         )
 
 

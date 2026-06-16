@@ -283,6 +283,9 @@ def limit_for_reviewers(queryset, event, user, reviewer_tracks=None, add_assignm
 
 
 def submissions_for_user(event, user):
+    from eventyay.base.models import Submission
+    from eventyay.talk_rules.agenda import can_view_wip_schedule
+
     if not user.is_anonymous:
         if is_only_reviewer(user, event):
             return limit_for_reviewers(event.submissions.all(), event, user)
@@ -291,8 +294,16 @@ def submissions_for_user(event, user):
 
     # Fall through: both anon users and users without permissions
     # get here, e.g. speakers or attendees.
+    wip = event.wip_schedule
+    if not user.is_anonymous and wip and can_view_wip_schedule(user, event):
+        return Submission.objects.filter(
+            pk__in=wip.talks.filter(submission__isnull=False).values_list('submission_id', flat=True)
+        )
+
     if user.has_perm('base.list_schedule', event):
-        return event.current_schedule.slots
+        current = event.current_schedule
+        if current:
+            return current.slots
     return event.submissions.none()
 
 

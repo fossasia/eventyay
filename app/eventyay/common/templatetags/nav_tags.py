@@ -1,8 +1,11 @@
 from django import template
 from django.conf import settings
+from django.urls import reverse
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from i18nfield.strings import LazyI18nString
+
+from eventyay.talk_rules.agenda import is_wip_agenda_url
 
 register = template.Library()
 
@@ -72,3 +75,34 @@ def get_localized_menu_label(event, label_setting):
     if custom_label:
         return custom_label
     return MENU_LABEL_DEFAULTS.get(label_setting, '')
+
+
+@register.simple_tag
+def is_wip_agenda_preview(request):
+    return is_wip_agenda_url(getattr(request, 'path_info', ''))
+
+
+def _agenda_event_url_kwargs(event):
+    return {'organizer': event.organizer.slug, 'event': event.slug}
+
+
+@register.simple_tag
+def agenda_schedule_nav_url(request, event):
+    """Return the schedule tab URL, preserving WIP preview when applicable."""
+    if is_wip_agenda_url(getattr(request, 'path_info', '')):
+        return reverse(
+            'agenda:versioned-schedule',
+            kwargs={**_agenda_event_url_kwargs(event), 'version': 'wip'},
+        )
+    return event.talk_schedule_url
+
+
+@register.simple_tag
+def agenda_speakers_nav_url(request, event):
+    """Return the speakers tab URL, preserving WIP preview when applicable."""
+    if is_wip_agenda_url(getattr(request, 'path_info', '')):
+        return reverse(
+            'agenda:versioned-wip-speakers',
+            kwargs=_agenda_event_url_kwargs(event),
+        )
+    return event.talk_speaker_url

@@ -25,7 +25,8 @@
         {% endif %}
 
         {% if show_talks_tab %}
-            {% if schedule or request.event.has_schedule_content %}
+            {% can_list_schedule request.event as show_schedule_tab %}
+            {% if show_schedule_tab and request.event.has_schedule_content %}
                 <a href="{{ request.event.talk_schedule_url }}" class="header-tab ">
                     <i class="fa fa-calendar"></i> {% translate "Schedule" %}
                 </a>

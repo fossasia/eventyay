@@ -11,7 +11,7 @@
 		speaker-detail(v-else-if="view === 'speaker'", :speakerId="speakerCode", :onHomeServer="onHomeServer")
 	template(v-else-if="schedule && schedule.talks.length")
 		schedule-toolbar(v-if="(scheduleMeta || schedule) && !publicFavsUrl",
-			:version="scheduleMeta?.version || ''",
+			:version="version || scheduleMeta?.version || ''",
 			:isCurrent="scheduleMeta?.is_current !== false",
 			:changelogUrl="scheduleMeta?.changelog_url || ''",
 			:currentScheduleUrl="scheduleMeta?.current_schedule_url || ''",
@@ -219,6 +219,10 @@ export default {
 		}
 	},
 	provide () {
+		const wipLinkPrefix = () => {
+			const version = this.version || this.scheduleMeta?.version || ''
+			return version === 'wip' ? 'schedule/v/wip/' : ''
+		}
 		return {
 			eventUrl: this.eventUrl,
 			remoteApiUrl: computed(() => this.remoteApiUrl),
@@ -228,6 +232,10 @@ export default {
 				event.preventDefault()
 
 				this.showSessionDetails(session, event)
+			},
+			generateSessionLinkUrl: ({eventUrl, session}) => {
+				if (!this.onHomeServer) return `#session/${session.id}/`
+				return `${eventUrl}${wipLinkPrefix()}talk/${session.id}/`
 			},
 			scheduleFav: (id) => this.fav(id),
 			scheduleUnfav: (id) => this.unfav(id),
@@ -252,7 +260,7 @@ export default {
 				return roomId ? `${base}${roomId}/` : ''
 			},
 			generateSpeakerLinkUrl: ({speaker}) => {
-				if (this.onHomeServer) return `${this.eventUrl}speakers/${speaker.code}/`
+				if (this.onHomeServer) return `${this.eventUrl}${wipLinkPrefix()}speakers/${speaker.code}/`
 				return `#speakers/${speaker.code}`
 			},
 			onSpeakerLinkClick: (event, speaker) => {
@@ -262,7 +270,8 @@ export default {
 				}
 			},
 			loggedIn: computed(() => this.loggedIn),
-			translationMessages: computed(() => this.translationMessages)
+			translationMessages: computed(() => this.translationMessages),
+			isWipPreview: computed(() => (this.version || this.scheduleMeta?.version || '') === 'wip')
 		}
 	},
 	data () {
