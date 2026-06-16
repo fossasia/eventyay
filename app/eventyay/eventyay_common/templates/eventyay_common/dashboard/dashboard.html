@@ -1,6 +1,11 @@
 {% extends "eventyay_common/base.html" %}
 {% load i18n %}
-{% block title %}{% trans "Dashboard" %}
+{% load static %}
+{% load eventurl %}
+{% load compress %}
+{% block title %}{% trans "Dashboard" %}{% endblock %}
+{% block custom_header %}
+    <script defer src="{% static 'pretixpresale/js/startpage.js' %}"></script>
 {% endblock %}
 {% block content %}
     <h1>{% trans "Dashboard" %}</h1>
@@ -93,6 +98,121 @@
             </a>
         </p>
     {% endif %}
+    {% if followed_organizers %}
+        <section class="dashboard-events" aria-label="{% trans 'Followed organizers' %}">
+            <h2>{% trans "Followed organizers" %}</h2>
+            <div class="dashboard-event-list">
+                {% for item in followed_organizers %}
+                    <article class="dashboard-event-card">
+                        <a class="dashboard-event-media" href="{{ item.organizer_url }}">
+                            {% if item.logo_url %}
+                                <img src="{{ item.logo_url }}" alt="{{ item.organizer.name }}">
+                            {% else %}
+                                <div class="dashboard-event-media-placeholder">
+                                    <i class="fa fa-users"></i>
+                                </div>
+                            {% endif %}
+                        </a>
+                        <div class="dashboard-event-body">
+                            <h3 class="dashboard-event-title">
+                                <a href="{{ item.organizer_url }}">{{ item.organizer.name }}</a>
+                            </h3>
+                            <div class="dashboard-event-meta">
+                                <span class="dashboard-event-description">
+                                    {{ item.description|truncatechars:100|escape }}
+                                    {% if item.description|length > 100 %}
+                                        <a href="{{ item.organizer_url }}" class="event-public-text-link">{% trans "read more" %}</a>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="dashboard-event-footer">
+                            <form action="{% eventurl item.organizer "presale:organizer.unfollow" %}" method="post" class="dashboard-unfollow-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{% url 'eventyay_common:dashboard' %}">
+                                <button type="submit" class="btn btn-danger">
+                                    <span class="fa fa-heart" aria-hidden="true"></span>
+                                    {% trans "Unfollow" %}
+                                </button>
+                            </form>
+                            <form action="{% url 'eventyay_common:organizers.toggle-mute' organizer_id=item.organizer.id %}" method="post" class="dashboard-mute-form">
+                                {% csrf_token %}
+                                <button class="dashboard-mute-toggle" type="submit" aria-label="{% if item.follow.muted %}{% trans 'Unmute organizer' %}{% else %}{% trans 'Mute organizer' %}{% endif %}" title="{% if item.follow.muted %}{% trans 'Unmute organizer' %}{% else %}{% trans 'Mute organizer' %}{% endif %}">
+                                    {% if item.follow.muted %}
+                                        <i class="fa fa-bell-slash text-danger" aria-hidden="true"></i>
+                                    {% else %}
+                                        <i class="fa fa-bell" aria-hidden="true"></i>
+                                    {% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+    {% if followed_upcoming_events %}
+        <section class="dashboard-events" aria-label="{% trans 'Upcoming events from followed organizers' %}">
+            <h2>{% trans "Upcoming events from followed organizers" %}</h2>
+            <div class="dashboard-event-list">
+                {% for event in followed_upcoming_events %}
+                    {% eventurl event "presale:event.index" as event_url %}
+                    {% abseventurl event "presale:event.index" as event_url_abs %}
+                    {% with event.visible_logo_url|default:event.visible_header_image_url as event_image_url %}
+                    {% with event.social_image_signature as share_image_signature %}
+                    <article
+                        class="dashboard-event-card startpage-event-card"
+                        data-event-name="{{ event.name|event_localize|escape }}"
+                        data-event-date="{{ event.get_date_range_display|escape }}"
+                        data-event-url="{{ event_url }}"
+                        data-event-image="{{ event_image_url|default:''|escape }}"
+                    >
+                        <a class="dashboard-event-media" href="{{ event_url }}">
+                            {% if event.visible_header_image_url %}
+                                <img src="{{ event.visible_header_image_url }}" alt="{{ event.name|event_localize }}">
+                            {% else %}
+                                <div class="dashboard-event-media-placeholder">
+                                    <i class="fa fa-calendar"></i>
+                                </div>
+                            {% endif %}
+                        </a>
+                        <div class="dashboard-event-body">
+                            <h3 class="dashboard-event-title">
+                                <a href="{{ event_url }}">{{ event.name|event_localize }}</a>
+                            </h3>
+                            <div class="dashboard-event-meta">
+                                <a class="dashboard-event-date event-public-text-link" href="{{ event_url }}">
+                                    {{ event.get_date_range_display }}
+                                </a>
+                                {% if event.location %}
+                                    <span class="dashboard-event-location">
+                                        <i class="fa fa-map-marker" aria-hidden="true"></i>
+                                        {{ event.location|event_localize }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="dashboard-event-footer">
+                            <a class="btn btn-primary" href="{{ event_url }}">
+                                {% trans "View event" %}
+                            </a>
+                            {% if event.has_component_testmode %}
+                                <span class="dashboard-testmode-badge" title="{% trans 'Test mode enabled' %}">
+                                    <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                                    {% trans 'Test Mode' %}
+                                </span>
+                            {% endif %}
+                            <button class="dashboard-event-share startpage-event-share" type="button" data-url="{{ event_url_abs }}" data-share-image-signature="{{ share_image_signature|default:''|escape }}" data-share-label="{% trans 'Share event' %}" aria-label="{% trans 'Share event' %}" title="{% trans 'Share event' %}">
+                                <i class="fa fa-share-alt" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </article>
+                    {% endwith %}
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
     {% if widgets %}
         <h2>{% trans "Other features" %}</h2>
         <div class="dashboard">
@@ -140,4 +260,39 @@
         </div>
     </div>
     {% include "eventyay_common/includes/ticket_permission_dialog.html" %}
+
+    <dialog id="share-dialog" role="dialog" aria-labelledby="share-dialog-label" class="dashboard-share-dialog">
+        <div class="modal-card">
+            <div class="modal-card-content">
+                <div class="share-header">
+                    <h3 id="share-dialog-label">{% trans "Share this event" %}</h3>
+                    <button type="button" id="share-dialog-close" class="btn btn-default btn-xs" aria-label="{% trans 'Close' %}">
+                        <i class="fa fa-times" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="share-body">
+                    <div class="share-social-links">
+                        <a id="share-facebook" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-facebook" aria-label="{% trans 'Share on Facebook' %}"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+                        <a id="share-x" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-x" aria-label="{% trans 'Share on X' %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                              <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865l8.875 11.633Z"/>
+                            </svg>
+                        </a>
+                        <a id="share-linkedin" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-linkedin" aria-label="{% trans 'Share on LinkedIn' %}"><i class="fa fa-linkedin" aria-hidden="true"></i></a>
+                        <a id="share-reddit" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-reddit" aria-label="{% trans 'Share on Reddit' %}"><i class="fa fa-reddit-alien" aria-hidden="true"></i></a>
+                        <button type="button" id="share-native" class="btn btn-native" aria-label="{% trans 'More share options' %}"><i class="fa fa-ellipsis-h" aria-hidden="true"></i></button>
+                    </div>
+                    <div class="input-group share-input-group">
+                        <label for="share-url-input" class="sr-only">{% trans 'Event link' %}</label>
+                        <input type="text" id="share-url-input" class="form-control" readonly>
+                        <span class="input-group-btn">
+                            <button id="share-copy-btn" class="btn btn-inverse" type="button" data-copied-label="{% trans 'Copied!' %}">
+                                {% trans 'Copy' %} <i class="fa fa-copy" aria-hidden="true"></i>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
 {% endblock %}

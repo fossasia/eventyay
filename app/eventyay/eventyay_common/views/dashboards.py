@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from django.contrib.contenttypes.models import ContentType
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.core.files.storage import default_storage
 from django.db.models import (
     Count,
     Exists,
@@ -23,11 +24,12 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import NoReverseMatch, reverse
 from django.utils.formats import date_format
-from django.utils.html import escape, format_html
+from django.utils.html import escape, format_html, strip_tags
 from django.utils.timezone import now
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
+from i18nfield.strings import LazyI18nString
 from pytz.tzinfo import DstTzInfo
 from zoneinfo import ZoneInfo
 
@@ -160,6 +162,25 @@ def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
         widgets.extend(filter_event_dashboard_widgets_for_request(request, result, permissions))
 
     return JsonResponse({'widgets': widgets})
+
+
+def toggle_mute_organizer(request: HttpRequest, organizer_id: int) -> HttpResponse:
+    if not request.user.is_authenticated:
+        return redirect('eventyay_common:auth.login')
+
+    if request.method == 'POST':
+        try:
+            follower = OrganizerFollower.objects.get(user=request.user, organizer_id=organizer_id)
+            follower.muted = not follower.muted
+            follower.save()
+            if follower.muted:
+                messages.success(request, _('Notifications muted for this organizer.'))
+            else:
+                messages.success(request, _('Notifications unmuted for this organizer.'))
+        except OrganizerFollower.DoesNotExist:
+            messages.error(request, _('You are not following this organizer.'))
+
+    return redirect('eventyay_common:dashboard')
 
 
 class EventIndexView(TemplateView):
@@ -686,10 +707,26 @@ def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
                 organizer_url = eventreverse(organizer, 'presale:organizer.index')
             except NoReverseMatch:
                 organizer_url = '#'
+
+            logo_path = organizer.settings.get('organizer_logo_image', as_type=str, default='')
+            if logo_path.startswith('file://'):
+                logo_path = logo_path[7:]
+            logo_url = None
+            if logo_path:
+                try:
+                    logo_url = default_storage.url(logo_path)
+                except Exception:
+                    pass
+
+            desc = organizer.settings.get('organizer_homepage_text', as_type=LazyI18nString)
+            desc_str = " ".join(strip_tags(str(desc)).split()) if desc else ''
+
             followed_organizers_data.append({
                 'follow': follow,
                 'organizer': organizer,
                 'organizer_url': organizer_url,
+                'logo_url': logo_url,
+                'description': desc_str,
             })
     ctx['followed_organizers'] = followed_organizers_data
 
@@ -747,3 +784,22 @@ def user_index_widgets_lazy(request: HttpRequest) -> JsonResponse:
         8,
     )
     return JsonResponse({'widgets': widgets})
+
+
+def toggle_mute_organizer(request: HttpRequest, organizer_id: int) -> HttpResponse:
+    if not request.user.is_authenticated:
+        return redirect('eventyay_common:auth.login')
+
+    if request.method == 'POST':
+        try:
+            follower = OrganizerFollower.objects.get(user=request.user, organizer_id=organizer_id)
+            follower.muted = not follower.muted
+            follower.save()
+            if follower.muted:
+                messages.success(request, _('Notifications muted for this organizer.'))
+            else:
+                messages.success(request, _('Notifications unmuted for this organizer.'))
+        except OrganizerFollower.DoesNotExist:
+            messages.error(request, _('You are not following this organizer.'))
+
+    return redirect('eventyay_common:dashboard')

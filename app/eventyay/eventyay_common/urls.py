@@ -33,6 +33,7 @@ urlpatterns = [
     path('invite/<str:token>', auth.invite, name='auth.invite'),
     path('', dashboards.eventyay_common_dashboard, name='dashboard'),
     path('widgets.json/', dashboards.user_index_widgets_lazy, name='dashboard.widgets'),
+    path('organizers/toggle-mute/<int:organizer_id>/', dashboards.toggle_mute_organizer, name='organizers.toggle-mute'),
     path('organizers/', organizer.OrganizerList.as_view(), name='organizers'),
     path('organizers/add', organizer.OrganizerCreate.as_view(), name='organizers.add'),
     path(
