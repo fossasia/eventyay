@@ -71,13 +71,22 @@ const getCookie = (name) => {
     return cookieValue
 }
 
-onReady(() => {
-    initScrollPosition()
-    document
+const initFeaturedToggles = (root = document) => {
+    root
         .querySelectorAll("input.submission_featured")
         .forEach((element) =>
             element.addEventListener("change", () =>
                 handleFeaturedChange(element),
             ),
         )
+}
+
+onReady(() => {
+    initScrollPosition()
+    initFeaturedToggles()
+})
+
+// Re-bind toggles inside table regions.
+document.addEventListener("eventyay:ajax-results-replaced", (event) => {
+    initFeaturedToggles(event.detail?.container ?? document)
 })

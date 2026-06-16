@@ -16,7 +16,8 @@ from django.views.generic import DetailView, ListView, TemplateView, View
 from django_context_decorator import context
 from i18nfield.utils import I18nJSONEncoder
 
-from eventyay.agenda.views.utils import is_public_speakers_empty, redirect_to_presale_with_warning
+from eventyay.agenda.views.utils import WipAgendaPreviewPageMixin, is_public_speakers_empty, redirect_to_presale_with_warning
+from eventyay.talk_rules.agenda import agenda_speaker_talks
 from eventyay.base.models import SpeakerProfile, TalkQuestionTarget, User
 from eventyay.common.text.path import safe_filename
 from eventyay.common.urls import get_base_url
@@ -56,9 +57,10 @@ class SpeakerView(PermissionRequired, TemplateView):
     template_name = 'agenda/speaker.html'
     permission_required = 'base.view_speakerprofile'
     slug_field = 'code'
+    wip_preview = False
 
     def dispatch(self, request, *args, **kwargs):
-        if is_public_speakers_empty(request):
+        if not self.wip_preview and is_public_speakers_empty(request):
             return redirect_to_presale_with_warning(request, _('No published speakers.'))
         return super().dispatch(request, *args, **kwargs)
 
@@ -74,15 +76,20 @@ class SpeakerView(PermissionRequired, TemplateView):
     @context
     @cached_property
     def talks(self):
-        if not self.request.event.current_schedule:
-            return []
         return (
-            self.request.event.current_schedule.talks.filter(
-                submission__speakers__code=self.kwargs['code'], is_visible=True
+            agenda_speaker_talks(
+                self.request.event,
+                self.request.user,
+                speaker_code=self.kwargs['code'],
+                wip_preview=self.wip_preview,
             )
             .select_related('submission', 'room', 'submission__event', 'submission__event__organizer')
             .prefetch_related('submission__speakers')
         )
+
+    @context
+    def schedule_version(self):
+        return ''
 
     def get_permission_object(self):
         return self.profile
@@ -94,6 +101,14 @@ class SpeakerView(PermissionRequired, TemplateView):
             question__event=self.request.event,
             question__target=TalkQuestionTarget.SPEAKER,
         ).select_related('question')
+
+
+class WipSpeakerView(WipAgendaPreviewPageMixin, SpeakerView):
+    pass
+
+
+class WipSpeakerList(WipAgendaPreviewPageMixin, TemplateView):
+    template_name = 'agenda/speakers.html'
 
 
 class SpeakerRedirect(DetailView):
@@ -116,13 +131,16 @@ class SpeakerTalksIcalView(PermissionRequired, DetailView):
         return SpeakerProfile.objects.filter(event=self.request.event, user__code__iexact=self.kwargs['code']).first()
 
     def get(self, request, event, *args, **kwargs):
-        if not self.request.event.current_schedule:
+        speaker = self.get_object()
+        slots = agenda_speaker_talks(
+            request.event,
+            request.user,
+            speaker=speaker.user,
+            wip_preview=getattr(self, 'wip_preview', False),
+        ).select_related('room', 'submission')
+        if not slots.exists():
             raise Http404()
         netloc = urlparse(settings.SITE_URL).netloc
-        speaker = self.get_object()
-        slots = self.request.event.current_schedule.talks.filter(
-            submission__speakers=speaker.user, is_visible=True
-        ).select_related('room', 'submission')
 
         cal = vobject.iCalendar()
         cal.add('prodid').value = f'-//eventyay//{netloc}//{request.event.slug}//{speaker.code}'
@@ -156,14 +174,16 @@ class SpeakerTalksExportView(EventPermissionRequired, View):
         )
         if not speaker:
             raise Http404()
-        schedule = request.event.current_schedule
-        if not schedule:
+        slots = agenda_speaker_talks(
+            request.event,
+            request.user,
+            speaker=speaker.user,
+            wip_preview=getattr(self, 'wip_preview', False),
+        ).select_related(
+            'room', 'submission', 'submission__track', 'submission__submission_type'
+        ).prefetch_related('submission__speakers', 'submission__resources')
+        if not slots.exists():
             raise Http404()
-        slots = (
-            schedule.talks.filter(submission__speakers=speaker.user, is_visible=True)
-            .select_related('room', 'submission', 'submission__track', 'submission__submission_type')
-            .prefetch_related('submission__speakers', 'submission__resources')
-        )
         return speaker, slots
 
     def get(self, request, event, **kwargs):
@@ -272,12 +292,12 @@ class SpeakerTalksCalendarRedirectView(EventPermissionRequired, View):
         )
         if not speaker:
             raise Http404()
-        schedule = request.event.current_schedule
-        if not schedule:
-            raise Http404()
-        slots = schedule.talks.filter(submission__speakers=speaker.user, is_visible=True).select_related(
-            'room', 'submission'
-        )
+        slots = agenda_speaker_talks(
+            request.event,
+            request.user,
+            speaker=speaker.user,
+            wip_preview=getattr(self, 'wip_preview', False),
+        ).select_related('room', 'submission')
         if not slots.exists():
             raise Http404()
 

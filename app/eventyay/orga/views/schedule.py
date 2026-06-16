@@ -169,17 +169,26 @@ class ScheduleResetView(EventPermissionRequired, View):
 class ScheduleToggleView(EventPermissionRequired, View):
     permission_required = 'base.update_event'
 
+    @staticmethod
+    def _set_schedule_public(event, is_public):
+        """Persist talk schedule visibility for agenda and presale navigation."""
+        flags = dict(event.feature_flags)
+        flags['show_schedule'] = is_public
+        event.feature_flags = flags
+        event.settings.talk_schedule_public = is_public
+        event.save(update_fields=['feature_flags'])
+
     def dispatch(self, request, event):
         super().dispatch(request, event)
-        self.request.event.feature_flags['show_schedule'] = not self.request.event.get_feature_flag('show_schedule')
-        self.request.event.save()
+        is_public = not self.request.event.get_feature_flag('show_schedule')
+        self._set_schedule_public(self.request.event, is_public)
         # Trigger tickets to hidden/unhidden schedule menu
         try:
             from eventyay.orga.tasks import trigger_public_schedule
 
             trigger_public_schedule.apply_async(
                 kwargs={
-                    'is_show_schedule': self.request.event.feature_flags['show_schedule'],
+                    'is_show_schedule': is_public,
                     'event_slug': self.request.event.slug,
                     'organiser_slug': self.request.event.organiser.slug,
                     'user_email': self.request.user.email,

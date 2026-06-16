@@ -5,7 +5,7 @@
 			.talk-header(:class="{'has-actions': talkExportOptions.length || loggedIn}")
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
 				.header-actions
-					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl")
+					export-dropdown.talk-export(v-if="talkExportOptions.length || isWipPreview", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl", :disabled="isWipPreview")
 					.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
 						fav-button(@toggleFav="toggleFav")
 			.info
@@ -123,7 +123,8 @@ export default {
 		generateStarrerLinkUrl: { default: () => (user) => user.url || '' },
 		onStarrerLinkClick: { default: () => () => {} },
 		loggedIn: { default: false },
-		translationMessages: { default: () => ({}) }
+		translationMessages: { default: () => ({}) },
+		isWipPreview: { default: false }
 	},
 	props: {
 		talk: Object,

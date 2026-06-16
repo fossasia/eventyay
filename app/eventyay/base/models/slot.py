@@ -17,7 +17,7 @@ from i18nfield.fields import I18nCharField
 from eventyay.base.models import PretalxModel
 from eventyay.common.text.serialize import serialize_duration
 from eventyay.common.urls import get_base_url
-from eventyay.talk_rules.agenda import is_agenda_submission_visible, is_agenda_visible
+from eventyay.talk_rules.agenda import can_view_wip_schedule, is_agenda_submission_visible, is_agenda_visible
 from eventyay.talk_rules.submission import is_break, is_wip, orga_can_change_submissions
 
 
@@ -78,7 +78,8 @@ class TalkSlot(PretalxModel):
                 # is down to the API/view
                 & ((is_break & is_agenda_visible) | is_agenda_submission_visible)
             )
-            | orga_can_change_submissions,
+            | orga_can_change_submissions
+            | (is_wip & can_view_wip_schedule),
             'update': is_wip & orga_can_change_submissions,
         }
 

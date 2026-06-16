@@ -44,7 +44,7 @@ from eventyay.api.serializers.event import (
 from eventyay.api.serializers.rooms import EventSerializer as RoomsEventSerializer
 from eventyay.api.utils import get_protocol
 from eventyay.api.views import ConditionalListView
-from eventyay.base.models import Device, SubEvent, TaxRule, TeamAPIToken, User
+from eventyay.base.models import Device, Organizer, SubEvent, TaxRule, TeamAPIToken, User
 from eventyay.base.models.event import Event
 from eventyay.base.payment import ManualPayment
 from eventyay.base.services.event import notify_event_change
@@ -510,7 +510,7 @@ def check_token_permission(token, permission_required):
     decoded_data = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
     # Check if user existed
     User.objects.get(email=decoded_data['email'])
-    if decoded_data.get('has_perms') not in permission_required:
+    if decoded_data.get('has_perms') != permission_required:
         return False
     return True
 
@@ -519,27 +519,43 @@ def check_token_permission(token, permission_required):
 @require_POST
 @scopes_disabled()
 def talk_schedule_public(request, *args, **kwargs):
-    # Disabled because it uses pretix Organizer model
-    return JsonResponse({'status': 'disabled (pretix dependency)'}, status=501)
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        logger.error('Authorization header missing or invalid')
+        return JsonResponse({'status': 'Authorization header missing or invalid'}, status=403)
 
-
-# def talk_schedule_public(request, *args, **kwargs):
-#     auth_header = request.headers.get('Authorization')
-#     if auth_header and auth_header.startswith('Bearer '):
-#         token = auth_header.split(' ')[1]
-#         try:
-#             if not check_token_permission(token, 'orga.edit_schedule'):
-#                 return JsonResponse(
-#                     {'status': 'User does not have permission to show schedule on menu'},
-#                     status=403,
-#                 )
-#             organiser = get_object_or_404(Organizer, slug=kwargs['organizer'])
-#             event = get_object_or_404(Event, slug=kwargs['event'], organizer=organiser)
-#             request_data = json.loads(request.body)
-#             event.settings.talk_schedule_public = request_data.get('is_show_schedule') or False
-#             return JsonResponse({'status': 'success'}, status=200)
-#         except jwt.ExpiredSignatureError:
-#             ...
+    token = auth_header.split(' ')[1]
+    try:
+        if not check_token_permission(token, 'base.edit_schedule'):
+            return JsonResponse(
+                {'status': 'User does not have permission to show schedule on menu'},
+                status=403,
+            )
+        organizer = get_object_or_404(Organizer, slug=kwargs['organizer'])
+        event = get_object_or_404(Event, slug=kwargs['event'], organizer=organizer)
+        request_data = json.loads(request.body)
+        is_show_schedule = bool(request_data.get('is_show_schedule'))
+        flags = dict(event.feature_flags)
+        flags['show_schedule'] = is_show_schedule
+        event.feature_flags = flags
+        event.settings.talk_schedule_public = is_show_schedule
+        event.save(update_fields=['feature_flags'])
+        return JsonResponse({'status': 'success'}, status=200)
+    except jwt.ExpiredSignatureError:
+        logger.error('Token has expired')
+        return JsonResponse({'status': 'Token has expired'}, status=401)
+    except jwt.InvalidTokenError:
+        logger.error('Invalid token')
+        return JsonResponse({'status': 'Invalid token'}, status=401)
+    except User.DoesNotExist:
+        logger.error('User not found for schedule-public token')
+        return JsonResponse({'status': 'User not found'}, status=401)
+    except json.JSONDecodeError:
+        logger.error('Invalid JSON payload for schedule-public')
+        return JsonResponse({'status': 'Invalid JSON payload'}, status=400)
+    except Exception:
+        logger.exception('Internal server error in talk_schedule_public')
+        return JsonResponse({'status': 'Internal server error'}, status=500)
 
 
 class CustomerOrderCheckView(APIView):
