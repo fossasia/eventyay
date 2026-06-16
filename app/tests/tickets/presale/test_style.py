@@ -5,8 +5,8 @@ from django.conf import settings
 from django.test import TestCase
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Organizer
-from pretix.presale.style import regenerate_organizer_css
+from eventyay.base.models import Event, Organizer
+from eventyay.presale.style import regenerate_organizer_css
 
 
 class StyleTest(TestCase):
@@ -49,3 +49,45 @@ class StyleTest(TestCase):
         with open(os.path.join(settings.MEDIA_ROOT, self.event.settings.presale_css_file), 'r') as c:
             assert '#34c34c' not in c.read()
             assert '#33c33c' not in c.read()
+
+    def test_event_generate_css_primary_font(self):
+        from eventyay.presale.style import regenerate_css
+        self.event.settings.primary_font = 'Georgia'
+        regenerate_css.apply(args=(self.event.pk,))
+        self.event.settings.flush()
+        assert self.event.settings.presale_css_file
+        with open(os.path.join(settings.MEDIA_ROOT, self.event.settings.presale_css_file), 'r') as c:
+            content = c.read()
+            assert 'Georgia' in content
+
+    def test_organizer_generate_css_primary_font_inherited(self):
+        self.orga.settings.primary_font = 'Georgia'
+        regenerate_organizer_css.apply(args=(self.orga.pk,))
+        self.orga.settings.flush()
+        self.event.settings.flush()
+        assert self.event.settings.presale_css_file
+        with open(os.path.join(settings.MEDIA_ROOT, self.event.settings.presale_css_file), 'r') as c:
+            content = c.read()
+            assert 'Georgia' in content
+
+    def test_validate_event_settings_primary_font(self):
+        from django.core.exceptions import ValidationError
+        from eventyay.base.settings import validate_event_settings
+        
+        # Valid system font
+        validate_event_settings(self.event, {'primary_font': 'Georgia'})
+        
+        # Invalid font
+        with self.assertRaises(ValidationError):
+            validate_event_settings(self.event, {'primary_font': 'NonExistentFont'})
+
+    def test_validate_organizer_settings_primary_font(self):
+        from django.core.exceptions import ValidationError
+        from eventyay.base.settings import validate_organizer_settings
+        
+        # Valid system font
+        validate_organizer_settings(self.orga, {'primary_font': 'Georgia'})
+        
+        # Invalid font
+        with self.assertRaises(ValidationError):
+            validate_organizer_settings(self.orga, {'primary_font': 'NonExistentFont'})

@@ -339,3 +339,19 @@ class SplitDateTimeField(forms.SplitDateTimeField):
 
 class FontSelect(forms.RadioSelect):
     option_template_name = 'pretixcontrol/font_option.html'
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        from eventyay.presale.style import SYSTEM_FONTS, get_fonts, BASE_SANS_STACK
+
+        font_key = value
+        font_family = None
+        if font_key in SYSTEM_FONTS:
+            font_family = SYSTEM_FONTS[font_key]
+        elif font_key in get_fonts():
+            font_family = f'"{font_key}", {BASE_SANS_STACK}'
+        else:
+            font_family = SYSTEM_FONTS.get('Open Sans')
+
+        option['font_family'] = font_family
+        return option
