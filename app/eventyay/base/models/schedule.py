@@ -28,9 +28,12 @@ from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
-from eventyay.talk_rules.agenda import can_view_schedule, is_agenda_visible, is_widget_visible
-from eventyay.talk_rules.orga import can_view_speaker_names
-from eventyay.talk_rules.person import is_reviewer
+from eventyay.talk_rules.agenda import (
+    can_view_schedule,
+    can_view_wip_schedule,
+    is_agenda_visible,
+    is_widget_visible,
+)
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
 from .auth import (
@@ -97,12 +100,10 @@ class Schedule(PretalxModel):
         ordering = ('-published',)
         unique_together = (('event', 'version'),)
         rules_permissions = {
-            'list': can_view_schedule,
-            'view_widget': is_widget_visible | orga_can_change_submissions,
-            'view': (~is_wip & is_agenda_visible)
-            | orga_can_change_submissions
-            | (is_reviewer & can_view_speaker_names),
-            'orga_view': orga_can_change_submissions | (is_reviewer & can_view_speaker_names),
+            'list': (~is_wip & can_view_schedule) | can_view_wip_schedule,
+            'view_widget': is_widget_visible | can_view_wip_schedule,
+            'view': (~is_wip & is_agenda_visible) | can_view_wip_schedule,
+            'orga_view': can_view_wip_schedule,
             'release': orga_can_change_submissions,
         }
 

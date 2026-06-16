@@ -12,6 +12,7 @@ from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.encoding import force_str
 from django.utils.translation import activate
+from django_context_decorator import context
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.base.models.submission import SubmissionFavourite
@@ -19,6 +20,7 @@ from eventyay.common.exporter import BaseExporter
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
 from eventyay.common.text.path import safe_filename
 from eventyay.schedule.exporters import FavedICalExporter
+from eventyay.talk_rules.agenda import require_wip_schedule_access
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 
@@ -31,21 +33,28 @@ def escape_json_for_script(json_str: str) -> str:
     return json_str.translate(JSON_SCRIPT_ESCAPES)
 
 
-def build_enriched_schedule_json(request: HttpRequest) -> str:
-    """Serialize the current schedule for inline first-party agenda views.
+def build_enriched_schedule_json(request: HttpRequest, *, wip_preview: bool = False) -> str:
+    """Serialize schedule data for inline first-party agenda views.
 
-    Some public pages, such as featured talk pages, remain accessible even when the
-    standalone widget JSON endpoint is intentionally hidden. Those pages need a
-    self-contained payload instead of depending on ``widgets/schedule.json``.
+    Public talk/speaker pages embed the released schedule. WIP preview pages
+    (``schedule/v/wip/...``) embed the editable WIP schedule without public
+    visibility filters.
     """
 
-    schedule = request.event.current_schedule
+    event = request.event
+    if wip_preview:
+        require_wip_schedule_access(request)
+        schedule = event.wip_schedule
+    else:
+        schedule = event.current_schedule
     if not schedule:
         return '{}'
 
     data = schedule.build_data(
+        all_talks=wip_preview or not schedule.version,
         enrich=True,
-        include_featured_speaker_metadata=are_featured_submissions_visible(request.user, request.event),
+        include_featured_speaker_metadata=are_featured_submissions_visible(request.user, event),
+        respect_public_visibility=not wip_preview,
     )
     return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
@@ -292,3 +301,17 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
     if exporter.cors:
         headers['Access-Control-Allow-Origin'] = exporter.cors
     return HttpResponse(data, content_type=file_type, headers=headers)
+
+
+class WipAgendaPreviewPageMixin:
+    """Shared setup for first-party HTML pages under ``schedule/v/wip/``."""
+
+    wip_preview = True
+
+    def dispatch(self, request, *args, **kwargs):
+        require_wip_schedule_access(request)
+        return super().dispatch(request, *args, **kwargs)
+
+    @context
+    def schedule_version(self):
+        return 'wip'
