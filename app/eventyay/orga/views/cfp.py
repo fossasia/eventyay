@@ -19,8 +19,23 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import FormView, TemplateView, UpdateView, View
 from django_context_decorator import context
 
+from eventyay.base.models import (
+    AnswerOption,
+    Availability,
+    CfP,
+    MailTemplateRoles,
+    ResourceKind,
+    SpeakerProfile,
+    SubmissionType,
+    SubmitterAccessCode,
+    TalkQuestion,
+    TalkQuestionRequired,
+    TalkQuestionTarget,
+    Track,
+)
 from eventyay.cfp.flow import CfPFlow
 from eventyay.common.forms import I18nFormSet
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
 from eventyay.common.text.serialize import I18nStrJSONEncoder
 from eventyay.common.views.generic import OrgaCRUDView
@@ -30,11 +45,11 @@ from eventyay.common.views.mixins import (
     OrderActionMixin,
     PermissionRequired,
 )
-from eventyay.base.models import MailTemplateRoles
-from eventyay.orga.forms import CfPForm, TalkQuestionForm, SubmissionTypeForm, TrackForm
+from eventyay.orga.forms import CfPForm, SubmissionTypeForm, TalkQuestionForm, TrackForm
 from eventyay.orga.forms.cfp import (
     AccessCodeSendForm,
     AnswerOptionForm,
+    CfPGeneralSettingsForm,
     CfPSettingsForm,
     QuestionFilterForm,
     ReminderFilterForm,
@@ -49,6 +64,7 @@ from eventyay.base.models import (
     TalkQuestion,
     TalkQuestionRequired,
     TalkQuestionTarget,
+    TalkQuestionVariant,
     SubmissionType,
     SubmitterAccessCode,
     Track,
@@ -56,6 +72,7 @@ from eventyay.base.models import (
     Availability,
 )
 from eventyay.talk_rules.submission import questions_for_user
+
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +86,7 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
 
     @context
     def tablist(self):
-        return {
-            'general': _('General information')
-        }
+        return {'general': _('General information')}
 
     @context
     @cached_property
@@ -137,11 +152,32 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['has_create_permission'] = True
         context['question_list'] = (
             questions_for_user(self.request, self.request.event, self.request.user)
+            .filter(is_imported=False)
             .annotate(answer_count=Count('answers'))
             .order_by('position')
         )
         context['create_url'] = reverse('orga:cfp.questions.create', kwargs={'event': self.request.event.slug})
-        
+
+        available_codes = [code for code, _ in self.request.event.available_content_locales]
+        choices = get_language_choices_native_with_ui_name(codes=available_codes)
+        existing_codes = {c[0] for c in choices}
+        for code, name in self.request.event.available_content_locales:
+            if code not in existing_codes:
+                choices.append((code, name))
+        event_languages = list(self.request.event.settings.locales or [])
+        context['event_languages'] = event_languages
+        selected_content_locales = self.request.event.settings.content_locales
+        context['selected_content_locales'] = selected_content_locales
+        sform = self.sform
+        content_locales_key = sform.add_prefix('content_locales')
+        if sform.is_bound and content_locales_key in sform.data:
+            effective_content_locales = sform.data.getlist(content_locales_key)
+        else:
+            effective_content_locales = selected_content_locales if selected_content_locales is not None else event_languages
+        effective_set = set(effective_content_locales)
+        context['all_languages'] = sorted(choices, key=lambda x: (x[0] not in effective_set, x[1]))
+        context['effective_content_locales'] = effective_content_locales
+
         # Pass saved field order to template for JavaScript reordering.
         # normalize_field_order ensures every built-in field is present at
         # its canonical position — covering both configs with no built-ins
@@ -159,36 +195,33 @@ class CfPForms(EventPermissionRequired, TemplateView):
             normalize_field_order(fields_config.get('reviewer', []), 'reviewer')
         )
         sform = self.sform
-        
+
         def get_field_data(targets, config_key):
             questions = TalkQuestion.all_objects.filter(
                 event=self.request.event,
-                target__in=targets
+                target__in=targets,
+                is_imported=False,
             ).annotate(answer_count=Count('answers'))
-            
+
             question_map = {str(q.id): q for q in questions if f'question_{q.pk}' in sform.fields}
             saved_order = fields_config.get(config_key, [])
-            
+
             ordered_questions = []
             processed_ids = set()
-            
+
             for item in saved_order:
                 if item.isdigit() and item in question_map:
                     ordered_questions.append(question_map[item])
                     processed_ids.add(item)
-            
+
             remaining_questions = sorted(
-                [q for q_id, q in question_map.items() if q_id not in processed_ids],
-                key=lambda x: (x.position, x.id)
+                [q for q_id, q in question_map.items() if q_id not in processed_ids], key=lambda x: (x.position, x.id)
             )
             ordered_questions.extend(remaining_questions)
-            
+
             data = []
             for q in ordered_questions:
-                data.append({
-                    'question': q,
-                    'field': sform[f'question_{q.pk}']
-                })
+                data.append({'question': q, 'field': sform[f'question_{q.pk}']})
             return data
 
         context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION], 'session')
@@ -201,13 +234,15 @@ class CfPForms(EventPermissionRequired, TemplateView):
             abstract=Count('id', filter=~Q(abstract='')),
             description=Count('id', filter=~Q(description='')),
             notes=Count('id', filter=~Q(notes='')),
+            slot_count=Count('id'),
             do_not_record=Count('id', filter=Q(do_not_record=True)),
             image=Count('id', filter=~Q(image='')),
             track=Count('id', filter=Q(track__isnull=False)),
             duration=Count('id', filter=Q(duration__isnull=False)),
             content_locale=Count('id', filter=~Q(content_locale='')),
         )
-        
+        submission_counts['slides'] = event.submissions.filter(resources__kind=ResourceKind.SLIDES).distinct().count()
+
         speaker_counts = SpeakerProfile.objects.filter(event=event).aggregate(
             name=Count('id', filter=~Q(user__fullname='') & Q(user__fullname__isnull=False)),
             biography=Count('id', filter=~Q(biography='') & Q(biography__isnull=False)),
@@ -217,7 +252,9 @@ class CfPForms(EventPermissionRequired, TemplateView):
         )
 
         additional_speaker_count = event.submissions.annotate(sc=Count('speakers')).filter(sc__gt=1).count()
-        availabilities_count = Availability.objects.filter(event=event, person__isnull=False).values('person').distinct().count()
+        availabilities_count = (
+            Availability.objects.filter(event=event, person__isnull=False).values('person').distinct().count()
+        )
 
         context['field_counts'] = {
             **submission_counts,
@@ -235,7 +272,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         if order_param:
             self._handle_field_reordering(order_param)
             return HttpResponse(status=204)  # No content response for AJAX
-        
+
         # Handle regular form submission
         if self.sform.is_valid():
             self.sform.save()
@@ -243,22 +280,22 @@ class CfPForms(EventPermissionRequired, TemplateView):
             return redirect(request.path)
         messages.error(request, phrases.base.error_saving_changes)
         return self.get(request, *args, **kwargs)
-    
+
     def _handle_field_reordering(self, order_str):
         """Handle field reordering for both default fields and custom questions."""
         order_list = order_str.split(',')
         event = self.request.event
-        
+
         custom_question_ids = []
         for item in order_list:
             if item.isdigit():
                 custom_question_ids.append(int(item))
-        
+
         fields_config = event.cfp.settings.get('fields_config', {})
-        
+
         session_keys = set(BUILTIN_FIELD_KEYS.get('session', ()))
         speaker_keys = set(BUILTIN_FIELD_KEYS.get('speaker', ()))
-        
+
         has_session_fields = any(item in session_keys for item in order_list)
         has_speaker_fields = any(item in speaker_keys for item in order_list)
         has_reviewer_fields = False
@@ -267,7 +304,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
             logger.warning(
                 'Ambiguous field reordering: contains both session and speaker fields. '
                 'Skipping fields_config update for event %s.',
-                event.id
+                event.id,
             )
             return
 
@@ -301,7 +338,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         elif has_reviewer_fields:
             fields_config['reviewer'] = order_list
             target_type = TalkQuestionTarget.REVIEWER
-        
+
         if target_type:
             for index, question_id in enumerate(custom_question_ids):
                 try:
@@ -320,6 +357,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         if fields_config:
             event.cfp.settings['fields_config'] = fields_config
             event.cfp.save(update_fields=['settings'])
+
 
 class QuestionView(OrderActionMixin, OrgaCRUDView):
     model = TalkQuestion
@@ -404,7 +442,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
                 )
 
         extra_forms = [
-            form for form in self.formset.extra_forms if form.has_changed and not self.formset._should_delete_form(form)
+            form for form in self.formset.extra_forms if form.has_changed() and not self.formset._should_delete_form(form)
         ]
         for form in extra_forms:
             form.instance.question = obj
@@ -461,16 +499,15 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
     def form_valid(self, form):
         form.instance.event = self.request.event
         self.instance = form.instance
-        
+
         is_new = not form.instance.pk
         if is_new:
-            max_position = TalkQuestion.objects.filter(
-                event=self.request.event,
-                target=form.instance.target
-            ).aggregate(models.Max('position'))['position__max']
+            max_position = TalkQuestion.objects.filter(event=self.request.event, target=form.instance.target).aggregate(
+                models.Max('position')
+            )['position__max']
             form.instance.position = (max_position or -1) + 1
-        
-        if form.cleaned_data.get('variant') in ('choices', 'multiple_choice'):
+
+        if form.cleaned_data.get('variant') in ('choices', 'multiple_choice', 'select'):
             changed_options = [form.changed_data for form in self.formset if form.has_changed()]
             if form.cleaned_data.get('options') and changed_options:
                 messages.error(
@@ -478,8 +515,26 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
                     _('You cannot change the options and upload an option file at the same time.'),
                 )
                 return self.form_invalid(form)
+
+            if not form.cleaned_data.get('options'):
+                if not self.formset.is_valid():
+                    return self.form_invalid(form)
+
+                remaining_options = sum(
+                    1 for f in self.formset.initial_forms if f not in self.formset.deleted_forms
+                ) + sum(
+                    1 for f in self.formset.extra_forms if f.has_changed() and not self.formset._should_delete_form(f)
+                )
+
+                if remaining_options == 0:
+                    messages.error(
+                        self.request,
+                        _('Please provide at least one option for this question type.'),
+                    )
+                    return self.form_invalid(form)
+
         result = super().form_valid(form)
-        
+
         if is_new:
             event = self.request.event
             fields_config = event.cfp.settings.get('fields_config', {})
@@ -491,7 +546,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
                 config_key = 'reviewer'
             else:
                 config_key = None
-            
+
             if config_key:
                 if config_key not in fields_config:
                     fields_config[config_key] = []
@@ -499,10 +554,11 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
                     fields_config[config_key].append(str(form.instance.pk))
                     event.cfp.settings['fields_config'] = fields_config
                     event.cfp.save(update_fields=['settings'])
-        
+
         if form.cleaned_data.get('variant') in (
             'choices',
             'multiple_choice',
+            'select',
         ) and not form.cleaned_data.get('options'):
             formset = self.save_formset(self.instance)
             if not formset:
@@ -541,20 +597,17 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class CfPQuestionToggle(PermissionRequired, View):
     """Toggle question field states via AJAX POST or legacy GET."""
+
     permission_required = 'base.update_talkquestion'
 
     def get_object(self) -> TalkQuestion:
-        return get_object_or_404(
-            TalkQuestion.all_objects,
-            event=self.request.event,
-            pk=self.kwargs.get('pk')
-        )
+        return get_object_or_404(TalkQuestion.all_objects, event=self.request.event, pk=self.kwargs.get('pk'))
 
     def dispatch(self, request, *args, **kwargs):
         # Check permissions first
         if not self.has_permission():
             return self.handle_no_permission()
-            
+
         question = self.get_object()
 
         # Legacy GET: toggle active
@@ -601,7 +654,11 @@ class CfPQuestionToggle(PermissionRequired, View):
             # Validate type for string fields
             if not isinstance(value, str):
                 return JsonResponse({'error': 'Value must be string for question_required field'}, status=400)
-            allowed_values = [TalkQuestionRequired.OPTIONAL, TalkQuestionRequired.REQUIRED, TalkQuestionRequired.AFTER_DEADLINE]
+            allowed_values = [
+                TalkQuestionRequired.OPTIONAL,
+                TalkQuestionRequired.REQUIRED,
+                TalkQuestionRequired.AFTER_DEADLINE,
+            ]
             if value not in allowed_values:
                 return JsonResponse({'error': 'Invalid value for question_required field'}, status=400)
             question.question_required = value
@@ -610,6 +667,35 @@ class CfPQuestionToggle(PermissionRequired, View):
             return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
 
         return JsonResponse({'success': True, 'field': field, 'value': getattr(question, field)})
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class QuestionOptionsAjax(EventPermissionRequired, View):
+    """AJAX endpoint to fetch question options for dependency configuration."""
+    permission_required = 'base.orga_view_talkquestion'
+
+    def get(self, request, *args, **kwargs):
+        question_id = kwargs.get('question')
+        try:
+            question_obj = TalkQuestion.all_objects.get(event=request.event, id=question_id)
+            if question_obj.variant == TalkQuestionVariant.BOOLEAN:
+                options = [
+                    {'id': 'True', 'answer': str(_('Yes'))},
+                    {'id': 'False', 'answer': str(_('No'))}
+                ]
+            else:
+                options = []
+                for option in question_obj.options.all():
+                    options.append({
+                        'id': str(option.pk),
+                        'answer': str(option.answer)
+                    })
+            return JsonResponse({
+                'variant': question_obj.variant,
+                'options': options
+            })
+        except TalkQuestion.DoesNotExist:
+            return JsonResponse({'error': str(_('Question not found'))}, status=404)
 
 
 class CfPQuestionRemind(EventPermissionRequired, FormView):
@@ -792,7 +878,8 @@ class AccessCodeView(OrderActionMixin, OrgaCRUDView):
             messages.error(
                 request,
                 _(
-                    'This access code has been used for a proposal and cannot be deleted. To disable it, you can set its validity date to the past.'
+                    'This access code has been used for a proposal and cannot be deleted. '
+                    'To disable it, you can set its validity date to the past.'
                 ),
             )
             return self.delete_view(request, *args, **kwargs)
@@ -830,6 +917,7 @@ class AccessCodeSend(PermissionRequired, UpdateView):
             data={'email': form.cleaned_data['to']},
         )
         return result
+
 
 @method_decorator(csp_update({'SCRIPT_SRC': "'self' 'unsafe-eval'"}), name='dispatch')
 class CfPFlowEditor(EventPermissionRequired, TemplateView):

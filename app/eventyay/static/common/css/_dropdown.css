@@ -13,6 +13,23 @@ details.dropdown summary {
   color: inherit;
 }
 
+/* User/language header triggers (scoped by id or header containers) */
+#profile-dropdown > summary,
+#language-dropdown > summary,
+#user-dropdown-label > summary,
+#locale-dropdown-label > summary,
+.header-row-right details.dropdown > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--header-icon-text-gap, 0.375rem);
+}
+
+.header-row-right a.login-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--header-icon-text-gap, 0.375rem);
+}
+
 details.dropdown summary::before,
 details.dropdown summary::marker {
   display: none;
@@ -466,16 +483,21 @@ details.dropdown .dropdown-content-se::after {
   left: 10px;
 }
 
+#locale-dropdown.dropdown-content {
+  width: clamp(440px, 60vw, 560px);
+  max-width: 92vw;
+}
+
 #locale-dropdown .language-columns {
-  width: 350px;
+  width: 100%;
   max-height: 350px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
   border-top: 1px solid var(--color-border, #ced4da);
 }
 
 #locale-dropdown .language-enforce-bar {
-  width: 350px;
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -587,7 +609,6 @@ details.dropdown .dropdown-content-se::after {
 }
 
 #locale-dropdown .language-column {
-  max-width: 200px;
   max-height: 350px;
   display: flex;
   flex-direction: column;
@@ -605,12 +626,14 @@ details.dropdown .dropdown-content-se::after {
   padding: 6px 12px;
   font-weight: 600;
   text-align: center;
+  white-space: nowrap;
   color: var(--color-grey, #6c757d);
   background: var(--color-grey-lightest, #f8f9fa);
   border-bottom: 1px solid var(--color-border, #ced4da);
 }
 
 #locale-dropdown .language-column .language-column-scroll {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -629,6 +652,23 @@ details.dropdown .dropdown-content-se::after {
 
 #locale-dropdown .language-column .dropdown-item:hover {
   background: var(--color-primary-lighter, #d9ebf9);
+}
+
+@media (max-width: 540px) {
+  #locale-dropdown.dropdown-content {
+    width: 92vw;
+    max-width: 92vw;
+  }
+
+  #locale-dropdown .language-enforce-bar,
+  #locale-dropdown .language-columns {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #locale-dropdown .language-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .navbar-top-links #profile-dropdown,
@@ -671,18 +711,6 @@ details.dropdown .dropdown-content-se::after {
 .navbar-inverse #language-dropdown > summary i,
 .navbar #language-dropdown > summary i {
   color: var(--navbar-link-color, #f8f9fa);
-}
-
-.navbar-top-links #profile-dropdown > summary i.fa-user,
-.navbar-inverse #profile-dropdown > summary i.fa-user,
-.navbar #profile-dropdown > summary i.fa-user {
-  margin-right: 5px;
-}
-
-.navbar-top-links #language-dropdown > summary i.fa-globe,
-.navbar-inverse #language-dropdown > summary i.fa-globe,
-.navbar #language-dropdown > summary i.fa-globe {
-  margin-right: 5px;
 }
 
 .navbar-top-links #profile-dropdown > summary i.fa-caret-down,

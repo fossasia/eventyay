@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
@@ -9,14 +7,13 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
+from urllib.parse import urlencode
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 from django_context_decorator import context
 from django_scopes import scope
 
-from eventyay.agenda.views.utils import get_schedule_exporters
 from eventyay.base.models import Answer, SpeakerProfile, User
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
@@ -32,14 +29,14 @@ from eventyay.common.views.mixins import (
     ActionConfirmMixin,
     ActionFromUrl,
     EventPermissionRequired,
+    ImportProcessRedirectMixin,
     Filterable,
     PaginationMixin,
     PermissionRequired,
     Sortable,
 )
 from eventyay.consts import SizeKey
-from eventyay.orga.forms.importers import CSVImportForm, SpeakerImportProcessForm
-from eventyay.orga.forms.speaker import SpeakerExportForm
+from eventyay.orga.forms.importers import SpeakerImportProcessForm
 from eventyay.person.forms import (
     SpeakerFilterForm,
     SpeakerInformationForm,
@@ -348,68 +345,23 @@ class SpeakerInformationView(OrgaCRUDView):
         return _('Speaker Information Notes')
 
 
-class SpeakerExport(EventPermissionRequired, FormView):
-    permission_required = 'base.update_event'
-    template_name = 'orga/speaker/export.html'
-    form_class = SpeakerExportForm
-
-    def get_form_kwargs(self):
-        result = super().get_form_kwargs()
-        result['event'] = self.request.event
-        return result
-
-    @context
-    def exporters(self):
-        return [exporter for exporter in get_schedule_exporters(self.request) if exporter.group == 'speaker']
-
-    @context
-    def tablist(self):
-        return {
-            'custom': _('CSV/JSON exports'),
-            'general': _('More exports'),
-            'api': _('API'),
-        }
-
-    def form_valid(self, form):
-        result = form.export_data()
-        if not result:
-            messages.success(self.request, _('No data to be exported'))
-            return redirect(self.request.path)
-        return result
-
-
-class SpeakerImportView(EventPermissionRequired, FormView):
-    permission_required = 'base.update_event'
-    template_name = 'orga/speaker/import.html'
-    form_class = CSVImportForm
-    IMPORT_FILENAME = 'speaker_import.csv'
-
-    def form_valid(self, form):
-        session = self.request.session
-        if not session.session_key:
-            session.save()
-        if not session.session_key:
-            messages.error(self.request, _('Could not establish a session for file upload. Please try again.'))
-            return redirect(self.request.path)
-        cf = CachedFile.objects.create(
-            expires=now() + timedelta(days=1),
-            date=now(),
-            filename=self.IMPORT_FILENAME,
-            type='text/csv',
-            web_download=False,
-            session_key=session.session_key,
-        )
-        cf.file.save(self.IMPORT_FILENAME, form.cleaned_data['file'])
-        return redirect(self.request.event.orga_urls.speakers_import + str(cf.id) + '/')
-
-
-class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
+class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequired, AsyncAction, FormView):
     permission_required = 'base.update_event'
     template_name = 'orga/speaker/import_process.html'
     form_class = SpeakerImportProcessForm
     task = import_speakers
     known_errortypes = ['ImportExecutionError']
     IMPORT_FILENAME = 'speaker_import.csv'
+
+    import_process_url_name = 'settings.import_export.speakers_import_process'
+    import_page_url_name = 'import_export_settings'
+    import_target = 'speaker'
+
+    @cached_property
+    def import_settings_url(self):
+        base = self.request.event.orga_urls.import_export_settings
+        query = urlencode({'import_target': self.import_target})
+        return f'{base}?{query}#tab-import'
 
     def dispatch(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
@@ -418,7 +370,7 @@ class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
             _ = self.file
         except Http404:
             messages.error(request, _('The uploaded CSV file is missing or expired. Please upload it again.'))
-            return redirect(self.request.event.orga_urls.speakers_import)
+            return redirect(self.import_settings_url)
         return super().dispatch(request, *args, **kwargs)
 
     @cached_property
@@ -462,13 +414,13 @@ class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
             return self.get_result(request)
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.request.event.orga_urls.speakers_import)
+            return redirect(self.import_settings_url)
         return FormView.get(self, request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.request.event.orga_urls.speakers_import)
+            return redirect(self.import_settings_url)
         return FormView.post(self, request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -482,10 +434,10 @@ class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
         )
 
     def get_success_url(self, value):
-        return self.request.event.orga_urls.speakers
+        return self.import_settings_url
 
     def get_error_url(self):
-        return self.request.event.orga_urls.speakers_import
+        return self.import_settings_url
 
     def get_success_message(self, value):
         if isinstance(value, dict):

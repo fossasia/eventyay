@@ -3,7 +3,9 @@
 {% load safelink %}
 {% load event_tags %}
 {% load eventurl %}
+{% load presale_locale %}
 {% load staff_session %}
+{% load nav_tags %}
 
 {% with current_event=request.event path=request.path_info schedule_label=phrases.schedule.schedule|default:_("Schedule") sessions_label=phrases.schedule.sessions|default:_("Sessions") speakers_label=phrases.schedule.speakers|default:_("Speakers") %}
     {% tickets_tab_visible as show_tickets_tab %}
@@ -12,8 +14,9 @@
         <i class="fa fa-info-circle"></i> {% translate "Info" %}
     </a>
     {% if show_tickets_tab %}
+        {% get_localized_menu_label current_event 'menu_label_tickets' as label %}
         <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}#tickets" id="nav-tab-tickets" class="header-tab">
-            <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+            <i class="fa fa-ticket"></i> {{ label }}
         </a>
     {% endif %}
     {% can_view_featured_sessions_public current_event as show_featured_sessions_tab %}
@@ -23,27 +26,23 @@
         </a>
     {% endif %}
     {% if show_talks_tab %}
-        {% if schedule or current_event.has_schedule_content %}
-            {% with schedule_url=current_event.talk_schedule_url|default:current_event.urls.schedule %}
-                <a href="{{ schedule_url }}" class="header-tab {% if '/schedule/' in path %}active{% endif %}">
+        {% can_list_schedule current_event as show_schedule_tab %}
+        {% is_wip_agenda_preview request as wip_preview %}
+        {% if show_schedule_tab %}
+        {% if current_event.has_schedule_content or wip_preview or schedule %}
+            {% agenda_schedule_nav_url request current_event as schedule_url %}
+                <a href="{{ schedule_url }}" class="header-tab {% if '/schedule/' in path and '/speakers/' not in path and '/talk/' not in path %}active{% endif %}">
                     <i class="fa fa-calendar"></i> {{ schedule_label }}
                 </a>
-            {% endwith %}
             {% if current_event.speakers.exists %}
-                {% with speakers_url=current_event.talk_speaker_url|default:current_event.urls.speakers %}
+                {% agenda_speakers_nav_url request current_event as speakers_url %}
                     <a href="{{ speakers_url }}" class="header-tab {% if '/speakers/' in path %}active{% endif %}">
                         <i class="fa fa-group"></i> {{ speakers_label }}
                     </a>
-                {% endwith %}
             {% endif %}
         {% endif %}
+        {% endif %}
     {% endif %}
-
-    {% for link in header_links %}
-        <a href="{% safelink link.url %}" target="_blank" rel="noopener" class="header-tab">
-            <i class="fa fa-link"></i> {{ link.label }}
-        </a>
-    {% endfor %}
 
     {% eventsignal current_event "eventyay.presale.signals.header_nav_tabs" request=request %}
 
@@ -63,14 +62,21 @@
         {% endwith %}
     {% endif %}
 
+    {% for link in header_links %}
+        <a href="{% safelink link.url %}" target="_blank" rel="noopener" class="header-tab">
+            <i class="fa fa-link"></i> {{ link.label }}
+        </a>
+    {% endfor %}
+
     {% if show_online_video_link|default:False %}
+        {% get_localized_menu_label current_event 'menu_label_join_video' as label %}
         {% if nav_context == "presale" %}
             <a id="join-event-link" href="{% eventurl current_event 'presale:event.onlinevideo.join' %}" class="header-tab join-video-link {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{% translate "Join online video" %}</span>
+                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{{ label }}</span>
             </a>
         {% else %}
             <a id="join-event-link" href="{% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug %}" class="header-tab join-video-link {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{% translate "Join online video" %}</span>
+                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{{ label }}</span>
             </a>
         {% endif %}
     {% endif %}

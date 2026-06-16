@@ -1,0 +1,204 @@
+{% extends "eventyay_common/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load static %}
+
+{% block title %}{% trans "Create a new event" %}{% endblock %}
+
+{% block custom_header %}
+    <script defer src="{% static "eventyay-common/js/ui/event-create.js" %}"></script>
+{% endblock %}
+
+{% block content %}
+    <h1>{% trans "Create a new event" %}</h1>
+    {% if has_organizer %}
+        {{ organizer_slug_options|json_script:"event-create-organizers" }}
+        <form action="" method="post" class="form-horizontal">
+            {% csrf_token %}
+            {% bootstrap_form_errors foundation_form %}
+            {% bootstrap_form_errors basics_form %}
+
+            {% comment %} TODO: Reintroduce component selection when unified component initialization is stable.
+            <div class="form-group">
+                <label class="col-md-3 control-label">{% trans "Create this event for" %}</label>
+                <div class="col-md-9">
+                    <div class="radio">
+                        <label>
+                            <input
+                                type="radio"
+                                name="create_for"
+                                value="{{ event_creation_for_choice.TICKET }}"
+                                {% if create_for == event_creation_for_choice.TICKET %}checked{% endif %}
+                            >
+                            <strong>{% trans "Tickets system" %}</strong>
+                        </label>
+                    </div>
+                    <div class="radio">
+                        <label>
+                            <input
+                                type="radio" name="create_for"
+                                value="{{ event_creation_for_choice.TALK }}"
+                                {% if create_for == event_creation_for_choice.TALK %}checked{% endif %} disabled>
+                            <strong>{% trans "Talk system" %}</strong>
+                            <div class="help-block">
+                                {% blocktrans trimmed %}
+                                    Create event for Talk system only not ready yet.
+                                {% endblocktrans %}
+                            </div>
+                        </label>
+                    </div>
+                    <div class="radio">
+                        <label>
+                            <input
+                                type="radio" name="create_for"
+                                value="{{ event_creation_for_choice.BOTH }}"
+                                {% if create_for == event_creation_for_choice.BOTH %}checked{% endif %}>
+                            <strong>{% trans "Both tickets and talk system" %}</strong>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            {% bootstrap_field foundation_form.is_video_creation layout="horizontal" %}
+            {% endcomment %}
+
+            <fieldset>
+                <legend>{% trans "Event setup" %}</legend>
+                <div class="form-group{% if foundation_form.organizer.errors %} has-error{% endif %}">
+                    <label class="col-md-3 control-label" for="{{ foundation_form.organizer.id_for_label }}">
+                        {{ foundation_form.organizer.label }}
+                        {% if foundation_form.organizer.field.required %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                    <div class="col-md-9">
+                        {% bootstrap_field foundation_form.organizer layout="inline" show_label=False form_group_class="" %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{% trans "Event type" %}</label>
+                    <div class="col-md-9">
+                        <p class="form-control-static">
+                            {% if foundation_form.has_subevents.value %}
+                                {% include "eventyay_common/includes/icon_calendar_series.html" %}
+                                <strong>{% trans "Event series or time slot booking" %}</strong>
+                            {% else %}
+                                <span class="fa fa-calendar-o" aria-hidden="true"></span>
+                                <strong>{% trans "Singular event or non-event shop" %}</strong>
+                            {% endif %}
+                        </p>
+                        <p class="help-block">
+                            {% blocktrans trimmed %}
+                                The event type is set from the entry point. To choose a different type, go back and use the appropriate button.
+                            {% endblocktrans %}
+                        </p>
+                        <input type="hidden" name="{{ foundation_form.has_subevents.html_name }}" value="{{ foundation_form.has_subevents.value|yesno:'on,' }}">
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>{% trans "Localization" %}</legend>
+                {% bootstrap_field foundation_form.locales layout="horizontal" %}
+                {% bootstrap_field basics_form.locale layout="control" %}
+            </fieldset>
+
+            <fieldset>
+                <legend>{% trans "General information" %}</legend>
+                <div id="event-name-field">
+                    {% bootstrap_field basics_form.name layout="control" %}
+                </div>
+                <div class="form-group">
+                    <label class="col-md-3 control-label" for="{{ basics_form.slug.id_for_label }}">{{ basics_form.slug.label }}</label>
+                    <div class="col-md-9 form-inline">
+                        <button class="btn btn-default pull-right flip" type="button" id="event-slug-random-generate"
+                                data-rng-url="{{ organizer_slug_rng_url }}"
+                                {% if not organizer_slug_rng_url %}disabled{% endif %}>
+                            {% trans "Set to random" %}
+                        </button>
+                        {{ basics_form.slug }}
+                        {% if basics_form.slug.errors %}
+                            <span class="text-danger ml-2"><small>{% trans "Slug not available" %}</small></span>
+                        {% endif %}
+                        <div class="help-block">
+                            {% blocktrans trimmed %}
+                            This is the address your event will be available at. Should be short, only contain lowercase letters
+                            and numbers, and must be unique. We recommend some kind of abbreviation with less than 30 characters
+                            that can be easily remembered. You cannot change the slug later on! If you don't provide a slug,
+                            a random one will be generated for you.
+                            {% endblocktrans %}
+                        </div>
+                        <div class="slug-length alert alert-warning helper-display-none-soft">
+                            {% blocktrans trimmed %}
+                                We strongly recommend against using short forms of more then 16 characters.
+                            {% endblocktrans %}
+                        </div>
+                    </div>
+                </div>
+                {% bootstrap_field basics_form.date_from layout="control" %}
+                {% if basics_form.date_to %}
+                    {% bootstrap_field basics_form.date_to layout="control" %}
+                {% endif %}
+                {% bootstrap_field basics_form.currency layout="control" %}
+            </fieldset>
+
+            <fieldset>
+                <legend>{% trans "Location" %}</legend>
+                {% with form=basics_form %}
+                    <div class="geodata-section">
+                        <div id="event-location-field">
+                            {% bootstrap_field form.location layout="control" %}
+                        </div>
+                        {% include "pretixcontrol/event/fragment_geodata_autoupdate.html" %}
+                        <div class="form-group geodata-group"
+                             data-tiles="{{ global_settings.leaflet_tiles }}"
+                             data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
+                             data-icon="{% static 'leaflet/images/marker-icon.png' %}"
+                             data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
+                            <label class="col-md-3 control-label">
+                                {% trans "Geo coordinates" %}<br>
+                                <span class="optional">{% trans "Optional" %}</span>
+                            </label>
+                            <div class="col-md-4">
+                                {% bootstrap_field form.geo_lat layout="inline" %}
+                                {% if global_settings.opencagedata_apikey %}
+                                    <p class="attrib">
+                                        <a href="https://openstreetmap.org/" target="_blank">
+                                            {% trans "Geocoding data © OpenStreetMap" %}
+                                        </a>
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                {% bootstrap_field form.geo_lon layout="inline" %}
+                            </div>
+                            <div class="col-md-1"></div>
+                        </div>
+                    </div>
+                {% endwith %}
+            </fieldset>
+
+            <fieldset>
+                <legend>{% trans "Display settings" %}</legend>
+                {% bootstrap_field basics_form.timezone layout="control" %}
+            </fieldset>
+
+            <fieldset>
+                <legend>{% trans "Getting in touch" %}</legend>
+                {% bootstrap_field basics_form.email layout="control" %}
+            </fieldset>
+
+            <div class="form-group submit-group">
+                <button type="submit" class="btn btn-primary btn-save pull-right flip">
+                    {% trans "Create event" %}
+                </button>
+            </div>
+        </form>
+    {% else %}
+        <div class="alert alert-danger">
+            {% trans "Every event needs to be created as part of an organizer account. Currently, you do not have access to any organizer accounts." %}
+        </div>
+        {% if staff_session %}
+            <a href='{% url "eventyay_common:organizers.add" %}' class="btn btn-default">
+                {% trans "Create a new organizer" %}
+            </a>
+        {% endif %}
+    {% endif %}
+{% endblock %}

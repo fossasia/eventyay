@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 from csp.decorators import csp_update
@@ -6,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.core.exceptions import ValidationError
 from django.core.files.storage import FileSystemStorage
-from django.db import transaction
+from django.db import models, transaction
 from django.forms.models import inlineformset_factory
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -20,8 +21,10 @@ from django_context_decorator import context
 from django_scopes import scope, scopes_disabled
 from formtools.wizard.views import SessionWizardView
 
+
 from eventyay.common.forms import I18nEventFormSet, I18nFormSet
 from eventyay.base.models import LogEntry
+from eventyay.base.models.base import CachedFile
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
@@ -40,10 +43,15 @@ from eventyay.orga.forms.event import (
     WidgetGenerationForm,
     WidgetSettingsForm,
 )
+from eventyay.orga.forms.importers import CSVImportForm
+from eventyay.orga.forms.schedule import ScheduleExportForm
+from eventyay.orga.forms.speaker import SpeakerExportForm
 from eventyay.person.forms import UserForm
-from eventyay.base.models import User
-from eventyay.base.models import ReviewPhase, ReviewScoreCategory
+from eventyay.base.models import ReviewPhase, ReviewScoreCategory, User
+from eventyay.agenda.views.utils import get_schedule_exporters
 from eventyay.submission.tasks import recalculate_all_review_scores
+from .speaker import SpeakerImportProcessView
+from .submission import SubmissionImportProcessView
 
 
 class EventSettingsPermission(EventPermissionRequired):
@@ -479,7 +487,7 @@ class InvitationView(FormView):
     def post(self, *args, **kwargs):
         if not self.request.user.is_anonymous:
             self.accept_invite(self.request.user)
-            return redirect(reverse('orga:event.list'))
+            return redirect(reverse('eventyay_common:dashboard'))
         return super().post(*args, **kwargs)
 
     def form_valid(self, form):
@@ -494,7 +502,7 @@ class InvitationView(FormView):
 
         self.accept_invite(user)
         login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect(reverse('orga:event.list'))
+        return redirect(reverse('eventyay_common:dashboard'))
 
     @transaction.atomic()
     def accept_invite(self, user):
@@ -530,7 +538,7 @@ class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         self.get_object().shred(person=self.request.user)
-        return redirect(reverse('orga:event.list'))
+        return redirect(reverse('eventyay_common:dashboard'))
 
 @method_decorator(csp_update({'SCRIPT_SRC': "'self' 'unsafe-eval'"}), name='dispatch')
 class WidgetSettings(EventSettingsPermission, FormView):
@@ -554,3 +562,173 @@ class WidgetSettings(EventSettingsPermission, FormView):
 
     def get_success_url(self) -> str:
         return self.request.event.orga_urls.widget_settings
+
+
+class TargetChoice(models.TextChoices):
+    SPEAKER = 'speaker', _('Speakers')
+    SCHEDULE = 'session', _('Schedule')
+
+    @classmethod
+    def import_target_items(cls):
+        return (
+            (
+                cls.SPEAKER,
+                {
+                    'filename': SpeakerImportProcessView.IMPORT_FILENAME,
+                    'process_url_name': f'orga:{SpeakerImportProcessView.import_process_url_name}',
+                },
+            ),
+            (
+                cls.SCHEDULE,
+                {
+                    'filename': SubmissionImportProcessView.IMPORT_FILENAME,
+                    'process_url_name': f'orga:{SubmissionImportProcessView.import_process_url_name}',
+                },
+            ),
+        )
+
+    @classmethod
+    def import_choices(cls):
+        return tuple((target, target.label) for target, _config in cls.import_target_items())
+
+    @classmethod
+    def import_targets(cls):
+        return {target: config for target, config in cls.import_target_items()}
+
+
+class ImportExportSettings(EventSettingsPermission, TemplateView):
+    template_name = 'orga/settings/import_export.html'
+    import_choices = TargetChoice.import_choices()
+    import_targets = TargetChoice.import_targets()
+
+    def get_context_data(self, **kwargs):
+        result = super().get_context_data(**kwargs)
+        result['event'] = self.request.event
+        result['tablist'] = {
+            'import': _('Import'),
+            'export': _('Export'),
+        }
+        result['active_tab'] = kwargs.get('active_tab')
+        result['import_choices'] = self.import_choices
+        result['import_target'] = kwargs.get('import_target') or self.request.GET.get('import_target') or TargetChoice.SPEAKER
+        result['export_target'] = kwargs.get('export_target') or self.request.GET.get('export_target') or TargetChoice.SPEAKER
+        result['import_form'] = kwargs.get('import_form') or CSVImportForm()
+        result['speaker_export_form'] = kwargs.get('speaker_export_form') or SpeakerExportForm(
+            event=self.request.event,
+            prefix='speaker',
+        )
+        result['session_export_form'] = kwargs.get('session_export_form') or ScheduleExportForm(
+            event=self.request.event,
+            prefix='session',
+        )
+        all_exporters = get_schedule_exporters(self.request)
+        result['speaker_exporters'] = [e for e in all_exporters if e.group == 'speaker']
+        result['session_exporters'] = [e for e in all_exporters if e.group != 'speaker']
+        return result
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+
+        # Support for legacy schedule export payloads without prefix
+        if not action and 'export_format' in request.POST:
+            mutable_post = request.POST.copy()
+            mutable_post['action'] = 'export'
+            mutable_post['export_target'] = TargetChoice.SCHEDULE.value
+            for key, value in request.POST.lists():
+                mutable_post.setlist(f'session-{key}', value)
+            request.POST = mutable_post
+            action = 'export'
+
+        if action == 'import':
+            return self.handle_import()
+        if action == 'export':
+            return self.handle_export()
+        messages.error(request, _('Unknown action. Please try again.'))
+        return redirect(request.path)
+
+    def handle_import(self):
+        import_target = self.request.POST.get('import_target', TargetChoice.SPEAKER)
+        import_form = CSVImportForm(self.request.POST, self.request.FILES)
+
+        try:
+            target = TargetChoice(import_target)
+        except ValueError:
+            messages.error(self.request, _('Please choose whether to import speakers or schedule.'))
+            context = self.get_context_data(import_form=import_form, import_target=import_target)
+            return self.render_to_response(context, status=400)
+
+        if not import_form.is_valid():
+            context = self.get_context_data(import_form=import_form, import_target=target)
+            return self.render_to_response(context, status=400)
+
+        session = self.request.session
+        if not session.session_key:
+            session.save()
+        if not session.session_key:
+            messages.error(self.request, _('Could not establish a session for file upload. Please try again.'))
+            return redirect(f'{self.request.path}#tab-import')
+
+        target_config = self.import_targets[target]
+        import_filename = target_config['filename']
+        cached_file = CachedFile.objects.create(
+            expires=now() + timedelta(days=1),
+            date=now(),
+            filename=import_filename,
+            type='text/csv',
+            web_download=False,
+            session_key=session.session_key,
+        )
+        cached_file.file.save(import_filename, import_form.cleaned_data['file'])
+        process_url = reverse(
+            target_config['process_url_name'],
+            kwargs={'event': self.request.event.slug, 'file': cached_file.id},
+        )
+        return redirect(process_url)
+
+    def handle_export(self):
+        export_target = self.request.POST.get('export_target', TargetChoice.SPEAKER)
+
+        try:
+            target = TargetChoice(export_target)
+        except ValueError:
+            messages.error(self.request, _('Please choose whether to export speakers or schedule.'))
+            context = self.get_context_data(export_target=TargetChoice.SPEAKER, active_tab='export')
+            return self.render_to_response(context, status=400)
+
+        if target == TargetChoice.SPEAKER:
+            speaker_export_form = SpeakerExportForm(
+                self.request.POST,
+                event=self.request.event,
+                prefix='speaker',
+            )
+            session_export_form = ScheduleExportForm(event=self.request.event, prefix='session')
+            if not speaker_export_form.is_valid():
+                context = self.get_context_data(
+                    export_target=target,
+                    speaker_export_form=speaker_export_form,
+                    session_export_form=session_export_form,
+                    active_tab='export',
+                )
+                return self.render_to_response(context, status=400)
+            result = speaker_export_form.export_data()
+        else:  # TargetChoice.SCHEDULE
+            speaker_export_form = SpeakerExportForm(event=self.request.event, prefix='speaker')
+            session_export_form = ScheduleExportForm(
+                self.request.POST,
+                event=self.request.event,
+                prefix='session',
+            )
+            if not session_export_form.is_valid():
+                context = self.get_context_data(
+                    export_target=target,
+                    speaker_export_form=speaker_export_form,
+                    session_export_form=session_export_form,
+                    active_tab='export',
+                )
+                return self.render_to_response(context, status=400)
+            result = session_export_form.export_data()
+
+        if not result:
+            messages.success(self.request, _('No data to be exported'))
+            return redirect(f'{self.request.path}?export_target={target.value}#tab-export')
+        return result

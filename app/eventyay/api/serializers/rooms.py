@@ -2,10 +2,10 @@ from rest_framework import serializers
 
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
 from eventyay.base.models.event import Event
-from eventyay.base.models.room import Room
+from eventyay.base.models.room import Room, RoomLinkedSessionsSerializerMixin
 
 
-class RoomSerializer(I18nAwareModelSerializer):
+class RoomSerializer(RoomLinkedSessionsSerializerMixin, I18nAwareModelSerializer):
     module_config = serializers.ListField(
         child=serializers.DictField(), required=False, default=[]
     )
@@ -23,6 +23,8 @@ class RoomSerializer(I18nAwareModelSerializer):
             "sorting_priority",
             "pretalx_id",
             "schedule_data",
+            "is_unscheduled",
+            "has_linked_sessions",
             # TODO: picture
         ]
 

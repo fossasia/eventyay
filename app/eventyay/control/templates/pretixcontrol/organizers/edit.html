@@ -49,6 +49,11 @@
                         {% bootstrap_field sform.organizer_link_back layout="control" %}
                     </fieldset>
                     <fieldset>
+                        <legend>{% trans "Community" %}</legend>
+                        {% bootstrap_field sform.community_follow_enabled layout="control" %}
+                        {% bootstrap_field sform.community_show_follower_count layout="control" %}
+                    </fieldset>
+                    <fieldset>
                         <legend>{% trans "Localization" %}</legend>
                         {% bootstrap_field sform.locales layout="control" %}
                         {% bootstrap_field sform.region layout="control" %}
@@ -62,13 +67,16 @@
                             {% endblocktrans %}
                         </p>
                         {% bootstrap_field sform.primary_color layout="control" %}
+                        {% bootstrap_field sform.header_background_color layout="control" %}
+                        {% bootstrap_field sform.header_text_color layout="control" %}
+                        {% bootstrap_field sform.navigation_text_color layout="control" %}
                         {% bootstrap_field sform.theme_color_success layout="control" %}
                         {% bootstrap_field sform.theme_color_danger layout="control" %}
                         {% bootstrap_field sform.theme_color_background layout="control" %}
                         {% bootstrap_field sform.hover_button_color layout="control" %}
                         {% bootstrap_field sform.theme_round_borders layout="control" %}
                         {% bootstrap_field sform.primary_font layout="control" %}
-                        {% bootstrap_field sform.favicon layout="control" %}
+
                     </fieldset>
                     <fieldset>
                         <legend>{% trans "Gift cards" %}</legend>
@@ -79,6 +87,11 @@
                         <legend>{% trans "Privacy" %}</legend>
                         {% bootstrap_field sform.privacy_policy layout="control" %}
                     </fieldset>
+                </div>
+                <div class="form-group submit-group">
+                    <button type="submit" class="btn btn-primary btn-save">
+                        {% trans "Save" %}
+                    </button>
                 </div>
             </div>
             <div class="col-xs-12 col-lg-2">
@@ -91,11 +104,6 @@
                     {% include "pretixcontrol/includes/logs.html" with obj=organizer %}
                 </div>
             </div>
-        </div>
-        <div class="form-group submit-group">
-            <button type="submit" class="btn btn-primary btn-save">
-                {% trans "Save" %}
-            </button>
         </div>
     </form>
 {% endblock %}

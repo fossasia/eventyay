@@ -1,11 +1,9 @@
 import json
 import logging
 from contextlib import suppress
-from urllib.parse import urlparse
 
 import django_filters
 import jwt
-import requests
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -20,7 +18,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from django_scopes import scopes_disabled
-from rest_framework import exceptions, filters, serializers, views, viewsets
+from drf_spectacular.utils import extend_schema
+from rest_framework import exceptions, filters, status, views, viewsets
 from rest_framework.authentication import get_authorization_header
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
@@ -29,29 +28,32 @@ from rest_framework.views import APIView
 
 from eventyay.api.auth.api_auth import (
     ApiAccessRequiredPermission,
-    UserDeletePermissions,
     EventPermissions,
+    UserDeletePermissions,
 )
 from eventyay.api.auth.permission import CloneEventPermission, EventCRUDPermission, EventPermission
 from eventyay.api.serializers.event import (
     CloneEventSerializer,
-    EventSerializer as ApiEventSerializer,
     EventSettingsSerializer,
     SubEventSerializer,
     TaxRuleSerializer,
 )
+from eventyay.api.serializers.event import (
+    EventSerializer as ApiEventSerializer,
+)
 from eventyay.api.serializers.rooms import EventSerializer as RoomsEventSerializer
+from eventyay.api.utils import get_protocol
 from eventyay.api.views import ConditionalListView
-from eventyay.base.models import Channel, Device, SubEvent, TaxRule, TeamAPIToken, User
-from eventyay.base.services.event import notify_schedule_change, notify_event_change
-
+from eventyay.base.models import Device, Organizer, SubEvent, TaxRule, TeamAPIToken, User
 from eventyay.base.models.event import Event
+from eventyay.base.payment import ManualPayment
+from eventyay.base.services.event import notify_event_change
 from eventyay.base.settings import SETTINGS_AFFECTING_CSS
+from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
 from eventyay.helpers.dicts import merge_dicts
 from eventyay.presale.style import regenerate_css
 from eventyay.presale.views.organizer import filter_qs_by_attr
-from eventyay.api.utils import get_protocol
-from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
+
 
 logger = logging.getLogger(__name__)
 
@@ -171,6 +173,126 @@ class EventViewSet(viewsets.ModelViewSet):
             raise PermissionDenied(
                 'The event could not be deleted as some constraints (e.g. data created by plug-ins) do not allow it.'
             )
+
+
+def serialize_event_for_response(request):
+    return ApiEventSerializer(request.event, context={'request': request}).data
+
+
+class EventPublishTalksView(APIView):
+    permission_classes = (EventPermission,)
+    permission = 'can_change_event_settings'
+
+    @extend_schema(summary='Publish Talks')
+    def post(self, request, organizer, event):
+        if not request.event.live:
+            return Response(
+                {'detail': 'Publish the event before publishing talks.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        actor = request.user if request.user.is_authenticated else None
+        with transaction.atomic():
+            previous_private = request.event.private_testmode
+            request.event.talks_published = True
+            request.event.settings.private_testmode_talks = False
+            request.event.private_testmode = request.event.settings.get(
+                'private_testmode_tickets',
+                True,
+                as_type=bool,
+            )
+            request.event.save()
+            if previous_private != request.event.private_testmode:
+                request.event.log_action(
+                    'eventyay.event.private_testmode.deactivated',
+                    user=actor,
+                    auth=request.auth,
+                    data={},
+                )
+
+        return Response(serialize_event_for_response(request), status=status.HTTP_200_OK)
+
+
+class EventPublishTicketsView(APIView):
+    permission_classes = (EventPermission,)
+    permission = 'can_change_event_settings'
+
+    @extend_schema(summary='Publish Tickets')
+    def post(self, request, organizer, event):
+        ticketing_ready = request.event.products.exists() and request.event.quotas.exists()
+        billing_issue_texts = {str(issue) for issue in request.event.billing_issues()}
+        ticket_issues = [str(issue) for issue in request.event.live_issues if str(issue) not in billing_issue_texts]
+        if not request.event.live:
+            return Response(
+                {'detail': 'Publish the event before publishing tickets.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not ticketing_ready:
+            return Response(
+                {'detail': 'Please set up ticketing before publishing tickets.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if ticket_issues:
+            return Response(
+                {
+                    'detail': 'Please resolve the ticketing issues before publishing tickets.',
+                    'issues': ticket_issues,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        actor = request.user if request.user.is_authenticated else None
+        with transaction.atomic():
+            previous_private = request.event.private_testmode
+            request.event.tickets_published = True
+            request.event.settings.private_testmode_tickets = False
+            request.event.private_testmode = request.event.settings.get(
+                'private_testmode_talks',
+                False,
+                as_type=bool,
+            )
+            request.event.save()
+            if previous_private != request.event.private_testmode:
+                request.event.log_action(
+                    'eventyay.event.private_testmode.deactivated',
+                    user=actor,
+                    auth=request.auth,
+                    data={},
+                )
+
+        return Response(serialize_event_for_response(request), status=status.HTTP_200_OK)
+
+
+class EventEnableManualPaymentView(APIView):
+    permission_classes = (EventPermission,)
+    permission = 'can_change_event_settings'
+
+    @extend_schema(summary='Enable Manual Payment')
+    def post(self, request, organizer, event):
+        request.event.enable_plugin('eventyay.plugins.manualpayment')
+        provider = ManualPayment(request.event)
+        provider.settings.set('_enabled', True)
+        if not provider.settings.get('public_name'):
+            provider.settings.set('public_name', {'en': 'Manual payment'})
+        if not provider.settings.get('checkout_description'):
+            provider.settings.set(
+                'checkout_description',
+                {'en': 'Please follow the organizer instructions to complete payment.'},
+            )
+        if not provider.settings.get('pending_description'):
+            provider.settings.set(
+                'pending_description',
+                {'en': 'Please follow the organizer instructions to complete payment.'},
+            )
+
+        return Response(
+            {
+                'provider': provider.identifier,
+                'enabled': provider.is_enabled,
+                'plugins': request.event.get_plugins(),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class CloneEventViewSet(viewsets.ModelViewSet):
@@ -388,7 +510,7 @@ def check_token_permission(token, permission_required):
     decoded_data = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
     # Check if user existed
     User.objects.get(email=decoded_data['email'])
-    if decoded_data.get('has_perms') not in permission_required:
+    if decoded_data.get('has_perms') != permission_required:
         return False
     return True
 
@@ -397,25 +519,43 @@ def check_token_permission(token, permission_required):
 @require_POST
 @scopes_disabled()
 def talk_schedule_public(request, *args, **kwargs):
-    # Disabled because it uses pretix Organizer model
-    return JsonResponse({'status': 'disabled (pretix dependency)'}, status=501)
-# def talk_schedule_public(request, *args, **kwargs):
-#     auth_header = request.headers.get('Authorization')
-#     if auth_header and auth_header.startswith('Bearer '):
-#         token = auth_header.split(' ')[1]
-#         try:
-#             if not check_token_permission(token, 'orga.edit_schedule'):
-#                 return JsonResponse(
-#                     {'status': 'User does not have permission to show schedule on menu'},
-#                     status=403,
-#                 )
-#             organiser = get_object_or_404(Organizer, slug=kwargs['organizer'])
-#             event = get_object_or_404(Event, slug=kwargs['event'], organizer=organiser)
-#             request_data = json.loads(request.body)
-#             event.settings.talk_schedule_public = request_data.get('is_show_schedule') or False
-#             return JsonResponse({'status': 'success'}, status=200)
-#         except jwt.ExpiredSignatureError:
-#             ...
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        logger.error('Authorization header missing or invalid')
+        return JsonResponse({'status': 'Authorization header missing or invalid'}, status=403)
+
+    token = auth_header.split(' ')[1]
+    try:
+        if not check_token_permission(token, 'base.edit_schedule'):
+            return JsonResponse(
+                {'status': 'User does not have permission to show schedule on menu'},
+                status=403,
+            )
+        organizer = get_object_or_404(Organizer, slug=kwargs['organizer'])
+        event = get_object_or_404(Event, slug=kwargs['event'], organizer=organizer)
+        request_data = json.loads(request.body)
+        is_show_schedule = bool(request_data.get('is_show_schedule'))
+        flags = dict(event.feature_flags)
+        flags['show_schedule'] = is_show_schedule
+        event.feature_flags = flags
+        event.settings.talk_schedule_public = is_show_schedule
+        event.save(update_fields=['feature_flags'])
+        return JsonResponse({'status': 'success'}, status=200)
+    except jwt.ExpiredSignatureError:
+        logger.error('Token has expired')
+        return JsonResponse({'status': 'Token has expired'}, status=401)
+    except jwt.InvalidTokenError:
+        logger.error('Invalid token')
+        return JsonResponse({'status': 'Invalid token'}, status=401)
+    except User.DoesNotExist:
+        logger.error('User not found for schedule-public token')
+        return JsonResponse({'status': 'User not found'}, status=401)
+    except json.JSONDecodeError:
+        logger.error('Invalid JSON payload for schedule-public')
+        return JsonResponse({'status': 'Invalid JSON payload'}, status=400)
+    except Exception:
+        logger.exception('Internal server error in talk_schedule_public')
+        return JsonResponse({'status': 'Internal server error'}, status=500)
 
 
 class CustomerOrderCheckView(APIView):
@@ -426,6 +566,8 @@ class CustomerOrderCheckView(APIView):
     def post(self, request, *args, **kwargs):
         # Disabled because it uses pretix Organizer and Order models
         return Response({'detail': 'CustomerOrderCheckView disabled (pretix dependency).'}, status=501)
+
+
 #     def post(self, request, *args, **kwargs):
 #         organizer = Organizer.objects.get(...)
 #         order_list = Order.objects.filter(...)
@@ -460,16 +602,15 @@ class EventThemeView(APIView):
         @return: theme data of an event
         """
         try:
-            event = get_object_or_404(Event, id=kwargs["event_id"])
-            return Response(RoomsEventSerializer(event).data["config"]["theme"])
+            event = get_object_or_404(Event, id=kwargs['event_id'])
+            return Response(RoomsEventSerializer(event).data['config']['theme'])
         except KeyError:
             logger.error(
-                "error happened when trying to get theme data of event: %s",
-                kwargs["event_id"],
+                'error happened when trying to get theme data of event: %s',
+                kwargs['event_id'],
             )
             return Response(
-                "error happened when trying to get theme data of event: "
-                + kwargs["event_id"],
+                'error happened when trying to get theme data of event: ' + kwargs['event_id'],
                 status=503,
             )
 
@@ -483,67 +624,63 @@ class CreateEventView(APIView):
         payload = CreateEventView.get_payload_from_token(request)
 
         # check if user has permission to create event
-        if payload.get("has_permission"):
+        if payload.get('has_permission'):
             secret = get_random_string(length=64)
             config = {
-                "JWT_secrets": [
+                'JWT_secrets': [
                     {
-                        "issuer": "any",
-                        "audience": "eventyay",
-                        "secret": secret,
+                        'issuer': 'any',
+                        'audience': 'eventyay',
+                        'secret': secret,
                     }
                 ]
             }
 
-            titles = request.data.get("title") or {}
-            locale = request.data.get("locale")
+            titles = request.data.get('title') or {}
+            locale = request.data.get('locale')
 
             title_values = [value for value in titles.values() if value]
-            title_default = title_values[0] if title_values else ""
+            title_default = title_values[0] if title_values else ''
 
-            title = titles.get(locale) or titles.get("en") or title_default
+            title = titles.get(locale) or titles.get('en') or title_default
 
-            traits_payload = request.data.get("traits") or {}
+            traits_payload = request.data.get('traits') or {}
             if not isinstance(traits_payload, dict):
-                raise ValidationError("Traits must be provided as an object.")
+                raise ValidationError('Traits must be provided as an object.')
 
-            attendee_trait_grants = traits_payload.get("attendee", "")
+            attendee_trait_grants = traits_payload.get('attendee', '')
             if attendee_trait_grants and not isinstance(attendee_trait_grants, str):
-                raise ValidationError("Attendee traits must be a string")
+                raise ValidationError('Attendee traits must be a string')
 
             trait_grants = {
-                "admin": ["admin"],
-                "attendee": (
-                    [attendee_trait_grants] if attendee_trait_grants else ["attendee"]
-                ),
-                "scheduleuser": [],
+                'admin': ['admin'],
+                'attendee': ([attendee_trait_grants] if attendee_trait_grants else ['attendee']),
+                'scheduleuser': [],
             }
 
             for trait_name, role_name in VIDEO_TRAIT_ROLE_MAP.items():
-                trait_value = traits_payload.get(trait_name, "")
+                trait_value = traits_payload.get(trait_name, '')
                 if trait_value:
                     if not isinstance(trait_value, str):
-                        raise ValidationError(
-                            f"Trait '{trait_name}' must be a string value."
-                        )
+                        raise ValidationError(f"Trait '{trait_name}' must be a string value.")
                     trait_grants[role_name] = [trait_value]
 
             # if event already exists, update it, otherwise create a new event
-            event_id = request.data.get("id")
-            domain_path = "{}{}/{}".format(
+            event_id = request.data.get('id')
+            domain_path = '{}{}/{}'.format(
                 settings.DOMAIN_PATH,
                 settings.BASE_PATH,
-                request.data.get("id"),
+                request.data.get('id'),
             )
             try:
                 if not event_id:
-                    raise ValidationError("Event ID is required")
+                    raise ValidationError('Event ID is required')
                 if Event.objects.filter(id=event_id).exists():
                     event = Event.objects.get(id=event_id)
                     event.title = title
                     event.domain = domain_path
-                    event.locale = request.data.get("locale") or "en"
-                    event.timezone = request.data.get("timezone") or "UTC"
+                    event.locale = request.data.get('locale') or 'en'
+                    event.timezone = request.data.get('timezone') or 'UTC'
                     event.trait_grants = trait_grants
                     event.save()
                 else:
@@ -551,58 +688,48 @@ class CreateEventView(APIView):
                         id=event_id,
                         title=title,
                         domain=domain_path,
-                        locale=request.data.get("locale") or "en",
-                        timezone=request.data.get("timezone") or "UTC",
+                        locale=request.data.get('locale') or 'en',
+                        timezone=request.data.get('timezone') or 'UTC',
                         config=config,
                         trait_grants=trait_grants,
                     )
                 # Legacy eventyay-talk schedule connection is removed; video gets configured elsewhere.
                 site_url = settings.SITE_URL
                 protocol = get_protocol(site_url)
-                event.domain = "{}://{}".format(protocol, domain_path)
-                return JsonResponse(model_to_dict(event, exclude=["roles"]), status=201)
+                event.domain = f'{protocol}://{domain_path}'
+                return JsonResponse(model_to_dict(event, exclude=['roles']), status=201)
             except IntegrityError as e:
-                logger.error(f"Database integrity error while saving event: {e}")
+                logger.error(f'Database integrity error while saving event: {e}')
                 return JsonResponse(
-                    {
-                        "error": "An event with this ID already exists or database constraint violated"
-                    },
+                    {'error': 'An event with this ID already exists or database constraint violated'},
                     status=400,
                 )
             except ValidationError as e:
-                logger.error(f"Validation error while saving event: {e}")
-                return JsonResponse({"error": str(e)}, status=400)
+                logger.error(f'Validation error while saving event: {e}')
+                return JsonResponse({'error': str(e)}, status=400)
             except Exception as e:
-                logger.error(f"Unexpected error creating event: {e}")
-                return JsonResponse(
-                    {"error": "An unexpected error occurred"}, status=500
-                )
+                logger.error(f'Unexpected error creating event: {e}')
+                return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
         else:
             return JsonResponse(
-                {"error": "Event cannot be created due to missing permission"},
+                {'error': 'Event cannot be created due to missing permission'},
                 status=403,
             )
 
     @staticmethod
     def get_payload_from_token(request):
         auth_header = get_authorization_header(request).split()
-        if auth_header and auth_header[0].lower() == b"bearer":
+        if auth_header and auth_header[0].lower() == b'bearer':
             if len(auth_header) == 1:
-                raise exceptions.AuthenticationFailed(
-                    "Invalid token header. No credentials provided."
-                )
+                raise exceptions.AuthenticationFailed('Invalid token header. No credentials provided.')
             elif len(auth_header) > 2:
-                raise exceptions.AuthenticationFailed(
-                    "Invalid token header. Token string should not contain spaces."
-                )
+                raise exceptions.AuthenticationFailed('Invalid token header. Token string should not contain spaces.')
         try:
-            payload = jwt.decode(
-                auth_header[1], settings.SECRET_KEY, algorithms=["HS256"]
-            )
+            payload = jwt.decode(auth_header[1], settings.SECRET_KEY, algorithms=['HS256'])
         except jwt.ExpiredSignatureError:
-            raise exceptions.AuthenticationFailed("Token has expired")
+            raise exceptions.AuthenticationFailed('Token has expired')
         except jwt.DecodeError:
-            raise exceptions.AuthenticationFailed("Invalid token")
+            raise exceptions.AuthenticationFailed('Invalid token')
         return payload
 
 
@@ -625,37 +752,35 @@ class UserFavouriteView(APIView):
         import warnings
 
         warnings.warn(
-            "UserFavouriteView is deprecated, use per-submission favourite API",
+            'UserFavouriteView is deprecated, use per-submission favourite API',
             DeprecationWarning,
             stacklevel=2,
         )
         try:
             talk_list = json.loads(request.body.decode())
-            user_code = UserFavouriteView.get_uid_from_token(
-                request, kwargs["event_id"]
-            )
+            user_code = UserFavouriteView.get_uid_from_token(request, kwargs['event_id'])
             user = User.objects.get(token_id=user_code)
             if not user_code or not user:
                 # user not created yet, no error should be returned
-                logger.error("User not found for adding favourite talks.")
+                logger.error('User not found for adding favourite talks.')
                 return JsonResponse([], safe=False, status=200)
             if user.client_state is None:
                 # If it's None, create a new dictionary with schedule.favs field
-                user.client_state = {"schedule": {"favs": talk_list}}
+                user.client_state = {'schedule': {'favs': talk_list}}
             else:
                 # If client_state is not None, check if 'schedule' field exists
-                if "schedule" not in user.client_state:
+                if 'schedule' not in user.client_state:
                     # If 'schedule' field doesn't exist, create it
-                    user.client_state["schedule"] = {"favs": talk_list}
+                    user.client_state['schedule'] = {'favs': talk_list}
                 else:
                     # If 'schedule' field exists, update the 'favs' field
-                    user.client_state["schedule"]["favs"] = talk_list
+                    user.client_state['schedule']['favs'] = talk_list
             user.save()
             return JsonResponse(talk_list, safe=False, status=200)
         except Exception as e:
             logger.error(
-                "error happened when trying to add fav talks: %s",
-                kwargs["event_id"],
+                'error happened when trying to add fav talks: %s',
+                kwargs['event_id'],
             )
             logger.error(e)
             # Since this is called from background so no error should be returned
@@ -665,17 +790,13 @@ class UserFavouriteView(APIView):
     def get_uid_from_token(request, event_id):
         event = get_object_or_404(Event, id=event_id)
         auth_header = get_authorization_header(request).split()
-        if auth_header and auth_header[0].lower() == b"bearer":
+        if auth_header and auth_header[0].lower() == b'bearer':
             if len(auth_header) == 1:
-                raise exceptions.AuthenticationFailed(
-                    "Invalid token header. No credentials provided."
-                )
+                raise exceptions.AuthenticationFailed('Invalid token header. No credentials provided.')
             elif len(auth_header) > 2:
-                raise exceptions.AuthenticationFailed(
-                    "Invalid token header. Token string should not contain spaces."
-                )
+                raise exceptions.AuthenticationFailed('Invalid token header. Token string should not contain spaces.')
         token_decode = event.decode_token(token=auth_header[1])
-        return token_decode.get("uid")
+        return token_decode.get('uid')
 
 
 """Legacy eventyay-talk integration helpers (schedule export proxy and schedule_update push endpoint)
@@ -685,18 +806,18 @@ connects directly, so the legacy endpoints have been removed.
 """
 
 
-@api_view(http_method_names=["POST"])
+@api_view(http_method_names=['POST'])
 @permission_classes([UserDeletePermissions])
 def delete_user(request, **kwargs):
     """POST endpoint to soft-delete a user.
 
     This endpoint is called with a single POST parameter, 'user_id'."""
-    user_id = request.data.get("user_id")
-    token_id = request.data.get("token_id")
+    user_id = request.data.get('user_id')
+    token_id = request.data.get('token_id')
     if not user_id and not token_id:
-        return Response("Missing user ID.", status=400)
+        return Response('Missing user ID.', status=400)
     if user_id and token_id:
-        return Response("Ambiguous user ID.", status=400)
+        return Response('Ambiguous user ID.', status=400)
 
     user = None
     with suppress(exceptions.ValidationError):  # raised when user_id isn't a uid

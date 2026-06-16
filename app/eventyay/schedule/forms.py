@@ -11,6 +11,7 @@ from i18nfield.forms import I18nModelForm
 from eventyay.common.forms.mixins import ReadOnlyFlag
 from eventyay.common.forms.widgets import HtmlDateInput, HtmlTimeInput
 from eventyay.base.models import Availability, Room, TalkSlot
+from eventyay.base.models.room import rooms_for_talk_assignment
 
 
 class AvailabilitiesFormMixin(forms.Form):
@@ -201,14 +202,10 @@ class RoomForm(AvailabilitiesFormMixin, ReadOnlyFlag, I18nModelForm):
             'Information for speakers, e.g.: Projector has only HDMI input.'
         )
         self.fields['capacity'].widget.attrs['placeholder'] = '300'
-        if self.instance.pk and not self.instance.guid:
-            self.fields['guid'].help_text = _('The current, automatically generated GUID is: {guid}.').format(
-                guid=self.instance.uuid
-            )
 
     class Meta:
         model = Room
-        fields = ['name', 'guid', 'description', 'speaker_info', 'capacity']
+        fields = ['name', 'description', 'speaker_info', 'capacity', 'is_unscheduled']
 
 
 class QuickScheduleForm(forms.ModelForm):
@@ -218,7 +215,10 @@ class QuickScheduleForm(forms.ModelForm):
     def __init__(self, event, *args, **kwargs):
         self.event = event
         super().__init__(*args, **kwargs)
-        self.fields['room'].queryset = self.event.rooms.all()
+        self.fields['room'].queryset = rooms_for_talk_assignment(
+            self.event,
+            has_submission=True,
+        )
         if self.instance.start:
             self.fields['start_date'].initial = self.instance.start.date()
             self.fields['start_time'].initial = self.instance.start.time()

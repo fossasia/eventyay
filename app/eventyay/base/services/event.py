@@ -80,17 +80,10 @@ class EventConfigSerializer(serializers.Serializer):
 
 @database_sync_to_async
 def _get_event(event_id):
-    """Retrieve Event by primary key or slug.
-    Frontend passes <event_identifier> in /video/<event_identifier>/ and websocket /ws/event/<event_identifier>/.
-    Previously only numeric primary key worked; now also accept slug.
-    """
-    # Try numeric ID first if it looks like one
+    """Retrieve Event by primary key or slug."""
     if isinstance(event_id, str) and event_id.isdigit():
-        evt = Event.objects.filter(id=int(event_id)).first()
-        if evt:
-            return evt
-    # Fallback: match by slug OR (string) id (covers atypical string PK setups)
-    return Event.objects.filter(Q(slug=event_id) | Q(id=event_id)).first()
+        return Event.objects.filter(Q(slug=event_id) | Q(id=int(event_id))).first()
+    return Event.objects.filter(slug=event_id).first()
 
 
 async def get_event(event_id):
@@ -99,26 +92,30 @@ async def get_event(event_id):
 
 
 def get_rooms(event, user):
-    qs = (
-        event.rooms.filter(deleted=False)
-        .order_by('sorting_priority', 'id')
-        .prefetch_related("channel")
-        .annotate(
-            current_roomviews=Subquery(
-                RoomView.objects.filter(room_id=OuterRef("pk"), end__isnull=True)
-                .values("room_id")
-                .order_by()
-                .annotate(
-                    # Count('user_id', distinct=True) would be more accurate, but might be slow, and we don't need accurate
-                    c=Count("user_id")
+    from django_scopes import scope
+
+    with scope(event=event):
+        qs = (
+            event.rooms.filter(deleted=False)
+            .with_has_linked_sessions()
+            .order_by('sorting_priority', 'id')
+            .prefetch_related("channel")
+            .annotate(
+                current_roomviews=Subquery(
+                    RoomView.objects.filter(room_id=OuterRef("pk"), end__isnull=True)
+                    .values("room_id")
+                    .order_by()
+                    .annotate(
+                        # Count('user_id', distinct=True) would be more accurate, but might be slow, and we don't need accurate
+                        c=Count("user_id")
+                    )
+                    .values("c")
                 )
-                .values("c")
             )
         )
-    )
-    if user:
-        qs = qs.with_permission(event=event, user=user)
-    return list(qs)
+        if user:
+            qs = qs.with_permission(event=event, user=user)
+        return list(qs)
 
 
 @database_sync_to_async
@@ -186,8 +183,13 @@ def get_room_config(room, permissions):
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
             module_config["config"] = {}
-        elif module["type"] == "chat.native" and getattr(room, "channel", None):
-            module_config["channel_id"] = str(room.channel.id)
+        elif module["type"] == "chat.native":
+            # Strip webhook secrets — these are server-side only
+            cfg = module_config.get("config")
+            if isinstance(cfg, dict):
+                cfg.pop("webhook_hmac_secret", None)
+            if getattr(room, "channel", None):
+                module_config["channel_id"] = str(room.channel.id)
         room_config["modules"].append(module_config)
     return room_config
 

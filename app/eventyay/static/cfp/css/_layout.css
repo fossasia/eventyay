@@ -11,17 +11,12 @@
   cursor: pointer;
 }
 
-/* Add padding to username for visual match */
-.presale-sticky-tabs .header-row-right details.dropdown summary .mobile-hide-text {
-  padding-left: 6px;
-  padding-right: 6px;
-}
 body {
   background: var(--color-grey-lightest);
 }
 
 #top-bg {
-  background-color: var(--color-primary);
+  background-color: var(--color-header-background);
   position: fixed;
   top: 0;
   left: 0;
@@ -37,10 +32,10 @@ body {
 }
 
 h1 a {
-  color: white;
+  color: var(--color-header-text);
 
   &:hover {
-    color: white;
+    color: var(--color-header-text);
     text-decoration: none;
   }
 }
@@ -75,19 +70,22 @@ header {
     padding-bottom: 6px;
     flex-shrink: 0;
     a.header-tab {
+      color: var(--color-header-navigation);
       padding: 8px 10px 4px 10px;
       border-bottom: 2px solid transparent;
       &:hover {
+        color: var(--color-header-navigation);
         text-decoration: none;
         border-bottom: 2px dotted var(--color-primary);
       }
       &.active {
+        color: var(--color-header-navigation);
         border-bottom: 2px solid var(--color-primary);
       }
     }
   }
   .header-row-right {
-    color: var(--color-primary);
+    color: var(--color-header-navigation);
     margin-left: auto;
 	margin-right: 10px;
     display: flex;
@@ -98,8 +96,8 @@ header {
     gap: 10px;
 
     .header-nav {
-      color: var(--color-primary);
-      border-color: var(--color-primary);
+      color: var(--color-header-navigation);
+      border-color: var(--color-header-navigation);
       background: transparent;
     }
 
@@ -118,7 +116,7 @@ header {
     }
 
     .locale-link {
-      color: var(--color-primary);
+      color: var(--color-header-navigation);
       text-decoration: none;
       font-size: 0.9rem;
       opacity: 0.85;
@@ -141,11 +139,11 @@ header {
       
       summary {
         cursor: pointer;
-        color: var(--color-primary);
+        color: var(--color-header-navigation);
       }
       
       summary:focus-visible {
-        outline: 2px solid var(--color-primary);
+        outline: 2px solid var(--color-header-navigation);
         border-radius: var(--size-border-radius);
       }
       
@@ -213,22 +211,25 @@ header {
 }
 
 .presale-sticky-tabs a.header-tab {
+  color: var(--color-header-navigation);
   padding: 8px 10px 4px 10px;
   border-bottom: 2px solid transparent;
 }
 
 .presale-sticky-tabs a.header-tab:hover {
+  color: var(--color-header-navigation);
   text-decoration: none;
   border-bottom: 2px dotted var(--color-primary);
 }
 
 .presale-sticky-tabs a.header-tab.active,
 .presale-sticky-tabs a.header-tab.underline {
+  color: var(--color-header-navigation);
   border-bottom: 2px solid var(--color-primary);
 }
 
 .presale-sticky-tabs .header-row-right {
-  color: var(--color-primary);
+  color: var(--color-header-navigation);
   margin-left: auto;
   margin-right: 10px;
   display: flex;
@@ -240,8 +241,8 @@ header {
 }
 
 .presale-sticky-tabs .header-row-right .header-nav {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  color: var(--color-header-navigation);
+  border-color: var(--color-header-navigation);
   background: transparent;
 }
 
@@ -271,6 +272,18 @@ header {
 
 .event-brand--has-logo {
   padding-left: 1.75rem;
+}
+
+.event-brand--logo-large {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.event-brand--logo-large .organizer-logo {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
 }
 
 @media (min-width: 769px) {
@@ -364,7 +377,7 @@ header {
 }
 
 .event-hero-text {
-  color: white;
+  color: var(--color-header-text);
   display: flex;
   flex-direction: column;
 }
@@ -905,4 +918,22 @@ footer {
   aside .row-voucher .btn {
     margin-top: 0;
   }
+}
+
+.form-group:has([data-question-dependency]).dependency-hidden {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin-bottom: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.3s ease, margin-bottom 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.form-group:has([data-question-dependency]):not(.dependency-hidden) {
+  max-height: 10000px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease, margin-bottom 0.3s ease, visibility 0s linear 0s;
 }

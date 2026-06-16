@@ -453,6 +453,11 @@ export default {
 			const stickyHeader = this.$el.querySelector('.sticky-header')
 			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
 			const toolbar = scheduleRoot?.querySelector('.c-schedule-toolbar')
+			let stickyTopOffset = 40
+			if (scheduleRoot) {
+				const parsed = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-sticky-top-offset'))
+				if (Number.isFinite(parsed)) stickyTopOffset = parsed
+			}
 			let toolbarHeight = 0
 			if (toolbar) {
 				toolbarHeight = toolbar.getBoundingClientRect().height
@@ -461,17 +466,12 @@ export default {
 				toolbarHeight = Number.isFinite(parsed) ? parsed : 0
 			}
 			const stickyHeaderHeight = stickyHeader ? stickyHeader.getBoundingClientRect().height : 0
-			let navOffset = 40
-			if (stickyHeader) {
-				const rect = stickyHeader.getBoundingClientRect()
-				navOffset = Math.max(0, rect.top)
-			}
 			let versionWarning = 0
 			if (scheduleRoot) {
 				const vh = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-version-warning-height'))
 				versionWarning = Number.isFinite(vh) ? vh : 0
 			}
-			return navOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
+			return stickyTopOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
 		},
 		getScrolledDay () {
 			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
@@ -529,10 +529,8 @@ export default {
 			}
 		},
 		scrollToDayStart (day) {
-			const targetMoment = moment.isMoment(day)
-				? day.clone().tz(this.timezone).startOf('day')
-				: moment.tz(day, this.timezone).startOf('day')
-			const el = this.$refs[getSliceName(targetMoment)]?.[0]
+			const dayStr = moment.isMoment(day) ? day.clone().tz(this.timezone).startOf('day').format('YYYY-MM-DD') : day
+			const el = this.$el.querySelector(`[data-slice-day="${dayStr}"]`)
 			if (!el) return
 			this.scrollElementIntoViewWithClearance(el)
 		},
@@ -714,6 +712,10 @@ export default {
 			grid-template-columns: 78px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 			position: relative
 			min-width: max(min-content, calc(78px + (var(--total-rooms) * var(--room-col-min)) + 60px))
+			.c-linear-schedule-session, .break
+				margin: 6px
+				min-width: 0
+				box-sizing: border-box
 		.break
 			.time-box
 				background-color: $clr-grey-500
@@ -804,6 +806,11 @@ export default {
 	.rooms-bar .rooms-inner > .room
 		font-size: 14px
 		padding: 4px 2px
+	.grid-viewport .grid
+		.c-linear-schedule-session, .break
+			margin: 4px 3px
+			min-height: 48px
+			font-size: 12px
 	.grid
 		grid-template-columns: 60px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 	.rooms-inner
@@ -816,6 +823,11 @@ export default {
 	.rooms-bar .rooms-inner > .room
 		font-size: 20px
 		padding: 12px 6px
+	.grid-viewport .grid
+		.c-linear-schedule-session, .break
+			margin: 12px 9px
+			min-height: 120px
+			font-size: 15px
 	.grid
 		grid-template-columns: 96px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 	.rooms-inner

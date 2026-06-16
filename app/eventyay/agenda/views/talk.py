@@ -22,7 +22,8 @@ from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.signals import register_recording_provider
-from eventyay.agenda.views.utils import build_enriched_schedule_json, encode_email, is_email_like
+from eventyay.agenda.views.utils import WipAgendaPreviewPageMixin, build_enriched_schedule_json, encode_email, is_email_like
+from eventyay.talk_rules.agenda import agenda_schedule_for_user, can_view_wip_schedule, filter_agenda_slots
 from eventyay.base.models import (
     Event,
     Order,
@@ -63,6 +64,7 @@ class VideoJoinError(StrEnum):
 
 class TalkMixin(PermissionRequired):
     permission_required = 'base.view_public_submission'
+    wip_preview = False
 
     def get_queryset(self):
         return self.request.event.submissions.prefetch_related(
@@ -84,6 +86,21 @@ class TalkMixin(PermissionRequired):
 
     def get_permission_object(self):
         return self.submission
+
+    def agenda_schedule(self):
+        return agenda_schedule_for_user(
+            self.request.event,
+            self.request.user,
+            wip_preview=self.wip_preview,
+        )
+
+    def filter_visible_slots(self, qs):
+        return filter_agenda_slots(
+            qs,
+            self.request.user,
+            self.request.event,
+            wip_preview=self.wip_preview,
+        )
 
 
 def talk_starrers(request, event, slug, **kwargs):
@@ -166,6 +183,10 @@ class TalkView(TalkMixin, TemplateView):
     def schedule_json(self):
         return build_enriched_schedule_json(self.request)
 
+    @context
+    def schedule_version(self):
+        return ''
+
     def get_contrast_color(self, bg_color):
         if not bg_color:
             return ''
@@ -207,7 +228,7 @@ class TalkView(TalkMixin, TemplateView):
         from django.db.models import Prefetch
 
         ctx = super().get_context_data(**kwargs)
-        schedule = self.request.event.current_schedule or self.request.event.wip_schedule
+        schedule = self.agenda_schedule()
         if not self.request.user.has_perm('base.view_schedule', schedule):
             return ctx
         qs = schedule.talks.filter(room__isnull=False).select_related('room') if schedule else TalkSlot.objects.none()
@@ -216,7 +237,9 @@ class TalkView(TalkMixin, TemplateView):
         for tag_item in ctx['submission_tags']:
             tag_item.contrast_color = self.get_contrast_color(tag_item.color)
         other_slots = (
-            schedule.talks.exclude(submission_id=self.submission.pk).filter(is_visible=True)
+            self.filter_visible_slots(
+                schedule.talks.exclude(submission_id=self.submission.pk)
+            )
             if schedule
             else TalkSlot.objects.none()
         )
@@ -240,9 +263,11 @@ class TalkView(TalkMixin, TemplateView):
     @context
     @cached_property
     def submission_description(self):
+        abstract = self.submission.abstract if self.request.event.cfp.public_abstract else ''
+        description = self.submission.description if self.request.event.cfp.public_description else ''
         return (
-            self.submission.abstract
-            or self.submission.description
+            abstract
+            or description
             or _('The session “{title}” at {event}').format(
                 title=localize_event_text(self.submission.title),
                 event=localize_event_text(self.request.event.name),
@@ -253,6 +278,18 @@ class TalkView(TalkMixin, TemplateView):
     @cached_property
     def answers(self):
         return self.submission.public_answers
+
+
+class WipTalkView(WipAgendaPreviewPageMixin, TalkView):
+    def has_permission(self):
+        wip = self.request.event.wip_schedule
+        if not wip:
+            return False
+        return self.submission.slots.filter(schedule=wip).exists()
+
+    @context
+    def schedule_json(self):
+        return build_enriched_schedule_json(self.request, wip_preview=True)
 
 
 class TalkReviewView(TalkView):
@@ -310,9 +347,9 @@ class TalkReviewView(TalkView):
 class SingleICalView(EventPageMixin, TalkMixin, View):
     def get(self, request, event, **kwargs):
         code = self.submission.code
-        schedule = self.request.event.current_schedule or self.request.event.wip_schedule
+        schedule = self.agenda_schedule()
         talk_slots = (
-            self.submission.slots.filter(schedule=schedule, is_visible=True)
+            self.filter_visible_slots(self.submission.slots.filter(schedule=schedule))
             if schedule
             else self.submission.slots.none()
         )
@@ -336,11 +373,11 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
 
     def get(self, request, event, slug, **kwargs):
         fmt = kwargs.get('format', '')
-        schedule = request.event.current_schedule or request.event.wip_schedule
+        schedule = self.agenda_schedule()
         if not schedule:
             raise Http404
         talk_slots = (
-            self.submission.slots.filter(schedule=schedule, is_visible=True)
+            self.filter_visible_slots(self.submission.slots.filter(schedule=schedule))
             .select_related('room', 'submission', 'submission__track', 'submission__submission_type')
             .prefetch_related('submission__speakers', 'submission__resources')
         )
@@ -373,6 +410,9 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
     def _render_json(self, request, talk_slots):
         event = request.event
         base_url = get_base_url(event)
+        show_abstract = event.cfp.public_abstract
+        show_description = event.cfp.public_description
+        show_biography = event.cfp.public_biography
         talks_data = []
         for slot in talk_slots:
             sub = slot.submission
@@ -391,25 +431,29 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
                     'track': localize_event_text(sub.track.name) if sub.track else None,
                     'type': localize_event_text(sub.submission_type.name),
                     'language': sub.content_locale,
-                    'abstract': localize_event_text(sub.abstract),
-                    'description': localize_event_text(sub.description),
+                    'abstract': localize_event_text(sub.abstract) if show_abstract else '',
+                    'description': localize_event_text(sub.description) if show_description else '',
                     'do_not_record': sub.do_not_record,
                     'persons': [
                         {
                             'code': p.code,
                             'name': p.get_display_name(),
-                            'biography': localize_event_text(p.event_profile(event).biography),
+                            'biography': localize_event_text(p.event_profile(event).biography)
+                            if show_biography
+                            else '',
                         }
                         for p in sub.speakers.all()
                     ],
                     'links': [
                         {'title': localize_event_text(r.description), 'url': r.link}
                         for r in sub.resources.all()
+                        if event.cfp.is_resource_public(r)
                         if r.link
                     ],
                     'attachments': [
                         {'title': localize_event_text(r.description), 'url': r.resource.url}
                         for r in sub.resources.all()
+                        if event.cfp.is_resource_public(r)
                         if not r.link
                     ],
                 }
@@ -451,10 +495,10 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
 
     def get(self, request, event, slug, **kwargs):
         provider = kwargs.get('provider', '')
-        schedule = request.event.current_schedule or request.event.wip_schedule
+        schedule = self.agenda_schedule()
         if not schedule:
             raise Http404
-        talk_slots = self.submission.slots.filter(schedule=schedule, is_visible=True)
+        talk_slots = self.filter_visible_slots(self.submission.slots.filter(schedule=schedule))
         if not talk_slots.exists():
             raise Http404
 
@@ -485,7 +529,7 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
         dates = f'{start.strftime(fmt)}/{end.strftime(fmt)}'
         title = localize_event_text(sub.title)
         location = localize_event_text(slot.room.name) if slot.room else ''
-        details = localize_event_text(sub.abstract) or ''
+        details = localize_event_text(sub.abstract) if request.event.cfp.public_abstract else ''
         url = (
             'https://calendar.google.com/calendar/render?action=TEMPLATE'
             f'&text={quote(str(title))}'
@@ -560,7 +604,7 @@ class FeedbackView(TalkMixin, FormView):
 
 class TalkSocialMediaCard(SocialMediaCardMixin, TalkView):
     def get_image(self):
-        return self.submission.image
+        return self.submission.image if self.request.event.cfp.public_image else None
 
 
 class OnlineVideoJoin(EventPermissionRequired, View):

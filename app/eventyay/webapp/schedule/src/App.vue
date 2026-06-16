@@ -11,7 +11,7 @@
 		speaker-detail(v-else-if="view === 'speaker'", :speakerId="speakerCode", :onHomeServer="onHomeServer")
 	template(v-else-if="schedule && schedule.talks.length")
 		schedule-toolbar(v-if="(scheduleMeta || schedule) && !publicFavsUrl",
-			:version="scheduleMeta?.version || ''",
+			:version="version || scheduleMeta?.version || ''",
 			:isCurrent="scheduleMeta?.is_current !== false",
 			:changelogUrl="scheduleMeta?.changelog_url || ''",
 			:currentScheduleUrl="scheduleMeta?.current_schedule_url || ''",
@@ -219,6 +219,10 @@ export default {
 		}
 	},
 	provide () {
+		const wipLinkPrefix = () => {
+			const version = this.version || this.scheduleMeta?.version || ''
+			return version === 'wip' ? 'schedule/v/wip/' : ''
+		}
 		return {
 			eventUrl: this.eventUrl,
 			remoteApiUrl: computed(() => this.remoteApiUrl),
@@ -228,6 +232,10 @@ export default {
 				event.preventDefault()
 
 				this.showSessionDetails(session, event)
+			},
+			generateSessionLinkUrl: ({eventUrl, session}) => {
+				if (!this.onHomeServer) return `#session/${session.id}/`
+				return `${eventUrl}${wipLinkPrefix()}talk/${session.id}/`
 			},
 			scheduleFav: (id) => this.fav(id),
 			scheduleUnfav: (id) => this.unfav(id),
@@ -252,7 +260,7 @@ export default {
 				return roomId ? `${base}${roomId}/` : ''
 			},
 			generateSpeakerLinkUrl: ({speaker}) => {
-				if (this.onHomeServer) return `${this.eventUrl}speakers/${speaker.code}/`
+				if (this.onHomeServer) return `${this.eventUrl}${wipLinkPrefix()}speakers/${speaker.code}/`
 				return `#speakers/${speaker.code}`
 			},
 			onSpeakerLinkClick: (event, speaker) => {
@@ -262,7 +270,8 @@ export default {
 				}
 			},
 			loggedIn: computed(() => this.loggedIn),
-			translationMessages: computed(() => this.translationMessages)
+			translationMessages: computed(() => this.translationMessages),
+			isWipPreview: computed(() => (this.version || this.scheduleMeta?.version || '') === 'wip')
 		}
 	},
 	data () {
@@ -422,7 +431,7 @@ export default {
 				}
 				if (filteredTrackIds && !filteredTrackIds.has(session.track)) continue
 				if (filteredRoomIds && !filteredRoomIds.has(session.room)) continue
-				if (filteredTypeValues && !filteredTypeValues.has(session.session_type)) continue
+				if (filteredTypeValues && !filteredTypeValues.has(getSessionTypeLabel(session.session_type))) continue
 				if (langExact) {
 					const fallbackLocale = this.schedule?.content_locales?.[0] || null
 					const sessionLocale = session.content_locale || fallbackLocale
@@ -829,10 +838,18 @@ export default {
 		changeDay (day) {
 			if (day.clone().startOf('day').format('YYYY-MM-DD') === this.currentDay) return
 			this.currentDay = day.clone().startOf('day').format('YYYY-MM-DD')
-			window.location.hash = day.format('YYYY-MM-DD')
+			try {
+				window.history.replaceState(null, null, '#' + day.format('YYYY-MM-DD'))
+			} catch (e) {
+				window.location.hash = day.format('YYYY-MM-DD')
+			}
 		},
 		selectDay (dayId) {
-			window.location.hash = dayId
+			try {
+				window.history.replaceState(null, null, '#' + dayId)
+			} catch (e) {
+				window.location.hash = dayId
+			}
 			if (dayId === this.currentDay) {
 				this.forceScrollDay++
 				return

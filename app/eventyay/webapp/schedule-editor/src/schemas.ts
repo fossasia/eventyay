@@ -50,7 +50,8 @@ export const RoomSchema = z.object({
 
 export const TrackSchema = z.object({
   id: z.number(),
-  name: LocalizedTextSchema
+  name: LocalizedTextSchema,
+  color: z.string().nullable().optional()
 });
 
 // Define availability entry schema
@@ -76,7 +77,8 @@ export const TalkSchema = z.object({
   ]).nullable().optional(),
   track: z.union([
     z.number(),
-    z.string().transform(val => parseInt(val, 10) || 0)
+    z.string().transform(val => parseInt(val, 10) || 0),
+    z.object({ id: z.coerce.number() }).passthrough().transform(val => val.id)
   ]).nullable().optional(),
   start: z.string().nullable().optional(),
   end: z.string().nullable().optional(),
@@ -84,7 +86,8 @@ export const TalkSchema = z.object({
   updated: z.string().optional(),
   uncreated: z.boolean().optional(),
   availabilities: z.array(AvailabilityEntrySchema).optional().default([]),
-  duration: z.number().optional()
+  duration: z.number().optional(),
+  do_not_record: z.union([z.boolean(), z.null()]).optional().transform(val => val === true).default(false),
 });
 
 export const WarningSchema = z.object({

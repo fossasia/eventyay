@@ -9,9 +9,14 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import AuditLog, Channel, User
-from eventyay.base.models.room import Room
 from eventyay.base.models.event import Event
-from eventyay.base.models.room import RoomConfigSerializer, RoomView
+from eventyay.base.models.room import (
+    Room,
+    RoomConfigSerializer,
+    RoomView,
+    get_room_with_linked_sessions,
+    partial_validated_update,
+)
 from eventyay.base.services.user import get_public_users
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
@@ -50,12 +55,7 @@ def end_view(view: RoomView, delete=False):
         view.end = now()
         view.save()
     c = RoomView.objects.filter(room_id=view.room_id, end__isnull=True).count()
-    is_last = (
-        RoomView.objects.filter(
-            room_id=view.room_id, end__isnull=True, user=view.user
-        ).count()
-        == 0
-    )
+    is_last = RoomView.objects.filter(room_id=view.room_id, end__isnull=True, user=view.user).count() == 0
     return c, is_last
 
 
@@ -63,15 +63,27 @@ async def get_viewers(event: Event, room: Room):
     users = await get_public_users(
         # We're doing an ORM query in an async method, but it's okay, since it is not going to be evaluated but
         # lazily passed to get_public_users which will use it as a subquery :)
-        ids=RoomView.objects.filter(room=room, end__isnull=True).values_list(
-            "user_id", flat=True
-        ),
+        ids=RoomView.objects.filter(room=room, end__isnull=True).values_list('user_id', flat=True),
         event_id=event.pk,
         include_banned=False,
-        trait_badges_map=event.config.get("trait_badges_map"),
+        trait_badges_map=event.config.get('trait_badges_map'),
         require_show_publicly=True,
     )
     return users
+
+
+def validate_room_config_patch(room, body):
+    """
+    Validate a partial room config update in a sync DB context.
+
+    Returns (validated_data, update_fields) on success, or (None, None) if invalid.
+    """
+    serializer = RoomConfigSerializer(
+        get_room_with_linked_sessions(room),
+        data=body,
+        partial=True,
+    )
+    return partial_validated_update(serializer, body)
 
 
 @database_sync_to_async
@@ -83,15 +95,15 @@ def save_room(event, room, update_fields, old_data, by_user):
     AuditLog.objects.create(
         event_id=event.id,
         user=by_user,
-        type="event.room.updated",
+        type='event.room.updated',
         data={
-            "object": str(room.id),
-            "old": old_data,
-            "new": new,
+            'object': str(room.id),
+            'old': old_data,
+            'new': new,
         },
     )
 
-    if "chat.native" in {m["type"] for m in room.module_config}:
+    if 'chat.native' in {m['type'] for m in room.module_config}:
         Channel.objects.get_or_create(event_id=event.pk, room=room)
     return new
 
@@ -100,16 +112,16 @@ def save_room(event, room, update_fields, old_data, by_user):
 @atomic
 def delete_room(event, room, by_user):
     room.deleted = True
-    room.save(update_fields=["deleted"])
+    room.save(update_fields=['deleted'])
     old = RoomConfigSerializer(room).data
 
     AuditLog.objects.create(
         event_id=event.id,
         user=by_user,
-        type="event.room.deleted",
+        type='event.room.deleted',
         data={
-            "object": str(room.id),
-            "old": old,
+            'object': str(room.id),
+            'old': old,
         },
     )
 
@@ -117,32 +129,76 @@ def delete_room(event, room, by_user):
 @database_sync_to_async
 @atomic
 def reorder_rooms(event, id_list, by_user):
+    id_list_str = [str(i) for i in id_list]
+
     def key(r):
         try:
-            return id_list.index(str(r.id)), r.sorting_priority, r.name
-        except Exception:
+            return id_list_str.index(str(r.id)), r.sorting_priority, r.name
+        except ValueError:
             return sys.maxsize, r.sorting_priority, r.name
 
     all_rooms = list(
-        event.rooms.filter(deleted=False).only("id", "name", "sorting_priority")
+        event.rooms.filter(deleted=False).only('id', 'name', 'sorting_priority', 'position')
     )
     all_rooms.sort(key=key)
     to_update = []
 
     for i, r in enumerate(all_rooms):
+        changed = False
         if i + 1 != r.sorting_priority:
             r.sorting_priority = i + 1
+            changed = True
+        if i != r.position:
+            r.position = i
+            changed = True
+        if changed:
             to_update.append(r)
 
-    Room.objects.bulk_update(to_update, fields=["sorting_priority"])
+    Room.objects.bulk_update(to_update, fields=['sorting_priority', 'position'])
 
     AuditLog.objects.create(
         event_id=event.id,
         user=by_user,
-        type="event.room.reorder",
+        type='event.room.reorder',
         data={
-            "id_list": id_list,
+            'id_list': id_list,
         },
+    )
+
+
+@atomic
+def normalize_after_priority_change(event, room_id, new_priority):
+    other_rooms = list(
+        event.rooms.filter(deleted=False)
+        .exclude(id=room_id)
+        .only("id", "sorting_priority", "position")
+        .order_by("sorting_priority", "id")
+    )
+    insert_pos = max(0, min(new_priority - 1, len(other_rooms)))
+    actual_priority = insert_pos + 1
+    ordered_all = other_rooms[:insert_pos] + [None] + other_rooms[insert_pos:]
+
+    to_update = []
+    for i, r in enumerate(ordered_all):
+        if r is not None:
+            expected_priority = i + 1
+            expected_position = i
+            changed = False
+            if r.sorting_priority != expected_priority:
+                r.sorting_priority = expected_priority
+                changed = True
+            if r.position != expected_position:
+                r.position = expected_position
+                changed = True
+            if changed:
+                to_update.append(r)
+
+    if to_update:
+        Room.objects.bulk_update(to_update, fields=["sorting_priority", "position"])
+
+    Room.objects.filter(id=room_id).update(
+        sorting_priority=actual_priority,
+        position=actual_priority - 1,
     )
 
 
@@ -157,9 +213,9 @@ async def broadcast_stream_change(room_id, stream_schedule, reload=False):
     await get_channel_layer().group_send(
         GROUP_ROOM.format(id=room_id),
         {
-            "type": "stream.change",
-            "stream": data,
-            "reload": reload,
+            'type': 'stream.change',
+            'stream': data,
+            'reload': reload,
         },
     )
 
@@ -172,11 +228,7 @@ def check_stream_schedule_changes(sender, **kwargs):
     # Keep the last broadcast marker stable across periodic runs to avoid repeated rebroadcasts.
     cache_timeout = None
 
-    rooms = (
-        Room.objects.filter(deleted=False, stream_schedules__isnull=False)
-        .select_related('event')
-        .distinct()
-    )
+    rooms = Room.objects.filter(deleted=False, stream_schedules__isnull=False).select_related('event').distinct()
 
     for room in rooms:
         current_stream = room.get_current_stream()
@@ -187,6 +239,4 @@ def check_stream_schedule_changes(sender, **kwargs):
 
         if current_stream_id != last_broadcast_id:
             cache.set(cache_key, current_stream_id, cache_timeout)
-            async_to_sync(broadcast_stream_change)(
-                room.pk, current_stream, reload=current_stream_id is None
-            )
+            async_to_sync(broadcast_stream_change)(room.pk, current_stream, reload=current_stream_id is None)

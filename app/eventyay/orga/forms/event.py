@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
 from django.forms import inlineformset_factory
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -164,6 +165,8 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
 
     def save(self, *args, **kwargs):
         result = super().save(*args, **kwargs)
+        if 'show_schedule' in self.cleaned_data:
+            self.instance.settings.talk_schedule_public = bool(self.cleaned_data['show_schedule'])
         css_text = self.cleaned_data.get('custom_css_text', '')
         if css_text and 'custom_css_text' in self.changed_data:
             self.instance.custom_css.save(self.instance.slug + '.css', ContentFile(css_text))
@@ -207,8 +210,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     )
     signature = forms.CharField(
         label=_('Mail signature'),
-        help_text=_('The signature will be added to outgoing mails, preceded by “-- ”. ')
-        + phrases.base.use_markdown,
+        help_text='',
         required=False,
         widget=forms.Textarea,
     )
@@ -254,6 +256,11 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['signature'].help_text = format_lazy(
+            '{} <span class="markdown-hint">{}</span>',
+            _('The signature will be added to outgoing mails, preceded by “-- ”. '),
+            _('You can use Markdown in this field.'),
+        )
         if self.fields['smtp_password'].initial:
             self.fields['smtp_password'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
 
@@ -563,6 +570,7 @@ class EventExtraLinkForm(I18nModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['label'].required = True
         for fname in ('label', 'url'):
             if fname in self.fields:
                 widget = self.fields[fname].widget

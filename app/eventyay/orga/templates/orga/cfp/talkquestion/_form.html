@@ -1,23 +1,25 @@
 {% extends "orga/generic/_form.html" %}
 
 {% load compress %}
+{% load escapejson %}
 {% load formset_tags %}
 {% load i18n %}
 {% load static %}
 
 {% block stylesheets %}
 {% compress css %}
-<link rel="stylesheet" href="{% static "orga/css/dragsort.css" %}">
+<link rel="stylesheet" href="{% static 'orga/css/dragsort.css' %}">
 {% endcompress %}
 {% endblock stylesheets %}
 
 {% block scripts %}
 {% compress js %}
-<script defer src="{% static "js/jquery.js" %}"></script>
-<script defer src="{% static "js/jquery.formset.js" %}"></script>
-<script defer src="{% static "cfp/js/animateFormset.js" %}"></script>
-<script defer src="{% static "orga/js/questionForm.js" %}"></script>
-<script defer src="{% static "orga/js/dragsort.js" %}"></script>
+<script defer src="{% static 'js/jquery.js' %}"></script>
+<script defer src="{% static 'js/jquery.formset.js' %}"></script>
+<script defer src="{% static 'cfp/js/animateFormset.js' %}"></script>
+<script defer src="{% static 'orga/js/questionForm.js' %}"></script>
+<script defer src="{% static 'orga/js/dragsort.js' %}"></script>
+<script defer src="{% static 'orga/js/dependencyQuestion.js' %}"></script>
 {% endcompress %}
 {% endblock scripts %}
 
@@ -87,6 +89,40 @@
             {{ form.max_datetime.as_field_group }}
         </span>
     </fieldset>
+
+    <fieldset data-options-url-base="{% url 'orga:cfp.questions.options' event=request.event.slug question=0 %}">
+        <legend id="dependency">{% translate "Field dependency" %}</legend>
+        <div class="form-group row">
+            <label class="col-md-3 control-label" for="id_dependency_question">
+                {% translate "Custom field dependency" %}
+                <br><span class="optional">{% translate "Optional" context "form" %}</span>
+            </label>
+            <div class="col-md-4">
+                <script type="text/plain" id="dependency_value_val">{{ form.instance.dependency_values|escapejson_dumps }}</script>
+                {{ form.dependency_question }}
+                {% if form.dependency_question.errors %}
+                <div class="invalid-feedback d-block">{{ form.dependency_question.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-5">
+                {{ form.dependency_values }}
+                {% if form.dependency_values.errors %}
+                <div class="invalid-feedback d-block">{{ form.dependency_values.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="alert alert-info col-md-9 offset-md-3 mt-2">
+            {% blocktranslate trimmed %}
+                This field will only be shown if the selected parent field has one of the specified values.
+                Dependencies only work within the same field type (speaker fields can only depend on other speaker fields).
+            {% endblocktranslate %}
+        </div>
+    </fieldset>
+
+    <div id="dependency-question-config"
+         data-yes-label="{% trans 'Yes' %}"
+         data-no-label="{% trans 'No' %}">
+    </div>
 
     <fieldset id="answer-options" class="d-none">
         <legend id="options">{% translate "Response options" %}</legend>

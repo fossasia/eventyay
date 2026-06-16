@@ -13,7 +13,7 @@
     {% if messages %}
         {{ messages|join:" " }} ::
     {% endif %}
-    {% block thetitle %}{% endblock %}{% if request.resolver_match.url_name != "event.index" %} :: {% endif %}{{ event.name|event_localize }}
+    {% block thetitle %}{% endblock %}{% if request.event %}{% if request.resolver_match.url_name != "event.index" %} :: {% endif %}{{ event.name|event_localize }}{% endif %}
 {% endblock %}
 
 {% block favicons %}
@@ -91,7 +91,7 @@
     data-timeformat="{{ js_time_format }}"
     data-dateformat="{{ js_date_format }}"
     data-datetimelocale="{{ js_locale }}"
-    data-currency="{{ request.event.currency }}"
+    {% if request.event %}data-currency="{{ request.event.currency }}"{% endif %}
 {% endblock %}
 
 {% block body_top %}

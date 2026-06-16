@@ -109,10 +109,27 @@ const createEventyayUnderlinePlugin = () => {
 }
 
 const initToastUiMarkdownTextarea = (textarea) => {
-    if (!textarea || textarea.dataset.toastuiBound === 'true') return
+    if (!textarea || textarea.dataset.toastuiBound === 'true' || textarea.dataset.markdownReadonly === 'true') return
     if (!window.toastui?.Editor) return
 
     if (!textarea.parentNode) return
+
+    // For disabled textareas (read-only forms), don't mount the rich editor.
+    // Instead, render a static read-only view so the toolbar doesn't appear.
+    // Uses a separate flag so the editor can be initialized if the textarea
+    // is later enabled (e.g. via JS toggling edit mode).
+    if (textarea.disabled) {
+        textarea.dataset.markdownReadonly = 'true'
+        const wrapper = textarea.closest('.markdown-wrapper')
+        if (wrapper) {
+            textarea.hidden = true
+            const readonlyDiv = document.createElement('div')
+            readonlyDiv.className = 'markdown-readonly-view'
+            readonlyDiv.textContent = textarea.value || ''
+            wrapper.appendChild(readonlyDiv)
+        }
+        return
+    }
 
     textarea.dataset.toastuiBound = 'true'
 
@@ -209,13 +226,37 @@ const initToastUiMarkdownTextarea = (textarea) => {
     textarea.__eventyayToastUiEditor = editor
     mount.__eventyayToastUiEditor = editor
 
-    const fieldLang = textarea.getAttribute('lang') || textarea.lang
-    if (fieldLang) {
-        const ww = mount.querySelector?.('.toastui-editor-ww-container')
-        if (ww) ww.setAttribute('lang', fieldLang)
-        const md = mount.querySelector?.('.toastui-editor-md-container')
-        if (md) md.setAttribute('lang', fieldLang)
+    const applyLanguageDirection = () => {
+        const fieldLang = textarea.getAttribute('lang') || textarea.lang
+        const fieldDir = textarea.getAttribute('dir') || textarea.dir
+
+        const flagTargets = mount.querySelectorAll?.([
+            '.toastui-editor-ww-container',
+            '.toastui-editor-md-container',
+        ].join(',')) || []
+
+        flagTargets.forEach((element) => {
+            if (fieldLang) element.setAttribute('lang', fieldLang)
+            if (fieldDir) element.setAttribute('dir', fieldDir)
+        })
+
+        if (!fieldDir) return
+
+        const editorTargets = mount.querySelectorAll?.([
+            '.toastui-editor-contents',
+            '.ProseMirror',
+            '.toastui-editor-md-preview',
+            '.toastui-editor-md-code',
+            '.cm-editor',
+            '.cm-content',
+        ].join(',')) || []
+
+        editorTargets.forEach((element) => {
+            element.setAttribute('dir', fieldDir)
+        })
     }
+    applyLanguageDirection()
+    requestAnimationFrame(applyLanguageDirection)
 
     const installAbsoluteLinkOnlyValidation = () => {
         if (!window.MutationObserver) return () => { }
@@ -410,6 +451,8 @@ const initToastUiMarkdownTextarea = (textarea) => {
             if (typeof editor.changeMode === 'function') {
                 editor.changeMode(isMarkdownMode ? 'markdown' : 'wysiwyg', true)
             }
+
+            requestAnimationFrame(applyLanguageDirection)
 
             syncToTextarea()
         })
@@ -736,6 +779,7 @@ const initFormChanges = (form) => {
 
 const initFormButton = (form) => {
     form.querySelectorAll("button[type=submit]").forEach(submitButton => {
+        if (submitButton.hasAttribute('data-no-loading') || submitButton.id === 'button-sudo' || submitButton.id === 'button-shop') return;
         const submitButtonText = submitButton.textContent
         let lastSubmit = 0
         form.addEventListener("submit", () => {

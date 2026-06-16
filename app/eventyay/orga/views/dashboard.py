@@ -14,6 +14,7 @@ from eventyay.base.models import Submission, SubmissionStates
 from eventyay.base.models.event import Event
 from eventyay.base.models.log import LogEntry
 from eventyay.base.models.organizer import Organizer
+from eventyay.base.settings import is_event_series_creation_enabled
 from eventyay.common.text.phrases import phrases
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
@@ -32,7 +33,7 @@ def start_redirect_view(request):
             return redirect(orga_events.pop().orga_urls.base)
         return redirect(speaker_events.pop().urls.user_submissions)
 
-    return redirect(reverse('orga:event.list'))
+    return redirect(reverse('eventyay_common:dashboard'))
 
 
 class DashboardEventListView(TemplateView):
@@ -75,6 +76,7 @@ class DashboardEventListView(TemplateView):
         context['speaker_events'] = (
             Event.objects.filter(submissions__speakers__in=[self.request.user]).distinct().order_by('-date_from')
         )
+        context['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         return context
 
 

@@ -20,7 +20,7 @@ from eventyay.orga.views import (
 
 app_name = 'orga'
 urlpatterns = [
-    path("", RedirectView.as_view(url="event", permanent=False), name="base"),
+    path('', RedirectView.as_view(pattern_name='eventyay_common:dashboard', permanent=False), name='base'),
     path("reset/", auth.ResetView.as_view(), name="auth.reset"),
     path("reset/<token>", auth.RecoverView.as_view(), name="auth.recover"),
     path('me', person.UserSettings.as_view(), name='user.view'),  # Change this to common/account/general.
@@ -66,7 +66,7 @@ urlpatterns = [
             ]
         ),
     ),
-    path("event/", dashboard.DashboardEventListView.as_view(), name="event.list"),
+    path('event/', dashboard.DashboardEventListView.as_view(), name='event.list'),
     path(
         'event/<slug:event>/',
         include(
@@ -113,7 +113,31 @@ urlpatterns = [
                     event.WidgetSettings.as_view(),
                     name='settings.widget',
                 ),
-
+                path(
+                    'settings/import-export/',
+                    event.ImportExportSettings.as_view(),
+                    name='settings.import_export',
+                ),
+                path(
+                    'settings/import-export/speakers/import/<uuid:file>/',
+                    speaker.SpeakerImportProcessView.as_view(),
+                    name='settings.import_export.speakers_import_process',
+                ),
+                path(
+                    'settings/import-export/submissions/import/<uuid:file>/',
+                    submission.SubmissionImportProcessView.as_view(),
+                    name='settings.import_export.submissions_import_process',
+                ),
+                path(
+                    'settings/import-export/schedule/export/trigger',
+                    schedule.ScheduleExportTriggerView.as_view(),
+                    name='settings.import_export.schedule_export_trigger',
+                ),
+                path(
+                    'settings/import-export/schedule/export/download',
+                    schedule.ScheduleExportDownloadView.as_view(),
+                    name='settings.import_export.schedule_export_download',
+                ),
                 path(
                     'cfp/',
                     RedirectView.as_view(pattern_name='orga:cfp.text.view'),
@@ -122,11 +146,6 @@ urlpatterns = [
                 path('cfp/text/', cfp.CfPTextDetail.as_view(), name='cfp.text.view'),
                 path('cfp/flow/', cfp.CfPFlowEditor.as_view(), name='cfp.flow'),
                 path('cfp/questions/', cfp.CfPForms.as_view(), name='cfp.questions.view'),
-                *cfp.QuestionView.get_urls(
-                    url_base='cfp/questions',
-                    url_name='cfp.questions',
-                    namespace='orga',
-                ),
                 path(
                     'cfp/questions/remind/',
                     cfp.CfPQuestionRemind.as_view(),
@@ -136,6 +155,16 @@ urlpatterns = [
                     'cfp/questions/<int:pk>/toggle/',
                     cfp.CfPQuestionToggle.as_view(),
                     name='cfp.question.toggle',
+                ),
+                path(
+                    'cfp/questions/<int:question>/options/',
+                    cfp.QuestionOptionsAjax.as_view(),
+                    name='cfp.questions.options',
+                ),
+                *cfp.QuestionView.get_urls(
+                    url_base='cfp/questions',
+                    url_name='cfp.questions',
+                    namespace='orga',
                 ),
                 *cfp.TrackView.get_urls(
                     url_base='cfp/tracks',
@@ -201,16 +230,6 @@ urlpatterns = [
                     url_base='submissions/tags',
                     url_name='submissions.tags',
                     namespace='orga',
-                ),
-                path(
-                    'submissions/import/',
-                    submission.SubmissionImportView.as_view(),
-                    name='submissions.import',
-                ),
-                path(
-                    'submissions/import/<uuid:file>/',
-                    submission.SubmissionImportProcessView.as_view(),
-                    name='submissions.import.process',
                 ),
                 path(
                     'submissions/<code>/',
@@ -321,21 +340,6 @@ urlpatterns = [
                 ),
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
                 path(
-                    'speakers/export/',
-                    speaker.SpeakerExport.as_view(),
-                    name='speakers.export',
-                ),
-                path(
-                    'speakers/import/',
-                    speaker.SpeakerImportView.as_view(),
-                    name='speakers.import',
-                ),
-                path(
-                    'speakers/import/<uuid:file>/',
-                    speaker.SpeakerImportProcessView.as_view(),
-                    name='speakers.import.process',
-                ),
-                path(
                     'speakers/<code>/',
                     include(
                         [
@@ -398,21 +402,6 @@ urlpatterns = [
                     name='reviews.export',
                 ),
                 path('schedule/', schedule.ScheduleView.as_view(), name='schedule.main'),
-                path(
-                    'schedule/export/',
-                    schedule.ScheduleExportView.as_view(),
-                    name='schedule.export',
-                ),
-                path(
-                    'schedule/export/trigger',
-                    schedule.ScheduleExportTriggerView.as_view(),
-                    name='schedule.export.trigger',
-                ),
-                path(
-                    'schedule/export/download',
-                    schedule.ScheduleExportDownloadView.as_view(),
-                    name='schedule.export.download',
-                ),
                 path(
                     'schedule/release',
                     schedule.ScheduleReleaseView.as_view(),

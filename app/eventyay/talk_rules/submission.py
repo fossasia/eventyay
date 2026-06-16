@@ -231,22 +231,23 @@ def questions_for_user(request, event, user):
 
     if user.has_perm('base.update_talkquestion', event) or is_admin_mode_active(request):
         # Organizers with edit permissions can see everything
-        return event.talkquestions(manager='all_objects').all()
+        return event.talkquestions(manager='all_objects').filter(is_imported=False)
     if not user.is_anonymous and is_only_reviewer(user, event) and can_view_speaker_names(user, event):
         return event.talkquestions(manager='all_objects').filter(
             Q(is_visible_to_reviewers=True) | Q(target=TalkQuestionTarget.REVIEWER),
             active=True,
+            is_imported=False,
         )
     if user.has_perm('base.orga_list_talkquestion', event):
         # Other team members can either view all active talkquestions
         # or only talkquestions open to reviewers
-        return event.talkquestions(manager='all_objects').all()
+        return event.talkquestions(manager='all_objects').filter(is_imported=False)
 
     # Now we are left with anonymous users or users with very limited permissions.
     # They can see all public (non-reviewer) talkquestions if they are already publicly
     # visible in the schedule. Otherwise, nothing.
     if user.has_perm('base.list_talkquestion', event):
-        return event.talkquestions.all().filter(is_public=True)
+        return event.talkquestions.all().filter(is_public=True, is_imported=False)
     return event.talkquestions.none()
 
 
@@ -282,6 +283,9 @@ def limit_for_reviewers(queryset, event, user, reviewer_tracks=None, add_assignm
 
 
 def submissions_for_user(event, user):
+    from eventyay.base.models import Submission
+    from eventyay.talk_rules.agenda import can_view_wip_schedule
+
     if not user.is_anonymous:
         if is_only_reviewer(user, event):
             return limit_for_reviewers(event.submissions.all(), event, user)
@@ -290,8 +294,16 @@ def submissions_for_user(event, user):
 
     # Fall through: both anon users and users without permissions
     # get here, e.g. speakers or attendees.
+    wip = event.wip_schedule
+    if not user.is_anonymous and wip and can_view_wip_schedule(user, event):
+        return Submission.objects.filter(
+            pk__in=wip.talks.filter(submission__isnull=False).values_list('submission_id', flat=True)
+        )
+
     if user.has_perm('base.list_schedule', event):
-        return event.current_schedule.slots
+        current = event.current_schedule
+        if current:
+            return current.slots
     return event.submissions.none()
 
 

@@ -219,14 +219,15 @@ input[type="file"] {
       background-color: #dde0e3;
     }
   }
-  input[type="file"] {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
+}
+.eventyay-file-pick-wrapper input[type="file"],
+.eventyay-file-pick-wrapper input[type="file"]:disabled {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 .eventyay-file-name {
   font-size: 0.875em;
@@ -418,7 +419,7 @@ input[type="search"] {
   margin: auto;
 }
 
-input[type="number"] {
+input[type="number"]:not(.show-spinner) {
   -moz-appearance: textfield !important;
   appearance: textfield !important;
 

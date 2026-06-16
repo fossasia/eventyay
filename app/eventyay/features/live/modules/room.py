@@ -1,36 +1,45 @@
 import asyncio
+import ipaddress
 import logging
+import secrets
+import socket
 import time
 from datetime import timedelta
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
+import asgiref.sync
+import requests as http_requests
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
+from requests import RequestException
 from sentry_sdk import add_breadcrumb, configure_scope
 
 from eventyay.base.models.room import AnonymousInvite, RoomConfigSerializer
-from eventyay.core.permissions import Permission
-from eventyay.base.services.poll import get_polls, get_voted_polls
-from eventyay.base.services.reactions import store_reaction
-from eventyay.base.services.room import (
-    delete_room,
-    end_view,
-    get_viewers,
-    reorder_rooms,
-    save_room,
-    start_view,
-)
 from eventyay.base.services.event import (
     create_room,
     get_room_config_for_user,
     get_rooms,
     notify_event_change,
 )
+from eventyay.base.services.poll import get_polls, get_voted_polls
+from eventyay.base.services.reactions import store_reaction
+from eventyay.base.services.room import (
+    delete_room,
+    end_view,
+    get_viewers,
+    normalize_after_priority_change,
+    reorder_rooms,
+    save_room,
+    start_view,
+    validate_room_config_patch,
+)
+from eventyay.core.permissions import Permission
 from eventyay.core.utils.redis import aredis
 from eventyay.features.live.channels import (
+    GROUP_EVENT,
     GROUP_ROOM,
     GROUP_ROOM_POLL_ALL_RESULTS,
     GROUP_ROOM_POLL_MANAGE,
@@ -39,7 +48,6 @@ from eventyay.features.live.channels import (
     GROUP_ROOM_QUESTION_MODERATE,
     GROUP_ROOM_QUESTION_READ,
     GROUP_ROOM_VIEWERS,
-    GROUP_EVENT,
 )
 from eventyay.features.live.decorators import (
     command,
@@ -50,7 +58,12 @@ from eventyay.features.live.decorators import (
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
 
+
 logger = logging.getLogger(__name__)
+
+
+def serialize_room_config(room_or_rooms, many=False):
+    return RoomConfigSerializer(room_or_rooms, many=many).data
 
 
 class RoomModule(BaseModule):
@@ -59,6 +72,111 @@ class RoomModule(BaseModule):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.current_views = {}
+
+    @staticmethod
+    def _is_private_url(url):
+        """Check if a URL points to a private/localhost address (SSRF protection)."""
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return True
+        if hostname in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+            return True
+        try:
+            for info in socket.getaddrinfo(hostname, None):
+                addr = info[4][0]
+                if not ipaddress.ip_address(addr).is_global:
+                    return True
+        except (socket.gaierror, ValueError):
+            return True
+        return False
+
+    async def _verify_webhook_challenges(self, old_module_config, new_module_config):
+        """
+        When module_config is updated, verify any new webhook URLs via
+        challenge-response before allowing them to be saved.
+        """
+        old_urls = {}
+        for m in old_module_config:
+            cfg = m.get("config", {})
+            url = cfg.get("webhook_url")
+            if url:
+                old_urls[m["type"]] = url
+
+        for m in new_module_config:
+            cfg = m.get("config", {})
+            url = cfg.get("webhook_url")
+            secret = cfg.get("webhook_hmac_secret")
+            if not url:
+                continue
+            # Always validate secret when URL is set (not just on URL change)
+            if not secret:
+                raise ConsumerException(
+                    "webhook.missing_secret",
+                    "webhook_hmac_secret is required when webhook_url is set.",
+                )
+            # Validate URL structure
+            parsed = urlparse(url)
+            scheme = (parsed.scheme or "").lower()
+            if scheme not in ("https", "http"):
+                raise ConsumerException(
+                    "webhook.invalid_url",
+                    "Webhook URL must use http or https.",
+                )
+            if scheme != "https" and not settings.DEBUG:
+                raise ConsumerException(
+                    "webhook.insecure_url",
+                    "Webhook URL must use HTTPS in production.",
+                )
+            if parsed.fragment or parsed.username or parsed.password:
+                raise ConsumerException(
+                    "webhook.invalid_url",
+                    "Webhook URL must not contain fragments or credentials.",
+                )
+            # Block private/localhost targets (SSRF protection), skip in DEBUG
+            if not settings.DEBUG:
+                is_private = await asgiref.sync.sync_to_async(
+                    self._is_private_url
+                )(url)
+                if is_private:
+                    raise ConsumerException(
+                        "webhook.invalid_url",
+                        "Webhook URL must not point to a private network address.",
+                    )
+            # Only run challenge verification if the URL is new or changed
+            if old_urls.get(m["type"]) == url:
+                continue
+            # Challenge verification
+            challenge_token = secrets.token_urlsafe(32)
+            try:
+                resp = await asgiref.sync.sync_to_async(http_requests.get)(
+                    url,
+                    params={"challenge": challenge_token},
+                    timeout=5,
+                    allow_redirects=False,
+                )
+            except RequestException:
+                raise ConsumerException(
+                    "webhook.verification_failed",
+                    "Could not reach webhook URL for challenge verification.",
+                )
+            if resp.status_code != 200:
+                raise ConsumerException(
+                    "webhook.verification_failed",
+                    f"Webhook challenge returned HTTP {resp.status_code}.",
+                )
+            try:
+                data = resp.json()
+            except ValueError:
+                raise ConsumerException(
+                    "webhook.verification_failed",
+                    "Webhook challenge response is not valid JSON.",
+                )
+            if data.get("challenge") != challenge_token:
+                raise ConsumerException(
+                    "webhook.verification_failed",
+                    "Webhook challenge token mismatch.",
+                )
 
     @command("enter")
     @room_action(permission_required=Permission.ROOM_VIEW)
@@ -366,24 +484,39 @@ class RoomModule(BaseModule):
     @require_event_permission(Permission.ROOM_UPDATE)
     async def rooms_list(self, body):
         rooms = await database_sync_to_async(get_rooms)(self.consumer.event, user=None)
-        await self.consumer.send_success(RoomConfigSerializer(rooms, many=True).data)
+        await self.consumer.send_success(await database_sync_to_async(serialize_room_config)(rooms, many=True))
 
     @command("config.get")
     @room_action(permission_required=Permission.ROOM_UPDATE)
     async def config_get(self, body):
-        await self.consumer.send_success(RoomConfigSerializer(self.room).data)
+        await self.consumer.send_success(await database_sync_to_async(serialize_room_config)(self.room))
 
     @command("config.patch")
     @room_action(permission_required=Permission.ROOM_UPDATE)
     async def config_patch(self, body):
-        old = RoomConfigSerializer(self.room).data
-        s = RoomConfigSerializer(self.room, data=body, partial=True)
-        if s.is_valid():
-            update_fields = set()
-            for f in s.fields.keys():
-                if f in body:
-                    setattr(self.room, f, s.validated_data[f])
-                    update_fields.add(f)
+        old = await database_sync_to_async(serialize_room_config)(self.room)
+        validated_data, update_fields = await database_sync_to_async(
+            validate_room_config_patch
+        )(self.room, body)
+        if validated_data is not None:
+            for field in update_fields:
+                setattr(self.room, field, validated_data[field])
+
+            # Validate webhook URL via challenge verification when module_config changes
+            if "module_config" in update_fields:
+                try:
+                    await self._verify_webhook_challenges(
+                        old.get("module_config") or [],
+                        self.room.module_config or [],
+                    )
+                except ConsumerException:
+                    raise
+                except Exception:
+                    logger.exception("Webhook challenge verification failed")
+                    await self.consumer.send_error(
+                        code="webhook.verification_failed"
+                    )
+                    return
 
             # When module_config is updated, ensure open-viewer rooms have participant: [] so
             # implicit participant-role permissions (chat, questions, polls, BBB/join, etc.) work.
@@ -404,6 +537,16 @@ class RoomModule(BaseModule):
                 old_data=old,
                 by_user=self.consumer.user,
             )
+            if "sorting_priority" in update_fields:
+                await database_sync_to_async(normalize_after_priority_change)(
+                    self.consumer.event,
+                    self.room.id,
+                    self.room.sorting_priority,
+                )
+                await database_sync_to_async(self.room.refresh_from_db)(
+                    fields=["sorting_priority"]
+                )
+                new = await database_sync_to_async(serialize_room_config)(self.room)
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)
         else:
@@ -414,19 +557,19 @@ class RoomModule(BaseModule):
     async def config_reorder(self, body):
         await reorder_rooms(self.consumer.event, body, self.consumer.user)
         rooms = await database_sync_to_async(get_rooms)(self.consumer.event, user=None)
-        await self.consumer.send_success(RoomConfigSerializer(rooms, many=True).data)
+        await self.consumer.send_success(await database_sync_to_async(serialize_room_config)(rooms, many=True))
         await notify_event_change(self.consumer.event.id)
 
     @command("delete")
     @room_action(permission_required=Permission.ROOM_DELETE)
     async def delete(self, body):
-        self.room.deleted = True
         await delete_room(self.consumer.event, self.room, by_user=self.consumer.user)
         await self.consumer.send_success()
         await get_channel_layer().group_send(
             f"event.{self.consumer.event.id}",
             {"type": "room.delete", "room": str(self.room.id)},
         )
+        await notify_event_change(self.consumer.event.id)
 
     @event("delete")
     async def push_room_delete(self, body):
@@ -435,7 +578,7 @@ class RoomModule(BaseModule):
     @command("schedule")
     @room_action(permission_required=Permission.ROOM_ANNOUNCE)
     async def change_schedule_data(self, body):
-        old = RoomConfigSerializer(self.room).data
+        old = await database_sync_to_async(serialize_room_config)(self.room)
         data = body.get("schedule_data")
         if data and not all(
             key in ["title", "session", "computeSession"] for key in data.keys()

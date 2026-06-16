@@ -21,10 +21,12 @@ from rest_framework import serializers
 
 from eventyay.base.models import Choices, User
 from eventyay.common.exceptions import SubmissionError
+from eventyay.common.language import LANGUAGE_NAMES
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.text.serialize import serialize_duration
 from eventyay.common.urls import EventUrls
+from eventyay.submission.constants import AUTO_DRAFT_TITLE
 from eventyay.submission.signals import submission_state_change
 from eventyay.talk_rules.agenda import (
     event_uses_feedback,
@@ -326,6 +328,7 @@ class Submission(GenerateCode, PretalxModel):
         confirm = '{user_base}confirm'
         public_base = '{self.event.urls.base}talk/{self.code}'
         public = '{public_base}/'
+        wip_public = '{self.event.urls.base}schedule/v/wip/talk/{self.code}/'
         feedback = '{public}feedback/'
         social_image = '{public}og-image'
         ical = '{public_base}.ics'
@@ -586,7 +589,7 @@ class Submission(GenerateCode, PretalxModel):
                 'submission': self,
             },
             context={
-                'full_submission_content': self.get_content_for_mail(),
+                'full_submission_content': self.get_content_for_mail(locale=locale),
             },
             skip_queue=True,
             commit=True,  # Send immediately, but save a record
@@ -723,7 +726,10 @@ class Submission(GenerateCode, PretalxModel):
         return self.event.locale
 
     def get_content_locale_display(self):
-        return str(dict(self.event.named_content_locales)[self.content_locale])
+        locales = dict(self.event.named_content_locales)
+        if self.content_locale in locales:
+            return str(locales[self.content_locale])
+        return str(LANGUAGE_NAMES.get(self.content_locale, self.content_locale))
 
     def send_state_mail(self):
         from .mail import MailTemplateRoles
@@ -875,9 +881,15 @@ class Submission(GenerateCode, PretalxModel):
         """Helper method for a consistent speaker name display."""
         return ', '.join(speaker.get_display_name() for speaker in self.speakers.all())
 
+    @property
+    def display_title(self):
+        if self.title == AUTO_DRAFT_TITLE:
+            return _('Untitled draft')
+        return self.title
+
     @cached_property
     def display_title_with_speakers(self):
-        title = f'{phrases.base.quotation_open}{self.title}{phrases.base.quotation_close}'
+        title = f'{phrases.base.quotation_open}{self.display_title}{phrases.base.quotation_close}'
         if not self.speakers.exists():
             return title
         return _('{title_in_quotes} by {list_of_speakers}').format(
@@ -955,41 +967,53 @@ class Submission(GenerateCode, PretalxModel):
         all_availabilities = self.event.availabilities.filter(person__in=self.speaker_profiles)
         return Availability.intersection(all_availabilities)
 
-    def get_content_for_mail(self):
-        order = [
-            'title',
-            'abstract',
-            'description',
-            'notes',
-            'duration',
-            'content_locale',
-            'do_not_record',
-            'image',
-        ]
-        data = []
-        result = ''
-        for field in order:
-            field_content = getattr(self, field, None)
-            if field_content:
-                _field = self._meta.get_field(field)
-                field_name = _field.verbose_name or _field.name
-                data.append({'name': field_name, 'value': field_content})
-        for answer in self.answers.all().order_by('question__position'):
-            if answer.question.variant == 'boolean':
-                data.append({'name': answer.question.question, 'value': answer.boolean_answer})
-            elif answer.answer_file:
-                data.append({'name': answer.question.question, 'value': answer.answer_file})
-            else:
-                data.append({'name': answer.question.question, 'value': answer.answer or '-'})
-        for content in data:
-            field_name = content['name']
-            field_content = content['value']
-            if isinstance(field_content, bool):
-                field_content = _('Yes') if field_content else _('No')
-            elif isinstance(field_content, FieldFile):
-                field_content = (self.event.custom_domain or settings.SITE_URL) + field_content.url
-            result += f'**{field_name}**: {field_content}\n\n'
-        return result
+    def get_content_for_mail(self, locale=None):
+        locale = locale or self.get_email_locale()
+        with override(locale):
+            order = [
+                'title',
+                'abstract',
+                'description',
+                'notes',
+                'duration',
+                'content_locale',
+                'do_not_record',
+                'image',
+            ]
+            data = []
+            info_step_config = self.event.cfp_flow.config.get('steps', {}).get('info', {})
+            info_fields = {
+                field_key: field
+                for field in info_step_config.get('fields', [])
+                if isinstance(field, dict) and (field_key := field.get('key'))
+            }
+
+            for field in order:
+                field_content = getattr(self, field, None)
+                if field_content:
+                    _field = self._meta.get_field(field)
+                    field_name = _field.verbose_name or _field.name
+                    if field in info_fields and info_fields[field].get('label'):
+                        field_name = str(info_fields[field]['label'])
+                    data.append({'name': field_name, 'value': field_content})
+            for answer in self.answers.select_related('question').order_by('question__position'):
+                if answer.question.variant == 'boolean':
+                    data.append({'name': answer.question.question, 'value': answer.boolean_answer})
+                elif answer.answer_file:
+                    data.append({'name': answer.question.question, 'value': answer.answer_file})
+                else:
+                    data.append({'name': answer.question.question, 'value': answer.answer or '-'})
+
+            result = ''
+            for content in data:
+                field_name = content['name']
+                field_content = content['value']
+                if isinstance(field_content, bool):
+                    field_content = _('Yes') if field_content else _('No')
+                elif isinstance(field_content, FieldFile):
+                    field_content = (self.event.custom_domain or settings.SITE_URL) + field_content.url
+                result += f'**{field_name}**: {field_content}\n\n'
+            return result
 
     def add_speaker(self, email, name=None, locale=None, user=None):
         from eventyay.common.urls import build_absolute_uri

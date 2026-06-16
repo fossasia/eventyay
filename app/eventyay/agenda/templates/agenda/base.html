@@ -9,6 +9,8 @@
 {% load safelink %}
 
 {% load presale_locale %}
+{% load nav_tags %}
+{% load static %}
 {% block custom_header %}
     {% block alternate_link %}
         <link rel="alternate" type="application/atom+xml" title="{{ request.event.name|event_localize }} Schedule Versions" href="{{ request.event.urls.feed }}" />
@@ -52,3 +54,28 @@
     {% endif %}
     {% block agenda_content %}{% endblock agenda_content %}
 {% endblock content %}
+
+{% block body_bottom %}
+    {{ block.super }}
+    {% is_wip_agenda_preview request as wip_preview %}
+    {% if wip_preview %}
+        <dialog id="agenda-wip-preview-leave-dialog" class="agenda-wip-preview-leave-dialog" aria-labelledby="agenda-wip-preview-leave-title" aria-describedby="agenda-wip-preview-leave-message">
+            <div class="agenda-wip-preview-leave-dialog__card">
+                <p class="agenda-wip-preview-leave-dialog__icon" aria-hidden="true">
+                    <i class="fa fa-eye-slash"></i>
+                </p>
+                <h3 id="agenda-wip-preview-leave-title">{% translate "Leave schedule preview?" %}</h3>
+                <p id="agenda-wip-preview-leave-message" class="agenda-wip-preview-leave-dialog__message">
+                    {% blocktranslate trimmed %}
+                        You are moving away from schedule preview mode. This will move you to the public view. You will only be able to see the schedule if it is public and released.
+                    {% endblocktranslate %}
+                </p>
+                <div class="agenda-wip-preview-leave-dialog__actions">
+                    <button type="button" class="btn btn-default" data-wip-preview-action="stay">{% translate "Stay in preview" %}</button>
+                    <button type="button" class="btn btn-primary" data-wip-preview-action="leave">{% translate "Go to public view" %}</button>
+                </div>
+            </div>
+        </dialog>
+        <script type="module" src="{% static 'agenda/js/wip-preview-guard.js' %}"></script>
+    {% endif %}
+{% endblock body_bottom %}

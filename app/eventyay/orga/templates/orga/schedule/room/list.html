@@ -33,6 +33,9 @@
                     <tr dragsort-id="{{ room.pk }}">
                         <td>
                             <a href="{{ room.urls.edit }}">{{ room.name }}</a>
+                            {% if room.is_unscheduled %}
+                                <span class="badge badge-info text-dark">{% translate "Unscheduled" %}</span>
+                            {% endif %}
                         </td>
                         <td class="numeric">
                             {% if room.capacity %}{{ room.capacity }}{% endif %}

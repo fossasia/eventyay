@@ -5,9 +5,9 @@
 			.generic-settings
 				bunt-input(name="name", v-model="localizedName", label="Name", :validation="v$.config.name")
 				bunt-input(name="description", v-model="localizedDescription", label="Description")
-				bunt-input(name="sorting_priority", v-model="config.sorting_priority", label="Sorting priority", :validation="v$.config.sorting_priority")
+				div(:title="config.has_linked_sessions ? \"Room has linked sessions and can't be marked unscheduled\" : ''")
+					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", label="Unscheduled room (hide from schedule/sessions)", :disabled="config.has_linked_sessions")
 				template(v-if="inferredType")
-					bunt-input(v-if="inferredType.id === 'stage' || inferredType.id === 'channel-bbb'", name="pretalx_id", v-model="config.pretalx_id", label="pretalx ID", :validation="v$.config.pretalx_id")
 					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules")
 			stream-schedule(v-if="!creating && config.id && inferredType && inferredType.id === 'stage'", :room-id="String(config.id)")
@@ -20,8 +20,7 @@ import { markRaw } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
-import Prompt from 'components/Prompt'
-import { required, integer } from 'lib/validators'
+import { required } from 'lib/validators'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
 import ROOM_TYPES, { inferType } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
@@ -37,7 +36,7 @@ import PageLanding from './types-edit/page-landing'
 import StreamSchedule from './StreamSchedule'
 
 export default {
-	components: { Prompt, StreamSchedule },
+	components: { StreamSchedule },
 	mixins: [ValidationErrorsMixin],
 	props: {
 		config: {
@@ -100,21 +99,13 @@ export default {
 		}
 	},
 	validations() {
-		const config = {
-			name: {
-				required: required('name is required')
-			},
-			sorting_priority: {
-				integer: integer('sorting priority must be a number')
-			},
-			pretalx_id: {
-				integer: integer('pretalx id must be a number')
+		return {
+			config: {
+				name: {
+					required: required('name is required')
+				},
 			},
 		}
-
-		if (!this.creating) config.sorting_priority.required = required('sorting priority is required')
-
-		return { config }
 	},
 	methods: {
 		async save() {
@@ -132,16 +123,16 @@ export default {
 						modules: []
 					}))
 				}
-				await api.call('room.config.patch', {
+				const updated = await api.call('room.config.patch', {
 					room: roomId,
 					name: this.config.name,
 					description: this.config.description,
-					sorting_priority: this.config.sorting_priority === '' ? undefined : this.config.sorting_priority,
-					pretalx_id: this.config.pretalx_id || 0, // TODO weird default
 					picture: this.config.picture,
 					force_join: this.config.force_join,
+					is_unscheduled: this.config.is_unscheduled,
 					module_config: this.config.module_config,
 				})
+				Object.assign(this.config, updated)
 				this.saving = false
 				if (this.creating) {
 					this.$router.push({name: 'admin:rooms:item', params: {roomId}})

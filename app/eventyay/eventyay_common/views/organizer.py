@@ -96,6 +96,7 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
             can_video_view_users=True,
             can_video_manage_users=True,
             can_video_manage_rooms=True,
+            can_video_manage_polls_questions=True,
             can_video_manage_kiosks=True,
             can_video_manage_configuration=True,
         )
