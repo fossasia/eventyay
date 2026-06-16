@@ -57,22 +57,18 @@ def test_orga_live_page_renders(organizer_client, event):
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
-def test_orga_private_testmode_talks_redirects_to_central(organizer_client, event):
-    """After toggling private test mode for talks on the orga page, redirect to central status."""
+def test_orga_private_testmode_talks_stays_on_orga_page(organizer_client, event):
+    """After toggling private test mode for talks on the orga page, stay on the orga page."""
     event.private_testmode = True
     event.settings.set('private_testmode_talks', True)
     event.save()
 
     orga_url = reverse('orga:event.live', kwargs={'event': event.slug})
-    central_url = reverse(
-        'eventyay_common:event.live',
-        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
-    )
     response = organizer_client.post(
         orga_url, {'private_testmode_talks_action': 'disable'}
     )
     assert response.status_code in {301, 302}
-    assert response.headers['Location'].endswith(central_url)
+    assert response.headers['Location'].endswith(orga_url)
 
 
 @pytest.mark.django_db
