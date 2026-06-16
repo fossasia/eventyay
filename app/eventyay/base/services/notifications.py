@@ -174,7 +174,7 @@ def notify_organizer_followers(event_id: int):
         event_url = settings.SITE_URL
 
     followers = (
-        OrganizerFollower.objects.filter(organizer=organizer, muted=False)
+        OrganizerFollower.objects.filter(organizer=organizer)
         .select_related('user')
         .iterator()
     )

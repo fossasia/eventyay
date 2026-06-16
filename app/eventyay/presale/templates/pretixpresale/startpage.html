@@ -255,6 +255,16 @@
                                 {% endfor %}
                             </div>
                         </section>
+                        {% if followed_upcoming_events %}
+                            <section class="startpage-events" aria-label="{% trans "Upcoming events from followed organizers" %}">
+                                <h2>{% trans "Upcoming events from followed organizers" %}</h2>
+                                <div class="startpage-event-list">
+                                    {% for event in followed_upcoming_events %}
+                                        {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                    {% endfor %}
+                                </div>
+                            </section>
+                        {% endif %}
                         {% if past_events %}
                             <section class="startpage-events" aria-label="{% trans "Past events" %}">
                                 <h2>{% trans "Past events" %}</h2>

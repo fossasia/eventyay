@@ -25,7 +25,6 @@ class OrganizerFollower(models.Model):
         verbose_name=_('Organizer'),
     )
     created = models.DateTimeField(auto_now_add=True)
-    muted = models.BooleanField(default=False, verbose_name=_('Muted'))
 
     class Meta:
         constraints = [
