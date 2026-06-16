@@ -1,5 +1,7 @@
-const dialog = document.getElementById('contact-organizer-dialog');
-if (dialog) {
+const initContactModal = () => {
+    const dialog = document.getElementById('contact-organizer-dialog');
+    if (!dialog) return;
+
     const i18n = dialog.dataset;
     const form = document.getElementById('contact-organizer-form');
     const closeBtn = document.getElementById('contact-modal-close');
@@ -82,4 +84,10 @@ if (dialog) {
                 showError(i18n.msgNetworkError);
             });
     });
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initContactModal);
+} else {
+    initContactModal();
 }
