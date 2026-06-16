@@ -17,12 +17,12 @@
 	bunt-input(v-else-if="modules['livestream.youtube']", name="ytid", v-model="modules['livestream.youtube'].config.ytid", label="YouTube Video ID or URL", :validation="v$.modules['livestream.youtube'].config.ytid", @blur="normalizePrimaryYoutubeId")
 	// Language and URL input for YouTube stream
 	.language-urls(v-if="modules['livestream.youtube']")
-		h4 Languages and YouTube ID
+		h4 Languages and Audio Source
 		.language-url-entry(v-for="(entry, index) in modules['livestream.youtube'].config.languageUrls" :key="index")
 			bunt-select(name="language", v-model="entry.language", :options="ISO_LANGUAGE_OPTIONS", label="Language")
-			bunt-input(name="youtube_id" v-model="entry.youtube_id" label="YouTube Video ID or URL" @blur="normalizeLanguageYoutubeId(entry)")
+			bunt-input(name="youtube_id" v-model="entry.youtube_id" label="Audio Source (YouTube ID or WHEP URL)" @blur="normalizeLanguageYoutubeId(entry)")
 			bunt-icon-button(@click="deleteLanguageUrl(index)") delete-outline
-		bunt-button(@click="addLanguageUrl") + Add Language and Youtube ID
+		bunt-button(@click="addLanguageUrl") + Add Language and Audio Source
 		// Switch button for no-cookies domain
 		.bunt-switch-container
 			bunt-switch(name="enablePrivacyEnhancedMode", v-model="enablePrivacyEnhancedMode", label="Enable No-Cookies")
@@ -171,8 +171,15 @@ export default defineComponent({
 		},
 		normalizeLanguageYoutubeId(entry) {
 			if (!entry?.youtube_id) return
-			const id = normalizeYoutubeVideoId(entry.youtube_id)
-			if (id) entry.youtube_id = id
+			try {
+				new URL(entry.youtube_id)
+				const id = normalizeYoutubeVideoId(entry.youtube_id)
+				if (id) entry.youtube_id = id
+				return
+			} catch (e) {
+				const id = normalizeYoutubeVideoId(entry.youtube_id)
+				if (id) entry.youtube_id = id
+			}
 		},
 		setYoutubeConfigProp(prop, value) {
 			if (!this.modules['livestream.youtube']) return
