@@ -147,15 +147,6 @@ class EventLive(EventSettingsPermission, TemplateView):
         result['talks_published'] = self.request.event.talks_published
         return result
 
-    def _central_status_url(self):
-        return reverse(
-            'eventyay_common:event.live',
-            kwargs={
-                'organizer': self.request.event.organizer.slug,
-                'event': self.request.event.slug,
-            },
-        )
-
     def post(self, request, *args, **kwargs):
         event = request.event
         if request.POST.get('talks_published') == 'true':
@@ -253,8 +244,6 @@ class EventLive(EventSettingsPermission, TemplateView):
                 self.request,
                 _('Private test mode is now enabled for talks.') if enable else _('Private test mode is now disabled for talks.'),
             )
-            # Redirect to the central status control page after private test mode changes
-            return redirect(self._central_status_url())
         return redirect(event.orga_urls.live)
 
 
