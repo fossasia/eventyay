@@ -242,7 +242,10 @@ export default {
 			if (apiContent && apiContent.answers && apiContent.answers.length > 0) return []
 			const answers = this.modalContent?.contentObject?.answers
 			if (!answers || !answers.length) return []
-			return answers
+			if (!this.displayResources.length && !(this.modalContent?.contentObject?.resources?.length)) return answers
+
+			const downloadsLabel = (this.t.downloads || '').trim().toLowerCase()
+			return answers.filter((answer) => (answer.question || '').trim().toLowerCase() !== downloadsLabel)
 		}
 	},
 	methods: {

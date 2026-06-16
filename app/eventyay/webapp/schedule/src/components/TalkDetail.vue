@@ -492,13 +492,6 @@ export default {
 			word-break: break-all
 			&:hover
 				text-decoration: underline
-		.downloads
-			border: border-separator()
-			border-radius: 4px
-			display: flex
-			flex-direction: column
-			font-size: 16px
-			font-weight: 600
 		.video-stream
 			margin-top: 16px
 			.view-video-btn

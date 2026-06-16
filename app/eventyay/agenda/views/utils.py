@@ -6,6 +6,7 @@ import string
 from datetime import UTC, datetime
 
 from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.core import signing
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, HttpResponseNotModified, HttpResponseRedirect
@@ -29,10 +30,52 @@ from eventyay.talk_rules.submission import are_featured_submissions_visible
 # Same escaping Django applies inside json_script to prevent XSS in <script> tags.
 JSON_SCRIPT_ESCAPES = {ord('>'): '\\u003E', ord('<'): '\\u003C', ord('&'): '\\u0026'}
 
+CACHE_TTL = 600
+
 
 def escape_json_for_script(json_str: str) -> str:
     """Escape a JSON string for safe embedding in an HTML ``<script>`` tag."""
     return json_str.translate(JSON_SCRIPT_ESCAPES)
+
+
+def speaker_public_field_flags(event):
+    """Return (include_avatar, include_biography) for public speaker pages."""
+    try:
+        cfp = event.cfp
+    except ObjectDoesNotExist:
+        return False, False
+    include_avatar = cfp.request_avatar and cfp.public_avatar
+    include_biography = getattr(cfp, 'public_biography', False)
+    return include_avatar, include_biography
+
+
+def _serialize_schedule_build_data(schedule, **build_kwargs) -> str:
+    data = schedule.build_data(**build_kwargs)
+    return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
+
+
+def build_schedule_meta_json(event, schedule) -> str:
+    """Build escaped JSON for the pretalx-schedule-meta inline script tag."""
+    version = schedule.version if schedule else None
+    released = list(
+        event.schedules.filter(version__isnull=False)
+        .order_by('-published')
+        .values_list('version', flat=True)
+    )
+    base_schedule_url = str(event.urls.schedule)
+    current_version = event.current_schedule.version if event.current_schedule else None
+    versions = [
+        {'version': v, 'url': f'{base_schedule_url}v/{v}/', 'isCurrent': v == current_version} for v in released
+    ]
+    meta = {
+        'version': version or '',
+        'is_current': schedule == event.current_schedule if schedule else False,
+        'changelog_url': str(event.urls.changelog),
+        'current_schedule_url': base_schedule_url if event.current_schedule else '',
+        'versions': versions,
+        'exporters': build_public_schedule_exporters(event, version=version),
+    }
+    return escape_json_for_script(json.dumps(meta))
 
 
 def build_enriched_schedule_json(request: HttpRequest, *, wip_preview: bool = False) -> str:
@@ -61,16 +104,16 @@ def build_enriched_schedule_json(request: HttpRequest, *, wip_preview: bool = Fa
         if cached is not None:
             return cached
 
-    data = schedule.build_data(
+    result = _serialize_schedule_build_data(
+        schedule,
         all_talks=wip_preview or not schedule.version,
         enrich=True,
         include_featured_speaker_metadata=featured,
         respect_public_visibility=not wip_preview,
     )
-    result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
     if schedule.version:
-        cache.set(cache_key, result, 600)
+        cache.set(cache_key, result, CACHE_TTL)
     return result
 
 
@@ -93,15 +136,15 @@ def build_schedule_json(request: HttpRequest, schedule=None) -> str:
         if cached is not None:
             return cached
 
-    data = schedule.build_data(
+    result = _serialize_schedule_build_data(
+        schedule,
         all_talks=not bool(schedule.version),
         enrich=False,
         include_featured_speaker_metadata=featured,
     )
-    result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
     if schedule.version:
-        cache.set(cache_key, result, 600)
+        cache.set(cache_key, result, CACHE_TTL)
     return result
 
 
@@ -123,16 +166,56 @@ def build_talk_schedule_json(request: HttpRequest, submission_code: str) -> str:
         if cached is not None:
             return cached
 
-    data = schedule.build_data(
+    result = _serialize_schedule_build_data(
+        schedule,
         enrich=False,
         submission_codes={submission_code},
         include_featured_speaker_metadata=featured,
     )
-    result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
     if schedule.version:
-        cache.set(cache_key, result, 600)
+        cache.set(cache_key, result, CACHE_TTL)
     return result
+
+
+def build_speaker_schedule_json_for_schedule(event, schedule, speaker_code, featured):
+    """Build speaker-scoped schedule JSON without reading/writing the cache."""
+    talk_codes = set(
+        schedule.talks.filter(
+            submission__speakers__code__iexact=speaker_code,
+            is_visible=True,
+        ).values_list('submission__code', flat=True)
+    )
+
+    data = schedule.build_data(
+        enrich=False,
+        submission_codes=talk_codes,
+        include_featured_speaker_metadata=featured,
+    )
+
+    if not any(s['code'].lower() == speaker_code.lower() for s in data.get('speakers', [])):
+        user = User.objects.filter(code__iexact=speaker_code).first()
+        if user:
+            profile = SpeakerProfile.objects.filter(
+                event=event, user=user
+            ).select_related('user').first()
+            include_avatar, include_biography = speaker_public_field_flags(event)
+            data.setdefault('speakers', []).append({
+                'code': user.code,
+                'name': user.fullname or None,
+                'biography': getattr(profile, 'biography', '') if include_biography else '',
+                'avatar': user.get_avatar_url(event=event) if include_avatar else None,
+                'avatar_thumbnail_default': (
+                    user.get_avatar_url(event=event, thumbnail='default') if include_avatar else None
+                ),
+                'avatar_thumbnail_tiny': (
+                    user.get_avatar_url(event=event, thumbnail='tiny') if include_avatar else None
+                ),
+                'is_featured': bool(getattr(profile, 'is_featured', False)) if featured else False,
+                'featured_position': getattr(profile, 'position', None) if featured else None,
+            })
+
+    return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
 
 def build_speaker_schedule_json(request: HttpRequest, speaker_code: str) -> str:
@@ -155,50 +238,52 @@ def build_speaker_schedule_json(request: HttpRequest, speaker_code: str) -> str:
         if cached is not None:
             return cached
 
-    talk_codes = set(
-        schedule.talks.filter(
-            submission__speakers__code__iexact=speaker_code,
-            is_visible=True,
-        ).values_list('submission__code', flat=True)
-    )
-
-    data = schedule.build_data(
-        enrich=False,
-        submission_codes=talk_codes,
-        include_featured_speaker_metadata=featured,
-    )
-
-    # Ensure the speaker appears in the payload even when they have no visible
-    # sessions (e.g. accepted but not yet scheduled).
-    if not any(s['code'].lower() == speaker_code.lower() for s in data.get('speakers', [])):
-        user = User.objects.filter(code__iexact=speaker_code).first()
-        if user:
-            profile = SpeakerProfile.objects.filter(
-                event=request.event, user=user
-            ).select_related('user').first()
-            cfp = request.event.cfp
-            include_avatar = cfp.request_avatar and cfp.public_avatar
-            include_biography = getattr(cfp, 'public_biography', False)
-            data.setdefault('speakers', []).append({
-                'code': user.code,
-                'name': user.fullname or None,
-                'biography': getattr(profile, 'biography', '') if include_biography else '',
-                'avatar': user.get_avatar_url(event=request.event) if include_avatar else None,
-                'avatar_thumbnail_default': (
-                    user.get_avatar_url(event=request.event, thumbnail='default') if include_avatar else None
-                ),
-                'avatar_thumbnail_tiny': (
-                    user.get_avatar_url(event=request.event, thumbnail='tiny') if include_avatar else None
-                ),
-                'is_featured': bool(getattr(profile, 'is_featured', False)) if featured else False,
-                'featured_position': getattr(profile, 'position', None) if featured else None,
-            })
-
-    result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
+    result = build_speaker_schedule_json_for_schedule(request.event, schedule, speaker_code, featured)
 
     if schedule.version:
-        cache.set(cache_key, result, 600)
+        cache.set(cache_key, result, CACHE_TTL)
     return result
+
+
+def warm_scoped_schedule_caches(schedule, *, featured):
+    """Pre-warm per-talk and per-speaker inline JSON caches for a released schedule."""
+    if not schedule.version:
+        return
+
+    submission_codes = schedule.talks.filter(
+        is_visible=True,
+        submission__isnull=False,
+    ).values_list('submission__code', flat=True).distinct()
+    for submission_code in submission_codes:
+        cache_key = f'eagenda:talk:{schedule.pk}:{submission_code}:{int(featured)}'
+        if cache.get(cache_key) is not None:
+            continue
+        cache.set(
+            cache_key,
+            _serialize_schedule_build_data(
+                schedule,
+                enrich=False,
+                submission_codes={submission_code},
+                include_featured_speaker_metadata=featured,
+            ),
+            CACHE_TTL,
+        )
+
+    speaker_codes = schedule.talks.filter(
+        is_visible=True,
+        submission__isnull=False,
+    ).values_list('submission__speakers__code', flat=True).distinct()
+    for speaker_code in speaker_codes:
+        if not speaker_code:
+            continue
+        cache_key = f'eagenda:speaker:{schedule.pk}:{speaker_code}:{int(featured)}'
+        if cache.get(cache_key) is not None:
+            continue
+        cache.set(
+            cache_key,
+            build_speaker_schedule_json_for_schedule(schedule.event, schedule, speaker_code, featured),
+            CACHE_TTL,
+        )
 
 
 def is_email_like(value: str) -> bool:
@@ -314,7 +399,7 @@ def build_public_schedule_exporters(event, version=None):
     identifier, verbose_name, icon, export_url, and qrcode_svg.
     Used by both the agenda view and the video SPA to ensure identical
     exporter lists in both UIs.  Result is cached for 5 minutes per
-    (event.pk, version) to avoid firing Django signals on every request.
+    (event.pk, version, active language) to avoid firing Django signals on every request.
     """
     language = get_language() or ''
     cache_key = f'eagenda:exporters:{event.pk}:{version or ""}:{language}'
@@ -373,7 +458,7 @@ def build_public_schedule_exporters(event, version=None):
                 'qrcode_svg': str(exporter.get_qrcode()) if getattr(exporter, 'show_qrcode', False) else '',
             }
         )
-    cache.set(cache_key, result, 600)
+    cache.set(cache_key, result, CACHE_TTL)
     return result
 
 

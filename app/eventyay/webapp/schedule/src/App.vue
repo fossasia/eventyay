@@ -4,7 +4,7 @@
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
 	template(v-else-if="isTalkView && schedule && resolvedTalk")
-		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl", :apiContent="talkApiContent")
+		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
 	template(v-else-if="isSpeakerView && schedule")
 		featured-speakers(v-if="view === 'featured-speakers'")
 		speakers-list(v-else-if="view === 'speakers'")
@@ -304,7 +304,6 @@ export default {
 			displayDates: this.dateFilter?.split(',').filter(d => d.length === 10) || [],
 			modalContent: null,
 			scheduleMeta: null,
-			talkApiContent: null,
 			sessionsMode: false,
 			searchQuery: '',
 			recordingFilter: 'all',

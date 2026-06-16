@@ -23,8 +23,9 @@ from django.views.generic import TemplateView
 from django_context_decorator import context
 
 from eventyay.agenda.views.utils import (
-    build_public_schedule_exporters,
+    CACHE_TTL,
     build_schedule_json,
+    build_schedule_meta_json,
     escape_json_for_script,
     get_schedule_exporter_content,
     get_schedule_exporters,
@@ -356,29 +357,11 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
                 ctx['schedule_page_version'] = version or ''
                 return ctx
 
-        released = list(
-            self.request.event.schedules.filter(version__isnull=False)
-            .order_by('-published')
-            .values_list('version', flat=True)
-        )
-        base_schedule_url = str(self.request.event.urls.schedule)
-        current_version = self.request.event.current_schedule.version if self.request.event.current_schedule else None
-        versions = [
-            {'version': v, 'url': f'{base_schedule_url}v/{v}/', 'isCurrent': v == current_version} for v in released
-        ]
-        meta = {
-            'version': version or '',
-            'is_current': schedule == self.request.event.current_schedule if schedule else False,
-            'changelog_url': str(self.request.event.urls.changelog),
-            'current_schedule_url': base_schedule_url if self.request.event.current_schedule else '',
-            'versions': versions,
-            'exporters': build_public_schedule_exporters(self.request.event, version=version),
-        }
-        meta_json = escape_json_for_script(json.dumps(meta))
+        meta_json = build_schedule_meta_json(self.request.event, schedule)
         ctx['schedule_meta_json'] = meta_json
         ctx['schedule_page_version'] = version or ''
         if cache_version:
-            cache.set(meta_cache_key, meta_json, 600)
+            cache.set(meta_cache_key, meta_json, CACHE_TTL)
         return ctx
 
 
