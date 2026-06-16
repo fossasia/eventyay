@@ -1,6 +1,12 @@
 {% extends "orga/mails/base.html" %}
 
 {% load i18n %}
+{% load static %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script defer src="{% static "orga/js/submission_filter.js" %}"></script>
+{% endblock scripts %}
 
 {% block mail_content %}
     <div class="d-md-flex justify-content-between">

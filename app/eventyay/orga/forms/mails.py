@@ -13,7 +13,7 @@ from i18nfield.forms import I18nModelForm
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer, TabularFormRenderer
-from eventyay.common.forms.widgets import EnhancedSelectMultiple, SelectMultipleWithCount
+from eventyay.common.forms.widgets import EnhancedSelectMultiple, FilterCheckboxDropdown
 from eventyay.common.language import language
 from eventyay.common.text.phrases import phrases
 from eventyay.mail.context import get_available_placeholders, get_invalid_placeholders
@@ -423,7 +423,7 @@ class QueuedMailFilterForm(forms.Form):
     track = forms.ModelMultipleChoiceField(
         required=False,
         queryset=Track.objects.none(),
-        widget=SelectMultipleWithCount(attrs={'title': _('Tracks')}, color_field='color'),
+        widget=FilterCheckboxDropdown(attrs={'title': _('Tracks')}),
     )
 
     default_renderer = InlineFormRenderer
