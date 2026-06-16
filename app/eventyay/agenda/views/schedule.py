@@ -34,6 +34,7 @@ from eventyay.common.signals import register_my_data_exporters
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
+from eventyay.talk_rules.agenda import require_wip_schedule_access
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 
@@ -45,6 +46,21 @@ STARRED_ICS_TOKEN_MIN_VALIDITY = timedelta(seconds=10)
 
 
 class ScheduleMixin:
+    @staticmethod
+    def _version_from_kwargs(kwargs):
+        if version := kwargs.get('version'):
+            return unquote(version)
+        return None
+
+    def ensure_wip_schedule_access(self, kwargs=None, request=None):
+        """WIP preview is restricted to organisers and reviewers with schedule access."""
+        request = request or getattr(self, 'request', None)
+        if request is None:
+            return
+        if self._version_from_kwargs(kwargs or getattr(self, 'kwargs', {})) != 'wip':
+            return
+        require_wip_schedule_access(request)
+
     @cached_property
     def version(self):
         if version := self.kwargs.get('version'):
@@ -144,6 +160,10 @@ class ScheduleMixin:
 class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
     permission_required = 'base.list_schedule'
 
+    def dispatch(self, request, *args, **kwargs):
+        self.ensure_wip_schedule_access(kwargs, request)
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         url = resolve(self.request.path_info)
         url_name = url.url_name or ''
@@ -200,7 +220,8 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return HttpResponse(response_start + result, content_type='text/plain; charset=utf-8')
 
     def dispatch(self, request, **kwargs):
-        if self.version is None and is_public_schedule_empty(request):
+        self.ensure_wip_schedule_access(kwargs, request)
+        if self._version_from_kwargs(kwargs) is None and is_public_schedule_empty(request):
             if request.resolver_match and request.resolver_match.url_name == 'talks':
                 return redirect_to_presale_with_warning(request, _('No published sessions.'))
             return redirect_to_presale_with_warning(request, _('No published schedule.'))
@@ -309,7 +330,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         schedule = ctx.get('schedule')
-        version = schedule.version if schedule else None
+        version = self.version or (schedule.version if schedule else None)
         released = list(
             self.request.event.schedules.filter(version__isnull=False)
             .order_by('-published')
@@ -329,6 +350,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             'exporters': build_public_schedule_exporters(self.request.event, version=version),
         }
         ctx['schedule_meta_json'] = escape_json_for_script(json.dumps(meta))
+        ctx['schedule_page_version'] = version or ''
         return ctx
 
 
@@ -354,6 +376,9 @@ def schedule_messages(request, **kwargs):
         'version_warning_editable': _(
             'You are currently viewing the editable schedule version. It may not match the released version.'
         ),
+        'version_warning_wip': _(
+            'You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.'
+        ),
         'version_warning_old': _('You are currently viewing an older schedule version.'),
         'join_room': _('Join room'),
         'view_video': _('View Video'),
@@ -361,6 +386,9 @@ def schedule_messages(request, **kwargs):
         'speaker_fallback': _('Speaker'),
         'speaker_name_not_provided': _('Speaker name not provided'),
         'add_to_calendar': _('Add to Calendar'),
+        'public_schedule_only': _(
+            'Only available on the public schedule once a schedule is released and public.'
+        ),
         'ical': _('iCal'),
         'json': _('JSON'),
         'xml': _('XML'),
@@ -442,6 +470,10 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
     """Handles redirects for both Google Calendar and other calendar applications."""
 
     permission_required = 'base.list_schedule'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.ensure_wip_schedule_access(kwargs, request)
+        return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         url_name = request.resolver_match.url_name if request.resolver_match else ''
