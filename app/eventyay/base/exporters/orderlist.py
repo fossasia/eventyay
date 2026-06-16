@@ -1048,7 +1048,7 @@ class OrderPositionListExporter(OrderListExporter):
             return '{}_orderpositions'.format(self.event.slug)
 
     def render(self, form_data: dict, output_file=None):
-        return super(OrderListExporter, self).render(form_data, output_file=output_file)
+        return super(MultiSheetListExporter, self).render(form_data, output_file=output_file)
 
 
 class PaymentListExporter(ListExporter):
