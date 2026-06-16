@@ -211,6 +211,9 @@ def default_feature_flags():
 
 
 def default_display_settings():
+    # Note: meta_noindex was previously stored here but has been moved to the
+    # hierarkey settings system (event.settings.meta_noindex). Hierarkey returns
+    # False by default when the key is absent, so existing events are unaffected.
     return {
         'schedule': 'grid',
         'imprint_url': None,
