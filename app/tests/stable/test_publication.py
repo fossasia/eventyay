@@ -77,39 +77,47 @@ def test_publication_settings_save_via_main_settings(organizer_client, organizer
                 field_key = name[len('settings-'):]
                 if field_key == 'locales' or field_key == 'locale':
                     continue
-                # If it ends with _0 (localized setting field)
-                if field_key.endswith('_0'):
-                    field_key = field_key[:-2]
-                val = sform.initial.get(field_key)
+                # Strip _0/_1 suffix to get the base setting key
+                base_key = field_key
+                if base_key.endswith('_0') or base_key.endswith('_1'):
+                    base_key = base_key[:-2]
+                
+                val = sform.initial.get(base_key)
                 if val is not None:
-                    post_data[name] = str(val)
+                    if isinstance(val, (list, tuple)):
+                        post_data[name] = str(val[0] if name.endswith('_0') else val[1])
+                    elif hasattr(val, 'strftime'):
+                        if name.endswith('_0'):
+                            post_data[name] = val.strftime('%Y-%m-%d')
+                        elif name.endswith('_1'):
+                            post_data[name] = val.strftime('%H:%M:%S')
+                        else:
+                            post_data[name] = str(val)
+                    else:
+                        post_data[name] = str(val)
                 continue
                 
             # 4. Standard/multilingual form fields
             base_name = name
-            if name.endswith('_0'):
+            if name.endswith('_0') or name.endswith('_1'):
                 base_name = name[:-2]
             
             val = form.initial.get(base_name)
             if val is not None:
-                if name.endswith('_0'):
-                    post_data[name] = str(val)
-                elif 'date' in name:
+                if hasattr(val, 'strftime'):
                     if name.endswith('_0'):
                         post_data[name] = val.strftime('%Y-%m-%d')
                     elif name.endswith('_1'):
                         post_data[name] = val.strftime('%H:%M:%S')
+                    else:
+                        post_data[name] = str(val)
                 else:
-                    post_data[name] = val
+                    post_data[name] = str(val)
             else:
                 if base_name == 'name':
                     post_data[name] = 'Test Event'
                 elif base_name == 'email':
                     post_data[name] = 'test@example.com'
-                elif name == 'date_from_0':
-                    post_data[name] = event.date_from.strftime('%Y-%m-%d')
-                elif name == 'date_from_1':
-                    post_data[name] = event.date_from.strftime('%H:%M:%S')
                     
         return post_data
         
