@@ -301,9 +301,15 @@ def submissions_for_user(event, user):
         )
 
     if user.has_perm('base.list_schedule', event):
-        current = event.current_schedule
-        if current:
-            return current.slots
+        schedule = event.current_schedule
+        if not schedule:
+            return event.submissions.none()
+        return event.submissions.filter(
+            pk__in=schedule.talks.filter(
+                is_visible=True,
+                submission__isnull=False,
+            ).values_list('submission_id', flat=True)
+        )
     return event.submissions.none()
 
 

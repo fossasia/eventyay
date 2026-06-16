@@ -41,6 +41,7 @@ export default {
 		emptyOutDir: true,
 		manifest: 'schedule-editor-manifest.json',
 		assetsDir: '',
+		sourcemap: false,
 		rollupOptions: {
 			input: 'src/main.ts',
 			output: {

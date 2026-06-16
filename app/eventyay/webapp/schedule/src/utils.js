@@ -77,6 +77,48 @@ export function getIconByFileEnding(url) {
 	return 'file-download-outline'
 }
 
+export function computeTalkExporters(baseUrl, code) {
+	const base = baseUrl ? baseUrl.replace(/\/?$/, '/') : '/'
+	return {
+		ics: `${base}talk/${code}.ics`,
+		json: `${base}talk/${code}.json`,
+		xml: `${base}talk/${code}.xml`,
+		xcal: `${base}talk/${code}.xcal`,
+		google_calendar: `${base}talk/${code}/export/google-calendar`,
+		webcal: `${base}talk/${code}/export/webcal`,
+	}
+}
+
+export function computeSpeakerExporters(speakerBaseUrl) {
+	const base = speakerBaseUrl ? speakerBaseUrl.replace(/\/?$/, '') : ''
+	return {
+		ics: `${base}/talks.ics`,
+		json: `${base}/talks.json`,
+		xml: `${base}/talks.xml`,
+		xcal: `${base}/talks.xcal`,
+		google_calendar: `${base}/talks/export/google-calendar`,
+		webcal: `${base}/talks/export/webcal`,
+	}
+}
+
+export function buildExportMenuItems(exporters) {
+	if (!exporters) return []
+	const qr = exporters.qrcodes || {}
+	return [
+		{ id: 'google_calendar', label: 'Add to Google Calendar', url: exporters.google_calendar, icon: 'fa-google', qrcode_svg: qr.google_calendar },
+		{ id: 'webcal', label: 'Add to Other Calendar', url: exporters.webcal, icon: 'fa-calendar', qrcode_svg: qr.webcal },
+		{ id: 'ics', label: 'iCal', url: exporters.ics, icon: 'fa-calendar', qrcode_svg: qr.ics },
+		{ id: 'json', label: 'JSON (frab compatible)', url: exporters.json, icon: 'fa-code', qrcode_svg: qr.json },
+		{ id: 'xml', label: 'XML (frab compatible)', url: exporters.xml, icon: 'fa-code', qrcode_svg: qr.xml },
+		{ id: 'xcal', label: 'XCal (frab compatible)', url: exporters.xcal, icon: 'fa-calendar', qrcode_svg: qr.xcal },
+	].filter(o => o.url)
+}
+
+export function parseBooleanAnswer (value) {
+	if (typeof value === 'boolean') return value
+	return ['true', '1', 'yes'].includes(String(value).toLowerCase())
+}
+
 export function normalizePopularityCount (session) {
 	const value = Number(
 		session?.fav_count

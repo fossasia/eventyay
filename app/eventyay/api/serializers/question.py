@@ -90,6 +90,7 @@ class QuestionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             "max_date",
             "min_datetime",
             "max_datetime",
+            "is_public",
         )
         expandable_fields = {
             "options": (
@@ -126,7 +127,6 @@ class QuestionOrgaSerializer(QuestionSerializer):
     class Meta(QuestionSerializer.Meta):
         fields = QuestionSerializer.Meta.fields + (
             "active",
-            "is_public",
             "contains_personal_data",
             "is_visible_to_reviewers",
         )
