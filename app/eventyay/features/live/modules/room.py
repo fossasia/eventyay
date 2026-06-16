@@ -34,6 +34,7 @@ from eventyay.base.services.room import (
     reorder_rooms,
     save_room,
     start_view,
+    validate_room_config_patch,
 )
 from eventyay.core.permissions import Permission
 from eventyay.core.utils.redis import aredis
@@ -59,6 +60,10 @@ from eventyay.features.live.modules.base import BaseModule
 
 
 logger = logging.getLogger(__name__)
+
+
+def serialize_room_config(room_or_rooms, many=False):
+    return RoomConfigSerializer(room_or_rooms, many=many).data
 
 
 class RoomModule(BaseModule):
@@ -479,24 +484,23 @@ class RoomModule(BaseModule):
     @require_event_permission(Permission.ROOM_UPDATE)
     async def rooms_list(self, body):
         rooms = await database_sync_to_async(get_rooms)(self.consumer.event, user=None)
-        await self.consumer.send_success(RoomConfigSerializer(rooms, many=True).data)
+        await self.consumer.send_success(await database_sync_to_async(serialize_room_config)(rooms, many=True))
 
     @command("config.get")
     @room_action(permission_required=Permission.ROOM_UPDATE)
     async def config_get(self, body):
-        await self.consumer.send_success(RoomConfigSerializer(self.room).data)
+        await self.consumer.send_success(await database_sync_to_async(serialize_room_config)(self.room))
 
     @command("config.patch")
     @room_action(permission_required=Permission.ROOM_UPDATE)
     async def config_patch(self, body):
-        old = RoomConfigSerializer(self.room).data
-        s = RoomConfigSerializer(self.room, data=body, partial=True)
-        if s.is_valid():
-            update_fields = set()
-            for f in s.fields.keys():
-                if f in body:
-                    setattr(self.room, f, s.validated_data[f])
-                    update_fields.add(f)
+        old = await database_sync_to_async(serialize_room_config)(self.room)
+        validated_data, update_fields = await database_sync_to_async(
+            validate_room_config_patch
+        )(self.room, body)
+        if validated_data is not None:
+            for field in update_fields:
+                setattr(self.room, field, validated_data[field])
 
             # Validate webhook URL via challenge verification when module_config changes
             if "module_config" in update_fields:
@@ -542,7 +546,7 @@ class RoomModule(BaseModule):
                 await database_sync_to_async(self.room.refresh_from_db)(
                     fields=["sorting_priority"]
                 )
-                new = RoomConfigSerializer(self.room).data
+                new = await database_sync_to_async(serialize_room_config)(self.room)
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)
         else:
@@ -553,7 +557,7 @@ class RoomModule(BaseModule):
     async def config_reorder(self, body):
         await reorder_rooms(self.consumer.event, body, self.consumer.user)
         rooms = await database_sync_to_async(get_rooms)(self.consumer.event, user=None)
-        await self.consumer.send_success(RoomConfigSerializer(rooms, many=True).data)
+        await self.consumer.send_success(await database_sync_to_async(serialize_room_config)(rooms, many=True))
         await notify_event_change(self.consumer.event.id)
 
     @command("delete")
@@ -574,7 +578,7 @@ class RoomModule(BaseModule):
     @command("schedule")
     @room_action(permission_required=Permission.ROOM_ANNOUNCE)
     async def change_schedule_data(self, body):
-        old = RoomConfigSerializer(self.room).data
+        old = await database_sync_to_async(serialize_room_config)(self.room)
         data = body.get("schedule_data")
         if data and not all(
             key in ["title", "session", "computeSession"] for key in data.keys()

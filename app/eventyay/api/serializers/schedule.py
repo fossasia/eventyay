@@ -108,6 +108,18 @@ class TalkSlotOrgaSerializer(TalkSlotSerializer):
         read_only_fields = TalkSlotSerializer.Meta.read_only_fields + ['is_visible']
         expandable_fields = TalkSlotSerializer.Meta.expandable_fields
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        from eventyay.base.models.room import validate_talk_slot_room_from_attrs
+
+        try:
+            validate_talk_slot_room_from_attrs(attrs, self.instance)
+        except DjangoValidationError as exc:
+            raise ValidationError(exc.message_dict) from exc
+        return attrs
+
     def validate_end(self, value):
         if self.instance and self.instance.submission:
             raise ValidationError(

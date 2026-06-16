@@ -93,8 +93,11 @@ class PermissionMiddleware:
             get_script_prefix() + 'teamshifts'
         ) and not request.path.startswith(
             get_script_prefix() + 'exhibitors'
+        ) and not request.path.startswith(
+            get_script_prefix() + 'social'
         ):
-            # This middleware should only touch the /control, /common, /admin, /teamshifts, and /exhibitors subpaths
+            # This middleware should only touch the /control, /common,
+            # /admin, /teamshifts, /exhibitors, and /social subpaths
             return self.get_response(request)
 
         if hasattr(request, 'organizer'):

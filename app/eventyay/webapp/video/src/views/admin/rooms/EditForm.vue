@@ -5,6 +5,8 @@
 			.generic-settings
 				bunt-input(name="name", v-model="localizedName", label="Name", :validation="v$.config.name")
 				bunt-input(name="description", v-model="localizedDescription", label="Description")
+				div(:title="config.has_linked_sessions ? \"Room has linked sessions and can't be marked unscheduled\" : ''")
+					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", label="Unscheduled room (hide from schedule/sessions)", :disabled="config.has_linked_sessions")
 				template(v-if="inferredType")
 					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules")
@@ -127,6 +129,7 @@ export default {
 					description: this.config.description,
 					picture: this.config.picture,
 					force_join: this.config.force_join,
+					is_unscheduled: this.config.is_unscheduled,
 					module_config: this.config.module_config,
 				})
 				Object.assign(this.config, updated)
