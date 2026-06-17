@@ -28,97 +28,51 @@ def test_publication_settings_save_via_main_settings(organizer_client, organizer
     })
     
     response = organizer_client.get(url)
-    names = re.findall(r'name=["\']([^"\']+)["\']', response.content.decode('utf-8'))
-    
     form = response.context['form']
     sform = response.context['sform']
     
-    print("SFORM LOCALES INITIAL:", sform.initial.get('locales'))
-    print("SFORM LOCALES CHOICES:", list(sform.fields['locales'].choices))
+    # Assert initial choices are present (replacing prints)
+    assert 'en' in sform.initial.get('locales', [])
+    assert len(sform.fields['locales'].choices) > 0
     
     def construct_post_data(enable_publication=True):
         post_data = {
             'settings-timezone': 'UTC',
             'settings-locale': 'en',
             'settings-locales': sform.initial.get('locales') or ['en'],
+            'is_public': 'on' if enable_publication else '',
+            'startpage_visible': 'on' if enable_publication else '',
+            'settings-meta_noindex': 'on' if enable_publication else '',
+            'name': 'Test Event',
+            'email': 'test@example.com',
         }
         
-        for name in names:
-            if name == 'csrfmiddlewaretoken':
-                continue
-            
-            # 1. Formset management fields
-            if 'TOTAL_FORMS' in name or 'INITIAL_FORMS' in name:
-                post_data[name] = '0'
-                continue
-            elif 'MIN_NUM_FORMS' in name:
-                post_data[name] = '0'
-                continue
-            elif 'MAX_NUM_FORMS' in name:
-                post_data[name] = '1000'
-                continue
-                
-            # 2. Publication settings (the fields we want to test)
-            if name == 'is_public':
-                if enable_publication:
-                    post_data[name] = 'on'
-                continue
-            elif name == 'startpage_visible':
-                if enable_publication:
-                    post_data[name] = 'on'
-                continue
-            elif name == 'settings-meta_noindex':
-                if enable_publication:
-                    post_data[name] = 'on'
-                continue
-                
-            # 3. Settings fields (sform)
-            if name.startswith('settings-'):
-                field_key = name[len('settings-'):]
-                if field_key == 'locales' or field_key == 'locale':
-                    continue
-                # Strip _0/_1 suffix to get the base setting key
-                base_key = field_key
-                if base_key.endswith('_0') or base_key.endswith('_1'):
-                    base_key = base_key[:-2]
-                
-                val = sform.initial.get(base_key)
-                if val is not None:
-                    if isinstance(val, (list, tuple)):
-                        post_data[name] = str(val[0] if name.endswith('_0') else val[1])
-                    elif hasattr(val, 'strftime'):
-                        if name.endswith('_0'):
-                            post_data[name] = val.strftime('%Y-%m-%d')
-                        elif name.endswith('_1'):
-                            post_data[name] = val.strftime('%H:%M:%S')
-                        else:
-                            post_data[name] = str(val)
-                    else:
-                        post_data[name] = str(val)
-                continue
-                
-            # 4. Standard/multilingual form fields
-            base_name = name
-            if name.endswith('_0') or name.endswith('_1'):
-                base_name = name[:-2]
-            
-            val = form.initial.get(base_name)
-            if val is not None:
+        # Add required form values from context
+        for field in form.fields:
+            if field not in post_data and form.initial.get(field) is not None:
+                val = form.initial.get(field)
                 if hasattr(val, 'strftime'):
-                    if name.endswith('_0'):
-                        post_data[name] = val.strftime('%Y-%m-%d')
-                    elif name.endswith('_1'):
-                        post_data[name] = val.strftime('%H:%M:%S')
-                    else:
-                        post_data[name] = str(val)
+                    post_data[field] = val.strftime('%Y-%m-%d')
+                elif isinstance(val, (list, tuple)) and not val:
+                    post_data[field] = ''
                 else:
-                    post_data[name] = str(val)
-            else:
-                if base_name == 'name':
-                    post_data[name] = 'Test Event'
-                elif base_name == 'email':
-                    post_data[name] = 'test@example.com'
-                    
+                    post_data[field] = str(val)
+
+        # Add required sform values from context
+        for field in sform.fields:
+            key = f"settings-{field}"
+            if key not in post_data and sform.initial.get(field) is not None:
+                val = sform.initial.get(field)
+                if isinstance(val, (list, tuple)) and not val:
+                    post_data[key] = ''
+                else:
+                    post_data[key] = str(val)
+
+        # Include formset management fields from context
+        if 'plugin_formset' in response.context:
+            for key, val in response.context['plugin_formset'].management_form.initial.items():
+                post_data[f"{response.context['plugin_formset'].prefix}-{key}"] = str(val)
+                
         return post_data
         
     # Enable all settings
@@ -128,8 +82,8 @@ def test_publication_settings_save_via_main_settings(organizer_client, organizer
     if response.status_code == 200 and not response.redirect_chain:
         form = response.context['form']
         sform = response.context['sform']
-        print("ENABLE FORM ERRORS:", form.errors)
-        print("ENABLE SFORM ERRORS:", sform.errors)
+        assert not form.errors, f"Form failed with errors: {form.errors}"
+        assert not sform.errors, f"Settings form failed with errors: {sform.errors}"
         
     assert response.status_code == 200
     assert len(response.redirect_chain) > 0, "Enable form submission did not redirect"
