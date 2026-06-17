@@ -352,8 +352,10 @@ export default {
 		sortedSpeakers() {
 			const speakers = [...this.languageFilteredSpeakers]
 			const byName = (a, b, dir = 1) => {
-				if (!!(a.name?.trim()) !== !!(b.name?.trim())) return a.name?.trim() ? -1 : 1
-				return dir * (a.name || '').localeCompare(b.name || '')
+				const an = (a.name || '').trim()
+				const bn = (b.name || '').trim()
+				if (!!an !== !!bn) return an ? -1 : 1
+				return dir * an.localeCompare(bn)
 			}
 			if (this.sortBy === 'featured') {
 				return speakers.sort((a, b) => {

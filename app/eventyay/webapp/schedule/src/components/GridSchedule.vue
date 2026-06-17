@@ -4,7 +4,7 @@
 		.rooms-bar(ref="roomsBar")
 			.rooms-inner(:style="{'--total-rooms': rooms.length, 'min-width': scrollContentWidth ? (scrollContentWidth + 'px') : null}")
 				.room
-				.room(v-for="(room, index) of rooms")
+				.room(v-for="(room, index) of rooms", :key="room.id || index")
 					span.room-name(:title="getLocalizedString(room.name)") {{ getLocalizedString(room.name) }}
 					span.room-description(v-if="getLocalizedString(room.description)", @mouseenter="showRoomTooltip($event, room)", @mouseleave="hideRoomTooltip") ?
 				.room(v-if="hasSessionsWithoutRoom") no location
@@ -52,7 +52,7 @@
 			.print-chunk
 				.print-rooms-bar(:style="{'--total-rooms': chunk.length}")
 					.room
-					.room(v-for="room of chunk")
+					.room(v-for="(room, index) of chunk", :key="room.id || index")
 						span.room-name {{ getLocalizedString(room.name) }}
 				.print-grid(:style="getPrintChunkGridStyle(chunk)")
 					template(v-for="slice of visibleTimeslices")

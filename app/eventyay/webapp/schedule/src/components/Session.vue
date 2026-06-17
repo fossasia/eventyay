@@ -10,12 +10,12 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 		.is-live(v-if="showLiveBadge && isLive") live
 	.info(:class="{'has-fav-count': hasFavCount, 'has-icons': hasAnyRightIcons}")
 		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
-		.speakers(v-if="session.speakers", :class="{'names-clamped': isShortSession}")
-			template(v-for="(speaker, i) of session.speakers", :key="speaker.code || i")
+		.speakers(v-if="namedSpeakers.length", :class="{'names-clamped': isShortSession}")
+			template(v-for="(speaker, i) of namedSpeakers", :key="speaker.code || i")
 				span.speaker
-					img(v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url", :src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url", :alt="speaker.name || ''")
-					span(v-if="speaker.name") {{ speaker.name }}
-				span(v-if="i + 1 < session.speakers.length") , 
+					img(v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url", :src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url", alt="", aria-hidden="true")
+					span {{ speaker.name }}
+				span(v-if="i + 1 < namedSpeakers.length") , 
 		.tags-box(v-if="showTags && session.tags && session.tags.length")
 			.tags(v-for="tag_item of session.tags")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
@@ -188,6 +188,9 @@ export default {
 				minutes = this.session.duration
 			}
 			return minutes > 0 && minutes <= 15
+		},
+		namedSpeakers () {
+			return (this.session.speakers || []).filter(s => (s.name || '').trim())
 		}
 	},
 	methods: {
