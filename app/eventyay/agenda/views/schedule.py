@@ -503,7 +503,8 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
             ics_tokenized_view_name = 'agenda:versioned-export-tokenized'
             reverse_kwargs['version'] = self.version
 
-        base_url = get_base_url(request.event)
+        parsed_base = urlparse(get_base_url(request.event))
+        base_url = f'{parsed_base.scheme}://{parsed_base.netloc}'
 
         if is_my:
             if not request.user.is_authenticated:

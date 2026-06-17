@@ -509,8 +509,10 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
             raise Http404
 
         slot = talk_slots.first()
+        parsed_base = urlparse(get_base_url(request.event))
+        base_url = f'{parsed_base.scheme}://{parsed_base.netloc}'
         ical_url = urljoin(
-            get_base_url(request.event),
+            base_url,
             reverse(
                 'agenda:ical',
                 kwargs={

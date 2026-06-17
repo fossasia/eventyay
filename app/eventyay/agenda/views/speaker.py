@@ -314,8 +314,10 @@ class SpeakerTalksCalendarRedirectView(EventPermissionRequired, View):
             slot = slots.first()
             return self.google_calendar_redirect(slot, request)
         if provider == 'webcal':
+            parsed_base = urlparse(get_base_url(request.event))
+            base_url = f'{parsed_base.scheme}://{parsed_base.netloc}'
             ical_url = urljoin(
-                get_base_url(request.event),
+                base_url,
                 reverse(
                     'agenda:speaker.talks.ical',
                     kwargs={
