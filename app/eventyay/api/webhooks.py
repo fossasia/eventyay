@@ -292,6 +292,37 @@ def notify_webhooks(logentry_ids: list):
             send_webhook.apply_async(args=(logentry.id, notification_type.action_type, wh.pk))
 
 
+def _read_bounded_response(resp, max_bytes: int) -> str:
+    """Read at most *max_bytes* bytes from a streaming response and return them
+    as a decoded string.
+
+    The final chunk is trimmed to the remaining byte budget before being
+    appended, so the raw byte total never exceeds *max_bytes* regardless of
+    chunk size.  Decoding is performed on the already-bounded bytes, so
+    multi-byte sequences cannot cause the result to exceed the budget when
+    re-encoded.  The charset from the response's Content-Type header is used
+    for decoding (falling back to UTF-8 when absent), matching the behaviour
+    of ``requests.Response.text``.  The response is always closed in a finally
+    block so the underlying connection is returned to the pool even when the
+    loop exits early.
+    """
+    chunks: list[bytes] = []
+    bytes_read = 0
+    try:
+        for chunk in resp.iter_content(chunk_size=4096, decode_unicode=False):
+            remaining = max_bytes - bytes_read
+            if len(chunk) > remaining:
+                chunk = chunk[:remaining]
+            chunks.append(chunk)
+            bytes_read += len(chunk)
+            if bytes_read >= max_bytes:
+                break
+    finally:
+        resp.close()
+    encoding = resp.encoding or "utf-8"
+    return b"".join(chunks).decode(encoding, errors="replace")
+
+
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
     # 9 retries with 2**(2*x) timing is roughly 72 hours
@@ -313,7 +344,17 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                resp = requests.post(
+                    webhook.target_url,
+                    json=payload,
+                    allow_redirects=False,
+                    # requests interprets a tuple as (connect_timeout, read_timeout).
+                    # Each applies independently; this is not a combined budget.
+                    timeout=settings.WEBHOOK_TIMEOUT,
+                    stream=True,
+                )
+                max_size = settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]
+                response_body = _read_bounded_response(resp, max_size)
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
@@ -322,7 +363,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=resp.status_code,
                     payload=json.dumps(payload),
-                    response_body=resp.text[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    response_body=response_body,
                     success=200 <= resp.status_code <= 299,
                 )
                 if resp.status_code == 410:
@@ -342,6 +383,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     return_code=0,
                     payload=json.dumps(payload),
                     response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    success=False,
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)
