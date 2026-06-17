@@ -3,6 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -11,9 +12,10 @@ from eventyay.base.models.resource import (
     create_slide_resource,
     delete_slide_resources,
 )
-from eventyay.common.forms.fields import ExtensionFileField, SizeFileField
+from eventyay.common.forms.fields import ExtensionFileField, SizeFileField, SizeFileInput
 from eventyay.common.forms.renderers import InlineFormLabelRenderer
 from eventyay.common.forms.widgets import SlidesWidget
+from eventyay.consts import SizeKey
 
 
 PDF_EXTENSIONS = {
@@ -86,9 +88,17 @@ class SlidesField(forms.Field):
         )
         super().__init__(*args, **kwargs)
         self.link_field = forms.URLField(required=False)
-        self.resource_field = ExtensionFileField(required=False, extensions=PDF_EXTENSIONS)
+        pdf_max_size = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_PDF]
+        self.resource_field = ExtensionFileField(
+            required=False,
+            extensions=PDF_EXTENSIONS,
+            max_size=pdf_max_size,
+        )
+        self.max_size = pdf_max_size
+        self.size_warning = SizeFileInput.get_size_warning(pdf_max_size)
         self.max_items = max_items
         self.widget.max_items = max_items
+        self.widget.max_size = pdf_max_size
         self.existing_resources = []
 
     def set_max_items(self, value):

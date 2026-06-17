@@ -219,6 +219,7 @@ class SlidesWidget(Widget):
     def __init__(self, attrs=None):
         super().__init__(attrs)
         self.max_items = None
+        self.max_size = None
 
     @staticmethod
     def links_field_name(name):
@@ -230,18 +231,31 @@ class SlidesWidget(Widget):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
+        pending_uploads = []
         if isinstance(value, dict):
-            current_resources = list(value.get('existing_resources', []))
-            links_value = '\n'.join(value.get('links', []))
+            if 'existing_resources' in value or 'links' in value:
+                # Value came from InfoForm.__init__ setting initial from DB resources
+                current_resources = list(value.get('existing_resources', []))
+                links_value = '\n'.join(value.get('links', []))
+            else:
+                # Raw dict from value_from_datadict (POST submission, possibly invalid form re-render)
+                current_resources = []
+                links_value = value.get('links_text', '')
+                # Collect any freshly-uploaded files to display as pending
+                for uploaded_file in value.get('resources', []):
+                    if uploaded_file and hasattr(uploaded_file, 'name'):
+                        pending_uploads.append(uploaded_file.name)
         else:
             current_resources = list(value or [])
             links_value = ''
         context['widget']['current_resources'] = current_resources
+        context['widget']['pending_uploads'] = pending_uploads
         context['widget']['existing_value'] = bool(current_resources)
         context['widget']['max_items'] = self.max_items
-        context['widget']['current_count'] = len(current_resources)
+        context['widget']['max_size'] = self.max_size
+        context['widget']['current_count'] = len(current_resources) + len(pending_uploads)
         context['widget']['remaining_items'] = (
-            max(self.max_items - len(current_resources), 0) if self.max_items else None
+            max(self.max_items - len(current_resources) - len(pending_uploads), 0) if self.max_items else None
         )
         context['widget']['links_name'] = self.links_field_name(name)
         context['widget']['files_name'] = self.files_field_name(name)

@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n filesize %}
 
 {% if widget.current_resources %}
   <div class='mb-3'>
@@ -43,28 +43,79 @@
   </div>
 
   <div>
-    <input
-      type='file'
-      name='{{ widget.files_name }}'
-      id='{{ widget.files_id }}'
-      class='form-control-file'
-      accept='.pdf,application/pdf'
-      {% if widget.max_items != 1 %}multiple{% endif %}>
-    <small class='form-text text-muted'>
-      {% if widget.remaining_items == 1 %}
-        {% translate 'You can upload 1 PDF file.' %}
-      {% elif widget.remaining_items is not None %}
-        {% blocktranslate count count=widget.remaining_items %}You can upload up to {{ count }} PDF file.{% plural %}You can upload up to {{ count }} PDF files.{% endblocktranslate %}
+    <div>
+      <label class='btn btn-default mb-0' style='cursor:pointer; white-space:nowrap;' for='{{ widget.files_id }}'>
+        {% translate 'Choose file' %}
+      </label>
+      <input
+        type='file'
+        name='{{ widget.files_name }}'
+        id='{{ widget.files_id }}'
+        style='display: none !important;'
+        accept='.pdf,application/pdf'
+        {% if widget.max_size %}data-maxsize='{{ widget.max_size }}'{% endif %}
+        {% if widget.max_items != 1 %}multiple{% endif %}>
+      <span id='{{ widget.files_id }}_label' class='ml-2 text-muted' style='font-size:0.95em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;'>
+        {% if widget.pending_uploads %}
+          {% for filename in widget.pending_uploads %}{{ filename }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        {% else %}
+          {% translate 'No file chosen' %}
+        {% endif %}
+      </span>
+      <div id='{{ widget.files_id }}_error' class='text-danger mt-1' style='display: none; font-size: 0.9em; font-weight: bold;'>
+        {% if widget.max_size %}
+          {% blocktranslate with size=widget.max_size|filesize %}Please do not upload files larger than {{ size }}.{% endblocktranslate %}
+        {% endif %}
+      </div>
+    </div>
+    <script>
+      (function() {
+        var input = document.getElementById('{{ widget.files_id }}');
+        var label = document.getElementById('{{ widget.files_id }}_label');
+        var errorMsg = document.getElementById('{{ widget.files_id }}_error');
+        
+        if (input && label) {
+          input.addEventListener('change', function() {
+            if (input.files && input.files.length > 0) {
+              var maxSize = parseInt(input.getAttribute('data-maxsize'), 10);
+              var totalSize = 0;
+              for (var i = 0; i < input.files.length; i++) {
+                totalSize += input.files[i].size;
+              }
+              
+              if (maxSize && totalSize > maxSize) {
+                // Show error, clear input
+                errorMsg.style.display = 'block';
+                input.value = '';
+                label.textContent = label.dataset.original || '{% translate "No file chosen" %}';
+                label.classList.add('text-muted');
+                return;
+              }
+              
+              errorMsg.style.display = 'none';
+              var names = Array.from(input.files).map(function(f) { return f.name; });
+              label.textContent = names.join(', ');
+              label.classList.remove('text-muted');
+            } else {
+              errorMsg.style.display = 'none';
+              label.textContent = label.dataset.original || '{% translate "No file chosen" %}';
+              label.classList.add('text-muted');
+            }
+          });
+          label.dataset.original = label.textContent.trim();
+        }
+      })();
+    </script>
+    <small class='form-text text-muted mt-2'>
+      {% if widget.max_items %}
+        {% blocktranslate count count=widget.max_items %}You can keep up to {{ count }} slide entry in total.{% plural %}You can keep up to {{ count }} slide entries in total.{% endblocktranslate %}
       {% else %}
         {% translate 'You can upload PDF files.' %}
       {% endif %}
-      {% if widget.max_items %}
-        {% blocktranslate count count=widget.max_items %} You can keep up to {{ count }} slide entry in total.{% plural %} You can keep up to {{ count }} slide entries in total.{% endblocktranslate %}
-      {% endif %}
-      {% if widget.remaining_items is not None and widget.current_count > 0 %}
-        {% blocktranslate count count=widget.remaining_items %} You can add {{ count }} more slide entry across links and uploads combined.{% plural %} You can add {{ count }} more slide entries across links and uploads combined.{% endblocktranslate %}
-      {% endif %}
       {% translate 'Only PDF is supported right now.' %}
+      {% if widget.max_size %}
+        {% blocktranslate with size=widget.max_size|filesize %}Maximum file size: {{ size }}.{% endblocktranslate %}
+      {% endif %}
     </small>
   </div>
 {% endif %}

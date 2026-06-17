@@ -310,6 +310,11 @@ class FormFlowStep(TemplateFlowStep):
             for warning in filter(None, warning_messages):
                 messages.warning(self.request, warning)
             form.hide_top_errors = True
+            # Save any uploaded files to session even on validation failure,
+            # so they are preserved when the form re-renders (browsers don't
+            # re-send files in subsequent requests).
+            if form.files:
+                self.set_files(form.files)
             return self.render(form=form)
         self.set_data(form.cleaned_data)
         self.set_files(form.files)
