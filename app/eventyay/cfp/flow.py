@@ -279,14 +279,6 @@ class FormFlowStep(TemplateFlowStep):
         previous_data = self.cfp_session.get('data')
         submission_title = previous_data.get('info', {}).get('title')
         result['submission_title'] = '' if submission_title == AUTO_DRAFT_TITLE else submission_title
-        # Add information about uploaded files for display in templates
-        saved_files = self.cfp_session.get('files', {}).get(self.identifier, {}) or {}
-        result['uploaded_files'] = {
-            field: (
-                [entry.get('name') for entry in file_dict] if isinstance(file_dict, list) else file_dict.get('name')
-            )
-            for field, file_dict in saved_files.items()
-        }
         return result
 
     def post(self, request):
@@ -310,15 +302,6 @@ class FormFlowStep(TemplateFlowStep):
             for warning in filter(None, warning_messages):
                 messages.warning(self.request, warning)
             form.hide_top_errors = True
-            # Save uploaded files to session only for fields that don't have errors,
-            # so valid files are preserved when the form re-renders.
-            if form.files:
-                valid_files = form.files.copy()
-                for field_name in form.errors:
-                    if field_name in valid_files:
-                        valid_files.pop(field_name)
-                if valid_files:
-                    self.set_files(valid_files)
             return self.render(form=form)
         self.set_data(form.cleaned_data)
         self.set_files(form.files)
