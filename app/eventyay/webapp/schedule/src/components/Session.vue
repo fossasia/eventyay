@@ -1,5 +1,5 @@
 <template lang="pug">
-a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
+a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
 	.time-box
 		.start(:class="{'has-ampm': hasAmPm}")
 			.date(v-if="showDate") {{ shortDate }}
@@ -9,14 +9,14 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="styl
 		.buffer
 		.is-live(v-if="showLiveBadge && isLive") live
 	.info(:class="{'has-fav-count': hasFavCount, 'has-icons': hasAnyRightIcons}")
-		.title {{ getLocalizedString(session.title) }}
+		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
 		.speakers(v-if="session.speakers")
 			.avatars
 				template(v-for="speaker of session.speakers")
 					img(v-if="speaker.avatar_thumbnail_tiny", :src="speaker.avatar_thumbnail_tiny")
 					img(v-else-if="speaker.avatar_thumbnail_default", :src="speaker.avatar_thumbnail_default")
 					img(v-else-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
-			.names {{ session.speakers.map(s => s.name).join(', ') }}
+			.names(:class="{'names-clamped': isShortSession}") {{ session.speakers.map(s => s.name).join(', ') }}
 		.tags-box(v-if="showTags && session.tags && session.tags.length")
 			.tags(v-for="tag_item of session.tags")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
@@ -180,6 +180,15 @@ export default {
 		},
 		hasAnyRightIcons () {
 			return this.loggedIn || this.canOpenStream || this.session.do_not_record
+		},
+		isShortSession () {
+			let minutes = 0
+			if (this.session.start && this.session.end && this.session.end.diff) {
+				minutes = this.session.end.diff(this.session.start, 'minutes')
+			} else if (this.session.duration) {
+				minutes = this.session.duration
+			}
+			return minutes > 0 && minutes <= 15
 		}
 	},
 	methods: {
@@ -309,7 +318,8 @@ sessionTextExpand()
 			font-weight: 500
 			margin-bottom: 4px
 			margin-right: 0
-			sessionTextClamp(2)
+			&.title-clamped
+				sessionTextClamp(2)
 		.speakers
 			color: $clr-secondary-text-light
 			display: flex
@@ -328,7 +338,8 @@ sessionTextExpand()
 			.names
 				line-height: 24px
 				flex: 1
-				sessionTextClamp(1)
+				&.names-clamped
+					sessionTextClamp(1)
 		.abstract
 			margin: 8px 0 12px 0
 			// TODO make this take up more space if available?
@@ -428,7 +439,7 @@ sessionTextExpand()
 				color: var(--pretalx-clr-primary)
 	@media (hover: hover) and (pointer: fine)
 		&:hover
-			.title, .speakers .names
+			.title.title-clamped, .speakers .names.names-clamped
 				sessionTextExpand()
 @media(hover: none)
 	.c-linear-schedule-session .session-icons .btn-fav-container
