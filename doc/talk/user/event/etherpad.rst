@@ -30,7 +30,6 @@ administrator can configure:
 * **Default Etherpad instance URL** – e.g. ``https://pad.example.org``.
 * **Etherpad API key** – the contents of the instance's ``APIKEY.txt``. This is
   only required for automatic pad creation and is never exposed to the browser.
-* **Allow organiser-level overrides** – reserved for a future release.
 * **Pad name pattern** – the template used to generate pad names. Available
   placeholders are ``{event}``, ``{submission}`` and ``{token}``. The default is
   ``{event}-{submission}-{token}``.

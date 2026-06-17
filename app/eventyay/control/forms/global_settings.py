@@ -454,14 +454,6 @@ class GlobalSettingsForm(SettingsForm):
                     ),
                 ),
                 (
-                    'etherpad_allow_org_override',
-                    forms.BooleanField(
-                        label=_('Allow organiser-level Etherpad overrides'),
-                        help_text=_('If enabled, organisers may configure their own Etherpad instance instead of the platform default.'),
-                        required=False,
-                    ),
-                ),
-                (
                     'etherpad_pad_name_pattern',
                     forms.CharField(
                         label=_('Pad name pattern'),
@@ -529,7 +521,6 @@ class GlobalSettingsForm(SettingsForm):
                 'etherpad_enabled',
                 'etherpad_base_url',
                 'etherpad_api_key',
-                'etherpad_allow_org_override',
                 'etherpad_pad_name_pattern',
             ]),
         ]
