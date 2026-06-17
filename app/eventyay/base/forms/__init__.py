@@ -86,8 +86,11 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
             kwargs = DEFAULTS[fname].get('form_kwargs', {})
             if callable(kwargs):
                 kwargs = kwargs()
-            kwargs.setdefault('required', False)
-            field = DEFAULTS[fname]['form_class'](**kwargs)
+            import django
+            form_class = DEFAULTS[fname]['form_class']
+            if issubclass(form_class, forms.URLField) and django.VERSION[0] >= 5:
+                kwargs.setdefault('assume_scheme', 'https')
+            field = form_class(**kwargs)
             if isinstance(field, i18nfield.forms.I18nFormField):
                 field.widget.enabled_locales = self.locales
             self.fields[fname] = field

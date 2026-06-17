@@ -43,16 +43,21 @@ def test_publication_settings_save_via_main_settings(organizer_client, organizer
             'is_public': 'on' if enable_publication else '',
             'startpage_visible': 'on' if enable_publication else '',
             'settings-meta_noindex': 'on' if enable_publication else '',
-            'name': 'Test Event',
-            'email': 'test@example.com',
+            
+            # Form required fields (I18n/SplitDateTime fields require _0, _1 suffixes)
+            'name_0': 'Test Event',
+            'date_from_0': '2026-10-01',
+            'date_from_1': '10:00:00',
+            'date_to_0': '2026-10-02',
+            'date_to_1': '18:00:00',
         }
         
-        # Add required form values from context
+        # Add required form values from context (fallback for other fields)
         for field in form.fields:
             if field not in post_data and form.initial.get(field) is not None:
                 val = form.initial.get(field)
                 if hasattr(val, 'strftime'):
-                    post_data[field] = val.strftime('%Y-%m-%d')
+                    post_data[field] = val.strftime('%Y-%m-%d %H:%M:%S')
                 elif isinstance(val, (list, tuple)) and not val:
                     post_data[field] = ''
                 else:
