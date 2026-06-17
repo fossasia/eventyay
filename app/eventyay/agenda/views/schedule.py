@@ -2,7 +2,7 @@ import json
 import textwrap
 from contextlib import suppress
 from datetime import timedelta
-from urllib.parse import unquote, urlparse, urlunparse
+from urllib.parse import unquote, urljoin, urlparse, urlunparse
 
 from django.contrib import messages
 from django.core import signing
@@ -34,6 +34,7 @@ from eventyay.agenda.views.utils import (
     redirect_to_presale_with_warning,
 )
 from eventyay.common.signals import register_my_data_exporters
+from eventyay.common.urls import get_base_url
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
@@ -502,6 +503,9 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
             ics_tokenized_view_name = 'agenda:versioned-export-tokenized'
             reverse_kwargs['version'] = self.version
 
+        parsed_base = urlparse(get_base_url(request.event))
+        base_url = f'{parsed_base.scheme}://{parsed_base.netloc}'
+
         if is_my:
             if not request.user.is_authenticated:
                 return HttpResponseRedirect(self.request.event.urls.login)
@@ -518,7 +522,8 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
             if generate_new_token:
                 token = self.generate_ics_token(request, request.user.id)
 
-            ics_url = request.build_absolute_uri(
+            ics_url = urljoin(
+                base_url,
                 reverse(
                     ics_tokenized_view_name,
                     kwargs={
@@ -526,17 +531,18 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
                         'name': 'schedule-my.ics',
                         'token': token,
                     },
-                )
+                ),
             )
         else:
-            ics_url = request.build_absolute_uri(
+            ics_url = urljoin(
+                base_url,
                 reverse(
                     ics_view_name,
                     kwargs={
                         **reverse_kwargs,
                         'name': 'schedule.ics',
                     },
-                )
+                ),
             )
 
         if is_google:

@@ -1,5 +1,5 @@
 import io
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urljoin, urlparse
 
 import vobject
 from django.conf import settings
@@ -314,7 +314,10 @@ class SpeakerTalksCalendarRedirectView(EventPermissionRequired, View):
             slot = slots.first()
             return self.google_calendar_redirect(slot, request)
         if provider == 'webcal':
-            ical_url = request.build_absolute_uri(
+            parsed_base = urlparse(get_base_url(request.event))
+            base_url = f'{parsed_base.scheme}://{parsed_base.netloc}'
+            ical_url = urljoin(
+                base_url,
                 reverse(
                     'agenda:speaker.talks.ical',
                     kwargs={
@@ -322,7 +325,7 @@ class SpeakerTalksCalendarRedirectView(EventPermissionRequired, View):
                         'event': event,
                         'code': self.kwargs['code'],
                     },
-                )
+                ),
             )
             webcal_url = ical_url.replace('https://', 'webcal://').replace('http://', 'webcal://')
             return HttpResponseRedirect(webcal_url)
