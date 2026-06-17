@@ -52,26 +52,41 @@ def test_publication_settings_save_via_main_settings(organizer_client, organizer
             'date_to_1': '18:00:00',
         }
         
-        # Add required form values from context (fallback for other fields)
-        for field in form.fields:
-            if field not in post_data and form.initial.get(field) is not None:
-                val = form.initial.get(field)
-                if hasattr(val, 'strftime'):
-                    post_data[field] = val.strftime('%Y-%m-%d %H:%M:%S')
-                elif isinstance(val, (list, tuple)) and not val:
-                    post_data[field] = ''
+        # Add required form values from context
+        import i18nfield.forms
+        from django import forms
+        
+        def populate_from_form(form_obj, prefix_str=''):
+            for name, field in form_obj.fields.items():
+                initial = form_obj.initial.get(name)
+                key = f"{prefix_str}{name}"
+                
+                if key in post_data:
+                    continue
+                    
+                if isinstance(field, i18nfield.forms.I18nFormField):
+                    val = initial.data if hasattr(initial, 'data') else initial
+                    if isinstance(val, dict):
+                        post_data[f"{key}_0"] = str(val.get('en', val.get(list(val.keys())[0], '')) if val else 'Test')
+                    else:
+                        post_data[f"{key}_0"] = str(val or 'Test')
+                elif isinstance(field, forms.SplitDateTimeField):
+                    post_data[f"{key}_0"] = '2026-10-01' if 'from' in key else '2026-10-02'
+                    post_data[f"{key}_1"] = '10:00:00' if 'from' in key else '18:00:00'
+                elif isinstance(field, (forms.FileField, forms.ImageField)):
+                    # Browsers don't submit text for empty file inputs
+                    continue
                 else:
-                    post_data[field] = str(val)
+                    if initial is not None:
+                        if isinstance(initial, (list, tuple)) and not initial:
+                            post_data[key] = ''
+                        elif hasattr(initial, 'strftime'):
+                            post_data[key] = initial.strftime('%Y-%m-%d %H:%M:%S')
+                        else:
+                            post_data[key] = str(initial)
 
-        # Add required sform values from context
-        for field in sform.fields:
-            key = f"settings-{field}"
-            if key not in post_data and sform.initial.get(field) is not None:
-                val = sform.initial.get(field)
-                if isinstance(val, (list, tuple)) and not val:
-                    post_data[key] = ''
-                else:
-                    post_data[key] = str(val)
+        populate_from_form(form, '')
+        populate_from_form(sform, 'settings-')
 
         # Include formset management fields from context
         if 'plugin_formset' in response.context:
