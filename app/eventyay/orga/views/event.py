@@ -681,7 +681,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         cached_file.file.save(import_filename, import_form.cleaned_data['file'])
         process_url = reverse(
             target_config['process_url_name'],
-            kwargs={'event': self.request.event.slug, 'file': cached_file.id},
+            kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug, 'file': cached_file.id},
         )
         return redirect(process_url)
 

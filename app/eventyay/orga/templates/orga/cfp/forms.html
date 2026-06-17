@@ -139,7 +139,7 @@
                             <th class="text-right">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
-                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' organizer=request.event.organizer.slug event=request.event.slug %}">
                         <tr dragsort-id="title">
                             <th>{% translate "Title" %}</th>
                             <td class="text-center">
@@ -700,7 +700,7 @@
                             <th class="text-right">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
-                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' organizer=request.event.organizer.slug event=request.event.slug %}">
                         {# Full Name #}
                         {% with field=sform.cfp_ask_fullname %}
                         <tr dragsort-id="fullname">
@@ -1066,7 +1066,7 @@
                             <th class="text-right">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
-                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' organizer=request.event.organizer.slug event=request.event.slug %}">
                         {% for item in custom_reviewer_fields %}
                             <tr dragsort-id="{{ item.question.id }}">
                                 <th>

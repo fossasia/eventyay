@@ -156,7 +156,11 @@ class CfPForms(EventPermissionRequired, TemplateView):
             .annotate(answer_count=Count('answers'))
             .order_by('position')
         )
-        context['create_url'] = reverse('orga:cfp.questions.create', kwargs={'event': self.request.event.slug})
+        context['create_url'] = reverse(
+            'orga:cfp.questions.create',
+            kwargs={'organizer': self.request.event.organizer.slug,
+                    'event': self.request.event.slug},
+        )
 
         available_codes = [code for code, _ in self.request.event.available_content_locales]
         choices = get_language_choices_native_with_ui_name(codes=available_codes)
