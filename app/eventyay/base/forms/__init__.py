@@ -86,6 +86,7 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
             kwargs = DEFAULTS[fname].get('form_kwargs', {})
             if callable(kwargs):
                 kwargs = kwargs()
+            kwargs.setdefault('required', False)
             import django
             form_class = DEFAULTS[fname]['form_class']
             if issubclass(form_class, forms.URLField) and django.VERSION[0] >= 5:
