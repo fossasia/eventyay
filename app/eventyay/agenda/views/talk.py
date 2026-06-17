@@ -468,7 +468,8 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
             raise Http404
 
         slot = talk_slots.first()
-        ical_url = request.build_absolute_uri(
+        ical_url = urljoin(
+            get_base_url(request.event),
             reverse(
                 'agenda:ical',
                 kwargs={
@@ -476,7 +477,7 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
                     'event': event,
                     'slug': slug,
                 },
-            )
+            ),
         )
 
         if provider == 'google-calendar':
