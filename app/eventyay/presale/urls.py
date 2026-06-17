@@ -244,8 +244,8 @@ organizer_patterns = [
         eventyay.presale.views.organizer.OrganizerIcalDownload.as_view(),
         name='organizer.ical',
     ),
-    path(
-        'events/export/<str:export_target>/',
+    re_path(
+        r'^events/export/(?P<export_target>webcal)/$',
         eventyay.presale.views.organizer.OrganizerCalendarExportRedirectView.as_view(),
         name='organizer.export',
     ),

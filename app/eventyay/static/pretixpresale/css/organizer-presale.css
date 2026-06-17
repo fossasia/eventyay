@@ -3,23 +3,6 @@ body.organizer-presale-page {
   line-height: 1.55;
 }
 
-body.organizer-presale-page .event-hero-text .event-title {
-  font-size: 26px;
-  line-height: 1.2;
-}
-
-body.organizer-presale-page .event-date-line {
-  font-size: 16px;
-}
-
-body.organizer-presale-page #main-container > header {
-  margin-top: 24px;
-}
-
-body.organizer-presale-page .event-hero {
-  margin: 16px 0 56px;
-}
-
 body.organizer-presale-page #main-container.main-schedule #main-card > main {
   padding: 24px 20px;
 }
@@ -118,55 +101,15 @@ body.organizer-presale-page h2.content-header {
   gap: 0.625rem 0.875rem;
 }
 
-body.organizer-presale-page .organizer-event-toolbar a.btn,
-body.organizer-presale-page .organizer-event-toolbar summary.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 16px;
-  line-height: 1.4;
-  padding: 0.5rem 1rem;
-  margin: 0;
-  border-radius: var(--size-border-radius, 4px);
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-body.organizer-presale-page .organizer-event-toolbar a.btn.outline,
-body.organizer-presale-page .organizer-event-toolbar summary.btn.outline {
-  background: var(--color-bg, #fff);
-  color: var(--color-primary);
-  border: 1px solid var(--color-primary);
-}
-
-body.organizer-presale-page .organizer-event-toolbar a.btn.outline:hover,
-body.organizer-presale-page .organizer-event-toolbar summary.btn.outline:hover {
-  background: var(--color-primary);
-  color: #fff;
-}
-
-body.organizer-presale-page .organizer-event-toolbar a.btn.link {
-  background: transparent;
-  border: none;
-  color: var(--color-primary-text, var(--color-primary));
-  padding: 0.5rem 0.75rem;
-}
-
-body.organizer-presale-page .organizer-event-toolbar a.btn.link:hover {
-  color: var(--color-primary-text-dark, var(--color-primary));
-  text-decoration: none;
-}
-
 .organizer-export-dropdown {
   position: relative;
 }
 
-.organizer-export-dropdown > summary.btn {
+.organizer-export-dropdown > summary {
   list-style: none;
 }
 
-.organizer-export-dropdown > summary.btn::-webkit-details-marker {
+.organizer-export-dropdown > summary::-webkit-details-marker {
   display: none;
 }
 
@@ -254,24 +197,22 @@ body.organizer-presale-page #main-card .event-list .row a.btn:hover {
   min-width: 9rem;
   margin: 0.25rem;
   font-size: 16px;
-  padding: 0.45rem 0.75rem;
+  padding: 0 0.75rem;
   vertical-align: middle;
 }
 
-.organizer-calendar-nav .row {
+.organizer-calendar-filter-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  margin: 0;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0 0 1.5rem;
 }
 
-.organizer-calendar-pager {
+.organizer-calendar-selects {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
 }
 
@@ -279,8 +220,8 @@ body.organizer-presale-page .organizer-calendar-nav a.btn.outline {
   background: var(--color-bg, #fff);
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
-  font-size: 16px;
-  padding: 0.5rem 1rem;
+  font-size: 15px;
+  padding: 0.4rem 0.8rem;
 }
 
 /* Month / week calendar grids */
@@ -429,16 +370,8 @@ body.organizer-presale-page #main-card .week-calendar a.event.over {
 }
 
 @media (max-width: 768px) {
-  body.organizer-presale-page .event-hero {
-    margin: 8px 0 32px;
-  }
-
   body.organizer-presale-page #main-container.main-schedule #main-card > main {
     padding: 12px;
-  }
-
-  body.organizer-presale-page .event-hero-text .event-title {
-    font-size: 20px;
   }
 
   body.organizer-presale-page .presale-sticky-tabs a.header-tab {
@@ -526,10 +459,16 @@ body.organizer-presale-page #main-card .week-calendar a.event.over {
   body.organizer-presale-page #main-card .table-calendar td.day.has-events.selected-day-cell h3 {
     color: #fff;
   }
-}
 
-@media (max-width: 576px) {
-  body.organizer-presale-page .event-hero-text .event-title {
-    font-size: 18px;
+  body.organizer-presale-page .organizer-calendar-filter-row {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  body.organizer-presale-page .event-brand {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
   }
 }

@@ -13,7 +13,6 @@
     <div class="organizer-list-header">
         <h2 class="content-header">{{ date|date:"F Y" }}</h2>
         {% include "pretixpresale/organizers/fragment_community_bar.html" %}
-        {% include "pretixpresale/organizers/fragment_toolbar.html" %}
     </div>
     <form class="form-inline organizer-calendar-nav" method="get" id="monthselform" action="{% eventurl request.organizer "presale:organizer.index" %}">
         {% for f, v in request.GET.items %}
@@ -21,8 +20,17 @@
                 <input type="hidden" name="{{ f }}" value="{{ v }}">
             {% endif %}
         {% endfor %}
-        <div class="row">
-            <div class="col-sm-6 col-xs-12 text-center">
+        <div class="organizer-calendar-filter-row">
+            {% if has_before %}
+                <a href="?{% url_replace request "year" before.year "month" before.month %}" class="btn outline">
+                    <span class="fa fa-arrow-left" aria-hidden="true"></span>
+                    {{ before|date:"F Y" }}
+                </a>
+            {% else %}
+                <div class="placeholder-nav"></div>
+            {% endif %}
+
+            <div class="organizer-calendar-selects">
                 <select name="month" class="form-control" aria-label="{% translate 'Month' %}">
                     {% for m in months %}
                         <option value="{{ m|date:"m" }}" {% if m == date %}selected{% endif %}>{{ m|date:"F" }}</option>
@@ -37,20 +45,15 @@
                     {% trans "Go" %}
                 </button>
             </div>
-            <div class="col-sm-6 col-xs-12 text-center organizer-calendar-pager">
-                {% if has_before %}
-                    <a href="?{% url_replace request "year" before.year "month" before.month %}" class="btn outline">
-                        <span class="fa fa-arrow-left" aria-hidden="true"></span>
-                        {{ before|date:"F Y" }}
-                    </a>
-                {% endif %}
-                {% if has_after %}
-                    <a href="?{% url_replace request "year" after.year "month" after.month %}" class="btn outline">
-                        {{ after|date:"F Y" }}
-                        <span class="fa fa-arrow-right" aria-hidden="true"></span>
-                    </a>
-                {% endif %}
-            </div>
+
+            {% if has_after %}
+                <a href="?{% url_replace request "year" after.year "month" after.month %}" class="btn outline">
+                    {{ after|date:"F Y" }}
+                    <span class="fa fa-arrow-right" aria-hidden="true"></span>
+                </a>
+            {% else %}
+                <div class="placeholder-nav"></div>
+            {% endif %}
         </div>
     </form>
     {% include "pretixpresale/fragment_calendar.html" with show_avail=request.organizer.settings.event_list_availability %}

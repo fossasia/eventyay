@@ -13,7 +13,6 @@
     <div class="organizer-list-header">
         <h2 class="content-header">{% blocktrans with week=date.isocalendar.1 year=date.isocalendar.0 %}Week {{ week }}, {{ year }}{% endblocktrans %}</h2>
         {% include "pretixpresale/organizers/fragment_community_bar.html" %}
-        {% include "pretixpresale/organizers/fragment_toolbar.html" %}
     </div>
     <form class="form-inline organizer-calendar-nav" method="get" id="monthselform"
           action="{% eventurl request.organizer "presale:organizer.index" %}">
@@ -22,8 +21,18 @@
                 <input type="hidden" name="{{ f }}" value="{{ v }}">
             {% endif %}
         {% endfor %}
-        <div class="row">
-            <div class="col-sm-6 col-xs-12 text-center">
+        <div class="organizer-calendar-filter-row">
+            {% if has_before %}
+                <a href="?{% url_replace request "year" before.isocalendar.0 "week" before.isocalendar.1 %}"
+                   class="btn outline">
+                    <span class="fa fa-arrow-left" aria-hidden="true"></span>
+                    {{ before|date:week_format }}
+                </a>
+            {% else %}
+                <div class="placeholder-nav"></div>
+            {% endif %}
+
+            <div class="organizer-calendar-selects">
                 <select name="week" class="form-control select-calendar-week-short" aria-label="{% translate 'Week' %}">
                     {% for w in weeks %}
                         <option value="{{ w.0.isocalendar.1 }}"
@@ -41,22 +50,16 @@
                     {% trans "Go" %}
                 </button>
             </div>
-            <div class="col-sm-6 col-xs-12 text-center organizer-calendar-pager">
-                {% if has_before %}
-                    <a href="?{% url_replace request "year" before.isocalendar.0 "week" before.isocalendar.1 %}"
-                       class="btn outline">
-                        <span class="fa fa-arrow-left" aria-hidden="true"></span>
-                        {{ before|date:week_format }}
-                    </a>
-                {% endif %}
-                {% if has_after %}
-                    <a href="?{% url_replace request "year" after.isocalendar.0 "week" after.isocalendar.1 %}"
-                       class="btn outline">
-                        {{ after|date:week_format }}
-                        <span class="fa fa-arrow-right" aria-hidden="true"></span>
-                    </a>
-                {% endif %}
-            </div>
+
+            {% if has_after %}
+                <a href="?{% url_replace request "year" after.isocalendar.0 "week" after.isocalendar.1 %}"
+                   class="btn outline">
+                    {{ after|date:week_format }}
+                    <span class="fa fa-arrow-right" aria-hidden="true"></span>
+                </a>
+            {% else %}
+                <div class="placeholder-nav"></div>
+            {% endif %}
         </div>
     </form>
     {% include "pretixpresale/fragment_week_calendar.html" with show_avail=request.organizer.settings.event_list_availability %}
