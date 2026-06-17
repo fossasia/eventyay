@@ -1,0 +1,33 @@
+name: PR Process Reminder
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, synchronize, reopened, edited, review_requested]
+    branches: [dev, main]
+  pull_request_review:
+    types: [submitted]
+    branches: [dev, main]
+  pull_request_review_thread:
+    types: [resolved, unresolved]
+    branches: [dev, main]
+
+jobs:
+  post-reminder:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.state == 'open'
+    concurrency:
+      group: pr-process-reminder-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const { runPrProcessReminder } = await import(
+              `${process.env.GITHUB_WORKSPACE}/.github/scripts/pr-process-reminder-lib.mjs`
+            );
+            await runPrProcessReminder({ github, context, core });
