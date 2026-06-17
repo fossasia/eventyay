@@ -69,6 +69,7 @@ import api from 'lib/api'
 import Prompt from 'components/Prompt'
 import ROOM_TYPES, { inferType } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
+import { PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 import Stage from 'views/admin/rooms/types-edit/stage'
 import PageStatic from 'views/admin/rooms/types-edit/page-static'
 import PageIframe from 'views/admin/rooms/types-edit/page-iframe'
@@ -157,6 +158,12 @@ export default {
 		await this.fetchConfig()
 	},
 	methods: {
+		getStartingModuleConfig (type) {
+			if (type.id === 'stage') {
+				return { playback_mode: PLAYBACK_MODE_SCHEDULE_DRIVEN }
+			}
+			return {}
+		},
 		async fetchConfig () {
 			this.loading = true
 			this.error = null
@@ -173,7 +180,7 @@ export default {
 		},
 		changeType (type) {
 			if (this.inferredType && this.inferredType.id === type.id) return
-			this.config.module_config = [{ type: type.startingModule, config: {} }]
+			this.config.module_config = [{ type: type.startingModule, config: this.getStartingModuleConfig(type) }]
 		},
 		async resetRoom () {
 			this.resetError = null

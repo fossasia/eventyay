@@ -4,7 +4,19 @@ prompt.c-create-stage-prompt(@close="$emit('close')")
 		h1 {{ $t('CreateStagePrompt:headline:text') }}
 		form(@submit.prevent="create")
 			bunt-input(name="name", :label="$t('CreateStagePrompt:name:label')", icon="theater", :placeholder="$t('CreateStagePrompt:name:placeholder')", v-model="name", :validation="v$.name")
-			bunt-input(name="url", :label="$t('CreateStagePrompt:url:label')", icon="link", placeholder="https://example.com/stream.m3u8", v-model="url", :validation="v$.url")
+			.stage-mode
+				.fieldset-label Stream type
+				.radio-options
+					label.radio-option(v-for="option in PLAYBACK_MODE_OPTIONS", :key="option.id")
+						input(type="radio", name="playbackMode", :value="option.id", v-model="playbackMode")
+						.radio-copy
+							.radio-title {{ option.label }}
+							.radio-description {{ option.description }}
+			.default-source(v-if="playbackMode === PLAYBACK_MODE_ALWAYS_ON")
+				bunt-select(name="streamSource", v-model="streamSource", :options="streamSourceOptions", option-value="id", option-label="label", label="Default stream source")
+				bunt-input(v-if="streamSource === 'hls'", name="url", :label="$t('CreateStagePrompt:url:label')", icon="link", placeholder="https://example.com/stream.m3u8", v-model="url", :validation="v$.url")
+				bunt-input(v-else-if="streamSource === 'youtube'", name="youtubeId", label="YouTube Video ID or URL", icon="youtube", placeholder="https://www.youtube.com/watch?v=...", v-model="youtubeId", :validation="v$.youtubeId", @blur="normalizeYoutubeId")
+				bunt-input(v-else-if="streamSource === 'iframe'", name="url", label="Iframe player URL", icon="link", placeholder="https://example.com/player", v-model="url", :validation="v$.url")
 			bunt-input-outline-container(:label="$t('CreateChatPrompt:description:label')")
 				template(#default="{focus, blur}")
 					textarea(v-model="description", @focus="focus", @blur="blur")
@@ -14,7 +26,13 @@ prompt.c-create-stage-prompt(@close="$emit('close')")
 import { useVuelidate } from '@vuelidate/core'
 import { mapGetters } from 'vuex'
 import Prompt from 'components/Prompt'
-import { required, url } from 'lib/validators'
+import { required, url, youtubeid, normalizeYoutubeVideoId } from 'lib/validators'
+import {
+	PLAYBACK_MODE_ALWAYS_ON,
+	PLAYBACK_MODE_OPTIONS,
+	PLAYBACK_MODE_SCHEDULE_DRIVEN,
+	getStreamSourceOptions
+} from 'lib/stage-streams'
 
 export default {
 	components: { Prompt },
@@ -23,25 +41,63 @@ export default {
 	data() {
 		return {
 			name: '',
+			playbackMode: PLAYBACK_MODE_SCHEDULE_DRIVEN,
+			streamSource: 'hls',
 			url: '',
+			youtubeId: '',
 			description: '',
 			loading: false,
-			error: null
+			error: null,
+			PLAYBACK_MODE_ALWAYS_ON,
+			PLAYBACK_MODE_OPTIONS,
+			streamSourceOptions: getStreamSourceOptions()
 		}
 	},
 	computed: {
 		...mapGetters(['hasPermission']),
 	},
-	validations: {
-		url: {
-			required: required('HLS URL is required'),
-			url: url('must be a valid url')
-		},
-		name: {
-			required: required('Name is required')
+	validations() {
+		const urlRules = {}
+		const youtubeRules = {}
+		if (this.playbackMode === PLAYBACK_MODE_ALWAYS_ON && ['hls', 'iframe'].includes(this.streamSource)) {
+			urlRules.required = required('Stream URL is required')
+			urlRules.url = url('must be a valid url')
+		}
+		if (this.playbackMode === PLAYBACK_MODE_ALWAYS_ON && this.streamSource === 'youtube') {
+			youtubeRules.required = required('YouTube Video ID or URL is required')
+			youtubeRules.youtubeid = youtubeid('not a valid YouTube video ID or URL')
+		}
+		return {
+			url: urlRules,
+			youtubeId: youtubeRules,
+			name: {
+				required: required('Name is required')
+			}
 		}
 	},
 	methods: {
+		normalizeYoutubeId() {
+			const id = normalizeYoutubeVideoId(this.youtubeId)
+			if (id) this.youtubeId = id
+		},
+		buildLivestreamModule() {
+			const config = {
+				playback_mode: this.playbackMode,
+			}
+			if (this.playbackMode !== PLAYBACK_MODE_ALWAYS_ON) {
+				return { type: 'livestream.native', config }
+			}
+			if (this.streamSource === 'youtube') {
+				config.ytid = normalizeYoutubeVideoId(this.youtubeId) || this.youtubeId
+				return { type: 'livestream.youtube', config }
+			}
+			if (this.streamSource === 'iframe') {
+				config.url = this.url
+				return { type: 'livestream.iframe', config }
+			}
+			config.hls_url = this.url
+			return { type: 'livestream.native', config }
+		},
 		async create() {
 			this.error = null
 			this.v$.$touch()
@@ -61,12 +117,7 @@ export default {
 					volatile: true,
 				}
 			})
-			modules.push({
-				type: 'livestream.native',
-				config: {
-					hls_url: this.url,
-				}
-			})
+			modules.push(this.buildLivestreamModule())
 			let room
 			try {
 				({ room } = await this.$store.dispatch('createRoom', {
@@ -110,6 +161,39 @@ export default {
 					resize: vertical
 					min-height: 64px
 					padding: 0 8px
+			.stage-mode
+				margin-top: 16px
+				.fieldset-label
+					font-size: 12px
+					font-weight: 500
+					color: $clr-secondary-text-light
+					margin-bottom: 8px
+				.radio-options
+					display: flex
+					flex-direction: column
+					border: border-separator()
+					border-radius: 4px
+				.radio-option
+					display: flex
+					gap: 10px
+					padding: 10px 12px
+					cursor: pointer
+					color: $clr-primary-text-light
+					&:not(:last-child)
+						border-bottom: border-separator()
+					input
+						margin-top: 3px
+						flex: none
+					.radio-title
+						font-weight: 500
+						line-height: 20px
+					.radio-description
+						color: $clr-secondary-text-light
+						font-size: 12px
+						line-height: 18px
+			.default-source
+				display: flex
+				flex-direction: column
 			.bunt-button
 				themed-button-primary()
 				margin-top: 16px

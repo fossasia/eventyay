@@ -36,7 +36,7 @@
 						.error-message(v-if="v$.formData.end_time.$error") End time is required
 					.timezone-hint
 						i All times in {{ eventTimezone }}
-					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", :validation="v$.formData.stream_type")
+					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", option-value="id", option-label="label", :validation="v$.formData.stream_type")
 					.form-error(v-if="saveError")
 						| {{ saveError }}
 					.form-actions
@@ -45,7 +45,8 @@
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core';
-import { required, url } from 'lib/validators';
+import { helpers } from '@vuelidate/validators';
+import { required, url, normalizeYoutubeVideoId } from 'lib/validators';
 import api from 'lib/api';
 import Prompt from 'components/Prompt';
 import moment from 'lib/timetravelMoment';
@@ -125,6 +126,10 @@ export default {
 				url: {
 					required: required('Stream URL is required'),
 					url: url('Must be a valid URL'),
+					youtube: helpers.withMessage('Must be a valid YouTube URL', (value) => {
+						if (!value || this.formData.stream_type !== 'youtube') return true;
+						return !!normalizeYoutubeVideoId(value);
+					})
 				},
 				start_time: {
 					required: required('Start time is required'),

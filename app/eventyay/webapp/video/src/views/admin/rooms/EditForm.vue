@@ -10,7 +10,7 @@
 				template(v-if="inferredType")
 					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules")
-			stream-schedule(v-if="!creating && config.id && inferredType && inferredType.id === 'stage'", :room-id="String(config.id)")
+			stream-schedule(v-if="showStreamSchedule", :room-id="String(config.id)")
 	.ui-form-actions
 		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ creating ? 'create' : 'save' }}
 		.errors {{ validationErrors.join(', ') }}
@@ -24,6 +24,7 @@ import { required } from 'lib/validators'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
 import ROOM_TYPES, { inferType } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
+import { PLAYBACK_MODE_SCHEDULE_DRIVEN, getStagePlaybackMode } from 'lib/stage-streams'
 import Stage from './types-edit/stage'
 import PageStatic from './types-edit/page-static'
 import PageIframe from './types-edit/page-iframe'
@@ -80,6 +81,17 @@ export default {
 		},
 		inferredType() {
 			return inferType(this.config)
+		},
+		stagePlaybackMode() {
+			if (!this.modules) return null
+			const module = this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
+			return getStagePlaybackMode(module)
+		},
+		showStreamSchedule() {
+			return !this.creating &&
+				this.config.id &&
+				this.inferredType?.id === 'stage' &&
+				this.stagePlaybackMode === PLAYBACK_MODE_SCHEDULE_DRIVEN
 		},
 		localizedName: {
 			get() {

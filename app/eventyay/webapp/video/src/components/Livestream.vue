@@ -48,6 +48,7 @@ import Hls from 'hls.js'
 import mux from 'mux-embed'
 import config from 'config'
 import theme from 'theme'
+import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 
 const RETRY_INTERVAL = 5000
 // TODO look at capLevelToPlayerSize
@@ -140,9 +141,12 @@ export default {
 			return 'quality-high'
 		},
 		hlsUrl() {
-			if (this.room?.currentStream?.url && this.room.currentStream.stream_type === 'hls') {
+			const isScheduleDriven = getStagePlaybackMode(this.module) === PLAYBACK_MODE_SCHEDULE_DRIVEN
+			if (isScheduleDriven && this.room?.currentStream?.url && this.room.currentStream.stream_type === 'hls') {
 				return this.room.currentStream.url
 			}
+			if (isScheduleDriven) return null
+
 			if (this.chosenAlternative) {
 				const alternative = (this.module.config.alternatives || []).find((a) => a.label === this.chosenAlternative)
 				if (alternative && alternative.hls_url) {
