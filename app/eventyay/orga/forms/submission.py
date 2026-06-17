@@ -10,6 +10,7 @@ from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.base.models.room import rooms_for_talk_assignment
 from eventyay.base.services.etherpad import validate_etherpad_url
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.mixins import ReadOnlyFlag, RequestRequire
 from eventyay.common.forms.renderers import InlineFormLabelRenderer, InlineFormRenderer
@@ -142,7 +143,10 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             self.fields['duration'].help_text += ' ' + str(
                 _('Leave empty to use the default duration for the session type.')
             )
-        if not event.get_feature_flag('etherpad_enabled'):
+        # Show the field only when both the platform and the event enable Etherpad.
+        gs = GlobalSettingsObject().settings
+        platform_ready = bool(gs.etherpad_enabled and gs.etherpad_base_url)
+        if not (platform_ready and event.get_feature_flag('etherpad_enabled')):
             self.fields.pop('etherpad_url', None)
 
     def clean_etherpad_url(self):
