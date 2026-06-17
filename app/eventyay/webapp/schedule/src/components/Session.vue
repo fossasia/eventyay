@@ -10,20 +10,19 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 		.is-live(v-if="showLiveBadge && isLive") live
 	.info(:class="{'has-fav-count': hasFavCount, 'has-icons': hasAnyRightIcons}")
 		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
-		.speakers(v-if="session.speakers")
-			.avatars
-				template(v-for="speaker of session.speakers")
-					img(v-if="speaker.avatar_thumbnail_tiny", :src="speaker.avatar_thumbnail_tiny")
-					img(v-else-if="speaker.avatar_thumbnail_default", :src="speaker.avatar_thumbnail_default")
-					img(v-else-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
-			.names(:class="{'names-clamped': isShortSession}") {{ session.speakers.map(s => s.name).join(', ') }}
+		.speakers(v-if="session.speakers", :class="{'names-clamped': isShortSession}")
+			template(v-for="(speaker, i) of session.speakers", :key="speaker.code || i")
+				span.speaker
+					img(v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url", :src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url", :alt="speaker.name || ''")
+					span(v-if="speaker.name") {{ speaker.name }}
+				span(v-if="i + 1 < session.speakers.length") , 
 		.tags-box(v-if="showTags && session.tags && session.tags.length")
 			.tags(v-for="tag_item of session.tags")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
 		.abstract(v-if="showAbstract", v-html="abstractText")
 		.bottom-info
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
-			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
+			.room(v-if="showRoom && session.room", :title="getLocalizedString(session.room.name)") {{ getLocalizedString(session.room.name) }}
 		.do_not_record(v-if="session.do_not_record", :title="doNotRecordTooltip", :aria-label="doNotRecordTooltip")
 			svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
 				g(transform="translate(-9.3465481,-5.441411)")
@@ -323,23 +322,22 @@ sessionTextExpand()
 		.speakers
 			color: $clr-secondary-text-light
 			display: flex
+			flex-wrap: wrap
+			align-items: center
 			min-width: 0
-			.avatars
-				flex: none
-				> *:not(:first-child)
-					margin-left: -20px
+			line-height: 24px
+			.speaker
+				display: inline-flex
+				align-items: center
 				img
 					background-color: $clr-white
 					border-radius: 50%
 					height: 24px
 					width: @height
-					margin: 0 8px 0 0
+					margin: 0 6px 0 0
 					object-fit: cover
-			.names
-				line-height: 24px
-				flex: 1
-				&.names-clamped
-					sessionTextClamp(1)
+			&.names-clamped
+				sessionTextClamp(1)
 		.abstract
 			margin: 8px 0 12px 0
 			// TODO make this take up more space if available?
@@ -360,7 +358,9 @@ sessionTextExpand()
 				min-width: 0
 				text-align: right
 				color: $clr-secondary-text-light
-				ellipsis()
+				white-space: nowrap
+				overflow: hidden
+				text-overflow: ellipsis
 		.do_not_record
 			position: absolute
 			bottom: 2px
@@ -439,7 +439,7 @@ sessionTextExpand()
 				color: var(--pretalx-clr-primary)
 	@media (hover: hover) and (pointer: fine)
 		&:hover
-			.title.title-clamped, .speakers .names.names-clamped
+			.title.title-clamped, .speakers.names-clamped
 				sessionTextExpand()
 @media(hover: none)
 	.c-linear-schedule-session .session-icons .btn-fav-container

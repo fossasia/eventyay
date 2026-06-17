@@ -4,7 +4,8 @@
 		.rooms-bar(ref="roomsBar")
 			.rooms-inner(:style="{'--total-rooms': rooms.length, 'min-width': scrollContentWidth ? (scrollContentWidth + 'px') : null}")
 				.room
-				.room(v-for="(room, index) of rooms") {{ getLocalizedString(room.name) }}
+				.room(v-for="(room, index) of rooms")
+					span.room-name(:title="getLocalizedString(room.name)") {{ getLocalizedString(room.name) }}
 					span.room-description(v-if="getLocalizedString(room.description)", @mouseenter="showRoomTooltip($event, room)", @mouseleave="hideRoomTooltip") ?
 				.room(v-if="hasSessionsWithoutRoom") no location
 		.room-tooltip(v-if="roomTooltip.visible", :style="roomTooltipStyle") {{ roomTooltip.text }}
@@ -51,7 +52,8 @@
 			.print-chunk
 				.print-rooms-bar(:style="{'--total-rooms': chunk.length}")
 					.room
-					.room(v-for="room of chunk") {{ getLocalizedString(room.name) }}
+					.room(v-for="room of chunk")
+						span.room-name {{ getLocalizedString(room.name) }}
 				.print-grid(:style="getPrintChunkGridStyle(chunk)")
 					template(v-for="slice of visibleTimeslices")
 						.timeslice(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
@@ -650,9 +652,16 @@ export default {
 				display: flex
 				justify-content: center
 				align-items: center
+				min-width: 0
+				gap: 0.4em
 				font-size: 18px
 				background-color: $clr-white
 				padding: 8px 4px
+				.room-name
+					min-width: 0
+					overflow: hidden
+					white-space: nowrap
+					text-overflow: ellipsis
 				.room-description
 					display: inline-flex
 					justify-content: center
@@ -859,6 +868,12 @@ export default {
 						font-weight: 600
 						padding: 8px 4px
 						border-bottom: 2px solid #ccc
+						min-width: 0
+						.room-name
+							display: block
+							overflow: hidden
+							white-space: nowrap
+							text-overflow: ellipsis
 				.print-grid
 					display: grid
 					grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
