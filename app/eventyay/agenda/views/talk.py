@@ -22,7 +22,14 @@ from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.signals import register_recording_provider
-from eventyay.agenda.views.utils import build_enriched_schedule_json, encode_email, is_email_like
+from eventyay.agenda.views.utils import (
+    WipAgendaPreviewPageMixin,
+    build_enriched_schedule_json,
+    build_talk_schedule_json,
+    encode_email,
+    is_email_like,
+)
+from eventyay.talk_rules.agenda import agenda_schedule_for_user, can_view_wip_schedule, filter_agenda_slots
 from eventyay.base.models import (
     Event,
     Order,
@@ -63,6 +70,7 @@ class VideoJoinError(StrEnum):
 
 class TalkMixin(PermissionRequired):
     permission_required = 'base.view_public_submission'
+    wip_preview = False
 
     def get_queryset(self):
         return self.request.event.submissions.prefetch_related(
@@ -84,6 +92,21 @@ class TalkMixin(PermissionRequired):
 
     def get_permission_object(self):
         return self.submission
+
+    def agenda_schedule(self):
+        return agenda_schedule_for_user(
+            self.request.event,
+            self.request.user,
+            wip_preview=self.wip_preview,
+        )
+
+    def filter_visible_slots(self, qs):
+        return filter_agenda_slots(
+            qs,
+            self.request.user,
+            self.request.event,
+            wip_preview=self.wip_preview,
+        )
 
 
 def talk_starrers(request, event, slug, **kwargs):
@@ -164,7 +187,11 @@ class TalkView(TalkMixin, TemplateView):
 
     @context
     def schedule_json(self):
-        return build_enriched_schedule_json(self.request)
+        return build_talk_schedule_json(self.request, self.submission.code)
+
+    @context
+    def schedule_version(self):
+        return ''
 
     def get_contrast_color(self, bg_color):
         if not bg_color:
@@ -207,7 +234,7 @@ class TalkView(TalkMixin, TemplateView):
         from django.db.models import Prefetch
 
         ctx = super().get_context_data(**kwargs)
-        schedule = self.request.event.current_schedule or self.request.event.wip_schedule
+        schedule = self.agenda_schedule()
         if not self.request.user.has_perm('base.view_schedule', schedule):
             return ctx
         qs = schedule.talks.filter(room__isnull=False).select_related('room') if schedule else TalkSlot.objects.none()
@@ -216,7 +243,9 @@ class TalkView(TalkMixin, TemplateView):
         for tag_item in ctx['submission_tags']:
             tag_item.contrast_color = self.get_contrast_color(tag_item.color)
         other_slots = (
-            schedule.talks.exclude(submission_id=self.submission.pk).filter(is_visible=True)
+            self.filter_visible_slots(
+                schedule.talks.exclude(submission_id=self.submission.pk)
+            )
             if schedule
             else TalkSlot.objects.none()
         )
@@ -255,6 +284,18 @@ class TalkView(TalkMixin, TemplateView):
     @cached_property
     def answers(self):
         return self.submission.public_answers
+
+
+class WipTalkView(WipAgendaPreviewPageMixin, TalkView):
+    def has_permission(self):
+        wip = self.request.event.wip_schedule
+        if not wip:
+            return False
+        return self.submission.slots.filter(schedule=wip).exists()
+
+    @context
+    def schedule_json(self):
+        return build_enriched_schedule_json(self.request, wip_preview=True)
 
 
 class TalkReviewView(TalkView):
@@ -312,9 +353,9 @@ class TalkReviewView(TalkView):
 class SingleICalView(EventPageMixin, TalkMixin, View):
     def get(self, request, event, **kwargs):
         code = self.submission.code
-        schedule = self.request.event.current_schedule or self.request.event.wip_schedule
+        schedule = self.agenda_schedule()
         talk_slots = (
-            self.submission.slots.filter(schedule=schedule, is_visible=True)
+            self.filter_visible_slots(self.submission.slots.filter(schedule=schedule))
             if schedule
             else self.submission.slots.none()
         )
@@ -338,11 +379,11 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
 
     def get(self, request, event, slug, **kwargs):
         fmt = kwargs.get('format', '')
-        schedule = request.event.current_schedule or request.event.wip_schedule
+        schedule = self.agenda_schedule()
         if not schedule:
             raise Http404
         talk_slots = (
-            self.submission.slots.filter(schedule=schedule, is_visible=True)
+            self.filter_visible_slots(self.submission.slots.filter(schedule=schedule))
             .select_related('room', 'submission', 'submission__track', 'submission__submission_type')
             .prefetch_related('submission__speakers', 'submission__resources')
         )
@@ -460,10 +501,10 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
 
     def get(self, request, event, slug, **kwargs):
         provider = kwargs.get('provider', '')
-        schedule = request.event.current_schedule or request.event.wip_schedule
+        schedule = self.agenda_schedule()
         if not schedule:
             raise Http404
-        talk_slots = self.submission.slots.filter(schedule=schedule, is_visible=True)
+        talk_slots = self.filter_visible_slots(self.submission.slots.filter(schedule=schedule))
         if not talk_slots.exists():
             raise Http404
 

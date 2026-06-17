@@ -12,7 +12,7 @@ import TalkDetail from '~/components/TalkDetail'
 import ScheduleView from '~/components/ScheduleView'
 import ExportDropdown from '~/components/ExportDropdown'
 import ScheduleToolbar from '~/components/ScheduleToolbar'
-export { getLocalizedString, getPrettyDuration, getSessionTime, isProperSession, getContrastColor, getIconByFileEnding } from '~/utils'
+export { getLocalizedString, getPrettyDuration, getSessionTime, isProperSession, getContrastColor, getIconByFileEnding, computeTalkExporters, computeSpeakerExporters, buildExportMenuItems } from '~/utils'
 
 export {
 	LinearSchedule,

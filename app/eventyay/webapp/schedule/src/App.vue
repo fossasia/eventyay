@@ -11,7 +11,7 @@
 		speaker-detail(v-else-if="view === 'speaker'", :speakerId="speakerCode", :onHomeServer="onHomeServer")
 	template(v-else-if="schedule && schedule.talks.length")
 		schedule-toolbar(v-if="(scheduleMeta || schedule) && !publicFavsUrl",
-			:version="scheduleMeta?.version || ''",
+			:version="version || scheduleMeta?.version || ''",
 			:isCurrent="scheduleMeta?.is_current !== false",
 			:changelogUrl="scheduleMeta?.changelog_url || ''",
 			:currentScheduleUrl="scheduleMeta?.current_schedule_url || ''",
@@ -127,7 +127,7 @@ const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersLis
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount, computeTalkExporters } from '~/utils'
 
 function getCsrfToken () {
 	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
@@ -219,6 +219,10 @@ export default {
 		}
 	},
 	provide () {
+		const wipLinkPrefix = () => {
+			const version = this.version || this.scheduleMeta?.version || ''
+			return version === 'wip' ? 'schedule/v/wip/' : ''
+		}
 		return {
 			eventUrl: this.eventUrl,
 			remoteApiUrl: computed(() => this.remoteApiUrl),
@@ -228,6 +232,10 @@ export default {
 				event.preventDefault()
 
 				this.showSessionDetails(session, event)
+			},
+			generateSessionLinkUrl: ({eventUrl, session}) => {
+				if (!this.onHomeServer) return `#session/${session.id}/`
+				return `${eventUrl}${wipLinkPrefix()}talk/${session.id}/`
 			},
 			scheduleFav: (id) => this.fav(id),
 			scheduleUnfav: (id) => this.unfav(id),
@@ -252,7 +260,7 @@ export default {
 				return roomId ? `${base}${roomId}/` : ''
 			},
 			generateSpeakerLinkUrl: ({speaker}) => {
-				if (this.onHomeServer) return `${this.eventUrl}speakers/${speaker.code}/`
+				if (this.onHomeServer) return `${this.eventUrl}${wipLinkPrefix()}speakers/${speaker.code}/`
 				return `#speakers/${speaker.code}`
 			},
 			onSpeakerLinkClick: (event, speaker) => {
@@ -262,7 +270,8 @@ export default {
 				}
 			},
 			loggedIn: computed(() => this.loggedIn),
-			translationMessages: computed(() => this.translationMessages)
+			translationMessages: computed(() => this.translationMessages),
+			isWipPreview: computed(() => (this.version || this.scheduleMeta?.version || '') === 'wip')
 		}
 	},
 	data () {
@@ -689,6 +698,9 @@ export default {
 			} else {
 				this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 			}
+			if (this.view === 'speaker' && this.speakerCode) {
+				this.fetchSpeakerApiContentIfNeeded(this.speakerCode)
+			}
 			return
 		}
 
@@ -857,8 +869,8 @@ export default {
 			this.scrollParentWidth = entries[0].contentRect.width
 		},
 		async remoteApiRequest (path, method, data) {
-			const eventUrlObj = new URL(this.eventUrl)
-			const baseUrl = `${eventUrlObj.protocol}//${eventUrlObj.host}/api/v1/events/${this.eventSlug}/`
+			const eventUrlObj = new URL(this.eventUrl, window.location.origin)
+			const baseUrl = `${eventUrlObj.origin}/api/v1/events/${this.eventSlug}/`
 			return this.apiRequest(path, method, data, baseUrl)
 		},
 		async apiRequest (path, method, data, baseUrl) {
@@ -1036,16 +1048,21 @@ export default {
 				}
 			}
 		},
+		computedExporters(code) {
+			return computeTalkExporters(this.eventUrl, code)
+		},
 		async showSessionDetails(session, ev) {
 			ev.preventDefault()
 
 			const talk = this.talksLookup[session.id]
+			const exporters = session.exporters || (this.onHomeServer ? this.computedExporters(session.id) : null)
 
 			// Show session immediately with loading state
 			this.modalContent = {
 				contentType: 'session',
 				contentObject: {
 					...session,
+					exporters,
 					apiContent: talk.apiContent,
 					isLoading: !talk.apiContent,
 					faved: this.favSet.has(session.id)
@@ -1060,13 +1077,14 @@ export default {
 					if (this.modalContent && this.modalContent.contentType === 'session' && this.modalContent.contentObject.id === session.id) {
 						this.modalContent.contentObject.isLoading = true;
 					}
-					talk.apiContent = await this.remoteApiRequest(`submissions/${session.id}/?expand=answers.question`, 'GET')
+					talk.apiContent = await this.remoteApiRequest(`submissions/${session.id}/?expand=answers.question,resources`, 'GET')
 					// Update content with fetched description if we are still on the same session
 					if (this.modalContent && this.modalContent.contentType === 'session' && this.modalContent.contentObject.id === session.id) {
 						this.modalContent = {
 							contentType: 'session',
 							contentObject: {
 								...session,
+								exporters,
 								apiContent: talk.apiContent,
 								isLoading: false,
 								faved: this.favSet.has(session.id)

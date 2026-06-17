@@ -6,6 +6,7 @@ from urllib.parse import unquote, urljoin, urlparse, urlunparse
 
 from django.contrib import messages
 from django.core import signing
+from django.core.cache import cache
 from django.http import (
     Http404,
     HttpResponse,
@@ -16,13 +17,15 @@ from django.urls import resolve, reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.http import urlencode
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import TemplateView
 from django_context_decorator import context
 
 from eventyay.agenda.views.utils import (
-    build_public_schedule_exporters,
+    CACHE_TTL,
+    build_schedule_json,
+    build_schedule_meta_json,
     escape_json_for_script,
     get_schedule_exporter_content,
     get_schedule_exporters,
@@ -35,6 +38,7 @@ from eventyay.common.urls import get_base_url
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
+from eventyay.talk_rules.agenda import require_wip_schedule_access
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 
@@ -46,6 +50,21 @@ STARRED_ICS_TOKEN_MIN_VALIDITY = timedelta(seconds=10)
 
 
 class ScheduleMixin:
+    @staticmethod
+    def _version_from_kwargs(kwargs):
+        if version := kwargs.get('version'):
+            return unquote(version)
+        return None
+
+    def ensure_wip_schedule_access(self, kwargs=None, request=None):
+        """WIP preview is restricted to organisers and reviewers with schedule access."""
+        request = request or getattr(self, 'request', None)
+        if request is None:
+            return
+        if self._version_from_kwargs(kwargs or getattr(self, 'kwargs', {})) != 'wip':
+            return
+        require_wip_schedule_access(request)
+
     @cached_property
     def version(self):
         if version := self.kwargs.get('version'):
@@ -145,6 +164,10 @@ class ScheduleMixin:
 class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
     permission_required = 'base.list_schedule'
 
+    def dispatch(self, request, *args, **kwargs):
+        self.ensure_wip_schedule_access(kwargs, request)
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         url = resolve(self.request.path_info)
         url_name = url.url_name or ''
@@ -201,7 +224,8 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return HttpResponse(response_start + result, content_type='text/plain; charset=utf-8')
 
     def dispatch(self, request, **kwargs):
-        if self.version is None and is_public_schedule_empty(request):
+        self.ensure_wip_schedule_access(kwargs, request)
+        if self._version_from_kwargs(kwargs) is None and is_public_schedule_empty(request):
             if request.resolver_match and request.resolver_match.url_name == 'talks':
                 return redirect_to_presale_with_warning(request, _('No published sessions.'))
             return redirect_to_presale_with_warning(request, _('No published schedule.'))
@@ -307,29 +331,38 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
     def show_talk_list(self):
         return self.is_sessions_page() or self.request.event.display_settings['schedule'] == 'list'
 
+    @context
+    def schedule_data_json(self):
+        """Inline non-enriched schedule JSON for all schedule pages.
+
+        Vue reads this directly and skips the widget endpoint fetch entirely,
+        removing a full round-trip from every page load.  Released schedules are
+        cached for 5 minutes; WIP is never cached (and uses all_talks=True).
+        """
+        return build_schedule_json(self.request, self.schedule)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         schedule = ctx.get('schedule')
-        version = schedule.version if schedule else None
-        released = list(
-            self.request.event.schedules.filter(version__isnull=False)
-            .order_by('-published')
-            .values_list('version', flat=True)
-        )
-        base_schedule_url = str(self.request.event.urls.schedule)
-        current_version = self.request.event.current_schedule.version if self.request.event.current_schedule else None
-        versions = [
-            {'version': v, 'url': f'{base_schedule_url}v/{v}/', 'isCurrent': v == current_version} for v in released
-        ]
-        meta = {
-            'version': version or '',
-            'is_current': schedule == self.request.event.current_schedule if schedule else False,
-            'changelog_url': str(self.request.event.urls.changelog),
-            'current_schedule_url': base_schedule_url if self.request.event.current_schedule else '',
-            'versions': versions,
-            'exporters': build_public_schedule_exporters(self.request.event, version=version),
-        }
-        ctx['schedule_meta_json'] = escape_json_for_script(json.dumps(meta))
+        version = self.version or (schedule.version if schedule else None)
+        cache_version = schedule.version if schedule else None
+
+        # Cache the entire meta JSON for released schedules (avoids DB + signal dispatch per request).
+        # WIP schedules are never cached so organiser previews are always fresh.
+        if cache_version:
+            language = get_language() or ''
+            meta_cache_key = f'eagenda:meta:{self.request.event.pk}:{cache_version}:{language}'
+            cached_meta = cache.get(meta_cache_key)
+            if cached_meta is not None:
+                ctx['schedule_meta_json'] = cached_meta
+                ctx['schedule_page_version'] = version or ''
+                return ctx
+
+        meta_json = build_schedule_meta_json(self.request.event, schedule)
+        ctx['schedule_meta_json'] = meta_json
+        ctx['schedule_page_version'] = version or ''
+        if cache_version:
+            cache.set(meta_cache_key, meta_json, CACHE_TTL)
         return ctx
 
 
@@ -355,6 +388,9 @@ def schedule_messages(request, **kwargs):
         'version_warning_editable': _(
             'You are currently viewing the editable schedule version. It may not match the released version.'
         ),
+        'version_warning_wip': _(
+            'You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.'
+        ),
         'version_warning_old': _('You are currently viewing an older schedule version.'),
         'join_room': _('Join room'),
         'view_video': _('View Video'),
@@ -362,6 +398,9 @@ def schedule_messages(request, **kwargs):
         'speaker_fallback': _('Speaker'),
         'speaker_name_not_provided': _('Speaker name not provided'),
         'add_to_calendar': _('Add to Calendar'),
+        'public_schedule_only': _(
+            'Only available on the public schedule once a schedule is released and public.'
+        ),
         'ical': _('iCal'),
         'json': _('JSON'),
         'xml': _('XML'),
@@ -390,6 +429,7 @@ def schedule_messages(request, **kwargs):
         'featured_speakers': _('Featured Speakers'),
         'view_profile': _('View speaker profile'),
         'no_starred_sessions': _('No starred sessions.'),
+        'schedule_do_not_record': _('This session will not be recorded.'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(
@@ -442,6 +482,10 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
     """Handles redirects for both Google Calendar and other calendar applications."""
 
     permission_required = 'base.list_schedule'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.ensure_wip_schedule_access(kwargs, request)
+        return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         url_name = request.resolver_match.url_name if request.resolver_match else ''
@@ -501,7 +545,7 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
             )
 
         if is_google:
-            google_url = f'https://calendar.google.com/calendar/r?{urlencode({"cid": ics_url})}'
+            google_url = f'https://calendar.google.com/calendar/r?{urlencode({"cid": ics_url.replace("https://", "http://")})}'
             return HttpResponseRedirect(google_url)
 
         parsed = urlparse(ics_url)

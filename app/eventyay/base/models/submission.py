@@ -328,6 +328,7 @@ class Submission(GenerateCode, PretalxModel):
         confirm = '{user_base}confirm'
         public_base = '{self.event.urls.base}talk/{self.code}'
         public = '{public_base}/'
+        wip_public = '{self.event.urls.base}schedule/v/wip/talk/{self.code}/'
         feedback = '{public}feedback/'
         social_image = '{public}og-image'
         ical = '{public_base}.ics'
