@@ -158,17 +158,20 @@ class SettingsSandbox:
         self._event.settings.set(self._convert_key(key), value)
 
 
-def validate_event_settings(event, settings_dict):
-    from eventyay.base.models import Event
-    from eventyay.base.signals import validate_event_settings
-
-    primary_font = settings_dict.get('primary_font')
+def validate_primary_font(primary_font):
     if primary_font:
         from eventyay.presale.style import SYSTEM_FONTS, get_fonts
         if primary_font not in SYSTEM_FONTS and primary_font not in get_fonts():
             raise ValidationError(
                 {'primary_font': _('The selected font is not allowed.')}
             )
+
+
+def validate_event_settings(event, settings_dict):
+    from eventyay.base.models import Event
+    from eventyay.base.signals import validate_event_settings
+
+    validate_primary_font(settings_dict.get('primary_font'))
 
     default_locale = settings_dict.get('locale')
     locales = settings_dict.get('locales', [])
@@ -221,13 +224,7 @@ def validate_event_settings(event, settings_dict):
 
 
 def validate_organizer_settings(organizer, settings_dict):
-    primary_font = settings_dict.get('primary_font')
-    if primary_font:
-        from eventyay.presale.style import SYSTEM_FONTS, get_fonts
-        if primary_font not in SYSTEM_FONTS and primary_font not in get_fonts():
-            raise ValidationError(
-                {'primary_font': _('The selected font is not allowed.')}
-            )
+    validate_primary_font(settings_dict.get('primary_font'))
 
 
 def global_settings_object(holder):

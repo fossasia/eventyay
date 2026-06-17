@@ -91,3 +91,25 @@ class StyleTest(TestCase):
         # Invalid font
         with self.assertRaises(ValidationError):
             validate_organizer_settings(self.orga, {'primary_font': 'NonExistentFont'})
+
+    def test_event_font_form_inheritance(self):
+        from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
+        
+        # 1. Set organizer font to Georgia
+        self.orga.settings.primary_font = 'Georgia'
+        
+        # 2. Instantiate form and check that empty string is in choices and represents the default option
+        form = EventCommonSettingsForm(obj=self.event)
+        choices = dict(form.fields['primary_font'].choices)
+        self.assertIn('', choices)
+        self.assertIn('Georgia', choices[''])
+        
+        # 3. Save the form with empty string '' (representing Inherit)
+        form = EventCommonSettingsForm(data={'timezone': 'UTC', 'locale': 'en', 'locales': ['en'], 'primary_font': ''}, obj=self.event)
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+        
+        # 4. Check that primary_font is NOT in the database cache for the event
+        self.assertNotIn('primary_font', self.event.settings._cache())
+        # 5. Check that settings.get() correctly retrieves the organizer's font
+        self.assertEqual(self.event.settings.get('primary_font'), 'Georgia')

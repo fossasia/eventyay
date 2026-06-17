@@ -13,6 +13,7 @@ from django.core.files.storage import default_storage
 from django.dispatch import Signal
 from django.templatetags.static import static as _static
 from django.utils.timezone import now
+from django.db.models import Count
 from django_scopes import scope
 
 from eventyay.base.models import Event, Event_SettingsStore, Organizer
@@ -91,8 +92,13 @@ def compile_scss(object, file='main.scss', fonts=True):
         sassrules.append('$border-radius-small: 0;')
 
     font = object.settings.get('primary_font')
+    # If the event has an empty string stored (blocking hierarkey parent lookup),
+    # explicitly fall back to the organizer's font setting.
+    if not font and isinstance(object, Event) and hasattr(object, 'organizer'):
+        font = object.organizer.settings.get('primary_font')
     font_family_value = None
     if font and fonts:
+        fonts_dict = get_fonts()
         if font in SYSTEM_FONTS:
             font_family_value = SYSTEM_FONTS[font]
             # We explicitly do not use !default here because we want to override
@@ -100,9 +106,10 @@ def compile_scss(object, file='main.scss', fonts=True):
             sassrules.append(
                 '$font-family-sans-serif: {};'.format(font_family_value)
             )
-        elif font in get_fonts():
-            font_family_value = '"{}", {}'.format(font, BASE_SANS_STACK)
-            sassrules.append(get_font_stylesheet(font))
+        elif font in fonts_dict:
+            escaped_font = escape_font_name(font)
+            font_family_value = '"{}", {}'.format(escaped_font, BASE_SANS_STACK)
+            sassrules.append(get_font_stylesheet(font, fonts=fonts_dict))
             # We explicitly do not use !default here because we want to override
             # any default variables declared in Bootstrap/our stylesheets.
             sassrules.append(
@@ -204,13 +211,18 @@ def regenerate_organizer_css(organizer_id: int):
             organizer.settings.set('presale_widget_css_file', newname)
             organizer.settings.set('presale_widget_css_checksum', checksum)
 
-        non_inherited_events = set(
-            Event_SettingsStore.objects.filter(object__organizer=organizer, key__in=affected_keys).values_list(
-                'object_id', flat=True
-            )
+        fully_overridden_events = set(
+            Event_SettingsStore.objects.filter(
+                object__organizer=organizer, key__in=affected_keys
+            ).exclude(value__in=['', '""', "''"]).values('object_id').annotate(
+                overridden_count=Count('key')
+            ).filter(
+                overridden_count=len(affected_keys)
+            ).values_list('object_id', flat=True)
         )
         for event in organizer.events.all():
-            if event.pk not in non_inherited_events:
+            if event.pk not in fully_overridden_events:
+                event.settings.flush()
                 regenerate_css.apply_async(args=(event.pk,))
 
 
@@ -246,14 +258,28 @@ def get_fonts():
     return f
 
 
-def get_font_stylesheet(font_name):
+def escape_font_name(font_name):
+    if not font_name:
+        return ""
+    # Escape backslashes first, then escape double quotes.
+    # Also strip out characters that shouldn't be in a font name, like newlines, semicolons, and curly braces.
+    escaped = font_name.replace('\\', '\\\\').replace('"', '\\"')
+    for char in (';', '{', '}', '\r', '\n'):
+        escaped = escaped.replace(char, '')
+    return escaped
+
+
+def get_font_stylesheet(font_name, fonts=None):
     stylesheet = []
-    font = get_fonts()[font_name]
+    if fonts is None:
+        fonts = get_fonts()
+    font = fonts[font_name]
+    escaped_font_name = escape_font_name(font_name)
     for sty, formats in font.items():
         if sty == 'sample':
             continue
         stylesheet.append('@font-face { ')
-        stylesheet.append('font-family: "{}";'.format(font_name))
+        stylesheet.append('font-family: "{}";'.format(escaped_font_name))
         if sty in ('italic', 'bolditalic'):
             stylesheet.append('font-style: italic;')
         else:

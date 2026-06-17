@@ -342,14 +342,24 @@ class FontSelect(forms.RadioSelect):
 
     def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
         option = super().create_option(name, value, label, selected, index, subindex, attrs)
-        from eventyay.presale.style import SYSTEM_FONTS, get_fonts, BASE_SANS_STACK
+        from eventyay.presale.style import SYSTEM_FONTS, get_fonts, BASE_SANS_STACK, escape_font_name
 
         font_key = value
+        if font_key == '' and hasattr(self, 'obj'):
+            from eventyay.base.models import Event
+            if isinstance(self.obj, Event) and hasattr(self.obj, 'organizer'):
+                font_key = self.obj.organizer.settings.get('primary_font') or 'Open Sans'
+            else:
+                font_key = 'Open Sans'
+
+        if not hasattr(self, '_fonts_dict'):
+            self._fonts_dict = get_fonts()
+
         font_family = None
         if font_key in SYSTEM_FONTS:
             font_family = SYSTEM_FONTS[font_key]
-        elif font_key in get_fonts():
-            font_family = f'"{font_key}", {BASE_SANS_STACK}'
+        elif font_key in self._fonts_dict:
+            font_family = f'"{escape_font_name(font_key)}", {BASE_SANS_STACK}'
         else:
             font_family = SYSTEM_FONTS.get('Open Sans')
 
