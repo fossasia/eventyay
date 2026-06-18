@@ -3,7 +3,7 @@ import os.path
 from django.test import TestCase
 
 # Do NOT use relative imports here
-from pretix.plugins.banktransfer import csvimport
+from eventyay.plugins.banktransfer import csvimport
 
 # These tests need data files. Don't worry, they are fully anonymized,
 # all IBANs are random/fake.

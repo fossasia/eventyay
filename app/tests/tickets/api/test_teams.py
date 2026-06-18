@@ -2,7 +2,7 @@ import pytest
 from django.core import mail
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Team, User
+from eventyay.base.models import Team, User
 
 
 @pytest.fixture

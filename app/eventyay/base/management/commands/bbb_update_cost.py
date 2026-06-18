@@ -6,32 +6,29 @@ from django.core.management.base import BaseCommand
 from lxml import etree
 
 from eventyay.base.models import BBBServer
-from eventyay.core.services.bbb import get_url
+from eventyay.base.services.bbb import get_url
+
 
 logger = logging.getLogger(__name__)
+REQUEST_TIMEOUT = (5, 30)
 
 
 class Command(BaseCommand):
-    help = "Updated load balancing cost of BBB servers"
+    help = "Update load balancing costs of BBB servers"
 
     def _update_cost(self, server: BBBServer):
         try:
             meetings_url = get_url("getMeetings", {}, server.url, server.secret)
-            r = requests.get(meetings_url)
+            r = requests.get(meetings_url, timeout=REQUEST_TIMEOUT)
             r.raise_for_status()
             cost = 0
 
             root = etree.fromstring(r.text)
             if root.xpath("returncode")[0].text != "SUCCESS":
-                raise ValueError("Recordings could not be fetched: " + r.text)
+                raise ValueError("Meetings could not be fetched: " + r.text)
 
-            # Our naive cost calculation probably needs to adjusted at some point. For now, it works like this:
-            # Every meeting has a minimal cost of 10, which models that every running meeting requires resources (mostly
-            # RAM) on the server. Then, we model an additional cost of 10 * video_senders * video_recipients
-            # as well as a cost of 1 * audio_senders * audio_recipients. This follows the bandwidth estimation given
-            # at https://docs.bigbluebutton.org/support/faq.html#bandwidth-requirements and we hope that other resources
-            # (CPU) are roughly linear to the same values.
-
+            # Every meeting has a base cost of 10. Video cost is estimated as
+            # 10 * senders * recipients, and audio as senders * recipients.
             for meet in root.xpath("meetings/meeting"):
                 participants = int(meet.xpath("participantCount")[0].text)
                 voice_users = int(meet.xpath("voiceParticipantCount")[0].text)
