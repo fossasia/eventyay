@@ -448,6 +448,7 @@ export default {
 					abstract: session.abstract,
 					description: session.description,
 					do_not_record: session.do_not_record,
+					duration: session.duration,
 					start: start,
 					end: moment.tz(session.end, this.currentTimezone),
 					speakers: (session.speakers || [])
