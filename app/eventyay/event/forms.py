@@ -19,7 +19,8 @@ from eventyay.common.forms.widgets import (
 )
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import Event, Organizer, Team, TeamInvite
-from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
+from eventyay.control.forms import MultipleLanguagesWidget
+from eventyay.orga.forms.widgets import HeaderSelect
 from eventyay.base.models import Track
 
 

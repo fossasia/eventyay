@@ -303,6 +303,7 @@
 	"Questions:deactivated-placeholder": "Fragen sind derzeit deaktiviert.",
 	"Questions:empty-placeholder": "Noch keine Fragen, warum stellen Sie nicht eine?",
 	"Questions:moderator-actions:archive-all:label": "Alle archivieren",
+	"RecordingsPrompt:empty:text": "Es sind keine Aufzeichnungen verfügbar.",
 	"RecordingsPrompt:error:text": "Fehler beim Laden der Aufzeichnungen vom Server.",
 	"RecordingsPrompt:headline:text": "Aufzeichnungen",
 	"RecordingsPrompt:info:text": "Bitte beachten Sie, dass Aufzeichnungen erst einige Minuten nach dem Ende des Meetings verarbeitet werden und hier erscheinen (in der Regel, wenn der Raum eine Weile leer war).",

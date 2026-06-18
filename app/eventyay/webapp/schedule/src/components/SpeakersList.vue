@@ -351,6 +351,12 @@ export default {
 		},
 		sortedSpeakers() {
 			const speakers = [...this.languageFilteredSpeakers]
+			const byName = (a, b, dir = 1) => {
+				const an = (a.name || '').trim()
+				const bn = (b.name || '').trim()
+				if (!!an !== !!bn) return an ? -1 : 1
+				return dir * an.localeCompare(bn)
+			}
 			if (this.sortBy === 'featured') {
 				return speakers.sort((a, b) => {
 					const af = a.is_featured ? 1 : 0
@@ -359,17 +365,17 @@ export default {
 					const ap = Number.isFinite(a.featured_position) ? a.featured_position : 1e9
 					const bp = Number.isFinite(b.featured_position) ? b.featured_position : 1e9
 					if (ap !== bp) return ap - bp
-					return (a.name || '').localeCompare(b.name || '')
+					return byName(a, b)
 				})
 			}
 			if (this.sortBy === 'a-z') {
-				return speakers.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+				return speakers.sort((a, b) => byName(a, b))
 			}
 			if (this.sortBy === 'z-a') {
-				return speakers.sort((a, b) => (b.name || '').localeCompare(a.name || ''))
+				return speakers.sort((a, b) => byName(a, b, -1))
 			}
 			// default: a-z
-			return speakers.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+			return speakers.sort((a, b) => byName(a, b))
 		},
 		filteredSpeakers() {
 			if (!this.searchQuery) return this.sortedSpeakers

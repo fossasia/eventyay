@@ -4,7 +4,7 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Order,
     OrderPayment,
     OrderRefund,
@@ -108,7 +108,7 @@ def test_card_detail_view_transact_revert_refund(organizer, admin_user, gift_car
             name='Dummy',
             slug='dummy',
             date_from=now(),
-            plugins='pretix.plugins.banktransfer,pretix.plugins.stripe,tests.testdummy',
+            plugins='eventyay.plugins.banktransfer,eventyay.plugins.stripe,tests.tickets.testdummy',
         )
         o = Order.objects.create(
             code='FOO',

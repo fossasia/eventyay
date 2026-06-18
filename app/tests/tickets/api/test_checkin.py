@@ -15,8 +15,8 @@ from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 from pytz import UTC
 
-from pretix.api.serializers.item import QuestionSerializer
-from pretix.base.models import (
+from eventyay.api.serializers.product import QuestionSerializer
+from eventyay.base.models import (
     Checkin,
     CheckinList,
     InvoiceAddress,
