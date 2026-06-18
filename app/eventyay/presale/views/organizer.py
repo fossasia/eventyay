@@ -8,7 +8,7 @@ import pytz
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Exists, Max, Min, OuterRef, Q, Value
+from django.db.models import Max, Min, Q
 from django.db.models.functions import Coalesce, Greatest
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -25,12 +25,9 @@ from pytz import UTC
 from eventyay.base.i18n import language
 from eventyay.base.models import (
     Event,
-    EventMetaValue,
-    Organizer,
     OrganizerFollower,
     Quota,
     SubEvent,
-    SubEventMetaValue,
 )
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.helpers.compat import date_fromisocalendar
