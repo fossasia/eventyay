@@ -8,7 +8,7 @@ from django.db import transaction
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Item, Order, OrderPosition, Organizer
+from eventyay.base.models import Event, Product as Item, Order, OrderPosition, Organizer
 
 
 @pytest.fixture

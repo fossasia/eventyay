@@ -383,9 +383,6 @@
                                     <a href="{% url "orga:reviews.assign" event=request.event.slug %}" class="nav-link nav-link-second-level{% if "reviews.assign" in url_name %} active{% endif %}">
                                         <span>{% translate "Assign reviewers" %}</span>
                                     </a>
-                                    <a href="{% url "orga:reviews.export" event=request.event.slug %}" class="nav-link nav-link-second-level{% if "reviews.export" in url_name %} active{% endif %}">
-                                        <span>{% translate "Export reviews" %}</span>
-                                    </a>
                                 </div>
                             </div>
                         {% else %}
@@ -493,7 +490,7 @@
                 <main>
                     {% if messages %}
                         {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }}">
+                            <div class="alert {{ message.tags }}">
                                 {{ message }}
                             </div>
                         {% endfor %}

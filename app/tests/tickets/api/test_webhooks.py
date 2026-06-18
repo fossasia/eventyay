@@ -3,7 +3,7 @@ import copy
 import pytest
 from django_scopes import scopes_disabled
 
-from pretix.api.models import WebHook
+from eventyay.api.models import WebHook
 
 
 @pytest.fixture

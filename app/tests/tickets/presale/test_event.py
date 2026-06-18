@@ -11,11 +11,11 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from pytz import timezone
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
-    ItemCategory,
-    ItemVariation,
+    Product as Item,
+    ProductCategory as ItemCategory,
+    ProductVariation as ItemVariation,
     Order,
     Organizer,
     Quota,
@@ -23,9 +23,9 @@ from pretix.base.models import (
     User,
     WaitingListEntry,
 )
-from pretix.base.models.items import SubEventItem, SubEventItemVariation
-from tests.base import SoupTest
-from tests.testdummy.signals import FoobarSalesChannel
+from eventyay.base.models.product import SubEventProduct as SubEventItem, SubEventProductVariation as SubEventItemVariation
+from tests.tickets.base import SoupTest
+from tests.tickets.testdummy.signals import FoobarSalesChannel
 
 
 class EventTestMixin:

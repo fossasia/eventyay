@@ -69,7 +69,7 @@ class ReviewViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     @cached_property
     def visible_submissions(self):
-        if not self.event:
+        if not self.event or self.request.user.is_anonymous:
             return Submission.objects.none()
         submissions = self.event.submissions.all().exclude(
             speakers__in=[self.request.user]

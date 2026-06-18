@@ -68,4 +68,6 @@ class BBBModule(BaseModule):
         recordings = await service.get_recordings_for_room(
             self.room,
         )
+        if recordings is None:
+            raise ConsumerException("bbb.failed")
         await self.consumer.send_success({"results": recordings})

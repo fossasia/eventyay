@@ -1,6 +1,6 @@
 from datetime import date
 
-from pretix.plugins.banktransfer.tasks import parse_date
+from eventyay.plugins.banktransfer.tasks import parse_date
 
 
 def test_date_formats():

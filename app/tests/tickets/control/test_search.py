@@ -4,17 +4,17 @@ from decimal import Decimal
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
     InvoiceAddress,
-    Item,
+    Product as Item,
     Order,
     OrderPosition,
     Organizer,
     Team,
     User,
 )
-from tests.base import SoupTest
+from tests.tickets.base import SoupTest
 
 
 class OrderSearchTest(SoupTest):
@@ -28,7 +28,7 @@ class OrderSearchTest(SoupTest):
             name='30C3',
             slug='30c3',
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
-            plugins='pretix.plugins.banktransfer,tests.testdummy',
+            plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
         )
         self.event2 = Event.objects.create(
             organizer=self.orga1,
