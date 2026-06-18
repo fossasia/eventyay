@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import logging
 import random
@@ -394,21 +395,39 @@ class BBBService:
 
     async def get_recordings_for_room(self, room):
         recordings = []
-        for server in await self._get_possible_servers():
-            try:
-                call = await get_call_for_room(room)
-                recordings_url = get_url(
-                    "getRecordings",
-                    {"meetingID": call.meeting_id, "state": "any"},
-                    server.url,
-                    server.secret,
-                )
-                root = await self._get(recordings_url, timeout=10)
-                if root is False:
-                    return []
+        call = await get_call_for_room(room)
+        if not call:
+            return recordings
 
+        successful_request = False
+        servers = await self._get_possible_servers()
+        recording_urls = [
+            get_url(
+                "getRecordings",
+                {"meetingID": call.meeting_id, "state": "any"},
+                server.url,
+                server.secret,
+            )
+            for server in servers
+        ]
+        responses = await asyncio.gather(
+            *(self._get(url, timeout=10) for url in recording_urls)
+        )
+        for server, recordings_url, root in zip(servers, recording_urls, responses):
+            try:
+                if root is False:
+                    continue
+
+                server_recordings = []
                 tz = pytz.timezone(self.event.timezone)
-                for rec in root.xpath("recordings/recording"):
+                recordings_nodes = root.xpath("recordings")
+                if not recordings_nodes:
+                    logger.error(
+                        "BBB recordings response from server %s has no recordings container",
+                        server,
+                    )
+                    continue
+                for rec in recordings_nodes[0].xpath("recording"):
                     url_presentation = url_screenshare = url_video = url_notes = None
                     for f in rec.xpath("playback/format"):
                         if f.xpath("type")[0].text == "presentation":
@@ -434,7 +453,7 @@ class BBBService:
                             and not url_notes
                         ):
                             continue
-                    recordings.append(
+                    server_recordings.append(
                         {
                             "start": (
                                 # BBB outputs timestamps in server time, not UTC :( Let's assume the BBB server time
@@ -462,6 +481,8 @@ class BBBService:
                             "url_notes": url_notes,
                         }
                     )
+                recordings.extend(server_recordings)
+                successful_request = True
             except Exception:
-                logger.exception(f"Could not fetch recordings from server {server}")
-        return recordings
+                logger.exception("Could not fetch recordings from server %s", server)
+        return recordings if successful_request else None
