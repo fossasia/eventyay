@@ -396,11 +396,6 @@ urlpatterns = [
                     review.ReviewAssignment.as_view(),
                     name='reviews.assign',
                 ),
-                path(
-                    'reviews/export/',
-                    review.ReviewExport.as_view(),
-                    name='reviews.export',
-                ),
                 path('schedule/', schedule.ScheduleView.as_view(), name='schedule.main'),
                 path(
                     'schedule/release',
