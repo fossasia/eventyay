@@ -302,6 +302,7 @@
 	"Questions:deactivated-placeholder": "الأسئلة معطلة حاليًا.",
 	"Questions:empty-placeholder": "لا توجد أسئلة حتى الآن، لماذا لا تطرح سؤالًا؟",
 	"Questions:moderator-actions:archive-all:label": "أرشفة الكل",
+	"RecordingsPrompt:empty:text": "لا توجد تسجيلات متاحة.",
 	"RecordingsPrompt:error:text": "فشل تحميل التسجيلات من الخادم.",
 	"RecordingsPrompt:headline:text": "التسجيلات",
 	"RecordingsPrompt:info:text": "يرجى ملاحظة أن التسجيلات تبدأ في المعالجة والظهور هنا بعد بضع دقائق من انتهاء الاجتماع (عادةً، إذا كانت الغرفة فارغة لفترة).",

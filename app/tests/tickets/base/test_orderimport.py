@@ -8,10 +8,10 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 
-from pretix.base.models import (
+from eventyay.base.models import (
     CachedFile,
     Event,
-    Item,
+    Product as Item,
     Order,
     OrderPayment,
     OrderPosition,
@@ -20,7 +20,7 @@ from pretix.base.models import (
     QuestionAnswer,
     User,
 )
-from pretix.base.services.orderimport import DataImportError, import_orders
+from eventyay.base.services.orderimport import DataImportError, import_orders
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def event():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     return event
 

@@ -6,19 +6,19 @@ from django.test import TestCase
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
+    Product as Item,
     Order,
     OrderPosition,
     Organizer,
     Voucher,
     WaitingListEntry,
 )
-from pretix.base.models.orders import OrderFee, OrderPayment, OrderRefund
-from pretix.base.services.cancelevent import cancel_event
-from pretix.base.services.invoices import generate_invoice
-from pretix.testutils.scope import classscope
+from eventyay.base.models.orders import OrderFee, OrderPayment, OrderRefund
+from eventyay.base.services.cancelevent import cancel_event
+from eventyay.base.services.invoices import generate_invoice
+from tests.testutils.scope import classscope
 
 
 class EventCancelTests(TestCase):
@@ -31,7 +31,7 @@ class EventCancelTests(TestCase):
                 name='Dummy',
                 slug='dummy',
                 date_from=now(),
-                plugins='tests.testdummy',
+                plugins='tests.tickets.testdummy',
             )
             self.order = Order.objects.create(
                 code='FOO',
@@ -513,7 +513,7 @@ class SubEventCancelTests(TestCase):
                 name='Dummy',
                 slug='dummy',
                 date_from=now(),
-                plugins='tests.testdummy',
+                plugins='tests.tickets.testdummy',
                 has_subevents=True,
             )
             self.se1 = self.event.subevents.create(name='One', date_from=now() - timedelta(days=30))
