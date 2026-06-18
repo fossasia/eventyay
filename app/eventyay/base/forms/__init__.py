@@ -87,9 +87,8 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
             if callable(kwargs):
                 kwargs = kwargs()
             kwargs.setdefault('required', False)
-            import django
             form_class = DEFAULTS[fname]['form_class']
-            if issubclass(form_class, forms.URLField) and django.VERSION[0] >= 5:
+            if issubclass(form_class, forms.URLField):
                 kwargs.setdefault('assume_scheme', 'https')
             field = form_class(**kwargs)
             if isinstance(field, i18nfield.forms.I18nFormField):
