@@ -67,6 +67,10 @@ class StreamSchedule(models.Model):
             return f'{self.room.name} - {self.title}'
         return f'{self.room.name} - {self.start_time}'
 
+    def __init__(self, *args, **kwargs):
+        self._skip_validation = kwargs.pop('skip_validation', False)
+        super().__init__(*args, **kwargs)
+
     def clean(self):
         if self.end_time <= self.start_time:
             raise ValidationError({'end_time': _('End time must be after start time.')})
@@ -89,9 +93,10 @@ class StreamSchedule(models.Model):
 
     def save(self, *args, **kwargs):
         skip_validation = kwargs.pop('skip_validation', False)
-        if not skip_validation:
+        if not skip_validation and not self._skip_validation:
             self.full_clean()
         super().save(*args, **kwargs)
+        self._skip_validation = False
 
     def is_active(self, at_time=None):
         from django.utils.timezone import now

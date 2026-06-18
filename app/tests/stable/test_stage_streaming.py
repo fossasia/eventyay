@@ -1,5 +1,6 @@
 import datetime as dt
 import importlib
+from types import SimpleNamespace
 
 import pytest
 from asgiref.sync import async_to_sync
@@ -7,18 +8,41 @@ from django.utils.timezone import now
 
 from eventyay.base.models import Room
 from eventyay.base.models.stream_schedule import StreamSchedule
-from eventyay.base.services.event import create_room
+from eventyay.base.services import event as event_service
 
 stream_schedule_migration = importlib.import_module(
     "eventyay.base.migrations.0031_migrate_native_stream_schedules"
 )
 
 
-@pytest.mark.django_db
-def test_create_schedule_driven_stage_without_base_stream(event, user):
-    user.event_grants.create(event=event, role="video_stage_manager")
+async def _allow_permission(**kwargs):
+    return True
 
-    result = async_to_sync(create_room)(
+
+class ChannelLayer:
+    async def group_send(self, *args, **kwargs):
+        pass
+
+
+def _patch_room_creation(monkeypatch):
+    created = {}
+
+    async def fake_create_room(data, with_channel=False, **kwargs):
+        created["data"] = data
+        created["with_channel"] = with_channel
+        channel = SimpleNamespace(id="channel-id") if with_channel else None
+        return SimpleNamespace(id="room-id"), channel
+
+    monkeypatch.setattr(event_service, "_create_room", fake_create_room)
+    monkeypatch.setattr(event_service, "get_channel_layer", lambda: ChannelLayer())
+    return created
+
+
+def test_create_schedule_driven_stage_without_base_stream(monkeypatch):
+    created = _patch_room_creation(monkeypatch)
+    event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
+
+    result = async_to_sync(event_service.create_room)(
         event,
         {
             "name": "Schedule Driven Stage",
@@ -31,19 +55,24 @@ def test_create_schedule_driven_stage_without_base_stream(event, user):
                 },
             ],
         },
-        user,
+        object(),
     )
 
-    room = Room.objects.get(pk=result["room"])
-    livestream = next(m for m in room.module_config if m["type"] == "livestream.native")
+    livestream = next(
+        m
+        for m in created["data"]["module_config"]
+        if m["type"] == "livestream.native"
+    )
+    assert result == {"room": "room-id", "channel": "channel-id"}
+    assert created["with_channel"] is True
     assert livestream["config"] == {"playback_mode": "schedule_driven"}
 
 
-@pytest.mark.django_db
-def test_create_always_on_hls_stage_stores_base_stream(event, user):
-    user.event_grants.create(event=event, role="video_stage_manager")
+def test_create_always_on_hls_stage_stores_base_stream(monkeypatch):
+    created = _patch_room_creation(monkeypatch)
+    event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
 
-    result = async_to_sync(create_room)(
+    result = async_to_sync(event_service.create_room)(
         event,
         {
             "name": "Always On Stage",
@@ -58,11 +87,16 @@ def test_create_always_on_hls_stage_stores_base_stream(event, user):
                 },
             ],
         },
-        user,
+        object(),
     )
 
-    room = Room.objects.get(pk=result["room"])
-    livestream = next(m for m in room.module_config if m["type"] == "livestream.native")
+    livestream = next(
+        m
+        for m in created["data"]["module_config"]
+        if m["type"] == "livestream.native"
+    )
+    assert result == {"room": "room-id", "channel": None}
+    assert created["with_channel"] is False
     assert livestream["config"] == {
         "playback_mode": "always_on",
         "hls_url": "https://example.com/live.m3u8",
