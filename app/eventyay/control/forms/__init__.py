@@ -276,7 +276,8 @@ class SlugWidget(forms.TextInput):
 
 
 class MultipleLanguagesWidget(forms.CheckboxSelectMultiple):
-    option_template_name = 'pretixcontrol/multi_languages_widget.html'
+    template_name = 'pretixcontrol/language_grid_select.html'
+    option_template_name = 'pretixcontrol/multi_languages_grid_option.html'
 
     def sort(self):
         self.choices = sorted(

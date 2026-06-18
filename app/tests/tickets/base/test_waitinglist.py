@@ -5,21 +5,21 @@ from django.test import TestCase
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
-    ItemVariation,
+    Product as Item,
+    ProductVariation as ItemVariation,
     Organizer,
     Quota,
     Voucher,
     WaitingListEntry,
 )
-from pretix.base.models.waitinglist import WaitingListException
-from pretix.base.services.waitinglist import (
+from eventyay.base.models.waitinglist import WaitingListException
+from eventyay.base.services.waitinglist import (
     assign_automatically,
     process_waitinglist,
 )
-from pretix.testutils.scope import classscope
+from tests.testutils.scope import classscope
 
 
 class WaitingListTestCase(TestCase):

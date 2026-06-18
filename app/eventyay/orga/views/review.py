@@ -765,27 +765,3 @@ class ReviewAssignmentImport(EventPermissionRequired, FormView):
         return redirect(self.request.event.orga_urls.review_assignments)
 
 
-class ReviewExport(EventPermissionRequired, FormView):
-    permission_required = 'base.update_event'
-    template_name = 'orga/review/export.html'
-    form_class = ReviewExportForm
-
-    @context
-    def tablist(self):
-        return {
-            'custom': _('CSV/JSON exports'),
-            'api': _('API'),
-        }
-
-    def get_form_kwargs(self):
-        result = super().get_form_kwargs()
-        result['event'] = self.request.event
-        result['user'] = self.request.user
-        return result
-
-    def form_valid(self, form):
-        result = form.export_data()
-        if not result:
-            messages.success(self.request, _('No data to be exported'))
-            return redirect(self.request.path)
-        return result

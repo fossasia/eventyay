@@ -4,9 +4,10 @@ prompt.c-recordings-prompt(@close="$emit('close')")
 		bunt-icon-button#btn-close(@click="$emit('close')") close
 		h1 {{ $t('RecordingsPrompt:headline:text') }}
 		p {{ $t('RecordingsPrompt:info:text') }}
-		bunt-progress-circular(v-if="recordings == null && error == null")
-		p(v-if="error != null") {{ $t('RecordingsPrompt:error:text') }}
-		.recordings(v-if="recordings != null")
+		bunt-progress-circular(v-if="loading")
+		p(v-else-if="error != null") {{ $t('RecordingsPrompt:error:text') }}
+		p(v-else-if="recordings.length === 0") {{ $t('RecordingsPrompt:empty:text') }}
+		.recordings(v-else)
 			.recording(v-for="r in recordings")
 				.recording-dates {{ moment(r.start).format('l, LT') }} – {{ moment(r.end).format('LT') }}
 				a.link.bunt-button(v-if="r.url && (r.state == 'published' || r.state == 'available')", :href="r.url", target="_blank") {{ $t('RecordingsPrompt:view:label') }}
@@ -28,19 +29,23 @@ export default {
 	emits: ['close'],
 	data() {
 		return {
-			recordings: null,
+			recordings: [],
 			error: null,
+			loading: true,
 		}
 	},
 	computed: {},
 	async created() {
 		try {
-			this.recordings = (await api.call('bbb.recordings', {room: this.room.id}, {timeout: 150000})).results
+			const response = await api.call('bbb.recordings', {room: this.room.id})
+			this.recordings = Array.isArray(response?.results) ? response.results : []
 			this.error = null
 		} catch (error) {
 			this.error = error
-			this.recordings = null
+			this.recordings = []
 			console.error(error)
+		} finally {
+			this.loading = false
 		}
 	},
 	methods: {

@@ -3,7 +3,7 @@ from decimal import Decimal
 import pytest
 from django_scopes import scopes_disabled
 
-from pretix.base.models import TaxRule
+from eventyay.base.models import TaxRule
 
 TEST_TAXRULE_RES = {
     'name': {'en': 'VAT'},

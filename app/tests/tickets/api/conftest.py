@@ -6,9 +6,9 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from rest_framework.test import APIClient
 
-from pretix.base.models import Device, Event, Organizer, Team, User
-from pretix.base.models.devices import generate_api_token
-from pretix.base.models.organizer import OrganizerBillingModel
+from eventyay.base.models import Device, Event, Organizer, Team, User
+from eventyay.base.models.devices import generate_api_token
+from eventyay.base.models.organizer import OrganizerBillingModel
 
 
 @pytest.fixture
@@ -56,7 +56,7 @@ def event(organizer, meta_prop):
         name='Dummy',
         slug='dummy',
         date_from=datetime(2017, 12, 27, 10, 0, 0, tzinfo=timezone.utc),
-        plugins='pretix.plugins.banktransfer,pretix.plugins.ticketoutputpdf',
+        plugins='eventyay.plugins.banktransfer,eventyay.plugins.ticketoutputpdf',
         is_public=True,
     )
     e.meta_values.create(property=meta_prop, value='Conference')
@@ -73,7 +73,7 @@ def event2(organizer, meta_prop):
         name='Dummy2',
         slug='dummy2',
         date_from=datetime(2017, 12, 27, 10, 0, 0, tzinfo=timezone.utc),
-        plugins='pretix.plugins.banktransfer,pretix.plugins.ticketoutputpdf',
+        plugins='eventyay.plugins.banktransfer,eventyay.plugins.ticketoutputpdf',
     )
     e.meta_values.create(property=meta_prop, value='Conference')
     return e
@@ -87,7 +87,7 @@ def event3(organizer, meta_prop):
         name='Dummy3',
         slug='dummy3',
         date_from=datetime(2017, 12, 27, 10, 0, 0, tzinfo=timezone.utc),
-        plugins='pretix.plugins.banktransfer,pretix.plugins.ticketoutputpdf',
+        plugins='eventyay.plugins.banktransfer,eventyay.plugins.ticketoutputpdf',
     )
     e.meta_values.create(property=meta_prop, value='Conference')
     return e
