@@ -303,6 +303,7 @@
 	"Questions:deactivated-placeholder": "Perguntas estão desativadas no momento.",
 	"Questions:empty-placeholder": "Ainda não há perguntas, por que não fazer uma?",
 	"Questions:moderator-actions:archive-all:label": "Arquivar tudo",
+	"RecordingsPrompt:empty:text": "Nenhuma gravação está disponível.",
 	"RecordingsPrompt:error:text": "Falha ao carregar gravações do servidor.",
 	"RecordingsPrompt:headline:text": "Gravações",
 	"RecordingsPrompt:info:text": "Observe que as gravações começam a ser processadas e aparecem aqui apenas alguns minutos após o término da reunião (normalmente, se a sala esteve vazia por um tempo).",
