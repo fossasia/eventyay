@@ -46,7 +46,6 @@ export function initLanguageGrid(widget) {
   panel.hidden = true;
 
   const emptyText = countLabel?.dataset.emptyText || countLabel?.textContent.trim() || '';
-  const requiredMarker = countLabel?.querySelector('[data-language-grid-required]')?.outerHTML || '';
   const selectedSingularText = countLabel?.dataset.selectedSingularText || '';
   const selectedPluralText = countLabel?.dataset.selectedPluralText || selectedSingularText;
   const overflowText = countLabel?.dataset.overflowText || '';
@@ -55,7 +54,7 @@ export function initLanguageGrid(widget) {
 
   function setCountLabel(text) {
     if (countLabel) {
-      countLabel.innerHTML = `${text}${requiredMarker}`;
+      countLabel.textContent = text;
     }
   }
 
