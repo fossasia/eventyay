@@ -8,8 +8,8 @@ from django.utils.timezone import now
 from django_scopes import scope
 from freezegun import freeze_time
 
-from pretix.base.models import Checkin, Event, Order, OrderPosition, Organizer
-from pretix.base.services.checkin import (
+from eventyay.base.models import Checkin, Event, Order, OrderPosition, Organizer
+from eventyay.base.services.checkin import (
     CheckInError,
     RequiredQuestionsError,
     SQLLogic,
@@ -26,7 +26,7 @@ def event():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     event.settings.timezone = 'Europe/Berlin'
     with scope(organizer=o):

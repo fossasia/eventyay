@@ -302,6 +302,7 @@
 	"Questions:deactivated-placeholder": "Les questions sont actuellement désactivées.",
 	"Questions:empty-placeholder": "Pas encore de questions, pourquoi ne pas en poser une?",
 	"Questions:moderator-actions:archive-all:label": "Tout archiver",
+	"RecordingsPrompt:empty:text": "Aucun enregistrement n’est disponible.",
 	"RecordingsPrompt:error:text": "Échec du chargement des enregistrements depuis le serveur.",
 	"RecordingsPrompt:headline:text": "Enregistrements",
 	"RecordingsPrompt:info:text": "Veuillez noter que les enregistrements commencent à être traités et à apparaître ici seulement quelques minutes après la fin de la réunion (généralement, si la salle est restée vide pendant un certain temps).",
