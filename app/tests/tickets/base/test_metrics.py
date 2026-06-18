@@ -5,8 +5,8 @@ import base64
 import pytest
 from django.test import override_settings
 
-from pretix.base import metrics
-from pretix.base.views import metrics as metricsview
+from eventyay.base import metrics
+from eventyay.base.views import metrics as metricsview
 
 
 class FakeRedis(object):

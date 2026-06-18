@@ -1,7 +1,7 @@
 from django.utils.translation import get_language
 
-from pretix.base.i18n import get_language_without_region, language
-from pretix.helpers.i18n import get_javascript_format, get_moment_locale
+from eventyay.base.i18n import get_language_without_region, language
+from eventyay.helpers.i18n import get_javascript_format, get_moment_locale
 
 
 def test_js_formats():

@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django_scopes import scopes_disabled
 
-from pretix.base.models import OrderPayment
+from eventyay.base.models import OrderPayment
 
 from ..presale.test_orders import BaseOrdersTest
 
@@ -11,7 +11,7 @@ class ReturnURLTest(BaseOrdersTest):
     @scopes_disabled()
     def setUp(self):
         super().setUp()
-        self.event.enable_plugin('pretix.plugins.returnurl')
+        self.event.enable_plugin('eventyay.plugins.returnurl')
         self.event.save()
         self.event.settings.returnurl_prefix = 'https://example.com'
         self.event.settings.set('payment_banktransfer__enabled', True)

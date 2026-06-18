@@ -9,15 +9,15 @@ from webauthn.registration.verify_registration_response import (
     VerifiedRegistration,
 )
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
     Organizer,
     U2FDevice,
     User,
     WebAuthnDevice,
 )
-from pretix.testutils.mock import mocker_context
-from tests.base import SoupTest, extract_form_fields
+from tests.testutils.mock import mocker_context
+from tests.tickets.base import SoupTest, extract_form_fields
 
 
 class UserSettingsTest(SoupTest):
@@ -338,7 +338,7 @@ class UserSettingsNotificationsTest(SoupTest):
             name='Dummy',
             slug='dummy',
             date_from=now(),
-            plugins='pretix.plugins.banktransfer',
+            plugins='eventyay.plugins.banktransfer',
         )
         t = o.teams.create(can_change_orders=True, all_events=True)
         t.members.add(self.user)
