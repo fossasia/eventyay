@@ -249,6 +249,11 @@ organizer_patterns = [
         eventyay.presale.views.organizer.OrganizerCalendarExportRedirectView.as_view(),
         name='organizer.export',
     ),
+    re_path(
+        r'^events/export/(?P<export_target>google-calendar)/$',
+        eventyay.presale.views.organizer.OrganizerCalendarExportRedirectView.as_view(),
+        name='organizer.export',
+    ),
     path(
         'events/export/<str:name>/',
         eventyay.presale.views.organizer.OrganizerExportDownload.as_view(),
