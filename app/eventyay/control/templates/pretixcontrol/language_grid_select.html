@@ -13,7 +13,7 @@
           data-selected-singular-text="{% translate 'language selected' %}"
           data-selected-plural-text="{% translate 'languages selected' %}"
           data-overflow-text="{% translate 'more' %}">
-      {% translate 'No languages selected' %}
+      {% translate 'No languages selected' %}{% if widget.required %}<span class="language-grid-required text-danger" data-language-grid-required> *</span>{% endif %}
     </span>
     <span class="language-grid-toggle-icon fa fa-chevron-down"
           aria-hidden="true"></span>
