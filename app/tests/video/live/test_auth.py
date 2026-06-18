@@ -9,10 +9,10 @@ from channels.testing import WebsocketCommunicator
 from django.utils.timezone import now
 
 from tests.utils import get_token
-from venueless.core.models import User
-from venueless.core.models.room import AnonymousInvite
-from venueless.core.services.user import get_user_by_token_id
-from venueless.routing import application
+from eventyay.base.models import User
+from eventyay.base.models.room import AnonymousInvite
+from eventyay.base.services.user import get_user_by_token_id
+from eventyay.config.asgi import application
 
 
 @asynccontextmanager

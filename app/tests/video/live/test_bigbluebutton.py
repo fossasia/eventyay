@@ -8,8 +8,8 @@ from aiohttp.http_exceptions import HttpProcessingError
 from aioresponses import aioresponses
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
-from venueless.core.models import BBBCall, BBBServer, User
-from venueless.routing import application
+from eventyay.base.models import BBBCall, BBBServer, User
+from eventyay.config.asgi import application
 
 
 @asynccontextmanager

@@ -5,8 +5,8 @@ import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 
-from venueless.core.models import Exhibitor, ExhibitorStaff, User
-from venueless.routing import application
+from eventyay.base.models import Exhibitor, ExhibitorStaff, User
+from eventyay.config.asgi import application
 
 
 @asynccontextmanager

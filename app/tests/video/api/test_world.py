@@ -2,7 +2,7 @@ import pytest
 from django.conf import settings
 
 from tests.utils import get_token_header
-from venueless.core.services.user import create_user
+from eventyay.base.services.user import create_user
 
 
 @pytest.mark.django_db

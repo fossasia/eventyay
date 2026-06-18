@@ -6,7 +6,7 @@ import pytest
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
 
-from venueless.core.models import (
+from eventyay.base.models import (
     AuditLog,
     BBBCall,
     BBBServer,
@@ -18,8 +18,8 @@ from venueless.core.models import (
     RoulettePairing,
     RouletteRequest,
 )
-from venueless.core.services.user import create_user, update_user
-from venueless.storage.models import StoredFile
+from eventyay.base.services.user import create_user, update_user
+from eventyay.storage.models import StoredFile
 
 
 @pytest.mark.django_db

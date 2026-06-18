@@ -5,7 +5,7 @@ import pytest
 from django.test import override_settings
 from django.utils.timezone import now
 
-from venueless.core.models.room import AnonymousInvite
+from eventyay.base.models.room import AnonymousInvite
 
 
 @pytest.mark.django_db

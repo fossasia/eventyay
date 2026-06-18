@@ -26,7 +26,7 @@ ulimit -n 4000000
 
 ```sh
 docker-compose up redis db celery
-docker-compose run -p 8375:8375 --entrypoint "gunicorn -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8375 --max-requests 1200 --max-requests-jitter 200 -w 32 venueless.asgi:application" server
+docker-compose run -p 8375:8375 --entrypoint "gunicorn -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8375 --max-requests 1200 --max-requests-jitter 200 -w 32 eventyay.config.asgi:application" server
 ```
 
 ### Load test

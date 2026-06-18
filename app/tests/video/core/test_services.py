@@ -1,7 +1,7 @@
 import pytest
 
-from venueless.core.models import World
-from venueless.core.services.user import create_user, get_user, update_user
+from eventyay.base.models import World
+from eventyay.base.services.user import create_user, get_user, update_user
 
 
 @pytest.mark.django_db

@@ -7,8 +7,8 @@ from channels.db import database_sync_to_async
 from django.test import override_settings
 
 from tests.utils import LoggingCommunicator, get_token
-from venueless.core.models import User
-from venueless.routing import application
+from eventyay.base.models import User
+from eventyay.config.asgi import application
 
 
 @asynccontextmanager

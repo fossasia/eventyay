@@ -8,8 +8,8 @@ from channels.testing import WebsocketCommunicator
 from django.utils.timezone import now
 
 from tests.utils import get_token
-from venueless.core.models import Announcement
-from venueless.routing import application
+from eventyay.base.models import Announcement
+from eventyay.config.asgi import application
 
 
 @database_sync_to_async

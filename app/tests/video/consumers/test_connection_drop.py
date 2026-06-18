@@ -4,7 +4,7 @@ from channels.testing import WebsocketCommunicator
 from django.conf import settings
 from django.core.management import call_command
 
-from venueless.routing import application
+from eventyay.config.asgi import application
 
 
 @pytest.mark.asyncio

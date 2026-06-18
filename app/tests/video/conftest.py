@@ -7,7 +7,7 @@ from channels.layers import channel_layers, get_channel_layer
 from django.conf import settings
 from django.utils.timezone import now
 
-from venueless.core.models import (
+from eventyay.base.models import (
     Announcement,
     BBBServer,
     Channel,
@@ -17,13 +17,13 @@ from venueless.core.models import (
     User,
     World,
 )
-from venueless.core.models.world import PlannedUsage
-from venueless.core.utils.redis import flush_aredis_pool
+from eventyay.base.models.world import PlannedUsage
+from eventyay.core.utils.redis import flush_aredis_pool
 
 
 @pytest.fixture(autouse=True)
 async def clear_redis():
-    from venueless.core.utils.redis import aredis
+    from eventyay.core.utils.redis import aredis
 
     if settings.REDIS_USE_PUBSUB:
         try:
@@ -55,7 +55,7 @@ def world_data():
 
 @database_sync_to_async
 def _import_world(world_data):
-    from venueless.core.utils.config import import_config
+    from eventyay.core.utils.config import import_config
 
     import_config(world_data)
     world = World.objects.all().get()
@@ -190,7 +190,7 @@ def staff_client(client, staff_user):
 
 @pytest.fixture
 def planned_usage(world_data):
-    from venueless.core.utils.config import import_config
+    from eventyay.core.utils.config import import_config
 
     import_config(world_data)
     world = World.objects.all().get()

@@ -7,9 +7,9 @@ from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 
 from tests.utils import get_token
-from venueless.core.services.chat import ChatService
-from venueless.core.utils.redis import aredis
-from venueless.routing import application
+from eventyay.base.services.chat import ChatService
+from eventyay.core.utils.redis import aredis
+from eventyay.config.asgi import application
 
 
 @asynccontextmanager
