@@ -2,10 +2,10 @@ import logging
 
 from django.http import HttpRequest
 
-from pretix.base.models import OrderPayment, OrderRefund
-from pretix.base.payment import BasePaymentProvider
+from eventyay.base.models import OrderPayment, OrderRefund
+from eventyay.base.payment import BasePaymentProvider
 
-logger = logging.getLogger('tests.testdummy.ticketoutput')
+logger = logging.getLogger('tests.tickets.testdummy.payment')
 
 
 class DummyPaymentProvider(BasePaymentProvider):

@@ -8,20 +8,20 @@ from django.test import TestCase
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
-    ItemCategory,
-    ItemVariation,
+    Product as Item,
+    ProductCategory as ItemCategory,
+    ProductVariation as ItemVariation,
     Order,
     OrderPosition,
     Organizer,
     Question,
     Quota,
 )
-from pretix.base.models.orders import OrderFee, OrderPayment
-from pretix.base.reldate import RelativeDate, RelativeDateWrapper
-from pretix.base.services.invoices import generate_invoice
+from eventyay.base.models.orders import OrderFee, OrderPayment
+from eventyay.base.reldate import RelativeDate, RelativeDateWrapper
+from eventyay.base.services.invoices import generate_invoice
 
 
 class BaseOrdersTest(TestCase):
@@ -34,7 +34,7 @@ class BaseOrdersTest(TestCase):
             name='30C3',
             slug='30c3',
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
-            plugins='pretix.plugins.stripe,pretix.plugins.banktransfer,tests.testdummy',
+            plugins='eventyay.plugins.stripe,eventyay.plugins.banktransfer,tests.tickets.testdummy',
             live=True,
         )
         self.event.settings.set('payment_banktransfer__enabled', True)
