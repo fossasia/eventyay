@@ -57,14 +57,23 @@ export default {
 	props: {
 		roomId: {
 			type: [String, Number],
-			required: true,
+			default: null,
+		},
+		openCreateOnMount: {
+			type: Boolean,
+			default: false,
+		},
+		roomName: {
+			type: String,
+			default: '',
 		},
 	},
+	emits: ['create-requires-room', 'opened-create-on-mount'],
 	setup: () => ({ v$: useVuelidate({ $stopPropagation: true }) }),
 	data() {
 		return {
 			streamSchedules: null,
-			loading: true,
+			loading: !!this.roomId,
 			error: null,
 			showCreateForm: false,
 			editingSchedule: null,
@@ -145,9 +154,57 @@ export default {
 		return rules;
 	},
 	async created() {
+		if (!this.roomId) {
+			this.streamSchedules = [];
+			this.loading = false;
+			return;
+		}
 		await this.fetchStreamSchedules();
+		if (this.openCreateOnMount) {
+			const savedDraft = this.loadSavedDraft();
+			if (savedDraft) {
+				this.formData = savedDraft;
+				this.showCreateForm = true;
+				await this.saveSchedule();
+			} else {
+				this.openCreateForm();
+			}
+			this.$emit('opened-create-on-mount');
+		}
 	},
 	methods: {
+		serializeFormData() {
+			return {
+				title: this.formData.title || '',
+				url: this.formData.url,
+				start_time: this.formData.start_time
+					? this.formData.start_time.toISOString()
+					: null,
+				end_time: this.formData.end_time
+					? this.formData.end_time.toISOString()
+					: null,
+				stream_type: this.formData.stream_type,
+			};
+		},
+		loadSavedDraft() {
+			const key = `streamScheduleDraft:${this.roomId}`;
+			const savedDraft = sessionStorage.getItem(key);
+			if (!savedDraft) return null;
+			sessionStorage.removeItem(key);
+			try {
+				const draft = JSON.parse(savedDraft);
+				const tz = this.eventTimezone || 'UTC';
+				return {
+					title: draft.title || '',
+					url: draft.url || '',
+					start_time: draft.start_time ? this.parseApiDateTime(draft.start_time).tz(tz) : null,
+					end_time: draft.end_time ? this.parseApiDateTime(draft.end_time).tz(tz) : null,
+					stream_type: draft.stream_type || 'youtube',
+				};
+			} catch (error) {
+				return null;
+			}
+		},
 		getCsrfToken() {
 			const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/);
 			return match ? match[1] : null;
@@ -173,6 +230,11 @@ export default {
 			return `/api/v1/organizers/${organizer}/events/${event}/rooms/${this.roomId}/stream-schedules/`;
 		},
 		async fetchStreamSchedules() {
+			if (!this.roomId) {
+				this.streamSchedules = [];
+				this.loading = false;
+				return;
+			}
 			try {
 				this.error = null;
 				this.loading = true;
@@ -262,6 +324,14 @@ export default {
 					return;
 				}
 			}
+			if (!this.roomId) {
+				if (!this.roomName.trim()) {
+					this.saveError = 'Room name is required.';
+					return;
+				}
+				this.$emit('create-requires-room', this.serializeFormData());
+				return;
+			}
 
 			this.saving = true;
 			try {
@@ -279,17 +349,7 @@ export default {
 				const csrfToken = this.getCsrfToken();
 				if (csrfToken) headers['X-CSRFToken'] = csrfToken;
 
-				const payload = {
-					title: this.formData.title || '',
-					url: this.formData.url,
-					start_time: this.formData.start_time
-						? this.formData.start_time.toISOString()
-						: null,
-					end_time: this.formData.end_time
-						? this.formData.end_time.toISOString()
-						: null,
-					stream_type: this.formData.stream_type,
-				};
+				const payload = this.serializeFormData();
 
 				let response;
 				if (this.editingSchedule) {
