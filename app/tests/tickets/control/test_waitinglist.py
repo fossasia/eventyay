@@ -4,9 +4,9 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
+    Product as Item,
     Organizer,
     Quota,
     Team,
@@ -14,7 +14,7 @@ from pretix.base.models import (
     Voucher,
     WaitingListEntry,
 )
-from pretix.control.views.dashboards import waitinglist_widgets
+from eventyay.control.views.dashboards import waitinglist_widgets
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer,tests.testdummy',
+        plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
     )
     event.settings.set('ticketoutput_testdummy__enabled', True)
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
