@@ -41,14 +41,12 @@
 				bunt-switch(name="disableKb", v-model="disableKb", label="Disable Keyboard Controls")
 				bunt-switch(name="showInfo", v-model="showInfo", label="Hide Video Info")
 		bunt-input(v-else-if="modules['livestream.iframe']", name="iframe-player", v-model="modules['livestream.iframe'].config.url", label="Iframe player url", hint="iframe player should be autoplaying and support resizing to small sizes for background playing")
-	sidebar-addons(v-bind="$props")
 </template>
 <script>
 import { defineComponent } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import UploadUrlInput from 'components/UploadUrlInput'
 import mixin from './mixin'
-import SidebarAddons from './SidebarAddons'
 import {youtubeid, normalizeYoutubeVideoId} from 'lib/validators'
 import ISO6391 from 'iso-639-1'
 import {
@@ -80,7 +78,7 @@ function getDefaultStreamConfig(streamSource, playbackMode = PLAYBACK_MODE_ALWAY
 }
 
 export default defineComponent({
-	components: { UploadUrlInput, SidebarAddons },
+	components: { UploadUrlInput },
 	mixins: [mixin],
 	setup: () => ({ v$: useVuelidate() }),
 	data() {

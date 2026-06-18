@@ -11,6 +11,7 @@
 					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
 			stream-schedule(ref="streamSchedule", v-if="showStreamSchedule", :room-id="config.id ? String(config.id) : null", :room-name="localizedName", :open-create-on-mount="openStreamScheduleCreateOnMount", @opened-create-on-mount="clearOpenStreamScheduleCreateQuery", @create-requires-room="createRoomForStreamSchedule")
+			sidebar-addons(v-if="inferredType && inferredType.id === 'stage'", :config="config", :modules="modules", :creating="creating")
 	.ui-form-actions
 		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ creating ? 'create' : 'save' }}
 		.errors {{ validationErrors.join(', ') }}
@@ -35,9 +36,10 @@ import ChannelRoulette from './types-edit/channel-roulette'
 import Posters from './types-edit/posters'
 import PageLanding from './types-edit/page-landing'
 import StreamSchedule from './StreamSchedule'
+import SidebarAddons from './types-edit/SidebarAddons'
 
 export default {
-	components: { StreamSchedule },
+	components: { StreamSchedule, SidebarAddons },
 	mixins: [ValidationErrorsMixin],
 	props: {
 		config: {
