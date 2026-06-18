@@ -202,7 +202,7 @@
             <div class="card" id="main-card">
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                        <div class="alert {{ message.tags }}">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
                 <main>

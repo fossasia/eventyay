@@ -28,7 +28,7 @@ from eventyay.common.forms.widgets import (
 from eventyay.common.text.css import validate_css
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import Event, EventExtraLink
-from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
+from eventyay.orga.forms.widgets import HeaderSelect
 from eventyay.base.models import ReviewPhase, ReviewScore, ReviewScoreCategory
 
 ENCRYPTED_PASSWORD_PLACEHOLDER = '*' * 24

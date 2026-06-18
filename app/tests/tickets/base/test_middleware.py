@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.test import Client, RequestFactory, TestCase
 from django.test.utils import override_settings
 from django.utils.timezone import now
-from pretix.base.models import Event, Organizer, User
+from eventyay.base.models import Event, Organizer, User
 
 from eventyay.base.middleware import SecurityMiddleware
 

@@ -1,7 +1,7 @@
 import pytest
 from django.core.files.base import ContentFile
 
-from pretix.testutils.mock import mocker_context
+from tests.testutils.mock import mocker_context
 
 TEST_ORGANIZER_RES = {'name': 'Dummy', 'slug': 'dummy'}
 
@@ -51,7 +51,7 @@ def test_get_settings(token_client, organizer):
 @pytest.mark.django_db
 def test_patch_settings(token_client, organizer):
     with mocker_context() as mocker:
-        mocked = mocker.patch('pretix.presale.style.regenerate_organizer_css.apply_async')
+        mocked = mocker.patch('eventyay.presale.style.regenerate_organizer_css.apply_async')
 
         organizer.settings.event_list_type = 'week'
         resp = token_client.patch(

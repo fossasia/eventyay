@@ -9,14 +9,14 @@ from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
 
-from pretix.base.decimal import round_decimal
-from pretix.base.models import (
+from eventyay.base.decimal import round_decimal
+from eventyay.base.models import (
     CartPosition,
     Event,
     InvoiceAddress,
-    Item,
-    ItemCategory,
-    ItemVariation,
+    Product as Item,
+    ProductCategory as ItemCategory,
+    ProductVariation as ItemVariation,
     Organizer,
     Question,
     QuestionAnswer,
@@ -24,21 +24,21 @@ from pretix.base.models import (
     SeatingPlan,
     Voucher,
 )
-from pretix.base.models.items import (
-    ItemAddOn,
-    ItemBundle,
-    SubEventItem,
-    SubEventItemVariation,
+from eventyay.base.models.product import (
+    ProductAddOn as ItemAddOn,
+    ProductBundle as ItemBundle,
+    SubEventProduct as SubEventItem,
+    SubEventProductVariation as SubEventItemVariation,
 )
-from pretix.base.services.cart import (
+from eventyay.base.services.cart import (
     CartError,
     CartManager,
     error_messages,
     update_tax_rates,
 )
-from pretix.testutils.scope import classscope
-from pretix.testutils.sessions import get_cart_session_key
-from tests.testdummy.signals import FoobarSalesChannel
+from tests.testutils.scope import classscope
+from tests.testutils.sessions import get_cart_session_key
+from tests.tickets.testdummy.signals import FoobarSalesChannel
 
 
 class CartTestMixin:
@@ -52,7 +52,7 @@ class CartTestMixin:
             slug='30c3',
             date_from=datetime.datetime(now().year + 1, 12, 26, tzinfo=datetime.timezone.utc),
             live=True,
-            plugins='pretix.plugins.banktransfer',
+            plugins='eventyay.plugins.banktransfer',
             sales_channels=['web', 'bar'],
         )
         self.tr19 = self.event.tax_rules.create(rate=Decimal('19.00'))
