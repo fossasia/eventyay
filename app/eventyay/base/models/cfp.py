@@ -244,9 +244,9 @@ class CfP(PretalxModel):
     def is_open(self) -> bool:
         """``True`` if ``max_deadline`` is not over yet, or if no deadline is
         set."""
-        if self.deadline is None:
+        if self.max_deadline is None:
             return True
-        return self.max_deadline >= now() if self.max_deadline else True
+        return self.max_deadline >= now()
 
     @cached_property
     def max_deadline(self) -> dt.datetime:
