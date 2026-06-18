@@ -3,7 +3,7 @@
 	h2 Stream type
 	.radio-options
 		label.radio-option(v-for="option in PLAYBACK_MODE_OPTIONS", :key="option.id")
-			input(type="radio", name="playback-mode", :value="option.id", v-model="playbackMode")
+			input(type="radio", name="playback-mode", :value="option.id", v-model="playbackMode", :disabled="!creating")
 			.radio-copy
 				.radio-title {{ option.label }}
 				.radio-description {{ option.description }}

@@ -9,7 +9,7 @@
 					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", label="Unscheduled room (hide from schedule/sessions)", :disabled="config.has_linked_sessions")
 				template(v-if="inferredType")
 					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
-			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules")
+			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
 			stream-schedule(ref="streamSchedule", v-if="showStreamSchedule", :room-id="config.id ? String(config.id) : null", :room-name="localizedName", :open-create-on-mount="openStreamScheduleCreateOnMount", @opened-create-on-mount="clearOpenStreamScheduleCreateQuery", @create-requires-room="createRoomForStreamSchedule")
 	.ui-form-actions
 		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ creating ? 'create' : 'save' }}
