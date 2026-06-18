@@ -587,11 +587,12 @@ footer {
     margin-right: 0;
     margin-bottom: 0;
 
-    [type="text"] {
+    [type="text"],
+    [type="search"] {
       height: 2.5rem;
     }
 
-    label {
+    & > label {
       display: none;
     }
 
@@ -634,12 +635,12 @@ footer {
 }
 
 /* Multi-select filters rendered as a <details> checkbox dropdown. */
-.search-form .filter-select {
+.filter-select {
   position: relative;
   width: 100%;
 }
 
-.search-form .filter-select__summary {
+.filter-select__summary {
   display: flex;
   align-items: center;
   height: 2.5rem;
@@ -653,17 +654,17 @@ footer {
   overflow: hidden;
 }
 
-.search-form .filter-select__summary::-webkit-details-marker {
+.filter-select__summary::-webkit-details-marker {
   display: none;
 }
 
-.search-form .filter-select__label {
+.filter-select__label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.search-form .filter-select__summary::after {
+.filter-select__summary::after {
   content: "";
   margin-left: auto;
   margin-top: 5px;
@@ -671,13 +672,13 @@ footer {
   border-top-color: var(--color-grey, #6c757d);
 }
 
-.search-form .filter-select[open] .filter-select__summary::after {
+.filter-select[open] .filter-select__summary::after {
   margin-top: -5px;
   border-top-color: transparent;
   border-bottom-color: var(--color-grey, #6c757d);
 }
 
-.search-form .filter-select__menu {
+.filter-select__menu {
   position: absolute;
   z-index: 500;
   top: calc(100% + 2px);
@@ -692,8 +693,8 @@ footer {
   box-shadow: var(--shadow-light);
 }
 
-.search-form .filter-select .filter-select__option,
-.search-form .filter-select .filter-select__pending {
+.filter-select .filter-select__option,
+.filter-select .filter-select__pending {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -703,21 +704,21 @@ footer {
   cursor: pointer;
 }
 
-.search-form .filter-select .filter-select__option:hover,
-.search-form .filter-select .filter-select__pending:hover {
+.filter-select .filter-select__option:hover,
+.filter-select .filter-select__pending:hover {
   background: var(--color-grey-lighter, #e9ecef);
 }
 
-.search-form .filter-select .filter-select__pending .form-group {
+.filter-select .filter-select__pending .form-group {
   margin-bottom: 0;
 }
 
 /* Re-show the exclude-pending label that .form-group hides by default. */
-.search-form .filter-select .filter-select__pending label {
+.filter-select .filter-select__pending label {
   display: inline-flex;
 }
 
-.search-form .filter-select__separator {
+.filter-select__separator {
   border-top: 1px solid var(--color-border, #ddd);
   margin: 4px 0;
 }
