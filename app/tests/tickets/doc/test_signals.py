@@ -7,7 +7,7 @@ import pytest
 from django.conf import settings
 from django.dispatch import Signal
 
-from pretix.base.signals import DeprecatedSignal
+from eventyay.base.signals import DeprecatedSignal
 
 here = os.path.dirname(__file__)
 doc_dir = os.path.join(here, '../../../doc')

@@ -8,7 +8,7 @@ const updateTabPanels = () => {
     selectedTab.parentElement.querySelectorAll(`[role=tab][aria-selected=true]`).forEach((element) => {
         element.setAttribute("aria-selected", "false")
     })
-    selectedPanel.parentElement.querySelectorAll("[role=tabpanel][aria-hidden=false]").forEach((element) => {
+    selectedPanel.parentElement.querySelectorAll(":scope > [role=tabpanel]").forEach((element) => {
         element.setAttribute("aria-hidden", "true")
     })
     selectedTab.setAttribute("aria-selected", "true")
