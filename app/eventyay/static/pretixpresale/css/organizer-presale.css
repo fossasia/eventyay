@@ -85,14 +85,6 @@ body.organizer-presale-page h2.content-header {
   border-bottom: 1px solid var(--color-grey-light);
 }
 
-.organizer-community-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1 1 auto;
-}
-
 .organizer-event-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -470,5 +462,90 @@ body.organizer-presale-page #main-card .week-calendar a.event.over {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+}
+
+body.organizer-presale-page .event-hero-text #organizer-follower-count {
+  display: block;
+  font-size: 1rem;
+  opacity: 0.96;
+  color: inherit;
+}
+
+body.organizer-presale-page .header-follow-floating {
+  position: absolute;
+  bottom: -27.5px;
+  right: 7.5px;
+  z-index: 1050;
+}
+
+@media (min-width: 769px) {
+  body.organizer-presale-page .header-follow-floating {
+    right: 0;
+  }
+}
+
+body.organizer-presale-page .header-follow-floating .btn-follow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 6px;
+  height: 28px;
+  min-width: 0;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1;
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.organizer-presale-page .header-follow-floating .btn-follow.btn-primary {
+  color: white;
+}
+
+body.organizer-presale-page .header-follow-floating .btn-follow.btn-danger {
+  color: white;
+}
+
+body.organizer-presale-page .header-follow-floating .btn-follow:hover,
+body.organizer-presale-page .header-follow-floating .btn-follow:focus {
+  transform: scale(1.02);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  color: white;
+}
+
+body.organizer-presale-page .header-follow-floating .btn-follow.btn-primary:hover,
+body.organizer-presale-page .header-follow-floating .btn-follow.btn-primary:focus {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+body.organizer-presale-page .header-follow-floating .btn-follow.btn-danger:hover,
+body.organizer-presale-page .header-follow-floating .btn-follow.btn-danger:focus {
+  background-color: #d9534f;
+  border-color: #d43f3a;
+}
+
+body.organizer-presale-page .header-follow-floating .btn-follow .follow-text {
+  display: inline-block;
+}
+
+@media (max-width: 319px) {
+  body.organizer-presale-page .header-follow-floating .btn-follow {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  body.organizer-presale-page .header-follow-floating .btn-follow .follow-text {
+    display: none;
+  }
+
+  body.organizer-presale-page .header-follow-floating .btn-follow i {
+    font-size: 0.95rem;
   }
 }

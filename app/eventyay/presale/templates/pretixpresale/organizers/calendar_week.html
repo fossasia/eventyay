@@ -12,7 +12,6 @@
     {% endif %}
     <div class="organizer-list-header">
         <h2 class="content-header">{% blocktrans with week=date.isocalendar.1 year=date.isocalendar.0 %}Week {{ week }}, {{ year }}{% endblocktrans %}</h2>
-        {% include "pretixpresale/organizers/fragment_community_bar.html" %}
     </div>
     <form class="form-inline organizer-calendar-nav" method="get" id="monthselform"
           action="{% eventurl request.organizer "presale:organizer.index" %}">
