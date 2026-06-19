@@ -26,11 +26,7 @@ from eventyay.base.models import (
     Team,
     User,
 )
-from pretix.base.exporters.orderlist import OrderListExporter, OrderPositionListExporter
-from pretix.base.payment import PaymentException
-from pretix.control.forms.orders import ExporterForm
-from pretix.base.services.invoices import (
-from eventyay.base.exporters.orderlist import OrderListExporter
+from eventyay.base.exporters.orderlist import OrderListExporter, OrderPositionListExporter
 from eventyay.base.payment import PaymentException
 from eventyay.control.forms.orders import ExporterForm
 from eventyay.base.services.invoices import (
