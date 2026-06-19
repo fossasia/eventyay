@@ -8,6 +8,15 @@ from eventyay.base.templatetags.rich_text import (
 )
 
 
+def test_compile_email_body_preserves_html():
+    html = '<p><strong>Hello</strong></p>'
+    assert compile_email_body(html) == html
+
+
+def test_compile_email_body_compiles_plain_text():
+    assert compile_email_body('Hello world') == '<p>Hello world</p>'
+
+
 @pytest.mark.parametrize(
     'link',
     [
@@ -54,15 +63,6 @@ from eventyay.base.templatetags.rich_text import (
         ),
     ],
 )
-def test_compile_email_body_preserves_html():
-    html = '<p><strong>Hello</strong></p>'
-    assert compile_email_body(html) == html
-
-
-def test_compile_email_body_compiles_plain_text():
-    assert compile_email_body('Hello world') == '<p>Hello world</p>'
-
-
 def test_linkify_abs(link):
     input, output = link
     assert rich_text_snippet(input, safelinks=False) == output
