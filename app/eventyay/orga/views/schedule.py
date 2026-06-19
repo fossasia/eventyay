@@ -180,8 +180,8 @@ class ScheduleToggleView(EventPermissionRequired, View):
         event.settings.talk_schedule_public = is_public
         event.save(update_fields=['feature_flags'])
 
-    def dispatch(self, request, event):
-        super().dispatch(request, event)
+    def dispatch(self, request, *args, **kwargs):
+        super().dispatch(request, *args, **kwargs)
         is_public = not self.request.event.get_feature_flag('show_schedule')
         self._set_schedule_public(self.request.event, is_public)
         # Trigger tickets to hidden/unhidden schedule menu
