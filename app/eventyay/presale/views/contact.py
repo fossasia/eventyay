@@ -29,13 +29,17 @@ class ContactOrganizerView(EventViewMixin, View):
         if not client_ip:
             return False
         from django_redis import get_redis_connection
-        rc = get_redis_connection('redis')
+        from redis.exceptions import RedisError
         key = 'contact_ratelimit_{}'.format(hashlib.sha1(client_ip.encode()).hexdigest())
-        count = rc.get(key)
-        if count and int(count) >= _RATE_LIMIT_MAX:
-            return True
-        if rc.incr(key) == 1:
-            rc.expire(key, _RATE_LIMIT_WINDOW)
+        try:
+            rc = get_redis_connection('redis')
+            count = rc.get(key)
+            if count and int(count) >= _RATE_LIMIT_MAX:
+                return True
+            if rc.incr(key) == 1:
+                rc.expire(key, _RATE_LIMIT_WINDOW)
+        except RedisError:
+            logger.exception('Contact form rate-limit check failed; allowing request')
         return False
 
     def post(self, request, *args, **kwargs):
