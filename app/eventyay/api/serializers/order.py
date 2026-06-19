@@ -537,11 +537,6 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
         return instance
 
 
-class RequireAttentionField(serializers.Field):
-    def to_representation(self, instance: OrderPosition):
-        return instance.require_checkin_attention
-
-
 class AttendeeNameField(serializers.Field):
     def to_representation(self, instance: OrderPosition):
         an = instance.attendee_name
@@ -573,7 +568,7 @@ class AttendeeNamePartsField(serializers.Field):
 
 
 class CheckinListOrderPositionSerializer(OrderPositionSerializer):
-    require_attention = RequireAttentionField(source='*')
+    require_attention = serializers.BooleanField(source='require_checkin_attention', read_only=True)
     attendee_name = AttendeeNameField(source='*')
     attendee_name_parts = AttendeeNamePartsField(source='*')
     order__status = serializers.SlugRelatedField(read_only=True, slug_field='status', source='order')
