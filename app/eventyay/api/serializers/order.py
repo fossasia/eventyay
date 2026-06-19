@@ -539,7 +539,7 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
 
 class RequireAttentionField(serializers.Field):
     def to_representation(self, instance: OrderPosition):
-        return instance.order.checkin_attention or instance.product.checkin_attention
+        return instance.require_checkin_attention
 
 
 class AttendeeNameField(serializers.Field):
