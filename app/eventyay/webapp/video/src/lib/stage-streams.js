@@ -30,5 +30,15 @@ export function getStreamSourceOptions() {
 }
 
 export function getStagePlaybackMode(module) {
-	return module?.config?.playback_mode || PLAYBACK_MODE_ALWAYS_ON
+	if (!module) return PLAYBACK_MODE_ALWAYS_ON
+
+	const config = module.config || {}
+	if (config.playback_mode) return config.playback_mode
+
+	const hasDefaultStreamSource = ['hls_url', 'ytid', 'url'].some(key =>
+		Object.prototype.hasOwnProperty.call(config, key)
+	)
+	if (hasDefaultStreamSource) return PLAYBACK_MODE_ALWAYS_ON
+
+	return PLAYBACK_MODE_SCHEDULE_DRIVEN
 }
