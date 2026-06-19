@@ -145,45 +145,6 @@ class EnhancedSelectMultiple(EnhancedSelectMixin, SelectMultiple):
     pass
 
 
-def get_count(value, label):
-    count = None
-    instance = getattr(value, 'instance', None)
-    if instance:
-        count = getattr(instance, 'count', 0)
-    count = count or getattr(label, 'count', 0)
-    if callable(count):
-        return count(label)
-    return count
-
-
-class SelectMultipleWithCount(EnhancedSelectMultiple):
-    """A widget for multi-selects that correspond to countable values."""
-
-    def optgroups(self, name, value, attrs=None):
-        choices = sorted(self.choices, key=lambda choice: get_count(*choice), reverse=True)
-        result = []
-        for index, (option_value, label) in enumerate(choices):
-            count = get_count(option_value, label)
-            if count == 0:
-                continue
-            selected = str(option_value) in value
-            result.append(
-                self.create_option(
-                    name,
-                    value=option_value,
-                    label=label,
-                    selected=selected,
-                    index=index,
-                    count=count,
-                )
-            )
-        return [(None, result, 0)]
-
-    def create_option(self, name, value, label, *args, count=0, **kwargs):
-        label = f'{label} ({count})'
-        return super().create_option(name, value, label, *args, **kwargs)
-
-
 class FilterCheckboxDropdown(CheckboxSelectMultiple):
     """A multi-select rendered as a native <details> dropdown of checkboxes."""
 
