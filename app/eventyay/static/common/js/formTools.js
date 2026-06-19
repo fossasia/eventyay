@@ -216,6 +216,7 @@ const initToastUiMarkdownTextarea = (textarea) => {
         previewStyle: 'tab',
         usageStatistics: false,
         hideModeSwitch: true,
+        autofocus: false,
         initialValue: String(textarea.value || ''),
         plugins: [underlinePlugin],
         toolbarItems: [
