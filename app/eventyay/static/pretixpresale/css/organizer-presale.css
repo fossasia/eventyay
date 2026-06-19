@@ -549,3 +549,64 @@ body.organizer-presale-page .header-follow-floating .btn-follow .follow-text {
     font-size: 0.95rem;
   }
 }
+
+@media (min-width: 769px) {
+  body.organizer-presale-page .calendar-nav-prev {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+
+  body.organizer-presale-page .calendar-nav-next {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  body.organizer-presale-page .organizer-calendar-selects {
+    flex: 0 0 auto;
+  }
+}
+
+body.organizer-presale-page .organizer-calendar-nav select[name="week"] {
+  min-width: 19rem;
+}
+
+body.organizer-presale-page .organizer-calendar-nav select[name="month"] {
+  min-width: 7rem;
+}
+
+body.organizer-presale-page .organizer-calendar-nav select[name="year"] {
+  min-width: 4rem;
+}
+
+@media (max-width: 768px) {
+  body.organizer-presale-page .organizer-calendar-selects-week {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+    gap: 0.25rem;
+  }
+
+  body.organizer-presale-page .organizer-calendar-selects-week select {
+    margin: 0;
+  }
+
+  body.organizer-presale-page .organizer-calendar-selects-week select[name="week"] {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  body.organizer-presale-page .organizer-calendar-selects-week select[name="year"] {
+    min-width: 0;
+    flex: 0 0 5rem;
+    width: 5rem;
+  }
+}

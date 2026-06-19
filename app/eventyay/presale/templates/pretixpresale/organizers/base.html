@@ -123,12 +123,12 @@
     {% if "old" in request.GET %}
         <a href="?{% url_replace request "old" "" "year" "" "month" "" "week" "" "page" "" %}" class="header-tab organizer-toggle-past">
             <span class="fa fa-clock-o" aria-hidden="true"></span>
-            {% trans "Show upcoming" %}
+            <span class="hidden-xs">{% trans "Show upcoming" %}</span>
         </a>
     {% else %}
         <a href="?{% url_replace request "old" "1" "year" "" "month" "" "week" "" "page" "" %}" class="header-tab organizer-toggle-past">
             <span class="fa fa-clock-o" aria-hidden="true"></span>
-            {% trans "Show past events" %}
+            <span class="hidden-xs">{% trans "Show past events" %}</span>
         </a>
     {% endif %}
 {% endblock %}
@@ -138,7 +138,7 @@
         <details class="dropdown organizer-export-dropdown">
             <summary role="button" tabindex="0">
                 <span class="fa fa-download" aria-hidden="true"></span>
-                {% trans "Export" %}
+                <span class="hidden-xs">{% trans "Export" %}</span>
                 <span class="fa fa-caret-down" aria-hidden="true"></span>
             </summary>
             <div class="dropdown-content dropdown-content-sw">

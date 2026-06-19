@@ -20,14 +20,14 @@
             {% endif %}
         {% endfor %}
         <div class="organizer-calendar-filter-row">
-            {% if has_before %}
-                <a href="?{% url_replace request "year" before.year "month" before.month %}" class="btn outline">
-                    <span class="fa fa-arrow-left" aria-hidden="true"></span>
-                    {{ before|date:"F Y" }}
-                </a>
-            {% else %}
-                <div class="placeholder-nav"></div>
-            {% endif %}
+            <div class="calendar-nav-prev">
+                {% if has_before %}
+                    <a href="?{% url_replace request "year" before.year "month" before.month %}" class="btn outline">
+                        <span class="fa fa-arrow-left" aria-hidden="true"></span>
+                        {{ before|date:"F Y" }}
+                    </a>
+                {% endif %}
+            </div>
 
             <div class="organizer-calendar-selects">
                 <select name="month" class="form-control" aria-label="{% translate 'Month' %}">
@@ -45,14 +45,14 @@
                 </button>
             </div>
 
-            {% if has_after %}
-                <a href="?{% url_replace request "year" after.year "month" after.month %}" class="btn outline">
-                    {{ after|date:"F Y" }}
-                    <span class="fa fa-arrow-right" aria-hidden="true"></span>
-                </a>
-            {% else %}
-                <div class="placeholder-nav"></div>
-            {% endif %}
+            <div class="calendar-nav-next">
+                {% if has_after %}
+                    <a href="?{% url_replace request "year" after.year "month" after.month %}" class="btn outline">
+                        {{ after|date:"F Y" }}
+                        <span class="fa fa-arrow-right" aria-hidden="true"></span>
+                    </a>
+                {% endif %}
+            </div>
         </div>
     </form>
     {% include "pretixpresale/fragment_calendar.html" with show_avail=request.organizer.settings.event_list_availability %}

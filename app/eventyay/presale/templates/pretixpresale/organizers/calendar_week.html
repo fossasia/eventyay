@@ -21,22 +21,22 @@
             {% endif %}
         {% endfor %}
         <div class="organizer-calendar-filter-row">
-            {% if has_before %}
-                <a href="?{% url_replace request "year" before.isocalendar.0 "week" before.isocalendar.1 %}"
-                   class="btn outline">
-                    <span class="fa fa-arrow-left" aria-hidden="true"></span>
-                    {{ before|date:week_format }}
-                </a>
-            {% else %}
-                <div class="placeholder-nav"></div>
-            {% endif %}
+            <div class="calendar-nav-prev">
+                {% if has_before %}
+                    <a href="?{% url_replace request "year" before.isocalendar.0 "week" before.isocalendar.1 %}"
+                       class="btn outline">
+                        <span class="fa fa-arrow-left" aria-hidden="true"></span>
+                        {{ before|date:week_format }}
+                    </a>
+                {% endif %}
+            </div>
 
-            <div class="organizer-calendar-selects">
+            <div class="organizer-calendar-selects organizer-calendar-selects-week">
                 <select name="week" class="form-control select-calendar-week-short" aria-label="{% translate 'Week' %}">
                     {% for w in weeks %}
                         <option value="{{ w.0.isocalendar.1 }}"
                                 {% if w.0.isocalendar.1 == date.isocalendar.1 %}selected{% endif %}>{% trans "W" %} {{ w.0.isocalendar.1 }}
-                            ({{ w.0|date:"SHORT_DATE_FORMAT" }} – {{ w.1|date:"SHORT_DATE_FORMAT" }})
+                            ({{ w.0|date:"d-M-Y" }} – {{ w.1|date:"d-M-Y" }})
                         </option>
                     {% endfor %}
                 </select>
@@ -50,15 +50,15 @@
                 </button>
             </div>
 
-            {% if has_after %}
-                <a href="?{% url_replace request "year" after.isocalendar.0 "week" after.isocalendar.1 %}"
-                   class="btn outline">
-                    {{ after|date:week_format }}
-                    <span class="fa fa-arrow-right" aria-hidden="true"></span>
-                </a>
-            {% else %}
-                <div class="placeholder-nav"></div>
-            {% endif %}
+            <div class="calendar-nav-next">
+                {% if has_after %}
+                    <a href="?{% url_replace request "year" after.isocalendar.0 "week" after.isocalendar.1 %}"
+                       class="btn outline">
+                        {{ after|date:week_format }}
+                        <span class="fa fa-arrow-right" aria-hidden="true"></span>
+                    </a>
+                {% endif %}
+            </div>
         </div>
     </form>
     {% include "pretixpresale/fragment_week_calendar.html" with show_avail=request.organizer.settings.event_list_availability %}
