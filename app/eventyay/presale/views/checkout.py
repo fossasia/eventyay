@@ -46,9 +46,18 @@ class CheckoutView(View):
 
         if request.event.settings.require_registered_account_for_tickets and not request.user.is_authenticated:
             storage = messages.get_messages(request)
-            _consumed = list(storage)
+            has_success = False
+            other_messages = []
+            for msg in storage:
+                if msg.level == messages.SUCCESS:
+                    has_success = True
+                else:
+                    other_messages.append((msg.level, str(msg)))
             storage.used = True
-            request.session['pending_cart_success'] = True
+            for level, text in other_messages:
+                messages.add_message(request, level, text)
+            if has_success:
+                request.session['pending_cart_success'] = True
             messages.info(request, _('Please log in to complete your order.'))
             next_url = request.path
             login_url = reverse('eventyay_common:auth.login')
