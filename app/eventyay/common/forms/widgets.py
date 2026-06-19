@@ -190,6 +190,13 @@ class FilterCheckboxDropdown(CheckboxSelectMultiple):
     template_name = 'orga/widgets/filter_checkbox_dropdown.html'
     option_template_name = 'django/forms/widgets/checkbox_option.html'
 
+    def create_option(self, name, value, label, *args, **kwargs):
+        instance = getattr(value, 'instance', None)
+        count = getattr(instance, 'count', None) if instance else getattr(label, 'count', None)
+        if isinstance(count, int):
+            label = f'{label} ({count})'
+        return super().create_option(name, value, label, *args, **kwargs)
+
 
 class SearchInput(TextInput):
     input_type = 'search'
