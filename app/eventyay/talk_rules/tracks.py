@@ -39,7 +39,7 @@ def get_allowed_tracks(event, user, *, reviewers_only=False):
     from eventyay.base.models import Track
 
     team_pks = [team.pk for team in teams]
-    return set(Track.objects.filter(event=event, team_set__pk__in=team_pks).distinct())
+    return set(Track.objects.filter(event=event, team__pk__in=team_pks).distinct())
 
 
 def user_has_track_limits(event, user, *, reviewers_only=False):
