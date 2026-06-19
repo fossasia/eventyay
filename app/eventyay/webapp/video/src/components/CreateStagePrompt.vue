@@ -30,7 +30,6 @@ import { required, url, youtubeid, normalizeYoutubeVideoId } from 'lib/validator
 import {
 	PLAYBACK_MODE_ALWAYS_ON,
 	PLAYBACK_MODE_OPTIONS,
-	PLAYBACK_MODE_SCHEDULE_DRIVEN,
 	getStreamSourceOptions
 } from 'lib/stage-streams'
 
@@ -41,7 +40,7 @@ export default {
 	data() {
 		return {
 			name: '',
-			playbackMode: PLAYBACK_MODE_SCHEDULE_DRIVEN,
+			playbackMode: PLAYBACK_MODE_ALWAYS_ON,
 			streamSource: 'hls',
 			url: '',
 			youtubeId: '',

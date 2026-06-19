@@ -5,14 +5,14 @@ export const PLAYBACK_MODE_ALWAYS_ON = 'always_on'
 
 export const PLAYBACK_MODE_OPTIONS = [
 	{
-		id: PLAYBACK_MODE_SCHEDULE_DRIVEN,
-		label: 'Schedule-driven stage',
-		description: 'Use only the active stream schedule as the playback source.'
-	},
-	{
 		id: PLAYBACK_MODE_ALWAYS_ON,
 		label: 'Always-on stage',
 		description: 'Configure a default stream source directly on this stage.'
+	},
+	{
+		id: PLAYBACK_MODE_SCHEDULE_DRIVEN,
+		label: 'Schedule-driven stage',
+		description: 'Use only the active stream schedule as the playback source.'
 	}
 ]
 

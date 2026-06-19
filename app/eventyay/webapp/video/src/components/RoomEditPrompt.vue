@@ -46,7 +46,8 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 					v-if="inferredType && typeComponents[inferredType.id]",
 					:is="typeComponents[inferredType.id]",
 					:config="config",
-					:modules="modules"
+					:modules="modules",
+					:creating="!wasConfigured"
 				)
 				.danger-zone(v-if="wasConfigured && hasPermission('room:delete')")
 					h3 Danger Zone
@@ -69,7 +70,7 @@ import api from 'lib/api'
 import Prompt from 'components/Prompt'
 import ROOM_TYPES, { inferType } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
-import { PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
+import { PLAYBACK_MODE_ALWAYS_ON } from 'lib/stage-streams'
 import Stage from 'views/admin/rooms/types-edit/stage'
 import PageStatic from 'views/admin/rooms/types-edit/page-static'
 import PageIframe from 'views/admin/rooms/types-edit/page-iframe'
@@ -160,7 +161,7 @@ export default {
 	methods: {
 		getStartingModuleConfig (type) {
 			if (type.id === 'stage') {
-				return { playback_mode: PLAYBACK_MODE_SCHEDULE_DRIVEN }
+				return { playback_mode: PLAYBACK_MODE_ALWAYS_ON }
 			}
 			return {}
 		},

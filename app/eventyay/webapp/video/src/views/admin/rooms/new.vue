@@ -18,7 +18,7 @@
 import { mapGetters } from 'vuex'
 import ROOM_TYPES from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
-import { PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
+import { PLAYBACK_MODE_ALWAYS_ON } from 'lib/stage-streams'
 import EditForm from './EditForm'
 
 export default {
@@ -48,7 +48,7 @@ export default {
 	methods: {
 		getStartingModuleConfig(type) {
 			if (type.id === 'stage') {
-				return { playback_mode: PLAYBACK_MODE_SCHEDULE_DRIVEN }
+				return { playback_mode: PLAYBACK_MODE_ALWAYS_ON }
 			}
 			return {}
 		},
