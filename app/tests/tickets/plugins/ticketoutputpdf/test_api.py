@@ -4,8 +4,8 @@ import json
 import pytest
 from django.utils.timezone import now
 
-from pretix.base.models import Event, Item, Organizer, Team, User
-from pretix.plugins.ticketoutputpdf.models import TicketLayoutItem
+from eventyay.base.models import Event, Product as Item, Organizer, Team, User
+from eventyay.plugins.ticketoutputpdf.models import TicketLayoutProduct as TicketLayoutItem
 
 
 @pytest.fixture
@@ -16,7 +16,7 @@ def env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
     t = Team.objects.create(organizer=event.organizer)

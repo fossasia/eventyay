@@ -9,7 +9,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.api.webhooks import notify_webhooks
-from pretix.base.models import Event, Item, LogEntry, Order, OrderPosition, Organizer
+from eventyay.base.models import Event, Product as Item, Order, OrderPosition, Organizer
 
 
 @pytest.fixture
