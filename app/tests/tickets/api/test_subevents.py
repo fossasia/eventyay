@@ -7,14 +7,14 @@ from django_countries.fields import Country
 from django_scopes import scopes_disabled
 from pytz import UTC
 
-from pretix.base.models import (
+from eventyay.base.models import (
     InvoiceAddress,
     Order,
     OrderPosition,
     SeatingPlan,
     SubEvent,
 )
-from pretix.base.models.orders import OrderFee
+from eventyay.base.models.orders import OrderFee
 
 
 @pytest.fixture

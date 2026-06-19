@@ -2,7 +2,7 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Device
+from eventyay.base.models import Device
 
 
 @pytest.fixture

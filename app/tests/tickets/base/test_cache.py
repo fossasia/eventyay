@@ -4,7 +4,7 @@ from django.core.cache import cache as django_cache
 from django.test import TestCase, override_settings
 from django.utils.timezone import now
 
-from pretix.base.models import Event, Organizer
+from eventyay.base.models import Event, Organizer
 
 
 @override_settings(
