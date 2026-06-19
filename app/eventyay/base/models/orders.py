@@ -2219,10 +2219,13 @@ class OrderPosition(AbstractPosition):
 
     @cached_property
     def require_checkin_attention(self):
+        variation_attention = (
+            getattr(self.variation, 'checkin_attention', False) if self.variation_id else False
+        )
         return (
             self.order.checkin_attention
             or self.product.checkin_attention
-            or (self.variation_id and self.variation.checkin_attention)
+            or variation_attention
         )
 
     @property
