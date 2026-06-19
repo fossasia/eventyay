@@ -14,7 +14,7 @@ from eventyay.base.models import (
     GiftCard,
     InvoiceAddress,
     Product as Item,
-    ItemCategory,
+    ProductCategory as ItemCategory,
     Order,
     OrderFee,
     OrderPayment,
