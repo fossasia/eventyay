@@ -63,12 +63,16 @@
           {% blocktranslate with size=widget.max_size|filesize %}Please do not upload files larger than {{ size }}.{% endblocktranslate %}
         {% endif %}
       </div>
+      <div id='{{ widget.files_id }}_storage_warning' class='text-warning mt-1' style='display: none; font-size: 0.9em; font-weight: bold;'>
+        {% translate 'Note: This file is too large to be saved in the browser’s temporary storage. If the form has other errors, you will need to re-select it before submitting.' %}
+      </div>
     </div>
     <script>
       (function() {
         var input = document.getElementById('{{ widget.files_id }}');
         var label = document.getElementById('{{ widget.files_id }}_label');
         var errorMsg = document.getElementById('{{ widget.files_id }}_error');
+        var storageWarningMsg = document.getElementById('{{ widget.files_id }}_storage_warning');
         var storageKey = 'file_upload_{{ widget.files_id }}';
         
         function b64toFile(b64Data, contentType, filename) {
@@ -89,8 +93,9 @@
         }
 
         if (input && label) {
-          // Restore from sessionStorage on load
+          // Restore from sessionStorage on load if re-rendering due to errors
           try {
+              {% if widget.is_re_render %}
               var storedData = sessionStorage.getItem(storageKey);
               if (storedData) {
                   var dataArr = JSON.parse(storedData);
@@ -105,8 +110,11 @@
                   label.textContent = names.join(', ');
                   label.classList.remove('text-muted');
               }
+              {% else %}
+              sessionStorage.removeItem(storageKey);
+              {% endif %}
           } catch (e) {
-              console.warn('Failed to restore files from sessionStorage', e);
+              console.warn('Failed to restore or clear files in sessionStorage', e);
           }
 
           input.addEventListener('change', function() {
@@ -120,6 +128,9 @@
               if (maxSize && totalSize > maxSize) {
                 // Show error, clear input
                 errorMsg.style.display = 'block';
+                if (storageWarningMsg) {
+                  storageWarningMsg.style.display = 'none';
+                }
                 input.value = '';
                 label.textContent = label.dataset.original || '{% translate "No file chosen" %}';
                 label.classList.add('text-muted');
@@ -128,6 +139,9 @@
               }
               
               errorMsg.style.display = 'none';
+              if (storageWarningMsg) {
+                storageWarningMsg.style.display = 'none';
+              }
               var names = Array.from(input.files).map(function(f) { return f.name; });
               label.textContent = names.join(', ');
               label.classList.remove('text-muted');
@@ -150,8 +164,14 @@
                       if (processed === filesToProcess) {
                           try {
                               sessionStorage.setItem(storageKey, JSON.stringify(filesData));
+                              if (storageWarningMsg) {
+                                storageWarningMsg.style.display = 'none';
+                              }
                           } catch (err) {
                               console.warn('Files too large for sessionStorage', err);
+                              if (storageWarningMsg) {
+                                storageWarningMsg.style.display = 'block';
+                              }
                           }
                       }
                   };
@@ -159,6 +179,9 @@
               });
             } else {
               errorMsg.style.display = 'none';
+              if (storageWarningMsg) {
+                storageWarningMsg.style.display = 'none';
+              }
               label.textContent = label.dataset.original || '{% translate "No file chosen" %}';
               label.classList.add('text-muted');
               try { sessionStorage.removeItem(storageKey); } catch(e) {}
