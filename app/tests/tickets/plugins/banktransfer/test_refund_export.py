@@ -5,9 +5,9 @@ from decimal import Decimal
 import pytest
 from django.utils.timezone import now
 
-from pretix.base.models import Event, Order, OrderRefund, Organizer, Team, User
-from pretix.plugins.banktransfer.models import RefundExport
-from pretix.plugins.banktransfer.views import (
+from eventyay.base.models import Event, Order, OrderRefund, Organizer, Team, User
+from eventyay.plugins.banktransfer.models import RefundExport
+from eventyay.plugins.banktransfer.views import (
     _row_key_func,
     _unite_transaction_rows,
 )
@@ -21,7 +21,7 @@ def env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
     t = Team.objects.create(organizer=event.organizer, can_view_orders=True, can_change_orders=True)

@@ -5,8 +5,8 @@ import pytest
 from django.utils.timezone import now
 from pytz import UTC
 
-from pretix.api.models import ApiCall
-from pretix.base.models import Order
+from eventyay.api.models import ApiCall
+from eventyay.base.models import Order
 
 PAYLOAD = {
     'name': {'en': 'Demo Conference 2020 Test'},

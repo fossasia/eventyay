@@ -82,7 +82,6 @@
 					.filter-dropdown-empty(v-else) No {{ languageGroup.title.toLowerCase() }} available
 			button.toolbar-btn.icon-only.fav-toggle(
 				v-if="loggedIn && favsCount",
-				:class="{active: onlyFavs, disabled: !onlyFavs}",
 				:disabled="!favsCount",
 				:aria-label="t.starred",
 				:aria-pressed="onlyFavs ? 'true' : 'false'",
@@ -950,15 +949,6 @@ export default {
 			position: relative
 			&.disabled
 				opacity: 0.6
-			&.active::after
-				content: ''
-				position: absolute
-				right: 6px
-				top: 6px
-				width: 7px
-				height: 7px
-				border-radius: 50%
-				background: var(--pretalx-clr-primary, #3aa57c)
 			&:disabled
 				opacity: 0.5
 				cursor: default
