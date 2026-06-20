@@ -3,7 +3,7 @@ name = "eventyay-unified"
 version = "0.1.0"
 description = "Platform to manage events (ticketing, talk schedule)."
 readme = "README.rst"
-requires-python = ">=3.12, <3.13"
+requires-python = ">=3.12"
 keywords = ["tickets", "events", "web", "shop", "ecommerce"]
 authors = [ {name = "eventyay", email = "info@eventyay.com"}, ]
 maintainers = [ {name = "eventyay", email = "info@eventyay.com"}, ]
@@ -202,8 +202,8 @@ dependencies = [
     "tzdata>=2026.2",
     "urllib3>=2.7.0",
     "urlman>=2.0.3",
-    # This library prevents us from being compatible with Python v3.13+.
-    "vat-moss-forked>=2020.3.20.0.11.0",
+    # vat-moss-forked was replaced by vat-moss-lite which supports Python 3.13+.
+    "vat-moss-lite>=0.12.1",
     "vine>=5.1.0",
     "vobject>=0.9.9",
     "wcwidth>=0.8.1",
