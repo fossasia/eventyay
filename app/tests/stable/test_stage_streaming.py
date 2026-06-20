@@ -119,9 +119,10 @@ def test_native_stream_schedule_migration_maps_to_hls(event):
         url="https://example.com/live.m3u8",
         start_time=now(),
         end_time=now() + dt.timedelta(hours=1),
-        stream_type="native",
-        skip_validation=True,
+        stream_type="hls",
     )
+    StreamSchedule.objects.filter(pk=schedule.pk).update(stream_type="native")
+    schedule.refresh_from_db()
 
     class Apps:
         @staticmethod

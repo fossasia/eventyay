@@ -49,6 +49,12 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 					:modules="modules",
 					:creating="!wasConfigured"
 				)
+				sidebar-addons(
+					v-if="inferredType && inferredType.id === 'stage'",
+					:config="config",
+					:modules="modules",
+					:creating="!wasConfigured"
+				)
 				.danger-zone(v-if="wasConfigured && hasPermission('room:delete')")
 					h3 Danger Zone
 					p #[b Deleting this room will remove it from the schedule, but the sessions will remain safe.] Sessions assigned to this room will no longer have a room assigned.
@@ -80,9 +86,10 @@ import ChannelZoom from 'views/admin/rooms/types-edit/channel-zoom'
 import ChannelRoulette from 'views/admin/rooms/types-edit/channel-roulette'
 import Posters from 'views/admin/rooms/types-edit/posters'
 import PageLanding from 'views/admin/rooms/types-edit/page-landing'
+import SidebarAddons from 'views/admin/rooms/types-edit/SidebarAddons'
 
 export default {
-	components: { Prompt },
+	components: { Prompt, SidebarAddons },
 	props: {
 		room: {
 			type: Object,
