@@ -1,7 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from pretalx.common.text.css import validate_css
+from eventyay.common.text.css import validate_css
 
 
 @pytest.fixture

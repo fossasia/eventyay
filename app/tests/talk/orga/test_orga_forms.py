@@ -2,7 +2,7 @@ import pytest
 from django_scopes import scope
 
 from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
-from pretalx.orga.forms import SubmissionForm
+from eventyay.orga.forms import SubmissionForm
 
 
 @pytest.mark.django_db

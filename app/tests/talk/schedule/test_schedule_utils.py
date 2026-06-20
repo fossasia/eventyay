@@ -1,11 +1,11 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.schedule.notifications import (
+from eventyay.schedule.notifications import (
     get_current_notifications,
     get_full_notifications,
 )
-from pretalx.schedule.utils import guess_schedule_version
+from eventyay.schedule.utils import guess_schedule_version
 
 
 @pytest.mark.django_db

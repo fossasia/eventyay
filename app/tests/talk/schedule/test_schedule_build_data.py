@@ -2,7 +2,7 @@ import pytest
 from django_scopes import scope
 
 from eventyay.base.models import SpeakerProfile
-from pretalx.submission.models import Answer, Question, QuestionVariant
+from eventyay.base.models import Answer, TalkQuestion as Question, TalkQuestionVariant as QuestionVariant
 
 
 @pytest.fixture

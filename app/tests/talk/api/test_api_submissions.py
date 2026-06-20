@@ -3,14 +3,14 @@ import json
 import pytest
 from django_scopes import scope
 
-from pretalx.api.serializers.submission import (
+from eventyay.api.serializers.submission import (
     SubmissionOrgaSerializer,
     SubmissionSerializer,
     SubmissionTypeSerializer,
     TagSerializer,
     TrackSerializer,
 )
-from pretalx.submission.models import SubmissionStates
+from eventyay.base.models import SubmissionStates
 
 
 @pytest.mark.django_db
@@ -353,7 +353,7 @@ def test_orga_can_see_single_tag_locale_override(client, orga_user_token, tag):
 
 @pytest.mark.django_db
 def test_orga_can_see_single_legacy_tag(client, orga_user_token, tag):
-    from pretalx.api.versions import LEGACY
+    from eventyay.api.versions import LEGACY
 
     response = client.get(
         tag.event.api_urls.tags + f"{tag.pk}/",
@@ -398,7 +398,7 @@ def test_orga_can_create_tags(client, orga_user_write_token, event):
     assert response.status_code == 201
     with scope(event=event):
         tag = event.tags.get(tag="newtesttag")
-        assert tag.logged_actions().filter(action_type="pretalx.tag.create").exists()
+        assert tag.logged_actions().filter(action_type="eventyay.tag.create").exists()
 
 
 @pytest.mark.django_db
@@ -433,7 +433,7 @@ def test_orga_cannot_create_tags_readonly_token(client, orga_user_token, event):
     with scope(event=event):
         assert not event.tags.filter(tag="newtesttag").exists()
         assert (
-            not event.logged_actions().filter(action_type="pretalx.tag.create").exists()
+            not event.logged_actions().filter(action_type="eventyay.tag.create").exists()
         )
 
 
@@ -453,7 +453,7 @@ def test_orga_can_update_tags(client, orga_user_write_token, event, tag):
     with scope(event=tag.event):
         tag.refresh_from_db()
         assert tag.tag == "newtesttag"
-        assert tag.logged_actions().filter(action_type="pretalx.tag.update").exists()
+        assert tag.logged_actions().filter(action_type="eventyay.tag.update").exists()
 
 
 @pytest.mark.django_db
@@ -472,7 +472,7 @@ def test_orga_cannot_update_tags_readonly_token(client, orga_user_token, tag):
         tag.refresh_from_db()
         assert tag.tag != "newtesttag"
         assert (
-            not tag.logged_actions().filter(action_type="pretalx.tag.update").exists()
+            not tag.logged_actions().filter(action_type="eventyay.tag.update").exists()
         )
 
 
@@ -489,7 +489,7 @@ def test_orga_can_delete_tags(client, orga_user_write_token, event, tag):
     assert response.status_code == 204
     with scope(event=tag.event):
         assert event.tags.all().count() == 0
-        assert event.logged_actions().filter(action_type="pretalx.tag.delete").exists()
+        assert event.logged_actions().filter(action_type="eventyay.tag.delete").exists()
 
 
 @pytest.mark.django_db
@@ -565,7 +565,7 @@ def test_orga_can_see_single_track_locale_override(client, orga_user_token, trac
 
 @pytest.mark.django_db
 def test_no_legacy_track_api(client, orga_user_token, track):
-    from pretalx.api.versions import LEGACY
+    from eventyay.api.versions import LEGACY
 
     response = client.get(
         track.event.api_urls.tracks + f"{track.pk}/",
@@ -594,7 +594,7 @@ def test_orga_can_create_tracks(client, orga_user_write_token, event):
     with scope(event=event):
         track = event.tracks.get(name="newtesttrack")
         assert (
-            track.logged_actions().filter(action_type="pretalx.track.create").exists()
+            track.logged_actions().filter(action_type="eventyay.track.create").exists()
         )
 
 
@@ -614,7 +614,7 @@ def test_orga_cannot_create_tracks_readonly_token(client, orga_user_token, event
         assert not event.tracks.filter(name="newtesttrack").exists()
         assert (
             not event.logged_actions()
-            .filter(action_type="pretalx.track.create")
+            .filter(action_type="eventyay.track.create")
             .exists()
         )
 
@@ -636,7 +636,7 @@ def test_orga_can_update_tracks(client, orga_user_write_token, event, track):
         track.refresh_from_db()
         assert track.name == "newtesttrack"
         assert (
-            track.logged_actions().filter(action_type="pretalx.track.update").exists()
+            track.logged_actions().filter(action_type="eventyay.track.update").exists()
         )
 
 
@@ -657,7 +657,7 @@ def test_orga_cannot_update_tracks_readonly_token(client, orga_user_token, track
         assert track.name != "newtesttrack"
         assert (
             not track.logged_actions()
-            .filter(action_type="pretalx.track.update")
+            .filter(action_type="eventyay.track.update")
             .exists()
         )
 
@@ -675,7 +675,7 @@ def test_orga_can_delete_tracks(client, orga_user_write_token, event, track):
     with scope(event=track.event):
         assert event.tracks.all().count() == 0
         assert (
-            event.logged_actions().filter(action_type="pretalx.track.delete").exists()
+            event.logged_actions().filter(action_type="eventyay.track.delete").exists()
         )
 
 
@@ -771,7 +771,7 @@ def test_orga_can_see_single_submission_type_locale_override(
 
 @pytest.mark.django_db
 def test_no_legacy_submission_type_api(client, orga_user_token, submission_type):
-    from pretalx.api.versions import LEGACY
+    from eventyay.api.versions import LEGACY
 
     response = client.get(
         submission_type.event.api_urls.submission_types + f"{submission_type.pk}/",
