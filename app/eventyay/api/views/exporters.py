@@ -57,7 +57,7 @@ class ExportersMixin:
         cf = get_object_or_404(CachedFile, id=kwargs['cfid'])
         if cf.file:
             resp = ChunkBasedFileResponse(cf.file.file, content_type=cf.type)
-            resp['Content-Disposition'] = 'attachment; filename="{}"'.format(cf.filename)
+            resp['Content-Disposition'] = f'attachment; filename="{cf.filename}"'
             return resp
         elif not settings.HAS_CELERY:
             return Response(
@@ -136,8 +136,11 @@ class OrganizerExportersViewSet(ExportersMixin, viewsets.ViewSet):
     @cached_property
     def exporters(self):
         exporters = []
+        perm_holder = (
+            self.request.auth if hasattr(self.request.auth, 'get_events_with_permission') else self.request.user
+        )
         events = (
-            (self.request.auth or self.request.user)
+            perm_holder
             .get_events_with_permission('can_view_orders', request=self.request)
             .filter(organizer=self.request.organizer)
         )
@@ -151,8 +154,11 @@ class OrganizerExportersViewSet(ExportersMixin, viewsets.ViewSet):
         return exporters
 
     def get_serializer_kwargs(self):
+        perm_holder = (
+            self.request.auth if hasattr(self.request.auth, 'get_events_with_permission') else self.request.user
+        )
         return {
-            'events': self.request.auth.get_events_with_permission('can_view_orders', request=self.request).filter(
+            'events': perm_holder.get_events_with_permission('can_view_orders', request=self.request).filter(
                 organizer=self.request.organizer
             )
         }
