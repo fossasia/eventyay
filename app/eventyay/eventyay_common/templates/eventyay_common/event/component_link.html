@@ -1,22 +1,22 @@
 {% load i18n %}
 <div class="navigation-button">
     {% if request.organizer and request.event %}
-        <a href="{% url 'eventyay_common:event.index' organizer=request.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
+        <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
             <i class="fa fa-home"></i> {% trans "Home" %}
         </a>
         {% if has_ticket_access %}
-            <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
+            <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
                 <i class="fa fa-ticket"></i> {% trans "Tickets" %}
             </a>
         {% endif %}
         {% if is_talk_event_created %}
-            <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
-                <i class="fa fa-group"></i> {% trans "Talks" %}
-            </a>
+        <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
+            <i class="fa fa-group"></i> {% trans "Talks" %}
+        </a>
         {% endif %}
         {% if has_video_access %}
             <a class="header-nav btn btn-outline-success"
-               href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
+               href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'
                title="{% trans 'Access videos related to this event' %}">
                 <i class="fa fa-video-camera"></i> {% trans "Videos" %}
             </a>
