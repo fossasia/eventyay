@@ -3,10 +3,10 @@ from django.test import RequestFactory
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import Event, Organizer
-from pretix.multidomain.middlewares import SessionMiddleware
-from pretix.presale import checkoutflow
-from pretix.presale.checkoutflowstep import BaseCheckoutFlowStep
+from eventyay.base.models import Event, Organizer
+from eventyay.multidomain.middlewares import SessionMiddleware
+from eventyay.presale import checkoutflow
+from eventyay.presale.checkoutflowstep import BaseCheckoutFlowStep
 
 
 @pytest.fixture
@@ -48,17 +48,17 @@ def test_double_linked_list(event):
 
 @pytest.mark.django_db
 def test_plugins_called(event, mocker):
-    from pretix.presale.signals import checkout_flow_steps
+    from eventyay.presale.signals import checkout_flow_steps
 
-    mocker.patch('pretix.presale.signals.checkout_flow_steps.send')
+    mocker.patch('eventyay.presale.signals.checkout_flow_steps.send')
     checkoutflow.get_checkout_flow(event)
     checkout_flow_steps.send.assert_called_once_with(event)
 
 
 def with_mocked_step(mocker, step, event):
-    from pretix.presale.signals import checkout_flow_steps
+    from eventyay.presale.signals import checkout_flow_steps
 
-    mocker.patch('pretix.presale.signals.checkout_flow_steps.send')
+    mocker.patch('eventyay.presale.signals.checkout_flow_steps.send')
     checkout_flow_steps.send.return_value = [(None, step)]
     return checkoutflow.get_checkout_flow(event)
 

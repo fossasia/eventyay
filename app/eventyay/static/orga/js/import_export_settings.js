@@ -75,10 +75,16 @@ const addImportExportSettingsHooks = () => {
         updateSelectAllState(panel)
     })
 
-    // Delegated event listener for checkboxes (Select All logic)
+    // Delegated event listener for checkboxes and subtabs
     wrapper.addEventListener("change", (event) => {
         const target = event.target
-        if (target.hasAttribute("data-select-all")) {
+        if (target.matches("input[role='tab'][name^='subtabs-']")) {
+            const container = target.closest("[data-export-panel]")
+            const selectedPanelId = target.getAttribute("aria-controls")
+            container.querySelectorAll(":scope > [role='tabpanel']").forEach((panel) => {
+                panel.setAttribute("aria-hidden", panel.id === selectedPanelId ? "false" : "true")
+            })
+        } else if (target.hasAttribute("data-select-all")) {
             handleSelectAll(target)
         } else if (target.type === "checkbox") {
             const panel = target.closest("[data-export-panel]")
