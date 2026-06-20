@@ -302,6 +302,7 @@
 	"Questions:deactivated-placeholder": "Вопросы в данный момент отключены.",
 	"Questions:empty-placeholder": "Пока нет вопросов, почему бы не задать один?",
 	"Questions:moderator-actions:archive-all:label": "Архивировать все",
+	"RecordingsPrompt:empty:text": "Нет доступных записей.",
 	"RecordingsPrompt:error:text": "Не удалось загрузить записи с сервера.",
 	"RecordingsPrompt:headline:text": "Записи",
 	"RecordingsPrompt:info:text": "Пожалуйста, обратите внимание, что записи начинают обрабатываться и появляться здесь через несколько минут после окончания собрания (обычно, если комната оставалась пустой некоторое время).",

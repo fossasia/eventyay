@@ -6,8 +6,8 @@
 			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 		.duration {{ durationPretty }}
 	.info
-		.title {{ getLocalizedString(session.title) }}
-		.speakers(v-if="hasSpeakersWithNames") {{ speakerNames }}
+		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
+		.speakers(v-if="hasSpeakersWithNames", :class="{'speakers-clamped': isShortSession}") {{ speakerNames }}
 		.pending-line(v-if="session.state === 'pending'")
 			i.fa.fa-exclamation-circle
 			span {{ $t('Pending proposal state') }}
@@ -115,6 +115,7 @@ const classes = computed(() => {
 
   if (props.isDragged) cls.push('dragging')
   if (props.isDragClone) cls.push('clone')
+  if (isShortSession.value) cls.push('short-session')
 
   return cls
 })
@@ -141,6 +142,11 @@ const startTime = computed< { time: string; ampm?: string } | undefined>(() => {
 const durationMinutes = computed<number>(() => {
   if (!props.session.start || !props.session.end) return props.session.duration
   return moment(props.session.end).diff(props.session.start, 'minutes')
+})
+
+const isShortSession = computed<boolean>(() => {
+  const minutes = durationMinutes.value
+  return minutes > 0 && minutes <= 15
 })
 
 const durationPretty = computed<string | undefined>(() => {
@@ -282,10 +288,12 @@ sessionTextExpand()
 		min-width: 0
 		.title
 			font-weight: 500
-			sessionTextClamp(2)
+			&.title-clamped
+				sessionTextClamp(2)
 		.speakers
 			color: $clr-secondary-text-light
-			sessionTextClamp(1)
+			&.speakers-clamped
+				sessionTextClamp(1)
 		.bottom-info
 			flex: auto
 			display: flex
@@ -318,7 +326,7 @@ sessionTextExpand()
 			padding-right: 4px
 	@media (hover: hover) and (pointer: fine)
 		&:hover:not(.dragging):not(.clone)
-			.title, .speakers
+			.title.title-clamped, .speakers.speakers-clamped
 				sessionTextExpand()
 @media print
 	.c-linear-schedule-session.isbreak
