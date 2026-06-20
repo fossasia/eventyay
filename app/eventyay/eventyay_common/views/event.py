@@ -482,11 +482,29 @@ class EventCreateView(TemplateView):
             basics_form.save()
             if self.clone_from:
                 event.clone_from(self.clone_from, new_secrets=True)
-
-            with scope(organizer=event.organizer):
-                event.checkin_lists.create(name=_('Default'), all_products=True)
-            # New events start unpublished; set_defaults enables private test mode for tickets/talks by default.
-            event.set_defaults()
+                with scope(organizer=event.organizer):
+                    event.copy_data_from(self.clone_from)
+                # Keep cloned events unpublished and in private test mode instead of
+                # inheriting publication/test-mode state from the source event
+                event.testmode = False
+                event.private_testmode = True
+                event.tickets_published = False
+                event.talks_published = False
+                event.settings.private_testmode_tickets = True
+                event.settings.private_testmode_talks = True
+                event.save(
+                    update_fields=[
+                    'testmode',
+                    'private_testmode',
+                    'tickets_published',
+                    'talks_published',
+                    ]
+                )
+            else:
+                with scope(organizer=event.organizer):
+                    event.checkin_lists.create(name=_('Default'), all_products=True)
+                # New events start unpublished; set_defaults enables private test mode for tickets/talks by default.
+                event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
             event.update_language_configuration(
