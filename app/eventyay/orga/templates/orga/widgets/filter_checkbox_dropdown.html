@@ -7,7 +7,7 @@
     {% for group, options, index in widget.optgroups %}
       {% for option in options %}
         <label class="filter-select__option">
-          <input type="checkbox" name="{{ widget.name }}" value="{{ option.value|stringformat:'s' }}"{% if option.selected %} checked{% endif %}>
+          <input type="checkbox" name="{{ widget.name }}" value="{{ option.value|stringformat:'s' }}"{% for attr, val in option.attrs.items %}{% if val is not False %} {{ attr }}{% if val is not True %}="{{ val|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}>
           <span>{{ option.label }}</span>
         </label>
       {% endfor %}
