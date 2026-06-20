@@ -72,6 +72,7 @@
         {% endcompress %}
         {% block stylesheets %}{% endblock stylesheets %}
         {% block public_stylesheets %}{% endblock public_stylesheets %}
+        {% if css_file %}<link rel="stylesheet" type="text/css" href="{{ css_file }}" />{% endif %}
         {% if current_event and current_event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ current_event.urls.settings_css }}?c={{ current_event.visible_primary_color|urlencode }}" />{% endif %}
         {% if current_event and current_event.custom_css %}<link rel="stylesheet" type="text/css" href="{{ current_event.custom_css.url }}"/>{% endif %}
         {% compress js %}
