@@ -202,7 +202,6 @@ dependencies = [
     "tzdata>=2026.2",
     "urllib3>=2.7.0",
     "urlman>=2.0.3",
-    # vat-moss-forked was replaced by vat-moss-lite which supports Python 3.13+.
     "vat-moss-lite>=0.12.1",
     "vine>=5.1.0",
     "vobject>=0.9.9",
