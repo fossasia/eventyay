@@ -187,7 +187,6 @@ class InfoForm(
                     _('Leave empty to use the default duration for the session type.')
                 )
 
-
     def _set_locales(self):
         if 'content_locale' in self.fields:
             saved_visibility = self.event.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
