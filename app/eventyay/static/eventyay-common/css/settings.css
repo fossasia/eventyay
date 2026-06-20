@@ -65,15 +65,15 @@
     display: inline-block;
     padding: 2px 6px;
     margin-left: 6px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     line-height: 1.2;
     color: #fff;
-    background-color: #f0ad4e; /* Orange for beta/warning */
+    background-color: #c05600; /* Darker orange for WCAG contrast */
     border-radius: 3px;
     vertical-align: middle;
     position: relative;
-    top: -2px;
+    top: -1px;
     letter-spacing: 0.05em;
     white-space: nowrap;
     text-transform: uppercase;
@@ -81,5 +81,5 @@
 
 .badge-beta .fa {
     margin-right: 3px;
-    font-size: 9px;
+    font-size: 10px;
 }
