@@ -173,6 +173,40 @@
                             </td>
                         </tr>
 
+                        {# Session Type #}
+                        <tr dragsort-id="submission_type">
+                            <th>{% translate "Session type" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Session type is always active' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Session type always active' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="required">
+                                    <select class="required-status-dropdown" disabled aria-readonly="true"
+                                        aria-describedby="submission-type-required-help" data-current="required">
+                                        <option value="required" selected>Required</option>
+                                    </select>
+                                </div>
+                                <span id="submission-type-required-help" class="sr-only">{% translate "Session type is always required and cannot be changed." %}</span>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-center">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Session type is always public' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Session type always public' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td class="text-center">{{ field_counts.submission_type }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+
                         {# Abstract #}
                         {% with field=sform.cfp_ask_abstract %}
                         <tr dragsort-id="abstract">

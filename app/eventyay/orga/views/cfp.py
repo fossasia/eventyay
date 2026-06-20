@@ -231,6 +231,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         event = self.request.event
         submission_counts = event.submissions.aggregate(
             title=Count('id', filter=~Q(title='')),
+            submission_type=Count('id', filter=Q(submission_type__isnull=False)),
             abstract=Count('id', filter=~Q(abstract='')),
             description=Count('id', filter=~Q(description='')),
             notes=Count('id', filter=~Q(notes='')),
