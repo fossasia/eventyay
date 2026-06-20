@@ -130,18 +130,17 @@ class StartPageView(TemplateView):
                 followed_org_ids = OrganizerFollower.objects.filter(
                     user=self.request.user
                 ).values_list('organizer_id', flat=True)
-                followed_upcoming_events = (
+                qs = (
                     Event.objects.filter(
                         organizer_id__in=followed_org_ids,
                         live=True,
-                        is_public=True,
-                        has_subevents=False,
-                        date_from__gte=timezone.now(),
                     )
+                    .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
+                    .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
                     .select_related('organizer')
                     .order_by('date_from')[:20]
                 )
-                followed_upcoming_events = [e for e in followed_upcoming_events if not e.has_component_testmode]
+                followed_upcoming_events = [e for e in qs if not e.has_component_testmode]
 
             ctx['followed_upcoming_events'] = followed_upcoming_events
         return ctx
