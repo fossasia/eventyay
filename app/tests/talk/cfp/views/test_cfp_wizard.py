@@ -772,9 +772,9 @@ def test_infoform_set_submission_type(event, other_event):
     with scope(event=event):
         f = InfoForm(event)
         assert len(event.submission_types.all()) == 1
-        assert "submission_type" not in f.fields
+        assert "submission_type" in f.fields
+        assert f.fields["submission_type"].disabled is True
         assert f.initial["submission_type"] == event.submission_types.first()
-        assert "submission_type" not in f.fields
 
 
 @pytest.mark.django_db
