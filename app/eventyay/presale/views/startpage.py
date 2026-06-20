@@ -138,6 +138,7 @@ class StartPageView(TemplateView):
                     .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
                     .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
                     .select_related('organizer')
+                    .prefetch_related('_settings_objects')
                     .order_by('date_from')[:20]
                 )
                 followed_upcoming_events = [e for e in qs if not e.has_component_testmode]
