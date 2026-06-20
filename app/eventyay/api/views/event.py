@@ -577,13 +577,13 @@ class CustomerOrderCheckView(APIView):
     authentication_classes = ()
     permission_classes = ()
 
-    @scopes_disabled()
     def post(self, request, *args, **kwargs):
         organizer_slug = kwargs.get('organizer')
         event_slug = kwargs.get('event')
 
-        organizer = get_object_or_404(Organizer, slug=organizer_slug)
-        event = get_object_or_404(Event, slug=event_slug, organizer=organizer)
+        with scopes_disabled():
+            organizer = get_object_or_404(Organizer, slug=organizer_slug)
+            event = get_object_or_404(Event, slug=event_slug, organizer=organizer)
 
         email = request.data.get('email', '').strip()
         code = request.data.get('code', '').strip().upper()
@@ -596,42 +596,43 @@ class CustomerOrderCheckView(APIView):
 
         from eventyay.base.models.orders import Order
 
-        qs = Order.objects.filter(event=event)
-        if code:
-            # Normalise common OCR-confused characters the same way the model does
-            code = Order.normalize_code(code)
-            qs = qs.filter(code=code)
-        if email:
-            qs = qs.filter(email__iexact=email)
+        with scopes_disabled():
+            qs = Order.objects.filter(event=event)
+            if code:
+                # Use exact (case-insensitive) match — normalization is for OCR/handwriting
+                # and would corrupt codes like QXUG02 (2→Z gives QXUG0Z, no match)
+                qs = qs.filter(code__iexact=code)
+            if email:
+                qs = qs.filter(email__iexact=email)
 
-        orders = list(qs.prefetch_related('positions', 'positions__product'))
+            orders = list(qs.prefetch_related('positions', 'positions__product'))
 
-        if not orders:
+            result = []
+            for order in orders:
+                positions = []
+                for pos in order.positions.all():
+                    positions.append({
+                        'id': pos.pk,
+                        'product': str(pos.product.name),
+                        'price': str(pos.price),
+                        'attendee_name': pos.attendee_name_cached or '',
+                        'attendee_email': pos.attendee_email or '',
+                        'seat': str(pos.seat) if pos.seat else None,
+                    })
+                result.append({
+                    'code': order.code,
+                    'status': order.status,
+                    'email': order.email or '',
+                    'total': str(order.total),
+                    'datetime': order.datetime.isoformat(),
+                    'positions': positions,
+                })
+
+        if not result:
             return Response(
                 {'detail': 'No orders found matching the supplied criteria.'},
                 status=status.HTTP_404_NOT_FOUND,
             )
-
-        result = []
-        for order in orders:
-            positions = []
-            for pos in order.positions.all():
-                positions.append({
-                    'id': pos.pk,
-                    'product': str(pos.product.name),
-                    'price': str(pos.price),
-                    'attendee_name': pos.attendee_name_cached or '',
-                    'attendee_email': pos.attendee_email or '',
-                    'seat': str(pos.seat) if pos.seat else None,
-                })
-            result.append({
-                'code': order.code,
-                'status': order.status,
-                'email': order.email or '',
-                'total': str(order.total),
-                'datetime': order.datetime.isoformat(),
-                'positions': positions,
-            })
 
         return Response(result, status=status.HTTP_200_OK)
 
