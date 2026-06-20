@@ -96,13 +96,16 @@
                         <td class="text-right">
                             {% if profile.accepted_submission_count %}
                                 {% if can_mark_speaker %}
-                                    <a class="btn btn-sm btn-{{ profile.has_arrived|yesno:"success,info" }}" href="{{ profile.orga_urls.toggle_arrived }}?from=list">
-                                        {% if profile.has_arrived %}
-                                            {% translate "Mark speaker as not arrived" %}
-                                        {% else %}
-                                            {% translate "Mark speaker as arrived" %}
-                                        {% endif %}
-                                    </a>
+                                    <form action="{{ profile.orga_urls.toggle_arrived }}?from=list" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-{{ profile.has_arrived|yesno:"success,info" }}">
+                                            {% if profile.has_arrived %}
+                                                {% translate "Mark speaker as not arrived" %}
+                                            {% else %}
+                                                {% translate "Mark speaker as arrived" %}
+                                            {% endif %}
+                                        </button>
+                                    </form>
                                 {% else %}
                                     {% if profile.has_arrived %}
                                         <a><i class="fa fa-check"></i> {% translate "Arrived" %}</a>

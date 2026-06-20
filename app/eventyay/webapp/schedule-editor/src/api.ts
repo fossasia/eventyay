@@ -12,6 +12,15 @@ import moment, { type Moment } from 'moment';
 
 const basePath = process.env.BASE_PATH || '';
 
+function getOrgaEventBase() {
+  if (typeof window === 'undefined') return '';
+  const match = window.location.pathname.match(/\/orga\/event\/([^/]+)\/([^/]+)/);
+  if (!match) {
+    throw new Error('Schedule editor must be loaded under /orga/event/<organizer>/<event>/');
+  }
+  return `${basePath}/orga/event/${match[1]}/${match[2]}`;
+}
+
 const calculateDuration = (start?: string, end?: string): number | undefined => {
   if (!start || !end) return undefined;
   try {
@@ -38,7 +47,18 @@ interface TalkPayload {
 type HttpRequestBody = Record<string, unknown> | string | null;
 
 const api = {
-  eventSlug: basePath ? window.location.pathname.split("/")[4] : window.location.pathname.split("/")[3],
+  getOrgaEventBase,
+  get organizerSlug() {
+    if (typeof window === 'undefined') return null;
+    const match = window.location.pathname.match(/\/orga\/event\/([^/]+)\/([^/]+)/);
+    return match ? match[1] : null;
+  },
+  
+  get eventSlug() {
+    if (typeof window === 'undefined') return null;
+    const match = window.location.pathname.match(/\/orga\/event\/([^/]+)\/([^/]+)/);
+    return match ? match[2] : null;
+  },
   
   async http<T>(verb: string, url: string, body: HttpRequestBody): Promise<T> {
     const headers: Record<string, string> = {};
@@ -67,30 +87,33 @@ const api = {
   },
 
   async fetchTalks(options?: { since?: string; warnings?: boolean }): Promise<Schedule> {
-    let url = `${basePath}/orga/event/${this.eventSlug}/schedule/api/talks/`;
+    let url = `${getOrgaEventBase()}/schedule/api/talks/`;
     const params = new URLSearchParams(window.location.search);
     if (options?.since) params.append('since', options.since);
     if (options?.warnings) params.append('warnings', 'true');
-    url += `?${params.toString()}`;
+    const paramsString = params.toString();
+    if (paramsString) {
+      url += `?${paramsString}`;
+    }
     
     const data = await this.http<Schedule>('GET', url, null);
     return ScheduleSchema.parse(data);
   },
 
   async fetchAvailabilities(): Promise<Availability> {
-    const url = `${basePath}/orga/event/${this.eventSlug}/schedule/api/availabilities/`;
+    const url = `${getOrgaEventBase()}/schedule/api/availabilities/`;
     const data = await this.http<Availability>('GET', url, null);
     return AvailabilitySchema.parse(data);
   },
 
   async fetchWarnings(): Promise<Warnings> {
-    const url = `${basePath}/orga/event/${this.eventSlug}/schedule/api/warnings/`;
+    const url = `${getOrgaEventBase()}/schedule/api/warnings/`;
     const data = await this.http<Warnings>('GET', url, null);
     return WarningsSchema.parse(data);
   },
 
   async saveTalk(talk: TalkPayload,{ action = 'PATCH' }: { action?: string } = {}): Promise<Talk | void> {
-    const talksBase = `${basePath}/orga/event/${this.eventSlug}/schedule/api/talks/`;
+    const talksBase = `${getOrgaEventBase()}/schedule/api/talks/`;
     const urlPath = talk.id ? `${talksBase}${talk.id}/` : talksBase;
     const params = new URLSearchParams(window.location.search);
     const url = params.toString() ? `${urlPath}?${params.toString()}` : urlPath;
