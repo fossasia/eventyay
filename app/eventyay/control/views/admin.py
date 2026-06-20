@@ -8,11 +8,7 @@ from allauth.account.models import EmailAddress
 from cron_descriptor import Options, get_description
 from django.conf import settings
 from django.contrib import messages
-<<<<<<< HEAD
-from django.db.models import Prefetch, Q
-=======
-from django.db.models import Q, Sum
->>>>>>> f7e40ba44 (Add platform KPI overview to unified admin dashboard.)
+from django.db.models import Prefetch, Q, Sum
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -95,15 +91,17 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             ctx['orders_total'] = Order.objects.count()
             ctx['orders_paid'] = Order.objects.filter(status=Order.STATUS_PAID).count()
             ctx['orders_pending'] = Order.objects.filter(status=Order.STATUS_PENDING).count()
-            ctx['orders_revenue'] = (
+            ctx['orders_revenue'] = list(
                 Order.objects.filter(status=Order.STATUS_PAID)
-                .aggregate(total=Sum('total'))['total']
-            ) or Decimal('0.00')
+                .values('event__currency')
+                .annotate(total=Sum('total'))
+                .order_by('-total')
+            )
 
             # Programme KPIs — align with admin submissions list ("All Sessions")
             ctx['sessions_total'] = Submission.objects.count()
             ctx['speakers_total'] = (
-                User.objects.filter(submissions__in=Submission.objects.values('pk'))
+                User.objects.filter(submissions__isnull=False)
                 .distinct()
                 .count()
             )

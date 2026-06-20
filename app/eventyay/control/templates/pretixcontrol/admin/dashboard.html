@@ -44,9 +44,18 @@
     </div>
     <div class="widget-container widget-small">
       <div class="widget">
-        <div class="numwidget">
-          <span class="num">{{ orders_revenue|floatformat:2 }}</span>
-          <span class="text">{% trans "Revenue" %}</span>
+        <div class="numwidget" style="padding: 10px 0;">
+          {% if orders_revenue %}
+            {% for rev in orders_revenue|slice:":3" %}
+              <div style="font-size: 24px; font-weight: bold; line-height: 1.2; text-align: center;">{{ rev.total|floatformat:2 }} <span style="font-size: 14px; font-weight: normal;">{{ rev.event__currency }}</span></div>
+            {% endfor %}
+            {% if orders_revenue|length > 3 %}
+              <div style="font-size: 16px; font-weight: bold; text-align: center;">...</div>
+            {% endif %}
+          {% else %}
+            <span class="num">0.00</span>
+          {% endif %}
+          <span class="text" style="margin-top: 5px;">{% trans "Revenue" %}</span>
         </div>
       </div>
     </div>
@@ -170,10 +179,17 @@
               <td>{% trans "Pending" %}</td>
               <td class="text-right">{{ orders_pending|intcomma }}</td>
             </tr>
+            {% for rev in orders_revenue %}
+            <tr>
+              <td>{% trans "Revenue" %} ({{ rev.event__currency }})</td>
+              <td class="text-right">{{ rev.total|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
             <tr>
               <td>{% trans "Revenue" %}</td>
-              <td class="text-right">{{ orders_revenue|floatformat:2 }}</td>
+              <td class="text-right">0.00</td>
             </tr>
+            {% endfor %}
             <tr>
               <td>{% trans "Attendees" %}</td>
               <td class="text-right">{{ attendees_total|intcomma }}</td>
