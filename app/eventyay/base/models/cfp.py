@@ -25,7 +25,7 @@ def default_settings():
 # Canonical lists of built-in CFP field keys, grouped by target.
 # Every other module should import these instead of hard-coding field names.
 BUILTIN_SESSION_FIELDS = (
-    'title', 'abstract', 'description', 'notes', 'track',
+    'title', 'submission_type', 'abstract', 'description', 'notes', 'track',
     'duration', 'slot_count', 'content_locale', 'image', 'slides', 'do_not_record',
 )
 BUILTIN_SPEAKER_FIELDS = (
@@ -81,6 +81,10 @@ def default_fields():
             'max_length': None,
             'public': True,
         },
+        'submission_type': {
+            'visibility': 'required',
+            'public': True,
+        },
         'abstract': {
             'visibility': 'required',
             'min_length': None,
@@ -124,7 +128,7 @@ def field_helper(cls):
         return self.fields.get(field, default_fields()[field])['visibility'] == 'required'
 
     def is_field_public(self, field):
-        if field in {'title', 'track', 'duration', 'fullname'}:
+        if field in {'title', 'submission_type', 'track', 'duration', 'fullname'}:
             return True
         return self.fields.get(field, default_fields()[field]).get(
             'public', default_fields()[field].get('public', False)
