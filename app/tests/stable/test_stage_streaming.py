@@ -9,6 +9,7 @@ from django.utils.timezone import now
 from eventyay.base.models import Room
 from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.services import event as event_service
+from eventyay.base.services import room as room_service
 
 stream_schedule_migration = importlib.import_module(
     "eventyay.base.migrations.0031_migrate_native_stream_schedules"
@@ -133,3 +134,41 @@ def test_native_stream_schedule_migration_maps_to_hls(event):
     stream_schedule_migration.migrate_native_stream_schedules(Apps, None)
     schedule.refresh_from_db()
     assert schedule.stream_type == "hls"
+
+
+@pytest.mark.parametrize(
+    ("module_config", "expected"),
+    [
+        (None, False),
+        ([], False),
+        (
+            [
+                {
+                    "type": "livestream.native",
+                    "config": {"playback_mode": "schedule_driven"},
+                }
+            ],
+            True,
+        ),
+        (
+            [
+                {
+                    "type": "livestream.native",
+                    "config": {"playback_mode": "always_on"},
+                }
+            ],
+            False,
+        ),
+        (
+            [
+                {
+                    "type": "chat.native",
+                    "config": {"playback_mode": "schedule_driven"},
+                }
+            ],
+            False,
+        ),
+    ],
+)
+def test_uses_schedule_driven_stage(module_config, expected):
+    assert room_service.uses_schedule_driven_stage(module_config) is expected

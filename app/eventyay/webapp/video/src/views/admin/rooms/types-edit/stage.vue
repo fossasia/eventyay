@@ -8,7 +8,6 @@
 				:name="playbackModeInputName",
 				:value="option.id",
 				:checked="playbackMode === option.id",
-				:disabled="!creating",
 				@change="playbackMode = option.id"
 			)
 			.radio-copy
@@ -69,7 +68,15 @@ const STREAM_SOURCE_BY_ID = STREAM_SOURCE_OPTIONS.reduce((acc, option) => {
 	acc[option.id] = option
 	return acc
 }, {})
+const STREAM_SOURCE_BY_MODULE = STREAM_SOURCE_OPTIONS.reduce((acc, option) => {
+	acc[option.module] = option
+	return acc
+}, {})
 let playbackModeInputId = 0
+
+function cloneConfig(config) {
+	return JSON.parse(JSON.stringify(config || {}))
+}
 
 function getDefaultStreamConfig(streamSource, playbackMode = PLAYBACK_MODE_ALWAYS_ON) {
 	const config = { playback_mode: playbackMode }
@@ -94,6 +101,7 @@ export default defineComponent({
 			STREAM_SOURCE_OPTIONS,
 			ISO_LANGUAGE_OPTIONS: [],
 			b_streamSource: null,
+			streamSourceConfigs: {},
 			playbackModeInputName: `playback-mode-${++playbackModeInputId}`,
 			PLAYBACK_MODE_ALWAYS_ON,
 			PLAYBACK_MODE_OPTIONS
@@ -210,20 +218,40 @@ export default defineComponent({
 		currentStreamModule() {
 			return this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
 		},
-		replaceStreamSourceModule(streamSource, playbackMode) {
+		rememberCurrentStreamConfig() {
+			const module = this.currentStreamModule()
+			if (!module) return
+			if (getStagePlaybackMode(module) === PLAYBACK_MODE_SCHEDULE_DRIVEN) return
+
+			const option = STREAM_SOURCE_BY_MODULE[module.type]
+			if (option) this.streamSourceConfigs[option.id] = cloneConfig(module.config)
+		},
+		getStoredStreamConfig(streamSource, playbackMode) {
+			if (playbackMode === PLAYBACK_MODE_SCHEDULE_DRIVEN) {
+				return getDefaultStreamConfig(streamSource, playbackMode)
+			}
+			const storedConfig = this.streamSourceConfigs[streamSource]
+			const config = storedConfig
+				? cloneConfig(storedConfig)
+				: getDefaultStreamConfig(streamSource, playbackMode)
+			config.playback_mode = playbackMode
+			return config
+		},
+		replaceStreamSourceModule(streamSource, playbackMode, updateSelectedSource = true) {
 			const option = STREAM_SOURCE_BY_ID[streamSource]
 			if (!option) return
+			this.rememberCurrentStreamConfig()
 			this.config.module_config = this.config.module_config.filter(module =>
 				!STREAM_SOURCE_OPTIONS.some(sourceOption => sourceOption.module === module.type)
 			)
 			this.config.module_config.push({
 				type: option.module,
-				config: getDefaultStreamConfig(streamSource, playbackMode)
+				config: this.getStoredStreamConfig(streamSource, playbackMode)
 			})
-			this.b_streamSource = streamSource
+			if (updateSelectedSource) this.b_streamSource = streamSource
 		},
 		setScheduleDrivenModule() {
-			this.replaceStreamSourceModule('hls', PLAYBACK_MODE_SCHEDULE_DRIVEN)
+			this.replaceStreamSourceModule('hls', PLAYBACK_MODE_SCHEDULE_DRIVEN, false)
 		},
 		ensureStreamSourceModule(streamSource, playbackMode) {
 			this.replaceStreamSourceModule(streamSource, playbackMode)

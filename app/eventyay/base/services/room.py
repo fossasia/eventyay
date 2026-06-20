@@ -86,10 +86,30 @@ def validate_room_config_patch(room, body):
     return partial_validated_update(serializer, body)
 
 
+def uses_schedule_driven_stage(module_config):
+    stage_modules = {
+        'livestream.native',
+        'livestream.youtube',
+        'livestream.iframe',
+    }
+    for module in module_config or []:
+        if module.get('type') not in stage_modules:
+            continue
+        config = module.get('config') or {}
+        return config.get('playback_mode') == 'schedule_driven'
+    return False
+
+
 @database_sync_to_async
 @atomic
 def save_room(event, room, update_fields, old_data, by_user):
     room.save(update_fields=update_fields)
+    if 'module_config' in update_fields and not uses_schedule_driven_stage(
+        room.module_config
+    ):
+        if room.stream_schedules.exists():
+            room.stream_schedules.all().delete()
+            async_to_sync(broadcast_stream_change)(room.pk, None, reload=True)
     new = RoomConfigSerializer(room).data
 
     AuditLog.objects.create(

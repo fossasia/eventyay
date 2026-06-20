@@ -81,7 +81,6 @@ export default {
 			saveError: null,
 			streamTypes: [
 				{ id: 'youtube', label: 'YouTube' },
-				{ id: 'vimeo', label: 'Vimeo' },
 				{ id: 'hls', label: 'HLS' },
 				{ id: 'iframe', label: 'Iframe' },
 			],
