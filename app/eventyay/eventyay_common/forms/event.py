@@ -276,6 +276,12 @@ class EventUpdateForm(I18nModelForm):
             instance.cache.clear()
         return instance
 
+    def clean_startpage_visible(self):
+        val = self.cleaned_data.get('startpage_visible')
+        if not val:
+            self.instance.startpage_featured = False
+        return val
+
     def clean_slug(self):
         if self.change_slug:
             return self.cleaned_data['slug']
