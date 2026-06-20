@@ -3,7 +3,14 @@
 	h2 Stream type
 	.radio-options
 		label.radio-option(v-for="option in PLAYBACK_MODE_OPTIONS", :key="option.id")
-			input(type="radio", name="playback-mode", :value="option.id", v-model="playbackMode", :disabled="!creating")
+			input(
+				type="radio",
+				:name="playbackModeInputName",
+				:value="option.id",
+				:checked="playbackMode === option.id",
+				:disabled="!creating",
+				@change="playbackMode = option.id"
+			)
 			.radio-copy
 				.radio-title {{ option.label }}
 				.radio-description {{ option.description }}
@@ -62,6 +69,7 @@ const STREAM_SOURCE_BY_ID = STREAM_SOURCE_OPTIONS.reduce((acc, option) => {
 	acc[option.id] = option
 	return acc
 }, {})
+let playbackModeInputId = 0
 
 function getDefaultStreamConfig(streamSource, playbackMode = PLAYBACK_MODE_ALWAYS_ON) {
 	const config = { playback_mode: playbackMode }
@@ -86,6 +94,7 @@ export default defineComponent({
 			STREAM_SOURCE_OPTIONS,
 			ISO_LANGUAGE_OPTIONS: [],
 			b_streamSource: null,
+			playbackModeInputName: `playback-mode-${++playbackModeInputId}`,
 			PLAYBACK_MODE_ALWAYS_ON,
 			PLAYBACK_MODE_OPTIONS
 		}
@@ -106,8 +115,7 @@ export default defineComponent({
 	computed: {
 		playbackMode: {
 			get() {
-				const currentModule = this.modules[STREAM_SOURCE_BY_ID[this.b_streamSource]?.module]
-				return getStagePlaybackMode(currentModule)
+				return getStagePlaybackMode(this.currentStreamModule())
 			},
 			set(value) {
 				if (value === PLAYBACK_MODE_SCHEDULE_DRIVEN) {
@@ -199,6 +207,9 @@ export default defineComponent({
 		}
 	},
 	methods: {
+		currentStreamModule() {
+			return this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
+		},
 		replaceStreamSourceModule(streamSource, playbackMode) {
 			const option = STREAM_SOURCE_BY_ID[streamSource]
 			if (!option) return

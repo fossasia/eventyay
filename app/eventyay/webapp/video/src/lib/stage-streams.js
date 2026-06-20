@@ -16,6 +16,8 @@ export const PLAYBACK_MODE_OPTIONS = [
 	}
 ]
 
+const PLAYBACK_MODES = new Set([PLAYBACK_MODE_ALWAYS_ON, PLAYBACK_MODE_SCHEDULE_DRIVEN])
+
 export const STREAM_SOURCE_OPTIONS = [
 	{ id: 'hls', label: 'HLS', module: 'livestream.native' },
 	{ id: 'youtube', label: 'YouTube', module: 'livestream.youtube' },
@@ -33,7 +35,7 @@ export function getStagePlaybackMode(module) {
 	if (!module) return PLAYBACK_MODE_ALWAYS_ON
 
 	const config = module.config || {}
-	if (config.playback_mode) return config.playback_mode
+	if (PLAYBACK_MODES.has(config.playback_mode)) return config.playback_mode
 
 	const hasDefaultStreamSource = ['hls_url', 'ytid', 'url'].some(key =>
 		Object.prototype.hasOwnProperty.call(config, key)

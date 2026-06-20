@@ -44,6 +44,7 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 				component.type-settings(
 					ref="settings",
 					v-if="inferredType && typeComponents[inferredType.id]",
+					:key="inferredType.id",
 					:is="typeComponents[inferredType.id]",
 					:config="config",
 					:modules="modules",
@@ -76,7 +77,7 @@ import api from 'lib/api'
 import Prompt from 'components/Prompt'
 import ROOM_TYPES, { inferType } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
-import { PLAYBACK_MODE_ALWAYS_ON } from 'lib/stage-streams'
+import { PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 import Stage from 'views/admin/rooms/types-edit/stage'
 import PageStatic from 'views/admin/rooms/types-edit/page-static'
 import PageIframe from 'views/admin/rooms/types-edit/page-iframe'
@@ -168,7 +169,7 @@ export default {
 	methods: {
 		getStartingModuleConfig (type) {
 			if (type.id === 'stage') {
-				return { playback_mode: PLAYBACK_MODE_ALWAYS_ON }
+				return { playback_mode: PLAYBACK_MODE_SCHEDULE_DRIVEN }
 			}
 			return {}
 		},
