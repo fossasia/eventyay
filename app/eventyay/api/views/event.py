@@ -559,19 +559,82 @@ def talk_schedule_public(request, *args, **kwargs):
 
 
 class CustomerOrderCheckView(APIView):
+    """
+    Check a customer's ticket / order for a given event.
+
+    POST body (all fields optional, at least one must be supplied):
+        {
+            "email": "attendee@example.com",
+            "code":  "ABCDE"
+        }
+
+    Responses:
+        200  – order(s) found; returns a list of matching orders with their positions.
+        400  – neither ``email`` nor ``code`` was supplied.
+        404  – event not found, or no orders match the supplied criteria.
+    """
+
     authentication_classes = ()
     permission_classes = ()
 
     @scopes_disabled()
     def post(self, request, *args, **kwargs):
-        # Disabled because it uses pretix Organizer and Order models
-        return Response({'detail': 'CustomerOrderCheckView disabled (pretix dependency).'}, status=501)
+        organizer_slug = kwargs.get('organizer')
+        event_slug = kwargs.get('event')
 
+        organizer = get_object_or_404(Organizer, slug=organizer_slug)
+        event = get_object_or_404(Event, slug=event_slug, organizer=organizer)
 
-#     def post(self, request, *args, **kwargs):
-#         organizer = Organizer.objects.get(...)
-#         order_list = Order.objects.filter(...)
-#         ...
+        email = request.data.get('email', '').strip()
+        code = request.data.get('code', '').strip().upper()
+
+        if not email and not code:
+            return Response(
+                {'detail': 'Please supply at least one of: email, code.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from eventyay.base.models.orders import Order
+
+        qs = Order.objects.filter(event=event)
+        if code:
+            # Normalise common OCR-confused characters the same way the model does
+            code = Order.normalize_code(code)
+            qs = qs.filter(code=code)
+        if email:
+            qs = qs.filter(email__iexact=email)
+
+        orders = list(qs.prefetch_related('positions', 'positions__product'))
+
+        if not orders:
+            return Response(
+                {'detail': 'No orders found matching the supplied criteria.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        result = []
+        for order in orders:
+            positions = []
+            for pos in order.positions.all():
+                positions.append({
+                    'id': pos.pk,
+                    'product': str(pos.product.name),
+                    'price': str(pos.price),
+                    'attendee_name': pos.attendee_name_cached or '',
+                    'attendee_email': pos.attendee_email or '',
+                    'seat': str(pos.seat) if pos.seat else None,
+                })
+            result.append({
+                'code': order.code,
+                'status': order.status,
+                'email': order.email or '',
+                'total': str(order.total),
+                'datetime': order.datetime.isoformat(),
+                'positions': positions,
+            })
+
+        return Response(result, status=status.HTTP_200_OK)
+
 
 
 class EventView(APIView):
