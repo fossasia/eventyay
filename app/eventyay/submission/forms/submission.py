@@ -165,8 +165,16 @@ class InfoForm(
         if instance and instance.pk:
             pks |= {instance.submission_type.pk}
         if len(pks) == 1:
-            self.default_values['submission_type'] = submission_types.get(pk=list(pks)[0])
-            self.fields.pop('submission_type')
+            single_type = submission_types.get(pk=list(pks)[0])
+            self.default_values['submission_type'] = single_type
+            # Keep the field visible but disabled — speakers can see which session
+            # type they are submitting for even when there is only one available.
+            self.fields['submission_type'].queryset = submission_types.filter(pk=single_type.pk)
+            self.fields['submission_type'].required = True
+            self.fields['submission_type'].empty_label = None
+            self.fields['submission_type'].disabled = True
+            # Ensure the initial value is set so Django's disabled-field logic picks it up.
+            self.initial['submission_type'] = single_type
         else:
             self.fields['submission_type'].queryset = submission_types.filter(pk__in=pks)
             self.fields['submission_type'].required = True
