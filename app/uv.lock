@@ -1185,7 +1185,7 @@ source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#a6d9c
 [[package]]
 name = "eventyay-socialmedia"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#6a446eb56d4daecf58bc4cfc8d65f2877f049629" }
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#1d3912546df0d08cd73b4bf577a56a41972252f8" }
 
 [[package]]
 name = "eventyay-stripe"
