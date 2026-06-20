@@ -453,9 +453,31 @@ body.organizer-presale-page #main-card .week-calendar a.event.over {
   }
 
   body.organizer-presale-page .organizer-calendar-filter-row {
+    display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 0.75rem;
+    align-items: center;
+    gap: 0.75rem 0;
+  }
+
+  body.organizer-presale-page .calendar-nav-prev {
+    flex: 0 0 50%;
+    width: 50%;
+    order: 1;
+  }
+
+  body.organizer-presale-page .calendar-nav-next {
+    flex: 0 0 50%;
+    width: 50%;
+    order: 2;
+  }
+
+  body.organizer-presale-page .organizer-calendar-selects {
+    flex: 0 0 100%;
+    width: 100%;
+    order: 3;
+    display: flex;
+    justify-content: center;
   }
 
   body.organizer-presale-page .event-brand {
@@ -550,18 +572,24 @@ body.organizer-presale-page .header-follow-floating .btn-follow .follow-text {
   }
 }
 
+body.organizer-presale-page .calendar-nav-prev {
+  display: flex;
+  justify-content: flex-start;
+}
+
+body.organizer-presale-page .calendar-nav-next {
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (min-width: 769px) {
   body.organizer-presale-page .calendar-nav-prev {
     flex: 1;
-    display: flex;
-    justify-content: flex-start;
     min-width: 0;
   }
 
   body.organizer-presale-page .calendar-nav-next {
     flex: 1;
-    display: flex;
-    justify-content: flex-end;
     min-width: 0;
   }
 
