@@ -1,4 +1,4 @@
-{% load i18n filesize %}
+{% load i18n filesize static %}
 
 {% if widget.current_resources %}
   <div class='mb-3'>
@@ -42,7 +42,7 @@
     </small>
   </div>
 
-  <div>
+  <div class="slides-input-widget" data-id="{{ widget.files_id }}" data-is-re-render="{% if widget.is_re_render %}true{% else %}false{% endif %}">
     <div>
       <label class='btn btn-default mb-0' style='cursor:pointer; white-space:nowrap;' for='{{ widget.files_id }}'>
         {% translate 'Choose file' %}
@@ -51,7 +51,7 @@
         type='file'
         name='{{ widget.files_name }}'
         id='{{ widget.files_id }}'
-        style='display: none !important;'
+        class='sr-only sr-only-focusable'
         accept='.pdf,application/pdf'
         {% if widget.max_size %}data-maxsize='{{ widget.max_size }}'{% endif %}
         {% if widget.max_items != 1 %}multiple{% endif %}>
@@ -67,130 +67,7 @@
         {% translate 'Note: This file is too large to be saved in the browser’s temporary storage. If the form has other errors, you will need to re-select it before submitting.' %}
       </div>
     </div>
-    <script>
-      (function() {
-        var input = document.getElementById('{{ widget.files_id }}');
-        var label = document.getElementById('{{ widget.files_id }}_label');
-        var errorMsg = document.getElementById('{{ widget.files_id }}_error');
-        var storageWarningMsg = document.getElementById('{{ widget.files_id }}_storage_warning');
-        var storageKey = 'file_upload_{{ widget.files_id }}';
-        
-        function b64toFile(b64Data, contentType, filename) {
-            var sliceSize = 512;
-            var byteCharacters = atob(b64Data);
-            var byteArrays = [];
-            for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-                var slice = byteCharacters.slice(offset, offset + sliceSize);
-                var byteNumbers = new Array(slice.length);
-                for (var i = 0; i < slice.length; i++) {
-                    byteNumbers[i] = slice.charCodeAt(i);
-                }
-                var byteArray = new Uint8Array(byteNumbers);
-                byteArrays.push(byteArray);
-            }
-            var blob = new Blob(byteArrays, {type: contentType});
-            return new File([blob], filename, {type: contentType});
-        }
-
-        if (input && label) {
-          // Restore from sessionStorage on load if re-rendering due to errors
-          try {
-              {% if widget.is_re_render %}
-              var storedData = sessionStorage.getItem(storageKey);
-              if (storedData) {
-                  var dataArr = JSON.parse(storedData);
-                  var dt = new DataTransfer();
-                  var names = [];
-                  dataArr.forEach(function(data) {
-                      var file = b64toFile(data.base64, data.type, data.name);
-                      dt.items.add(file);
-                      names.push(data.name);
-                  });
-                  input.files = dt.files;
-                  label.textContent = names.join(', ');
-                  label.classList.remove('text-muted');
-              }
-              {% else %}
-              sessionStorage.removeItem(storageKey);
-              {% endif %}
-          } catch (e) {
-              console.warn('Failed to restore or clear files in sessionStorage', e);
-          }
-
-          input.addEventListener('change', function() {
-            if (input.files && input.files.length > 0) {
-              var maxSize = parseInt(input.getAttribute('data-maxsize'), 10);
-              var totalSize = 0;
-              for (var i = 0; i < input.files.length; i++) {
-                totalSize += input.files[i].size;
-              }
-              
-              if (maxSize && totalSize > maxSize) {
-                // Show error, clear input
-                errorMsg.style.display = 'block';
-                if (storageWarningMsg) {
-                  storageWarningMsg.style.display = 'none';
-                }
-                input.value = '';
-                label.textContent = label.dataset.original || '{% translate "No file chosen" %}';
-                label.classList.add('text-muted');
-                try { sessionStorage.removeItem(storageKey); } catch(e) {}
-                return;
-              }
-              
-              errorMsg.style.display = 'none';
-              if (storageWarningMsg) {
-                storageWarningMsg.style.display = 'none';
-              }
-              var names = Array.from(input.files).map(function(f) { return f.name; });
-              label.textContent = names.join(', ');
-              label.classList.remove('text-muted');
-
-              // Save to sessionStorage
-              var filesData = [];
-              var filesToProcess = input.files.length;
-              var processed = 0;
-              
-              Array.from(input.files).forEach(function(file) {
-                  var reader = new FileReader();
-                  reader.onload = function(e) {
-                      var base64 = e.target.result.split(',')[1];
-                      filesData.push({
-                          name: file.name,
-                          type: file.type,
-                          base64: base64
-                      });
-                      processed++;
-                      if (processed === filesToProcess) {
-                          try {
-                              sessionStorage.setItem(storageKey, JSON.stringify(filesData));
-                              if (storageWarningMsg) {
-                                storageWarningMsg.style.display = 'none';
-                              }
-                          } catch (err) {
-                              console.warn('Files too large for sessionStorage', err);
-                              if (storageWarningMsg) {
-                                storageWarningMsg.style.display = 'block';
-                              }
-                          }
-                      }
-                  };
-                  reader.readAsDataURL(file);
-              });
-            } else {
-              errorMsg.style.display = 'none';
-              if (storageWarningMsg) {
-                storageWarningMsg.style.display = 'none';
-              }
-              label.textContent = label.dataset.original || '{% translate "No file chosen" %}';
-              label.classList.add('text-muted');
-              try { sessionStorage.removeItem(storageKey); } catch(e) {}
-            }
-          });
-          label.dataset.original = label.textContent.trim();
-        }
-      })();
-    </script>
+    <script src="{% static 'common/js/slides_input.js' %}" defer></script>
     <small class='form-text text-muted mt-2'>
       {% if widget.max_items %}
         {% blocktranslate count count=widget.max_items %}You can keep up to {{ count }} slide entry in total.{% plural %}You can keep up to {{ count }} slide entries in total.{% endblocktranslate %}
