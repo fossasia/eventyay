@@ -27,7 +27,7 @@
                             {% for plugin in plist %}
                                 <tr class="{% if plugin.app.compatibility_errors %}warning{% elif plugin.module in plugins_active %}success{% else %}default{% endif %}">
                                     <td>
-                                        <strong>{{ plugin.name }}</strong>
+                                        <strong>{{ plugin.name }}{% if plugin.beta %} {% include "eventyay_common/component/_beta_badge.html" %}{% endif %}</strong>
                                         {% if plugin.author %}
                                             <p class="meta text-muted">
                                                 {% blocktrans trimmed with v=plugin.version a=plugin.author %}
