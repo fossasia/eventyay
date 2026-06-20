@@ -88,8 +88,6 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
                 kwargs = kwargs()
             kwargs.setdefault('required', False)
             form_class = DEFAULTS[fname]['form_class']
-            if issubclass(form_class, forms.URLField):
-                kwargs.setdefault('assume_scheme', 'https')
             field = form_class(**kwargs)
             if isinstance(field, i18nfield.forms.I18nFormField):
                 field.widget.enabled_locales = self.locales
