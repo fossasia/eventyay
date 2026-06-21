@@ -738,18 +738,23 @@ $widget-alert-danger-text: #a94442;
     }
   }
 
+  .pretix-widget-item-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
   .pretix-widget-item-info-col {
     width: 100%;
     float: none;
     margin-bottom: 15px;
   }
   .pretix-widget-item-price-col {
-    width: 50%;
-    text-align: left;
+    flex: 1;
+    text-align: start;
   }
   .pretix-widget-item-availability-col {
-    width: 50%;
-    text-align: right;
+    flex: 1;
+    text-align: end;
   }
   .pretix-widget-action {
     width: 100%;
