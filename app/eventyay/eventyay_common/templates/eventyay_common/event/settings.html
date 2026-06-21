@@ -87,7 +87,6 @@
                     {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
                 </div>
             </div>
-            {% bootstrap_field form.is_public layout="control" %}
             {% comment %}
             <div class="setting-part">
                 <div class="form-group setting-form">
@@ -188,6 +187,12 @@
             {% bootstrap_field sform.theme_round_borders layout="control" %}
             {% bootstrap_field sform.primary_font layout="control" %}
             {% endpropagated %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Publication" %}</legend>
+            {% bootstrap_field form.is_public layout="control" %}
+            {% bootstrap_field form.startpage_visible layout="control" %}
+            {% bootstrap_field sform.meta_noindex layout="control" %}
         </fieldset>
     </div>
     <div class="form-group submit-group">
