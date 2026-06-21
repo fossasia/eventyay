@@ -66,14 +66,15 @@ export function getContrastColor(bgColor) {
 }
 
 export function getIconByFileEnding(url) {
-	url = url?.toLowerCase()
-	if (/\.pdf$/.test(url)) return 'file-pdf-outline'
-	if (/\.xlsx?$/.test(url)) return 'file-excel-outline'
-	if (/\.docx?$/.test(url)) return 'file-word-outline'
-	if (/\.pptx?$/.test(url)) return 'file-powerpoint-outline'
-	if (/\.(mp3|ogg|wav|flac)$/.test(url)) return 'file-music-outline'
-	if (/\.(jpe?g|png|tiff)$/.test(url)) return 'file-image-outline'
-	if (/(\.(mp4|mov|webm|avi)$)|\/\/(youtube\.com|youtu\.be|vimeo\.com)\//.test(url)) return 'file-video-outline'
+	if (!url) return 'file-download-outline'
+	const path = url.split(/[?#]/)[0].toLowerCase()
+	if (/\.pdf$/.test(path)) return 'link'
+	if (/\.xlsx?$/.test(path)) return 'file-excel-outline'
+	if (/\.docx?$/.test(path)) return 'file-word-outline'
+	if (/\.pptx?$/.test(path)) return 'file-powerpoint-outline'
+	if (/\.(mp3|ogg|wav|flac)$/.test(path)) return 'file-music-outline'
+	if (/\.(jpe?g|png|tiff)$/.test(path)) return 'file-image-outline'
+	if (/(\.(mp4|mov|webm|avi)$)|\/\/(youtube\.com|youtu\.be|vimeo\.com)\//.test(path)) return 'file-video-outline'
 	return 'file-download-outline'
 }
 
@@ -119,6 +120,23 @@ export function parseBooleanAnswer (value) {
 	return ['true', '1', 'yes'].includes(String(value).toLowerCase())
 }
 
+export function resolveAbsoluteUrl (url, eventUrl = '') {
+	if (!url) return url
+	if (/^https?:\/\//i.test(url)) return url
+	try {
+		const origin = new URL(eventUrl || '/', window.location.origin).origin
+		return new URL(url, origin).href
+	} catch {
+		return url
+	}
+}
+
+export function buildQrcodesUrl (eventUrl, kind, code) {
+	if (!eventUrl || !code) return ''
+	const base = eventUrl.replace(/\/?$/, '/')
+	return `${base}schedule/widgets/qrcodes/${kind}/${code}.json`
+}
+
 export function normalizePopularityCount (session) {
 	const value = Number(
 		session?.fav_count
@@ -128,4 +146,38 @@ export function normalizePopularityCount (session) {
 		?? 0
 	)
 	return Number.isFinite(value) ? value : 0
+}
+
+export function buildEventPageUrl (eventUrl, pagePath = '', isWipPreview = false) {
+	if (!eventUrl) return ''
+	const base = eventUrl.replace(/\/?$/, '/')
+	const wipPrefix = isWipPreview ? 'schedule/v/wip/' : ''
+	const normalizedPath = String(pagePath).replace(/^\//, '')
+	return `${base}${wipPrefix}${normalizedPath}`
+}
+
+const DETAIL_BACK_DESTINATIONS = {
+	schedule: {
+		messageKey: 'back_to_schedule',
+		defaultLabel: 'Back to schedule',
+		pagePath (isWipPreview) {
+			return isWipPreview ? '' : 'schedule/'
+		},
+	},
+	speakers: {
+		messageKey: 'back_to_speakers',
+		defaultLabel: 'Back to speakers',
+		pagePath () {
+			return 'speakers/'
+		},
+	},
+}
+
+export function getDetailBackLink ({ eventUrl, destination, isWipPreview = false, messages = {} }) {
+	const config = DETAIL_BACK_DESTINATIONS[destination]
+	if (!config || !eventUrl) return null
+	return {
+		href: buildEventPageUrl(eventUrl, config.pagePath(isWipPreview), isWipPreview),
+		label: messages[config.messageKey] || config.defaultLabel,
+	}
 }
