@@ -344,12 +344,12 @@ def test_orga_can_toggle_schedule_visibility(orga_client, event):
 
     assert event.feature_flags["show_schedule"] is True
 
-    response = orga_client.get(event.orga_urls.toggle_schedule, follow=True)
+    response = orga_client.post(event.orga_urls.toggle_schedule, follow=True)
     assert response.status_code == 200
     event = Event.objects.get(pk=event.pk)
     assert event.feature_flags["show_schedule"] is False
 
-    response = orga_client.get(event.orga_urls.toggle_schedule, follow=True)
+    response = orga_client.post(event.orga_urls.toggle_schedule, follow=True)
     assert response.status_code == 200
     event = Event.objects.get(pk=event.pk)
     with scope(event=event):
