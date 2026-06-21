@@ -249,16 +249,19 @@ class CfP(PretalxModel):
         return self.max_deadline >= now()
 
     @cached_property
-    def max_deadline(self) -> dt.datetime:
-        """Returns the latest date any submission is possible.
+    def max_deadline(self) -> dt.datetime | None:
+        """Latest date a submission is possible, or ``None`` if open indefinitely.
 
-        This includes the deadlines set on any submission type for this
-        event.
+        A submission type's effective deadline is its own deadline, falling back
+        to the event-wide one.
         """
-        deadlines = list(self.event.submission_types.filter(deadline__isnull=False).values_list('deadline', flat=True))
-        if self.deadline:
-            deadlines.append(self.deadline)
-        return max(deadlines) if deadlines else None
+        effective_deadlines = [
+            type_deadline or self.deadline
+            for type_deadline in self.event.submission_types.values_list('deadline', flat=True)
+        ] or [self.deadline]  # fall back to the event-wide deadline when there are no submission types
+        if any(deadline is None for deadline in effective_deadlines):
+            return None
+        return max(effective_deadlines)
 
     @property
     def enable_gravatar(self) -> bool:
