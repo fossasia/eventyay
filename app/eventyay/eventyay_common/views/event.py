@@ -485,7 +485,9 @@ class EventCreateView(TemplateView):
                 with scopes_disabled():
                     event.copy_data_from(self.clone_from)
                 # Keep cloned events unpublished and in private test mode instead of
-                # inheriting publication/test-mode state from the source event
+                # inheriting publication/test-mode state from the source event.
+                event.plugins = ','.join(all_plugins)
+                event.live = False
                 event.testmode = False
                 event.private_testmode = True
                 event.tickets_published = False
@@ -494,6 +496,8 @@ class EventCreateView(TemplateView):
                 event.settings.private_testmode_talks = True
                 event.save(
                     update_fields=[
+                        'plugins',
+                        'live',
                         'testmode',
                         'private_testmode',
                         'tickets_published',
