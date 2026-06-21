@@ -669,7 +669,8 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
-        self.email_form.save()
+        if any(k.startswith('email-') for k in self.request.POST):
+            self.email_form.save()
         self.header_links_formset.save()
         self.footer_links_formset.save()
         # Keep event model timezone in sync with settings
@@ -796,12 +797,14 @@ class EventUpdate(
         form = self.get_form()
         has_formset_changes = self.header_links_formset.has_changed() or self.footer_links_formset.has_changed()
         is_test_request = request.POST.get('test', '0').strip() == '1'
+        has_email_form_data = any(k.startswith('email-') for k in request.POST)
+        email_form_valid = (not has_email_form_data) or self.email_form.is_valid()
         if is_test_request or form.changed_data or self.sform.changed_data or self.email_form.has_changed() or has_formset_changes:
             form.instance.sales_channels = ['web']
             if (
                 form.is_valid()
                 and self.sform.is_valid()
-                and self.email_form.is_valid()
+                and email_form_valid
                 and self.header_links_formset.is_valid()
                 and self.footer_links_formset.is_valid()
             ):
