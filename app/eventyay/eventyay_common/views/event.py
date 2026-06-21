@@ -23,7 +23,7 @@ from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, TemplateView
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 from pytz import timezone
 from rest_framework import views
 from django.views import View
@@ -482,7 +482,7 @@ class EventCreateView(TemplateView):
             basics_form.save()
             if self.clone_from:
                 event.clone_from(self.clone_from, new_secrets=True)
-                with scope(organizer=event.organizer):
+                with scopes_disabled():
                     event.copy_data_from(self.clone_from)
                 # Keep cloned events unpublished and in private test mode instead of
                 # inheriting publication/test-mode state from the source event
