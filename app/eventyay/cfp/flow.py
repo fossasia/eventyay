@@ -586,7 +586,7 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         form.save()
 
         additional_speaker = (form.cleaned_data.get('additional_speaker') or '').strip()
-        if additional_speaker and hasattr(request, 'submission'):
+        if not draft and additional_speaker and hasattr(request, 'submission'):
             try:
                 request.submission.send_invite(to=[additional_speaker], _from=request.user)
             except SendMailException as exception:
