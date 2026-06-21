@@ -106,7 +106,8 @@ export default {
 		sessionBuckets () {
 			if (!this.includeDateSortKey) {
 				const sortedFlat = this.sortBucketSessions(this.sessions)
-				const fallbackDate = sortedFlat.length ? sortedFlat[0].start.clone().startOf('day') : moment()
+				const firstStart = sortedFlat.find(session => session.start)?.start
+				const fallbackDate = firstStart ? firstStart.clone().startOf('day') : moment()
 				return [{
 					date: fallbackDate,
 					sessions: sortedFlat
@@ -115,7 +116,12 @@ export default {
 
 			const buckets = {}
 			const seenBreakIds = {}
+			const pendingSessions = []
 			for (const session of this.sessions) {
+				if (!session.start) {
+					if (session.id) pendingSessions.push(session)
+					continue
+				}
 				const key = this.getBucketName(session.start)
 				if (!buckets[key]) {
 					buckets[key] = []
@@ -155,6 +161,13 @@ export default {
 					const bySort = this.sessionComparator(a._sortKey, b._sortKey)
 					if (bySort !== 0) return bySort
 					return a.date.diff(b.date)
+				})
+			}
+			if (pendingSessions.length) {
+				const sortedPending = this.sortBucketSessions(pendingSessions)
+				groupedBuckets.push({
+					date: moment(),
+					sessions: sortedPending,
 				})
 			}
 			return groupedBuckets
@@ -253,6 +266,12 @@ export default {
 			}
 
 			if (this.includeDateSortKey) {
+				if (a.schedule_pending && !b.schedule_pending) return 1
+				if (!a.schedule_pending && b.schedule_pending) return -1
+				if (a.schedule_pending || b.schedule_pending || !a.start || !b.start) {
+					const direction = this.sortBy === 'title_desc' ? -1 : 1
+					return this.titleSortKey(a).localeCompare(this.titleSortKey(b)) * direction
+				}
 				const dateCmp = a.start.diff(b.start)
 				if (dateCmp !== 0) return dateCmp
 			}
