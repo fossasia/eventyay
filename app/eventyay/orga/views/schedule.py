@@ -65,7 +65,7 @@ class ScheduleView(EventPermissionRequired, TemplateView):
 class ScheduleExportTriggerView(EventPermissionRequired, View):
     permission_required = 'base.update_event'
 
-    def post(self, request, event):
+    def post(self, request, *args, **kwargs):
         if not settings.CELERY_TASK_ALWAYS_EAGER:
             export_schedule_html.apply_async(kwargs={'event_id': self.request.event.id}, ignore_result=True)
             messages.success(
@@ -88,7 +88,7 @@ class ScheduleExportTriggerView(EventPermissionRequired, View):
 class ScheduleExportDownloadView(EventPermissionRequired, View):
     permission_required = 'base.update_event'
 
-    def get(self, request, event):
+    def get(self, request, *args, **kwargs):
         try:
             zip_path = get_export_zip_path(self.request.event)
             response = FileResponse(open(zip_path, 'rb'), as_attachment=True)
@@ -152,9 +152,8 @@ class ScheduleReleaseView(EventPermissionRequired, FormView):
 class ScheduleResetView(EventPermissionRequired, View):
     permission_required = 'base.release_schedule'
 
-    def dispatch(self, request, event):
-        super().dispatch(request, event)
-        schedule_version = self.request.GET.get('version')
+    def post(self, request, *args, **kwargs):
+        schedule_version = self.request.POST.get('version') or self.request.GET.get('version')
         schedule = self.request.event.schedules.filter(version=schedule_version).first()
         if schedule:
             schedule.unfreeze(user=request.user)
@@ -164,6 +163,9 @@ class ScheduleResetView(EventPermissionRequired, View):
             )
         else:
             messages.error(self.request, _('Error retrieving the schedule version to reset to.'))
+        return redirect(self.request.event.orga_urls.schedule)
+
+    def get(self, request, *args, **kwargs):
         return redirect(self.request.event.orga_urls.schedule)
 
 
@@ -179,8 +181,8 @@ class ScheduleToggleView(EventPermissionRequired, View):
         event.settings.talk_schedule_public = is_public
         event.save(update_fields=['feature_flags'])
 
-    def dispatch(self, request, event):
-        super().dispatch(request, event)
+    def dispatch(self, request, *args, **kwargs):
+        super().dispatch(request, *args, **kwargs)
         is_public = not self.request.event.get_feature_flag('show_schedule')
         self._set_schedule_public(self.request.event, is_public)
         # Trigger tickets to hidden/unhidden schedule menu
@@ -191,7 +193,7 @@ class ScheduleToggleView(EventPermissionRequired, View):
                 kwargs={
                     'is_show_schedule': is_public,
                     'event_slug': self.request.event.slug,
-                    'organiser_slug': self.request.event.organiser.slug,
+                    'organiser_slug': self.request.event.organizer.slug,
                     'user_email': self.request.user.email,
                 },
                 ignore_result=True,
@@ -209,8 +211,7 @@ class ScheduleToggleView(EventPermissionRequired, View):
 class ScheduleResendMailsView(EventPermissionRequired, View):
     permission_required = 'base.release_schedule'
 
-    def dispatch(self, request, event):
-        super().dispatch(request, event)
+    def post(self, request, *args, **kwargs):
         if self.request.event.current_schedule:
             mails = self.request.event.current_schedule.generate_notifications(save=True)
             messages.success(
@@ -222,6 +223,9 @@ class ScheduleResendMailsView(EventPermissionRequired, View):
                 self.request,
                 _('You can only regenerate mails after the first schedule was released.'),
             )
+        return redirect(self.request.event.orga_urls.schedule)
+
+    def get(self, request, *args, **kwargs):
         return redirect(self.request.event.orga_urls.schedule)
 
 
@@ -279,7 +283,7 @@ def serialize_slot(slot, warnings=None):
 class TalkList(EventPermissionRequired, View):
     permission_required = 'base.release_schedule'
 
-    def get(self, request, event):
+    def get(self, request, *args, **kwargs):
         version = self.request.GET.get('version')
         schedule = None
         if version:
@@ -313,7 +317,7 @@ class TalkList(EventPermissionRequired, View):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
-    def post(self, request, event):
+    def post(self, request, *args, **kwargs):
         data = json.loads(request.body.decode())
         start = dateutil.parser.parse(data.get('start')) if data.get('start') else request.event.datetime_from
         end = (
@@ -340,7 +344,7 @@ class TalkList(EventPermissionRequired, View):
 class ScheduleWarnings(EventPermissionRequired, View):
     permission_required = 'base.release_schedule'
 
-    def get(self, request, event):
+    def get(self, request, *args, **kwargs):
         return JsonResponse(
             {
                 talk.submission.code: warnings
@@ -352,7 +356,7 @@ class ScheduleWarnings(EventPermissionRequired, View):
 class ScheduleAvailabilities(EventPermissionRequired, View):
     permission_required = 'base.release_schedule'
 
-    def get(self, request, event):
+    def get(self, request, *args, **kwargs):
         return JsonResponse(
             {
                 'talks': self._get_speaker_availabilities(),
@@ -406,7 +410,7 @@ class TalkUpdate(PermissionRequired, View):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
-    def patch(self, request, event, pk):
+    def patch(self, request, *args, **kwargs):
         talk = self.get_object()
         if not talk:
             return JsonResponse({'error': 'Talk not found'})
@@ -444,7 +448,7 @@ class TalkUpdate(PermissionRequired, View):
 
         return JsonResponse(serialize_slot(talk, warnings=warnings))
 
-    def delete(self, request, event, pk):
+    def delete(self, request, *args, **kwargs):
         talk = self.get_object()
         if not talk:
             return JsonResponse({'error': 'Talk not found'})
