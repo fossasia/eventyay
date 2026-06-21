@@ -444,6 +444,7 @@ export default {
 				if (displayDateSet && !displayDateSet.has(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
 				sessions.push({
 					id: session.code,
+					code: session.code,
 					title: session.title,
 					abstract: session.abstract,
 					description: session.description,

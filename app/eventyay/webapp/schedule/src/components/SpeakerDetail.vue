@@ -1,7 +1,11 @@
 <template lang="pug">
 .c-speaker-detail
+	detail-back-nav(destination="speakers")
+		detail-top-actions(
+			:export-options="speakerExportOptions",
+			:qrcodes-url="speakerQrcodesUrl")
 	.speaker-wrapper(v-if="speakerDetailReady")
-		.speaker-header(:class="{'has-export': speakerExportOptions.length}")
+		.speaker-header
 			.speaker-avatar
 				img(v-if="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :src="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :alt="resolvedSpeaker.name")
 				.avatar-placeholder(v-else)
@@ -10,7 +14,6 @@
 			.speaker-content-area
 				.speaker-title
 					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
-				export-dropdown.speaker-export(v-if="speakerExportOptions.length || isWipPreview", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl", :disabled="isWipPreview")
 		.field-section.biography-section(v-if="resolvedSpeaker.biography")
 			h2.field-heading {{ t.biography }}
 			.field-content
@@ -47,14 +50,15 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer } from '../utils'
+import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
 import Session from './Session.vue'
-import ExportDropdown from './ExportDropdown.vue'
+import DetailBackNav from './DetailBackNav.vue'
+import DetailTopActions from './DetailTopActions.vue'
 
 export default {
 	name: 'SpeakerDetail',
-	components: { MarkdownContent, Session, ExportDropdown },
+	components: { MarkdownContent, Session, DetailBackNav, DetailTopActions },
 	inject: {
 		eventUrl: { default: null },
 		remoteApiUrl: { default: '' },
@@ -106,9 +110,7 @@ export default {
 	computed: {
 		speakerQrcodesUrl() {
 			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code
-			if (!code || !this.eventUrl) return ''
-			const base = this.eventUrl.replace(/\/?$/, '/')
-			return `${base}schedule/widgets/qrcodes/speaker/${code}.json`
+			return buildQrcodesUrl(this.eventUrl, 'speaker', code)
 		},
 		t() {
 			const m = this.translationMessages || {}
@@ -303,10 +305,6 @@ export default {
 	.speaker-content-area
 		flex: 1
 		min-width: 0
-		display: flex
-		align-items: center
-		justify-content: space-between
-		gap: 12px
 	.speaker-title
 		width: 100%
 		display: flex
@@ -314,9 +312,6 @@ export default {
 		h2
 			margin: 0
 			text-align: left
-	.speaker-export
-		flex-shrink: 0
-		align-self: center
 	.speaker-avatar
 		flex-shrink: 0
 		width: 128px
@@ -355,7 +350,7 @@ export default {
 			.field-content
 				font-size: 16px
 	.answer-link
-		color: var(--clr-primary)
+		color: var(--pretalx-clr-primary, var(--clr-primary))
 		text-decoration: none
 		word-break: break-all
 		&:hover
@@ -372,17 +367,11 @@ export default {
 			flex-direction: column
 			align-items: center
 			text-align: center
-			&.has-export
-				padding-top: 32px
 			.speaker-content-area
 				width: 100%
 				flex-direction: column
 				align-items: center
 				gap: 4px
-				.speaker-export
-					position: absolute
-					top: 0
-					right: 0
 				.speaker-title h2
 					text-align: center
 		.speaker-avatar
