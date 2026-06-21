@@ -430,6 +430,8 @@ def schedule_messages(request, **kwargs):
         'view_profile': _('View speaker profile'),
         'no_starred_sessions': _('No starred sessions.'),
         'schedule_do_not_record': _('This session will not be recorded.'),
+        'back_to_schedule': _('Back to schedule'),
+        'back_to_speakers': _('Back to speakers'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(

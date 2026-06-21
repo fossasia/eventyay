@@ -466,14 +466,6 @@ class InfoStep(GenericFlowStep, FormFlowStep):
                 ),
             )
 
-            additional_speaker = (form.cleaned_data.get('additional_speaker') or '').strip()
-            if additional_speaker:
-                try:
-                    submission.send_invite(to=[additional_speaker], _from=request.user)
-                except SendMailException as exception:
-                    logging.getLogger('').warning(str(exception))
-                    messages.warning(self.request, phrases.cfp.submission_email_fail)
-
         access_code = getattr(request, 'access_code', None)
         if access_code:
             submission.access_code = access_code
@@ -566,6 +558,9 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         result['enforce_account_name_match'] = True
         return result
 
+    def get_extra_form_kwargs(self):
+        return {'add_additional_speaker': True}
+
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
         email = getattr(self.request.user, 'email', None)
@@ -581,6 +576,15 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         form.is_valid()
         form.user = request.user
         form.save()
+
+        additional_speaker = (form.cleaned_data.get('additional_speaker') or '').strip()
+        submission = getattr(request, 'submission', None)
+        if not draft and additional_speaker and submission:
+            try:
+                submission.send_invite(to=[additional_speaker], _from=request.user)
+            except SendMailException as exception:
+                logger.warning('Failed to send co-speaker invite email: %s', exception)
+                messages.warning(request, phrases.cfp.submission_email_fail)
 
     @property
     def label(self):

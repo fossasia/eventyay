@@ -22,6 +22,7 @@ from django_scopes import scope
 from i18nfield.fields import I18nTextField
 from qrcode.image.svg import SvgPathFillImage
 
+from eventyay.agenda.export_resources import enriched_resource_entry
 from eventyay.agenda.signals import register_recording_provider
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
@@ -956,13 +957,9 @@ class Schedule(PretalxModel):
                             talk_data['stream_type'] = match.stream_type
                 if enrich:
                     talk_data['resources'] = [
-                        {
-                            'resource': resource.resource.url if resource.resource else resource.link,
-                            'description': str(resource.description),
-                            'link': resource.link,
-                        }
+                        enriched_resource_entry(resource)
                         for resource in talk.submission.resources.all()
-                        if (resource.resource or resource.link) and (show_slides or resource.kind != 'slides')
+                        if resource.url and (show_slides or resource.kind != 'slides')
                     ]
                     talk_data['answers'] = [
                         {
