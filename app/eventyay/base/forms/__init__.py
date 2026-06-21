@@ -87,7 +87,8 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
             if callable(kwargs):
                 kwargs = kwargs()
             kwargs.setdefault('required', False)
-            field = DEFAULTS[fname]['form_class'](**kwargs)
+            form_class = DEFAULTS[fname]['form_class']
+            field = form_class(**kwargs)
             if isinstance(field, i18nfield.forms.I18nFormField):
                 field.widget.enabled_locales = self.locales
             self.fields[fname] = field

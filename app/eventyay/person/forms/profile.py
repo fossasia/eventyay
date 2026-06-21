@@ -76,6 +76,15 @@ class SpeakerProfileForm(
     RequestRequire,
     forms.ModelForm,
 ):
+    additional_speaker = forms.EmailField(
+        label=_('Additional Speaker'),
+        help_text=_(
+            'If you have a co-speaker, please add their email address here, and we will invite them '
+            'to create an account. If you have more than one co-speaker, you can add more speakers '
+            'after finishing the proposal process.'
+        ),
+        required=False,
+    )
     USER_FIELDS = [
         'fullname',
         'email',
@@ -87,6 +96,7 @@ class SpeakerProfileForm(
     FIRST_TIME_EXCLUDE = ['email']
 
     def __init__(self, *args, name=None, enforce_account_name_match=False, **kwargs):
+        self.add_additional_speaker = kwargs.pop('add_additional_speaker', False)
         self.user = kwargs.pop('user', None)
         self.event = kwargs.pop('event', None)
         self.with_email = kwargs.pop('with_email', True)
@@ -100,6 +110,11 @@ class SpeakerProfileForm(
         read_only = kwargs.get('read_only', False)
         initial = kwargs.get('initial', {})
         initial['name'] = name
+
+        if not self.add_additional_speaker and 'additional_speaker' in self.fields:
+            self.fields.pop('additional_speaker')
+        if 'additional_speaker' in self.fields:
+            self._update_cfp_texts('additional_speaker')
 
         if self.user:
             initial.update({field: getattr(self.user, field) for field in self.user_fields})
@@ -140,7 +155,7 @@ class SpeakerProfileForm(
         cfp_defaults = default_fields()
         count_length_in = self.event.cfp.settings.get('count_length_in', 'chars')
         count_chars = count_length_in == 'chars'
-        for key in ('avatar_source', 'avatar_license'):
+        for key in ('avatar_source', 'avatar_license', 'additional_speaker'):
             if key not in self.fields:
                 continue
             default_config = cfp_defaults.get(key, {})
