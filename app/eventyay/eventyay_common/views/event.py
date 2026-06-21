@@ -494,10 +494,10 @@ class EventCreateView(TemplateView):
                 event.settings.private_testmode_talks = True
                 event.save(
                     update_fields=[
-                    'testmode',
-                    'private_testmode',
-                    'tickets_published',
-                    'talks_published',
+                        'testmode',
+                        'private_testmode',
+                        'tickets_published',
+                        'talks_published',
                     ]
                 )
             else:
