@@ -56,7 +56,7 @@
     "vue-virtual-scroller": "^3.0.4",
     "vuex": "^4.1.0",
     "web-animations-js": "^2.3.2",
-    "webrtc-adapter": "^9.0.5"
+    "webrtc-adapter": "^9.0.6"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.29.7",
