@@ -230,7 +230,7 @@ class WidgetAPIProductList(EventListMixin, View):
                 {
                     'id': cat.pk if cat else None,
                     'name': str(cat.name) if cat else None,
-                    'description': str(rich_text(cat.description, safelinks=False))
+                    'description': str(rich_text(cat.description))
                     if cat and cat.description
                     else None,
                     'items': [
@@ -238,7 +238,7 @@ class WidgetAPIProductList(EventListMixin, View):
                             'id': product.pk,
                             'name': str(product.name),
                             'picture': get_picture(self.request.event, product.picture) if product.picture else None,
-                            'description': str(rich_text(product.description, safelinks=False))
+                            'description': str(rich_text(product.description))
                             if product.description
                             else None,
                             'has_variations': product.has_variations,
@@ -271,7 +271,7 @@ class WidgetAPIProductList(EventListMixin, View):
                                     'id': var.id,
                                     'value': str(var.value),
                                     'order_max': var.order_max,
-                                    'description': str(rich_text(var.description, safelinks=False))
+                                    'description': str(rich_text(var.description))
                                     if var.description
                                     else None,
                                     'price': price_dict(product, var.display_price),

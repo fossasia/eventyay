@@ -281,7 +281,7 @@ Vue.component('pricebox', {
         + '<span v-if="!free_price && original_price">'
         + '<del class="pretix-widget-pricebox-original-price">{{ original_line }}</del> '
         + '<ins class="pretix-widget-pricebox-new-price">{{ priceline }}</ins></span>'
-        + '<div v-if="free_price">'
+        + '<div v-if="free_price" class="pretix-widget-pricebox-free-price">'
         + '{{ $root.currency }} '
         + '<input type="number" class="pretix-widget-pricebox-price-input" placeholder="0" '
         + '       :min="display_price_nonlocalized" :value="display_price_nonlocalized" :name="field_name"'
