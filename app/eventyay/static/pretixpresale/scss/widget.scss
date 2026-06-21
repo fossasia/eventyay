@@ -271,9 +271,18 @@ $widget-alert-danger-text: #a94442;
     text-align: center;
   }
 
+  .pretix-widget-pricebox-free-price {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: nowrap;
+  }
+
   .pretix-widget-pricebox-price-input {
     display: inline;
-    width: 100px;
+    flex: 1;
+    min-width: 60px;
+    max-width: 100px;
     box-sizing: border-box;
     text-align: right;
   }
