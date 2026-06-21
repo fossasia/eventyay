@@ -1,7 +1,9 @@
 <template lang="pug">
 .c-speaker-detail
+	detail-back-nav(:event-url="eventUrl", destination="speakers")
+		export-dropdown.speaker-export(v-if="speakerExportOptions.length || isWipPreview", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl", :disabled="isWipPreview")
 	.speaker-wrapper(v-if="speakerDetailReady")
-		.speaker-header(:class="{'has-export': speakerExportOptions.length}")
+		.speaker-header
 			.speaker-avatar
 				img(v-if="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :src="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :alt="resolvedSpeaker.name")
 				.avatar-placeholder(v-else)
@@ -10,7 +12,6 @@
 			.speaker-content-area
 				.speaker-title
 					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
-				export-dropdown.speaker-export(v-if="speakerExportOptions.length || isWipPreview", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl", :disabled="isWipPreview")
 		.field-section.biography-section(v-if="resolvedSpeaker.biography")
 			h2.field-heading {{ t.biography }}
 			.field-content
@@ -51,10 +52,11 @@ import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, pars
 import MarkdownContent from './MarkdownContent.vue'
 import Session from './Session.vue'
 import ExportDropdown from './ExportDropdown.vue'
+import DetailBackNav from './DetailBackNav.vue'
 
 export default {
 	name: 'SpeakerDetail',
-	components: { MarkdownContent, Session, ExportDropdown },
+	components: { MarkdownContent, Session, ExportDropdown, DetailBackNav },
 	inject: {
 		eventUrl: { default: null },
 		remoteApiUrl: { default: '' },
@@ -303,10 +305,6 @@ export default {
 	.speaker-content-area
 		flex: 1
 		min-width: 0
-		display: flex
-		align-items: center
-		justify-content: space-between
-		gap: 12px
 	.speaker-title
 		width: 100%
 		display: flex
@@ -314,9 +312,6 @@ export default {
 		h2
 			margin: 0
 			text-align: left
-	.speaker-export
-		flex-shrink: 0
-		align-self: center
 	.speaker-avatar
 		flex-shrink: 0
 		width: 128px

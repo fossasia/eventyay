@@ -130,3 +130,37 @@ export function normalizePopularityCount (session) {
 	)
 	return Number.isFinite(value) ? value : 0
 }
+
+export function buildEventPageUrl (eventUrl, pagePath = '', isWipPreview = false) {
+	if (!eventUrl) return ''
+	const base = eventUrl.replace(/\/?$/, '/')
+	const wipPrefix = isWipPreview ? 'schedule/v/wip/' : ''
+	const normalizedPath = String(pagePath).replace(/^\//, '')
+	return `${base}${wipPrefix}${normalizedPath}`
+}
+
+const DETAIL_BACK_DESTINATIONS = {
+	schedule: {
+		messageKey: 'back_to_schedule',
+		defaultLabel: 'Back to schedule',
+		pagePath (isWipPreview) {
+			return isWipPreview ? '' : 'schedule/'
+		},
+	},
+	speakers: {
+		messageKey: 'back_to_speakers',
+		defaultLabel: 'Back to speakers',
+		pagePath () {
+			return 'speakers/'
+		},
+	},
+}
+
+export function getDetailBackLink ({ eventUrl, destination, isWipPreview = false, messages = {} }) {
+	const config = DETAIL_BACK_DESTINATIONS[destination]
+	if (!config || !eventUrl) return null
+	return {
+		href: buildEventPageUrl(eventUrl, config.pagePath(isWipPreview), isWipPreview),
+		label: messages[config.messageKey] || config.defaultLabel,
+	}
+}

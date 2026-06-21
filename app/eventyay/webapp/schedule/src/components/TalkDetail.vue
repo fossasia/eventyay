@@ -1,13 +1,13 @@
 <template lang="pug">
 .c-talk-detail
+	detail-back-nav(:event-url="baseUrl", destination="schedule")
+		export-dropdown.talk-export(v-if="talkExportOptions.length || isWipPreview", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl", :disabled="isWipPreview")
+		.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
+			fav-button(@toggleFav="toggleFav")
 	.talk-wrapper(v-if="talkDetailReady")
 		.talk
-			.talk-header(:class="{'has-actions': talkExportOptions.length || loggedIn}")
+			.talk-header
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
-				.header-actions
-					export-dropdown.talk-export(v-if="talkExportOptions.length || isWipPreview", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl", :disabled="isWipPreview")
-					.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
-						fav-button(@toggleFav="toggleFav")
 			.info
 				span.info-main {{ datetime }} {{ roomName }}
 				span.session-language(v-if="sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
@@ -111,10 +111,11 @@ import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExp
 import MarkdownContent from './MarkdownContent.vue'
 import FavButton from './FavButton.vue'
 import ExportDropdown from './ExportDropdown.vue'
+import DetailBackNav from './DetailBackNav.vue'
 
 export default {
 	name: 'TalkDetail',
-	components: { MarkdownContent, FavButton, ExportDropdown },
+	components: { MarkdownContent, FavButton, ExportDropdown, DetailBackNav },
 	inject: {
 		scheduleData: { default: null },
 		scheduleFav: {
@@ -485,21 +486,9 @@ export default {
 		flex: none
 		margin: 16px
 		.talk-header
-			display: flex
-			justify-content: space-between
-			align-items: center
-			gap: 16px
 			margin-bottom: 8px
 			h1
-				flex: 1
 				margin: 0
-			.header-actions
-				display: flex
-				align-items: center
-				gap: 8px
-				flex-shrink: 0
-				.button-container
-					flex-shrink: 0
 		.info
 			font-size: 18px
 			color: $clr-secondary-text-light
@@ -785,12 +774,8 @@ export default {
 		.talk
 			margin: 10px
 			.talk-header
-				flex-direction: column-reverse
-				align-items: flex-end
 				h1
 					font-size: 20px
-				.header-actions
-					gap: 4px
 			.info
 				font-size: 15px
 			.abstract
