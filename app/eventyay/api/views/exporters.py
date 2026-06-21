@@ -133,12 +133,22 @@ class EventExportersViewSet(ExportersMixin, viewsets.ViewSet):
 class OrganizerExportersViewSet(ExportersMixin, viewsets.ViewSet):
     permission = None
 
+    def get_permission_holder(self):
+        """
+        Return the object that should be used for permission-based event queries.
+
+        Prefer `request.auth` if it exposes `get_events_with_permission`, otherwise
+        fall back to `request.user`.
+        """
+        perm_holder = getattr(self.request, "auth", None)
+        if perm_holder is not None and hasattr(perm_holder, "get_events_with_permission"):
+            return perm_holder
+        return self.request.user
+
     @cached_property
     def exporters(self):
         exporters = []
-        perm_holder = (
-            self.request.auth if hasattr(self.request.auth, 'get_events_with_permission') else self.request.user
-        )
+        perm_holder = self.get_permission_holder()
         events = (
             perm_holder
             .get_events_with_permission('can_view_orders', request=self.request)
@@ -154,9 +164,7 @@ class OrganizerExportersViewSet(ExportersMixin, viewsets.ViewSet):
         return exporters
 
     def get_serializer_kwargs(self):
-        perm_holder = (
-            self.request.auth if hasattr(self.request.auth, 'get_events_with_permission') else self.request.user
-        )
+        perm_holder = self.get_permission_holder()
         return {
             'events': perm_holder.get_events_with_permission('can_view_orders', request=self.request).filter(
                 organizer=self.request.organizer
