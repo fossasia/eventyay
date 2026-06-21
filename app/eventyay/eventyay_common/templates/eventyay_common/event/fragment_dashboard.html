@@ -32,8 +32,7 @@
                 {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees, design custom badges, and streamline event marketing by sending targeted emails." %}
             </p>
             <p>
-                {% trans "Go to" %}
-                <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
+                {% trans "Go to" %} <a href="{% url 'control:event.index' organizer=request.event.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
             </p>
         </div>
     </div>
@@ -50,7 +49,7 @@
             </p>
             {% if is_talk_event_created %}
                 <p>
-                    {% trans "Go to" %} <a href='{% url "orga:event.dashboard" event=request.event.slug %}'>{% trans "Talks Dashboard" %}</a>
+                    {% trans "Go to" %} <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}'>{% trans "Talks Dashboard" %}</a>
                 </p>
             {% else %}
                 <p>
@@ -72,7 +71,7 @@
             </p>
             <p>
                 {% trans "Go to" %}
-                <a href="{% url 'eventyay_common:event.create_access_to_video' organizer=request.organizer.slug event=request.event.slug %}" target="_blank" rel="noopener noreferrer">{% trans "Video Configuration" %}</a>
+                <a href="{% url 'eventyay_common:event.create_access_to_video' organizer=request.event.organizer.slug event=request.event.slug %}" target="_blank" rel="noopener noreferrer">{% trans "Video Configuration" %}</a>
             </p>
         </div>
     </div>
