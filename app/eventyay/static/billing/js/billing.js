@@ -113,7 +113,7 @@ $(document).ready(function () {
                 redirect: 'if_required'
             });
 
-            const csrfToken = document.cookie.match(/pretix_csrftoken=([^;]+)/)[1];
+            const csrfToken = (document.cookie.match(/eventyay_csrftoken=([^;]+)/) || [])[1];
 
             if (!organizerSlug || !result?.setupIntent?.id || !csrfToken) {
                 notification.style.display = 'block';
