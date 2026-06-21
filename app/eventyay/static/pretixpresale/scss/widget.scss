@@ -741,10 +741,15 @@ $widget-alert-danger-text: #a94442;
   .pretix-widget-item-info-col {
     width: 100%;
     float: none;
-    margin-bottom: 5px;
+    margin-bottom: 15px;
   }
-  .pretix-widget-item-price-col, .pretix-widget-item-availability-col {
+  .pretix-widget-item-price-col {
     width: 50%;
+    text-align: left;
+  }
+  .pretix-widget-item-availability-col {
+    width: 50%;
+    text-align: right;
   }
   .pretix-widget-action {
     width: 100%;
