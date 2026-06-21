@@ -66,9 +66,10 @@ urlpatterns = [
             ]
         ),
     ),
+    path('event/<slug:event>/', dashboard.legacy_orga_event_redirect, name='event.legacy'),
     path('event/', dashboard.DashboardEventListView.as_view(), name='event.list'),
     path(
-        'event/<slug:event>/',
+        'event/<orgslug:organizer>/<slug:event>/',
         include(
             [
                 path("delete", event.EventDelete.as_view(), name="event.delete"),

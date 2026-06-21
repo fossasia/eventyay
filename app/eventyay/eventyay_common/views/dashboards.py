@@ -488,7 +488,7 @@ class EventWidgetGenerator:
         Generate a talk button based on event settings.
         """
         if event.settings.create_for == EventCreatedFor.BOTH.value or event.settings.talk_schedule_public is not None:
-            talk_url = reverse('orga:event.dashboard', kwargs={'event': event.slug})
+            talk_url = reverse('orga:event.dashboard', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
             return f'<a href="{talk_url}" class="middle-component">{_("Talks")}</a>'
         return f"""
             <a href="#" data-toggle="modal" data-target="#alert-modal" class="middle-component">
