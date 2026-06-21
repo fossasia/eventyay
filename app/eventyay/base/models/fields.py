@@ -64,6 +64,7 @@ class MultiStringField(TextField):
 class MultiStringContains(builtin_lookups.Contains):
     def process_rhs(self, qn, connection):
         sql, params = super().process_rhs(qn, connection)
+        params = list(params)
         params[0] = '%' + DELIMITER + params[0][1:-1] + DELIMITER + '%'
         return sql, params
 
@@ -71,6 +72,7 @@ class MultiStringContains(builtin_lookups.Contains):
 class MultiStringIContains(builtin_lookups.IContains):
     def process_rhs(self, qn, connection):
         sql, params = super().process_rhs(qn, connection)
+        params = list(params)
         params[0] = '%' + DELIMITER + params[0][1:-1] + DELIMITER + '%'
         return sql, params
 
