@@ -712,6 +712,7 @@ def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
             .order_by('date_from')[:10]
         )
     ctx['followed_upcoming_events'] = followed_upcoming_events
+    ctx['video_permission_dialog_id'] = VIDEO_PERMISSION_DIALOG_ID
 
     return render(request, 'eventyay_common/dashboard/dashboard.html', ctx)
 
