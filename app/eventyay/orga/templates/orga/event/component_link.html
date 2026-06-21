@@ -9,7 +9,7 @@
                 <i class="fa fa-ticket"></i> {% translate "Tickets" %}
             </a>
         {% endif %}
-        <a href="{% url 'orga:event.dashboard' event=request.event.slug %}" class="header-nav btn btn-success active">
+        <a href="{% url 'orga:event.dashboard' organizer=request.event.organizer.slug event=request.event.slug %}" class="header-nav btn btn-success active">
             <i class="fa fa-group"></i> {% translate "Talks" %}
         </a>
         {% if has_video_access %}

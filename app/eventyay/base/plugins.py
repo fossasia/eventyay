@@ -28,6 +28,17 @@ class PluginType(Enum):
     EXPORT = 4
 
 
+# Module names of plugins that are currently in beta.
+# For plugins whose source cannot be edited (e.g. external git packages), add
+# their Python module name here to have the beta badge shown automatically.
+BETA_PLUGINS: frozenset[str] = frozenset(
+    [
+        'socialmedia',
+        'teamshifts',
+    ]
+)
+
+
 def get_all_plugins(event=None) -> List[type]:
     """
     Returns the EventyayPluginMeta classes of all plugins found in the installed Django apps.
@@ -45,6 +56,11 @@ def get_all_plugins(event=None) -> List[type]:
             if hasattr(app, 'is_available') and event:
                 if not app.is_available(event):
                     continue
+
+            # Annotate beta flag: the plugin's own meta may set beta=True,
+            # or it may be listed in BETA_PLUGINS for external packages.
+            if not getattr(meta, 'beta', False):
+                meta.beta = app.name in BETA_PLUGINS
 
             plugins.append(meta)
     return sorted(
