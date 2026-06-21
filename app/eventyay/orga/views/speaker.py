@@ -294,7 +294,7 @@ class SpeakerPasswordReset(SpeakerViewMixin, ActionConfirmMixin, DetailView):
 class SpeakerToggleArrived(SpeakerViewMixin, View):
     permission_required = 'base.update_speakerprofile'
 
-    def dispatch(self, request, event, code):
+    def post(self, request, *args, **kwargs):
         self.profile.has_arrived = not self.profile.has_arrived
         self.profile.save()
         action = 'eventyay.speaker.arrived' if self.profile.has_arrived else 'eventyay.speaker.unarrived'
@@ -307,6 +307,9 @@ class SpeakerToggleArrived(SpeakerViewMixin, View):
         if url := self.request.GET.get('next'):
             if url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
                 return redirect(url)
+        return redirect(self.profile.orga_urls.base)
+
+    def get(self, request, *args, **kwargs):
         return redirect(self.profile.orga_urls.base)
 
 
