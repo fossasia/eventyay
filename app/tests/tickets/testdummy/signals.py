@@ -1,7 +1,7 @@
 from django.dispatch import receiver
 
-from pretix.base.channels import SalesChannel
-from pretix.base.signals import (
+from eventyay.base.channels import SalesChannel
+from eventyay.base.signals import (
     register_payment_providers,
     register_sales_channels,
     register_ticket_outputs,

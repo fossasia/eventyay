@@ -92,15 +92,7 @@
                                 <i class="fa fa-caret-down"></i>
                             </a>
                         </th>
-                        <th>
-                            {% translate "Check in Status" %}
-                            <a href="?{% url_replace request 'ordering' 'check_in_status' %}">
-                                <i class="fa fa-caret-up"></i>
-                            </a>
-                            <a href="?{% url_replace request 'ordering' '-check_in_status' %}">
-                                <i class="fa fa-caret-down"></i>
-                            </a>
-                        </th>
+                        <th>{% translate "Check in Status" %}</th>
                     </tr>
                 </thead>
 

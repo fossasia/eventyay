@@ -55,12 +55,50 @@ class MultiDomainMiddleware:
         if resolved.url_name in ANY_DOMAIN_ALLOWED or request.path_info.startswith('/api/'):
             return None
         event_slug = resolved.kwargs.get('event')
+        organizer_slug = resolved.kwargs.get('organizer')
         if event_slug:
             try:
-                event = Event.objects.get(slug__iexact=event_slug)
+                if organizer_slug:
+                    event = Event.objects.get(
+                        slug__iexact=event_slug,
+                        organizer__slug__iexact=organizer_slug,
+                    )
+                else:
+                    event = Event.objects.get(slug__iexact=event_slug)
+            except Event.MultipleObjectsReturned:
+                if organizer_slug:
+                    event = Event.objects.filter(
+                        slug__iexact=event_slug,
+                        organizer__slug__iexact=organizer_slug,
+                    ).first()
+                else:
+                    if request.path.startswith('/orga'):
+                        if resolved.url_name == 'event.legacy':
+                            return None
+                        raise Http404()
+                    event = Event.objects.filter(slug__iexact=event_slug).first()
             except (Event.DoesNotExist, ValueError):
                 # A ValueError can happen if the event slug contains malicious input
                 # like NUL bytes. We return a 404 here to avoid leaking information.
+                if request.path.startswith('/orga/event/') and organizer_slug:
+                    legacy_events = Event.objects.filter(slug__iexact=organizer_slug)
+                    if legacy_events.count() == 1:
+                        e = legacy_events.first()
+                        new_path = request.path.replace(f'/orga/event/{organizer_slug}/', f'/orga/event/{e.organizer.slug}/{e.slug}/', 1)
+                        if request.META.get('QUERY_STRING'):
+                            new_path += '?' + request.META['QUERY_STRING']
+                        return redirect(new_path, permanent=True)
+                    elif legacy_events.count() > 1 and request.user.is_authenticated:
+                        user_events = legacy_events.filter(
+                            Q(organizer__id__in=request.user.teams.values_list('organizer_id', flat=True)) |
+                            Q(submissions__speakers__in=[request.user])
+                        ).distinct()
+                        if user_events.count() == 1:
+                            e = user_events.first()
+                            new_path = request.path.replace(f'/orga/event/{organizer_slug}/', f'/orga/event/{e.organizer.slug}/{e.slug}/', 1)
+                            if request.META.get('QUERY_STRING'):
+                                new_path += '?' + request.META['QUERY_STRING']
+                            return redirect(new_path, permanent=True)
                 raise Http404()
             request.event = event
             if event.custom_domain:

@@ -46,6 +46,7 @@ from eventyay.orga.forms.event import (
 from eventyay.orga.forms.importers import CSVImportForm
 from eventyay.orga.forms.schedule import ScheduleExportForm
 from eventyay.orga.forms.speaker import SpeakerExportForm
+from eventyay.orga.forms.review import ReviewExportForm
 from eventyay.person.forms import UserForm
 from eventyay.base.models import ReviewPhase, ReviewScoreCategory, User
 from eventyay.agenda.views.utils import get_schedule_exporters
@@ -596,10 +597,21 @@ class TargetChoice(models.TextChoices):
         return {target: config for target, config in cls.import_target_items()}
 
 
+class ExportTargetChoice(models.TextChoices):
+    SPEAKER = 'speaker', _('Speakers')
+    SCHEDULE = 'session', _('Schedule')
+    REVIEW = 'review', _('Reviews')
+
+    @classmethod
+    def export_choices(cls):
+        return tuple((target, target.label) for target in cls)
+
+
 class ImportExportSettings(EventSettingsPermission, TemplateView):
     template_name = 'orga/settings/import_export.html'
     import_choices = TargetChoice.import_choices()
     import_targets = TargetChoice.import_targets()
+    export_choices = ExportTargetChoice.export_choices()
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
@@ -610,8 +622,9 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         }
         result['active_tab'] = kwargs.get('active_tab')
         result['import_choices'] = self.import_choices
+        result['export_choices'] = self.export_choices
         result['import_target'] = kwargs.get('import_target') or self.request.GET.get('import_target') or TargetChoice.SPEAKER
-        result['export_target'] = kwargs.get('export_target') or self.request.GET.get('export_target') or TargetChoice.SPEAKER
+        result['export_target'] = kwargs.get('export_target') or self.request.GET.get('export_target') or ExportTargetChoice.SPEAKER
         result['import_form'] = kwargs.get('import_form') or CSVImportForm()
         result['speaker_export_form'] = kwargs.get('speaker_export_form') or SpeakerExportForm(
             event=self.request.event,
@@ -620,6 +633,11 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         result['session_export_form'] = kwargs.get('session_export_form') or ScheduleExportForm(
             event=self.request.event,
             prefix='session',
+        )
+        result['review_export_form'] = kwargs.get('review_export_form') or ReviewExportForm(
+            event=self.request.event,
+            user=self.request.user,
+            prefix='review',
         )
         all_exporters = get_schedule_exporters(self.request)
         result['speaker_exporters'] = [e for e in all_exporters if e.group == 'speaker']
@@ -681,54 +699,54 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         cached_file.file.save(import_filename, import_form.cleaned_data['file'])
         process_url = reverse(
             target_config['process_url_name'],
-            kwargs={'event': self.request.event.slug, 'file': cached_file.id},
+            kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug, 'file': cached_file.id},
         )
         return redirect(process_url)
 
     def handle_export(self):
-        export_target = self.request.POST.get('export_target', TargetChoice.SPEAKER)
+        export_target = self.request.POST.get('export_target', ExportTargetChoice.SPEAKER)
 
         try:
-            target = TargetChoice(export_target)
+            target = ExportTargetChoice(export_target)
         except ValueError:
-            messages.error(self.request, _('Please choose whether to export speakers or schedule.'))
-            context = self.get_context_data(export_target=TargetChoice.SPEAKER, active_tab='export')
+            messages.error(self.request, _('Please choose a valid export target.'))
+            context = self.get_context_data(export_target=ExportTargetChoice.SPEAKER, active_tab='export')
             return self.render_to_response(context, status=400)
 
-        if target == TargetChoice.SPEAKER:
-            speaker_export_form = SpeakerExportForm(
-                self.request.POST,
-                event=self.request.event,
-                prefix='speaker',
+        speaker_kwargs = {'event': self.request.event, 'prefix': 'speaker'}
+        session_kwargs = {'event': self.request.event, 'prefix': 'session'}
+        review_kwargs = {'event': self.request.event, 'user': self.request.user, 'prefix': 'review'}
+
+        if target == ExportTargetChoice.SPEAKER:
+            speaker_kwargs['data'] = self.request.POST
+        elif target == ExportTargetChoice.SCHEDULE:
+            session_kwargs['data'] = self.request.POST
+        else:  # ExportTargetChoice.REVIEW
+            review_kwargs['data'] = self.request.POST
+
+        speaker_export_form = SpeakerExportForm(**speaker_kwargs)
+        session_export_form = ScheduleExportForm(**session_kwargs)
+        review_export_form = ReviewExportForm(**review_kwargs)
+
+        active_form = {
+            ExportTargetChoice.SPEAKER: speaker_export_form,
+            ExportTargetChoice.SCHEDULE: session_export_form,
+            ExportTargetChoice.REVIEW: review_export_form,
+        }[target]
+
+        if not active_form.is_valid():
+            context = self.get_context_data(
+                export_target=target,
+                speaker_export_form=speaker_export_form,
+                session_export_form=session_export_form,
+                review_export_form=review_export_form,
+                active_tab='export',
             )
-            session_export_form = ScheduleExportForm(event=self.request.event, prefix='session')
-            if not speaker_export_form.is_valid():
-                context = self.get_context_data(
-                    export_target=target,
-                    speaker_export_form=speaker_export_form,
-                    session_export_form=session_export_form,
-                    active_tab='export',
-                )
-                return self.render_to_response(context, status=400)
-            result = speaker_export_form.export_data()
-        else:  # TargetChoice.SCHEDULE
-            speaker_export_form = SpeakerExportForm(event=self.request.event, prefix='speaker')
-            session_export_form = ScheduleExportForm(
-                self.request.POST,
-                event=self.request.event,
-                prefix='session',
-            )
-            if not session_export_form.is_valid():
-                context = self.get_context_data(
-                    export_target=target,
-                    speaker_export_form=speaker_export_form,
-                    session_export_form=session_export_form,
-                    active_tab='export',
-                )
-                return self.render_to_response(context, status=400)
-            result = session_export_form.export_data()
+            return self.render_to_response(context, status=400)
+
+        result = active_form.export_data()
 
         if not result:
-            messages.success(self.request, _('No data to be exported'))
+            messages.warning(self.request, _('No data to be exported'))
             return redirect(f'{self.request.path}?export_target={target.value}#tab-export')
         return result

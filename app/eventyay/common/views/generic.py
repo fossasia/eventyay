@@ -494,6 +494,7 @@ class OrgaCRUDView(CRUDView):
     def get_reverse_kwargs(self, *args, **kwargs):
         result = super().get_reverse_kwargs(*args, **kwargs)
         if self.event:
+            result['organizer'] = self.event.organizer.slug
             result['event'] = self.event.slug
         elif self.organizer:
             result['organizer'] = self.organizer.slug
