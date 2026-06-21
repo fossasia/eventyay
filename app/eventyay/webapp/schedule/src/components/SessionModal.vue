@@ -60,7 +60,9 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 							hr
 							h4 {{ t.downloads }}
 							a.download(v-for="{resource, description} of displayResources", :href="resource", target="_blank")
-								.mdi(:class="`mdi-${getIconByFileEnding(resource)}`")
+								svg.download-icon(viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; flex-shrink: 0; opacity: 0.7;")
+									path(d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71")
+									path(d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71")
 								.filename {{ description }}
 						a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="$emit('joinRoom', $event)") {{ t.join_room }}
 			.speakers(v-if="modalContent.contentObject.speakers")
@@ -169,7 +171,18 @@ export default {
 		displayResources() {
 			const obj = this.modalContent?.contentObject
 			if (!obj) return []
-			return obj.apiContent?.resources ?? obj.resources ?? []
+			const resources = obj.apiContent?.resources ?? obj.resources ?? []
+			return resources.map(r => {
+				const resPath = r.resource || r.link
+				if (resPath && resPath.toLowerCase().endsWith('.pdf')) {
+					return {
+						...r,
+						resource: r.resource ? `${r.resource}#resource` : undefined,
+						link: r.link ? `${r.link}#resource` : undefined
+					}
+				}
+				return r
+			})
 		},
 		talkQrcodesUrl() {
 			const id = this.modalContent?.contentObject?.id
@@ -337,11 +350,17 @@ export default {
 					font-size: 14px
 					text-decoration: none
 					color: var(--pretalx-clr-text)
+					transition: color 0.2s ease
 					&:hover
-						text-decoration: underline
-					.mdi
-						font-size: 24px
-						margin-right: 4px
+						color: var(--pretalx-clr-primary)
+						.download-icon
+							opacity: 1
+							color: var(--pretalx-clr-primary)
+					.download-icon
+						margin-right: 6px
+						flex-shrink: 0
+						opacity: 0.7
+						transition: opacity 0.2s ease, color 0.2s ease
 					.filename
 						flex: 1
 			.join-room-btn

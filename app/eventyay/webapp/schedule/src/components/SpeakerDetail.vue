@@ -355,7 +355,7 @@ export default {
 			.field-content
 				font-size: 16px
 	.answer-link
-		color: var(--clr-primary)
+		color: var(--pretalx-clr-primary, var(--clr-primary))
 		text-decoration: none
 		word-break: break-all
 		&:hover

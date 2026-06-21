@@ -35,11 +35,6 @@
 					h2.field-heading {{ answer.question }}
 					.field-content
 						markdown-content(:markdown="answer.answer")
-			.downloads(v-if="displayResources.length > 0")
-				h2 {{ t.downloads }}
-				a.download(v-for="{resource, link, description} of displayResources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
-					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
-					.filename {{ description }}
 			.video-stream(v-if="resolvedTalk.stream_url && computedJoinRoomLink && isLive")
 				a.view-video-btn(:href="computedJoinRoomLink")
 					svg(viewBox="0 0 24 24", width="18", height="18", fill="currentColor")
@@ -47,6 +42,20 @@
 					span {{ t.view_video }}
 			slot(name="actions")
 				a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="onJoinRoomClick") {{ t.join_room }}
+		.downloads(v-if="displayResources.length > 0")
+			.header {{ t.downloads }}
+			a.download(v-for="{resource, link, description} of displayResources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
+				.icon-container
+					svg.download-icon(viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+						path(d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71")
+						path(d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71")
+				.filename-container
+					.filename {{ description }}
+					.file-meta {{ getFileExtensionLabel(resource || link) }}
+				svg.download-action-icon(viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+					path(d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4")
+					polyline(points="7 10 12 15 17 10")
+					line(x1="12" y1="15" x2="12" y2="3")
 		.speakers(v-if="resolvedTalk.speakers && resolvedTalk.speakers.length > 0")
 			.header {{ t.speakers }} ({{ resolvedTalk.speakers.length }})
 			.speakers-list
@@ -165,9 +174,10 @@ export default {
 	},
 	computed: {
 		talkQrcodesUrl() {
-			if (!this.baseUrl || !this.resolvedTalk?.id) return ''
+			if (!this.baseUrl || !this.resolvedTalk) return ''
+			const code = this.resolvedTalk.code || this.resolvedTalk.id || this.talkId
 			const base = this.baseUrl.replace(/\/?$/, '/')
-			return `${base}schedule/widgets/qrcodes/talk/${this.resolvedTalk.id}.json`
+			return `${base}schedule/widgets/qrcodes/talk/${code}.json`
 		},
 		t() {
 			const m = this.translationMessages || {}
@@ -227,7 +237,7 @@ export default {
 				if (lu && lu[this.talkId]) return lu[this.talkId]
 				const sessions = this.scheduleData.sessions || []
 				for (let i = 0; i < sessions.length; i++) {
-					if (sessions[i].id === this.talkId) return sessions[i]
+					if (sessions[i].code === this.talkId || sessions[i].id === this.talkId) return sessions[i]
 				}
 				return null
 			}
@@ -241,9 +251,10 @@ export default {
 		isFaved() {
 			if (!this.resolvedTalk) return false
 			const favSet = this.scheduleData?.favSet
-			if (favSet && typeof favSet.has === 'function') return favSet.has(this.resolvedTalk.id)
+			const favId = this.resolvedTalk.code || this.resolvedTalk.id || this.talkId
+			if (favSet && typeof favSet.has === 'function') return favSet.has(favId)
 			const favs = this.scheduleData?.favs || []
-			return favs.includes(this.resolvedTalk.id)
+			return favs.includes(favId)
 		},
 		datetime() {
 			if (!this.resolvedTalk) return ''
@@ -300,11 +311,26 @@ export default {
 			return answers.filter((answer) => (answer.question || '').trim().toLowerCase() !== downloadsLabel)
 		},
 		displayResources() {
-			return this.effectiveApiContent?.resources ?? this.resolvedTalk?.resources ?? []
+			const resources = this.effectiveApiContent?.resources ?? this.resolvedTalk?.resources ?? []
+			return resources.map(r => {
+				const resPath = r.resource || r.link
+				if (resPath) {
+					const cleanPath = resPath.split(/[?#]/)[0]
+					if (cleanPath.toLowerCase().endsWith('.pdf') && !resPath.includes('#')) {
+						return {
+							...r,
+							resource: r.resource ? `${r.resource}#resource` : undefined,
+							link: r.link ? `${r.link}#resource` : undefined
+						}
+					}
+				}
+				return r
+			})
 		},
 		talkExportOptions() {
+			const code = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
 			const exporters = this.resolvedTalk?.exporters ||
-				(this.baseUrl && this.resolvedTalk?.id ? computeTalkExporters(this.baseUrl, this.resolvedTalk.id) : null)
+				(this.baseUrl && code ? computeTalkExporters(this.baseUrl, code) : null)
 			return buildExportMenuItems(exporters)
 		}
 	},
@@ -338,15 +364,16 @@ export default {
 			this.onStarrerLinkClick(event, user)
 		},
 		getStarrersUrl({ limit } = {}) {
-			if (!this.baseUrl || !this.resolvedTalk?.id) return ''
+			const code = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
+			if (!this.baseUrl || !code) return ''
 			try {
-				const url = new URL(`talk/${this.resolvedTalk.id}/starrers.json`, this.baseUrl)
+				const url = new URL(`talk/${code}/starrers.json`, this.baseUrl)
 				if (typeof limit === 'number') url.searchParams.set('limit', String(limit))
 				return url.href
 			} catch {
 				const base = this.baseUrl.replace(/\/$/, '')
-				if (typeof limit !== 'number') return `${base}/talk/${this.resolvedTalk.id}/starrers.json`
-				return `${base}/talk/${this.resolvedTalk.id}/starrers.json?limit=${encodeURIComponent(String(limit))}`
+				if (typeof limit !== 'number') return `${base}/talk/${code}/starrers.json`
+				return `${base}/talk/${code}/starrers.json?limit=${encodeURIComponent(String(limit))}`
 			}
 		},
 		async loadStarrers({ limit } = {}) {
@@ -387,6 +414,16 @@ export default {
 				return resource
 			}
 		},
+		getFileExtensionLabel(path) {
+			if (!path) return 'Resource'
+			if (/^https?:\/\//i.test(path) && !/\.[a-z0-9]+$/i.test(path)) {
+				return 'External Link'
+			}
+			const parts = path.split(/[#?]/)[0].split('.')
+			if (parts.length < 2) return 'Resource'
+			const ext = parts[parts.length - 1].toUpperCase()
+			return `${ext} Document`
+		},
 		getSpeakerLink(speaker) {
 			return this.generateSpeakerLinkUrl({speaker})
 		},
@@ -399,10 +436,11 @@ export default {
 		async toggleFav() {
 			if (!this.loggedIn) return
 			if (!this.resolvedTalk) return
+			const favId = this.resolvedTalk.code || this.resolvedTalk.id || this.talkId
 			if (this.isFaved) {
-				await this.scheduleUnfav(this.resolvedTalk.id)
+				await this.scheduleUnfav(favId)
 			} else {
-				await this.scheduleFav(this.resolvedTalk.id)
+				await this.scheduleFav(favId)
 			}
 			await this.loadStarrers({ limit: this.starrersExpanded ? 0 : this.inlineStarrersLimit })
 		},
@@ -412,7 +450,7 @@ export default {
 				this.apiContentLoaded = true
 				return
 			}
-			const id = this.resolvedTalk?.id || this.talkId
+			const id = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
 			if (!id) {
 				this.apiContentLoaded = true
 				return
@@ -487,7 +525,7 @@ export default {
 					font-size: 16px
 					font-weight: 600
 		.answer-link
-			color: var(--clr-primary)
+			color: var(--pretalx-clr-primary, var(--clr-primary))
 			text-decoration: none
 			word-break: break-all
 			&:hover
@@ -516,7 +554,7 @@ export default {
 			font-weight: 600
 			text-decoration: none
 			color: $clr-white
-			background-color: var(--clr-primary)
+			background-color: var(--pretalx-clr-primary, var(--clr-primary))
 			&:hover
 				opacity: 0.9
 	.starrers
@@ -537,7 +575,7 @@ export default {
 				background: transparent
 				padding: 0
 				font: inherit
-				color: var(--clr-primary)
+				color: var(--pretalx-clr-primary, var(--clr-primary))
 				cursor: pointer
 				text-decoration: underline
 				font-weight: 600
@@ -597,7 +635,7 @@ export default {
 					&:hover
 						.name
 							text-decoration: underline
-							color: var(--clr-primary)
+							color: var(--pretalx-clr-primary, var(--clr-primary))
 					.avatar-circle
 						border-radius: 50%
 						height: 32px
@@ -636,7 +674,7 @@ export default {
 				color: $clr-primary-text-light
 				&:hover
 					.name
-						color: var(--clr-primary)
+						color: var(--pretalx-clr-primary, var(--clr-primary))
 						text-decoration: underline
 			.avatar-circle
 				border-radius: 50%
@@ -663,30 +701,77 @@ export default {
 		display: flex
 		flex-direction: column
 		border: border-separator()
-		border-radius: 4px
+		border-radius: 6px
+		background-color: $clr-white
+		overflow: hidden
 		.header
 			border-bottom: border-separator()
-			padding: 8px
+			padding: 10px 12px
+			font-weight: 600
+			font-size: 16px
+			color: $clr-primary-text-light
+			background-color: $clr-grey-50
 		.download
 			display: flex
 			align-items: center
-			gap: 8px
-			padding: 8px
+			gap: 12px
+			padding: 12px
 			text-decoration: none
 			color: $clr-primary-text-light
 			border-top: border-separator()
+			transition: background-color 0.2s ease, transform 0.15s ease
 			&:first-child
 				border-top: none
 			&:hover
-				background-color: $clr-grey-100
+				background-color: unquote("color-mix(in srgb, var(--pretalx-clr-primary) 8%, transparent)")
+				.icon-container
+					background-color: var(--pretalx-clr-primary)
+					color: $clr-white
 				.filename
-					text-decoration: underline
-					color: var(--clr-primary)
-			.mdi
-				font-size: 24px
+					color: var(--pretalx-clr-primary)
+					text-decoration: none
+				.download-action-icon
+					opacity: 1
+					color: var(--pretalx-clr-primary)
+			.icon-container
+				display: flex
+				align-items: center
+				justify-content: center
+				width: 36px
+				height: 36px
+				border-radius: 50%
+				background-color: $clr-grey-100
+				color: $clr-secondary-text-light
+				transition: background-color 0.2s ease, color 0.2s ease
 				flex-shrink: 0
-			.filename
-				font-weight: 600
+				.mdi
+					font-size: 20px
+					line-height: 1
+			.filename-container
+				flex: 1
+				min-width: 0
+				display: flex
+				flex-direction: column
+				gap: 2px
+				.filename
+					font-weight: 600
+					font-size: 14px
+					overflow: hidden
+					text-overflow: ellipsis
+					white-space: nowrap
+					transition: color 0.2s ease
+				.file-meta
+					font-size: 11px
+					color: $clr-secondary-text-light
+			.download-action-icon
+				color: $clr-grey-400
+				font-size: 20px
+				margin-left: auto
+				display: flex
+				align-items: center
+				justify-content: center
+				opacity: 0
+				transition: opacity 0.2s ease, color 0.2s ease
 	@media (max-width: 768px)
 		.speakers
 			margin: 0 16px 16px
