@@ -60,6 +60,7 @@ from ..permissions import (
     filter_timeline_entry_for_ticket_access,
     get_cached_event_dashboard_access,
     user_has_ticket_dashboard_access,
+    user_has_video_dashboard_access,
 )
 from ..utils import EventCreatedFor, get_subevent
 
@@ -72,6 +73,7 @@ SHOP_STATE_WIDGET_KEY = 'shop_state'
 # ``key='shop_state'`` on their dashboard widget payload (see shop_state_widget).
 EVENT_SETTINGS_PERMISSION_DIALOG_ID = 'event-settings-permission-dialog'
 TICKET_PERMISSION_DIALOG_ID = 'ticket-permission-dialog'
+VIDEO_PERMISSION_DIALOG_ID = 'video-permission-dialog'
 
 
 def _sanitize_widget_content_for_permission_dialog(content: str) -> str:
@@ -461,13 +463,13 @@ class EventWidgetGenerator:
     @staticmethod
     def generate_video_button(event: Event, request: HttpRequest) -> str:
         """
-        Generate a video button based on the user's ticket permissions.
+        Generate a video button based on the user's video permissions.
         The access view will ensure configuration and plugin setup as needed.
         """
-        has_ticket_access = user_has_ticket_dashboard_access(
+        has_video_access = user_has_video_dashboard_access(
             request.user, event.organizer, event, request=request
         )
-        if has_ticket_access:
+        if has_video_access:
             url = reverse(
                 'eventyay_common:event.create_access_to_video',
                 kwargs={'event': event.slug, 'organizer': event.organizer.slug},
@@ -477,8 +479,8 @@ class EventWidgetGenerator:
         return format_html(
             '<button type="button" class="component" aria-haspopup="dialog" '
             'aria-controls="{}" data-dialog-target="#{}" data-toggle="dialog">{}</button>',
-            TICKET_PERMISSION_DIALOG_ID,
-            TICKET_PERMISSION_DIALOG_ID,
+            VIDEO_PERMISSION_DIALOG_ID,
+            VIDEO_PERMISSION_DIALOG_ID,
             _('Video'),
         )
 
@@ -710,6 +712,7 @@ def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
             .order_by('date_from')[:10]
         )
     ctx['followed_upcoming_events'] = followed_upcoming_events
+    ctx['video_permission_dialog_id'] = VIDEO_PERMISSION_DIALOG_ID
 
     return render(request, 'eventyay_common/dashboard/dashboard.html', ctx)
 
