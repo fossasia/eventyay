@@ -687,6 +687,7 @@ class EventUpdate(
             (
                 form.has_changed(),
                 self.sform.has_changed(),
+                self.email_form.has_changed(),
                 self.header_links_formset.has_changed(),
                 self.footer_links_formset.has_changed(),
             )
