@@ -14,6 +14,7 @@
 					:showFavCount="showFavCount",
 					:faved="session.id && favSet.has(session.id)",
 					:onHomeServer="onHomeServer",
+					:showDate="showsMultiDay",
 					@fav="$emit('fav', session.id)",
 					@unfav="$emit('unfav', session.id)"
 				)
@@ -86,6 +87,9 @@ export default {
 		},
 		favSet () {
 			return new Set(this.favs || [])
+		},
+		showsMultiDay () {
+			return !this.includeDateSortKey
 		},
 		/** First session bucket per calendar day (for toolbar day jump without scanning all buckets). */
 		bucketFirstByDay () {
