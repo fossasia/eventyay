@@ -113,6 +113,8 @@ class SpeakerProfileForm(
 
         if not self.add_additional_speaker and 'additional_speaker' in self.fields:
             self.fields.pop('additional_speaker')
+        if 'additional_speaker' in self.fields:
+            self._update_cfp_texts('additional_speaker')
 
         if self.user:
             initial.update({field: getattr(self.user, field) for field in self.user_fields})

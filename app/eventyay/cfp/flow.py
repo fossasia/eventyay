@@ -586,11 +586,12 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         form.save()
 
         additional_speaker = (form.cleaned_data.get('additional_speaker') or '').strip()
-        if not draft and additional_speaker and hasattr(request, 'submission'):
+        submission = getattr(request, 'submission', None)
+        if not draft and additional_speaker and submission:
             try:
-                request.submission.send_invite(to=[additional_speaker], _from=request.user)
+                submission.send_invite(to=[additional_speaker], _from=request.user)
             except SendMailException as exception:
-                logging.getLogger('').warning(str(exception))
+                logger.warning('Failed to send co-speaker invite email: %s', exception)
                 messages.warning(request, phrases.cfp.submission_email_fail)
 
     @property
