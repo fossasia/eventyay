@@ -297,6 +297,7 @@ _LIBRARY_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'django.contrib.postgres',
     'django_filters',
     'django_otp',
     'django_otp.plugins.otp_totp',
