@@ -145,15 +145,22 @@ class OrganizerExportersViewSet(ExportersMixin, viewsets.ViewSet):
             return perm_holder
         return self.request.user
 
+    def get_events_queryset(self):
+        """
+        Return the queryset of events the current permission holder is allowed to
+        view orders for, limited to the current request's organizer.
+        """
+        perm_holder = self.get_permission_holder()
+        return (
+            perm_holder
+            .get_events_with_permission("can_view_orders", request=self.request)
+            .filter(organizer=self.request.organizer)
+        )
+
     @cached_property
     def exporters(self):
         exporters = []
-        perm_holder = self.get_permission_holder()
-        events = (
-            perm_holder
-            .get_events_with_permission('can_view_orders', request=self.request)
-            .filter(organizer=self.request.organizer)
-        )
+        events = self.get_events_queryset()
         responses = register_multievent_data_exporters.send(self.request.organizer)
         for ex in sorted(
             [response(events) for r, response in responses if response],
@@ -164,11 +171,8 @@ class OrganizerExportersViewSet(ExportersMixin, viewsets.ViewSet):
         return exporters
 
     def get_serializer_kwargs(self):
-        perm_holder = self.get_permission_holder()
         return {
-            'events': perm_holder.get_events_with_permission('can_view_orders', request=self.request).filter(
-                organizer=self.request.organizer
-            )
+            'events': self.get_events_queryset()
         }
 
     def do_export(self, cf, instance, data):
