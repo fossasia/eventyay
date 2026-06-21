@@ -19,20 +19,20 @@
             <h1>{{ request.event.name|event_localize }} {% trans "- Settings" %}</h1>
         </div>
         <div class="navigation-button">
-            <a href="{% url 'eventyay_common:event.index' organizer=request.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
+            <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
                 <i class="fa fa-home"></i> {% trans "Home" %}
             </a>
-            <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
+            <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}'
                 class="header-nav btn btn-outline-success">
                 <i class="fa fa-ticket"></i> {% trans "Tickets" %}
             </a>
             {% if is_talk_event_created %}
-            <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
+            <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
                 <i class="fa fa-group"></i> {% trans "Talks" %}
             </a>
             {% endif %}
             <a class="header-nav btn btn-outline-success"
-                href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
+                href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'
                 title="{% trans 'Access videos related to this event' %}">
                 <i class="fa fa-video-camera"></i> {% trans "Videos" %}
             </a>
@@ -98,11 +98,11 @@
                             data-target="#alert-modal-disabled">
                             {% trans "Enabled" %}
                         </button>
-                        <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
+                        <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}'
                             class="btn btn-sm btn-default" title='{% trans "Dashboard" %}' data-toggle="tooltip">
                             <span class="fa fa-dashboard"></span>
                         </a>
-                        <a href='{% url "control:event.settings" organizer=request.organizer.slug event=request.event.slug %}'
+                        <a href='{% url "control:event.settings" organizer=request.event.organizer.slug event=request.event.slug %}'
                             class="btn btn-sm btn-default" title='{% trans "Setting" %}' data-toggle="tooltip">
                             <span class="fa fa-edit"></span>
                         </a>
@@ -116,11 +116,11 @@
                             data-target="#alert-modal-disabled">
                             {% trans "Enabled" %}
                         </button>
-                        <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="btn btn-sm btn-default"
+                        <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}' class="btn btn-sm btn-default"
                             title='{% trans "Dashboard" %}' data-toggle="tooltip">
                             <span class="fa fa-dashboard"></span>
                         </a>
-                        <a href='{% url "orga:settings.event.view" event=request.event.slug %}' class="btn btn-sm btn-default"
+                        <a href='{% url "orga:settings.event.view" organizer=request.event.organizer.slug event=request.event.slug %}' class="btn btn-sm btn-default"
                             title='{% trans "Settings" %}' data-toggle="tooltip">
                             <span class="fa fa-edit"></span>
                         </a>
@@ -140,7 +140,7 @@
                             data-target="#alert-modal-disabled">
                             {% trans "Enabled" %}
                         </button>
-                        <a href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
+                        <a href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'
                             class="btn btn-sm btn-default" title='{% trans "Video Configuration" %}'
                             data-toggle="tooltip">
                             <span class="fa fa-edit"></span>

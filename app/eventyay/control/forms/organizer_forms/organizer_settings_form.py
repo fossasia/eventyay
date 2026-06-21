@@ -49,9 +49,3 @@ class OrganizerSettingsForm(SettingsForm):
         ),
     )
 
-    def clean(self):
-        data = super().clean()
-        from eventyay.base.settings import validate_organizer_settings
-        validate_organizer_settings(self.obj, data)
-        return data
-
