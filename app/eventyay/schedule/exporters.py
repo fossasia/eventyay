@@ -15,6 +15,7 @@ from django.utils.safestring import SafeString
 from django.utils.translation import gettext_lazy as _
 from i18nfield.utils import I18nJSONEncoder
 
+from eventyay.agenda.export_resources import frab_public_resource_attachments, frab_public_resource_links
 from eventyay import __version__
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.submission import Submission
@@ -326,7 +327,6 @@ class FrabJsonExporter(ScheduleData):
         }
 
     def serialize_talk(self, talk, room):
-        resources = list(talk.submission.resources.all())
         persons = []
         for person in talk.submission.speakers.all():
             profile = self.get_speaker_profile(person)
@@ -362,26 +362,10 @@ class FrabJsonExporter(ScheduleData):
             'recording_license': '',
             'do_not_record': talk.submission.do_not_record,
             'persons': persons,
-            'links': [
-                {
-                    'title': localize_event_text(resource.description),
-                    'url': resource.link,
-                    'type': 'related',
-                }
-                for resource in resources
-                if resource.link
-            ],
+            'links': frab_public_resource_links(talk.submission, self.event),
             'feedback_url': talk.submission.urls.feedback.full(),
             'origin_url': talk.submission.urls.public.full(),
-            'attachments': [
-                {
-                    'title': localize_event_text(resource.description),
-                    'url': resource.resource.url,
-                    'type': 'related',
-                }
-                for resource in resources
-                if not resource.link
-            ],
+            'attachments': frab_public_resource_attachments(talk.submission, self.event),
         }
 
     def render(self, **kwargs):

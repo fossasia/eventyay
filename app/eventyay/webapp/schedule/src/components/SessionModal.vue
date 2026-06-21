@@ -129,7 +129,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 </template>
 
 <script>
-import { getLocalizedString, getSessionTime, getIconByFileEnding, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer } from '../utils'
+import { getLocalizedString, getSessionTime, getIconByFileEnding, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl } from '../utils'
 import { renderEventyayRichText } from '../utils/eventyayRichText'
 import FavButton from './FavButton.vue'
 import Session from './Session.vue'
@@ -186,15 +186,11 @@ export default {
 		},
 		talkQrcodesUrl() {
 			const id = this.modalContent?.contentObject?.id
-			if (!this.eventUrl || !id) return ''
-			const base = this.eventUrl.replace(/\/?$/, '/')
-			return `${base}schedule/widgets/qrcodes/talk/${id}.json`
+			return buildQrcodesUrl(this.eventUrl, 'talk', id)
 		},
 		speakerQrcodesUrl() {
 			const code = this.modalContent?.contentObject?.code
-			if (!this.eventUrl || !code) return ''
-			const base = this.eventUrl.replace(/\/?$/, '/')
-			return `${base}schedule/widgets/qrcodes/speaker/${code}.json`
+			return buildQrcodesUrl(this.eventUrl, 'speaker', code)
 		},
 		favSet () {
 			return new Set(this.favs || [])

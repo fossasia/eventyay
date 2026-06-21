@@ -1,7 +1,9 @@
 <template lang="pug">
 .c-speaker-detail
-	detail-back-nav(:event-url="eventUrl", destination="speakers")
-		export-dropdown.speaker-export(v-if="speakerExportOptions.length || isWipPreview", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl", :disabled="isWipPreview")
+	detail-back-nav(destination="speakers")
+		detail-top-actions(
+			:export-options="speakerExportOptions",
+			:qrcodes-url="speakerQrcodesUrl")
 	.speaker-wrapper(v-if="speakerDetailReady")
 		.speaker-header
 			.speaker-avatar
@@ -48,15 +50,15 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer } from '../utils'
+import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
 import Session from './Session.vue'
-import ExportDropdown from './ExportDropdown.vue'
 import DetailBackNav from './DetailBackNav.vue'
+import DetailTopActions from './DetailTopActions.vue'
 
 export default {
 	name: 'SpeakerDetail',
-	components: { MarkdownContent, Session, ExportDropdown, DetailBackNav },
+	components: { MarkdownContent, Session, DetailBackNav, DetailTopActions },
 	inject: {
 		eventUrl: { default: null },
 		remoteApiUrl: { default: '' },
@@ -108,9 +110,7 @@ export default {
 	computed: {
 		speakerQrcodesUrl() {
 			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code
-			if (!code || !this.eventUrl) return ''
-			const base = this.eventUrl.replace(/\/?$/, '/')
-			return `${base}schedule/widgets/qrcodes/speaker/${code}.json`
+			return buildQrcodesUrl(this.eventUrl, 'speaker', code)
 		},
 		t() {
 			const m = this.translationMessages || {}
@@ -367,17 +367,11 @@ export default {
 			flex-direction: column
 			align-items: center
 			text-align: center
-			&.has-export
-				padding-top: 32px
 			.speaker-content-area
 				width: 100%
 				flex-direction: column
 				align-items: center
 				gap: 4px
-				.speaker-export
-					position: absolute
-					top: 0
-					right: 0
 				.speaker-title h2
 					text-align: center
 		.speaker-avatar

@@ -120,6 +120,23 @@ export function parseBooleanAnswer (value) {
 	return ['true', '1', 'yes'].includes(String(value).toLowerCase())
 }
 
+export function resolveAbsoluteUrl (url, eventUrl = '') {
+	if (!url) return url
+	if (/^https?:\/\//i.test(url)) return url
+	try {
+		const origin = new URL(eventUrl || '/', window.location.origin).origin
+		return new URL(url, origin).href
+	} catch {
+		return url
+	}
+}
+
+export function buildQrcodesUrl (eventUrl, kind, code) {
+	if (!eventUrl || !code) return ''
+	const base = eventUrl.replace(/\/?$/, '/')
+	return `${base}schedule/widgets/qrcodes/${kind}/${code}.json`
+}
+
 export function normalizePopularityCount (session) {
 	const value = Number(
 		session?.fav_count

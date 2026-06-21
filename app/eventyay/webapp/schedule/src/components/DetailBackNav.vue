@@ -15,6 +15,7 @@ import { getDetailBackLink } from '../utils'
 export default {
 	name: 'DetailBackNav',
 	inject: {
+		parentEventUrl: { from: 'eventUrl', default: '' },
 		translationMessages: { default: () => ({}) },
 		isWipPreview: { default: false },
 	},
@@ -30,9 +31,12 @@ export default {
 		}
 	},
 	computed: {
+		resolvedEventUrl () {
+			return this.eventUrl || this.parentEventUrl || ''
+		},
 		backLink () {
 			return getDetailBackLink({
-				eventUrl: this.eventUrl,
+				eventUrl: this.resolvedEventUrl,
 				destination: this.destination,
 				isWipPreview: this.isWipPreview,
 				messages: this.translationMessages || {},

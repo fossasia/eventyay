@@ -1,9 +1,12 @@
 <template lang="pug">
 .c-talk-detail
 	detail-back-nav(:event-url="baseUrl", destination="schedule")
-		export-dropdown.talk-export(v-if="talkExportOptions.length || isWipPreview", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl", :disabled="isWipPreview")
-		.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
-			fav-button(@toggleFav="toggleFav")
+		detail-top-actions(
+			:export-options="talkExportOptions",
+			:qrcodes-url="talkQrcodesUrl",
+			:show-fav="loggedIn",
+			:faved="isFaved",
+			@toggleFav="toggleFav")
 	.talk-wrapper(v-if="talkDetailReady")
 		.talk
 			.talk-header
@@ -107,15 +110,14 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems, parseBooleanAnswer } from '../utils'
+import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems, parseBooleanAnswer, resolveAbsoluteUrl, buildQrcodesUrl } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
-import FavButton from './FavButton.vue'
-import ExportDropdown from './ExportDropdown.vue'
 import DetailBackNav from './DetailBackNav.vue'
+import DetailTopActions from './DetailTopActions.vue'
 
 export default {
 	name: 'TalkDetail',
-	components: { MarkdownContent, FavButton, ExportDropdown, DetailBackNav },
+	components: { MarkdownContent, DetailBackNav, DetailTopActions },
 	inject: {
 		scheduleData: { default: null },
 		scheduleFav: {
@@ -175,10 +177,8 @@ export default {
 	},
 	computed: {
 		talkQrcodesUrl() {
-			if (!this.baseUrl || !this.resolvedTalk) return ''
-			const code = this.resolvedTalk.code || this.resolvedTalk.id || this.talkId
-			const base = this.baseUrl.replace(/\/?$/, '/')
-			return `${base}schedule/widgets/qrcodes/talk/${code}.json`
+			const code = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
+			return buildQrcodesUrl(this.baseUrl, 'talk', code)
 		},
 		t() {
 			const m = this.translationMessages || {}
@@ -407,13 +407,7 @@ export default {
 			}
 		},
 		getAbsoluteResourceUrl(resource) {
-			if (!this.baseUrl) return resource
-			try {
-				const base = (new URL(this.baseUrl)).origin
-				return new URL(resource, base).href
-			} catch {
-				return resource
-			}
+			return resolveAbsoluteUrl(resource, this.baseUrl)
 		},
 		getFileExtensionLabel(path) {
 			if (!path) return 'Resource'

@@ -86,6 +86,7 @@ def test_build_data_enrich_resources(event, slot, confirmed_resource):
         res = talk["resources"][0]
         assert "description" in res
         assert "resource" in res
+        assert res["resource"].startswith(("http://", "https://"))
 
 
 @pytest.mark.django_db
