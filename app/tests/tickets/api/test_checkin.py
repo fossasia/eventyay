@@ -61,7 +61,7 @@ def order(event, item, other_item, taxrule):
         OrderPosition.objects.create(
             order=o,
             positionid=1,
-            item=item,
+            product=item,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Peter'},
@@ -71,7 +71,7 @@ def order(event, item, other_item, taxrule):
         OrderPosition.objects.create(
             order=o,
             positionid=2,
-            item=other_item,
+            product=other_item,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Michael'},

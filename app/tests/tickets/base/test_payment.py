@@ -133,7 +133,7 @@ def test_availability_date_cart_relative_subevents(event):
     se2 = event.subevents.create(name='SE2', date_from=now() + datetime.timedelta(days=3))
 
     CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + datetime.timedelta(days=1),
         subevent=se1,
@@ -141,7 +141,7 @@ def test_availability_date_cart_relative_subevents(event):
         cart_id='123',
     )
     CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + datetime.timedelta(days=1),
         subevent=se2,
@@ -205,7 +205,7 @@ def test_availability_date_order_relative_subevents(event):
     )
     OrderPosition.objects.create(
         order=order,
-        item=ticket,
+        product=ticket,
         variation=None,
         subevent=se1,
         price=Decimal('23.00'),
@@ -214,7 +214,7 @@ def test_availability_date_order_relative_subevents(event):
     )
     OrderPosition.objects.create(
         order=order,
-        item=ticket,
+        product=ticket,
         variation=None,
         subevent=se2,
         price=Decimal('23.00'),

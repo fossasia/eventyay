@@ -204,7 +204,7 @@ def test_expiry_last_relative_subevents(event):
     se2 = event.subevents.create(name='SE2', date_from=now() + timedelta(days=8))
 
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         subevent=se1,
@@ -212,7 +212,7 @@ def test_expiry_last_relative_subevents(event):
         cart_id='123',
     )
     cp2 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         subevent=se2,
@@ -525,7 +525,7 @@ class PaymentReminderTests(TestCase):
             )
             self.op1 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Peter'},
@@ -600,7 +600,7 @@ class DownloadReminderTests(TestCase):
             )
             self.op1 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Peter'},
@@ -671,7 +671,7 @@ class DownloadReminderTests(TestCase):
         self.op1.save()
         self.op2 = OrderPosition.objects.create(
             order=self.order,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             subevent=se2,
             attendee_email='attendee2@dummy.test',
@@ -763,7 +763,7 @@ class OrderCancelTests(TestCase):
             )
             self.op1 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Peter'},
@@ -771,7 +771,7 @@ class OrderCancelTests(TestCase):
             )
             self.op2 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Dieter'},
@@ -808,7 +808,7 @@ class OrderCancelTests(TestCase):
 
     @classscope(attr='o')
     def test_cancel_unpaid_with_voucher(self):
-        self.op1.voucher = self.event.vouchers.create(item=self.ticket, redeemed=1)
+        self.op1.voucher = self.event.vouchers.create(product=self.ticket, redeemed=1)
         self.op1.save()
         cancel_order(self.order.pk)
         self.order.refresh_from_db()
@@ -846,7 +846,7 @@ class OrderCancelTests(TestCase):
         self.order.total = 48.5
         self.order.save()
         self.order.payments.create(state=OrderPayment.PAYMENT_STATE_CONFIRMED, amount=48.5)
-        self.op1.voucher = self.event.vouchers.create(item=self.ticket, redeemed=1)
+        self.op1.voucher = self.event.vouchers.create(product=self.ticket, redeemed=1)
         self.op1.save()
         cancel_order(self.order.pk, cancellation_fee=2.5)
         self.order.refresh_from_db()
@@ -873,7 +873,7 @@ class OrderCancelTests(TestCase):
         self.order.total = 48.5
         self.order.save()
         self.order.payments.create(state=OrderPayment.PAYMENT_STATE_CONFIRMED, amount=48.5)
-        self.op1.voucher = self.event.vouchers.create(item=self.ticket, redeemed=1)
+        self.op1.voucher = self.event.vouchers.create(product=self.ticket, redeemed=1)
         self.op1.save()
         cancel_order(self.order.pk, cancellation_fee=2.5)
         self.order.refresh_from_db()
@@ -1007,7 +1007,7 @@ class OrderChangeManagerTests(TestCase):
             )
             self.op1 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Peter'},
@@ -1015,7 +1015,7 @@ class OrderChangeManagerTests(TestCase):
             )
             self.op2 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Dieter'},
@@ -1104,7 +1104,7 @@ class OrderChangeManagerTests(TestCase):
         s = self.op1.secret
         se1 = self.event.subevents.create(name='Foo', date_from=now())
         se2 = self.event.subevents.create(name='Bar', date_from=now())
-        SubEventItem.objects.create(subevent=se2, item=self.ticket, price=12)
+        SubEventItem.objects.create(subevent=se2, product=self.ticket, price=12)
         self.op1.subevent = se1
         self.op1.save()
         self.quota.subevent = se2
@@ -1126,7 +1126,7 @@ class OrderChangeManagerTests(TestCase):
         self.event.save()
         se1 = self.event.subevents.create(name='Foo', date_from=now())
         se2 = self.event.subevents.create(name='Bar', date_from=now())
-        SubEventItem.objects.create(subevent=se2, item=self.ticket, price=12)
+        SubEventItem.objects.create(subevent=se2, product=self.ticket, price=12)
         s = self.op1.secret
         self.op1.subevent = se1
         self.op1.save()
@@ -1148,7 +1148,7 @@ class OrderChangeManagerTests(TestCase):
         self.event.save()
         se1 = self.event.subevents.create(name='Foo', date_from=now())
         se2 = self.event.subevents.create(name='Bar', date_from=now())
-        SubEventItem.objects.create(subevent=se2, item=self.ticket, price=12)
+        SubEventItem.objects.create(subevent=se2, product=self.ticket, price=12)
         self.op1.subevent = se1
         self.op1.save()
         self.quota.subevent = se2
@@ -1218,7 +1218,7 @@ class OrderChangeManagerTests(TestCase):
 
     @classscope(attr='o')
     def test_change_item_change_price_before_voucher(self):
-        self.op1.voucher = self.event.vouchers.create(item=self.shirt, redeemed=1, price_mode='set', value='5.00')
+        self.op1.voucher = self.event.vouchers.create(product=self.shirt, redeemed=1, price_mode='set', value='5.00')
         self.op1.price = Decimal('5.00')
         self.op1.price_before_voucher = Decimal('23.00')
         self.op1.save()
@@ -1233,7 +1233,7 @@ class OrderChangeManagerTests(TestCase):
 
     @classscope(attr='o')
     def test_change_item_change_price_before_voucher_minimum_value(self):
-        self.op1.voucher = self.event.vouchers.create(item=self.shirt, redeemed=1, price_mode='set', value='20.00')
+        self.op1.voucher = self.event.vouchers.create(product=self.shirt, redeemed=1, price_mode='set', value='20.00')
         self.op1.price = Decimal('20.00')
         self.op1.price_before_voucher = Decimal('23.00')
         self.op1.save()
@@ -1717,7 +1717,7 @@ class OrderChangeManagerTests(TestCase):
         self.event.has_subevents = True
         self.event.save()
         se1 = self.event.subevents.create(name='Foo', date_from=now())
-        SubEventItem.objects.create(subevent=se1, item=self.ticket, price=12)
+        SubEventItem.objects.create(subevent=se1, product=self.ticket, price=12)
         self.quota.subevent = se1
         self.quota.save()
 
@@ -2811,7 +2811,7 @@ def test_autocheckin(clist_autocheckin, event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -2832,7 +2832,7 @@ def test_autocheckin(clist_autocheckin, event):
     clist_autocheckin.save()
 
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -2862,7 +2862,7 @@ def test_saleschannel_testmode_restriction(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -2881,7 +2881,7 @@ def test_saleschannel_testmode_restriction(event):
     assert not order.testmode
 
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -2900,7 +2900,7 @@ def test_saleschannel_testmode_restriction(event):
 
     event.testmode = True
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -2918,7 +2918,7 @@ def test_saleschannel_testmode_restriction(event):
     assert order.testmode
 
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -2945,7 +2945,7 @@ def test_giftcard_multiple(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -2980,7 +2980,7 @@ def test_giftcard_partial(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3014,7 +3014,7 @@ def test_giftcard_payment_fee(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3047,7 +3047,7 @@ def test_giftcard_invalid_currency(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3076,7 +3076,7 @@ def test_giftcard_invalid_organizer(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3106,7 +3106,7 @@ def test_giftcard_test_mode_invalid(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3135,7 +3135,7 @@ def test_giftcard_test_mode_event(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3167,7 +3167,7 @@ def test_giftcard_swap(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3197,7 +3197,7 @@ def test_issue_when_paid_and_changed(event):
         admission=True,
     )
     cp1 = CartPosition.objects.create(
-        item=ticket,
+        product=ticket,
         price=23,
         expires=now() + timedelta(days=1),
         event=event,
@@ -3264,7 +3264,7 @@ class OrderReactivateTest(TestCase):
             )
             self.op1 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Peter'},
@@ -3272,7 +3272,7 @@ class OrderReactivateTest(TestCase):
             )
             self.op2 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Dieter'},
@@ -3339,7 +3339,7 @@ class OrderReactivateTest(TestCase):
 
     @classscope(attr='o')
     def test_reactivate_voucher_ok(self):
-        self.op1.voucher = self.event.vouchers.create(code='FOO', item=self.ticket, redeemed=0, max_usages=1)
+        self.op1.voucher = self.event.vouchers.create(code='FOO', product=self.ticket, redeemed=0, max_usages=1)
         self.op1.save()
         reactivate_order(self.order)
         v = self.op1.voucher
@@ -3348,7 +3348,7 @@ class OrderReactivateTest(TestCase):
 
     @classscope(attr='o')
     def test_reactivate_voucher_budget(self):
-        self.op1.voucher = self.event.vouchers.create(code='FOO', item=self.ticket, budget=Decimal('0.00'))
+        self.op1.voucher = self.event.vouchers.create(code='FOO', product=self.ticket, budget=Decimal('0.00'))
         self.op1.price_before_voucher = self.op1.price * 2
         self.op1.save()
         with pytest.raises(OrderError):
@@ -3356,7 +3356,7 @@ class OrderReactivateTest(TestCase):
 
     @classscope(attr='o')
     def test_reactivate_voucher_used(self):
-        self.op1.voucher = self.event.vouchers.create(code='FOO', item=self.ticket, redeemed=1, max_usages=1)
+        self.op1.voucher = self.event.vouchers.create(code='FOO', product=self.ticket, redeemed=1, max_usages=1)
         self.op1.save()
         with pytest.raises(OrderError):
             reactivate_order(self.order)

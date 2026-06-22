@@ -51,13 +51,13 @@ def test_base_item_subevent_no_entry(item, subevent):
 
 @pytest.mark.django_db
 def test_base_item_subevent_no_override(item, subevent):
-    SubEventItem.objects.create(item=item, subevent=subevent, price=None)
+    SubEventItem.objects.create(product=item, subevent=subevent, price=None)
     assert get_price(item, subevent=subevent).gross == Decimal('23.00')
 
 
 @pytest.mark.django_db
 def test_base_item_subevent_override(item, subevent):
-    SubEventItem.objects.create(item=item, subevent=subevent, price=Decimal('24.00'))
+    SubEventItem.objects.create(product=item, subevent=subevent, price=Decimal('24.00'))
     assert get_price(item, subevent=subevent).gross == Decimal('24.00')
 
 
@@ -151,7 +151,7 @@ def test_free_price_ignored_if_lower_than_voucher(item, voucher):
 @pytest.mark.django_db
 def test_free_price_ignored_if_lower_than_subevent(item, subevent):
     item.free_price = True
-    SubEventItem.objects.create(item=item, subevent=subevent, price=Decimal('50.00'))
+    SubEventItem.objects.create(product=item, subevent=subevent, price=Decimal('50.00'))
     assert get_price(item, subevent=subevent, custom_price=Decimal('40.00')).gross == Decimal('50.00')
 
 

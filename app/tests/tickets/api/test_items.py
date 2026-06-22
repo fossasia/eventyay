@@ -75,7 +75,7 @@ def order(event, item, taxrule):
 def order_position(item, order, taxrule, variations):
     op = OrderPosition.objects.create(
         order=order,
-        item=item,
+        product=item,
         variation=variations[0],
         tax_rule=taxrule,
         tax_rate=taxrule.rate,
@@ -95,7 +95,7 @@ def cart_position(event, item, variations):
         mock_now.return_value = testtime
         c = CartPosition.objects.create(
             event=event,
-            item=item,
+            product=item,
             datetime=testtime,
             expires=testtime + timedelta(days=1),
             variation=variations[0],

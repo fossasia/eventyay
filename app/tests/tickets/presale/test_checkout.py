@@ -93,8 +93,8 @@ class BaseCheckoutTestCase:
             category=self.workshopcat,
             default_price=Decimal('12.00'),
         )
-        self.workshop2a = ItemVariation.objects.create(item=self.workshop2, value='A')
-        self.workshop2b = ItemVariation.objects.create(item=self.workshop2, value='B')
+        self.workshop2a = ItemVariation.objects.create(product=self.workshop2, value='A')
+        self.workshop2b = ItemVariation.objects.create(product=self.workshop2, value='B')
         self.workshopquota.products.add(self.workshop1)
         self.workshopquota.products.add(self.workshop2)
         self.workshopquota.variations.add(self.workshop2a)
@@ -163,7 +163,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -230,7 +230,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -273,7 +273,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -314,7 +314,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -354,7 +354,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -391,7 +391,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -445,7 +445,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -510,7 +510,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -565,7 +565,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -620,7 +620,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
                 voucher=self.event.vouchers.create(),
@@ -693,7 +693,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -744,7 +744,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -803,7 +803,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -846,7 +846,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -891,7 +891,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -935,7 +935,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -995,7 +995,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1039,7 +1039,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1090,7 +1090,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1127,7 +1127,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1198,7 +1198,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=0,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1228,7 +1228,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1265,7 +1265,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1306,7 +1306,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1332,7 +1332,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1343,7 +1343,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1368,7 +1368,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1416,7 +1416,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1448,7 +1448,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1483,7 +1483,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1518,7 +1518,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1543,7 +1543,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1601,7 +1601,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1650,7 +1650,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1686,7 +1686,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1746,7 +1746,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1765,7 +1765,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1786,7 +1786,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1808,7 +1808,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1842,7 +1842,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1861,7 +1861,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1879,7 +1879,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1898,7 +1898,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1924,7 +1924,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -1949,7 +1949,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -2014,7 +2014,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
                 subevent=se,
@@ -2038,7 +2038,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=42,
                 expires=now() + timedelta(minutes=10),
             )
@@ -2061,7 +2061,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=0,
                 expires=now() + timedelta(minutes=10),
             )
@@ -2087,7 +2087,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cp1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=0,
                 expires=now() - timedelta(minutes=10),
             )
@@ -2104,7 +2104,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.workshop1,
+                product=self.workshop1,
                 price=0,
                 expires=now() - timedelta(minutes=10),
                 addon_to=cp1,
@@ -2132,7 +2132,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=42,
                 expires=now() + timedelta(minutes=10),
             )
@@ -2152,7 +2152,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=0,
                 expires=now() + timedelta(minutes=10),
             )
@@ -2175,7 +2175,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=0,
                 expires=now() + timedelta(minutes=10),
             )
@@ -2197,7 +2197,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         self.ticket.save()
         with scopes_disabled():
             voucher = self.event.vouchers.create(
-                item=self.ticket,
+                product=self.ticket,
                 allow_ignore_approval=True,
                 price_mode='set',
                 value=Decimal('0.00'),
@@ -2205,7 +2205,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=0,
                 voucher=voucher,
                 expires=now() + timedelta(minutes=10),
@@ -2229,7 +2229,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         self.ticket.save()
         with scopes_disabled():
             voucher = self.event.vouchers.create(
-                item=self.ticket,
+                product=self.ticket,
                 allow_ignore_approval=True,
                 price_mode='set',
                 value=Decimal('10.00'),
@@ -2237,7 +2237,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=10,
                 voucher=voucher,
                 expires=now() + timedelta(minutes=10),
@@ -2262,7 +2262,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -2291,7 +2291,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
                 subevent=se,
@@ -2311,7 +2311,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -2332,11 +2332,11 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             se = self.event.subevents.create(name='Foo', date_from=now())
             q = se.quotas.create(name='foo', size=None, event=self.event)
             q.products.add(self.ticket)
-            SubEventItem.objects.create(subevent=se, item=self.ticket, price=24)
+            SubEventItem.objects.create(subevent=se, product=self.ticket, price=24)
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
                 subevent=se,
@@ -2357,11 +2357,11 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             se = self.event.subevents.create(name='Foo', date_from=now())
             q = se.quotas.create(name='foo', size=None, event=self.event)
             q.products.add(self.ticket)
-            SubEventItem.objects.create(subevent=se, item=self.ticket, price=24, disabled=True)
+            SubEventItem.objects.create(subevent=se, product=self.ticket, price=24, disabled=True)
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
                 subevent=se,
@@ -2384,7 +2384,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.workshop2,
+                product=self.workshop2,
                 variation=self.workshop2b,
                 price=23,
                 expires=now() - timedelta(minutes=10),
@@ -2407,14 +2407,14 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cp1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.workshop1,
+                product=self.workshop1,
                 price=0,
                 expires=now() - timedelta(minutes=10),
                 addon_to=cp1,
@@ -2425,7 +2425,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         doc = BeautifulSoup(response.content.decode(), 'lxml')
         self.assertEqual(len(doc.select('.thank-you')), 1)
         with scopes_disabled():
-            self.assertEqual(OrderPosition.objects.filter(item=self.workshop1).last().price, 0)
+            self.assertEqual(OrderPosition.objects.filter(product=self.workshop1).last().price, 0)
 
     def test_confirm_price_changed_reverse_charge(self):
         self._enable_reverse_charge()
@@ -2435,7 +2435,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -2455,7 +2455,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -2477,7 +2477,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -2493,7 +2493,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_voucher(self):
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 price_mode='set',
@@ -2502,7 +2502,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() + timedelta(minutes=10),
                 voucher=v,
@@ -2522,7 +2522,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_voucher_required(self):
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 price_mode='set',
@@ -2533,7 +2533,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() + timedelta(minutes=10),
                 voucher=v,
@@ -2553,7 +2553,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() + timedelta(minutes=10),
             )
@@ -2566,7 +2566,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_voucher_price_changed(self):
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 price_mode='set',
@@ -2575,7 +2575,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=13,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2592,7 +2592,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_voucher_redeemed(self):
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 valid_until=now() + timedelta(days=2),
@@ -2601,7 +2601,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2614,7 +2614,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_voucher_multiuse_redeemed(self):
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 valid_until=now() + timedelta(days=2),
@@ -2624,7 +2624,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2637,7 +2637,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_voucher_multiuse_partially(self):
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 price_mode='set',
@@ -2648,7 +2648,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2656,7 +2656,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2671,7 +2671,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_voucher_multiuse_ok(self):
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 price_mode='set',
@@ -2682,7 +2682,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2690,7 +2690,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2709,7 +2709,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_voucher_multiuse_in_other_cart_expired(self):
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 price_mode='set',
@@ -2720,7 +2720,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id='other',
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2728,7 +2728,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2736,7 +2736,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2755,7 +2755,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_voucher_multiuse_in_other_cart(self):
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 price_mode='set',
@@ -2766,7 +2766,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id='other',
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() + timedelta(minutes=10),
                 voucher=v,
@@ -2774,7 +2774,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2782,7 +2782,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2799,7 +2799,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         self.quota_tickets.save()
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 price_mode='set',
@@ -2809,7 +2809,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2829,7 +2829,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         self.quota_tickets.save()
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 value=Decimal('12.00'),
                 event=self.event,
                 price_mode='set',
@@ -2839,7 +2839,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
             )
@@ -2878,7 +2878,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=12,
                 expires=now() - timedelta(minutes=10),
                 voucher=v,
@@ -2896,7 +2896,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         self.quota_tickets.save()
         with scopes_disabled():
             v = Voucher.objects.create(
-                item=self.ticket,
+                product=self.ticket,
                 event=self.event,
                 valid_until=now() + timedelta(days=2),
                 block_quota=True,
@@ -2904,7 +2904,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
                 voucher=v,
@@ -2912,7 +2912,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
                 voucher=v,
@@ -2946,14 +2946,14 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -2987,7 +2987,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
                 subevent=se,
@@ -2995,7 +2995,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
                 subevent=se,
@@ -3003,7 +3003,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
                 subevent=se2,
@@ -3023,14 +3023,14 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3049,7 +3049,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3066,7 +3066,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3082,7 +3082,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3099,7 +3099,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3118,7 +3118,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3137,7 +3137,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3156,7 +3156,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3175,7 +3175,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3193,7 +3193,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3213,7 +3213,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 voucher=v,
                 price=23,
                 expires=now() - timedelta(minutes=10),
@@ -3232,7 +3232,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 voucher=v,
                 price=23,
                 expires=now() - timedelta(minutes=10),
@@ -3253,7 +3253,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 voucher=v,
                 price=23,
                 expires=now() + timedelta(minutes=10),
@@ -3272,7 +3272,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 voucher=v,
                 price=23,
                 expires=now() + timedelta(minutes=10),
@@ -3289,7 +3289,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3307,14 +3307,14 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cp1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
             cp2 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3348,7 +3348,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cp1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3378,7 +3378,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cp1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3407,7 +3407,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3433,7 +3433,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3459,7 +3459,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3491,7 +3491,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
             )
@@ -3523,13 +3523,13 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             self.workshopquota.size = 1
             self.workshopquota.subevent = se
             self.workshopquota.save()
-            SubEventItem.objects.create(subevent=se, item=self.workshop1, price=42)
+            SubEventItem.objects.create(subevent=se, product=self.workshop1, price=42)
 
             ItemAddOn.objects.create(base_item=self.ticket, addon_category=self.workshopcat, min_count=1)
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
                 subevent=se,
@@ -3559,13 +3559,13 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             self.workshop1.save()
             self.workshop2.tax_rule = self.event.tax_rules.get_or_create(rate=Decimal('19.00'), name='VAT')[0]
             self.workshop2.save()
-            SubEventItem.objects.create(subevent=se, item=self.workshop1, price=42)
+            SubEventItem.objects.create(subevent=se, product=self.workshop1, price=42)
 
             ItemAddOn.objects.create(base_item=self.ticket, addon_category=self.workshopcat, min_count=1)
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() - timedelta(minutes=10),
                 subevent=se,
@@ -3596,7 +3596,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
                 subevent=se,
@@ -3623,7 +3623,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
                 subevent=se,
@@ -3647,7 +3647,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
                 subevent=se,
@@ -3674,7 +3674,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
                 subevent=se,
@@ -3692,7 +3692,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3712,7 +3712,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3732,7 +3732,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cp1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3757,7 +3757,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cp1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3786,7 +3786,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=0,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3824,7 +3824,7 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
             cr = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3855,7 +3855,7 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
                 expires=now() + timedelta(days=3),
                 total=4,
             )
-            op = OrderPosition.objects.create(order=order, item=self.ticket, price=42)
+            op = OrderPosition.objects.create(order=order, product=self.ticket, price=42)
             o1.cartposition, o2.cartposition, o3.cartposition = None, None, None
             o1.orderposition, o2.orderposition, o3.orderposition = op, op, op
             # only time and date answers should be unaffected by timezone change
@@ -3884,7 +3884,7 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
             cp1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -3892,7 +3892,7 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
             cp2 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.workshop1,
+                product=self.workshop1,
                 addon_to=cp1,
                 price=0,
                 expires=now() + timedelta(minutes=10),
@@ -3905,11 +3905,11 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
         self.assertEqual(len(doc.select('.thank-you')), 1)
         with scopes_disabled():
             self.assertEqual(
-                OrderPosition.objects.filter(item=self.ticket).first().answers.first().answer,
+                OrderPosition.objects.filter(product=self.ticket).first().answers.first().answer,
                 '12',
             )
             self.assertEqual(
-                OrderPosition.objects.filter(item=self.workshop1).first().answers.first().answer,
+                OrderPosition.objects.filter(product=self.workshop1).first().answers.first().answer,
                 '12',
             )
 
@@ -3932,14 +3932,14 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
             cr2 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=20,
                 expires=now() + timedelta(minutes=10),
             )
@@ -4000,7 +4000,7 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
-                item=self.ticket,
+                product=self.ticket,
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
@@ -4251,14 +4251,14 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         self.cp1 = CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key,
-            item=self.ticket,
+            product=self.ticket,
             price=21.5,
             expires=now() + timedelta(minutes=10),
         )
         self.bundled1 = CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key,
-            item=self.trans,
+            product=self.trans,
             addon_to=self.cp1,
             price=1.5,
             expires=now() + timedelta(minutes=10),
@@ -4322,7 +4322,7 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         bundled2 = CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key,
-            item=self.trans,
+            product=self.trans,
             addon_to=self.cp1,
             price=1.5,
             expires=now() + timedelta(minutes=10),
@@ -4441,7 +4441,7 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
     @classscope(attr='orga')
     def test_simple_bundle_with_voucher(self):
         v = Voucher.objects.create(
-            item=self.ticket,
+            product=self.ticket,
             value=Decimal('12.00'),
             event=self.event,
             price_mode='none',
@@ -4568,7 +4568,7 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         a = CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key,
-            item=self.trans,
+            product=self.trans,
             addon_to=self.cp1,
             price=2.5,
             expires=now() - timedelta(minutes=10),
@@ -4650,7 +4650,7 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         a = CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key,
-            item=self.trans,
+            product=self.trans,
             addon_to=self.cp1,
             price=1.5,
             expires=now() - timedelta(minutes=10),
@@ -4788,7 +4788,7 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key,
-            item=self.trans,
+            product=self.trans,
             addon_to=self.cp1,
             price=0,
             expires=now() + timedelta(minutes=10),
@@ -4813,7 +4813,7 @@ class CheckoutSeatingTest(BaseCheckoutTestCase, TestCase):
         self.cp1 = CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key,
-            item=self.ticket,
+            product=self.ticket,
             price=21.5,
             expires=now() + timedelta(minutes=10),
             seat=self.seat_a1,
@@ -4909,7 +4909,7 @@ class CheckoutSeatingTest(BaseCheckoutTestCase, TestCase):
         cp2 = CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key,
-            item=self.ticket,
+            product=self.ticket,
             price=21.5,
             expires=now() + timedelta(minutes=10),
             seat=self.seat_a1,
@@ -4950,7 +4950,7 @@ class CheckoutSeatingTest(BaseCheckoutTestCase, TestCase):
         CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key + '_other',
-            item=self.ticket,
+            product=self.ticket,
             price=21.5,
             expires=now() + timedelta(minutes=10),
             seat=self.seat_a1,
@@ -4974,7 +4974,7 @@ class CheckoutVoucherBudgetTest(BaseCheckoutTestCase, TestCase):
     def setUp(self):
         super().setUp()
         self.v = Voucher.objects.create(
-            item=self.ticket,
+            product=self.ticket,
             value=Decimal('21.50'),
             event=self.event,
             price_mode='set',
@@ -4985,7 +4985,7 @@ class CheckoutVoucherBudgetTest(BaseCheckoutTestCase, TestCase):
         self.cp1 = CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key,
-            item=self.ticket,
+            product=self.ticket,
             price_before_voucher=23,
             price=21.5,
             expires=now() + timedelta(minutes=10),
@@ -4994,7 +4994,7 @@ class CheckoutVoucherBudgetTest(BaseCheckoutTestCase, TestCase):
         self.cp2 = CartPosition.objects.create(
             event=self.event,
             cart_id=self.session_key,
-            item=self.ticket,
+            product=self.ticket,
             price_before_voucher=23,
             price=21.5,
             expires=now() + timedelta(minutes=10),

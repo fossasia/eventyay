@@ -101,7 +101,7 @@ class TicketLayoutFormTest(SoupTest):
             d,
         )
         with scopes_disabled():
-            assert TicketLayoutItem.objects.get(item=self.item1, layout=bl2)
+            assert TicketLayoutItem.objects.get(product=self.item1, layout=bl2)
         doc = self.get_doc('/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item1.id))
         d = extract_form_fields(doc.select('.container-fluid form')[0])
         d.update(
@@ -120,12 +120,12 @@ class TicketLayoutFormTest(SoupTest):
             d,
         )
         with scopes_disabled():
-            assert not TicketLayoutItem.objects.filter(item=self.item1, layout=bl2).exists()
+            assert not TicketLayoutItem.objects.filter(product=self.item1, layout=bl2).exists()
 
     def test_item_copy(self):
         with scopes_disabled():
             bl2 = self.event1.ticket_layouts.create(name='Layout 2')
-            TicketLayoutItem.objects.create(item=self.item1, layout=bl2)
+            TicketLayoutItem.objects.create(product=self.item1, layout=bl2)
         self.client.post(
             '/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug),
             {
@@ -138,13 +138,13 @@ class TicketLayoutFormTest(SoupTest):
         )
         with scopes_disabled():
             i_new = Item.objects.get(name__icontains='Intermediate')
-            assert TicketLayoutItem.objects.get(item=i_new, layout=bl2)
-            assert TicketLayoutItem.objects.get(item=self.item1, layout=bl2)
+            assert TicketLayoutItem.objects.get(product=i_new, layout=bl2)
+            assert TicketLayoutItem.objects.get(product=self.item1, layout=bl2)
 
     def test_copy_event(self):
         with scopes_disabled():
             bl2 = self.event1.ticket_layouts.create(name='Layout 2')
-            TicketLayoutItem.objects.create(item=self.item1, layout=bl2)
+            TicketLayoutItem.objects.create(product=self.item1, layout=bl2)
         self.post_doc(
             '/control/events/add',
             {
@@ -185,4 +185,4 @@ class TicketLayoutFormTest(SoupTest):
             ev = Event.objects.get(slug='33c3')
             i_new = ev.products.first()
             bl_new = ev.ticket_layouts.first()
-            assert TicketLayoutItem.objects.get(item=i_new, layout=bl_new)
+            assert TicketLayoutItem.objects.get(product=i_new, layout=bl_new)

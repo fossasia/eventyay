@@ -57,7 +57,7 @@ def test_authorize_require_login(client, application: OAuthApplication):
         '/api/v1/oauth/authorize?client_id=%s&redirect_uri=%s' % (application.client_id, quote('https://example.org'))
     )
     assert resp.status_code == 302
-    assert resp['Location'].startswith('/control/login')
+    assert resp['Location'].startswith('/common/login')
 
 
 @pytest.mark.django_db

@@ -269,7 +269,7 @@ def test_import_product(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
     settings['item'] = 'csv:E'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
-    assert OrderPosition.objects.filter(item=i).count() == 3
+    assert OrderPosition.objects.filter(product=i).count() == 3
 
 
 @pytest.mark.django_db

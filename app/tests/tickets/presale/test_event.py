@@ -367,7 +367,7 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
             q.products.add(item)
             q = Quota.objects.create(event=self.event, name='Quota', size=2, subevent=se2)
             q.products.add(item)
-            SubEventItem.objects.create(subevent=se1, item=item, price=12, disabled=True)
+            SubEventItem.objects.create(subevent=se1, product=item, price=12, disabled=True)
 
         resp = self.client.get('/%s/%s/%d/' % (self.orga.slug, self.event.slug, se1.pk))
         self.assertNotIn('Early-bird', resp.rendered_content)
@@ -385,7 +385,7 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
             q.products.add(item)
             q = Quota.objects.create(event=self.event, name='Quota', size=2, subevent=se2)
             q.products.add(item)
-            SubEventItem.objects.create(subevent=se1, item=item, price=12)
+            SubEventItem.objects.create(subevent=se1, product=item, price=12)
 
         resp = self.client.get('/%s/%s/%d/' % (self.orga.slug, self.event.slug, se1.pk))
         self.assertIn('12.00', resp.rendered_content)
@@ -412,7 +412,7 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
             q.products.add(item)
             q = Quota.objects.create(event=self.event, name='Quota', size=2, subevent=se2)
             q.products.add(item)
-            SubEventItem.objects.create(subevent=se1, item=item, price=12)
+            SubEventItem.objects.create(subevent=se1, product=item, price=12)
 
         resp = self.client.get('/%s/%s/%d/' % (self.orga.slug, self.event.slug, se1.pk))
         self.assertIn('10.08', resp.rendered_content)
@@ -430,7 +430,7 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
             se1 = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             se2 = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             item = Item.objects.create(event=self.event, name='Early-bird ticket', default_price=15)
-            v = ItemVariation.objects.create(item=item, value='Blue')
+            v = ItemVariation.objects.create(product=item, value='Blue')
             q = Quota.objects.create(event=self.event, name='Quota', size=2, subevent=se1)
             q.products.add(item)
             q.variations.add(v)
@@ -449,7 +449,7 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
             c = ItemCategory.objects.create(event=self.event, name='Entry tickets', position=0)
             q = Quota.objects.create(event=self.event, name='Quota', size=2)
             item = Item.objects.create(event=self.event, name='Early-bird ticket', category=c, default_price=0)
-            ItemVariation.objects.create(item=item, value='Blue')
+            ItemVariation.objects.create(product=item, value='Blue')
             q.products.add(item)
         resp = self.client.get('/%s/%s/' % (self.orga.slug, self.event.slug))
         self.assertNotIn('Early-bird', resp.rendered_content)
@@ -459,8 +459,8 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
             c = ItemCategory.objects.create(event=self.event, name='Entry tickets', position=0)
             q = Quota.objects.create(event=self.event, name='Quota', size=2)
             item = Item.objects.create(event=self.event, name='Early-bird ticket', category=c, default_price=0)
-            var1 = ItemVariation.objects.create(item=item, value='Red')
-            ItemVariation.objects.create(item=item, value='Blue')
+            var1 = ItemVariation.objects.create(product=item, value='Red')
+            ItemVariation.objects.create(product=item, value='Blue')
             q.products.add(item)
         q.variations.add(var1)
         self._assert_variation_found()
@@ -470,8 +470,8 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
             c = ItemCategory.objects.create(event=self.event, name='Entry tickets', position=0)
             q = Quota.objects.create(event=self.event, name='Quota', size=None)
             item = Item.objects.create(event=self.event, name='Early-bird ticket', category=c, default_price=0)
-            var1 = ItemVariation.objects.create(item=item, value='Red')
-            ItemVariation.objects.create(item=item, value='Blue')
+            var1 = ItemVariation.objects.create(product=item, value='Red')
+            ItemVariation.objects.create(product=item, value='Blue')
         q.products.add(item)
         q.variations.add(var1)
         self._assert_variation_found()
@@ -494,8 +494,8 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
                 default_price=12,
                 max_per_order=max_per_order,
             )
-            var1 = ItemVariation.objects.create(item=item, value='Red')
-            var2 = ItemVariation.objects.create(item=item, value='Blue')
+            var1 = ItemVariation.objects.create(product=item, value='Red')
+            var2 = ItemVariation.objects.create(product=item, value='Blue')
             q.products.add(item)
             q.variations.add(var1)
             q.variations.add(var2)
@@ -523,8 +523,8 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
             c = ItemCategory.objects.create(event=self.event, name='Entry tickets', position=0)
             q = Quota.objects.create(event=self.event, name='Quota', size=2)
             item = Item.objects.create(event=self.event, name='Early-bird ticket', category=c, default_price=12)
-            var1 = ItemVariation.objects.create(item=item, value='Red', default_price=14, position=1)
-            var2 = ItemVariation.objects.create(item=item, value='Black', position=2)
+            var1 = ItemVariation.objects.create(product=item, value='Red', default_price=14, position=1)
+            var2 = ItemVariation.objects.create(product=item, value='Black', position=2)
             q.variations.add(var1)
             q.variations.add(var2)
         q.products.add(item)
@@ -744,8 +744,8 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
 
     def test_variations_all(self):
         with scopes_disabled():
-            var1 = ItemVariation.objects.create(item=self.item, value='Red', default_price=14, position=1)
-            var2 = ItemVariation.objects.create(item=self.item, value='Black', position=2)
+            var1 = ItemVariation.objects.create(product=self.item, value='Red', default_price=14, position=1)
+            var2 = ItemVariation.objects.create(product=self.item, value='Black', position=2)
             self.q.variations.add(var1)
             self.q.variations.add(var2)
         self.v.item = self.item
@@ -757,8 +757,8 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
 
     def test_variations_specific(self):
         with scopes_disabled():
-            var1 = ItemVariation.objects.create(item=self.item, value='Red', default_price=14, position=1)
-            var2 = ItemVariation.objects.create(item=self.item, value='Black', position=2)
+            var1 = ItemVariation.objects.create(product=self.item, value='Red', default_price=14, position=1)
+            var2 = ItemVariation.objects.create(product=self.item, value='Black', position=2)
             self.q.variations.add(var1)
             self.q.variations.add(var2)
             self.v.item = self.item
@@ -793,8 +793,8 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
 
     def test_variations_sold_out(self):
         with scopes_disabled():
-            var1 = ItemVariation.objects.create(item=self.item, value='Red', default_price=14, position=1)
-            var2 = ItemVariation.objects.create(item=self.item, value='Black', position=2)
+            var1 = ItemVariation.objects.create(product=self.item, value='Red', default_price=14, position=1)
+            var2 = ItemVariation.objects.create(product=self.item, value='Black', position=2)
             self.q.variations.add(var1)
             self.q.variations.add(var2)
         self.q.size = 0
@@ -804,8 +804,8 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
 
     def test_variations_sold_out_blocking(self):
         with scopes_disabled():
-            var1 = ItemVariation.objects.create(item=self.item, value='Red', default_price=14, position=1)
-            var2 = ItemVariation.objects.create(item=self.item, value='Black', position=2)
+            var1 = ItemVariation.objects.create(product=self.item, value='Red', default_price=14, position=1)
+            var2 = ItemVariation.objects.create(product=self.item, value='Black', position=2)
             self.q.variations.add(var1)
             self.q.variations.add(var2)
         self.q.size = 0
@@ -833,8 +833,8 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
 
     def test_voucher_price_variations(self):
         with scopes_disabled():
-            var1 = ItemVariation.objects.create(item=self.item, value='Red', default_price=14, position=1)
-            var2 = ItemVariation.objects.create(item=self.item, value='Black', position=2)
+            var1 = ItemVariation.objects.create(product=self.item, value='Red', default_price=14, position=1)
+            var2 = ItemVariation.objects.create(product=self.item, value='Black', position=2)
             self.q.variations.add(var1)
             self.q.variations.add(var2)
         self.v.value = Decimal('10.00')
@@ -898,8 +898,8 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
             se1 = self.event.subevents.create(name='SE1', date_from=now(), active=True)
             q = Quota.objects.create(event=self.event, name='Quota', size=2, subevent=se1)
 
-            var1 = ItemVariation.objects.create(item=self.item, value='Red', position=1)
-            var2 = ItemVariation.objects.create(item=self.item, value='Black', position=2)
+            var1 = ItemVariation.objects.create(product=self.item, value='Red', position=1)
+            var2 = ItemVariation.objects.create(product=self.item, value='Black', position=2)
             q.products.add(self.item)
             q.variations.add(var1)
             q.variations.add(var2)
@@ -924,8 +924,8 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
             se1 = self.event.subevents.create(name='SE1', date_from=now(), active=True)
             q = Quota.objects.create(event=self.event, name='Quota', size=2, subevent=se1)
 
-            var1 = ItemVariation.objects.create(item=self.item, value='Red', position=1)
-            var2 = ItemVariation.objects.create(item=self.item, value='Black', position=2)
+            var1 = ItemVariation.objects.create(product=self.item, value='Red', position=1)
+            var2 = ItemVariation.objects.create(product=self.item, value='Black', position=2)
             q.products.add(self.item)
             q.variations.add(var1)
             q.variations.add(var2)
@@ -953,8 +953,8 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
             se2 = self.event.subevents.create(name='SE2', date_from=now(), active=True)
             q = Quota.objects.create(event=self.event, name='Quota', size=2, subevent=se1)
 
-            var1 = ItemVariation.objects.create(item=self.item, value='Red', position=1)
-            var2 = ItemVariation.objects.create(item=self.item, value='Black', position=2)
+            var1 = ItemVariation.objects.create(product=self.item, value='Red', position=1)
+            var2 = ItemVariation.objects.create(product=self.item, value='Black', position=2)
             q.products.add(self.item)
             q.variations.add(var1)
             q.variations.add(var2)
@@ -975,8 +975,8 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
             q = Quota.objects.create(event=self.event, name='Quota', size=0, subevent=se1)
             q2 = Quota.objects.create(event=self.event, name='Quota', size=2, subevent=se2)
 
-            var1 = ItemVariation.objects.create(item=self.item, value='Red', position=1)
-            var2 = ItemVariation.objects.create(item=self.item, value='Black', position=2)
+            var1 = ItemVariation.objects.create(product=self.item, value='Red', position=1)
+            var2 = ItemVariation.objects.create(product=self.item, value='Black', position=2)
             q.variations.add(var1)
             q2.variations.add(var1)
             q.variations.add(var2)

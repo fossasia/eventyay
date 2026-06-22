@@ -61,7 +61,7 @@ def order(event, item, taxrule):
 def order_position(item, order, taxrule, variations):
     op = OrderPosition.objects.create(
         order=order,
-        item=item,
+        product=item,
         variation=variations[0],
         tax_rule=taxrule,
         tax_rate=taxrule.rate,

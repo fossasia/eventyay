@@ -51,7 +51,7 @@ class EventCancelTests(TestCase):
             )
             self.op1 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Peter'},
@@ -59,7 +59,7 @@ class EventCancelTests(TestCase):
             )
             self.op2 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 price=Decimal('23.00'),
                 attendee_name_parts={'full_name': 'Dieter'},
@@ -536,7 +536,7 @@ class SubEventCancelTests(TestCase):
             )
             self.op1 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 subevent=self.se1,
                 price=Decimal('23.00'),
@@ -545,7 +545,7 @@ class SubEventCancelTests(TestCase):
             )
             self.op2 = OrderPosition.objects.create(
                 order=self.order,
-                item=self.ticket,
+                product=self.ticket,
                 variation=None,
                 subevent=self.se2,
                 price=Decimal('23.00'),
@@ -794,12 +794,12 @@ class SubEventCancelTests(TestCase):
         v = Voucher.objects.create(event=self.event, block_quota=True, redeemed=1)
         WaitingListEntry.objects.create(
             event=self.event,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             email='foo@bar.com',
             voucher=v,
         )
-        WaitingListEntry.objects.create(event=self.event, item=self.ticket, variation=None, email='foo@example.org')
+        WaitingListEntry.objects.create(event=self.event, product=self.ticket, variation=None, email='foo@example.org')
         cancel_event(
             self.event.pk,
             subevent=None,

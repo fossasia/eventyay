@@ -149,7 +149,7 @@ def order(event, item, taxrule, question):
         )
         op = OrderPosition.objects.create(
             order=o,
-            item=item,
+            product=item,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
@@ -158,7 +158,7 @@ def order(event, item, taxrule, question):
         )
         OrderPosition.objects.create(
             order=o,
-            item=item,
+            product=item,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
@@ -180,11 +180,12 @@ TEST_ORDERPOSITION_RES = {
     'id': 1,
     'order': 'FOO',
     'positionid': 1,
-    'item': 1,
+    'product': 1,
     'variation': None,
     'price': '23.00',
     'attendee_name_parts': {'full_name': 'Peter', '_scheme': 'full'},
     'attendee_name': 'Peter',
+    'job_title': None,
     'attendee_email': None,
     'voucher': None,
     'tax_rate': '0.00',
@@ -309,7 +310,7 @@ def test_order_list_filter_subevent_date(token_client, organizer, event, order, 
         p.subevent = subevent
         p.save()
         fee = order.fees.first()
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['subevent'] = subevent.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['last_modified'] = order.last_modified.isoformat().replace('+00:00', 'Z')
@@ -362,7 +363,7 @@ def test_order_list(token_client, organizer, event, order, item, taxrule, questi
     with scopes_disabled():
         res['positions'][0]['id'] = order.positions.first().pk
         res['fees'][0]['id'] = order.fees.first().pk
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['last_modified'] = order.last_modified.isoformat().replace('+00:00', 'Z')
     res['fees'][0]['tax_rule'] = taxrule.pk
@@ -455,7 +456,7 @@ def test_order_detail(token_client, organizer, event, order, item, taxrule, ques
     res = dict(TEST_ORDER_RES)
     with scopes_disabled():
         res['positions'][0]['id'] = order.positions.first().pk
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['fees'][0]['tax_rule'] = taxrule.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['last_modified'] = order.last_modified.isoformat().replace('+00:00', 'Z')
@@ -990,7 +991,7 @@ def test_orderposition_delete(token_client, organizer, event, order, item, quest
     with scopes_disabled():
         op2 = OrderPosition.objects.create(
             order=order,
-            item=item,
+            product=item,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
@@ -1468,7 +1469,7 @@ def test_order_extend_expired_quota_waiting_list(token_client, organizer, event,
     quota.size = 1
     quota.save()
     with scopes_disabled():
-        event.waitinglistentries.create(item=item, email='foo@bar.com')
+        event.waitinglistentries.create(product=item, email='foo@bar.com')
     newdate = (now() + datetime.timedelta(days=20)).strftime('%Y-%m-%d')
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/{}/extend/'.format(organizer.slug, event.slug, order.code),
@@ -1612,7 +1613,7 @@ ORDER_CREATE_PAYLOAD = {
 @pytest.mark.django_db
 def test_order_create(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -1664,7 +1665,7 @@ def test_order_create_simulate(token_client, organizer, event, item, quota, ques
     question.save()
     with scopes_disabled():
         opt = question.options.create(answer='L')
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['answers'][0]['options'] = [opt.pk]
     resp = token_client.post(
@@ -1778,7 +1779,7 @@ def test_order_create_positionids_addons_simulated(token_client, organizer, even
 @pytest.mark.django_db
 def test_order_create_autocheckin(token_client, organizer, event, item, quota, question, clist_autocheckin):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -1809,7 +1810,7 @@ def test_order_create_autocheckin(token_client, organizer, event, item, quota, q
 @pytest.mark.django_db
 def test_order_create_invoice_address_optional(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['invoice_address']
     resp = token_client.post(
@@ -1827,7 +1828,7 @@ def test_order_create_invoice_address_optional(token_client, organizer, event, i
 @pytest.mark.django_db
 def test_order_create_sales_channel_optional(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['sales_channel']
     resp = token_client.post(
@@ -1844,7 +1845,7 @@ def test_order_create_sales_channel_optional(token_client, organizer, event, ite
 @pytest.mark.django_db
 def test_order_create_sales_channel_invalid(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['sales_channel'] = 'foo'
     resp = token_client.post(
@@ -1859,7 +1860,7 @@ def test_order_create_sales_channel_invalid(token_client, organizer, event, item
 @pytest.mark.django_db
 def test_order_create_in_test_mode(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['testmode'] = True
     resp = token_client.post(
@@ -1876,7 +1877,7 @@ def test_order_create_in_test_mode(token_client, organizer, event, item, quota, 
 @pytest.mark.django_db
 def test_order_create_in_test_mode_saleschannel_limited(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['testmode'] = True
     res['sales_channel'] = 'web'
@@ -1892,7 +1893,7 @@ def test_order_create_in_test_mode_saleschannel_limited(token_client, organizer,
 def test_order_create_attendee_name_optional(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['positions'][0]['attendee_name'] = None
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['positions'][0]['attendee_name_parts']
     resp = token_client.post(
@@ -1910,7 +1911,7 @@ def test_order_create_attendee_name_optional(token_client, organizer, event, ite
 def test_order_create_legacy_attendee_name(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['positions'][0]['attendee_name'] = 'Peter'
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
 
     resp = token_client.post(
@@ -1936,7 +1937,7 @@ def test_order_create_legacy_attendee_name(token_client, organizer, event, item,
 def test_order_create_legacy_invoice_name(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['invoice_address']['name'] = 'Peter'
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
 
     resp = token_client.post(
@@ -1960,7 +1961,7 @@ def test_order_create_legacy_invoice_name(token_client, organizer, event, item, 
 @pytest.mark.django_db
 def test_order_create_code_optional(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['code'] = 'ABCDE'
     resp = token_client.post(
@@ -1994,7 +1995,7 @@ def test_order_create_code_optional(token_client, organizer, event, item, quota,
 @pytest.mark.django_db
 def test_order_email_optional(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['email']
     resp = token_client.post(
@@ -2011,7 +2012,7 @@ def test_order_email_optional(token_client, organizer, event, item, quota, quest
 @pytest.mark.django_db
 def test_order_create_payment_provider_optional_free(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['price'] = '0.00'
     res['positions'][0]['status'] = 'p'
@@ -2030,7 +2031,7 @@ def test_order_create_payment_provider_optional_free(token_client, organizer, ev
 @pytest.mark.django_db
 def test_order_create_payment_info_optional(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2058,7 +2059,7 @@ def test_order_create_payment_info_optional(token_client, organizer, event, item
 @pytest.mark.django_db
 def test_order_create_position_secret_optional(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2095,7 +2096,7 @@ def test_order_create_position_secret_optional(token_client, organizer, event, i
 def test_order_create_tax_rules(token_client, organizer, event, item, quota, question, taxrule):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['fees'][0]['tax_rule'] = taxrule.pk
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     item.tax_rule = taxrule
     item.save()
@@ -2126,7 +2127,7 @@ def test_order_create_tax_rules(token_client, organizer, event, item, quota, que
 def test_order_create_fee_type_validation(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['fees'][0]['fee_type'] = 'unknown'
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2142,7 +2143,7 @@ def test_order_create_fee_as_percentage(token_client, organizer, event, item, qu
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['fees'][0]['_treat_value_as_percentage'] = True
     res['fees'][0]['value'] = '10.00'
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2163,7 +2164,7 @@ def test_order_create_fee_with_auto_tax(token_client, organizer, event, item, qu
     res['fees'][0]['_split_taxes_like_products'] = True
     res['fees'][0]['_treat_value_as_percentage'] = True
     res['fees'][0]['value'] = '10.00'
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     item.tax_rule = taxrule
     item.save()
@@ -2186,7 +2187,7 @@ def test_order_create_negative_fee_with_auto_tax(token_client, organizer, event,
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['fees'][0]['_split_taxes_like_products'] = True
     res['fees'][0]['value'] = '-10.00'
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     item.tax_rule = taxrule
     item.save()
@@ -2209,7 +2210,7 @@ def test_order_create_negative_fee_with_auto_tax(token_client, organizer, event,
 def test_order_create_tax_rule_wrong_event(token_client, organizer, event, item, quota, question, taxrule2):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['fees'][0]['tax_rule'] = taxrule2.pk
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2223,7 +2224,7 @@ def test_order_create_tax_rule_wrong_event(token_client, organizer, event, item,
 @pytest.mark.django_db
 def test_order_create_subevent_not_allowed(token_client, organizer, event, item, quota, question, subevent2):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['subevent'] = subevent2.pk
     resp = token_client.post(
@@ -2251,7 +2252,7 @@ def test_order_create_empty(token_client, organizer, event, item, quota, questio
 @pytest.mark.django_db
 def test_order_create_subevent_validation(token_client, organizer, event, item, subevent, subevent2, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2276,7 +2277,7 @@ def test_order_create_item_validation(token_client, organizer, event, item, item
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     item.active = False
     item.save()
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2288,7 +2289,7 @@ def test_order_create_item_validation(token_client, organizer, event, item, item
     item.active = True
     item.save()
 
-    res['positions'][0]['item'] = item2.pk
+    res['positions'][0]['product'] = item2.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2302,7 +2303,7 @@ def test_order_create_item_validation(token_client, organizer, event, item, item
         var2 = item2.variations.create(value='A')
         quota.variations.add(var2)
 
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['variation'] = var2.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2314,7 +2315,7 @@ def test_order_create_item_validation(token_client, organizer, event, item, item
 
     with scopes_disabled():
         var1 = item.variations.create(value='A')
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['variation'] = var1.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2357,7 +2358,7 @@ def test_order_create_item_validation(token_client, organizer, event, item, item
 @pytest.mark.django_db
 def test_order_create_subevent_disabled(token_client, organizer, event, item, subevent, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['subevent'] = subevent.pk
     s = item.subeventitem_set.create(subevent=subevent, disabled=True)
@@ -2386,7 +2387,7 @@ def test_order_create_subevent_variation_disabled(token_client, organizer, event
         item2 = event.products.create(name='Budget Ticket', default_price=23)
         var = item2.variations.create(default_price=12, value='XS')
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item2.pk
+    res['positions'][0]['product'] = item2.pk
     res['positions'][0]['variation'] = var.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['subevent'] = subevent.pk
@@ -2632,7 +2633,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
 @pytest.mark.django_db
 def test_order_create_answer_validation(token_client, organizer, event, item, quota, question, question2):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question2.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -2949,7 +2950,7 @@ def test_order_create_dropdown_answer_validation(token_client, organizer, event,
         question.options.create(answer='L')
 
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['answers'][0]['options'] = [question.options.first().pk, question.options.last().pk]
 
@@ -2984,7 +2985,7 @@ def test_order_create_file_answer_invalid_id_message(token_client, organizer, ev
     question.save()
 
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['answers'][0]['answer'] = 'file:not-a-real-id'
     res['positions'][0]['answers'][0]['options'] = []
@@ -3070,14 +3071,14 @@ def test_order_create_quota_validation(token_client, organizer, event, item, quo
 @pytest.mark.django_db
 def test_order_create_quota_consume_cart(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
 
     with scopes_disabled():
         cr = CartPosition.objects.create(
             event=event,
             cart_id='uxLJBUMEcnxOLI2EuxLYN1hWJq9GKu4yWL9FEgs2m7M0vdFi@api',
-            item=item,
+            product=item,
             price=23,
             expires=now() + datetime.timedelta(hours=3),
         )
@@ -3110,14 +3111,14 @@ def test_order_create_quota_consume_cart(token_client, organizer, event, item, q
 @pytest.mark.django_db
 def test_order_create_quota_consume_cart_expired(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
 
     with scopes_disabled():
         cr = CartPosition.objects.create(
             event=event,
             cart_id='uxLJBUMEcnxOLI2EuxLYN1hWJq9GKu4yWL9FEgs2m7M0vdFi@api',
-            item=item,
+            product=item,
             price=23,
             expires=now() - datetime.timedelta(hours=3),
         )
@@ -3142,7 +3143,7 @@ def test_order_create_quota_consume_cart_expired(token_client, organizer, event,
 def test_order_create_free(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['fees'] = []
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['price'] = '0.00'
     resp = token_client.post(
@@ -3167,7 +3168,7 @@ def test_order_create_free(token_client, organizer, event, item, quota, question
 def test_order_create_invalid_payment_provider(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['payment_provider'] = 'foo'
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -3182,7 +3183,7 @@ def test_order_create_invalid_payment_provider(token_client, organizer, event, i
 def test_order_create_invalid_free_order(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['payment_provider'] = 'free'
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -3197,7 +3198,7 @@ def test_order_create_invalid_free_order(token_client, organizer, event, item, q
 def test_order_create_invalid_status(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['status'] = 'e'
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -3214,7 +3215,7 @@ def test_order_create_paid_generate_invoice(token_client, organizer, event, item
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['status'] = 'p'
     res['payment_date'] = '2019-04-01 08:20:00Z'
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -3247,7 +3248,7 @@ def seat(event, organizer, item):
 @pytest.mark.django_db
 def test_order_create_with_seat(token_client, organizer, event, item, quota, seat, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['seat'] = seat.seat_guid
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
@@ -3267,7 +3268,7 @@ def test_order_create_with_blocked_seat_allowed(token_client, organizer, event, 
     seat.blocked = True
     seat.save()
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['seat'] = seat.seat_guid
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['sales_channel'] = 'web'
@@ -3285,7 +3286,7 @@ def test_order_create_with_blocked_seat(token_client, organizer, event, item, qu
     seat.blocked = True
     seat.save()
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['seat'] = seat.seat_guid
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
@@ -3306,13 +3307,13 @@ def test_order_create_with_used_seat(token_client, organizer, event, item, quota
     CartPosition.objects.create(
         event=event,
         cart_id='aaa',
-        item=item,
+        product=item,
         price=21.5,
         expires=now() + datetime.timedelta(minutes=10),
         seat=seat,
     )
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['seat'] = seat.seat_guid
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
@@ -3331,7 +3332,7 @@ def test_order_create_with_used_seat(token_client, organizer, event, item, quota
 @pytest.mark.django_db
 def test_order_create_with_unknown_seat(token_client, organizer, event, item, quota, seat, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['seat'] = seat.seat_guid + '_'
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
@@ -3350,7 +3351,7 @@ def test_order_create_with_unknown_seat(token_client, organizer, event, item, qu
 @pytest.mark.django_db
 def test_order_create_require_seat(token_client, organizer, event, item, quota, seat, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -3371,7 +3372,7 @@ def test_order_create_unseated(token_client, organizer, event, item, quota, seat
         item2 = event.products.create(name='Budget Ticket', default_price=23)
         quota.products.add(item2)
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item2.pk
+    res['positions'][0]['product'] = item2.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['seat'] = seat.seat_guid
     resp = token_client.post(
@@ -3435,13 +3436,13 @@ def test_order_create_with_seat_consumed_from_cart(token_client, organizer, even
     CartPosition.objects.create(
         event=event,
         cart_id='aaa',
-        item=item,
+        product=item,
         price=21.5,
         expires=now() + datetime.timedelta(minutes=10),
         seat=seat,
     )
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['seat'] = seat.seat_guid
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['consume_carts'] = ['aaa']
@@ -3460,7 +3461,7 @@ def test_order_create_with_seat_consumed_from_cart(token_client, organizer, even
 @pytest.mark.django_db
 def test_order_create_send_no_emails(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     djmail.outbox = []
     resp = token_client.post(
@@ -3475,7 +3476,7 @@ def test_order_create_send_no_emails(token_client, organizer, event, item, quota
 @pytest.mark.django_db
 def test_order_create_send_emails(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['send_email'] = True
     djmail.outbox = []
@@ -3492,7 +3493,7 @@ def test_order_create_send_emails(token_client, organizer, event, item, quota, q
 @pytest.mark.django_db
 def test_order_create_send_emails_free(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['price'] = '0.00'
     res['payment_provider'] = 'free'
     del res['fees']
@@ -3512,7 +3513,7 @@ def test_order_create_send_emails_free(token_client, organizer, event, item, quo
 @pytest.mark.django_db
 def test_order_create_send_emails_paid(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['send_email'] = True
     res['status'] = 'p'
@@ -3531,7 +3532,7 @@ def test_order_create_send_emails_paid(token_client, organizer, event, item, quo
 @pytest.mark.django_db
 def test_order_create_send_emails_legacy(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['send_mail'] = True
     res['status'] = 'p'
@@ -3550,7 +3551,7 @@ def test_order_create_send_emails_legacy(token_client, organizer, event, item, q
 @pytest.mark.django_db
 def test_order_paid_require_payment_method(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['payment_provider']
     res['status'] = 'p'
@@ -3577,7 +3578,7 @@ def test_order_paid_require_payment_method(token_client, organizer, event, item,
 @pytest.mark.django_db
 def test_order_create_auto_pricing(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['positions'][0]['price']
     resp = token_client.post(
@@ -3602,7 +3603,7 @@ def test_order_create_auto_pricing_reverse_charge(token_client, organizer, event
     item.tax_rule = taxrule
     item.save()
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['invoice_address']['country'] = 'FR'
     res['invoice_address']['is_business'] = True
@@ -3632,7 +3633,7 @@ def test_order_create_auto_pricing_country_rate(token_client, organizer, event, 
     item.tax_rule = taxrule
     item.save()
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['invoice_address']['country'] = 'FR'
     res['invoice_address']['is_business'] = True
@@ -3664,7 +3665,7 @@ def test_order_create_auto_pricing_reverse_charge_require_valid_vatid(
     item.tax_rule = taxrule
     item.save()
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['invoice_address']['country'] = 'FR'
     res['invoice_address']['is_business'] = True
@@ -3691,12 +3692,12 @@ def test_order_create_autopricing_voucher_budget_partially(
         voucher = event.vouchers.create(
             price_mode='set',
             value=21.50,
-            item=item,
+            product=item,
             budget=Decimal('2.50'),
             max_usages=999,
         )
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['voucher'] = voucher.code
     del res['positions'][0]['price']
@@ -3724,12 +3725,12 @@ def test_order_create_autopricing_voucher_budget_full(token_client, organizer, e
         voucher = event.vouchers.create(
             price_mode='set',
             value=21.50,
-            item=item,
+            product=item,
             budget=Decimal('0.50'),
             max_usages=999,
         )
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['voucher'] = voucher.code
     del res['positions'][0]['price']
@@ -3756,12 +3757,12 @@ def test_order_create_voucher_budget_exceeded(token_client, organizer, event, it
         voucher = event.vouchers.create(
             price_mode='set',
             value=21.50,
-            item=item,
+            product=item,
             budget=Decimal('3.00'),
             max_usages=999,
         )
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['voucher'] = voucher.code
     res['positions'][0]['price'] = '19.00'
@@ -3784,11 +3785,11 @@ def test_order_create_voucher_budget_exceeded(token_client, organizer, event, it
 @pytest.mark.django_db
 def test_order_create_voucher_price(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['positions'][0]['price']
     with scopes_disabled():
-        voucher = event.vouchers.create(price_mode='set', value=15, item=item)
+        voucher = event.vouchers.create(price_mode='set', value=15, product=item)
     res['positions'][0]['voucher'] = voucher.code
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -3809,11 +3810,11 @@ def test_order_create_voucher_price(token_client, organizer, event, item, quota,
 @pytest.mark.django_db
 def test_order_create_voucher_unknown_code(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['positions'][0]['price']
     with scopes_disabled():
-        event.vouchers.create(price_mode='set', value=15, item=item)
+        event.vouchers.create(price_mode='set', value=15, product=item)
     res['positions'][0]['voucher'] = 'FOOBAR'
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -3831,11 +3832,11 @@ def test_order_create_voucher_unknown_code(token_client, organizer, event, item,
 @pytest.mark.django_db
 def test_order_create_voucher_redeemed(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     del res['positions'][0]['price']
     res['positions'][0]['answers'][0]['question'] = question.pk
     with scopes_disabled():
-        voucher = event.vouchers.create(price_mode='set', value=15, item=item, redeemed=1)
+        voucher = event.vouchers.create(price_mode='set', value=15, product=item, redeemed=1)
     res['positions'][0]['voucher'] = voucher.code
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -3854,11 +3855,11 @@ def test_order_create_voucher_redeemed(token_client, organizer, event, item, quo
 def test_order_create_voucher_redeemed_partially(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['positions'][0]['answers'][0]['question'] = question.pk
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     del res['positions'][0]['price']
     del res['positions'][0]['positionid']
     with scopes_disabled():
-        voucher = event.vouchers.create(price_mode='set', value=15, item=item, redeemed=1, max_usages=2)
+        voucher = event.vouchers.create(price_mode='set', value=15, product=item, redeemed=1, max_usages=2)
     res['positions'][0]['voucher'] = voucher.code
     res['positions'].append(copy.deepcopy(res['positions'][0]))
     res['positions'].append(copy.deepcopy(res['positions'][0]))
@@ -3880,12 +3881,12 @@ def test_order_create_voucher_redeemed_partially(token_client, organizer, event,
 @pytest.mark.django_db
 def test_order_create_voucher_item_mismatch(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['positions'][0]['price']
     with scopes_disabled():
         item2 = event.products.create(name='Budget Ticket', default_price=23)
-        voucher = event.vouchers.create(price_mode='set', value=15, item=item2, redeemed=0)
+        voucher = event.vouchers.create(price_mode='set', value=15, product=item2, redeemed=0)
     res['positions'][0]['voucher'] = voucher.code
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -3903,14 +3904,14 @@ def test_order_create_voucher_item_mismatch(token_client, organizer, event, item
 @pytest.mark.django_db
 def test_order_create_voucher_expired(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['positions'][0]['price']
     with scopes_disabled():
         voucher = event.vouchers.create(
             price_mode='set',
             value=15,
-            item=item,
+            product=item,
             redeemed=0,
             valid_until=now() - datetime.timedelta(days=1),
         )
@@ -3931,7 +3932,7 @@ def test_order_create_voucher_expired(token_client, organizer, event, item, quot
 @pytest.mark.django_db
 def test_order_create_voucher_block_quota(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
-    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['positions'][0]['price']
     quota.size = 0
@@ -3944,7 +3945,7 @@ def test_order_create_voucher_block_quota(token_client, organizer, event, item, 
     assert resp.status_code == 400
 
     with scopes_disabled():
-        voucher = event.vouchers.create(price_mode='set', value=15, item=item, redeemed=0, block_quota=True)
+        voucher = event.vouchers.create(price_mode='set', value=15, product=item, redeemed=0, block_quota=True)
     res['positions'][0]['voucher'] = voucher.code
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
@@ -4607,7 +4608,7 @@ def test_orderposition_price_calculation_subevent_with_override(token_client, or
             name='Foobar',
             date_from=datetime.datetime(2017, 12, 27, 10, 0, 0, tzinfo=UTC),
         )
-        se2.subeventitem_set.create(item=item2, price=12)
+        se2.subeventitem_set.create(product=item2, price=12)
         op = order.positions.first()
     op.subevent = subevent
     op.save()

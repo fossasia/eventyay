@@ -42,8 +42,8 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         self.quota_shirts = Quota.objects.create(event=self.event, name='Shirts', size=2)
         self.shirt = Item.objects.create(event=self.event, name='T-Shirt', default_price=12)
         self.quota_shirts.products.add(self.shirt)
-        self.shirt_red = ItemVariation.objects.create(item=self.shirt, default_price=14, value='Red')
-        self.shirt_blue = ItemVariation.objects.create(item=self.shirt, value='Blue')
+        self.shirt_red = ItemVariation.objects.create(product=self.shirt, default_price=14, value='Red')
+        self.shirt_blue = ItemVariation.objects.create(product=self.shirt, value='Blue')
         self.quota_shirts.variations.add(self.shirt_red)
         self.quota_shirts.variations.add(self.shirt_blue)
         self.quota_tickets = Quota.objects.create(event=self.event, name='Tickets', size=5)
@@ -101,13 +101,13 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
     def test_list(self):
         with scopes_disabled():
-            self.event.vouchers.create(item=self.ticket, code='ABCDEFG')
+            self.event.vouchers.create(product=self.ticket, code='ABCDEFG')
         doc = self.client.get('/control/event/%s/%s/vouchers/' % (self.orga.slug, self.event.slug))
         assert 'ABCDEFG' in doc.content.decode()
 
     def test_csv(self):
         with scopes_disabled():
-            self.event.vouchers.create(item=self.ticket, code='ABCDEFG', allow_ignore_approval=True)
+            self.event.vouchers.create(product=self.ticket, code='ABCDEFG', allow_ignore_approval=True)
         doc = self.client.get('/control/event/%s/%s/vouchers/?download=yes' % (self.orga.slug, self.event.slug))
         assert (
             doc.content.decode().strip() == '"Voucher code","Valid until","Product","Reserve quota",'
@@ -119,7 +119,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
     def test_filter_status_valid(self):
         with scopes_disabled():
-            v = self.event.vouchers.create(item=self.ticket)
+            v = self.event.vouchers.create(product=self.ticket)
         doc = self.client.get('/control/event/%s/%s/vouchers/?status=v' % (self.orga.slug, self.event.slug))
         assert v.code in doc.content.decode()
         v.redeemed = 1
@@ -129,7 +129,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
     def test_filter_status_redeemed(self):
         with scopes_disabled():
-            v = self.event.vouchers.create(item=self.ticket, redeemed=1)
+            v = self.event.vouchers.create(product=self.ticket, redeemed=1)
         doc = self.client.get('/control/event/%s/%s/vouchers/?status=r' % (self.orga.slug, self.event.slug))
         assert v.code in doc.content.decode()
         v.redeemed = 0
@@ -139,7 +139,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
     def test_filter_status_expired(self):
         with scopes_disabled():
-            v = self.event.vouchers.create(item=self.ticket, valid_until=now() + datetime.timedelta(days=1))
+            v = self.event.vouchers.create(product=self.ticket, valid_until=now() + datetime.timedelta(days=1))
         doc = self.client.get('/control/event/%s/%s/vouchers/?status=e' % (self.orga.slug, self.event.slug))
         assert v.code not in doc.content.decode()
         v.valid_until = now() - datetime.timedelta(days=1)
@@ -149,7 +149,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
     def test_filter_tag(self):
         with scopes_disabled():
-            self.event.vouchers.create(item=self.ticket, code='ABCDEFG', comment='Foo', tag='bar')
+            self.event.vouchers.create(product=self.ticket, code='ABCDEFG', comment='Foo', tag='bar')
         doc = self.client.get('/control/event/%s/%s/vouchers/?tag=bar' % (self.orga.slug, self.event.slug))
         assert 'ABCDEFG' in doc.content.decode()
         doc = self.client.get('/control/event/%s/%s/vouchers/?tag=baz' % (self.orga.slug, self.event.slug))
@@ -157,7 +157,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
     def test_search_code(self):
         with scopes_disabled():
-            self.event.vouchers.create(item=self.ticket, code='ABCDEFG', comment='Foo')
+            self.event.vouchers.create(product=self.ticket, code='ABCDEFG', comment='Foo')
         doc = self.client.get('/control/event/%s/%s/vouchers/?search=ABCDEFG' % (self.orga.slug, self.event.slug))
         assert 'ABCDEFG' in doc.content.decode()
         doc = self.client.get('/control/event/%s/%s/vouchers/?search=Foo' % (self.orga.slug, self.event.slug))
@@ -295,7 +295,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
     def test_change_non_blocking_voucher(self):
         with scopes_disabled():
-            v = self.event.vouchers.create(item=self.ticket)
+            v = self.event.vouchers.create(product=self.ticket)
         self._change_voucher(v, {'itemvar': 'q-%d' % self.quota_tickets.pk})
         v.refresh_from_db()
         assert v.item is None
@@ -306,26 +306,26 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         self.quota_tickets.size = 0
         self.quota_tickets.save()
         with scopes_disabled():
-            v = self.event.vouchers.create(item=self.ticket, block_quota=True)
+            v = self.event.vouchers.create(product=self.ticket, block_quota=True)
         self._change_voucher(v, {})
         v.refresh_from_db()
         assert v.block_quota
 
     def test_change_voucher_reduce_max_usages(self):
         with scopes_disabled():
-            v = self.event.vouchers.create(item=self.ticket, max_usages=5, redeemed=3)
+            v = self.event.vouchers.create(product=self.ticket, max_usages=5, redeemed=3)
         self._change_voucher(v, {'max_usages': '2'}, expected_failure=True)
 
     def test_change_voucher_to_blocking_quota_full(self):
         self.quota_tickets.size = 0
         self.quota_tickets.save()
         with scopes_disabled():
-            v = self.event.vouchers.create(item=self.ticket)
+            v = self.event.vouchers.create(product=self.ticket)
         self._change_voucher(v, {'block_quota': 'on'}, expected_failure=True)
 
     def test_change_voucher_to_blocking_quota_free(self):
         with scopes_disabled():
-            v = self.event.vouchers.create(item=self.ticket)
+            v = self.event.vouchers.create(product=self.ticket)
         self._change_voucher(v, {'block_quota': 'on'})
         v.refresh_from_db()
         assert v.block_quota
@@ -335,7 +335,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         self.quota_tickets.save()
         with scopes_disabled():
             v = self.event.vouchers.create(
-                item=self.ticket,
+                product=self.ticket,
                 valid_until=now() - datetime.timedelta(days=3),
                 block_quota=True,
             )
@@ -353,7 +353,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
     def test_change_voucher_validity_to_valid_quota_free(self):
         with scopes_disabled():
             v = self.event.vouchers.create(
-                item=self.ticket,
+                product=self.ticket,
                 valid_until=now() - datetime.timedelta(days=3),
                 block_quota=True,
             )
@@ -371,7 +371,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         with scopes_disabled():
             ticket2 = Item.objects.create(event=self.event, name='Late-bird ticket', default_price=23)
             self.quota_tickets.products.add(ticket2)
-            v = self.event.vouchers.create(item=self.ticket, block_quota=True)
+            v = self.event.vouchers.create(product=self.ticket, block_quota=True)
         self._change_voucher(
             v,
             {
@@ -385,7 +385,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         with scopes_disabled():
             hoodie = Item.objects.create(event=self.event, name='Hoodie', default_price=23)
             self.quota_shirts.products.add(hoodie)
-            v = self.event.vouchers.create(item=self.ticket, block_quota=True)
+            v = self.event.vouchers.create(product=self.ticket, block_quota=True)
         self._change_voucher(
             v,
             {
@@ -398,7 +398,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         with scopes_disabled():
             self.quota_shirts.variations.remove(self.shirt_blue)
             self.quota_tickets.variations.add(self.shirt_blue)
-            v = self.event.vouchers.create(item=self.shirt, variation=self.shirt_red, block_quota=True)
+            v = self.event.vouchers.create(product=self.shirt, variation=self.shirt_red, block_quota=True)
         self._change_voucher(
             v,
             {
@@ -412,7 +412,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             self.quota_tickets.variations.add(self.shirt_blue)
             self.quota_tickets.size = 0
             self.quota_tickets.save()
-            v = self.event.vouchers.create(item=self.shirt, variation=self.shirt_red, block_quota=True)
+            v = self.event.vouchers.create(product=self.shirt, variation=self.shirt_red, block_quota=True)
         self._change_voucher(
             v,
             {
@@ -450,7 +450,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             self.quota_tickets.save()
             ticket2 = Item.objects.create(event=self.event, name='Standard Ticket', default_price=23)
             self.quota_tickets.products.add(ticket2)
-            v = self.event.vouchers.create(item=self.ticket, block_quota=True)
+            v = self.event.vouchers.create(product=self.ticket, block_quota=True)
         self._change_voucher(
             v,
             {
@@ -462,7 +462,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         with scopes_disabled():
             self.quota_shirts.size = 0
             self.quota_shirts.save()
-            v = self.event.vouchers.create(item=self.shirt, variation=self.shirt_red, block_quota=True)
+            v = self.event.vouchers.create(product=self.shirt, variation=self.shirt_red, block_quota=True)
         self._change_voucher(
             v,
             {
@@ -804,7 +804,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         with scopes_disabled():
             shirt_voucher = Voucher.objects.create(
                 event=self.event,
-                item=self.shirt,
+                product=self.shirt,
                 price_mode='set',
                 value=0.0,
                 max_usages=100,
@@ -823,7 +823,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
             OrderPosition.objects.create(
                 order=shirt_order,
-                item=self.shirt,
+                product=self.shirt,
                 variation=self.shirt_red,
                 price=decimal.Decimal('0'),
                 voucher=shirt_voucher,
@@ -831,7 +831,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
             OrderPosition.objects.create(
                 order=shirt_order,
-                item=self.shirt,
+                product=self.shirt,
                 variation=self.shirt_blue,
                 price=decimal.Decimal('0'),
                 voucher=shirt_voucher,

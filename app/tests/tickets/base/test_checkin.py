@@ -58,7 +58,7 @@ def position(event, item):
     )
     return OrderPosition.objects.create(
         order=order,
-        item=item,
+        product=item,
         variation=None,
         price=Decimal('23.00'),
         attendee_name_parts={'full_name': 'Peter'},

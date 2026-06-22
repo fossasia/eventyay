@@ -47,7 +47,7 @@ def order(event):
     )
     OrderPosition.objects.create(
         order=o,
-        item=ticket,
+        product=ticket,
         variation=None,
         price=Decimal('23.00'),
         attendee_name_parts={'full_name': 'Peter'},

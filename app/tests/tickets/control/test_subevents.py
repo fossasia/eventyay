@@ -100,7 +100,7 @@ class SubEventsTest(SoupTest):
             assert q.name == 'Q1'
             assert q.size == 50
             assert list(q.products.all()) == [self.ticket]
-            sei = SubEventItem.objects.get(subevent=se, item=self.ticket)
+            sei = SubEventItem.objects.get(subevent=se, product=self.ticket)
             assert sei.price == 12
             assert se.checkinlist_set.count() == 1
 
@@ -151,7 +151,7 @@ class SubEventsTest(SoupTest):
             assert q.name == 'Q1'
             assert q.size == 50
             assert list(q.products.all()) == [self.ticket]
-            sei = SubEventItem.objects.get(subevent=se, item=self.ticket)
+            sei = SubEventItem.objects.get(subevent=se, product=self.ticket)
             assert sei.price == 12
             assert se.checkinlist_set.count() == 1
 
@@ -181,7 +181,7 @@ class SubEventsTest(SoupTest):
             )
             OrderPosition.objects.create(
                 order=o,
-                item=self.ticket,
+                product=self.ticket,
                 subevent=self.subevent1,
                 price=Decimal('14'),
             )
@@ -278,7 +278,7 @@ class SubEventsTest(SoupTest):
         with scopes_disabled():
             assert ses[0].quotas.count() == 1
             assert list(ses[0].quotas.first().products.all()) == [self.ticket]
-            assert SubEventItem.objects.get(subevent=ses[0], item=self.ticket).price == 16
+            assert SubEventItem.objects.get(subevent=ses[0], product=self.ticket).price == 16
             assert ses[0].checkinlist_set.count() == 1
 
         assert str(ses[1].name) == 'Foo'
@@ -289,7 +289,7 @@ class SubEventsTest(SoupTest):
         with scopes_disabled():
             assert ses[1].quotas.count() == 1
             assert list(ses[1].quotas.first().products.all()) == [self.ticket]
-            assert SubEventItem.objects.get(subevent=ses[0], item=self.ticket).price == 16
+            assert SubEventItem.objects.get(subevent=ses[0], product=self.ticket).price == 16
             assert ses[1].checkinlist_set.count() == 1
 
         assert ses[-1].date_from.isoformat() == '2027-04-03T12:36:31+00:00'
@@ -666,7 +666,7 @@ class SubEventsTest(SoupTest):
             )
             OrderPosition.objects.create(
                 order=o,
-                item=self.ticket,
+                product=self.ticket,
                 subevent=self.subevent1,
                 price=Decimal('14'),
             )
@@ -1003,8 +1003,8 @@ class SubEventsTest(SoupTest):
             assert self.subevent2.date_to == datetime.datetime(2013, 12, 27, 17, 0, 0, tzinfo=datetime.timezone.utc)
 
     def test_edit_bulk_price(self):
-        sei1 = SubEventItem.objects.create(subevent=self.subevent1, item=self.ticket, price=Decimal('4.00'))
-        sei2 = SubEventItem.objects.create(subevent=self.subevent2, item=self.ticket, price=Decimal('4.00'))
+        sei1 = SubEventItem.objects.create(subevent=self.subevent1, product=self.ticket, price=Decimal('4.00'))
+        sei2 = SubEventItem.objects.create(subevent=self.subevent2, product=self.ticket, price=Decimal('4.00'))
         doc = self.post_doc(
             '/control/event/ccc/30c3/subevents/bulk_edit',
             {

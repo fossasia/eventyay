@@ -30,7 +30,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
         )
         self.ticket_pos = OrderPosition.objects.create(
             order=self.order,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Peter'},
@@ -319,7 +319,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
 
     def test_product_list_view_with_voucher(self):
         with scopes_disabled():
-            self.event.vouchers.create(item=self.ticket, code='ABCDE')
+            self.event.vouchers.create(product=self.ticket, code='ABCDE')
         response = self.client.get('/%s/%s/widget/product_list?voucher=ABCDE' % (self.orga.slug, self.event.slug))
         assert response['Access-Control-Allow-Origin'] == '*'
         data = json.loads(response.content.decode())
@@ -447,7 +447,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
     def test_product_list_view_with_voucher_expired(self):
         with scopes_disabled():
             self.event.vouchers.create(
-                item=self.ticket,
+                product=self.ticket,
                 code='ABCDE',
                 valid_until=now() - datetime.timedelta(days=1),
             )

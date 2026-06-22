@@ -61,7 +61,7 @@ class OrderSearchTest(SoupTest):
         )
         OrderPosition.objects.create(
             order=o1,
-            item=ticket1,
+            product=ticket1,
             variation=None,
             price=Decimal('14'),
             attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
@@ -87,7 +87,7 @@ class OrderSearchTest(SoupTest):
         )
         OrderPosition.objects.create(
             order=o2,
-            item=ticket2,
+            product=ticket2,
             variation=None,
             price=Decimal('14'),
             attendee_name_parts={'full_name': 'Mark', '_scheme': 'full'},

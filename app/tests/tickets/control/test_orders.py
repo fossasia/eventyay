@@ -78,14 +78,14 @@ def env():
     event.settings.set('locales', ['en', 'de'])
     OrderPosition.objects.create(
         order=o,
-        item=ticket,
+        product=ticket,
         variation=None,
         price=Decimal('14'),
         attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
     )
     OrderPosition.objects.create(
         order=o,
-        item=ticket,
+        product=ticket,
         variation=None,
         price=Decimal('14'),
         canceled=True,
@@ -217,7 +217,7 @@ def test_order_export_approval_pending_only_filters_orders(env):
         total=Decimal('23.00'),
         locale='en',
     )
-    OrderPosition.objects.create(order=paid_order, item=ticket, variation=None, price=Decimal('23.00'))
+    OrderPosition.objects.create(order=paid_order, product=ticket, variation=None, price=Decimal('23.00'))
 
     approval_order = Order.objects.create(
         code='APPR1',
@@ -230,7 +230,7 @@ def test_order_export_approval_pending_only_filters_orders(env):
         total=Decimal('23.00'),
         locale='en',
     )
-    OrderPosition.objects.create(order=approval_order, item=ticket, variation=None, price=Decimal('23.00'))
+    OrderPosition.objects.create(order=approval_order, product=ticket, variation=None, price=Decimal('23.00'))
 
     exporter = OrderListExporter(event)
     rows = [
@@ -260,7 +260,7 @@ def test_order_export_paid_only_excludes_approval_pending_orders(env):
         total=Decimal('23.00'),
         locale='en',
     )
-    OrderPosition.objects.create(order=paid_order, item=ticket, variation=None, price=Decimal('23.00'))
+    OrderPosition.objects.create(order=paid_order, product=ticket, variation=None, price=Decimal('23.00'))
 
     exporter = OrderListExporter(event)
     rows = [
@@ -538,7 +538,7 @@ def test_order_bulk_approve(client, env):
         )
         OrderPosition.objects.create(
             order=second,
-            item=env[3],
+            product=env[3],
             variation=None,
             price=Decimal('14'),
             attendee_name_parts={'full_name': 'Bar', '_scheme': 'full'},
@@ -587,7 +587,7 @@ def test_order_bulk_deny(client, env):
         )
         OrderPosition.objects.create(
             order=second,
-            item=env[3],
+            product=env[3],
             variation=None,
             price=Decimal('14'),
             attendee_name_parts={'full_name': 'Bar', '_scheme': 'full'},
@@ -636,7 +636,7 @@ def test_order_bulk_action_mixed_state(client, env):
         )
         OrderPosition.objects.create(
             order=second,
-            item=env[3],
+            product=env[3],
             variation=None,
             price=Decimal('14'),
             attendee_name_parts={'full_name': 'Bar', '_scheme': 'full'},
@@ -1047,7 +1047,7 @@ def test_order_extend_overdue_quota_blocked_by_waiting_list(client, env):
         o.save()
         q = Quota.objects.create(event=env[0], size=1)
         q.products.add(env[3])
-        env[0].waitinglistentries.create(item=env[3], email='foo@bar.com')
+        env[0].waitinglistentries.create(product=env[3], email='foo@bar.com')
         generate_cancellation(generate_invoice(o))
 
     newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
@@ -1223,7 +1223,7 @@ def test_order_extend_expired_seat_taken(client, env):
         )
         OrderPosition.objects.create(
             order=o,
-            item=env[3],
+            product=env[3],
             variation=None,
             price=Decimal('14'),
             attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
@@ -1252,7 +1252,7 @@ def test_order_extend_expired_quota_partial(client, env):
         o = Order.objects.get(id=env[2].id)
         OrderPosition.objects.create(
             order=o,
-            item=env[3],
+            product=env[3],
             variation=None,
             price=Decimal('14'),
             attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
@@ -1359,7 +1359,7 @@ def test_order_mark_paid_overdue_quota_blocked_by_waiting_list(client, env):
         o.save()
         q = Quota.objects.create(event=env[0], size=1)
         q.products.add(env[3])
-        env[0].waitinglistentries.create(item=env[3], email='foo@bar.com')
+        env[0].waitinglistentries.create(product=env[3], email='foo@bar.com')
 
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1487,7 +1487,7 @@ def test_order_mark_paid_expired_seat_taken(client, env):
         )
         OrderPosition.objects.create(
             order=o,
-            item=env[3],
+            product=env[3],
             variation=None,
             price=Decimal('14'),
             attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
@@ -1677,21 +1677,21 @@ class OrderChangeTests(SoupTest):
         )
         self.op1 = OrderPosition.objects.create(
             order=self.order,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('23.00'),
             attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
         )
         self.op2 = OrderPosition.objects.create(
             order=self.order,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('23.00'),
             attendee_name_parts={'full_name': 'Dieter', '_scheme': 'full'},
         )
         self.op3 = OrderPosition.objects.create(
             order=self.order,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('23.00'),
             attendee_name_parts={'full_name': 'Lukas', '_scheme': 'full'},
@@ -2689,7 +2689,7 @@ def test_refund_paid_order_offsetting_to_expired(client, env):
             total=5,
             locale='en',
         )
-        o.positions.create(price=5, item=env[3])
+        o.positions.create(price=5, product=env[3])
         q = Quota.objects.create(event=env[0], size=0)
         q.products.add(env[3])
 

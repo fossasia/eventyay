@@ -24,7 +24,7 @@ def env():
     t.limit_events.add(event)
     item1 = Item.objects.create(event=event, name='Ticket', default_price=23)
     tl = event.ticket_layouts.create(name='Foo', default=True, layout='[{"a": 2}]')
-    TicketLayoutItem.objects.create(layout=tl, item=item1)
+    TicketLayoutItem.objects.create(layout=tl, product=item1)
     return event, user, tl, item1
 
 

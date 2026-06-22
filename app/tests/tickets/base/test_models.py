@@ -77,9 +77,9 @@ class BaseQuotaTestCase(TestCase):
         self.item1 = Item.objects.create(event=self.event, name='Ticket', default_price=23, admission=True)
         self.item2 = Item.objects.create(event=self.event, name='T-Shirt', default_price=23)
         self.item3 = Item.objects.create(event=self.event, name='Goodie', default_price=23)
-        self.var1 = ItemVariation.objects.create(item=self.item2, value='S')
-        self.var2 = ItemVariation.objects.create(item=self.item2, value='M')
-        self.var3 = ItemVariation.objects.create(item=self.item3, value='Fancy')
+        self.var1 = ItemVariation.objects.create(product=self.item2, value='S')
+        self.var2 = ItemVariation.objects.create(product=self.item2, value='M')
+        self.var3 = ItemVariation.objects.create(product=self.item3, value='Fancy')
 
 
 class QuotaTestCase(BaseQuotaTestCase):
@@ -105,8 +105,8 @@ class QuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=4,
         )
-        OrderPosition.objects.create(order=order, item=self.item1, price=2)
-        OrderPosition.objects.create(order=order, item=self.item1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, price=2)
         self.assertEqual(self.item1.check_quotas(), (Quota.AVAILABILITY_GONE, 0))
 
         self.quota.products.add(self.item2)
@@ -121,7 +121,7 @@ class QuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=4,
         )
-        OrderPosition.objects.create(order=order, item=self.item2, variation=self.var1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item2, variation=self.var1, price=2)
         self.assertEqual(self.var1.check_quotas(), (Quota.AVAILABILITY_GONE, 0))
 
     @classscope(attr='o')
@@ -133,7 +133,7 @@ class QuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=4,
         )
-        OrderPosition.objects.create(order=order, item=self.item1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, price=2)
         self.assertEqual(self.item1.check_quotas(), (Quota.AVAILABILITY_OK, 1))
 
         order = Order.objects.create(
@@ -142,7 +142,7 @@ class QuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=4,
         )
-        OrderPosition.objects.create(order=order, item=self.item1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, price=2)
         self.assertEqual(self.item1.check_quotas(), (Quota.AVAILABILITY_ORDERED, 0))
 
         order.expires = now() - timedelta(days=3)
@@ -167,7 +167,7 @@ class QuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=4,
         )
-        OrderPosition.objects.create(order=order, item=self.item2, variation=self.var1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item2, variation=self.var1, price=2)
 
         self.assertEqual(quota2.availability(), (Quota.AVAILABILITY_OK, 1))
 
@@ -182,7 +182,7 @@ class QuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=4,
         )
-        op = OrderPosition.objects.create(order=order, item=self.item1, price=2)
+        op = OrderPosition.objects.create(order=order, product=self.item1, price=2)
         self.assertEqual(self.item1.check_quotas(), (Quota.AVAILABILITY_OK, 2))
         op.canceled = True
         op.save()
@@ -199,7 +199,7 @@ class QuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=4,
         )
-        OrderPosition.objects.create(order=order, item=self.item1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, price=2)
         self.assertEqual(self.item1.check_quotas(), (Quota.AVAILABILITY_OK, 2))
 
         order = Order.objects.create(
@@ -208,12 +208,12 @@ class QuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=4,
         )
-        OrderPosition.objects.create(order=order, item=self.item1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, price=2)
         self.assertEqual(self.item1.check_quotas(), (Quota.AVAILABILITY_OK, 1))
 
         cp = CartPosition.objects.create(
             event=self.event,
-            item=self.item1,
+            product=self.item1,
             price=2,
             expires=now() + timedelta(days=3),
         )
@@ -227,7 +227,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         self.quota.variations.add(self.var1)
         cp = CartPosition.objects.create(
             event=self.event,
-            item=self.item2,
+            product=self.item2,
             variation=self.var1,
             price=2,
             expires=now() + timedelta(days=3),
@@ -268,8 +268,8 @@ class QuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=2,
         )
-        OrderPosition.objects.create(order=order, item=self.item1, price=2)
-        OrderPosition.objects.create(order=order, item=self.item1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, price=2)
         self.assertEqual(self.item1.check_quotas(), (Quota.AVAILABILITY_GONE, 0))
 
         self.quota.size = None
@@ -282,7 +282,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         self.quota.size = 1
         self.quota.save()
 
-        v = Voucher.objects.create(item=self.item1, event=self.event)
+        v = Voucher.objects.create(product=self.item1, event=self.event)
         self.assertEqual(self.item1.check_quotas(), (Quota.AVAILABILITY_OK, 1))
         self.assertTrue(v.is_active())
 
@@ -296,7 +296,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         self.quota.size = 1
         self.quota.save()
 
-        v = Voucher.objects.create(item=self.item2, variation=self.var1, event=self.event)
+        v = Voucher.objects.create(product=self.item2, variation=self.var1, event=self.event)
         self.assertEqual(self.var1.check_quotas(), (Quota.AVAILABILITY_OK, 1))
         self.assertTrue(v.is_active())
 
@@ -363,14 +363,14 @@ class QuotaTestCase(BaseQuotaTestCase):
         self.quota.variations.add(self.var3)
         self.quota.save()
         Voucher.objects.create(
-            item=self.item1,
+            product=self.item1,
             event=self.event,
             block_quota=True,
             max_usages=5,
             redeemed=2,
         )
         Voucher.objects.create(
-            item=self.item2,
+            product=self.item2,
             variation=self.var2,
             event=self.event,
             block_quota=True,
@@ -378,7 +378,7 @@ class QuotaTestCase(BaseQuotaTestCase):
             redeemed=2,
         )
         Voucher.objects.create(
-            item=self.item2,
+            product=self.item2,
             variation=self.var2,
             event=self.event,
             block_quota=True,
@@ -428,7 +428,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         )
         CartPosition.objects.create(
             event=self.event,
-            item=self.item1,
+            product=self.item1,
             price=2,
             expires=now() + timedelta(days=3),
             voucher=v,
@@ -447,7 +447,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         v = Voucher.objects.create(quota=self.quota, event=self.event, block_quota=True)
         CartPosition.objects.create(
             event=self.event,
-            item=self.item1,
+            product=self.item1,
             price=2,
             expires=now() + timedelta(days=3),
             voucher=v,
@@ -470,7 +470,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         )
         CartPosition.objects.create(
             event=self.event,
-            item=self.item1,
+            product=self.item1,
             price=2,
             expires=now() + timedelta(days=3),
             voucher=v,
@@ -488,7 +488,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         v = Voucher.objects.create(quota=self.quota, event=self.event)
         CartPosition.objects.create(
             event=self.event,
-            item=self.item1,
+            product=self.item1,
             price=2,
             expires=now() + timedelta(days=3),
             voucher=v,
@@ -505,7 +505,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         self.quota.products.add(self.item1)
         self.quota.size = 1
         self.quota.save()
-        WaitingListEntry.objects.create(event=self.event, item=self.item1, email='foo@bar.com')
+        WaitingListEntry.objects.create(event=self.event, product=self.item1, email='foo@bar.com')
         self.assertEqual(self.item1.check_quotas(), (Quota.AVAILABILITY_ORDERED, 0))
         self.assertEqual(self.item1.check_quotas(count_waitinglist=False), (Quota.AVAILABILITY_OK, 1))
 
@@ -514,7 +514,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         self.quota.variations.add(self.var1)
         self.quota.size = 1
         self.quota.save()
-        WaitingListEntry.objects.create(event=self.event, item=self.item2, variation=self.var1, email='foo@bar.com')
+        WaitingListEntry.objects.create(event=self.event, product=self.item2, variation=self.var1, email='foo@bar.com')
         self.assertEqual(self.var1.check_quotas(), (Quota.AVAILABILITY_ORDERED, 0))
         self.assertEqual(self.var1.check_quotas(count_waitinglist=False), (Quota.AVAILABILITY_OK, 1))
 
@@ -526,7 +526,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         v = Voucher.objects.create(quota=self.quota, event=self.event, block_quota=True, redeemed=1)
         WaitingListEntry.objects.create(
             event=self.event,
-            item=self.item2,
+            product=self.item2,
             variation=self.var1,
             email='foo@bar.com',
             voucher=v,
@@ -542,7 +542,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         self.quota.variations.add(self.var1)
         self.quota.size = 1
         self.quota.save()
-        WaitingListEntry.objects.create(event=self.event, item=self.item2, variation=self.var2, email='foo@bar.com')
+        WaitingListEntry.objects.create(event=self.event, product=self.item2, variation=self.var2, email='foo@bar.com')
         self.assertEqual(self.var1.check_quotas(), (Quota.AVAILABILITY_OK, 1))
         self.assertEqual(self.var1.check_quotas(count_waitinglist=False), (Quota.AVAILABILITY_OK, 1))
 
@@ -551,7 +551,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         self.quota.variations.add(self.var1)
         self.quota.size = 1
         self.quota.save()
-        WaitingListEntry.objects.create(event=self.event, item=self.item2, variation=self.var1, email='foo@bar.com')
+        WaitingListEntry.objects.create(event=self.event, product=self.item2, variation=self.var1, email='foo@bar.com')
 
         cache = {}
 
@@ -590,22 +590,22 @@ class QuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=6,
         )
-        OrderPosition.objects.create(order=order, item=self.item1, subevent=se1, price=2)
-        OrderPosition.objects.create(order=order, item=self.item1, subevent=se1, price=2)
-        OrderPosition.objects.create(order=order, item=self.item1, subevent=se2, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, subevent=se1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, subevent=se1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, subevent=se2, price=2)
         order = Order.objects.create(
             event=self.event,
             status=Order.STATUS_PENDING,
             expires=now() + timedelta(days=3),
             total=8,
         )
-        OrderPosition.objects.create(order=order, item=self.item1, subevent=se1, price=2)
-        OrderPosition.objects.create(order=order, item=self.item1, subevent=se1, price=2)
-        OrderPosition.objects.create(order=order, item=self.item1, subevent=se1, price=2)
-        OrderPosition.objects.create(order=order, item=self.item1, subevent=se2, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, subevent=se1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, subevent=se1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, subevent=se1, price=2)
+        OrderPosition.objects.create(order=order, product=self.item1, subevent=se2, price=2)
 
         Voucher.objects.create(
-            item=self.item1,
+            product=self.item1,
             event=self.event,
             valid_until=now() + timedelta(days=5),
             block_quota=True,
@@ -613,7 +613,7 @@ class QuotaTestCase(BaseQuotaTestCase):
             subevent=se1,
         )
         Voucher.objects.create(
-            item=self.item1,
+            product=self.item1,
             event=self.event,
             valid_until=now() + timedelta(days=5),
             block_quota=True,
@@ -624,7 +624,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         for i in range(8):
             CartPosition.objects.create(
                 event=self.event,
-                item=self.item1,
+                product=self.item1,
                 price=2,
                 subevent=se1,
                 expires=now() + timedelta(days=3),
@@ -633,17 +633,17 @@ class QuotaTestCase(BaseQuotaTestCase):
         for i in range(5):
             CartPosition.objects.create(
                 event=self.event,
-                item=self.item1,
+                product=self.item1,
                 price=2,
                 subevent=se2,
                 expires=now() + timedelta(days=3),
             )
 
         for i in range(16):
-            WaitingListEntry.objects.create(event=self.event, item=self.item1, email='foo@bar.com', subevent=se1)
+            WaitingListEntry.objects.create(event=self.event, product=self.item1, email='foo@bar.com', subevent=se1)
 
         for i in range(13):
-            WaitingListEntry.objects.create(event=self.event, item=self.item1, email='foo@bar.com', subevent=se2)
+            WaitingListEntry.objects.create(event=self.event, product=self.item1, email='foo@bar.com', subevent=se2)
 
         with self.assertRaises(TypeError):
             self.item1.check_quotas()
@@ -695,7 +695,7 @@ class CheckinQuotaTestCase(BaseQuotaTestCase):
             expires=now() + timedelta(days=3),
             total=4,
         )
-        self.op = OrderPosition.objects.create(order=order, item=self.item1, price=2)
+        self.op = OrderPosition.objects.create(order=order, product=self.item1, price=2)
 
     @classscope(attr='o')
     def test_not_checked_in(self):
@@ -884,10 +884,10 @@ class WaitingListTestCase(BaseQuotaTestCase):
     @classscope(attr='o')
     def test_duplicate(self):
         w1 = WaitingListEntry.objects.create(
-            event=self.event, item=self.item2, variation=self.var1, email='foo@bar.com'
+            event=self.event, product=self.item2, variation=self.var1, email='foo@bar.com'
         )
         w1.clean()
-        w2 = WaitingListEntry(event=self.event, item=self.item2, variation=self.var1, email='foo@bar.com')
+        w2 = WaitingListEntry(event=self.event, product=self.item2, variation=self.var1, email='foo@bar.com')
         with self.assertRaises(ValidationError):
             w2.clean()
 
@@ -896,18 +896,18 @@ class WaitingListTestCase(BaseQuotaTestCase):
         v = Voucher.objects.create(quota=self.quota, event=self.event, block_quota=True, redeemed=1)
         w1 = WaitingListEntry.objects.create(
             event=self.event,
-            item=self.item2,
+            product=self.item2,
             variation=self.var1,
             email='foo@bar.com',
             voucher=v,
         )
         w1.clean()
-        w2 = WaitingListEntry(event=self.event, item=self.item2, variation=self.var1, email='foo@bar.com')
+        w2 = WaitingListEntry(event=self.event, product=self.item2, variation=self.var1, email='foo@bar.com')
         w2.clean()
 
     @classscope(attr='o')
     def test_missing_variation(self):
-        w2 = WaitingListEntry(event=self.event, item=self.item2, email='foo@bar.com')
+        w2 = WaitingListEntry(event=self.event, product=self.item2, email='foo@bar.com')
         with self.assertRaises(ValidationError):
             w2.clean()
 
@@ -924,7 +924,7 @@ class VoucherTestCase(BaseQuotaTestCase):
         # use a voucher normally
         cart = CartPosition.objects.create(
             event=self.event,
-            item=self.item1,
+            product=self.item1,
             price=self.item1.default_price,
             expires=now() + timedelta(days=3),
             voucher=v,
@@ -942,7 +942,7 @@ class VoucherTestCase(BaseQuotaTestCase):
         # assert that the voucher cannot be reused
         cart = CartPosition.objects.create(
             event=self.event,
-            item=self.item1,
+            product=self.item1,
             price=self.item1.default_price,
             expires=now() + timedelta(days=3),
             voucher=v,
@@ -964,7 +964,7 @@ class VoucherTestCase(BaseQuotaTestCase):
 
         cart = CartPosition.objects.create(
             event=self.event,
-            item=self.item1,
+            product=self.item1,
             price=self.item1.default_price,
             expires=now() + timedelta(days=3),
             voucher=v,
@@ -980,14 +980,14 @@ class VoucherTestCase(BaseQuotaTestCase):
 
     @classscope(attr='o')
     def test_voucher_applicability_item(self):
-        v = Voucher.objects.create(item=self.var1.item, event=self.event)
+        v = Voucher.objects.create(product=self.var1.item, event=self.event)
         self.assertFalse(v.applies_to(self.item1))
         self.assertTrue(v.applies_to(self.var1.item))
         self.assertTrue(v.applies_to(self.var1.item, self.var1))
 
     @classscope(attr='o')
     def test_voucher_applicability_variation(self):
-        v = Voucher.objects.create(item=self.var1.item, variation=self.var1, event=self.event)
+        v = Voucher.objects.create(product=self.var1.item, variation=self.var1, event=self.event)
         self.assertFalse(v.applies_to(self.item1))
         self.assertFalse(v.applies_to(self.var1.item))
         self.assertTrue(v.applies_to(self.var1.item, self.var1))
@@ -1014,25 +1014,25 @@ class VoucherTestCase(BaseQuotaTestCase):
     @classscope(attr='o')
     def test_voucher_no_item_with_quota(self):
         with self.assertRaises(ValidationError):
-            v = Voucher(quota=self.quota, item=self.item1, event=self.event)
+            v = Voucher(quota=self.quota, product=self.item1, event=self.event)
             v.clean()
 
     @classscope(attr='o')
     def test_voucher_item_with_no_variation(self):
         with self.assertRaises(ValidationError):
-            v = Voucher(item=self.item1, variation=self.var1, event=self.event)
+            v = Voucher(product=self.item1, variation=self.var1, event=self.event)
             v.clean()
 
     @classscope(attr='o')
     def test_voucher_item_does_not_match_variation(self):
         with self.assertRaises(ValidationError):
-            v = Voucher(item=self.item2, variation=self.var3, event=self.event)
+            v = Voucher(product=self.item2, variation=self.var3, event=self.event)
             v.clean()
 
     @classscope(attr='o')
     def test_voucher_specify_variation_for_block_quota(self):
         with self.assertRaises(ValidationError):
-            v = Voucher(item=self.item2, block_quota=True, event=self.event)
+            v = Voucher(product=self.item2, block_quota=True, event=self.event)
             v.clean()
 
     @classscope(attr='o')
@@ -1089,7 +1089,7 @@ class VoucherTestCase(BaseQuotaTestCase):
         )
         OrderPosition.objects.create(
             order=order,
-            item=self.item1,
+            product=self.item1,
             voucher=v,
             price=Decimal('20.00'),
             price_before_voucher=Decimal('23.00'),
@@ -1105,7 +1105,7 @@ class VoucherTestCase(BaseQuotaTestCase):
         )
         OrderPosition.objects.create(
             order=order,
-            item=self.item1,
+            product=self.item1,
             voucher=v,
             price=Decimal('20.00'),
             price_before_voucher=Decimal('23.00'),
@@ -1126,8 +1126,8 @@ class OrderTestCase(BaseQuotaTestCase):
                 total=46,
             )
             self.quota.products.add(self.item1)
-            self.op1 = OrderPosition.objects.create(order=self.order, item=self.item1, variation=None, price=23)
-            self.op2 = OrderPosition.objects.create(order=self.order, item=self.item1, variation=None, price=23)
+            self.op1 = OrderPosition.objects.create(order=self.order, product=self.item1, variation=None, price=23)
+            self.op2 = OrderPosition.objects.create(order=self.order, product=self.item1, variation=None, price=23)
 
     @classscope(attr='o')
     def test_paid_in_time(self):
@@ -1239,7 +1239,7 @@ class OrderTestCase(BaseQuotaTestCase):
     @classscope(attr='o')
     def test_paid_expired_unavailable_waiting_list(self):
         self.event.settings.payment_term_accept_late = True
-        self.event.waitinglistentries.create(item=self.item1, email='foo@bar.com')
+        self.event.waitinglistentries.create(product=self.item1, email='foo@bar.com')
         self.order.expires = now() - timedelta(days=2)
         self.order.status = Order.STATUS_EXPIRED
         self.order.save()
@@ -1252,7 +1252,7 @@ class OrderTestCase(BaseQuotaTestCase):
 
     @classscope(attr='o')
     def test_paid_expired_unavailable_waiting_list_ignore(self):
-        self.event.waitinglistentries.create(item=self.item1, email='foo@bar.com')
+        self.event.waitinglistentries.create(product=self.item1, email='foo@bar.com')
         self.order.expires = now() - timedelta(days=2)
         self.order.status = Order.STATUS_EXPIRED
         self.order.save()
@@ -1427,7 +1427,7 @@ class OrderTestCase(BaseQuotaTestCase):
             admission=True,
             allow_cancel=True,
         )
-        OrderPosition.objects.create(order=self.order, item=item1, variation=None, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=None, price=23)
         assert self.order.user_cancel_allowed
         self.event.settings.cancel_allow_user = False
         assert not self.order.user_cancel_allowed
@@ -1442,7 +1442,7 @@ class OrderTestCase(BaseQuotaTestCase):
             allow_cancel=True,
             issue_giftcard=True,
         )
-        p = OrderPosition.objects.create(order=self.order, item=item1, variation=None, price=23)
+        p = OrderPosition.objects.create(order=self.order, product=item1, variation=None, price=23)
         self.event.organizer.issued_gift_cards.create(currency='EUR', issued_in=p)
         assert not self.order.user_cancel_allowed
 
@@ -1493,8 +1493,8 @@ class OrderTestCase(BaseQuotaTestCase):
             admission=True,
             allow_cancel=True,
         )
-        OrderPosition.objects.create(order=self.order, item=item1, variation=None, price=23)
-        OrderPosition.objects.create(order=self.order, item=item2, variation=None, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=None, price=23)
+        OrderPosition.objects.create(order=self.order, product=item2, variation=None, price=23)
         assert self.order.user_cancel_allowed
 
     @classscope(attr='o')
@@ -1506,7 +1506,7 @@ class OrderTestCase(BaseQuotaTestCase):
             admission=True,
             allow_cancel=False,
         )
-        OrderPosition.objects.create(order=self.order, item=item1, variation=None, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=None, price=23)
         assert self.order.user_cancel_allowed is False
 
     @classscope(attr='o')
@@ -1525,8 +1525,8 @@ class OrderTestCase(BaseQuotaTestCase):
             admission=True,
             allow_cancel=True,
         )
-        OrderPosition.objects.create(order=self.order, item=item1, variation=None, price=23)
-        OrderPosition.objects.create(order=self.order, item=item2, variation=None, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=None, price=23)
+        OrderPosition.objects.create(order=self.order, product=item2, variation=None, price=23)
         assert self.order.user_cancel_allowed is False
 
     @classscope(attr='o')
@@ -1545,8 +1545,8 @@ class OrderTestCase(BaseQuotaTestCase):
             admission=True,
             allow_cancel=True,
         )
-        OrderPosition.objects.create(order=self.order, item=item1, variation=None, price=23)
-        OrderPosition.objects.create(order=self.order, item=item2, variation=None, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=None, price=23)
+        OrderPosition.objects.create(order=self.order, product=item2, variation=None, price=23)
         assert self.order.user_cancel_allowed is False
 
     @classscope(attr='o')
@@ -1558,8 +1558,8 @@ class OrderTestCase(BaseQuotaTestCase):
             admission=True,
             allow_cancel=False,
         )
-        p1 = OrderPosition.objects.create(order=self.order, item=item1, secret='ABC', variation=None, price=23)
-        p2 = OrderPosition.objects.create(order=self.order, item=item1, secret='ABC', variation=None, price=23)
+        p1 = OrderPosition.objects.create(order=self.order, product=item1, secret='ABC', variation=None, price=23)
+        p2 = OrderPosition.objects.create(order=self.order, product=item1, secret='ABC', variation=None, price=23)
         assert p1.secret != p2.secret
         assert self.order.user_cancel_allowed is False
 
@@ -1855,7 +1855,7 @@ class OrderTestCase(BaseQuotaTestCase):
             allow_cancel=True,
         )
         v = item1.variations.create(value='V')
-        OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=v, price=23)
         assert not self.order.user_change_allowed
         self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed
@@ -1877,7 +1877,7 @@ class OrderTestCase(BaseQuotaTestCase):
             issue_giftcard=True,
         )
         v = item1.variations.create(value='V')
-        p = OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
+        p = OrderPosition.objects.create(order=self.order, product=item1, variation=v, price=23)
         self.event.settings.change_allow_user_variation = True
         self.event.organizer.issued_gift_cards.create(currency='EUR', issued_in=p)
         assert not self.order.user_change_allowed
@@ -1914,8 +1914,8 @@ class OrderTestCase(BaseQuotaTestCase):
             allow_cancel=True,
         )
         v2 = item2.variations.create(value='V')
-        OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
-        OrderPosition.objects.create(order=self.order, item=item2, variation=v2, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=v, price=23)
+        OrderPosition.objects.create(order=self.order, product=item2, variation=v2, price=23)
         self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed
 
@@ -1929,7 +1929,7 @@ class OrderTestCase(BaseQuotaTestCase):
             allow_cancel=False,
         )
         v = item1.variations.create(value='V')
-        OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=v, price=23)
         self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed is False
 
@@ -1942,7 +1942,7 @@ class OrderTestCase(BaseQuotaTestCase):
             admission=True,
             allow_cancel=True,
         )
-        OrderPosition.objects.create(order=self.order, item=item1, variation=None, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=None, price=23)
         self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed is False
         item2 = Item.objects.create(
@@ -1953,7 +1953,7 @@ class OrderTestCase(BaseQuotaTestCase):
             allow_cancel=True,
         )
         v2 = item2.variations.create(value='V')
-        OrderPosition.objects.create(order=self.order, item=item2, variation=v2, price=23)
+        OrderPosition.objects.create(order=self.order, product=item2, variation=v2, price=23)
         assert self.order.user_change_allowed is True
 
     @classscope(attr='o')
@@ -1974,8 +1974,8 @@ class OrderTestCase(BaseQuotaTestCase):
         )
         v = item1.variations.create(value='V')
         v2 = item2.variations.create(value='V')
-        OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
-        OrderPosition.objects.create(order=self.order, item=item2, variation=v2, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=v, price=23)
+        OrderPosition.objects.create(order=self.order, product=item2, variation=v2, price=23)
         self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed is False
 
@@ -1997,8 +1997,8 @@ class OrderTestCase(BaseQuotaTestCase):
         )
         v = item1.variations.create(value='V')
         v2 = item2.variations.create(value='V')
-        OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
-        OrderPosition.objects.create(order=self.order, item=item2, variation=v2, price=23)
+        OrderPosition.objects.create(order=self.order, product=item1, variation=v, price=23)
+        OrderPosition.objects.create(order=self.order, product=item2, variation=v2, price=23)
         self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed is False
 
@@ -2200,7 +2200,7 @@ class ItemTest(TestCase):
         i.save()
         v = Voucher.objects.create(
             event=self.event,
-            item=i,
+            product=i,
         )
         assert not Item.objects.filter_available().exists()
         assert Item.objects.filter_available(voucher=v).exists()
@@ -2499,7 +2499,7 @@ class SubEventTest(TestCase):
             active=True,
             available_until=now() + timedelta(days=1),
         )
-        SubEventItem.objects.create(item=i, subevent=self.se, price=Decimal('30.00'))
+        SubEventItem.objects.create(product=i, subevent=self.se, price=Decimal('30.00'))
         assert self.se.item_price_overrides == {i.pk: Decimal('30.00')}
 
     @classscope(attr='organizer')
@@ -2602,19 +2602,19 @@ class CheckinListTestCase(TestCase):
             )
             OrderPosition.objects.create(
                 order=o,
-                item=self.item1,
+                product=self.item1,
                 variation=None,
                 price=Decimal('12'),
             )
             op2 = OrderPosition.objects.create(
                 order=o,
-                item=self.item1,
+                product=self.item1,
                 variation=None,
                 price=Decimal('12'),
             )
             op3 = OrderPosition.objects.create(
                 order=o,
-                item=self.item2,
+                product=self.item2,
                 variation=None,
                 price=Decimal('6'),
             )
@@ -2633,7 +2633,7 @@ class CheckinListTestCase(TestCase):
             )
             op4 = OrderPosition.objects.create(
                 order=o,
-                item=self.item2,
+                product=self.item2,
                 variation=None,
                 price=Decimal('6'),
             )
@@ -2707,7 +2707,7 @@ class SeatingTestCase(TestCase):
         )
         OrderPosition.objects.create(
             order=o,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('12'),
             seat=self.seat_a1,
@@ -2737,7 +2737,7 @@ class SeatingTestCase(TestCase):
         )
         OrderPosition.objects.create(
             order=o,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('12'),
             seat=self.seat_a1,
@@ -2759,7 +2759,7 @@ class SeatingTestCase(TestCase):
         )
         OrderPosition.objects.create(
             order=o,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('12'),
             seat=self.seat_a1,
@@ -2781,7 +2781,7 @@ class SeatingTestCase(TestCase):
         )
         OrderPosition.objects.create(
             order=o,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('12'),
             seat=self.seat_a1,
@@ -2794,7 +2794,7 @@ class SeatingTestCase(TestCase):
         CartPosition.objects.create(
             event=self.event,
             cart_id='a',
-            item=self.ticket,
+            product=self.ticket,
             seat=self.seat_a1,
             price=23,
             expires=now() + timedelta(minutes=10),
@@ -2807,7 +2807,7 @@ class SeatingTestCase(TestCase):
         CartPosition.objects.create(
             event=self.event,
             cart_id='a',
-            item=self.ticket,
+            product=self.ticket,
             seat=self.seat_a1,
             price=23,
             expires=now() - timedelta(minutes=10),
@@ -2832,7 +2832,7 @@ class SeatingTestCase(TestCase):
         )
         OrderPosition.objects.create(
             order=o,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('12'),
             seat=self.seat_a1,
@@ -2858,7 +2858,7 @@ class SeatingTestCase(TestCase):
         )
         OrderPosition.objects.create(
             order=o,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('12'),
             seat=self.seat_a1,
@@ -2875,7 +2875,7 @@ class SeatingTestCase(TestCase):
         CartPosition.objects.create(
             event=self.event,
             cart_id='a',
-            item=self.ticket,
+            product=self.ticket,
             seat=self.seat_a1,
             price=23,
             expires=now() + timedelta(minutes=10),
@@ -2892,7 +2892,7 @@ class SeatingTestCase(TestCase):
         CartPosition.objects.create(
             event=self.event,
             cart_id='a',
-            item=self.ticket,
+            product=self.ticket,
             seat=self.seat_a1,
             price=23,
             expires=now() - timedelta(minutes=10),
@@ -2906,7 +2906,7 @@ class SeatingTestCase(TestCase):
         Voucher.objects.create(
             event=self.event,
             code='a',
-            item=self.ticket,
+            product=self.ticket,
             seat=self.seat_a1,
             valid_until=now() + timedelta(minutes=10),
         )
@@ -2918,7 +2918,7 @@ class SeatingTestCase(TestCase):
         Voucher.objects.create(
             event=self.event,
             code='a',
-            item=self.ticket,
+            product=self.ticket,
             seat=self.seat_a1,
             valid_until=now() - timedelta(minutes=10),
         )
@@ -3095,14 +3095,14 @@ def test_subevent_date_updates_order_date():
             expires=now() + timedelta(days=3),
             total=6,
         )
-        OrderPosition.objects.create(order=order1, item=item1, subevent=se1, price=2)
+        OrderPosition.objects.create(order=order1, product=item1, subevent=se1, price=2)
         order2 = Order.objects.create(
             event=event,
             status=Order.STATUS_PAID,
             expires=now() + timedelta(days=3),
             total=6,
         )
-        OrderPosition.objects.create(order=order2, item=item1, subevent=se2, price=2)
+        OrderPosition.objects.create(order=order2, product=item1, subevent=se2, price=2)
 
         o1lm = order1.last_modified
         o2lm = order2.last_modified

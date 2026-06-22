@@ -44,8 +44,8 @@ class BaseOrdersTest(TestCase):
         self.quota_shirts = Quota.objects.create(event=self.event, name='Shirts', size=2)
         self.shirt = Item.objects.create(event=self.event, name='T-Shirt', category=self.category, default_price=12)
         self.quota_shirts.products.add(self.shirt)
-        self.shirt_red = ItemVariation.objects.create(item=self.shirt, default_price=14, value='Red')
-        self.shirt_blue = ItemVariation.objects.create(item=self.shirt, value='Blue')
+        self.shirt_red = ItemVariation.objects.create(product=self.shirt, default_price=14, value='Red')
+        self.shirt_blue = ItemVariation.objects.create(product=self.shirt, value='Blue')
         self.quota_shirts.variations.add(self.shirt_red)
         self.quota_shirts.variations.add(self.shirt_blue)
         self.quota_tickets = Quota.objects.create(event=self.event, name='Tickets', size=5)
@@ -74,14 +74,14 @@ class BaseOrdersTest(TestCase):
         )
         self.ticket_pos = OrderPosition.objects.create(
             order=self.order,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Peter'},
         )
         self.deleted_pos = OrderPosition.objects.create(
             order=self.order,
-            item=self.ticket,
+            product=self.ticket,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Lukas'},
@@ -1595,7 +1595,7 @@ class OrdersTest(BaseOrdersTest):
         with scopes_disabled():
             shirt_pos = OrderPosition.objects.create(
                 order=self.order,
-                item=self.shirt,
+                product=self.shirt,
                 variation=self.shirt_red,
                 price=Decimal('14'),
             )
@@ -1630,7 +1630,7 @@ class OrdersTest(BaseOrdersTest):
         with scopes_disabled():
             shirt_pos = OrderPosition.objects.create(
                 order=self.order,
-                item=self.shirt,
+                product=self.shirt,
                 variation=self.shirt_red,
                 price=Decimal('14'),
             )
@@ -1697,7 +1697,7 @@ class OrdersTest(BaseOrdersTest):
         with scopes_disabled():
             shirt_pos = OrderPosition.objects.create(
                 order=self.order,
-                item=self.shirt,
+                product=self.shirt,
                 variation=self.shirt_red,
                 price=Decimal('14'),
             )
@@ -1764,7 +1764,7 @@ class OrdersTest(BaseOrdersTest):
         with scopes_disabled():
             shirt_pos = OrderPosition.objects.create(
                 order=self.order,
-                item=self.shirt,
+                product=self.shirt,
                 variation=self.shirt_blue,
                 price=Decimal('12'),
             )
@@ -1790,7 +1790,7 @@ class OrdersTest(BaseOrdersTest):
         with scopes_disabled():
             shirt_pos = OrderPosition.objects.create(
                 order=self.order,
-                item=self.shirt,
+                product=self.shirt,
                 variation=self.shirt_blue,
                 price=Decimal('12'),
             )
@@ -1821,7 +1821,7 @@ class OrdersTest(BaseOrdersTest):
         with scopes_disabled():
             shirt_pos = OrderPosition.objects.create(
                 order=self.order,
-                item=self.shirt,
+                product=self.shirt,
                 variation=self.shirt_blue,
                 price=Decimal('12'),
             )
@@ -1873,7 +1873,7 @@ class OrdersTest(BaseOrdersTest):
             )
             shirt_pos = OrderPosition.objects.create(
                 order=self.order,
-                item=self.shirt,
+                product=self.shirt,
                 variation=self.shirt_blue,
                 price=Decimal('12'),
             )

@@ -48,7 +48,7 @@ def event():
         item_ticket = Item.objects.create(event=event, name='Ticket', default_price=23, admission=True)
         OrderPosition.objects.create(
             order=order_paid,
-            item=item_ticket,
+            product=item_ticket,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={
@@ -61,7 +61,7 @@ def event():
         )
         OrderPosition.objects.create(
             order=order_paid,
-            item=item_ticket,
+            product=item_ticket,
             variation=None,
             price=Decimal('13'),
             attendee_name_parts={
@@ -173,7 +173,7 @@ def test_csv_order_by_inherited_name_parts(event):  # noqa
         )
         OrderPosition.objects.create(
             order=order2,
-            item=event.products.first(),
+            product=event.products.first(),
             variation=None,
             company='BARCORP',
             price=Decimal('23'),

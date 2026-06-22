@@ -53,7 +53,7 @@ def order(item):
         email='dummy@dummy.test',
         datetime=now(),
     )
-    OrderPosition.objects.create(order=o, item=item, price=13)
+    OrderPosition.objects.create(order=o, product=item, price=13)
     p1 = o.payments.create(
         provider='stripe',
         state='refunded',
@@ -225,7 +225,7 @@ def test_one_view(
             event=event.slug,
             orga=event.organizer.slug,
             category=item_category.pk,
-            item=item.pk,
+            product=item.pk,
             order_code=order.code,
             question=question.pk,
             quota=quota.pk,

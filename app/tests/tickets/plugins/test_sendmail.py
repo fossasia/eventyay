@@ -61,7 +61,7 @@ def order(item):
 
 @pytest.fixture
 def pos(order, item):
-    return OrderPosition.objects.create(order=order, item=item, price=13)
+    return OrderPosition.objects.create(order=order, product=item, price=13)
 
 
 @pytest.fixture
@@ -197,7 +197,7 @@ def test_sendmail_multi_locales(logged_in_client, sendmail_url, event, item):
             datetime=now(),
             locale='de',
         )
-        OrderPosition.objects.create(order=o, item=item, price=13)
+        OrderPosition.objects.create(order=o, product=item, price=13)
 
     response = logged_in_client.post(
         sendmail_url,
@@ -419,7 +419,7 @@ def test_sendmail_attendee_product_filter(logged_in_client, sendmail_url, event,
         p = pos
         p.attendee_email = 'attendee1@dummy.test'
         p.save()
-        order.positions.create(item=i2, price=0, attendee_email='attendee2@dummy.test')
+        order.positions.create(product=i2, price=0, attendee_email='attendee2@dummy.test')
 
         djmail.outbox = []
         response = logged_in_client.post(
@@ -449,7 +449,7 @@ def test_sendmail_attendee_checkin_filter(logged_in_client, sendmail_url, event,
         p = pos
         p.attendee_email = 'attendee1@dummy.test'
         p.save()
-        pos2 = order.positions.create(item=item, price=0, attendee_email='attendee2@dummy.test')
+        pos2 = order.positions.create(product=item, price=0, attendee_email='attendee2@dummy.test')
         Checkin.objects.create(position=pos2, list=chkl2)
 
     djmail.outbox = []

@@ -69,7 +69,7 @@ def order(event, item):
     event.settings.set('locales', ['en', 'de'])
     OrderPosition.objects.create(
         order=o,
-        item=item,
+        product=item,
         variation=None,
         price=Decimal('14'),
         attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
@@ -125,7 +125,7 @@ def test_waitinglist_shredder(event, item):
     q = event.quotas.create(size=5)
     q.products.add(item)
     wle = event.waitinglistentries.create(
-        item=item,
+        product=item,
         email='foo@example.org',
         name_parts={'_legacy': 'Peter'},
         phone='+49891234567',

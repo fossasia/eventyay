@@ -27,7 +27,7 @@ def wle(event, item):
 
     with mock.patch('django.utils.timezone.now') as mock_now:
         mock_now.return_value = testtime
-        return WaitingListEntry.objects.create(event=event, item=item, email='waiting@example.org', locale='en')
+        return WaitingListEntry.objects.create(event=event, product=item, email='waiting@example.org', locale='en')
 
 
 TEST_WLE_RES = {
@@ -113,7 +113,7 @@ def test_wle_list(token_client, organizer, event, wle, item, subevent):
     assert [] == resp.data['results']
 
     with scopes_disabled():
-        v = event.vouchers.create(item=item, price_mode='set', value=12, tag='Foo')
+        v = event.vouchers.create(product=item, price_mode='set', value=12, tag='Foo')
     wle.voucher = v
     wle.save()
     res['voucher'] = v.pk
@@ -168,7 +168,7 @@ def test_delete_wle(token_client, organizer, event, wle, item):
 @pytest.mark.django_db
 def test_delete_wle_assigned(token_client, organizer, event, wle, item):
     with scopes_disabled():
-        v = event.vouchers.create(item=item, price_mode='set', value=12, tag='Foo')
+        v = event.vouchers.create(product=item, price_mode='set', value=12, tag='Foo')
     wle.voucher = v
     wle.save()
     resp = token_client.delete(
@@ -346,7 +346,7 @@ def test_wle_change_email(token_client, organizer, event, item, wle, quota):
 @pytest.mark.django_db
 def test_wle_change_assigned(token_client, organizer, event, item, wle, quota):
     with scopes_disabled():
-        v = event.vouchers.create(item=item, price_mode='set', value=12, tag='Foo')
+        v = event.vouchers.create(product=item, price_mode='set', value=12, tag='Foo')
     wle.voucher = v
     wle.save()
     change_wle(

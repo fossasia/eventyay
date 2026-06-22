@@ -60,12 +60,12 @@ def dashboard_env():
     )
     OrderPosition.objects.create(
         order=order_paid,
-        item=item_ticket,
+        product=item_ticket,
         variation=None,
         price=Decimal('23'),
         attendee_name_parts={'full_name': 'Peter'},
     )
-    OrderPosition.objects.create(order=order_paid, item=item_mascot, variation=None, price=Decimal('10'))
+    OrderPosition.objects.create(order=order_paid, product=item_mascot, variation=None, price=Decimal('10'))
 
     return event, user, o, order_paid, item_ticket, item_mascot, cl
 
@@ -93,7 +93,7 @@ def test_dashboard_pending_not_count(dashboard_env):
     )
     OrderPosition.objects.create(
         order=order_pending,
-        item=dashboard_env[4],
+        product=dashboard_env[4],
         variation=None,
         price=Decimal('23'),
         attendee_name_parts={'full_name': 'NotPaid'},
@@ -104,7 +104,7 @@ def test_dashboard_pending_not_count(dashboard_env):
 @pytest.mark.django_db
 @scopes_disabled()
 def test_dashboard_with_checkin(dashboard_env):
-    op = OrderPosition.objects.get(order=dashboard_env[3], item=dashboard_env[4])
+    op = OrderPosition.objects.get(order=dashboard_env[3], product=dashboard_env[4])
     Checkin.objects.create(position=op, list=dashboard_env[6])
     c = checkin_widget(dashboard_env[0])
     assert '1/2' in c[0]['content']
@@ -182,29 +182,29 @@ def checkin_list_env():
     # order position
     op_pending_ticket = OrderPosition.objects.create(
         order=order_pending,
-        item=item_ticket,
+        product=item_ticket,
         variation=None,
         price=Decimal('23'),
         attendee_name_parts={'full_name': 'Pending'},
     )
     op_a1_ticket = OrderPosition.objects.create(
         order=order_a1,
-        item=item_ticket,
+        product=item_ticket,
         variation=None,
         price=Decimal('23'),
         attendee_name_parts={'full_name': 'A1'},
     )
-    op_a1_mascot = OrderPosition.objects.create(order=order_a1, item=item_mascot, variation=None, price=Decimal('10'))
+    op_a1_mascot = OrderPosition.objects.create(order=order_a1, product=item_mascot, variation=None, price=Decimal('10'))
     op_a2_ticket = OrderPosition.objects.create(
         order=order_a2,
-        item=item_ticket,
+        product=item_ticket,
         variation=None,
         price=Decimal('23'),
         attendee_name_parts={'full_name': 'A2'},
     )
     op_a3_ticket = OrderPosition.objects.create(
         order=order_a3,
-        item=item_ticket,
+        product=item_ticket,
         variation=None,
         price=Decimal('23'),
         attendee_name_parts={'full_name': 'a4'},  # a3 attendee is a4
@@ -423,28 +423,28 @@ def checkin_list_with_addon_env():
     # order position
     op_pending_ticket = OrderPosition.objects.create(
         order=order_pending,
-        item=item_ticket,
+        product=item_ticket,
         variation=None,
         price=Decimal('23'),
         attendee_name_parts={'full_name': 'Pending'},
     )
     op_a1_ticket = OrderPosition.objects.create(
         order=order_a1,
-        item=item_ticket,
+        product=item_ticket,
         variation=None,
         price=Decimal('23'),
         attendee_name_parts={'full_name': 'A1'},
     )
     op_a1_workshop = OrderPosition.objects.create(
         order=order_a1,
-        item=item_workshop,
+        product=item_workshop,
         variation=None,
         price=Decimal('10'),
         addon_to=op_a1_ticket,
     )
     op_a2_ticket = OrderPosition.objects.create(
         order=order_a2,
-        item=item_ticket,
+        product=item_ticket,
         variation=None,
         price=Decimal('23'),
         attendee_name_parts={'full_name': 'A2'},

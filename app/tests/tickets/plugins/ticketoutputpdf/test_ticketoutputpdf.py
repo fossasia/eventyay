@@ -32,10 +32,10 @@ def env0():
         total=Decimal('13.37'),
     )
     shirt = Item.objects.create(event=event, name='T-Shirt', default_price=12)
-    shirt_red = ItemVariation.objects.create(item=shirt, default_price=14, value='Red')
+    shirt_red = ItemVariation.objects.create(product=shirt, default_price=14, value='Red')
     OrderPosition.objects.create(
         order=o1,
-        item=shirt,
+        product=shirt,
         variation=shirt_red,
         price=12,
         attendee_name_parts={},
@@ -43,7 +43,7 @@ def env0():
     )
     OrderPosition.objects.create(
         order=o1,
-        item=shirt,
+        product=shirt,
         variation=shirt_red,
         price=12,
         attendee_name_parts={},

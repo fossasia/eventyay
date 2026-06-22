@@ -142,7 +142,7 @@ class TaxRateFormTest(SoupTest):
                 total=12,
                 locale='en',
             )
-            o.positions.create(item=i, price=12, tax_rule=tr, tax_rate=19, tax_value=12 - 12 / 1.19)
+            o.positions.create(product=i, price=12, tax_rule=tr, tax_rate=19, tax_value=12 - 12 / 1.19)
         doc = self.get_doc('/control/event/%s/%s/settings/tax/%s/delete' % (self.orga1.slug, self.event1.slug, tr.id))
         form_data = extract_form_fields(doc.select('.container-fluid form')[0])
         doc = self.post_doc(

@@ -79,7 +79,7 @@ def test_cp_list(token_client, organizer, event, item, taxrule, question):
         cr = CartPosition.objects.create(
             event=event,
             cart_id='aaa',
-            item=item,
+            product=item,
             price=23,
             attendee_name_parts={'full_name': 'Peter'},
             datetime=datetime.datetime(2018, 6, 11, 10, 0, 0, 0, tzinfo=UTC),
@@ -103,7 +103,7 @@ def test_cp_list_api(token_client, organizer, event, item, taxrule, question):
         cr = CartPosition.objects.create(
             event=event,
             cart_id='aaa@api',
-            item=item,
+            product=item,
             price=23,
             attendee_name_parts={'full_name': 'Peter'},
             datetime=datetime.datetime(2018, 6, 11, 10, 0, 0, 0, tzinfo=UTC),
@@ -127,7 +127,7 @@ def test_cp_detail(token_client, organizer, event, item, taxrule, question):
         cr = CartPosition.objects.create(
             event=event,
             cart_id='aaa@api',
-            item=item,
+            product=item,
             price=23,
             attendee_name_parts={'full_name': 'Peter'},
             datetime=datetime.datetime(2018, 6, 11, 10, 0, 0, 0, tzinfo=UTC),
@@ -152,7 +152,7 @@ def test_cp_delete(token_client, organizer, event, item, taxrule, question):
         cr = CartPosition.objects.create(
             event=event,
             cart_id='aaa@api',
-            item=item,
+            product=item,
             price=23,
             attendee_name_parts={'full_name': 'Peter'},
             datetime=datetime.datetime(2018, 6, 11, 10, 0, 0, 0, tzinfo=UTC),
@@ -727,7 +727,7 @@ def test_cartpos_create_with_used_seat(token_client, organizer, event, item, quo
     CartPosition.objects.create(
         event=event,
         cart_id='aaa',
-        item=item,
+        product=item,
         price=21.5,
         expires=now() + datetime.timedelta(minutes=10),
         seat=seat,

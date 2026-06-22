@@ -77,24 +77,24 @@ def env():
             tax_rule=tr,
             admission=True,
         )
-        variation = ItemVariation.objects.create(value='M', item=t_shirt)
+        variation = ItemVariation.objects.create(value='M', product=t_shirt)
         OrderPosition.objects.create(
             order=o,
-            item=ticket,
+            product=ticket,
             variation=None,
             price=Decimal('23.00'),
             positionid=1,
         )
         OrderPosition.objects.create(
             order=o,
-            item=t_shirt,
+            product=t_shirt,
             variation=variation,
             price=Decimal('42.00'),
             positionid=2,
         )
         OrderPosition.objects.create(
             order=o,
-            item=t_shirt,
+            product=t_shirt,
             variation=variation,
             price=Decimal('42.00'),
             positionid=3,

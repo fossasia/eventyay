@@ -260,7 +260,7 @@ class QuestionsTest(ItemFormTest):
             )
             op = OrderPosition.objects.create(
                 order=o,
-                item=item1,
+                product=item1,
                 variation=None,
                 price=Decimal('14'),
                 attendee_name_parts={'full_name': 'Peter'},
@@ -268,7 +268,7 @@ class QuestionsTest(ItemFormTest):
             op.answers.create(question=c, answer='42')
             op = OrderPosition.objects.create(
                 order=o,
-                item=item1,
+                product=item1,
                 variation=None,
                 price=Decimal('14'),
                 attendee_name_parts={'full_name': 'Michael'},
@@ -276,7 +276,7 @@ class QuestionsTest(ItemFormTest):
             op.answers.create(question=c, answer='42')
             op = OrderPosition.objects.create(
                 order=o,
-                item=item1,
+                product=item1,
                 variation=None,
                 price=Decimal('14'),
                 attendee_name_parts={'full_name': 'Petra'},
@@ -398,8 +398,8 @@ class QuotaTest(ItemFormTest):
             c = Quota.objects.create(event=self.event1, name='Full house', size=500)
             item1 = Item.objects.create(event=self.event1, name='Standard', default_price=0)
             item2 = Item.objects.create(event=self.event1, name='Business', default_price=0)
-            ItemVariation.objects.create(item=item2, value='Silver')
-            ItemVariation.objects.create(item=item2, value='Gold')
+            ItemVariation.objects.create(product=item2, value='Silver')
+            ItemVariation.objects.create(product=item2, value='Gold')
         doc = self.get_doc('/control/event/%s/%s/quotas/%s/change' % (self.orga1.slug, self.event1.slug, c.id))
         [i for i in doc.select('[name=itemvars]') if i.get('value') == str(item1.id)][0]['checked'] = 'checked'
         form_data = extract_form_fields(doc.select('.container-fluid form')[0])
@@ -498,8 +498,8 @@ class ItemsTest(ItemFormTest):
             require_voucher=True,
             allow_cancel=False,
         )
-        self.var1 = ItemVariation.objects.create(item=self.item2, value='Silver')
-        self.var2 = ItemVariation.objects.create(item=self.item2, value='Gold')
+        self.var1 = ItemVariation.objects.create(product=self.item2, value='Silver')
+        self.var2 = ItemVariation.objects.create(product=self.item2, value='Gold')
         self.addoncat = ItemCategory.objects.create(event=self.event1, name='Item category')
 
     def test_move(self):
@@ -796,7 +796,7 @@ class ItemsTest(ItemFormTest):
             )
             OrderPosition.objects.create(
                 order=o,
-                item=self.item1,
+                product=self.item1,
                 variation=None,
                 price=Decimal('14'),
                 attendee_name_parts={'full_name': 'Peter'},
