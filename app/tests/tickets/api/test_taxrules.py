@@ -68,7 +68,7 @@ def test_rule_update(token_client, organizer, event, taxrule):
     assert resp.status_code == 200
     taxrule.refresh_from_db()
     assert taxrule.rate == Decimal('20.00')
-    assert taxrule.all_logentries().last().action_type == 'pretix.event.taxrule.changed'
+    assert taxrule.all_logentries().last().action_type == 'eventyay.event.taxrule.changed'
 
 
 @pytest.mark.django_db

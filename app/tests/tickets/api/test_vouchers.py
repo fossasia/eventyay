@@ -38,12 +38,12 @@ TEST_VOUCHER_RES = {
     'allow_ignore_quota': False,
     'price_mode': 'set',
     'value': '12.00',
-    'item': 1,
+    'product': 1,
     'variation': None,
     'quota': None,
     'tag': 'Foo',
     'comment': '',
-    'show_hidden_items': True,
+    'show_hidden_products': True,
     'subevent': None,
     'seat': None,
 }
@@ -52,7 +52,7 @@ TEST_VOUCHER_RES = {
 @pytest.mark.django_db
 def test_voucher_list(token_client, organizer, event, voucher, item, quota, subevent):
     res = dict(TEST_VOUCHER_RES)
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['id'] = voucher.pk
     res['code'] = voucher.code
     q2 = copy.copy(quota)
@@ -141,11 +141,11 @@ def test_voucher_list(token_client, organizer, event, voucher, item, quota, sube
     assert [] == resp.data['results']
 
     voucher.variation = None
-    voucher.item = None
+    voucher.product = None
     voucher.quota = quota
     voucher.save()
     res['variation'] = None
-    res['item'] = None
+    res['product'] = None
     res['quota'] = quota.pk
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/vouchers/?quota={}'.format(organizer.slug, event.slug, quota.pk)
@@ -202,7 +202,7 @@ def test_voucher_list(token_client, organizer, event, voucher, item, quota, sube
 @pytest.mark.django_db
 def test_voucher_detail(token_client, organizer, event, voucher, item):
     res = dict(TEST_VOUCHER_RES)
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['id'] = voucher.pk
     res['code'] = voucher.code
 
@@ -251,10 +251,10 @@ def test_voucher_create_minimal(token_client, organizer, event, item):
         organizer,
         event,
         data={
-            'item': item.pk,
+            'product': item.pk,
         },
     )
-    assert v.item == item
+    assert v.product == item
 
 
 @pytest.mark.django_db
@@ -271,7 +271,7 @@ def test_voucher_create_full(token_client, organizer, event, item):
             'allow_ignore_quota': False,
             'price_mode': 'set',
             'value': '12.00',
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'quota': None,
             'tag': 'Foo',
@@ -288,7 +288,7 @@ def test_voucher_create_full(token_client, organizer, event, item):
     assert v.block_quota is False
     assert v.price_mode == 'set'
     assert v.value == Decimal('12.00')
-    assert v.item == item
+    assert v.product == item
     assert v.variation is None
     assert v.quota is None
     assert v.tag == 'Foo'
@@ -305,7 +305,7 @@ def test_voucher_create_for_addon_item(token_client, organizer, event, item):
         organizer,
         event,
         data={
-            'item': item.pk,
+            'product': item.pk,
         },
         expected_failure=True,
     )
@@ -318,10 +318,10 @@ def test_create_non_blocking_item_voucher(token_client, organizer, event, item):
         organizer,
         event,
         data={
-            'item': item.pk,
+            'product': item.pk,
         },
     )
-    assert v.item == item
+    assert v.product == item
     assert v.variation is None
     assert v.quota is None
 
@@ -334,9 +334,9 @@ def test_create_non_blocking_variation_voucher(token_client, organizer, event, i
         token_client,
         organizer,
         event,
-        data={'item': item.pk, 'variation': variation.pk},
+        data={'product': item.pk, 'variation': variation.pk},
     )
-    assert v.item == variation.item
+    assert v.product == variation.product
     assert v.variation == variation
     assert v.quota is None
 
@@ -346,12 +346,12 @@ def test_create_non_blocking_quota_voucher(token_client, organizer, event, quota
     v = create_voucher(token_client, organizer, event, data={'quota': quota.pk})
     assert not v.block_quota
     assert v.quota == quota
-    assert v.item is None
+    assert v.product is None
 
 
 @pytest.mark.django_db
 def test_create_blocking_item_voucher_quota_free(token_client, organizer, event, item, quota):
-    v = create_voucher(token_client, organizer, event, data={'item': item.pk, 'block_quota': True})
+    v = create_voucher(token_client, organizer, event, data={'product': item.pk, 'block_quota': True})
     assert v.block_quota
 
 
@@ -363,7 +363,7 @@ def test_create_blocking_item_voucher_quota_full(token_client, organizer, event,
         token_client,
         organizer,
         event,
-        data={'item': item.pk, 'block_quota': True},
+        data={'product': item.pk, 'block_quota': True},
         expected_failure=True,
     )
 
@@ -377,7 +377,7 @@ def test_create_blocking_item_voucher_quota_full_invalid(token_client, organizer
         organizer,
         event,
         data={
-            'item': item.pk,
+            'product': item.pk,
             'block_quota': True,
             'valid_until': (now() - datetime.timedelta(days=3)).isoformat(),
         },
@@ -395,7 +395,7 @@ def test_create_blocking_variation_voucher_quota_free(token_client, organizer, e
         token_client,
         organizer,
         event,
-        data={'item': item.pk, 'variation': variation.pk, 'block_quota': True},
+        data={'product': item.pk, 'variation': variation.pk, 'block_quota': True},
     )
     assert v.block_quota
 
@@ -406,7 +406,7 @@ def test_create_short_code(token_client, organizer, event, item):
         token_client,
         organizer,
         event,
-        data={'code': 'ABC', 'item': item.pk},
+        data={'code': 'ABC', 'product': item.pk},
         expected_failure=True,
     )
 
@@ -422,7 +422,7 @@ def test_create_blocking_variation_voucher_quota_full(token_client, organizer, e
         token_client,
         organizer,
         event,
-        data={'item': item.pk, 'variation': variation.pk, 'block_quota': True},
+        data={'product': item.pk, 'variation': variation.pk, 'block_quota': True},
         expected_failure=True,
     )
 
@@ -473,12 +473,12 @@ def test_subevent_optional(token_client, organizer, event, item, subevent):
         organizer,
         event,
         data={
-            'item': item.pk,
+            'product': item.pk,
         },
     )
     assert v.subevent is None
     assert v.block_quota is False
-    assert v.item == item
+    assert v.product == item
 
 
 @pytest.mark.django_db
@@ -487,7 +487,7 @@ def test_subevent_required_for_blocking(token_client, organizer, event, item, su
         token_client,
         organizer,
         event,
-        data={'item': item.pk, 'block_quota': True},
+        data={'product': item.pk, 'block_quota': True},
         expected_failure=True,
     )
 
@@ -505,7 +505,7 @@ def test_subevent_blocking_quota_free(token_client, organizer, event, item, quot
         token_client,
         organizer,
         event,
-        data={'item': item.pk, 'block_quota': True, 'subevent': subevent.pk},
+        data={'product': item.pk, 'block_quota': True, 'subevent': subevent.pk},
     )
     assert v.block_quota
     assert v.subevent == subevent
@@ -525,7 +525,7 @@ def test_subevent_blocking_quota_full(token_client, organizer, event, item, quot
         token_client,
         organizer,
         event,
-        data={'item': item.pk, 'block_quota': True, 'subevent': subevent.pk},
+        data={'product': item.pk, 'block_quota': True, 'subevent': subevent.pk},
         expected_failure=True,
     )
 
@@ -560,19 +560,19 @@ def test_change_to_item_of_other_event(token_client, organizer, event, item):
         organizer,
         event,
         v,
-        data={'item': ticket2.pk},
+        data={'product': ticket2.pk},
         expected_failure=True,
     )
     v.refresh_from_db()
-    assert v.item == item
+    assert v.product == item
 
 
 @pytest.mark.django_db
 def test_change_non_blocking_voucher(token_client, organizer, event, item, quota):
     with scopes_disabled():
         v = event.vouchers.create(product=item)
-    change_voucher(token_client, organizer, event, v, data={'quota': quota.pk, 'item': None})
-    assert v.item is None
+    change_voucher(token_client, organizer, event, v, data={'quota': quota.pk, 'product': None})
+    assert v.product is None
     assert v.quota == quota
 
 
@@ -591,7 +591,7 @@ def test_change_blocking_voucher_unchanged_quota_full(token_client, organizer, e
     with scopes_disabled():
         v = event.vouchers.create(product=item, block_quota=True)
     change_voucher(token_client, organizer, event, v, data={'comment': 'Foo'})
-    assert v.item == item
+    assert v.product == item
     assert v.block_quota
     assert v.comment == 'Foo'
 
@@ -668,9 +668,9 @@ def test_change_item_of_blocking_voucher_quota_free(token_client, organizer, eve
         organizer,
         event,
         v,
-        data={'item': ticket2.pk},
+        data={'product': ticket2.pk},
     )
-    assert v.item == ticket2
+    assert v.product == ticket2
 
 
 @pytest.mark.django_db
@@ -685,7 +685,7 @@ def test_change_item_of_blocking_voucher_quota_full(token_client, organizer, eve
         organizer,
         event,
         v,
-        data={'item': ticket2.pk},
+        data={'product': ticket2.pk},
         expected_failure=True,
     )
 
@@ -784,9 +784,9 @@ def test_change_item_of_blocking_voucher_without_quota_change(token_client, orga
         organizer,
         event,
         v,
-        data={'item': ticket2.pk},
+        data={'product': ticket2.pk},
     )
-    assert v.item == ticket2
+    assert v.product == ticket2
 
 
 @pytest.mark.django_db
@@ -897,7 +897,7 @@ def test_create_multiple_vouchers(token_client, organizer, event, item):
                 'allow_ignore_quota': False,
                 'price_mode': 'set',
                 'value': '12.00',
-                'item': item.pk,
+                'product': item.pk,
                 'variation': None,
                 'quota': None,
                 'tag': 'Foo',
@@ -912,7 +912,7 @@ def test_create_multiple_vouchers(token_client, organizer, event, item):
                 'allow_ignore_quota': False,
                 'price_mode': 'set',
                 'value': '12.00',
-                'item': item.pk,
+                'product': item.pk,
                 'variation': None,
                 'quota': None,
                 'tag': 'Foo',
@@ -946,7 +946,7 @@ def test_create_multiple_vouchers_one_invalid(token_client, organizer, event, it
                 'allow_ignore_quota': False,
                 'price_mode': 'set',
                 'value': '12.00',
-                'item': item.pk,
+                'product': item.pk,
                 'variation': None,
                 'quota': None,
                 'tag': 'Foo',
@@ -961,7 +961,7 @@ def test_create_multiple_vouchers_one_invalid(token_client, organizer, event, it
                 'allow_ignore_quota': False,
                 'price_mode': 'set',
                 'value': '12.00',
-                'item': item.pk,
+                'product': item.pk,
                 'variation': None,
                 'quota': None,
                 'tag': 'Foo',
@@ -990,7 +990,7 @@ def test_create_multiple_vouchers_duplicate_code(token_client, organizer, event,
                 'allow_ignore_quota': False,
                 'price_mode': 'set',
                 'value': '12.00',
-                'item': item.pk,
+                'product': item.pk,
                 'variation': None,
                 'quota': None,
                 'tag': 'Foo',
@@ -1005,7 +1005,7 @@ def test_create_multiple_vouchers_duplicate_code(token_client, organizer, event,
                 'allow_ignore_quota': False,
                 'price_mode': 'set',
                 'value': '12.00',
-                'item': item.pk,
+                'product': item.pk,
                 'variation': None,
                 'quota': None,
                 'tag': 'Foo',
@@ -1047,7 +1047,7 @@ def test_create_multiple_vouchers_duplicate_seat(token_client, organizer, event,
                 'allow_ignore_quota': False,
                 'price_mode': 'set',
                 'value': '12.00',
-                'item': item.pk,
+                'product': item.pk,
                 'variation': None,
                 'quota': None,
                 'tag': 'Foo',
@@ -1063,7 +1063,7 @@ def test_create_multiple_vouchers_duplicate_seat(token_client, organizer, event,
                 'allow_ignore_quota': False,
                 'price_mode': 'set',
                 'value': '12.00',
-                'item': item.pk,
+                'product': item.pk,
                 'variation': None,
                 'quota': None,
                 'tag': 'Foo',

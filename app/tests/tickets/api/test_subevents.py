@@ -96,7 +96,7 @@ TEST_SUBEVENT_RES = {
     'geo_lat': None,
     'geo_lon': None,
     'is_public': True,
-    'item_price_overrides': [],
+    'product_price_overrides': [],
     'meta_data': {'type': 'Workshop'},
 }
 
@@ -182,7 +182,7 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
             'presale_start': None,
             'presale_end': None,
             'location': None,
-            'item_price_overrides': [],
+            'product_price_overrides': [],
             'variation_price_overrides': [],
             'meta_data': {
                 'type': 'Workshop',
@@ -210,7 +210,7 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
             'presale_start': None,
             'presale_end': None,
             'location': None,
-            'item_price_overrides': [],
+            'product_price_overrides': [],
             'variation_price_overrides': [],
             'meta_data': {'foo': 'bar'},
         },
@@ -230,7 +230,7 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
             'presale_start': None,
             'presale_end': None,
             'location': None,
-            'item_price_overrides': [],
+            'product_price_overrides': [],
             'variation_price_overrides': [],
             'meta_data': {meta_prop.name: 'bar'},
         },
@@ -250,7 +250,7 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
             'presale_start': None,
             'presale_end': None,
             'location': None,
-            'item_price_overrides': [{'item': item.pk, 'price': '23.42'}],
+            'product_price_overrides': [{'product': item.pk, 'price': '23.42'}],
             'variation_price_overrides': [],
             'meta_data': {'type': 'Workshop'},
         },
@@ -259,7 +259,7 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
     assert resp.status_code == 201
     assert item.default_price == Decimal('23.00')
     with scopes_disabled():
-        assert event.subevents.get(id=resp.data['id']).item_price_overrides[item.pk] == Decimal('23.42')
+        assert event.subevents.get(id=resp.data['id']).product_price_overrides[item.pk] == Decimal('23.42')
 
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/subevents/'.format(organizer.slug, event.slug),
@@ -272,7 +272,7 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
             'presale_start': None,
             'presale_end': None,
             'location': None,
-            'item_price_overrides': [{'item': 555, 'price': '23.42'}],
+            'product_price_overrides': [{'product': 555, 'price': '23.42'}],
             'variation_price_overrides': [],
             'meta_data': {'type': 'Workshop'},
         },
@@ -363,63 +363,63 @@ def test_subevent_update(
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
         {
-            'item_price_overrides': [{'item': item.pk, 'price': '99.99'}],
+            'product_price_overrides': [{'product': item.pk, 'price': '99.99'}],
         },
         format='json',
     )
     assert resp.status_code == 200
     with scopes_disabled():
         assert subevent.products.get(id=item.pk).default_price == Decimal('23.00')
-    assert subevent.item_price_overrides[item.pk] == Decimal('99.99')
+    assert subevent.product_price_overrides[item.pk] == Decimal('99.99')
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
         {
-            'item_price_overrides': [{'item': item.pk, 'price': '88.88'}],
+            'product_price_overrides': [{'product': item.pk, 'price': '88.88'}],
         },
         format='json',
     )
     assert resp.status_code == 200
     with scopes_disabled():
-        assert event.subevents.get(id=subevent.id).item_price_overrides[item.pk] == Decimal('88.88')
+        assert event.subevents.get(id=subevent.id).product_price_overrides[item.pk] == Decimal('88.88')
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
         {
-            'item_price_overrides': [{'item': item.pk, 'price': None}],
+            'product_price_overrides': [{'product': item.pk, 'price': None}],
         },
         format='json',
     )
     assert resp.status_code == 200
     with scopes_disabled():
-        assert item.pk not in event.subevents.get(id=subevent.id).item_price_overrides
+        assert item.pk not in event.subevents.get(id=subevent.id).product_price_overrides
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
         {
-            'item_price_overrides': [{'item': item.pk, 'price': '12.34'}],
+            'product_price_overrides': [{'product': item.pk, 'price': '12.34'}],
         },
         format='json',
     )
     assert resp.status_code == 200
     with scopes_disabled():
-        assert event.subevents.get(id=subevent.id).item_price_overrides[item.pk] == Decimal('12.34')
+        assert event.subevents.get(id=subevent.id).product_price_overrides[item.pk] == Decimal('12.34')
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
         {
-            'item_price_overrides': [],
+            'product_price_overrides': [],
         },
         format='json',
     )
     assert resp.status_code == 200
     with scopes_disabled():
-        assert item.pk not in event.subevents.get(id=subevent.id).item_price_overrides
+        assert item.pk not in event.subevents.get(id=subevent.id).product_price_overrides
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
         {
-            'item_price_overrides': [{'item': 123, 'price': '99.99'}],
+            'product_price_overrides': [{'product': 123, 'price': '99.99'}],
         },
         format='json',
     )
@@ -431,7 +431,7 @@ def test_subevent_update(
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
         {
-            'item_price_overrides': [{'item': item2.id, 'price': '99.99'}],
+            'product_price_overrides': [{'product': item2.id, 'price': '99.99'}],
         },
         format='json',
     )
@@ -523,13 +523,13 @@ def test_subevent_update_keep_subeventitems(token_client, organizer, event, sube
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
         {
-            'item_price_overrides': [{'item': item.pk, 'price': '88.88', 'disabled': True}],
+            'product_price_overrides': [{'product': item.pk, 'price': '88.88', 'disabled': True}],
         },
         format='json',
     )
     assert resp.status_code == 200
     with scopes_disabled():
-        assert event.subevents.get(id=subevent.id).item_overrides[item.pk].disabled
+        assert event.subevents.get(id=subevent.id).product_overrides[item.pk].disabled
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
@@ -540,7 +540,7 @@ def test_subevent_update_keep_subeventitems(token_client, organizer, event, sube
     )
     assert resp.status_code == 200
     with scopes_disabled():
-        assert event.subevents.get(id=subevent.id).item_overrides[item.pk].disabled
+        assert event.subevents.get(id=subevent.id).product_overrides[item.pk].disabled
 
 
 @pytest.mark.django_db
@@ -785,7 +785,7 @@ def test_subevent_create_with_seating(token_client, organizer, event, subevent, 
             'presale_start': None,
             'presale_end': None,
             'location': None,
-            'item_price_overrides': [{'item': item.pk, 'price': '23.42'}],
+            'product_price_overrides': [{'product': item.pk, 'price': '23.42'}],
             'variation_price_overrides': [],
             'seat_category_mapping': {'Stalls': item.pk},
             'meta_data': {},

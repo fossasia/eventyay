@@ -127,7 +127,7 @@ def test_patch_organizer_settings_file(token_client, organizer):
             'media_type': 'image/png',
             'file': ContentFile('file.png', 'invalid png content'),
         },
-        format='upload',
+        format='multipart',
         HTTP_CONTENT_DISPOSITION='attachment; filename="file.png"',
     )
     assert r.status_code == 201
@@ -139,7 +139,7 @@ def test_patch_organizer_settings_file(token_client, organizer):
             'media_type': 'application/pdf',
             'file': ContentFile('file.pdf', 'invalid pdf content'),
         },
-        format='upload',
+        format='multipart',
         HTTP_CONTENT_DISPOSITION='attachment; filename="file.pdf"',
     )
     assert r.status_code == 201

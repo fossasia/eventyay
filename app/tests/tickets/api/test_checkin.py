@@ -87,7 +87,7 @@ TEST_ORDERPOSITION1_RES = {
     'order__status': 'p',
     'order': 'FOO',
     'positionid': 1,
-    'item': 1,
+    'product': 1,
     'variation': None,
     'price': '23.00',
     'attendee_name': 'Peter',
@@ -119,7 +119,7 @@ TEST_ORDERPOSITION2_RES = {
     'order__status': 'p',
     'order': 'FOO',
     'positionid': 2,
-    'item': 1,
+    'product': 1,
     'variation': None,
     'price': '23.00',
     'attendee_name': 'Michael',
@@ -390,10 +390,10 @@ def test_list_all_items_positions(token_client, organizer, event, clist, clist_a
     with scopes_disabled():
         p1 = dict(TEST_ORDERPOSITION1_RES)
         p1['id'] = order.positions.first().pk
-        p1['item'] = item.pk
+        p1['product'] = item.pk
         p2 = dict(TEST_ORDERPOSITION2_RES)
         p2['id'] = order.positions.last().pk
-        p2['item'] = other_item.pk
+        p2['product'] = other_item.pk
 
     # All items
     resp = token_client.get(
@@ -539,13 +539,13 @@ def test_list_all_items_positions_by_subevent(
         p1 = dict(TEST_ORDERPOSITION1_RES)
         p1['id'] = pfirst.pk
         p1['subevent'] = se2.pk
-        p1['item'] = item.pk
+        p1['product'] = item.pk
         plast = order.positions.last()
         plast.subevent = subevent
         plast.save()
         p2 = dict(TEST_ORDERPOSITION2_RES)
         p2['id'] = plast.pk
-        p2['item'] = other_item.pk
+        p2['product'] = other_item.pk
         p2['subevent'] = subevent.pk
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/checkinlists/{}/positions/?ordering=positionid'.format(
@@ -571,7 +571,7 @@ def test_list_limited_items_positions(token_client, organizer, event, clist, ite
     p1 = dict(TEST_ORDERPOSITION1_RES)
     with scopes_disabled():
         p1['id'] = order.positions.first().pk
-    p1['item'] = item.pk
+    p1['product'] = item.pk
 
     # All items
     resp = token_client.get(
@@ -588,7 +588,7 @@ def test_list_limited_items_position_detail(token_client, organizer, event, clis
     p1 = dict(TEST_ORDERPOSITION1_RES)
     with scopes_disabled():
         p1['id'] = order.positions.first().pk
-    p1['item'] = item.pk
+    p1['product'] = item.pk
 
     # All items
     resp = token_client.get(
@@ -1206,7 +1206,7 @@ def test_question_upload(token_client, organizer, clist, event, order, question)
             'media_type': 'image/png',
             'file': ContentFile('file.png', 'invalid png content'),
         },
-        format='upload',
+        format='multipart',
         HTTP_CONTENT_DISPOSITION='attachment; filename="file.png"',
     )
     assert r.status_code == 201

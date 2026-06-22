@@ -786,7 +786,7 @@ def test_orderposition_list(token_client, organizer, event, order, item, subeven
     op.variation = var
     op.save()
     res['id'] = op.pk
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['variation'] = var.pk
     res['answers'][0]['question'] = question.pk
 
@@ -955,7 +955,7 @@ def test_orderposition_detail(token_client, organizer, event, order, item, quest
     with scopes_disabled():
         op = order.positions.first()
     res['id'] = op.pk
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['answers'][0]['question'] = question.pk
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/'.format(organizer.slug, event.slug, op.pk)
@@ -1073,7 +1073,7 @@ TEST_INVOICE_RES = {
             'event_date_from': '2017-12-27T11:00:00+01:00',
             'event_date_to': None,
             'attendee_name': 'Peter',
-            'item': None,
+            'product': None,
             'variation': None,
             'gross_value': '23.00',
             'tax_value': '0.00',
@@ -1086,7 +1086,7 @@ TEST_INVOICE_RES = {
             'event_date_from': '2017-12-27T11:00:00+01:00',
             'event_date_to': None,
             'attendee_name': None,
-            'item': None,
+            'product': None,
             'variation': None,
             'gross_value': '0.25',
             'tax_value': '0.05',
@@ -1100,7 +1100,7 @@ TEST_INVOICE_RES = {
 @pytest.mark.django_db
 def test_invoice_list(token_client, organizer, event, order, item, invoice):
     res = dict(TEST_INVOICE_RES)
-    res['lines'][0]['item'] = item.pk
+    res['lines'][0]['product'] = item.pk
 
     resp = token_client.get('/api/v1/organizers/{}/events/{}/invoices/'.format(organizer.slug, event.slug))
     assert resp.status_code == 200
@@ -1151,7 +1151,7 @@ def test_invoice_list(token_client, organizer, event, order, item, invoice):
 @pytest.mark.django_db
 def test_invoice_detail(token_client, organizer, event, item, invoice):
     res = dict(TEST_INVOICE_RES)
-    res['lines'][0]['item'] = item.pk
+    res['lines'][0]['product'] = item.pk
 
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/invoices/{}/'.format(organizer.slug, event.slug, invoice.number)
@@ -1606,7 +1606,7 @@ ORDER_CREATE_PAYLOAD = {
     'positions': [
         {
             'positionid': 1,
-            'item': 1,
+            'product': 1,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -1658,7 +1658,7 @@ def test_order_create(token_client, organizer, event, item, quota, question):
     with scopes_disabled():
         assert o.positions.count() == 1
         pos = o.positions.first()
-    assert pos.item == item
+    assert pos.product == item
     assert pos.price == Decimal('23.00')
     assert pos.attendee_name_parts == {'full_name': 'Peter', '_scheme': 'full'}
     assert pos.company == 'FOOCORP'
@@ -1698,7 +1698,7 @@ def test_order_create_positionids_addons_simulated(token_client, organizer, even
     res['positions'] = [
         {
             'positionid': 1,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -1709,7 +1709,7 @@ def test_order_create_positionids_addons_simulated(token_client, organizer, even
         },
         {
             'positionid': 2,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -1735,7 +1735,7 @@ def test_order_create_positionids_addons_simulated(token_client, organizer, even
     assert [dict(f) for f in resp.data['positions']] == [
         {
             'positionid': 1,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name': 'Peter',
@@ -1760,7 +1760,7 @@ def test_order_create_positionids_addons_simulated(token_client, organizer, even
         },
         {
             'positionid': 2,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name': 'Peter',
@@ -2127,7 +2127,7 @@ def test_order_create_tax_rules(token_client, organizer, event, item, quota, que
     assert ia.company == 'Sample company'
     with scopes_disabled():
         pos = o.positions.first()
-    assert pos.item == item
+    assert pos.product == item
     assert pos.tax_rate == Decimal('19.00')
     assert pos.tax_value == Decimal('3.67')
     assert pos.tax_rule == taxrule
@@ -2295,7 +2295,7 @@ def test_order_create_item_validation(token_client, organizer, event, item, item
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == {'positions': [{'item': ['The specified item is not active.']}]}
+    assert resp.data == {'positions': [{'product': ['The specified item is not active.']}]}
     item.active = True
     item.save()
 
@@ -2307,7 +2307,7 @@ def test_order_create_item_validation(token_client, organizer, event, item, item
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == {'positions': [{'item': ['The specified item does not belong to this event.']}]}
+    assert resp.data == {'positions': [{'product': ['The specified item does not belong to this event.']}]}
 
     with scopes_disabled():
         var2 = item2.variations.create(value='A')
@@ -2333,7 +2333,7 @@ def test_order_create_item_validation(token_client, organizer, event, item, item
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == {'positions': [{'item': ['The product "Budget Ticket" is not assigned to a quota.']}]}
+    assert resp.data == {'positions': [{'product': ['The product "Budget Ticket" is not assigned to a quota.']}]}
 
     with scopes_disabled():
         quota.variations.add(var1)
@@ -2371,7 +2371,7 @@ def test_order_create_subevent_disabled(token_client, organizer, event, item, su
     res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['subevent'] = subevent.pk
-    s = item.subeventitem_set.create(subevent=subevent, disabled=True)
+    s = item.subeventproduct_set.create(subevent=subevent, disabled=True)
     quota.subevent = subevent
     quota.save()
     resp = token_client.post(
@@ -2380,7 +2380,7 @@ def test_order_create_subevent_disabled(token_client, organizer, event, item, su
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == {'positions': [{'item': ['The product "Budget Ticket" is not available on this date.']}]}
+    assert resp.data == {'positions': [{'product': ['The product "Budget Ticket" is not available on this date.']}]}
 
     s.delete()
     resp = token_client.post(
@@ -2412,7 +2412,7 @@ def test_order_create_subevent_variation_disabled(token_client, organizer, event
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == {'positions': [{'item': ['The product "Budget Ticket" is not available on this date.']}]}
+    assert resp.data == {'positions': [{'product': ['The product "Budget Ticket" is not available on this date.']}]}
 
     s.delete()
     resp = token_client.post(
@@ -2429,7 +2429,7 @@ def test_order_create_positionids_addons(token_client, organizer, event, item, q
     res['positions'] = [
         {
             'positionid': 1,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2440,7 +2440,7 @@ def test_order_create_positionids_addons(token_client, organizer, event, item, q
         },
         {
             'positionid': 2,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2469,7 +2469,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
     res['positions'] = [
         {
             'positionid': 1,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2480,7 +2480,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
         },
         {
             'positionid': 2,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2511,7 +2511,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
 
     res['positions'] = [
         {
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2521,7 +2521,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
             'subevent': None,
         },
         {
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2547,7 +2547,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
     res['positions'] = [
         {
             'positionid': 1,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2556,7 +2556,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
             'subevent': None,
         },
         {
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2581,7 +2581,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
     res['positions'] = [
         {
             'positionid': 1,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2591,7 +2591,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
         },
         {
             'positionid': 3,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2610,7 +2610,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
 
     res['positions'] = [
         {
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2619,7 +2619,7 @@ def test_order_create_positionid_validation(token_client, organizer, event, item
             'subevent': None,
         },
         {
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -2727,7 +2727,7 @@ def test_order_create_answer_validation(token_client, organizer, event, item, qu
             'media_type': 'image/png',
             'file': ContentFile('file.png', 'invalid png content'),
         },
-        format='upload',
+        format='multipart',
         HTTP_CONTENT_DISPOSITION='attachment; filename="file.png"',
     )
     assert r.status_code == 201
@@ -3017,7 +3017,7 @@ def test_order_create_quota_validation(token_client, organizer, event, item, quo
     res['positions'] = [
         {
             'positionid': 1,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -3028,7 +3028,7 @@ def test_order_create_quota_validation(token_client, organizer, event, item, quo
         },
         {
             'positionid': 2,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -3049,8 +3049,8 @@ def test_order_create_quota_validation(token_client, organizer, event, item, quo
     assert resp.status_code == 400
     assert resp.data == {
         'positions': [
-            {'item': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
-            {'item': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
+            {'product': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
+            {'product': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
         ]
     }
 
@@ -3065,7 +3065,7 @@ def test_order_create_quota_validation(token_client, organizer, event, item, quo
     assert resp.data == {
         'positions': [
             {},
-            {'item': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
+            {'product': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
         ]
     }
 
@@ -3103,7 +3103,7 @@ def test_order_create_quota_consume_cart(token_client, organizer, event, item, q
     assert resp.status_code == 400
     assert resp.data == {
         'positions': [
-            {'item': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
+            {'product': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
         ]
     }
 
@@ -3144,7 +3144,7 @@ def test_order_create_quota_consume_cart_expired(token_client, organizer, event,
     assert resp.status_code == 400
     assert resp.data == {
         'positions': [
-            {'item': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
+            {'product': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
         ]
     }
 
@@ -3404,7 +3404,7 @@ def test_order_create_with_duplicate_seat(token_client, organizer, event, item, 
     res['positions'] = [
         {
             'positionid': 1,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -3416,7 +3416,7 @@ def test_order_create_with_duplicate_seat(token_client, organizer, event, item, 
         },
         {
             'positionid': 2,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'price': '23.00',
             'attendee_name_parts': {'full_name': 'Peter'},
@@ -4279,12 +4279,12 @@ def test_order_update_allowed_fields(token_client, organizer, event, order):
     assert not order.invoice_address.vat_id_validated
     assert order.invoice_address.city == 'Paris'
     with scopes_disabled():
-        assert order.all_logentries().get(action_type='pretix.event.order.comment')
-        assert order.all_logentries().get(action_type='pretix.event.order.checkin_attention')
-        assert order.all_logentries().get(action_type='pretix.event.order.contact.changed')
-        assert order.all_logentries().get(action_type='pretix.event.order.phone.changed')
-        assert order.all_logentries().get(action_type='pretix.event.order.locale.changed')
-        assert order.all_logentries().get(action_type='pretix.event.order.modified')
+        assert order.all_logentries().get(action_type='eventyay.event.order.comment')
+        assert order.all_logentries().get(action_type='eventyay.event.order.checkin_attention')
+        assert order.all_logentries().get(action_type='eventyay.event.order.contact.changed')
+        assert order.all_logentries().get(action_type='eventyay.event.order.phone.changed')
+        assert order.all_logentries().get(action_type='eventyay.event.order.locale.changed')
+        assert order.all_logentries().get(action_type='eventyay.event.order.modified')
 
 
 @pytest.mark.django_db
@@ -4441,7 +4441,7 @@ def test_order_create_invoice(token_client, organizer, event, order):
                 'event_date_from': '2017-12-27T11:00:00+01:00',
                 'event_date_to': None,
                 'attendee_name': 'Peter',
-                'item': pos.item_id,
+                'product': pos.product_id,
                 'variation': None,
                 'gross_value': '23.00',
                 'tax_value': '0.00',
@@ -4454,7 +4454,7 @@ def test_order_create_invoice(token_client, organizer, event, order):
                 'event_date_from': '2017-12-27T11:00:00+01:00',
                 'event_date_to': None,
                 'attendee_name': None,
-                'item': None,
+                'product': None,
                 'variation': None,
                 'gross_value': '0.25',
                 'tax_value': '0.05',
@@ -4551,7 +4551,7 @@ def test_orderposition_price_calculation_item_with_tax(token_client, organizer, 
         op = order.positions.first()
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),
-        data={'item': item2.pk},
+        data={'product': item2.pk},
     )
     assert resp.status_code == 200
     assert resp.data == {
@@ -4573,7 +4573,7 @@ def test_orderposition_price_calculation_item_with_variation(token_client, organ
         op = order.positions.first()
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),
-        data={'item': item2.pk, 'variation': var.pk},
+        data={'product': item2.pk, 'variation': var.pk},
     )
     assert resp.status_code == 200
     assert resp.data == {
@@ -4596,7 +4596,7 @@ def test_orderposition_price_calculation_subevent(token_client, organizer, event
     op.save()
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),
-        data={'item': item2.pk, 'subevent': subevent.pk},
+        data={'product': item2.pk, 'subevent': subevent.pk},
     )
     assert resp.status_code == 200
     assert resp.data == {
@@ -4618,13 +4618,13 @@ def test_orderposition_price_calculation_subevent_with_override(token_client, or
             name='Foobar',
             date_from=datetime.datetime(2017, 12, 27, 10, 0, 0, tzinfo=UTC),
         )
-        se2.subeventitem_set.create(product=item2, price=12)
+        se2.subeventproduct_set.create(product=item2, price=12)
         op = order.positions.first()
     op.subevent = subevent
     op.save()
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),
-        data={'item': item2.pk, 'subevent': se2.pk},
+        data={'product': item2.pk, 'subevent': se2.pk},
     )
     assert resp.status_code == 200
     assert resp.data == {
@@ -4652,7 +4652,7 @@ def test_orderposition_price_calculation_voucher_matching(token_client, organize
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),
         data={
-            'item': item2.pk,
+            'product': item2.pk,
         },
     )
     assert resp.status_code == 200
@@ -4680,7 +4680,7 @@ def test_orderposition_price_calculation_voucher_not_matching(token_client, orga
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),
         data={
-            'item': item2.pk,
+            'product': item2.pk,
         },
     )
     assert resp.status_code == 200
@@ -4705,7 +4705,7 @@ def test_orderposition_price_calculation_net_price(token_client, organizer, even
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),
         data={
-            'item': item2.pk,
+            'product': item2.pk,
         },
     )
     assert resp.status_code == 200
@@ -4737,7 +4737,7 @@ def test_orderposition_price_calculation_reverse_charge(token_client, organizer,
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),
         data={
-            'item': item2.pk,
+            'product': item2.pk,
         },
     )
     assert resp.status_code == 200
@@ -4842,7 +4842,7 @@ def test_position_update(token_client, organizer, event, order, question):
         assert op.state == 'CA'
         assert op.attendee_email == 'foo@example.org'
         le = order.all_logentries().last()
-    assert le.action_type == 'pretix.event.order.modified'
+    assert le.action_type == 'eventyay.event.order.modified'
     assert le.parsed_data == {
         'data': [
             {
@@ -4969,7 +4969,7 @@ def test_position_update_question_handling(token_client, organizer, event, order
             'media_type': 'image/png',
             'file': ContentFile('file.png', 'invalid png content'),
         },
-        format='upload',
+        format='multipart',
         HTTP_CONTENT_DISPOSITION='attachment; filename="file.png"',
     )
     assert r.status_code == 201

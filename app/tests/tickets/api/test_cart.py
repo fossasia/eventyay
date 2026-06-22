@@ -53,7 +53,7 @@ def quota(event, item):
 TEST_CARTPOSITION_RES = {
     'id': 1,
     'cart_id': 'aaa@api',
-    'item': 1,
+    'product': 1,
     'variation': None,
     'price': '23.00',
     'attendee_name_parts': {'full_name': 'Peter'},
@@ -87,7 +87,7 @@ def test_cp_list(token_client, organizer, event, item, taxrule, question):
         )
     res = dict(TEST_CARTPOSITION_RES)
     res['id'] = cr.pk
-    res['item'] = item.pk
+    res['product'] = item.pk
 
     resp = token_client.get('/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug))
     assert resp.status_code == 200
@@ -111,7 +111,7 @@ def test_cp_list_api(token_client, organizer, event, item, taxrule, question):
         )
     res = dict(TEST_CARTPOSITION_RES)
     res['id'] = cr.pk
-    res['item'] = item.pk
+    res['product'] = item.pk
 
     resp = token_client.get('/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug))
     assert resp.status_code == 200
@@ -135,7 +135,7 @@ def test_cp_detail(token_client, organizer, event, item, taxrule, question):
         )
     res = dict(TEST_CARTPOSITION_RES)
     res['id'] = cr.pk
-    res['item'] = item.pk
+    res['product'] = item.pk
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/cartpositions/{}/'.format(organizer.slug, event.slug, cr.pk)
     )
@@ -160,7 +160,7 @@ def test_cp_delete(token_client, organizer, event, item, taxrule, question):
         )
     res = dict(TEST_CARTPOSITION_RES)
     res['id'] = cr.pk
-    res['item'] = item.pk
+    res['product'] = item.pk
     resp = token_client.delete(
         '/api/v1/organizers/{}/events/{}/cartpositions/{}/'.format(organizer.slug, event.slug, cr.pk)
     )
@@ -169,7 +169,7 @@ def test_cp_delete(token_client, organizer, event, item, taxrule, question):
 
 CARTPOS_CREATE_PAYLOAD = {
     'cart_id': 'aaa@api',
-    'item': 1,
+    'product': 1,
     'variation': None,
     'price': '23.00',
     'attendee_name_parts': {'full_name': 'Peter'},
@@ -186,7 +186,7 @@ CARTPOS_CREATE_PAYLOAD = {
 @pytest.mark.django_db
 def test_cartpos_create(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
         format='json',
@@ -196,14 +196,14 @@ def test_cartpos_create(token_client, organizer, event, item, quota, question):
     with scopes_disabled():
         cp = CartPosition.objects.get(pk=resp.data['id'])
     assert cp.price == Decimal('23.00')
-    assert cp.item == item
+    assert cp.product == item
     assert cp.attendee_name_parts == {'full_name': 'Peter'}
 
 
 @pytest.mark.django_db
 def test_cartpos_create_name_optional(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['attendee_name'] = None
     del res['attendee_name_parts']
     resp = token_client.post(
@@ -215,14 +215,14 @@ def test_cartpos_create_name_optional(token_client, organizer, event, item, quot
     with scopes_disabled():
         cp = CartPosition.objects.get(pk=resp.data['id'])
     assert cp.price == Decimal('23.00')
-    assert cp.item == item
+    assert cp.product == item
     assert cp.attendee_name_parts == {}
 
 
 @pytest.mark.django_db
 def test_cartpos_create_legacy_name(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['attendee_name'] = 'Peter'
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -240,14 +240,14 @@ def test_cartpos_create_legacy_name(token_client, organizer, event, item, quota,
     with scopes_disabled():
         cp = CartPosition.objects.get(pk=resp.data['id'])
     assert cp.price == Decimal('23.00')
-    assert cp.item == item
+    assert cp.product == item
     assert cp.attendee_name_parts == {'_legacy': 'Peter'}
 
 
 @pytest.mark.django_db
 def test_cartpos_cart_id_noapi(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['cart_id'] = 'aaa'
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -260,7 +260,7 @@ def test_cartpos_cart_id_noapi(token_client, organizer, event, item, quota, ques
 @pytest.mark.django_db
 def test_cartpos_cart_id_optional(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     del res['cart_id']
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -271,14 +271,14 @@ def test_cartpos_cart_id_optional(token_client, organizer, event, item, quota, q
     with scopes_disabled():
         cp = CartPosition.objects.get(pk=resp.data['id'])
     assert cp.price == Decimal('23.00')
-    assert cp.item == item
+    assert cp.product == item
     assert len(cp.cart_id) > 48
 
 
 @pytest.mark.django_db
 def test_cartpos_create_subevent_validation(token_client, organizer, event, item, subevent, subevent2, quota, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
         format='json',
@@ -302,30 +302,30 @@ def test_cartpos_create_item_validation(token_client, organizer, event, item, it
     item.active = False
     item.save()
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
         format='json',
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == {'item': ['The specified item is not active.']}
+    assert resp.data == {'product': ['The specified item is not active.']}
     item.active = True
     item.save()
 
-    res['item'] = item2.pk
+    res['product'] = item2.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
         format='json',
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == {'item': ['The specified item does not belong to this event.']}
+    assert resp.data == {'product': ['The specified item does not belong to this event.']}
 
     with scopes_disabled():
         var2 = item2.variations.create(value='A')
 
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['variation'] = var2.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -337,7 +337,7 @@ def test_cartpos_create_item_validation(token_client, organizer, event, item, it
 
     with scopes_disabled():
         var1 = item.variations.create(value='A')
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['variation'] = var1.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -377,7 +377,7 @@ def test_cartpos_create_item_validation(token_client, organizer, event, item, it
 @pytest.mark.django_db
 def test_cartpos_expires_optional(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     del res['expires']
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -388,7 +388,7 @@ def test_cartpos_expires_optional(token_client, organizer, event, item, quota, q
     with scopes_disabled():
         cp = CartPosition.objects.get(pk=resp.data['id'])
     assert cp.price == Decimal('23.00')
-    assert cp.item == item
+    assert cp.product == item
     assert cp.expires - now() > datetime.timedelta(minutes=25)
     assert cp.expires - now() < datetime.timedelta(minutes=35)
 
@@ -398,7 +398,7 @@ def test_cartpos_create_answer_validation(token_client, organizer, event, item, 
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
     res['answers'] = [{'question': 1, 'answer': 'S', 'options': []}]
 
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['answers'][0]['question'] = question2.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -453,7 +453,7 @@ def test_cartpos_create_answer_validation(token_client, organizer, event, item, 
             'media_type': 'image/png',
             'file': ContentFile('file.png', 'invalid png content'),
         },
-        format='upload',
+        format='multipart',
         HTTP_CONTENT_DISPOSITION='attachment; filename="file.png"',
     )
     assert r.status_code == 201
@@ -653,7 +653,7 @@ def test_cartpos_create_answer_validation(token_client, organizer, event, item, 
 @pytest.mark.django_db
 def test_cartpos_create_quota_validation(token_client, organizer, event, item, quota, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
 
     quota.size = 0
     quota.save()
@@ -676,7 +676,7 @@ def seat(event, organizer, item):
 @pytest.mark.django_db
 def test_cartpos_create_with_seat(token_client, organizer, event, item, quota, seat, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['seat'] = seat.seat_guid
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -694,7 +694,7 @@ def test_cartpos_create_with_blocked_seat(token_client, organizer, event, item, 
     seat.blocked = True
     seat.save()
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['seat'] = seat.seat_guid
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -710,7 +710,7 @@ def test_cartpos_create_with_blocked_seat_allowed(token_client, organizer, event
     seat.blocked = True
     seat.save()
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['seat'] = seat.seat_guid
     res['sales_channel'] = 'bar'
     event.settings.seating_allow_blocked_seats_for_channel = ['bar']
@@ -733,7 +733,7 @@ def test_cartpos_create_with_used_seat(token_client, organizer, event, item, quo
         seat=seat,
     )
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['seat'] = seat.seat_guid
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -747,7 +747,7 @@ def test_cartpos_create_with_used_seat(token_client, organizer, event, item, quo
 @pytest.mark.django_db
 def test_cartpos_create_with_unknown_seat(token_client, organizer, event, item, quota, seat, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['seat'] = seat.seat_guid + '_'
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
@@ -761,7 +761,7 @@ def test_cartpos_create_with_unknown_seat(token_client, organizer, event, item, 
 @pytest.mark.django_db
 def test_cartpos_create_require_seat(token_client, organizer, event, item, quota, seat, question):
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item.pk
+    res['product'] = item.pk
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),
         format='json',
@@ -777,7 +777,7 @@ def test_cartpos_create_unseated(token_client, organizer, event, item, quota, se
         item2 = event.products.create(name='Budget Ticket', default_price=23)
         quota.products.add(item2)
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
-    res['item'] = item2.pk
+    res['product'] = item2.pk
     res['seat'] = seat.seat_guid
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/cartpositions/'.format(organizer.slug, event.slug),

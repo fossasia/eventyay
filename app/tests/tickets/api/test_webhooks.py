@@ -10,8 +10,8 @@ from eventyay.api.models import WebHook
 def webhook(organizer, event):
     wh = organizer.webhooks.create(enabled=True, target_url='https://google.com', all_events=False)
     wh.limit_events.add(event)
-    wh.listeners.create(action_type='pretix.event.order.placed')
-    wh.listeners.create(action_type='pretix.event.order.paid')
+    wh.listeners.create(action_type='eventyay.event.order.placed')
+    wh.listeners.create(action_type='eventyay.event.order.paid')
     return wh
 
 
@@ -21,7 +21,7 @@ TEST_WEBHOOK_RES = {
     'target_url': 'https://google.com',
     'all_events': False,
     'limit_events': ['dummy'],
-    'action_types': ['pretix.event.order.paid', 'pretix.event.order.placed'],
+    'action_types': ['eventyay.event.order.paid', 'eventyay.event.order.placed'],
 }
 
 
@@ -49,7 +49,7 @@ TEST_WEBHOOK_CREATE_PAYLOAD = {
     'target_url': 'https://google.com',
     'all_events': False,
     'limit_events': ['dummy'],
-    'action_types': ['pretix.event.order.placed', 'pretix.event.order.paid'],
+    'action_types': ['eventyay.event.order.placed', 'eventyay.event.order.paid'],
 }
 
 
@@ -66,8 +66,8 @@ def test_hook_create(token_client, organizer, event):
         assert cl.target_url == 'https://google.com'
         assert cl.limit_events.count() == 1
         assert set(cl.listeners.values_list('action_type', flat=True)) == {
-            'pretix.event.order.placed',
-            'pretix.event.order.paid',
+            'eventyay.event.order.placed',
+            'eventyay.event.order.paid',
         }
         assert not cl.all_events
 
@@ -121,8 +121,8 @@ def test_hook_patch_url(token_client, organizer, event, webhook):
     with scopes_disabled():
         assert webhook.limit_events.count() == 1
         assert set(webhook.listeners.values_list('action_type', flat=True)) == {
-            'pretix.event.order.placed',
-            'pretix.event.order.paid',
+            'eventyay.event.order.placed',
+            'eventyay.event.order.paid',
         }
     assert webhook.enabled
 
@@ -131,7 +131,7 @@ def test_hook_patch_url(token_client, organizer, event, webhook):
 def test_hook_patch_types(token_client, organizer, event, webhook):
     resp = token_client.patch(
         '/api/v1/organizers/{}/webhooks/{}/'.format(organizer.slug, webhook.pk),
-        {'action_types': ['pretix.event.order.placed', 'pretix.event.order.canceled']},
+        {'action_types': ['eventyay.event.order.placed', 'eventyay.event.order.canceled']},
         format='json',
     )
     assert resp.status_code == 200
@@ -139,8 +139,8 @@ def test_hook_patch_types(token_client, organizer, event, webhook):
     with scopes_disabled():
         assert webhook.limit_events.count() == 1
         assert set(webhook.listeners.values_list('action_type', flat=True)) == {
-            'pretix.event.order.placed',
-            'pretix.event.order.canceled',
+            'eventyay.event.order.placed',
+            'eventyay.event.order.canceled',
         }
     assert webhook.enabled
 

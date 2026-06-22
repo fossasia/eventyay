@@ -1,12 +1,19 @@
 import copy
 import datetime
 from unittest import mock
+from zoneinfo import ZoneInfo
 
 import pytest
 from django_scopes import scopes_disabled
 from pytz import UTC
 
 from eventyay.base.models import WaitingListEntry
+
+_BERLIN = ZoneInfo('Europe/Berlin')
+
+
+def _to_berlin(dt):
+    return dt.astimezone(_BERLIN).isoformat()
 
 
 @pytest.fixture
@@ -32,13 +39,13 @@ def wle(event, item):
 
 TEST_WLE_RES = {
     'id': 1,
-    'created': '2017-12-01T10:00:00Z',
+    'created': '2017-12-01T11:00:00+01:00',
     'name': None,
     'name_parts': {},
     'email': 'waiting@example.org',
     'phone': None,
     'voucher': None,
-    'item': 2,
+    'product': 2,
     'variation': None,
     'locale': 'en',
     'priority': 0,
@@ -58,7 +65,7 @@ def test_wle_list(token_client, organizer, event, wle, item, subevent):
     i2.pk = None
     i2.save()
     res['id'] = wle.pk
-    res['item'] = item.pk
+    res['product'] = item.pk
     res['variation'] = var.pk
 
     resp = token_client.get('/api/v1/organizers/{}/events/{}/waitinglistentries/'.format(organizer.slug, event.slug))
@@ -147,7 +154,7 @@ def test_wle_list(token_client, organizer, event, wle, item, subevent):
 def test_wle_detail(token_client, organizer, event, wle, item):
     res = dict(TEST_WLE_RES)
     res['id'] = wle.pk
-    res['item'] = item.pk
+    res['product'] = item.pk
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/waitinglistentries/{}/'.format(organizer.slug, event.slug, wle.pk)
     )
@@ -201,7 +208,7 @@ def test_wle_create_success(token_client, organizer, event, item, quota):
         event,
         data={
             'email': 'test@eventyay.com',
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'locale': 'en',
             'subevent': None,
@@ -209,7 +216,7 @@ def test_wle_create_success(token_client, organizer, event, item, quota):
         expected_failure=False,
     )
     assert w.email == 'test@eventyay.com'
-    assert w.item == item
+    assert w.product == item
     assert w.variation is None
     assert w.locale == 'en'
 
@@ -220,7 +227,7 @@ def test_wle_require_fields(token_client, organizer, event, item, quota):
         token_client,
         organizer,
         event,
-        data={'item': item.pk, 'variation': None, 'locale': 'en', 'subevent': None},
+        data={'product': item.pk, 'variation': None, 'locale': 'en', 'subevent': None},
         expected_failure=True,
     )
     create_wle(
@@ -243,7 +250,7 @@ def test_wle_require_fields(token_client, organizer, event, item, quota):
         event,
         data={
             'email': 'test@eventyay.com',
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'locale': 'en',
             'subevent': None,
@@ -257,7 +264,7 @@ def test_wle_require_fields(token_client, organizer, event, item, quota):
         event,
         data={
             'email': 'test@eventyay.com',
-            'item': item.pk,
+            'product': item.pk,
             'variation': v.pk,
             'locale': 'en',
             'subevent': None,
@@ -276,7 +283,7 @@ def test_wle_create_available(token_client, organizer, event, item, quota):
         event,
         data={
             'email': 'test@eventyay.com',
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'locale': 'en',
             'subevent': None,
@@ -293,7 +300,7 @@ def test_wle_create_duplicate(token_client, organizer, event, item, quota):
         event,
         data={
             'email': 'test@eventyay.com',
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'locale': 'en',
             'subevent': None,
@@ -306,7 +313,7 @@ def test_wle_create_duplicate(token_client, organizer, event, item, quota):
         event,
         data={
             'email': 'test@eventyay.com',
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'locale': 'en',
             'subevent': None,
@@ -368,8 +375,8 @@ def test_wle_change_to_available_item(token_client, organizer, event, item, wle,
         i = event.products.create(name='Budget Ticket', default_price=23)
         q = event.quotas.create(name='Budget Ticket', size=1)
     q.products.add(i)
-    change_wle(token_client, organizer, event, wle, data={'item': i.pk}, expected_failure=True)
-    assert wle.item == item
+    change_wle(token_client, organizer, event, wle, data={'product': i.pk}, expected_failure=True)
+    assert wle.product == item
 
 
 @pytest.mark.django_db
@@ -385,10 +392,10 @@ def test_wle_change_to_unavailable_item(token_client, organizer, event, item, wl
         organizer,
         event,
         wle,
-        data={'item': i.pk, 'variation': v.pk},
+        data={'product': i.pk, 'variation': v.pk},
         expected_failure=False,
     )
-    assert wle.item == i
+    assert wle.product == i
     assert wle.variation == v
 
 
@@ -406,11 +413,11 @@ def test_wle_change_to_unavailable_item_missing_var(token_client, organizer, eve
         event,
         wle,
         data={
-            'item': i.pk,
+            'product': i.pk,
         },
         expected_failure=True,
     )
-    assert wle.item == item
+    assert wle.product == item
     assert wle.variation is None
 
 
