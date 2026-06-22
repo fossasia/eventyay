@@ -64,7 +64,7 @@ def env():
     )
     quota = Quota.objects.create(name='Test', size=2, event=event)
     item1 = Item.objects.create(event=event, name='Ticket', default_price=23)
-    quota.items.add(item1)
+    quota.products.add(item1)
     OrderPosition.objects.create(order=o1, item=item1, variation=None, price=23)
     return event, user, o1, o2
 

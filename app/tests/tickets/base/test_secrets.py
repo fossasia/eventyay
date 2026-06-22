@@ -33,7 +33,7 @@ def event():
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_force_invalidate(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -46,7 +46,7 @@ def test_force_invalidate(event, scheme):
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_keep_same(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -59,8 +59,8 @@ def test_keep_same(event, scheme):
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_change_if_required(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
-    item2 = event.items.create(name='Bar', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
+    item2 = event.products.create(name='Bar', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -76,7 +76,7 @@ def test_change_if_required(event, scheme):
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_change_if_invalid(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 

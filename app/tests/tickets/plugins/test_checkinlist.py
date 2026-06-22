@@ -173,7 +173,7 @@ def test_csv_order_by_inherited_name_parts(event):  # noqa
         )
         OrderPosition.objects.create(
             order=order2,
-            item=event.items.first(),
+            item=event.products.first(),
             variation=None,
             company='BARCORP',
             price=Decimal('23'),

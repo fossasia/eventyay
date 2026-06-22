@@ -27,17 +27,17 @@ from eventyay.base.models import (
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def item_on_wrong_event(event2):
-    return event2.items.create(name='Budget Ticket', default_price=23)
+    return event2.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def other_item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
@@ -985,7 +985,7 @@ def question(event, item):
     )
     a1 = q.options.create(answer=LazyI18nString('M'))
     a2 = q.options.create(answer=LazyI18nString('L'))
-    q.items.add(item)
+    q.products.add(item)
     return q, a1, a2
 
 

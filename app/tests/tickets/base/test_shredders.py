@@ -50,7 +50,7 @@ def event():
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Early-bird ticket', category=None, default_price=23, admission=True)
+    return event.products.create(name='Early-bird ticket', category=None, default_price=23, admission=True)
 
 
 @pytest.fixture
@@ -82,7 +82,7 @@ def order(event, item):
 @pytest.fixture
 def question(event, item):
     q = event.questions.create(question='T-Shirt size', type='C', identifier='ABC')
-    q.items.add(item)
+    q.products.add(item)
     q.options.create(answer='XL', identifier='LVETRWVU')
     return q
 
@@ -123,7 +123,7 @@ def test_email_shredder(event, order):
 @pytest.mark.django_db
 def test_waitinglist_shredder(event, item):
     q = event.quotas.create(size=5)
-    q.items.add(item)
+    q.products.add(item)
     wle = event.waitinglistentries.create(
         item=item,
         email='foo@example.org',

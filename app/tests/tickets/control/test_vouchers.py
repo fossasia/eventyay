@@ -41,14 +41,14 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
         self.quota_shirts = Quota.objects.create(event=self.event, name='Shirts', size=2)
         self.shirt = Item.objects.create(event=self.event, name='T-Shirt', default_price=12)
-        self.quota_shirts.items.add(self.shirt)
+        self.quota_shirts.products.add(self.shirt)
         self.shirt_red = ItemVariation.objects.create(item=self.shirt, default_price=14, value='Red')
         self.shirt_blue = ItemVariation.objects.create(item=self.shirt, value='Blue')
         self.quota_shirts.variations.add(self.shirt_red)
         self.quota_shirts.variations.add(self.shirt_blue)
         self.quota_tickets = Quota.objects.create(event=self.event, name='Tickets', size=5)
         self.ticket = Item.objects.create(event=self.event, name='Early-bird ticket', default_price=23)
-        self.quota_tickets.items.add(self.ticket)
+        self.quota_tickets.products.add(self.ticket)
 
     def _create_voucher(self, data, expected_failure=False):
         with scopes_disabled():
@@ -370,7 +370,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
     def test_change_item_of_blocking_voucher_quota_free(self):
         with scopes_disabled():
             ticket2 = Item.objects.create(event=self.event, name='Late-bird ticket', default_price=23)
-            self.quota_tickets.items.add(ticket2)
+            self.quota_tickets.products.add(ticket2)
             v = self.event.vouchers.create(item=self.ticket, block_quota=True)
         self._change_voucher(
             v,
@@ -384,7 +384,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         self.quota_shirts.save()
         with scopes_disabled():
             hoodie = Item.objects.create(event=self.event, name='Hoodie', default_price=23)
-            self.quota_shirts.items.add(hoodie)
+            self.quota_shirts.products.add(hoodie)
             v = self.event.vouchers.create(item=self.ticket, block_quota=True)
         self._change_voucher(
             v,
@@ -449,7 +449,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             self.quota_tickets.size = 0
             self.quota_tickets.save()
             ticket2 = Item.objects.create(event=self.event, name='Standard Ticket', default_price=23)
-            self.quota_tickets.items.add(ticket2)
+            self.quota_tickets.products.add(ticket2)
             v = self.event.vouchers.create(item=self.ticket, block_quota=True)
         self._change_voucher(
             v,
@@ -778,7 +778,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             self.quota_tickets.subevent = se1
             self.quota_tickets.save()
             q2 = Quota.objects.create(event=self.event, name='Tickets', size=0, subevent=se2)
-            q2.items.add(self.ticket)
+            q2.products.add(self.ticket)
 
         self._create_voucher({'itemvar': '%d' % self.ticket.pk, 'block_quota': 'on', 'subevent': se1.pk})
 
@@ -793,7 +793,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             self.quota_tickets.size = 0
             self.quota_tickets.save()
             q2 = Quota.objects.create(event=self.event, name='Tickets', size=5, subevent=se2)
-            q2.items.add(self.ticket)
+            q2.products.add(self.ticket)
 
         self._create_voucher(
             {'itemvar': '%d' % self.ticket.pk, 'block_quota': 'on', 'subevent': se1.pk},

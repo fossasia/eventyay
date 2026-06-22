@@ -144,7 +144,7 @@ def test_order_list(client, env):
 
     with scopes_disabled():
         q = Question.objects.create(event=env[0], question='Q', type='N', required=True)
-        q.items.add(env[3])
+        q.products.add(env[3])
         op = env[2].positions.first()
         qa = QuestionAnswer.objects.create(question=q, orderposition=op, answer='12')
     response = client.get('/control/event/dummy/dummy/orders/?question=%d&answer=12' % q.pk)
@@ -378,7 +378,7 @@ def test_order_detail_show_test_mode(client, env):
 def test_order_set_contact(client, env):
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
     client.login(email='dummy@dummy.dummy', password='dummy')
     client.post('/control/event/dummy/dummy/orders/FOO/contact', {'email': 'admin@rami.io'})
     with scopes_disabled():
@@ -390,7 +390,7 @@ def test_order_set_contact(client, env):
 def test_order_set_locale(client, env):
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=0)
-    q.items.add(env[3])
+    q.products.add(env[3])
     client.login(email='dummy@dummy.dummy', password='dummy')
     client.post('/control/event/dummy/dummy/orders/FOO/locale', {'locale': 'de'})
     with scopes_disabled():
@@ -402,7 +402,7 @@ def test_order_set_locale(client, env):
 def test_order_set_locale_with_invalid_locale_value(client, env):
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
     client.login(email='dummy@dummy.dummy', password='dummy')
     client.post('/control/event/dummy/dummy/orders/FOO/locale', {'locale': 'fr'})
     with scopes_disabled():
@@ -414,7 +414,7 @@ def test_order_set_locale_with_invalid_locale_value(client, env):
 def test_order_set_comment(client, env):
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
     client.login(email='dummy@dummy.dummy', password='dummy')
     client.post('/control/event/dummy/dummy/orders/FOO/comment', {'comment': 'Foo'})
     with scopes_disabled():
@@ -426,7 +426,7 @@ def test_order_set_comment(client, env):
 def test_order_transition_to_expired_success(client, env):
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=0)
-    q.items.add(env[3])
+    q.products.add(env[3])
     client.login(email='dummy@dummy.dummy', password='dummy')
     client.post('/control/event/dummy/dummy/orders/FOO/transition', {'status': 'e'})
     with scopes_disabled():
@@ -438,7 +438,7 @@ def test_order_transition_to_expired_success(client, env):
 def test_order_transition_to_paid_in_time_success(client, env):
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=0)
-    q.items.add(env[3])
+    q.products.add(env[3])
     client.login(email='dummy@dummy.dummy', password='dummy')
     client.post(
         '/control/event/dummy/dummy/orders/FOO/transition',
@@ -460,7 +460,7 @@ def test_order_transition_to_paid_expired_quota_left(client, env):
         o.status = Order.STATUS_EXPIRED
         o.save()
         q = Quota.objects.create(event=env[0], size=10)
-    q.items.add(env[3])
+    q.products.add(env[3])
     client.login(email='dummy@dummy.dummy', password='dummy')
     res = client.post(
         '/control/event/dummy/dummy/orders/FOO/transition',
@@ -484,7 +484,7 @@ def test_order_approve(client, env):
         o.require_approval = True
         o.save()
         q = Quota.objects.create(event=env[0], size=10)
-    q.items.add(env[3])
+    q.products.add(env[3])
     client.login(email='dummy@dummy.dummy', password='dummy')
     res = client.post('/control/event/dummy/dummy/orders/FOO/approve', {})
     with scopes_disabled():
@@ -502,7 +502,7 @@ def test_order_deny(client, env):
         o.require_approval = True
         o.save()
         q = Quota.objects.create(event=env[0], size=10)
-        q.items.add(env[3])
+        q.products.add(env[3])
     client.login(email='dummy@dummy.dummy', password='dummy')
     res = client.post('/control/event/dummy/dummy/orders/FOO/deny', {})
     with scopes_disabled():
@@ -970,7 +970,7 @@ def test_order_reactivate_not_canceled(client, env):
 def test_order_reactivate(client, env):
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=3)
-        q.items.add(env[3])
+        q.products.add(env[3])
         o = Order.objects.get(id=env[2].id)
         o.status = Order.STATUS_CANCELED
         o.save()
@@ -1000,7 +1000,7 @@ def test_order_extend_not_pending(client, env):
 def test_order_extend_not_expired(client, env):
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
         o = Order.objects.get(id=env[2].id)
         generate_invoice(o)
     newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
@@ -1024,7 +1024,7 @@ def test_order_extend_overdue_quota_empty(client, env):
         o.expires = now() - timedelta(days=5)
         o.save()
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
     newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1046,7 +1046,7 @@ def test_order_extend_overdue_quota_blocked_by_waiting_list(client, env):
         o.expires = now() - timedelta(days=5)
         o.save()
         q = Quota.objects.create(event=env[0], size=1)
-        q.items.add(env[3])
+        q.products.add(env[3])
         env[0].waitinglistentries.create(item=env[3], email='foo@bar.com')
         generate_cancellation(generate_invoice(o))
 
@@ -1074,7 +1074,7 @@ def test_order_extend_expired_quota_left(client, env):
         o.save()
         generate_cancellation(generate_invoice(o))
         q = Quota.objects.create(event=env[0], size=3)
-        q.items.add(env[3])
+        q.products.add(env[3])
     newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
@@ -1102,7 +1102,7 @@ def test_order_extend_expired_quota_empty(client, env):
     o.save()
     with scopes_disabled():
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
     newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1125,7 +1125,7 @@ def test_order_extend_expired_quota_empty_ignore(client, env):
         o.status = Order.STATUS_EXPIRED
         o.save()
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
     newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1152,7 +1152,7 @@ def test_order_extend_expired_seat_free(client, env):
         p.seat = seat_a1
         p.save()
         q = Quota.objects.create(event=env[0], size=3)
-        q.items.add(env[3])
+        q.products.add(env[3])
         newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
         client.login(email='dummy@dummy.dummy', password='dummy')
         assert o.invoices.count() == 2
@@ -1183,7 +1183,7 @@ def test_order_extend_expired_seat_blocked(client, env):
         p.save()
 
         q = Quota.objects.create(event=env[0], size=100)
-        q.items.add(env[3])
+        q.products.add(env[3])
         newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1231,7 +1231,7 @@ def test_order_extend_expired_seat_taken(client, env):
         )
 
         q = Quota.objects.create(event=env[0], size=100)
-        q.items.add(env[3])
+        q.products.add(env[3])
         newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
         client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1262,7 +1262,7 @@ def test_order_extend_expired_quota_partial(client, env):
         olddate = o.expires
         o.save()
         q = Quota.objects.create(event=env[0], size=1)
-        q.items.add(env[3])
+        q.products.add(env[3])
     newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1297,7 +1297,7 @@ def test_order_extend_expired_voucher_budget_ok(client, env):
         p.save()
 
         q = Quota.objects.create(event=env[0], size=100)
-        q.items.add(env[3])
+        q.products.add(env[3])
         newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1333,7 +1333,7 @@ def test_order_extend_expired_voucher_budget_fail(client, env):
         p.save()
 
         q = Quota.objects.create(event=env[0], size=100)
-        q.items.add(env[3])
+        q.products.add(env[3])
         newdate = (now() + timedelta(days=20)).strftime('%Y-%m-%d')
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1358,7 +1358,7 @@ def test_order_mark_paid_overdue_quota_blocked_by_waiting_list(client, env):
         o.expires = now() - timedelta(days=5)
         o.save()
         q = Quota.objects.create(event=env[0], size=1)
-        q.items.add(env[3])
+        q.products.add(env[3])
         env[0].waitinglistentries.create(item=env[3], email='foo@bar.com')
 
     client.login(email='dummy@dummy.dummy', password='dummy')
@@ -1385,7 +1385,7 @@ def test_order_mark_paid_blocked(client, env):
         o.expires = now() - timedelta(days=5)
         o.save()
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
 
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1413,7 +1413,7 @@ def test_order_mark_paid_overpaid_expired(client, env):
         o.payments.create(state=OrderPayment.PAYMENT_STATE_CONFIRMED, amount=o.total * 2)
         assert o.pending_sum == -1 * o.total
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
 
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1442,7 +1442,7 @@ def test_order_mark_paid_forced(client, env):
         o.expires = now() - timedelta(days=5)
         o.save()
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
 
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
@@ -1495,7 +1495,7 @@ def test_order_mark_paid_expired_seat_taken(client, env):
         )
 
         q = Quota.objects.create(event=env[0], size=100)
-        q.items.add(env[3])
+        q.products.add(env[3])
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.post(
         '/control/event/dummy/dummy/orders/FOO/transition',
@@ -1698,8 +1698,8 @@ class OrderChangeTests(SoupTest):
             canceled=True,
         )
         self.quota = self.event.quotas.create(name='All', size=100)
-        self.quota.items.add(self.ticket)
-        self.quota.items.add(self.shirt)
+        self.quota.products.add(self.ticket)
+        self.quota.products.add(self.shirt)
         user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
         t = Team.objects.create(organizer=o, can_view_orders=True, can_change_orders=True)
         t.members.add(user)
@@ -1746,8 +1746,8 @@ class OrderChangeTests(SoupTest):
             self.quota.subevent = se1
             self.quota.save()
             q2 = self.event.quotas.create(name='Q2', size=100, subevent=se2)
-            q2.items.add(self.ticket)
-            q2.items.add(self.shirt)
+            q2.products.add(self.ticket)
+            q2.products.add(self.shirt)
         self.client.post(
             '/control/event/{}/{}/orders/{}/change'.format(self.event.organizer.slug, self.event.slug, self.order.code),
             {
@@ -2691,7 +2691,7 @@ def test_refund_paid_order_offsetting_to_expired(client, env):
         )
         o.positions.create(price=5, item=env[3])
         q = Quota.objects.create(event=env[0], size=0)
-        q.items.add(env[3])
+        q.products.add(env[3])
 
     client.post(
         '/control/event/dummy/dummy/orders/FOO/refund',

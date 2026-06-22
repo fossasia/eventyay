@@ -182,6 +182,6 @@ class BadgeLayoutFormTest(SoupTest):
 
         with scopes_disabled():
             ev = Event.objects.get(slug='33c3')
-            i_new = ev.items.first()
+            i_new = ev.products.first()
             bl_new = ev.badge_layouts.first()
             assert BadgeItem.objects.get(item=i_new, layout=bl_new)

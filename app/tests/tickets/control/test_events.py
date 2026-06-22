@@ -133,18 +133,18 @@ class EventsTest(SoupTest):
         )
         assert 'eventyay.plugins.banktransfer' in self.event1.plugins
         with scopes_disabled():
-            assert self.event1.items.count() == 2
-            i = self.event1.items.first()
+            assert self.event1.products.count() == 2
+            i = self.event1.products.first()
             assert str(i.name) == 'Normal ticket'
             assert i.default_price == Decimal('13.90')
-            i = self.event1.items.last()
+            i = self.event1.products.last()
             assert str(i.name) == 'Reduced ticket'
             assert i.default_price == Decimal('13.20')
             assert self.event1.quotas.count() == 1
             q = self.event1.quotas.first()
             assert q.name == 'Tickets'
             assert q.size == 300
-            assert q.items.count() == 2
+            assert q.products.count() == 2
 
     def test_quick_setup_single_quota(self):
         doc = self.get_doc('/control/event/%s/%s/quickstart/' % (self.orga1.slug, self.event1.slug))
@@ -185,22 +185,22 @@ class EventsTest(SoupTest):
         )
         assert 'eventyay.plugins.banktransfer' in self.event1.plugins
         with scopes_disabled():
-            assert self.event1.items.count() == 2
-            i = self.event1.items.first()
+            assert self.event1.products.count() == 2
+            i = self.event1.products.first()
             assert str(i.name) == 'Normal ticket'
             assert i.default_price == Decimal('13.90')
-            i = self.event1.items.last()
+            i = self.event1.products.last()
             assert str(i.name) == 'Reduced ticket'
             assert i.default_price == Decimal('13.20')
             assert self.event1.quotas.count() == 2
             q = self.event1.quotas.first()
             assert q.name == 'Normal ticket'
             assert q.size == 100
-            assert q.items.count() == 1
+            assert q.products.count() == 1
             q = self.event1.quotas.last()
             assert q.name == 'Reduced ticket'
             assert q.size == 50
-            assert q.items.count() == 1
+            assert q.products.count() == 1
 
     def test_quick_setup_dual_quota(self):
         doc = self.get_doc('/control/event/%s/%s/quickstart/' % (self.orga1.slug, self.event1.slug))
@@ -241,22 +241,22 @@ class EventsTest(SoupTest):
         )
         assert 'eventyay.plugins.banktransfer' in self.event1.plugins
         with scopes_disabled():
-            assert self.event1.items.count() == 2
-            i = self.event1.items.first()
+            assert self.event1.products.count() == 2
+            i = self.event1.products.first()
             assert str(i.name) == 'Normal ticket'
             assert i.default_price == Decimal('13.90')
-            i = self.event1.items.last()
+            i = self.event1.products.last()
             assert str(i.name) == 'Reduced ticket'
             assert i.default_price == Decimal('13.20')
             assert self.event1.quotas.count() == 3
             q = self.event1.quotas.first()
             assert q.name == 'Normal ticket'
             assert q.size == 100
-            assert q.items.count() == 1
+            assert q.products.count() == 1
             q = self.event1.quotas.last()
             assert q.name == 'Tickets'
             assert q.size == 120
-            assert q.items.count() == 2
+            assert q.products.count() == 2
 
     def test_settings(self):
         doc = self.get_doc('/control/event/%s/%s/settings/' % (self.orga1.slug, self.event1.slug))
@@ -390,7 +390,7 @@ class EventsTest(SoupTest):
 
     def test_live_ok(self):
         with scopes_disabled():
-            self.event1.items.create(name='Test', default_price=5)
+            self.event1.products.create(name='Test', default_price=5)
             self.event1.settings.set('payment_banktransfer__enabled', True)
             self.event1.quotas.create(name='Test quota')
         doc = self.get_doc('/control/event/%s/%s/live/' % (self.orga1.slug, self.event1.slug))
@@ -404,7 +404,7 @@ class EventsTest(SoupTest):
 
     def test_live_dont_require_payment_method_free(self):
         with scopes_disabled():
-            self.event1.items.create(name='Test', default_price=0)
+            self.event1.products.create(name='Test', default_price=0)
             self.event1.settings.set('payment_banktransfer__enabled', False)
             self.event1.quotas.create(name='Test quota')
         doc = self.get_doc('/control/event/%s/%s/live/' % (self.orga1.slug, self.event1.slug))
@@ -412,7 +412,7 @@ class EventsTest(SoupTest):
 
     def test_live_require_payment_method(self):
         with scopes_disabled():
-            self.event1.items.create(name='Test', default_price=5)
+            self.event1.products.create(name='Test', default_price=5)
             self.event1.settings.set('payment_banktransfer__enabled', False)
             self.event1.quotas.create(name='Test quota')
         doc = self.get_doc('/control/event/%s/%s/live/' % (self.orga1.slug, self.event1.slug))
@@ -820,7 +820,7 @@ class EventsTest(SoupTest):
                 name='Foo',
                 size=0,
             )
-            self.event1.items.create(
+            self.event1.products.create(
                 name='Early-bird ticket',
                 category=None,
                 default_price=23,
@@ -887,7 +887,7 @@ class EventsTest(SoupTest):
             assert ev.organizer == self.orga1
             assert ev.location == LazyI18nString({'de': 'Hamburg', 'en': 'Hamburg'})
             assert Team.objects.filter(limit_events=ev, members=self.user).exists()
-            assert ev.items.count() == 1
+            assert ev.products.count() == 1
 
             berlin_tz = timezone('Europe/Berlin')
             assert ev.date_from == berlin_tz.localize(datetime.datetime(2016, 12, 27, 10, 0, 0)).astimezone(pytz.utc)
@@ -896,7 +896,7 @@ class EventsTest(SoupTest):
             assert ev.presale_end == berlin_tz.localize(datetime.datetime(2016, 11, 30, 18, 0, 0)).astimezone(pytz.utc)
 
             assert ev.tax_rules.filter(rate=Decimal('19.00')).count() == 1
-            i = ev.items.get()
+            i = ev.products.get()
             assert i.hidden_if_available.name == 'Foo'
             assert i.hidden_if_available.event == ev
             assert i.hidden_if_available.pk != q1.pk
@@ -904,7 +904,7 @@ class EventsTest(SoupTest):
     def test_create_event_clone_success(self):
         with scopes_disabled():
             tr = self.event1.tax_rules.create(rate=19, name='VAT')
-            self.event1.items.create(
+            self.event1.products.create(
                 name='Early-bird ticket',
                 category=None,
                 default_price=23,
@@ -966,7 +966,7 @@ class EventsTest(SoupTest):
             assert ev.organizer == self.orga1
             assert ev.location == LazyI18nString({'de': 'Hamburg', 'en': 'Hamburg'})
             assert Team.objects.filter(limit_events=ev, members=self.user).exists()
-            assert ev.items.count() == 1
+            assert ev.products.count() == 1
 
             berlin_tz = timezone('Europe/Berlin')
             assert ev.date_from == berlin_tz.localize(datetime.datetime(2016, 12, 27, 10, 0, 0)).astimezone(pytz.utc)
@@ -1221,7 +1221,7 @@ class EventDeletionTest(SoupTest):
         )
         t.members.add(self.user)
         t.limit_events.add(self.event1)
-        self.ticket = self.event1.items.create(
+        self.ticket = self.event1.products.create(
             name='Early-bird ticket', category=None, default_price=23, admission=True
         )
 

@@ -3,7 +3,7 @@ from django.core.files.base import ContentFile
 
 from tests.testutils.mock import mocker_context
 
-TEST_ORGANIZER_RES = {'name': 'Dummy', 'slug': 'dummy'}
+TEST_ORGANIZER_RES = {'name': 'Dummy', 'slug': 'dummy', 'follower_count': 0, 'is_following': False}
 
 
 @pytest.mark.django_db

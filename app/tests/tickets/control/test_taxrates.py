@@ -73,7 +73,7 @@ class TaxRateFormTest(SoupTest):
     def test_delete_item_existing(self):
         with scopes_disabled():
             tr = self.event1.tax_rules.create(rate=19, name='VAT')
-            self.event1.items.create(name='foo', default_price=12, tax_rule=tr)
+            self.event1.products.create(name='foo', default_price=12, tax_rule=tr)
         doc = self.get_doc('/control/event/%s/%s/settings/tax/%s/delete' % (self.orga1.slug, self.event1.slug, tr.id))
         form_data = extract_form_fields(doc.select('.container-fluid form')[0])
         doc = self.post_doc(
@@ -131,7 +131,7 @@ class TaxRateFormTest(SoupTest):
     def test_delete_orderpos_existing(self):
         with scopes_disabled():
             tr = self.event1.tax_rules.create(rate=19, name='VAT')
-            i = self.event1.items.create(name='foo', default_price=12)
+            i = self.event1.products.create(name='foo', default_price=12)
             o = self.event1.orders.create(
                 code='FOO',
                 event=self.event1,

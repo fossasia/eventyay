@@ -11,13 +11,13 @@ from eventyay.base.models import WaitingListEntry
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def quota(event, item):
     q = event.quotas.create(name='Budget Ticket', size=0)
-    q.items.add(item)
+    q.products.add(item)
     return q
 
 
@@ -365,9 +365,9 @@ def test_wle_change_assigned(token_client, organizer, event, item, wle, quota):
 @pytest.mark.django_db
 def test_wle_change_to_available_item(token_client, organizer, event, item, wle, quota):
     with scopes_disabled():
-        i = event.items.create(name='Budget Ticket', default_price=23)
+        i = event.products.create(name='Budget Ticket', default_price=23)
         q = event.quotas.create(name='Budget Ticket', size=1)
-    q.items.add(i)
+    q.products.add(i)
     change_wle(token_client, organizer, event, wle, data={'item': i.pk}, expected_failure=True)
     assert wle.item == item
 
@@ -375,10 +375,10 @@ def test_wle_change_to_available_item(token_client, organizer, event, item, wle,
 @pytest.mark.django_db
 def test_wle_change_to_unavailable_item(token_client, organizer, event, item, wle, quota):
     with scopes_disabled():
-        i = event.items.create(name='Budget Ticket', default_price=23)
+        i = event.products.create(name='Budget Ticket', default_price=23)
         v = i.variations.create(value='S')
         q = event.quotas.create(name='Budget Ticket', size=0)
-    q.items.add(i)
+    q.products.add(i)
     q.variations.add(v)
     change_wle(
         token_client,
@@ -395,10 +395,10 @@ def test_wle_change_to_unavailable_item(token_client, organizer, event, item, wl
 @pytest.mark.django_db
 def test_wle_change_to_unavailable_item_missing_var(token_client, organizer, event, item, wle, quota):
     with scopes_disabled():
-        i = event.items.create(name='Budget Ticket', default_price=23)
+        i = event.products.create(name='Budget Ticket', default_price=23)
         v = i.variations.create(value='S')
         q = event.quotas.create(name='Budget Ticket', size=0)
-    q.items.add(i)
+    q.products.add(i)
     q.variations.add(v)
     change_wle(
         token_client,

@@ -94,7 +94,7 @@ TEST_EVENT_RES = {
     'meta_data': {'type': 'Conference'},
     'timezone': 'Europe/Berlin',
     'plugins': ['eventyay.plugins.banktransfer', 'eventyay.plugins.ticketoutputpdf'],
-    'item_meta_properties': {
+    'product_meta_properties': {
         'day': 'Monday',
     },
     'sales_channels': ['web'],
@@ -103,18 +103,18 @@ TEST_EVENT_RES = {
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def free_item(event):
-    return event.items.create(name='Free Ticket', default_price=0)
+    return event.products.create(name='Free Ticket', default_price=0)
 
 
 @pytest.fixture
 def free_quota(event, free_item):
     q = event.quotas.create(name='Budget Quota', size=200)
-    q.items.add(free_item)
+    q.products.add(free_item)
     return q
 
 
@@ -543,23 +543,23 @@ def test_event_update(token_client, organizer, event, item, meta_prop):
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/'.format(organizer.slug, event.slug),
-        {'item_meta_properties': {'Foo': 'Bar'}},
+        {'product_meta_properties': {'Foo': 'Bar'}},
         format='json',
     )
     assert resp.status_code == 200
     with scopes_disabled():
         assert (
-            organizer.events.get(slug=resp.data['slug']).item_meta_properties.filter(name='Foo', default='Bar').exists()
+            organizer.events.get(slug=resp.data['slug']).product_meta_properties.filter(name='Foo', default='Bar').exists()
         )
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/'.format(organizer.slug, event.slug),
-        {'item_meta_properties': {}},
+        {'product_meta_properties': {}},
         format='json',
     )
     assert resp.status_code == 200
     with scopes_disabled():
-        assert not organizer.events.get(slug=resp.data['slug']).item_meta_properties.filter(name='Foo').exists()
+        assert not organizer.events.get(slug=resp.data['slug']).product_meta_properties.filter(name='Foo').exists()
 
 
 @pytest.mark.django_db

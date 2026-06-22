@@ -103,12 +103,12 @@ TEST_SUBEVENT_RES = {
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def item2(event2):
-    return event2.items.create(name='Another Ticket', default_price=23)
+    return event2.products.create(name='Another Ticket', default_price=23)
 
 
 @pytest.mark.django_db
@@ -369,7 +369,7 @@ def test_subevent_update(
     )
     assert resp.status_code == 200
     with scopes_disabled():
-        assert subevent.items.get(id=item.pk).default_price == Decimal('23.00')
+        assert subevent.products.get(id=item.pk).default_price == Decimal('23.00')
     assert subevent.item_price_overrides[item.pk] == Decimal('99.99')
 
     resp = token_client.patch(

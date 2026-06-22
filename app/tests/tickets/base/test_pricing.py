@@ -19,7 +19,7 @@ def event():
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Ticket', default_price=Decimal('23.00'))
+    return event.products.create(name='Ticket', default_price=Decimal('23.00'))
 
 
 @pytest.fixture

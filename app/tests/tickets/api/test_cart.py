@@ -15,12 +15,12 @@ from eventyay.base.models.orders import CartPosition
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def item2(event2):
-    return event2.items.create(name='Budget Ticket', default_price=23)
+    return event2.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def taxrule(event):
 @pytest.fixture
 def question(event, item):
     q = event.questions.create(question='T-Shirt size', type='S', identifier='ABC')
-    q.items.add(item)
+    q.products.add(item)
     q.options.create(answer='XL', identifier='LVETRWVU')
     return q
 
@@ -39,14 +39,14 @@ def question(event, item):
 @pytest.fixture
 def question2(event2, item2):
     q = event2.questions.create(question='T-Shirt size', type='S', identifier='ABC')
-    q.items.add(item2)
+    q.products.add(item2)
     return q
 
 
 @pytest.fixture
 def quota(event, item):
     q = event.quotas.create(name='Budget Quota', size=200)
-    q.items.add(item)
+    q.products.add(item)
     return q
 
 
@@ -774,8 +774,8 @@ def test_cartpos_create_require_seat(token_client, organizer, event, item, quota
 @pytest.mark.django_db
 def test_cartpos_create_unseated(token_client, organizer, event, item, quota, seat, question):
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=23)
-        quota.items.add(item2)
+        item2 = event.products.create(name='Budget Ticket', default_price=23)
+        quota.products.add(item2)
     res = copy.deepcopy(CARTPOS_CREATE_PAYLOAD)
     res['item'] = item2.pk
     res['seat'] = seat.seat_guid

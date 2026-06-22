@@ -413,7 +413,7 @@ class QuotaTest(ItemFormTest):
         self.assertNotIn('500', doc.select('#page-wrapper table')[0].text)
         with scopes_disabled():
             assert Quota.objects.get(id=c.id).size == 350
-            assert item1 in Quota.objects.get(id=c.id).items.all()
+            assert item1 in Quota.objects.get(id=c.id).products.all()
 
     def test_update_subevent(self):
         self.event1.has_subevents = True
@@ -774,13 +774,13 @@ class ItemsTest(ItemFormTest):
             {},
         )
         with scopes_disabled():
-            assert not self.event1.items.filter(pk=self.item1.pk).exists()
+            assert not self.event1.products.filter(pk=self.item1.pk).exists()
         self.client.post(
             '/control/event/%s/%s/items/%d/delete' % (self.orga1.slug, self.event1.slug, self.item2.id),
             {},
         )
         with scopes_disabled():
-            assert not self.event1.items.filter(pk=self.item2.pk).exists()
+            assert not self.event1.products.filter(pk=self.item2.pk).exists()
 
     def test_delete_ordered(self):
         with scopes_disabled():
@@ -806,14 +806,14 @@ class ItemsTest(ItemFormTest):
             {},
         )
         with scopes_disabled():
-            assert self.event1.items.filter(pk=self.item1.pk).exists()
+            assert self.event1.products.filter(pk=self.item1.pk).exists()
         self.item1.refresh_from_db()
         assert not self.item1.active
 
     def test_create_copy(self):
         with scopes_disabled():
             q = Question.objects.create(event=self.event1, question='Size', type='N')
-            q.items.add(self.item2)
+            q.products.add(self.item2)
         self.item2.sales_channels = ['web', 'bar']
 
         self.client.post(
@@ -862,7 +862,7 @@ class ItemsTest(ItemFormTest):
             i = Item.objects.get(name__icontains='Existing')
 
             assert doc.select('.alert-success')
-            assert q.items.filter(pk=i.pk).exists()
+            assert q.products.filter(pk=i.pk).exists()
 
     def test_add_to_new_quota(self):
         doc = self.get_doc('/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug))
@@ -883,7 +883,7 @@ class ItemsTest(ItemFormTest):
             assert Item.objects.filter(name__icontains='New Item').exists()
             i = Item.objects.get(name__icontains='New Item')
             q = Quota.objects.get(name__icontains='New Quota')
-            assert q.items.filter(pk=i.pk).exists()
+            assert q.products.filter(pk=i.pk).exists()
 
     def test_order_forms_save_does_not_reset_common_settings(self):
         self.event1.settings.set('frontpage_text', LazyI18nString({'en': 'Presale intro text'}))

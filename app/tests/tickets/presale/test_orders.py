@@ -43,7 +43,7 @@ class BaseOrdersTest(TestCase):
         self.category = ItemCategory.objects.create(event=self.event, name='Everything', position=0)
         self.quota_shirts = Quota.objects.create(event=self.event, name='Shirts', size=2)
         self.shirt = Item.objects.create(event=self.event, name='T-Shirt', category=self.category, default_price=12)
-        self.quota_shirts.items.add(self.shirt)
+        self.quota_shirts.products.add(self.shirt)
         self.shirt_red = ItemVariation.objects.create(item=self.shirt, default_price=14, value='Red')
         self.shirt_blue = ItemVariation.objects.create(item=self.shirt, value='Blue')
         self.quota_shirts.variations.add(self.shirt_red)
@@ -56,7 +56,7 @@ class BaseOrdersTest(TestCase):
             default_price=23,
             admission=True,
         )
-        self.quota_tickets.items.add(self.ticket)
+        self.quota_tickets.products.add(self.ticket)
         self.event.settings.set('attendee_names_asked', True)
         self.question = Question.objects.create(
             question='Foo', type=Question.TYPE_STRING, event=self.event, required=False
@@ -1528,7 +1528,7 @@ class OrdersTest(BaseOrdersTest):
     def test_answer_download_token(self):
         with scopes_disabled():
             q = self.event.questions.create(question='Foo', type='F')
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
             a = self.ticket_pos.answers.create(question=q, answer='file')
             val = SimpleUploadedFile('testfile.txt', b'file_content')
             a.file.save('testfile.txt', val)
@@ -1815,7 +1815,7 @@ class OrdersTest(BaseOrdersTest):
 
         with scopes_disabled():
             q = self.event.quotas.create(name='s2', size=0)
-            q.items.add(self.shirt)
+            q.products.add(self.shirt)
             q.variations.add(self.shirt_red)
 
         with scopes_disabled():

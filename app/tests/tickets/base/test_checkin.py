@@ -41,7 +41,7 @@ def clist(event):
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Ticket', default_price=3, admission=True)
+    return event.products.create(name='Ticket', default_price=3, admission=True)
 
 
 @pytest.fixture
@@ -189,7 +189,7 @@ def test_required_question_missing(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.item)
     with pytest.raises(RequiredQuestionsError) as excinfo:
         perform_checkin(position, clist, {}, questions_supported=True)
     assert excinfo.value.code == 'incomplete'
@@ -204,7 +204,7 @@ def test_required_question_missing_but_not_supported(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.item)
     perform_checkin(position, clist, {}, questions_supported=False)
 
 
@@ -216,7 +216,7 @@ def test_required_question_missing_but_forced(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.item)
     perform_checkin(position, clist, {}, questions_supported=True, force=True)
 
 
@@ -228,7 +228,7 @@ def test_optional_question_missing(event, position, clist):
         required=False,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.item)
     with pytest.raises(RequiredQuestionsError) as excinfo:
         perform_checkin(position, clist, {}, questions_supported=True)
     assert excinfo.value.code == 'incomplete'
@@ -243,7 +243,7 @@ def test_required_online_question_missing(event, position, clist):
         required=True,
         ask_during_checkin=False,
     )
-    q.items.add(position.item)
+    q.products.add(position.item)
     perform_checkin(position, clist, {}, questions_supported=True)
 
 
@@ -255,7 +255,7 @@ def test_question_filled_previously(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.item)
     position.answers.create(question=q, answer='Foo')
     perform_checkin(position, clist, {}, questions_supported=True)
 
@@ -268,7 +268,7 @@ def test_question_filled(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.item)
     perform_checkin(position, clist, {q: 'Foo'}, questions_supported=True)
     a = position.answers.get()
     assert a.question == q
@@ -389,7 +389,7 @@ def test_rules_simple(position, clist):
 
 @pytest.mark.django_db
 def test_rules_product(event, position, clist):
-    i2 = event.items.create(name='Ticket', default_price=3, admission=True)
+    i2 = event.products.create(name='Ticket', default_price=3, admission=True)
     clist.rules = {
         'inList': [
             {'var': 'product'},

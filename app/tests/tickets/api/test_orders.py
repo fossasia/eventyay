@@ -52,12 +52,12 @@ class Object:
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def item2(event2):
-    return event2.items.create(name='Budget Ticket', default_price=23)
+    return event2.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
@@ -68,7 +68,7 @@ def taxrule(event):
 @pytest.fixture
 def question(event, item):
     q = event.questions.create(question='T-Shirt size', type='S', identifier='ABC')
-    q.items.add(item)
+    q.products.add(item)
     q.options.create(answer='XL', identifier='LVETRWVU')
     return q
 
@@ -76,14 +76,14 @@ def question(event, item):
 @pytest.fixture
 def question2(event2, item2):
     q = event2.questions.create(question='T-Shirt size', type='S', identifier='ABC')
-    q.items.add(item2)
+    q.products.add(item2)
     return q
 
 
 @pytest.fixture
 def quota(event, item):
     q = event.quotas.create(name='Budget Quota', size=200)
-    q.items.add(item)
+    q.products.add(item)
     return q
 
 
@@ -2383,7 +2383,7 @@ def test_order_create_subevent_disabled(token_client, organizer, event, item, su
 @pytest.mark.django_db
 def test_order_create_subevent_variation_disabled(token_client, organizer, event, item, subevent, quota, question):
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=23)
+        item2 = event.products.create(name='Budget Ticket', default_price=23)
         var = item2.variations.create(default_price=12, value='XS')
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['positions'][0]['item'] = item2.pk
@@ -2392,7 +2392,7 @@ def test_order_create_subevent_variation_disabled(token_client, organizer, event
     res['positions'][0]['subevent'] = subevent.pk
     s = var.subeventitemvariation_set.create(subevent=subevent, disabled=True)
     quota.subevent = subevent
-    quota.items.add(item2)
+    quota.products.add(item2)
     quota.variations.add(var)
     quota.save()
     resp = token_client.post(
@@ -3368,8 +3368,8 @@ def test_order_create_require_seat(token_client, organizer, event, item, quota, 
 @pytest.mark.django_db
 def test_order_create_unseated(token_client, organizer, event, item, quota, seat, question):
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=23)
-        quota.items.add(item2)
+        item2 = event.products.create(name='Budget Ticket', default_price=23)
+        quota.products.add(item2)
     res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
     res['positions'][0]['item'] = item2.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
@@ -3884,7 +3884,7 @@ def test_order_create_voucher_item_mismatch(token_client, organizer, event, item
     res['positions'][0]['answers'][0]['question'] = question.pk
     del res['positions'][0]['price']
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=23)
+        item2 = event.products.create(name='Budget Ticket', default_price=23)
         voucher = event.vouchers.create(price_mode='set', value=15, item=item2, redeemed=0)
     res['positions'][0]['voucher'] = voucher.code
     resp = token_client.post(
@@ -4074,7 +4074,7 @@ def test_order_delete_test_mode_voucher(token_client, organizer, event, order, i
     order.save()
     with scopes_disabled():
         q = event.quotas.create(name='Quota')
-        q.items.add(item)
+        q.products.add(item)
         voucher = event.vouchers.create(price_mode='set', value=15, quota=q, redeemed=1)
         op = order.positions.first()
         op.voucher = voucher
@@ -4098,7 +4098,7 @@ def test_order_delete_test_mode_voucher_cancelled_position(token_client, organiz
     order.save()
     with scopes_disabled():
         q = event.quotas.create(name='Quota')
-        q.items.add(item)
+        q.products.add(item)
         voucher = event.vouchers.create(price_mode='set', value=15, quota=q, redeemed=42)
         op = order.all_positions.last()
         op.voucher = voucher
@@ -4121,7 +4121,7 @@ def test_order_delete_test_mode_voucher_cancelled_order(token_client, organizer,
         order.status = Order.STATUS_CANCELED
         order.save()
         q = event.quotas.create(name='Quota')
-        q.items.add(item)
+        q.products.add(item)
         voucher = event.vouchers.create(price_mode='set', value=15, quota=q, redeemed=42)
         op = order.positions.first()
         op.voucher = voucher
@@ -4536,7 +4536,7 @@ def test_orderposition_price_calculation(token_client, organizer, event, order, 
 @pytest.mark.django_db
 def test_orderposition_price_calculation_item_with_tax(token_client, organizer, event, order, item, taxrule):
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=23, tax_rule=taxrule)
+        item2 = event.products.create(name='Budget Ticket', default_price=23, tax_rule=taxrule)
         op = order.positions.first()
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),
@@ -4557,7 +4557,7 @@ def test_orderposition_price_calculation_item_with_tax(token_client, organizer, 
 @pytest.mark.django_db
 def test_orderposition_price_calculation_item_with_variation(token_client, organizer, event, order):
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=23)
+        item2 = event.products.create(name='Budget Ticket', default_price=23)
         var = item2.variations.create(default_price=12, value='XS')
         op = order.positions.first()
     resp = token_client.post(
@@ -4579,7 +4579,7 @@ def test_orderposition_price_calculation_item_with_variation(token_client, organ
 @pytest.mark.django_db
 def test_orderposition_price_calculation_subevent(token_client, organizer, event, order, subevent):
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=23)
+        item2 = event.products.create(name='Budget Ticket', default_price=23)
         op = order.positions.first()
     op.subevent = subevent
     op.save()
@@ -4602,7 +4602,7 @@ def test_orderposition_price_calculation_subevent(token_client, organizer, event
 @pytest.mark.django_db
 def test_orderposition_price_calculation_subevent_with_override(token_client, organizer, event, order, subevent):
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=23)
+        item2 = event.products.create(name='Budget Ticket', default_price=23)
         se2 = event.subevents.create(
             name='Foobar',
             date_from=datetime.datetime(2017, 12, 27, 10, 0, 0, tzinfo=UTC),
@@ -4630,10 +4630,10 @@ def test_orderposition_price_calculation_subevent_with_override(token_client, or
 @pytest.mark.django_db
 def test_orderposition_price_calculation_voucher_matching(token_client, organizer, event, order, subevent, item):
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=23)
+        item2 = event.products.create(name='Budget Ticket', default_price=23)
         q = event.quotas.create(name='Quota')
-        q.items.add(item)
-        q.items.add(item2)
+        q.products.add(item)
+        q.products.add(item2)
         voucher = event.vouchers.create(price_mode='set', value=15, quota=q)
         op = order.positions.first()
     op.voucher = voucher
@@ -4659,9 +4659,9 @@ def test_orderposition_price_calculation_voucher_matching(token_client, organize
 @pytest.mark.django_db
 def test_orderposition_price_calculation_voucher_not_matching(token_client, organizer, event, order, subevent, item):
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=23)
+        item2 = event.products.create(name='Budget Ticket', default_price=23)
         q = event.quotas.create(name='Quota')
-        q.items.add(item)
+        q.products.add(item)
         voucher = event.vouchers.create(price_mode='set', value=15, quota=q)
         op = order.positions.first()
     op.voucher = voucher
@@ -4689,7 +4689,7 @@ def test_orderposition_price_calculation_net_price(token_client, organizer, even
     taxrule.price_includes_tax = False
     taxrule.save()
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=10, tax_rule=taxrule)
+        item2 = event.products.create(name='Budget Ticket', default_price=10, tax_rule=taxrule)
         op = order.positions.first()
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),
@@ -4721,7 +4721,7 @@ def test_orderposition_price_calculation_reverse_charge(token_client, organizer,
     order.invoice_address.country = Country('AT')
     order.invoice_address.save()
     with scopes_disabled():
-        item2 = event.items.create(name='Budget Ticket', default_price=10, tax_rule=taxrule)
+        item2 = event.products.create(name='Budget Ticket', default_price=10, tax_rule=taxrule)
         op = order.positions.first()
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orderpositions/{}/price_calc/'.format(organizer.slug, event.slug, op.pk),

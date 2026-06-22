@@ -70,7 +70,7 @@ class BaseCheckoutTestCase:
             admission=True,
             tax_rule=self.tr19,
         )
-        self.quota_tickets.items.add(self.ticket)
+        self.quota_tickets.products.add(self.ticket)
         self.event.settings.set('timezone', 'UTC')
         self.event.settings.set('attendee_names_asked', False)
         self.event.settings.set('payment_banktransfer__enabled', True)
@@ -95,8 +95,8 @@ class BaseCheckoutTestCase:
         )
         self.workshop2a = ItemVariation.objects.create(item=self.workshop2, value='A')
         self.workshop2b = ItemVariation.objects.create(item=self.workshop2, value='B')
-        self.workshopquota.items.add(self.workshop1)
-        self.workshopquota.items.add(self.workshop2)
+        self.workshopquota.products.add(self.workshop1)
+        self.workshopquota.products.add(self.workshop2)
         self.workshopquota.variations.add(self.workshop2a)
         self.workshopquota.variations.add(self.workshop2b)
 
@@ -2010,7 +2010,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         with scopes_disabled():
             se = self.event.subevents.create(name='Foo', date_from=now())
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
@@ -2287,7 +2287,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             self.quota_tickets.subevent = se2
             self.quota_tickets.save()
             q2 = se.quotas.create(event=self.event, size=1, name='Bar')
-            q2.items.add(self.ticket)
+            q2.products.add(self.ticket)
             cr1 = CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
@@ -2331,7 +2331,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         with scopes_disabled():
             se = self.event.subevents.create(name='Foo', date_from=now())
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
             SubEventItem.objects.create(subevent=se, item=self.ticket, price=24)
             cr1 = CartPosition.objects.create(
                 event=self.event,
@@ -2356,7 +2356,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         with scopes_disabled():
             se = self.event.subevents.create(name='Foo', date_from=now())
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
             SubEventItem.objects.create(subevent=se, item=self.ticket, price=24, disabled=True)
             cr1 = CartPosition.objects.create(
                 event=self.event,
@@ -2378,7 +2378,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         with scopes_disabled():
             se = self.event.subevents.create(name='Foo', date_from=now())
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.workshop2)
+            q.products.add(self.workshop2)
             q.variations.add(self.workshop2b)
             SubEventItemVariation.objects.create(subevent=se, variation=self.workshop2b, price=24, disabled=True)
             cr1 = CartPosition.objects.create(
@@ -2867,7 +2867,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             self.quota_tickets.size = 0
             self.quota_tickets.save()
             q2 = self.event.quotas.create(name='Testquota', size=0)
-            q2.items.add(self.ticket)
+            q2.products.add(self.ticket)
             v = Voucher.objects.create(
                 quota=self.quota_tickets,
                 value=Decimal('12.00'),
@@ -2983,7 +2983,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             self.quota_tickets.subevent = se2
             self.quota_tickets.save()
             q2 = se.quotas.create(event=self.event, size=1, name='Bar')
-            q2.items.add(self.ticket)
+            q2.products.add(self.ticket)
             CartPosition.objects.create(
                 event=self.event,
                 cart_id=self.session_key,
@@ -3188,7 +3188,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             self.assertFalse(CartPosition.objects.filter(id=cr1.id).exists())
 
     def test_confirm_completely_unavailable(self):
-        self.quota_tickets.items.remove(self.ticket)
+        self.quota_tickets.products.remove(self.ticket)
         with scopes_disabled():
             cr1 = CartPosition.objects.create(
                 event=self.event,
@@ -3482,7 +3482,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_set_addons_hidden_if_available(self):
         with scopes_disabled():
             self.workshopquota2 = Quota.objects.create(event=self.event, name='Workshop 1', size=5)
-            self.workshopquota2.items.add(self.workshop2)
+            self.workshopquota2.products.add(self.workshop2)
             self.workshopquota2.variations.add(self.workshop2a)
             self.workshop2.hidden_if_available = self.workshopquota
             self.workshop2.save()
@@ -3873,8 +3873,8 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
                 type=Question.TYPE_NUMBER,
                 required=True,
             )
-            q1.items.add(self.ticket)
-            q1.items.add(self.workshop1)
+            q1.products.add(self.ticket)
+            q1.products.add(self.workshop1)
             ItemAddOn.objects.create(
                 base_item=self.ticket,
                 addon_category=self.workshopcat,
@@ -4241,7 +4241,7 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         super().setUp()
         self.trans = Item.objects.create(event=self.event, name='Public Transport Ticket', default_price=2.50)
         self.transquota = Quota.objects.create(event=self.event, name='Transport', size=5)
-        self.transquota.items.add(self.trans)
+        self.transquota.products.add(self.trans)
         self.bundle1 = ItemBundle.objects.create(
             base_item=self.ticket,
             bundled_item=self.trans,

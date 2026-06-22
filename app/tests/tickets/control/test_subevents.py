@@ -40,7 +40,7 @@ class SubEventsTest(SoupTest):
         )
         t.members.add(self.user)
         t.limit_events.add(self.event1)
-        self.ticket = self.event1.items.create(
+        self.ticket = self.event1.products.create(
             name='Early-bird ticket', category=None, default_price=23, admission=True
         )
 
@@ -99,7 +99,7 @@ class SubEventsTest(SoupTest):
             q = se.quotas.last()
             assert q.name == 'Q1'
             assert q.size == 50
-            assert list(q.items.all()) == [self.ticket]
+            assert list(q.products.all()) == [self.ticket]
             sei = SubEventItem.objects.get(subevent=se, item=self.ticket)
             assert sei.price == 12
             assert se.checkinlist_set.count() == 1
@@ -150,7 +150,7 @@ class SubEventsTest(SoupTest):
             q = se.quotas.last()
             assert q.name == 'Q1'
             assert q.size == 50
-            assert list(q.items.all()) == [self.ticket]
+            assert list(q.products.all()) == [self.ticket]
             sei = SubEventItem.objects.get(subevent=se, item=self.ticket)
             assert sei.price == 12
             assert se.checkinlist_set.count() == 1
@@ -277,7 +277,7 @@ class SubEventsTest(SoupTest):
         assert ses[0].presale_end.isoformat() == '2018-04-02T12:36:31+00:00'
         with scopes_disabled():
             assert ses[0].quotas.count() == 1
-            assert list(ses[0].quotas.first().items.all()) == [self.ticket]
+            assert list(ses[0].quotas.first().products.all()) == [self.ticket]
             assert SubEventItem.objects.get(subevent=ses[0], item=self.ticket).price == 16
             assert ses[0].checkinlist_set.count() == 1
 
@@ -288,7 +288,7 @@ class SubEventsTest(SoupTest):
         assert ses[1].presale_end.isoformat() == '2019-04-02T12:36:31+00:00'
         with scopes_disabled():
             assert ses[1].quotas.count() == 1
-            assert list(ses[1].quotas.first().items.all()) == [self.ticket]
+            assert list(ses[1].quotas.first().products.all()) == [self.ticket]
             assert SubEventItem.objects.get(subevent=ses[0], item=self.ticket).price == 16
             assert ses[1].checkinlist_set.count() == 1
 
@@ -1059,11 +1059,11 @@ class SubEventsTest(SoupTest):
                 q = se.quotas.first()
                 assert q.name == 'Q1'
                 assert q.size == 50
-                assert list(q.items.all()) == [self.ticket]
+                assert list(q.products.all()) == [self.ticket]
                 q = se.quotas.last()
                 assert q.name == 'Q2'
                 assert q.size == 25
-                assert list(q.items.all()) == [self.ticket]
+                assert list(q.products.all()) == [self.ticket]
 
         doc = self.post_doc(
             '/control/event/ccc/30c3/subevents/bulk_edit',
@@ -1086,10 +1086,10 @@ class SubEventsTest(SoupTest):
             for se in [self.subevent1, self.subevent2]:
                 q = se.quotas.get(name='Q1')
                 assert q.size == 25
-                assert list(q.items.all()) == [self.ticket]
+                assert list(q.products.all()) == [self.ticket]
                 q = se.quotas.get(name='Q2')
                 assert q.size == 50
-                assert list(q.items.all()) == [self.ticket]
+                assert list(q.products.all()) == [self.ticket]
 
         doc = self.post_doc(
             '/control/event/ccc/30c3/subevents/bulk_edit',

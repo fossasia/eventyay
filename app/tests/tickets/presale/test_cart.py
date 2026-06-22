@@ -65,7 +65,7 @@ class CartTestMixin:
             default_price=12,
             tax_rule=self.tr19,
         )
-        self.quota_shirts.items.add(self.shirt)
+        self.quota_shirts.products.add(self.shirt)
         self.shirt_red = ItemVariation.objects.create(item=self.shirt, default_price=14, value='Red')
         self.shirt_blue = ItemVariation.objects.create(item=self.shirt, value='Blue')
         self.quota_shirts.variations.add(self.shirt_red)
@@ -78,11 +78,11 @@ class CartTestMixin:
             default_price=23,
             tax_rule=self.tr19,
         )
-        self.quota_tickets.items.add(self.ticket)
+        self.quota_tickets.products.add(self.ticket)
 
         self.quota_all = Quota.objects.create(event=self.event, name='All', size=None)
-        self.quota_all.items.add(self.ticket)
-        self.quota_all.items.add(self.shirt)
+        self.quota_all.products.add(self.ticket)
+        self.quota_all.products.add(self.shirt)
         self.quota_all.variations.add(self.shirt_blue)
         self.quota_all.variations.add(self.shirt_red)
 
@@ -191,7 +191,7 @@ class CartTest(CartTestMixin, TestCase):
                 type=Question.TYPE_NUMBER,
                 required=True,
             )
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         response = self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {
@@ -233,7 +233,7 @@ class CartTest(CartTestMixin, TestCase):
                 type=Question.TYPE_NUMBER,
                 required=True,
             )
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         response = self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {
@@ -273,7 +273,7 @@ class CartTest(CartTestMixin, TestCase):
                 type=Question.TYPE_NUMBER,
                 required=True,
             )
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         self._set_session(
             'widget_data',
             {
@@ -390,7 +390,7 @@ class CartTest(CartTestMixin, TestCase):
             self.quota_tickets.subevent = se
             self.quota_tickets.save()
             q = se.quotas.create(name='foo', size=None, event=self.event)
-        q.items.add(self.ticket)
+        q.products.add(self.ticket)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {
@@ -481,7 +481,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             se = self.event.subevents.create(name='Foo', date_from=now(), active=False)
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {'item_%d' % self.ticket.id: '1', 'subevent': se.pk},
@@ -503,7 +503,7 @@ class CartTest(CartTestMixin, TestCase):
                 presale_end=now() + timedelta(days=1),
             )
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {'item_%d' % self.ticket.id: '1', 'subevent': se.pk},
@@ -520,7 +520,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             se = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {'item_%d' % self.ticket.id: '1', 'subevent': se.pk},
@@ -541,7 +541,7 @@ class CartTest(CartTestMixin, TestCase):
                 presale_end=now() - timedelta(days=1),
             )
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {'item_%d' % self.ticket.id: '1', 'subevent': se.pk},
@@ -562,7 +562,7 @@ class CartTest(CartTestMixin, TestCase):
                 presale_start=now() + timedelta(days=1),
             )
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {'item_%d' % self.ticket.id: '1', 'subevent': se.pk},
@@ -578,7 +578,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             se = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {'item_%d' % self.ticket.id: '1', 'subevent': se.pk},
@@ -599,7 +599,7 @@ class CartTest(CartTestMixin, TestCase):
             se1 = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             self.event.subevents.create(name='Foo', date_from=now(), active=True)
             q = se1.quotas.create(name='foo', size=0, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {'item_%d' % self.ticket.id: '1', 'subevent': se1.pk},
@@ -616,9 +616,9 @@ class CartTest(CartTestMixin, TestCase):
             se1 = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             se2 = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             q = se1.quotas.create(name='foo', size=0, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
             q = se2.quotas.create(name='foo', size=100, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {'item_%d' % self.ticket.id: '1', 'subevent': se2.pk},
@@ -635,7 +635,7 @@ class CartTest(CartTestMixin, TestCase):
             se1 = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             se2 = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             q = se1.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
             {'item_%d' % self.ticket.id: '1', 'subevent': se2.pk},
@@ -651,7 +651,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             se = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
             SubEventItem.objects.create(subevent=se, item=self.ticket, price=42, disabled=True)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
@@ -668,7 +668,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             se = self.event.subevents.create(name='Foo', date_from=now(), active=True)
             q = se.quotas.create(name='foo', size=None, event=self.event)
-            q.items.add(self.ticket)
+            q.products.add(self.ticket)
             SubEventItem.objects.create(subevent=se, item=self.ticket, price=42)
         self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
@@ -1514,7 +1514,7 @@ class CartTest(CartTestMixin, TestCase):
             self.quota_tickets.subevent = se
             self.quota_tickets.save()
             q2 = self.event.quotas.create(name='Foo', size=15)
-            q2.items.add(self.ticket)
+            q2.products.add(self.ticket)
 
         response = self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
@@ -2987,9 +2987,9 @@ class CartAddonTest(CartTestMixin, TestCase):
         )
         self.workshop3a = ItemVariation.objects.create(item=self.workshop3, value='3a')
         self.workshop3b = ItemVariation.objects.create(item=self.workshop3, value='3b')
-        self.workshopquota.items.add(self.workshop1)
-        self.workshopquota.items.add(self.workshop2)
-        self.workshopquota.items.add(self.workshop3)
+        self.workshopquota.products.add(self.workshop1)
+        self.workshopquota.products.add(self.workshop2)
+        self.workshopquota.products.add(self.workshop3)
         self.workshopquota.variations.add(self.workshop3a)
         self.workshopquota.variations.add(self.workshop3b)
         self.addon1 = ItemAddOn.objects.create(base_item=self.ticket, addon_category=self.workshopcat)
@@ -3702,7 +3702,7 @@ class CartBundleTest(CartTestMixin, TestCase):
             require_bundling=True,
         )
         self.transquota = Quota.objects.create(event=self.event, name='Transport', size=5)
-        self.transquota.items.add(self.trans)
+        self.transquota.products.add(self.trans)
         self.bundle1 = ItemBundle.objects.create(
             base_item=self.ticket,
             bundled_item=self.trans,

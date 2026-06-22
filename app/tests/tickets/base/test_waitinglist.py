@@ -38,7 +38,7 @@ class WaitingListTestCase(TestCase):
 
     @classscope(attr='o')
     def test_send_unavailable(self):
-        self.quota.items.add(self.item1)
+        self.quota.products.add(self.item1)
         self.quota.size = 0
         self.quota.save()
         wle = WaitingListEntry.objects.create(event=self.event, item=self.item1, email='foo@bar.com')

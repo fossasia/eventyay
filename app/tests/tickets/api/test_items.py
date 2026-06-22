@@ -225,19 +225,19 @@ def test_category_delete(token_client, organizer, event, category3, item):
 
 @pytest.fixture
 def item(event):
-    item = event.items.create(name='Budget Ticket', default_price=23)
-    item.meta_values.create(property=event.item_meta_properties.first(), value='Tuesday')
+    item = event.products.create(name='Budget Ticket', default_price=23)
+    item.meta_values.create(property=event.product_meta_properties.first(), value='Tuesday')
     return item
 
 
 @pytest.fixture
 def item2(event2):
-    return event2.items.create(name='Budget Ticket', default_price=23)
+    return event2.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
 def item3(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 TEST_ITEM_RES = {
@@ -391,7 +391,7 @@ def test_item_detail_addons(token_client, organizer, event, team, item, category
 @pytest.mark.django_db
 def test_item_detail_bundles(token_client, organizer, event, team, item, category):
     with scopes_disabled():
-        i = event.items.create(name='Included thing', default_price=2)
+        i = event.products.create(name='Included thing', default_price=2)
         item.bundles.create(bundled_item=i, count=1, designated_price=2)
     res = dict(TEST_ITEM_RES)
 
@@ -744,7 +744,7 @@ def test_item_create_with_addon(token_client, organizer, event, item, category, 
 @pytest.mark.django_db
 def test_item_create_with_bundle(token_client, organizer, event, item, category, item2, taxrule):
     with scopes_disabled():
-        i = event.items.create(name='Included thing', default_price=2)
+        i = event.products.create(name='Included thing', default_price=2)
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/items/'.format(organizer.slug, event.slug),
         {
@@ -1032,7 +1032,7 @@ def test_items_delete(token_client, organizer, event, item):
     resp = token_client.delete('/api/v1/organizers/{}/events/{}/items/{}/'.format(organizer.slug, event.slug, item.pk))
     assert resp.status_code == 204
     with scopes_disabled():
-        assert not event.items.filter(pk=item.id).exists()
+        assert not event.products.filter(pk=item.id).exists()
 
 
 @pytest.mark.django_db
@@ -1040,7 +1040,7 @@ def test_items_with_order_position_not_delete(token_client, organizer, event, it
     resp = token_client.delete('/api/v1/organizers/{}/events/{}/items/{}/'.format(organizer.slug, event.slug, item.pk))
     assert resp.status_code == 403
     with scopes_disabled():
-        assert event.items.filter(pk=item.id).exists()
+        assert event.products.filter(pk=item.id).exists()
 
 
 @pytest.mark.django_db
@@ -1048,7 +1048,7 @@ def test_items_with_cart_position_delete(token_client, organizer, event, item, c
     resp = token_client.delete('/api/v1/organizers/{}/events/{}/items/{}/'.format(organizer.slug, event.slug, item.pk))
     assert resp.status_code == 204
     with scopes_disabled():
-        assert not event.items.filter(pk=item.id).exists()
+        assert not event.products.filter(pk=item.id).exists()
 
 
 @pytest.fixture
@@ -1533,7 +1533,7 @@ def test_addons_delete(token_client, organizer, event, item, addon):
 @pytest.fixture
 def quota(event, item):
     q = event.quotas.create(name='Budget Quota', size=200)
-    q.items.add(item)
+    q.products.add(item)
     return q
 
 
@@ -1836,7 +1836,7 @@ def question(event, item):
         identifier='ABC',
         help_text='This is an example question',
     )
-    q.items.add(item)
+    q.products.add(item)
     q.options.create(answer='XL', identifier='LVETRWVU')
     return q
 
@@ -1938,7 +1938,7 @@ def test_question_create(token_client, organizer, event, event2, item):
         assert question.question == "What's your name?"
         assert question.type == 'S'
         assert question.identifier is not None
-        assert len(question.items.all()) == 1
+        assert len(question.products.all()) == 1
 
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/questions/'.format(organizer.slug, event2.slug),
@@ -2056,7 +2056,7 @@ def test_question_create(token_client, organizer, event, event2, item):
         assert question.question == "What's your name?"
         assert question.type == 'S'
         assert question.identifier is not None
-        assert len(question.items.all()) == 1
+        assert len(question.products.all()) == 1
         assert question.dependency_question is None
         assert question.dependency_values == []
 

@@ -1023,9 +1023,9 @@ class OrderChangeManagerTests(TestCase):
             )
             self.ocm = OrderChangeManager(self.order, None)
             self.quota = self.event.quotas.create(name='Test', size=None)
-            self.quota.items.add(self.ticket)
-            self.quota.items.add(self.ticket2)
-            self.quota.items.add(self.shirt)
+            self.quota.products.add(self.ticket)
+            self.quota.products.add(self.ticket2)
+            self.quota.products.add(self.shirt)
 
             self.stalls = Item.objects.create(
                 event=self.event,
@@ -1036,7 +1036,7 @@ class OrderChangeManagerTests(TestCase):
             )
             self.plan = SeatingPlan.objects.create(name='Plan', organizer=self.o, layout='{}')
             self.event.seat_category_mappings.create(layout_category='Stalls', product=self.stalls)
-            self.quota.items.add(self.stalls)
+            self.quota.products.add(self.stalls)
             self.seat_a1 = self.event.seats.create(seat_number='A1', product=self.stalls, seat_guid='A1')
             self.seat_a2 = self.event.seats.create(seat_number='A2', product=self.stalls, seat_guid='A2')
             self.seat_a3 = self.event.seats.create(seat_number='A3', product=self.stalls, seat_guid='A3')
@@ -1087,9 +1087,9 @@ class OrderChangeManagerTests(TestCase):
         self.op1.save()
         self.quota.subevent = se1
         self.quota.save()
-        self.quota.items.remove(self.shirt)
+        self.quota.products.remove(self.shirt)
         q2 = self.event.quotas.create(name='Q2', size=None, subevent=se2)
-        q2.items.add(self.shirt)
+        q2.products.add(self.shirt)
         self.ocm.change_item_and_subevent(self.op1, self.shirt, None, se2)
         self.ocm.commit()
         self.op1.refresh_from_db()
@@ -1393,7 +1393,7 @@ class OrderChangeManagerTests(TestCase):
     @classscope(attr='o')
     def test_quota_unlimited(self):
         q = self.event.quotas.create(name='Test', size=None)
-        q.items.add(self.shirt)
+        q.products.add(self.shirt)
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
@@ -1402,7 +1402,7 @@ class OrderChangeManagerTests(TestCase):
     @classscope(attr='o')
     def test_quota_full(self):
         q = self.event.quotas.create(name='Test', size=0)
-        q.items.add(self.shirt)
+        q.products.add(self.shirt)
         self.ocm.change_item(self.op1, self.shirt, None)
         with self.assertRaises(OrderError):
             self.ocm.commit()
@@ -1412,7 +1412,7 @@ class OrderChangeManagerTests(TestCase):
     @classscope(attr='o')
     def test_quota_ignore(self):
         q = self.event.quotas.create(name='Test', size=0)
-        q.items.add(self.shirt)
+        q.products.add(self.shirt)
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.commit(check_quotas=False)
         self.op1.refresh_from_db()
@@ -1421,8 +1421,8 @@ class OrderChangeManagerTests(TestCase):
     @classscope(attr='o')
     def test_quota_full_but_in_same(self):
         q = self.event.quotas.create(name='Test', size=0)
-        q.items.add(self.shirt)
-        q.items.add(self.ticket)
+        q.products.add(self.shirt)
+        q.products.add(self.ticket)
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
@@ -1432,9 +1432,9 @@ class OrderChangeManagerTests(TestCase):
     def test_multiple_quotas_shared_full(self):
         q1 = self.event.quotas.create(name='Test', size=0)
         q2 = self.event.quotas.create(name='Test', size=2)
-        q1.items.add(self.shirt)
-        q1.items.add(self.ticket)
-        q2.items.add(self.shirt)
+        q1.products.add(self.shirt)
+        q1.products.add(self.ticket)
+        q2.products.add(self.shirt)
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
@@ -1444,9 +1444,9 @@ class OrderChangeManagerTests(TestCase):
     def test_multiple_quotas_unshared_full(self):
         q1 = self.event.quotas.create(name='Test', size=2)
         q2 = self.event.quotas.create(name='Test', size=0)
-        q1.items.add(self.shirt)
-        q1.items.add(self.ticket)
-        q2.items.add(self.shirt)
+        q1.products.add(self.shirt)
+        q1.products.add(self.ticket)
+        q2.products.add(self.shirt)
         self.ocm.change_item(self.op1, self.shirt, None)
         with self.assertRaises(OrderError):
             self.ocm.commit()
@@ -1456,7 +1456,7 @@ class OrderChangeManagerTests(TestCase):
     @classscope(attr='o')
     def test_multiple_items_success(self):
         q1 = self.event.quotas.create(name='Test', size=2)
-        q1.items.add(self.shirt)
+        q1.products.add(self.shirt)
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.change_item(self.op2, self.shirt, None)
         self.ocm.commit()
@@ -1468,7 +1468,7 @@ class OrderChangeManagerTests(TestCase):
     @classscope(attr='o')
     def test_multiple_items_quotas_partially_full(self):
         q1 = self.event.quotas.create(name='Test', size=1)
-        q1.items.add(self.shirt)
+        q1.products.add(self.shirt)
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.change_item(self.op2, self.shirt, None)
         with self.assertRaises(OrderError):
@@ -1679,7 +1679,7 @@ class OrderChangeManagerTests(TestCase):
     @classscope(attr='o')
     def test_add_item_quota_full(self):
         q1 = self.event.quotas.create(name='Test', size=0)
-        q1.items.add(self.shirt)
+        q1.products.add(self.shirt)
         self.ocm.add_position(self.shirt, None, None, None)
         with self.assertRaises(OrderError):
             self.ocm.commit()
@@ -3204,7 +3204,7 @@ def test_issue_when_paid_and_changed(event):
         cart_id='123',
     )
     q = event.quotas.create(size=None, name='foo')
-    q.items.add(ticket)
+    q.products.add(ticket)
     order = _create_order(
         event,
         email='dummy@example.org',
@@ -3287,8 +3287,8 @@ class OrderReactivateTest(TestCase):
             self.plan = SeatingPlan.objects.create(name='Plan', organizer=self.o, layout='{}')
             self.event.seat_category_mappings.create(layout_category='Stalls', product=self.stalls)
             self.quota = self.event.quotas.create(name='Test', size=None)
-            self.quota.items.add(self.stalls)
-            self.quota.items.add(self.ticket)
+            self.quota.products.add(self.stalls)
+            self.quota.products.add(self.ticket)
             self.seat_a1 = self.event.seats.create(seat_number='A1', product=self.stalls, seat_guid='A1')
             generate_invoice(self.order)
             djmail.outbox = []

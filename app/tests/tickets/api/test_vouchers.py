@@ -13,7 +13,7 @@ from eventyay.base.models import Event, SeatingPlan, Voucher
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23)
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def voucher(event, item):
 @pytest.fixture
 def quota(event, item):
     q = event.quotas.create(name='Budget Quota', size=200)
-    q.items.add(item)
+    q.products.add(item)
     return q
 
 
@@ -499,7 +499,7 @@ def test_subevent_blocking_quota_free(token_client, organizer, event, item, quot
         quota.subevent = subevent
         quota.save()
         q2 = event.quotas.create(event=event, name='Tickets', size=0, subevent=se2)
-        q2.items.add(item)
+        q2.products.add(item)
 
     v = create_voucher(
         token_client,
@@ -519,7 +519,7 @@ def test_subevent_blocking_quota_full(token_client, organizer, event, item, quot
         quota.size = 0
         quota.save()
         q2 = event.quotas.create(event=event, name='Tickets', size=5, subevent=se2)
-        q2.items.add(item)
+        q2.products.add(item)
 
     create_voucher(
         token_client,
@@ -553,7 +553,7 @@ def test_change_to_item_of_other_event(token_client, organizer, event, item):
             date_from=datetime.datetime(2017, 12, 27, 10, 0, 0, tzinfo=UTC),
             plugins='eventyay.plugins.banktransfer,eventyay.plugins.ticketoutputpdf',
         )
-        ticket2 = e2.items.create(name='Late-bird ticket', default_price=23)
+        ticket2 = e2.products.create(name='Late-bird ticket', default_price=23)
         v = event.vouchers.create(item=item)
     change_voucher(
         token_client,
@@ -660,8 +660,8 @@ def test_change_voucher_validity_to_valid_quota_free(token_client, organizer, ev
 @pytest.mark.django_db
 def test_change_item_of_blocking_voucher_quota_free(token_client, organizer, event, item, quota):
     with scopes_disabled():
-        ticket2 = event.items.create(name='Late-bird ticket', default_price=23)
-        quota.items.add(ticket2)
+        ticket2 = event.products.create(name='Late-bird ticket', default_price=23)
+        quota.products.add(ticket2)
         v = event.vouchers.create(item=item, block_quota=True)
     change_voucher(
         token_client,
@@ -676,9 +676,9 @@ def test_change_item_of_blocking_voucher_quota_free(token_client, organizer, eve
 @pytest.mark.django_db
 def test_change_item_of_blocking_voucher_quota_full(token_client, organizer, event, item, quota):
     with scopes_disabled():
-        ticket2 = event.items.create(name='Late-bird ticket', default_price=23)
+        ticket2 = event.products.create(name='Late-bird ticket', default_price=23)
         quota2 = event.quotas.create(name='Late', size=0)
-        quota2.items.add(ticket2)
+        quota2.products.add(ticket2)
         v = event.vouchers.create(item=item, block_quota=True)
     change_voucher(
         token_client,
@@ -693,7 +693,7 @@ def test_change_item_of_blocking_voucher_quota_full(token_client, organizer, eve
 @pytest.mark.django_db
 def test_change_variation_of_blocking_voucher_quota_free(token_client, organizer, event):
     with scopes_disabled():
-        shirt = event.items.create(name='Shirt', default_price=23)
+        shirt = event.products.create(name='Shirt', default_price=23)
         vs = shirt.variations.create(value='S')
         vm = shirt.variations.create(value='M')
         qs = event.quotas.create(name='S', size=2)
@@ -714,7 +714,7 @@ def test_change_variation_of_blocking_voucher_quota_free(token_client, organizer
 @pytest.mark.django_db
 def test_change_variation_of_blocking_voucher_without_quota_change(token_client, organizer, event):
     with scopes_disabled():
-        shirt = event.items.create(name='Shirt', default_price=23)
+        shirt = event.products.create(name='Shirt', default_price=23)
         vs = shirt.variations.create(value='S')
         vm = shirt.variations.create(value='M')
         q = event.quotas.create(name='S', size=0)
@@ -728,7 +728,7 @@ def test_change_variation_of_blocking_voucher_without_quota_change(token_client,
 @pytest.mark.django_db
 def test_change_variation_of_blocking_voucher_quota_full(token_client, organizer, event):
     with scopes_disabled():
-        shirt = event.items.create(name='Shirt', default_price=23)
+        shirt = event.products.create(name='Shirt', default_price=23)
         vs = shirt.variations.create(value='S')
         vm = shirt.variations.create(value='M')
         qs = event.quotas.create(name='S', size=2)
@@ -776,8 +776,8 @@ def test_change_item_of_blocking_voucher_without_quota_change(token_client, orga
     with scopes_disabled():
         quota.size = 0
         quota.save()
-        ticket2 = event.items.create(name='Standard Ticket', default_price=23)
-        quota.items.add(ticket2)
+        ticket2 = event.products.create(name='Standard Ticket', default_price=23)
+        quota.products.add(ticket2)
         v = event.vouchers.create(item=item, block_quota=True)
     change_voucher(
         token_client,
@@ -811,7 +811,7 @@ def test_change_subevent_blocking_quota_free(token_client, organizer, event, ite
         quota.save()
         se2 = event.subevents.create(name='Bar', date_from=now())
         q2 = event.quotas.create(event=event, name='Tickets', size=5, subevent=se2)
-        q2.items.add(item)
+        q2.products.add(item)
 
         v = event.vouchers.create(item=item, block_quota=True, subevent=subevent)
     change_voucher(
@@ -831,7 +831,7 @@ def test_change_subevent_blocking_quota_full(token_client, organizer, event, ite
         quota.save()
         se2 = event.subevents.create(name='Bar', date_from=now())
         q2 = event.quotas.create(event=event, name='Tickets', size=0, subevent=se2)
-        q2.items.add(item)
+        q2.products.add(item)
 
         v = event.vouchers.create(item=item, block_quota=True, subevent=subevent)
     change_voucher(
@@ -1136,7 +1136,7 @@ def test_seat_seat_productmissing(token_client, organizer, event, seatingplan, s
 @pytest.mark.django_db
 def test_seat_seat_productwrong(token_client, organizer, event, seatingplan, seat1, item, quota):
     with scopes_disabled():
-        i2 = event.items.create(name='Budget Ticket', default_price=23)
+        i2 = event.products.create(name='Budget Ticket', default_price=23)
         v = event.vouchers.create(item=i2)
     change_voucher(token_client, organizer, event, v, data={'seat': 'A1'}, expected_failure=True)
 

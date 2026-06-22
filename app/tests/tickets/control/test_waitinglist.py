@@ -150,7 +150,7 @@ def test_delete_single(client, env):
 def test_dashboard(client, env):
     with scopes_disabled():
         quota = Quota.objects.create(name='Test', size=2, event=env[0])
-        quota.items.add(env[3])
+        quota.products.add(env[3])
         w = waitinglist_widgets(env[0])
     assert '1' in w[0]['content']
     assert '5' in w[1]['content']
