@@ -509,6 +509,9 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
             action = 'eventyay.submission.' + ('create' if created else 'update')
             form.instance.log_action(action, person=self.request.user, orga=True)
             self.request.event.cache.set('rebuild_schedule_export', True, None)
+            if 'is_featured' in form.changed_data:
+                from eventyay.agenda.views.utils import clear_schedule_caches
+                clear_schedule_caches(self.request.event, submission=form.instance)
         return redirect(self.get_success_url())
 
     def get_form_kwargs(self):
@@ -639,6 +642,8 @@ class ToggleFeatured(SubmissionViewMixin, View):
     def post(self, *args, **kwargs):
         self.object.is_featured = not self.object.is_featured
         self.object.save(update_fields=['is_featured'])
+        from eventyay.agenda.views.utils import clear_schedule_caches
+        clear_schedule_caches(self.request.event, submission=self.object)
         return HttpResponse()
 
 
