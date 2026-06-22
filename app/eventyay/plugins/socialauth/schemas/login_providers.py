@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProviderConfig(BaseModel):
@@ -9,9 +9,8 @@ class ProviderConfig(BaseModel):
 
 
 class LoginProviders(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     mediawiki: ProviderConfig = Field(default_factory=ProviderConfig)
     github: ProviderConfig = Field(default_factory=ProviderConfig)
     google: ProviderConfig = Field(default_factory=ProviderConfig)
-
-    class Config:
-        extra = 'forbid'

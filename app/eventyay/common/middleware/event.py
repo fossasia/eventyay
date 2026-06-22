@@ -31,15 +31,31 @@ logger = logging.getLogger(__name__)
 
 
 def _agenda_featured_allowed_without_talks_published(url, request, event):
-    """Let /featured/ load when org settings allow it, even if talks are not published yet."""
-    if 'agenda' not in url.namespaces or url.url_name != 'featured':
+    """Let /featured/ (and featured exports after schedule release) load when org settings allow,
+    even if talks are not published yet.
+    """
+    if 'agenda' not in url.namespaces:
         return False
-    from eventyay.talk_rules.submission import are_featured_submissions_visible
+
+    from eventyay.talk_rules.submission import are_featured_submissions_visible, can_use_featured_exports
 
     user = getattr(request, 'user', None)
     if user is None:
         return False
-    return are_featured_submissions_visible(user, event)
+
+    is_featured_page = url.url_name == 'featured'
+    is_featured_export = (
+        (url.url_name in ('export', 'export-tokenized') or url.url_name.startswith('export.'))
+        and request.GET.get('featured') == 'true'
+    )
+
+    if is_featured_export:
+        return can_use_featured_exports(user, event)
+
+    if is_featured_page:
+        return are_featured_submissions_visible(user, event)
+
+    return False
 
 
 def get_login_redirect(request):

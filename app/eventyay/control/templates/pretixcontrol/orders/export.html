@@ -8,29 +8,32 @@
     {{ block.super }}
     <script type="text/javascript">
         $(function () {
-            var paidOnly = $('#id_orderlist-paid_only');
-            var approvalPendingOnly = $('#id_orderlist-approval_pending_only');
-            var includePaymentAmounts = $('#id_orderlist-include_payment_amounts');
+            $('.panel-body form').each(function () {
+                var $form = $(this);
+                var paidOnly = $form.find('input[name$="-paid_only"]');
+                var approvalPendingOnly = $form.find('input[name$="-approval_pending_only"]');
+                var includePaymentAmounts = $form.find('input[name$="-include_payment_amounts"]');
 
-            function updateDisabledState($field, disabled) {
-                $field.prop('disabled', disabled);
-                if (disabled) {
-                    $field.prop('checked', false);
+                function updateDisabledState($field, disabled) {
+                    $field.prop('disabled', disabled);
+                    if (disabled) {
+                        $field.prop('checked', false);
+                    }
+                    $field.closest('.form-group, .form-field-boundary').toggleClass('disabled', disabled);
                 }
-                $field.closest('.form-group, .form-field-boundary').toggleClass('disabled', disabled);
-            }
 
-            function syncOrderExportFilters() {
-                updateDisabledState(approvalPendingOnly, paidOnly.prop('checked'));
-                updateDisabledState(paidOnly, approvalPendingOnly.prop('checked'));
-                updateDisabledState(includePaymentAmounts, approvalPendingOnly.prop('checked'));
-            }
+                function syncOrderExportFilters() {
+                    updateDisabledState(approvalPendingOnly, paidOnly.prop('checked'));
+                    updateDisabledState(paidOnly, approvalPendingOnly.prop('checked'));
+                    updateDisabledState(includePaymentAmounts, approvalPendingOnly.prop('checked'));
+                }
 
-            if (paidOnly.length && approvalPendingOnly.length && includePaymentAmounts.length) {
-                syncOrderExportFilters();
-                paidOnly.on('change', syncOrderExportFilters);
-                approvalPendingOnly.on('change', syncOrderExportFilters);
-            }
+                if (paidOnly.length && approvalPendingOnly.length && includePaymentAmounts.length) {
+                    syncOrderExportFilters();
+                    paidOnly.on('change', syncOrderExportFilters);
+                    approvalPendingOnly.on('change', syncOrderExportFilters);
+                }
+            });
         });
     </script>
 {% endblock %}
