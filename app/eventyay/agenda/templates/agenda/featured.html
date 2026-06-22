@@ -1,20 +1,27 @@
 {% extends "agenda/base.html" %}
 
-{% load compress %}
+{% load vite %}
+{% load html_signal %}
 {% load i18n %}
-{% load rich_text %}
-{% load static %}
-
-{% load presale_locale %}
 
 {% block title %}{% translate "Featured Sessions" %} ::{% endblock title %}
 {% block meta_title %}{% translate "Featured Sessions" %}{% endblock meta_title %}
 {% block social_title %}{% translate "Featured Sessions" %}{% endblock social_title %}
 
+{% block container_width %} main-schedule list-schedule{% endblock container_width %}
+
+{% block agenda_custom_header %}
+<script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+{% endblock agenda_custom_header %}
+
+{% block header_right %}
+{% include "common/fragment_header_user.html" with current_event=request.event nav_context="agenda" %}
+{% endblock header_right %}
+
 {% block agenda_content %}
 <div class="featured-page">
     <h3 class="talk-title featured-page-title">{% translate "Featured Sessions" %}</h3>
-    {% if talks %}
+    {% if has_featured_submissions %}
         <p>
             {% blocktranslate trimmed %}
                 We prepared a list of exciting sessions, so you can get a feel for our
@@ -22,29 +29,34 @@
                 We will follow up with the full schedule in time, stay tuned!
             {% endblocktranslate %}
         </p>
+        {% html_signal "eventyay.agenda.signals.html_above_schedule_pages" sender=request.event request=request %}
+        <div id="fahrplan" class="list">
+            <script id="pretalx-schedule-meta" type="application/json">{{ schedule_meta_json|safe }}</script>
+            {% if schedule_data_json %}<script id="pretalx-schedule-data" type="application/json">{{ schedule_data_json|safe }}</script>{% endif %}
+            {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback='schedule/pretalx-schedule.js' %}
+
+            {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
+            <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule_page_version|default:'' }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" format="list" is-featured-page style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
+            {% endwith %}
+            <noscript class="d-block">
+                <div class="alert alert-info m-4">
+                    <div></div>
+                    <div>
+                        {% blocktranslate trimmed with href=request.event.urls.schedule_nojs %}
+                        To see our schedule, please either enable JavaScript or go <a href="{{ href }}">here</a> for our NoJS schedule.
+                        {% endblocktranslate %}
+                    </div>
+                </div>
+            </noscript>
+        </div>
+        {% html_signal "eventyay.agenda.signals.html_below_schedule_pages" sender=request.event request=request %}
     {% else %}
         <p>
             {% blocktranslate trimmed %}
-                In the near future you will see a curated list of sessions we’d like
-                to show off here. Right now we are busy reviewing proposals.<br>
-                Check back later!
+                No featured sessions have been selected yet. Once our organisers highlight sessions,
+                they will appear here. Please check back later!
             {% endblocktranslate %}
         </p>
     {% endif %}
-    <article id="featured-talks">
-        {% for talk in talks %}
-            <section>
-                <h5 class="talk-title">
-                    <div>{{ quotation_open }}{{ talk.title|event_localize }}{{ quotation_close }}</div>
-                    <small class="text-muted">
-                        {% if talk.display_speaker_names %}{{ talk.display_speaker_names }};{% endif %}
-                        <i>{{ talk.submission_type.name|event_localize }}</i>
-                    </small>
-                </h5>
-                <div class="featured-talk-abstract">{{ talk.abstract|default:talk.description|default:""|event_localize|rich_text }}</div>
-                {% if not forloop.last %}<hr>{% endif %}
-            </section>
-        {% endfor %}
-    </article>
 </div>
 {% endblock agenda_content %}
