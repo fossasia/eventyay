@@ -69,9 +69,41 @@ def _show_featured_setting(event):
     return defaults.get('show_featured', 'never')
 
 
+def show_featured_always(event):
+    """Whether org setting shows the featured page even before a schedule exists."""
+    return _show_featured_setting(event) == 'always'
+
+
+def featured_submissions_for_event(event):
+    """Public featured submissions that may appear before a schedule is released."""
+    from eventyay.base.models import SubmissionStates
+
+    return (
+        event.submissions.filter(is_featured=True)
+        .exclude(
+            state__in=(
+                SubmissionStates.REJECTED,
+                SubmissionStates.CANCELED,
+                SubmissionStates.WITHDRAWN,
+                SubmissionStates.DELETED,
+            )
+        )
+        .select_related('event', 'event__organizer', 'submission_type')
+        .prefetch_related('speakers')
+        .order_by('title')
+    )
+
+
+def event_has_featured_submissions(event):
+    return featured_submissions_for_event(event).exists()
+
+
 def _event_has_published_schedule(event):
     """True once at least one schedule version has been published (``published`` is set)."""
     return event.current_schedule is not None
+
+
+are_featured_exports_available = _event_has_published_schedule
 
 
 def schedule_widget_featured_cache_key_part(event):
@@ -87,9 +119,9 @@ def are_featured_submissions_visible(user, event):
     ``orga_can_change_submissions``) for API/orga rules. Public pages and nav must use this
     predicate so "Never" is respected for organizers viewing the public site.
 
-    For ``after_schedule`` ("once the first schedule version is published"), featured is shown
-    only **after** at least one published ``Schedule`` version exists. Before the first release,
-    featured is hidden. Uses a scoped DB check; does not depend on "show schedule publicly".
+    For ``after_schedule``, the featured page is available once a schedule version is
+    published (and talks are published), or earlier when featured submissions exist as a
+    preview before the schedule is released.
     """
     show_featured = _show_featured_setting(event)
     if show_featured == 'never':
@@ -97,10 +129,14 @@ def are_featured_submissions_visible(user, event):
     # "Always" shows regardless of schedule state or talks_published.
     if show_featured == 'always':
         return True
-    if not event.talks_published:
-        return False
-    # after_schedule: visible only once the first published schedule version exists
-    return _event_has_published_schedule(event)
+    if _event_has_published_schedule(event):
+        return event.talks_published
+    return event_has_featured_submissions(event)
+
+
+def can_use_featured_exports(user, event):
+    """Whether public featured export URLs are allowed for this user and event."""
+    return are_featured_submissions_visible(user, event) and are_featured_exports_available(event)
 
 
 @rules.predicate

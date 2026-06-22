@@ -1,5 +1,6 @@
 import datetime as dt
 from http import HTTPMethod
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib import messages
@@ -37,7 +38,7 @@ class ResetView(GenericResetView):
 
     def get_success_url(self):
         if getattr(self.request, 'event', None):
-            return reverse('orga:event.login', kwargs={'event': self.request.event.slug})
+            return reverse('eventyay_common:auth.login') + f"?next={quote(self.request.event.orga_urls.base)}"
         return reverse('eventyay_common:auth.login')
 
 
