@@ -115,6 +115,12 @@ export function buildExportMenuItems(exporters) {
 	].filter(o => o.url)
 }
 
+export function areScheduleExportsDisabled ({ version = '', scheduleMetaVersion = '', isFeaturedPage = false, exportersCount = 0, isWipPreview = false } = {}) {
+	if (isWipPreview || (version || scheduleMetaVersion) === 'wip') return true
+	if (isFeaturedPage && !exportersCount) return true
+	return false
+}
+
 export function parseBooleanAnswer (value) {
 	if (typeof value === 'boolean') return value
 	return ['true', '1', 'yes'].includes(String(value).toLowerCase())

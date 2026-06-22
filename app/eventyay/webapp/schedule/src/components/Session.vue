@@ -1,14 +1,23 @@
 <template lang="pug">
-a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
+a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession, 'schedule-pending-session': isSchedulePending}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
 	.time-box
-		.start(:class="{'has-ampm': hasAmPm}")
-			.date(v-if="showDate")
-				.weekday {{ weekdayLabel }}
-				.day-month {{ dayMonthLabel }}
-			.time {{ startTime.time }}
-			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
-			.duration {{ getPrettyDuration(session.start, session.end) }}
-		.buffer
+		.start.schedule-pending(v-if="isSchedulePending")
+			svg.schedule-pending-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
+				rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
+				line(x1="16", y1="2", x2="16", y2="6")
+				line(x1="8", y1="2", x2="8", y2="6")
+				line(x1="3", y1="10", x2="21", y2="10")
+			.schedule-pending-label
+				span.schedule-pending-text {{ schedulePendingText }}
+		template(v-else)
+			.start(:class="{'has-ampm': hasAmPm}")
+				.date(v-if="showDate")
+					.weekday {{ weekdayLabel }}
+					.day-month {{ dayMonthLabel }}
+				.time {{ startTime.time }}
+				.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
+				.duration {{ getPrettyDuration(session.start, session.end) }}
+		.buffer(v-if="!isSchedulePending")
 		.is-live(v-if="showLiveBadge && isLive") live
 	.info(:class="{'has-fav-count': hasFavCount, 'has-icons': hasAnyRightIcons}")
 		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
@@ -142,10 +151,17 @@ export default {
 			}
 		},
 		startTime () {
+			if (this.isSchedulePending) {
+				return { time: this.schedulePendingText }
+			}
 			return getSessionTime(this.session, this.effectiveTimezone, this.locale, this.effectiveHasAmPm)
 		},
-		shortDate () {
-			return this.session.start.clone().tz(this.effectiveTimezone).format('MMM D')
+		isSchedulePending () {
+			return Boolean(this.session.schedule_pending || !this.session.start)
+		},
+		schedulePendingText () {
+			const m = this.translationMessages || {}
+			return m.schedule_pending_secondary || 'Coming soon'
 		},
 		weekdayLabel () {
 			return this.session.start.clone().tz(this.effectiveTimezone).locale(this.locale || 'en').format('ddd')
@@ -266,6 +282,35 @@ sessionTextExpand()
 		display: flex
 		flex-direction: column
 		align-items: center
+		.start.schedule-pending
+			display: flex
+			flex-direction: column
+			align-items: center
+			justify-content: center
+			gap: 4px
+			width: 100%
+			margin-bottom: 0
+			flex: 1
+			color: $clr-primary-text-dark
+			.schedule-pending-icon
+				width: 16px
+				height: 16px
+				opacity: 0.9
+				flex-shrink: 0
+			.schedule-pending-label
+				display: flex
+				flex-direction: column
+				align-items: center
+				width: 100%
+			.schedule-pending-text
+				font-size: 11px
+				font-weight: 600
+				line-height: 1.25
+				text-align: center
+				letter-spacing: 0.02em
+				color: $clr-primary-text-dark
+				max-width: 100%
+				word-break: break-word
 		.start
 			color: $clr-primary-text-dark
 			display: flex
@@ -329,6 +374,12 @@ sessionTextExpand()
 			color: $clr-primary-text-dark
 			letter-spacing: 0.5px
 			text-transform: uppercase
+	&.schedule-pending-session
+		.time-box
+			justify-content: center
+	&.has-date
+		.time-box
+			width: 88px
 	.info
 		position: relative
 		flex: auto

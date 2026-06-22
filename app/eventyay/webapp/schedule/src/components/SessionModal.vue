@@ -14,7 +14,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 						span.ampm(v-if="getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm") {{ getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm }}
 					.room(v-if="modalContent.contentObject.room") {{ getLocalizedString(modalContent.contentObject.room.name) }}
 					.track(v-if="modalContent.contentObject.track", :style="{ color: modalContent.contentObject.track.color }") {{ getLocalizedString(modalContent.contentObject.track.name) }}
-					export-dropdown.session-export-area(v-if="talkExportOptions.length", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl")
+					export-dropdown.session-export-area(v-if="talkExportOptions.length || exportsDisabled", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl", :disabled="exportsDisabled")
 				.text-content
 					.recording-embed(v-if="modalContent.contentObject.recording_iframe", v-html="modalContent.contentObject.recording_iframe")
 					.field-section(v-if="modalContent.contentObject.abstract")
@@ -85,7 +85,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 					.speaker-title
 						h3 {{ modalContent.contentObject.name }}
-						export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl")
+						export-dropdown.speaker-export(v-if="speakerExportOptions.length || exportsDisabled", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl", :disabled="exportsDisabled")
 				.speaker-content.card-content
 					.biography(v-if="(modalContent.contentObject.apiContent?.biography || modalContent.contentObject.biography)?.length > 0", v-html="renderRichText(modalContent.contentObject.apiContent?.biography || modalContent.contentObject.biography)")
 					template(v-if="modalContent.contentObject.isLoading")
@@ -144,7 +144,8 @@ export default {
 		loggedIn: { default: false },
 		showJoinRoom: { default: false },
 		getJoinRoomLink: { default: () => () => '' },
-		translationMessages: { default: () => ({}) }
+		translationMessages: { default: () => ({}) },
+		exportsDisabled: { default: false },
 	},
 	props: {
 		modalContent: Object,
