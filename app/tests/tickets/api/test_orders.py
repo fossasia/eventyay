@@ -3,6 +3,7 @@ import datetime
 import json
 from decimal import Decimal
 from unittest import mock
+from zoneinfo import ZoneInfo
 
 import pytest
 from django.core import mail as djmail
@@ -11,6 +12,15 @@ from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scope, scopes_disabled
 from pytz import UTC
+
+# The test event uses Europe/Berlin. The middleware activates that timezone on
+# every request so DRF serializes datetimes in Berlin local time (+01:00 in
+# December). Use this helper when building expected response dicts.
+_BERLIN = ZoneInfo('Europe/Berlin')
+
+
+def _to_berlin(dt):
+    return dt.astimezone(_BERLIN).isoformat()
 
 from eventyay.base.models import (
     InvoiceAddress,
@@ -218,8 +228,8 @@ TEST_ORDERPOSITION_RES = {
 TEST_PAYMENTS_RES = [
     {
         'local_id': 1,
-        'created': '2017-12-01T10:00:00Z',
-        'payment_date': '2017-12-01T10:00:00Z',
+        'created': '2017-12-01T11:00:00+01:00',
+        'payment_date': '2017-12-01T11:00:00+01:00',
         'provider': 'stripe',
         'payment_url': None,
         'details': {},
@@ -228,7 +238,7 @@ TEST_PAYMENTS_RES = [
     },
     {
         'local_id': 2,
-        'created': '2017-12-01T10:00:00Z',
+        'created': '2017-12-01T11:00:00+01:00',
         'payment_date': None,
         'provider': 'banktransfer',
         'payment_url': None,
@@ -242,8 +252,8 @@ TEST_REFUNDS_RES = [
         'local_id': 1,
         'payment': 1,
         'source': 'admin',
-        'created': '2017-12-01T10:00:00Z',
-        'execution_date': '2017-12-01T10:00:00Z',
+        'created': '2017-12-01T11:00:00+01:00',
+        'execution_date': '2017-12-01T11:00:00+01:00',
         'comment': None,
         'provider': 'stripe',
         'state': 'done',
@@ -258,8 +268,8 @@ TEST_ORDER_RES = {
     'email': 'dummy@dummy.test',
     'phone': None,
     'locale': 'en',
-    'datetime': '2017-12-01T10:00:00Z',
-    'expires': '2017-12-10T10:00:00Z',
+    'datetime': '2017-12-01T11:00:00+01:00',
+    'expires': '2017-12-10T11:00:00+01:00',
     'payment_date': '2017-12-01',
     'sales_channel': 'web',
     'fees': [
@@ -279,7 +289,7 @@ TEST_ORDER_RES = {
     'comment': '',
     'checkin_attention': False,
     'invoice_address': {
-        'last_modified': '2017-12-01T10:00:00Z',
+        'last_modified': '2017-12-01T11:00:00+01:00',
         'is_business': False,
         'company': 'Sample company',
         'name': '',
@@ -313,7 +323,7 @@ def test_order_list_filter_subevent_date(token_client, organizer, event, order, 
     res['positions'][0]['product'] = item.pk
     res['positions'][0]['subevent'] = subevent.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
-    res['last_modified'] = order.last_modified.isoformat().replace('+00:00', 'Z')
+    res['last_modified'] = _to_berlin(order.last_modified)
     res['fees'][0]['tax_rule'] = taxrule.pk
     res['fees'][0]['id'] = fee.pk
 
@@ -365,7 +375,7 @@ def test_order_list(token_client, organizer, event, order, item, taxrule, questi
         res['fees'][0]['id'] = order.fees.first().pk
     res['positions'][0]['product'] = item.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
-    res['last_modified'] = order.last_modified.isoformat().replace('+00:00', 'Z')
+    res['last_modified'] = _to_berlin(order.last_modified)
     res['fees'][0]['tax_rule'] = taxrule.pk
 
     resp = token_client.get('/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug))
@@ -459,7 +469,7 @@ def test_order_detail(token_client, organizer, event, order, item, taxrule, ques
     res['positions'][0]['product'] = item.pk
     res['fees'][0]['tax_rule'] = taxrule.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
-    res['last_modified'] = order.last_modified.isoformat().replace('+00:00', 'Z')
+    res['last_modified'] = _to_berlin(order.last_modified)
     resp = token_client.get('/api/v1/organizers/{}/events/{}/orders/{}/'.format(organizer.slug, event.slug, order.code))
     assert resp.status_code == 200
     del resp.data['fees'][0]['id']
@@ -893,7 +903,7 @@ def test_orderposition_list(token_client, organizer, event, order, item, subeven
     res['checkins'] = [
         {
             'id': c.pk,
-            'datetime': '2017-12-26T10:00:00Z',
+            'datetime': '2017-12-26T11:00:00+01:00',
             'list': cl.pk,
             'auto_checked_in': False,
             'type': 'entry',
@@ -1060,7 +1070,7 @@ TEST_INVOICE_RES = {
         {
             'position': 1,
             'description': 'Budget Ticket<br />Attendee: Peter',
-            'event_date_from': '2017-12-27T10:00:00Z',
+            'event_date_from': '2017-12-27T11:00:00+01:00',
             'event_date_to': None,
             'attendee_name': 'Peter',
             'item': None,
@@ -1073,7 +1083,7 @@ TEST_INVOICE_RES = {
         {
             'position': 2,
             'description': 'Payment fee',
-            'event_date_from': '2017-12-27T10:00:00Z',
+            'event_date_from': '2017-12-27T11:00:00+01:00',
             'event_date_to': None,
             'attendee_name': None,
             'item': None,
@@ -4428,7 +4438,7 @@ def test_order_create_invoice(token_client, organizer, event, order):
             {
                 'position': 1,
                 'description': 'Budget Ticket<br />Attendee: Peter',
-                'event_date_from': '2017-12-27T10:00:00Z',
+                'event_date_from': '2017-12-27T11:00:00+01:00',
                 'event_date_to': None,
                 'attendee_name': 'Peter',
                 'item': pos.item_id,
@@ -4441,7 +4451,7 @@ def test_order_create_invoice(token_client, organizer, event, order):
             {
                 'position': 2,
                 'description': 'Payment fee',
-                'event_date_from': '2017-12-27T10:00:00Z',
+                'event_date_from': '2017-12-27T11:00:00+01:00',
                 'event_date_to': None,
                 'attendee_name': None,
                 'item': None,
@@ -4748,7 +4758,7 @@ def test_revoked_secret_list(token_client, organizer, event):
     res = {
         'id': r.id,
         'secret': 'abcd',
-        'created': r.created.isoformat().replace('+00:00', 'Z'),
+        'created': _to_berlin(r.created),
     }
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/revokedsecrets/'.format(
