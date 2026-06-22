@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
@@ -10,6 +12,10 @@ from eventyay.talk_rules.agenda import is_pre_agenda_featured_public, is_speaker
 User = get_user_model()
 
 
+def _event_base_path(event):
+    return urlparse(str(event.urls.base)).path.rstrip('/')
+
+
 def _assert_speakers_list_redirects(client, event, *, expected_message):
     speakers_list_url = reverse(
         'agenda:speakers',
@@ -20,7 +26,7 @@ def _assert_speakers_list_redirects(client, event, *, expected_message):
     )
     response = client.get(speakers_list_url, follow=True)
     assert response.status_code == 200
-    assert response.request['PATH_INFO'].rstrip('/') == event.urls.base.path.rstrip('/')
+    assert response.request['PATH_INFO'].rstrip('/') == _event_base_path(event)
     messages = [str(message) for message in get_messages(response.wsgi_request)]
     assert expected_message in messages
 
@@ -111,26 +117,19 @@ def test_featured_speakers_list_blocked_before_public_schedule_release(client, e
 
 @pytest.mark.django_db
 def test_speakers_list_blocked_when_no_schedule_released(client, event):
-    """Speakers page stays hidden when no schedule version has been released."""
+    """Speakers list redirects to the info page when no schedule version has been released."""
     with scope(event=event):
         event.talks_published = True
         event.feature_flags['show_schedule'] = True
         event.save(update_fields=['talks_published', 'feature_flags'])
         assert event.current_schedule is None
 
-    speakers_list_url = reverse(
-        'agenda:speakers',
-        kwargs={
-            'event': event.slug,
-            'organizer': event.organizer.slug,
-        },
-    )
-    assert client.get(speakers_list_url, follow=True).status_code == 404
+    _assert_speakers_list_redirects(client, event, expected_message='No published schedule.')
 
 
 @pytest.mark.django_db
 def test_speakers_list_blocked_when_featured_visible_without_schedule(client, event):
-    """Speakers page stays hidden when only featured content is public."""
+    """Speakers list redirects when only featured sessions are public without a released schedule."""
     with scope(event=event):
         event.talks_published = True
         event.feature_flags['show_schedule'] = True
@@ -138,23 +137,28 @@ def test_speakers_list_blocked_when_featured_visible_without_schedule(client, ev
         event.save(update_fields=['talks_published', 'feature_flags'])
         assert event.current_schedule is None
 
-    speakers_list_url = reverse(
-        'agenda:speakers',
-        kwargs={
-            'event': event.slug,
-            'organizer': event.organizer.slug,
-        },
-    )
-    assert client.get(speakers_list_url, follow=True).status_code == 404
+    _assert_speakers_list_redirects(client, event, expected_message='No published schedule.')
 
 
 @pytest.mark.django_db
 def test_speakers_list_blocked_for_organiser_until_public_release(organizer_client, event):
     """Organisers use orga/WIP preview; the public speakers page redirects until release."""
     with scope(event=event):
+        user = User.objects.create_user(
+            email='featured-orga-pre-release@example.com',
+            password='testpass123',
+            fullname='Organiser Pre Release Speaker',
+        )
+        SpeakerProfile.objects.create(
+            event=event,
+            user=user,
+            biography='Featured biography.',
+            is_featured=True,
+        )
         event.talks_published = True
         event.private_testmode = True
         event.settings.private_testmode_talks = True
+        event.feature_flags['show_featured_speakers'] = 'always'
         event.feature_flags['show_schedule'] = True
         event.save(update_fields=['talks_published', 'private_testmode', 'feature_flags'])
         event.release_schedule('v1')
