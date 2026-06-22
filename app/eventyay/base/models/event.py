@@ -216,7 +216,6 @@ def default_display_settings():
         'imprint_url': None,
         'header_pattern': '',
         'html_export_url': '',
-        'meta_noindex': False,
         'texts': {'agenda_session_above': '', 'agenda_session_below': ''},
     }
 
@@ -809,7 +808,7 @@ class Event(
         """URL patterns for organizer/admin panel views of this event."""
 
         base_path = settings.BASE_PATH
-        base = '{base_path}/orga/event/{self.slug}/'
+        base = '{base_path}/orga/event/{self.organizer.slug}/{self.slug}/'
         login = '{base}login/'
         live = '{base}live'
         delete = '{base}delete'
@@ -2020,11 +2019,11 @@ class Event(
 
     @property
     def talk_dashboard_url(self):
-        return reverse('orga:event.dashboard', kwargs={'event': self.slug})
+        return reverse('orga:event.dashboard', kwargs={'organizer': self.organizer.slug, 'event': self.slug})
 
     @property
     def talk_settings_url(self):
-        return reverse('orga:settings.event.view', kwargs={'event': self.slug})
+        return reverse('orga:settings.event.view', kwargs={'organizer': self.organizer.slug, 'event': self.slug})
 
     @cached_property
     def live_issues(self):

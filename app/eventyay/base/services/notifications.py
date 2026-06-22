@@ -218,4 +218,3 @@ def notify_organizer_followers(event_id: int):
                     'user': user.pk,
                 }
             )
-
