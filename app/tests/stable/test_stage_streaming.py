@@ -12,7 +12,7 @@ from eventyay.base.services import event as event_service
 from eventyay.base.services import room as room_service
 
 stream_schedule_migration = importlib.import_module(
-    "eventyay.base.migrations.0031_migrate_native_stream_schedules"
+    "eventyay.base.migrations.0032_migrate_native_stream_schedules"
 )
 
 
