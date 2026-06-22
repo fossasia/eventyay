@@ -32,7 +32,7 @@ RES_LAYOUT = {
     'id': 1,
     'name': 'Foo',
     'default': True,
-    'item_assignments': [{'item': 1, 'sales_channel': 'web'}],
+    'item_assignments': [{'product': 1, 'sales_channel': 'web'}],
     'layout': [{'a': 2}],
     'background': None,
 }
@@ -42,7 +42,7 @@ RES_LAYOUT = {
 def test_api_list(env, client):
     res = copy.copy(RES_LAYOUT)
     res['id'] = env[2].pk
-    res['item_assignments'][0]['item'] = env[3].pk
+    res['item_assignments'][0]['product'] = env[3].pk
     client.login(email='dummy@dummy.dummy', password='dummy')
     r = json.loads(
         client.get(
@@ -57,7 +57,7 @@ def test_api_list(env, client):
     )
     assert r['results'] == [
         {
-            'item': env[3].pk,
+            'product': env[3].pk,
             'layout': env[2].pk,
             'id': env[2].item_assignments.first().pk,
             'sales_channel': 'web',
@@ -69,7 +69,7 @@ def test_api_list(env, client):
 def test_api_detail(env, client):
     res = copy.copy(RES_LAYOUT)
     res['id'] = env[2].pk
-    res['item_assignments'][0]['item'] = env[3].pk
+    res['item_assignments'][0]['product'] = env[3].pk
     client.login(email='dummy@dummy.dummy', password='dummy')
     r = json.loads(
         client.get(

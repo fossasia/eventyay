@@ -699,7 +699,7 @@ class ItemsTest(ItemFormTest):
 
         # Do not allow multi-level bundles
         with scopes_disabled():
-            self.item1.bundles.create(bundled_item=self.item1, count=1, designated_price=0)
+            self.item1.bundles.create(bundled_product=self.item1, count=1, designated_price=0)
         d.update(
             {
                 'bundles-TOTAL_FORMS': '1',

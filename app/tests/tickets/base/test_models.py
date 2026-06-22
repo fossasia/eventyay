@@ -670,7 +670,7 @@ class QuotaTestCase(BaseQuotaTestCase):
         self.quota.availability()
         self.quota.refresh_from_db()
         assert self.quota.closed
-        assert self.quota.all_logentries().filter(action_type='pretix.event.quota.closed').exists()
+        assert self.quota.all_logentries().filter(action_type='eventyay.event.quota.closed').exists()
 
     @classscope(attr='o')
     def test_closed_reports_as_sold_out(self):
@@ -752,10 +752,10 @@ class BundleQuotaTestCase(BaseQuotaTestCase):
         self.quota.products.add(self.item2)
         self.quota.variations.add(self.var1)
         self.bundle1 = ItemBundle.objects.create(
-            base_item=self.item1, bundled_item=self.trans, designated_price=1.5, count=1
+            base_item=self.item1, bundled_product=self.trans, designated_price=1.5, count=1
         )
         self.bundle2 = ItemBundle.objects.create(
-            base_item=self.item2, bundled_item=self.trans, designated_price=1.5, count=1
+            base_item=self.item2, bundled_product=self.trans, designated_price=1.5, count=1
         )
 
     @classscope(attr='o')
@@ -780,7 +780,7 @@ class BundleQuotaTestCase(BaseQuotaTestCase):
 
     @classscope(attr='o')
     def test_multiple_bundles(self):
-        ItemBundle.objects.create(base_item=self.item1, bundled_item=self.trans, designated_price=1.5, count=1)
+        ItemBundle.objects.create(base_item=self.item1, bundled_product=self.trans, designated_price=1.5, count=1)
         self.transquota.size = 3
         self.transquota.save()
         assert self.item1.check_quotas(include_bundled=True) == (
@@ -847,7 +847,7 @@ class BundleQuotaTestCase(BaseQuotaTestCase):
 
     @classscope(attr='o')
     def test_var_multiple_bundles(self):
-        ItemBundle.objects.create(base_item=self.item2, bundled_item=self.trans, designated_price=1.5, count=1)
+        ItemBundle.objects.create(base_item=self.item2, bundled_product=self.trans, designated_price=1.5, count=1)
         self.transquota.size = 3
         self.transquota.save()
         assert self.var1.check_quotas(include_bundled=True) == (
@@ -980,36 +980,36 @@ class VoucherTestCase(BaseQuotaTestCase):
 
     @classscope(attr='o')
     def test_voucher_applicability_item(self):
-        v = Voucher.objects.create(product=self.var1.item, event=self.event)
+        v = Voucher.objects.create(product=self.var1.product, event=self.event)
         self.assertFalse(v.applies_to(self.item1))
-        self.assertTrue(v.applies_to(self.var1.item))
-        self.assertTrue(v.applies_to(self.var1.item, self.var1))
+        self.assertTrue(v.applies_to(self.var1.product))
+        self.assertTrue(v.applies_to(self.var1.product, self.var1))
 
     @classscope(attr='o')
     def test_voucher_applicability_variation(self):
-        v = Voucher.objects.create(product=self.var1.item, variation=self.var1, event=self.event)
+        v = Voucher.objects.create(product=self.var1.product, variation=self.var1, event=self.event)
         self.assertFalse(v.applies_to(self.item1))
-        self.assertFalse(v.applies_to(self.var1.item))
-        self.assertTrue(v.applies_to(self.var1.item, self.var1))
-        self.assertFalse(v.applies_to(self.var1.item, self.var2))
+        self.assertFalse(v.applies_to(self.var1.product))
+        self.assertTrue(v.applies_to(self.var1.product, self.var1))
+        self.assertFalse(v.applies_to(self.var1.product, self.var2))
 
     @classscope(attr='o')
     def test_voucher_applicability_all(self):
         v = Voucher.objects.create(event=self.event)
         self.assertTrue(v.applies_to(self.item1))
-        self.assertTrue(v.applies_to(self.var1.item))
-        self.assertTrue(v.applies_to(self.var1.item, self.var1))
-        self.assertTrue(v.applies_to(self.var1.item, self.var2))
+        self.assertTrue(v.applies_to(self.var1.product))
+        self.assertTrue(v.applies_to(self.var1.product, self.var1))
+        self.assertTrue(v.applies_to(self.var1.product, self.var2))
 
     @classscope(attr='o')
     def test_voucher_applicability_variation_through_quota(self):
         self.quota.variations.add(self.var1)
-        self.quota.products.add(self.var1.item)
+        self.quota.products.add(self.var1.product)
         v = Voucher.objects.create(quota=self.quota, event=self.event)
         self.assertFalse(v.applies_to(self.item1))
-        self.assertTrue(v.applies_to(self.var1.item))  # semantics unclear
-        self.assertTrue(v.applies_to(self.var1.item, self.var1))
-        self.assertFalse(v.applies_to(self.var1.item, self.var2))
+        self.assertTrue(v.applies_to(self.var1.product))  # semantics unclear
+        self.assertTrue(v.applies_to(self.var1.product, self.var1))
+        self.assertFalse(v.applies_to(self.var1.product, self.var2))
 
     @classscope(attr='o')
     def test_voucher_no_item_with_quota(self):
@@ -1136,7 +1136,7 @@ class OrderTestCase(BaseQuotaTestCase):
         self.order.payments.create(provider='manual', amount=self.order.total).confirm()
         self.order = Order.objects.get(id=self.order.id)
         self.assertEqual(self.order.status, Order.STATUS_PAID)
-        assert not self.order.all_logentries().filter(action_type='pretix.event.order.overpaid').exists()
+        assert not self.order.all_logentries().filter(action_type='eventyay.event.order.overpaid').exists()
 
     @classscope(attr='o')
     def test_paid_expired_available(self):
@@ -1269,7 +1269,7 @@ class OrderTestCase(BaseQuotaTestCase):
         self.order.payments.create(provider='manual', amount=self.order.total + 2).confirm(count_waitinglist=False)
         self.order = Order.objects.get(id=self.order.id)
         self.assertEqual(self.order.status, Order.STATUS_PAID)
-        assert self.order.all_logentries().filter(action_type='pretix.event.order.overpaid').exists()
+        assert self.order.all_logentries().filter(action_type='eventyay.event.order.overpaid').exists()
 
     @classscope(attr='o')
     def test_can_modify_answers(self):
@@ -2500,7 +2500,7 @@ class SubEventTest(TestCase):
             available_until=now() + timedelta(days=1),
         )
         SubEventItem.objects.create(product=i, subevent=self.se, price=Decimal('30.00'))
-        assert self.se.item_price_overrides == {i.pk: Decimal('30.00')}
+        assert self.se.product_price_overrides == {i.pk: Decimal('30.00')}
 
     @classscope(attr='organizer')
     def test_override_var_prices(self):

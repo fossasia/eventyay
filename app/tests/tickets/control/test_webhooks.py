@@ -21,8 +21,8 @@ def event(organizer):
 def webhook(organizer, event):
     wh = organizer.webhooks.create(enabled=True, target_url='https://google.com', all_events=False)
     wh.limit_events.add(event)
-    wh.listeners.create(action_type='pretix.event.order.placed')
-    wh.listeners.create(action_type='pretix.event.order.paid')
+    wh.listeners.create(action_type='eventyay.event.order.placed')
+    wh.listeners.create(action_type='eventyay.event.order.paid')
     return wh
 
 
@@ -53,7 +53,7 @@ def test_create_webhook(event, admin_user, admin_team, client):
         {
             'target_url': 'https://google.com',
             'enabled': 'on',
-            'events': 'pretix.event.order.paid',
+            'events': 'eventyay.event.order.paid',
             'limit_events': str(event.pk),
         },
         follow=True,
@@ -62,7 +62,7 @@ def test_create_webhook(event, admin_user, admin_team, client):
         w = WebHook.objects.last()
         assert w.target_url == 'https://google.com'
         assert w.limit_events.count() == 1
-        assert list(w.listeners.values_list('action_type', flat=True)) == ['pretix.event.order.paid']
+        assert list(w.listeners.values_list('action_type', flat=True)) == ['eventyay.event.order.paid']
         assert not w.all_events
 
 
@@ -74,7 +74,7 @@ def test_update_webhook(event, admin_user, admin_team, webhook, client):
         {
             'target_url': 'https://google.com',
             'enabled': 'on',
-            'events': ['pretix.event.order.paid', 'pretix.event.order.canceled'],
+            'events': ['eventyay.event.order.paid', 'eventyay.event.order.canceled'],
             'limit_events': str(event.pk),
         },
         follow=True,
@@ -84,8 +84,8 @@ def test_update_webhook(event, admin_user, admin_team, webhook, client):
     with scopes_disabled():
         assert webhook.limit_events.count() == 1
         assert list(webhook.listeners.values_list('action_type', flat=True)) == [
-            'pretix.event.order.canceled',
-            'pretix.event.order.paid',
+            'eventyay.event.order.canceled',
+            'eventyay.event.order.paid',
         ]
         assert not webhook.all_events
 
@@ -95,7 +95,7 @@ def test_webhook_logs(event, admin_user, admin_team, webhook, client):
     client.login(email='dummy@dummy.dummy', password='dummy')
     webhook.calls.create(
         webhook=webhook,
-        action_type='pretix.event.order.paid',
+        action_type='eventyay.event.order.paid',
         target_url=webhook.target_url,
         is_retry=False,
         execution_time=2,
@@ -104,4 +104,4 @@ def test_webhook_logs(event, admin_user, admin_team, webhook, client):
         response_body='bar',
     )
     resp = client.get('/control/organizer/dummy/webhook/{}/logs'.format(webhook.pk))
-    assert 'pretix.event.order.paid' in resp.content.decode()
+    assert 'eventyay.event.order.paid' in resp.content.decode()

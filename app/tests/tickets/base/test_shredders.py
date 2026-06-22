@@ -90,7 +90,7 @@ def question(event, item):
 @pytest.mark.django_db
 def test_email_shredder(event, order):
     l1 = order.log_action(
-        'pretix.event.order.email.expired',
+        'eventyay.event.order.email.expired',
         data={
             'recipient': 'dummy@dummy.test',
             'message': 'Hello Peter@,',
@@ -98,7 +98,7 @@ def test_email_shredder(event, order):
         },
     )
     l2 = order.log_action(
-        'pretix.event.order.contact.changed',
+        'eventyay.event.order.contact.changed',
         data={
             'old_email': 'dummy@dummy.test',
             'new_email': 'foo@bar.com',
@@ -138,7 +138,7 @@ def test_waitinglist_shredder(event, item):
     assert json.loads(f[0][2]) == [
         {
             'id': wle.pk,
-            'item': item.pk,
+            'product': item.pk,
             'variation': None,
             'subevent': None,
             'voucher': wle.voucher.pk,
@@ -164,7 +164,7 @@ def test_waitinglist_shredder(event, item):
 @pytest.mark.django_db
 def test_attendee_name_shredder(event, order):
     l1 = order.log_action(
-        'pretix.event.order.modified',
+        'eventyay.event.order.modified',
         data={
             'data': [{'attendee_name': 'Peter', 'question_1': 'Test', 'company': 'Foobar'}],
             'invoice_data': {'name': 'Foo'},
@@ -197,7 +197,7 @@ def test_attendee_name_shredder(event, order):
 @pytest.mark.django_db
 def test_invoice_address_shredder(event, order):
     l1 = order.log_action(
-        'pretix.event.order.modified',
+        'eventyay.event.order.modified',
         data={
             'data': [{'attendee_name': 'Hans', 'question_1': 'Test'}],
             'invoice_data': {
@@ -265,7 +265,7 @@ def test_question_answer_shredder(event, order, question):
     opt = question.options.first()
     q2 = event.questions.create(question='Photo', type='F', identifier='DEF')
     l1 = order.log_action(
-        'pretix.event.order.modified',
+        'eventyay.event.order.modified',
         data={
             'data': [
                 {

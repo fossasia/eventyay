@@ -199,7 +199,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             v = Voucher.objects.latest('pk')
         assert not v.block_quota
         assert not v.allow_ignore_approval
-        assert v.item.pk == self.ticket.pk
+        assert v.product.pk == self.ticket.pk
         assert v.variation is None
         assert v.quota is None
 
@@ -214,7 +214,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         with scopes_disabled():
             v = Voucher.objects.latest('pk')
         assert not v.block_quota
-        assert v.item.pk == self.shirt.pk
+        assert v.product.pk == self.shirt.pk
         assert v.variation.pk == self.shirt_red.pk
         assert v.quota is None
 
@@ -223,7 +223,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         with scopes_disabled():
             v = Voucher.objects.latest('pk')
         assert not v.block_quota
-        assert v.item is None
+        assert v.product is None
         assert v.variation is None
         assert v.quota.pk == self.quota_tickets.pk
 
@@ -298,7 +298,7 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
             v = self.event.vouchers.create(product=self.ticket)
         self._change_voucher(v, {'itemvar': 'q-%d' % self.quota_tickets.pk})
         v.refresh_from_db()
-        assert v.item is None
+        assert v.product is None
         assert v.variation is None
         assert v.quota.pk == self.quota_tickets.pk
 

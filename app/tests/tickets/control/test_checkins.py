@@ -257,7 +257,7 @@ def test_checkins_list_ordering(client, checkin_list_env, order_key, expected):
         '/control/event/dummy/dummy/checkinlists/{}/?ordering='.format(checkin_list_env[6].pk) + order_key
     )
     qs = response.context['entries']
-    item_keys = [q.order.code + str(q.item.name) for q in qs]
+    item_keys = [q.order.code + str(q.product.name) for q in qs]
     assert item_keys == expected
 
 
@@ -279,7 +279,7 @@ def test_checkins_list_filter(client, checkin_list_env, query, expected):
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.get('/control/event/dummy/dummy/checkinlists/{}/?'.format(checkin_list_env[6].pk) + query)
     qs = response.context['entries']
-    item_keys = [q.order.code + str(q.item.name) for q in qs]
+    item_keys = [q.order.code + str(q.product.name) for q in qs]
     assert item_keys == expected
 
 
@@ -290,7 +290,7 @@ def test_checkins_item_filter(client, checkin_list_env):
         response = client.get(
             '/control/event/dummy/dummy/checkinlists/{}/?item={}'.format(checkin_list_env[6].pk, item.pk)
         )
-        assert all(i.item.id == item.id for i in response.context['entries'])
+        assert all(i.product.id == item.id for i in response.context['entries'])
 
 
 @pytest.mark.django_db
@@ -309,7 +309,7 @@ def test_checkins_list_mixed(client, checkin_list_env, query, expected):
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.get('/control/event/dummy/dummy/checkinlists/{}/?{}'.format(checkin_list_env[6].pk, query))
     qs = response.context['entries']
-    item_keys = [q.order.code + str(q.item.name) for q in qs]
+    item_keys = [q.order.code + str(q.product.name) for q in qs]
     assert item_keys == expected
 
 
@@ -325,7 +325,7 @@ def test_manual_checkins(client, checkin_list_env):
     with scopes_disabled():
         assert checkin_list_env[5][3].checkins.exists()
     assert LogEntry.objects.filter(
-        action_type='pretix.event.checkin', object_id=checkin_list_env[5][3].order.pk
+        action_type='eventyay.event.checkin', object_id=checkin_list_env[5][3].order.pk
     ).exists()
 
 
@@ -345,10 +345,10 @@ def test_manual_checkins_revert(client, checkin_list_env):
     with scopes_disabled():
         assert not checkin_list_env[5][3].checkins.exists()
     assert LogEntry.objects.filter(
-        action_type='pretix.event.checkin', object_id=checkin_list_env[5][3].order.pk
+        action_type='eventyay.event.checkin', object_id=checkin_list_env[5][3].order.pk
     ).exists()
     assert LogEntry.objects.filter(
-        action_type='pretix.event.checkin.reverted',
+        action_type='eventyay.event.checkin.reverted',
         object_id=checkin_list_env[5][3].order.pk,
     ).exists()
 
@@ -471,7 +471,7 @@ def test_checkins_attendee_name_from_addon_available(client, checkin_list_with_a
     qs = response.context['entries']
     item_keys = [
         q.order.code
-        + str(q.item.name)
+        + str(q.product.name)
         + (str(q.addon_to.attendee_name) if q.addon_to is not None else str(q.attendee_name))
         for q in qs
     ]

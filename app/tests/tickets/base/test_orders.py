@@ -803,7 +803,7 @@ class OrderCancelTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.cancellation_date
         assert self.order.status == Order.STATUS_CANCELED
-        assert self.order.all_logentries().last().action_type == 'pretix.event.order.canceled'
+        assert self.order.all_logentries().last().action_type == 'eventyay.event.order.canceled'
         assert self.order.invoices.count() == 2
 
     @classscope(attr='o')
@@ -813,7 +813,7 @@ class OrderCancelTests(TestCase):
         cancel_order(self.order.pk)
         self.order.refresh_from_db()
         assert self.order.status == Order.STATUS_CANCELED
-        assert self.order.all_logentries().last().action_type == 'pretix.event.order.canceled'
+        assert self.order.all_logentries().last().action_type == 'eventyay.event.order.canceled'
         self.op1.voucher.refresh_from_db()
         assert self.op1.voucher.redeemed == 0
         assert self.order.invoices.count() == 2
@@ -825,7 +825,7 @@ class OrderCancelTests(TestCase):
         cancel_order(self.order.pk)
         self.order.refresh_from_db()
         assert self.order.status == Order.STATUS_CANCELED
-        assert self.order.all_logentries().last().action_type == 'pretix.event.order.canceled'
+        assert self.order.all_logentries().last().action_type == 'eventyay.event.order.canceled'
         assert self.order.invoices.count() == 2
 
     @classscope(attr='o')
@@ -858,7 +858,7 @@ class OrderCancelTests(TestCase):
         f.refresh_from_db()
         assert f.canceled
         assert self.order.total == 2.5
-        assert self.order.all_logentries().last().action_type == 'pretix.event.order.canceled'
+        assert self.order.all_logentries().last().action_type == 'eventyay.event.order.canceled'
         self.op1.voucher.refresh_from_db()
         assert self.op1.voucher.redeemed == 0
         assert self.order.invoices.count() == 3
@@ -895,8 +895,8 @@ class OrderCancelTests(TestCase):
         assert r.amount == Decimal('44.00')
         assert r.source == OrderRefund.REFUND_SOURCE_BUYER
         assert r.payment == p1
-        assert self.order.all_logentries().filter(action_type='pretix.event.order.refund.created').exists()
-        assert not self.order.all_logentries().filter(action_type='pretix.event.order.refund.requested').exists()
+        assert self.order.all_logentries().filter(action_type='eventyay.event.order.refund.created').exists()
+        assert not self.order.all_logentries().filter(action_type='eventyay.event.order.refund.requested').exists()
 
     @classscope(attr='o')
     def test_auto_refund_possible_giftcard(self):
@@ -913,8 +913,8 @@ class OrderCancelTests(TestCase):
         assert r.amount == Decimal('44.00')
         assert r.source == OrderRefund.REFUND_SOURCE_BUYER
         assert r.payment == p1
-        assert self.order.all_logentries().filter(action_type='pretix.event.order.refund.created').exists()
-        assert not self.order.all_logentries().filter(action_type='pretix.event.order.refund.requested').exists()
+        assert self.order.all_logentries().filter(action_type='eventyay.event.order.refund.created').exists()
+        assert not self.order.all_logentries().filter(action_type='eventyay.event.order.refund.requested').exists()
         assert gc.value == Decimal('44.00')
 
     @classscope(attr='o')
@@ -953,7 +953,7 @@ class OrderCancelTests(TestCase):
         )
         cancel_order(self.order.pk, cancellation_fee=2, try_auto_refund=True)
         assert not self.order.refunds.exists()
-        assert self.order.all_logentries().filter(action_type='pretix.event.order.refund.requested').exists()
+        assert self.order.all_logentries().filter(action_type='eventyay.event.order.refund.requested').exists()
 
 
 class OrderChangeManagerTests(TestCase):
@@ -1095,7 +1095,7 @@ class OrderChangeManagerTests(TestCase):
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
         assert self.op1.subevent == se2
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_change_subevent_success(self):
@@ -1196,7 +1196,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == p
         assert self.op1.tax_value == Decimal('3.67')
         assert self.op1.tax_rule == self.shirt.tax_rule
@@ -1210,7 +1210,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == p
         assert self.op1.tax_value == Decimal('3.67')
         assert self.op1.tax_rule == self.shirt.tax_rule
@@ -1227,7 +1227,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == p
         assert self.op1.price_before_voucher == Decimal('12.00')
 
@@ -1242,7 +1242,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == p
         assert self.op1.price_before_voucher == Decimal('20.00')
 
@@ -1252,7 +1252,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == Decimal('23.00')
         assert self.op1.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(self.op1.price * (1 - 100 / (100 + self.op1.tax_rate))) == self.op1.tax_value
@@ -1265,7 +1265,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == Decimal('12.00')
         assert self.op1.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(self.op1.price * (1 - 100 / (100 + self.op1.tax_rate))) == self.op1.tax_value
@@ -1277,7 +1277,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.ticket
+        assert self.op1.product == self.ticket
         assert self.op1.price == Decimal('24.00')
         assert round_decimal(self.op1.price * (1 - 100 / (100 + self.op1.tax_rate))) == self.op1.tax_value
         assert self.order.total == self.op1.price + self.op2.price
@@ -1290,7 +1290,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.ticket
+        assert self.op1.product == self.ticket
         assert self.op1.price == Decimal('10.70')
         assert round_decimal(self.op1.price * (1 - 100 / (100 + self.op1.tax_rate))) == self.op1.tax_value
         assert self.order.total == self.op1.price + self.op2.price
@@ -1397,7 +1397,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_quota_full(self):
@@ -1407,7 +1407,7 @@ class OrderChangeManagerTests(TestCase):
         with self.assertRaises(OrderError):
             self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.ticket
+        assert self.op1.product == self.ticket
 
     @classscope(attr='o')
     def test_quota_ignore(self):
@@ -1416,7 +1416,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.commit(check_quotas=False)
         self.op1.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_quota_full_but_in_same(self):
@@ -1426,7 +1426,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_multiple_quotas_shared_full(self):
@@ -1438,7 +1438,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_multiple_quotas_unshared_full(self):
@@ -1451,7 +1451,7 @@ class OrderChangeManagerTests(TestCase):
         with self.assertRaises(OrderError):
             self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.ticket
+        assert self.op1.product == self.ticket
 
     @classscope(attr='o')
     def test_multiple_items_success(self):
@@ -1462,8 +1462,8 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.op1.refresh_from_db()
         self.op2.refresh_from_db()
-        assert self.op1.item == self.shirt
-        assert self.op2.item == self.shirt
+        assert self.op1.product == self.shirt
+        assert self.op2.product == self.shirt
 
     @classscope(attr='o')
     def test_multiple_items_quotas_partially_full(self):
@@ -1475,8 +1475,8 @@ class OrderChangeManagerTests(TestCase):
             self.ocm.commit()
         self.op1.refresh_from_db()
         self.op2.refresh_from_db()
-        assert self.op1.item == self.ticket
-        assert self.op2.item == self.ticket
+        assert self.op1.product == self.ticket
+        assert self.op2.product == self.ticket
 
     @classscope(attr='o')
     def test_payment_fee_calculation(self):
@@ -1515,7 +1515,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.change_item(self.op1, self.shirt, None)
         self.ocm.commit()
         self.op1.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
 
     @classscope(attr='o')
     def test_change_price_to_free_marked_as_paid(self):
@@ -1610,7 +1610,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == self.shirt.default_price
         assert nop.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(nop.price * (1 - 100 / (100 + self.shirt.tax_rule.rate))) == nop.tax_value
@@ -1626,7 +1626,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == Decimal('14.28')
         assert nop.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(nop.price * (1 - 100 / (100 + self.shirt.tax_rule.rate))) == nop.tax_value
@@ -1641,7 +1641,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == Decimal('10.08')
         assert nop.tax_rate == Decimal('0.00')
         assert nop.tax_value == Decimal('0.00')
@@ -1655,7 +1655,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == Decimal('13.00')
         assert nop.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(nop.price * (1 - 100 / (100 + self.shirt.tax_rule.rate))) == nop.tax_value
@@ -1670,7 +1670,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == Decimal('11.90')
         assert nop.tax_rate == self.shirt.tax_rule.rate
         assert round_decimal(nop.price * (1 - 100 / (100 + self.shirt.tax_rule.rate))) == nop.tax_value
@@ -1694,7 +1694,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.addon_to == self.op1
 
     @classscope(attr='o')
@@ -1726,7 +1726,7 @@ class OrderChangeManagerTests(TestCase):
         self.order.refresh_from_db()
         assert self.order.positions.count() == 3
         nop = self.order.positions.last()
-        assert nop.item == self.ticket
+        assert nop.product == self.ticket
         assert nop.price == Decimal('12.00')
         assert nop.subevent == se1
 
@@ -1892,8 +1892,8 @@ class OrderChangeManagerTests(TestCase):
 
     @classscope(attr='o')
     def test_split_require_approval(self):
-        self.op2.item.require_approval = True
-        self.op2.item.save()
+        self.op2.product.require_approval = True
+        self.op2.product.save()
         self.order.require_approval = True
         self.order.save()
         old_secret = self.op2.secret
@@ -2405,7 +2405,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.add_position(self.stalls, None, price=Decimal('13.00'), seat=self.seat_a3)
         self.ocm.commit()
         op3 = self.order.positions.last()
-        assert op3.item == self.stalls
+        assert op3.product == self.stalls
         assert op3.seat == self.seat_a3
 
     @classscope(attr='o')
@@ -2722,7 +2722,7 @@ class OrderChangeManagerTests(TestCase):
         self.ocm.commit()
         self.order.refresh_from_db()
         nop = self.order.positions.first()
-        assert nop.item == self.shirt
+        assert nop.product == self.shirt
         assert nop.price == Decimal('23.00')
         assert nop.tax_rule != self.shirt.tax_rule
         assert nop.tax_rate == self.tr7.rate
@@ -3306,7 +3306,7 @@ class OrderReactivateTest(TestCase):
         reactivate_order(self.order)
         self.order.refresh_from_db()
         assert self.order.status == Order.STATUS_PENDING
-        assert self.order.all_logentries().last().action_type == 'pretix.event.order.reactivated'
+        assert self.order.all_logentries().last().action_type == 'eventyay.event.order.reactivated'
         assert self.order.invoices.count() == 3
         assert self.order.expires > e > now()
 
@@ -3316,7 +3316,7 @@ class OrderReactivateTest(TestCase):
         reactivate_order(self.order)
         self.order.refresh_from_db()
         assert self.order.status == Order.STATUS_PAID
-        assert self.order.all_logentries().last().action_type == 'pretix.event.order.reactivated'
+        assert self.order.all_logentries().last().action_type == 'eventyay.event.order.reactivated'
         assert self.order.invoices.count() == 3
         assert not self.order.cancellation_date
 
@@ -3329,7 +3329,7 @@ class OrderReactivateTest(TestCase):
 
     @classscope(attr='o')
     def test_reactivate_seat_taken(self):
-        self.op1.item = self.stalls
+        self.op1.product = self.stalls
         self.op1.seat = self.seat_a1
         self.op1.save()
         self.seat_a1.blocked = True

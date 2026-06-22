@@ -53,7 +53,7 @@ class MailSettingPreviewTest(SoupTest):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
             {
-                'item': 'dummy',
+                'product': 'dummy',
                 'mail_text_order_free_0': 'sss',
                 'mail_text_order_free_1': 'ttt',
             },
@@ -63,7 +63,7 @@ class MailSettingPreviewTest(SoupTest):
     def test_invalid_item_field(self):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_order_free', 'mail_text_order_free_w': 'sss'},
+            {'product': 'mail_text_order_free', 'mail_text_order_free_w': 'sss'},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -73,7 +73,7 @@ class MailSettingPreviewTest(SoupTest):
     def test_invalid_language_index(self):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_order_free', 'mail_text_order_free_1': 'sss'},
+            {'product': 'mail_text_order_free', 'mail_text_order_free_1': 'sss'},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -91,7 +91,7 @@ class MailSettingPreviewTest(SoupTest):
         dummy_text = 'This is dummy sentence for test'
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_order_free', 'mail_text_order_free_0': dummy_text},
+            {'product': 'mail_text_order_free', 'mail_text_order_free_0': dummy_text},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -104,7 +104,7 @@ class MailSettingPreviewTest(SoupTest):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.locale_event.slug),
             {
-                'item': 'mail_text_order_free',
+                'product': 'mail_text_order_free',
                 'mail_text_order_free_0': dummy_text,
                 'mail_text_order_free_2': dummy_text,
             },
@@ -121,7 +121,7 @@ class MailSettingPreviewTest(SoupTest):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.locale_event.slug),
             {
-                'item': 'mail_text_order_placed',
+                'product': 'mail_text_order_placed',
                 'mail_text_order_placed_0': dummy_text,
                 'mail_text_order_placed_2': dummy_text,
             },
@@ -140,7 +140,7 @@ class MailSettingPreviewTest(SoupTest):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.locale_event.slug),
             {
-                'item': 'mail_text_order_placed',
+                'product': 'mail_text_order_placed',
                 'mail_text_order_placed_0': dummy_text,
                 'mail_text_order_placed_2': dummy_text,
             },
@@ -156,7 +156,7 @@ class MailSettingPreviewTest(SoupTest):
         text = '{event}{total}{currency}{expire_date}{payment_info}{url}{invoice_name}{invoice_company}'
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_order_placed', 'mail_text_order_placed_0': text},
+            {'product': 'mail_text_order_placed', 'mail_text_order_placed_0': text},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -168,7 +168,7 @@ class MailSettingPreviewTest(SoupTest):
         text = '{event}{url}{invoice_name}{invoice_company}{payment_info}'
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_order_paid', 'mail_text_order_paid_0': text},
+            {'product': 'mail_text_order_paid', 'mail_text_order_paid_0': text},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -180,7 +180,7 @@ class MailSettingPreviewTest(SoupTest):
         text = '{event}{url}{invoice_name}{invoice_company}'
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_order_free', 'mail_text_order_free_0': text},
+            {'product': 'mail_text_order_free', 'mail_text_order_free_0': text},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -192,7 +192,7 @@ class MailSettingPreviewTest(SoupTest):
         text = '{event}{url}{invoice_name}{invoice_company}'
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_resend_link', 'mail_text_resend_link_0': text},
+            {'product': 'mail_text_resend_link', 'mail_text_resend_link_0': text},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -205,7 +205,7 @@ class MailSettingPreviewTest(SoupTest):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
             {
-                'item': 'mail_text_resend_all_links',
+                'product': 'mail_text_resend_all_links',
                 'mail_text_resend_all_links_0': text,
             },
         )
@@ -219,7 +219,7 @@ class MailSettingPreviewTest(SoupTest):
         text = '{event}{url}{invoice_name}{invoice_company}'
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_order_changed', 'mail_text_order_changed_0': text},
+            {'product': 'mail_text_order_changed', 'mail_text_order_changed_0': text},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -232,7 +232,7 @@ class MailSettingPreviewTest(SoupTest):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
             {
-                'item': 'mail_text_order_expire_warning',
+                'product': 'mail_text_order_expire_warning',
                 'mail_text_order_expire_warning_0': text,
             },
         )
@@ -246,7 +246,7 @@ class MailSettingPreviewTest(SoupTest):
         text = '{event}{url}{product}{hours}{code}'
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_waiting_list', 'mail_text_waiting_list_0': text},
+            {'product': 'mail_text_waiting_list', 'mail_text_waiting_list_0': text},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -258,7 +258,7 @@ class MailSettingPreviewTest(SoupTest):
         text = '{event}{code}{url}'
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_order_canceled', 'mail_text_order_canceled_0': text},
+            {'product': 'mail_text_order_canceled', 'mail_text_order_canceled_0': text},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -270,7 +270,7 @@ class MailSettingPreviewTest(SoupTest):
         text = '{event1}'
         response = self.client.post(
             self.target.format(self.orga1.slug, self.event1.slug),
-            {'item': 'mail_text_waiting_list', 'mail_text_waiting_list_0': text},
+            {'product': 'mail_text_waiting_list', 'mail_text_waiting_list_0': text},
         )
         assert response.status_code == 200
         res = json.loads(response.content.decode())
@@ -283,7 +283,7 @@ class MailSettingPreviewTest(SoupTest):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.locale_event.slug),
             {
-                'item': 'mail_text_order_placed',
+                'product': 'mail_text_order_placed',
                 'mail_text_order_placed_0': dummy_text,
                 'mail_text_order_placed_2': dummy_text,
             },
@@ -299,7 +299,7 @@ class MailSettingPreviewTest(SoupTest):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.locale_event.slug),
             {
-                'item': 'mail_text_order_expire_warning',
+                'product': 'mail_text_order_expire_warning',
                 'mail_text_order_expire_warning_0': dummy_text,
                 'mail_text_order_expire_warning_2': dummy_text,
             },
@@ -315,7 +315,7 @@ class MailSettingPreviewTest(SoupTest):
         response = self.client.post(
             self.target.format(self.orga1.slug, self.locale_event.slug),
             {
-                'item': 'mail_text_order_paid',
+                'product': 'mail_text_order_paid',
                 'mail_text_order_paid_0': dummy_text,
                 'mail_text_order_paid_2': dummy_text,
             },

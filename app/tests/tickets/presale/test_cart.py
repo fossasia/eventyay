@@ -177,7 +177,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
 
@@ -214,7 +214,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
             self.assertEqual(len(objs), 1)
-            self.assertEqual(objs[0].item, self.ticket)
+            self.assertEqual(objs[0].product, self.ticket)
             self.assertIsNone(objs[0].variation)
             self.assertEqual(objs[0].price, 23)
             self.assertEqual(objs[0].attendee_email, 'foo@example.com')
@@ -256,7 +256,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
             self.assertEqual(len(objs), 1)
-            self.assertEqual(objs[0].item, self.ticket)
+            self.assertEqual(objs[0].product, self.ticket)
             self.assertIsNone(objs[0].variation)
             self.assertEqual(objs[0].price, 23)
             assert not objs[0].attendee_email
@@ -297,7 +297,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
             self.assertEqual(len(objs), 1)
-            self.assertEqual(objs[0].item, self.ticket)
+            self.assertEqual(objs[0].product, self.ticket)
             self.assertIsNone(objs[0].variation)
             self.assertEqual(objs[0].price, 23)
             self.assertEqual(objs[0].attendee_email, 'foo@example.com')
@@ -422,7 +422,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
         self.assertEqual(objs[0].subevent, se)
@@ -447,7 +447,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
         self.assertEqual(objs[0].subevent, se)
@@ -587,7 +587,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
         self.assertEqual(objs[0].subevent, se)
@@ -678,7 +678,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 42)
         self.assertEqual(objs[0].subevent, se)
@@ -704,7 +704,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 24)
 
@@ -729,7 +729,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
 
@@ -754,7 +754,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
 
@@ -892,7 +892,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.shirt)
+        self.assertEqual(objs[0].product, self.shirt)
         self.assertEqual(objs[0].variation, self.shirt_red)
         self.assertEqual(objs[0].price, 14)
 
@@ -921,7 +921,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.shirt)
+        self.assertEqual(objs[0].product, self.shirt)
         self.assertEqual(objs[0].variation, self.shirt_red)
         self.assertEqual(objs[0].price, 16)
 
@@ -964,7 +964,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.shirt)
+        self.assertEqual(objs[0].product, self.shirt)
         self.assertEqual(objs[0].variation, self.shirt_red)
         self.assertEqual(objs[0].price, 42)
         self.assertEqual(objs[0].subevent, se)
@@ -989,7 +989,7 @@ class CartTest(CartTestMixin, TestCase):
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 2)
         for obj in objs:
-            self.assertEqual(obj.item, self.ticket)
+            self.assertEqual(obj.product, self.ticket)
             self.assertIsNone(obj.variation)
             self.assertEqual(obj.price, 23)
 
@@ -1013,9 +1013,9 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 3)
-        self.assertIn(self.shirt, [obj.item for obj in objs])
+        self.assertIn(self.shirt, [obj.product for obj in objs])
         self.assertIn(self.shirt_red, [obj.variation for obj in objs])
-        self.assertIn(self.ticket, [obj.item for obj in objs])
+        self.assertIn(self.ticket, [obj.product for obj in objs])
 
     def test_fuzzy_input(self):
         response = self.client.post(
@@ -1501,7 +1501,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
 
@@ -1531,7 +1531,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
 
@@ -1568,7 +1568,7 @@ class CartTest(CartTestMixin, TestCase):
         )
         with scopes_disabled():
             obj = CartPosition.objects.get(id=cp1.id)
-        self.assertEqual(obj.item, self.ticket)
+        self.assertEqual(obj.product, self.ticket)
         self.assertIsNone(obj.variation)
         self.assertEqual(obj.price, 23)
         self.assertGreater(obj.expires, now())
@@ -1651,7 +1651,7 @@ class CartTest(CartTestMixin, TestCase):
         )
         with scopes_disabled():
             obj = CartPosition.objects.get(id=cp1.id)
-        self.assertEqual(obj.item, self.ticket)
+        self.assertEqual(obj.product, self.ticket)
         self.assertIsNone(obj.variation)
         self.assertEqual(obj.price, 23)
         self.assertEqual(obj.subevent, se)
@@ -1868,7 +1868,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
 
@@ -1909,7 +1909,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.shirt)
+        self.assertEqual(objs[0].product, self.shirt)
         self.assertEqual(objs[0].variation, self.shirt_red)
 
     def test_voucher_quota(self):
@@ -1926,7 +1926,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.shirt)
+        self.assertEqual(objs[0].product, self.shirt)
         self.assertEqual(objs[0].variation, self.shirt_red)
 
     def test_voucher_quota_invalid_item(self):
@@ -2005,7 +2005,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, Decimal('12.00'))
 
@@ -2028,7 +2028,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, Decimal('0.00'))
 
@@ -2051,7 +2051,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, Decimal('20.70'))
 
@@ -2074,7 +2074,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, Decimal('13.00'))
 
@@ -2110,7 +2110,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, Decimal('21.00'))
         self.assertEqual(objs[0].price_before_voucher, Decimal('23.00'))
@@ -2147,7 +2147,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, Decimal('41.00'))
         self.assertEqual(objs[0].price_before_voucher, Decimal('41.00'))
@@ -2184,7 +2184,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, Decimal('20.70'))
         self.assertEqual(objs[0].price_before_voucher, Decimal('23.00'))
@@ -2280,7 +2280,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, Decimal('12.00'))
 
@@ -2317,7 +2317,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, Decimal('12.00'))
 
@@ -2340,7 +2340,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.ticket)
+        self.assertEqual(objs[0].product, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, Decimal('12.00'))
 
@@ -2376,7 +2376,7 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.shirt)
+        self.assertEqual(objs[0].product, self.shirt)
         self.assertEqual(objs[0].variation, self.shirt_red)
 
     def test_require_voucher_failed(self):
@@ -2428,12 +2428,12 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
         self.assertEqual(len(objs), 1)
-        self.assertEqual(objs[0].item, self.shirt)
+        self.assertEqual(objs[0].product, self.shirt)
         self.assertEqual(objs[0].variation, self.shirt_red)
 
     def test_hide_without_voucher_failed_because_of_voucher(self):
         with scopes_disabled():
-            v = Voucher.objects.create(product=self.shirt, event=self.event, show_hidden_items=False)
+            v = Voucher.objects.create(product=self.shirt, event=self.event, show_hidden_products=False)
         self.shirt.hide_without_voucher = True
         self.shirt.save()
         self.client.post(
@@ -3007,10 +3007,10 @@ class CartAddonTest(CartTestMixin, TestCase):
             cart_id=self.session_key,
         )
 
-        self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
         self.cm.commit()
         cp2 = cp1.addons.first()
-        assert cp2.item == self.workshop1
+        assert cp2.product == self.workshop1
         assert cp2.price == 0
 
     @classscope(attr='orga')
@@ -3025,7 +3025,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             cart_id=self.session_key,
         )
 
-        self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
         self.cm.commit()
         cp2 = cp1.addons.first()
         assert cp2.price == 0
@@ -3049,10 +3049,10 @@ class CartAddonTest(CartTestMixin, TestCase):
             cart_id=self.session_key,
         )
 
-        self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
         self.cm.commit()
         cp2 = cp1.addons.first()
-        assert cp2.item == self.workshop1
+        assert cp2.product == self.workshop1
         assert cp2.price == 12
 
     @classscope(attr='orga')
@@ -3071,10 +3071,10 @@ class CartAddonTest(CartTestMixin, TestCase):
             subevent=se,
         )
 
-        self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
         self.cm.commit()
         cp2 = cp1.addons.first()
-        assert cp2.item == self.workshop1
+        assert cp2.product == self.workshop1
         assert cp2.subevent == se
         assert cp2.price == 12
 
@@ -3096,7 +3096,7 @@ class CartAddonTest(CartTestMixin, TestCase):
         )
 
         with self.assertRaises(CartError):
-            self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+            self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
 
     @classscope(attr='orga')
     def test_wrong_category(self):
@@ -3110,7 +3110,7 @@ class CartAddonTest(CartTestMixin, TestCase):
         self.workshop1.category = self.category
         self.workshop1.save()
         with self.assertRaises(CartError):
-            self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+            self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
 
     @classscope(attr='orga')
     def test_invalid_parent(self):
@@ -3122,7 +3122,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             cart_id='other',
         )
         with self.assertRaises(CartError):
-            self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+            self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
 
     @classscope(attr='orga')
     def test_no_quota_for_addon(self):
@@ -3135,7 +3135,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             cart_id=self.session_key,
         )
         with self.assertRaises(CartError):
-            self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+            self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
 
     @classscope(attr='orga')
     def test_unknown_addon_item(self):
@@ -3147,7 +3147,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             cart_id=self.session_key,
         )
         with self.assertRaises(CartError):
-            self.cm.set_addons([{'addon_to': cp1.pk, 'item': 99999, 'variation': None}])
+            self.cm.set_addons([{'addon_to': cp1.pk, 'product': 99999, 'variation': None}])
 
     @classscope(attr='orga')
     def test_duplicate_items_for_other_cp(self):
@@ -3165,8 +3165,8 @@ class CartAddonTest(CartTestMixin, TestCase):
             event=self.event,
             cart_id=self.session_key,
         )
-        self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
-        self.cm.set_addons([{'addon_to': cp2.pk, 'item': self.workshop1.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp2.pk, 'product': self.workshop1.pk, 'variation': None}])
         self.cm.commit()
 
     @classscope(attr='orga')
@@ -3185,12 +3185,12 @@ class CartAddonTest(CartTestMixin, TestCase):
             [
                 {
                     'addon_to': cp1.pk,
-                    'item': self.workshop3.pk,
+                    'product': self.workshop3.pk,
                     'variation': self.workshop3a.pk,
                 },
                 {
                     'addon_to': cp1.pk,
-                    'item': self.workshop3.pk,
+                    'product': self.workshop3.pk,
                     'variation': self.workshop3b.pk,
                 },
             ]
@@ -3215,7 +3215,7 @@ class CartAddonTest(CartTestMixin, TestCase):
                 [
                     {
                         'addon_to': cp1.pk,
-                        'item': self.workshop3.pk,
+                        'product': self.workshop3.pk,
                         'variation': self.workshop3a.pk,
                         'count': 3,
                     },
@@ -3243,7 +3243,7 @@ class CartAddonTest(CartTestMixin, TestCase):
                 [
                     {
                         'addon_to': cp1.pk,
-                        'item': self.workshop3.pk,
+                        'product': self.workshop3.pk,
                         'variation': self.workshop3a.pk,
                         'count': 2,
                     },
@@ -3272,7 +3272,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             [
                 {
                     'addon_to': cp1.pk,
-                    'item': self.workshop3.pk,
+                    'product': self.workshop3.pk,
                     'variation': self.workshop3a.pk,
                     'count': 3,
                     'price': '24.00',
@@ -3288,7 +3288,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             [
                 {
                     'addon_to': cp1.pk,
-                    'item': self.workshop3.pk,
+                    'product': self.workshop3.pk,
                     'variation': self.workshop3a.pk,
                     'count': 3,
                     'price': '5.00',
@@ -3315,7 +3315,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             [
                 {
                     'addon_to': cp1.pk,
-                    'item': self.workshop3.pk,
+                    'product': self.workshop3.pk,
                     'variation': self.workshop3a.pk,
                     'count': 3,
                 },
@@ -3329,7 +3329,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             [
                 {
                     'addon_to': cp1.pk,
-                    'item': self.workshop3.pk,
+                    'product': self.workshop3.pk,
                     'variation': self.workshop3a.pk,
                     'count': 4,
                 },
@@ -3343,7 +3343,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             [
                 {
                     'addon_to': cp1.pk,
-                    'item': self.workshop3.pk,
+                    'product': self.workshop3.pk,
                     'variation': self.workshop3a.pk,
                     'count': 2,
                 },
@@ -3366,8 +3366,8 @@ class CartAddonTest(CartTestMixin, TestCase):
         with self.assertRaises(CartError):
             self.cm.set_addons(
                 [
-                    {'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None},
-                    {'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None},
+                    {'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None},
+                    {'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None},
                 ]
             )
         with self.assertRaises(CartError):
@@ -3375,12 +3375,12 @@ class CartAddonTest(CartTestMixin, TestCase):
                 [
                     {
                         'addon_to': cp1.pk,
-                        'item': self.workshop3.pk,
+                        'product': self.workshop3.pk,
                         'variation': self.workshop3a.pk,
                     },
                     {
                         'addon_to': cp1.pk,
-                        'item': self.workshop3.pk,
+                        'product': self.workshop3.pk,
                         'variation': self.workshop3b.pk,
                     },
                 ]
@@ -3398,8 +3398,8 @@ class CartAddonTest(CartTestMixin, TestCase):
         with self.assertRaises(CartError):
             self.cm.set_addons(
                 [
-                    {'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None},
-                    {'addon_to': cp1.pk, 'item': self.workshop2.pk, 'variation': None},
+                    {'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None},
+                    {'addon_to': cp1.pk, 'product': self.workshop2.pk, 'variation': None},
                 ]
             )
 
@@ -3407,8 +3407,8 @@ class CartAddonTest(CartTestMixin, TestCase):
         self.addon1.save()
         self.cm.set_addons(
             [
-                {'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None},
-                {'addon_to': cp1.pk, 'item': self.workshop2.pk, 'variation': None},
+                {'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None},
+                {'addon_to': cp1.pk, 'product': self.workshop2.pk, 'variation': None},
             ]
         )
 
@@ -3425,12 +3425,12 @@ class CartAddonTest(CartTestMixin, TestCase):
         self.addon1.max_count = 9
         self.addon1.save()
         with self.assertRaises(CartError):
-            self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop2.pk, 'variation': None}])
+            self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop2.pk, 'variation': None}])
 
         self.cm.set_addons(
             [
-                {'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None},
-                {'addon_to': cp1.pk, 'item': self.workshop2.pk, 'variation': None},
+                {'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None},
+                {'addon_to': cp1.pk, 'product': self.workshop2.pk, 'variation': None},
             ]
         )
 
@@ -3518,11 +3518,11 @@ class CartAddonTest(CartTestMixin, TestCase):
             cart_id=self.session_key,
             addon_to=cp1,
         )
-        self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop2.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop2.pk, 'variation': None}])
         self.cm.commit()
         cp1.refresh_from_db()
         assert cp1.addons.count() == 1
-        assert cp1.addons.first().item == self.workshop2
+        assert cp1.addons.first().product == self.workshop2
 
     @classscope(attr='orga')
     def test_unchanged(self):
@@ -3541,7 +3541,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             cart_id=self.session_key,
             addon_to=cp1,
         )
-        self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
         assert not self.cm._operations
 
     @classscope(attr='orga')
@@ -3554,7 +3554,7 @@ class CartAddonTest(CartTestMixin, TestCase):
             event=self.event,
             cart_id=self.session_key,
         )
-        self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
         self.cm.commit()
 
     @classscope(attr='orga')
@@ -3568,7 +3568,7 @@ class CartAddonTest(CartTestMixin, TestCase):
         )
         self.workshopquota.size = 0
         self.workshopquota.save()
-        self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
         with self.assertRaises(CartError):
             self.cm.commit()
 
@@ -3591,7 +3591,7 @@ class CartAddonTest(CartTestMixin, TestCase):
         )
         self.workshopquota.size = 0
         self.workshopquota.save()
-        self.cm.set_addons([{'addon_to': cp1.pk, 'item': self.workshop1.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp1.pk, 'product': self.workshop1.pk, 'variation': None}])
         self.cm.commit()
 
     @classscope(attr='orga')
@@ -3630,15 +3630,15 @@ class CartAddonTest(CartTestMixin, TestCase):
         self.workshopquota.save()
         self.cm.set_addons(
             [
-                {'addon_to': cp1.pk, 'item': self.workshop2.pk, 'variation': None},
-                {'addon_to': cp2.pk, 'item': self.workshop1.pk, 'variation': None},
+                {'addon_to': cp1.pk, 'product': self.workshop2.pk, 'variation': None},
+                {'addon_to': cp2.pk, 'product': self.workshop1.pk, 'variation': None},
             ]
         )
         self.cm.commit()
         assert cp1.addons.count() == 1
         assert cp2.addons.count() == 1
-        assert cp1.addons.first().item == self.workshop2
-        assert cp2.addons.first().item == self.workshop1
+        assert cp1.addons.first().product == self.workshop2
+        assert cp2.addons.first().product == self.workshop1
 
     @classscope(attr='orga')
     def test_expand_expired(self):
@@ -3705,7 +3705,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.transquota.products.add(self.trans)
         self.bundle1 = ItemBundle.objects.create(
             base_item=self.ticket,
-            bundled_item=self.trans,
+            bundled_product=self.trans,
             designated_price=1.5,
             count=1,
         )
@@ -3713,59 +3713,59 @@ class CartBundleTest(CartTestMixin, TestCase):
 
     @classscope(attr='orga')
     def test_simple_bundle(self):
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         self.cm.commit()
         cp = CartPosition.objects.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5
         assert cp.addons.count() == 1
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
 
     @classscope(attr='orga')
     def test_simple_bundle_main_enforce_free_price_minimum(self):
         self.ticket.free_price = True
         self.ticket.save()
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'price': '21.50', 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'price': '21.50', 'count': 1}])
         self.cm.commit()
         cp = CartPosition.objects.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5
         assert cp.addons.count() == 1
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
 
     @classscope(attr='orga')
     def test_voucher_on_base_product(self):
         v = self.event.vouchers.create(code='foo', product=self.ticket)
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'voucher': v.code, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'voucher': v.code, 'count': 1}])
         self.cm.commit()
         cp = CartPosition.objects.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5
         assert cp.addons.count() == 1
         assert cp.voucher == v
         assert cp.price_before_voucher == 23 - 1.5
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
         assert not a.voucher
 
     @classscope(attr='orga')
     def test_discounted_voucher_on_base_product(self):
         v = self.event.vouchers.create(code='foo', product=self.ticket, price_mode='subtract', value=Decimal('1.50'))
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'voucher': v.code, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'voucher': v.code, 'count': 1}])
         self.cm.commit()
         cp = CartPosition.objects.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5 - 1.5
         assert cp.addons.count() == 1
         assert cp.voucher == v
         assert cp.price_before_voucher == 23 - 1.5
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
         assert not a.voucher
 
@@ -3775,14 +3775,14 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.transquota.variations.add(v)
         self.bundle1.bundled_variation = v
         self.bundle1.save()
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         self.cm.commit()
         cp = CartPosition.objects.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5
         assert cp.addons.count() == 1
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.variation == v
         assert a.price == 1.5
 
@@ -3790,54 +3790,54 @@ class CartBundleTest(CartTestMixin, TestCase):
     def test_multiple_bundles(self):
         ItemBundle.objects.create(
             base_item=self.ticket,
-            bundled_item=self.trans,
+            bundled_product=self.trans,
             designated_price=1.5,
             count=1,
         )
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         self.cm.commit()
         cp = CartPosition.objects.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5 - 1.5
         assert cp.addons.count() == 2
         a = cp.addons.first()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
         a = cp.addons.last()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
 
     @classscope(attr='orga')
     def test_bundle_with_count(self):
         self.bundle1.count = 2
         self.bundle1.save()
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         self.cm.commit()
         cp = CartPosition.objects.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5 - 1.5
         assert cp.addons.count() == 2
         a = cp.addons.first()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
         a = cp.addons.last()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
 
     @classscope(attr='orga')
     def test_bundle_position_multiple(self):
         self.bundle1.count = 2
         self.bundle1.save()
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 2}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 2}])
         self.cm.commit()
         assert CartPosition.objects.filter(addon_to__isnull=True).count() == 2
         assert CartPosition.objects.count() == 6
         cp = CartPosition.objects.filter(addon_to__isnull=True).first()
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5 - 1.5
         assert cp.addons.count() == 2
         a = cp.addons.first()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
 
     @classscope(attr='orga')
@@ -3845,13 +3845,13 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.ticket.free_price = True
         self.ticket.default_price = 1
         self.ticket.save()
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1, 'price': 20}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1, 'price': 20}])
         self.cm.commit()
         cp = CartPosition.objects.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 20 - 1.5
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
 
     @classscope(attr='orga')
@@ -3859,13 +3859,13 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.ticket.free_price = True
         self.ticket.default_price = 1
         self.ticket.save()
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1, 'price': 1.2}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1, 'price': 1.2}])
         self.cm.commit()
         cp = CartPosition.objects.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == Decimal('0.00')
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == Decimal('1.50')
 
     @classscope(attr='orga')
@@ -3875,7 +3875,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.cm.add_new_items(
             [
                 {
-                    'item': self.ticket.pk,
+                    'product': self.ticket.pk,
                     'variation': None,
                     'count': 1,
                 }
@@ -3883,10 +3883,10 @@ class CartBundleTest(CartTestMixin, TestCase):
         )
         self.cm.commit()
         cp = CartPosition.objects.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 0
 
     @classscope(attr='orga')
@@ -3896,7 +3896,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.cm.add_new_items(
             [
                 {
-                    'item': self.ticket.pk,
+                    'product': self.ticket.pk,
                     'variation': None,
                     'count': 1,
                 }
@@ -3915,7 +3915,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.cm.add_new_items(
             [
                 {
-                    'item': self.ticket.pk,
+                    'product': self.ticket.pk,
                     'variation': None,
                     'count': 1,
                 }
@@ -3934,7 +3934,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.cm.add_new_items(
             [
                 {
-                    'item': self.ticket.pk,
+                    'product': self.ticket.pk,
                     'variation': None,
                     'count': 2,
                 }
@@ -3949,13 +3949,13 @@ class CartBundleTest(CartTestMixin, TestCase):
     def test_multiple_bundles_sold_out_partially(self):
         ItemBundle.objects.create(
             base_item=self.ticket,
-            bundled_item=self.trans,
+            bundled_product=self.trans,
             designated_price=1.5,
             count=1,
         )
         self.transquota.size = 1
         self.transquota.save()
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         with self.assertRaises(CartError):
             self.cm.commit()
         assert not CartPosition.objects.exists()
@@ -3965,7 +3965,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.ticket.require_bundling = True
         self.ticket.save()
         with self.assertRaises(CartError):
-            self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+            self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         assert not CartPosition.objects.exists()
 
     @classscope(attr='orga')
@@ -3973,7 +3973,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.ticket.active = False
         self.ticket.save()
         with self.assertRaises(CartError):
-            self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+            self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         assert not CartPosition.objects.exists()
 
     @classscope(attr='orga')
@@ -3989,19 +3989,19 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.ticket.save()
         self.trans.tax_rule = tr7
         self.trans.save()
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         self.cm.commit()
         assert CartPosition.objects.filter(addon_to__isnull=True).count() == 1
         assert CartPosition.objects.count() == 2
         cp = CartPosition.objects.filter(addon_to__isnull=True).first()
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == Decimal('21.50')
         assert cp.tax_rate == Decimal('19.00')
         assert cp.tax_value == Decimal('3.43')
         assert cp.addons.count() == 1
         assert cp.includes_tax
         a = cp.addons.first()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
         assert a.tax_rate == Decimal('7.00')
         assert a.tax_value == Decimal('0.10')
@@ -4015,21 +4015,21 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.trans.save()
         ItemAddOn.objects.create(base_item=self.ticket, addon_category=cat)
 
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         self.cm.commit()
 
         cp = CartPosition.objects.filter(addon_to__isnull=True).first()
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == Decimal('21.50')
         b = cp.addons.first()
-        assert b.item == self.trans
+        assert b.product == self.trans
 
         self.cm = CartManager(event=self.event, cart_id=self.session_key)
-        self.cm.set_addons([{'addon_to': cp.pk, 'item': self.trans.pk, 'variation': None}])
+        self.cm.set_addons([{'addon_to': cp.pk, 'product': self.trans.pk, 'variation': None}])
         self.cm.commit()
         assert cp.addons.count() == 2
         a = cp.addons.exclude(pk=b.pk).get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 2.5
 
     @classscope(attr='orga')
@@ -4370,7 +4370,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.trans.save()
 
         self.cm.invoice_address = ia
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         self.cm.commit()
 
         cp = CartPosition.objects.filter(addon_to__isnull=True).get()
@@ -4403,7 +4403,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.trans.save()
 
         self.cm.invoice_address = ia
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         self.cm.commit()
 
         cp = CartPosition.objects.filter(addon_to__isnull=True).get()
@@ -4590,7 +4590,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.trans.save()
 
         self.cm.invoice_address = ia
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         self.cm.commit()
 
         cp = CartPosition.objects.filter(addon_to__isnull=True).get()
@@ -4626,7 +4626,7 @@ class CartBundleTest(CartTestMixin, TestCase):
         self.trans.save()
 
         self.cm.invoice_address = ia
-        self.cm.add_new_items([{'item': self.ticket.pk, 'variation': None, 'count': 1}])
+        self.cm.add_new_items([{'product': self.ticket.pk, 'variation': None, 'count': 1}])
         self.cm.commit()
 
         cp = CartPosition.objects.filter(addon_to__isnull=True).get()
@@ -4661,7 +4661,7 @@ class CartSeatingTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
             self.assertEqual(len(objs), 1)
-            self.assertEqual(objs[0].item, self.ticket)
+            self.assertEqual(objs[0].product, self.ticket)
             self.assertEqual(objs[0].seat, self.seat_a1)
             self.assertIsNone(objs[0].variation)
             self.assertEqual(objs[0].price, 23)
@@ -4820,7 +4820,7 @@ class CartSeatingTest(CartTestMixin, TestCase):
         with scopes_disabled():
             objs = list(CartPosition.objects.filter(cart_id=self.session_key, event=self.event))
             self.assertEqual(len(objs), 1)
-            self.assertEqual(objs[0].item, self.ticket)
+            self.assertEqual(objs[0].product, self.ticket)
             self.assertEqual(objs[0].seat, self.seat_a1)
             self.assertEqual(objs[0].variation, v1)
             self.assertEqual(objs[0].price, 23)

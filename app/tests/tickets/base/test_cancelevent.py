@@ -146,8 +146,8 @@ class EventCancelTests(TestCase):
         assert r.amount == Decimal('46.00')
         assert r.source == OrderRefund.REFUND_SOURCE_ADMIN
         assert r.payment == p1
-        assert self.order.all_logentries().filter(action_type='pretix.event.order.refund.created').exists()
-        assert not self.order.all_logentries().filter(action_type='pretix.event.order.refund.requested').exists()
+        assert self.order.all_logentries().filter(action_type='eventyay.event.order.refund.created').exists()
+        assert not self.order.all_logentries().filter(action_type='eventyay.event.order.refund.requested').exists()
         assert gc.value == Decimal('46.00')
 
     @classscope(attr='o')
@@ -305,8 +305,8 @@ class EventCancelTests(TestCase):
         assert r.amount == Decimal('31.40')
         assert r.source == OrderRefund.REFUND_SOURCE_ADMIN
         assert r.payment == p1
-        assert self.order.all_logentries().filter(action_type='pretix.event.order.refund.created').exists()
-        assert not self.order.all_logentries().filter(action_type='pretix.event.order.refund.requested').exists()
+        assert self.order.all_logentries().filter(action_type='eventyay.event.order.refund.created').exists()
+        assert not self.order.all_logentries().filter(action_type='eventyay.event.order.refund.requested').exists()
         assert gc.value == Decimal('31.40')
 
     @classscope(attr='o')
@@ -376,8 +376,8 @@ class EventCancelTests(TestCase):
         assert r.amount == Decimal('36.90')
         assert r.source == OrderRefund.REFUND_SOURCE_ADMIN
         assert r.payment == p1
-        assert self.order.all_logentries().filter(action_type='pretix.event.order.refund.created').exists()
-        assert not self.order.all_logentries().filter(action_type='pretix.event.order.refund.requested').exists()
+        assert self.order.all_logentries().filter(action_type='eventyay.event.order.refund.created').exists()
+        assert not self.order.all_logentries().filter(action_type='eventyay.event.order.refund.requested').exists()
         assert gc.value == Decimal('36.90')
 
     @classscope(attr='o')
@@ -750,8 +750,8 @@ class SubEventCancelTests(TestCase):
         assert r.amount == Decimal('16.20')
         assert r.source == OrderRefund.REFUND_SOURCE_ADMIN
         assert r.payment == p1
-        assert self.order.all_logentries().filter(action_type='pretix.event.order.refund.created').exists()
-        assert not self.order.all_logentries().filter(action_type='pretix.event.order.refund.requested').exists()
+        assert self.order.all_logentries().filter(action_type='eventyay.event.order.refund.created').exists()
+        assert not self.order.all_logentries().filter(action_type='eventyay.event.order.refund.requested').exists()
         assert gc.value == Decimal('16.20')
         assert self.order.positions.filter(subevent=self.se2).count() == 1
         assert self.order.positions.filter(subevent=self.se1).count() == 0

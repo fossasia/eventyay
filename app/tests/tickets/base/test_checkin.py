@@ -113,7 +113,7 @@ def test_checkin_invalid_product(position, clist):
     with pytest.raises(CheckInError) as excinfo:
         perform_checkin(position, clist, {})
     assert excinfo.value.code == 'product'
-    clist.limit_products.add(position.item)
+    clist.limit_products.add(position.product)
     perform_checkin(position, clist, {})
 
 
@@ -189,7 +189,7 @@ def test_required_question_missing(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.products.add(position.item)
+    q.products.add(position.product)
     with pytest.raises(RequiredQuestionsError) as excinfo:
         perform_checkin(position, clist, {}, questions_supported=True)
     assert excinfo.value.code == 'incomplete'
@@ -204,7 +204,7 @@ def test_required_question_missing_but_not_supported(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.products.add(position.item)
+    q.products.add(position.product)
     perform_checkin(position, clist, {}, questions_supported=False)
 
 
@@ -216,7 +216,7 @@ def test_required_question_missing_but_forced(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.products.add(position.item)
+    q.products.add(position.product)
     perform_checkin(position, clist, {}, questions_supported=True, force=True)
 
 
@@ -228,7 +228,7 @@ def test_optional_question_missing(event, position, clist):
         required=False,
         ask_during_checkin=True,
     )
-    q.products.add(position.item)
+    q.products.add(position.product)
     with pytest.raises(RequiredQuestionsError) as excinfo:
         perform_checkin(position, clist, {}, questions_supported=True)
     assert excinfo.value.code == 'incomplete'
@@ -243,7 +243,7 @@ def test_required_online_question_missing(event, position, clist):
         required=True,
         ask_during_checkin=False,
     )
-    q.products.add(position.item)
+    q.products.add(position.product)
     perform_checkin(position, clist, {}, questions_supported=True)
 
 
@@ -255,7 +255,7 @@ def test_question_filled_previously(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.products.add(position.item)
+    q.products.add(position.product)
     position.answers.create(question=q, answer='Foo')
     perform_checkin(position, clist, {}, questions_supported=True)
 
@@ -268,7 +268,7 @@ def test_question_filled(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.products.add(position.item)
+    q.products.add(position.product)
     perform_checkin(position, clist, {q: 'Foo'}, questions_supported=True)
     a = position.answers.get()
     assert a.question == q
@@ -412,7 +412,7 @@ def test_rules_product(event, position, clist):
             {
                 'objectList': [
                     {'lookup': ['product', str(i2.pk), 'Ticket']},
-                    {'lookup': ['product', str(position.item.pk), 'Ticket']},
+                    {'lookup': ['product', str(position.product.pk), 'Ticket']},
                 ]
             },
         ]

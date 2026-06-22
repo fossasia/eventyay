@@ -1728,7 +1728,7 @@ class OrderChangeTests(SoupTest):
         )
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.shirt
+        assert self.op1.product == self.shirt
         assert self.op1.price == self.shirt.default_price
         assert self.op1.tax_rate == self.shirt.tax_rule.rate
         assert self.order.total == self.op1.price + self.op2.price
@@ -1781,7 +1781,7 @@ class OrderChangeTests(SoupTest):
         )
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.ticket
+        assert self.op1.product == self.ticket
         assert self.op1.price == Decimal('24.00')
         assert self.order.total == self.op1.price + self.op2.price
 
@@ -1816,7 +1816,7 @@ class OrderChangeTests(SoupTest):
         )
         with scopes_disabled():
             assert self.order.positions.count() == 3
-            assert self.order.positions.last().item == self.shirt
+            assert self.order.positions.last().product == self.shirt
             assert self.order.positions.last().price == 14
 
     def test_recalculate_reverse_charge(self):
@@ -1919,7 +1919,7 @@ class OrderChangeTests(SoupTest):
         )
         self.op1.refresh_from_db()
         self.order.refresh_from_db()
-        assert self.op1.item == self.ticket
+        assert self.op1.product == self.ticket
         assert self.op1.price == Decimal('24.00')
         fee.refresh_from_db()
         self.op1.refresh_from_db()

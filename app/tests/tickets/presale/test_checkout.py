@@ -3333,8 +3333,8 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             target_status_code=200,
         )
         with scopes_disabled():
-            assert cp1.addons.first().item == self.workshop1
-            assert cp2.addons.first().item == self.workshop2
+            assert cp1.addons.first().product == self.workshop1
+            assert cp2.addons.first().product == self.workshop2
             assert cp2.addons.first().variation == self.workshop2a
 
     def test_set_addon_multi(self):
@@ -3367,8 +3367,8 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         )
         with scopes_disabled():
             assert cp1.addons.count() == 2
-            assert cp1.addons.first().item == self.workshop1
-            assert cp1.addons.last().item == self.workshop1
+            assert cp1.addons.first().product == self.workshop1
+            assert cp1.addons.last().product == self.workshop1
 
     def test_set_addon_free_price(self):
         with scopes_disabled():
@@ -3398,7 +3398,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         )
         with scopes_disabled():
             assert cp1.addons.count() == 1
-            assert cp1.addons.first().item == self.workshop1
+            assert cp1.addons.first().product == self.workshop1
             assert cp1.addons.first().price == Decimal('999.99')
 
     def test_set_addons_required(self):
@@ -4244,7 +4244,7 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         self.transquota.products.add(self.trans)
         self.bundle1 = ItemBundle.objects.create(
             base_item=self.ticket,
-            bundled_item=self.trans,
+            bundled_product=self.trans,
             designated_price=1.5,
             count=1,
         )
@@ -4279,11 +4279,11 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         cp = o.positions.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5
         assert cp.addons.count() == 1
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
 
     @classscope(attr='orga')
@@ -4307,11 +4307,11 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         cp = o.positions.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5
         assert cp.addons.count() == 1
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.variation == v
         assert a.price == 1.5
 
@@ -4340,14 +4340,14 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         cp = o.positions.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5 - 1.5
         assert cp.addons.count() == 2
         a = cp.addons.first()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
         a = cp.addons.last()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
 
     @classscope(attr='orga')
@@ -4370,10 +4370,10 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         cp = o.positions.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 20 - 1.5
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
 
     @classscope(attr='orga')
@@ -4396,10 +4396,10 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         cp = o.positions.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == Decimal('0.00')
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == Decimal('1.50')
 
     @classscope(attr='orga')
@@ -4427,13 +4427,13 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         cp = o.positions.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == Decimal('21.50')
         assert cp.tax_rate == Decimal('19.00')
         assert cp.tax_value == Decimal('3.43')
         assert cp.addons.count() == 1
         a = cp.addons.first()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
         assert a.tax_rate == Decimal('7.00')
         assert a.tax_value == Decimal('0.10')
@@ -4461,11 +4461,11 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         cp = o.positions.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == 23 - 1.5
         assert cp.addons.count() == 1
         a = cp.addons.get()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == 1.5
 
     @classscope(attr='orga')
@@ -4712,13 +4712,13 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         cp = o.positions.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == Decimal('21.50')
         assert cp.tax_rate == Decimal('19.00')
         assert cp.tax_value == Decimal('3.43')
         assert cp.addons.count() == 1
         a = cp.addons.first()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == Decimal('1.40')
         assert a.tax_rate == Decimal('0.00')
         assert a.tax_value == Decimal('0.00')
@@ -4768,13 +4768,13 @@ class CheckoutBundleTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         cp = o.positions.get(addon_to__isnull=True)
-        assert cp.item == self.ticket
+        assert cp.product == self.ticket
         assert cp.price == Decimal('18.07')
         assert cp.tax_rate == Decimal('0.00')
         assert cp.tax_value == Decimal('0.00')
         assert cp.addons.count() == 1
         a = cp.addons.first()
-        assert a.item == self.trans
+        assert a.product == self.trans
         assert a.price == Decimal('1.40')
         assert a.tax_rate == Decimal('0.00')
         assert a.tax_value == Decimal('0.00')
@@ -4833,7 +4833,7 @@ class CheckoutSeatingTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         op = o.positions.first()
-        assert op.item == self.ticket
+        assert op.product == self.ticket
         assert op.seat == self.seat_a1
 
     @scopes_disabled()
@@ -4871,7 +4871,7 @@ class CheckoutSeatingTest(BaseCheckoutTestCase, TestCase):
 
     @scopes_disabled()
     def test_seat_not_allowed(self):
-        self.cp1.item = self.workshop1
+        self.cp1.product = self.workshop1
         self.cp1.save()
         with self.assertRaises(OrderError):
             _perform_order(
@@ -4888,7 +4888,7 @@ class CheckoutSeatingTest(BaseCheckoutTestCase, TestCase):
 
     @scopes_disabled()
     def test_seat_invalid_product(self):
-        self.cp1.item = self.workshop1
+        self.cp1.product = self.workshop1
         self.cp1.save()
         self.event.seat_category_mappings.create(layout_category='Foo', product=self.workshop1)
         with self.assertRaises(OrderError):
@@ -5015,7 +5015,7 @@ class CheckoutVoucherBudgetTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         op = o.positions.first()
-        assert op.item == self.ticket
+        assert op.product == self.ticket
         assert op.price_before_voucher == Decimal('23.00')
 
     @scopes_disabled()
@@ -5034,7 +5034,7 @@ class CheckoutVoucherBudgetTest(BaseCheckoutTestCase, TestCase):
         )
         o = Order.objects.get(pk=oid)
         op = o.positions.first()
-        assert op.item == self.ticket
+        assert op.product == self.ticket
 
         with self.assertRaises(OrderError):
             _perform_order(
@@ -5184,7 +5184,7 @@ class CheckoutVoucherBudgetTest(BaseCheckoutTestCase, TestCase):
         o = Order.objects.get(pk=oid)
         op = o.positions.first()
 
-        assert op.item == self.ticket
+        assert op.product == self.ticket
         self.v.budget = Decimal('1.00')
         self.v.save()
 

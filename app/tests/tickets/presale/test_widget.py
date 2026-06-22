@@ -511,7 +511,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
         self.quota_shirts.size = 0
         self.quota_shirts.save()
         self.ticket.bundles.create(
-            bundled_item=self.shirt,
+            bundled_product=self.shirt,
             bundled_variation=self.shirt_blue,
             designated_price=2,
             count=1,
@@ -528,7 +528,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
             self.shirt.require_bundling = True
             self.shirt.save()
             self.ticket.bundles.create(
-                bundled_item=self.shirt,
+                bundled_product=self.shirt,
                 bundled_variation=self.shirt_blue,
                 designated_price=2,
                 count=1,

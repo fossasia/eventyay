@@ -358,7 +358,7 @@ class UserSettingsNotificationsTest(SoupTest):
             self.user.notification_settings.get(
                 event__isnull=True,
                 method='mail',
-                action_type='pretix.event.order.placed',
+                action_type='eventyay.event.order.placed',
             ).enabled
             is True
         )
@@ -367,7 +367,7 @@ class UserSettingsNotificationsTest(SoupTest):
         self.user.notification_settings.create(
             event=None,
             method='mail',
-            action_type='pretix.event.order.placed',
+            action_type='eventyay.event.order.placed',
             enabled=True,
         )
         self.client.post(
@@ -378,7 +378,7 @@ class UserSettingsNotificationsTest(SoupTest):
             self.user.notification_settings.get(
                 event__isnull=True,
                 method='mail',
-                action_type='pretix.event.order.placed',
+                action_type='eventyay.event.order.placed',
             ).enabled
             is False
         )
@@ -387,7 +387,7 @@ class UserSettingsNotificationsTest(SoupTest):
         self.user.notification_settings.create(
             event=self.event,
             method='mail',
-            action_type='pretix.event.order.placed',
+            action_type='eventyay.event.order.placed',
             enabled=True,
         )
         self.client.post(
@@ -396,7 +396,7 @@ class UserSettingsNotificationsTest(SoupTest):
         )
         assert (
             self.user.notification_settings.get(
-                event=self.event, method='mail', action_type='pretix.event.order.placed'
+                event=self.event, method='mail', action_type='eventyay.event.order.placed'
             ).enabled
             is False
         )
@@ -408,7 +408,7 @@ class UserSettingsNotificationsTest(SoupTest):
         )
         assert (
             self.user.notification_settings.get(
-                event=self.event, method='mail', action_type='pretix.event.order.placed'
+                event=self.event, method='mail', action_type='eventyay.event.order.placed'
             ).enabled
             is False
         )
@@ -417,7 +417,7 @@ class UserSettingsNotificationsTest(SoupTest):
         self.user.notification_settings.create(
             event=self.event,
             method='mail',
-            action_type='pretix.event.order.placed',
+            action_type='eventyay.event.order.placed',
             enabled=False,
         )
         self.client.post(
@@ -426,7 +426,7 @@ class UserSettingsNotificationsTest(SoupTest):
         )
         assert (
             self.user.notification_settings.get(
-                event=self.event, method='mail', action_type='pretix.event.order.placed'
+                event=self.event, method='mail', action_type='eventyay.event.order.placed'
             ).enabled
             is True
         )
@@ -438,7 +438,7 @@ class UserSettingsNotificationsTest(SoupTest):
         )
         assert (
             self.user.notification_settings.get(
-                event=self.event, method='mail', action_type='pretix.event.order.placed'
+                event=self.event, method='mail', action_type='eventyay.event.order.placed'
             ).enabled
             is True
         )
@@ -447,7 +447,7 @@ class UserSettingsNotificationsTest(SoupTest):
         self.user.notification_settings.create(
             event=self.event,
             method='mail',
-            action_type='pretix.event.order.placed',
+            action_type='eventyay.event.order.placed',
             enabled=True,
         )
         self.client.post(
@@ -455,14 +455,14 @@ class UserSettingsNotificationsTest(SoupTest):
             {'mail:pretix.event.order.placed': 'global'},
         )
         assert not self.user.notification_settings.filter(
-            event=self.event, method='mail', action_type='pretix.event.order.placed'
+            event=self.event, method='mail', action_type='eventyay.event.order.placed'
         ).exists()
 
     def test_event_disabled_global(self):
         self.user.notification_settings.create(
             event=self.event,
             method='mail',
-            action_type='pretix.event.order.placed',
+            action_type='eventyay.event.order.placed',
             enabled=False,
         )
         self.client.post(
@@ -470,7 +470,7 @@ class UserSettingsNotificationsTest(SoupTest):
             {'mail:pretix.event.order.placed': 'global'},
         )
         assert not self.user.notification_settings.filter(
-            event=self.event, method='mail', action_type='pretix.event.order.placed'
+            event=self.event, method='mail', action_type='eventyay.event.order.placed'
         ).exists()
 
     def test_disable_all_via_link(self):

@@ -76,9 +76,9 @@ def monkeypatch_on_commit(monkeypatch):
 @pytest.mark.django_db
 def test_notification_trigger_event_specific(event, order, user, monkeypatch_on_commit):
     djmail.outbox = []
-    user.notification_settings.create(method='mail', event=event, action_type='pretix.event.order.paid', enabled=True)
+    user.notification_settings.create(method='mail', event=event, action_type='eventyay.event.order.paid', enabled=True)
     with transaction.atomic():
-        order.log_action('pretix.event.order.paid', {})
+        order.log_action('eventyay.event.order.paid', {})
     assert len(djmail.outbox) == 1
     assert djmail.outbox[0].subject.endswith('DUMMY: Order FOO has been marked as paid.')
 
@@ -86,9 +86,9 @@ def test_notification_trigger_event_specific(event, order, user, monkeypatch_on_
 @pytest.mark.django_db
 def test_notification_trigger_global(event, order, user, monkeypatch_on_commit):
     djmail.outbox = []
-    user.notification_settings.create(method='mail', event=None, action_type='pretix.event.order.paid', enabled=True)
+    user.notification_settings.create(method='mail', event=None, action_type='eventyay.event.order.paid', enabled=True)
     with transaction.atomic():
-        order.log_action('pretix.event.order.paid', {})
+        order.log_action('eventyay.event.order.paid', {})
     assert len(djmail.outbox) == 1
 
 
@@ -98,30 +98,30 @@ def test_notification_trigger_global_wildcard(event, order, user, monkeypatch_on
     user.notification_settings.create(
         method='mail',
         event=None,
-        action_type='pretix.event.order.changed.*',
+        action_type='eventyay.event.order.changed.*',
         enabled=True,
     )
     with transaction.atomic():
-        order.log_action('pretix.event.order.changed.item', {})
+        order.log_action('eventyay.event.order.changed.product', {})
     assert len(djmail.outbox) == 1
 
 
 @pytest.mark.django_db
 def test_notification_enabled_global_ignored_specific(event, order, user, monkeypatch_on_commit):
     djmail.outbox = []
-    user.notification_settings.create(method='mail', event=None, action_type='pretix.event.order.paid', enabled=True)
-    user.notification_settings.create(method='mail', event=event, action_type='pretix.event.order.paid', enabled=False)
+    user.notification_settings.create(method='mail', event=None, action_type='eventyay.event.order.paid', enabled=True)
+    user.notification_settings.create(method='mail', event=event, action_type='eventyay.event.order.paid', enabled=False)
     with transaction.atomic():
-        order.log_action('pretix.event.order.paid', {})
+        order.log_action('eventyay.event.order.paid', {})
     assert len(djmail.outbox) == 0
 
 
 @pytest.mark.django_db
 def test_notification_ignore_same_user(event, order, user, monkeypatch_on_commit):
     djmail.outbox = []
-    user.notification_settings.create(method='mail', event=event, action_type='pretix.event.order.paid', enabled=True)
+    user.notification_settings.create(method='mail', event=event, action_type='eventyay.event.order.paid', enabled=True)
     with transaction.atomic():
-        order.log_action('pretix.event.order.paid', {}, user=user)
+        order.log_action('eventyay.event.order.paid', {}, user=user)
     assert len(djmail.outbox) == 0
 
 
@@ -130,9 +130,9 @@ def test_notification_ignore_insufficient_permissions(event, order, user, team, 
     djmail.outbox = []
     team.can_view_orders = False
     team.save()
-    user.notification_settings.create(method='mail', event=event, action_type='pretix.event.order.paid', enabled=True)
+    user.notification_settings.create(method='mail', event=event, action_type='eventyay.event.order.paid', enabled=True)
     with transaction.atomic():
-        order.log_action('pretix.event.order.paid', {})
+        order.log_action('eventyay.event.order.paid', {})
     assert len(djmail.outbox) == 0
 
 

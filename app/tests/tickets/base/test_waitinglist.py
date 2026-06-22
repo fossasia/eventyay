@@ -70,7 +70,7 @@ class WaitingListTestCase(TestCase):
         wle.refresh_from_db()
 
         assert wle.voucher
-        assert wle.voucher.item == wle.item
+        assert wle.voucher.product == wle.product
         assert wle.voucher.variation == wle.variation
         assert wle.email in wle.voucher.comment
         assert wle.voucher.block_quota

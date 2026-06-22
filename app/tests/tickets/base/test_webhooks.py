@@ -27,8 +27,8 @@ def event(organizer):
 def webhook(organizer, event):
     wh = organizer.webhooks.create(enabled=True, target_url='https://google.com', all_events=False)
     wh.limit_events.add(event)
-    wh.listeners.create(action_type='pretix.event.order.placed')
-    wh.listeners.create(action_type='pretix.event.order.paid')
+    wh.listeners.create(action_type='eventyay.event.order.placed')
+    wh.listeners.create(action_type='eventyay.event.order.paid')
     return wh
 
 
@@ -83,20 +83,20 @@ def test_webhook_trigger_event_specific(event, order, webhook, monkeypatch_on_co
     )
 
     with transaction.atomic():
-        le = order.log_action('pretix.event.order.paid', {})
+        le = order.log_action('eventyay.event.order.paid', {})
     assert len(responses.calls) == 1
     assert json.loads(force_str(responses.calls[0].request.body)) == {
         'notification_id': le.pk,
         'organizer': 'dummy',
         'event': 'dummy',
         'code': 'FOO',
-        'action': 'pretix.event.order.paid',
+        'action': 'eventyay.event.order.paid',
     }
     with scopes_disabled():
         first = webhook.calls.last()
         assert first.webhook == webhook
         assert first.target_url == 'https://google.com'
-        assert first.action_type == 'pretix.event.order.paid'
+        assert first.action_type == 'eventyay.event.order.paid'
         assert not first.is_retry
         assert first.return_code == 200
         assert first.success
@@ -110,34 +110,34 @@ def test_webhook_trigger_global(event, order, webhook, monkeypatch_on_commit):
     webhook.save()
     responses.add(responses.POST, 'https://google.com', status=200)
     with transaction.atomic():
-        le = order.log_action('pretix.event.order.paid', {})
+        le = order.log_action('eventyay.event.order.paid', {})
     assert len(responses.calls) == 1
     assert json.loads(force_str(responses.calls[0].request.body)) == {
         'notification_id': le.pk,
         'organizer': 'dummy',
         'event': 'dummy',
         'code': 'FOO',
-        'action': 'pretix.event.order.paid',
+        'action': 'eventyay.event.order.paid',
     }
 
 
 @pytest.mark.django_db
 @responses.activate
 def test_webhook_trigger_global_wildcard(event, order, webhook, monkeypatch_on_commit):
-    webhook.listeners.create(action_type='pretix.event.order.changed.*')
+    webhook.listeners.create(action_type='eventyay.event.order.changed.*')
     webhook.limit_events.clear()
     webhook.all_events = True
     webhook.save()
     responses.add(responses.POST, 'https://google.com', status=200)
     with transaction.atomic():
-        le = order.log_action('pretix.event.order.changed.item', {})
+        le = order.log_action('eventyay.event.order.changed.product', {})
     assert len(responses.calls) == 1
     assert json.loads(force_str(responses.calls[0].request.body)) == {
         'notification_id': le.pk,
         'organizer': 'dummy',
         'event': 'dummy',
         'code': 'FOO',
-        'action': 'pretix.event.order.changed.item',
+        'action': 'eventyay.event.order.changed.product',
     }
 
 
@@ -146,7 +146,7 @@ def test_webhook_trigger_global_wildcard(event, order, webhook, monkeypatch_on_c
 def test_webhook_ignore_wrong_action_type(event, order, webhook, monkeypatch_on_commit):
     responses.add(responses.POST, 'https://google.com', status=200)
     with transaction.atomic():
-        order.log_action('pretix.event.order.changed.item', {})
+        order.log_action('eventyay.event.order.changed.product', {})
     assert len(responses.calls) == 0
 
 
@@ -157,7 +157,7 @@ def test_webhook_ignore_disabled(event, order, webhook, monkeypatch_on_commit):
     webhook.save()
     responses.add(responses.POST, 'https://google.com', status=200)
     with transaction.atomic():
-        order.log_action('pretix.event.order.changed.item', {})
+        order.log_action('eventyay.event.order.changed.product', {})
     assert len(responses.calls) == 0
 
 
@@ -167,7 +167,7 @@ def test_webhook_ignore_wrong_event(event, order, webhook, monkeypatch_on_commit
     webhook.limit_events.clear()
     responses.add(responses.POST, 'https://google.com', status=200)
     with transaction.atomic():
-        order.log_action('pretix.event.order.changed.item', {})
+        order.log_action('eventyay.event.order.changed.product', {})
     assert len(responses.calls) == 0
 
 
@@ -178,7 +178,7 @@ def test_webhook_retry(event, order, webhook, monkeypatch_on_commit):
     responses.add(responses.POST, 'https://google.com', status=500)
     responses.add(responses.POST, 'https://google.com', status=200)
     with transaction.atomic():
-        order.log_action('pretix.event.order.paid', {})
+        order.log_action('eventyay.event.order.paid', {})
     assert len(responses.calls) == 2
     with scopes_disabled():
         second = webhook.objects.first()
@@ -186,14 +186,14 @@ def test_webhook_retry(event, order, webhook, monkeypatch_on_commit):
 
     assert first.webhook == webhook
     assert first.target_url == 'https://google.com'
-    assert first.action_type == 'pretix.event.order.paid'
+    assert first.action_type == 'eventyay.event.order.paid'
     assert not first.is_retry
     assert first.return_code == 500
     assert not first.success
 
     assert second.webhook == webhook
     assert second.target_url == 'https://google.com'
-    assert second.action_type == 'pretix.event.order.paid'
+    assert second.action_type == 'eventyay.event.order.paid'
     assert first.is_retry
     assert first.return_code == 200
     assert first.success
@@ -204,7 +204,7 @@ def test_webhook_retry(event, order, webhook, monkeypatch_on_commit):
 def test_webhook_disable_gone(event, order, webhook, monkeypatch_on_commit):
     responses.add(responses.POST, 'https://google.com', status=410)
     with transaction.atomic():
-        order.log_action('pretix.event.order.paid', {})
+        order.log_action('eventyay.event.order.paid', {})
     assert len(responses.calls) == 1
     webhook.refresh_from_db()
     assert not webhook.enabled
@@ -217,14 +217,14 @@ def test_webhook_trigger_batch_with_invalid_entries(event, order, webhook, monke
 
     # 1. Valid
     le_valid = LogEntry.objects.create(
-        action_type='pretix.event.order.paid',
+        action_type='eventyay.event.order.paid',
         content_object=order,
         event=event,
     )
 
     # 2. No webhook type
     le_no_type = LogEntry.objects.create(
-        action_type='pretix.event.order.invalid.type',
+        action_type='eventyay.event.order.invalid.type',
         content_object=order,
         event=event,
     )
@@ -235,7 +235,7 @@ def test_webhook_trigger_batch_with_invalid_entries(event, order, webhook, monke
     non_existent_order_id = (Order.objects.order_by('-pk').first().pk + 1) if Order.objects.exists() else 1
     
     le_no_org = LogEntry.objects.create(
-        action_type='pretix.event.order.paid',
+        action_type='eventyay.event.order.paid',
         content_type=ContentType.objects.get_for_model(Order),
         object_id=non_existent_order_id,
         event=None,

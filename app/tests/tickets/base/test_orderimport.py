@@ -121,7 +121,7 @@ DEFAULT_SETTINGS = {
 @scopes_disabled()
 def test_import_simple(event, item, user):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
     assert event.orders.count() == 3
     assert OrderPosition.objects.count() == 3
@@ -131,7 +131,7 @@ def test_import_simple(event, item, user):
 @scopes_disabled()
 def test_import_as_one_order(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['orders'] = 'one'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
     assert event.orders.count() == 1
@@ -144,7 +144,7 @@ def test_import_as_one_order(user, event, item):
 @scopes_disabled()
 def test_import_in_test_mode(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['testmode'] = True
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
     assert event.orders.last().testmode
@@ -154,7 +154,7 @@ def test_import_in_test_mode(user, event, item):
 @scopes_disabled()
 def test_import_not_in_test_mode(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['testmode'] = False
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
     assert not event.orders.last().testmode
@@ -164,7 +164,7 @@ def test_import_not_in_test_mode(user, event, item):
 @scopes_disabled()
 def test_import_pending(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['status'] = 'pending'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
     o = event.orders.last()
@@ -177,7 +177,7 @@ def test_import_pending(user, event, item):
 @scopes_disabled()
 def test_import_paid_generate_invoice(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['status'] = 'paid'
     event.settings.invoice_generate = 'paid'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
@@ -194,7 +194,7 @@ def test_import_paid_generate_invoice(user, event, item):
 @scopes_disabled()
 def test_import_free(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['price'] = 'csv:F'
     settings['status'] = 'pending'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
@@ -210,7 +210,7 @@ def test_import_free(user, event, item):
 @scopes_disabled()
 def test_import_email(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['email'] = 'csv:C'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
     assert event.orders.filter(email='schneider@example.org').exists()
@@ -222,7 +222,7 @@ def test_import_email(user, event, item):
 @scopes_disabled()
 def test_import_email_invalid(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['email'] = 'csv:A'
     with pytest.raises(DataImportError) as excinfo:
         import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
@@ -236,7 +236,7 @@ def test_import_email_invalid(user, event, item):
 @scopes_disabled()
 def test_import_attendee_email(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['attendee_email'] = 'csv:C'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
     assert OrderPosition.objects.filter(attendee_email='schneider@example.org').exists()
@@ -247,7 +247,7 @@ def test_import_attendee_email(user, event, item):
 @scopes_disabled()
 def test_import_attendee_email_invalid(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['attendee_email'] = 'csv:A'
     with pytest.raises(DataImportError) as excinfo:
         import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
@@ -267,7 +267,7 @@ def test_import_product(user, event, item):
         default_price=23,
     )
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'csv:E'
+    settings['product'] = 'csv:E'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
     assert OrderPosition.objects.filter(product=i).count() == 3
 
@@ -276,7 +276,7 @@ def test_import_product(user, event, item):
 @scopes_disabled()
 def test_import_product_unknown(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'csv:A'
+    settings['product'] = 'csv:A'
     with pytest.raises(DataImportError) as excinfo:
         import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
     assert (
@@ -289,7 +289,7 @@ def test_import_product_unknown(user, event, item):
 @scopes_disabled()
 def test_import_product_dupl(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'csv:E'
+    settings['product'] = 'csv:E'
     Item.objects.create(
         event=event,
         name='Foo',
@@ -312,7 +312,7 @@ def test_import_product_dupl(user, event, item):
 @scopes_disabled()
 def test_variation_required(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     item.variations.create(value='Default')
     with pytest.raises(DataImportError) as excinfo:
         import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
@@ -326,7 +326,7 @@ def test_variation_required(user, event, item):
 @scopes_disabled()
 def test_variation_invalid(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['variation'] = 'csv:E'
     item.variations.create(value='Default')
     with pytest.raises(DataImportError) as excinfo:
@@ -341,7 +341,7 @@ def test_variation_invalid(user, event, item):
 @scopes_disabled()
 def test_variation_dynamic(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['variation'] = 'csv:E'
     v1 = item.variations.create(value='Foo')
     v2 = item.variations.create(value=LazyI18nString({'en': 'Bar'}))
@@ -356,7 +356,7 @@ def test_variation_dynamic(user, event, item):
 @scopes_disabled()
 def test_company(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['email'] = 'csv:C'
     settings['invoice_address_company'] = 'csv:C'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
@@ -371,7 +371,7 @@ def test_company(user, event, item):
 def test_name_parts(user, event, item):
     event.settings.name_scheme = 'given_family'
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['email'] = 'csv:C'
     settings['invoice_address_name_given_name'] = 'csv:A'
     settings['invoice_address_name_family_name'] = 'csv:B'
@@ -397,7 +397,7 @@ def test_name_parts(user, event, item):
 @scopes_disabled()
 def test_import_country(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['invoice_address_country'] = 'csv:G'
     settings['email'] = 'csv:C'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk))
@@ -408,7 +408,7 @@ def test_import_country(user, event, item):
 @scopes_disabled()
 def test_import_country_invalid(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['invoice_address_country'] = 'csv:A'
     settings['email'] = 'csv:C'
     with pytest.raises(DataImportError) as excinfo:
@@ -423,7 +423,7 @@ def test_import_country_invalid(user, event, item):
 @scopes_disabled()
 def test_import_state(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['invoice_address_country'] = 'csv:G'
     settings['invoice_address_state'] = 'csv:H'
     settings['email'] = 'csv:C'
@@ -436,7 +436,7 @@ def test_import_state(user, event, item):
 @scopes_disabled()
 def test_import_state_invalid(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['invoice_address_country'] = 'static:AU'
     settings['invoice_address_state'] = 'csv:H'
     settings['email'] = 'csv:C'
@@ -452,7 +452,7 @@ def test_import_state_invalid(user, event, item):
 @scopes_disabled()
 def test_import_saleschannel_invalid(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['sales_channel'] = 'csv:A'
     with pytest.raises(DataImportError) as excinfo:
         import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
@@ -466,7 +466,7 @@ def test_import_saleschannel_invalid(user, event, item):
 @scopes_disabled()
 def test_import_locale_invalid(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['locale'] = 'static:de'  # not enabled on this event
     with pytest.raises(DataImportError) as excinfo:
         import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
@@ -480,7 +480,7 @@ def test_import_locale_invalid(user, event, item):
 @scopes_disabled()
 def test_import_price_invalid(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['price'] = 'csv:A'
     with pytest.raises(DataImportError) as excinfo:
         import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
@@ -493,7 +493,7 @@ def test_import_price_invalid(user, event, item):
 @scopes_disabled()
 def test_import_secret(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['secret'] = 'csv:A'
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
     assert OrderPosition.objects.filter(secret='Dieter').count() == 1
@@ -503,7 +503,7 @@ def test_import_secret(user, event, item):
 @scopes_disabled()
 def test_import_secret_dupl(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['secret'] = 'csv:D'
     with pytest.raises(DataImportError) as excinfo:
         import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
@@ -517,7 +517,7 @@ def test_import_secret_dupl(user, event, item):
 @scopes_disabled()
 def test_import_seat_required(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
 
     event.seat_category_mappings.create(layout_category='Stalls', product=item)
     with pytest.raises(DataImportError) as excinfo:
@@ -532,7 +532,7 @@ def test_import_seat_required(user, event, item):
 @scopes_disabled()
 def test_import_seat_blocked(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['seat'] = 'csv:D'
 
     event.seat_category_mappings.create(layout_category='Stalls', product=item)
@@ -549,7 +549,7 @@ def test_import_seat_blocked(user, event, item):
 @scopes_disabled()
 def test_import_seat_dbl(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['seat'] = 'csv:D'
 
     event.seat_category_mappings.create(layout_category='Stalls', product=item)
@@ -566,7 +566,7 @@ def test_import_seat_dbl(user, event, item):
 @scopes_disabled()
 def test_import_seat(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['seat'] = 'csv:E'
 
     event.seat_category_mappings.create(layout_category='Stalls', product=item)
@@ -586,7 +586,7 @@ def test_import_subevent_invalid(user, event, item):
     event.has_subevents = True
     event.save()
     event.subevents.create(name='Foo', date_from=now(), active=True)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['subevent'] = 'csv:E'
 
     with pytest.raises(DataImportError) as excinfo:
@@ -602,7 +602,7 @@ def test_import_subevent_required(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
     event.has_subevents = True
     event.save()
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
 
     with pytest.raises(DataImportError) as excinfo:
         import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
@@ -618,7 +618,7 @@ def test_import_subevent(user, event, item):
     event.has_subevents = True
     event.save()
     s = event.subevents.create(name='Test', date_from=now(), active=True)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['subevent'] = 'csv:D'
 
     import_orders.apply(args=(event.pk, inputfile_factory().id, settings, 'en', user.pk)).get()
@@ -630,7 +630,7 @@ def test_import_subevent(user, event, item):
 def test_import_question_validate(user, event, item):
     settings = dict(DEFAULT_SETTINGS)
     q = event.questions.create(question='Foo', type=Question.TYPE_NUMBER)
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['question_{}'.format(q.pk)] = 'csv:D'
 
     with pytest.raises(DataImportError) as excinfo:
@@ -647,7 +647,7 @@ def test_import_question_valid(user, event, item):
     q = event.questions.create(question='Foo', type=Question.TYPE_CHOICE_MULTIPLE)
     o1 = q.options.create(answer='Foo', identifier='Foo')
     o2 = q.options.create(answer='Bar', identifier='Bar')
-    settings['item'] = 'static:{}'.format(item.pk)
+    settings['product'] = 'static:{}'.format(item.pk)
     settings['attendee_email'] = 'csv:C'
     settings['question_{}'.format(q.pk)] = 'csv:I'
 
