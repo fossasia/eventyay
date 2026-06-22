@@ -1,6 +1,7 @@
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 from urllib.parse import urlencode
+from allauth.account.models import EmailAddress
 from django import forms
 from django.apps import apps
 from django.conf import settings
@@ -1485,6 +1486,12 @@ class UserFilterForm(FilterForm):
 
     def filter_qs(self, qs):
         fdata = self.cleaned_data
+
+        qs = qs.annotate(
+            is_email_verified=Exists(
+                EmailAddress.objects.filter(user=OuterRef('pk'), primary=True, verified=True)
+            )
+        )
 
         if fdata.get('status') == 'active':
             qs = qs.filter(is_active=True)

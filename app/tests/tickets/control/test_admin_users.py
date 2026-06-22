@@ -169,8 +169,9 @@ class AdminUserListViewTest(TestCase):
         self.assertIn('Last Accessed', content)
         self.assertIn('Verified', content)
         self.assertIn('Mark as Spam', content)
-        self.assertIn(reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': self.target_user.pk}), content)
-        self.assertIn(reverse('eventyay_admin:admin.users.toggle_spam', kwargs={'id': self.target_user.pk}), content)
+        self.assertIn('name="action" value="toggle_verified"', content)
+        self.assertIn('name="action" value="toggle_spam"', content)
+        self.assertIn(f'name="user_id" value="{self.target_user.pk}"', content)
 
 
 class UserToggleViewsTest(TestCase):
@@ -180,20 +181,22 @@ class UserToggleViewsTest(TestCase):
         self.target_user = _make_user('toggle@example.com')
         self.email_address = EmailAddress.objects.create(user=self.target_user, email=self.target_user.email, primary=True, verified=False)
 
-    def _post_as_admin(self, url):
+    def _post_as_admin(self, action, user_id):
         self.client.force_login(self.admin)
         session = self.client.session
         session['pretix_auth_login_time'] = int(time.time())
         session['pretix_auth_long_session'] = False
         session.save()
         with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
-            return self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+            return self.client.post(
+                reverse('eventyay_admin:admin.users'),
+                {'action': action, 'user_id': user_id},
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
 
     def test_toggle_verified_flips_field(self):
         self.assertFalse(self.email_address.verified)
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': self.target_user.pk})
-        )
+        response = self._post_as_admin('toggle_verified', self.target_user.pk)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'ok')
@@ -204,9 +207,7 @@ class UserToggleViewsTest(TestCase):
         no_email_user = _make_user('noemail_toggle@example.com')
         no_email_user.email = ''
         no_email_user.save()
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': no_email_user.pk})
-        )
+        response = self._post_as_admin('toggle_verified', no_email_user.pk)
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'error')
@@ -216,9 +217,7 @@ class UserToggleViewsTest(TestCase):
     def test_toggle_verified_missing_primary_email(self, mock_create):
         mock_create.return_value = None
         EmailAddress.objects.filter(user=self.target_user).delete()
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': self.target_user.pk})
-        )
+        response = self._post_as_admin('toggle_verified', self.target_user.pk)
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'error')
@@ -226,9 +225,7 @@ class UserToggleViewsTest(TestCase):
 
     def test_toggle_spam_flips_field(self):
         self.assertFalse(self.target_user.is_spam)
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.toggle_spam', kwargs={'id': self.target_user.pk})
-        )
+        response = self._post_as_admin('toggle_spam', self.target_user.pk)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'ok')
@@ -237,9 +234,7 @@ class UserToggleViewsTest(TestCase):
 
     def test_toggle_spam_on_admin_is_blocked(self):
         other_admin = _make_admin(email='otheradmin@example.com')
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.toggle_spam', kwargs={'id': other_admin.pk})
-        )
+        response = self._post_as_admin('toggle_spam', other_admin.pk)
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'error')
@@ -247,9 +242,7 @@ class UserToggleViewsTest(TestCase):
 
     def test_toggle_admin_flips_field(self):
         self.assertFalse(self.target_user.is_staff)
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.toggle_admin', kwargs={'id': self.target_user.pk})
-        )
+        response = self._post_as_admin('toggle_admin', self.target_user.pk)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'ok')
@@ -262,9 +255,7 @@ class UserToggleViewsTest(TestCase):
         self.assertTrue(self.target_user.is_spam)
         self.assertFalse(self.target_user.is_staff)
 
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.toggle_admin', kwargs={'id': self.target_user.pk})
-        )
+        response = self._post_as_admin('toggle_admin', self.target_user.pk)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'ok')
@@ -281,7 +272,8 @@ class UserToggleViewsTest(TestCase):
         session['pretix_auth_login_time'] = int(time.time())
         session.save()
         response = self.client.post(
-            reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': self.target_user.pk}),
+            reverse('eventyay_admin:admin.users'),
+            {'action': 'toggle_verified', 'user_id': self.target_user.pk},
             HTTP_X_REQUESTED_WITH='XMLHttpRequest',
         )
         self.assertIn(response.status_code, [301, 302, 403])
@@ -294,20 +286,22 @@ class UserEmailActionsTest(TestCase):
         self.target_user = _make_user('emailtarget@example.com')
         self.email_address = EmailAddress.objects.create(user=self.target_user, email=self.target_user.email, primary=True, verified=False)
 
-    def _post_as_admin(self, url):
+    def _post_as_admin(self, action, user_id):
         self.client.force_login(self.admin)
         session = self.client.session
         session['pretix_auth_login_time'] = int(time.time())
         session['pretix_auth_long_session'] = False
         session.save()
         with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
-            return self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+            return self.client.post(
+                reverse('eventyay_admin:admin.users'),
+                {'action': action, 'user_id': user_id},
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
 
     @patch('allauth.account.models.EmailAddress.send_confirmation')
     def test_resend_verification_success(self, mock_send):
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.resend_verification', kwargs={'id': self.target_user.pk})
-        )
+        response = self._post_as_admin('resend_verification', self.target_user.pk)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'ok')
@@ -317,9 +311,7 @@ class UserEmailActionsTest(TestCase):
         no_email_user = _make_user('noemail_resend@example.com')
         no_email_user.email = ''
         no_email_user.save()
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.resend_verification', kwargs={'id': no_email_user.pk})
-        )
+        response = self._post_as_admin('resend_verification', no_email_user.pk)
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'error')
@@ -327,9 +319,7 @@ class UserEmailActionsTest(TestCase):
 
     @patch('allauth.account.models.EmailAddress.send_confirmation', side_effect=SendMailException())
     def test_resend_verification_mail_error(self, mock_send):
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.resend_verification', kwargs={'id': self.target_user.pk})
-        )
+        response = self._post_as_admin('resend_verification', self.target_user.pk)
         self.assertEqual(response.status_code, 500)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'error')
@@ -338,9 +328,7 @@ class UserEmailActionsTest(TestCase):
     def test_resend_verification_already_verified_guard(self):
         self.email_address.verified = True
         self.email_address.save(update_fields=['verified'])
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.resend_verification', kwargs={'id': self.target_user.pk})
-        )
+        response = self._post_as_admin('resend_verification', self.target_user.pk)
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'error')
@@ -348,9 +336,7 @@ class UserEmailActionsTest(TestCase):
 
     @patch('eventyay.base.models.User.send_password_reset')
     def test_reset_password_success(self, mock_send):
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.reset_password', kwargs={'id': self.target_user.pk})
-        )
+        response = self._post_as_admin('reset_password', self.target_user.pk)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'ok')
@@ -360,9 +346,7 @@ class UserEmailActionsTest(TestCase):
         no_email_user = _make_user('noemail_reset@example.com')
         no_email_user.email = ''
         no_email_user.save()
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.reset_password', kwargs={'id': no_email_user.pk})
-        )
+        response = self._post_as_admin('reset_password', no_email_user.pk)
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'error')
@@ -370,9 +354,7 @@ class UserEmailActionsTest(TestCase):
 
     @patch('eventyay.base.models.User.send_password_reset', side_effect=SendMailException())
     def test_reset_password_mail_error(self, mock_send):
-        response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.reset_password', kwargs={'id': self.target_user.pk})
-        )
+        response = self._post_as_admin('reset_password', self.target_user.pk)
         self.assertEqual(response.status_code, 500)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'error')

@@ -16,7 +16,13 @@ function gettext(msgid) {
     return msgid;
 }
 
-function getCsrfToken() {
+function getCsrfToken(form) {
+    if (form) {
+        const input = form.querySelector('[name=csrfmiddlewaretoken]');
+        if (input) {
+            return input.value;
+        }
+    }
     const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
     return match ? decodeURIComponent(match[1]) : '';
 }
@@ -84,10 +90,10 @@ async function submitToggle(form, checkbox, isChecked) {
     checkbox.disabled = true;
 
     try {
-        const response = await fetch(form.action, {
+        const response = await fetch(form.getAttribute('action'), {
             method: 'POST',
             headers: {
-                'X-CSRFToken': getCsrfToken(),
+                'X-CSRFToken': getCsrfToken(form),
                 'X-Requested-With': 'XMLHttpRequest',
             },
             body: new FormData(form),
@@ -220,10 +226,10 @@ async function handleActionClick(event) {
     }
 
     try {
-        const response = await fetch(form.action, {
+        const response = await fetch(form.getAttribute('action'), {
             method: 'POST',
             headers: {
-                'X-CSRFToken': getCsrfToken(),
+                'X-CSRFToken': getCsrfToken(form),
                 'X-Requested-With': 'XMLHttpRequest',
             },
             body: new FormData(form),

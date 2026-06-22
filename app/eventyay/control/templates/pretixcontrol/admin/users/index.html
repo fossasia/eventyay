@@ -90,13 +90,15 @@
                         {# Verified column #}
                         <td class="text-center">
                             <form
-                                action='{% url "eventyay_admin:admin.users.toggle_verified" id=u.pk %}'
+                                action='{% url "eventyay_admin:admin.users" %}'
                                 method="post"
                                 class="user-toggle-form"
                                 data-toggle-type="verified"
                                 data-user-id="{{ u.pk }}"
                             >
                                 {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ u.pk }}">
+                                <input type="hidden" name="action" value="toggle_verified">
                                 {% if not u.email %}
                                     <label class="toggle-switch always-on" title="{% trans 'Users without an email address cannot be verified.' %}">
                                         <input
@@ -122,7 +124,7 @@
                         {# Admin column #}
                         <td class="text-center">
                             <form
-                                action='{% url "eventyay_admin:admin.users.toggle_admin" id=u.pk %}'
+                                action='{% url "eventyay_admin:admin.users" %}'
                                 method="post"
                                 class="user-toggle-form"
                                 data-toggle-type="admin"
@@ -130,6 +132,8 @@
                                 data-confirm-message="{% trans 'Please confirm that this account should be a site admin.' %}"
                             >
                                 {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ u.pk }}">
+                                <input type="hidden" name="action" value="toggle_admin">
                                 {% if u.pk == request.user.pk %}
                                     <label class="toggle-switch always-on" title="{% trans 'You cannot change your own admin status.' %}">
                                         <input
@@ -156,13 +160,15 @@
                         {# Spam column #}
                         <td class="text-center">
                             <form
-                                action='{% url "eventyay_admin:admin.users.toggle_spam" id=u.pk %}'
+                                action='{% url "eventyay_admin:admin.users" %}'
                                 method="post"
                                 class="user-toggle-form"
                                 data-toggle-type="spam"
                                 data-user-id="{{ u.pk }}"
                             >
                                 {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ u.pk }}">
+                                <input type="hidden" name="action" value="toggle_spam">
                                 {% if u.is_staff or u.is_superuser or u.pk == request.user.pk %}
                                     <label class="toggle-switch always-on" title="{% if u.pk == request.user.pk %}{% trans 'You cannot mark yourself as spam.' %}{% else %}{% trans 'Administrators cannot be marked as spam.' %}{% endif %}">
                                         <input
@@ -218,11 +224,13 @@
                                     <ul class="dropdown-menu dropdown-menu-right">
                                         <li>
                                             <form
-                                                action='{% url "eventyay_admin:admin.users.resend_verification" id=u.pk %}'
+                                                action='{% url "eventyay_admin:admin.users" %}'
                                                 method="post"
                                                 class="user-action-form"
                                             >
                                                 {% csrf_token %}
+                                                <input type="hidden" name="user_id" value="{{ u.pk }}">
+                                                <input type="hidden" name="action" value="resend_verification">
                                                 <button type="button" class="btn btn-link btn-block text-left btn-dropdown-link">
                                                     <span class="fa fa-envelope-o"></span>
                                                     {% trans "Resend Verification Email" %}
@@ -231,11 +239,13 @@
                                         </li>
                                         <li>
                                             <form
-                                                action='{% url "eventyay_admin:admin.users.reset_password" id=u.pk %}'
+                                                action='{% url "eventyay_admin:admin.users" %}'
                                                 method="post"
                                                 class="user-action-form"
                                             >
                                                 {% csrf_token %}
+                                                <input type="hidden" name="user_id" value="{{ u.pk }}">
+                                                <input type="hidden" name="action" value="reset_password">
                                                 <button type="button" class="btn btn-link btn-block text-left btn-dropdown-link">
                                                     <span class="fa fa-key"></span>
                                                     {% trans "Reset Password Email" %}
