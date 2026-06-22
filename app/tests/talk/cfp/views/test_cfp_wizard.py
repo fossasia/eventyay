@@ -53,7 +53,6 @@ class TestWizard:
         submission_type=None,
         event=None,
         track=None,
-        additional_speaker=None,
     ):
         submission_data = {
             "title": title,
@@ -63,7 +62,6 @@ class TestWizard:
             "notes": notes,
             "slot_count": slot_count,
             "submission_type": submission_type,
-            "additional_speaker": additional_speaker or "",
         }
         if track:
             submission_data["track"] = getattr(track, "pk", track)
@@ -120,8 +118,9 @@ class TestWizard:
         next_step="me/submissions",
         event=None,
         success=True,
+        additional_speaker=None,
     ):
-        data = {"name": name, "biography": bio}
+        data = {"name": name, "biography": bio, "additional_speaker": additional_speaker or ""}
         response, current_url = self.get_response_and_url(client, url, data=data)
         assert (
             f"/{next_step}/" in current_url
@@ -371,10 +370,9 @@ class TestWizard:
             submission_type=submission_type,
             next_step="profile",
             event=event,
-            additional_speaker="additional@example.com",
         )
         response, current_url = self.perform_profile_form(
-            client, response, current_url, event=event
+            client, response, current_url, event=event, additional_speaker="additional@example.com"
         )
         submission = self.assert_submission(event)
         user = self.assert_user(submission)
@@ -398,10 +396,9 @@ class TestWizard:
             submission_type=submission_type,
             next_step="profile",
             event=event,
-            additional_speaker="additional@example.com",
         )
         response, current_url = self.perform_profile_form(
-            client, response, current_url, event=event
+            client, response, current_url, event=event, additional_speaker="additional@example.com"
         )
         submission = self.assert_submission(event)
         user = self.assert_user(submission)
@@ -719,7 +716,7 @@ class TestWizard:
             assert draft.submission_type is not None
             assert draft.speakers.filter(pk=user.pk).exists()
 
-            form = InfoForm(event, instance=draft, remove_additional_speaker=True)
+            form = InfoForm(event, instance=draft)
             assert form["title"].value() == ""
 
     @pytest.mark.django_db
@@ -772,9 +769,9 @@ def test_infoform_set_submission_type(event, other_event):
     with scope(event=event):
         f = InfoForm(event)
         assert len(event.submission_types.all()) == 1
-        assert "submission_type" not in f.fields
+        assert "submission_type" in f.fields
+        assert f.fields["submission_type"].disabled is True
         assert f.initial["submission_type"] == event.submission_types.first()
-        assert "submission_type" not in f.fields
 
 
 @pytest.mark.django_db

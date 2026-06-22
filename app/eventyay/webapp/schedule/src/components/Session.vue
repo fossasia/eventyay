@@ -1,12 +1,23 @@
 <template lang="pug">
-a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
+a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession, 'schedule-pending-session': isSchedulePending}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
 	.time-box
-		.start(:class="{'has-ampm': hasAmPm}")
-			.date(v-if="showDate") {{ shortDate }}
-			.time {{ startTime.time }}
-			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
-			.duration {{ getPrettyDuration(session.start, session.end) }}
-		.buffer
+		.start.schedule-pending(v-if="isSchedulePending")
+			svg.schedule-pending-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
+				rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
+				line(x1="16", y1="2", x2="16", y2="6")
+				line(x1="8", y1="2", x2="8", y2="6")
+				line(x1="3", y1="10", x2="21", y2="10")
+			.schedule-pending-label
+				span.schedule-pending-text {{ schedulePendingText }}
+		template(v-else)
+			.start(:class="{'has-ampm': hasAmPm}")
+				.date(v-if="showDate")
+					.weekday {{ weekdayLabel }}
+					.day-month {{ dayMonthLabel }}
+				.time {{ startTime.time }}
+				.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
+				.duration {{ getPrettyDuration(session.start, session.end) }}
+		.buffer(v-if="!isSchedulePending")
 		.is-live(v-if="showLiveBadge && isLive") live
 	.info(:class="{'has-fav-count': hasFavCount, 'has-icons': hasAnyRightIcons}")
 		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
@@ -140,10 +151,23 @@ export default {
 			}
 		},
 		startTime () {
+			if (this.isSchedulePending) {
+				return { time: this.schedulePendingText }
+			}
 			return getSessionTime(this.session, this.effectiveTimezone, this.locale, this.effectiveHasAmPm)
 		},
-		shortDate () {
-			return this.session.start.clone().tz(this.effectiveTimezone).format('MMM D')
+		isSchedulePending () {
+			return Boolean(this.session.schedule_pending || !this.session.start)
+		},
+		schedulePendingText () {
+			const m = this.translationMessages || {}
+			return m.schedule_pending_secondary || 'Coming soon'
+		},
+		weekdayLabel () {
+			return this.session.start.clone().tz(this.effectiveTimezone).locale(this.locale || 'en').format('ddd')
+		},
+		dayMonthLabel () {
+			return this.session.start.clone().tz(this.effectiveTimezone).locale(this.locale || 'en').format('D MMM')
 		},
 		isLive () {
 			const now = this.effectiveNow
@@ -249,40 +273,94 @@ sessionTextExpand()
 	position: relative
 	font-size: 14px
 	.time-box
-		width: 62px
+		width: 64px
+		flex-shrink: 0
 		box-sizing: border-box
 		background-color: var(--track-color)
-		padding: 10px 8px 6px 8px
+		padding: 10px 4px 6px 4px
 		border-radius: 6px 0 0 6px
 		display: flex
 		flex-direction: column
 		align-items: center
+		.start.schedule-pending
+			display: flex
+			flex-direction: column
+			align-items: center
+			justify-content: center
+			gap: 4px
+			width: 100%
+			margin-bottom: 0
+			flex: 1
+			color: $clr-primary-text-dark
+			.schedule-pending-icon
+				width: 16px
+				height: 16px
+				opacity: 0.9
+				flex-shrink: 0
+			.schedule-pending-label
+				display: flex
+				flex-direction: column
+				align-items: center
+				width: 100%
+			.schedule-pending-text
+				font-size: 11px
+				font-weight: 600
+				line-height: 1.25
+				text-align: center
+				letter-spacing: 0.02em
+				color: $clr-primary-text-dark
+				max-width: 100%
+				word-break: break-word
 		.start
 			color: $clr-primary-text-dark
-			font-size: 16px
-			font-weight: 600
-			margin-bottom: 8px
-			.date
-				margin-bottom: 4px
-				white-space: nowrap
-				font-size: 13px
-				font-weight: 500
-				text-transform: uppercase
-				letter-spacing: 0.3px
 			display: flex
 			flex-direction: column
 			align-items: center
 			text-align: center
+			width: 100%
 			&.has-ampm
 				align-self: stretch
+			.date
+				display: inline-flex
+				flex-direction: column
+				align-items: center
+				justify-content: center
+				background-color: rgba(255, 255, 255, 0.18)
+				color: rgba(255, 255, 255, 0.95)
+				border-radius: 6px
+				padding: 4px 6px
+				margin-bottom: 6px
+				max-width: 100%
+				box-sizing: border-box
+				text-align: center
+				.weekday
+					font-size: 10px
+					font-weight: 700
+					text-transform: uppercase
+					letter-spacing: 0.5px
+					line-height: 1
+				.day-month
+					font-size: 11px
+					font-weight: 600
+					text-transform: uppercase
+					letter-spacing: 0.3px
+					line-height: 1
+					margin-top: 2px
+			.time
+				font-size: 14px
+				font-weight: 700
+				line-height: 1.2
 			.ampm
 				font-weight: 400
-				font-size: 13px
+				font-size: 10px
+				margin-top: 1px
+				opacity: 0.85
+				text-transform: uppercase
 			.duration
 				font-weight: 400
-				font-size: 13px
-				color: $clr-secondary-text-dark
-				margin-top: 2px
+				font-size: 11px
+				color: rgba(255, 255, 255, 0.7)
+				margin-top: 4px
 		.buffer
 			flex: auto
 		.is-live
@@ -291,11 +369,14 @@ sessionTextExpand()
 			font-weight: 600
 			padding: 2px 4px
 			border-radius: 4px
-			margin: 0 -10px 0 -6px // HACK
+			margin: 0 -8px 0 -4px // HACK
 			background-color: $clr-danger
 			color: $clr-primary-text-dark
 			letter-spacing: 0.5px
 			text-transform: uppercase
+	&.schedule-pending-session
+		.time-box
+			justify-content: center
 	&.has-date
 		.time-box
 			width: 88px
@@ -455,10 +536,23 @@ sessionTextExpand()
 		margin-right: 8px
 		min-height: 80px
 		.time-box
-			width: 56px
-			padding: 8px 6px
+			width: 58px
+			padding: 8px 4px 6px 4px
 			.start
-				font-size: 14px
+				.date
+					padding: 3px 5px
+					margin-bottom: 4px
+					border-radius: 5px
+					.weekday
+						font-size: 9px
+					.day-month
+						font-size: 10px
+				.time
+					font-size: 13px
+				.ampm
+					font-size: 9px
+				.duration
+					font-size: 10px
 		.info
 			padding: 6px
 			padding-right: 6px
@@ -472,9 +566,6 @@ sessionTextExpand()
 				sessionTextClamp(2)
 			.bottom-info
 				font-size: 12px
-	.c-linear-schedule-session.has-date
-		.time-box
-			width: 76px
 
 .density-compact .c-linear-schedule-session,
 .density-compact .break
@@ -482,15 +573,23 @@ sessionTextExpand()
 	margin: 4px 4px
 	font-size: 12px
 	.time-box
-		width: 50px
+		width: 56px
 		padding: 6px 4px 4px 4px
 		.start
-			font-size: 13px
-			margin-bottom: 4px
-			.duration
-				font-size: 11px
+			.date
+				padding: 3px 4px
+				margin-bottom: 4px
+				border-radius: 5px
+				.weekday
+					font-size: 9px
+				.day-month
+					font-size: 10px
+			.time
+				font-size: 12px
 			.ampm
-				font-size: 11px
+				font-size: 9px
+			.duration
+				font-size: 10px
 	.info
 		padding: 4px
 		padding-right: 4px
@@ -511,15 +610,25 @@ sessionTextExpand()
 	margin: 12px 8px
 	font-size: 16px
 	.time-box
-		width: 76px
-		padding: 14px 10px 8px 10px
+		width: 72px
+		padding: 14px 6px 8px 6px
 		.start
-			font-size: 18px
+			font-size: 16px
 			margin-bottom: 10px
+			.date
+				padding: 5px 8px
+				margin-bottom: 6px
+				border-radius: 8px
+				.weekday
+					font-size: 11px
+				.day-month
+					font-size: 12px
+			.time
+				font-size: 16px
 			.duration
-				font-size: 14px
+				font-size: 13px
 			.ampm
-				font-size: 14px
+				font-size: 12px
 	.info
 		padding: 12px
 		padding-right: 12px

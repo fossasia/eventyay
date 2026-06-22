@@ -46,8 +46,8 @@
                 <links>{% for resource in submission.resources.all %}{% if resource.link %}
                     <link href="{{ resource.link }}">{{ resource.description|event_localize }}</link>
                 {% endif %}{% endfor %}</links>
-                <attachments>{% for resource in submission.resources.all %}{% if resource.resource %}
-                    <attachment href="{{ base_url }}{{ resource.resource.url }}">{{ resource.description|event_localize }}</attachment>
+                <attachments>{% for resource in submission.resources.all %}{% if resource.url and not resource.link %}
+                    <attachment href="{{ resource.url }}">{{ resource.description|event_localize }}</attachment>
                 {% endif %}{% endfor %}</attachments>
 
                 <url>{{ talk.submission.urls.public.full }}</url>
