@@ -12,7 +12,12 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import Order, OrderPosition
 from eventyay.common.urls import is_http_url
 from eventyay.common.permissions import is_admin_mode_active, user_has_cfp_submissions
-from eventyay.talk_rules.submission import are_featured_submissions_visible
+from eventyay.talk_rules.submission import (
+    are_featured_submissions_visible,
+    event_has_featured_submissions,
+    show_featured_always,
+)
+from eventyay.agenda.views.utils import event_has_public_featured_schedule_talks
 
 register = template.Library()
 logger = logging.getLogger(__name__)
@@ -216,10 +221,21 @@ def can_view_featured_sessions_public(context, event=None):
     event = event or getattr(request, 'event', None)
     if not request or not event:
         return False
+
     user = getattr(request, 'user', None)
     if user is None:
         return False
-    return are_featured_submissions_visible(user, event)
+    if not are_featured_submissions_visible(user, event):
+        return False
+    if show_featured_always(event):
+        return True
+
+    if event.current_schedule:
+        has_featured = event_has_public_featured_schedule_talks(event)
+    else:
+        has_featured = event_has_featured_submissions(event)
+
+    return has_featured
 
 
 @register.simple_tag(takes_context=True)
