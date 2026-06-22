@@ -39,7 +39,7 @@ from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequ
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
 from eventyay.talk_rules.agenda import require_wip_schedule_access
-from eventyay.talk_rules.submission import are_featured_submissions_visible
+from eventyay.talk_rules.submission import are_featured_submissions_visible, can_use_featured_exports
 
 
 # Starred-ICS token timing: grace, fallback, refresh buffer.
@@ -163,6 +163,13 @@ class ScheduleMixin:
 
 class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
     permission_required = 'base.list_schedule'
+
+    def has_permission(self):
+        if super().has_permission():
+            return True
+        if self.request.GET.get('featured') == 'true':
+            return can_use_featured_exports(self.request.user, self.request.event)
+        return False
 
     def dispatch(self, request, *args, **kwargs):
         self.ensure_wip_schedule_access(kwargs, request)
@@ -432,6 +439,7 @@ def schedule_messages(request, **kwargs):
         'schedule_do_not_record': _('This session will not be recorded.'),
         'back_to_schedule': _('Back to schedule'),
         'back_to_speakers': _('Back to speakers'),
+        'schedule_pending_secondary': _('Coming soon'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(
@@ -546,6 +554,9 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
                     },
                 ),
             )
+
+        if request.GET.get('featured') == 'true':
+            ics_url = f'{ics_url}?featured=true'
 
         if is_google:
             google_url = f'https://calendar.google.com/calendar/r?{urlencode({"cid": ics_url.replace("https://", "http://")})}'
