@@ -28,7 +28,7 @@ from eventyay.common.forms.widgets import (
 from eventyay.common.text.css import validate_css
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import Event, EventExtraLink
-from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
+from eventyay.orga.forms.widgets import HeaderSelect
 from eventyay.base.models import ReviewPhase, ReviewScore, ReviewScoreCategory
 
 ENCRYPTED_PASSWORD_PLACEHOLDER = '*' * 24
@@ -118,7 +118,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         required=False,
         widget=HeaderSelect,
     )
-    meta_noindex = forms.BooleanField(label=_('Ask search engines not to index the event pages'), required=False)
 
     def __init__(self, *args, **kwargs):
         self.is_administrator = kwargs.pop('is_administrator', False)
@@ -191,7 +190,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             'export_html_on_release': 'feature_flags',
             'html_export_url': 'display_settings',
             'header_pattern': 'display_settings',
-            'meta_noindex': 'display_settings',
         }
 
 

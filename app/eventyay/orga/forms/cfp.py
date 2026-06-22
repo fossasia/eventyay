@@ -32,7 +32,7 @@ from eventyay.common.forms.widgets import (
 )
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
-from eventyay.orga.forms.widgets import MultipleLanguagesWidget
+from eventyay.control.forms import MultipleLanguagesWidget
 from eventyay.orga.utils.colors import generate_random_high_contrast_color
 
 

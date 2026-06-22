@@ -13,6 +13,8 @@
 		schedule-toolbar(v-if="(scheduleMeta || schedule) && !publicFavsUrl",
 			:version="version || scheduleMeta?.version || ''",
 			:isCurrent="scheduleMeta?.is_current !== false",
+			:isFeaturedPage="isFeaturedPage",
+			:isListView="!showGrid || sessionsMode",
 			:changelogUrl="scheduleMeta?.changelog_url || ''",
 			:currentScheduleUrl="scheduleMeta?.current_schedule_url || ''",
 			:exporters="scheduleMeta?.exporters || []",
@@ -127,7 +129,7 @@ const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersLis
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount, computeTalkExporters } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled } from '~/utils'
 
 function getCsrfToken () {
 	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
@@ -171,6 +173,10 @@ export default {
 		version: {
 			type: String,
 			default: ''
+		},
+		isFeaturedPage: {
+			type: Boolean,
+			default: false
 		},
 		// View mode: 'schedule' (default), 'speakers' (list), 'speaker' (detail), 'talk' (single talk), 'sessions' (sessions only, no breaks)
 		view: {
@@ -271,7 +277,8 @@ export default {
 			},
 			loggedIn: computed(() => this.loggedIn),
 			translationMessages: computed(() => this.translationMessages),
-			isWipPreview: computed(() => (this.version || this.scheduleMeta?.version || '') === 'wip')
+			isWipPreview: computed(() => (this.version || this.scheduleMeta?.version || '') === 'wip'),
+			exportsDisabled: computed(() => this.exportsDisabled),
 		}
 	},
 	data () {
@@ -332,6 +339,14 @@ export default {
 		showGrid () {
 			// Always allow a distinct calendar grid view when not explicitly in list format
 			return this.format !== 'list'
+		},
+		exportsDisabled () {
+			return areScheduleExportsDisabled({
+				version: this.version,
+				scheduleMetaVersion: this.scheduleMeta?.version,
+				isFeaturedPage: this.isFeaturedPage,
+				exportersCount: this.scheduleMeta?.exporters?.length || 0,
+			})
 		},
 		roomsLookup () {
 			if (!this.schedule) return {}
@@ -423,7 +438,7 @@ export default {
 			}
 			const sessions = []
 			for (const session of this.schedule.talks) {
-				if (!session.start) continue
+				const isPending = Boolean(session.schedule_pending || !session.start)
 				if (favSet && !favSet.has(session.code)) continue
 				if (this.showRecordingFilter) {
 					if (this.recordingFilter === 'yes' && session.do_not_record !== false) continue
@@ -440,14 +455,45 @@ export default {
 					const primary = localePrimary(normalized)
 					if (!langExact.has(normalized) && !(primary && langPrimary.has(primary))) continue
 				}
+				if (isPending) {
+					sessions.push({
+						id: session.code,
+						title: session.title,
+						abstract: session.abstract,
+						description: session.description,
+						do_not_record: session.do_not_record,
+						duration: session.duration,
+						start: null,
+						end: null,
+						schedule_pending: true,
+						speakers: (session.speakers || [])
+							.map(code => this.speakersLookup[code] || { code })
+							.filter(Boolean),
+						track: this.tracksLookup[session.track],
+						room: null,
+						fav_count: normalizePopularityCount(session),
+						tags: session.tags,
+						session_type: session.session_type,
+						content_locale: session.content_locale,
+						resources: session.resources,
+						answers: session.answers,
+						exporters: session.exporters,
+						recording_iframe: session.recording_iframe,
+						stream_url: session.stream_url || null,
+						stream_type: session.stream_type || null,
+					})
+					continue
+				}
 				const start = moment.tz(session.start, this.currentTimezone)
 				if (displayDateSet && !displayDateSet.has(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
 				sessions.push({
 					id: session.code,
+					code: session.code,
 					title: session.title,
 					abstract: session.abstract,
 					description: session.description,
 					do_not_record: session.do_not_record,
+					duration: session.duration,
 					start: start,
 					end: moment.tz(session.end, this.currentTimezone),
 					speakers: (session.speakers || [])
@@ -467,7 +513,14 @@ export default {
 					stream_type: session.stream_type || null,
 				})
 			}
-			sessions.sort((a, b) => a.start.diff(b.start))
+			sessions.sort((a, b) => {
+				if (a.schedule_pending && !b.schedule_pending) return 1
+				if (!a.schedule_pending && b.schedule_pending) return -1
+				if (a.schedule_pending && b.schedule_pending) {
+					return getLocalizedString(a.title).localeCompare(getLocalizedString(b.title))
+				}
+				return a.start.diff(b.start)
+			})
 			return sessions
 		},
 		// sessions: baseSessions + search filter. Used for display.
@@ -505,6 +558,7 @@ export default {
 			const seen = new Set()
 			const days = []
 			for (const session of this.baseSessions) {
+				if (!session.start) continue
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
 				const key = day.valueOf()
 				if (!seen.has(key)) {
@@ -521,6 +575,7 @@ export default {
 			if (!this.baseSessions) return
 			const days = []
 			for (const session of this.baseSessions) {
+				if (!session.start) continue
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
 				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
 			}
@@ -627,6 +682,9 @@ export default {
 		if (this.view === 'sessions') {
 			this.sessionsMode = true
 		}
+		if (this.isFeaturedPage) {
+			this.sessionsMode = true
+		}
 
 		// Detect login state from the DOM element (always rendered by Django),
 		// independent of whether the PRETALX_MESSAGES JS global loaded
@@ -710,7 +768,9 @@ export default {
 		}
 		this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
 		this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
-		this.currentDay = this.days[0].format('YYYY-MM-DD')
+		if (this.days?.length) {
+			this.currentDay = this.days[0].format('YYYY-MM-DD')
+		}
 		this.now = moment.tz(this.currentTimezone)
 		setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
 		if (!this.scrollParentResizeObserver) {
@@ -1055,7 +1115,7 @@ export default {
 			ev.preventDefault()
 
 			const talk = this.talksLookup[session.id]
-			const exporters = session.exporters || (this.onHomeServer ? this.computedExporters(session.id) : null)
+			const exporters = session.exporters || (this.onHomeServer && !this.exportsDisabled ? this.computedExporters(session.id) : null)
 
 			// Show session immediately with loading state
 			this.modalContent = {

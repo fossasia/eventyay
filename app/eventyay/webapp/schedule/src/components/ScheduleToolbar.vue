@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-schedule-toolbar(:class="{'mobile-filters-open': mobileFiltersOpen, 'mobile-more-open': mobileMoreOpen}")
-	.version-warning-banner(v-if="showVersionWarningBanner", ref="versionBanner")
+	.version-warning-banner(v-if="!isFeaturedPage && showVersionWarningBanner", ref="versionBanner")
 		span.version-warning-text {{ versionWarningText }}
 		a.current-version-link(v-if="currentScheduleUrl && !isWipPreview", :href="currentScheduleUrl")
 			|  {{ t.go_to_current_version }}
@@ -82,7 +82,6 @@
 					.filter-dropdown-empty(v-else) No {{ languageGroup.title.toLowerCase() }} available
 			button.toolbar-btn.icon-only.fav-toggle(
 				v-if="loggedIn && favsCount",
-				:class="{active: onlyFavs, disabled: !onlyFavs}",
 				:disabled="!favsCount",
 				:aria-label="t.starred",
 				:aria-pressed="onlyFavs ? 'true' : 'false'",
@@ -133,7 +132,7 @@
 							span.sort-inclusion-label {{ t.sort_include_popularity }}
 							button.sort-toggle-slider(type="button", :class="{on: includePopularitySortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_popularity", :aria-checked="includePopularitySortKeyModel ? 'true' : 'false'", @click.prevent.stop="togglePopularitySort")
 								span.toggle-slider(aria-hidden="true")
-			button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.cal : t.list", :aria-label="sessionsMode ? t.cal : t.list")
+			button.toolbar-btn.sessions-toggle(v-if="!isFeaturedPage", :class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.cal : t.list", :aria-label="sessionsMode ? t.cal : t.list")
 				template(v-if="sessionsMode")
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 						rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
@@ -149,7 +148,7 @@
 						line(x1="3", y1="12", x2="3.01", y2="12")
 						line(x1="3", y1="18", x2="3.01", y2="18")
 				span.sessions-toggle-label {{ sessionsMode ? t.cal : t.list }}
-		.toolbar-center(v-if="days && days.length > 1")
+		.toolbar-center(v-if="!isListView && days && days.length > 1")
 			button.day-arrow(:disabled="dayWindowStart <= 0", @click="shiftDays(-2)", :title="t.previous_days", :aria-label="t.previous_days")
 				svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 					path(d="M15 18l-6-6 6-6")
@@ -226,12 +225,12 @@
 								)
 									span {{ option.label }}
 				.timezone-label(v-else) {{ scheduleTimezone }}
-				.exporter-area(v-if="resolvedExporters.length || isWipPreview")
+				.exporter-area(v-if="resolvedExporters.length || exportsDisabled")
 					.exporter-dropdown(ref="exportDropdown")
 						button.toolbar-btn.icon-only.tooltip-align-right(
-							:class="{disabled: isWipPreview}",
-							@click="!isWipPreview && (exportOpen = !exportOpen)",
-							:aria-label="isWipPreview ? publicOnlyFeatureHint : t.add_to_calendar",
+							:class="{disabled: exportsDisabled}",
+							@click="!exportsDisabled && (exportOpen = !exportOpen)",
+							:aria-label="exportsDisabled ? publicOnlyFeatureHint : t.add_to_calendar",
 							:aria-expanded="exportOpen ? 'true' : 'false'",
 							aria-haspopup="menu")
 							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
@@ -256,7 +255,7 @@
 								transition(name="fade")
 									.qr-hover(v-if="hoveredExporter === exp && exp.qrcode_svg", v-html="exp.qrcode_svg")
 			.toolbar-secondary(:class="{open: mobileMoreOpen}", ref="mobileMorePanel")
-				.version-area(v-if="versionOptions.length || changelogUrl || isWipPreview")
+				.version-area(v-if="!isFeaturedPage && (versionOptions.length || changelogUrl || isWipPreview)")
 					.version-dropdown(ref="versionDropdown")
 						button.toolbar-btn.version-btn.tooltip-align-right(
 							:class="{disabled: isWipPreview}",
@@ -325,6 +324,8 @@
 </template>
 
 <script>
+import { areScheduleExportsDisabled } from '../utils'
+
 // FA icon name → inline SVG path mapping (shadow DOM blocks external CSS)
 const FA_SVG_MAP = {
 	'fa-calendar': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
@@ -373,7 +374,9 @@ export default {
 		popularityFeatureEnabled: { type: Boolean, default: false },
 		loggedIn: { type: Boolean, default: false },
 		sortOptions: { type: Array, default: () => ['title', 'title_desc'] },
-		timeDensityMinutes: { type: Number, default: 30 }
+		timeDensityMinutes: { type: Number, default: 30 },
+		isFeaturedPage: { type: Boolean, default: false },
+		isListView: { type: Boolean, default: false }
 	},
 	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
@@ -496,7 +499,19 @@ export default {
 			return current ? current.label : this.t.sort_by_title
 		},
 		resolvedExporters() {
-			return this.exporters || []
+			let list = this.exporters || []
+			if (this.isFeaturedPage) {
+				list = list.filter(exp => !exp.identifier.includes('-my') && !exp.identifier.includes('my-') && exp.identifier !== 'faved.ics')
+			}
+			return list
+		},
+		exportsDisabled() {
+			return areScheduleExportsDisabled({
+				version: this.version,
+				isFeaturedPage: this.isFeaturedPage,
+				exportersCount: this.resolvedExporters.length,
+				isWipPreview: this.isWipPreview,
+			})
 		},
 		isWipPreview() {
 			if (this.version === 'wip') {
@@ -950,15 +965,6 @@ export default {
 			position: relative
 			&.disabled
 				opacity: 0.6
-			&.active::after
-				content: ''
-				position: absolute
-				right: 6px
-				top: 6px
-				width: 7px
-				height: 7px
-				border-radius: 50%
-				background: var(--pretalx-clr-primary, #3aa57c)
 			&:disabled
 				opacity: 0.5
 				cursor: default

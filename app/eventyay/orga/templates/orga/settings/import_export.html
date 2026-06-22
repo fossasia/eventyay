@@ -75,13 +75,25 @@
       <div class='form-group d-flex align-items-center'>
         <label class='mb-0 mr-3 font-weight-bold' for='id_export_target'>{% translate 'Export target' %}</label>
         <select id='id_export_target' class='form-control w-25' data-export-target-select>
-          {% for value, label in import_choices %}
+          {% for value, label in export_choices %}
             <option value='{{ value }}' {% if export_target == value %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
 
       <div data-export-panel='speaker'>
+        <div role="tablist" class="mb-4">
+          <input role="tab" type="radio" id="subtab-speaker-csv" name="subtabs-speaker" aria-controls="panel-speaker-csv" checked>
+          <label for="subtab-speaker-csv">{% translate "Custom CSV/JSON" %}</label>
+
+          <input role="tab" type="radio" id="subtab-speaker-more" name="subtabs-speaker" aria-controls="panel-speaker-more">
+          <label for="subtab-speaker-more">{% translate "More Exports" %}</label>
+
+          <input role="tab" type="radio" id="subtab-speaker-api" name="subtabs-speaker" aria-controls="panel-speaker-api">
+          <label for="subtab-speaker-api">{% translate "API Access" %}</label>
+        </div>
+
+        <div role="tabpanel" id="panel-speaker-csv" aria-hidden="false">
         <form method='post' action='{{ request.path }}#tab-export'>
           {% csrf_token %}
           <input type='hidden' name='action' value='export'>
@@ -176,9 +188,9 @@
             </span>
           </div>
         </form>
+        </div>
 
-        <hr class="mt-5">
-        <h3>{% translate "More exports" %}</h3>
+        <div role="tabpanel" id="panel-speaker-more" aria-hidden="true">
         <p>
             {% blocktranslate trimmed %}
                 eventyay provides a range of exports. If none of these match what you are looking
@@ -206,9 +218,9 @@
                 </li>
             {% endfor %}
         </ul>
+        </div>
 
-        <hr class="mt-5">
-        <h3>{% translate "API" %}</h3>
+        <div role="tabpanel" id="panel-speaker-api" aria-hidden="true">
         <p>{% translate "You can also use the API to export or use data." %}</p>
         <p>
             {% blocktranslate trimmed %}
@@ -229,9 +241,22 @@
             </a>
         </span>
         </div>
+        </div>
       </div>
 
       <div data-export-panel='session'>
+        <div role="tablist" class="mb-4">
+          <input role="tab" type="radio" id="subtab-session-csv" name="subtabs-session" aria-controls="panel-session-csv" checked>
+          <label for="subtab-session-csv">{% translate "Custom CSV/JSON" %}</label>
+
+          <input role="tab" type="radio" id="subtab-session-more" name="subtabs-session" aria-controls="panel-session-more">
+          <label for="subtab-session-more">{% translate "More Exports" %}</label>
+
+          <input role="tab" type="radio" id="subtab-session-api" name="subtabs-session" aria-controls="panel-session-api">
+          <label for="subtab-session-api">{% translate "API Access" %}</label>
+        </div>
+
+        <div role="tabpanel" id="panel-session-csv" aria-hidden="false">
         <form method='post' action='{{ request.path }}#tab-export'>
           {% csrf_token %}
           <input type='hidden' name='action' value='export'>
@@ -319,9 +344,16 @@
             </span>
           </div>
         </form>
+        </div>
 
-        <hr class="mt-5">
-        <h3>{% translate "More exports" %}</h3>
+        <div role="tabpanel" id="panel-session-more" aria-hidden="true">
+        {% if not request.event.current_schedule %}
+            <div class="alert alert-warning mt-2">
+                {% blocktranslate trimmed %}
+                    You haven’t released a schedule yet – many of these data exporters only work on a released schedule.
+                {% endblocktranslate %}
+            </div>
+        {% else %}
         <p>
             {% blocktranslate trimmed %}
                 eventyay provides a range of exports. If none of these match what you are looking
@@ -329,13 +361,6 @@
                 your administrator to install the plugin.
             {% endblocktranslate %}
         </p>
-        {% if not request.event.current_schedule %}
-            <div class="alert alert-warning mt-2">
-                {% blocktranslate trimmed %}
-                    You haven’t released a schedule yet – many of these data exporters only work on a released schedule.
-                {% endblocktranslate %}
-            </div>
-        {% endif %}
         <ul class="mt-3">
             {% for exporter in session_exporters %}
                 <li class="mb-2">
@@ -357,8 +382,7 @@
             {% endfor %}
         </ul>
 
-        <hr class="mt-5">
-        <h3>{% translate "HTML Export" %}</h3>
+
         <p>
             {% blocktranslate trimmed %}
                 The event schedule can be exported to a static HTML dump, so you can upload it
@@ -385,9 +409,10 @@
             </form>
         </span>
         </div>
+        {% endif %}
+        </div>
 
-        <hr class="mt-5">
-        <h3>{% translate "API" %}</h3>
+        <div role="tabpanel" id="panel-session-api" aria-hidden="true">
         <p>{% translate "You can also use the API to export or use data." %}</p>
         <p>
             {% blocktranslate trimmed %}
@@ -408,6 +433,116 @@
                 {% translate "Go to API" %}
             </a>
         </span>
+        </div>
+        </div>
+      </div>
+
+      <div data-export-panel='review'>
+        <div role="tablist" class="mb-4">
+          <input role="tab" type="radio" id="subtab-review-csv" name="subtabs-review" aria-controls="panel-review-csv" checked>
+          <label for="subtab-review-csv">{% translate "Custom CSV/JSON" %}</label>
+
+          <input role="tab" type="radio" id="subtab-review-api" name="subtabs-review" aria-controls="panel-review-api">
+          <label for="subtab-review-api">{% translate "API Access" %}</label>
+        </div>
+
+        <div role="tabpanel" id="panel-review-csv" aria-hidden="false">
+        <form method='post' action='{{ request.path }}#tab-export'>
+          {% csrf_token %}
+          <input type='hidden' name='action' value='export'>
+          <input type='hidden' name='export_target' value='review'>
+
+          {% if review_export_form.non_field_errors %}
+            <div class='alert alert-danger'>
+              {{ review_export_form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <fieldset>
+            <legend>{% translate 'Dataset' %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right' for='{{ review_export_form.target.id_for_label }}'>
+                {{ review_export_form.target.label }}
+                {% if review_export_form.target.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {{ review_export_form.target }}
+                {% for error in review_export_form.target.errors %}
+                  <div class='invalid-feedback d-block'>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>{% translate 'Data fields' %}</legend>
+            <div class='d-flex justify-content-end mb-2'>
+              <div class='form-check'>
+                <input type='checkbox' class='form-check-input' id='select-all-review' data-select-all>
+                <label class='form-check-label' for='select-all-review'>{% translate 'Select all' %}</label>
+              </div>
+            </div>
+            {% for field in review_export_form.export_fields %}
+              {{ field.as_field_group }}
+            {% endfor %}
+          </fieldset>
+
+          <fieldset>
+            <legend>{% translate 'Export settings' %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right'>
+                {{ review_export_form.export_format.label }}
+                {% if review_export_form.export_format.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {% for radio in review_export_form.export_format %}
+                  <div class='form-check form-check-inline'>
+                    {{ radio.tag }}
+                    <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                      {{ radio.choice_label }}
+                    </label>
+                  </div>
+                {% endfor %}
+                {% if review_export_form.export_format.help_text %}
+                <small class="form-text text-muted d-block mt-2">{{ review_export_form.export_format.help_text }}</small>
+                {% endif %}
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="submit-group panel">
+            <span></span>
+            <span>
+              <button type='submit' class='btn btn-success btn-lg'>
+                <i class='fa fa-download'></i>
+                {% translate 'Export reviews' %}
+              </button>
+            </span>
+          </div>
+        </form>
+        </div>
+
+        <div role="tabpanel" id="panel-review-api" aria-hidden="true">
+        <p>{% translate "You can also use the API to export or use data." %}</p>
+        <p>
+            {% blocktranslate trimmed %}
+                Some of the general exports are only accessible for organisers, or include
+                more information when accessed with your organiser account. If you want to
+                access the organiser version in automatic integrations, you’ll have to
+                provide your authentication token just like in the API, like this:
+            {% endblocktranslate %}
+        </p>
+        <pre> curl -H "Authorization: Token {{ request.user.auth_token.key }}" {{ request.event.api_urls.reviews.full }} </pre>
+        <div class="submit-group"><span></span><span>
+            <a class="btn btn-lg btn-info" href="https://docs.eventyay.com/api/fundamentals" target="_blank" rel="noopener noreferrer">
+                <i class="fa fa-book"></i>
+                {% translate "Documentation" %}
+            </a>
+            <a class="btn btn-lg btn-success" href="{{ request.event.api_urls.base }}">
+                {% translate "Go to API" %}
+            </a>
+        </span>
+        </div>
         </div>
       </div>
     </div>

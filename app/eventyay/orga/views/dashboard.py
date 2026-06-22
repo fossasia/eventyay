@@ -10,6 +10,31 @@ from django.views.generic import TemplateView
 from django_context_decorator import context
 from django_scopes import scopes_disabled
 
+from django.http import Http404
+
+def legacy_orga_event_redirect(request, event):
+    from eventyay.base.models import Event
+    with scopes_disabled():
+        events = Event.objects.filter(slug__iexact=event)
+        if events.count() == 1:
+            e = events.first()
+            url = f"/orga/event/{e.organizer.slug}/{e.slug}/"
+            if request.META.get('QUERY_STRING'):
+                url += '?' + request.META['QUERY_STRING']
+            return redirect(url, permanent=True)
+        if events.count() > 1 and request.user.is_authenticated:
+            user_events = events.filter(
+                Q(organizer__id__in=request.user.teams.values_list('organizer_id', flat=True)) |
+                Q(submissions__speakers__in=[request.user])
+            ).distinct()
+            if user_events.count() == 1:
+                e = user_events.first()
+                url = f"/orga/event/{e.organizer.slug}/{e.slug}/"
+                if request.META.get('QUERY_STRING'):
+                    url += '?' + request.META['QUERY_STRING']
+                return redirect(url, permanent=True)
+        raise Http404()
+
 from eventyay.base.models import Submission, SubmissionStates
 from eventyay.base.models.event import Event
 from eventyay.base.models.log import LogEntry
