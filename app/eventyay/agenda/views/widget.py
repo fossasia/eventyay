@@ -5,15 +5,22 @@ from urllib.parse import unquote
 from csp.decorators import csp_exempt
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.staticfiles import finders
-from django.http import Http404, HttpResponse, JsonResponse, FileResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.templatetags.static import static
 from django.views.decorators.gzip import gzip_page
 from django.views.decorators.http import condition
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.base.models import SpeakerProfile, TalkSlot
-from eventyay.base.models.schedule import make_talk_qr_map, make_speaker_qr_map
+from eventyay.base.models.schedule import make_speaker_qr_map, make_talk_qr_map
 from eventyay.common.views import conditional_cache_page
+from eventyay.presale.style import (
+    BASE_SANS_STACK,
+    SYSTEM_FONTS,
+    escape_font_name,
+    get_font_stylesheet,
+    get_fonts,
+)
 from eventyay.talk_rules.agenda import (
     can_access_schedule_widget,
     can_view_wip_schedule,
@@ -35,11 +42,13 @@ def color_etag(request, organizer=None, event=None, **kwargs):
     header_background_color = request.event.settings.get('header_background_color')
     header_text_color = request.event.settings.get('header_text_color')
     navigation_text_color = request.event.settings.get('navigation_text_color')
+    primary_font = request.event.settings.get('primary_font')
     parts = [
         request.event.visible_primary_color or '',
         header_background_color or '',
         header_text_color or '',
         navigation_text_color or '',
+        primary_font or '',
     ]
     return '|'.join(parts) if any(parts) else 'none'
 
@@ -242,7 +251,7 @@ def widget_script(request, organizer=None, event=None, **kwargs):
         module_src = reverse('agenda:widget.schedule.chunk', kwargs={'organizer': request.organizer.slug, 'event': request.event.slug, 'filename': 'pretalx-schedule.js'})
     else:
         module_src = static(WIDGET_PATH)
-    
+
     loader = (
         "(function(){"
         f"var staticPath={module_src!r};"
@@ -278,12 +287,14 @@ def widget_schedule_chunk(request, organizer=None, event=None, filename=None, **
 @condition(etag_func=color_etag)
 @csp_exempt()
 def event_css(request, organizer=None, event=None, **kwargs):
-    # If this event has custom colours, we send back a simple CSS file that sets the
-    # root colours for the event.
+    # If this event has custom colours or font, we send back a simple CSS file that sets the
+    # root colours and font properties for the event.
     variables = []
     header_background_color = request.event.settings.get('header_background_color')
     header_text_color = request.event.settings.get('header_text_color')
     navigation_text_color = request.event.settings.get('navigation_text_color')
+    primary_font = request.event.settings.get('primary_font')
+
     if request.event.visible_primary_color:
         if request.GET.get('target') == 'orga':
             # The organizer area sometimes needs the event’s colour, but shouldn’t use
@@ -297,7 +308,27 @@ def event_css(request, organizer=None, event=None, **kwargs):
         variables.append(f'--color-header-text: {header_text_color};')
     if navigation_text_color:
         variables.append(f'--color-header-navigation: {navigation_text_color};')
-    result = f':root {{{" ".join(variables)}}}' if variables else ''
+
+    font_css = ''
+    if primary_font:
+        fonts_dict = get_fonts()
+        font_family_value = None
+
+        if primary_font in SYSTEM_FONTS:
+            font_family_value = SYSTEM_FONTS[primary_font]
+        elif primary_font in fonts_dict:
+            escaped_font = escape_font_name(primary_font)
+            font_family_value = f'"{escaped_font}", {BASE_SANS_STACK}'
+            font_css = get_font_stylesheet(primary_font, fonts=fonts_dict)
+        else:
+            font_family_value = SYSTEM_FONTS.get('Open Sans')
+
+        if font_family_value:
+            variables.append(f'--font-family: {font_family_value};')
+            variables.append(f'--font-family-title: {font_family_value};')
+
+    root_css = f':root {{{" ".join(variables)}}}' if variables else ''
+    result = f'{font_css}\n{root_css}'.strip()
     response = HttpResponse(result, content_type='text/css')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
