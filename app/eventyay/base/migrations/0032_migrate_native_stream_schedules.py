@@ -11,7 +11,7 @@ def migrate_native_stream_schedules(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0030_room_is_unscheduled_team_polls_questions'),
+        ('base', '0031_migrate_meta_noindex'),
     ]
 
     operations = [
