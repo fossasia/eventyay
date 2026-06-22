@@ -562,16 +562,11 @@ class CustomerOrderCheckView(APIView):
     """
     Check a customer's ticket / order for a given event.
 
-    POST body (all fields optional, at least one must be supplied):
+    POST body (both fields are required):
         {
             "email": "attendee@example.com",
             "code":  "ABCDE"
         }
-
-    Responses:
-        200  – order(s) found; returns a list of matching orders with their positions.
-        400  – neither ``email`` nor ``code`` was supplied.
-        404  – event not found, or no orders match the supplied criteria.
     """
 
     authentication_classes = ()
@@ -585,12 +580,14 @@ class CustomerOrderCheckView(APIView):
             organizer = get_object_or_404(Organizer, slug=organizer_slug)
             event = get_object_or_404(Event, slug=event_slug, organizer=organizer)
 
-        email = request.data.get('email', '').strip()
-        code = request.data.get('code', '').strip().upper()
+        email = request.data.get('email')
+        code = request.data.get('code')
+        email = str(email).strip() if isinstance(email, str) else ''
+        code = str(code).strip().upper() if isinstance(code, str) else ''
 
-        if not email and not code:
+        if not email or not code:
             return Response(
-                {'detail': 'Please supply at least one of: email, code.'},
+                {'detail': 'Please supply both email and code.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -605,12 +602,12 @@ class CustomerOrderCheckView(APIView):
             if email:
                 qs = qs.filter(email__iexact=email)
 
-            orders = list(qs.prefetch_related('positions', 'positions__product'))
+            orders = list(qs.prefetch_related('all_positions', 'all_positions__product'))
 
             result = []
             for order in orders:
                 positions = []
-                for pos in order.positions.all():
+                for pos in order.all_positions.all():
                     positions.append({
                         'id': pos.pk,
                         'product': str(pos.product.name),
