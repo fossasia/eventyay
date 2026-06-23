@@ -42,7 +42,6 @@
 			v-model:includePopularitySortKey="sortIncludePopularity",
 			:popularityFeatureEnabled="popularityFeatureEnabled",
 			:popularitySortAvailable="popularitySortAvailable",
-			:loggedIn="loggedIn",
 			:exportsDisabled="exportsDisabled",
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
@@ -281,7 +280,7 @@ export default {
 					this.showSpeakerDetails(speaker, event)
 				}
 			},
-			loggedIn: computed(() => this.loggedIn),
+			favsReadOnly: computed(() => this.favsReadOnly),
 			translationMessages: computed(() => this.translationMessages),
 			isWipPreview: computed(() => (this.version || this.scheduleMeta?.version || '') === 'wip'),
 			exportsDisabled: computed(() => this.exportsDisabled),
@@ -597,13 +596,11 @@ export default {
 		showPopularityOnSchedule () {
 			return isPopularityVisibleOnSchedule({
 				flags: this.schedule?.feature_flags || {},
-				loggedIn: this.loggedIn,
 			})
 		},
 		popularitySortAvailable () {
 			return isPopularitySortAvailable({
 				flags: this.schedule?.feature_flags || {},
-				loggedIn: this.loggedIn,
 			})
 		},
 		sortOptions () {
@@ -628,14 +625,11 @@ export default {
 				if (this.sortBy === 'popularity') this.sortBy = 'title'
 			}
 		},
-		loggedIn (isLoggedIn) {
-			if (!isLoggedIn) {
-				this.sortIncludePopularity = false
-			}
-			if (!isLoggedIn) {
-				this.onlyFavs = false
-				this.favs = []
-			}
+		loggedIn () {
+			if (!this.schedule) return
+			this.loadFavs().then((favs) => {
+				this.favs = this.pruneFavs(favs, this.schedule)
+			})
 		},
 		recordingFilter () {
 			this.writeRecordingQueryParam()
@@ -662,8 +656,6 @@ export default {
 			this.sessionsMode = true
 		}
 
-		// Detect login state from the DOM element (always rendered by Django),
-		// independent of whether the PRETALX_MESSAGES JS global loaded
 		const messagesEl = document.querySelector('#pretalx-messages')
 		if (messagesEl) {
 			this.onHomeServer = true
@@ -673,7 +665,6 @@ export default {
 			}
 		}
 
-		// Load translation messages if available
 		/* global PRETALX_MESSAGES */
 		if (typeof PRETALX_MESSAGES !== 'undefined') {
 			this.translationMessages = PRETALX_MESSAGES
@@ -731,6 +722,7 @@ export default {
 				this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
 			} else {
 				this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+				if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
 			}
 			if (this.view === 'speaker' && this.speakerCode) {
 				this.fetchSpeakerApiContentIfNeeded(this.speakerCode)
@@ -796,6 +788,7 @@ export default {
 			this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
 		} else {
 			this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+			if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
 		}
 
 		if (fragment && fragment.length === 10) {
@@ -929,30 +922,31 @@ export default {
 			return response.json()
 		},
 		async loadFavs () {
-			if (!this.loggedIn) return []
-			const userStorageKey = this.getFavStorageKey(this.userCode)
 			const anonymousStorageKey = this.getFavStorageKey(null)
-			const localFavs = [...new Set([
-				...this.readLocalFavs(userStorageKey),
-				...this.readLocalFavs(anonymousStorageKey),
-			])]
-			if (this.loggedIn) {
-				try {
-					const merged = await this.apiRequest(
-						'submissions/favourites/merge/',
-						'POST',
-						localFavs
-					)
-					if (Array.isArray(merged)) {
-						localStorage.setItem(userStorageKey, JSON.stringify(merged))
-						localStorage.removeItem(anonymousStorageKey)
-						return merged
-					}
-				} catch {
-					this.pushErrorMessage(this.translationMessages.favs_not_saved)
-				}
+			const localFavs = this.readLocalFavs(anonymousStorageKey)
+			if (!this.loggedIn) {
+				return localFavs
 			}
-			return localFavs
+			const userStorageKey = this.getFavStorageKey(this.userCode)
+			const mergedLocal = [...new Set([
+				...this.readLocalFavs(userStorageKey),
+				...localFavs,
+			])]
+			try {
+				const merged = await this.apiRequest(
+					'submissions/favourites/merge/',
+					'POST',
+					mergedLocal
+				)
+				if (Array.isArray(merged)) {
+					localStorage.setItem(userStorageKey, JSON.stringify(merged))
+					localStorage.removeItem(anonymousStorageKey)
+					return merged
+				}
+			} catch {
+				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+			}
+			return mergedLocal
 		},
 		async loadPublicFavs () {
 			if (!this.publicFavsUrl) return []
@@ -972,17 +966,25 @@ export default {
 			if (this.errorMessages.includes(message)) return
 			this.errorMessages.push(message)
 		},
+		showAnonymousFavsInfo () {
+			if (this.loggedIn || this.favsReadOnly) return
+			const message = this.translationMessages.favs_anonymous_notice
+			if (message) this.pushErrorMessage(message)
+		},
 		pruneFavs (favs, schedule) {
-			// we're not pushing the changed list to the server, as if a talk vanished but will appear again,
-			// we want it to still be faved
-			const talkSet = new Set((schedule.talks || []).map(e => e.code))
-			return favs.filter(e => talkSet.has(e))
+			const talkSet = new Set((schedule.talks || []).map(talk => talk.code))
+			return favs.filter(code => talkSet.has(code))
 		},
 		saveFavs () {
-			if (!this.loggedIn) return
+			const storageKey = this.getFavStorageKey(this.loggedIn ? this.userCode : null)
+			try {
+				localStorage.setItem(storageKey, JSON.stringify(this.favs))
+			} catch {
+				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+			}
 		},
 		toggleSessionModalFav (id) {
-			if (!this.loggedIn) return
+			if (this.favsReadOnly) return
 			if (this.favSet.has(id)) {
 				this.unfav(id)
 			} else {
@@ -990,7 +992,6 @@ export default {
 			}
 		},
 		async fav (id) {
-			if (!this.loggedIn) return
 			if (this.favsReadOnly) return
 			if (this.favSet.has(id)) return
 			this.favs.push(id)
@@ -999,6 +1000,10 @@ export default {
 				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) + 1)
 			}
 			this.saveFavs()
+			if (!this.loggedIn) {
+				this.showAnonymousFavsInfo()
+				return
+			}
 			try {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
 			} catch (error) {
@@ -1007,7 +1012,6 @@ export default {
 			}
 		},
 		async unfav (id) {
-			if (!this.loggedIn) return
 			if (this.favsReadOnly) return
 			this.favs = this.favs.filter(elem => elem !== id)
 			const talk = this.schedule?.talks?.find(t => t.code === id)
@@ -1015,6 +1019,7 @@ export default {
 				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) - 1)
 			}
 			this.saveFavs()
+			if (!this.loggedIn) return
 			try {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
 			} catch (error) {

@@ -373,14 +373,17 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return ctx
 
 
-@cache_page(60 * 60 * 24)
+@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v3')
 def schedule_messages(request, **kwargs):
-    """This view is cached for a day, as it is small and non-critical, but loaded synchronously."""
+    """Cached for static exports; bump key_prefix when message keys or copy change."""
     strings = {
-        'favs_not_logged_in': _(
-            "You're currently not logged in, so your favourited talks will only be stored locally in your browser."
+        'favs_anonymous_notice': _(
+            'Your favourites can only be saved locally in this browser. '
+            'Please sign in or register to sync starred sessions and use more features. '
+            'Locally saved stars may be lost if you clear your browser data; '
+            'we are not responsible for data loss in this case.'
         ),
-        'favs_not_saved': _('Your favourites could only be saved locally in your browser.'),
+        'favs_not_saved': _('Your favourites could not be saved. Please try again.'),
         'no_matching_options': _('Sorry, no matching options.'),
         'view_changelog': _('View Changelog'),
         'go_to_current_version': _('Go to current version'),
@@ -396,7 +399,8 @@ def schedule_messages(request, **kwargs):
             'You are currently viewing the editable schedule version. It may not match the released version.'
         ),
         'version_warning_wip': _(
-            'You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.'
+            'You are currently viewing the unreleased schedule preview. '
+            'It may change at any time and is not visible to the public.'
         ),
         'version_warning_old': _('You are currently viewing an older schedule version.'),
         'join_room': _('Join room'),
