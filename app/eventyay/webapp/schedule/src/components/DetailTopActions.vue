@@ -1,5 +1,5 @@
 <template lang="pug">
-export-dropdown(v-if="showExport", :options="exportOptions", :qrcodesUrl="qrcodesUrl", :disabled="isWipPreview")
+export-dropdown(v-if="showExport", :options="exportOptions", :qrcodesUrl="qrcodesUrl", :disabled="exportControlDisabled")
 .button-container(v-if="showFav", :class="{ faved }")
 	fav-button(@toggleFav="$emit('toggleFav')")
 </template>
@@ -14,6 +14,7 @@ export default {
 	emits: ['toggleFav'],
 	inject: {
 		isWipPreview: { default: false },
+		exportsDisabled: { default: false },
 	},
 	props: {
 		exportOptions: {
@@ -34,8 +35,11 @@ export default {
 		},
 	},
 	computed: {
+		exportControlDisabled () {
+			return this.isWipPreview || this.exportsDisabled
+		},
 		showExport () {
-			return this.exportOptions.length > 0 || this.isWipPreview
+			return this.exportOptions.length > 0 || this.exportControlDisabled
 		},
 	},
 }
