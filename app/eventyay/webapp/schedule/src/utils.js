@@ -1,3 +1,5 @@
+import moment from 'moment-timezone'
+
 export function getLocalizedString (string) {
 	if (!string) return ''
 	if (typeof string === 'string') return string
@@ -115,7 +117,8 @@ export function buildExportMenuItems(exporters) {
 	].filter(o => o.url)
 }
 
-export function areScheduleExportsDisabled ({ version = '', scheduleMetaVersion = '', isFeaturedPage = false, exportersCount = 0, isWipPreview = false } = {}) {
+export function areScheduleExportsDisabled ({ version = '', scheduleMetaVersion = '', isFeaturedPage = false, exportersCount = 0, isWipPreview = false, scheduleExportsDisabled = false } = {}) {
+	if (scheduleExportsDisabled) return true
 	if (isWipPreview || (version || scheduleMetaVersion) === 'wip') return true
 	if (isFeaturedPage && !exportersCount) return true
 	return false
@@ -154,6 +157,49 @@ export function normalizePopularityCount (session) {
 	return Number.isFinite(value) ? value : 0
 }
 
+export function isPopularityFeatureEnabled (flags = {}) {
+	return !!flags.session_popularity_enabled
+}
+
+export function isPopularityVisibleOnSchedule ({ flags = {}, loggedIn = false } = {}) {
+	if (!loggedIn || !isPopularityFeatureEnabled(flags)) return false
+	if ('session_popularity_show_on_schedule' in flags) {
+		return !!flags.session_popularity_show_on_schedule
+	}
+	return !!(flags.session_popularity_show_on_calendar || flags.session_popularity_show_on_list)
+}
+
+export function isPopularitySortAvailable ({ flags = {}, loggedIn = false } = {}) {
+	return loggedIn && isPopularityFeatureEnabled(flags)
+}
+
+export function isFeaturedSpeakersSortAvailable ({ flags = {}, speakers = [] } = {}) {
+	if (!flags.featured_speakers_enabled) return false
+	return speakers.some(speaker => speaker?.is_featured)
+}
+
+export function featuredPosition (speaker) {
+	const position = speaker?.featured_position
+	if (position === null || position === undefined || position === '') {
+		return Number.MAX_SAFE_INTEGER
+	}
+	const numeric = Number(position)
+	return Number.isFinite(numeric) ? numeric : Number.MAX_SAFE_INTEGER
+}
+
+export function compareFeaturedSpeakers (a, b, { featuredFirst = false } = {}) {
+	if (featuredFirst) {
+		if (a?.is_featured && !b?.is_featured) return -1
+		if (!a?.is_featured && b?.is_featured) return 1
+	}
+	const positionDelta = featuredPosition(a) - featuredPosition(b)
+	if (positionDelta !== 0) return positionDelta
+	const nameA = (a?.name || '').trim()
+	const nameB = (b?.name || '').trim()
+	if (!!nameA !== !!nameB) return nameA ? -1 : 1
+	return nameA.localeCompare(nameB)
+}
+
 export function buildEventPageUrl (eventUrl, pagePath = '', isWipPreview = false) {
 	if (!eventUrl) return ''
 	const base = eventUrl.replace(/\/?$/, '/')
@@ -162,28 +208,96 @@ export function buildEventPageUrl (eventUrl, pagePath = '', isWipPreview = false
 	return `${base}${wipPrefix}${normalizedPath}`
 }
 
-const DETAIL_BACK_DESTINATIONS = {
-	schedule: {
-		messageKey: 'back_to_schedule',
-		defaultLabel: 'Back to schedule',
-		pagePath (isWipPreview) {
-			return isWipPreview ? '' : 'schedule/'
-		},
-	},
-	speakers: {
-		messageKey: 'back_to_speakers',
-		defaultLabel: 'Back to speakers',
-		pagePath () {
-			return 'speakers/'
-		},
-	},
+export function speakerCodeFromReference (sp) {
+	if (!sp) return null
+	if (typeof sp === 'string') return sp
+	return sp.code || null
 }
 
-export function getDetailBackLink ({ eventUrl, destination, isWipPreview = false, messages = {} }) {
-	const config = DETAIL_BACK_DESTINATIONS[destination]
-	if (!config || !eventUrl) return null
-	return {
-		href: buildEventPageUrl(eventUrl, config.pagePath(isWipPreview), isWipPreview),
-		label: messages[config.messageKey] || config.defaultLabel,
+export function isTalkSchedulePending (talk) {
+	return Boolean(talk?.schedule_pending || !talk?.start)
+}
+
+export function talkToSession (talk, {
+	timezone,
+	speakersLookup = {},
+	tracksLookup = {},
+	roomsLookup = {},
+	includePopularity = false,
+} = {}) {
+	const isPending = isTalkSchedulePending(talk)
+	const speakers = (talk.speakers || []).map((sp) => {
+		if (typeof sp === 'object' && sp?.code) return sp
+		const code = speakerCodeFromReference(sp)
+		return speakersLookup[code] || { code }
+	}).filter(Boolean)
+	const track = typeof talk.track === 'object' ? talk.track : tracksLookup[talk.track]
+	const base = {
+		id: talk.code,
+		code: talk.code,
+		title: talk.title,
+		abstract: talk.abstract,
+		description: talk.description,
+		do_not_record: talk.do_not_record,
+		duration: talk.duration,
+		speakers,
+		track,
+		tags: talk.tags,
+		session_type: talk.session_type,
+		content_locale: talk.content_locale,
+		resources: talk.resources,
+		answers: talk.answers,
+		exporters: talk.exporters,
+		recording_iframe: talk.recording_iframe,
+		stream_url: talk.stream_url || null,
+		stream_type: talk.stream_type || null,
 	}
+	if (includePopularity) {
+		base.fav_count = normalizePopularityCount(talk)
+	}
+	if (isPending) {
+		return { ...base, start: null, end: null, schedule_pending: true, room: null }
+	}
+	return {
+		...base,
+		start: moment.tz(talk.start, timezone),
+		end: moment.tz(talk.end, timezone),
+		room: typeof talk.room === 'object' ? talk.room : roomsLookup[talk.room],
+	}
+}
+
+export function sortSessionsByStart (sessions) {
+	return sessions.slice().sort((a, b) => {
+		if (a.schedule_pending && !b.schedule_pending) return 1
+		if (!a.schedule_pending && b.schedule_pending) return -1
+		if (a.schedule_pending && b.schedule_pending) {
+			return getLocalizedString(a.title).localeCompare(getLocalizedString(b.title))
+		}
+		return a.start.diff(b.start)
+	})
+}
+
+export function talksToScheduleSessions (talks, context) {
+	if (!talks?.length || !context?.timezone) return []
+	return sortSessionsByStart(talks.map(talk => talkToSession(talk, context)))
+}
+
+export function sessionsForSpeaker (sessionsBySpeaker, speakerId) {
+	if (!speakerId || !sessionsBySpeaker) return []
+	const key = speakerId.toLowerCase()
+	return sessionsBySpeaker[key] || sessionsBySpeaker[speakerId] || []
+}
+
+export function buildSessionsBySpeaker (sessions, { lowercaseKeys = true } = {}) {
+	if (!sessions?.length) return {}
+	return sessions.reduce((acc, session) => {
+		(session.speakers || []).forEach((speaker) => {
+			const code = speakerCodeFromReference(speaker)
+			if (!code) return
+			const key = lowercaseKeys ? code.toLowerCase() : code
+			if (!acc[key]) acc[key] = []
+			acc[key].push(session)
+		})
+		return acc
+	}, {})
 }
