@@ -21,7 +21,7 @@
         <meta name="application-name" content="{{ site_name }}">
         <meta name="generator" content="{{ site_name }}">
         <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% elif request.organizer %}{{ organizer.name }}, {{ organizer.slug }},{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
-        {% if current_event and current_event.display_settings.meta_noindex %}
+        {% if current_event and current_event.settings.meta_noindex %}
             <meta name="robots" content="noindex, nofollow">
         {% else %}
             <meta name="robots" content="index, follow">
@@ -150,7 +150,7 @@
                 {% endblock presale_back_navigation %}
                 <div class="event-hero">
                     <div class="event-hero-overlay">
-                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% elif request.organizer and organizer_logo %} event-brand--has-logo{% endif %}{% if request.organizer and organizer.settings.organizer_logo_image_large %} event-brand--logo-large{% endif %}">
+                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% elif request.organizer and organizer_logo %} event-brand--has-logo{% endif %}{% if current_event and current_event.settings.logo_image_large %} event-brand--logo-large{% elif not current_event and request.organizer and request.organizer.settings.organizer_logo_image_large %} event-brand--logo-large{% endif %}">
                             <div class="event-logo">
                                 <a href="{% block nav_link %}{% endblock nav_link %}">
                                     {% block event_logo %}
@@ -224,7 +224,7 @@
             <div class="card" id="main-card">
                 {% block alerts %}
                     {% if messages %}
-                        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+                        {% for message in messages %}<div class="alert {{ message.tags }}">{{ message }}</div>{% endfor %}
                     {% endif %}
                 {% endblock alerts %}
                 <main>
