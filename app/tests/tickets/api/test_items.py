@@ -650,7 +650,7 @@ def test_item_create_with_addon(token_client, organizer, event, item, category, 
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"addons":["The add-on\'s category must belong to the same event as the item."]}'
+    assert resp.content.decode() == '{"addons":["The add-on\'s category must belong to the same event as the product."]}'
     with scopes_disabled():
         assert 2 == Item.objects.all().count()
 
@@ -826,7 +826,7 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"bundles":["The bundled item must belong to the same event as the item."]}'
+    assert resp.content.decode() == '{"bundles":["The bundled product must belong to the same event as the product."]}'
 
     with scopes_disabled():
         v = item2.variations.create(value='foo')
@@ -865,7 +865,7 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"bundles":["The chosen variation does not belong to this item."]}'
+    assert resp.content.decode() == '{"bundles":["The chosen variation does not belong to this product."]}'
 
 
 @pytest.mark.django_db
@@ -896,7 +896,7 @@ def test_item_update(token_client, organizer, event, item, category, item2, cate
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"non_field_errors":["The item\'s availability cannot end before it starts."]}'
+    assert resp.content.decode() == '{"non_field_errors":["The product\'s availability cannot end before it starts."]}'
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/products/{}/'.format(organizer.slug, event.slug, item.pk),
@@ -904,7 +904,7 @@ def test_item_update(token_client, organizer, event, item, category, item2, cate
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"category":["The item\'s category must belong to the same event as the item."]}'
+    assert resp.content.decode() == '{"category":["The product\'s category must belong to the same event as the product."]}'
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/products/{}/'.format(organizer.slug, event.slug, item.pk),
@@ -912,7 +912,7 @@ def test_item_update(token_client, organizer, event, item, category, item2, cate
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"tax_rule":["The item\'s tax rule must belong to the same event as the item."]}'
+    assert resp.content.decode() == '{"tax_rule":["The product\'s tax rule must belong to the same event as the product."]}'
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/products/{}/'.format(organizer.slug, event.slug, item.pk),
@@ -973,7 +973,7 @@ def test_item_update(token_client, organizer, event, item, category, item2, cate
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"meta_data":["Item meta data property \'foo\' does not exist."]}'
+    assert resp.content.decode() == '{"meta_data":["Product meta data property \'foo\' does not exist."]}'
 
 
 @pytest.mark.django_db
@@ -1157,7 +1157,7 @@ def test_variations_create_not_allowed(token_client, organizer, event, item):
     )
     assert resp.status_code == 403
     assert (
-        resp.content.decode() == '{"detail":"This variation cannot be created because the item does '
+        resp.content.decode() == '{"detail":"This variation cannot be created because the product does '
         'not have variations. Changing a product without variations to a product with '
         'variations is not allowed."}'
     )
@@ -1336,7 +1336,7 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     )
     assert resp.status_code == 400
     assert (
-        resp.content.decode() == '{"non_field_errors":["The bundled item must belong to the same event as the item."]}'
+        resp.content.decode() == '{"non_field_errors":["The bundled product must belong to the same event as the product."]}'
     )
 
     resp = token_client.post(
@@ -1352,7 +1352,7 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     assert resp.status_code == 400
     assert (
         resp.content.decode()
-        == '{"non_field_errors":["The bundled item must not be the same item as the bundling one."]}'
+        == '{"non_field_errors":["The bundled product must not be the same product as the bundling one."]}'
     )
 
     with scopes_disabled():
@@ -1368,7 +1368,7 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"non_field_errors":["The bundled item must not have bundles on its own."]}'
+    assert resp.content.decode() == '{"non_field_errors":["The bundled product must not have bundles on its own."]}'
 
 
 @pytest.mark.django_db
@@ -1475,7 +1475,7 @@ def test_addons_create(token_client, organizer, event, item, category, category2
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"addon_category":["The item already has an add-on of this category."]}'
+    assert resp.content.decode() == '{"addon_category":["The product already has an add-on of this category."]}'
 
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/products/{}/addons/'.format(organizer.slug, event.slug, item.pk),
@@ -1492,7 +1492,7 @@ def test_addons_create(token_client, organizer, event, item, category, category2
     assert resp.status_code == 400
     assert (
         resp.content.decode() == '{"addon_category":["The add-on\'s category must belong to the same event as '
-        'the item."]}'
+        'the product."]}'
     )
 
 
@@ -1541,7 +1541,7 @@ def quota(event, item):
 TEST_QUOTA_RES = {
     'name': 'Budget Quota',
     'size': 200,
-    'items': [],
+    'products': [],
     'variations': [],
     'subevent': None,
     'close_when_sold_out': False,
@@ -1554,7 +1554,7 @@ TEST_QUOTA_RES = {
 def test_quota_list(token_client, organizer, event, quota, item, subevent):
     res = dict(TEST_QUOTA_RES)
     res['id'] = quota.pk
-    res['items'] = [item.pk]
+    res['products'] = [item.pk]
 
     resp = token_client.get('/api/v1/organizers/{}/events/{}/quotas/'.format(organizer.slug, event.slug))
     assert resp.status_code == 200
@@ -1580,7 +1580,7 @@ def test_quota_detail(token_client, organizer, event, quota, item):
     res = dict(TEST_QUOTA_RES)
 
     res['id'] = quota.pk
-    res['items'] = [item.pk]
+    res['products'] = [item.pk]
     resp = token_client.get('/api/v1/organizers/{}/events/{}/quotas/{}/'.format(organizer.slug, event.slug, quota.pk))
     assert resp.status_code == 200
     assert res == resp.data
@@ -1593,7 +1593,7 @@ def test_quota_create(token_client, organizer, event, event2, item):
         {
             'name': 'Ticket Quota',
             'size': 200,
-            'items': [item.pk],
+            'products': [item.pk],
             'variations': [],
             'subevent': None,
         },
@@ -1610,14 +1610,14 @@ def test_quota_create(token_client, organizer, event, event2, item):
         {
             'name': 'Ticket Quota',
             'size': 200,
-            'items': [item.pk],
+            'products': [item.pk],
             'variations': [],
             'subevent': None,
         },
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"non_field_errors":["One or more items do not belong to this event."]}'
+    assert resp.content.decode() == '{"non_field_errors":["One or more products do not belong to this event."]}'
 
 
 @pytest.mark.django_db
@@ -1627,7 +1627,7 @@ def test_quota_create_with_variations(token_client, organizer, event, item, vari
         {
             'name': 'Ticket Quota',
             'size': 200,
-            'items': [item.pk],
+            'products': [item.pk],
             'variations': [variations[0].pk],
             'subevent': None,
         },
@@ -1640,7 +1640,7 @@ def test_quota_create_with_variations(token_client, organizer, event, item, vari
         {
             'name': 'Ticket Quota',
             'size': 200,
-            'items': [item.pk],
+            'products': [item.pk],
             'variations': [100],
             'subevent': None,
         },
@@ -1654,7 +1654,7 @@ def test_quota_create_with_variations(token_client, organizer, event, item, vari
         {
             'name': 'Ticket Quota',
             'size': 200,
-            'items': [item.pk],
+            'products': [item.pk],
             'variations': [variations[0].pk, variations2[0].pk],
             'subevent': None,
         },
@@ -1663,7 +1663,7 @@ def test_quota_create_with_variations(token_client, organizer, event, item, vari
     assert resp.status_code == 400
     assert (
         resp.content.decode()
-        == '{"non_field_errors":["All variations must belong to an item contained in the items list."]}'
+        == '{"non_field_errors":["All variations must belong to an item contained in the products list."]}'
     )
 
     resp = token_client.post(
@@ -1671,7 +1671,7 @@ def test_quota_create_with_variations(token_client, organizer, event, item, vari
         {
             'name': 'Ticket Quota',
             'size': 200,
-            'items': [item.pk],
+            'products': [item.pk],
             'variations': [],
             'subevent': None,
         },
@@ -1680,7 +1680,7 @@ def test_quota_create_with_variations(token_client, organizer, event, item, vari
     assert resp.status_code == 400
     assert (
         resp.content.decode()
-        == '{"non_field_errors":["One or more items has variations but none of these are in the variations list."]}'
+        == '{"non_field_errors":["One or more products has variations but none of these are in the variations list."]}'
     )
 
 
@@ -1691,7 +1691,7 @@ def test_quota_create_with_subevent(token_client, organizer, event, event3, item
         {
             'name': 'Ticket Quota',
             'size': 200,
-            'items': [item.pk],
+            'products': [item.pk],
             'variations': [variations[0].pk],
             'subevent': subevent.pk,
         },
@@ -1704,7 +1704,7 @@ def test_quota_create_with_subevent(token_client, organizer, event, event3, item
         {
             'name': 'Ticket Quota',
             'size': 200,
-            'items': [item.pk],
+            'products': [item.pk],
             'variations': [variations[0].pk],
             'subevent': None,
         },
@@ -1718,7 +1718,7 @@ def test_quota_create_with_subevent(token_client, organizer, event, event3, item
         {
             'name': 'Ticket Quota',
             'size': 200,
-            'items': [item.pk],
+            'products': [item.pk],
             'variations': [variations[0].pk],
             'subevent': subevent2.pk,
         },
@@ -1732,7 +1732,7 @@ def test_quota_create_with_subevent(token_client, organizer, event, event3, item
         {
             'name': 'Ticket Quota',
             'size': 200,
-            'items': [],
+            'products': [],
             'variations': [],
             'subevent': subevent2.pk,
         },
@@ -1846,7 +1846,7 @@ TEST_QUESTION_RES = {
     'question': {'en': 'T-Shirt size'},
     'type': 'C',
     'required': False,
-    'items': [],
+    'products': [],
     'ask_during_checkin': False,
     'hidden': False,
     'print_on_invoice': False,
@@ -1870,7 +1870,7 @@ TEST_QUESTION_RES = {
 def test_question_list(token_client, organizer, event, question, item):
     res = dict(TEST_QUESTION_RES)
     res['id'] = question.pk
-    res['items'] = [item.pk]
+    res['products'] = [item.pk]
     res['options'][0]['id'] = question.options.first().pk
 
     resp = token_client.get('/api/v1/organizers/{}/events/{}/questions/'.format(organizer.slug, event.slug))
@@ -1908,7 +1908,7 @@ def test_question_detail(token_client, organizer, event, question, item):
     res = dict(TEST_QUESTION_RES)
 
     res['id'] = question.pk
-    res['items'] = [item.pk]
+    res['products'] = [item.pk]
     res['options'][0]['id'] = question.options.first().pk
 
     resp = token_client.get(
@@ -1926,7 +1926,7 @@ def test_question_create(token_client, organizer, event, event2, item):
             'question': "What's your name?",
             'type': 'S',
             'required': True,
-            'items': [item.pk],
+            'products': [item.pk],
             'position': 0,
             'ask_during_checkin': False,
             'identifier': None,
@@ -1947,7 +1947,7 @@ def test_question_create(token_client, organizer, event, event2, item):
             'question': "What's your name?",
             'type': 'S',
             'required': True,
-            'items': [item.pk],
+            'products': [item.pk],
             'position': 0,
             'ask_during_checkin': False,
             'identifier': None,
@@ -1955,7 +1955,7 @@ def test_question_create(token_client, organizer, event, event2, item):
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"non_field_errors":["One or more items do not belong to this event."]}'
+    assert resp.content.decode() == '{"non_field_errors":["One or more products do not belong to this event."]}'
 
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/questions/'.format(organizer.slug, event.slug),
@@ -1963,7 +1963,7 @@ def test_question_create(token_client, organizer, event, event2, item):
             'question': "What's your name?",
             'type': 'S',
             'required': True,
-            'items': [item.pk],
+            'products': [item.pk],
             'position': 0,
             'ask_during_checkin': False,
             'identifier': question.identifier,
@@ -1979,7 +1979,7 @@ def test_question_create(token_client, organizer, event, event2, item):
             'question': "What's your name?",
             'type': 'S',
             'required': True,
-            'items': [item.pk],
+            'products': [item.pk],
             'position': 0,
             'ask_during_checkin': False,
             'dependency_question': question.pk,
@@ -2002,7 +2002,7 @@ def test_question_create(token_client, organizer, event, event2, item):
             'question': "What's your name?",
             'type': 'S',
             'required': True,
-            'items': [item.pk],
+            'products': [item.pk],
             'position': 0,
             'ask_during_checkin': True,
             'dependency_question': question.pk,
@@ -2022,7 +2022,7 @@ def test_question_create(token_client, organizer, event, event2, item):
             'question': "What's your name?",
             'type': 'S',
             'required': True,
-            'items': [item.pk],
+            'products': [item.pk],
             'position': 0,
             'ask_during_checkin': False,
             'dependency_question': question.pk,
@@ -2042,7 +2042,7 @@ def test_question_create(token_client, organizer, event, event2, item):
             'question': "What's your name?",
             'type': 'S',
             'required': True,
-            'items': [item.pk],
+            'products': [item.pk],
             'position': 0,
             'ask_during_checkin': False,
             'identifier': None,
@@ -2257,7 +2257,7 @@ def test_question_create_with_option(token_client, organizer, event, item):
             'question': "What's your name?",
             'type': 'S',
             'required': True,
-            'items': [item.pk],
+            'products': [item.pk],
             'position': 0,
             'ask_during_checkin': False,
             'identifier': None,
@@ -2290,7 +2290,7 @@ def test_question_create_with_option(token_client, organizer, event, item):
             'question': "What's your name?",
             'type': 'S',
             'required': True,
-            'items': [item.pk],
+            'products': [item.pk],
             'position': 0,
             'ask_during_checkin': False,
             'identifier': None,
