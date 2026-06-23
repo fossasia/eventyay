@@ -74,7 +74,7 @@ def test_device_auth_revoked(client, device):
     device.revoked = True
     device.save()
     resp = client.get('/api/v1/organizers/')
-    assert resp.status_code == 401
+    assert resp.status_code == 403
     assert str(resp.data['detail']) == 'Device access has been revoked.'
 
 

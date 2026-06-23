@@ -11,4 +11,4 @@ def test_get(token_client, organizer, event, team):
 @pytest.mark.django_db
 def test_post(token_client, organizer, event, team):
     resp = token_client.post('/api/v1/organizers/{}/teams'.format(organizer.slug), follow=False)
-    assert resp.status_code == 404
+    assert resp.status_code == 301
