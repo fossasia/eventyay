@@ -154,7 +154,7 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString } from '../utils'
+import { getLocalizedString, compareFeaturedSpeakers, isFeaturedSpeakersSortAvailable } from '../utils'
 import MarkdownContent from './MarkdownContent'
 
 function normalizeLocaleCode (code) {
@@ -224,6 +224,16 @@ export default {
 	},
 	mounted() {
 		document.addEventListener('click', this.onOutsideClick, true)
+		if (!this.featuredSortAvailable && this.sortBy === 'featured') {
+			this.sortBy = 'a-z'
+		}
+	},
+	watch: {
+		featuredSortAvailable(available) {
+			if (!available && this.sortBy === 'featured') {
+				this.sortBy = 'a-z'
+			}
+		},
 	},
 	beforeUnmount() {
 		document.removeEventListener('click', this.onOutsideClick, true)
@@ -262,11 +272,20 @@ export default {
 			return Boolean(this.searchQuery) || this.selectedLanguages.length > 0 || this.selectedTracks.length > 0
 		},
 		sortOptions() {
-			return [
-				{ value: 'featured', label: this.t.featured },
+			const options = [
 				{ value: 'a-z', label: this.t.a_to_z },
 				{ value: 'z-a', label: this.t.z_to_a },
 			]
+			if (this.featuredSortAvailable) {
+				options.unshift({ value: 'featured', label: this.t.featured })
+			}
+			return options
+		},
+		featuredSortAvailable() {
+			return isFeaturedSpeakersSortAvailable({
+				flags: this.scheduleData?.schedule?.feature_flags || {},
+				speakers: this.scheduleData?.schedule?.speakers || [],
+			})
 		},
 		currentSortLabel() {
 			const opt = this.sortOptions.find(o => o.value === this.sortBy)
@@ -358,15 +377,7 @@ export default {
 				return dir * an.localeCompare(bn)
 			}
 			if (this.sortBy === 'featured') {
-				return speakers.sort((a, b) => {
-					const af = a.is_featured ? 1 : 0
-					const bf = b.is_featured ? 1 : 0
-					if (af !== bf) return bf - af
-					const ap = Number.isFinite(a.featured_position) ? a.featured_position : 1e9
-					const bp = Number.isFinite(b.featured_position) ? b.featured_position : 1e9
-					if (ap !== bp) return ap - bp
-					return byName(a, b)
-				})
+				return speakers.sort((a, b) => compareFeaturedSpeakers(a, b, { featuredFirst: true }))
 			}
 			if (this.sortBy === 'a-z') {
 				return speakers.sort((a, b) => byName(a, b))
