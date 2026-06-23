@@ -61,7 +61,7 @@
                 </a>
                 {% endif %}
             </p>
-            <table class="table table-condensed table-hover">
+            <table class="table table-condensed table-hover events-table">
                 <thead>
                 <tr>
                 <th>
@@ -105,9 +105,9 @@
                     <td class="event-name-col">
                         <strong><a href='{% url "eventyay_common:event.index" organizer=e.organizer.slug event=e.slug %}'>{{ e.name }}</a></strong>
                     </td>
-                    <td>{{ e.slug }}</td>
-                    <td>{{ e.organizer }}</td>
-                    <td class="event-date-col">
+                    <td data-label="{% trans 'Short form' %}">{{ e.slug }}</td>
+                    <td data-label="{% trans 'Organizer' %}">{{ e.organizer }}</td>
+                    <td class="event-date-col" data-label="{% trans 'Date' %}">
                         {% if e.has_subevents %}
                             {{ e.min_from|default_if_none:""|date:"SHORT_DATETIME_FORMAT" }}
                         {% else %}
@@ -128,7 +128,7 @@
                             <span class="fa fa-globe text-muted" data-toggle="tooltip" title="{{ e.timezone }}"></span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="{% trans 'Paid tickets' %}">
                         {% for q in e.first_quotas|slice:":3" %}
                             {% include "pretixcontrol/fragment_quota_box_paid.html" with quota=q %}
                         {% endfor %}
@@ -140,7 +140,7 @@
                             </a>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="{% trans 'Shop' %}">
                         {% if not e.live %}
                             <span class="label label-danger">{% trans "Shop disabled" %}</span>
                         {% elif e.presale_has_ended %}

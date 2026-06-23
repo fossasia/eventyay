@@ -1287,3 +1287,126 @@ h1 .label {
         padding-bottom: 0;
     }
 }
+
+@media (max-width: $screen-sm-max) {
+    table.events-table {
+        thead {
+            display: none;
+        }
+        > tbody > tr {
+            display: block;
+            position: relative;
+            border: 1px solid #e3e3e3;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        > tbody > tr > td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: none;
+            padding: 8px 5px;
+            text-align: right;
+            border-bottom: 1px solid #f5f5f5;
+            
+            &:last-child,
+            &:nth-last-child(2) {
+                border-bottom: none;
+            }
+            
+            &::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #555;
+                text-align: left;
+                padding-right: 15px;
+                flex-shrink: 0;
+            }
+        }
+        > tbody > tr > td.event-name-col {
+            display: block;
+            width: 100%;
+            text-align: left;
+            font-size: 1.15em;
+            padding-bottom: 12px;
+            padding-right: 90px;
+            word-break: break-word;
+            border-bottom: none;
+            
+            &::before {
+                display: none;
+            }
+        }
+        > tbody > tr > td.event-date-col {
+            display: block;
+            text-align: right;
+            
+            &::after {
+                content: "";
+                display: table;
+                clear: both;
+            }
+            
+            &::before {
+                float: left;
+                margin-bottom: 0;
+            }
+        }
+        > tbody > tr > .flip {
+            position: absolute;
+            top: 16px;
+            right: 15px;
+            border-bottom: none;
+            padding: 0;
+            justify-content: flex-end;
+            gap: 10px;
+            
+            &::before {
+                display: none;
+            }
+        }
+    }
+    .filter-form .col-xs-12 {
+        margin-bottom: 10px;
+    }
+    .filter-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+        
+        .btn {
+            flex: 1 1 50% !important;
+            max-width: 50% !important;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            margin: 0 !important;
+        }
+    }
+    [data-ajax-results-region] > p {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        margin-bottom: 20px;
+        
+        .btn {
+            flex: 1;
+            margin: 0;
+            white-space: normal;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 44px;
+            border-radius: 6px;
+        }
+    }
+}
