@@ -1,11 +1,18 @@
 from datetime import datetime
 from decimal import Decimal
 from unittest import mock
+from zoneinfo import ZoneInfo
 
 import pytest
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
 from pytz import UTC
+
+_BERLIN = ZoneInfo("Europe/Berlin")
+
+
+def _to_berlin(dt):
+    return dt.astimezone(_BERLIN).isoformat()
 
 from eventyay.base.models import (
     InvoiceAddress,
@@ -82,11 +89,11 @@ TEST_SUBEVENT_RES = {
     'active': False,
     'event': 'dummy',
     'presale_start': None,
-    'date_to': None,
+    'date_to': '2017-12-28T11:00:00+01:00',
     'date_admission': None,
     'name': {'en': 'Foobar'},
     'frontpage_text': None,
-    'date_from': '2017-12-27T10:00:00Z',
+    'date_from': '2017-12-27T11:00:00+01:00',
     'presale_end': None,
     'seating_plan': None,
     'seat_category_mapping': {},
@@ -115,7 +122,7 @@ def item2(event2):
 def test_subevent_list(token_client, organizer, event, subevent):
     res = dict(TEST_SUBEVENT_RES)
     res['id'] = subevent.pk
-    res['last_modified'] = subevent.last_modified.isoformat().replace('+00:00', 'Z')
+    res['last_modified'] = _to_berlin(subevent.last_modified)
     resp = token_client.get('/api/v1/organizers/{}/events/{}/subevents/'.format(organizer.slug, event.slug))
     assert resp.status_code == 200
     assert [res] == resp.data['results']
@@ -176,8 +183,8 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
         {
             'name': {'de': 'Demo Subevent 2020 Test', 'en': 'Demo Subevent 2020 Test'},
             'active': False,
-            'date_from': '2017-12-27T10:00:00Z',
-            'date_to': '2017-12-28T10:00:00Z',
+            'date_from': '2017-12-27T11:00:00+01:00',
+            'date_to': '2017-12-28T11:00:00+01:00',
             'date_admission': None,
             'presale_start': None,
             'presale_end': None,
@@ -204,8 +211,8 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
         {
             'name': {'de': 'Demo Subevent 2020 Test', 'en': 'Demo Subevent 2020 Test'},
             'active': False,
-            'date_from': '2017-12-27T10:00:00Z',
-            'date_to': '2017-12-28T10:00:00Z',
+            'date_from': '2017-12-27T11:00:00+01:00',
+            'date_to': '2017-12-28T11:00:00+01:00',
             'date_admission': None,
             'presale_start': None,
             'presale_end': None,
@@ -224,8 +231,8 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
         {
             'name': {'de': 'Demo Subevent 2020 Test', 'en': 'Demo Subevent 2020 Test'},
             'active': False,
-            'date_from': '2017-12-27T10:00:00Z',
-            'date_to': '2017-12-28T10:00:00Z',
+            'date_from': '2017-12-27T11:00:00+01:00',
+            'date_to': '2017-12-28T11:00:00+01:00',
             'date_admission': None,
             'presale_start': None,
             'presale_end': None,
@@ -244,8 +251,8 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
         {
             'name': {'de': 'Demo Subevent 2020 Test', 'en': 'Demo Subevent 2020 Test'},
             'active': False,
-            'date_from': '2017-12-27T10:00:00Z',
-            'date_to': '2017-12-28T10:00:00Z',
+            'date_from': '2017-12-27T11:00:00+01:00',
+            'date_to': '2017-12-28T11:00:00+01:00',
             'date_admission': None,
             'presale_start': None,
             'presale_end': None,
@@ -266,8 +273,8 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
         {
             'name': {'de': 'Demo Subevent 2020 Test', 'en': 'Demo Subevent 2020 Test'},
             'active': False,
-            'date_from': '2017-12-27T10:00:00Z',
-            'date_to': '2017-12-28T10:00:00Z',
+            'date_from': '2017-12-27T11:00:00+01:00',
+            'date_to': '2017-12-28T11:00:00+01:00',
             'date_admission': None,
             'presale_start': None,
             'presale_end': None,
@@ -280,7 +287,7 @@ def test_subevent_create(team, token_client, organizer, event, subevent, meta_pr
     )
     assert resp.status_code == 400
     assert (
-        resp.content.decode() == '{"item_price_overrides":[{"item":["Invalid pk \\"555\\" - object does not exist."]}]}'
+        resp.content.decode() == '{"product_price_overrides":[{"product":["Invalid pk \\"555\\" - object does not exist."]}]}'
     )
 
 
@@ -312,7 +319,7 @@ def test_subevent_update(
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
-        {'date_from': '2017-12-27T10:00:00Z', 'date_to': '2017-12-26T10:00:00Z'},
+        {'date_from': '2017-12-27T11:00:00+01:00', 'date_to': '2017-12-26T10:00:00Z'},
         format='json',
     )
     assert resp.status_code == 400
@@ -425,7 +432,7 @@ def test_subevent_update(
     )
     assert resp.status_code == 400
     assert (
-        resp.content.decode() == '{"item_price_overrides":[{"item":["Invalid pk \\"123\\" - object does not exist."]}]}'
+        resp.content.decode() == '{"product_price_overrides":[{"product":["Invalid pk \\"123\\" - object does not exist."]}]}'
     )
 
     resp = token_client.patch(
@@ -534,7 +541,7 @@ def test_subevent_update_keep_subeventitems(token_client, organizer, event, sube
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk),
         {
-            'date_from': '2017-12-27T10:00:00Z',
+            'date_from': '2017-12-27T11:00:00+01:00',
         },
         format='json',
     )
@@ -547,7 +554,7 @@ def test_subevent_update_keep_subeventitems(token_client, organizer, event, sube
 def test_subevent_detail(token_client, organizer, event, subevent):
     res = dict(TEST_SUBEVENT_RES)
     res['id'] = subevent.pk
-    res['last_modified'] = subevent.last_modified.isoformat().replace('+00:00', 'Z')
+    res['last_modified'] = _to_berlin(subevent.last_modified)
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/subevents/{}/'.format(organizer.slug, event.slug, subevent.pk)
     )
@@ -779,8 +786,8 @@ def test_subevent_create_with_seating(token_client, organizer, event, subevent, 
         {
             'name': {'de': 'Demo Subevent 2020 Test', 'en': 'Demo Subevent 2020 Test'},
             'active': False,
-            'date_from': '2017-12-27T10:00:00Z',
-            'date_to': '2017-12-28T10:00:00Z',
+            'date_from': '2017-12-27T11:00:00+01:00',
+            'date_to': '2017-12-28T11:00:00+01:00',
             'date_admission': None,
             'presale_start': None,
             'presale_end': None,
