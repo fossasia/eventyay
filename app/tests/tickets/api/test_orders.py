@@ -2401,7 +2401,7 @@ def test_order_create_subevent_variation_disabled(token_client, organizer, event
     res['positions'][0]['variation'] = var.pk
     res['positions'][0]['answers'][0]['question'] = question.pk
     res['positions'][0]['subevent'] = subevent.pk
-    s = var.subeventitemvariation_set.create(subevent=subevent, disabled=True)
+    s = var.subeventproductvariation_set.create(subevent=subevent, disabled=True)
     quota.subevent = subevent
     quota.products.add(item2)
     quota.variations.add(var)

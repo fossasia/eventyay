@@ -15,6 +15,21 @@ def second_team(organizer, event):
     return t
 
 
+_NEW_TEAM_FIELDS = {
+    'can_change_submissions': False,
+    'is_reviewer': False,
+    'force_hide_speaker_names': False,
+    'can_video_create_stages': False,
+    'can_video_create_channels': False,
+    'can_video_direct_message': False,
+    'can_video_manage_announcements': False,
+    'can_video_view_users': False,
+    'can_video_manage_users': False,
+    'can_video_manage_rooms': False,
+    'can_video_manage_kiosks': False,
+    'can_video_manage_configuration': False,
+}
+
 TEST_TEAM_RES = {
     'id': 1,
     'name': 'Test-Team',
@@ -31,6 +46,7 @@ TEST_TEAM_RES = {
     'can_view_vouchers': True,
     'can_change_vouchers': True,
     'can_checkin_orders': False,
+    **_NEW_TEAM_FIELDS,
 }
 
 SECOND_TEAM_RES = {
@@ -49,6 +65,7 @@ SECOND_TEAM_RES = {
     'can_view_vouchers': False,
     'can_change_vouchers': False,
     'can_checkin_orders': False,
+    **_NEW_TEAM_FIELDS,
 }
 
 

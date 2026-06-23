@@ -399,7 +399,7 @@ def test_item_detail_bundles(token_client, organizer, event, team, item, categor
     res['id'] = item.pk
     res['bundles'] = [
         {
-            'bundled_item': i.pk,
+            'bundled_product': i.pk,
             'bundled_variation': None,
             'count': 1,
             'designated_price': '2.00',
@@ -772,7 +772,7 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
             'has_variations': True,
             'bundles': [
                 {
-                    'bundled_item': i.pk,
+                    'bundled_product': i.pk,
                     'bundled_variation': None,
                     'count': 2,
                     'designated_price': '3.00',
@@ -785,7 +785,7 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
     with scopes_disabled():
         item = Item.objects.get(pk=resp.data['id'])
         b = item.bundles.first()
-    assert b.bundled_item == i
+    assert b.bundled_product == i
     assert b.bundled_variation is None
     assert b.count == 2
     assert b.designated_price == 3
@@ -816,7 +816,7 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
             'has_variations': True,
             'bundles': [
                 {
-                    'bundled_item': item2.pk,
+                    'bundled_product': item2.pk,
                     'bundled_variation': None,
                     'count': 2,
                     'designated_price': '3.00',
@@ -855,7 +855,7 @@ def test_item_create_with_bundle(token_client, organizer, event, item, category,
             'has_variations': True,
             'bundles': [
                 {
-                    'bundled_item': item.pk,
+                    'bundled_product': item.pk,
                     'bundled_variation': v.pk,
                     'count': 2,
                     'designated_price': '3.00',
@@ -942,7 +942,7 @@ def test_item_update(token_client, organizer, event, item, category, item2, cate
         {
             'bundles': [
                 {
-                    'bundled_item': item2.pk,
+                    'bundled_product': item2.pk,
                     'bundled_variation': None,
                     'count': 2,
                     'designated_price': '3.00',
@@ -1273,7 +1273,7 @@ def bundle(item, item3, category):
 
 
 TEST_BUNDLE_RES = {
-    'bundled_item': 0,
+    'bundled_product': 0,
     'bundled_variation': None,
     'count': 1,
     'designated_price': '2.00',
@@ -1284,7 +1284,7 @@ TEST_BUNDLE_RES = {
 def test_bundles_list(token_client, organizer, event, item, bundle, item3):
     res = dict(TEST_BUNDLE_RES)
     res['id'] = bundle.pk
-    res['bundled_item'] = item3.pk
+    res['bundled_product'] = item3.pk
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk)
     )
@@ -1296,7 +1296,7 @@ def test_bundles_list(token_client, organizer, event, item, bundle, item3):
 def test_bundles_detail(token_client, organizer, event, item, bundle, item3):
     res = dict(TEST_BUNDLE_RES)
     res['id'] = bundle.pk
-    res['bundled_item'] = item3.pk
+    res['bundled_product'] = item3.pk
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/products/{}/bundles/{}/'.format(organizer.slug, event.slug, item.pk, bundle.pk)
     )
@@ -1309,7 +1309,7 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
         {
-            'bundled_item': item3.pk,
+            'bundled_product': item3.pk,
             'bundled_variation': None,
             'count': 1,
             'designated_price': '1.50',
@@ -1319,7 +1319,7 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     assert resp.status_code == 201
     with scopes_disabled():
         b = ItemBundle.objects.get(pk=resp.data['id'])
-    assert b.bundled_item == item3
+    assert b.bundled_product == item3
     assert b.bundled_variation is None
     assert b.designated_price == 1.5
     assert b.count == 1
@@ -1327,7 +1327,7 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
         {
-            'bundled_item': item2.pk,
+            'bundled_product': item2.pk,
             'bundled_variation': None,
             'count': 1,
             'designated_price': '1.50',
@@ -1342,7 +1342,7 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
         {
-            'bundled_item': item.pk,
+            'bundled_product': item.pk,
             'bundled_variation': None,
             'count': 1,
             'designated_price': '1.50',
@@ -1360,7 +1360,7 @@ def test_bundles_create(token_client, organizer, event, item, item2, item3):
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/products/{}/bundles/'.format(organizer.slug, event.slug, item.pk),
         {
-            'bundled_item': item3.pk,
+            'bundled_product': item3.pk,
             'bundled_variation': None,
             'count': 1,
             'designated_price': '1.50',
