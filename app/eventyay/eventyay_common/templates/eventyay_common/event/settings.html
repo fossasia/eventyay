@@ -1,7 +1,6 @@
 {% extends "eventyay_common/event/settings_base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
-{% load static %}
 {% load hierarkey_form %}
 {% load formset_tags %}
 {% load presale_locale %}
@@ -9,7 +8,6 @@
 {% block custom_header %}
 {{ block.super }}
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
-<script defer src="{% static 'eventyay-common/js/event-image-source.js' %}"></script>
 {{ sform.media }}
 {% endblock %}
 {% block inside %}
@@ -19,20 +17,20 @@
             <h1>{{ request.event.name|event_localize }} {% trans "- Settings" %}</h1>
         </div>
         <div class="navigation-button">
-            <a href="{% url 'eventyay_common:event.index' organizer=request.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
+            <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
                 <i class="fa fa-home"></i> {% trans "Home" %}
             </a>
-            <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
+            <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}'
                 class="header-nav btn btn-outline-success">
                 <i class="fa fa-ticket"></i> {% trans "Tickets" %}
             </a>
             {% if is_talk_event_created %}
-            <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
+            <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
                 <i class="fa fa-group"></i> {% trans "Talks" %}
             </a>
             {% endif %}
             <a class="header-nav btn btn-outline-success"
-                href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
+                href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'
                 title="{% trans 'Access videos related to this event' %}">
                 <i class="fa fa-video-camera"></i> {% trans "Videos" %}
             </a>
@@ -89,7 +87,6 @@
                     {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
                 </div>
             </div>
-            {% bootstrap_field form.is_public layout="control" %}
             {% comment %}
             <div class="setting-part">
                 <div class="form-group setting-form">
@@ -99,11 +96,11 @@
                             data-target="#alert-modal-disabled">
                             {% trans "Enabled" %}
                         </button>
-                        <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
+                        <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}'
                             class="btn btn-sm btn-default" title='{% trans "Dashboard" %}' data-toggle="tooltip">
                             <span class="fa fa-dashboard"></span>
                         </a>
-                        <a href='{% url "control:event.settings" organizer=request.organizer.slug event=request.event.slug %}'
+                        <a href='{% url "control:event.settings" organizer=request.event.organizer.slug event=request.event.slug %}'
                             class="btn btn-sm btn-default" title='{% trans "Setting" %}' data-toggle="tooltip">
                             <span class="fa fa-edit"></span>
                         </a>
@@ -117,11 +114,11 @@
                             data-target="#alert-modal-disabled">
                             {% trans "Enabled" %}
                         </button>
-                        <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="btn btn-sm btn-default"
+                        <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}' class="btn btn-sm btn-default"
                             title='{% trans "Dashboard" %}' data-toggle="tooltip">
                             <span class="fa fa-dashboard"></span>
                         </a>
-                        <a href='{% url "orga:settings.event.view" event=request.event.slug %}' class="btn btn-sm btn-default"
+                        <a href='{% url "orga:settings.event.view" organizer=request.event.organizer.slug event=request.event.slug %}' class="btn btn-sm btn-default"
                             title='{% trans "Settings" %}' data-toggle="tooltip">
                             <span class="fa fa-edit"></span>
                         </a>
@@ -141,7 +138,7 @@
                             data-target="#alert-modal-disabled">
                             {% trans "Enabled" %}
                         </button>
-                        <a href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
+                        <a href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'
                             class="btn btn-sm btn-default" title='{% trans "Video Configuration" %}'
                             data-toggle="tooltip">
                             <span class="fa fa-edit"></span>
@@ -172,43 +169,9 @@
         </fieldset>
         <fieldset>
             <legend>{{ _('Design') }}</legend>
-            <div
-                data-image-source-pair
-                data-file-input-id="{{ sform.event_logo_image.id_for_label }}"
-                data-url-input-id="{{ sform.event_logo_image_url.id_for_label }}"
-                data-has-current-file="{{ sform.image_source_states.event_logo_image.has_uploaded_file|yesno:'true,false' }}"
-            >
-                {% bootstrap_field sform.event_logo_image layout="control" %}
-                {% bootstrap_field sform.event_logo_image_url layout="control" %}
-                <div class="form-group" data-image-url-preview hidden>
-                    <label class="col-md-3 control-label">{% trans "Logo preview" %}</label>
-                    <div class="col-md-9">
-                        <a data-image-url-preview-link href="" target="_blank" rel="noopener noreferrer">
-                            <img loading="lazy" data-image-url-preview-image class="img-responsive img-thumbnail" alt="{% trans 'Logo preview' %}" hidden>
-                        </a>
-                        <p class="help-block text-danger" data-image-url-preview-error hidden>{% trans "We could not load this image preview." %}</p>
-                    </div>
-                </div>
-            </div>
+            {% bootstrap_field sform.event_logo_image layout="control" %}
             {% bootstrap_field sform.logo_show_title layout="control" %}
-            <div
-                data-image-source-pair
-                data-file-input-id="{{ sform.logo_image.id_for_label }}"
-                data-url-input-id="{{ sform.logo_image_url.id_for_label }}"
-                data-has-current-file="{{ sform.image_source_states.logo_image.has_uploaded_file|yesno:'true,false' }}"
-            >
-                {% bootstrap_field sform.logo_image layout="control" %}
-                {% bootstrap_field sform.logo_image_url layout="control" %}
-                <div class="form-group" data-image-url-preview hidden>
-                    <label class="col-md-3 control-label">{% trans "Header image preview" %}</label>
-                    <div class="col-md-9">
-                        <a data-image-url-preview-link href="" target="_blank" rel="noopener noreferrer">
-                            <img loading="lazy" data-image-url-preview-image class="img-responsive img-thumbnail" alt="{% trans 'Header image preview' %}" hidden>
-                        </a>
-                        <p class="help-block text-danger" data-image-url-preview-error hidden>{% trans "We could not load this image preview." %}</p>
-                    </div>
-                </div>
-            </div>
+            {% bootstrap_field sform.logo_image layout="control" %}
             {% bootstrap_field sform.logo_image_large layout="control" %}
             {% bootstrap_field sform.og_image layout="control" %}
             {% url "eventyay_common:organizer.edit" organizer=request.organizer.slug as org_url %}
@@ -224,6 +187,12 @@
             {% bootstrap_field sform.theme_round_borders layout="control" %}
             {% bootstrap_field sform.primary_font layout="control" %}
             {% endpropagated %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Publication" %}</legend>
+            {% bootstrap_field form.is_public layout="control" %}
+            {% bootstrap_field form.startpage_visible layout="control" %}
+            {% bootstrap_field sform.meta_noindex layout="control" %}
         </fieldset>
     </div>
     <div class="form-group submit-group">

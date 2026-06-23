@@ -21,7 +21,7 @@ from eventyay.talk_rules.agenda import (
     wip_preview_build_data,
 )
 from eventyay.talk_rules.submission import (
-    are_featured_submissions_visible,
+    are_featured_speakers_visible,
     schedule_widget_featured_cache_key_part,
 )
 
@@ -146,7 +146,7 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
     result = schedule.build_data(
         all_talks=not schedule.version,
         enrich=enrich,
-        include_featured_speaker_metadata=are_featured_submissions_visible(AnonymousUser(), event),
+        include_featured_speaker_metadata=are_featured_speakers_visible(AnonymousUser(), event),
         include_qrcodes=include_qrcodes,
         respect_public_visibility=not preview,
     )
