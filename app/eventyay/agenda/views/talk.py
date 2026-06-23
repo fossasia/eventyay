@@ -21,6 +21,7 @@ from django_context_decorator import context
 from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
+from eventyay.agenda.export_resources import public_resource_attachments, public_resource_links
 from eventyay.agenda.signals import register_recording_provider
 from eventyay.agenda.views.utils import (
     WipAgendaPreviewPageMixin,
@@ -450,18 +451,8 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
                         }
                         for p in sub.speakers.all()
                     ],
-                    'links': [
-                        {'title': localize_event_text(r.description), 'url': r.link}
-                        for r in sub.resources.all()
-                        if event.cfp.is_resource_public(r)
-                        if r.link
-                    ],
-                    'attachments': [
-                        {'title': localize_event_text(r.description), 'url': r.resource.url}
-                        for r in sub.resources.all()
-                        if event.cfp.is_resource_public(r)
-                        if not r.link
-                    ],
+                    'links': public_resource_links(sub, event),
+                    'attachments': public_resource_attachments(sub, event),
                 }
             )
         data = {

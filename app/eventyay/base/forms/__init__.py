@@ -87,21 +87,10 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
             if callable(kwargs):
                 kwargs = kwargs()
             kwargs.setdefault('required', False)
-            field = DEFAULTS[fname]['form_class'](**kwargs)
+            form_class = DEFAULTS[fname]['form_class']
+            field = form_class(**kwargs)
             if isinstance(field, i18nfield.forms.I18nFormField):
                 field.widget.enabled_locales = self.locales
-            if fname == 'primary_font':
-                from eventyay.base.models import Event
-                if isinstance(self.obj, Event):
-                    inherited_font = None
-                    if hasattr(self.obj, 'organizer'):
-                        inherited_font = self.obj.organizer.settings.get('primary_font')
-                    if not inherited_font:
-                        inherited_font = 'Open Sans'
-                    field.choices = [('', _('Default (Inherit: {})').format(inherited_font))] + list(field.choices)
-                    if 'primary_font' not in self.obj.settings._cache():
-                        self.initial['primary_font'] = ''
-                    field.widget.obj = self.obj
             self.fields[fname] = field
             if fname not in self.initial or self.initial[fname] is None:
                 default_value = DEFAULTS[fname].get('default')
@@ -144,10 +133,6 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
         for k, v in self.cleaned_data.items():
             if isinstance(self.fields.get(k), SecretKeySettingsField) and self.cleaned_data.get(k) == SECRET_REDACTED:
                 self.cleaned_data[k] = self.initial[k]
-
-        if self.cleaned_data.get('primary_font') == '':
-            self.cleaned_data['primary_font'] = None
-
         return super().save()
 
     def get_new_filename(self, name: str) -> str:

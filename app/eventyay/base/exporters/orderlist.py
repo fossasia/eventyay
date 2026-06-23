@@ -69,6 +69,7 @@ class OrderListExporter(MultiSheetListExporter):
 
     @property
     def additional_form_fields(self):
+        prefix = f'#id_{self.identifier}'
         d = [
             (
                 'paid_only',
@@ -77,7 +78,7 @@ class OrderListExporter(MultiSheetListExporter):
                     initial=True,
                     required=False,
                     widget=forms.CheckboxInput(
-                        attrs={'data-inverse-dependency': '#id_orderlist-approval_pending_only'}
+                        attrs={'data-inverse-dependency': f'{prefix}-approval_pending_only'}
                     ),
                 ),
             ),
@@ -87,7 +88,7 @@ class OrderListExporter(MultiSheetListExporter):
                     label=_('Only approval pending orders'),
                     initial=False,
                     required=False,
-                    widget=forms.CheckboxInput(attrs={'data-inverse-dependency': '#id_orderlist-paid_only'}),
+                    widget=forms.CheckboxInput(attrs={'data-inverse-dependency': f'{prefix}-paid_only'}),
                 ),
             ),
             (
@@ -97,7 +98,7 @@ class OrderListExporter(MultiSheetListExporter):
                     initial=False,
                     required=False,
                     widget=forms.CheckboxInput(
-                        attrs={'data-inverse-dependency': '#id_orderlist-approval_pending_only'}
+                        attrs={'data-inverse-dependency': f'{prefix}-approval_pending_only'}
                     ),
                 ),
             ),
@@ -1012,6 +1013,44 @@ class OrderListExporter(MultiSheetListExporter):
             return '{}_orders'.format(self.event.slug)
 
 
+class OrderPositionListExporter(OrderListExporter):
+    identifier = 'orderpositionlist'
+    verbose_name = gettext_lazy('Order positions')
+
+    @property
+    def export_form_fields(self) -> dict:
+        ff = OrderedDict(
+            [
+                (
+                    '_format',
+                    forms.ChoiceField(
+                        label=_('Export format'),
+                        choices=(
+                            ('xlsx', _('Excel (.xlsx)')),
+                            ('default', _('CSV (with commas)')),
+                            ('csv-excel', _('CSV (Excel-style)')),
+                            ('semicolon', _('CSV (with semicolons)')),
+                        ),
+                    ),
+                ),
+            ]
+        )
+        ff.update(self.additional_form_fields)
+        return ff
+
+    def iterate_list(self, form_data):
+        yield from self.iterate_positions(form_data)
+
+    def get_filename(self):
+        if self.is_multievent:
+            return '{}_orderpositions'.format(self.events.first().organizer.slug)
+        else:
+            return '{}_orderpositions'.format(self.event.slug)
+
+    def render(self, form_data: dict, output_file=None):
+        return super(MultiSheetListExporter, self).render(form_data, output_file=output_file)
+
+
 class PaymentListExporter(ListExporter):
     identifier = 'paymentlist'
     verbose_name = gettext_lazy('Order payments and refunds')
@@ -1358,6 +1397,16 @@ def register_orderlist_exporter(sender, **kwargs):
 @receiver(register_multievent_data_exporters, dispatch_uid='multiexporter_orderlist')
 def register_multievent_orderlist_exporter(sender, **kwargs):
     return OrderListExporter
+
+
+@receiver(register_data_exporters, dispatch_uid='exporter_orderpositionlist')
+def register_orderpositionlist_exporter(sender, **kwargs):
+    return OrderPositionListExporter
+
+
+@receiver(register_multievent_data_exporters, dispatch_uid='multiexporter_orderpositionlist')
+def register_multievent_orderpositionlist_exporter(sender, **kwargs):
+    return OrderPositionListExporter
 
 
 @receiver(register_data_exporters, dispatch_uid='exporter_paymentlist')

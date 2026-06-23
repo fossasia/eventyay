@@ -79,21 +79,30 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
 
         @property
         def name(self):
+            if isinstance(self.file, str):
+                return self.file.split('?')[0].split('/')[-1]
             if hasattr(self.file, 'display_name'):
                 return self.file.display_name
             return self.file.name
 
         @property
         def is_img(self):
-            return any(self.file.name.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif'))
+            if isinstance(self.file, str):
+                return False
+            name = self.name
+            return any(name.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif'))
 
         def __str__(self):
+            if isinstance(self.file, str):
+                return self.file.split('?')[0].split('/')[-1]
             if hasattr(self.file, 'display_name'):
                 return self.file.display_name
             return os.path.basename(self.file.name).split('.', 1)[-1]
 
         @property
         def url(self):
+            if isinstance(self.file, str):
+                return self.file
             return self.file.url
 
     def get_context(self, name, value, attrs):
@@ -101,6 +110,13 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
         ctx['widget']['value'] = self.FakeFile(value)
         ctx['widget']['cachedfile'] = None
         return ctx
+
+    def is_initial(self, value):
+        # Backward-compat: plain string means a legacy external URL is stored.
+        # Treat it as an initial value so the template shows the link + clear checkbox.
+        if isinstance(value, str) and value:
+            return True
+        return super().is_initial(value)
 
 
 class CachedFileInput(forms.ClearableFileInput):
@@ -340,29 +356,3 @@ class SplitDateTimeField(forms.SplitDateTimeField):
 
 class FontSelect(forms.RadioSelect):
     option_template_name = 'pretixcontrol/font_option.html'
-
-    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
-        option = super().create_option(name, value, label, selected, index, subindex, attrs)
-        from eventyay.presale.style import SYSTEM_FONTS, get_fonts, BASE_SANS_STACK, escape_font_name
-
-        font_key = value
-        if font_key == '' and hasattr(self, 'obj'):
-            from eventyay.base.models import Event
-            if isinstance(self.obj, Event) and hasattr(self.obj, 'organizer'):
-                font_key = self.obj.organizer.settings.get('primary_font') or 'Open Sans'
-            else:
-                font_key = 'Open Sans'
-
-        if not hasattr(self, '_fonts_dict'):
-            self._fonts_dict = get_fonts()
-
-        font_family = None
-        if font_key in SYSTEM_FONTS:
-            font_family = SYSTEM_FONTS[font_key]
-        elif font_key in self._fonts_dict:
-            font_family = f'"{escape_font_name(font_key)}", {BASE_SANS_STACK}'
-        else:
-            font_family = SYSTEM_FONTS.get('Open Sans')
-
-        option['font_family'] = font_family
-        return option
