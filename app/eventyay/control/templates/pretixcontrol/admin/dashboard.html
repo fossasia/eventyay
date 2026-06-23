@@ -170,7 +170,7 @@
 								<td>{% trans "Pending" %}</td>
 								<td class="text-right">{{ orders_pending|intcomma }}</td>
 							</tr>
-							{% for rev in orders_revenue %}
+							{% for rev in orders_revenue|slice:":3" %}
 							<tr>
 								<td>{% trans "Revenue" %} ({{ rev.event__currency }})</td>
 								<td class="text-right">{{ rev.total|floatformat:2 }}</td>
@@ -181,14 +181,10 @@
 								<td class="text-right">0.00</td>
 							</tr>
 							{% endfor %}
-							<tr>
-								<td>{% trans "Attendees" %}</td>
-								<td class="text-right">{{ attendees_total|intcomma }}</td>
-							</tr>
 						</tbody>
 					</table>
 					<div class="panel-footer">
-						<a href="{% url 'eventyay_admin:admin.attendees' %}">{% trans "View attendees" %}</a>
+						<a href="{% url 'eventyay_admin:admin.attendees' %}">{% trans "View orders" %}</a>
 					</div>
 				</div>
 			</div>

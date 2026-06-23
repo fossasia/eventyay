@@ -20,7 +20,11 @@
   }
 
   .panel {
-    margin-bottom: 0;
+    margin-bottom: 16px;
+
+    @media (min-width: $screen-md-min) {
+      margin-bottom: 0;
+    }
   }
 
   .table {
