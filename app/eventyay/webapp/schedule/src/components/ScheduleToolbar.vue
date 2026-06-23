@@ -81,7 +81,7 @@
 							span.filter-dropdown-label {{ item.label }}
 					.filter-dropdown-empty(v-else) No {{ languageGroup.title.toLowerCase() }} available
 			button.toolbar-btn.icon-only.fav-toggle(
-				v-if="loggedIn && favsCount",
+				v-if="loggedIn && popularityFeatureEnabled && favsCount",
 				:disabled="!favsCount",
 				:aria-label="t.starred",
 				:aria-pressed="onlyFavs ? 'true' : 'false'",
@@ -128,7 +128,7 @@
 							span.sort-inclusion-label {{ t.sort_include_datetime }}
 							button.sort-toggle-slider(type="button", :class="{on: includeDateSortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_datetime", :aria-checked="includeDateSortKeyModel ? 'true' : 'false'", @click.prevent.stop="toggleDatetimeSort")
 								span.toggle-slider(aria-hidden="true")
-						.sort-inclusion-row
+						.sort-inclusion-row(v-if="popularitySortAvailable")
 							span.sort-inclusion-label {{ t.sort_include_popularity }}
 							button.sort-toggle-slider(type="button", :class="{on: includePopularitySortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_popularity", :aria-checked="includePopularitySortKeyModel ? 'true' : 'false'", @click.prevent.stop="togglePopularitySort")
 								span.toggle-slider(aria-hidden="true")
@@ -324,8 +324,6 @@
 </template>
 
 <script>
-import { areScheduleExportsDisabled } from '../utils'
-
 // FA icon name → inline SVG path mapping (shadow DOM blocks external CSS)
 const FA_SVG_MAP = {
 	'fa-calendar': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
@@ -372,7 +370,9 @@ export default {
 		includeDateSortKey: { type: Boolean, default: false },
 		includePopularitySortKey: { type: Boolean, default: false },
 		popularityFeatureEnabled: { type: Boolean, default: false },
+		popularitySortAvailable: { type: Boolean, default: false },
 		loggedIn: { type: Boolean, default: false },
+		exportsDisabled: { type: Boolean, default: false },
 		sortOptions: { type: Array, default: () => ['title', 'title_desc'] },
 		timeDensityMinutes: { type: Number, default: 30 },
 		isFeaturedPage: { type: Boolean, default: false },
@@ -492,6 +492,7 @@ export default {
 			}
 			return allowed
 				.filter(v => ['title', 'title_desc', 'popularity'].includes(v))
+				.filter(v => v !== 'popularity' || this.popularitySortAvailable)
 				.map(v => ({ value: v, label: labelMap[v] || v }))
 		},
 		currentSortLabel() {
@@ -504,14 +505,6 @@ export default {
 				list = list.filter(exp => !exp.identifier.includes('-my') && !exp.identifier.includes('my-') && exp.identifier !== 'faved.ics')
 			}
 			return list
-		},
-		exportsDisabled() {
-			return areScheduleExportsDisabled({
-				version: this.version,
-				isFeaturedPage: this.isFeaturedPage,
-				exportersCount: this.resolvedExporters.length,
-				isWipPreview: this.isWipPreview,
-			})
 		},
 		isWipPreview() {
 			if (this.version === 'wip') {

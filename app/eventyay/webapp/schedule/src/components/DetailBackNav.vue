@@ -1,48 +1,50 @@
 <template lang="pug">
-.c-detail-top-bar(v-if="backLink || $slots.default")
-	nav.back-nav(v-if="backLink", :aria-label="backLink.label")
-		a.back-link(:href="backLink.href")
+.c-detail-top-bar(v-if="showBack || $slots.default")
+	nav.back-nav(v-if="showBack", :aria-label="backLabel")
+		button.back-link(type="button", @click="goBack")
 			svg.back-icon(viewBox="0 0 24 24", aria-hidden="true")
 				path(fill="currentColor", d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z")
-			span.back-label {{ backLink.label }}
+			span.back-label {{ backLabel }}
 	.detail-top-actions(v-if="$slots.default")
 		slot
 </template>
 
 <script>
-import { getDetailBackLink } from '../utils'
-
 export default {
 	name: 'DetailBackNav',
 	inject: {
 		parentEventUrl: { from: 'eventUrl', default: '' },
 		translationMessages: { default: () => ({}) },
-		isWipPreview: { default: false },
 	},
 	props: {
 		eventUrl: {
 			type: String,
 			default: ''
 		},
-		destination: {
-			type: String,
-			required: true,
-			validator: (value) => ['schedule', 'speakers'].includes(value)
-		}
 	},
 	computed: {
 		resolvedEventUrl () {
 			return this.eventUrl || this.parentEventUrl || ''
 		},
-		backLink () {
-			return getDetailBackLink({
-				eventUrl: this.resolvedEventUrl,
-				destination: this.destination,
-				isWipPreview: this.isWipPreview,
-				messages: this.translationMessages || {},
-			})
-		}
-	}
+		backLabel () {
+			const messages = this.translationMessages || {}
+			return messages.back || 'Back'
+		},
+		showBack () {
+			return Boolean(this.resolvedEventUrl || (typeof window !== 'undefined' && window.history.length > 1))
+		},
+	},
+	methods: {
+		goBack () {
+			if (typeof window !== 'undefined' && window.history.length > 1) {
+				window.history.back()
+				return
+			}
+			if (this.resolvedEventUrl) {
+				window.location.href = this.resolvedEventUrl
+			}
+		},
+	},
 }
 </script>
 
@@ -72,6 +74,7 @@ export default {
 		line-height: 1.2
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04)
 		transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease
+		cursor: pointer
 		max-width: 100%
 		.back-icon
 			width: 18px
