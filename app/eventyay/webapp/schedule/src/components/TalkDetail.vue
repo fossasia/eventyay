@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-talk-detail
-	detail-back-nav(:event-url="baseUrl", destination="schedule")
+	detail-back-nav
 		detail-top-actions(
 			:export-options="talkExportOptions",
 			:qrcodes-url="talkQrcodesUrl",
@@ -12,8 +12,8 @@
 			.talk-header
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
 			.info
-				span.info-main {{ datetime }} {{ roomName }}
-				span.session-language(v-if="sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
+				span.info-main {{ sessionTimeLabel }}
+				span.session-language(v-if="!isSchedulePending && sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
 			.field-section.abstract-section(v-if="resolvedTalk.abstract")
 				h2.field-heading Abstract
 				.field-content
@@ -147,6 +147,7 @@ export default {
 		loggedIn: { default: false },
 		translationMessages: { default: () => ({}) },
 		isWipPreview: { default: false },
+		exportsDisabled: { default: false },
 		remoteApiUrl: { default: null },
 	},
 	props: {
@@ -258,8 +259,20 @@ export default {
 			return favs.includes(favId)
 		},
 		datetime() {
-			if (!this.resolvedTalk) return ''
+			if (!this.resolvedTalk || this.isSchedulePending) return ''
 			return moment(this.resolvedTalk.start).format('L LT') + ' - ' + moment(this.resolvedTalk.end).format('LT')
+		},
+		isSchedulePending () {
+			return Boolean(this.resolvedTalk?.schedule_pending || !this.resolvedTalk?.start)
+		},
+		schedulePendingText () {
+			const m = this.translationMessages || {}
+			return m.schedule_pending_secondary || 'Coming soon'
+		},
+		sessionTimeLabel () {
+			if (this.isSchedulePending) return this.schedulePendingText
+			const parts = [this.datetime, this.roomName].filter(Boolean)
+			return parts.join(' ')
 		},
 		roomName() {
 			if (!this.resolvedTalk) return ''
@@ -329,6 +342,7 @@ export default {
 			})
 		},
 		talkExportOptions() {
+			if (this.exportsDisabled || this.isSchedulePending) return []
 			const code = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
 			const exporters = this.resolvedTalk?.exporters ||
 				(this.baseUrl && code ? computeTalkExporters(this.baseUrl, code) : null)

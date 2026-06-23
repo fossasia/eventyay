@@ -26,22 +26,20 @@
         </a>
     {% endif %}
     {% if show_talks_tab %}
-        {% can_list_schedule current_event as show_schedule_tab %}
-        {% is_wip_agenda_preview request as wip_preview %}
-        {% if show_schedule_tab %}
-        {% if current_event.has_schedule_content or wip_preview or schedule %}
+        {% show_schedule_nav_tab current_event as show_schedule_nav %}
+            {% if show_schedule_nav %}
             {% agenda_schedule_nav_url request current_event as schedule_url %}
                 <a href="{{ schedule_url }}" class="header-tab {% if '/schedule/' in path and '/speakers/' not in path and '/talk/' not in path %}active{% endif %}">
                     <i class="fa fa-calendar"></i> {{ schedule_label }}
                 </a>
-            {% if current_event.speakers.exists %}
+            {% endif %}
+            {% show_public_speakers_list current_event as show_speakers_list %}
+            {% if show_speakers_list %}
                 {% agenda_speakers_nav_url request current_event as speakers_url %}
                     <a href="{{ speakers_url }}" class="header-tab {% if '/speakers/' in path %}active{% endif %}">
                         <i class="fa fa-group"></i> {{ speakers_label }}
                     </a>
             {% endif %}
-        {% endif %}
-        {% endif %}
     {% endif %}
 
     {% eventsignal current_event "eventyay.presale.signals.header_nav_tabs" request=request %}
