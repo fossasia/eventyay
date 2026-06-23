@@ -5,7 +5,10 @@ from django.utils.translation import gettext_lazy as _
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.talk_rules.agenda import can_view_schedule, is_speaker_viewable
-from eventyay.talk_rules.orga import can_view_speaker_names
+from eventyay.talk_rules.orga import (
+    can_view_speaker_names,
+    enforces_hide_speaker_names,
+)
 from eventyay.talk_rules.person import (
     can_mark_speakers_arrived,
     is_administrator,
@@ -54,9 +57,9 @@ class SpeakerProfile(PretalxModel):
         rules_permissions = {
             'list': can_view_schedule | (is_reviewer & can_view_speaker_names),
             'reviewer_list': is_reviewer & can_view_speaker_names,
-            'orga_list': orga_can_change_submissions | (is_reviewer & can_view_speaker_names),
-            'view': is_speaker_viewable | orga_can_change_submissions | (is_reviewer & can_view_speaker_names),
-            'orga_view': orga_can_change_submissions | (is_reviewer & can_view_speaker_names),
+            'orga_list': ~enforces_hide_speaker_names & (orga_can_change_submissions | (is_reviewer & can_view_speaker_names)),
+            'view': is_speaker_viewable | (~enforces_hide_speaker_names & (orga_can_change_submissions | (is_reviewer & can_view_speaker_names))),
+            'orga_view': ~enforces_hide_speaker_names & (orga_can_change_submissions | (is_reviewer & can_view_speaker_names)),
             'create': is_administrator,
             'update': orga_can_change_submissions,
             'mark_arrived': orga_can_change_submissions & can_mark_speakers_arrived,

@@ -161,6 +161,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_change_submissions',
             'is_reviewer',
             'force_hide_speaker_names',
+            'force_hide_speaker_emails',
             'can_video_create_stages',
             'can_video_create_channels',
             'can_video_direct_message',

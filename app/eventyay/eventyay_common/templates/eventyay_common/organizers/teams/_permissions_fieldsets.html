@@ -39,6 +39,7 @@
     {% with toggle_id=form.is_reviewer.auto_id %}
     <div class="team-review-settings" data-review-toggle="{{ toggle_id }}">
         {% bootstrap_field form.force_hide_speaker_names layout="control" %}
+        {% bootstrap_field form.force_hide_speaker_emails layout="control" %}
 
         <div class="form-group">
             <label class="control-label col-md-3">

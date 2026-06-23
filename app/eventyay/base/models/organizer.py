@@ -463,11 +463,18 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         ),
     )
     force_hide_speaker_names = models.BooleanField(
-        verbose_name=_('Always hide speaker names'),
+        verbose_name=_('Hide all speaker details'),
         help_text=_(
             'Normally, anonymisation is configured in the event review settings. '
             'This setting will <strong>override the event settings</strong> '
-            'and always hide speaker names for this team.'
+            'and always hide all speaker details for this team.'
+        ),
+        default=False,
+    )
+    force_hide_speaker_emails = models.BooleanField(
+        verbose_name=_('Hide speaker emails only'),
+        help_text=_(
+            'When enabled, reviewers will not be able to see speaker email addresses, but can still see other speaker details.'
         ),
         default=False,
     )

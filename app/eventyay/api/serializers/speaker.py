@@ -58,12 +58,15 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             and request
             and request.user.has_perm('base.orga_list_speakerprofile', self.event)
             and not request.user.has_perm('base.orga_update_submission', self.event)
-            and not can_view_speaker_names(request.user, self.event)
         ):
-            data.pop('fullname', None)
-            data.pop('email', None)
-            data.pop('biography', None)
-            data.pop('avatar_url', None)
+            from eventyay.talk_rules.orga import can_view_speaker_emails, can_view_speaker_names
+            if not can_view_speaker_names(request.user, self.event):
+                data.pop('fullname', None)
+                data.pop('email', None)
+                data.pop('biography', None)
+                data.pop('avatar_url', None)
+            elif not can_view_speaker_emails(request.user, self.event):
+                data.pop('email', None)
         return data
 
     @staticmethod

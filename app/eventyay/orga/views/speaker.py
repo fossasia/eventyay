@@ -255,6 +255,8 @@ class SpeakerDetail(SpeakerViewMixin, ActionFromUrl, CreateOrUpdateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({'event': self.request.event, 'user': self.object})
+        if not self.request.user.has_perm('base.orga_view_speaker_emails', self.request.event):
+            kwargs['with_email'] = False
         return kwargs
 
 
