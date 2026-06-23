@@ -55,12 +55,12 @@
             </fieldset>
             <fieldset>
                 <legend id="schedule">{% translate "Schedule" %}</legend>
-                {{ form.show_schedule.as_field_group }}
-                {{ form.schedule.as_field_group }}
                 {{ form.show_featured.as_field_group }}
+                {{ form.show_featured_speakers.as_field_group }}
                 {{ form.session_popularity_enabled.as_field_group }}
-                {{ form.session_popularity_show_on_calendar.as_field_group }}
-                {{ form.session_popularity_show_on_list.as_field_group }}
+                <div class="form-subfield-group{% if form.fields.session_popularity_show_on_schedule.disabled %} subfield-disabled{% endif %}" id="session-popularity-subfields">
+                    {{ form.session_popularity_show_on_schedule.as_field_group }}
+                </div>
                 {{ form.use_feedback.as_field_group }}
                 {{ form.export_html_on_release.as_field_group }}
                 {{ form.html_export_url.as_field_group }}

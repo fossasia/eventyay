@@ -383,9 +383,10 @@
     {% if subevent or not event.has_subevents %}
         {% if featured_speakers %}
             <section class="front-page" id="featured-speakers" aria-label="{% trans 'Featured Speakers' %}">
+                <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}"></script>
                 <script id="pretalx-schedule-data" type="application/json">{{ featured_speakers_widget_schedule_json|safe }}</script>
                 {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback='schedule/pretalx-schedule.js' %}
-                <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="featured-speakers" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
+                <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="featured-speakers" speakers-list-public="{% if featured_speakers_list_public %}true{% else %}false{% endif %}" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
             </section>
         {% endif %}
     {% endif %}
