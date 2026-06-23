@@ -29,6 +29,14 @@ if TYPE_CHECKING:
     from eventyay.base.models.slot import TalkSlot
 
 
+def filter_featured_public_talk_slots(queryset):
+    """Limit talk slots to featured sessions with a visible, non-deleted room."""
+    return queryset.filter(
+        submission__is_featured=True,
+        room__isnull=False,
+    ).exclude(room__deleted=True)
+
+
 class RoomData(TypedDict):
     id: int
     guid: str
@@ -73,6 +81,8 @@ class ScheduleData(BaseExporter):
         schedule = self.schedule
 
         base_qs = schedule.talks.all() if self.with_accepted else schedule.talks.filter(is_visible=True)
+        if getattr(self, 'featured_only', False):
+            base_qs = filter_featured_public_talk_slots(base_qs)
         talks = (
             base_qs.select_related(
                 'submission',
@@ -417,6 +427,8 @@ class ICalExporter(BaseExporter):
             .select_related('submission', 'room', 'submission__event')
             .order_by('start')
         )
+        if getattr(self, 'featured_only', False):
+            talks = filter_featured_public_talk_slots(talks)
         for talk in talks:
             if self.favs_retrieve and talk.submission and talk.submission.code not in self.talk_ids:
                 continue
@@ -456,6 +468,8 @@ class FavedICalExporter(BaseExporter):
         if not schedule:
             return None
         slots = schedule.scheduled_talks.filter(submission__favourites__user__in=[request.user])
+        if getattr(self, 'featured_only', False):
+            slots = slots.filter(submission__is_featured=True)
 
         cal = vobject.iCalendar()
         cal.add('prodid').value = f'-//pretalx//{netloc}//{request.event.slug}//faved'
