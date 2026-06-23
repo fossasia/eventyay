@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-speaker-detail
-	detail-back-nav(destination="speakers")
+	detail-back-nav(:event-url="eventUrl")
 		detail-top-actions(
 			:export-options="speakerExportOptions",
 			:qrcodes-url="speakerQrcodesUrl")
@@ -50,7 +50,7 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl } from '../utils'
+import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl, sessionsForSpeaker } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
 import Session from './Session.vue'
 import DetailBackNav from './DetailBackNav.vue'
@@ -76,7 +76,8 @@ export default {
 			}
 		},
 		translationMessages: { default: () => ({}) },
-		isWipPreview: { default: false }
+		isWipPreview: { default: false },
+		exportsDisabled: { default: false },
 	},
 	props: {
 		speaker: Object,
@@ -149,26 +150,15 @@ export default {
 		resolvedSessions() {
 			if (this.sessions?.length) return this.sessions
 			const id = this.speakerId || this.speaker?.code
-			if (id && this.scheduleData?.sessionsBySpeaker?.[id]) {
-				return this.scheduleData.sessionsBySpeaker[id]
-			}
-			if (id && this.scheduleData) {
-				const list = this.scheduleData.sessions || []
-				const out = []
-				for (let i = 0; i < list.length; i++) {
-					const s = list[i]
-					const spk = s.speakers
-					if (!spk) continue
-					for (let j = 0; j < spk.length; j++) {
-						if (spk[j] && spk[j].code === id) {
-							out.push(s)
-							break
-						}
-					}
-				}
-				return out
-			}
-			return []
+			if (!id) return []
+			const fromBySpeaker = sessionsForSpeaker(this.scheduleData?.sessionsBySpeaker, id)
+			if (fromBySpeaker.length) return fromBySpeaker
+			const list = this.scheduleData?.sessions || []
+			const normalizedId = id.toLowerCase()
+			return list.filter((session) => (session.speakers || []).some((sp) => {
+				const code = typeof sp === 'string' ? sp : sp?.code
+				return code && code.toLowerCase() === normalizedId
+			}))
 		},
 		resolvedFavs() {
 			if (this.favs?.length) return this.favs
@@ -226,6 +216,7 @@ export default {
 			return `${this.eventUrl}speakers/${code}`
 		},
 		speakerExportOptions() {
+			if (this.exportsDisabled || !this.resolvedSessions?.length) return []
 			const exporters = this.resolvedSpeaker?.exporters
 			const base = this.speakerBaseUrl
 			if (!exporters && !base) return []
