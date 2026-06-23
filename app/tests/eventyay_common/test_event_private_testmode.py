@@ -69,33 +69,22 @@ def test_user_cannot_view_talks_when_unpublished_and_no_private_mode(fresh_event
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
-def test_orga_live_page_renders(organizer_client, event):
-    """The orga talk-specific status page renders successfully."""
-    orga_url = reverse('orga:event.live', kwargs={'event': event.slug})
-    response = organizer_client.get(orga_url)
-    assert response.status_code == 200
-
-
-@pytest.mark.django_db
-@override_settings(SITE_URL='https://testserver')
-def test_orga_private_testmode_talks_stays_on_orga_page(organizer_client, event):
-    """After toggling private test mode for talks on the orga page, stay on the orga page."""
-    event.private_testmode = True
-    event.settings.set('private_testmode_talks', True)
-    event.save()
-
-    orga_url = reverse('orga:event.live', kwargs={'event': event.slug})
-    response = organizer_client.post(
-        orga_url, {'private_testmode_talks_action': 'disable'}
+def test_orga_live_url_redirects_to_central(organizer_client, event):
+    """The orga talk-component status URL now redirects to the central status page."""
+    orga_url = reverse('orga:event.live', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
+    central_url = reverse(
+        'eventyay_common:event.live',
+        kwargs={'organizer': event.organizer.slug, 'event': event.slug},
     )
+    response = organizer_client.get(orga_url)
     assert response.status_code in {301, 302}
-    assert response.headers['Location'].endswith(orga_url)
+    assert response.headers['Location'].endswith(central_url)
 
 
 @pytest.mark.django_db
 @override_settings(SITE_URL='https://testserver')
 def test_central_status_disables_private_testmode_redirect(organizer_client, event):
-    """After disabling private test mode for talks, redirect goes to central page."""
+    """After disabling private test mode for talks on the central page, stay on central page."""
     event.private_testmode = True
     event.settings.set('private_testmode_talks', True)
     event.save()
