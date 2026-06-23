@@ -215,7 +215,7 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                     'user': self,
                     'organizer': self.context['organizer'].name,
                     'team': instance.team.name,
-                    'url': build_absolute_uri('control:auth.invite', kwargs={'token': instance.token}),
+                    'url': build_absolute_uri('common:auth.invite', kwargs={'token': instance.token}),
                 },
                 event=None,
                 locale=get_language_without_region(),  # TODO: expose?
