@@ -1372,23 +1372,23 @@ h1 .label {
     .filter-form .col-xs-12 {
         margin-bottom: 10px;
     }
-    .filter-actions {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
+    .filter-form .filter-actions {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
         justify-content: space-between;
         gap: 10px;
         width: 100%;
         
         .btn {
-            flex: 1 1 50% !important;
-            max-width: 50% !important;
+            flex: 1 1 50%;
+            max-width: 50%;
             height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 6px;
-            margin: 0 !important;
+            margin: 0;
         }
     }
     [data-ajax-results-region] > p {
