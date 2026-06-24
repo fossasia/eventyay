@@ -3,71 +3,53 @@
 {% load rich_text %}
 {% load eventurl %}
 {% load urlreplace %}
-{% block title %}{% trans "Event overview" %}{% endblock %}
-{% block content %}
+{% block pagetitle %}{% trans "Event overview" %}{% endblock %}
+{% block page_content %}
     {% if organizer_homepage_text %}
         <div>
             {{ organizer_homepage_text | rich_text }}
         </div>
     {% endif %}
-    <h3>{{ date|date:"F Y" }}</h3>
-    <form class="form-inline" method="get" id="monthselform" action="{% eventurl request.organizer "presale:organizer.index" %}">
+    <div class="organizer-list-header">
+        <h2 class="content-header">{{ date|date:"F Y" }}</h2>
+    </div>
+    <form class="form-inline organizer-calendar-nav" method="get" id="monthselform" action="{% eventurl request.organizer "presale:organizer.index" %}">
         {% for f, v in request.GET.items %}
             {% if f != "month" and f != "year" %}
                 <input type="hidden" name="{{ f }}" value="{{ v }}">
             {% endif %}
         {% endfor %}
-        <div class="row">
-            <div class="col-sm-4 col-xs-12 text-left flip">
-                <div class="btn-group" role="group">
-                    <a href="?{% url_replace request "style" "list" "week" "" "year" "" "month" "" %}" type="button" class="btn btn-default">
-                        <span class="fa fa-list" aria-hidden="true"></span>
-                        {% trans "List" %}
-                    </a>
-                    <a href="?{% url_replace request "style" "week" "old" "" "month" "" "year" "" %}" type="button"
-                            class="btn btn-default">
-                        <span class="fa fa-calendar" aria-hidden="true"></span>
-                        {% trans "Week" %}
-                    </a>
-                    <a href="?{% url_replace request "style" "calendar" "old" "" "week" "" %}"
-                            type="button"
-                            class="btn btn-default active">
-                        <span class="fa fa-calendar" aria-hidden="true"></span>
-                        {% trans "Month" %}
-                    </a>
-                </div>
-                <a href="{% eventurl request.organizer "presale:organizer.ical" %}?{% url_replace request "locale" request.LANGUAGE_CODE "page" "" "old" "" "week" "" "style" "" "month" "" "year" "" %}"
-                        class="btn btn-default">
-                    <span class="fa fa-calendar-plus-o" aria-hidden="true"></span>
-                    {% trans "iCal" %}
-                </a>
-            </div>
-            <div class="col-sm-4 col-xs-12 text-center">
-                <select name="month" class="form-control">
-                    {% for m in months %}
-                        <option value="{{ m|date:"m" }}" {% if m == date %}selected{% endif %}>{{ m|date:"F" }}</option>
-                    {% endfor %}
-                </select>
-                <select name="year" class="form-control">
-                    {% for y in years %}
-                        <option value="{{ y }}" {% if y == date.year %}selected{% endif %}>{{ y }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="js-hidden btn btn-default">
-                    {% trans "Go" %}
-                </button>
-            </div>
-            <div class="col-sm-4 hidden-xs text-right flip">
+        <div class="organizer-calendar-filter-row">
+            <div class="calendar-nav-prev">
                 {% if has_before %}
-                    <a href="?{% url_replace request "year" before.year "month" before.month %}" class="btn btn-default">
+                    <a href="?{% url_replace request "year" before.year "month" before.month %}" class="btn outline">
                         <span class="fa fa-arrow-left" aria-hidden="true"></span>
                         {{ before|date:"F Y" }}
                     </a>
                 {% endif %}
+            </div>
+
+            <div class="organizer-calendar-selects">
+                <select name="month" class="form-control" aria-label="{% translate 'Month' %}">
+                    {% for m in months %}
+                        <option value="{{ m|date:"m" }}" {% if m == date %}selected{% endif %}>{{ m|date:"F" }}</option>
+                    {% endfor %}
+                </select>
+                <select name="year" class="form-control" aria-label="{% translate 'Year' %}">
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if y == date.year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="js-hidden btn outline">
+                    {% trans "Go" %}
+                </button>
+            </div>
+
+            <div class="calendar-nav-next">
                 {% if has_after %}
-                    <a href="?{% url_replace request "year" after.year "month" after.month %}" class="btn btn-default">
-                        <span class="fa fa-arrow-right" aria-hidden="true"></span>
+                    <a href="?{% url_replace request "year" after.year "month" after.month %}" class="btn outline">
                         {{ after|date:"F Y" }}
+                        <span class="fa fa-arrow-right" aria-hidden="true"></span>
                     </a>
                 {% endif %}
             </div>
@@ -82,4 +64,4 @@
             {% endblocktrans %}
         </div>
     {% endif %}
-{% endblock %}
+{% endblock page_content %}

@@ -1,0 +1,24 @@
+{% load i18n %}
+{% load urlreplace %}
+<div class="organizer-event-toolbar">
+    <details class="dropdown organizer-export-dropdown">
+        <summary class="btn outline">
+            <span class="fa fa-download" aria-hidden="true"></span>
+            {% trans "Export" %}
+            <span class="fa fa-caret-down" aria-hidden="true"></span>
+        </summary>
+        <div class="dropdown-content dropdown-content-sw">
+            {% for exporter in organizer_calendar_exporters %}
+                <a class="dropdown-item" href="{{ exporter.url }}">
+                    <span class="fa {{ exporter.icon }}" aria-hidden="true"></span>
+                    {{ exporter.label }}
+                </a>
+            {% endfor %}
+        </div>
+    </details>
+    {% if "old" in request.GET %}
+        <a href="?{% url_replace request "old" "" %}" class="btn link organizer-toggle-past">{% trans "Show upcoming" %}</a>
+    {% else %}
+        <a href="?{% url_replace request "old" "1" %}" class="btn link organizer-toggle-past">{% trans "Show past events" %}</a>
+    {% endif %}
+</div>
