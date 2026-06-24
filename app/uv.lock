@@ -815,15 +815,15 @@ wheels = [
 
 [[package]]
 name = "django-debug-toolbar"
-version = "6.3.0"
+version = "7.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "sqlparse" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d8/ea/b62673424dd72d2dbf5adf4145281a421d5792f47380d9bc8e3b11e1a769/django_debug_toolbar-6.3.0.tar.gz", hash = "sha256:f830a86fe02e17f625a22cfbed24a5bd1500762e201ec959c50efb0f9327282b", size = 334079, upload-time = "2026-04-02T16:07:01.385Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/ac/3ac674f99c64bfbcd9ae3d7f5f3577f23ea52884e5ac36842e1f024dce03/django_debug_toolbar-7.0.0.tar.gz", hash = "sha256:ef7494c5b459c149e87cc2da88d86e944064945e86bd7b2d879093586b5fefbf", size = 359560, upload-time = "2026-06-19T00:21:23.346Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7d/9e/d8c3c845f4b5ccac7377c19f4049e7e00c6f121846a81f69a497b45734df/django_debug_toolbar-6.3.0-py3-none-any.whl", hash = "sha256:a199ce3d0f884739a9096835ad417479fede05f3b3c4824bc8b354721ba8f629", size = 298304, upload-time = "2026-04-02T16:06:59.617Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/ab/684a56624f9ed35127e203e52d2c241f3b7b70d37cfa8cb2ba4fc8e1e8d7/django_debug_toolbar-7.0.0-py3-none-any.whl", hash = "sha256:656161388ce48384276342eeb16d532113ec670816fa1546cc3753730aa51b3d", size = 302038, upload-time = "2026-06-19T00:21:21.531Z" },
 ]
 
 [[package]]
@@ -1016,15 +1016,16 @@ wheels = [
 
 [[package]]
 name = "django-redis"
-version = "6.0.0"
+version = "7.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "redis" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/08/53/dbcfa1e528e0d6c39947092625b2c89274b5d88f14d357cee53c4d6dbbd4/django_redis-6.0.0.tar.gz", hash = "sha256:2d9cb12a20424a4c4dde082c6122f486628bae2d9c2bee4c0126a4de7fda00dd", size = 56904, upload-time = "2025-06-17T18:15:46.376Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/78/203a0cdc0f1c083a5407d01f77b58099a120bb8a5a04562f56a9bb341314/django_redis-7.0.0.tar.gz", hash = "sha256:e48491c862f4350b0747ceb1016700686fb93c4f4e0fb9c490fe6c6658ffd933", size = 64601, upload-time = "2026-06-02T14:17:48.819Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/79/055dfcc508cfe9f439d9f453741188d633efa9eab90fc78a67b0ab50b137/django_redis-6.0.0-py3-none-any.whl", hash = "sha256:20bf0063a8abee567eb5f77f375143c32810c8700c0674ced34737f8de4e36c0", size = 33687, upload-time = "2025-06-17T18:15:34.165Z" },
+    { url = "https://files.pythonhosted.org/packages/7e/9f/09cdb9a1eebe8533b02a7694ca787acfc1e4d93b5b6175ff99366d4e6d64/django_redis-7.0.0-py3-none-any.whl", hash = "sha256:4b23aa6e0cd0937bb1242e9a463809e6004de3ca2150f34e986306bb6220d688", size = 38932, upload-time = "2026-06-02T14:17:47.281Z" },
 ]
 
 [[package]]
@@ -1507,7 +1508,7 @@ requires-dist = [
     { name = "django-otp", specifier = ">=1.7.0" },
     { name = "django-pdb", specifier = ">=0.6.2" },
     { name = "django-phonenumber-field", specifier = ">=8.4.0" },
-    { name = "django-redis", specifier = ">=5.4.0" },
+    { name = "django-redis", specifier = ">=7.0.0" },
     { name = "django-scopes", specifier = ">=2.0.0" },
     { name = "django-sso", specifier = ">=3.0.2" },
     { name = "django-statici18n", specifier = ">=2.5.0" },
@@ -1637,7 +1638,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "django-debug-toolbar", specifier = ">=6.1.0" },
+    { name = "django-debug-toolbar", specifier = ">=7.0.0" },
     { name = "django-extensions", specifier = ">=4.1" },
     { name = "wlc", specifier = ">=2.0.0" },
 ]
