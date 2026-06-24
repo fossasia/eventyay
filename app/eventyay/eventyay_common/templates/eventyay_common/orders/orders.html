@@ -20,7 +20,7 @@
     </div>
     <div data-ajax-results-region>
         <div class="table-responsive">
-            <table class="table table-condensed table-hover table-quotas">
+            <table class="table table-condensed table-hover table-quotas events-table">
                 <thead>
                     <tr>
                         <th>{{ _('Order code') }}</th>
@@ -33,19 +33,19 @@
                 <tbody>
                     {% for order in order_list %}
                     <tr>
-                        <td>
+                        <td class="event-name-col" data-label="{{ _('Order code') }}">
                             <a href="{% abseventurl order.event 'presale:event.order' order=order.code secret=order.secret %}">
                                 {{ order.code }}
                             </a>
                         </td>
-                        <td>
+                        <td data-label="{{ _('Event') }}">
                             <a href="{% eventurl order.event 'presale:event.index' %}">{{ order.event.name }}</a>
                         </td>
-                        <td>{{ order.datetime|date:"SHORT_DATETIME_FORMAT" }}</td>
-                        <td>
+                        <td data-label="{{ _('Order Date') }}">{{ order.datetime|date:"SHORT_DATETIME_FORMAT" }}</td>
+                        <td data-label="{{ _('Order total') }}" class="events-table__cell--no-border">
                             {{ order.total|money:order.event.currency }}
                         </td>
-                        <td>
+                        <td data-label="{{ _('Status') }}">
                             {% include "eventyay_common/orders/fragment_order_status.html" with order=order event=order.event %}
                         </td>
                     </tr>

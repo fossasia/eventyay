@@ -102,7 +102,7 @@
                 <tbody>
                 {% for e in events %}
                     <tr>
-                    <td class="event-name-col">
+                    <td class="event-name-col" data-label="{% trans 'Event name' %}">
                         <strong><a href='{% url "eventyay_common:event.index" organizer=e.organizer.slug event=e.slug %}'>{{ e.name }}</a></strong>
                     </td>
                     <td data-label="{% trans 'Short form' %}">{{ e.slug }}</td>
@@ -140,7 +140,7 @@
                             </a>
                         {% endif %}
                     </td>
-                    <td data-label="{% trans 'Shop' %}">
+                    <td data-label="{% trans 'Shop' %}" class="events-table__cell--no-border">
                         {% if not e.live %}
                             <span class="label label-danger">{% trans "Shop disabled" %}</span>
                         {% elif e.presale_has_ended %}

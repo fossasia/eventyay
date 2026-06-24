@@ -1313,7 +1313,7 @@ h1 .label {
             border-bottom: 1px solid #f5f5f5;
             
             &:last-child,
-            &:nth-last-child(2) {
+            &.events-table__cell--no-border {
                 border-bottom: none;
             }
             
@@ -1367,6 +1367,11 @@ h1 .label {
             &::before {
                 display: none;
             }
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
         }
     }
     .filter-form .col-xs-12 {
