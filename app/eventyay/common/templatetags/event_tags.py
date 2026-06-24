@@ -12,6 +12,11 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import Order, OrderPosition
 from eventyay.common.urls import is_http_url
 from eventyay.common.permissions import is_admin_mode_active, user_has_cfp_submissions
+from eventyay.talk_rules.agenda import (
+    can_list_released_schedule_speakers,
+    is_agenda_visible,
+    is_wip_agenda_url,
+)
 from eventyay.talk_rules.submission import (
     are_featured_submissions_visible,
     event_has_featured_submissions,
@@ -198,6 +203,40 @@ def can_list_schedule(context, event=None):
         and event.get_feature_flag('show_schedule')
         and event.current_schedule
     )
+
+
+@register.simple_tag(takes_context=True)
+def show_public_speakers_list(context, event=None):
+    """Whether the public speakers overview page and nav link may be shown."""
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not request or not event:
+        return False
+    return can_list_released_schedule_speakers(AnonymousUser(), event)
+
+
+@register.simple_tag(takes_context=True)
+def show_schedule_nav_tab(context, event=None):
+    """Whether the schedule header tab should link to the public schedule."""
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not request or not event:
+        return False
+    if not can_list_schedule(context, event):
+        return False
+
+    path = getattr(request, 'path_info', '') or ''
+    user = getattr(request, 'user', None) or AnonymousUser()
+
+    if is_wip_agenda_url(path):
+        return True
+    if is_agenda_visible(user, event) and event.has_schedule_content:
+        return True
+    if '/featured/' in path:
+        return False
+    if '/schedule/' in path and '/speakers/' not in path and '/talk/' not in path:
+        return True
+    return False
 
 
 @register.simple_tag(takes_context=True)
