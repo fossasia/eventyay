@@ -55,14 +55,14 @@ def send_queued_mail(self, event_id: int, queued_mail_id: int):
                 self.retry(countdown=countdown, args=[original_event_id, queued_mail_id], throw=False)
                 return
 
-        result = qm.send(async_send=False)
+            result = qm.send(async_send=False)
 
-        if not result:
-            logger.warning("[SendMail] EmailQueue ID %s: no recipients to send to.", queued_mail_id)
-        elif not qm.sent_at:
-            logger.warning("[SendMail] EmailQueue ID %s: partially sent, some recipients failed.", queued_mail_id)
-        else:
-            logger.info("[SendMail] EmailQueue ID %s: all emails sent successfully.", queued_mail_id)
+            if not result:
+                logger.warning("[SendMail] EmailQueue ID %s: no recipients to send to.", queued_mail_id)
+            elif not qm.sent_at:
+                logger.warning("[SendMail] EmailQueue ID %s: partially sent, some recipients failed.", queued_mail_id)
+            else:
+                logger.info("[SendMail] EmailQueue ID %s: all emails sent successfully.", queued_mail_id)
 
     except Exception as exc:
         logger.exception("[SendMail] Unexpected error for EmailQueue ID %s", queued_mail_id)
