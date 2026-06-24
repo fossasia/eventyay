@@ -810,3 +810,41 @@ table td > .checkbox input[type="checkbox"] {
     padding-top: 0;
   }
 }
+
+/* Thumbnailed file input widget styles */
+.thumbnailed-file-initial {
+  margin-bottom: 8px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.thumbnailed-file-link {
+  vertical-align: middle;
+}
+.thumbnailed-file-preview-eye {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.thumbnailed-file-delete-wrapper {
+  margin-left: 10px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.thumbnailed-file-checkbox {
+  vertical-align: middle;
+}
+.thumbnailed-file-checkbox-label {
+  font-weight: normal;
+  cursor: pointer;
+  margin-bottom: 0;
+  vertical-align: middle;
+}
+.thumbnailed-file-delete-ajax {
+  display: none;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.thumbnailed-file-input-text {
+  margin-top: 8px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}

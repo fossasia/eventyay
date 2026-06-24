@@ -43,7 +43,7 @@ def _search_events(query, limit=10):
                 'name': str(event.name),
                 'url': url,
                 'date': event.get_date_range_display(),
-                'image': event.visible_logo_url or event.visible_header_image_url or '',
+                'image': event.preview_image_url_with_fallback or '',
             })
     return results
 

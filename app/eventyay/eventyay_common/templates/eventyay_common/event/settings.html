@@ -1,5 +1,5 @@
 {% extends "eventyay_common/event/settings_base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% load bootstrap3 %}
 {% load hierarkey_form %}
 {% load formset_tags %}
@@ -8,6 +8,7 @@
 {% block custom_header %}
 {{ block.super }}
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
+
 {{ sform.media }}
 {% endblock %}
 {% block inside %}
@@ -172,6 +173,7 @@
             {% bootstrap_field sform.event_logo_image layout="control" %}
             {% bootstrap_field sform.logo_show_title layout="control" %}
             {% bootstrap_field sform.logo_image layout="control" %}
+            {% bootstrap_field sform.event_preview_image layout="control" %}
             {% bootstrap_field sform.logo_image_large layout="control" %}
             {% bootstrap_field sform.og_image layout="control" %}
             {% url "eventyay_common:organizer.edit" organizer=request.organizer.slug as org_url %}
@@ -272,4 +274,6 @@
     </div>
     {% endcomment %}
 </form>
+
+<script src="{% static 'eventyay-common/js/event-settings-images.js' %}"></script>
 {% endblock %}

@@ -1,6 +1,7 @@
 import datetime as dt
 import logging
 import re
+import os
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from enum import StrEnum
@@ -10,6 +11,8 @@ import jwt
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.core.files import File
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField
@@ -35,8 +38,9 @@ from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
+from eventyay.base.settings import DEFAULTS, SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
 from eventyay.presale.style import regenerate_css
+from eventyay.common.urls import get_file_url_path
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
 from eventyay.control.forms.filter import EventFilterForm
@@ -695,6 +699,35 @@ class EventUpdate(
         return True
 
     def post(self, request, *args, **kwargs):
+        if request.POST.get('ajax') == 'delete_image':
+            setting_key = request.POST.get('setting_key', '').strip()
+            if not setting_key:
+                field = request.POST.get('field', '').strip()
+                if field.startswith('settings-'):
+                    setting_key = field[len('settings-'):]
+                else:
+                    setting_key = field
+
+            if setting_key in DEFAULTS and DEFAULTS[setting_key].get('type') is File:
+                current_value = request.event.settings.get(setting_key, as_type=str)
+                if current_value:
+                    current_file = get_file_url_path(current_value)
+                    if current_file:
+                        default_storage.delete(current_file)
+                        base_path, _ = os.path.splitext(current_file)
+                        orig_ext = request.event.settings.get(f'{setting_key}_original_ext', as_type=str)
+                        if orig_ext:
+                            default_storage.delete(f'{base_path}_original.{orig_ext}')
+
+                if request.event.settings.get(setting_key) is not None:
+                    del request.event.settings[setting_key]
+                orig_ext_key = f"{setting_key}_original_ext"
+                if request.event.settings.get(orig_ext_key) is not None:
+                    del request.event.settings[orig_ext_key]
+                request.event.log_action('eventyay.event.settings.changed', user=request.user, data={setting_key: None})
+                return JsonResponse({'success': True})
+            return JsonResponse({'success': False, 'error': 'Invalid field'}, status=400)
+
         if self.enable_talk_system(request):
             return redirect(self.get_success_url())
 

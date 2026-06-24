@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 MAX_WIDTH: dict[str, int] = {
     'logo_image': 3000,       # header/banner image
     'event_logo_image': 1000, # event logo
+    'event_preview_image': 1200, # event preview card image
 }
 
 JPEG_QUALITY = 85
