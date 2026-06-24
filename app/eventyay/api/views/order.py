@@ -363,8 +363,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                     send_mail=send_mail,
                     count_waitinglist=False,
                 )
-            except Quota.QuotaExceededException as e:
-                return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Quota.QuotaExceededException:
+                raise QuotaExceededAPIException()
             except PaymentException as e:
                 return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
             except SendMailException:
@@ -438,8 +438,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 auth=request.auth if isinstance(request.auth, (Device, TeamAPIToken, OAuthAccessToken)) else None,
                 send_mail=send_mail,
             )
-        except Quota.QuotaExceededException as e:
-            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Quota.QuotaExceededException:
+            raise QuotaExceededAPIException()
         except OrderError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return self.retrieve(request, [], **kwargs)
@@ -1113,8 +1113,8 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
             ocm.commit()
         except OrderError as e:
             raise ValidationError(str(e))
-        except Quota.QuotaExceededException as e:
-            raise ValidationError(str(e))
+        except Quota.QuotaExceededException:
+            raise ValidationError({'error_code': 'QUOTA_EXCEEDED', 'detail': 'Quota exceeded.'})
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.get('partial', False)
@@ -1155,8 +1155,8 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         order_modified.send(sender=serializer.instance.order.event, order=serializer.instance.order)
 
 
-def get_order_for_nested_route(request, order_id):
-    return get_object_or_404(Order, pk=order_id, event=request.event)
+def get_order_for_nested_route(request, order_pk):
+    return get_object_or_404(Order, pk=order_pk, event=request.event)
 
 
 class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
@@ -1196,8 +1196,8 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                         force=request.data.get('force', False),
                         send_mail=send_mail,
                     )
-                except Quota.QuotaExceededException as e:
-                    raise ValidationError({'detail': str(e)})
+                except Quota.QuotaExceededException:
+                    raise QuotaExceededAPIException()
                 except SendMailException:
                     pass
 
@@ -1242,8 +1242,8 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                 send_mail=send_mail,
                 force=force,
             )
-        except Quota.QuotaExceededException as e:
-            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Quota.QuotaExceededException:
+            raise QuotaExceededAPIException()
         except PaymentException as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except SendMailException:
@@ -1538,6 +1538,12 @@ class RetryException(APIException):
     status_code = 409
     default_detail = 'The requested resource is not ready, please retry later.'
     default_code = 'retry_later'
+
+
+class QuotaExceededAPIException(APIException):
+    status_code = 409
+    default_detail = 'Quota exceeded.'
+    default_code = 'QUOTA_EXCEEDED'
 
 
 class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
