@@ -70,7 +70,11 @@
     <script src="{% static 'common/js/slides_input.js' %}" defer></script>
     <small class='form-text text-muted mt-2'>
       {% if widget.max_items %}
-        {% blocktranslate count count=widget.max_items %}You can keep up to {{ count }} slide entry in total.{% plural %}You can keep up to {{ count }} slide entries in total.{% endblocktranslate %}
+        {% if widget.current_count %}
+          {% blocktranslate count count=widget.remaining_items %}You can add {{ count }} more slide entry.{% plural %}You can add {{ count }} more slide entries.{% endblocktranslate %}
+        {% else %}
+          {% blocktranslate count count=widget.max_items %}You can keep up to {{ count }} slide entry in total.{% plural %}You can keep up to {{ count }} slide entries in total.{% endblocktranslate %}
+        {% endif %}
       {% else %}
         {% translate 'You can upload PDF files.' %}
       {% endif %}

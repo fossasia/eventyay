@@ -1,29 +1,29 @@
-document.addEventListener('DOMContentLoaded', function() {
-  var widgets = document.querySelectorAll('.slides-input-widget');
-  widgets.forEach(function(widget) {
-    var id = widget.getAttribute('data-id');
-    var isReRender = widget.getAttribute('data-is-re-render') === 'true';
+document.addEventListener('DOMContentLoaded', () => {
+  const widgets = document.querySelectorAll('.slides-input-widget');
+  widgets.forEach(widget => {
+    const id = widget.getAttribute('data-id');
+    const isReRender = widget.getAttribute('data-is-re-render') === 'true';
     
-    var input = document.getElementById(id);
-    var label = document.getElementById(id + '_label');
-    var errorMsg = document.getElementById(id + '_error');
-    var storageWarningMsg = document.getElementById(id + '_storage_warning');
-    var storageKey = 'file_upload_' + id;
+    const input = document.getElementById(id);
+    const label = document.getElementById(id + '_label');
+    const errorMsg = document.getElementById(id + '_error');
+    const storageWarningMsg = document.getElementById(id + '_storage_warning');
+    const storageKey = 'file_upload_' + id;
     
     function b64toFile(b64Data, contentType, filename) {
-        var sliceSize = 512;
-        var byteCharacters = atob(b64Data);
-        var byteArrays = [];
-        for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-            var slice = byteCharacters.slice(offset, offset + sliceSize);
-            var byteNumbers = new Array(slice.length);
-            for (var i = 0; i < slice.length; i++) {
+        const sliceSize = 512;
+        const byteCharacters = atob(b64Data);
+        const byteArrays = [];
+        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+            const slice = byteCharacters.slice(offset, offset + sliceSize);
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
                 byteNumbers[i] = slice.charCodeAt(i);
             }
-            var byteArray = new Uint8Array(byteNumbers);
+            const byteArray = new Uint8Array(byteNumbers);
             byteArrays.push(byteArray);
         }
-        var blob = new Blob(byteArrays, {type: contentType});
+        const blob = new Blob(byteArrays, {type: contentType});
         return new File([blob], filename, {type: contentType});
     }
 
@@ -33,13 +33,13 @@ document.addEventListener('DOMContentLoaded', function() {
       // Restore from sessionStorage on load if re-rendering due to errors
       try {
           if (isReRender) {
-              var storedData = sessionStorage.getItem(storageKey);
+              const storedData = sessionStorage.getItem(storageKey);
               if (storedData) {
-                  var dataArr = JSON.parse(storedData);
-                  var dt = new DataTransfer();
-                  var names = [];
-                  dataArr.forEach(function(data) {
-                      var file = b64toFile(data.base64, data.type, data.name);
+                  const dataArr = JSON.parse(storedData);
+                  const dt = new DataTransfer();
+                  const names = [];
+                  dataArr.forEach(data => {
+                      const file = b64toFile(data.base64, data.type, data.name);
                       dt.items.add(file);
                       names.push(data.name);
                   });
@@ -54,13 +54,13 @@ document.addEventListener('DOMContentLoaded', function() {
           console.warn('Failed to restore or clear files in sessionStorage', e);
       }
 
-      input.addEventListener('change', function() {
+      input.addEventListener('change', () => {
         if (input.files && input.files.length > 0) {
-          var maxSize = parseInt(input.getAttribute('data-maxsize'), 10);
-          var exceedsMaxSize = false;
+          const maxSize = parseInt(input.getAttribute('data-maxsize'), 10);
+          let exceedsMaxSize = false;
           
           if (maxSize) {
-            for (var i = 0; i < input.files.length; i++) {
+            for (let i = 0; i < input.files.length; i++) {
               if (input.files[i].size > maxSize) {
                 exceedsMaxSize = true;
                 break;
@@ -85,19 +85,30 @@ document.addEventListener('DOMContentLoaded', function() {
           if (storageWarningMsg) {
             storageWarningMsg.style.display = 'none';
           }
-          var names = Array.from(input.files).map(function(f) { return f.name; });
+          const names = Array.from(input.files).map(f => f.name);
           label.textContent = names.join(', ');
           label.classList.remove('text-muted');
 
+          // Proactively skip base64 storage if size > 2MB
+          const totalSize = Array.from(input.files).reduce((acc, file) => acc + file.size, 0);
+          if (totalSize > 2 * 1024 * 1024) {
+              console.warn('Files too large for sessionStorage (> 2MB)');
+              if (storageWarningMsg) {
+                  storageWarningMsg.style.display = 'block';
+              }
+              try { sessionStorage.removeItem(storageKey); } catch(e) {}
+              return;
+          }
+
           // Save to sessionStorage
-          var filesData = [];
-          var filesToProcess = input.files.length;
-          var processed = 0;
+          const filesData = [];
+          const filesToProcess = input.files.length;
+          let processed = 0;
           
-          Array.from(input.files).forEach(function(file) {
-              var reader = new FileReader();
-              reader.onload = function(e) {
-                  var base64 = e.target.result.split(',')[1];
+          Array.from(input.files).forEach(file => {
+              const reader = new FileReader();
+              reader.onload = e => {
+                  const base64 = e.target.result.split(',')[1];
                   filesData.push({
                       name: file.name,
                       type: file.type,
