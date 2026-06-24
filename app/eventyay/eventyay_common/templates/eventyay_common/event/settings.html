@@ -19,7 +19,8 @@
             <h1>{{ request.event.name|event_localize }} {% trans "- Settings" %}</h1>
         </div>
         <div class="navigation-button">
-            <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
+            <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}"
+                class="header-nav btn btn-outline-success active">
                 <i class="fa fa-home"></i> {% trans "Home" %}
             </a>
             <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}'
@@ -27,7 +28,8 @@
                 <i class="fa fa-ticket"></i> {% trans "Tickets" %}
             </a>
             {% if is_talk_event_created %}
-            <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
+            <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}'
+                class="header-nav btn btn-outline-success">
                 <i class="fa fa-group"></i> {% trans "Talks" %}
             </a>
             {% endif %}
@@ -43,7 +45,8 @@
     {% csrf_token %}
     {% bootstrap_form_errors form %}
     {% bootstrap_form_errors sform %} {# Added to show sform errors #}
-    {% comment %} TODO: Reintroduce component selection when unified component initialization is stable. {% endcomment %}
+    {% comment %} TODO: Reintroduce component selection when unified component initialization is stable. {% endcomment
+    %}
     <div class="tabbed-form">
         <fieldset>
             <legend>{% trans "Basics" %}</legend>
@@ -65,10 +68,10 @@
                 <div class="col-md-9">
                     <div class="help-block text-muted">
                         {% blocktranslate trimmed %}
-                            These links will be shown at the top of all your schedule-related pages, e.g.
-                            the schedule itself, speaker pages, session pages, etc.
-                            You could for example link to your home page, your registration page, or your
-                            livestream here.
+                        These links will be shown at the top of all your schedule-related pages, e.g.
+                        the schedule itself, speaker pages, session pages, etc.
+                        You could for example link to your home page, your registration page, or your
+                        livestream here.
                         {% endblocktranslate %}
                     </div>
                     {% include "orga/includes/event_links_formset.html" with formset=header_links_formset %}
@@ -82,8 +85,8 @@
                 <div class="col-md-9">
                     <div class="help-block text-muted">
                         {% blocktranslate trimmed %}
-                            These links will be shown in the footer of all your public pages. You could
-                            for example link your terms of service, imprint, or privacy policy here.
+                        These links will be shown in the footer of all your public pages. You could
+                        for example link your terms of service, imprint, or privacy policy here.
                         {% endblocktranslate %}
                     </div>
                     {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
@@ -116,12 +119,12 @@
                             data-target="#alert-modal-disabled">
                             {% trans "Enabled" %}
                         </button>
-                        <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}' class="btn btn-sm btn-default"
-                            title='{% trans "Dashboard" %}' data-toggle="tooltip">
+                        <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}'
+                            class="btn btn-sm btn-default" title='{% trans "Dashboard" %}' data-toggle="tooltip">
                             <span class="fa fa-dashboard"></span>
                         </a>
-                        <a href='{% url "orga:settings.event.view" organizer=request.event.organizer.slug event=request.event.slug %}' class="btn btn-sm btn-default"
-                            title='{% trans "Settings" %}' data-toggle="tooltip">
+                        <a href='{% url "orga:settings.event.view" organizer=request.event.organizer.slug event=request.event.slug %}'
+                            class="btn btn-sm btn-default" title='{% trans "Settings" %}' data-toggle="tooltip">
                             <span class="fa fa-edit"></span>
                         </a>
                         {% else %}
@@ -275,7 +278,8 @@
     {% endcomment %}
 
     <!-- Cropper Modal -->
-    <div class="modal fade" id="cropperModal" tabindex="-1" role="dialog" aria-labelledby="cropperModalLabel" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal fade" id="cropperModal" tabindex="-1" role="dialog" aria-labelledby="cropperModalLabel"
+        aria-hidden="true" style="z-index: 1060;">
         <div class="modal-dialog modal-lg" role="document" style="margin-top: 80px;">
             <div class="modal-content">
                 <div class="modal-header">
@@ -285,7 +289,8 @@
                     <h4 class="modal-title" id="cropperModalLabel">{% trans "Crop Image" %}</h4>
                 </div>
                 <div class="modal-body">
-                    <div class="img-container" style="max-height: 500px; overflow: hidden; display: flex; justify-content: center;">
+                    <div class="img-container"
+                        style="max-height: 500px; overflow: hidden; display: flex; justify-content: center;">
                         <img id="cropperImage" src="" alt="Picture" style="max-width: 100%;">
                     </div>
                 </div>
@@ -296,7 +301,7 @@
             </div>
         </div>
     </div>
-    
+
     <script src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
     <script src="{% static 'eventyay-common/image_cropper.js' %}"></script>
 </form>
