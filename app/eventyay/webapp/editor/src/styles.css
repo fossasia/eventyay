@@ -166,6 +166,57 @@
   color: #1a56db;
 }
 
+/* ── Link popover ────────────────────────────────────────────────────────── */
+
+.tiptap-link-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.tiptap-link-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1000;
+  min-width: 280px;
+}
+
+.tiptap-link-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.tiptap-link-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.tiptap-link-input:focus {
+  outline: none;
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+}
+
+.tiptap-link-error {
+  color: #dc3545;
+  font-size: 12px;
+}
+
+.tiptap-link-actions {
+  display: flex;
+  gap: 6px;
+}
+
 /* ── Preview modal ───────────────────────────────────────────────────────── */
 
 .tiptap-preview-modal {
@@ -212,4 +263,14 @@
   background: #fff;
   font-size: 14px;
   line-height: 1.6;
+}
+
+.tiptap-preview-body .placeholder {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #e8f0fe;
+  border: 1px solid #aac4f5;
+  color: #1a56db;
+  font-size: 0.9em;
 }

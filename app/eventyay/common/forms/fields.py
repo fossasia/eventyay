@@ -175,9 +175,30 @@ class I18nEmailBodyFormField(I18nFormField):
     """I18n form field for Message center email bodies using the Tiptap email editor.
 
     Sanitizes each locale value with ``sanitize_email_html`` after validation.
+
+    Args:
+        placeholders: Names of template variables available for insertion,
+            e.g. ``['attendee_name', 'event_name', 'order_code']``.
+        preview_url: Optional URL for the email preview AJAX endpoint.
     """
 
     widget = I18nEmailEditorWidget
+
+    def __init__(
+        self,
+        *args,
+        placeholders: Sequence[str] | None = None,
+        preview_url: str = '',
+        **kwargs,
+    ) -> None:
+        widget_kwargs = kwargs.pop('widget_kwargs', {})
+        if placeholders is not None:
+            widget_kwargs.setdefault('placeholders', placeholders)
+        if preview_url:
+            widget_kwargs.setdefault('preview_url', preview_url)
+        kwargs['widget_kwargs'] = widget_kwargs
+        kwargs.setdefault('widget', I18nEmailEditorWidget)
+        super().__init__(*args, **kwargs)
 
     def clean(self, value):
         result = super().clean(value)

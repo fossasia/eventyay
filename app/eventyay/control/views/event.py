@@ -50,7 +50,7 @@ from eventyay.base.models.event import EventMetaValue
 from eventyay.base.services import tickets
 from eventyay.base.services.invoices import build_preview_invoice_pdf
 from eventyay.base.signals import register_ticket_outputs
-from eventyay.base.templatetags.rich_text import markdown_compile_email
+from eventyay.base.templatetags.rich_text import expand_email_preview_placeholders, markdown_compile_email
 from eventyay.control.forms.event import (
     CancelSettingsForm,
     CommentForm,
@@ -972,13 +972,9 @@ class MailSettingsRendererPreview(MailSettingsPreview):
 class EditorEmailPreview(EventPermissionRequiredMixin, View):
     """AJAX endpoint for previewing email body HTML from the Tiptap email editor.
 
-    Accepts a JSON POST body ``{ "html": "<p>...</p>" }``, sanitizes it with
-    ``sanitize_email_html``, and returns ``{ "html": "<p>...</p>" }``.
-
-    The editor's Preview button calls this URL so users can see what the
-    sanitized output looks like before sending.  No event-specific placeholder
-    expansion is performed; the raw editor output is returned as-is after
-    sanitization.
+    Accepts a JSON POST body ``{ "html": "<p>...</p>", "locale": "en" }``,
+    sanitizes the HTML, expands ``{placeholder}`` tokens with sample values,
+    and returns ``{ "html": "<p>...</p>" }``.
     """
 
     permission = 'can_change_orders'
@@ -993,8 +989,15 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
         if not isinstance(raw_html, str):
             return HttpResponseBadRequest('html must be a string')
 
+        locale = payload.get('locale')
+        if locale is not None and not isinstance(locale, str):
+            return HttpResponseBadRequest('locale must be a string')
+
         safe_html = sanitize_email_html(raw_html)
-        return JsonResponse({'html': safe_html})
+        preview_html = expand_email_preview_placeholders(
+            safe_html, request.event, locale=locale or None
+        )
+        return JsonResponse({'html': preview_html})
 
 
 class TicketSettingsPreview(EventPermissionRequiredMixin, View):

@@ -98,11 +98,14 @@ class TestSanitizeEmailHtml:
         result = sanitize_email_html('<p><span>chip</span> text</p>')
         assert '<span>chip</span>' in result
 
-    def test_span_with_data_variable_attribute_stripped(self):
-        """data-variable is not in the allowed attribute set; nh3 strips it."""
+    def test_span_with_data_variable_preserved(self):
         result = sanitize_email_html('<span data-variable="name">{name}</span>')
-        assert 'data-variable' not in result
+        assert 'data-variable="name"' in result
         assert '{name}' in result
+
+    def test_span_class_preserved(self):
+        result = sanitize_email_html('<span class="tiptap-placeholder-chip">{name}</span>')
+        assert 'class="tiptap-placeholder-chip"' in result
 
     def test_javascript_protocol_stripped(self):
         result = sanitize_email_html('<a href="javascript:alert(1)">xss</a>')

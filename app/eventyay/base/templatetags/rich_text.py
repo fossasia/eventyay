@@ -1,4 +1,5 @@
 import html
+import re
 import urllib.parse
 from copy import copy
 from functools import partial
@@ -6,7 +7,6 @@ from functools import partial
 # TODO: Remove bleach import
 import bleach
 import markdown
-import nh3
 # TODO: Remove bleach import
 from bleach import DEFAULT_CALLBACKS
 # TODO: Remove bleach import
@@ -147,6 +147,67 @@ NO_LINKS_CLEANER = bleach.Cleaner(
 
 STRIKETHROUGH_RE = '(~{2})(.+?)(~{2})'
 
+_TIPTAP_BLOCK_START_RE = re.compile(
+    r'^\s*<(p|ul|ol|blockquote)(\s|>)',
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _is_tiptap_email_html(source: str) -> bool:
+    """Return True when *source* looks like HTML from the Tiptap email editor.
+
+    ``nh3.is_html()`` is too broad: legacy Markdown bodies may contain inline
+    tags such as ``<br>`` or ``<b>`` and must still be compiled.  Tiptap
+    output is always block-structured (``<p>``, lists, blockquote) or contains
+    placeholder chips with ``data-variable``.
+    """
+    if not source:
+        return False
+    if 'data-variable=' in source:
+        return True
+    return bool(_TIPTAP_BLOCK_START_RE.match(source))
+
+
+_PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
+    'event',
+    'order',
+    'position',
+    'position_or_address',
+    'team',
+    'invoice_address',
+)
+
+
+def expand_email_preview_placeholders(html: str, event, *, locale: str | None = None) -> str:
+    """Replace ``{placeholder}`` tokens with sample values for editor preview.
+
+    Uses the same sample rendering as the Message center's full-form preview so
+    the toolbar preview matches what users see after clicking "Preview email".
+    """
+    from django.utils.translation import gettext
+
+    from eventyay.base.email import get_available_placeholders
+    from eventyay.base.i18n import language
+    from eventyay.base.services.mail import TolerantDict
+
+    resolved_locale = locale or event.settings.locale
+    if resolved_locale not in event.settings.locales:
+        resolved_locale = event.settings.locale
+
+    with language(resolved_locale, event.settings.region):
+        context_dict = TolerantDict()
+        for key, placeholder in get_available_placeholders(
+            event, list(_PREVIEW_PLACEHOLDER_CONTEXT)
+        ).items():
+            context_dict[key] = (
+                '<span class="placeholder" title="{}">{}</span>'.format(
+                    gettext('This value will be replaced based on dynamic parameters.'),
+                    placeholder.render_sample(event),
+                )
+            )
+        return html.format_map(context_dict)
+
+
 def compile_email_body(source: str) -> str:
     """Render an email body fragment as HTML.
 
@@ -156,7 +217,7 @@ def compile_email_body(source: str) -> str:
     """
     if not source:
         return source
-    if nh3.is_html(source):
+    if _is_tiptap_email_html(source):
         return source
     return markdown_compile_email(source)
 

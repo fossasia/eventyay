@@ -5,9 +5,10 @@
  * @param {string} options.profile - 'richtext' | 'email'
  * @param {string[]} options.placeholders - list of placeholder variable names (email profile only)
  * @param {string} options.previewUrl - URL for email preview endpoint (email profile only)
+ * @param {string} options.locale - BCP 47 locale for the active editor tab (email profile only)
  * @returns {HTMLElement}
  */
-export function buildToolbar(editor, { profile, placeholders = [], previewUrl = '' }) {
+export function buildToolbar(editor, { profile, placeholders = [], previewUrl = '', locale = '' }) {
   const bar = document.createElement('div')
   bar.className = 'tiptap-toolbar'
   bar.setAttribute('role', 'toolbar')
@@ -45,19 +46,22 @@ export function buildToolbar(editor, { profile, placeholders = [], previewUrl = 
   const underlineBtn = button('<u>U</u>', 'Underline', () => editor.chain().focus().toggleUnderline().run(), 'underline')
   const ulBtn = button('&#8226;&#8212;', 'Bullet list', () => editor.chain().focus().toggleBulletList().run(), 'bulletList')
   const olBtn = button('1.&#8212;', 'Numbered list', () => editor.chain().focus().toggleOrderedList().run(), 'orderedList')
-  const linkBtn = button('&#128279;', 'Insert link', () => promptLink(editor), 'link')
+  const linkWrapper = document.createElement('span')
+  linkWrapper.className = 'tiptap-link-menu'
+  const linkBtn = button('&#128279;', 'Insert link', () => showLinkPopover(editor, linkWrapper), 'link')
+  linkWrapper.append(linkBtn)
   const clearBtn = button('&#10005;', 'Clear formatting', () => editor.chain().focus().clearNodes().unsetAllMarks().run())
   const undoBtn = button('&#8630;', 'Undo', () => editor.chain().focus().undo().run())
   const redoBtn = button('&#8631;', 'Redo', () => editor.chain().focus().redo().run())
 
-  bar.append(boldBtn, italicBtn, underlineBtn, separator(), ulBtn, olBtn, separator(), linkBtn, separator(), clearBtn, separator(), undoBtn, redoBtn)
+  bar.append(boldBtn, italicBtn, underlineBtn, separator(), ulBtn, olBtn, separator(), linkWrapper, separator(), clearBtn, separator(), undoBtn, redoBtn)
 
   if (profile === 'email') {
     if (placeholders.length > 0) {
       bar.append(separator(), buildPlaceholderMenu(editor, placeholders))
     }
     if (previewUrl) {
-      bar.append(separator(), buildPreviewButton(editor, previewUrl))
+      bar.append(separator(), buildPreviewButton(editor, previewUrl, locale))
     }
   }
 
@@ -77,19 +81,96 @@ export function buildToolbar(editor, { profile, placeholders = [], previewUrl = 
   return bar
 }
 
-function promptLink(editor) {
-  const existing = editor.getAttributes('link').href || ''
-  const url = window.prompt('Enter URL (https://...)', existing)
-  if (url === null) return
-  if (url === '') {
+function showLinkPopover(editor, anchor) {
+  document.querySelectorAll('.tiptap-link-popover').forEach((el) => el.remove())
+
+  const wrapper = document.createElement('span')
+  wrapper.className = 'tiptap-link-popover'
+
+  const form = document.createElement('form')
+  form.className = 'tiptap-link-form'
+  form.noValidate = true
+
+  const input = document.createElement('input')
+  input.type = 'url'
+  input.className = 'tiptap-link-input'
+  input.placeholder = 'https://...'
+  input.value = editor.getAttributes('link').href || ''
+  input.setAttribute('aria-label', 'Link URL')
+
+  const error = document.createElement('div')
+  error.className = 'tiptap-link-error'
+  error.hidden = true
+  error.textContent = 'Only https:// and http:// URLs are allowed.'
+
+  const actions = document.createElement('div')
+  actions.className = 'tiptap-link-actions'
+
+  const applyBtn = document.createElement('button')
+  applyBtn.type = 'submit'
+  applyBtn.className = 'tiptap-btn'
+  applyBtn.textContent = 'Apply'
+
+  const removeBtn = document.createElement('button')
+  removeBtn.type = 'button'
+  removeBtn.className = 'tiptap-btn'
+  removeBtn.textContent = 'Remove'
+
+  const close = () => {
+    wrapper.remove()
+    document.removeEventListener('click', onDocumentClick)
+    document.removeEventListener('keydown', onKeydown)
+  }
+
+  const applyLink = () => {
+    const url = input.value.trim()
+    error.hidden = true
+    if (!url) {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+      close()
+      return
+    }
+    if (!/^https?:\/\//i.test(url)) {
+      error.hidden = false
+      input.focus()
+      return
+    }
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    close()
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    applyLink()
+  })
+
+  removeBtn.addEventListener('click', (e) => {
+    e.preventDefault()
     editor.chain().focus().extendMarkRange('link').unsetLink().run()
-    return
+    close()
+  })
+
+  const onDocumentClick = (e) => {
+    if (!wrapper.contains(e.target) && !anchor.contains(e.target)) {
+      close()
+    }
   }
-  if (!/^https?:\/\//i.test(url)) {
-    window.alert('Only https:// and http:// URLs are allowed.')
-    return
+
+  const onKeydown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      close()
+    }
   }
-  editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+
+  actions.append(applyBtn, removeBtn)
+  form.append(input, error, actions)
+  wrapper.append(form)
+  anchor.append(wrapper)
+  document.addEventListener('click', onDocumentClick)
+  document.addEventListener('keydown', onKeydown)
+  input.focus()
+  input.select()
 }
 
 function buildPlaceholderMenu(editor, placeholders) {
@@ -145,7 +226,7 @@ function buildPlaceholderMenu(editor, placeholders) {
   return wrapper
 }
 
-function buildPreviewButton(editor, previewUrl) {
+function buildPreviewButton(editor, previewUrl, locale = '') {
   const btn = document.createElement('button')
   btn.type = 'button'
   btn.className = 'tiptap-btn tiptap-preview-btn'
@@ -163,7 +244,7 @@ function buildPreviewButton(editor, previewUrl) {
           'Content-Type': 'application/json',
           'X-CSRFToken': csrfToken,
         },
-        body: JSON.stringify({ html }),
+        body: JSON.stringify({ html, locale: locale || undefined }),
       })
       if (!response.ok) throw new Error(`Preview request failed: ${response.status}`)
       const data = await response.json()

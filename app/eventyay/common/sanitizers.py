@@ -20,6 +20,11 @@ _EMAIL_TAGS: frozenset[str] = _RICH_TEXT_TAGS | frozenset({'span'})
 
 _LINK_ATTRIBUTES: dict[str, set[str]] = {'a': {'href', 'title'}}
 
+_EMAIL_ATTRIBUTES: dict[str, set[str]] = {
+    **_LINK_ATTRIBUTES,
+    'span': {'data-variable', 'class'},
+}
+
 _SAFE_URL_SCHEMES: frozenset[str] = frozenset({'http', 'https'})
 
 
@@ -54,7 +59,7 @@ def sanitize_email_html(html: str) -> str:
     return nh3.clean(
         html,
         tags=_EMAIL_TAGS,
-        attributes=_LINK_ATTRIBUTES,
+        attributes=_EMAIL_ATTRIBUTES,
         url_schemes=_SAFE_URL_SCHEMES,
         link_rel=None,
     )
