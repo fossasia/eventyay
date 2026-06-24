@@ -58,6 +58,15 @@ body.organizer-presale-page .presale-sticky-tabs .header-row-right details.dropd
   font-size: 16px;
 }
 
+body.organizer-presale-page #locale-dropdown-label .dropdown-content {
+  min-width: 200px;
+  max-width: 400px;
+  width: auto;
+  max-height: 400px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 body.organizer-presale-page #main-card,
 body.organizer-presale-page #main-card > main,
 body.organizer-presale-page .organizer-page-content {
@@ -368,7 +377,7 @@ body.organizer-presale-page #main-card .week-calendar a.event.over {
 
   body.organizer-presale-page .presale-sticky-tabs a.header-tab {
     font-size: 1rem;
-    padding: 8px 10px 4px;
+    padding: 8px 10px 6px;
   }
 
   body.organizer-presale-page .presale-sticky-tabs .header-row-right,
