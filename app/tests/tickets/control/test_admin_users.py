@@ -2,10 +2,13 @@ import json
 import time
 from unittest.mock import patch
 
+from django import forms as django_forms
+from django.db.models import Exists, OuterRef
 from django.test import TestCase
 from django.urls import reverse
 
 from allauth.account.models import EmailAddress
+from eventyay.base.forms.auth import LoginForm
 from eventyay.base.models import User
 from eventyay.base.services.mail import SendMailException
 from eventyay.control.forms.filter import UserFilterForm
@@ -79,9 +82,6 @@ class SpamLoginBlockingTest(TestCase):
         self.assertEqual(form.errors.get('__all__').as_data()[0].code, 'spam')
 
     def test_spam_error_code_in_form(self):
-        from django import forms as django_forms
-        from eventyay.base.forms.auth import LoginForm
-
         form = LoginForm.__new__(LoginForm)
         with self.assertRaises(django_forms.ValidationError) as ctx:
             form.confirm_login_allowed(self.spam_user)
@@ -101,7 +101,6 @@ class UserFilterFormTest(TestCase):
         self.clean_user = _make_user('cl@ex.com', is_spam=False)
 
     def _filter(self, data):
-        from django.db.models import Exists, OuterRef
         qs = User.objects.all().annotate(
             is_email_verified=Exists(
                 EmailAddress.objects.filter(user=OuterRef('pk'), primary=True, verified=True)

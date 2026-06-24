@@ -23,7 +23,7 @@ function getCsrfToken(form) {
             return input.value;
         }
     }
-    const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+    const match = document.cookie.match(/(?:^|;\s*)eventyay_csrftoken=([^;]+)/);
     return match ? decodeURIComponent(match[1]) : '';
 }
 

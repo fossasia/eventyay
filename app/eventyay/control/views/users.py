@@ -283,16 +283,18 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
                         'verified': False
                     }
                 )
-                if email_address.verified:
-                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                        return JsonResponse(
-                            {'status': 'error', 'message': str(_('This user is already verified.'))},
-                            status=400,
-                        )
-                    messages.warning(request, _('This user is already verified.'))
-                    return redirect(reverse('eventyay_admin:admin.users'))
+                is_verified = email_address.verified
 
-                email_address.send_confirmation(request)
+            if is_verified:
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse(
+                        {'status': 'error', 'message': str(_('This user is already verified.'))},
+                        status=400,
+                    )
+                messages.warning(request, _('This user is already verified.'))
+                return redirect(reverse('eventyay_admin:admin.users'))
+
+            email_address.send_confirmation(request)
         except SendMailException:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse(
