@@ -12,6 +12,18 @@ def can_view_speaker_names(user, obj):
 
 
 @rules.predicate
+def is_reviewer_only_for_event(user, obj):
+    """True for reviewer team members who do not have submission write access."""
+    event = getattr(obj, 'event', obj)
+    in_reviewer_team = event.teams.filter(members__in=[user], is_reviewer=True).exists()
+    return bool(
+        in_reviewer_team
+        and user.has_perm('base.orga_list_submission', event)
+        and not user.has_perm('base.orga_update_submission', event)
+    )
+
+
+@rules.predicate
 def can_view_speaker_emails(user, obj):
     """ONLY in use with users who don't have change permissions."""
     event = obj.event

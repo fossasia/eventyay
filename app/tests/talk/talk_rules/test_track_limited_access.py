@@ -94,6 +94,26 @@ def test_reviewer_api_hides_speakers_when_team_force_hide(
 
 
 @pytest.mark.django_db
+def test_reviewer_api_hides_expanded_speakers_when_team_force_hide(
+    client, review_user_token, review_user, submission, event
+):
+    with scope(event=event):
+        review_user.teams.first().force_hide_speaker_names = True
+        review_user.teams.first().save()
+        assert event.active_review_phase.can_see_speaker_names is True
+
+    response = client.get(
+        event.api_urls.submissions + '?expand=speakers',
+        follow=True,
+        headers={'Authorization': f'Token {review_user_token.token}'},
+    )
+    assert response.status_code == 200, response.text
+    content = json.loads(response.text)
+    submission_result = next(item for item in content['results'] if item['code'] == submission.code)
+    assert submission_result['speakers'] == []
+
+
+@pytest.mark.django_db
 def test_reviewer_api_still_blocked_in_anonymised_phase(
     client, review_user_token, submission, event
 ):

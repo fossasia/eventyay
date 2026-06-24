@@ -16,7 +16,7 @@ from eventyay.base.models.submission import Submission
 from eventyay.base.models.tag import Tag
 from eventyay.base.models.track import Track
 from eventyay.base.models.type import SubmissionType
-from eventyay.talk_rules.orga import can_view_speaker_names
+from eventyay.talk_rules.orga import can_view_speaker_names, is_reviewer_only_for_event
 
 
 @register_serializer()
@@ -181,8 +181,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         request = self.context.get('request')
         if (
             request
-            and request.user.has_perm('base.orga_list_submission', self.event)
-            and not request.user.has_perm('base.orga_update_submission', self.event)
+            and is_reviewer_only_for_event(request.user, self.event)
             and not can_view_speaker_names(request.user, self.event)
         ):
             return []

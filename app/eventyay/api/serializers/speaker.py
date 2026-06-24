@@ -20,7 +20,7 @@ from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.base.models.auth import User
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.question import TalkQuestionTarget
-from eventyay.talk_rules.orga import can_view_speaker_names
+from eventyay.talk_rules.orga import can_view_speaker_names, is_reviewer_only_for_event
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -57,7 +57,7 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             self.event
             and request
             and request.user.has_perm('base.orga_list_speakerprofile', self.event)
-            and not request.user.has_perm('base.orga_update_submission', self.event)
+            and is_reviewer_only_for_event(request.user, self.event)
         ):
             from eventyay.talk_rules.orga import can_view_speaker_emails, can_view_speaker_names
             if not can_view_speaker_names(request.user, self.event):
