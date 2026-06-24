@@ -15,11 +15,9 @@ from eventyay.base.models import SpeakerProfile, TalkSlot
 from eventyay.base.models.schedule import make_speaker_qr_map, make_talk_qr_map
 from eventyay.common.views import conditional_cache_page
 from eventyay.presale.style import (
-    BASE_SANS_STACK,
-    SYSTEM_FONTS,
-    escape_font_name,
     get_font_stylesheet,
     get_fonts,
+    resolve_font,
 )
 from eventyay.talk_rules.agenda import (
     can_access_schedule_widget,
@@ -312,16 +310,9 @@ def event_css(request, organizer=None, event=None, **kwargs):
     font_css = ''
     if primary_font:
         fonts_dict = get_fonts()
-        font_family_value = None
-
-        if primary_font in SYSTEM_FONTS:
-            font_family_value = SYSTEM_FONTS[primary_font]
-        elif primary_font in fonts_dict:
-            escaped_font = escape_font_name(primary_font)
-            font_family_value = f'"{escaped_font}", {BASE_SANS_STACK}'
-            font_css = get_font_stylesheet(primary_font, fonts=fonts_dict)
-        else:
-            font_family_value = SYSTEM_FONTS.get('Open Sans')
+        resolved_font, font_family_value = resolve_font(request.event, fonts_dict=fonts_dict)
+        if resolved_font and resolved_font in fonts_dict:
+            font_css = get_font_stylesheet(resolved_font, fonts=fonts_dict, for_sass=False)
 
         if font_family_value:
             variables.append(f'--font-family: {font_family_value};')

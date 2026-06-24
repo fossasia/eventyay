@@ -92,38 +92,29 @@ def compile_scss(object, file='main.scss', fonts=True):
         sassrules.append('$border-radius-large: 0;')
         sassrules.append('$border-radius-small: 0;')
 
-    font = object.settings.get('primary_font')
-    # If the event has an empty string stored (blocking hierarkey parent lookup),
-    # explicitly fall back to the organizer's font setting.
-    if not font and isinstance(object, Event) and hasattr(object, 'organizer'):
-        font = object.organizer.settings.get('primary_font')
     font_family_value = None
-    if font and fonts:
+    if fonts:
         fonts_dict = get_fonts()
-        if font in SYSTEM_FONTS:
-            font_family_value = SYSTEM_FONTS[font]
-            # We explicitly do not use !default here because we want to override
-            # any default variables declared in Bootstrap/our stylesheets.
-            sassrules.append(
-                f'$font-family-sans-serif: {font_family_value};'
-            )
-        elif font in fonts_dict:
-            escaped_font = escape_font_name(font)
-            font_family_value = f'"{escaped_font}", {BASE_SANS_STACK}'
-            sassrules.append(get_font_stylesheet(font, fonts=fonts_dict))
-            # We explicitly do not use !default here because we want to override
-            # any default variables declared in Bootstrap/our stylesheets.
-            sassrules.append(
-                f'$font-family-sans-serif: {font_family_value};'
-            )
-        else:
-            # Fallback for old or invalid font values: treat as Open Sans
-            font_family_value = SYSTEM_FONTS['Open Sans']
-            # We explicitly do not use !default here because we want to override
-            # any default variables declared in Bootstrap/our stylesheets.
-            sassrules.append(
-                f'$font-family-sans-serif: {font_family_value};'
-            )
+        resolved_font, font_family_value = resolve_font(object, fonts_dict=fonts_dict)
+        if font_family_value:
+            if resolved_font in SYSTEM_FONTS:
+                # We explicitly do not use !default here because we want to override
+                # any default variables declared in Bootstrap/our stylesheets.
+                sassrules.append(
+                    f'$font-family-sans-serif: {font_family_value};'
+                )
+            elif resolved_font in fonts_dict:
+                sassrules.append(get_font_stylesheet(resolved_font, fonts=fonts_dict, for_sass=True))
+                # We explicitly do not use !default here because we want to override
+                # any default variables declared in Bootstrap/our stylesheets.
+                sassrules.append(
+                    f'$font-family-sans-serif: {font_family_value};'
+                )
+            else:
+                # Fallback for old or invalid font values: treat as Open Sans
+                sassrules.append(
+                    f'$font-family-sans-serif: {font_family_value};'
+                )
 
     if isinstance(object, Event):
         for recv, resp in sass_preamble.send(object, filename=file):
@@ -250,6 +241,26 @@ Return a dictionaries of the following structure. Paths should be relative to st
 """
 
 
+def resolve_font(object, fonts_dict=None):
+    font = object.settings.get('primary_font')
+    if not font and isinstance(object, Event) and hasattr(object, 'organizer'):
+        font = object.organizer.settings.get('primary_font')
+
+    if not font:
+        return None, None
+
+    if fonts_dict is None:
+        fonts_dict = get_fonts()
+
+    if font in SYSTEM_FONTS:
+        return font, SYSTEM_FONTS[font]
+    elif font in fonts_dict:
+        escaped_font = escape_font_name(font)
+        return font, f'"{escaped_font}", {BASE_SANS_STACK}'
+    else:
+        return 'Open Sans', SYSTEM_FONTS['Open Sans']
+
+
 def get_fonts():
     f = {}
     for recv, value in register_fonts.send(0):
@@ -268,7 +279,7 @@ def escape_font_name(font_name):
     return escaped
 
 
-def get_font_stylesheet(font_name, fonts=None):
+def get_font_stylesheet(font_name, fonts=None, for_sass=True):
     stylesheet = []
     if fonts is None:
         fonts = get_fonts()
@@ -289,12 +300,20 @@ def get_font_stylesheet(font_name, fonts=None):
             stylesheet.append('font-weight: normal;')
 
         srcs = []
-        if 'woff2' in formats:
-            srcs.append("url(static('{}')) format('woff2')".format(formats['woff2']))
-        if 'woff' in formats:
-            srcs.append("url(static('{}')) format('woff')".format(formats['woff']))
-        if 'truetype' in formats:
-            srcs.append("url(static('{}')) format('truetype')".format(formats['truetype']))
+        if for_sass:
+            if 'woff2' in formats:
+                srcs.append("url(static('{}')) format('woff2')".format(formats['woff2']))
+            if 'woff' in formats:
+                srcs.append("url(static('{}')) format('woff')".format(formats['woff']))
+            if 'truetype' in formats:
+                srcs.append("url(static('{}')) format('truetype')".format(formats['truetype']))
+        else:
+            if 'woff2' in formats:
+                srcs.append("url('{}') format('woff2')".format(_static(formats['woff2'])))
+            if 'woff' in formats:
+                srcs.append("url('{}') format('woff')".format(_static(formats['woff'])))
+            if 'truetype' in formats:
+                srcs.append("url('{}') format('truetype')".format(_static(formats['truetype'])))
         stylesheet.append('src: {};'.format(', '.join(srcs)))
         stylesheet.append('font-display: swap;')
         stylesheet.append('}')
