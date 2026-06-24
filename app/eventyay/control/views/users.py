@@ -294,7 +294,10 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
                 messages.warning(request, _('This user is already verified.'))
                 return redirect(reverse('eventyay_admin:admin.users'))
 
-            email_address.send_confirmation(request)
+            try:
+                email_address.send_confirmation(request)
+            except Exception as e:
+                raise SendMailException(str(e)) from e
         except SendMailException:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse(

@@ -1,4 +1,5 @@
 import json
+import smtplib
 import time
 from unittest.mock import patch
 
@@ -316,7 +317,7 @@ class UserEmailActionsTest(TestCase):
         self.assertEqual(data['status'], 'error')
         self.assertIn('has no email address', data['message'])
 
-    @patch('allauth.account.models.EmailAddress.send_confirmation', side_effect=SendMailException())
+    @patch('allauth.account.models.EmailAddress.send_confirmation', side_effect=smtplib.SMTPException('connection refused'))
     def test_resend_verification_mail_error(self, mock_send):
         response = self._post_as_admin('resend_verification', self.target_user.pk)
         self.assertEqual(response.status_code, 500)
