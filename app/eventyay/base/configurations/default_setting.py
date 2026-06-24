@@ -2140,6 +2140,26 @@ Your {event} team"""
         'type': File,
         'form_class': ExtFileField,
         'form_kwargs': dict(
+            label=_('Logo'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+            help_text=_(
+                'Upload your organizer logo. Accepted formats: PNG, JPEG, GIF. '
+                'The logo is displayed in the page header.'
+            ),
+        ),
+        'serializer_class': UploadedFileField,
+        'serializer_kwargs': dict(
+            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        ),
+    },
+
+    'organizer_header_image': {
+        'default': None,
+        'type': File,
+        'form_class': ExtFileField,
+        'form_kwargs': dict(
             label=_('Header image'),
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
@@ -2155,7 +2175,7 @@ Your {event} team"""
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },
-    'organizer_logo_image_large': {
+    'organizer_header_image_large': {
         'default': 'False',
         'type': bool,
         'form_class': forms.BooleanField,
