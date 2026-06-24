@@ -125,6 +125,61 @@ def test_generate_uses_api_when_key_present(event, submission, monkeypatch):
 
 
 @pytest.mark.django_db
+def test_api_network_failure_raises_etherpad_error(event, submission, monkeypatch):
+    gs = GlobalSettingsObject().settings
+    gs.etherpad_enabled = True
+    gs.etherpad_base_url = 'https://pad.example.org'
+    gs.etherpad_api_key = 'secret-key'
+
+    import requests as _requests
+
+    def fake_get(*args, **kwargs):
+        raise _requests.ConnectionError('unreachable')
+
+    monkeypatch.setattr('eventyay.base.services.etherpad.requests.get', fake_get)
+    with pytest.raises(EtherpadError):
+        generate_pad_for_submission(event, submission)
+
+
+@pytest.mark.django_db
+def test_api_rejected_by_server_raises_etherpad_error(event, submission, monkeypatch):
+    gs = GlobalSettingsObject().settings
+    gs.etherpad_enabled = True
+    gs.etherpad_base_url = 'https://pad.example.org'
+    gs.etherpad_api_key = 'bad-key'
+
+    class _Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {'code': 4, 'message': 'no such function'}
+
+    monkeypatch.setattr('eventyay.base.services.etherpad.requests.get', lambda *a, **kw: _Resp())
+    with pytest.raises(EtherpadError):
+        generate_pad_for_submission(event, submission)
+
+
+@pytest.mark.django_db
+def test_api_pad_already_exists_is_idempotent(event, submission, monkeypatch):
+    gs = GlobalSettingsObject().settings
+    gs.etherpad_enabled = True
+    gs.etherpad_base_url = 'https://pad.example.org'
+    gs.etherpad_api_key = 'secret-key'
+
+    class _Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {'code': 1, 'message': 'padID does already exist'}
+
+    monkeypatch.setattr('eventyay.base.services.etherpad.requests.get', lambda *a, **kw: _Resp())
+    url = generate_pad_for_submission(event, submission)
+    assert url.startswith('https://pad.example.org/p/')
+
+
+@pytest.mark.django_db
 def test_generate_refuses_overwrite_without_force(event, submission):
     gs = GlobalSettingsObject().settings
     gs.etherpad_enabled = True

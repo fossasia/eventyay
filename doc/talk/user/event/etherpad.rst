@@ -55,10 +55,15 @@ Session configuration
 
 On the session edit page you can:
 
-* Enter or edit the **Etherpad URL** manually.
+* Enter or edit the **Etherpad URL** manually. You can link to any Etherpad
+  instance, not only the platform default — useful if different sessions use
+  different instances.
 * Click **Auto-generate Etherpad link** to create a pad automatically (if your
   event allows it). If the session already has a pad, you will be asked to
   confirm before it is replaced, so existing notes are never lost accidentally.
+  Generating the same session's pad twice (with confirmation) produces a new pad
+  name each time; the old pad and its content remain on the Etherpad server but
+  are no longer linked from the session.
 
 Public session pages
 --------------------
