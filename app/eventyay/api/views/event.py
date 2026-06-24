@@ -558,6 +558,8 @@ def talk_schedule_public(request, *args, **kwargs):
         return JsonResponse({'status': 'Internal server error'}, status=500)
 
 
+from rest_framework.throttling import AnonRateThrottle
+
 class CustomerOrderCheckView(APIView):
     """
     Check a customer's ticket / order for a given event.
@@ -571,6 +573,7 @@ class CustomerOrderCheckView(APIView):
 
     authentication_classes = ()
     permission_classes = ()
+    throttle_classes = (AnonRateThrottle,)
 
     def post(self, request, *args, **kwargs):
         organizer_slug = kwargs.get('organizer')
@@ -631,7 +634,7 @@ class CustomerOrderCheckView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        return Response(result, status=status.HTTP_200_OK)
+        return Response(result[0], status=status.HTTP_200_OK)
 
 
 

@@ -141,11 +141,10 @@ def test_ticket_check_by_email_and_code(client, organizer, event, order):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert isinstance(data, list)
-    assert len(data) == 1
-    assert data[0]['code'] == order.code
-    assert data[0]['status'] == order.status
-    assert data[0]['email'] == order.email
+    assert isinstance(data, dict)
+    assert data['code'] == order.code
+    assert data['status'] == order.status
+    assert data['email'] == order.email
 
 
 @pytest.mark.django_db
@@ -182,7 +181,7 @@ def test_ticket_check_response_includes_positions(client, organizer, event, orde
     )
     assert resp.status_code == 200
     data = resp.json()
-    positions = data[0]['positions']
+    positions = data['positions']
     assert len(positions) == 1
     pos = positions[0]
     assert 'product' in pos
@@ -191,3 +190,34 @@ def test_ticket_check_response_includes_positions(client, organizer, event, orde
     assert 'attendee_email' in pos
     assert pos['attendee_name'] == 'Jane Doe'
     assert pos['attendee_email'] == 'jane@example.com'
+
+
+# ---------------------------------------------------------------------------
+# 200 – pending and expired orders
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_ticket_check_pending_order(client, organizer, event, order):
+    order.status = Order.STATUS_PENDING
+    order.save()
+    resp = client.post(
+        url(organizer, event),
+        data={'email': order.email, 'code': order.code},
+        content_type='application/json',
+    )
+    assert resp.status_code == 200
+    assert resp.json()['status'] == Order.STATUS_PENDING
+
+
+@pytest.mark.django_db
+def test_ticket_check_expired_order(client, organizer, event, order):
+    order.status = Order.STATUS_EXPIRED
+    order.save()
+    resp = client.post(
+        url(organizer, event),
+        data={'email': order.email, 'code': order.code},
+        content_type='application/json',
+    )
+    assert resp.status_code == 200
+    assert resp.json()['status'] == Order.STATUS_EXPIRED
