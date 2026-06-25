@@ -33,7 +33,7 @@
         {% include "orga/event/component_link.html" %}
     </div>
 
-    {% include "common/includes/search_form.html" %}
+    {% include "orga/includes/speaker_filter_form.html" %}
 
     {% if filter_form.is_valid and filter_form.cleaned_data.question %}
         <p class="text-muted ml-2">
@@ -58,7 +58,14 @@
                     <th>{% translate "Name" %}</th>
                     <th class="numeric">{% translate "Accepted Proposals" %}</th>
                     <th class="numeric">{% translate "Proposals" %}</th>
-                    <th class="text-center">{% translate "Featured" %}</th>
+                    <th class="text-center">
+                        {% translate "Featured" %}
+                        {% if can_update_speaker %}
+                            <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate "Show this speaker in the list of featured speakers." %}"></i>
+                            <a href="{% querystring sort="-is_featured" %}"><i class="fa fa-caret-down"></i></a>
+                            <a href="{% querystring sort="is_featured" %}"><i class="fa fa-caret-up"></i></a>
+                        {% endif %}
+                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -89,16 +96,13 @@
                             {% else %}
                                 <i class="fa fa-{{ profile.is_featured|yesno:'check,times' }}"></i>
                             {% endif %}
-                            <i class="working fa fa-spinner fa-spin d-none"></i>
-                            <i class="done fa fa-check d-none text-success"></i>
-                            <i class="fail fa fa-times d-none"></i>
                         </td>
                         <td class="text-right">
                             {% if profile.accepted_submission_count %}
                                 {% if can_mark_speaker %}
-                                    <form action="{{ profile.orga_urls.toggle_arrived }}?from=list" method="POST" class="d-inline">
+                                    <form action="{{ profile.orga_urls.toggle_arrived }}?next={{ request.get_full_path|urlencode }}" method="POST" class="d-inline">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-{{ profile.has_arrived|yesno:"success,info" }}">
+                                        <button type="submit" class="btn btn-sm {% if profile.has_arrived %}btn-speaker-not-arrived{% else %}btn-speaker-arrived{% endif %}">
                                             {% if profile.has_arrived %}
                                                 {% translate "Mark speaker as not arrived" %}
                                             {% else %}

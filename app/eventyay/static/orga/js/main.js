@@ -1,12 +1,20 @@
 const handleFeaturedChange = (element) => {
+    const statusWrapper = element.closest("td")
+    if (!statusWrapper) {
+        return
+    }
     const resetStatus = () => {
-        statusWrapper.querySelectorAll("i").forEach((element) => {
-            element.classList.add("d-none")
+        statusWrapper.querySelectorAll("i.working, i.done, i.fail").forEach((icon) => {
+            icon.classList.add("d-none")
         })
     }
     const setStatus = (statusName) => {
+        const statusIcon = statusWrapper.querySelector("." + statusName)
+        if (!statusIcon) {
+            return
+        }
         resetStatus()
-        statusWrapper.querySelector("." + statusName).classList.remove("d-none")
+        statusIcon.classList.remove("d-none")
         setTimeout(resetStatus, 3000)
     }
     const fail = () => {
@@ -14,8 +22,6 @@ const handleFeaturedChange = (element) => {
         setStatus("fail")
     }
 
-    const id = element.dataset.id
-    const statusWrapper = element.parentElement.parentElement
     setStatus("working")
 
     // Use the URL from the data-url attribute if available, otherwise construct it

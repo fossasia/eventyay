@@ -178,6 +178,16 @@ button, a.btn{
 	border-color: var(--color-primary);
 }
 
+button.btn-success,
+button.btn-danger,
+button.btn-warning,
+button.btn-info,
+button.btn-primary,
+button.btn-secondary {
+  background-color: var(--highlight-color);
+  border-color: var(--highlight-color);
+}
+
 button,
 input {
   overflow: visible;
