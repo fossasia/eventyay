@@ -28,6 +28,7 @@ from eventyay.common.forms.widgets import (
 from eventyay.common.text.css import validate_css
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import Event, EventExtraLink
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.orga.forms.widgets import HeaderSelect
 from eventyay.base.models import ReviewPhase, ReviewScore, ReviewScoreCategory
 
@@ -115,6 +116,21 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         required=False,
         widget=HeaderSelect,
     )
+    etherpad_enabled = forms.BooleanField(
+        label=_('Enable Etherpad for sessions'),
+        help_text=_('Allow collaborative Etherpad notes to be attached to sessions in this event.'),
+        required=False,
+    )
+    etherpad_auto_generate = forms.BooleanField(
+        label=_('Auto-generate Etherpad links'),
+        help_text=_('Offer a one-click button to create a pad for sessions that do not have one yet.'),
+        required=False,
+    )
+    etherpad_public = forms.BooleanField(
+        label=_('Show Etherpad links publicly'),
+        help_text=_('If unset, the pad link is hidden from public session pages and only visible to organisers.'),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         self.is_administrator = kwargs.pop('is_administrator', False)
@@ -124,6 +140,11 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         if 'show_featured_speakers' not in flags and 'show_featured' in flags:
             self.fields['show_featured_speakers'].initial = flags['show_featured']
         self._configure_session_popularity_fields(flags)
+        # Show Etherpad event toggles only when the platform has the integration enabled.
+        gs = GlobalSettingsObject().settings
+        if not (gs.etherpad_enabled and gs.etherpad_base_url):
+            for field_name in ('etherpad_enabled', 'etherpad_auto_generate', 'etherpad_public'):
+                self.fields.pop(field_name, None)
 
     def _configure_session_popularity_fields(self, flags):
         if 'session_popularity_show_on_schedule' not in flags:
@@ -210,6 +231,9 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             'export_html_on_release': 'feature_flags',
             'html_export_url': 'display_settings',
             'header_pattern': 'display_settings',
+            'etherpad_enabled': 'feature_flags',
+            'etherpad_auto_generate': 'feature_flags',
+            'etherpad_public': 'display_settings',
         }
 
 
