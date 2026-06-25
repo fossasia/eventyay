@@ -20,8 +20,8 @@
         <meta name="description" content="{% block meta_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
         <meta name="application-name" content="{{ site_name }}">
         <meta name="generator" content="{{ site_name }}">
-        <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% elif request.organizer %}{{ organizer.name }}, {{ organizer.slug }},{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
-        {% if current_event and current_event.settings.meta_noindex %}
+        <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% elif request.organizer %}{{ request.organizer.name }}, {{ request.organizer.slug }},{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
+        {% if current_event and current_event.display_settings.meta_noindex %}
             <meta name="robots" content="noindex, nofollow">
         {% else %}
             <meta name="robots" content="index, follow">

@@ -77,19 +77,32 @@ class EventCommonSettingsForm(SettingsForm):
                     default_storage.delete(f'{base_path}_original.{orig_ext}')
 
             if isinstance(new_value, UploadedFile):
-                self.cleaned_data[image_field] = self._save_optimized(new_value, image_field)
+                try:
+                    prefix = self.add_prefix(image_field)
+                    crop_x = int(float(self.data.get(f'{prefix}_crop_x', '')))
+                    crop_y = int(float(self.data.get(f'{prefix}_crop_y', '')))
+                    crop_w = int(float(self.data.get(f'{prefix}_crop_w', '')))
+                    crop_h = int(float(self.data.get(f'{prefix}_crop_h', '')))
+                    if crop_w <= 0 or crop_h <= 0:
+                        raise ValueError('Invalid crop dimensions')
+                    crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
+                    self.event.settings.set(f'{image_field}_crop_data', f'{crop_x},{crop_y},{crop_w},{crop_h}')
+                except (ValueError, TypeError) as e:
+                    logger.error(f'Crop failed for {image_field}. Data keys: {[k for k in self.data.keys() if "crop" in k]}. Error: {e}')
+                    crop_box = None
+                self.cleaned_data[image_field] = self._save_optimized(new_value, image_field, crop_box)
 
         return super().save()
 
-    def _save_optimized(self, uploaded: UploadedFile, setting_key: str) -> str | UploadedFile:
+    def _save_optimized(self, uploaded: UploadedFile, setting_key: str, crop_box: tuple[int, int, int, int] | None = None) -> str | UploadedFile:
         """
         Resize and re-encode *uploaded*, persist the original alongside it,
         and return the path to the optimized file so that the settings form
         stores the optimized variant.
         """
         try:
-            result = optimize_uploaded_image(uploaded, setting_key)
-        except (OSError, ValueError):
+            result = optimize_uploaded_image(uploaded, setting_key, crop_box)
+        except Exception:
             logger.exception(
                 'Image optimization failed for %s; storing original unmodified',
                 setting_key,
