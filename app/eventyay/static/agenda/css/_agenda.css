@@ -623,3 +623,22 @@ dialog.agenda-wip-preview-leave-dialog::backdrop {
     min-width: 0;
   }
 }
+
+.etherpad-session-block {
+  margin: 8px 16px 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.etherpad-session-block .etherpad-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.etherpad-session-block .etherpad-note {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}

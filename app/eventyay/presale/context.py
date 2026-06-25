@@ -134,6 +134,20 @@ def _default_context(request):
         if request.resolver_match:
             ctx['cart_namespace'] = request.resolver_match.kwargs.get('cart_namespace', '')
     elif hasattr(request, 'organizer'):
+        if not request.organizer.settings.get('presale_css_file') and not hasattr(request, 'event'):
+            lock_key = f'presale:regenerate_organizer_css:{request.organizer.pk}'
+            if cache.add(lock_key, True, 60):
+                try:
+                    from eventyay.presale.style import regenerate_organizer_css
+
+                    regenerate_organizer_css.apply_async(args=(request.organizer.pk,))
+                except Exception:
+                    cache.delete(lock_key)
+                    logger.warning(
+                        'Could not enqueue presale CSS regeneration for %s',
+                        request.organizer.slug,
+                        exc_info=True,
+                    )
         ctx['languages'] = [_safe_language_info(code) for code in request.organizer.settings.locales]
 
     if hasattr(request, 'organizer'):

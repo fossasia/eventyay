@@ -86,6 +86,7 @@ def _encode_optimized(image: Image.Image) -> tuple[bytes, str]:
 def optimize_uploaded_image(
     uploaded: UploadedFile,
     setting_key: str,
+    crop_box: tuple[int, int, int, int] | None = None,
 ) -> OptimizedImages:
     """
     Resize *uploaded* to the cap for *setting_key* and return both the
@@ -128,6 +129,10 @@ def optimize_uploaded_image(
         )
 
     image = ImageOps.exif_transpose(image)
+
+    if crop_box:
+        logger.info('Cropping %s to %s', setting_key, crop_box)
+        image = image.crop(crop_box)
 
     orig_w, orig_h = image.size
     if orig_w > max_w:
