@@ -2,6 +2,11 @@ import features from 'features'
 
 export const PLAYBACK_MODE_SCHEDULE_DRIVEN = 'schedule_driven'
 export const PLAYBACK_MODE_ALWAYS_ON = 'always_on'
+export const STREAM_TYPE_HLS = 'hls'
+export const STREAM_TYPE_IFRAME = 'iframe'
+export const STREAM_TYPE_VIMEO = 'vimeo'
+export const STREAM_TYPE_YOUTUBE = 'youtube'
+export const IFRAME_PROVIDER_HELP_TEXT = 'Use an autoplaying, responsive embed/player URL. Supports YouTube, Vimeo, Dailymotion, Twitch, PeerTube, or any provider that allows iframe embedding.'
 
 export const PLAYBACK_MODE_OPTIONS = [
 	{
@@ -19,14 +24,14 @@ export const PLAYBACK_MODE_OPTIONS = [
 const PLAYBACK_MODES = new Set([PLAYBACK_MODE_ALWAYS_ON, PLAYBACK_MODE_SCHEDULE_DRIVEN])
 
 export const STREAM_SOURCE_OPTIONS = [
-	{ id: 'hls', label: 'HLS', module: 'livestream.native' },
-	{ id: 'youtube', label: 'YouTube', module: 'livestream.youtube' },
+	{ id: STREAM_TYPE_HLS, label: 'HLS', module: 'livestream.native' },
+	{ id: STREAM_TYPE_YOUTUBE, label: 'YouTube', module: 'livestream.youtube' },
 ]
 
 export function getStreamSourceOptions() {
 	const options = [...STREAM_SOURCE_OPTIONS]
 	if (features.enabled('iframe-player')) {
-		options.push({ id: 'iframe', label: 'Iframe player', module: 'livestream.iframe' })
+		options.push({ id: STREAM_TYPE_IFRAME, label: 'Iframe player', module: 'livestream.iframe' })
 	}
 	return options
 }

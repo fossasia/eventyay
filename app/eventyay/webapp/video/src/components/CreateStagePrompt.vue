@@ -16,7 +16,9 @@ prompt.c-create-stage-prompt(@close="$emit('close')")
 				bunt-select(name="streamSource", v-model="streamSource", :options="streamSourceOptions", option-value="id", option-label="label", label="Default stream source")
 				bunt-input(v-if="streamSource === 'hls'", name="url", :label="$t('CreateStagePrompt:url:label')", icon="link", placeholder="https://example.com/stream.m3u8", v-model="url", :validation="v$.url")
 				bunt-input(v-else-if="streamSource === 'youtube'", name="youtubeId", label="YouTube Video ID or URL", icon="youtube", placeholder="https://www.youtube.com/watch?v=...", v-model="youtubeId", :validation="v$.youtubeId", @blur="normalizeYoutubeId")
-				bunt-input(v-else-if="streamSource === 'iframe'", name="url", label="Iframe player URL", icon="link", placeholder="https://example.com/player", v-model="url", :validation="v$.url")
+				template(v-else-if="streamSource === 'iframe'")
+					bunt-input(name="url", label="Iframe player URL", icon="link", placeholder="https://example.com/player", v-model="url", :validation="v$.url")
+					.field-hint {{ IFRAME_PROVIDER_HELP_TEXT }}
 			bunt-input-outline-container(:label="$t('CreateChatPrompt:description:label')")
 				template(#default="{focus, blur}")
 					textarea(v-model="description", @focus="focus", @blur="blur")
@@ -30,6 +32,7 @@ import { required, url, youtubeid, normalizeYoutubeVideoId } from 'lib/validator
 import {
 	PLAYBACK_MODE_ALWAYS_ON,
 	PLAYBACK_MODE_OPTIONS,
+	IFRAME_PROVIDER_HELP_TEXT,
 	getStreamSourceOptions
 } from 'lib/stage-streams'
 
@@ -49,6 +52,7 @@ export default {
 			error: null,
 			PLAYBACK_MODE_ALWAYS_ON,
 			PLAYBACK_MODE_OPTIONS,
+			IFRAME_PROVIDER_HELP_TEXT,
 			streamSourceOptions: getStreamSourceOptions()
 		}
 	},
@@ -84,6 +88,7 @@ export default {
 				playback_mode: this.playbackMode,
 			}
 			if (this.playbackMode !== PLAYBACK_MODE_ALWAYS_ON) {
+				// Schedule entries provide the concrete source type and URL at playback time.
 				return { type: 'livestream.native', config }
 			}
 			if (this.streamSource === 'youtube') {
@@ -193,6 +198,11 @@ export default {
 			.default-source
 				display: flex
 				flex-direction: column
+				.field-hint
+					margin-top: 4px
+					font-size: 12px
+					line-height: 18px
+					color: $clr-secondary-text-light
 			.bunt-button
 				themed-button-primary()
 				margin-top: 16px

@@ -136,6 +136,122 @@ def test_native_stream_schedule_migration_maps_to_hls(event):
     assert schedule.stream_type == "hls"
 
 
+@pytest.mark.django_db
+def test_native_stream_schedule_migration_reverse_is_noop(event):
+    room = Room.objects.create(event=event, name="Stage")
+    schedule = StreamSchedule.objects.create(
+        room=room,
+        title="HLS stream",
+        url="https://example.com/live.m3u8",
+        start_time=now(),
+        end_time=now() + dt.timedelta(hours=1),
+        stream_type="hls",
+    )
+
+    stream_schedule_migration.Migration.operations[0].reverse_code(None, None)
+
+    schedule.refresh_from_db()
+    assert schedule.stream_type == "hls"
+
+
+@pytest.mark.django_db
+def test_save_room_deletes_schedules_when_stage_leaves_schedule_driven(
+    event, user, monkeypatch
+):
+    room = Room.objects.create(
+        event=event,
+        name="Stage",
+        module_config=[
+            {
+                "type": "livestream.native",
+                "config": {"playback_mode": "schedule_driven"},
+            }
+        ],
+    )
+    StreamSchedule.objects.create(
+        room=room,
+        title="HLS stream",
+        url="https://example.com/live.m3u8",
+        start_time=now(),
+        end_time=now() + dt.timedelta(hours=1),
+        stream_type="hls",
+    )
+    broadcasts = []
+
+    async def fake_broadcast_stream_change(room_id, stream_schedule, reload=False):
+        broadcasts.append((room_id, stream_schedule, reload))
+
+    monkeypatch.setattr(
+        room_service, "broadcast_stream_change", fake_broadcast_stream_change
+    )
+
+    room.module_config = [
+        {
+            "type": "livestream.native",
+            "config": {"playback_mode": "always_on", "hls_url": ""},
+        }
+    ]
+    async_to_sync(room_service.save_room)(
+        event,
+        room,
+        ["module_config"],
+        old_data={"module_config": []},
+        by_user=user,
+    )
+
+    assert not StreamSchedule.objects.filter(room=room).exists()
+    assert broadcasts == [(room.pk, None, True)]
+
+
+@pytest.mark.django_db
+def test_save_room_keeps_schedules_when_stage_stays_schedule_driven(
+    event, user, monkeypatch
+):
+    room = Room.objects.create(
+        event=event,
+        name="Stage",
+        module_config=[
+            {
+                "type": "livestream.native",
+                "config": {"playback_mode": "schedule_driven"},
+            }
+        ],
+    )
+    schedule = StreamSchedule.objects.create(
+        room=room,
+        title="HLS stream",
+        url="https://example.com/live.m3u8",
+        start_time=now(),
+        end_time=now() + dt.timedelta(hours=1),
+        stream_type="hls",
+    )
+    broadcasts = []
+
+    async def fake_broadcast_stream_change(room_id, stream_schedule, reload=False):
+        broadcasts.append((room_id, stream_schedule, reload))
+
+    monkeypatch.setattr(
+        room_service, "broadcast_stream_change", fake_broadcast_stream_change
+    )
+
+    room.module_config = [
+        {
+            "type": "livestream.native",
+            "config": {"playback_mode": "schedule_driven"},
+        }
+    ]
+    async_to_sync(room_service.save_room)(
+        event,
+        room,
+        ["module_config"],
+        old_data={"module_config": []},
+        by_user=user,
+    )
+
+    assert StreamSchedule.objects.filter(pk=schedule.pk).exists()
+    assert broadcasts == []
+
+
 @pytest.mark.parametrize(
     ("module_config", "expected"),
     [

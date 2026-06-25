@@ -33,7 +33,14 @@ import JanusCall from 'components/JanusCall';
 import JanusChannelCall from 'components/JanusChannelCall';
 import Livestream from 'components/Livestream';
 import { WhepClient } from 'lib/webrtc/whep';
-import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams';
+import {
+	getStagePlaybackMode,
+	PLAYBACK_MODE_SCHEDULE_DRIVEN,
+	STREAM_TYPE_HLS,
+	STREAM_TYPE_IFRAME,
+	STREAM_TYPE_VIMEO,
+	STREAM_TYPE_YOUTUBE,
+} from 'lib/stage-streams';
 
 // Props & Emits
 defineOptions({
@@ -94,7 +101,7 @@ const shouldUseLivestream = computed(() => {
 	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
 
 	if (streamType) {
-		return streamType === 'hls';
+		return streamType === STREAM_TYPE_HLS;
 	}
 
 	return module.value.type === 'livestream.native';
@@ -114,9 +121,9 @@ const iframeOffline = computed(() => {
 	const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
-	const isIFrame = streamType === 'iframe' || moduleType === 'livestream.iframe';
-	const isYouTube = streamType === 'youtube' || moduleType === 'livestream.youtube';
-	const isVimeo = streamType === 'vimeo';
+	const isIFrame = streamType === STREAM_TYPE_IFRAME || moduleType === 'livestream.iframe';
+	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || moduleType === 'livestream.youtube';
+	const isVimeo = streamType === STREAM_TYPE_VIMEO;
 
 	if (!isIFrame && !isYouTube && !isVimeo) return false;
 
@@ -206,7 +213,7 @@ watch(youtubeTransUrl, async (audioSource) => {
 	if (!props.room) return;
 	const isScheduleDriven = module.value && getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
 	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
-	const isYouTube = streamType === 'youtube' || module.value?.type === 'livestream.youtube';
+	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || module.value?.type === 'livestream.youtube';
 	if (!isYouTube) return;
 
 	// Teardown previous whep client
@@ -317,11 +324,11 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
 		const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 		const streamType = currentStream?.stream_type;
-		const effectiveModuleType = streamType === 'youtube'
+		const effectiveModuleType = streamType === STREAM_TYPE_YOUTUBE
 			? 'livestream.youtube'
-			: streamType === 'vimeo'
+			: streamType === STREAM_TYPE_VIMEO
 			? 'livestream.vimeo'
-			: streamType === 'iframe'
+			: streamType === STREAM_TYPE_IFRAME
 			? 'livestream.iframe'
 			: (!isScheduleDriven ? module.value.type : null);
 
@@ -359,7 +366,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			case 'livestream.youtube': {
 				isYouTube = true;
 				let ytid;
-				if (streamType === 'youtube' && currentStream?.url) {
+				if (streamType === STREAM_TYPE_YOUTUBE && currentStream?.url) {
 					ytid = normalizeYoutubeVideoId(currentStream.url);
 				} else if (!isScheduleDriven && module.value.type === 'livestream.youtube' && module.value.config?.ytid) {
 					ytid = normalizeYoutubeVideoId(module.value.config.ytid);

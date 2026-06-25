@@ -46,7 +46,7 @@
 				bunt-switch(name="noRelated", v-model="noRelated", label="Limit related videos to same channel")
 				bunt-switch(name="disableKb", v-model="disableKb", label="Disable Keyboard Controls")
 				bunt-switch(name="showInfo", v-model="showInfo", label="Hide Video Info")
-		bunt-input(v-else-if="modules['livestream.iframe']", name="iframe-player", v-model="modules['livestream.iframe'].config.url", label="Iframe player url", hint="iframe player should be autoplaying and support resizing to small sizes for background playing")
+		bunt-input(v-else-if="modules['livestream.iframe']", name="iframe-player", v-model="modules['livestream.iframe'].config.url", label="Iframe player url", :hint="IFRAME_PROVIDER_HELP_TEXT")
 </template>
 <script>
 import { defineComponent } from 'vue'
@@ -59,6 +59,7 @@ import {
 	PLAYBACK_MODE_ALWAYS_ON,
 	PLAYBACK_MODE_OPTIONS,
 	PLAYBACK_MODE_SCHEDULE_DRIVEN,
+	IFRAME_PROVIDER_HELP_TEXT,
 	getStagePlaybackMode,
 	getStreamSourceOptions
 } from 'lib/stage-streams'
@@ -104,7 +105,8 @@ export default defineComponent({
 			streamSourceConfigs: {},
 			playbackModeInputName: `playback-mode-${++playbackModeInputId}`,
 			PLAYBACK_MODE_ALWAYS_ON,
-			PLAYBACK_MODE_OPTIONS
+			PLAYBACK_MODE_OPTIONS,
+			IFRAME_PROVIDER_HELP_TEXT
 		}
 	},
 	validations() {

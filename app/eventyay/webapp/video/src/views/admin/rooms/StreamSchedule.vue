@@ -37,6 +37,7 @@
 					.timezone-hint
 						i All times in {{ eventTimezone }}
 					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", option-value="id", option-label="label", :validation="v$.formData.stream_type")
+					.field-hint(v-if="formData.stream_type === 'iframe'") {{ IFRAME_PROVIDER_HELP_TEXT }}
 					.form-error(v-if="saveError")
 						| {{ saveError }}
 					.form-actions
@@ -50,6 +51,7 @@ import { required, url, normalizeYoutubeVideoId } from 'lib/validators';
 import api from 'lib/api';
 import Prompt from 'components/Prompt';
 import moment from 'lib/timetravelMoment';
+import { IFRAME_PROVIDER_HELP_TEXT } from 'lib/stage-streams';
 
 export default {
 	name: 'StreamSchedule',
@@ -84,6 +86,7 @@ export default {
 				{ id: 'hls', label: 'HLS' },
 				{ id: 'iframe', label: 'Iframe' },
 			],
+			IFRAME_PROVIDER_HELP_TEXT,
 			formData: {
 				title: '',
 				url: '',
@@ -536,6 +539,11 @@ export default {
 			margin: 4px 0
 	.add-btn
 		margin-top: 16px
+	.field-hint
+		margin-top: 4px
+		font-size: 12px
+		line-height: 18px
+		color: $clr-secondary-text-light
 
 .c-stream-schedule-prompt
 	.content
