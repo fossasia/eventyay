@@ -285,6 +285,14 @@ def render_markdown_abslinks(text: str) -> str:
     return render_markdown(text, cleaner=ABSLINK_CLEANER)
 
 
+def _unwrap_single_paragraph(html: str) -> str:
+    """Return inline HTML for snippet contexts by removing one outer <p> wrapper."""
+    match = re.fullmatch(r'<p>(.*)</p>\s*', html, flags=re.DOTALL | re.IGNORECASE)
+    if match:
+        return match.group(1)
+    return html
+
+
 @register.filter
 def rich_text(text: str):
     return render_markdown(text, cleaner=CLEANER)
@@ -297,7 +305,10 @@ def rich_text_without_links(text: str):
 
 @register.filter
 def rich_text_snippet(text: str):
-    return render_markdown(text, cleaner=ABSLINK_CLEANER)
+    rendered = render_markdown(text, cleaner=ABSLINK_CLEANER)
+    if not rendered:
+        return rendered
+    return mark_safe(_unwrap_single_paragraph(str(rendered)))
 
 
 @register.filter

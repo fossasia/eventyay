@@ -7,7 +7,7 @@ from eventyay.base.templatetags.rich_text import (
     compile_email_body,
     expand_email_preview_placeholders,
     markdown_compile_email,
-    rich_text,
+    render_markdown_abslinks,
     rich_text_snippet,
 )
 
@@ -65,10 +65,10 @@ def test_compile_email_body_compiles_legacy_inline_html():
         ('[Call](tel:+12345)', '<a href="tel:+12345" rel="nofollow">Call</a>'),
         (
             '[Foo](/foo)',
-            '<a href="http://example.com/foo" rel="noopener" target="_blank">Foo</a>',
+            '<a href="/foo" rel="nofollow">Foo</a>',
         ),
         ('mail@example.org', '<a href="mailto:mail@example.org">mail@example.org</a>'),
-        # Test truelink_callback
+        # Existing HTML links keep their label text after sanitization
         (
             'evilsite.com',
             '<a href="http://evilsite.com" rel="noopener" target="_blank">evilsite.com</a>',
@@ -87,11 +87,11 @@ def test_compile_email_body_compiles_legacy_inline_html():
         ),
         (
             '<a href="https://evilsite.com">goodsite.com</a>',
-            '<a href="https://evilsite.com" rel="noopener" target="_blank">https://evilsite.com</a>',
+            '<a href="https://evilsite.com" rel="noopener" target="_blank">goodsite.com</a>',
         ),
         (
             '<a href="https://goodsite.com.evilsite.com">goodsite.com</a>',
-            '<a href="https://goodsite.com.evilsite.com" rel="noopener" target="_blank">https://goodsite.com.evilsite.com</a>',
+            '<a href="https://goodsite.com.evilsite.com" rel="noopener" target="_blank">goodsite.com</a>',
         ),
         (
             '<a href="https://evilsite.com/deep/path">evilsite.com</a>',
@@ -101,6 +101,6 @@ def test_compile_email_body_compiles_legacy_inline_html():
 )
 def test_linkify_abs(link):
     input, output = link
-    assert rich_text_snippet(input, safelinks=False) == output
-    assert rich_text(input, safelinks=False) == f'<p>{output}</p>'
+    assert rich_text_snippet(input) == output
+    assert render_markdown_abslinks(input) == f'<p>{output}</p>'
     assert markdown_compile_email(input) == f'<p>{output}</p>'
