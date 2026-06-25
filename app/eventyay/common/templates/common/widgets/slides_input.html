@@ -44,7 +44,7 @@
 
   <div class="slides-input-widget" data-id="{{ widget.files_id }}" data-is-re-render="{% if widget.is_re_render %}true{% else %}false{% endif %}">
     <div>
-      <label class='btn btn-default mb-0' style='cursor:pointer; white-space:nowrap;' for='{{ widget.files_id }}'>
+      <label class='btn btn-default mb-0 slides-file-label' for='{{ widget.files_id }}'>
         {% translate 'Choose file' %}
       </label>
       <input
@@ -55,15 +55,15 @@
         accept='.pdf,application/pdf'
         {% if widget.max_size %}data-maxsize='{{ widget.max_size }}'{% endif %}
         {% if widget.max_items != 1 %}multiple{% endif %}>
-      <span id='{{ widget.files_id }}_label' class='ml-2 text-muted' style='font-size:0.95em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;'>
+      <span id='{{ widget.files_id }}_label' class='ml-2 text-muted slides-filename-label'>
         {% translate 'No file chosen' %}
       </span>
-      <div id='{{ widget.files_id }}_error' class='text-danger mt-1' style='display: none; font-size: 0.9em; font-weight: bold;'>
+      <div id='{{ widget.files_id }}_error' class='text-danger mt-1 slides-error-msg'>
         {% if widget.max_size %}
           {% blocktranslate with size=widget.max_size|filesize %}Please do not upload files larger than {{ size }}.{% endblocktranslate %}
         {% endif %}
       </div>
-      <div id='{{ widget.files_id }}_storage_warning' class='text-warning mt-1' style='display: none; font-size: 0.9em; font-weight: bold;'>
+      <div id='{{ widget.files_id }}_storage_warning' class='text-warning mt-1 slides-storage-warning'>
         {% translate 'Note: This file is too large to be saved in the browser’s temporary storage. If the form has other errors, you will need to re-select it before submitting.' %}
       </div>
     </div>
