@@ -36,8 +36,8 @@
     <legend>{% translate "Talk permissions" %}</legend>
     {% bootstrap_field form.can_change_submissions layout="control" %}
     {% bootstrap_field form.is_reviewer layout="control" %}
-    {% with toggle_id=form.is_reviewer.auto_id %}
-    <div class="team-review-settings" data-review-toggle="{{ toggle_id }}">
+    {% with toggle_id=form.is_reviewer.auto_id submission_toggle_id=form.can_change_submissions.auto_id %}
+    <div class="team-review-settings" data-review-toggle="{{ toggle_id }}" data-submission-toggle="{{ submission_toggle_id }}">
         {% bootstrap_field form.force_hide_speaker_names layout="control" %}
         {% bootstrap_field form.force_hide_speaker_emails layout="control" %}
 
@@ -49,12 +49,11 @@
             <div class="col-md-9">
                 {% if form.events_with_tracks %}
                 <div class="event-track-selector" id="event-track-selector-{{ form.prefix }}">
-                    <div style="margin-bottom: 10px;">
-                        <label class="text-muted" style="font-weight: normal; margin-bottom: 5px;">
+                    <div class="event-track-filter-row">
+                        <label class="text-muted event-track-filter-label">
                             <i class="fa fa-calendar"></i> {% translate "Select event to configure tracks:" %}
                         </label>
-                        <select class="form-control event-track-filter" data-target-prefix="{{ form.prefix }}"
-                            style="max-width: 400px;">
+                        <select class="form-control event-track-filter" data-target-prefix="{{ form.prefix }}">
                             <option value="">{% translate "— Select an event —" %}</option>
                             {% for event_data in form.events_with_tracks %}
                             <option value="{{ event_data.id }}">{{ event_data.name }} ({{ event_data.slug }})</option>
@@ -62,31 +61,28 @@
                         </select>
                     </div>
 
-                    <div class="event-tracks-wrapper"
-                        style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #fafafa;">
-                        <div class="event-tracks-placeholder text-muted" style="padding: 10px; text-align: center;">
+                    <div class="event-tracks-wrapper">
+                        <div class="event-tracks-placeholder text-muted">
                             <i class="fa fa-info-circle"></i> {% translate "Select an event above to configure its tracks." %}
                         </div>
 
                         {% for event_data in form.events_with_tracks %}
-                        <div class="event-track-group" data-event-group-id="{{ event_data.id }}" style="display: none;">
-                            <div
-                                style="font-weight: bold; margin-bottom: 8px; padding: 5px 0; border-bottom: 1px solid #eee; color: #337ab7;">
+                        <div class="event-track-group" data-event-group-id="{{ event_data.id }}">
+                            <div class="event-track-group-header">
                                 <i class="fa fa-calendar-o"></i> {{ event_data.name }}
                             </div>
-                            <div class="scrolling-multiple-choice" style="max-height: 200px; overflow-y: auto;">
+                            <div class="scrolling-multiple-choice event-track-list">
                                 {% for track in event_data.tracks %}
-                                <div style="padding: 3px 0;">
-                                    <label style="font-weight: normal;">
+                                <div class="event-track-item">
+                                    <label class="event-track-item">
                                         <input type="checkbox" name="{{ form.limit_tracks.html_name }}"
-                                            value="{{ track.id }}" {% if track.id in form.selected_track_ids %}
-                                            checked{% endif %}>
+                                            value="{{ track.id }}" {% if track.id in form.selected_track_ids %}checked{% endif %}>
                                         {{ track.name }}
                                     </label>
                                 </div>
                                 {% endfor %}
                             </div>
-                            <div style="margin-top: 5px;">
+                            <div class="event-track-actions">
                                 <a href="#" class="track-select-all" data-event-id="{{ event_data.id }}">{% translate "All" %}</a> / <a href="#" class="track-select-none" data-event-id="{{ event_data.id }}">{% translate "None" %}</a>
                             </div>
                         </div>
@@ -94,7 +90,7 @@
                     </div>
                 </div>
                 {% else %}
-                <p class="text-muted" style="padding-top: 7px;">
+                <p class="text-muted track-hint">
                     <i class="fa fa-info-circle"></i> {% translate "No tracks are configured for any events." %}
                 </p>
                 {% endif %}
