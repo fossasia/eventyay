@@ -80,70 +80,6 @@ const getCookie = (name) => {
     return cookieValue
 }
 
-const updateArrivalButton = (button, hasArrived) => {
-    const arrivedLabel = button.dataset.labelArrived
-    const notArrivedLabel = button.dataset.labelNotArrived
-    if (hasArrived) {
-        button.classList.remove("btn-speaker-arrived")
-        button.classList.add("btn-speaker-not-arrived")
-        if (notArrivedLabel) {
-            button.textContent = notArrivedLabel
-        }
-    } else {
-        button.classList.remove("btn-speaker-not-arrived")
-        button.classList.add("btn-speaker-arrived")
-        if (arrivedLabel) {
-            button.textContent = arrivedLabel
-        }
-    }
-}
-
-const handleArrivalFormSubmit = (event) => {
-    const form = event.target.closest("form.speaker-arrival-form")
-    if (!form) {
-        return
-    }
-    event.preventDefault()
-    const button = form.querySelector('button[type="submit"]')
-    if (!button || form.dataset.busy === "true") {
-        return
-    }
-
-    const wasArrived = button.classList.contains("btn-speaker-not-arrived")
-    form.dataset.busy = "true"
-    updateArrivalButton(button, !wasArrived)
-
-    fetch(form.action, {
-        method: "POST",
-        body: new FormData(form),
-        credentials: "include",
-        headers: {
-            "X-Requested-With": "XMLHttpRequest",
-        },
-    })
-        .then(async (response) => {
-            if (!response.ok) {
-                throw new Error("Speaker arrival toggle failed")
-            }
-            const contentType = response.headers.get("content-type") || ""
-            if (contentType.includes("application/json")) {
-                const data = await response.json()
-                updateArrivalButton(button, data.has_arrived)
-            }
-        })
-        .catch(() => {
-            updateArrivalButton(button, wasArrived)
-        })
-        .finally(() => {
-            delete form.dataset.busy
-        })
-}
-
-const initArrivalToggles = () => {
-    document.removeEventListener("submit", handleArrivalFormSubmit)
-    document.addEventListener("submit", handleArrivalFormSubmit)
-}
-
 const initFeaturedToggles = (root = document) => {
     root
         .querySelectorAll("input.submission_featured")
@@ -157,7 +93,6 @@ const initFeaturedToggles = (root = document) => {
 onReady(() => {
     initScrollPosition()
     initFeaturedToggles()
-    initArrivalToggles()
 })
 
 // Re-bind featured toggles inside table regions replaced by AJAX filters.

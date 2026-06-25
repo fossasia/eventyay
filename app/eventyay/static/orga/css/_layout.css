@@ -1876,11 +1876,6 @@ a.btn-speaker-not-arrived {
   gap: 0.35rem;
 }
 
-.speaker-arrival-form {
-  display: inline-flex;
-  margin: 0;
-}
-
 button.btn-speaker-arrived,
 button.btn-speaker-not-arrived {
   white-space: nowrap;

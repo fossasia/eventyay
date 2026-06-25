@@ -102,9 +102,9 @@
                             <i class="fail fa fa-times d-none"></i>
                         </td>
                         <td class="speaker-sessions-cell">
-                            {% if profile.user.accepted_sessions %}
+                            {% if profile.user.list_sessions %}
                                 <ul class="list-unstyled mb-0 speaker-session-list">
-                                    {% for submission in profile.user.accepted_sessions %}
+                                    {% for submission in profile.user.list_sessions %}
                                         <li>
                                             <a href="{{ submission.orga_urls.base }}" title="{{ submission.title }}">{{ submission.title }}</a>
                                         </li>
@@ -118,14 +118,9 @@
                             <div class="speaker-actions-wrap">
                             {% if profile.accepted_submission_count %}
                                 {% if can_mark_speaker %}
-                                    <form action="{{ profile.orga_urls.toggle_arrived }}" method="POST" class="speaker-arrival-form">
+                                    <form action="{{ profile.orga_urls.toggle_arrived }}?next={{ request.get_full_path|urlencode }}" method="POST" class="d-inline">
                                         {% csrf_token %}
-                                        <button
-                                            type="submit"
-                                            class="btn btn-sm {% if profile.has_arrived %}btn-speaker-not-arrived{% else %}btn-speaker-arrived{% endif %}"
-                                            data-label-arrived="{% translate 'Mark speaker as arrived' %}"
-                                            data-label-not-arrived="{% translate 'Mark speaker as not arrived' %}"
-                                        >
+                                        <button type="submit" class="btn btn-sm {% if profile.has_arrived %}btn-speaker-not-arrived{% else %}btn-speaker-arrived{% endif %}">
                                             {% if profile.has_arrived %}
                                                 {% translate "Mark speaker as not arrived" %}
                                             {% else %}

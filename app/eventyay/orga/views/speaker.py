@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
 from django.db.models.expressions import OrderBy
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -113,15 +113,18 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
             return self.sort_queryset(qs).prefetch_related(
                 Prefetch(
                     'user__submissions',
-                    queryset=self._accepted_submissions_queryset(),
-                    to_attr='accepted_sessions',
+                    queryset=self._speaker_sessions_queryset(),
+                    to_attr='list_sessions',
                 )
             )
 
-    def _accepted_submissions_queryset(self):
-        qs = self.request.event.submissions.filter(
-            state__in=SubmissionStates.accepted_states,
-        ).order_by('title')
+    def _speaker_sessions_queryset(self):
+        qs = (
+            self.request.event.submissions.exclude(
+                state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT),
+            )
+            .order_by('title')
+        )
         if is_only_reviewer(self.request.user, self.request.event):
             qs = limit_for_reviewers(qs, self.request.event, self.request.user)
         return qs
@@ -318,8 +321,6 @@ class SpeakerToggleArrived(SpeakerViewMixin, View):
             user=self.request.user,
             # orga=True,
         )
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'has_arrived': self.profile.has_arrived})
         if url := self.request.GET.get('next'):
             if url_has_allowed_host_and_scheme(
                 url,
