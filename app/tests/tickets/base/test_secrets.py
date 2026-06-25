@@ -1,5 +1,6 @@
 import base64
 import struct
+from types import SimpleNamespace
 import pytest
 from django.utils.timezone import now
 from django_scopes import scope
@@ -33,7 +34,7 @@ def event():
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_force_invalidate(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -46,7 +47,7 @@ def test_force_invalidate(event, scheme):
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_keep_same(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -59,8 +60,8 @@ def test_keep_same(event, scheme):
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_change_if_required(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
-    item2 = event.items.create(name='Bar', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
+    item2 = event.products.create(name='Bar', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -76,7 +77,7 @@ def test_change_if_required(event, scheme):
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_change_if_invalid(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -84,6 +85,37 @@ def test_change_if_invalid(event, scheme):
     second = g.generate_secret(item, None, None, current_secret=first, force_invalidate=False)
     if input_dependent:
         assert first != second
+
+
+def test_sig1_generate_secret_accepts_attendee_name():
+    event = SimpleNamespace(
+        settings=SimpleNamespace(
+            ticket_secrets_pretix_sig1_privkey='',
+            ticket_secrets_pretix_sig1_pubkey='',
+        )
+    )
+    product = SimpleNamespace(pk=1)
+    generator = Sig1TicketSecretGenerator(event)
+
+    first = generator.generate_secret(
+        product,
+        None,
+        None,
+        attendee_name='Ada Lovelace',
+        current_secret=None,
+        force_invalidate=False,
+    )
+    assert first
+
+    second = generator.generate_secret(
+        product,
+        None,
+        None,
+        'Ada Lovelace',
+        current_secret=first,
+        force_invalidate=False,
+    )
+    assert second == first
 
 
 @pytest.mark.django_db
