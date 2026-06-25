@@ -249,12 +249,13 @@ def resolve_font(object, fonts_dict=None):
     if not font:
         return None, None
 
+    if font in SYSTEM_FONTS:
+        return font, SYSTEM_FONTS[font]
+
     if fonts_dict is None:
         fonts_dict = get_fonts()
 
-    if font in SYSTEM_FONTS:
-        return font, SYSTEM_FONTS[font]
-    elif font in fonts_dict:
+    if font in fonts_dict:
         escaped_font = escape_font_name(font)
         return font, f'"{escaped_font}", {BASE_SANS_STACK}'
     else:
@@ -270,7 +271,7 @@ def get_fonts():
 
 def escape_font_name(font_name):
     if not font_name:
-        return ""
+        return ''
     # Escape backslashes first, then escape double quotes.
     # Also strip out characters that shouldn't be in a font name, like newlines, semicolons, and curly braces.
     escaped = font_name.replace('\\', '\\\\').replace('"', '\\"')

@@ -15,6 +15,7 @@ from eventyay.base.models import SpeakerProfile, TalkSlot
 from eventyay.base.models.schedule import make_speaker_qr_map, make_talk_qr_map
 from eventyay.common.views import conditional_cache_page
 from eventyay.presale.style import (
+    SYSTEM_FONTS,
     get_font_stylesheet,
     get_fonts,
     resolve_font,
@@ -309,10 +310,11 @@ def event_css(request, organizer=None, event=None, **kwargs):
 
     font_css = ''
     if primary_font:
-        fonts_dict = get_fonts()
-        resolved_font, font_family_value = resolve_font(request.event, fonts_dict=fonts_dict)
-        if resolved_font and resolved_font in fonts_dict:
-            font_css = get_font_stylesheet(resolved_font, fonts=fonts_dict, for_sass=False)
+        resolved_font, font_family_value = resolve_font(request.event)
+        if resolved_font and resolved_font not in SYSTEM_FONTS:
+            fonts_dict = get_fonts()
+            if resolved_font in fonts_dict:
+                font_css = get_font_stylesheet(resolved_font, fonts=fonts_dict, for_sass=False)
 
         if font_family_value:
             variables.append(f'--font-family: {font_family_value};')
