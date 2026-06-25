@@ -6,9 +6,11 @@ $(function() {
     var image = document.getElementById('cropperImage');
     var $saveBtn = $('#cropperSaveBtn');
 
+    var cropApplied = false;
+
     var config = {
-        'id_settings-event_logo_image': { ratio: 1 },
-        'id_settings-logo_image': { ratio: 6 / 1 }
+        'id_settings-event_logo_image': { ratio: NaN }, // Free form aspect ratio for Logo
+        'id_settings-logo_image': { ratio: 1920 / 640 } // 3:1 aspect ratio for Header Image (recommended 1920x640)
     };
 
     function initCropperForInput(inputId) {
@@ -37,6 +39,7 @@ $(function() {
                     return;
                 }
                 
+                cropApplied = false;
                 currentInput = inputId;
                 var reader = new FileReader();
                 reader.onload = function(evt) {
@@ -67,10 +70,16 @@ $(function() {
             cropper.destroy();
             cropper = null;
         }
+        if (!cropApplied && currentInput) {
+            // If the user cancelled, clear the file input so the uncropped image isn't saved.
+            $('#' + currentInput).val('');
+        }
+        currentInput = null;
     });
 
     $saveBtn.on('click', function() {
         if (cropper && currentInput) {
+            cropApplied = true;
             var cropData = cropper.getData(true);
             var $input = $('#' + currentInput);
             var fieldName = $input.attr('name');
