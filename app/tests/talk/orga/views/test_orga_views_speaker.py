@@ -405,7 +405,7 @@ def test_speaker_list_sorts_by_featured(
 
 
 @pytest.mark.django_db
-def test_speaker_arrival_buttons_use_distinct_styles(orga_client, speaker, event, submission):
+def test_speaker_arrival_buttons_use_distinct_styles(orga_client, speaker, event, accepted_submission):
     with scope(event=event):
         profile = speaker.event_profile(event)
         profile.has_arrived = False
@@ -415,6 +415,7 @@ def test_speaker_arrival_buttons_use_distinct_styles(orga_client, speaker, event
     assert response.status_code == 200
     assert 'btn-speaker-arrived' in response.text
     assert 'Mark speaker as arrived' in response.text
+    assert 'speaker-arrival-form' in response.text
 
     profile.has_arrived = True
     with scope(event=event):
@@ -425,14 +426,39 @@ def test_speaker_arrival_buttons_use_distinct_styles(orga_client, speaker, event
 
 
 @pytest.mark.django_db
-def test_speaker_arrived_toggle_from_list_stays_on_list(orga_client, speaker, event, submission):
+def test_speaker_list_shows_linked_sessions(orga_client, speaker, event, accepted_submission):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    assert accepted_submission.title in response.text
+    assert accepted_submission.orga_urls.base in response.text
+    assert 'speaker-session-list' in response.text
+
+
+@pytest.mark.django_db
+def test_speaker_arrived_toggle_from_list_stays_on_list(orga_client, speaker, event, accepted_submission):
     list_url = event.orga_urls.speakers + '?sort=-is_featured'
     with scope(event=event):
         toggle_url = speaker.event_profile(event).orga_urls.toggle_arrived
+    response = orga_client.post(
+        toggle_url,
+        HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+    )
+    assert response.status_code == 200
+    assert response.json() == {'has_arrived': True}
+
     response = orga_client.post(f'{toggle_url}?next={list_url}', follow=True)
     assert response.status_code == 200
     assert response.request['PATH_INFO'].rstrip('/').endswith('/speakers')
     assert 'sort=-is_featured' in response.request.get('QUERY_STRING', '')
+
+
+@pytest.mark.django_db
+def test_speaker_arrived_toggle_without_next_returns_to_list(orga_client, speaker, event, accepted_submission):
+    with scope(event=event):
+        toggle_url = speaker.event_profile(event).orga_urls.toggle_arrived
+    response = orga_client.post(toggle_url, follow=True)
+    assert response.status_code == 200
+    assert response.request['PATH_INFO'].rstrip('/').endswith('/speakers')
 
 
 @pytest.mark.django_db

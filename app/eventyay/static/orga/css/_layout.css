@@ -1829,15 +1829,17 @@ h2 .user-name-display img {
   cursor: not-allowed;
 }
 
-button.btn-speaker-arrived {
+button.btn-speaker-arrived,
+a.btn-speaker-arrived {
   --highlight-color: var(--color-positive);
   background-color: var(--highlight-color);
   border-color: var(--highlight-color);
   color: var(--color-white);
 }
 
-button.btn-speaker-not-arrived {
-  --highlight-color: var(--color-danger);
+button.btn-speaker-not-arrived,
+a.btn-speaker-not-arrived {
+  --highlight-color: var(--color-info);
   background-color: var(--highlight-color);
   border-color: var(--highlight-color);
   color: var(--color-white);

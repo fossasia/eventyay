@@ -179,11 +179,17 @@ button, a.btn{
 }
 
 button.btn-success,
+a.btn-success,
 button.btn-danger,
+a.btn-danger,
 button.btn-warning,
+a.btn-warning,
 button.btn-info,
+a.btn-info,
 button.btn-primary,
-button.btn-secondary {
+a.btn-primary,
+button.btn-secondary,
+a.btn-secondary {
   background-color: var(--highlight-color);
   border-color: var(--highlight-color);
 }

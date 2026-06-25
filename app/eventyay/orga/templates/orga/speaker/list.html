@@ -61,11 +61,12 @@
                     <th class="text-center">
                         {% translate "Featured" %}
                         {% if can_update_speaker %}
-                            <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate "Show this speaker in the list of featured speakers." %}"></i>
-                            <a href="{% querystring sort="-is_featured" %}"><i class="fa fa-caret-down"></i></a>
-                            <a href="{% querystring sort="is_featured" %}"><i class="fa fa-caret-up"></i></a>
+                            <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate 'Show this speaker in the list of featured speakers.' %}"></i>
+                            <a href="{% querystring sort='-is_featured' %}"><i class="fa fa-caret-down"></i></a>
+                            <a href="{% querystring sort='is_featured' %}"><i class="fa fa-caret-up"></i></a>
                         {% endif %}
                     </th>
+                    <th>{% translate "Sessions" %}</th>
                     <th></th>
                 </tr>
             </thead>
@@ -81,7 +82,7 @@
                         <td class="numeric">{{ profile.submission_count }}</td>
                         <td class="submission_featured text-center">
                             {% if can_update_speaker %}
-                                <div class="form-check d-inline-block" title="{% translate "Show this speaker in the list of featured speakers." %}">
+                                <div class="form-check d-inline-block" title="{% translate 'Show this speaker in the list of featured speakers.' %}">
                                     <input
                                         type="checkbox"
                                         id="featured_speaker_{{ profile.user.code }}"
@@ -100,12 +101,30 @@
                             <i class="done fa fa-check d-none text-success"></i>
                             <i class="fail fa fa-times d-none"></i>
                         </td>
+                        <td>
+                            {% if profile.accepted_sessions %}
+                                <ul class="list-unstyled mb-0 speaker-session-list">
+                                    {% for submission in profile.accepted_sessions %}
+                                        <li>
+                                            <a href="{{ submission.orga_urls.base }}">{{ submission.title }}</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
                         <td class="text-right">
                             {% if profile.accepted_submission_count %}
                                 {% if can_mark_speaker %}
-                                    <form action="{{ profile.orga_urls.toggle_arrived }}?next={{ request.get_full_path|urlencode }}" method="POST" class="d-inline">
+                                    <form action="{{ profile.orga_urls.toggle_arrived }}" method="POST" class="d-inline speaker-arrival-form">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm {% if profile.has_arrived %}btn-speaker-not-arrived{% else %}btn-speaker-arrived{% endif %}">
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm {% if profile.has_arrived %}btn-speaker-not-arrived{% else %}btn-speaker-arrived{% endif %}"
+                                            data-label-arrived="{% translate 'Mark speaker as arrived' %}"
+                                            data-label-not-arrived="{% translate 'Mark speaker as not arrived' %}"
+                                        >
                                             {% if profile.has_arrived %}
                                                 {% translate "Mark speaker as not arrived" %}
                                             {% else %}
@@ -130,7 +149,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5">{% translate "No submitters found." %}</td>
+                        <td colspan="6">{% translate "No submitters found." %}</td>
                     </tr>
                 {% endfor %}
             </tbody>
