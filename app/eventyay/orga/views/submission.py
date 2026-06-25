@@ -10,7 +10,7 @@ from django.contrib.syndication.views import Feed
 from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.forms.models import BaseModelFormSet, inlineformset_factory
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import feedgenerator
 from django.utils.functional import cached_property
@@ -251,19 +251,22 @@ class SubmissionEtherpadGenerate(SubmissionViewMixin, View):
 
     def post(self, request, *args, **kwargs):
         submission = self.object
-        if not request.event.get_feature_flag('etherpad_enabled'):
-            messages.error(request, _('Etherpad is not enabled for this event.'))
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+        def fail(message, status=400):
+            if is_ajax:
+                return JsonResponse({'error': str(message)}, status=status)
+            messages.error(request, message)
             return redirect(submission.orga_urls.edit)
+
+        if not request.event.get_feature_flag('etherpad_enabled'):
+            return fail(_('Etherpad is not enabled for this event.'))
 
         force = request.POST.get('force') == 'true'
         try:
             url = generate_pad_for_submission(request.event, submission, force=force)
-        except EtherpadConfigurationError as exc:
-            messages.error(request, str(exc))
-            return redirect(submission.orga_urls.edit)
-        except EtherpadError as exc:
-            messages.error(request, str(exc))
-            return redirect(submission.orga_urls.edit)
+        except (EtherpadConfigurationError, EtherpadError) as exc:
+            return fail(exc)
 
         submission.etherpad_url = url
         submission.save(update_fields=['etherpad_url'])
@@ -272,6 +275,8 @@ class SubmissionEtherpadGenerate(SubmissionViewMixin, View):
             person=request.user,
             orga=True,
         )
+        if is_ajax:
+            return JsonResponse({'url': url})
         messages.success(request, _('An Etherpad link has been generated for this session.'))
         return redirect(submission.orga_urls.edit)
 

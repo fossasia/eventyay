@@ -98,15 +98,16 @@
                             <p class="help-block mb-2">{% translate "No Etherpad is configured for this session yet." %}</p>
                         {% endif %}
                         {% if action != "create" and request.event.feature_flags.etherpad_auto_generate %}
-                            {% if submission.etherpad_url %}
-                                <button type="submit" class="btn btn-outline-info" formaction="{{ submission.orga_urls.etherpad_generate }}" formmethod="post" formnovalidate name="force" value="true" data-confirm="{% translate "This session already has an Etherpad link. Replace it with a newly generated pad? The existing notes will no longer be linked." %}">
-                                    <i class="fa fa-file-text-o"></i> {% translate "Regenerate Etherpad link" %}
-                                </button>
-                            {% else %}
-                                <button type="submit" class="btn btn-outline-info" formaction="{{ submission.orga_urls.etherpad_generate }}" formmethod="post" formnovalidate>
-                                    <i class="fa fa-file-text-o"></i> {% translate "Auto-generate Etherpad link" %}
-                                </button>
-                            {% endif %}
+                            {% translate "This session already has an Etherpad link. Replace it with a newly generated pad? The existing notes will no longer be linked." as etherpad_replace_confirm %}
+                            <button type="button" class="btn btn-outline-info"
+                                    data-etherpad-generate
+                                    data-url="{{ submission.orga_urls.etherpad_generate }}"
+                                    data-replace-confirm="{{ etherpad_replace_confirm }}"
+                                    data-error-text="{% translate "Could not generate the Etherpad link. Please try again." %}"
+                                    {% if submission.etherpad_url %}data-force="true" data-confirm="{{ etherpad_replace_confirm }}"{% endif %}>
+                                <i class="fa fa-file-text-o"></i>
+                                {% if submission.etherpad_url %}{% translate "Regenerate Etherpad link" %}{% else %}{% translate "Auto-generate Etherpad link" %}{% endif %}
+                            </button>
                         {% endif %}
                     </div>
                 </div>

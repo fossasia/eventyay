@@ -525,6 +525,14 @@ class GlobalSettingsForm(SettingsForm):
             ]),
         ]
 
+    def clean_etherpad_pad_name_pattern(self):
+        pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
+        if pattern and '{submission}' not in pattern and '{token}' not in pattern:
+            raise forms.ValidationError(
+                _('The pattern must contain {submission} or {token} so each session gets a unique pad.')
+            )
+        return pattern
+
     def clean(self):
         data = super().clean()
 

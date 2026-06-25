@@ -39,6 +39,37 @@ def test_orga_can_generate_etherpad_link(orga_client, event, submission):
 
 
 @pytest.mark.django_db
+def test_generate_returns_json_for_ajax(orga_client, event, submission):
+    _enable_platform_etherpad()
+    with scope(event=event):
+        _enable_event_etherpad(event)
+
+    response = orga_client.post(
+        submission.orga_urls.etherpad_generate,
+        HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+    )
+    assert response.status_code == 200
+    assert response.json()['url'].startswith('https://pad.example.org/p/')
+    with scope(event=event):
+        submission.refresh_from_db()
+        assert submission.etherpad_url
+
+
+@pytest.mark.django_db
+def test_generate_ajax_returns_error_when_event_disabled(orga_client, event, submission):
+    _enable_platform_etherpad()
+    response = orga_client.post(
+        submission.orga_urls.etherpad_generate,
+        HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+    )
+    assert response.status_code == 400
+    assert 'error' in response.json()
+    with scope(event=event):
+        submission.refresh_from_db()
+        assert not submission.etherpad_url
+
+
+@pytest.mark.django_db
 def test_existing_link_not_overwritten_without_force(orga_client, event, submission):
     _enable_platform_etherpad()
     with scope(event=event):
