@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='utf-8' ?>
+{% load xmlescape %}
+<!-- Made with love by eventyay v{{ version }}. -->
+<schedule>
+    <generator name="eventyay" version="{{ version }}" />
+    <version>{{ data.version|xmlescape }}</version>
+    <conference>
+        <title>{{ data.conference.title|xmlescape }}</title>
+        <acronym>{{ data.conference.acronym|xmlescape }}</acronym>
+        <start>{{ data.conference.start|date:"c" }}</start>
+        <end>{{ data.conference.end|date:"c" }}</end>
+        <days>{{ data.conference.duration }}</days>
+        <timeslot_duration>00:05</timeslot_duration>
+        <base_url>{{ data.base_url|xmlescape }}</base_url>
+        <time_zone_name>{{ data.conference.timezone }}</time_zone_name>
+    </conference>
+    {% for day in data.days %}
+    <day index='{{ day.index }}' date='{{ day.start.date|date:"c" }}' start='{{ day.start|date:"c" }}' end='{{ day.end|date:"c" }}'>
+        {% for room in day.rooms %}
+        <room name='{{ room.name|xmlescape }}' guid='{{ room.guid }}'>
+            {% for entry in room.entries %}
+            <event guid='{{ entry.uid }}' id='{{ entry.slug|xmlescape }}'>
+                <room>{{ room.name|xmlescape }}</room>
+                <title>{{ entry.name|xmlescape }}</title>
+                <subtitle></subtitle>
+                <type>Event</type>
+                <date>{{ entry.start|date:"c" }}</date>
+                <start>{{ entry.start|date:"H:i" }}</start>
+                <duration>{{ entry.export_duration }}</duration>
+                <slug>{{ entry.slug|xmlescape }}</slug>
+                <url>{{ entry.url|xmlescape }}</url>
+                {% if entry.location %}<location>{{ entry.location|xmlescape }}</location>{% endif %}
+            </event>
+            {% endfor %}
+        </room>
+        {% endfor %}
+    </day>
+    {% endfor %}
+</schedule>
