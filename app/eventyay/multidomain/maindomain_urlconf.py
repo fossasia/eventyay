@@ -14,7 +14,12 @@ from eventyay.presale.urls import (
     locale_patterns,
     organizer_patterns,
 )
-from eventyay.presale.views.startpage import StartPageView
+from eventyay.presale.views.startpage import (
+    FollowedEventsView,
+    PastEventsView,
+    StartPageView,
+    UpcomingEventsView,
+)
 
 from .views import AnonymousInviteRedirectView, VideoAssetView, VideoSPAView
 
@@ -29,6 +34,9 @@ presale_patterns_main = [
             (
                 locale_patterns
                 + [
+                    path('all-events/upcoming/', UpcomingEventsView.as_view(), name='events.upcoming'),
+                    path('all-events/past/',     PastEventsView.as_view(),     name='events.past'),
+                    path('followed-events/',     FollowedEventsView.as_view(),  name='events.followed'),
                     path('<orgslug:organizer>/', include(organizer_patterns)),
                     path(
                         '<orgslug:organizer>/<slug:event>/',

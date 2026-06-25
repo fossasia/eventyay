@@ -1,8 +1,10 @@
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.db.models import Q
 from django.http import JsonResponse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
@@ -61,33 +63,7 @@ class StartPageView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['staff_session'] = is_admin_mode_active(self.request)
-        settings_obj = GlobalSettingsObject().settings
-        header_image = settings_obj.get('startpage_header_image', as_type=str, default='')
-        if header_image.startswith('file://'):
-            header_image = header_image[7:]
-        elif header_image.startswith('public:'):
-            header_image = header_image[7:]
-        ctx['startpage_header_image_url'] = default_storage.url(header_image) if header_image else ''
-        header_text = settings_obj.get(
-            'startpage_header_text',
-            as_type=LazyI18nString,
-            default='',
-        )
-        ctx['site_name'] = settings.INSTANCE_NAME
-        ctx['startpage_header_text'] = header_text or settings.INSTANCE_NAME
-        if self.request.user.is_authenticated:
-            ctx['nav_items'] = get_global_navigation(self.request)
-        else:
-            ctx['nav_items'] = []
-        ctx['show_link_in_header_for_start_page'] = Page.objects.filter(
-            link_on_website_start_page=True,
-            link_in_header=True,
-        )
-        ctx['show_link_in_footer_for_start_page'] = Page.objects.filter(
-            link_on_website_start_page=True,
-            link_in_footer=True,
-        )
+        ctx.update(_common_base_context(self.request))
         search_query = self.request.GET.get('q', '').strip()
         ctx['search_query'] = search_query
         with scopes_disabled():
@@ -121,9 +97,9 @@ class StartPageView(TemplateView):
                 elif event.startpage_visible:
                     past_events.append(event)
 
-            ctx['featured_events'] = featured_events
-            ctx['upcoming_events'] = upcoming_events
-            ctx['past_events'] = list(reversed(past_events))
+            ctx['featured_events'] = featured_events[:8]
+            ctx['upcoming_events'] = upcoming_events[:8]
+            ctx['past_events'] = list(reversed(past_events))[:8]
 
             followed_upcoming_events = []
             if self.request.user.is_authenticated:
@@ -143,5 +119,129 @@ class StartPageView(TemplateView):
                 )
                 followed_upcoming_events = [e for e in qs if not e.has_component_testmode]
 
-            ctx['followed_upcoming_events'] = followed_upcoming_events
+            ctx['followed_upcoming_events'] = followed_upcoming_events[:8]
+        return ctx
+
+
+def _common_base_context(request):
+    """Return shared context variables for the three dedicated event-list views."""
+    ctx = {
+        'site_name': settings.INSTANCE_NAME,
+        'staff_session': is_admin_mode_active(request),
+    }
+    ctx['nav_items'] = get_global_navigation(request) if request.user.is_authenticated else []
+    ctx['show_link_in_header_for_start_page'] = Page.objects.filter(
+        link_on_website_start_page=True,
+        link_in_header=True,
+    )
+    ctx['show_link_in_footer_for_start_page'] = Page.objects.filter(
+        link_on_website_start_page=True,
+        link_in_footer=True,
+    )
+
+    settings_obj = GlobalSettingsObject().settings
+    header_image = settings_obj.get('startpage_header_image', as_type=str, default='')
+    if header_image.startswith('file://'):
+        header_image = header_image[7:]
+    elif header_image.startswith('public:'):
+        header_image = header_image[7:]
+    ctx['startpage_header_image_url'] = default_storage.url(header_image) if header_image else ''
+    header_text = settings_obj.get(
+        'startpage_header_text',
+        as_type=LazyI18nString,
+        default='',
+    )
+    ctx['startpage_header_text'] = header_text or settings.INSTANCE_NAME
+    return ctx
+
+
+class UpcomingEventsView(TemplateView):
+    template_name = 'pretixpresale/events/upcoming.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(_common_base_context(self.request))
+        with scopes_disabled():
+            qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
+            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
+            events = list(qs.order_by('date_from'))
+            visible_events = [event for event in events if not event.has_component_testmode]
+
+            today = timezone.localdate()
+            upcoming_events = []
+            for event in visible_events:
+                event_end = event.date_to or event.date_from
+                if timezone.is_aware(event_end):
+                    event_end_date = timezone.localtime(event_end).date()
+                else:
+                    event_end_date = event_end.date()
+                in_future = event_end_date >= today
+                if in_future and event.startpage_visible and not event.startpage_featured:
+                    upcoming_events.append(event)
+            ctx['events'] = upcoming_events
+        return ctx
+
+
+class PastEventsView(TemplateView):
+    template_name = 'pretixpresale/events/past.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(_common_base_context(self.request))
+        with scopes_disabled():
+            qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
+            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
+            events = list(qs.order_by('date_from'))
+            visible_events = [event for event in events if not event.has_component_testmode]
+
+            today = timezone.localdate()
+            past_events = []
+            for event in visible_events:
+                event_end = event.date_to or event.date_from
+                if timezone.is_aware(event_end):
+                    event_end_date = timezone.localtime(event_end).date()
+                else:
+                    event_end_date = event_end.date()
+                in_future = event_end_date >= today
+                if not in_future and event.startpage_visible:
+                    past_events.append(event)
+            ctx['events'] = list(reversed(past_events))
+        return ctx
+
+
+@method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
+class FollowedEventsView(TemplateView):
+    template_name = 'pretixpresale/events/followed.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(_common_base_context(self.request))
+        with scopes_disabled():
+            followed_org_ids = OrganizerFollower.objects.filter(
+                user=self.request.user
+            ).values_list('organizer_id', flat=True)
+            qs = (
+                Event.objects.filter(
+                    organizer_id__in=followed_org_ids,
+                    live=True,
+                )
+                .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
+                .select_related('organizer')
+                .prefetch_related('_settings_objects')
+                .order_by('date_from')
+            )
+            visible_events = [e for e in qs if not e.has_component_testmode]
+
+            today = timezone.localdate()
+            followed_upcoming_events = []
+            for event in visible_events:
+                event_end = event.date_to or event.date_from
+                if timezone.is_aware(event_end):
+                    event_end_date = timezone.localtime(event_end).date()
+                else:
+                    event_end_date = event_end.date()
+                in_future = event_end_date >= today
+                if in_future:
+                    followed_upcoming_events.append(event)
+            ctx['events'] = followed_upcoming_events
         return ctx

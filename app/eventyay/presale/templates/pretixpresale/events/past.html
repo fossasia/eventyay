@@ -1,0 +1,15 @@
+{% extends "pretixpresale/events/event_list_page_base.html" %}
+{% load i18n %}
+{% block page_title %}{% trans "Past Events" %}{% endblock %}
+{% block content %}
+<section class="startpage-events" aria-label="{% trans "Past events" %}">
+  <h2>{% trans "Past Events" %}</h2>
+  <div class="startpage-event-list">
+    {% for event in events %}
+      {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+    {% empty %}
+      <p class="startpage-empty">{% trans "No past events." %}</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

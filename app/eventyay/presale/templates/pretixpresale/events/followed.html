@@ -1,0 +1,15 @@
+{% extends "pretixpresale/events/event_list_page_base.html" %}
+{% load i18n %}
+{% block page_title %}{% trans "Events from Followed Organizers" %}{% endblock %}
+{% block content %}
+<section class="startpage-events" aria-label="{% trans "Events from followed organizers" %}">
+  <h2>{% trans "Events from Followed Organizers" %}</h2>
+  <div class="startpage-event-list">
+    {% for event in events %}
+      {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+    {% empty %}
+      <p class="startpage-empty">{% trans "No upcoming events from organizers you follow." %}</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

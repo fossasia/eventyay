@@ -952,4 +952,41 @@ body.startpage-body {
       outline-offset: -2px;
     }
   }
+
+  .startpage-footer-links {
+    margin-top: 20px;
+  }
+
+  .startpage-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+
+    h2 {
+      margin: 0;
+    }
+  }
+
+  .startpage-hero {
+    width: 100%;
+
+    .event-hero-overlay {
+      width: 100%;
+    }
+  }
+
+  .event-list-header-brand {
+    width: 100%;
+    justify-content: space-between;
+
+    .event-home-back {
+      color: #fff;
+      text-decoration: none;
+
+      &:hover, &:focus {
+        text-decoration: none;
+      }
+    }
+  }
 }

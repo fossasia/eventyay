@@ -1,0 +1,15 @@
+{% extends "pretixpresale/events/event_list_page_base.html" %}
+{% load i18n %}
+{% block page_title %}{% trans "Upcoming Events" %}{% endblock %}
+{% block content %}
+<section class="startpage-events" aria-label="{% trans "Upcoming events" %}">
+  <h2>{% trans "Upcoming Events" %}</h2>
+  <div class="startpage-event-list">
+    {% for event in events %}
+      {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+    {% empty %}
+      <p class="startpage-empty">{% trans "No upcoming events available yet." %}</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
