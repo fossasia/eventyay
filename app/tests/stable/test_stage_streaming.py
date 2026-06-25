@@ -154,7 +154,7 @@ def test_native_stream_schedule_migration_reverse_is_noop(event):
     assert schedule.stream_type == "hls"
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_save_room_deletes_schedules_when_stage_leaves_schedule_driven(
     event, user, monkeypatch
 ):
@@ -203,7 +203,7 @@ def test_save_room_deletes_schedules_when_stage_leaves_schedule_driven(
     assert broadcasts == [(room.pk, None, True)]
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_save_room_keeps_schedules_when_stage_stays_schedule_driven(
     event, user, monkeypatch
 ):
