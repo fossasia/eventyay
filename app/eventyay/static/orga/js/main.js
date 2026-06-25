@@ -24,6 +24,7 @@ const handleFeaturedChange = (element) => {
 
     setStatus("working")
 
+    const id = element.dataset.id
     // Use the URL from the data-url attribute if available, otherwise construct it
     const url = element.dataset.url || (window.location.pathname + (window.location.pathname.endsWith('/') ? '' : '/') + id + "/toggle_featured")
     const options = {

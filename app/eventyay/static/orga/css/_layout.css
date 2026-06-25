@@ -1830,15 +1830,15 @@ h2 .user-name-display img {
 }
 
 button.btn-speaker-arrived {
-  --highlight-color: #28a745;
+  --highlight-color: var(--color-positive);
   background-color: var(--highlight-color);
   border-color: var(--highlight-color);
-  color: #fff;
+  color: var(--color-white);
 }
 
 button.btn-speaker-not-arrived {
   --highlight-color: var(--color-danger);
   background-color: var(--highlight-color);
   border-color: var(--highlight-color);
-  color: #fff;
+  color: var(--color-white);
 }

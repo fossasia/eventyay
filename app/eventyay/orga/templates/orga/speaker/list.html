@@ -33,7 +33,7 @@
         {% include "orga/event/component_link.html" %}
     </div>
 
-    {% include "orga/includes/speaker_filter_form.html" %}
+    {% include "common/includes/search_form.html" %}
 
     {% if filter_form.is_valid and filter_form.cleaned_data.question %}
         <p class="text-muted ml-2">
@@ -79,7 +79,7 @@
                         </td>
                         <td class="numeric">{{ profile.accepted_submission_count }}</td>
                         <td class="numeric">{{ profile.submission_count }}</td>
-                        <td class="speaker_featured text-center">
+                        <td class="submission_featured text-center">
                             {% if can_update_speaker %}
                                 <div class="form-check d-inline-block" title="{% translate "Show this speaker in the list of featured speakers." %}">
                                     <input
@@ -87,7 +87,7 @@
                                         id="featured_speaker_{{ profile.user.code }}"
                                         data-id="{{ profile.user.code }}"
                                         data-url="{{ profile.orga_urls.toggle_featured }}"
-                                        class="submission_featured speaker_featured"
+                                        class="submission_featured"
                                         aria-label="{% translate 'Show this speaker in the list of featured speakers.' %}"
                                         {% if profile.is_featured %}checked{% endif %}
                                     >
@@ -96,6 +96,9 @@
                             {% else %}
                                 <i class="fa fa-{{ profile.is_featured|yesno:'check,times' }}"></i>
                             {% endif %}
+                            <i class="working fa fa-spinner fa-spin d-none"></i>
+                            <i class="done fa fa-check d-none text-success"></i>
+                            <i class="fail fa fa-times d-none"></i>
                         </td>
                         <td class="text-right">
                             {% if profile.accepted_submission_count %}
