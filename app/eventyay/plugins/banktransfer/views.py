@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 
 class ActionView(View):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
     def _discard(self, trans):
         trans.state = BankTransaction.STATE_DISCARDED
@@ -272,7 +272,7 @@ class ActionView(View):
 
 class JobDetailView(DetailView):
     template_name = 'pretixplugins/banktransfer/job_detail.html'
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
     context_objectname = 'job'
 
     def redirect_form(self):
@@ -373,7 +373,7 @@ class BankTransactionFilterForm(forms.Form):
 
 class ImportView(ListView):
     template_name = 'pretixplugins/banktransfer/import_form.html'
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
     context_object_name = 'transactions_unhandled'
     paginate_by = 30
 
@@ -630,7 +630,7 @@ class OrganizerBanktransferView:
 
 
 class EventImportView(EventPermissionRequiredMixin, ImportView):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
 
 class OrganizerImportView(
@@ -639,11 +639,11 @@ class OrganizerImportView(
     OrganizerDetailViewMixin,
     ImportView,
 ):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
 
 class EventJobDetailView(EventPermissionRequiredMixin, JobDetailView):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
 
 class OrganizerJobDetailView(
@@ -652,11 +652,11 @@ class OrganizerJobDetailView(
     OrganizerDetailViewMixin,
     JobDetailView,
 ):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
 
 class EventActionView(EventPermissionRequiredMixin, ActionView):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
 
 class OrganizerActionView(
@@ -665,12 +665,12 @@ class OrganizerActionView(
     OrganizerDetailViewMixin,
     ActionView,
 ):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
     def order_qs(self):
         all = self.request.user.teams.filter(
             organizer=self.request.organizer,
-            can_change_orders=True,
+            can_manage_bank_transfers=True,
             can_view_orders=True,
             all_events=True,
         ).exists()
@@ -680,7 +680,7 @@ class OrganizerActionView(
             return Order.objects.filter(
                 event_id__in=self.request.user.teams.filter(
                     organizer=self.request.organizer,
-                    can_change_orders=True,
+                    can_manage_bank_transfers=True,
                     can_view_orders=True,
                 ).values_list('limit_events__id', flat=True)
             )
@@ -784,7 +784,7 @@ class RefundExportListView(ListView):
 
 
 class EventRefundExportListView(EventPermissionRequiredMixin, RefundExportListView):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
     def get_success_url(self):
         return reverse(
@@ -808,7 +808,7 @@ class EventRefundExportListView(EventPermissionRequiredMixin, RefundExportListVi
 
 
 class OrganizerRefundExportListView(OrganizerPermissionRequiredMixin, RefundExportListView):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
     def dispatch(self, request, *args, **kwargs):
         if len(request.organizer.events.order_by('currency').values_list('currency', flat=True).distinct()) > 1:
@@ -853,7 +853,7 @@ class DownloadRefundExportView(DetailView):
 
 
 class EventDownloadRefundExportView(EventPermissionRequiredMixin, DownloadRefundExportView):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
     def get_object(self, *args, **kwargs):
         return get_object_or_404(RefundExport, event=self.request.event, pk=self.kwargs.get('id'))
@@ -862,7 +862,7 @@ class EventDownloadRefundExportView(EventPermissionRequiredMixin, DownloadRefund
 class OrganizerDownloadRefundExportView(
     OrganizerPermissionRequiredMixin, OrganizerDetailViewMixin, DownloadRefundExportView
 ):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
     def get_object(self, *args, **kwargs):
         return get_object_or_404(RefundExport, organizer=self.request.organizer, pk=self.kwargs.get('id'))
@@ -905,7 +905,7 @@ class SepaXMLExportView(SingleObjectMixin, FormView):
 
 
 class EventSepaXMLExportView(EventPermissionRequiredMixin, SepaXMLExportView):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
     def get_object(self, *args, **kwargs):
         return get_object_or_404(RefundExport, event=self.request.event, pk=self.kwargs.get('id'))
@@ -917,7 +917,7 @@ class EventSepaXMLExportView(EventPermissionRequiredMixin, SepaXMLExportView):
 
 
 class OrganizerSepaXMLExportView(OrganizerPermissionRequiredMixin, OrganizerDetailViewMixin, SepaXMLExportView):
-    permission = 'can_change_orders'
+    permission = 'can_manage_bank_transfers'
 
     def get_object(self, *args, **kwargs):
         return get_object_or_404(RefundExport, organizer=self.request.organizer, pk=self.kwargs.get('id'))
