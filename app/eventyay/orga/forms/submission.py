@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 
@@ -8,6 +9,8 @@ from eventyay.base.models import Submission, SubmissionStates, TalkSlot
 from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.base.models.room import rooms_for_talk_assignment
+from eventyay.base.services.etherpad import validate_etherpad_url
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.mixins import ReadOnlyFlag, RequestRequire
 from eventyay.common.forms.renderers import InlineFormLabelRenderer, InlineFormRenderer
@@ -140,6 +143,20 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             self.fields['duration'].help_text += ' ' + str(
                 _('Leave empty to use the default duration for the session type.')
             )
+        # Show the field only when both the platform and the event enable Etherpad.
+        gs = GlobalSettingsObject().settings
+        platform_ready = bool(gs.etherpad_enabled and gs.etherpad_base_url)
+        if not (platform_ready and event.get_feature_flag('etherpad_enabled')):
+            self.fields.pop('etherpad_url', None)
+
+    def clean_etherpad_url(self):
+        url = self.cleaned_data.get('etherpad_url')
+        if url:
+            try:
+                validate_etherpad_url(url)
+            except DjangoValidationError as exc:
+                raise forms.ValidationError(_('Please enter a valid Etherpad URL.')) from exc
+        return url
 
     def clean(self):
         data = super().clean()
@@ -200,6 +217,7 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             'image',
             'slides',
             'is_featured',
+            'etherpad_url',
         ]
         widgets = {
             'tags': EnhancedSelectMultiple(color_field='color'),
