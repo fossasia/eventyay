@@ -178,7 +178,7 @@ class TeamForm(forms.ModelForm):
                 _("Please pick at least one permission for this team!")
             )
             self.add_error(None, error)
-        
+
         if data.get('can_change_orders'):
             data['can_view_orders'] = True
         if data.get('can_change_vouchers'):

@@ -671,7 +671,6 @@ class OrganizerActionView(
         all = self.request.user.teams.filter(
             organizer=self.request.organizer,
             can_manage_bank_transfers=True,
-            can_view_orders=True,
             all_events=True,
         ).exists()
         if self.request.user.has_active_staff_session(self.request.session.session_key) or all:
@@ -681,7 +680,6 @@ class OrganizerActionView(
                 event_id__in=self.request.user.teams.filter(
                     organizer=self.request.organizer,
                     can_manage_bank_transfers=True,
-                    can_view_orders=True,
                 ).values_list('limit_events__id', flat=True)
             )
 

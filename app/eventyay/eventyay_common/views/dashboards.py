@@ -491,6 +491,12 @@ class EventWidgetGenerator:
         """
         Generate a talk button based on event settings and user permission.
         """
+        if event.settings.create_for != EventCreatedFor.BOTH.value and event.settings.talk_schedule_public is None:
+            return format_html(
+                '<a href="#" data-toggle="modal" data-target="#alert-modal" class="middle-component">{}</a>',
+                _('Talks'),
+            )
+
         has_talk_access = user_has_talk_dashboard_access(
             request.user, event.organizer, event, request=request
         )
@@ -503,15 +509,10 @@ class EventWidgetGenerator:
                 _('Talks'),
             )
 
-        if event.settings.create_for == EventCreatedFor.BOTH.value or event.settings.talk_schedule_public is not None:
-            talk_url = reverse('orga:event.dashboard', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
-            return format_html(
-                '<a href="{}" class="middle-component">{}</a>',
-                talk_url,
-                _('Talks'),
-            )
+        talk_url = reverse('orga:event.dashboard', kwargs={'organizer': event.organizer.slug, 'event': event.slug})
         return format_html(
-            '<a href="#" data-toggle="modal" data-target="#alert-modal" class="middle-component">{}</a>',
+            '<a href="{}" class="middle-component">{}</a>',
+            talk_url,
             _('Talks'),
         )
 
