@@ -102,9 +102,9 @@
                             <i class="fail fa fa-times d-none"></i>
                         </td>
                         <td>
-                            {% if profile.accepted_sessions %}
+                            {% if profile.user.accepted_sessions %}
                                 <ul class="list-unstyled mb-0 speaker-session-list">
-                                    {% for submission in profile.accepted_sessions %}
+                                    {% for submission in profile.user.accepted_sessions %}
                                         <li>
                                             <a href="{{ submission.orga_urls.base }}">{{ submission.title }}</a>
                                         </li>

@@ -86,54 +86,59 @@ const updateArrivalButton = (button, hasArrived) => {
     if (hasArrived) {
         button.classList.remove("btn-speaker-arrived")
         button.classList.add("btn-speaker-not-arrived")
-        button.textContent = notArrivedLabel
+        if (notArrivedLabel) {
+            button.textContent = notArrivedLabel
+        }
     } else {
         button.classList.remove("btn-speaker-not-arrived")
         button.classList.add("btn-speaker-arrived")
-        button.textContent = arrivedLabel
+        if (arrivedLabel) {
+            button.textContent = arrivedLabel
+        }
     }
 }
 
-const handleArrivalSubmit = (form) => {
-    form.addEventListener("submit", (event) => {
-        event.preventDefault()
-        const button = form.querySelector('button[type="submit"]')
-        if (!button) {
-            return
-        }
-        button.disabled = true
-        fetch(form.action, {
-            method: "POST",
-            body: new FormData(form),
-            credentials: "include",
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-            },
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error("Speaker arrival toggle failed")
-                }
-                return response.json()
-            })
-            .then((data) => {
-                updateArrivalButton(button, data.has_arrived)
-            })
-            .catch(() => {})
-            .finally(() => {
-                button.disabled = false
-            })
+const handleArrivalFormSubmit = (event) => {
+    const form = event.target.closest("form.speaker-arrival-form")
+    if (!form) {
+        return
+    }
+    event.preventDefault()
+    const button = form.querySelector('button[type="submit"]')
+    if (!button || button.disabled) {
+        return
+    }
+    button.disabled = true
+    fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        credentials: "include",
+        headers: {
+            "X-Requested-With": "XMLHttpRequest",
+        },
     })
+        .then(async (response) => {
+            if (!response.ok) {
+                throw new Error("Speaker arrival toggle failed")
+            }
+            const contentType = response.headers.get("content-type") || ""
+            if (contentType.includes("application/json")) {
+                const data = await response.json()
+                updateArrivalButton(button, data.has_arrived)
+                return
+            }
+            // Fallback when the server returns a non-JSON success response.
+            updateArrivalButton(button, button.classList.contains("btn-speaker-arrived"))
+        })
+        .catch(() => {})
+        .finally(() => {
+            button.disabled = false
+        })
 }
 
-const initArrivalToggles = (root = document) => {
-    root.querySelectorAll("form.speaker-arrival-form").forEach((form) => {
-        if (form.dataset.arrivalInitialized) {
-            return
-        }
-        form.dataset.arrivalInitialized = "true"
-        handleArrivalSubmit(form)
-    })
+const initArrivalToggles = () => {
+    document.removeEventListener("submit", handleArrivalFormSubmit)
+    document.addEventListener("submit", handleArrivalFormSubmit)
 }
 
 const initFeaturedToggles = (root = document) => {
@@ -152,9 +157,7 @@ onReady(() => {
     initArrivalToggles()
 })
 
-// Re-bind toggles inside table regions.
+// Re-bind featured toggles inside table regions replaced by AJAX filters.
 document.addEventListener("eventyay:ajax-results-replaced", (event) => {
-    const container = event.detail?.container ?? document
-    initFeaturedToggles(container)
-    initArrivalToggles(container)
+    initFeaturedToggles(event.detail?.container ?? document)
 })
