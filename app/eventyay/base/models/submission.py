@@ -261,6 +261,13 @@ class Submission(GenerateCode, PretalxModel):
         verbose_name=_('Show this session in public list of featured sessions.'),
     )
     do_not_record = models.BooleanField(default=False, verbose_name=_('Don’t record this session.'))
+    etherpad_url = models.URLField(
+        max_length=500,
+        null=True,
+        blank=True,
+        verbose_name=_('Etherpad URL'),
+        help_text=_('Collaborative notes pad for this session. Notes are hosted on the configured Etherpad instance.'),
+    )
     image = models.ImageField(
         null=True,
         blank=True,
@@ -363,6 +370,7 @@ class Submission(GenerateCode, PretalxModel):
         comments = '{base}comments/'
         quick_schedule = '{self.event.orga_urls.schedule}quick/{self.code}/'
         history = '{base}history/'
+        etherpad_generate = '{base}etherpad/generate'
 
     @property
     def image_url(self):

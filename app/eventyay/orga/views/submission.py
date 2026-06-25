@@ -10,7 +10,7 @@ from django.contrib.syndication.views import Feed
 from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.forms.models import BaseModelFormSet, inlineformset_factory
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import feedgenerator
 from django.utils.functional import cached_property
@@ -35,6 +35,11 @@ from eventyay.base.models import (
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.services.etherpad import (
+    EtherpadConfigurationError,
+    EtherpadError,
+    generate_pad_for_submission,
+)
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.talkimport import import_submissions
 from eventyay.base.views.tasks import AsyncAction
@@ -242,6 +247,41 @@ class SubmissionSpeakersDelete(SubmissionViewMixin, View):
         else:
             messages.warning(request, _('The speaker was not part of this proposal.'))
         return redirect(submission.orga_urls.speakers)
+
+
+class SubmissionEtherpadGenerate(SubmissionViewMixin, View):
+    permission_required = 'base.update_submission'
+
+    def post(self, request, *args, **kwargs):
+        submission = self.object
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+        def fail(message, status=400):
+            if is_ajax:
+                return JsonResponse({'error': str(message)}, status=status)
+            messages.error(request, message)
+            return redirect(submission.orga_urls.edit)
+
+        if not request.event.get_feature_flag('etherpad_enabled'):
+            return fail(_('Etherpad is not enabled for this event.'))
+
+        force = request.POST.get('force') == 'true'
+        try:
+            url = generate_pad_for_submission(request.event, submission, force=force)
+        except (EtherpadConfigurationError, EtherpadError) as exc:
+            return fail(exc)
+
+        submission.etherpad_url = url
+        submission.save(update_fields=['etherpad_url'])
+        submission.log_action(
+            'eventyay.submission.etherpad.generate',
+            person=request.user,
+            orga=True,
+        )
+        if is_ajax:
+            return JsonResponse({'url': url})
+        messages.success(request, _('An Etherpad link has been generated for this session.'))
+        return redirect(submission.orga_urls.edit)
 
 
 class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView):
