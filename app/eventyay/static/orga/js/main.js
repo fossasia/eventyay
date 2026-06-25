@@ -105,10 +105,14 @@ const handleArrivalFormSubmit = (event) => {
     }
     event.preventDefault()
     const button = form.querySelector('button[type="submit"]')
-    if (!button || button.disabled) {
+    if (!button || form.dataset.busy === "true") {
         return
     }
-    button.disabled = true
+
+    const wasArrived = button.classList.contains("btn-speaker-not-arrived")
+    form.dataset.busy = "true"
+    updateArrivalButton(button, !wasArrived)
+
     fetch(form.action, {
         method: "POST",
         body: new FormData(form),
@@ -125,14 +129,13 @@ const handleArrivalFormSubmit = (event) => {
             if (contentType.includes("application/json")) {
                 const data = await response.json()
                 updateArrivalButton(button, data.has_arrived)
-                return
             }
-            // Fallback when the server returns a non-JSON success response.
-            updateArrivalButton(button, button.classList.contains("btn-speaker-arrived"))
         })
-        .catch(() => {})
+        .catch(() => {
+            updateArrivalButton(button, wasArrived)
+        })
         .finally(() => {
-            button.disabled = false
+            delete form.dataset.busy
         })
 }
 

@@ -1844,3 +1844,44 @@ a.btn-speaker-not-arrived {
   border-color: var(--highlight-color);
   color: var(--color-white);
 }
+
+.speaker-list-table td {
+  vertical-align: middle;
+}
+
+.speaker-list-table .speaker-sessions-cell {
+  max-width: 22rem;
+  min-width: 12rem;
+}
+
+.speaker-session-list li + li {
+  margin-top: 0.2rem;
+}
+
+.speaker-session-list a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.speaker-actions-cell {
+  white-space: nowrap;
+}
+
+.speaker-actions-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.speaker-arrival-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+button.btn-speaker-arrived,
+button.btn-speaker-not-arrived {
+  white-space: nowrap;
+}
