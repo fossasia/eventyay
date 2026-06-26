@@ -279,14 +279,6 @@ class FormFlowStep(TemplateFlowStep):
         previous_data = self.cfp_session.get('data')
         submission_title = previous_data.get('info', {}).get('title')
         result['submission_title'] = '' if submission_title == AUTO_DRAFT_TITLE else submission_title
-        # Add information about uploaded files for display in templates
-        saved_files = self.cfp_session.get('files', {}).get(self.identifier, {}) or {}
-        result['uploaded_files'] = {
-            field: (
-                [entry.get('name') for entry in file_dict] if isinstance(file_dict, list) else file_dict.get('name')
-            )
-            for field, file_dict in saved_files.items()
-        }
         return result
 
     def post(self, request):
