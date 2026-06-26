@@ -207,6 +207,8 @@ def default_feature_flags():
         'chat-moderation': True,
         'polls': True,
         'schedule-control': True,
+        'etherpad_enabled': False,
+        'etherpad_auto_generate': False,
     }
 
 
@@ -217,6 +219,7 @@ def default_display_settings():
         'header_pattern': '',
         'html_export_url': '',
         'texts': {'agenda_session_above': '', 'agenda_session_below': ''},
+        'etherpad_public': False,
     }
 
 
