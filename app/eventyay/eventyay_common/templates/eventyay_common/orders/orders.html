@@ -33,7 +33,7 @@
                 <tbody>
                     {% for order in order_list %}
                     <tr>
-                        <td class="event-name-col" data-label="{{ _('Order code') }}">
+                        <td data-label="{{ _('Order code') }}">
                             <a href="{% abseventurl order.event 'presale:event.order' order=order.code secret=order.secret %}">
                                 {{ order.code }}
                             </a>
