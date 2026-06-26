@@ -1828,3 +1828,61 @@ h2 .user-name-display img {
 .form-subfield-group.subfield-disabled input[type="checkbox"] {
   cursor: not-allowed;
 }
+
+button.btn-speaker-arrived,
+a.btn-speaker-arrived {
+  --highlight-color: var(--color-positive);
+  background-color: var(--highlight-color);
+  border-color: var(--highlight-color);
+  color: var(--color-white);
+}
+
+button.btn-speaker-not-arrived,
+a.btn-speaker-not-arrived {
+  --highlight-color: var(--color-info);
+  background-color: var(--highlight-color);
+  border-color: var(--highlight-color);
+  color: var(--color-white);
+}
+
+.speaker-list-table td {
+  vertical-align: middle;
+}
+
+.speaker-list-table .speaker-sessions-cell {
+  max-width: 22rem;
+  min-width: 12rem;
+}
+
+.speaker-session-list {
+  padding-left: 0;
+  margin-left: 0;
+  list-style: none;
+}
+
+.speaker-session-list li + li {
+  margin-top: 0.2rem;
+}
+
+.speaker-session-list a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.speaker-actions-cell {
+  white-space: nowrap;
+}
+
+.speaker-actions-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+button.btn-speaker-arrived,
+button.btn-speaker-not-arrived {
+  white-space: nowrap;
+}
