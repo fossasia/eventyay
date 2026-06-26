@@ -1,7 +1,7 @@
 import pytest
 from django.conf import settings
 
-from pretalx.orga.utils.i18n import get_moment_locale
+from eventyay.orga.utils.i18n import get_moment_locale
 
 
 @pytest.mark.parametrize(

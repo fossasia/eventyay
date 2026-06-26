@@ -6,7 +6,7 @@ from django.urls import reverse
 from django_scopes import scope
 
 from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
-from pretalx.submission.models import SubmissionStates
+from eventyay.base.models import SubmissionStates
 
 
 @pytest.mark.django_db
