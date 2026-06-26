@@ -506,6 +506,10 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
+        if not self.objects:
+            messages.warning(request, _('Please select at least one voucher to delete.'))
+            return redirect(self.get_success_url())
+
         if request.POST.get('action') == 'delete':
             active_op_qs = OrderPosition.objects.filter(
                 voucher=OuterRef('pk'),
@@ -521,25 +525,22 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
                 },
             )
         elif request.POST.get('action') == 'delete_confirm':
-            for obj in self.objects:
-                if obj.allow_delete():
-                    obj.log_action('eventyay.voucher.deleted', user=self.request.user)
-                    CartPosition.objects.filter(addon_to__voucher=obj).delete()
-                    obj.cartposition_set.all().delete()
-                    obj._clear_canceled_order_positions()
-                    obj.delete()
-                else:
-                    obj.log_action(
-                        'eventyay.voucher.changed',
-                        user=self.request.user,
-                        data={
-                            'max_usages': min(obj.redeemed, obj.max_usages),
-                            'bulk': True,
-                        },
-                    )
-                    obj.max_usages = min(obj.redeemed, obj.max_usages)
-                    obj.save(update_fields=['max_usages'])
-            messages.success(request, _('The selected vouchers have been deleted or disabled.'))
+            allowed = [obj for obj in self.objects if obj.allow_delete()]
+            forbidden = [obj for obj in self.objects if not obj.allow_delete()]
+            
+            for obj in allowed:
+                obj.log_action('eventyay.voucher.deleted', user=self.request.user)
+                CartPosition.objects.filter(addon_to__voucher=obj).delete()
+                obj.cartposition_set.all().delete()
+                obj._clear_canceled_order_positions()
+                obj.delete()
+
+            if forbidden:
+                messages.error(request, _('Deletion failed for some vouchers because they have already been redeemed.'))
+                if allowed:
+                    messages.success(request, _('The other selected vouchers have been deleted.'))
+            else:
+                messages.success(request, _('The selected vouchers have been deleted.'))
         return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
