@@ -4,6 +4,7 @@
 {% load i18n %}
 {% load rules %}
 {% load event_tags %}
+{% load eventurl %}
 {% load static %}
 
 <!DOCTYPE html>
@@ -58,6 +59,7 @@
             <link rel="stylesheet" type="text/css" href="{% static "cfp/css/_layout.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_agenda.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_speaker.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_contact_modal.css" %}" />
         {% endcompress %}
         {% block stylesheets %}{% endblock stylesheets %}
         {% if request.event and request.event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ request.event.urls.settings_css }}?c={{ request.event.visible_primary_color|urlencode }}" />{% endif %}
@@ -68,6 +70,7 @@
             <script src="{% static 'jquery/js/jquery-3.7.1.min.js' %}"></script>
             <script src="{% static 'agenda/js/join-online-event.js' %}"></script>
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
+            <script type="module" src="{% static 'common/js/contact-modal.js' %}"></script>
         {% endcompress %}
         {% block scripts %}{% endblock scripts %}
         {% block custom_header %}{% endblock custom_header %}
@@ -227,8 +230,10 @@
                 {% endif %}
                 {% include "common/powered_by.html" %}
                 {% if request.event %}
-                    ·
-                    <a href="mailto:{{ request.event.email }}">{% translate "Contact us" %}</a>
+                    {% if request.event.settings.contact_mail or request.event.email %}
+                        ·
+                        <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
+                    {% endif %}
                 {% endif %}
                 {% if request.event.display_settings.imprint_url %}
                     ·
@@ -241,6 +246,12 @@
             </footer>
         </div>
         {% include "common/includes/modals.html" %}
+        {% if request.event %}
+            {% if request.event.settings.contact_mail or request.event.email %}
+                {% eventurl request.event "presale:event.contact" as contact_url %}
+                {% include "common/includes/contact_organizer_modal.html" with contact_url=contact_url %}
+            {% endif %}
+        {% endif %}
         {% include "pretixpresale/fragment_join_online_video.html" %}
     </body>
 </html>
