@@ -319,6 +319,29 @@ async def create_room(event, data, creator):
         m = [m for m in data.get("modules", []) if m["type"] == "call.bigbluebutton"][0]
         m["config"] = event.config.get("bbb_defaults", {})
         m["config"].pop("secret", None)  # legacy
+    elif types == {"call.jitsi"}:
+        if not await event.has_permission_async(
+            user=creator, permission=Permission.EVENT_ROOMS_CREATE_BBB
+        ):
+            raise ValidationError(
+                "This user is not allowed to create a room of this type.",
+                code="denied",
+            )
+        m = [m for m in data.get("modules", []) if m["type"] == "call.jitsi"][0]
+        m["config"] = {
+            "domain": m.get("config", {}).get("domain", ""),
+            "room_name": m.get("config", {}).get("room_name", ""),
+            "jwt_enabled": m.get("config", {}).get("jwt_enabled", True),
+            "app_id": m.get("config", {}).get("app_id", ""),
+            "key_id": m.get("config", {}).get("key_id", ""),
+            "app_secret": m.get("config", {}).get("app_secret", ""),
+            "start_with_audio_muted": m.get("config", {}).get(
+                "start_with_audio_muted", False
+            ),
+            "start_with_video_muted": m.get("config", {}).get(
+                "start_with_video_muted", False
+            ),
+        }
     elif "livestream.native" in types:
         if not await event.has_permission_async(
             user=creator, permission=Permission.EVENT_ROOMS_CREATE_STAGE

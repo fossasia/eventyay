@@ -5,15 +5,21 @@ import jwt
 import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
+from tests.utils import get_token
 from venueless.core.models import Room, User
 from venueless.routing import application
 
 
 @asynccontextmanager
-async def world_communicator(named=True):
+async def world_communicator(named=True, token=None):
     communicator = WebsocketCommunicator(application, "/ws/world/sample/")
     await communicator.connect()
-    await communicator.send_json_to(["authenticate", {"client_id": str(uuid.uuid4())}])
+    if token:
+        await communicator.send_json_to(["authenticate", {"token": token}])
+    else:
+        await communicator.send_json_to(
+            ["authenticate", {"client_id": str(uuid.uuid4())}]
+        )
     response = await communicator.receive_json_from()
     assert response[0] == "authenticated", response
     communicator.context = response[1]
@@ -182,3 +188,50 @@ async def test_jitsi_secret_not_disclosed(world):
 
     assert room["modules"][0]["type"] == "call.jitsi"
     assert "app_secret" not in room["modules"][0]["config"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_jitsi_secret_not_disclosed_in_admin_config(world):
+    jitsi_room = await create_jitsi_room(world)
+    async with world_communicator(token=get_token(world, ["admin"])) as c:
+        await c.send_json_to(["room.config.get", 123, {"room": str(jitsi_room.pk)}])
+        response = await c.receive_json_from()
+
+    assert response[0] == "success"
+    assert response[2]["module_config"][0]["type"] == "call.jitsi"
+    assert "app_secret" not in response[2]["module_config"][0]["config"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_jitsi_room_create_uses_video_channel_permission(world):
+    async with world_communicator(
+        token=get_token(world, ["video_channel_manager"])
+    ) as c:
+        await c.send_json_to(
+            [
+                "room.create",
+                123,
+                {
+                    "name": "Created Jitsi Room",
+                    "description": "",
+                    "modules": [
+                        {
+                            "type": "call.jitsi",
+                            "config": {
+                                "domain": "meet.example.org",
+                                "room_name": "created-jitsi-room",
+                                "jwt_enabled": True,
+                                "app_id": "eventyay",
+                                "app_secret": "test-secret",
+                            },
+                        }
+                    ],
+                },
+            ]
+        )
+        response = await c.receive_json_from()
+
+    assert response[0] == "success"
+    assert response[2]["room"]

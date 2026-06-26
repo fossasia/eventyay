@@ -26,8 +26,7 @@ import RecordingsPrompt from 'components/RecordingsPrompt'
 const PERMISSIONS_TO_MANAGE = [
 	'room:chat.moderate',
 	'room:question.moderate',
-	'room:poll.manage',
-	'room:jitsi.moderate'
+	'room:poll.manage'
 ]
 
 export default {
