@@ -134,3 +134,19 @@ class StyleTest(TestCase):
         content = response.content.decode()
         self.assertIn('--font-family: Georgia', content)
         self.assertIn('--color-primary: #123456', content)
+
+    def test_event_css_view_with_font_target_orga(self):
+        from django.urls import reverse
+        self.event.settings.primary_font = 'Georgia'
+        self.event.settings.primary_color = '#123456'
+        response = self.client.get(
+            reverse('agenda:event.css', kwargs={
+                'organizer': self.orga.slug,
+                'event': self.event.slug
+            }) + '?target=orga'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/css')
+        content = response.content.decode()
+        self.assertNotIn('--font-family', content)
+        self.assertIn('--color-primary-event: #123456', content)

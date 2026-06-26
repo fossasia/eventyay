@@ -73,8 +73,8 @@
         {% block stylesheets %}{% endblock stylesheets %}
         {% block public_stylesheets %}{% endblock public_stylesheets %}
         {% if current_event %}
-            {% if current_event.visible_primary_color or current_event.settings.primary_font %}
-                <link rel="stylesheet" type="text/css" href="{{ current_event.urls.settings_css }}?c={{ current_event.visible_primary_color|urlencode }}&f={{ current_event.settings.primary_font|urlencode }}" />
+            {% if current_event.visible_primary_color or current_event_font %}
+                <link rel="stylesheet" type="text/css" href="{{ current_event.urls.settings_css }}?c={{ current_event.visible_primary_color|urlencode }}&f={{ current_event_font|urlencode }}" />
             {% endif %}
         {% endif %}
         {% if current_event and current_event.custom_css %}<link rel="stylesheet" type="text/css" href="{{ current_event.custom_css.url }}"/>{% endif %}

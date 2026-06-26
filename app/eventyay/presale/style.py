@@ -205,7 +205,7 @@ def regenerate_organizer_css(organizer_id: int):
             Event_SettingsStore.objects.filter(
                 object__organizer=organizer, key__in=affected_keys
             ).exclude(value__in=['', '""', "''"]).values('object_id').annotate(
-                overridden_count=Count('key')
+                overridden_count=Count('key', distinct=True)
             ).filter(
                 overridden_count=len(affected_keys)
             ).values_list('object_id', flat=True)

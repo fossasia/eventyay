@@ -309,7 +309,7 @@ def event_css(request, organizer=None, event=None, **kwargs):
         variables.append(f'--color-header-navigation: {navigation_text_color};')
 
     font_css = ''
-    if primary_font:
+    if primary_font and request.GET.get('target') != 'orga':
         resolved_font, font_family_value = resolve_font(request.event)
         if resolved_font and resolved_font not in SYSTEM_FONTS:
             fonts_dict = get_fonts()
