@@ -16,7 +16,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
 from eventyay.api.serializers.voucher import VoucherSerializer
-from eventyay.base.models import Voucher
+from eventyay.base.models import CartPosition, Voucher
 
 with scopes_disabled():
 
@@ -130,8 +130,9 @@ class VoucherViewSet(viewsets.ModelViewSet):
             auth=self.request.auth,
         )
         with transaction.atomic():
-            instance.cartposition_set.filter(addon_to__isnull=False).delete()
+            CartPosition.objects.filter(addon_to__voucher=instance).delete()
             instance.cartposition_set.all().delete()
+            instance._clear_canceled_order_positions()
             super().perform_destroy(instance)
 
     @action(detail=False, methods=['POST'])

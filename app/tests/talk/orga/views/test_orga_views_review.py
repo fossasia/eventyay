@@ -4,7 +4,7 @@ import tempfile
 import pytest
 from django_scopes import scope
 
-from pretalx.submission.models.question import QuestionRequired
+from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
 
 
 @pytest.mark.parametrize("assigned", (True, False))

@@ -1,7 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from pretalx.common.forms.validators import ZXCVBNValidator
+from eventyay.common.forms.validators import ZXCVBNValidator
 
 
 @pytest.mark.parametrize(
