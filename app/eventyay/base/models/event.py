@@ -194,10 +194,10 @@ def default_feature_flags():
     return {
         'show_schedule': True,
         'show_featured': 'never',
+        'show_featured_speakers': 'never',
         'show_widget_if_not_public': False,
         'session_popularity_enabled': False,
-        'session_popularity_show_on_calendar': True,
-        'session_popularity_show_on_list': True,
+        'session_popularity_show_on_schedule': True,
         'export_html_on_release': False,
         'use_tracks': True,
         'use_feedback': True,
@@ -207,6 +207,8 @@ def default_feature_flags():
         'chat-moderation': True,
         'polls': True,
         'schedule-control': True,
+        'etherpad_enabled': False,
+        'etherpad_auto_generate': False,
     }
 
 
@@ -217,6 +219,7 @@ def default_display_settings():
         'header_pattern': '',
         'html_export_url': '',
         'texts': {'agenda_session_above': '', 'agenda_session_below': ''},
+        'etherpad_public': False,
     }
 
 
@@ -2604,6 +2607,26 @@ class Event(
         if feature in self.feature_flags:
             return self.feature_flags[feature]
         return default_feature_flags().get(feature, False)
+
+    def session_popularity_show_on_schedule(self):
+        flags = self.feature_flags or {}
+        if 'session_popularity_show_on_schedule' in flags:
+            return bool(flags['session_popularity_show_on_schedule'])
+        return bool(
+            flags.get('session_popularity_show_on_calendar', True)
+            or flags.get('session_popularity_show_on_list', True)
+        )
+
+    def schedule_client_feature_flags(self):
+        """Feature flags exposed to schedule webapp clients via inline JSON."""
+        from eventyay.talk_rules.submission import are_featured_speakers_visible
+
+        popularity_enabled = bool(self.feature_flags.get('session_popularity_enabled', False))
+        return {
+            'session_popularity_enabled': popularity_enabled,
+            'session_popularity_show_on_schedule': self.session_popularity_show_on_schedule(),
+            'featured_speakers_enabled': are_featured_speakers_visible(None, self),
+        }
 
     @cached_property
     def duration(self):

@@ -3,8 +3,9 @@ import json
 import pytest
 from django_scopes import scope
 
-from pretalx.person.models import SpeakerProfile, UserApiToken
-from pretalx.submission.models import Answer, Question, QuestionTarget, Submission
+from eventyay.base.models import SpeakerProfile
+from eventyay.base.models.auth_token import UserApiToken
+from eventyay.base.models import Answer, TalkQuestion as Question, TalkQuestionTarget as QuestionTarget, Submission
 
 
 @pytest.fixture
@@ -464,7 +465,7 @@ def test_speaker_update_by_orga(
         assert profile.biography == new_bio
         assert (
             profile.logged_actions()
-            .filter(action_type="pretalx.user.profile.update")
+            .filter(action_type="eventyay.user.profile.update")
             .exists()
         )
 
@@ -534,7 +535,7 @@ def test_speaker_update_change_name_email(
         assert speaker.email == new_email
         assert (
             profile.logged_actions()
-            .filter(action_type="pretalx.user.profile.update")
+            .filter(action_type="eventyay.user.profile.update")
             .exists()
         )
 
