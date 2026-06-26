@@ -201,3 +201,62 @@ class Command(BaseCommand):
 
         if not dry_run:
             self.stdout.write(self.style.SUCCESS(f"\nImport finished: {success_count} succeeded, {failure_count} failed."))
+
+        # 3. Process User profiles (external_avatar_url from JSON field)
+        profile_users = User.objects.filter(profile__avatar__url__startswith="http")
+        if dry_run:
+            self.stdout.write(self.style.SUCCESS(f"\n[DRY-RUN] Found {profile_users.count()} external images in User profiles."))
+            for instance in profile_users:
+                url = instance.external_avatar_url
+                self.stdout.write(self.style.SUCCESS(f"[DRY-RUN] Would download and import {url} on User {instance.pk}"))
+        else:
+            self.stdout.write(self.style.MIGRATE_HEADING(f"Processing User.profile avatars"))
+            for instance in profile_users:
+                url = instance.external_avatar_url
+                if not url or not url.startswith("http"):
+                    continue
+                
+                self.stdout.write(f"Found external URL in User profile {instance.pk}: {url}")
+                
+                content = self.download_image(url)
+                if not content:
+                    failure_count += 1
+                    continue
+
+                content_file = ContentFile(content)
+                
+                try:
+                    validate_image(content_file)
+                except Exception as e:
+                    self.stderr.write(self.style.ERROR(f"Invalid image content from {url}: {e}"))
+                    failure_count += 1
+                    continue
+
+                try:
+                    filename = urllib.parse.urlparse(url).path.split('/')[-1]
+                    if not filename:
+                        filename = "image.jpg"
+                        
+                    with transaction.atomic():
+                        field = instance.avatar
+                        field.save(filename, content_file, save=False)
+                        
+                        # Remove the external URL from the profile JSON
+                        if isinstance(instance.profile, dict) and 'avatar' in instance.profile:
+                            if 'url' in instance.profile['avatar']:
+                                del instance.profile['avatar']['url']
+                                
+                        instance.save(update_fields=['avatar', 'profile'])
+                    
+                    self.stdout.write(self.style.SUCCESS(f"Successfully imported {url} to User {instance.pk} avatar"))
+                    
+                    if hasattr(instance, 'process_image'):
+                        instance.process_image('avatar', generate_thumbnail=True)
+                        
+                    success_count += 1
+                except Exception as e:
+                    self.stderr.write(self.style.ERROR(f"Error saving image from {url}: {e}"))
+                    failure_count += 1
+
+        if not dry_run:
+            self.stdout.write(self.style.SUCCESS(f"\nFinal import summary: {success_count} succeeded, {failure_count} failed."))
