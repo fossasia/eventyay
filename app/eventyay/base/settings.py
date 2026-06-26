@@ -53,6 +53,12 @@ settings_hierarkey.add_default('venueless_show_public_link', False, bool)
 settings_hierarkey.add_default('talk_schedule_public', None, bool)
 settings_hierarkey.add_default('create_for', 'all', str)
 
+# Etherpad collaborative notes integration
+settings_hierarkey.add_default('etherpad_enabled', False, bool)
+settings_hierarkey.add_default('etherpad_base_url', '', str)
+settings_hierarkey.add_default('etherpad_api_key', '', str)
+settings_hierarkey.add_default('etherpad_pad_name_pattern', '{event}-{submission}-{token}', str)
+
 # Telemetry settings for anonymous usage data collection
 # These are used by GlobalSettingsObject via settings_hierarkey
 settings_hierarkey.add_default('telemetry_enabled', False, bool)

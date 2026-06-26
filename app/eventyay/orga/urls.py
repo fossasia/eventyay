@@ -292,6 +292,11 @@ urlpatterns = [
                                 name='submissions.speakers.delete',
                             ),
                             path(
+                                'etherpad/generate',
+                                submission.SubmissionEtherpadGenerate.as_view(),
+                                name='submissions.etherpad.generate',
+                            ),
+                            path(
                                 'reviews/',
                                 review.ReviewSubmission.as_view(),
                                 name='submissions.reviews',
