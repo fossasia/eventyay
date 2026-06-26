@@ -29,7 +29,7 @@ from eventyay.common.forms.mixins import (
     ReadOnlyFlag,
     RequestRequire,
 )
-from eventyay.common.forms.renderers import InlineFormLabelRenderer, InlineFormRenderer
+from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
     ClearableBasenameFileInput,
     EnhancedSelect,
@@ -417,10 +417,9 @@ class SpeakerInformationForm(I18nHelpText, I18nModelForm):
 
 
 class SpeakerFilterForm(forms.Form):
-    default_renderer = InlineFormLabelRenderer
+    default_renderer = InlineFormRenderer
 
     role = forms.ChoiceField(
-        label=_('Role'),
         choices=(
             ('', phrases.base.all_choices),
             ('true', phrases.schedule.speakers if phrases.schedule else _('Speakers')),
@@ -430,7 +429,6 @@ class SpeakerFilterForm(forms.Form):
         widget=EnhancedSelect,
     )
     arrived = forms.ChoiceField(
-        label=_('Arrival'),
         choices=(
             ('', phrases.base.all_choices),
             ('true', _('Marked as arrived')),

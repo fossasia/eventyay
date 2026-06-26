@@ -77,8 +77,8 @@ summary.btn {
   user-select: none;
   text-decoration: none;
 
-  border: 1px solid var(--highlight-color, var(--color-primary));
-  background: var(--highlight-color, var(--color-primary));
+  border: 1px solid var(--highlight-color);
+  background: var(--highlight-color);
   color: white;
   transition:
     color 0.15s ease-in-out,
@@ -173,7 +173,10 @@ a[data-toggle] {
   cursor: pointer;
 }
 
-
+button, a.btn{
+	background-color: var(--color-primary);
+	border-color: var(--color-primary);
+}
 
 button,
 input {
