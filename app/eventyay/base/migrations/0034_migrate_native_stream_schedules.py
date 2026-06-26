@@ -11,7 +11,7 @@ def migrate_native_stream_schedules(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0031_migrate_meta_noindex'),
+        ('base', '0033_alter_event_private_testmode_default'),
     ]
 
     operations = [

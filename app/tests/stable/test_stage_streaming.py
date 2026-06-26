@@ -12,7 +12,7 @@ from eventyay.base.services import event as event_service
 from eventyay.base.services import room as room_service
 
 stream_schedule_migration = importlib.import_module(
-    "eventyay.base.migrations.0032_migrate_native_stream_schedules"
+    "eventyay.base.migrations.0034_migrate_native_stream_schedules"
 )
 
 
@@ -154,9 +154,9 @@ def test_native_stream_schedule_migration_reverse_is_noop(event):
     assert schedule.stream_type == "hls"
 
 
-@pytest.mark.django_db(transaction=True)
-def test_save_room_deletes_schedules_when_stage_leaves_schedule_driven(
-    event, user, monkeypatch
+@pytest.mark.django_db
+def test_clear_stream_schedules_when_stage_leaves_schedule_driven(
+    event, monkeypatch
 ):
     room = Room.objects.create(
         event=event,
@@ -191,21 +191,16 @@ def test_save_room_deletes_schedules_when_stage_leaves_schedule_driven(
             "config": {"playback_mode": "always_on", "hls_url": ""},
         }
     ]
-    async_to_sync(room_service.save_room)(
-        event,
-        room,
-        ["module_config"],
-        old_data={"module_config": []},
-        by_user=user,
-    )
+    cleared = room_service.clear_stream_schedules_unless_schedule_driven(room)
 
+    assert cleared is True
     assert not StreamSchedule.objects.filter(room=room).exists()
     assert broadcasts == [(room.pk, None, True)]
 
 
-@pytest.mark.django_db(transaction=True)
-def test_save_room_keeps_schedules_when_stage_stays_schedule_driven(
-    event, user, monkeypatch
+@pytest.mark.django_db
+def test_clear_stream_schedules_keeps_schedules_when_stage_stays_schedule_driven(
+    event, monkeypatch
 ):
     room = Room.objects.create(
         event=event,
@@ -240,14 +235,9 @@ def test_save_room_keeps_schedules_when_stage_stays_schedule_driven(
             "config": {"playback_mode": "schedule_driven"},
         }
     ]
-    async_to_sync(room_service.save_room)(
-        event,
-        room,
-        ["module_config"],
-        old_data={"module_config": []},
-        by_user=user,
-    )
+    cleared = room_service.clear_stream_schedules_unless_schedule_driven(room)
 
+    assert cleared is False
     assert StreamSchedule.objects.filter(pk=schedule.pk).exists()
     assert broadcasts == []
 
