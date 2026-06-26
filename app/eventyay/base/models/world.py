@@ -47,6 +47,7 @@ def default_roles():
         Permission.ROOM_ROULETTE_JOIN,
         Permission.ROOM_BBB_JOIN,
         Permission.ROOM_JANUSCALL_JOIN,
+        Permission.ROOM_JITSI_JOIN,
         Permission.ROOM_ZOOM_JOIN,
     ]
     room_creator = [Permission.EVENT_ROOMS_CREATE_CHAT]
@@ -57,6 +58,7 @@ def default_roles():
     speaker = participant + [
         Permission.ROOM_BBB_MODERATE,
         Permission.ROOM_JANUSCALL_MODERATE,
+        Permission.ROOM_JITSI_MODERATE,
         Permission.ROOM_POLL_EARLY_RESULTS,
     ]
     moderator = speaker + [
