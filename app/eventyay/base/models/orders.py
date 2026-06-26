@@ -2223,6 +2223,15 @@ class OrderPosition(AbstractPosition):
             self.event.settings.ticket_download_nonadm or self.product.admission
         )
 
+    @property
+    def ticket_qrcode_content(self):
+        """Return the JSON-encoded QR code content matching the ticket PDF barcode."""
+        return json.dumps({
+            'event': str(self.order.event),
+            'ticket': self.secret,
+            'lead': self.pseudonymization_id,
+        })
+
     @classmethod
     def transform_cart_positions(cls, cp: List, order) -> list:
         from . import Voucher
