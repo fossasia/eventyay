@@ -34,6 +34,8 @@ import JanusChannelCall from 'components/JanusChannelCall';
 import Livestream from 'components/Livestream';
 import { WhepClient } from 'lib/webrtc/whep';
 
+const jitsiScriptLoads = new Map();
+
 // Props & Emits
 defineOptions({
 	components: { Livestream, JanusCall, JanusChannelCall, IframeBlocker },
@@ -59,6 +61,7 @@ const consentBlockedUrl = ref(null);
 // Prevents overlapping initializeIframe runs (e.g. store watcher + consent handler)
 // from both passing the iframeEl guard before the first await.
 let iframeInitInProgress = false;
+let jitsiApi = null;
 
 // WHEP audio client
 const whepAudioEl = ref(null);
@@ -83,6 +86,7 @@ const module = computed(() => {
 			'call.bigbluebutton',
 			'call.janus',
 			'call.zoom',
+			'call.jitsi',
 		].includes(m.type)
 	);
 });
@@ -259,6 +263,8 @@ onBeforeUnmount(() => {
 		whepClient = null;
 	}
 	iframeEl.value?.remove();
+	jitsiApi?.dispose?.();
+	jitsiApi = null;
 	if (api.socketState !== 'open') return;
 	// TODO move to store?
 	if (props.room) api.call('room.leave', { room: props.room.id });
@@ -306,6 +312,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		let iframeUrl;
 		let hideIfBackground = false;
 		let isYouTube = false;
+		let jitsiConfig = null;
 		const streamType = props.room?.currentStream?.stream_type;
 		const effectiveModuleType = streamType === 'youtube' 
 			? 'livestream.youtube' 
@@ -326,6 +333,14 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				({ url: iframeUrl } = await api.call('zoom.room_url', {
 					room: props.room.id,
 				}));
+				hideIfBackground = true;
+				break;
+			}
+			case 'call.jitsi': {
+				jitsiConfig = await api.call('jitsi.room_config', {
+					room: props.room.id,
+				});
+				iframeUrl = `https://${jitsiConfig.domain}/${encodeURIComponent(jitsiConfig.roomName)}`;
 				hideIfBackground = true;
 				break;
 			}
@@ -407,6 +422,11 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		// Consent is satisfied (or not required); clear any previous gate.
 		consentBlockedUrl.value = null
 
+		if (jitsiConfig) {
+			await createJitsiIframe(jitsiConfig, hideIfBackground);
+			return;
+		}
+
 		const iframe = document.createElement('iframe');
 		iframe.src = iframeUrl;
 		iframe.classList.add('iframe-media-source');
@@ -453,9 +473,63 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 }
 
 function destroyIframe() {
+	jitsiApi?.dispose?.();
+	jitsiApi = null;
 	iframeEl.value?.remove();
 	iframeEl.value = null;
 	consentBlockedUrl.value = null;
+}
+
+async function createJitsiIframe(config, hideIfBackground) {
+	const container = document.querySelector('#media-source-iframes');
+	if (!container) return;
+	await loadJitsiExternalApi(config.domain);
+	if (isUnmounted.value || !window.JitsiMeetExternalAPI) return;
+
+	const options = {
+		roomName: config.roomName,
+		parentNode: container,
+		userInfo: config.userInfo || {},
+		configOverwrite: config.configOverwrite || {},
+		interfaceConfigOverwrite: config.interfaceConfigOverwrite || {},
+	};
+	if (config.jwt) {
+		options.jwt = config.jwt;
+	}
+
+	jitsiApi = new window.JitsiMeetExternalAPI(config.domain, options);
+	const iframe = jitsiApi.getIFrame();
+	if (!iframe) return;
+	iframe.classList.add('iframe-media-source');
+	if (hideIfBackground) {
+		iframe.classList.add('hide-if-background');
+	}
+	if (props.background) {
+		iframe.classList.add('background');
+		iframe.classList.add('size-tiny');
+	}
+	iframe.allow =
+		'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' +
+		(autoplay.value ? '; autoplay *' : '');
+	iframe.allowFullscreen = true;
+	iframe.setAttribute('allowusermedia', 'true');
+	iframe.setAttribute('allowfullscreen', '');
+	iframeEl.value = iframe;
+}
+
+function loadJitsiExternalApi(domain) {
+	if (window.JitsiMeetExternalAPI) return Promise.resolve();
+	if (jitsiScriptLoads.has(domain)) return jitsiScriptLoads.get(domain);
+	const promise = new Promise((resolve, reject) => {
+		const script = document.createElement('script');
+		script.async = true;
+		script.src = `https://${domain}/external_api.js`;
+		script.onload = resolve;
+		script.onerror = reject;
+		document.head.appendChild(script);
+	});
+	jitsiScriptLoads.set(domain, promise);
+	return promise;
 }
 
 function onConsentGiven(persistent) {

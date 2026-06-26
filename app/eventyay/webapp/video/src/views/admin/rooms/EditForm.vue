@@ -29,6 +29,7 @@ import PageStatic from './types-edit/page-static'
 import PageIframe from './types-edit/page-iframe'
 import ChannelBBB from './types-edit/channel-bbb'
 import ChannelJanus from './types-edit/channel-janus'
+import ChannelJitsi from './types-edit/channel-jitsi'
 import ChannelZoom from './types-edit/channel-zoom'
 import ChannelRoulette from './types-edit/channel-roulette'
 import Posters from './types-edit/posters'
@@ -60,6 +61,7 @@ export default {
 				'channel-bbb': ChannelBBB,
 				'channel-roulette': ChannelRoulette,
 				'channel-janus': ChannelJanus,
+				'channel-jitsi': ChannelJitsi,
 				'channel-zoom': ChannelZoom,
 				posters: Posters
 			}),
