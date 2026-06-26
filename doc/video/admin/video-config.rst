@@ -79,6 +79,39 @@ Experimental Features
 * muxdata
 * zoom
 * janus
+* jitsi
 * page.landing
 * iframe-player
 * polls
+
+Jitsi Rooms
+-----------
+
+Jitsi rooms are available when the :code:`jitsi` feature flag is enabled. They are configured as a dedicated
+video room provider, not as a generic iframe, so Eventyay checks room permissions before returning the Jitsi
+join configuration.
+
+For moderator support, use a Jitsi deployment with JWT/token authentication enabled. Public anonymous Jitsi
+rooms can be used only without reliable moderator enforcement, because Eventyay cannot force Jitsi moderator
+state after the user enters an anonymous room.
+
+Room configuration fields:
+
+* :code:`domain`: Jitsi Meet domain, for example :code:`meet.example.org`.
+* :code:`room_name`: Jitsi room name. If omitted, Eventyay uses the room ID.
+* :code:`jwt_enabled`: Enable server-side JWT generation.
+* :code:`app_id`: JWT issuer/application ID configured on the Jitsi deployment.
+* :code:`key_id`: Optional JWT key ID sent as the token :code:`kid` header.
+* :code:`app_secret`: JWT shared secret. Eventyay stores this server-side and does not expose it in room config.
+* :code:`start_with_audio_muted`: Ask Jitsi to join with audio muted.
+* :code:`start_with_video_muted`: Ask Jitsi to join with video muted.
+
+Manual test checklist:
+
+* Enable the :code:`jitsi` feature flag.
+* Create a Jitsi room in the video admin UI.
+* Configure a JWT-enabled Jitsi domain, app ID, key ID if needed, and app secret.
+* Join as an attendee and verify the room opens.
+* Join as a user with :code:`room:jitsi.moderate` and verify Jitsi receives moderator context.
+* Join as a user without :code:`room:jitsi.join` and verify Eventyay denies the room config request.
+* Confirm the room config returned to the frontend does not include :code:`app_secret`.
