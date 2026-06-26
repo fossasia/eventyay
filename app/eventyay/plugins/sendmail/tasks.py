@@ -1,5 +1,6 @@
 import logging
 
+from celery.exceptions import MaxRetriesExceededError
 from django.db import transaction
 from django.utils.timezone import now
 
@@ -14,7 +15,6 @@ logger = logging.getLogger(__name__)
 @app.task(base=ProfiledEventTask, bind=True, max_retries=3, default_retry_delay=60, acks_late=True)
 def send_queued_mail(self, event_id: int, queued_mail_id: int):
     from eventyay.plugins.sendmail.models import EmailQueue
-    from celery.exceptions import MaxRetriesExceededError
 
     if isinstance(event_id, Event):
         original_event_id = event_id.pk

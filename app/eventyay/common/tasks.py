@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+from celery.exceptions import MaxRetriesExceededError
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils.timezone import now
@@ -80,7 +81,6 @@ def send_scheduled_queuedmail(self, mail_pk: int):
     minimum_interval throttle on the periodic poller. Uses select_for_update to
     claim the row exclusively and prevent double-send with the poller fallback.
     """
-    from celery.exceptions import MaxRetriesExceededError
 
     from eventyay.base.models.mail import QueuedMail
     from eventyay.common.exceptions import SendMailException
