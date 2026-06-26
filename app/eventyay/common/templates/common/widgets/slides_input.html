@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n filesize static %}
 
 {% if widget.current_resources %}
   <div class='mb-3'>
@@ -42,29 +42,46 @@
     </small>
   </div>
 
-  <div>
-    <input
-      type='file'
-      name='{{ widget.files_name }}'
-      id='{{ widget.files_id }}'
-      class='form-control-file'
-      accept='.pdf,application/pdf'
-      {% if widget.max_items != 1 %}multiple{% endif %}>
-    <small class='form-text text-muted'>
-      {% if widget.remaining_items == 1 %}
-        {% translate 'You can upload 1 PDF file.' %}
-      {% elif widget.remaining_items is not None %}
-        {% blocktranslate count count=widget.remaining_items %}You can upload up to {{ count }} PDF file.{% plural %}You can upload up to {{ count }} PDF files.{% endblocktranslate %}
+  <div class="slides-input-widget" data-id="{{ widget.files_id }}" data-is-re-render="{% if widget.is_re_render %}true{% else %}false{% endif %}">
+    <div>
+      <label class='btn btn-default mb-0 slides-file-label' for='{{ widget.files_id }}'>
+        {% translate 'Choose file' %}
+      </label>
+      <input
+        type='file'
+        name='{{ widget.files_name }}'
+        id='{{ widget.files_id }}'
+        class='sr-only sr-only-focusable'
+        accept='.pdf,application/pdf'
+        {% if widget.max_size %}data-maxsize='{{ widget.max_size }}'{% endif %}
+        {% if widget.max_items != 1 %}multiple{% endif %}>
+      <span id='{{ widget.files_id }}_label' class='ml-2 text-muted slides-filename-label'>
+        {% translate 'No file chosen' %}
+      </span>
+      <div id='{{ widget.files_id }}_error' class='text-danger mt-1 slides-error-msg'>
+        {% if widget.max_size %}
+          {% blocktranslate with size=widget.max_size|filesize %}Please do not upload files larger than {{ size }}.{% endblocktranslate %}
+        {% endif %}
+      </div>
+      <div id='{{ widget.files_id }}_storage_warning' class='text-warning mt-1 slides-storage-warning'>
+        {% translate 'Note: This file is too large to be saved in the browser’s temporary storage. If the form has other errors, you will need to re-select it before submitting.' %}
+      </div>
+    </div>
+    <script src="{% static 'common/js/slides_input.js' %}" defer></script>
+    <small class='form-text text-muted mt-2'>
+      {% if widget.max_items %}
+        {% if widget.current_count %}
+          {% blocktranslate count count=widget.remaining_items %}You can add {{ count }} more slide entry.{% plural %}You can add {{ count }} more slide entries.{% endblocktranslate %}
+        {% else %}
+          {% blocktranslate count count=widget.max_items %}You can keep up to {{ count }} slide entry in total.{% plural %}You can keep up to {{ count }} slide entries in total.{% endblocktranslate %}
+        {% endif %}
       {% else %}
         {% translate 'You can upload PDF files.' %}
       {% endif %}
-      {% if widget.max_items %}
-        {% blocktranslate count count=widget.max_items %} You can keep up to {{ count }} slide entry in total.{% plural %} You can keep up to {{ count }} slide entries in total.{% endblocktranslate %}
-      {% endif %}
-      {% if widget.remaining_items is not None and widget.current_count > 0 %}
-        {% blocktranslate count count=widget.remaining_items %} You can add {{ count }} more slide entry across links and uploads combined.{% plural %} You can add {{ count }} more slide entries across links and uploads combined.{% endblocktranslate %}
-      {% endif %}
       {% translate 'Only PDF is supported right now.' %}
+      {% if widget.max_size %}
+        {% blocktranslate with size=widget.max_size|filesize %}Maximum file size: {{ size }}.{% endblocktranslate %}
+      {% endif %}
     </small>
   </div>
 {% endif %}
