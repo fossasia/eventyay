@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -225,7 +226,6 @@ class EmailQueue(models.Model):
         """
         Resolves recipients and populates to_users with metadata.
         """
-        from collections import defaultdict
 
         filters = getattr(self, 'filters_data', None)
         if not filters:

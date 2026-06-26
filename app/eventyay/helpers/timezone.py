@@ -3,6 +3,8 @@ from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from django.utils.formats import date_format
+
 
 def get_browser_timezone(tz_string: Optional[str], fallback: str = 'UTC') -> ZoneInfo:
     """
@@ -38,10 +40,5 @@ def attach_timezone_to_naive_clock_time(dt_value: datetime, tz: ZoneInfo) -> dat
 
 
 def format_scheduled_datetime(event, scheduled_at):
-    """Format a scheduled_at datetime for display in the event's timezone.
-
-    Used by both the Tickets (sendmail plugin) and Talk/Orga mail views to
-    produce a consistent, human-readable representation of the scheduled time.
-    """
-    from django.utils.formats import date_format
+    """Format a scheduled_at datetime for display in the event's timezone."""
     return date_format(scheduled_at.astimezone(event.tz), 'SHORT_DATETIME_FORMAT')
