@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0032_submission_etherpad_url'),
+        ('base', '0033_alter_event_private_testmode_default'),
     ]
 
     operations = [
