@@ -3,9 +3,9 @@ import json
 import pytest
 from django_scopes import scope
 
-from pretalx.api.serializers.question import AnswerOptionSerializer, QuestionSerializer
-from pretalx.api.versions import LEGACY
-from pretalx.submission.models import AnswerOption, QuestionVariant
+from eventyay.api.serializers.question import AnswerOptionSerializer, QuestionSerializer
+from eventyay.api.versions import LEGACY
+from eventyay.base.models import AnswerOption, TalkQuestionVariant as QuestionVariant
 
 
 @pytest.mark.django_db
@@ -129,7 +129,7 @@ def test_organiser_can_create_question(event, orga_user_write_token, client):
         assert question.help_text == "hellllp"
         assert (
             question.logged_actions()
-            .filter(action_type="pretalx.question.create")
+            .filter(action_type="eventyay.question.create")
             .exists()
         )
 
@@ -188,7 +188,7 @@ def test_organiser_cannot_create_question_readonly_token(
         assert event.questions.all().count() == count
         assert (
             not event.logged_actions()
-            .filter(action_type="pretalx.question.create")
+            .filter(action_type="eventyay.question.create")
             .exists()
         )
 
@@ -366,7 +366,7 @@ def test_organiser_can_delete_question(event, orga_user_write_token, client):
         assert not event.questions.filter(pk=pk).exists()
         assert (
             event.logged_actions()
-            .filter(action_type="pretalx.question.delete")
+            .filter(action_type="eventyay.question.delete")
             .exists()
         )
 
@@ -389,7 +389,7 @@ def test_organiser_cannot_delete_question_readonly_token(
         assert event.questions.filter(pk=pk).exists()
         assert (
             not event.logged_actions()
-            .filter(action_type="pretalx.question.delete")
+            .filter(action_type="eventyay.question.delete")
             .exists()
         )
 
@@ -414,7 +414,7 @@ def test_organiser_cannot_delete_answered_question(
         assert event.questions.filter(pk=pk).exists()
         assert (
             not event.logged_actions()
-            .filter(action_type="pretalx.question.delete")
+            .filter(action_type="eventyay.question.delete")
             .exists()
         )
 

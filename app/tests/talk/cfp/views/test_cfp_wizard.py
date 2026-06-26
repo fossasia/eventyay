@@ -11,8 +11,8 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
-from pretalx.submission.forms import InfoForm
-from pretalx.submission.models import Submission, SubmissionStates, SubmissionType
+from eventyay.submission.forms import InfoForm
+from eventyay.base.models import Submission, SubmissionStates, SubmissionType
 
 
 class TestWizard:
