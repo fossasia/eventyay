@@ -91,6 +91,18 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
             field = form_class(**kwargs)
             if isinstance(field, i18nfield.forms.I18nFormField):
                 field.widget.enabled_locales = self.locales
+            if fname == 'primary_font':
+                from eventyay.base.models import Event  # noqa: PLC0415
+                if isinstance(self.obj, Event):
+                    inherited_font = None
+                    if hasattr(self.obj, 'organizer'):
+                        inherited_font = self.obj.organizer.settings.get('primary_font')
+                    if not inherited_font:
+                        inherited_font = 'Open Sans'
+                    field.choices = [('', _('Default (Inherit: {})').format(inherited_font))] + list(field.choices)
+                    if 'primary_font' not in self.obj.settings._cache():
+                        self.initial['primary_font'] = ''
+                    field.widget.obj = self.obj
             self.fields[fname] = field
             if fname not in self.initial or self.initial[fname] is None:
                 default_value = DEFAULTS[fname].get('default')
@@ -133,10 +145,14 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
         for k, v in self.cleaned_data.items():
             if isinstance(self.fields.get(k), SecretKeySettingsField) and self.cleaned_data.get(k) == SECRET_REDACTED:
                 self.cleaned_data[k] = self.initial[k]
+
+        if self.cleaned_data.get('primary_font') == '':
+            self.cleaned_data['primary_font'] = None
+
         return super().save()
 
     def get_new_filename(self, name: str) -> str:
-        from eventyay.base.models import Event
+        from eventyay.base.models import Event  # noqa: PLC0415
 
         nonce = get_random_string(length=8)
         if isinstance(self.obj, Event):

@@ -2009,7 +2009,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#480e68cf7bf9dc15019b9615739d1ea806b01ce3" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#a46d7c2949513df6a8754b6381ae8617fc77236d" }
 dependencies = [
     { name = "flake8" },
 ]
