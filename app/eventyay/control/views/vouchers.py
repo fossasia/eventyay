@@ -195,6 +195,7 @@ class VoucherDelete(EventPermissionRequiredMixin, DeleteView):
             self.object.log_action('eventyay.voucher.deleted', user=self.request.user)
             CartPosition.objects.filter(addon_to__voucher=self.object).delete()
             self.object.cartposition_set.all().delete()
+            self.object._clear_canceled_order_positions()
             self.object.delete()
             messages.success(self.request, _('The selected voucher has been deleted.'))
         return HttpResponseRedirect(success_url)
@@ -525,6 +526,7 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
                     obj.log_action('eventyay.voucher.deleted', user=self.request.user)
                     OrderPosition.objects.filter(addon_to__voucher=obj).delete()
                     obj.cartposition_set.all().delete()
+                    obj._clear_canceled_order_positions()
                     obj.delete()
                 else:
                     obj.log_action(
