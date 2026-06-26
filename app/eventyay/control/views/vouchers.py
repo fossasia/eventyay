@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import connection, transaction
-from django.db.models import Sum
+from django.db.models import Exists, OuterRef, Sum
 from django.http import (
     Http404,
     HttpResponse,
@@ -28,7 +28,7 @@ from django.views.generic import (
     View,
 )
 
-from eventyay.base.models import CartPosition, LogEntry, OrderPosition, Voucher
+from eventyay.base.models import CartPosition, LogEntry, Order, OrderPosition, Voucher
 from eventyay.base.models.vouchers import _generate_random_code
 from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.vouchers import vouchers_send
@@ -506,12 +506,17 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         if request.POST.get('action') == 'delete':
+            active_op_qs = OrderPosition.objects.filter(
+                voucher=OuterRef('pk'),
+            ).exclude(order__status=Order.STATUS_CANCELED)
+            deletable = self.objects.filter(~Exists(active_op_qs))
+            forbidden = self.objects.filter(Exists(active_op_qs))
             return render(
                 request,
                 'pretixcontrol/vouchers/delete_bulk.html',
                 {
-                    'allowed': self.objects.filter(redeemed=0),
-                    'forbidden': self.objects.exclude(redeemed=0),
+                    'allowed': deletable,
+                    'forbidden': forbidden,
                 },
             )
         elif request.POST.get('action') == 'delete_confirm':

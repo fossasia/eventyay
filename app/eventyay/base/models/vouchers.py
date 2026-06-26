@@ -226,7 +226,11 @@ class Voucher(LoggedModel):
         return self.code
 
     def allow_delete(self):
-        return self.redeemed == 0 and not self.orderposition_set.exists()
+        return not OrderPosition.objects.filter(
+            voucher=self,
+        ).exclude(
+            order__status=Order.STATUS_CANCELED
+        ).exists()
 
     def clean(self):
         Voucher.clean_product_properties(
