@@ -183,6 +183,10 @@ def get_room_config(room, permissions):
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
             module_config["config"] = {}
+        elif module["type"] == "call.jitsi":
+            cfg = module_config.get("config")
+            if isinstance(cfg, dict):
+                cfg.pop("app_secret", None)
         elif module["type"] == "chat.native":
             # Strip webhook secrets — these are server-side only
             cfg = module_config.get("config")
