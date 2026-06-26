@@ -33,7 +33,7 @@ def test_main_dashboard_access(orga_user, orga_client, speaker, event, test_user
 def test_event_dashboard(
     orga_user, orga_client, review_user, speaker, event, test_user, slot, query
 ):
-    from pretalx.common.models.log import ActivityLog
+    from eventyay.base.models.log import ActivityLog
 
     ActivityLog.objects.create(
         event=event,

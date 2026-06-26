@@ -1,12 +1,9 @@
-import datetime
-
 import pytest
-from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import QueuedMail, User
-from eventyay.base.services.mail import TolerantDict
 from eventyay.common.exceptions import SendMailException
+from eventyay.common.mail import TolerantDict
 
 
 @pytest.mark.parametrize(
