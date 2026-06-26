@@ -7,7 +7,7 @@ from django.core import mail as djmail
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretalx.event.models import Event
+from eventyay.base.models import Event
 
 
 def get_settings_form_data(event):
@@ -181,7 +181,7 @@ def test_add_custom_css_as_administrator(event, administrator_client, path):
     ),
 )
 def test_change_custom_domain(event, orga_client, monkeypatch, domain, result):
-    from pretalx.orga.forms.event import socket
+    from eventyay.orga.forms.event import socket
 
     yessocket = lambda x: True  # noqa
     monkeypatch.setattr(socket, "gethostbyname", yessocket)
@@ -199,7 +199,7 @@ def test_change_custom_domain(event, orga_client, monkeypatch, domain, result):
 def test_change_custom_domain_to_unavailable_domain(
     event, orga_client, other_event, monkeypatch
 ):
-    from pretalx.orga.forms.event import socket
+    from eventyay.orga.forms.event import socket
 
     def nosocket(param):
         raise OSError
