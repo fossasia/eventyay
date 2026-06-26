@@ -63,7 +63,20 @@ logger = logging.getLogger(__name__)
 
 
 def serialize_room_config(room_or_rooms, many=False):
-    return RoomConfigSerializer(room_or_rooms, many=many).data
+    data = RoomConfigSerializer(room_or_rooms, many=many).data
+    _strip_jitsi_secrets(data, many=many)
+    return data
+
+
+def _strip_jitsi_secrets(data, many=False):
+    rooms = data if many else [data]
+    for room in rooms:
+        for module in room.get("module_config") or []:
+            if module.get("type") != "call.jitsi":
+                continue
+            config = module.get("config")
+            if isinstance(config, dict):
+                config.pop("app_secret", None)
 
 
 class RoomModule(BaseModule):

@@ -2,8 +2,11 @@ export function isRoomTypeAvailable(typeId, hasPermission) {
 	if (typeId === 'stage') {
 		return hasPermission('world:rooms.create.stage')
 	}
-	if (typeId === 'channel-bbb' || typeId === 'channel-janus' || typeId === 'channel-zoom' || typeId === 'channel-jitsi') {
+	if (typeId === 'channel-bbb' || typeId === 'channel-janus' || typeId === 'channel-zoom') {
 		return hasPermission('world:rooms.create.bbb')
+	}
+	if (typeId === 'channel-jitsi') {
+		return hasPermission('world:rooms.create.jitsi')
 	}
 	if (typeId === 'channel-text') {
 		return hasPermission('world:rooms.create.chat')
