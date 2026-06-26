@@ -62,8 +62,8 @@
                         {% translate "Featured" %}
                         {% if can_update_speaker %}
                             <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate 'Show this speaker in the list of featured speakers.' %}"></i>
-                            <a href="{% querystring sort='-is_featured' %}"><i class="fa fa-caret-down"></i></a>
-                            <a href="{% querystring sort='is_featured' %}"><i class="fa fa-caret-up"></i></a>
+                            <a href="{% querystring sort='-is_featured' %}" aria-label="{% translate 'Sort featured speakers first' %}"><i class="fa fa-caret-down"></i></a>
+                            <a href="{% querystring sort='is_featured' %}" aria-label="{% translate 'Sort non-featured speakers first' %}"><i class="fa fa-caret-up"></i></a>
                         {% endif %}
                     </th>
                     <th>{% translate "Sessions" %}</th>

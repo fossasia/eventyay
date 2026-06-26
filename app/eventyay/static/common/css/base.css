@@ -77,8 +77,8 @@ summary.btn {
   user-select: none;
   text-decoration: none;
 
-  border: 1px solid var(--highlight-color);
-  background: var(--highlight-color);
+  border: 1px solid var(--highlight-color, var(--color-primary));
+  background: var(--highlight-color, var(--color-primary));
   color: white;
   transition:
     color 0.15s ease-in-out,
@@ -173,26 +173,7 @@ a[data-toggle] {
   cursor: pointer;
 }
 
-button, a.btn{
-	background-color: var(--color-primary);
-	border-color: var(--color-primary);
-}
 
-button.btn-success,
-a.btn-success,
-button.btn-danger,
-a.btn-danger,
-button.btn-warning,
-a.btn-warning,
-button.btn-info,
-a.btn-info,
-button.btn-primary,
-a.btn-primary,
-button.btn-secondary,
-a.btn-secondary {
-  background-color: var(--highlight-color);
-  border-color: var(--highlight-color);
-}
 
 button,
 input {
