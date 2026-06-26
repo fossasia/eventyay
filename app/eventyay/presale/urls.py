@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 import eventyay.presale.views.cart
 import eventyay.presale.views.checkout
+import eventyay.presale.views.contact
 import eventyay.presale.views.event
 import eventyay.presale.views.locale
 import eventyay.presale.views.order
@@ -216,6 +217,11 @@ event_patterns = [
         name='event.ical.download',
     ),
     path('auth/', eventyay.presale.views.event.EventAuth.as_view(), name='event.auth'),
+    path(
+        'contact/',
+        eventyay.presale.views.contact.ContactOrganizerView.as_view(),
+        name='event.contact',
+    ),
     path(
         'widget/product_list',
         eventyay.presale.views.widget.WidgetAPIProductList.as_view(),
