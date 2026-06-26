@@ -53,9 +53,9 @@ def country_choice_kwargs():
 
 
 def primary_font_kwargs():
-    from eventyay.presale.style import get_fonts
+    from eventyay.presale.style import SYSTEM_FONT_CHOICES, get_fonts
 
-    choices = [('Open Sans', 'Open Sans')]
+    choices = list(SYSTEM_FONT_CHOICES)
     choices += [(a, {'title': a, 'data': v}) for a, v in get_fonts().items()]
     return {
         'choices': choices,
