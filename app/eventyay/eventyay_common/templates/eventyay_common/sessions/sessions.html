@@ -63,12 +63,12 @@
                             <span class="label label-info">{{ submission.get_state_display }}</span>
                         {% endif %}
                     </td>
-                    <td data-label="{% translate 'Session Type' %}" class="events-table__cell--no-border">{{ submission.submission_type.name }}</td>
+                    <td data-label="{% translate 'Session Type' %}">{{ submission.submission_type.name }}</td>
                     <td data-label="{% translate 'Email' %}"><a href="{% url 'cfp:event.user.mails' organizer=submission.event.organizer.slug event=submission.event.slug %}">
                         <i class="fa fa-link"></i>
                         </a>
                     </td>
-                    <td data-label="{% translate 'Profile' %}"><a href="{% url 'cfp:event.user.view' organizer=submission.event.organizer.slug event=submission.event.slug %}">
+                    <td data-label="{% translate 'Profile' %}" class="events-table__cell--no-border"><a href="{% url 'cfp:event.user.view' organizer=submission.event.organizer.slug event=submission.event.slug %}">
                             <i class="fa fa-link"></i>
                         </a>
                     </td>

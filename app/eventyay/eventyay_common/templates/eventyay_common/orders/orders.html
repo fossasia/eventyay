@@ -42,10 +42,10 @@
                             <a href="{% eventurl order.event 'presale:event.index' %}">{{ order.event.name }}</a>
                         </td>
                         <td data-label="{{ _('Order Date') }}">{{ order.datetime|date:"SHORT_DATETIME_FORMAT" }}</td>
-                        <td data-label="{{ _('Order total') }}" class="events-table__cell--no-border">
+                        <td data-label="{{ _('Order total') }}">
                             {{ order.total|money:order.event.currency }}
                         </td>
-                        <td data-label="{{ _('Status') }}">
+                        <td data-label="{{ _('Status') }}" class="events-table__cell--no-border">
                             {% include "eventyay_common/orders/fragment_order_status.html" with order=order event=order.event %}
                         </td>
                     </tr>
