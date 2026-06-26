@@ -4,7 +4,7 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretalx.event.stages import STAGE_ORDER, in_stage
+from eventyay.event.stages import STAGE_ORDER, in_stage
 
 
 @pytest.mark.django_db

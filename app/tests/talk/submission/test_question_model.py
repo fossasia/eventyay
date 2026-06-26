@@ -1,8 +1,8 @@
 import pytest
 from django_countries.fields import Country
 from django_scopes import scope
-from pretalx.submission.forms import TalkQuestionsForm
-from pretalx.submission.models import Answer, Question, QuestionVariant
+from eventyay.submission.forms import TalkQuestionsForm
+from eventyay.base.models import Answer, TalkQuestion as Question, TalkQuestionVariant as QuestionVariant
 
 from eventyay.helpers.countries import get_country_name
 

@@ -1,7 +1,7 @@
 import pytest
 from django.core import mail as djmail
 
-from pretalx.common.mail import mail_send_task
+from eventyay.common.mail import mail_send_task
 
 
 @pytest.mark.django_db
