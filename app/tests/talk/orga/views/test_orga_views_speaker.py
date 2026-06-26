@@ -3,7 +3,7 @@ import json
 import bs4
 import pytest
 from django_scopes import scope, scopes_disabled
-from pretalx.submission.models.question import QuestionRequired
+from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
 
 from eventyay.person.forms import SpeakerProfileForm
 from eventyay.person.forms.profile import AVATAR_LICENSE_TEXT_VALIDATION_ERROR
