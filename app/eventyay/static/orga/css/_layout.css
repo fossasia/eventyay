@@ -1854,6 +1854,12 @@ a.btn-speaker-not-arrived {
   min-width: 12rem;
 }
 
+.speaker-session-list {
+  padding-left: 0;
+  margin-left: 0;
+  list-style: none;
+}
+
 .speaker-session-list li + li {
   margin-top: 0.2rem;
 }
