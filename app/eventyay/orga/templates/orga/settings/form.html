@@ -66,6 +66,14 @@
                 {{ form.html_export_url.as_field_group }}
             </fieldset>
 
+            {% if form.etherpad_enabled %}
+            <fieldset>
+                <legend id="etherpad">{% translate "Etherpad" %}</legend>
+                {{ form.etherpad_enabled.as_field_group }}
+                {{ form.etherpad_auto_generate.as_field_group }}
+                {{ form.etherpad_public.as_field_group }}
+            </fieldset>
+            {% endif %}
         </section>
 
         <div class="submit-group panel">

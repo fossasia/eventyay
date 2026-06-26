@@ -244,6 +244,16 @@ organizer_patterns = [
         eventyay.presale.views.organizer.OrganizerIcalDownload.as_view(),
         name='organizer.ical',
     ),
+    re_path(
+        r'^events/export/(?P<export_target>webcal|google-calendar)/$',
+        eventyay.presale.views.organizer.OrganizerCalendarExportRedirectView.as_view(),
+        name='organizer.export',
+    ),
+    path(
+        'events/export/<str:name>/',
+        eventyay.presale.views.organizer.OrganizerExportDownload.as_view(),
+        name='organizer.events.export',
+    ),
     path(
         'follow',
         eventyay.presale.views.organizer.OrganizerFollow.as_view(),

@@ -1,8 +1,8 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.submission.models import Submission, SubmissionStates
-from pretalx.submission.rules import (
+from eventyay.base.models import Submission, SubmissionStates
+from eventyay.talk_rules.submission import (
     can_be_accepted,
     can_be_canceled,
     can_be_confirmed,
