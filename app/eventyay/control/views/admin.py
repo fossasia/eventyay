@@ -61,7 +61,7 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
 
         # User KPIs
         ctx['users_total'] = User.objects.count()
-        ctx['users_verified'] = EmailAddress.objects.filter(verified=True, primary=True).count()
+        ctx['users_verified'] = EmailAddress.objects.filter(verified=True, primary=True).values('user_id').distinct().count()
         ctx['users_unverified'] = ctx['users_total'] - ctx['users_verified']
         ctx['users_new_24h'] = User.objects.filter(date_joined__gte=n - timedelta(hours=24)).count()
         ctx['users_new_7d'] = User.objects.filter(date_joined__gte=n - timedelta(days=7)).count()
