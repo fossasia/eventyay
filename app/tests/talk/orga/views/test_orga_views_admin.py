@@ -3,8 +3,8 @@ import json
 import pytest
 import responses
 
-from pretalx.common.models.settings import GlobalSettings
-from pretalx.person.models import User
+from eventyay.base.models.settings import GlobalSettings
+from eventyay.base.models import User
 
 
 @pytest.mark.django_db
@@ -81,7 +81,7 @@ def test_settings(client, user):
 def test_trigger(client, user):
     responses.add_callback(
         responses.POST,
-        "https://pretalx.com/.update_check/",
+        "https://eventyay.com/.update_check/",
         callback=request_callback_updatable,
         content_type="application/json",
     )
