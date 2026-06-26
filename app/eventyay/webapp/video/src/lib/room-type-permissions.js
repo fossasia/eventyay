@@ -2,7 +2,7 @@ export function isRoomTypeAvailable(typeId, hasPermission) {
 	if (typeId === 'stage') {
 		return hasPermission('world:rooms.create.stage')
 	}
-	if (typeId === 'channel-bbb' || typeId === 'channel-janus' || typeId === 'channel-zoom') {
+	if (typeId === 'channel-bbb' || typeId === 'channel-janus' || typeId === 'channel-zoom' || typeId === 'channel-jitsi') {
 		return hasPermission('world:rooms.create.bbb')
 	}
 	if (typeId === 'channel-text') {
@@ -27,4 +27,3 @@ export function isRoomTypeAvailable(typeId, hasPermission) {
 export function filterRoomTypesByPermission(roomTypes, hasPermission) {
 	return roomTypes.filter(type => isRoomTypeAvailable(type.id, hasPermission))
 }
-

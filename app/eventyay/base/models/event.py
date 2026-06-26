@@ -108,6 +108,7 @@ FEATURE_FLAGS = [
     'page.landing',
     'zoom',
     'janus',
+    'jitsi',
     'polls',
     'poster',
     'conftool',

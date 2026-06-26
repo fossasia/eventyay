@@ -35,6 +35,8 @@ class Permission(Enum):
     ROOM_BBB_JOIN = "room:bbb.join"
     ROOM_BBB_MODERATE = "room:bbb.moderate"
     ROOM_BBB_RECORDINGS = "room:bbb.recordings"
+    ROOM_JITSI_JOIN = "room:jitsi.join"
+    ROOM_JITSI_MODERATE = "room:jitsi.moderate"
     ROOM_ZOOM_JOIN = "room:zoom.join"
     ROOM_QUESTION_READ = "room:question.read"
     ROOM_QUESTION_ASK = "room:question.ask"
@@ -192,6 +194,7 @@ def default_roles():
         Permission.ROOM_ROULETTE_JOIN,
         Permission.ROOM_BBB_JOIN,
         Permission.ROOM_JANUSCALL_JOIN,
+        Permission.ROOM_JITSI_JOIN,
         Permission.ROOM_ZOOM_JOIN,
     ]
     room_creator = [Permission.EVENT_ROOMS_CREATE_CHAT]
@@ -202,6 +205,7 @@ def default_roles():
     speaker = participant + [
         Permission.ROOM_BBB_MODERATE,
         Permission.ROOM_JANUSCALL_MODERATE,
+        Permission.ROOM_JITSI_MODERATE,
         Permission.ROOM_POLL_EARLY_RESULTS,
     ]
     moderator = speaker + [
