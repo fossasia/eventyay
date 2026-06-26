@@ -121,6 +121,8 @@ def _default_context(request):
         if request.event.settings.presale_css_file:
             ctx['css_file'] = default_storage.url(request.event.settings.presale_css_file)
 
+        ctx['current_event_font'] = request.event.settings.get('primary_font', default='')
+
         ctx['event_logo'] = request.event.visible_header_image_url or ''
         ctx['event_logo_image'] = request.event.visible_logo_url or ''
         try:
