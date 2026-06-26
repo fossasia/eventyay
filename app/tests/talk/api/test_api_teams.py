@@ -3,7 +3,7 @@ import json
 import pytest
 from django_scopes import scopes_disabled
 
-from pretalx.api.serializers.team import TeamSerializer
+from eventyay.api.serializers.team import TeamSerializer
 
 
 @pytest.fixture
@@ -411,7 +411,7 @@ def test_orga_can_delete_invite(
         assert not team.invites.filter(pk=invitation.pk).exists()
         assert (
             team.logged_actions()
-            .filter(action_type="pretalx.team.invite.orga.retract")
+            .filter(action_type="eventyay.team.invite.orga.retract")
             .exists()
         )
 
@@ -456,7 +456,7 @@ def test_orga_can_remove_member(
         assert not team.members.filter(pk=orga_user.pk).exists()
         assert (
             team.logged_actions()
-            .filter(action_type="pretalx.team.remove_member")
+            .filter(action_type="eventyay.team.remove_member")
             .exists()
         )
 

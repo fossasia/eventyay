@@ -5,9 +5,9 @@ from django.core import mail as djmail
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretalx.mail.models import QueuedMail
-from pretalx.schedule.models import Schedule, TalkSlot
-from pretalx.submission.models import Submission
+from eventyay.base.models import QueuedMail
+from eventyay.base.models import Schedule, TalkSlot
+from eventyay.base.models import Submission
 
 
 @pytest.mark.django_db

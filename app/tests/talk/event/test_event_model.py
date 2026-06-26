@@ -313,7 +313,7 @@ def test_event_update_review_phase_keep_outdated_phase(event):
 
 @pytest.mark.django_db
 def test_event_update_review_phase_activate_next_phase(event):
-    from pretalx.submission.models.review import ReviewPhase
+    from eventyay.base.models.review import ReviewPhase
 
     with scope(event=event):
         event.review_phases.all().delete()
