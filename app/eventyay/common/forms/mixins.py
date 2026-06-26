@@ -660,6 +660,10 @@ class JsonSubfieldMixin:
             instance = self.instance
         modified_paths = set()
         for field, path in self.Meta.json_fields.items():
+            # Fields may be conditionally removed (e.g. feature-gated); leave any
+            # stored value untouched rather than overwriting it with None.
+            if field not in self.fields:
+                continue
             # We don't need nested data for now
             data_dict = getattr(instance, path) or {}
             data_dict[field] = self.cleaned_data.get(field)
