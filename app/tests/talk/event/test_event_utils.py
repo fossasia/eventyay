@@ -1,7 +1,7 @@
 import pytest
 
-from pretalx.event.models import Organiser
-from pretalx.event.utils import create_organiser_with_team
+from eventyay.base.models import Organizer as Organiser
+from eventyay.event.utils import create_organizer_with_team as create_organiser_with_team
 
 
 @pytest.mark.django_db

@@ -29,11 +29,11 @@ def fix_settings(live_server):
 
 @pytest.fixture(autouse=True)
 def event():
-    from pretalx.common.models.settings import GlobalSettings
-    from pretalx.event.models import Event
-    from pretalx.person.models import User
-    from pretalx.schedule.models import TalkSlot
-    from pretalx.submission.models import AnswerOption, Question, QuestionVariant
+    from eventyay.base.models.settings import GlobalSettings
+    from eventyay.base.models import Event
+    from eventyay.base.models import User
+    from eventyay.base.models import TalkSlot
+    from eventyay.base.models import AnswerOption, Question, QuestionVariant
 
     gs = GlobalSettings()
     gs.settings.update_check_result_warning = False
@@ -88,8 +88,8 @@ def event():
 
 @pytest.fixture
 def user(event):
-    from pretalx.event.models import Team
-    from pretalx.person.models import User
+    from eventyay.base.models import Team
+    from eventyay.base.models import User
 
     team = Team.objects.create(
         name=_("Organisers"),

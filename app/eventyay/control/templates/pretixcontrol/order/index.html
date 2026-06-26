@@ -367,7 +367,7 @@
                                                 </form>
                                             {% endfor %}
                                         {% endif %}
-                                        <button type="submit" data-toggle="qrcode" data-qrcode="{{ line.secret }}"
+                                        <button type="submit" data-toggle="qrcode" data-qrcode="{{ line.ticket_qrcode_content }}"
                                                 class="btn btn-xs btn-default">
                                             <span class="fa fa-qrcode"></span> {% trans "Ticket code" %}
                                         </button>

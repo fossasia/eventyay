@@ -4,7 +4,7 @@ import pytest
 from django.core.files.base import ContentFile
 from django_scopes import scope
 
-from pretalx.api.serializers.speaker_information import SpeakerInformationSerializer
+from eventyay.api.serializers.speaker_information import SpeakerInformationSerializer
 
 
 @pytest.mark.django_db
@@ -87,7 +87,7 @@ def test_orga_can_see_single_speaker_information(client, orga_user_token, event)
 
 @pytest.mark.django_db
 def test_no_legacy_speaker_information_api(client, orga_user_token, event):
-    from pretalx.api.versions import LEGACY
+    from eventyay.api.versions import LEGACY
 
     with scope(event=event):
         speaker_info = event.information.create(
@@ -129,7 +129,7 @@ def test_orga_can_create_speaker_information(client, orga_user_write_token, even
         assert speaker_info.text == "This is some new test information"
         assert (
             speaker_info.logged_actions()
-            .filter(action_type="pretalx.speaker_information.create")
+            .filter(action_type="eventyay.speaker_information.create")
             .exists()
         )
 
@@ -156,7 +156,7 @@ def test_orga_cannot_create_speaker_information_readonly_token(
         assert not event.information.filter(title="New Test Info").exists()
         assert (
             not event.logged_actions()
-            .filter(action_type="pretalx.speaker_information.create")
+            .filter(action_type="eventyay.speaker_information.create")
             .exists()
         )
 
@@ -185,7 +185,7 @@ def test_orga_can_update_speaker_information(client, orga_user_write_token, even
         assert speaker_info.title == "Updated Test Info"
         assert (
             speaker_info.logged_actions()
-            .filter(action_type="pretalx.speaker_information.update")
+            .filter(action_type="eventyay.speaker_information.update")
             .exists()
         )
 
@@ -216,7 +216,7 @@ def test_orga_cannot_update_speaker_information_readonly_token(
         assert speaker_info.title != "Updated Test Info"
         assert (
             not speaker_info.logged_actions()
-            .filter(action_type="pretalx.speaker_information.update")
+            .filter(action_type="eventyay.speaker_information.update")
             .exists()
         )
 
@@ -242,7 +242,7 @@ def test_orga_can_delete_speaker_information(client, orga_user_write_token, even
         assert not event.information.filter(pk=speaker_info.pk).exists()
         assert (
             event.logged_actions()
-            .filter(action_type="pretalx.speaker_information.delete")
+            .filter(action_type="eventyay.speaker_information.delete")
             .exists()
         )
 
