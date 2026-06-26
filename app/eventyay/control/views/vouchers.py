@@ -524,7 +524,7 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
             for obj in self.objects:
                 if obj.allow_delete():
                     obj.log_action('eventyay.voucher.deleted', user=self.request.user)
-                    OrderPosition.objects.filter(addon_to__voucher=obj).delete()
+                    CartPosition.objects.filter(addon_to__voucher=obj).delete()
                     obj.cartposition_set.all().delete()
                     obj._clear_canceled_order_positions()
                     obj.delete()
