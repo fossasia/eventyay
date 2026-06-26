@@ -5,8 +5,8 @@ import dateutil.parser
 import pytest
 from django_scopes import scope
 
-from pretalx.api.serializers.room import RoomOrgaSerializer, RoomSerializer
-from pretalx.api.versions import LEGACY
+from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
+from eventyay.api.versions import LEGACY
 
 
 @pytest.mark.django_db
@@ -155,7 +155,7 @@ def test_orga_can_create_rooms(client, orga_user_write_token, event):
     assert response.status_code == 201, response.text
     with scope(event=event):
         room = event.rooms.get(name="newtestroom")
-        assert room.logged_actions().filter(action_type="pretalx.room.create").exists()
+        assert room.logged_actions().filter(action_type="eventyay.room.create").exists()
 
 
 @pytest.mark.django_db
@@ -174,7 +174,7 @@ def test_orga_cannot_create_rooms_readonly_token(client, orga_user_token, event)
         assert not event.rooms.filter(name="newtestroom").exists()
         assert (
             not event.logged_actions()
-            .filter(action_type="pretalx.room.create")
+            .filter(action_type="eventyay.room.create")
             .exists()
         )
 
@@ -195,7 +195,7 @@ def test_orga_can_update_rooms(client, orga_user_write_token, event, room):
     with scope(event=room.event):
         room.refresh_from_db()
         assert room.name == "newtestroom"
-        assert room.logged_actions().filter(action_type="pretalx.room.update").exists()
+        assert room.logged_actions().filter(action_type="eventyay.room.update").exists()
 
 
 @pytest.mark.django_db
@@ -214,7 +214,7 @@ def test_orga_cannot_update_rooms_readonly_token(client, orga_user_token, room):
         room.refresh_from_db()
         assert room.name != "newtestroom"
         assert (
-            not room.logged_actions().filter(action_type="pretalx.room.update").exists()
+            not room.logged_actions().filter(action_type="eventyay.room.update").exists()
         )
 
 
@@ -230,7 +230,7 @@ def test_orga_can_delete_rooms(client, orga_user_write_token, event, room):
     assert response.status_code == 204
     with scope(event=room.event):
         assert event.rooms.all().count() == 0
-        assert event.logged_actions().filter(action_type="pretalx.room.delete").exists()
+        assert event.logged_actions().filter(action_type="eventyay.room.delete").exists()
 
 
 @pytest.mark.django_db
