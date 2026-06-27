@@ -373,7 +373,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return ctx
 
 
-@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v3')
+@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v4')
 def schedule_messages(request, **kwargs):
     """Cached for static exports; bump key_prefix when message keys or copy change."""
     strings = {
@@ -383,7 +383,9 @@ def schedule_messages(request, **kwargs):
             'Locally saved stars may be lost if you clear your browser data; '
             'we are not responsible for data loss in this case.'
         ),
-        'favs_not_saved': _('Your favourites could not be saved. Please try again.'),
+        'favs_not_saved': _(
+            'Could not sync favourites to your account. They remain stored locally in this browser.'
+        ),
         'no_matching_options': _('Sorry, no matching options.'),
         'view_changelog': _('View Changelog'),
         'go_to_current_version': _('Go to current version'),
