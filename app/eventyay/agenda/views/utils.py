@@ -1032,9 +1032,11 @@ def clear_schedule_caches(event, submission=None, speaker=None):
     """Clear all eagenda schedule caches for the event's schedules."""
     schedules = event.schedules.all()
     keys = []
+    settings_part = schedule_widget_featured_cache_key_part(event)
     for schedule in schedules:
         for featured in (0, 1):
             keys.append(f'eagenda:schedule:{schedule.pk}:{featured}')
+            keys.append(f'eagenda:schedule:{schedule.pk}:{featured}:{settings_part}')
             keys.append(f'eagenda:enriched:{schedule.pk}:{featured}')
             if submission:
                 keys.append(f'eagenda:talk:{schedule.pk}:{submission.code}:{featured}')
