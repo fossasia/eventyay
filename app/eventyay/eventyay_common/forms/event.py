@@ -110,7 +110,8 @@ class EventCommonSettingsForm(SettingsForm):
             uploaded.seek(0)
             return uploaded
 
-        new_filename = self.get_new_filename(uploaded.name or setting_key)
+        clean_name, _ = os.path.splitext(uploaded.name or setting_key)
+        new_filename = self.get_new_filename(clean_name)
         base_path, _ = os.path.splitext(new_filename)
 
         # Persist the optimized file.

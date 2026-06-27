@@ -101,17 +101,20 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
             else:
                 name = os.path.basename(self.file.name)
             
-            # Clean up the 8-character random hash/nonce (e.g. filename.hash.ext -> filename.ext)
-            parts = name.split('.')
-            if len(parts) >= 3 and re.match(r'^[a-zA-Z0-9]{8}$', parts[-2]):
-                parts.pop(-2)
-                name = '.'.join(parts)
-            
-            # Clean duplicate extension if it exists (e.g. logo_image.jpg.jpg -> logo_image.jpg)
-            parts = name.split('.')
-            if len(parts) >= 3 and parts[-1] == parts[-2]:
-                parts.pop(-2)
-                name = '.'.join(parts)
+            # Iteratively strip hash nonces and duplicate extensions.
+            changed = True
+            while changed:
+                changed = False
+                parts = name.split('.')
+                if len(parts) >= 3 and parts[-1] == parts[-2]:
+                    parts.pop(-2)
+                    name = '.'.join(parts)
+                    changed = True
+                parts = name.split('.')
+                if len(parts) >= 3 and re.match(r'^[a-zA-Z0-9]{8}$', parts[-2]):
+                    parts.pop(-2)
+                    name = '.'.join(parts)
+                    changed = True
 
             return name
 

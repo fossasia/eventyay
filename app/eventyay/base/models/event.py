@@ -49,7 +49,7 @@ from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
-from eventyay.common.text.path import path_with_hash
+from eventyay.common.text.path import path_with_hash, resolve_media_path as _resolve_media_path
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls, is_http_url
 from eventyay.consts import TIMEZONE_CHOICES
@@ -523,9 +523,6 @@ class EventMixin:
         if self.settings.seating_minimal_distance > 0:
             q |= Q(has_closeby_taken=True, has_order=False)
         return qs.filter(q)
-
-
-from eventyay.common.text.path import resolve_media_path as _resolve_media_path
 
 
 # We don't subclass PretalxModel because:

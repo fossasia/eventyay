@@ -40,6 +40,7 @@ from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
 from eventyay.base.settings import DEFAULTS, SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
 from eventyay.presale.style import regenerate_css
+from eventyay.common.text.path import resolve_media_path
 from eventyay.common.urls import get_file_url_path
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
@@ -710,7 +711,7 @@ class EventUpdate(
             if setting_key in DEFAULTS and DEFAULTS[setting_key].get('type') is File:
                 current_value = request.event.settings.get(setting_key, as_type=str)
                 if current_value:
-                    current_file = get_file_url_path(current_value)
+                    current_file = resolve_media_path(current_value)
                     if current_file:
                         default_storage.delete(current_file)
                         base_path, _ = os.path.splitext(current_file)
