@@ -243,5 +243,20 @@ class FollowedEventsView(TemplateView):
                 in_future = event_end_date >= today
                 if in_future:
                     followed_upcoming_events.append(event)
+
+            organizer_groups = []
+            seen_organizers = {}
+            for event in followed_upcoming_events:
+                org = event.organizer
+                if org not in seen_organizers:
+                    group = {
+                        'organizer': org,
+                        'events': []
+                    }
+                    organizer_groups.append(group)
+                    seen_organizers[org] = group
+                seen_organizers[org]['events'].append(event)
+
+            ctx['organizer_groups'] = organizer_groups
             ctx['events'] = followed_upcoming_events
         return ctx

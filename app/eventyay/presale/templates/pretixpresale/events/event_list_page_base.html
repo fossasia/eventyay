@@ -184,17 +184,17 @@
                 <div class="event-hero startpage-hero">
                     <div class="event-hero-overlay">
                         <div class="event-brand event-list-header-brand">
-                            <div class="event-hero-text">
-                                <div class="event-title">
-                                    {{ startpage_header_text }}
-                                </div>
-                            </div>
                             <a class="event-home-back d-print-none" href="{% url "presale:index" %}">
                                 <span class="event-home-back-pill">
                                     <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
                                     <span class="event-home-back-label" aria-hidden="true">{% trans "Home" %}</span>
                                 </span>
                             </a>
+                            <div class="event-hero-text">
+                                <div class="event-title">
+                                    {{ startpage_header_text }}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -230,6 +230,8 @@
                 </ul>
             </footer>
         </div>
-
+        {% include "pretixpresale/includes/share_dialog.html" %}
+        {% include "common/includes/modals.html" %}
+        {{ html_foot|safe }}
     </body>
 </html>
