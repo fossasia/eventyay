@@ -132,16 +132,21 @@ export default {
 		},
 	},
 	validations() {
+		const urlRules = {
+			required: required('Stream URL is required')
+		};
+		if (this.formData.stream_type === 'youtube') {
+			urlRules.youtubeid = helpers.withMessage('Must be a valid YouTube URL', (value) => {
+				if (!value) return true;
+				return !!normalizeYoutubeVideoId(value);
+			});
+		} else {
+			urlRules.url = url('Must be a valid URL');
+		}
+
 		const rules = {
 			formData: {
-				url: {
-					required: required('Stream URL is required'),
-					url: url('Must be a valid URL'),
-					youtube: helpers.withMessage('Must be a valid YouTube URL', (value) => {
-						if (!value || this.formData.stream_type !== 'youtube') return true;
-						return !!normalizeYoutubeVideoId(value);
-					})
-				},
+				url: urlRules,
 				start_time: {
 					required: required('Start time is required'),
 				},

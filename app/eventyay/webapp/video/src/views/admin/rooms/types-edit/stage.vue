@@ -1,8 +1,8 @@
 <template lang="pug">
 .c-stage-settings
 	h2 Stream type
-	.radio-options
-		label.radio-option(v-for="option in PLAYBACK_MODE_OPTIONS", :key="option.id")
+	.ui-radio-options
+		label.ui-radio-option(v-for="option in PLAYBACK_MODE_OPTIONS", :key="option.id")
 			input(
 				type="radio",
 				:name="playbackModeInputName",
@@ -11,8 +11,8 @@
 				@change="playbackMode = option.id"
 			)
 			.radio-copy
-				.radio-title {{ option.label }}
-				.radio-description {{ option.description }}
+				.ui-radio-title {{ option.label }}
+				.ui-radio-description {{ option.description }}
 	template(v-if="playbackMode === PLAYBACK_MODE_ALWAYS_ON")
 		h2 Default stream source
 		bunt-select(name="stream-source", v-model="streamSource", :options="STREAM_SOURCE_OPTIONS", option-value="id", option-label="label", label="Stream source")
@@ -314,31 +314,7 @@ export default defineComponent({
 </script>
 <style lang="stylus">
 .c-stage-settings
-	.radio-options
-		display: flex
-		flex-direction: column
-		border: border-separator()
-		border-radius: 4px
-		max-width: 520px
-		margin-bottom: 16px
-	.radio-option
-		display: flex
-		gap: 10px
-		padding: 10px 12px
-		cursor: pointer
-		color: $clr-primary-text-light
-		&:not(:last-child)
-			border-bottom: border-separator()
-		input
-			margin-top: 3px
-			flex: none
-		.radio-title
-			font-weight: 500
-			line-height: 20px
-		.radio-description
-			color: $clr-secondary-text-light
-			font-size: 12px
-			line-height: 18px
+	// no local radio styles needed anymore
 .bunt-switch-container
 	margin-top: 16px
 </style>

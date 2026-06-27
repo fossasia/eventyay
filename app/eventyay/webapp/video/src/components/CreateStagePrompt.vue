@@ -6,12 +6,12 @@ prompt.c-create-stage-prompt(@close="$emit('close')")
 			bunt-input(name="name", :label="$t('CreateStagePrompt:name:label')", icon="theater", :placeholder="$t('CreateStagePrompt:name:placeholder')", v-model="name", :validation="v$.name")
 			.stage-mode
 				.fieldset-label Stream type
-				.radio-options
-					label.radio-option(v-for="option in PLAYBACK_MODE_OPTIONS", :key="option.id")
+				.ui-radio-options
+					label.ui-radio-option(v-for="option in PLAYBACK_MODE_OPTIONS", :key="option.id")
 						input(type="radio", name="playbackMode", :value="option.id", v-model="playbackMode")
 						.radio-copy
-							.radio-title {{ option.label }}
-							.radio-description {{ option.description }}
+							.ui-radio-title {{ option.label }}
+							.ui-radio-description {{ option.description }}
 			.default-source(v-if="playbackMode === PLAYBACK_MODE_ALWAYS_ON")
 				bunt-select(name="streamSource", v-model="streamSource", :options="streamSourceOptions", option-value="id", option-label="label", label="Default stream source")
 				bunt-input(v-if="streamSource === 'hls'", name="url", :label="$t('CreateStagePrompt:url:label')", icon="link", placeholder="https://example.com/stream.m3u8", v-model="url", :validation="v$.url")
@@ -172,29 +172,6 @@ export default {
 					font-weight: 500
 					color: $clr-secondary-text-light
 					margin-bottom: 8px
-				.radio-options
-					display: flex
-					flex-direction: column
-					border: border-separator()
-					border-radius: 4px
-				.radio-option
-					display: flex
-					gap: 10px
-					padding: 10px 12px
-					cursor: pointer
-					color: $clr-primary-text-light
-					&:not(:last-child)
-						border-bottom: border-separator()
-					input
-						margin-top: 3px
-						flex: none
-					.radio-title
-						font-weight: 500
-						line-height: 20px
-					.radio-description
-						color: $clr-secondary-text-light
-						font-size: 12px
-						line-height: 18px
 			.default-source
 				display: flex
 				flex-direction: column
