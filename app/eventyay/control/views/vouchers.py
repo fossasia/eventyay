@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import connection, transaction
-from django.db.models import Exists, OuterRef, Sum
+from django.db.models import Sum
 from django.http import (
     Http404,
     HttpResponse,
@@ -28,7 +28,7 @@ from django.views.generic import (
     View,
 )
 
-from eventyay.base.models import CartPosition, LogEntry, Order, OrderPosition, Voucher
+from eventyay.base.models import CartPosition, LogEntry, OrderPosition, Voucher
 from eventyay.base.models.vouchers import _generate_random_code
 from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.vouchers import vouchers_send
@@ -195,7 +195,6 @@ class VoucherDelete(EventPermissionRequiredMixin, DeleteView):
             self.object.log_action('eventyay.voucher.deleted', user=self.request.user)
             CartPosition.objects.filter(addon_to__voucher=self.object).delete()
             self.object.cartposition_set.all().delete()
-            self.object._clear_canceled_order_positions()
             self.object.delete()
             messages.success(self.request, _('The selected voucher has been deleted.'))
         return HttpResponseRedirect(success_url)
@@ -511,28 +510,22 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
             return redirect(self.get_success_url())
 
         if request.POST.get('action') == 'delete':
-            active_op_qs = OrderPosition.objects.filter(
-                voucher=OuterRef('pk'),
-            ).exclude(order__status=Order.STATUS_CANCELED)
-            deletable = self.objects.filter(~Exists(active_op_qs))
-            forbidden = self.objects.filter(Exists(active_op_qs))
             return render(
                 request,
                 'pretixcontrol/vouchers/delete_bulk.html',
                 {
-                    'allowed': deletable,
-                    'forbidden': forbidden,
+                    'allowed': self.objects.filter(redeemed=0),
+                    'forbidden': self.objects.exclude(redeemed=0),
                 },
             )
         elif request.POST.get('action') == 'delete_confirm':
             allowed = [obj for obj in self.objects if obj.allow_delete()]
             forbidden = [obj for obj in self.objects if not obj.allow_delete()]
-            
+
             for obj in allowed:
                 obj.log_action('eventyay.voucher.deleted', user=self.request.user)
                 CartPosition.objects.filter(addon_to__voucher=obj).delete()
                 obj.cartposition_set.all().delete()
-                obj._clear_canceled_order_positions()
                 obj.delete()
 
             if forbidden:
