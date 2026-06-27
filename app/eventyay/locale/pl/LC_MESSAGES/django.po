@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
 "PO-Revision-Date: 2026-06-27 09:15+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"Last-Translator: Szymon Grabarczuk <sgrabarczuk@wikimedia.org>\n"
 "Language-Team: Polish <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "pl/>\n"
 "Language: pl\n"
@@ -244,7 +244,7 @@ msgstr "Ścieżka"
 #: presale/templates/pretixpresale/event/fragment_nav.html:36
 #: schedule/phrases.py:18
 msgid "Speakers"
-msgstr "Głośniki"
+msgstr "Prelegenci"
 
 #: agenda/templates/agenda/talk_review.html:59 base/models/submission.py:219
 #: orga/templates/orga/cfp/forms.html:140
