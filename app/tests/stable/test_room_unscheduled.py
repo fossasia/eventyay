@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from eventyay.api.serializers.room import RoomOrgaSerializer
 from eventyay.base.models import Room
+from eventyay.base.models.event import permissions_with_jitsi_defaults
 from eventyay.base.models.room import room_has_linked_submissions
 from eventyay.base.models.slot import TalkSlot
 from eventyay.core.permissions import Permission, SYSTEM_ROLES
@@ -15,6 +16,7 @@ def test_video_content_manager_grants_room_create_and_edit_permissions():
     assert Permission.EVENT_ROOMS_CREATE_STAGE.value in perms
     assert Permission.EVENT_ROOMS_CREATE_CHAT.value in perms
     assert Permission.EVENT_ROOMS_CREATE_BBB.value in perms
+    assert Permission.EVENT_ROOMS_CREATE_JITSI.value in perms
     assert Permission.EVENT_ROOMS_CREATE_EXHIBITION.value in perms
     assert Permission.EVENT_ROOMS_CREATE_POSTER.value in perms
     assert Permission.ROOM_UPDATE.value in perms
@@ -56,6 +58,28 @@ def test_event_grants_chat_moderate_via_organizer_video_trait(event):
         traits=['attendee'],
         permissions=[Permission.ROOM_CHAT_MODERATE],
     )
+
+
+def test_stale_event_roles_are_augmented_with_jitsi_permissions():
+    participant_permissions = permissions_with_jitsi_defaults(
+        'participant',
+        [
+            Permission.ROOM_BBB_JOIN.value,
+            Permission.ROOM_JANUSCALL_JOIN.value,
+            Permission.ROOM_ZOOM_JOIN.value,
+        ],
+    )
+    speaker_permissions = permissions_with_jitsi_defaults(
+        'speaker',
+        [
+            Permission.ROOM_BBB_JOIN.value,
+            Permission.ROOM_BBB_MODERATE.value,
+        ],
+    )
+
+    assert Permission.ROOM_JITSI_JOIN.value in participant_permissions
+    assert Permission.ROOM_JITSI_JOIN.value in speaker_permissions
+    assert Permission.ROOM_JITSI_MODERATE.value in speaker_permissions
 
 
 @pytest.mark.django_db

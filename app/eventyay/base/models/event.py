@@ -100,6 +100,36 @@ def event_logo_path(instance, filename):
     return path_with_hash(filename, base_path=f'{instance.slug}/img/')
 
 
+JITSI_ROLE_PERMISSION_AUGMENTS = {
+    'participant': [Permission.ROOM_JITSI_JOIN],
+    'room_owner': [Permission.ROOM_JITSI_JOIN],
+    'speaker': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
+    'moderator': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
+    'admin': [
+        Permission.EVENT_ROOMS_CREATE_JITSI,
+        Permission.ROOM_JITSI_JOIN,
+        Permission.ROOM_JITSI_MODERATE,
+    ],
+    'apiuser': [
+        Permission.EVENT_ROOMS_CREATE_JITSI,
+        Permission.ROOM_JITSI_JOIN,
+        Permission.ROOM_JITSI_MODERATE,
+    ],
+}
+
+
+def permissions_with_jitsi_defaults(role_name, permissions):
+    permissions = [
+        normalize_permission_value(permission)
+        for permission in permissions
+    ]
+    for permission in JITSI_ROLE_PERMISSION_AUGMENTS.get(role_name, []):
+        permission_value = normalize_permission_value(permission)
+        if permission_value not in permissions:
+            permissions.append(permission_value)
+    return permissions
+
+
 FEATURE_FLAGS = [
     'schedule-control',
     'iframe-player',
@@ -1404,7 +1434,7 @@ class Event(
         if event_roles is None:
             event_roles = self.roles if self.roles is not None else {}
         if role_name in event_roles and event_roles[role_name] is not None:
-            return event_roles[role_name]
+            return permissions_with_jitsi_defaults(role_name, event_roles[role_name])
         defaults = self._get_default_roles()
         if role_name in defaults:
             return defaults[role_name]

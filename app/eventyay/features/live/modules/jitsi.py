@@ -22,7 +22,8 @@ class JitsiModule(BaseModule):
         if not display_name:
             raise ConsumerException("jitsi.join.missing_profile")
 
-        domain = self._normalize_domain(self.module_config.get("domain"))
+        server = self._normalize_server(self.module_config.get("domain"))
+        domain = server["domain"] if server else None
         room_name = self.module_config.get("room_name") or f"room-{self.room.id}"
         if not domain:
             raise ConsumerException("jitsi.missing_domain")
@@ -35,6 +36,8 @@ class JitsiModule(BaseModule):
 
         result = {
             "domain": domain,
+            "url": server["url"],
+            "protocol": server["protocol"],
             "roomName": room_name,
             "userInfo": {
                 "displayName": display_name,
@@ -91,11 +94,23 @@ class JitsiModule(BaseModule):
         return jwt.encode(payload, app_secret, algorithm="HS256", headers=headers)
 
     @staticmethod
-    def _normalize_domain(domain):
+    def _normalize_server(domain):
         if not domain:
             return None
         domain = domain.strip()
         if "://" not in domain:
-            return domain.strip("/")
+            normalized = domain.strip("/")
+            return {
+                "domain": normalized,
+                "url": f"https://{normalized}",
+                "protocol": "https:",
+            }
         parsed = urlparse(domain)
-        return parsed.netloc or None
+        if not parsed.netloc:
+            return None
+        protocol = parsed.scheme.lower() + ":"
+        return {
+            "domain": parsed.netloc,
+            "url": f"{parsed.scheme.lower()}://{parsed.netloc}",
+            "protocol": protocol,
+        }

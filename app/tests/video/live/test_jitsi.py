@@ -119,6 +119,8 @@ async def test_attendee_room_config(world):
     assert response[0] == "success"
     data = response[2]
     assert data["domain"] == "meet.example.org"
+    assert data["url"] == "https://meet.example.org"
+    assert data["protocol"] == "https:"
     assert data["roomName"] == "eventyay-test-room"
     assert data["userInfo"]["displayName"] == "Foo Fighter"
     assert data["moderator"] is False
