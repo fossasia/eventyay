@@ -340,7 +340,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				jitsiConfig = await api.call('jitsi.room_config', {
 					room: props.room.id,
 				});
-				iframeUrl = `https://${jitsiConfig.domain}/${encodeURIComponent(jitsiConfig.roomName)}`;
+				iframeUrl = getJitsiRoomUrl(jitsiConfig);
 				hideIfBackground = true;
 				break;
 			}
@@ -483,6 +483,10 @@ function destroyIframe() {
 async function createJitsiIframe(config, hideIfBackground) {
 	const container = document.querySelector('#media-source-iframes');
 	if (!container) return;
+	if (config.protocol === 'http:') {
+		createJitsiDirectIframe(config, hideIfBackground, container);
+		return;
+	}
 	await loadJitsiExternalApi(config.domain);
 	if (isUnmounted.value || !window.JitsiMeetExternalAPI) return;
 
@@ -517,6 +521,27 @@ async function createJitsiIframe(config, hideIfBackground) {
 	iframeEl.value = iframe;
 }
 
+function createJitsiDirectIframe(config, hideIfBackground, container) {
+	const iframe = document.createElement('iframe');
+	iframe.src = getJitsiRoomUrl(config);
+	iframe.classList.add('iframe-media-source');
+	if (hideIfBackground) {
+		iframe.classList.add('hide-if-background');
+	}
+	if (props.background) {
+		iframe.classList.add('background');
+		iframe.classList.add('size-tiny');
+	}
+	iframe.allow =
+		'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' +
+		(autoplay.value ? '; autoplay *' : '');
+	iframe.allowFullscreen = true;
+	iframe.setAttribute('allowusermedia', 'true');
+	iframe.setAttribute('allowfullscreen', '');
+	container.appendChild(iframe);
+	iframeEl.value = iframe;
+}
+
 function loadJitsiExternalApi(domain) {
 	if (window.JitsiMeetExternalAPI) return Promise.resolve();
 	if (jitsiScriptLoads.has(domain)) return jitsiScriptLoads.get(domain);
@@ -530,6 +555,29 @@ function loadJitsiExternalApi(domain) {
 	});
 	jitsiScriptLoads.set(domain, promise);
 	return promise;
+}
+
+function encodeJitsiHash(prefix, values) {
+	return Object.entries(values || {})
+		.filter(([, value]) => value !== undefined && value !== null)
+		.map(([key, value]) => `${prefix}.${key}=${encodeURIComponent(JSON.stringify(value))}`);
+}
+
+function getJitsiRoomUrl(config) {
+	const url = new URL(config.url || `https://${config.domain}`);
+	url.pathname = `/${encodeURIComponent(config.roomName)}`;
+	if (config.jwt) {
+		url.searchParams.set('jwt', config.jwt);
+	}
+	const hash = [
+		...encodeJitsiHash('config', config.configOverwrite),
+		...encodeJitsiHash('interfaceConfig', config.interfaceConfigOverwrite),
+		...encodeJitsiHash('userInfo', config.userInfo),
+	];
+	if (hash.length) {
+		url.hash = hash.join('&');
+	}
+	return url.toString();
 }
 
 function onConsentGiven(persistent) {

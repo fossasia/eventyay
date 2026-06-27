@@ -177,6 +177,38 @@ def default_grants():
     }
 
 
+JITSI_ROLE_PERMISSION_AUGMENTS = {
+    'participant': [Permission.ROOM_JITSI_JOIN],
+    'room_owner': [Permission.ROOM_JITSI_JOIN],
+    'speaker': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
+    'moderator': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
+    'admin': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
+    'apiuser': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
+}
+
+
+def normalize_roles(roles):
+    return {
+        role: [
+            normalize_permission_value(permission)
+            for permission in permissions
+        ]
+        for role, permissions in roles.items()
+    }
+
+
+def roles_with_jitsi_defaults(roles):
+    roles = normalize_roles(roles if roles is not None else default_roles())
+    for role, permissions in JITSI_ROLE_PERMISSION_AUGMENTS.items():
+        if role not in roles:
+            continue
+        for permission in permissions:
+            permission_value = normalize_permission_value(permission)
+            if permission_value not in roles[role]:
+                roles[role].append(permission_value)
+    return roles
+
+
 FEATURE_FLAGS = [
     'schedule-control',
     'iframe-player',
@@ -1480,7 +1512,7 @@ class Event(
     ):
         # Ensure trait_grants and roles are not None - use defaults if missing
         event_trait_grants = self._get_trait_grants_with_defaults()
-        event_roles = self.roles if self.roles is not None else default_roles()
+        event_roles = roles_with_jitsi_defaults(self.roles)
 
         for role, required_traits in event_trait_grants.items():
             if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
@@ -1523,7 +1555,7 @@ class Event(
             return True
 
         roles = user.get_role_grants(room)
-        event_roles = self.roles if self.roles is not None else default_roles()
+        event_roles = roles_with_jitsi_defaults(self.roles)
         for r in roles:
             role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
             if any(normalize_permission_value(p) in role_perms for p in permission):
@@ -1553,7 +1585,7 @@ class Event(
             return True
 
         roles = await user.get_role_grants_async(room)
-        event_roles = self.roles if self.roles is not None else default_roles()
+        event_roles = roles_with_jitsi_defaults(self.roles)
         for r in roles:
             role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
             if any(normalize_permission_value(p) in role_perms for p in permission):
@@ -1568,7 +1600,7 @@ class Event(
 
         # Ensure trait_grants and roles are not None
         event_trait_grants = self._get_trait_grants_with_defaults()
-        event_roles = self.roles if self.roles is not None else default_roles()
+        event_roles = roles_with_jitsi_defaults(self.roles)
 
         user_traits = user.traits or []
 
