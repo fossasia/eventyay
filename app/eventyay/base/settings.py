@@ -40,6 +40,7 @@ for k, v in DEFAULTS.items():
 # Eventyay Video (integrated)
 settings_hierarkey.add_default('venueless_start', None, RelativeDateWrapper)
 settings_hierarkey.add_default('venueless_text', None, LazyI18nString)
+settings_hierarkey.add_default('review_help_text', None, LazyI18nString)
 settings_hierarkey.add_default('venueless_allow_pending', 'False', bool)
 settings_hierarkey.add_default('venueless_all_products', 'True', bool)
 settings_hierarkey.add_default('venueless_products', '[]', list)
@@ -164,9 +165,20 @@ class SettingsSandbox:
         self._event.settings.set(self._convert_key(key), value)
 
 
+def validate_primary_font(primary_font):
+    if primary_font:
+        from eventyay.presale.style import SYSTEM_FONTS, get_fonts  # noqa: PLC0415
+        if primary_font not in SYSTEM_FONTS and primary_font not in get_fonts():
+            raise ValidationError(
+                {'primary_font': _('The selected font is not allowed.')}
+            )
+
+
 def validate_event_settings(event, settings_dict):
-    from eventyay.base.models import Event
-    from eventyay.base.signals import validate_event_settings
+    from eventyay.base.models import Event  # noqa: PLC0415
+    from eventyay.base.signals import validate_event_settings  # noqa: PLC0415
+
+    validate_primary_font(settings_dict.get('primary_font'))
 
     default_locale = settings_dict.get('locale')
     locales = settings_dict.get('locales', [])
@@ -219,12 +231,7 @@ def validate_event_settings(event, settings_dict):
 
 
 def validate_organizer_settings(organizer, settings_dict):
-    # This is not doing anything for the time being.
-    # But earlier we called validate_event_settings for the organizer, too - and that didn't do anything for
-    # organizer-settings either.
-    #
-    # N.B.: When actually fleshing out this stub, adding it to the OrganizerUpdateForm should be considered.
-    pass
+    validate_primary_font(settings_dict.get('primary_font'))
 
 
 def global_settings_object(holder):
