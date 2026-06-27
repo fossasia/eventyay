@@ -293,6 +293,7 @@ class SlidesWidget(Widget):
     def __init__(self, attrs=None):
         super().__init__(attrs)
         self.max_items = None
+        self.max_size = None
 
     @staticmethod
     def links_field_name(name):
@@ -305,14 +306,21 @@ class SlidesWidget(Widget):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         if isinstance(value, dict):
-            current_resources = list(value.get('existing_resources', []))
-            links_value = '\n'.join(value.get('links', []))
+            if 'existing_resources' in value or 'links' in value:
+                # Value came from InfoForm.__init__ setting initial from DB resources
+                current_resources = list(value.get('existing_resources', []))
+                links_value = '\n'.join(value.get('links', []))
+            else:
+                # Raw dict from value_from_datadict (POST submission, possibly invalid form re-render)
+                current_resources = []
+                links_value = value.get('links_text', '')
         else:
             current_resources = list(value or [])
             links_value = ''
         context['widget']['current_resources'] = current_resources
         context['widget']['existing_value'] = bool(current_resources)
         context['widget']['max_items'] = self.max_items
+        context['widget']['max_size'] = self.max_size
         context['widget']['current_count'] = len(current_resources)
         context['widget']['remaining_items'] = (
             max(self.max_items - len(current_resources), 0) if self.max_items else None
@@ -323,6 +331,7 @@ class SlidesWidget(Widget):
         context['widget']['files_id'] = f'id_{self.files_field_name(name)}'
         context['widget']['clear_name'] = self.clear_checkbox_name(name)
         context['widget']['links_value'] = links_value
+        context['widget']['is_re_render'] = isinstance(value, dict) and 'existing_resources' not in value and 'links' not in value
         return context
 
     @staticmethod
