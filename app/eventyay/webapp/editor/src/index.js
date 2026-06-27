@@ -9,6 +9,9 @@ import { buildToolbar } from './toolbar.js'
  * @returns {Editor}
  */
 function mountEditor(textarea) {
+  if (textarea.dataset.tiptapMounted) return null
+  textarea.dataset.tiptapMounted = 'true'
+
   const profile = textarea.dataset.tiptapProfile
   const placeholders = parsePlaceholders(textarea.dataset.tiptapPlaceholders)
   const previewUrl = textarea.dataset.tiptapPreviewUrl || ''
@@ -44,6 +47,9 @@ function mountEditor(textarea) {
     editorProps: {
       attributes: prosemirrorAttrs,
     },
+    onUpdate({ editor }) {
+      textarea.value = editor.getHTML()
+    }
   })
 
   const toolbar = buildToolbar(editor, { profile, placeholders, previewUrl, locale: fieldLang || '' })
@@ -51,13 +57,6 @@ function mountEditor(textarea) {
   textarea.style.display = 'none'
   wrapper.insertBefore(toolbar, textarea)
   wrapper.insertBefore(editorEl, textarea)
-
-  const form = textarea.closest('form')
-  if (form) {
-    form.addEventListener('submit', () => {
-      textarea.value = editor.getHTML()
-    })
-  }
 
   return editor
 }

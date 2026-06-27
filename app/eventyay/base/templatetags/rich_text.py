@@ -163,6 +163,7 @@ def _is_tiptap_email_html(source: str) -> bool:
     """
     if not source:
         return False
+    source = str(source)
     if 'data-variable=' in source:
         return True
     return bool(_TIPTAP_BLOCK_START_RE.match(source))
@@ -201,8 +202,8 @@ def expand_email_preview_placeholders(html: str, event, *, locale: str | None = 
         ).items():
             context_dict[key] = (
                 '<span class="placeholder" title="{}">{}</span>'.format(
-                    gettext('This value will be replaced based on dynamic parameters.'),
-                    placeholder.render_sample(event),
+                    html.escape(str(gettext('This value will be replaced based on dynamic parameters.'))),
+                    html.escape(str(placeholder.render_sample(event))),
                 )
             )
         return html.format_map(context_dict)
@@ -217,6 +218,7 @@ def compile_email_body(source: str) -> str:
     """
     if not source:
         return source
+    source = str(source)
     if _is_tiptap_email_html(source):
         return source
     return markdown_compile_email(source)

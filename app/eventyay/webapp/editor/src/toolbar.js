@@ -251,6 +251,7 @@ function buildPreviewButton(editor, previewUrl, locale = '') {
       showPreviewModal(data.html)
     } catch (err) {
       console.error('Email preview failed:', err)
+      alert('An error occurred while generating the preview. Please try again.')
     }
   })
 
