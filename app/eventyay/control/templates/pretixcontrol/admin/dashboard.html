@@ -1,6 +1,11 @@
 {% extends "pretixcontrol/admin/base.html" %}
 {% load i18n humanize %}
+{% load static %}
 {% block title %}{% trans "Dashboard" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'pretixcontrol/css/admin-page.css' %}">
+{% endblock %}
 {% block content %}
     <h1>{% trans "Admin Dashboard" %}</h1>
     <p>{% trans "Overview of platform activity across users, events, orders, and programme." %}</p>
