@@ -965,6 +965,23 @@ $(function () {
         return false;
     });
 
+    // Voucher page specific delete selected toggle
+    if ($('.table-quotas').length && $('button[name="action"][value="delete"]').length) {
+        var $vouchersForm = $('button[name="action"][value="delete"]').closest('form');
+        var $vouchersDeleteBtn = $('button[name="action"][value="delete"]');
+        var $vouchersCheckboxes = $vouchersForm.find('input[name="voucher"]');
+
+        var updateVouchersDeleteBtn = function() {
+            $vouchersDeleteBtn.toggle($vouchersCheckboxes.filter(':checked').length > 0);
+        };
+
+        $vouchersForm.on('change', 'input[name="voucher"], input[data-toggle-table]', function() {
+            setTimeout(updateVouchersDeleteBtn, 50);
+        });
+
+        updateVouchersDeleteBtn();
+    }
+
     $("#ajaxerr").on("click", ".ajaxerr-close", ajaxErrDialog.hide);
     moment.locale($("body").attr("data-datetimelocale"));
 });

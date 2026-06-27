@@ -506,7 +506,6 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         if not self.objects:
-            messages.warning(request, _('Please select at least one voucher to delete.'))
             return redirect(self.get_success_url())
 
         if request.POST.get('action') == 'delete':
