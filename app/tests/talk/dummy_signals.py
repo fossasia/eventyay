@@ -1,16 +1,16 @@
 from django.dispatch import receiver
 
-from pretalx.agenda.recording import BaseRecordingProvider
-from pretalx.agenda.signals import register_recording_provider
-from pretalx.cfp.signals import footer_link, html_above_profile_page, html_head
-from pretalx.common.signals import register_locales
-from pretalx.orga.signals import (
+from eventyay.agenda.recording import BaseRecordingProvider
+from eventyay.agenda.signals import register_recording_provider
+from eventyay.cfp.signals import footer_link, html_above_profile_page, html_head
+from eventyay.common.signals import register_locales
+from eventyay.orga.signals import (
     activate_event,
     nav_event,
     nav_event_settings,
     nav_global,
 )
-from pretalx.submission.signals import submission_state_change
+from eventyay.submission.signals import submission_state_change
 
 
 @receiver(register_locales)
