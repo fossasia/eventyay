@@ -53,8 +53,25 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
     sortable_fields = ('position', 'user__email', 'user__fullname', 'is_featured')
     default_sort_field = 'position'
-    secondary_sort = {'position': ('user__fullname',)}
+    secondary_sort = {'position': ('user__fullname',), 'is_featured': ('position', 'user__fullname')}
     permission_required = 'base.orga_list_speakerprofile'
+
+    def _speaker_list_ordering(self, *, descending=False):
+        direction = (
+            OrderBy(F('position'), descending=True, nulls_last=True)
+            if descending
+            else OrderBy(F('position'), nulls_last=True)
+        )
+        return (direction, 'user__fullname', 'pk')
+
+    def sort_queryset(self, qs):
+        sort_key = self.request.GET.get('sort') or ''
+        if not sort_key or sort_key == 'default':
+            sort_key = getattr(self, 'default_sort_field', None) or ''
+        plain_key = sort_key[1:] if sort_key.startswith('-') else sort_key
+        if plain_key == 'position':
+            return qs.order_by(*self._speaker_list_ordering(descending=sort_key.startswith('-')))
+        return super().sort_queryset(qs)
 
     def get_filter_form(self):
         with scope(event=self.request.event):
@@ -78,11 +95,6 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
                         & Q(user__submissions__state__in=SubmissionStates.accepted_states),
                         distinct=True,
                     ),
-                )
-                .order_by(
-                    OrderBy(F('position'), nulls_last=True),
-                    'user__fullname',
-                    'pk',
                 )
             )
 
@@ -144,33 +156,31 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
             requested_ids = [int(pk) for pk in order.split(',') if pk]
         except ValueError:
             return False
-        if not requested_ids:
-            return False
-        if len(requested_ids) != len(set(requested_ids)):
+        if not requested_ids or len(requested_ids) != len(set(requested_ids)):
             return False
 
         with transaction.atomic(), scope(event=self.request.event):
-            profiles = list(
-                speaker_profiles_for_user(self.request.event, self.request.user)
-                .select_related('user')
-                .order_by(OrderBy(F('position'), nulls_last=True), 'user__fullname', 'pk')
-            )
-            profile_by_id = {profile.pk: profile for profile in profiles}
-            valid_requested_ids = [pk for pk in requested_ids if pk in profile_by_id]
-            if not valid_requested_ids:
+            profiles_qs = speaker_profiles_for_user(self.request.event, self.request.user)
+            sorted_ids = list(self.sort_queryset(profiles_qs).values_list('pk', flat=True))
+            profile_by_id = {profile.pk: profile for profile in profiles_qs.only('pk', 'position')}
+            if not all(pk in profile_by_id for pk in requested_ids):
                 return False
 
-            requested_set = set(valid_requested_ids)
-            requested_iter = iter(valid_requested_ids)
-            reordered_ids = []
-            for profile in profiles:
-                if profile.pk in requested_set:
-                    reordered_ids.append(next(requested_iter))
-                else:
-                    reordered_ids.append(profile.pk)
+            if len(requested_ids) == len(sorted_ids):
+                new_order = requested_ids
+            else:
+                positions = [sorted_ids.index(pk) for pk in requested_ids]
+                if len(positions) != len(requested_ids):
+                    return False
+                start, end = min(positions), max(positions)
+                if end - start + 1 != len(requested_ids):
+                    return False
+                if set(sorted_ids[start : end + 1]) != set(requested_ids):
+                    return False
+                new_order = sorted_ids[:start] + requested_ids + sorted_ids[end + 1 :]
 
             updates = []
-            for position, profile_id in enumerate(reordered_ids):
+            for position, profile_id in enumerate(new_order):
                 profile = profile_by_id[profile_id]
                 if profile.position != position:
                     profile.position = position
@@ -178,6 +188,9 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
 
             if updates:
                 SpeakerProfile.objects.bulk_update(updates, ['position'])
+                from eventyay.agenda.views.utils import clear_schedule_caches
+
+                clear_schedule_caches(self.request.event)
 
         return True
 
@@ -346,6 +359,9 @@ class SpeakerToggleFeatured(SpeakerViewMixin, View):
             data={'event': self.request.event.slug},
             user=self.request.user,
         )
+        from eventyay.agenda.views.utils import clear_schedule_caches
+
+        clear_schedule_caches(self.request.event)
         return HttpResponse()
 
 

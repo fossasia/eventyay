@@ -70,7 +70,7 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody dragsort-url="{{ request.event.orga_urls.speakers }}">
+            <tbody dragsort-url="{{ request.get_full_path }}">
                 {% for profile in speakers %}
                     <tr dragsort-id="{{ profile.pk }}">
                         <td>
