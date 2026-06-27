@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Q
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
 from django.db.models.expressions import OrderBy
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -17,7 +17,7 @@ from django_scopes import scope
 from eventyay.base.models import Answer, SpeakerProfile, User
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
-from eventyay.base.models.submission import SubmissionStates
+from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.talkimport import import_speakers
 from eventyay.base.views.tasks import AsyncAction
@@ -51,7 +51,7 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     template_name = 'orga/speaker/list.html'
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
-    sortable_fields = ('position', 'user__email', 'user__fullname')
+    sortable_fields = ('position', 'user__email', 'user__fullname', 'is_featured')
     default_sort_field = 'position'
     secondary_sort = {'position': ('user__fullname',)}
     permission_required = 'base.orga_list_speakerprofile'
@@ -110,7 +110,24 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
                 answers = Answer.objects.filter(question_id=question, person_id=OuterRef('user_id'))
                 qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=False)
             qs = qs.distinct()
-            return self.sort_queryset(qs)
+            return self.sort_queryset(qs).prefetch_related(
+                Prefetch(
+                    'user__submissions',
+                    queryset=self._speaker_sessions_queryset(),
+                    to_attr='list_sessions',
+                )
+            )
+
+    def _speaker_sessions_queryset(self):
+        qs = (
+            self.request.event.submissions.exclude(
+                state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT),
+            )
+            .order_by('title')
+        )
+        if is_only_reviewer(self.request.user, self.request.event):
+            qs = limit_for_reviewers(qs, self.request.event, self.request.user)
+        return qs
 
     def post(self, request, *args, **kwargs):
         if not request.user.has_perm('base.update_speakerprofile', request.event):
@@ -294,11 +311,11 @@ class SpeakerPasswordReset(SpeakerViewMixin, ActionConfirmMixin, DetailView):
 
 
 class SpeakerToggleArrived(SpeakerViewMixin, View):
-    permission_required = 'base.update_speakerprofile'
+    permission_required = 'base.mark_arrived_speakerprofile'
 
     def post(self, request, *args, **kwargs):
         self.profile.has_arrived = not self.profile.has_arrived
-        self.profile.save()
+        self.profile.save(update_fields=['has_arrived'])
         action = 'eventyay.speaker.arrived' if self.profile.has_arrived else 'eventyay.speaker.unarrived'
         self.object.log_action(
             action,
@@ -307,9 +324,13 @@ class SpeakerToggleArrived(SpeakerViewMixin, View):
             # orga=True,
         )
         if url := self.request.GET.get('next'):
-            if url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
+            if url_has_allowed_host_and_scheme(
+                url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
                 return redirect(url)
-        return redirect(self.profile.orga_urls.base)
+        return redirect(self.request.event.orga_urls.speakers)
 
     def get(self, request, *args, **kwargs):
         return redirect(self.profile.orga_urls.base)
