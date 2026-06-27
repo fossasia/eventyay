@@ -15,7 +15,11 @@ const handleFeaturedChange = (element) => {
         }
         resetStatus()
         statusIcon.classList.remove("d-none")
-        setTimeout(resetStatus, 3000)
+
+        if (statusWrapper.resetTimeout) {
+            clearTimeout(statusWrapper.resetTimeout)
+        }
+        statusWrapper.resetTimeout = setTimeout(resetStatus, 3000)
     }
     const fail = () => {
         element.checked = !element.checked
