@@ -212,7 +212,7 @@ msgstr "காலநீளம்"
 #: agenda/templates/agenda/talk_review.html:24
 #, python-format
 msgid "%(minutes)s min"
-msgstr "%(நிமிடங்கள்) மணித்துளி"
+msgstr "%(minutes)s மணித்துளி"
 
 #: agenda/templates/agenda/talk_review.html:31 base/models/access_code.py:30
 #: base/models/submission.py:193
@@ -25204,14 +25204,14 @@ msgstr "குழுவை உருவாக்கு"
 msgid "%(count)s member"
 msgid_plural "%(count)s members"
 msgstr[0] "%(count)s உறுப்பினர்"
-msgstr[1] "%(எண்ணிக்கை) உறுப்பினர்கள்"
+msgstr[1] "%(count)s உறுப்பினர்கள்"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:65
 #, python-format
 msgid "%(count)s event"
 msgid_plural "%(count)s events"
 msgstr[0] "%(count)s நிகழ்வு"
-msgstr[1] "%(எண்ணிக்கை) நிகழ்வுகள்"
+msgstr[1] "%(count)s நிகழ்வுகள்"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:78
 #, python-format
