@@ -40,6 +40,7 @@ for k, v in DEFAULTS.items():
 # Eventyay Video (integrated)
 settings_hierarkey.add_default('venueless_start', None, RelativeDateWrapper)
 settings_hierarkey.add_default('venueless_text', None, LazyI18nString)
+settings_hierarkey.add_default('review_help_text', None, LazyI18nString)
 settings_hierarkey.add_default('venueless_allow_pending', 'False', bool)
 settings_hierarkey.add_default('venueless_all_products', 'True', bool)
 settings_hierarkey.add_default('venueless_products', '[]', list)
