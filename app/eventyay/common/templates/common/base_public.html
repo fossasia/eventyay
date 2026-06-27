@@ -20,7 +20,7 @@
         <meta name="description" content="{% block meta_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
         <meta name="application-name" content="{{ site_name }}">
         <meta name="generator" content="{{ site_name }}">
-        <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% elif request.organizer %}{{ organizer.name }}, {{ organizer.slug }},{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
+        <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% elif request.organizer %}{{ request.organizer.name }}, {{ request.organizer.slug }},{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
         {% if current_event and current_event.display_settings.meta_noindex %}
             <meta name="robots" content="noindex, nofollow">
         {% else %}
@@ -69,10 +69,15 @@
             <link rel="stylesheet" type="text/css" href="{% static "cfp/css/_layout.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_agenda.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_speaker.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_contact_modal.css" %}" />
         {% endcompress %}
         {% block stylesheets %}{% endblock stylesheets %}
         {% block public_stylesheets %}{% endblock public_stylesheets %}
-        {% if current_event and current_event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ current_event.urls.settings_css }}?c={{ current_event.visible_primary_color|urlencode }}" />{% endif %}
+        {% if current_event %}
+            {% if current_event.visible_primary_color or current_event_font %}
+                <link rel="stylesheet" type="text/css" href="{{ current_event.urls.settings_css }}?c={{ current_event.visible_primary_color|urlencode }}&f={{ current_event_font|urlencode }}" />
+            {% endif %}
+        {% endif %}
         {% if current_event and current_event.custom_css %}<link rel="stylesheet" type="text/css" href="{{ current_event.custom_css.url }}"/>{% endif %}
         {% compress js %}
             <script defer src="{% static 'common/js/base.js' %}"></script>
@@ -80,6 +85,7 @@
             <script src="{% static 'agenda/js/join-online-event.js' %}"></script>
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
             <script defer src="{% static 'common/js/nav-tabs.js' %}"></script>
+            <script type="module" src="{% static 'common/js/contact-modal.js' %}"></script>
         {% endcompress %}
         {% block scripts %}{% endblock scripts %}
         {% block custom_header %}{% endblock custom_header %}
@@ -150,7 +156,7 @@
                 {% endblock presale_back_navigation %}
                 <div class="event-hero">
                     <div class="event-hero-overlay">
-                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% elif request.organizer and organizer_logo %} event-brand--has-logo{% endif %}{% if request.organizer and organizer.settings.organizer_logo_image_large %} event-brand--logo-large{% endif %}">
+                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% elif request.organizer and organizer_logo %} event-brand--has-logo{% endif %}{% if current_event and current_event.settings.logo_image_large %} event-brand--logo-large{% elif not current_event and request.organizer and request.organizer.settings.organizer_logo_image_large %} event-brand--logo-large{% endif %}">
                             <div class="event-logo">
                                 <a href="{% block nav_link %}{% endblock nav_link %}">
                                     {% block event_logo %}
@@ -242,8 +248,10 @@
                 {% endif %}
                 {% include "common/powered_by.html" %}
                 {% if current_event %}
-                    ·
-                    <a href="mailto:{{ current_event.email }}">{% translate "Contact us" %}</a>
+                    {% if current_event.settings.contact_mail or current_event.email %}
+                        ·
+                        <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
+                    {% endif %}
                 {% elif request.organizer and request.organizer.settings.contact_mail %}
                     ·
                     <a href="mailto:{{ request.organizer.settings.contact_mail }}">{% translate "Contact event organizer" %}</a>
@@ -262,6 +270,12 @@
             </footer>
         </div>
         {% include "common/includes/modals.html" %}
+        {% if current_event %}
+            {% if current_event.settings.contact_mail or current_event.email %}
+                {% eventurl current_event "presale:event.contact" as contact_url %}
+                {% include "common/includes/contact_organizer_modal.html" with contact_url=contact_url %}
+            {% endif %}
+        {% endif %}
         {% block body_bottom %}{% endblock body_bottom %}
     </body>
 </html>

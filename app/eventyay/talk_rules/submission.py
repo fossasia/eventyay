@@ -41,22 +41,7 @@ def is_cfp_open(user, obj):
     return event and event.talks_published and event.cfp.is_open
 
 
-def _show_featured_setting(event):
-    """Normalized value for org setting ``show_featured`` (stored: never / after_schedule / always).
-
-    ``after_schedule`` means: featured is shown only *after* the first **published** schedule
-    version exists (``Schedule.published`` set on a versioned release).
-    """
-    from eventyay.base.models.event import default_feature_flags
-
-    defaults = default_feature_flags()
-    flags = event.feature_flags
-    if not isinstance(flags, dict):
-        flags = {}
-    if 'show_featured' in flags and flags['show_featured'] is not None:
-        raw = flags['show_featured']
-    else:
-        raw = defaults.get('show_featured', 'never')
+def _normalize_featured_visibility(raw, default='never'):
     if isinstance(raw, bool):
         return 'always' if raw else 'never'
     if isinstance(raw, str):
@@ -66,7 +51,63 @@ def _show_featured_setting(event):
         # Migrate legacy value saved before rename.
         if normalized == 'pre_schedule':
             return 'after_schedule'
-    return defaults.get('show_featured', 'never')
+    return default
+
+
+def _show_featured_visibility_setting(event, flag_key, fallback_key=None):
+    """Normalized value for org featured visibility (never / after_schedule / always)."""
+    from eventyay.base.models.event import default_feature_flags
+
+    defaults = default_feature_flags()
+    flags = event.feature_flags
+    if not isinstance(flags, dict):
+        flags = {}
+    if flag_key in flags and flags[flag_key] is not None:
+        raw = flags[flag_key]
+    elif fallback_key and fallback_key in flags and flags[fallback_key] is not None:
+        raw = flags[fallback_key]
+    else:
+        raw = defaults.get(flag_key, 'never')
+    return _normalize_featured_visibility(raw, defaults.get(flag_key, 'never'))
+
+
+def _show_featured_setting(event):
+    """Normalized value for org setting ``show_featured`` (featured sessions)."""
+    return _show_featured_visibility_setting(event, 'show_featured')
+
+
+def _show_featured_speakers_setting(event):
+    """Normalized value for org setting ``show_featured_speakers`` (featured speakers)."""
+    return _show_featured_visibility_setting(event, 'show_featured_speakers', fallback_key='show_featured')
+
+
+def show_featured_always(event):
+    """Whether org setting shows the featured page even before a schedule exists."""
+    return _show_featured_setting(event) == 'always'
+
+
+def featured_submissions_for_event(event):
+    """Public featured submissions that may appear before a schedule is released."""
+    from eventyay.base.models import SubmissionStates
+
+    return (
+        event.submissions.filter(is_featured=True)
+        .exclude(
+            state__in=(
+                SubmissionStates.REJECTED,
+                SubmissionStates.CANCELED,
+                SubmissionStates.WITHDRAWN,
+                SubmissionStates.DELETED,
+            )
+        )
+        .select_related('event', 'event__organizer', 'submission_type')
+        .prefetch_related('speakers')
+        .order_by('title')
+    )
+
+
+def event_has_featured_submissions(event):
+    return featured_submissions_for_event(event).exists()
 
 
 def _event_has_published_schedule(event):
@@ -74,9 +115,48 @@ def _event_has_published_schedule(event):
     return event.current_schedule is not None
 
 
+def are_featured_exports_available(event):
+    """Public calendar/file exports require the same release as the main agenda."""
+    return bool(
+        event
+        and event.talks_published
+        and event.get_feature_flag('show_schedule')
+        and event.current_schedule
+    )
+
+
+def event_has_featured_speakers(event):
+    from eventyay.base.models import SpeakerProfile
+
+    return SpeakerProfile.objects.filter(event=event, is_featured=True).exists()
+
+
 def schedule_widget_featured_cache_key_part(event):
-    """Vary schedule widget JSON cache when featured rules or release state change."""
-    return f'{_show_featured_setting(event)}|rel={int(_event_has_published_schedule(event))}'
+    """Vary schedule JSON cache when featured rules, popularity, or release state change."""
+    flags = event.feature_flags or {}
+    popularity_enabled = bool(flags.get('session_popularity_enabled', False))
+    return (
+        f'sess={_show_featured_setting(event)}|'
+        f'spk={_show_featured_speakers_setting(event)}|'
+        f'rel={int(_event_has_published_schedule(event))}|'
+        f'pop={int(popularity_enabled)}|'
+        f'popshow={int(event.session_popularity_show_on_schedule())}'
+    )
+
+
+def _after_schedule_featured_sessions_visible(event):
+    if _event_has_published_schedule(event):
+        return event.talks_published
+    return event_has_featured_submissions(event)
+
+
+def _featured_public_visible(event, setting_fn, after_schedule_fn):
+    show = setting_fn(event)
+    if show == 'never':
+        return False
+    if show == 'always':
+        return True
+    return after_schedule_fn(event)
 
 
 @rules.predicate
@@ -87,20 +167,35 @@ def are_featured_submissions_visible(user, event):
     ``orga_can_change_submissions``) for API/orga rules. Public pages and nav must use this
     predicate so "Never" is respected for organizers viewing the public site.
 
-    For ``after_schedule`` ("once the first schedule version is published"), featured is shown
-    only **after** at least one published ``Schedule`` version exists. Before the first release,
-    featured is hidden. Uses a scoped DB check; does not depend on "show schedule publicly".
+    For ``after_schedule``, the featured page is available once a schedule version is
+    published (and talks are published), or earlier when featured submissions exist as a
+    preview before the schedule is released.
     """
-    show_featured = _show_featured_setting(event)
-    if show_featured == 'never':
+    return _featured_public_visible(event, _show_featured_setting, _after_schedule_featured_sessions_visible)
+
+
+def can_use_featured_exports(user, event):
+    """Whether public featured export URLs are allowed for this user and event."""
+    return are_featured_submissions_visible(user, event) and are_featured_exports_available(event)
+
+
+@rules.predicate
+def are_featured_speakers_visible(user, event):
+    """Whether public pages may show speakers marked as featured.
+
+    Unlike :func:`are_featured_submissions_visible`, this does not require ``talks_published``
+    or a published schedule. For ``after_schedule``, featured speakers appear once organisers
+    mark at least one speaker as featured.
+    """
+    event_obj = getattr(event, 'event', event)
+    if not event_obj:
         return False
-    # "Always" shows regardless of schedule state or talks_published.
-    if show_featured == 'always':
-        return True
-    if not event.talks_published:
-        return False
-    # after_schedule: visible only once the first published schedule version exists
-    return _event_has_published_schedule(event)
+    return _featured_public_visible(event_obj, _show_featured_speakers_setting, event_has_featured_speakers)
+
+
+def include_public_featured_speaker_metadata(user, event):
+    """Whether schedule JSON should expose ``is_featured`` / ``featured_position``."""
+    return are_featured_speakers_visible(user, event)
 
 
 @rules.predicate

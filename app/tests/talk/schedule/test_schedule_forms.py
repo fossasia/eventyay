@@ -7,9 +7,9 @@ from django.forms import ModelForm, ValidationError
 from django.utils import timezone
 from django_scopes import scope
 
-from pretalx.person.models import SpeakerProfile
-from pretalx.schedule.forms import AvailabilitiesFormMixin
-from pretalx.schedule.models import Availability, Room
+from eventyay.base.models import SpeakerProfile
+from eventyay.schedule.forms import AvailabilitiesFormMixin
+from eventyay.base.models import Availability, Room
 
 timezone.activate(ZoneInfo("UTC"))
 

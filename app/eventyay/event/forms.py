@@ -278,7 +278,7 @@ class EventWizardDisplayForm(forms.Form):
     )
     email = forms.EmailField(
         label=_("Organizer email address"),
-        help_text=_("We'll show this publicly to allow attendees to contact you."),
+        help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
         required=True,
     )
 

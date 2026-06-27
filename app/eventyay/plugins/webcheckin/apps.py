@@ -13,6 +13,7 @@ class WebCheckinApp(AppConfig):
         version = version
         category = 'FEATURE'
         featured = True
+        beta = True
         description = _('This plugin allows you to perform check-in actions in your browser.')
 
     def ready(self):

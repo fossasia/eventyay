@@ -2,7 +2,7 @@ import pytest
 from django_scopes import scope
 
 from eventyay.base.models import SpeakerProfile
-from pretalx.submission.models import Answer, Question, QuestionVariant
+from eventyay.base.models import Answer, TalkQuestion as Question, TalkQuestionVariant as QuestionVariant
 
 
 @pytest.fixture
@@ -86,6 +86,7 @@ def test_build_data_enrich_resources(event, slot, confirmed_resource):
         res = talk["resources"][0]
         assert "description" in res
         assert "resource" in res
+        assert res["resource"].startswith(("http://", "https://"))
 
 
 @pytest.mark.django_db
