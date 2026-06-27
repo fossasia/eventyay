@@ -1021,6 +1021,7 @@ class OrderPositionCancel(OrderPositionCancelMixin, EventViewMixin, OrderDetailM
                     'position_total': position_total,
                     'cancellation_fee': cancellation_fee,
                     'refund_amount': position_total - cancellation_fee,
+                    'addons': addons,
                 }
             )
 

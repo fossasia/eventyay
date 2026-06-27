@@ -43,6 +43,16 @@
                                     </small>
                                 {% endif %}
                             </label>
+                            {% if row.addons %}
+                                <small class="text-warning">
+                                    <span class="fa fa-exclamation-triangle" aria-hidden="true"></span>
+                                    {% blocktrans trimmed count n=row.addons|length %}
+                                        Canceling this ticket will also cancel its add-on.
+                                    {% plural %}
+                                        Canceling this ticket will also cancel its {{ n }} add-ons.
+                                    {% endblocktrans %}
+                                </small>
+                            {% endif %}
                         </div>
                         <small class="text-muted">
                             {% blocktrans trimmed with total=row.position_total|money:request.event.currency %}
