@@ -337,17 +337,22 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
 
         result = []
         for submission in submissions:
-            for slot in submission.current_slots or []:
-                for speaker in submission.speakers.all():
-                    result.append(
-                        {
-                            'submission': submission,
-                            'slot': slot,
-                            'user': speaker,
-                        }
-                    )
+            speakers = list(submission.speakers.all())
+            current_slots = submission.current_slots or []
+            
+            # Use schedule slots if the submission is scheduled; otherwise fallback to just the speakers
+            if current_slots:
+                for slot in current_slots:
+                    for speaker in speakers:
+                        result.append(
+                            {
+                                'submission': submission,
+                                'slot': slot,
+                                'user': speaker,
+                            }
+                        )
             else:
-                for speaker in submission.speakers.all():
+                for speaker in speakers:
                     result.append(
                         {
                             'submission': submission,
