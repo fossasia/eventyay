@@ -81,7 +81,7 @@
 							span.filter-dropdown-label {{ item.label }}
 					.filter-dropdown-empty(v-else) No {{ languageGroup.title.toLowerCase() }} available
 			button.toolbar-btn.icon-only.fav-toggle(
-				v-if="loggedIn && popularityFeatureEnabled && favsCount",
+				v-if="favsCount",
 				:disabled="!favsCount",
 				:aria-label="t.starred",
 				:aria-pressed="onlyFavs ? 'true' : 'false'",
@@ -338,7 +338,6 @@ export default {
 	name: 'ScheduleToolbar',
 	inject: {
 		translationMessages: { default: () => ({}) },
-		loggedIn: { default: false }
 	},
 	props: {
 		version: { type: String, default: '' },
@@ -371,7 +370,6 @@ export default {
 		includePopularitySortKey: { type: Boolean, default: false },
 		popularityFeatureEnabled: { type: Boolean, default: false },
 		popularitySortAvailable: { type: Boolean, default: false },
-		loggedIn: { type: Boolean, default: false },
 		exportsDisabled: { type: Boolean, default: false },
 		sortOptions: { type: Array, default: () => ['title', 'title_desc'] },
 		timeDensityMinutes: { type: Number, default: 30 },
