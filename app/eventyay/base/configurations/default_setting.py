@@ -53,9 +53,9 @@ def country_choice_kwargs():
 
 
 def primary_font_kwargs():
-    from eventyay.presale.style import get_fonts
+    from eventyay.presale.style import SYSTEM_FONT_CHOICES, get_fonts
 
-    choices = [('Open Sans', 'Open Sans')]
+    choices = list(SYSTEM_FONT_CHOICES)
     choices += [(a, {'title': a, 'data': v}) for a, v in get_fonts().items()]
     return {
         'choices': choices,
@@ -1576,7 +1576,7 @@ DEFAULT_SETTINGS = {
         'form_class': forms.EmailField,
         'form_kwargs': dict(
             label=_('Contact address'),
-            help_text=_("We'll show this publicly to allow attendees to contact you."),
+            help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
         ),
     },
     'imprint_url': {

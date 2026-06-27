@@ -848,3 +848,9 @@ table td > .checkbox input[type="checkbox"] {
   margin-bottom: 6px;
   font-weight: 500;
 }
+
+// Font picker preview label — applies the per-option font family set via
+// the --font-preview CSS custom property injected by FontSelect.create_option.
+.font-preview-label {
+  font-family: var(--font-preview);
+}
