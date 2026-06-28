@@ -102,6 +102,7 @@ export default defineConfig(({ mode }) => {
       })
     ].filter(Boolean),
     css: {
+      preprocessorMaxWorkers: 0,
       preprocessorOptions: {
         stylus: stylusOptions,
         styl: stylusOptions
@@ -110,50 +111,46 @@ export default defineConfig(({ mode }) => {
     resolve: {
       extensions: ['.js', '.json', '.vue'],
       preserveSymlinks: true,
-      alias: {
-        lodash: 'lodash-es',
-        '~': path.resolve(__dirname, 'src'),
-        config: path.resolve(__dirname, 'config.js'),
-        react: 'preact/compat',
-        'react-dom': 'preact/compat',
-        // Some legacy bundles or sourcemaps may reference this deep path; normalize to supported entry
-        'preact/hooks/dist/hooks.js': 'preact/hooks',
-        // Use official entrypoints; avoid deep paths that may not exist across versions
-        assets: path.resolve(__dirname, 'src/assets'),
-        components: path.resolve(__dirname, 'src/components'),
-        lib: path.resolve(__dirname, 'src/lib'),
-        locales: path.resolve(__dirname, 'src/locales'),
-        router: path.resolve(__dirname, 'src/router'),
-        store: path.resolve(__dirname, 'src/store'),
-        styles: path.resolve(__dirname, 'src/styles'),
-        views: path.resolve(__dirname, 'src/views'),
-        // Redirect schedule component imports to shared schedule module
-        '@schedule': path.resolve(__dirname, '../schedule/src'),
-        features: path.resolve(__dirname, 'src/features'),
-        i18n: path.resolve(__dirname, 'src/i18n'),
-        theme: path.resolve(__dirname, 'src/theme'),
-        'has-emoji': path.resolve(__dirname, 'build/has-emoji/emoji.json'),
-        // Reduce moment-timezone data size similar to previous webpack plugin
-        'moment-timezone': path.resolve(__dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js'),
-        // Ensure schedule component imports resolve from video's node_modules
-        'markdown-it': path.resolve(__dirname, 'node_modules/markdown-it'),
-        'markdown-it-multimd-table': path.resolve(
-          __dirname,
-          'node_modules/markdown-it-multimd-table'
-        ),
-        dompurify: path.resolve(__dirname, 'node_modules/dompurify'),
-        // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
-        sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
-      }
+      dedupe: ['vue'],
+      alias: [
+        { find: 'lodash', replacement: 'lodash-es' },
+        { find: '~', replacement: path.resolve(__dirname, 'src') },
+        { find: /^buntpapier$/, replacement: path.resolve(__dirname, 'node_modules/buntpapier/src/index.js') },
+        { find: 'config', replacement: path.resolve(__dirname, 'config.js') },
+        { find: 'react', replacement: 'preact/compat' },
+        { find: 'react-dom', replacement: 'preact/compat' },
+        { find: 'preact/hooks/dist/hooks.js', replacement: 'preact/hooks' },
+        { find: 'assets', replacement: path.resolve(__dirname, 'src/assets') },
+        { find: 'components', replacement: path.resolve(__dirname, 'src/components') },
+        { find: 'lib', replacement: path.resolve(__dirname, 'src/lib') },
+        { find: 'locales', replacement: path.resolve(__dirname, 'src/locales') },
+        { find: 'router', replacement: path.resolve(__dirname, 'src/router') },
+        { find: 'store', replacement: path.resolve(__dirname, 'src/store') },
+        { find: 'styles', replacement: path.resolve(__dirname, 'src/styles') },
+        { find: 'views', replacement: path.resolve(__dirname, 'src/views') },
+        { find: '@schedule', replacement: path.resolve(__dirname, '../schedule/src') },
+        { find: 'features', replacement: path.resolve(__dirname, 'src/features') },
+        { find: 'i18n', replacement: path.resolve(__dirname, 'src/i18n') },
+        { find: 'theme', replacement: path.resolve(__dirname, 'src/theme') },
+        { find: 'has-emoji', replacement: path.resolve(__dirname, 'build/has-emoji/emoji.json') },
+        { find: 'moment-timezone', replacement: path.resolve(__dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js') },
+        { find: 'markdown-it', replacement: path.resolve(__dirname, 'node_modules/markdown-it') },
+        { find: 'markdown-it-multimd-table', replacement: path.resolve(__dirname, 'node_modules/markdown-it-multimd-table') },
+        { find: 'dompurify', replacement: path.resolve(__dirname, 'node_modules/dompurify') },
+        { find: 'sdp', replacement: path.resolve(__dirname, 'src/shims/sdp-default.js') },
+      ]
     },
     optimizeDeps: {
       include: [
         'color',
-        'buntpapier',
-        'moment-timezone'
+        'moment-timezone',
+        'fuzzysearch',
+        'popper.js',
+        'resize-observer-polyfill',
       ],
       exclude: [
-        'pdfjs-dist'
+        'pdfjs-dist',
+        'buntpapier',
       ],
       esbuildOptions: {
         target: 'esnext'
@@ -189,7 +186,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('quill')) return 'vendor-quill'
               if (id.includes('markdown-it')) return 'vendor-markdown'
               if (id.includes('i18next')) return 'vendor-i18n'
-              if (id.includes('buntpapier')) return 'vendor-buntpapier'
               if (id.includes('preact')) return 'vendor-preact'
               if (id.includes('vue') || id.includes('vue-router') || id.includes('vuex') || id.includes('vue-virtual-scroller')) return 'vendor-vue'
               // removed pretalx chunk assignment since library removed from usage
@@ -222,7 +218,9 @@ export default defineConfig(({ mode }) => {
       BASE_URL: `'${process.env.BASE_URL || '/'}'`,
       global: 'globalThis',
       'process.env.NODE_PATH': `'${process.env.NODE_PATH}'`,
-      __CURRENT_YEAR__: currentYear
+      __CURRENT_YEAR__: currentYear,
+      __BUNDLED_DEV__: 'false',
+      __SERVER_FORWARD_CONSOLE__: 'false',
     }
   }
 })
