@@ -94,6 +94,26 @@ def test_slides_widget_accepts_plain_dict_session_data():
     }
 
 
+def test_slides_widget_get_context_re_render():
+    widget = SlidesWidget()
+
+    # Normal GET request (None value or list of existing resources)
+    ctx1 = widget.get_context('slides', None, {})
+    assert ctx1['widget']['is_re_render'] is False
+
+    ctx2 = widget.get_context('slides', [], {})
+    assert ctx2['widget']['is_re_render'] is False
+
+    # Initial values from DB (dict with existing_resources or links)
+    ctx3 = widget.get_context('slides', {'existing_resources': [], 'links': []}, {})
+    assert ctx3['widget']['is_re_render'] is False
+
+    # Validation error re-render (raw dict from value_from_datadict without database keys)
+    ctx4 = widget.get_context('slides', {'links_text': 'http://...', 'clear_ids': []}, {})
+    assert ctx4['widget']['is_re_render'] is True
+
+
+
 def test_info_form_ignores_default_slot_count_for_drafts():
     assert InfoForm._has_real_draft_value('slot_count', 1) is False
     assert InfoForm._has_real_draft_value('slot_count', 2) is True

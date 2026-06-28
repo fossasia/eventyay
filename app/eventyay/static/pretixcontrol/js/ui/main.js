@@ -250,6 +250,24 @@ var form_handlers = function (el) {
         return parts.host;
     }
 
+    function hexToRgbObj(hex) {
+        if (!hex) return null;
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    function getEffectiveColor(name, defaultHex) {
+        var $field = $("input[name$='" + name + "']");
+        if ($field.length && $field.val() && !$field.is(".no-contrast")) {
+            return hexToRgbObj($field.val());
+        }
+        return hexToRgbObj(defaultHex);
+    }
+
     function updateContrastState($input, rgb) {
         var $host = getColorFieldHost($input),
             $note = $host.find(".contrast-state");
@@ -261,7 +279,24 @@ var form_handlers = function (el) {
             $note = $("<div class='help-block contrast-state'></div>");
             $host.append($note);
         }
-        var c = contrast([255,255,255], [rgb.r, rgb.g, rgb.b]);
+
+        var name = $input.attr("name") || "";
+        var compareRgb = {r: 255, g: 255, b: 255};
+        var backgroundName = gettext("white background");
+
+        if (name.indexOf("header_background_color") !== -1) {
+            compareRgb = getEffectiveColor("header_text_color", "#ffffff") || {r: 255, g: 255, b: 255};
+            backgroundName = gettext("header text color");
+        } else if (name.indexOf("header_text_color") !== -1) {
+            var primaryFallback = getEffectiveColor("primary_color", "#3b1c4a") || {r: 59, g: 28, b: 74};
+            compareRgb = getEffectiveColor("header_background_color", null) || primaryFallback;
+            backgroundName = gettext("header background color");
+        } else if (name.indexOf("navigation_text_color") !== -1) {
+            compareRgb = {r: 255, g: 255, b: 255};
+            backgroundName = gettext("white background");
+        }
+
+        var c = contrast([compareRgb.r, compareRgb.g, compareRgb.b], [rgb.r, rgb.g, rgb.b]);
         if (c > 7) {
             $note.html("<span class='fa fa-fw fa-check-circle'></span>")
                 .append(gettext('Your color has great contrast and is very easy to read!'));
@@ -272,8 +307,7 @@ var form_handlers = function (el) {
             $note.removeClass("text-success").removeClass("text-warning").removeClass("text-danger");
         } else {
             $note.html("<span class='fa fa-fw fa-warning'></span>")
-                .append(gettext('Your color has bad contrast for text on white background, please choose a darker ' +
-                    'shade.'));
+                .append(gettext('Your color has bad contrast for text on ' + backgroundName + ', please choose a different shade.'));
             $note.addClass("text-danger").removeClass("text-success").removeClass("text-warning");
         }
     }
@@ -306,6 +340,24 @@ var form_handlers = function (el) {
             colorString = pickerColor && pickerColor.toString ? pickerColor.toString() : null;
         updateColorPreview($input, colorString);
         updateContrastState($input, rgb);
+
+        if (!e.isTriggeredByDependency) {
+            var name = $input.attr("name") || "";
+            if (name.indexOf("header_background_color") !== -1 || name.indexOf("primary_color") !== -1) {
+                var $depTxt = $("input[name$='header_text_color']");
+                if ($depTxt.length && $depTxt.val()) {
+                    var txtRgb = hexToRgbObj($depTxt.val());
+                    if (txtRgb) updateContrastState($depTxt, txtRgb);
+                }
+            }
+            if (name.indexOf("header_text_color") !== -1 || name.indexOf("primary_color") !== -1) {
+                var $depBg = $("input[name$='header_background_color']");
+                if ($depBg.length && $depBg.val()) {
+                    var bgRgb = hexToRgbObj($depBg.val());
+                    if (bgRgb) updateContrastState($depBg, bgRgb);
+                }
+            }
+        }
     });
 
     $colorInputs.on('input', function () {
@@ -869,7 +921,7 @@ $(function () {
             if (!nrOfChecked) countLabels.empty();
             else countLabels.text(" ("+nrOfChecked+")");
 
-            if (!allChecked) $selectAll.find("input").prop("checked", false); 
+            if (!allChecked) $selectAll.find("input").prop("checked", false);
 
             $actionButtons.prop("disabled", !nrOfChecked);
             $toggle.prop("checked", allChecked).prop("indeterminate", nrOfChecked > 0 && !allChecked);
@@ -964,6 +1016,24 @@ $(function () {
         });
         return false;
     });
+
+    // Voucher page specific delete selected toggle
+    var $vouchersDeleteBtn = $('button[name="action"][value="delete"]');
+    var $vouchersForm = $vouchersDeleteBtn.closest('form');
+    var $vouchersCheckboxes = $vouchersForm.find('input[name="voucher"]');
+
+    // Only run this behavior on the voucher list (other pages also use .table-quotas + a delete button).
+    if ($vouchersCheckboxes.length) {
+        var updateVouchersDeleteBtn = function () {
+            $vouchersDeleteBtn.toggle($vouchersCheckboxes.filter(':checked').length > 0);
+        };
+
+        $vouchersForm.on('change', 'input[name="voucher"], input[data-toggle-table]', function () {
+            setTimeout(updateVouchersDeleteBtn, 50);
+        });
+
+        updateVouchersDeleteBtn();
+    }
 
     $("#ajaxerr").on("click", ".ajaxerr-close", ajaxErrDialog.hide);
     moment.locale($("body").attr("data-datetimelocale"));

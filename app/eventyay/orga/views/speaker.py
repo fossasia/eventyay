@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Q
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
 from django.db.models.expressions import OrderBy
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -17,7 +17,7 @@ from django_scopes import scope
 from eventyay.base.models import Answer, SpeakerProfile, User
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
-from eventyay.base.models.submission import SubmissionStates
+from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.talkimport import import_speakers
 from eventyay.base.views.tasks import AsyncAction
@@ -51,10 +51,27 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     template_name = 'orga/speaker/list.html'
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
-    sortable_fields = ('position', 'user__email', 'user__fullname')
+    sortable_fields = ('position', 'user__email', 'user__fullname', 'is_featured')
     default_sort_field = 'position'
-    secondary_sort = {'position': ('user__fullname',)}
+    secondary_sort = {'position': ('user__fullname',), 'is_featured': ('position', 'user__fullname')}
     permission_required = 'base.orga_list_speakerprofile'
+
+    def _speaker_list_ordering(self, *, descending=False):
+        direction = (
+            OrderBy(F('position'), descending=True, nulls_last=True)
+            if descending
+            else OrderBy(F('position'), nulls_last=True)
+        )
+        return (direction, 'user__fullname', 'pk')
+
+    def sort_queryset(self, qs):
+        sort_key = self.request.GET.get('sort') or ''
+        if not sort_key or sort_key == 'default':
+            sort_key = getattr(self, 'default_sort_field', None) or ''
+        plain_key = sort_key[1:] if sort_key.startswith('-') else sort_key
+        if plain_key == 'position':
+            return qs.order_by(*self._speaker_list_ordering(descending=sort_key.startswith('-')))
+        return super().sort_queryset(qs)
 
     def get_filter_form(self):
         with scope(event=self.request.event):
@@ -78,11 +95,6 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
                         & Q(user__submissions__state__in=SubmissionStates.accepted_states),
                         distinct=True,
                     ),
-                )
-                .order_by(
-                    OrderBy(F('position'), nulls_last=True),
-                    'user__fullname',
-                    'pk',
                 )
             )
 
@@ -110,7 +122,24 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
                 answers = Answer.objects.filter(question_id=question, person_id=OuterRef('user_id'))
                 qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=False)
             qs = qs.distinct()
-            return self.sort_queryset(qs)
+            return self.sort_queryset(qs).prefetch_related(
+                Prefetch(
+                    'user__submissions',
+                    queryset=self._speaker_sessions_queryset(),
+                    to_attr='list_sessions',
+                )
+            )
+
+    def _speaker_sessions_queryset(self):
+        qs = (
+            self.request.event.submissions.exclude(
+                state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT),
+            )
+            .order_by('title')
+        )
+        if is_only_reviewer(self.request.user, self.request.event):
+            qs = limit_for_reviewers(qs, self.request.event, self.request.user)
+        return qs
 
     def post(self, request, *args, **kwargs):
         if not request.user.has_perm('base.update_speakerprofile', request.event):
@@ -127,16 +156,14 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
             requested_ids = [int(pk) for pk in order.split(',') if pk]
         except ValueError:
             return False
-        if not requested_ids:
-            return False
-        if len(requested_ids) != len(set(requested_ids)):
+        if not requested_ids or len(requested_ids) != len(set(requested_ids)):
             return False
 
         with transaction.atomic(), scope(event=self.request.event):
             profiles = list(
                 speaker_profiles_for_user(self.request.event, self.request.user)
                 .select_related('user')
-                .order_by(OrderBy(F('position'), nulls_last=True), 'user__fullname', 'pk')
+                .order_by(*self._speaker_list_ordering())
             )
             profile_by_id = {profile.pk: profile for profile in profiles}
             valid_requested_ids = [pk for pk in requested_ids if pk in profile_by_id]
@@ -161,6 +188,9 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
 
             if updates:
                 SpeakerProfile.objects.bulk_update(updates, ['position'])
+                from eventyay.agenda.views.utils import clear_schedule_caches
+
+                clear_schedule_caches(self.request.event)
 
         return True
 
@@ -292,11 +322,11 @@ class SpeakerPasswordReset(SpeakerViewMixin, ActionConfirmMixin, DetailView):
 
 
 class SpeakerToggleArrived(SpeakerViewMixin, View):
-    permission_required = 'base.update_speakerprofile'
+    permission_required = 'base.mark_arrived_speakerprofile'
 
     def post(self, request, *args, **kwargs):
         self.profile.has_arrived = not self.profile.has_arrived
-        self.profile.save()
+        self.profile.save(update_fields=['has_arrived'])
         action = 'eventyay.speaker.arrived' if self.profile.has_arrived else 'eventyay.speaker.unarrived'
         self.object.log_action(
             action,
@@ -305,9 +335,13 @@ class SpeakerToggleArrived(SpeakerViewMixin, View):
             # orga=True,
         )
         if url := self.request.GET.get('next'):
-            if url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
+            if url_has_allowed_host_and_scheme(
+                url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
                 return redirect(url)
-        return redirect(self.profile.orga_urls.base)
+        return redirect(self.request.event.orga_urls.speakers)
 
     def get(self, request, *args, **kwargs):
         return redirect(self.profile.orga_urls.base)
@@ -325,6 +359,9 @@ class SpeakerToggleFeatured(SpeakerViewMixin, View):
             data={'event': self.request.event.slug},
             user=self.request.user,
         )
+        from eventyay.agenda.views.utils import clear_schedule_caches
+
+        clear_schedule_caches(self.request.event)
         return HttpResponse()
 
 

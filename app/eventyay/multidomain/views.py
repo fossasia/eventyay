@@ -150,10 +150,15 @@ class VideoSPAView(View):
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
                 'translationMessages': {
-                    'favs_not_logged_in': str(_(
-                        "You're currently not logged in, so your favourited talks will only be stored locally in your browser."
+                    'favs_anonymous_notice': str(_(
+                        'Your favourites can only be saved locally in this browser. '
+                        'Please sign in or register to sync starred sessions and use more features. '
+                        'Locally saved stars may be lost if you clear your browser data; '
+                        'we are not responsible for data loss in this case.'
                     )),
-                    'favs_not_saved': str(_('Your favourites could only be saved locally in your browser.')),
+                    'favs_not_saved': str(_(
+                        'Could not sync favourites to your account. They remain stored locally in this browser.'
+                    )),
                     'no_matching_options': str(_('Sorry, no matching options.')),
                     'view_changelog': str(_('View Changelog')),
                     'go_to_current_version': str(_('Go to current version')),

@@ -55,12 +55,19 @@ class Command(BaseCommand):
             return None
 
         try:
-            response = requests.get(url, timeout=10, stream=True)
+            response = requests.get(url, timeout=(5, 10), allow_redirects=False, stream=True)
+            if response.is_redirect:
+                location = response.headers.get('Location', '')
+                if not self.is_safe_url(location):
+                    self.stderr.write(self.style.ERROR(f"Redirect to unsafe URL blocked: {location}"))
+                    return None
+                response = requests.get(location, timeout=(5, 10), allow_redirects=False, stream=True)
+
             response.raise_for_status()
 
             # Limit size to 10MB
             max_size = 10 * 1024 * 1024
-            
+
             content_length = response.headers.get('Content-Length')
             if content_length and int(content_length) > max_size:
                 self.stderr.write(self.style.ERROR(f"Image too large ({content_length} bytes): {url}"))
@@ -80,7 +87,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
-        
+
         models_to_check = [
             (Event, 'logo'),
             (Event, 'header_image'),
@@ -103,12 +110,12 @@ class Command(BaseCommand):
                 url = store.value
                 event = store.object
                 self.stdout.write(f"Found external URL in Event {event.slug} setting '{store.key}': {url}")
-                
+
                 content = self.download_image(url)
                 if not content:
                     failure_count += 1
                     continue
-                    
+
                 content_file = ContentFile(content)
                 try:
                     validate_image(content_file)
@@ -116,31 +123,31 @@ class Command(BaseCommand):
                     self.stderr.write(self.style.ERROR(f"Invalid image content from {url}: {e}"))
                     failure_count += 1
                     continue
-                    
+
                 try:
                     filename = urllib.parse.urlparse(url).path.split('/')[-1]
                     if not filename:
                         filename = "image.jpg"
-                        
+
                     uploaded = SimpleUploadedFile(filename, content)
-                    
+
                     with transaction.atomic():
                         result = optimize_uploaded_image(uploaded, store.key)
-                        
+
                         uid = uuid.uuid4().hex[:8]
                         base_name = filename.rsplit('.', 1)[0]
                         base_dir = f"pub/{event.organizer.slug}/{event.slug}/img"
                         base_path = f"{base_dir}/{base_name}_{uid}"
-                        
+
                         optimized_name = f"{base_path}.{result.optimized_ext}"
                         optimized_path = default_storage.save(optimized_name, result.optimized)
-                        
+
                         original_name = f"{base_path}_original.{result.original_ext}"
                         default_storage.save(original_name, result.original)
-                        
+
                         event.settings.set(store.key, f"file://{optimized_path}")
                         event.settings.set(f"{store.key}_original_ext", result.original_ext)
-                    
+
                     self.stdout.write(self.style.SUCCESS(f"Successfully imported {url} to {optimized_path}"))
                     success_count += 1
                 except Exception as e:
@@ -150,7 +157,7 @@ class Command(BaseCommand):
         # 2. Process models
         for model_cls, field_name in models_to_check:
             qs = model_cls.objects.filter(**{f"{field_name}__startswith": "http"})
-            
+
             if dry_run:
                 self.stdout.write(self.style.SUCCESS(f"\n[DRY-RUN] Found {qs.count()} external images for {model_cls.__name__}.{field_name}."))
                 for instance in qs:
@@ -159,18 +166,18 @@ class Command(BaseCommand):
                 continue
 
             self.stdout.write(self.style.MIGRATE_HEADING(f"Processing {model_cls.__name__}.{field_name}"))
-            
+
             for instance in qs:
                 url = getattr(instance, field_name).name
                 self.stdout.write(f"Found external URL on {model_cls.__name__} {instance.pk}: {url}")
-                
+
                 content = self.download_image(url)
                 if not content:
                     failure_count += 1
                     continue
 
                 content_file = ContentFile(content)
-                
+
                 try:
                     validate_image(content_file)
                 except Exception as e:
@@ -182,22 +189,84 @@ class Command(BaseCommand):
                     filename = urllib.parse.urlparse(url).path.split('/')[-1]
                     if not filename:
                         filename = "image.jpg"
-                        
+
                     with transaction.atomic():
                         field = getattr(instance, field_name)
                         setattr(instance, field_name, '')
                         field.save(filename, content_file, save=False)
                         instance.save(update_fields=[field_name])
-                    
+
                     self.stdout.write(self.style.SUCCESS(f"Successfully imported {url} to {field.name}"))
-                    
+
                     if hasattr(instance, 'process_image'):
                         instance.process_image(field_name, generate_thumbnail=(field_name == 'avatar'))
-                        
+
                     success_count += 1
                 except Exception as e:
                     self.stderr.write(self.style.ERROR(f"Error saving image from {url}: {e}"))
                     failure_count += 1
 
         if not dry_run:
-            self.stdout.write(self.style.SUCCESS(f"\nImport finished: {success_count} succeeded, {failure_count} failed."))
+            self.stdout.write(self.style.SUCCESS(f"\nImport phase 1-2 finished (before User.profile JSON avatars): {success_count} succeeded, {failure_count} failed."))
+
+        # 3. Process User profiles (external_avatar_url from JSON field)
+        profile_users = User.objects.filter(profile__avatar__url__startswith="http")
+        if dry_run:
+            self.stdout.write(self.style.SUCCESS(f"\n[DRY-RUN] Found {profile_users.count()} external images in User profiles."))
+            for instance in profile_users:
+                url = instance.external_avatar_url
+                self.stdout.write(self.style.SUCCESS(f"[DRY-RUN] Would download and import {url} on User {instance.pk}"))
+        else:
+            self.stdout.write(self.style.MIGRATE_HEADING(f"Processing User.profile avatars"))
+            for instance in profile_users:
+                if instance.avatar and instance.avatar.name != 'False':
+                    continue
+                url = instance.external_avatar_url
+                if not url or not url.startswith("http"):
+                    continue
+
+                self.stdout.write(f"Found external URL in User profile {instance.pk}: {url}")
+
+                content = self.download_image(url)
+                if not content:
+                    failure_count += 1
+                    continue
+
+                content_file = ContentFile(content)
+
+                try:
+                    validate_image(content_file)
+                except Exception as e:
+                    self.stderr.write(self.style.ERROR(f"Invalid image content from {url}: {e}"))
+                    failure_count += 1
+                    continue
+
+                try:
+                    filename = urllib.parse.urlparse(url).path.split('/')[-1]
+                    if not filename:
+                        filename = "image.jpg"
+
+                    with transaction.atomic():
+                        field = instance.avatar
+                        field.save(filename, content_file, save=False)
+
+                        # Remove the external URL from the profile JSON
+                        profile = dict(instance.profile) if isinstance(instance.profile, dict) else {}
+                        avatar = profile.get('avatar')
+                        if isinstance(avatar, dict) and 'url' in avatar:
+                            del avatar['url']
+                        instance.profile = profile
+                        instance.save(update_fields=['avatar', 'profile'])
+
+                    self.stdout.write(self.style.SUCCESS(f"Successfully imported {url} to User {instance.pk} avatar"))
+
+                    if hasattr(instance, 'process_image'):
+                        instance.process_image('avatar', generate_thumbnail=True)
+
+                    success_count += 1
+                except Exception as e:
+                    self.stderr.write(self.style.ERROR(f"Error saving image from {url}: {e}"))
+                    failure_count += 1
+
+        if not dry_run:
+            self.stdout.write(self.style.SUCCESS(f"\nFinal import summary: {success_count} succeeded, {failure_count} failed."))
