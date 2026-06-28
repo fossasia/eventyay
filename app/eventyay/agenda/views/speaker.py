@@ -16,13 +16,21 @@ from django.views.generic import DetailView, ListView, TemplateView, View
 from django_context_decorator import context
 from i18nfield.utils import I18nJSONEncoder
 
+from eventyay.agenda.export_resources import public_resource_attachments, public_resource_links
 from eventyay.agenda.views.utils import (
     WipAgendaPreviewPageMixin,
     build_speaker_schedule_json,
+    build_speakers_list_schedule_json,
     is_public_speakers_empty,
     redirect_to_presale_with_warning,
+    redirect_when_public_speakers_unavailable,
+    speaker_profile_display_order,
 )
-from eventyay.talk_rules.agenda import agenda_speaker_talks
+from eventyay.talk_rules.agenda import (
+    agenda_speaker_talks,
+    can_list_released_schedule_speakers,
+    should_hide_public_speaker_sessions,
+)
 from eventyay.base.models import SpeakerProfile, TalkQuestionTarget, User
 from eventyay.common.text.path import safe_filename
 from eventyay.common.urls import get_base_url
@@ -41,18 +49,25 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
     permission_required = 'base.list_schedule'
     default_filters = ('user__fullname__icontains',)
 
+    def has_permission(self):
+        return can_list_released_schedule_speakers(self.request.user, self.request.event)
+
     def dispatch(self, request, *args, **kwargs):
         if is_public_speakers_empty(request):
             return redirect_to_presale_with_warning(request, _('No published speakers.'))
+        if not can_list_released_schedule_speakers(request.user, request.event):
+            return redirect_when_public_speakers_unavailable(request)
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        qs = (
-            SpeakerProfile.objects.filter(user__in=self.request.event.speakers, event=self.request.event)
-            .select_related('user', 'event', 'event__organizer')
-            .order_by('user__fullname')
-        )
+        event = self.request.event
+        qs = SpeakerProfile.objects.filter(user__in=event.speakers, event=event)
+        qs = qs.select_related('user', 'event', 'event__organizer').order_by(*speaker_profile_display_order())
         return self.filter_queryset(qs)
+
+    @context
+    def schedule_json(self):
+        return build_speakers_list_schedule_json(self.request)
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(**kwargs)
@@ -85,6 +100,14 @@ class SpeakerView(PermissionRequired, TemplateView):
     @context
     @cached_property
     def talks(self):
+        if should_hide_public_speaker_sessions(
+            self.request.user,
+            self.request.event,
+            wip_preview=self.wip_preview,
+        ):
+            from eventyay.base.models import TalkSlot
+
+            return TalkSlot.objects.none()
         return (
             agenda_speaker_talks(
                 self.request.event,
@@ -244,18 +267,8 @@ class SpeakerTalksExportView(EventPermissionRequired, View):
                         }
                         for p in sub.speakers.all()
                     ],
-                    'links': [
-                        {'title': localize_event_text(r.description), 'url': r.link}
-                        for r in sub.resources.all()
-                        if event.cfp.is_resource_public(r)
-                        if r.link
-                    ],
-                    'attachments': [
-                        {'title': localize_event_text(r.description), 'url': r.resource.url}
-                        for r in sub.resources.all()
-                        if event.cfp.is_resource_public(r)
-                        if not r.link
-                    ],
+                    'links': public_resource_links(sub, event),
+                    'attachments': public_resource_attachments(sub, event),
                 }
             )
         data = {

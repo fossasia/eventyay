@@ -1810,3 +1810,79 @@ h2 .user-name-display img {
   pointer-events: auto;
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease, margin-bottom 0.3s ease, visibility 0s linear 0s;
 }
+
+.form-subfield-group {
+  padding-left: 2rem;
+}
+
+.form-subfield-group.subfield-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.form-subfield-group.subfield-disabled .col-form-label,
+.form-subfield-group.subfield-disabled label {
+  color: var(--color-text-muted, #6c757d);
+}
+
+.form-subfield-group.subfield-disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+button.btn-speaker-arrived,
+a.btn-speaker-arrived {
+  --highlight-color: var(--color-positive);
+  background-color: var(--highlight-color);
+  border-color: var(--highlight-color);
+  color: var(--color-white);
+}
+
+button.btn-speaker-not-arrived,
+a.btn-speaker-not-arrived {
+  --highlight-color: var(--color-info);
+  background-color: var(--highlight-color);
+  border-color: var(--highlight-color);
+  color: var(--color-white);
+}
+
+.speaker-list-table td {
+  vertical-align: middle;
+}
+
+.speaker-list-table .speaker-sessions-cell {
+  max-width: 22rem;
+  min-width: 12rem;
+}
+
+.speaker-session-list {
+  padding-left: 0;
+  margin-left: 0;
+  list-style: none;
+}
+
+.speaker-session-list li + li {
+  margin-top: 0.2rem;
+}
+
+.speaker-session-list a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.speaker-actions-cell {
+  white-space: nowrap;
+}
+
+.speaker-actions-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+button.btn-speaker-arrived,
+button.btn-speaker-not-arrived {
+  white-space: nowrap;
+}

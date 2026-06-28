@@ -25,21 +25,31 @@ from eventyay.common.utils.language import (
     strict_match_language,
     validate_language,
 )
+from eventyay.talk_rules.agenda import agenda_page_allowed_without_talks_published
 
 
 logger = logging.getLogger(__name__)
 
 
 def _agenda_featured_allowed_without_talks_published(url, request, event):
-    """Let /featured/ load when org settings allow it, even if talks are not published yet."""
-    if 'agenda' not in url.namespaces or url.url_name != 'featured':
+    """Let featured/speaker pages load when org settings allow it, even if talks are not published yet."""
+    if 'agenda' not in url.namespaces:
         return False
-    from eventyay.talk_rules.submission import are_featured_submissions_visible
 
     user = getattr(request, 'user', None)
     if user is None:
         return False
-    return are_featured_submissions_visible(user, event)
+
+    is_featured_export = (
+        (url.url_name in ('export', 'export-tokenized') or url.url_name.startswith('export.'))
+        and request.GET.get('featured') == 'true'
+    )
+    if is_featured_export:
+        from eventyay.talk_rules.submission import can_use_featured_exports
+
+        return can_use_featured_exports(user, event)
+
+    return agenda_page_allowed_without_talks_published(url.url_name, user, event, url_kwargs=url.kwargs)
 
 
 def get_login_redirect(request):
@@ -139,8 +149,9 @@ class EventPermissionMiddleware:
         if event and not event.user_can_view_talks(request.user, request=request):
             if 'agenda' in url.namespaces or 'cfp' in url.namespaces:
                 if url.url_name != 'event.css':
-                    if not _agenda_featured_allowed_without_talks_published(url, request, event):
-                        raise Http404()
+                    with scope(event=event):
+                        if not _agenda_featured_allowed_without_talks_published(url, request, event):
+                            raise Http404()
         if event:
             with scope(event=event):
                 response = self.get_response(request)

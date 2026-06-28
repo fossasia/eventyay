@@ -4,11 +4,26 @@ body.page-agenda #main-container > header {
   margin-top: 24px;
 }
 
+body.page-agenda {
+  --page-inset-block-start: 0.75rem;
+  --page-inset-inline: 1rem;
+  --page-inset-block-end: 1rem;
+}
+
+@media (max-width: 768px) {
+  body.page-agenda {
+    --page-inset-block-start: 0.5rem;
+    --page-inset-inline: 0.75rem;
+    --page-inset-block-end: 0.875rem;
+  }
+}
+
 /* Featured page typography */
 body.page-agenda .featured-page {
   --featured-intro-size: 0.9375rem;
   --featured-body-size: 0.9375rem;
   --featured-meta-size: 0.875rem;
+  padding: var(--page-inset-block-start) var(--page-inset-inline) var(--page-inset-block-end);
 }
 
 body.page-agenda .featured-page > .talk-title.featured-page-title {
@@ -175,12 +190,18 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
   #main-card {
     margin: 0 auto;
     main {
-      padding: 5px;
       width: 100%;
+    }
+    main:not(:has(.featured-page)) {
+      padding: calc(var(--page-inset-block-start) / 2) calc(var(--page-inset-inline) / 2)
+        calc(var(--page-inset-block-end) / 2);
+    }
+    main:has(.featured-page) {
+      padding: 0;
     }
   }
 
-  /* The container main now provides the 5px padding. We can set it to 0 or leave as minimal here. */
+  /* The container main now provides the inset. Keep the widget flush inside #fahrplan. */
   pretalx-schedule[view="schedule"],
   #fahrplan {
     padding: 0 !important;
@@ -192,7 +213,11 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
     padding-left: 0;
     padding-right: 0;
     padding-bottom: 0;
-    #main-card main {
+    #main-card main:not(:has(.featured-page)) {
+      padding: calc(var(--page-inset-block-start) / 2) calc(var(--page-inset-inline) / 2)
+        calc(var(--page-inset-block-end) / 2);
+    }
+    #main-card main:has(.featured-page) {
       padding: 0;
     }
   }
@@ -597,4 +622,23 @@ dialog.agenda-wip-preview-leave-dialog::backdrop {
     width: 100%;
     min-width: 0;
   }
+}
+
+.etherpad-session-block {
+  margin: 8px 16px 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.etherpad-session-block .etherpad-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.etherpad-session-block .etherpad-note {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
 }
