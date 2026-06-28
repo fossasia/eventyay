@@ -29,6 +29,10 @@ $(function() {
         $input.after(hiddenFields);
 
 
+        $input.on('mousedown click', function() {
+            this.value = '';
+        });
+
         $input.on('change', function(e) {
             var files = e.target.files;
             if (files && files.length > 0) {
@@ -44,11 +48,13 @@ $(function() {
                 currentInput = inputId;
                 var reader = new FileReader();
                 reader.onload = function(evt) {
+                    if (cropper) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
                     image.src = evt.target.result;
-                    
-                    $modal.modal({ backdrop: 'static', keyboard: false });
-                    
-                    $modal.one('shown.bs.modal', function() {
+
+                    var setupCropper = function() {
                         if (cropper) {
                             cropper.destroy();
                         }
@@ -56,7 +62,14 @@ $(function() {
                             aspectRatio: config[inputId].ratio,
                             viewMode: 1,
                         });
-                    });
+                    };
+
+                    if ($modal.is(':visible')) {
+                        setupCropper();
+                    } else {
+                        $modal.one('shown.bs.modal', setupCropper);
+                        $modal.modal({ backdrop: 'static', keyboard: false }).modal('show');
+                    }
                 };
                 reader.readAsDataURL(file);
             }
