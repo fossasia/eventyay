@@ -1017,6 +1017,24 @@ $(function () {
         return false;
     });
 
+    // Voucher page specific delete selected toggle
+    var $vouchersDeleteBtn = $('button[name="action"][value="delete"]');
+    var $vouchersForm = $vouchersDeleteBtn.closest('form');
+    var $vouchersCheckboxes = $vouchersForm.find('input[name="voucher"]');
+
+    // Only run this behavior on the voucher list (other pages also use .table-quotas + a delete button).
+    if ($vouchersCheckboxes.length) {
+        var updateVouchersDeleteBtn = function () {
+            $vouchersDeleteBtn.toggle($vouchersCheckboxes.filter(':checked').length > 0);
+        };
+
+        $vouchersForm.on('change', 'input[name="voucher"], input[data-toggle-table]', function () {
+            setTimeout(updateVouchersDeleteBtn, 50);
+        });
+
+        updateVouchersDeleteBtn();
+    }
+
     $("#ajaxerr").on("click", ".ajaxerr-close", ajaxErrDialog.hide);
     moment.locale($("body").attr("data-datetimelocale"));
 });
