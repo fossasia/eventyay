@@ -918,14 +918,15 @@ $(function () {
                 } else if (suppressRowClick) {
                     var checkbox = suppressRowClick.querySelector("td:first-child input[type=checkbox]");
                     if (checkbox) {
-                        checkbox.checked = selectionChecked;
+                        $(checkbox).prop("checked", selectionChecked).trigger("change");
+                    } else {
+                        update();
                     }
                     ev.preventDefault();
                     $(suppressRowClick).find("td:first-child").one("click", function(e) {
                         e.preventDefault();
                         e.stopImmediatePropagation();
                     });
-                    update();
                 }
                 suppressRowClick = null;
                 $rows.off("pointerenter", onChangeSelection);
