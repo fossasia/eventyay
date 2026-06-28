@@ -3,7 +3,7 @@ from django.core import mail as djmail
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Organizer, Team, User
+from eventyay.base.models import Event, Organizer, Team, User
 
 
 @pytest.fixture

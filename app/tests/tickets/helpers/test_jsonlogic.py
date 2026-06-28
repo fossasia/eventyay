@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from pretix.helpers.jsonlogic import Logic
+from eventyay.helpers.jsonlogic import Logic
 
 with open(os.path.join(os.path.dirname(__file__), 'jsonlogic-tests.json'), 'r') as f:
     data = json.load(f)

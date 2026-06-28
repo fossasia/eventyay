@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretalx.schedule.models import Schedule
+from eventyay.base.models import Schedule
 
 
 @pytest.mark.django_db
@@ -340,16 +340,16 @@ def test_orga_cannot_reuse_schedule_name(orga_client, event):
 
 @pytest.mark.django_db
 def test_orga_can_toggle_schedule_visibility(orga_client, event):
-    from pretalx.event.models import Event
+    from eventyay.base.models import Event
 
     assert event.feature_flags["show_schedule"] is True
 
-    response = orga_client.get(event.orga_urls.toggle_schedule, follow=True)
+    response = orga_client.post(event.orga_urls.toggle_schedule, follow=True)
     assert response.status_code == 200
     event = Event.objects.get(pk=event.pk)
     assert event.feature_flags["show_schedule"] is False
 
-    response = orga_client.get(event.orga_urls.toggle_schedule, follow=True)
+    response = orga_client.post(event.orga_urls.toggle_schedule, follow=True)
     assert response.status_code == 200
     event = Event.objects.get(pk=event.pk)
     with scope(event=event):

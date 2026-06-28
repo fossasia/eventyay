@@ -29,6 +29,8 @@
 			v-model:includeRoomSortKey="sortIncludeRoom",
 			v-model:includeDateSortKey="sortIncludeDate",
 			v-model:includePopularitySortKey="sortIncludePopularity",
+			:popularityFeatureEnabled="popularityFeatureEnabled",
+			:popularitySortAvailable="popularitySortAvailable",
 			@selectDay="changeDay($event)",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
@@ -48,7 +50,7 @@
 				:locale="locale",
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
-				:showFavCount="showFavCountOnCalendar",
+				:showFavCount="showFavCountOnSchedule",
 				:density="'default'",
 				:timeDensityMinutes="timeDensityMinutes",
 				@changeDay="setCurrentDay",
@@ -64,7 +66,7 @@
 				:locale="locale",
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
-				:showFavCount="showFavCountOnList",
+				:showFavCount="showFavCountOnSchedule",
 				:sortBy="effectiveSortBy",
 				:includeRoomSortKey="sortIncludeRoom",
 				:includeDateSortKey="sortIncludeDate",
@@ -85,7 +87,7 @@ import moment from 'moment-timezone'
 import LinearSchedule from './LinearSchedule'
 import GridScheduleWrapper from './GridScheduleWrapper'
 import ScheduleToolbar from './ScheduleToolbar'
-import { getLocalizedString, getSessionTypeLabel, isProperSession, normalizePopularityCount } from '../utils'
+import { getLocalizedString, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount } from '../utils'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -113,7 +115,6 @@ export default {
 		scheduleData: { default: null },
 		scheduleFav: { default: null },
 		scheduleUnfav: { default: null },
-		loggedIn: { default: false },
 		scheduleExporters: { default: () => [] },
 		scheduleMetaData: { default: () => ({}) }
 	},
@@ -205,13 +206,9 @@ export default {
 		scheduleReady() {
 			return !!(this.resolvedSchedule && this.enrichedSessions.length)
 		},
-		showFavCountOnCalendar() {
-			const flags = this.scheduleData?.schedule?.feature_flags || {}
-			return !!(this.loggedIn && flags.session_popularity_enabled && flags.session_popularity_show_on_calendar)
-		},
-		showFavCountOnList() {
-			const flags = this.scheduleData?.schedule?.feature_flags || {}
-			return !!(this.loggedIn && flags.session_popularity_enabled && flags.session_popularity_show_on_list)
+		showFavCountOnSchedule() {
+			const flags = this.scheduleData?.schedule?.feature_flags || this.resolvedSchedule?.feature_flags || {}
+			return isPopularityVisibleOnSchedule({ flags })
 		},
 		hasError() {
 			return !!(this.errorLoading || this.scheduleData?.errorLoading)
@@ -386,11 +383,16 @@ export default {
 			return !this.linearOnly && this.scrollParentWidth > 710
 		},
 		popularityFeatureEnabled() {
-			return !!this.resolvedSchedule?.feature_flags?.session_popularity_enabled
+			const flags = this.resolvedSchedule?.feature_flags || {}
+			return isPopularityFeatureEnabled(flags)
+		},
+		popularitySortAvailable() {
+			const flags = this.resolvedSchedule?.feature_flags || {}
+			return isPopularitySortAvailable({ flags })
 		},
 		sortOptions() {
 			const options = ['title', 'title_desc']
-			if (this.loggedIn && this.popularityFeatureEnabled) options.push('popularity')
+			if (this.popularitySortAvailable) options.push('popularity')
 			return options
 		},
 		effectiveSortBy() {
@@ -413,6 +415,18 @@ export default {
 				if (val && val !== this.internalSortBy) this.internalSortBy = val
 			},
 			immediate: true
+		},
+		popularitySortAvailable(enabled) {
+			if (!enabled) {
+				this.sortIncludePopularity = false
+				if (this.internalSortBy === 'popularity') this.internalSortBy = 'title'
+			}
+		},
+		popularityFeatureEnabled(enabled) {
+			if (!enabled) {
+				this.sortIncludePopularity = false
+				if (this.internalSortBy === 'popularity') this.internalSortBy = 'title'
+			}
 		},
 		resolvedSchedule: {
 			handler(val) {
@@ -540,7 +554,6 @@ export default {
 			this.currentDay = dayStr
 		},
 		toggleFavs() {
-			if (!this.loggedIn) return
 			this.onlyFavs = !this.onlyFavs
 			if (this.onlyFavs) this.resetFilters()
 		},
@@ -561,12 +574,10 @@ export default {
 			localStorage.setItem('userTimezone', this.currentTimezone)
 		},
 		onFav(id) {
-			if (!this.loggedIn) return
 			if (this.scheduleFav) this.scheduleFav(id)
 			this.$emit('fav', id)
 		},
 		onUnfav(id) {
-			if (!this.loggedIn) return
 			if (this.scheduleUnfav) this.scheduleUnfav(id)
 			this.$emit('unfav', id)
 		},

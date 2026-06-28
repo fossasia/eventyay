@@ -1,3 +1,4 @@
+import json
 from contextlib import suppress
 from contextvars import ContextVar
 
@@ -75,6 +76,13 @@ def get_current_event_language() -> str | None:
 def localize_event_text(value):
     if value is None:
         return value
+    if isinstance(value, dict):
+        value = LazyI18nString(value)
+    elif isinstance(value, str):
+        with suppress(ValueError, TypeError):
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                value = LazyI18nString(parsed)
     event_lang = get_current_event_language()
     ui_lang = translation.get_language() or settings.LANGUAGE_CODE
     default_lang = settings.LANGUAGE_CODE

@@ -979,7 +979,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(
                 {
                     'status': 'incomplete',
-                    'require_attention': op.product.checkin_attention or op.order.checkin_attention,
+                    'require_attention': op.require_checkin_attention,
                     'position': CheckinListOrderPositionSerializer(op, context=self.get_serializer_context()).data,
                     'questions': [QuestionSerializer(q).data for q in e.questions],
                 },
@@ -1004,7 +1004,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
                 {
                     'status': 'error',
                     'reason': e.code,
-                    'require_attention': op.product.checkin_attention or op.order.checkin_attention,
+                    'require_attention': op.require_checkin_attention,
                     'position': CheckinListOrderPositionSerializer(op, context=self.get_serializer_context()).data,
                 },
                 status=400,
@@ -1013,7 +1013,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(
                 {
                     'status': 'ok',
-                    'require_attention': op.product.checkin_attention or op.order.checkin_attention,
+                    'require_attention': op.require_checkin_attention,
                     'position': CheckinListOrderPositionSerializer(op, context=self.get_serializer_context()).data,
                 },
                 status=201,

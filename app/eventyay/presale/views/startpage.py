@@ -7,7 +7,7 @@ from django.views.generic import TemplateView
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 
-from eventyay.base.models import Event
+from eventyay.base.models import Event, OrganizerFollower
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_admin_mode_active
@@ -124,4 +124,24 @@ class StartPageView(TemplateView):
             ctx['featured_events'] = featured_events
             ctx['upcoming_events'] = upcoming_events
             ctx['past_events'] = list(reversed(past_events))
+
+            followed_upcoming_events = []
+            if self.request.user.is_authenticated:
+                followed_org_ids = OrganizerFollower.objects.filter(
+                    user=self.request.user
+                ).values_list('organizer_id', flat=True)
+                qs = (
+                    Event.objects.filter(
+                        organizer_id__in=followed_org_ids,
+                        live=True,
+                    )
+                    .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
+                    .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
+                    .select_related('organizer')
+                    .prefetch_related('_settings_objects')
+                    .order_by('date_from')[:20]
+                )
+                followed_upcoming_events = [e for e in qs if not e.has_component_testmode]
+
+            ctx['followed_upcoming_events'] = followed_upcoming_events
         return ctx

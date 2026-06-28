@@ -178,6 +178,7 @@ export default {
 		align-items: center
 		position: relative
 		padding: 16px
+		min-height: 0
 		h1
 			margin: 8px 0
 			text-align: center
@@ -189,6 +190,10 @@ export default {
 			display: flex
 			flex-direction: column
 			align-items: center
+			flex: 1 1 auto
+			min-height: 0
+			overflow-y: auto
+			width: 100%
 		.step-connect-social
 			margin-bottom: 16px
 			.social-connection
@@ -224,6 +229,7 @@ export default {
 			align-self: stretch
 			display: flex
 			justify-content: flex-end
+			flex-shrink: 0
 		#btn-back
 			themed-button-secondary()
 			margin-right: 8px

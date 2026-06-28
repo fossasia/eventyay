@@ -41,7 +41,7 @@
     </h3>
 {% endif %}
 <div class="submission-info d-flex">
-    {% if submission.submission_type and request.event.submission_types.all|length > 1 %}
+    {% if submission.submission_type %}
         <p class="mr-1 ml-1">
             <strong>{% translate "Session type" %}</strong>: {{ submission.submission_type.name|event_localize }}
         </p>

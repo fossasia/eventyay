@@ -194,10 +194,10 @@ def default_feature_flags():
     return {
         'show_schedule': True,
         'show_featured': 'never',
+        'show_featured_speakers': 'never',
         'show_widget_if_not_public': False,
         'session_popularity_enabled': False,
-        'session_popularity_show_on_calendar': True,
-        'session_popularity_show_on_list': True,
+        'session_popularity_show_on_schedule': True,
         'export_html_on_release': False,
         'use_tracks': True,
         'use_feedback': True,
@@ -207,6 +207,8 @@ def default_feature_flags():
         'chat-moderation': True,
         'polls': True,
         'schedule-control': True,
+        'etherpad_enabled': False,
+        'etherpad_auto_generate': False,
     }
 
 
@@ -216,8 +218,8 @@ def default_display_settings():
         'imprint_url': None,
         'header_pattern': '',
         'html_export_url': '',
-        'meta_noindex': False,
         'texts': {'agenda_session_above': '', 'agenda_session_below': ''},
+        'etherpad_public': False,
     }
 
 
@@ -573,7 +575,7 @@ class Event(
     CURRENCY_CHOICES = [(c.alpha_3, c.alpha_3 + ' - ' + c.name) for c in settings.CURRENCIES]
     organizer = models.ForeignKey(Organizer, related_name='events', on_delete=models.PROTECT)
     testmode = models.BooleanField(default=False)
-    private_testmode = models.BooleanField(default=True)
+    private_testmode = models.BooleanField(default=False)
     name = I18nCharField(
         max_length=200,
         verbose_name=_('Event name'),
@@ -809,7 +811,7 @@ class Event(
         """URL patterns for organizer/admin panel views of this event."""
 
         base_path = settings.BASE_PATH
-        base = '{base_path}/orga/event/{self.slug}/'
+        base = '{base_path}/orga/event/{self.organizer.slug}/{self.slug}/'
         login = '{base}login/'
         live = '{base}live'
         delete = '{base}delete'
@@ -928,8 +930,8 @@ class Event(
         self.settings.invoice_email_attachment = True
         self.settings.name_scheme = 'given_family'
         self.settings.ticket_download = True
-        self.settings.private_testmode_tickets = True
-        self.settings.private_testmode_talks = True
+        self.settings.private_testmode_tickets = False
+        self.settings.private_testmode_talks = False
 
     @property
     def social_image(self):
@@ -2020,11 +2022,11 @@ class Event(
 
     @property
     def talk_dashboard_url(self):
-        return reverse('orga:event.dashboard', kwargs={'event': self.slug})
+        return reverse('orga:event.dashboard', kwargs={'organizer': self.organizer.slug, 'event': self.slug})
 
     @property
     def talk_settings_url(self):
-        return reverse('orga:settings.event.view', kwargs={'event': self.slug})
+        return reverse('orga:settings.event.view', kwargs={'organizer': self.organizer.slug, 'event': self.slug})
 
     @cached_property
     def live_issues(self):
@@ -2605,6 +2607,26 @@ class Event(
         if feature in self.feature_flags:
             return self.feature_flags[feature]
         return default_feature_flags().get(feature, False)
+
+    def session_popularity_show_on_schedule(self):
+        flags = self.feature_flags or {}
+        if 'session_popularity_show_on_schedule' in flags:
+            return bool(flags['session_popularity_show_on_schedule'])
+        return bool(
+            flags.get('session_popularity_show_on_calendar', True)
+            or flags.get('session_popularity_show_on_list', True)
+        )
+
+    def schedule_client_feature_flags(self):
+        """Feature flags exposed to schedule webapp clients via inline JSON."""
+        from eventyay.talk_rules.submission import are_featured_speakers_visible
+
+        popularity_enabled = bool(self.feature_flags.get('session_popularity_enabled', False))
+        return {
+            'session_popularity_enabled': popularity_enabled,
+            'session_popularity_show_on_schedule': self.session_popularity_show_on_schedule(),
+            'featured_speakers_enabled': are_featured_speakers_visible(None, self),
+        }
 
     @cached_property
     def duration(self):

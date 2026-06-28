@@ -65,7 +65,7 @@
 
     <div class="dashboard-list">
         {% if can_change_settings %}
-            <a href="{{ request.event.orga_urls.live }}" class="dashboard-block">
+            <a href="{% url 'eventyay_common:event.live' organizer=request.event.organizer.slug event=request.event.slug %}" class="dashboard-block">
                 <div class="dashboard-live-text">
                     {% translate "Your talk component is currently" %}
                 </div>
