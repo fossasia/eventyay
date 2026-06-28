@@ -627,7 +627,10 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['featured_speakers_list_public'] = False
 
         event = self.request.event
-        featured_speaker_profiles = load_public_featured_speaker_profiles(self.request.user, event)
+        featured_speaker_profiles = load_public_featured_speaker_profiles(
+            self.request.user,
+            event,
+        )
 
         if featured_speaker_profiles:
             context['featured_speakers'] = featured_speaker_profiles
