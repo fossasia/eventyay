@@ -102,21 +102,60 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
         user_id = data.get('user_id')
 
         if not user_id or not action:
-            return JsonResponse({'status': 'error', 'message': str(_('Missing user_id or action.'))}, status=400)
+            msg = str(_('Missing user_id or action.'))
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': msg}, status=400)
+            messages.error(request, msg)
+            return redirect(reverse('eventyay_admin:admin.users'))
 
         try:
             user_id = int(user_id)
         except (TypeError, ValueError):
-            return JsonResponse({'status': 'error', 'message': str(_('Invalid user_id.'))}, status=400)
+            msg = str(_('Invalid user_id.'))
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': msg}, status=400)
+            messages.error(request, msg)
+            return redirect(reverse('eventyay_admin:admin.users'))
 
-        target_user = get_object_or_404(User, pk=user_id)
+        try:
+            target_user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            msg = str(_('User not found.'))
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': msg}, status=404)
+            messages.error(request, msg)
+            return redirect(reverse('eventyay_admin:admin.users'))
 
         handler_name = self._ACTION_HANDLERS.get(action)
         if not handler_name:
-            return JsonResponse({'status': 'error', 'message': str(_('Unknown action.'))}, status=400)
+            msg = str(_('Unknown action.'))
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': msg}, status=400)
+            messages.error(request, msg)
+            return redirect(reverse('eventyay_admin:admin.users'))
 
         handler = getattr(self, handler_name)
         return handler(request, target_user)
+
+    def _get_or_create_primary_email(self, target_user):
+        primary_email = EmailAddress.objects.filter(user=target_user, primary=True).first()
+        if not primary_email and target_user.email:
+            primary_email = EmailAddress.objects.filter(user=target_user, email__iexact=target_user.email).first()
+            if primary_email:
+                primary_email.primary = True
+                primary_email.save(update_fields=['primary'])
+            else:
+                try:
+                    with transaction.atomic():
+                        primary_email = EmailAddress.objects.create(
+                            user=target_user,
+                            email=target_user.email,
+                            primary=True,
+                            verified=False
+                        )
+                except DatabaseError:
+                    primary_email = EmailAddress.objects.filter(user=target_user, email__iexact=target_user.email).first()
+        return primary_email
 
     def _handle_toggle_verified(self, request, target_user):
         if not target_user.email:
@@ -129,22 +168,7 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
             return redirect(reverse('eventyay_admin:admin.users'))
 
         with transaction.atomic():
-            primary_email = EmailAddress.objects.filter(user=target_user, primary=True).first()
-            if not primary_email and target_user.email:
-                primary_email = EmailAddress.objects.filter(user=target_user, email__iexact=target_user.email).first()
-                if primary_email:
-                    primary_email.primary = True
-                    primary_email.save(update_fields=['primary'])
-                else:
-                    try:
-                        primary_email = EmailAddress.objects.create(
-                            user=target_user,
-                            email=target_user.email,
-                            primary=True,
-                            verified=False
-                        )
-                    except DatabaseError:
-                        primary_email = EmailAddress.objects.filter(user=target_user, email__iexact=target_user.email).first()
+            primary_email = self._get_or_create_primary_email(target_user)
 
             if not primary_email:
                 if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -275,14 +299,15 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
 
         try:
             with transaction.atomic():
-                email_address, created = EmailAddress.objects.get_or_create(
-                    user=target_user,
-                    email=target_user.email,
-                    defaults={
-                        'primary': not target_user.emailaddress_set.filter(primary=True).exists(),
-                        'verified': False
-                    }
-                )
+                email_address = self._get_or_create_primary_email(target_user)
+                if not email_address:
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse(
+                            {'status': 'error', 'message': str(_('This user has no primary email address.'))},
+                            status=400,
+                        )
+                    messages.error(request, _('This user has no primary email address.'))
+                    return redirect(reverse('eventyay_admin:admin.users'))
                 is_verified = email_address.verified
 
             if is_verified:

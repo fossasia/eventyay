@@ -1487,12 +1487,6 @@ class UserFilterForm(FilterForm):
     def filter_qs(self, qs):
         fdata = self.cleaned_data
 
-        qs = qs.annotate(
-            is_email_verified=Exists(
-                EmailAddress.objects.filter(user=OuterRef('pk'), primary=True, verified=True)
-            )
-        )
-
         if fdata.get('status') == 'active':
             qs = qs.filter(is_active=True)
         elif fdata.get('status') == 'inactive':
