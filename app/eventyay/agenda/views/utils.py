@@ -1028,13 +1028,35 @@ def is_visible(exporter: BaseExporter, request: HttpRequest, public: bool = Fals
     return bool(exporter.public)
 
 
+def clear_featured_speakers_without_active_submissions(event, speakers):
+    """Remove featured status from speakers who no longer have active submissions."""
+    from eventyay.base.models import SpeakerProfile, Submission, SubmissionStates
+
+    user_ids = [speaker.pk for speaker in speakers if speaker]
+    if not user_ids:
+        return
+
+    inactive_states = SubmissionStates.terminal_states + (SubmissionStates.DRAFT,)
+    active_speaker_ids = set(
+        Submission.objects.filter(event=event, speakers__in=user_ids)
+        .exclude(state__in=inactive_states)
+        .values_list('speakers', flat=True)
+        .distinct()
+    )
+    SpeakerProfile.objects.filter(event=event, user_id__in=user_ids, is_featured=True).exclude(
+        user_id__in=active_speaker_ids
+    ).update(is_featured=False)
+
+
 def clear_schedule_caches(event, submission=None, speaker=None):
     """Clear all eagenda schedule caches for the event's schedules."""
     schedules = event.schedules.all()
     keys = []
+    settings_part = schedule_widget_featured_cache_key_part(event)
     for schedule in schedules:
         for featured in (0, 1):
             keys.append(f'eagenda:schedule:{schedule.pk}:{featured}')
+            keys.append(f'eagenda:schedule:{schedule.pk}:{featured}:{settings_part}')
             keys.append(f'eagenda:enriched:{schedule.pk}:{featured}')
             if submission:
                 keys.append(f'eagenda:talk:{schedule.pk}:{submission.code}:{featured}')
