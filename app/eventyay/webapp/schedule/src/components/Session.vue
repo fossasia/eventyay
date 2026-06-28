@@ -1,16 +1,25 @@
 <template lang="pug">
-a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
+a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession, 'schedule-pending-session': isSchedulePending, 'has-fav-count': hasFavCount}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
 	.time-box
-		.start(:class="{'has-ampm': hasAmPm}")
-			.date(v-if="showDate")
-				.weekday {{ weekdayLabel }}
-				.day-month {{ dayMonthLabel }}
-			.time {{ startTime.time }}
-			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
-			.duration {{ getPrettyDuration(session.start, session.end) }}
-		.buffer
+		.start.schedule-pending(v-if="isSchedulePending")
+			svg.schedule-pending-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
+				rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
+				line(x1="16", y1="2", x2="16", y2="6")
+				line(x1="8", y1="2", x2="8", y2="6")
+				line(x1="3", y1="10", x2="21", y2="10")
+			.schedule-pending-label
+				span.schedule-pending-text {{ schedulePendingText }}
+		template(v-else)
+			.start(:class="{'has-ampm': hasAmPm}")
+				.date(v-if="showDate")
+					.weekday {{ weekdayLabel }}
+					.day-month {{ dayMonthLabel }}
+				.time {{ startTime.time }}
+				.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
+				.duration {{ getPrettyDuration(session.start, session.end) }}
+		.buffer(v-if="!isSchedulePending")
 		.is-live(v-if="showLiveBadge && isLive") live
-	.info(:class="{'has-fav-count': hasFavCount, 'has-icons': hasAnyRightIcons}")
+	.info(:class="{'has-icons': hasAnyRightIcons}")
 		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
 		.speakers(v-if="namedSpeakers.length", :class="{'names-clamped': isShortSession}")
 			template(v-for="(speaker, i) of namedSpeakers", :key="speaker.code || i")
@@ -31,17 +40,17 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 					rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
 					path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
 					path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
-		.fav-count(v-if="loggedIn && showFavCount && session.fav_count > 0") {{ session.fav_count > 99 ? "99+" : session.fav_count }}
+	span.fav-count(v-if="hasFavCount", :aria-label="favCountLabel") {{ favCountLabel }}
 	.stream-indicator(v-if="canOpenStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
 			path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
-	.session-icons(v-if="loggedIn")
+	.session-icons(v-if="!favsReadOnly")
 		fav-button(@toggleFav="toggleFav")
 
 </template>
 <script>
 import MarkdownIt from 'markdown-it'
-import { getLocalizedString, getPrettyDuration, getSessionTime, getContrastColor } from '../utils'
+import { getLocalizedString, getPrettyDuration, getSessionTime, getContrastColor, normalizePopularityCount } from '../utils'
 import FavButton from './FavButton.vue'
 
 const markdownIt = MarkdownIt({
@@ -107,7 +116,7 @@ export default {
 			}
 		},
 		getJoinRoomLink: { default: () => () => '' },
-		loggedIn: { default: false },
+		favsReadOnly: { default: false },
 		translationMessages: { default: () => ({}) }
 	},
 	components: {
@@ -142,10 +151,17 @@ export default {
 			}
 		},
 		startTime () {
+			if (this.isSchedulePending) {
+				return { time: this.schedulePendingText }
+			}
 			return getSessionTime(this.session, this.effectiveTimezone, this.locale, this.effectiveHasAmPm)
 		},
-		shortDate () {
-			return this.session.start.clone().tz(this.effectiveTimezone).format('MMM D')
+		isSchedulePending () {
+			return Boolean(this.session.schedule_pending || !this.session.start)
+		},
+		schedulePendingText () {
+			const m = this.translationMessages || {}
+			return m.schedule_pending_secondary || 'Coming soon'
 		},
 		weekdayLabel () {
 			return this.session.start.clone().tz(this.effectiveTimezone).locale(this.locale || 'en').format('ddd')
@@ -179,14 +195,18 @@ export default {
 			}
 		},
 		hasFavCount () {
-			return this.loggedIn && this.showFavCount && this.session.fav_count > 0
+			return this.showFavCount && normalizePopularityCount(this.session) > 0
+		},
+		favCountLabel () {
+			const count = normalizePopularityCount(this.session)
+			return count > 99 ? '99+' : String(count)
 		},
 		doNotRecordTooltip () {
 			const m = this.translationMessages || {}
 			return m.schedule_do_not_record || 'This session will not be recorded.'
 		},
 		hasAnyRightIcons () {
-			return this.loggedIn || this.canOpenStream || this.session.do_not_record
+			return !this.favsReadOnly || this.canOpenStream || this.session.do_not_record
 		},
 		isShortSession () {
 			let minutes = 0
@@ -203,7 +223,7 @@ export default {
 	},
 	methods: {
 		toggleFav () {
-			if (!this.loggedIn) return
+			if (this.favsReadOnly) return
 			if (this.faved) {
 				this.$emit('unfav', this.session.id)
 			} else {
@@ -266,6 +286,35 @@ sessionTextExpand()
 		display: flex
 		flex-direction: column
 		align-items: center
+		.start.schedule-pending
+			display: flex
+			flex-direction: column
+			align-items: center
+			justify-content: center
+			gap: 4px
+			width: 100%
+			margin-bottom: 0
+			flex: 1
+			color: $clr-primary-text-dark
+			.schedule-pending-icon
+				width: 16px
+				height: 16px
+				opacity: 0.9
+				flex-shrink: 0
+			.schedule-pending-label
+				display: flex
+				flex-direction: column
+				align-items: center
+				width: 100%
+			.schedule-pending-text
+				font-size: 11px
+				font-weight: 600
+				line-height: 1.25
+				text-align: center
+				letter-spacing: 0.02em
+				color: $clr-primary-text-dark
+				max-width: 100%
+				word-break: break-word
 		.start
 			color: $clr-primary-text-dark
 			display: flex
@@ -329,6 +378,12 @@ sessionTextExpand()
 			color: $clr-primary-text-dark
 			letter-spacing: 0.5px
 			text-transform: uppercase
+	&.schedule-pending-session
+		.time-box
+			justify-content: center
+	&.has-date
+		.time-box
+			width: 88px
 	.info
 		position: relative
 		flex: auto
@@ -338,8 +393,6 @@ sessionTextExpand()
 		padding-right: 8px
 		&.has-icons
 			padding-right: 44px
-		&.has-fav-count
-			padding-right: 72px
 		border: border-separator()
 		border-left: none
 		border-radius: 0 6px 6px 0
@@ -405,20 +458,6 @@ sessionTextExpand()
 			align-items: center
 			line-height: 0
 			z-index: 5
-		.fav-count
-			border: 1px solid
-			border-radius: 50%
-			position: absolute
-			top: 5px
-			right: 40px
-			width: 25px
-			height: 25px
-			display: flex
-			justify-content: center
-			align-items: center
-			text-align: center
-			background-color: var(--track-color)
-			color: $clr-primary-text-dark
 	.tags-box
 		display: flex
 		flex-wrap: wrap
@@ -452,6 +491,28 @@ sessionTextExpand()
 			transform: translateY(-50%) scale(1.15)
 	svg
 			pointer-events: none
+	.fav-count
+		position: absolute
+		top: 10px
+		right: 38px
+		z-index: 12
+		display: inline-flex
+		align-items: center
+		justify-content: center
+		min-width: 20px
+		height: 18px
+		padding: 0 6px
+		border-radius: 999px
+		font-size: 10px
+		font-weight: 700
+		line-height: 1
+		letter-spacing: 0.02em
+		white-space: nowrap
+		color: var(--track-color)
+		background-color: unquote('color-mix(in srgb, var(--track-color) 16%, transparent)')
+		border: 1px solid unquote('color-mix(in srgb, var(--track-color) 32%, transparent)')
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08)
+		pointer-events: none
 	.session-icons
 		position: absolute
 		top: 2px
@@ -464,6 +525,9 @@ sessionTextExpand()
 			padding: 2px
 			width: 32px
 			height: 32px
+	&.has-fav-count
+		.info.has-icons
+			padding-right: 68px
 	&:hover
 		.info
 			border: 1px solid var(--track-color)
@@ -507,14 +571,21 @@ sessionTextExpand()
 			padding-right: 6px
 			&.has-icons
 				padding-right: 40px
-			&.has-fav-count
-				padding-right: 64px
 			.title
 				font-size: 14px
 			.abstract
 				sessionTextClamp(2)
 			.bottom-info
 				font-size: 12px
+		&.has-fav-count .info.has-icons
+			padding-right: 62px
+		.fav-count
+			top: 8px
+			right: 34px
+			height: 16px
+			min-width: 18px
+			padding: 0 5px
+			font-size: 9px
 
 .density-compact .c-linear-schedule-session,
 .density-compact .break
@@ -544,14 +615,14 @@ sessionTextExpand()
 		padding-right: 4px
 		&.has-icons
 			padding-right: 36px
-		&.has-fav-count
-			padding-right: 56px
 		.title
 			font-size: 13px
 		.speakers
 			font-size: 12px
 		.bottom-info
 			font-size: 11px
+	&.has-fav-count .info.has-icons
+		padding-right: 60px
 
 .density-comfortable .c-linear-schedule-session,
 .density-comfortable .break
@@ -583,12 +654,12 @@ sessionTextExpand()
 		padding-right: 12px
 		&.has-icons
 			padding-right: 52px
-		&.has-fav-count
-			padding-right: 80px
 		.title
 			font-size: 18px
 		.speakers
 			font-size: 15px
 		.bottom-info
 			font-size: 14px
+	&.has-fav-count .info.has-icons
+		padding-right: 76px
 </style>

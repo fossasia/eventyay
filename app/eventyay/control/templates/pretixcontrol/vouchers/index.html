@@ -212,7 +212,7 @@
                             </table>
                         </div>
                         {% if "can_change_vouchers" in request.eventpermset %}
-                            <button type="submit" class="btn btn-default btn-save" name="action" value="delete">
+                            <button type="submit" class="btn btn-default btn-save hidden" name="action" value="delete">
                                 {% trans "Delete selected" %}
                             </button>
                         {% endif %}

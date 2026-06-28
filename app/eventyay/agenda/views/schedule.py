@@ -39,7 +39,7 @@ from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequ
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
 from eventyay.talk_rules.agenda import require_wip_schedule_access
-from eventyay.talk_rules.submission import are_featured_submissions_visible
+from eventyay.talk_rules.submission import are_featured_submissions_visible, can_use_featured_exports
 
 
 # Starred-ICS token timing: grace, fallback, refresh buffer.
@@ -163,6 +163,13 @@ class ScheduleMixin:
 
 class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
     permission_required = 'base.list_schedule'
+
+    def has_permission(self):
+        if super().has_permission():
+            return True
+        if self.request.GET.get('featured') == 'true':
+            return can_use_featured_exports(self.request.user, self.request.event)
+        return False
 
     def dispatch(self, request, *args, **kwargs):
         self.ensure_wip_schedule_access(kwargs, request)
@@ -366,14 +373,19 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return ctx
 
 
-@cache_page(60 * 60 * 24)
+@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v4')
 def schedule_messages(request, **kwargs):
-    """This view is cached for a day, as it is small and non-critical, but loaded synchronously."""
+    """Cached for static exports; bump key_prefix when message keys or copy change."""
     strings = {
-        'favs_not_logged_in': _(
-            "You're currently not logged in, so your favourited talks will only be stored locally in your browser."
+        'favs_anonymous_notice': _(
+            'Your favourites can only be saved locally in this browser. '
+            'Please sign in or register to sync starred sessions and use more features. '
+            'Locally saved stars may be lost if you clear your browser data; '
+            'we are not responsible for data loss in this case.'
         ),
-        'favs_not_saved': _('Your favourites could only be saved locally in your browser.'),
+        'favs_not_saved': _(
+            'Could not sync favourites to your account. They remain stored locally in this browser.'
+        ),
         'no_matching_options': _('Sorry, no matching options.'),
         'view_changelog': _('View Changelog'),
         'go_to_current_version': _('Go to current version'),
@@ -389,7 +401,8 @@ def schedule_messages(request, **kwargs):
             'You are currently viewing the editable schedule version. It may not match the released version.'
         ),
         'version_warning_wip': _(
-            'You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.'
+            'You are currently viewing the unreleased schedule preview. '
+            'It may change at any time and is not visible to the public.'
         ),
         'version_warning_old': _('You are currently viewing an older schedule version.'),
         'join_room': _('Join room'),
@@ -430,8 +443,8 @@ def schedule_messages(request, **kwargs):
         'view_profile': _('View speaker profile'),
         'no_starred_sessions': _('No starred sessions.'),
         'schedule_do_not_record': _('This session will not be recorded.'),
-        'back_to_schedule': _('Back to schedule'),
-        'back_to_speakers': _('Back to speakers'),
+        'back': _('Back'),
+        'schedule_pending_secondary': _('Coming soon'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(
@@ -546,6 +559,9 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
                     },
                 ),
             )
+
+        if request.GET.get('featured') == 'true':
+            ics_url = f'{ics_url}?featured=true'
 
         if is_google:
             google_url = f'https://calendar.google.com/calendar/r?{urlencode({"cid": ics_url.replace("https://", "http://")})}'

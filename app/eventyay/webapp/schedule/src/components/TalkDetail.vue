@@ -1,10 +1,10 @@
 <template lang="pug">
 .c-talk-detail
-	detail-back-nav(:event-url="baseUrl", destination="schedule")
+	detail-back-nav
 		detail-top-actions(
 			:export-options="talkExportOptions",
 			:qrcodes-url="talkQrcodesUrl",
-			:show-fav="loggedIn",
+			:show-fav="!favsReadOnly",
 			:faved="isFaved",
 			@toggleFav="toggleFav")
 	.talk-wrapper(v-if="talkDetailReady")
@@ -12,8 +12,8 @@
 			.talk-header
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
 			.info
-				span.info-main {{ datetime }} {{ roomName }}
-				span.session-language(v-if="sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
+				span.info-main {{ sessionTimeLabel }}
+				span.session-language(v-if="!isSchedulePending && sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
 			.field-section.abstract-section(v-if="resolvedTalk.abstract")
 				h2.field-heading Abstract
 				.field-content
@@ -75,7 +75,7 @@
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || t.speaker_name_not_provided }}
 					markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
-		.starrers(v-if="popularityFeatureEnabled && loggedIn && starrers && starrers.total > 0")
+		.starrers(v-if="popularityFeatureEnabled && starrers && starrers.total > 0")
 			.header
 				span {{ t.starred_by }} ({{ starrers.total }})
 				button.expand-toggle(type="button", @click="toggleStarrersExpanded") {{ starrersExpanded ? t.hide_list : t.view_all }}
@@ -144,9 +144,10 @@ export default {
 		getJoinRoomLink: { default: () => () => '' },
 		generateStarrerLinkUrl: { default: () => (user) => user.url || '' },
 		onStarrerLinkClick: { default: () => () => {} },
-		loggedIn: { default: false },
+		favsReadOnly: { default: false },
 		translationMessages: { default: () => ({}) },
 		isWipPreview: { default: false },
+		exportsDisabled: { default: false },
 		remoteApiUrl: { default: null },
 	},
 	props: {
@@ -258,8 +259,20 @@ export default {
 			return favs.includes(favId)
 		},
 		datetime() {
-			if (!this.resolvedTalk) return ''
+			if (!this.resolvedTalk || this.isSchedulePending) return ''
 			return moment(this.resolvedTalk.start).format('L LT') + ' - ' + moment(this.resolvedTalk.end).format('LT')
+		},
+		isSchedulePending () {
+			return Boolean(this.resolvedTalk?.schedule_pending || !this.resolvedTalk?.start)
+		},
+		schedulePendingText () {
+			const m = this.translationMessages || {}
+			return m.schedule_pending_secondary || 'Coming soon'
+		},
+		sessionTimeLabel () {
+			if (this.isSchedulePending) return this.schedulePendingText
+			const parts = [this.datetime, this.roomName].filter(Boolean)
+			return parts.join(' ')
 		},
 		roomName() {
 			if (!this.resolvedTalk) return ''
@@ -329,6 +342,7 @@ export default {
 			})
 		},
 		talkExportOptions() {
+			if (this.exportsDisabled || this.isSchedulePending) return []
 			const code = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
 			const exporters = this.resolvedTalk?.exporters ||
 				(this.baseUrl && code ? computeTalkExporters(this.baseUrl, code) : null)
@@ -429,7 +443,7 @@ export default {
 			this.$emit('joinRoom', event)
 		},
 		async toggleFav() {
-			if (!this.loggedIn) return
+			if (this.favsReadOnly) return
 			if (!this.resolvedTalk) return
 			const favId = this.resolvedTalk.code || this.resolvedTalk.id || this.talkId
 			if (this.isFaved) {
