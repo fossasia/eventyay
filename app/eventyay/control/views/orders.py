@@ -272,6 +272,9 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
             o.icnt = data['icnt']
             o.sales_channel_obj = scs[o.sales_channel]
 
+        for o in ctx['orders']:
+            o.bulk_approval_eligible = o.status == Order.STATUS_PENDING and o.require_approval
+
         if ctx['page_obj'].paginator.count < 1000:
             # Performance safeguard: Only count positions if the data set is small
             ctx['sums'] = (

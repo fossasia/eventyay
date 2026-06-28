@@ -831,8 +831,11 @@ $(function () {
     });
 
     // Tables with bulk selection, e.g. subevent list
-    $("input[data-toggle-table]").each(function (ev) {
-        var $toggle = $(this);
+    window.eventyayInitBatchSelection = function (root) {
+        root = root || document;
+        $(root).find("input[data-toggle-table]:not([data-batch-selection-init])").each(function (ev) {
+            $(this).attr("data-batch-selection-init", "1");
+            var $toggle = $(this);
         var $batchSelectActions = $(".batch-select-actions", this.form);
         var $actionButtons = $batchSelectActions.find("[data-batch-action]");
         if (!$actionButtons.length) {
@@ -851,6 +854,7 @@ $(function () {
         var $rows = $table.find("tbody tr");
         var $checkboxes = $rows.find("td:first-child input[type=checkbox]");
         var firstIndex, lastIndex, selectionChecked, onChangeSelectionHappened = false;
+        var suppressRowClick = null;
         var updateSelection = function(a, b, checked) {
             if (a > b) {
                 //[a, b] = [b, a];// ES6 not ready yet for pretix
@@ -891,7 +895,9 @@ $(function () {
         $table.on("pointerdown", function(ev) {
             if (!ev.target.closest("td:first-child")) return;
             var row = ev.target.closest("tr");
-            selectionChecked = !row.querySelector("td:first-child input").checked;
+            if (!row || !row.closest("tbody")) return;
+            suppressRowClick = row;
+            selectionChecked = !row.querySelector("td:first-child input[type=checkbox]").checked;
 
             firstIndex = 0;
             while(row = row.previousSibling) {
@@ -909,24 +915,92 @@ $(function () {
                     $checkboxes.removeAttr("data-inital");
 
                     update();
+                } else if (suppressRowClick) {
+                    var checkbox = suppressRowClick.querySelector("td:first-child input[type=checkbox]");
+                    if (checkbox) {
+                        checkbox.checked = selectionChecked;
+                    }
+                    ev.preventDefault();
+                    $(suppressRowClick).find("td:first-child").one("click", function(e) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                    });
+                    update();
                 }
+                suppressRowClick = null;
                 $rows.off("pointerenter", onChangeSelection);
             });
         });
 
+        var $form = $toggle.closest("form");
         var update = function() {
             var nrOfChecked = $checkboxes.filter(":checked").length;
             var allChecked = nrOfChecked == $checkboxes.length;
+            var $checked = $checkboxes.filter(":checked");
+            var nrEligibleChecked = $checked.filter('[data-batch-eligible="true"]').length;
+            var $actionHint = $batchSelectActions.find("[data-batch-action-hint]");
+            var reasonNone = $batchSelectActions.attr("data-batch-disabled-reason-none");
+            var reasonIneligible = $batchSelectActions.attr("data-batch-disabled-reason-ineligible");
+            var actionsDisabled = false;
+            var disabledReason = "";
 
             if (!nrOfChecked) countLabels.empty();
             else countLabels.text(" ("+nrOfChecked+")");
 
-            if (!allChecked) $selectAll.find("input").prop("checked", false); 
+            if (!allChecked) $selectAll.find("input").prop("checked", false);
 
-            $actionButtons.prop("disabled", !nrOfChecked);
+            if (!nrOfChecked) {
+                actionsDisabled = true;
+                disabledReason = reasonNone || "";
+            } else if (reasonIneligible && nrEligibleChecked !== nrOfChecked) {
+                actionsDisabled = true;
+                disabledReason = reasonIneligible;
+            }
+
+            $actionButtons.prop("disabled", actionsDisabled);
+            if (actionsDisabled && disabledReason) {
+                $actionButtons.attr("title", disabledReason);
+            } else {
+                $actionButtons.removeAttr("title");
+            }
+            if ($actionHint.length) {
+                if (nrOfChecked > 0 && reasonIneligible && nrEligibleChecked !== nrOfChecked) {
+                    $actionHint.text(reasonIneligible).prop("hidden", false);
+                } else {
+                    $actionHint.text("").prop("hidden", true);
+                }
+            }
             $toggle.prop("checked", allChecked).prop("indeterminate", nrOfChecked > 0 && !allChecked);
             $selectAll.toggleClass("hidden", nrOfChecked !== $checkboxes.length).prop("hidden", nrOfChecked !== $checkboxes.length);
 
+        }
+
+        if ($batchSelectActions.attr("data-batch-disabled-reason-ineligible") && !$form.data("batch-selection-submit-bound")) {
+            $form.data("batch-selection-submit-bound", true);
+            $form.on("submit", function(ev) {
+                var $batchSelectActions = $(this).find(".batch-select-actions");
+                var $checkboxes = $(this).find("tbody input[type=checkbox]");
+                var reasonNone = $batchSelectActions.attr("data-batch-disabled-reason-none");
+                var reasonIneligible = $batchSelectActions.attr("data-batch-disabled-reason-ineligible");
+                var $actionHint = $batchSelectActions.find("[data-batch-action-hint]");
+                var nrOfChecked = $checkboxes.filter(":checked").length;
+                var nrEligibleChecked = $checkboxes.filter(":checked").filter('[data-batch-eligible="true"]').length;
+                var message = "";
+
+                if (!nrOfChecked) {
+                    message = reasonNone;
+                } else if (nrEligibleChecked !== nrOfChecked) {
+                    message = reasonIneligible;
+                }
+
+                if (message) {
+                    ev.preventDefault();
+                    if ($actionHint.length) {
+                        $actionHint.text(message).prop("hidden", false);
+                    }
+                    return false;
+                }
+            });
         }
 
         $checkboxes.change(update);
@@ -941,7 +1015,10 @@ $(function () {
         })
 
         update();
-    });
+        });
+    };
+
+    window.eventyayInitBatchSelection();
 
     // Items and categories
     $(".internal-name-wrapper").each(function () {
