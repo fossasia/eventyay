@@ -103,7 +103,7 @@ def event_logo_path(instance, filename):
 JITSI_ROLE_PERMISSION_AUGMENTS = {
     'participant': [Permission.ROOM_JITSI_JOIN],
     'room_owner': [Permission.ROOM_JITSI_JOIN],
-    'speaker': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
+    'speaker': [Permission.ROOM_JITSI_JOIN],
     'moderator': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
     'admin': [
         Permission.EVENT_ROOMS_CREATE_JITSI,
@@ -2191,6 +2191,7 @@ class Event(
 
         self.bbbserver_set.update(event_exclusive=None)
         self.janusserver_set.update(event_exclusive=None)
+        self.jitsiserver_set.update(event_exclusive=None)
         self.turnserver_set.update(event_exclusive=None)
 
         self.vouchers.all().delete()

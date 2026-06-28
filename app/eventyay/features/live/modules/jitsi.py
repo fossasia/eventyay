@@ -1,12 +1,40 @@
+import logging
 import time
-from urllib.parse import urlparse
 
+from channels.db import database_sync_to_async
 import jwt
 
+from eventyay.base.services.jitsi import (
+    JitsiServerUnavailable,
+    choose_server_or_raise,
+    normalize_server_url,
+)
 from eventyay.core.permissions import Permission
 from eventyay.features.live.decorators import command, room_action
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
+
+
+logger = logging.getLogger(__name__)
+
+JITSI_PARTICIPANT_TOOLBAR_BUTTONS = [
+    "camera",
+    "chat",
+    "closedcaptions",
+    "desktop",
+    "filmstrip",
+    "fullscreen",
+    "hangup",
+    "microphone",
+    "noisesuppression",
+    "profile",
+    "raisehand",
+    "select-background",
+    "settings",
+    "tileview",
+    "toggle-camera",
+    "videoquality",
+]
 
 
 class JitsiModule(BaseModule):
@@ -22,17 +50,58 @@ class JitsiModule(BaseModule):
         if not display_name:
             raise ConsumerException("jitsi.join.missing_profile")
 
-        server = self._normalize_server(self.module_config.get("domain"))
+        try:
+            server_model = await database_sync_to_async(choose_server_or_raise)(
+                event=self.consumer.event,
+                prefer_server=self.module_config.get("prefer_server"),
+            )
+        except JitsiServerUnavailable:
+            raise ConsumerException("jitsi.server_unavailable")
+
+        server = normalize_server_url(server_model.url)
         domain = server["domain"] if server else None
         room_name = self.module_config.get("room_name") or f"room-{self.room.id}"
         if not domain:
             raise ConsumerException("jitsi.missing_domain")
+        if not server_model.app_id or not server_model.app_secret:
+            raise ConsumerException("jitsi.missing_jwt_config")
 
-        is_moderator = await self.consumer.event.has_permission_async(
+        is_moderator = bool(await self.consumer.event.has_permission_async(
             user=self.consumer.user,
             permission=Permission.ROOM_JITSI_MODERATE,
             room=self.room,
+        ))
+        logger.info(
+            "Jitsi room_config user=%s room=%s jitsi_room=%s moderator=%s domain=%s server=%s",
+            self.consumer.user.pk,
+            self.room.id,
+            room_name,
+            is_moderator,
+            domain,
+            server_model.pk,
         )
+
+        config_overwrite = {
+            "startWithAudioMuted": self.module_config.get(
+                "start_with_audio_muted", False
+            ),
+            "startWithVideoMuted": self.module_config.get(
+                "start_with_video_muted", False
+            ),
+            "enableUserRolesBasedOnToken": True,
+            "remoteVideoMenu": {
+                "disableKick": not is_moderator,
+                "disableGrantModerator": not is_moderator,
+            },
+        }
+        if not is_moderator:
+            config_overwrite.update(
+                {
+                    "disableRemoteMute": True,
+                    "disableInviteFunctions": True,
+                    "toolbarButtons": JITSI_PARTICIPANT_TOOLBAR_BUTTONS,
+                }
+            )
 
         result = {
             "domain": domain,
@@ -43,31 +112,24 @@ class JitsiModule(BaseModule):
                 "displayName": display_name,
                 "email": self.consumer.user.profile.get("email") or "",
             },
-            "configOverwrite": {
-                "startWithAudioMuted": self.module_config.get(
-                    "start_with_audio_muted", False
-                ),
-                "startWithVideoMuted": self.module_config.get(
-                    "start_with_video_muted", False
-                ),
-            },
+            "configOverwrite": config_overwrite,
             "interfaceConfigOverwrite": {},
             "moderator": is_moderator,
         }
 
-        if self.module_config.get("jwt_enabled", True):
-            result["jwt"] = self._build_jwt(
-                domain=domain,
-                room_name=room_name,
-                display_name=display_name,
-                is_moderator=is_moderator,
-            )
+        result["jwt"] = self._build_jwt(
+            server=server_model,
+            domain=domain,
+            room_name=room_name,
+            display_name=display_name,
+            is_moderator=is_moderator,
+        )
 
         await self.consumer.send_success(result)
 
-    def _build_jwt(self, domain, room_name, display_name, is_moderator):
-        app_id = self.module_config.get("app_id")
-        app_secret = self.module_config.get("app_secret")
+    def _build_jwt(self, server, domain, room_name, display_name, is_moderator):
+        app_id = server.app_id
+        app_secret = server.app_secret
         if not app_id or not app_secret:
             raise ConsumerException("jitsi.missing_jwt_config")
 
@@ -85,32 +147,11 @@ class JitsiModule(BaseModule):
                     "name": display_name,
                     "email": self.consumer.user.profile.get("email") or "",
                     "moderator": bool(is_moderator),
+                    "affiliation": "owner" if is_moderator else "member",
                 }
             },
         }
         headers = {}
-        if self.module_config.get("key_id"):
-            headers["kid"] = self.module_config["key_id"]
+        if server.key_id:
+            headers["kid"] = server.key_id
         return jwt.encode(payload, app_secret, algorithm="HS256", headers=headers)
-
-    @staticmethod
-    def _normalize_server(domain):
-        if not domain:
-            return None
-        domain = domain.strip()
-        if "://" not in domain:
-            normalized = domain.strip("/")
-            return {
-                "domain": normalized,
-                "url": f"https://{normalized}",
-                "protocol": "https:",
-            }
-        parsed = urlparse(domain)
-        if not parsed.netloc:
-            return None
-        protocol = parsed.scheme.lower() + ":"
-        return {
-            "domain": parsed.netloc,
-            "url": f"{parsed.scheme.lower()}://{parsed.netloc}",
-            "protocol": protocol,
-        }

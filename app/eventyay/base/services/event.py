@@ -187,6 +187,10 @@ def get_room_config(room, permissions):
         elif module["type"] == "call.jitsi":
             cfg = module_config.get("config")
             if isinstance(cfg, dict):
+                cfg.pop("domain", None)
+                cfg.pop("jwt_enabled", None)
+                cfg.pop("app_id", None)
+                cfg.pop("key_id", None)
                 cfg.pop("app_secret", None)
         elif module["type"] == "chat.native":
             # Strip webhook secrets — these are server-side only

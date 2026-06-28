@@ -5,6 +5,8 @@ import jwt
 import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
+from eventyay.base.models import JitsiServer
+from eventyay.base.services.jitsi import choose_server
 from tests.utils import get_token
 from venueless.core.models import Room, User
 from venueless.routing import application
@@ -35,7 +37,21 @@ async def world_communicator(named=True, token=None):
 
 
 @database_sync_to_async
-def create_jitsi_room(world, *, trait_grants=None, jwt_enabled=True):
+def create_jitsi_room(
+    world,
+    *,
+    trait_grants=None,
+    with_server=True,
+    prefer_server="",
+    server_url="https://meet.example.org/",
+):
+    if with_server:
+        JitsiServer.objects.create(
+            url=server_url,
+            app_id="eventyay",
+            app_secret="test-secret",
+            key_id="eventyay-key",
+        )
     return Room.objects.create(
         event=world,
         name="Jitsi Room",
@@ -45,18 +61,30 @@ def create_jitsi_room(world, *, trait_grants=None, jwt_enabled=True):
             {
                 "type": "call.jitsi",
                 "config": {
-                    "domain": "https://meet.example.org/",
                     "room_name": "eventyay-test-room",
-                    "jwt_enabled": jwt_enabled,
-                    "app_id": "eventyay",
-                    "app_secret": "test-secret",
-                    "key_id": "eventyay-key",
+                    "prefer_server": prefer_server,
                     "start_with_audio_muted": True,
                     "start_with_video_muted": False,
                 },
             }
         ],
     )
+
+
+@pytest.mark.django_db
+def test_preferred_server_url_is_normalized(world):
+    preferred = JitsiServer.objects.create(
+        url="https://meet.example.org",
+        app_id="eventyay",
+        app_secret="test-secret",
+    )
+    JitsiServer.objects.create(
+        url="https://other.example.org",
+        app_id="eventyay",
+        app_secret="test-secret",
+    )
+
+    assert choose_server(world, prefer_server="https://meet.example.org/") == preferred
 
 
 @pytest.mark.asyncio
@@ -127,6 +155,31 @@ async def test_attendee_room_config(world):
     assert data["configOverwrite"] == {
         "startWithAudioMuted": True,
         "startWithVideoMuted": False,
+        "enableUserRolesBasedOnToken": True,
+        "remoteVideoMenu": {
+            "disableKick": True,
+            "disableGrantModerator": True,
+        },
+        "disableRemoteMute": True,
+        "disableInviteFunctions": True,
+        "toolbarButtons": [
+            "camera",
+            "chat",
+            "closedcaptions",
+            "desktop",
+            "filmstrip",
+            "fullscreen",
+            "hangup",
+            "microphone",
+            "noisesuppression",
+            "profile",
+            "raisehand",
+            "select-background",
+            "settings",
+            "tileview",
+            "toggle-camera",
+            "videoquality",
+        ],
     }
     claims = jwt.decode(
         data["jwt"],
@@ -138,12 +191,13 @@ async def test_attendee_room_config(world):
     assert claims["sub"] == "meet.example.org"
     assert claims["room"] == "eventyay-test-room"
     assert claims["context"]["user"]["moderator"] is False
+    assert claims["context"]["user"]["affiliation"] == "member"
     assert jwt.get_unverified_header(data["jwt"])["kid"] == "eventyay-key"
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
-async def test_moderator_room_config(world):
+async def test_speaker_room_config_is_not_moderator(world):
     jitsi_room = await create_jitsi_room(
         world, trait_grants={"viewer": [], "participant": [], "speaker": []}
     )
@@ -159,8 +213,57 @@ async def test_moderator_room_config(world):
         algorithms=["HS256"],
         audience="jitsi",
     )
+    assert data["moderator"] is False
+    assert data["configOverwrite"]["remoteVideoMenu"] == {
+        "disableKick": True,
+        "disableGrantModerator": True,
+    }
+    assert data["configOverwrite"]["disableRemoteMute"] is True
+    assert data["configOverwrite"]["disableInviteFunctions"] is True
+    assert "toolbarButtons" in data["configOverwrite"]
+    assert claims["context"]["user"]["moderator"] is False
+    assert claims["context"]["user"]["affiliation"] == "member"
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_moderator_room_config(world):
+    jitsi_room = await create_jitsi_room(
+        world, trait_grants={"viewer": [], "participant": [], "moderator": []}
+    )
+    async with world_communicator() as c:
+        await c.send_json_to(["jitsi.room_config", 123, {"room": str(jitsi_room.pk)}])
+        response = await c.receive_json_from()
+
+    assert response[0] == "success"
+    data = response[2]
+    claims = jwt.decode(
+        data["jwt"],
+        "test-secret",
+        algorithms=["HS256"],
+        audience="jitsi",
+    )
     assert data["moderator"] is True
+    assert data["configOverwrite"]["remoteVideoMenu"] == {
+        "disableKick": False,
+        "disableGrantModerator": False,
+    }
+    assert "toolbarButtons" not in data["configOverwrite"]
+    assert "disableRemoteMute" not in data["configOverwrite"]
     assert claims["context"]["user"]["moderator"] is True
+    assert claims["context"]["user"]["affiliation"] == "owner"
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_jitsi_server_required(world):
+    jitsi_room = await create_jitsi_room(world, with_server=False)
+    async with world_communicator() as c:
+        await c.send_json_to(["jitsi.room_config", 123, {"room": str(jitsi_room.pk)}])
+        response = await c.receive_json_from()
+
+    assert response[0] == "error"
+    assert response[2]["code"] == "jitsi.server_unavailable"
 
 
 @pytest.mark.asyncio
@@ -189,6 +292,10 @@ async def test_jitsi_secret_not_disclosed(world):
         )
 
     assert room["modules"][0]["type"] == "call.jitsi"
+    assert "domain" not in room["modules"][0]["config"]
+    assert "jwt_enabled" not in room["modules"][0]["config"]
+    assert "app_id" not in room["modules"][0]["config"]
+    assert "key_id" not in room["modules"][0]["config"]
     assert "app_secret" not in room["modules"][0]["config"]
 
 
@@ -202,6 +309,10 @@ async def test_jitsi_secret_not_disclosed_in_admin_config(world):
 
     assert response[0] == "success"
     assert response[2]["module_config"][0]["type"] == "call.jitsi"
+    assert "domain" not in response[2]["module_config"][0]["config"]
+    assert "jwt_enabled" not in response[2]["module_config"][0]["config"]
+    assert "app_id" not in response[2]["module_config"][0]["config"]
+    assert "key_id" not in response[2]["module_config"][0]["config"]
     assert "app_secret" not in response[2]["module_config"][0]["config"]
 
 
@@ -222,11 +333,8 @@ async def test_jitsi_room_create_uses_video_channel_permission(world):
                         {
                             "type": "call.jitsi",
                             "config": {
-                                "domain": "meet.example.org",
                                 "room_name": "created-jitsi-room",
-                                "jwt_enabled": True,
-                                "app_id": "eventyay",
-                                "app_secret": "test-secret",
+                                "prefer_server": "https://meet.example.org",
                             },
                         }
                     ],

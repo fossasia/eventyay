@@ -79,7 +79,16 @@ def test_stale_event_roles_are_augmented_with_jitsi_permissions():
 
     assert Permission.ROOM_JITSI_JOIN.value in participant_permissions
     assert Permission.ROOM_JITSI_JOIN.value in speaker_permissions
-    assert Permission.ROOM_JITSI_MODERATE.value in speaker_permissions
+    assert Permission.ROOM_JITSI_MODERATE.value not in speaker_permissions
+    moderator_permissions = permissions_with_jitsi_defaults(
+        'moderator',
+        [
+            Permission.ROOM_BBB_JOIN.value,
+            Permission.ROOM_BBB_MODERATE.value,
+            Permission.ROOM_CHAT_MODERATE.value,
+        ],
+    )
+    assert Permission.ROOM_JITSI_MODERATE.value in moderator_permissions
 
 
 @pytest.mark.django_db
