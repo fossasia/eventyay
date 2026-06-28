@@ -13,6 +13,8 @@
 		schedule-toolbar(v-if="(scheduleMeta || schedule) && !publicFavsUrl",
 			:version="version || scheduleMeta?.version || ''",
 			:isCurrent="scheduleMeta?.is_current !== false",
+			:isFeaturedPage="isFeaturedPage",
+			:isListView="!showGrid || sessionsMode",
 			:changelogUrl="scheduleMeta?.changelog_url || ''",
 			:currentScheduleUrl="scheduleMeta?.current_schedule_url || ''",
 			:exporters="scheduleMeta?.exporters || []",
@@ -39,7 +41,8 @@
 			v-model:includeDateSortKey="sortIncludeDate",
 			v-model:includePopularitySortKey="sortIncludePopularity",
 			:popularityFeatureEnabled="popularityFeatureEnabled",
-			:loggedIn="loggedIn",
+			:popularitySortAvailable="popularitySortAvailable",
+			:exportsDisabled="exportsDisabled",
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
@@ -58,7 +61,7 @@
 			:locale="locale",
 			:scrollParent="scrollParent",
 			:favs="favs",
-			:showFavCount="showPopularityOnCalendar",
+			:showFavCount="showPopularityOnSchedule",
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
@@ -77,7 +80,7 @@
 			:locale="locale",
 			:scrollParent="scrollParent",
 			:favs="favs",
-			:showFavCount="showPopularityOnList",
+			:showFavCount="showPopularityOnSchedule",
 			:sortBy="effectiveSortBy",
 			:includeRoomSortKey="sortIncludeRoom",
 			:includeDateSortKey="sortIncludeDate",
@@ -127,7 +130,7 @@ const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersLis
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount, computeTalkExporters } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending } from '~/utils'
 
 function getCsrfToken () {
 	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
@@ -171,6 +174,10 @@ export default {
 		version: {
 			type: String,
 			default: ''
+		},
+		isFeaturedPage: {
+			type: Boolean,
+			default: false
 		},
 		// View mode: 'schedule' (default), 'speakers' (list), 'speaker' (detail), 'talk' (single talk), 'sessions' (sessions only, no breaks)
 		view: {
@@ -216,6 +223,10 @@ export default {
 		enrichData: {
 			type: Boolean,
 			default: false
+		},
+		speakersListPublic: {
+			type: [Boolean, String],
+			default: null
 		}
 	},
 	provide () {
@@ -241,7 +252,7 @@ export default {
 			scheduleUnfav: (id) => this.unfav(id),
 			scheduleData: computed(() => ({
 				schedule: this.schedule,
-				sessions: this.sessions || [],
+				sessions: this.sessions || this.inlineScheduleSessions || [],
 				sessionsBySpeaker: this.sessionsBySpeaker,
 				sessionsLookup: this.sessionsLookup,
 				speakersLookup: this.speakersLookup,
@@ -269,9 +280,11 @@ export default {
 					this.showSpeakerDetails(speaker, event)
 				}
 			},
-			loggedIn: computed(() => this.loggedIn),
+			favsReadOnly: computed(() => this.favsReadOnly),
 			translationMessages: computed(() => this.translationMessages),
-			isWipPreview: computed(() => (this.version || this.scheduleMeta?.version || '') === 'wip')
+			isWipPreview: computed(() => (this.version || this.scheduleMeta?.version || '') === 'wip'),
+			exportsDisabled: computed(() => this.exportsDisabled),
+			speakersListPublic: computed(() => this.resolvedSpeakersListPublic),
 		}
 	},
 	data () {
@@ -333,6 +346,22 @@ export default {
 			// Always allow a distinct calendar grid view when not explicitly in list format
 			return this.format !== 'list'
 		},
+		exportsDisabled () {
+			return areScheduleExportsDisabled({
+				version: this.version,
+				scheduleMetaVersion: this.scheduleMeta?.version,
+				isFeaturedPage: this.isFeaturedPage,
+				exportersCount: this.scheduleMeta?.exporters?.length || 0,
+				isWipPreview: this.isWipPreview,
+				scheduleExportsDisabled: Boolean(this.schedule?.exports_disabled),
+			}) || (this.isTalkView && Boolean(this.resolvedTalk?.schedule_pending))
+		},
+		resolvedSpeakersListPublic () {
+			const prop = this.speakersListPublic
+			if (prop === false || prop === 'false') return false
+			if (prop === true || prop === 'true') return true
+			return Boolean(this.schedule?.speakers_list_public) && !this.schedule?.exports_disabled
+		},
 		roomsLookup () {
 			if (!this.schedule) return {}
 			return this.schedule.rooms.reduce((acc, room) => { acc[room.id] = room; return acc }, {})
@@ -387,16 +416,8 @@ export default {
 			return (this.schedule.talks || []).reduce((acc, t) => { acc[t.code] = t; return acc }, {})
 		},
 		sessionsBySpeaker () {
-			if (!this.sessions) return {}
-			return this.sessions.reduce((acc, session) => {
-				(session.speakers || []).forEach((speaker) => {
-					const code = typeof speaker === 'string' ? speaker : speaker?.code
-					if (!code) return
-					if (!acc[code]) acc[code] = []
-					acc[code].push(session)
-				})
-				return acc
-			}, {})
+			const sessions = this.sessions || this.inlineScheduleSessions
+			return buildSessionsBySpeaker(sessions)
 		},
 		favSet () {
 			return new Set(this.favs || [])
@@ -421,55 +442,47 @@ export default {
 						.filter(Boolean)
 				)
 			}
+			const sessionContext = {
+				timezone: this.currentTimezone,
+				speakersLookup: this.speakersLookup,
+				tracksLookup: this.tracksLookup,
+				roomsLookup: this.roomsLookup,
+				includePopularity: true,
+			}
 			const sessions = []
-			for (const session of this.schedule.talks) {
-				if (!session.start) continue
-				if (favSet && !favSet.has(session.code)) continue
+			for (const talk of this.schedule.talks) {
+				if (favSet && !favSet.has(talk.code)) continue
 				if (this.showRecordingFilter) {
-					if (this.recordingFilter === 'yes' && session.do_not_record !== false) continue
-					if (this.recordingFilter === 'no' && session.do_not_record !== true) continue
+					if (this.recordingFilter === 'yes' && talk.do_not_record !== false) continue
+					if (this.recordingFilter === 'no' && talk.do_not_record !== true) continue
 				}
-				if (filteredTrackIds && !filteredTrackIds.has(session.track)) continue
-				if (filteredRoomIds && !filteredRoomIds.has(session.room)) continue
-				if (filteredTypeValues && !filteredTypeValues.has(getSessionTypeLabel(session.session_type))) continue
+				if (filteredTrackIds && !filteredTrackIds.has(talk.track)) continue
+				if (filteredRoomIds && !filteredRoomIds.has(talk.room)) continue
+				if (filteredTypeValues && !filteredTypeValues.has(getSessionTypeLabel(talk.session_type))) continue
 				if (langExact) {
 					const fallbackLocale = this.schedule?.content_locales?.[0] || null
-					const sessionLocale = session.content_locale || fallbackLocale
+					const sessionLocale = talk.content_locale || fallbackLocale
 					const normalized = normalizeLocaleCode(sessionLocale)
 					if (!normalized) continue
 					const primary = localePrimary(normalized)
 					if (!langExact.has(normalized) && !(primary && langPrimary.has(primary))) continue
 				}
-				const start = moment.tz(session.start, this.currentTimezone)
-				if (displayDateSet && !displayDateSet.has(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
-				sessions.push({
-					id: session.code,
-					title: session.title,
-					abstract: session.abstract,
-					description: session.description,
-					do_not_record: session.do_not_record,
-					duration: session.duration,
-					start: start,
-					end: moment.tz(session.end, this.currentTimezone),
-					speakers: (session.speakers || [])
-						.map(code => this.speakersLookup[code] || { code })
-						.filter(Boolean),
-					track: this.tracksLookup[session.track],
-					room: this.roomsLookup[session.room],
-					fav_count: normalizePopularityCount(session),
-					tags: session.tags,
-					session_type: session.session_type,
-					content_locale: session.content_locale,
-					resources: session.resources,
-					answers: session.answers,
-					exporters: session.exporters,
-					recording_iframe: session.recording_iframe,
-					stream_url: session.stream_url || null,
-					stream_type: session.stream_type || null,
-				})
+				if (!isTalkSchedulePending(talk)) {
+					const start = moment.tz(talk.start, this.currentTimezone)
+					if (displayDateSet && !displayDateSet.has(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
+				}
+				sessions.push(talkToSession(talk, sessionContext))
 			}
-			sessions.sort((a, b) => a.start.diff(b.start))
-			return sessions
+			return sortSessionsByStart(sessions)
+		},
+		inlineScheduleSessions () {
+			return talksToScheduleSessions(this.schedule?.talks, {
+				timezone: this.currentTimezone,
+				speakersLookup: this.speakersLookup,
+				tracksLookup: this.tracksLookup,
+				roomsLookup: this.roomsLookup,
+				includePopularity: true,
+			})
 		},
 		// sessions: baseSessions + search filter. Used for display.
 		sessions () {
@@ -506,6 +519,7 @@ export default {
 			const seen = new Set()
 			const days = []
 			for (const session of this.baseSessions) {
+				if (!session.start) continue
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
 				const key = day.valueOf()
 				if (!seen.has(key)) {
@@ -522,6 +536,7 @@ export default {
 			if (!this.baseSessions) return
 			const days = []
 			for (const session of this.baseSessions) {
+				if (!session.start) continue
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
 				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
 			}
@@ -576,17 +591,21 @@ export default {
 			return `${eventUrlObj.protocol}//${eventUrlObj.host}/api/v1/events/${this.eventSlug}/`
 		},
 		popularityFeatureEnabled () {
-			return !!this.schedule?.feature_flags?.session_popularity_enabled
+			return isPopularityFeatureEnabled(this.schedule?.feature_flags || {})
 		},
-		showPopularityOnCalendar () {
-			return this.loggedIn && this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_calendar
+		showPopularityOnSchedule () {
+			return isPopularityVisibleOnSchedule({
+				flags: this.schedule?.feature_flags || {},
+			})
 		},
-		showPopularityOnList () {
-			return this.loggedIn && this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_list
+		popularitySortAvailable () {
+			return isPopularitySortAvailable({
+				flags: this.schedule?.feature_flags || {},
+			})
 		},
 		sortOptions () {
 			const options = ['title', 'title_desc']
-			if (this.showPopularityOnList) options.push('popularity')
+			if (this.popularitySortAvailable) options.push('popularity')
 			return options
 		},
 		effectiveSortBy () {
@@ -595,17 +614,22 @@ export default {
 	},
 	watch: {
 		popularityFeatureEnabled (enabled) {
-			// When the popularity feature is disabled, also disable the popularity sort toggle
-			if (!enabled) this.sortIncludePopularity = false
-		},
-		loggedIn (isLoggedIn) {
-			if (!isLoggedIn) {
+			if (!enabled) {
 				this.sortIncludePopularity = false
+				if (this.sortBy === 'popularity') this.sortBy = 'title'
 			}
-			if (!isLoggedIn) {
-				this.onlyFavs = false
-				this.favs = []
+		},
+		popularitySortAvailable (enabled) {
+			if (!enabled) {
+				this.sortIncludePopularity = false
+				if (this.sortBy === 'popularity') this.sortBy = 'title'
 			}
+		},
+		loggedIn () {
+			if (!this.schedule) return
+			this.loadFavs().then((favs) => {
+				this.favs = this.pruneFavs(favs, this.schedule)
+			})
 		},
 		recordingFilter () {
 			this.writeRecordingQueryParam()
@@ -628,9 +652,10 @@ export default {
 		if (this.view === 'sessions') {
 			this.sessionsMode = true
 		}
+		if (this.isFeaturedPage) {
+			this.sessionsMode = true
+		}
 
-		// Detect login state from the DOM element (always rendered by Django),
-		// independent of whether the PRETALX_MESSAGES JS global loaded
 		const messagesEl = document.querySelector('#pretalx-messages')
 		if (messagesEl) {
 			this.onHomeServer = true
@@ -640,7 +665,6 @@ export default {
 			}
 		}
 
-		// Load translation messages if available
 		/* global PRETALX_MESSAGES */
 		if (typeof PRETALX_MESSAGES !== 'undefined') {
 			this.translationMessages = PRETALX_MESSAGES
@@ -648,7 +672,7 @@ export default {
 
 		// Use inline data if available, otherwise fetch the schedule JSON.
 		const dataEl = document.getElementById('pretalx-schedule-data')
-		if (dataEl) {
+		if (dataEl && dataEl.textContent.trim()) {
 			try { this.schedule = JSON.parse(dataEl.textContent) } catch (e) { /* ignore parse error, fall through to fetch */ }
 		}
 		if (this.schedule) {
@@ -698,6 +722,7 @@ export default {
 				this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
 			} else {
 				this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+				if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
 			}
 			if (this.view === 'speaker' && this.speakerCode) {
 				this.fetchSpeakerApiContentIfNeeded(this.speakerCode)
@@ -711,7 +736,9 @@ export default {
 		}
 		this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
 		this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
-		this.currentDay = this.days[0].format('YYYY-MM-DD')
+		if (this.days?.length) {
+			this.currentDay = this.days[0].format('YYYY-MM-DD')
+		}
 		this.now = moment.tz(this.currentTimezone)
 		setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
 		if (!this.scrollParentResizeObserver) {
@@ -761,6 +788,7 @@ export default {
 			this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
 		} else {
 			this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+			if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
 		}
 
 		if (fragment && fragment.length === 10) {
@@ -894,30 +922,31 @@ export default {
 			return response.json()
 		},
 		async loadFavs () {
-			if (!this.loggedIn) return []
-			const userStorageKey = this.getFavStorageKey(this.userCode)
 			const anonymousStorageKey = this.getFavStorageKey(null)
-			const localFavs = [...new Set([
-				...this.readLocalFavs(userStorageKey),
-				...this.readLocalFavs(anonymousStorageKey),
-			])]
-			if (this.loggedIn) {
-				try {
-					const merged = await this.apiRequest(
-						'submissions/favourites/merge/',
-						'POST',
-						localFavs
-					)
-					if (Array.isArray(merged)) {
-						localStorage.setItem(userStorageKey, JSON.stringify(merged))
-						localStorage.removeItem(anonymousStorageKey)
-						return merged
-					}
-				} catch {
-					this.pushErrorMessage(this.translationMessages.favs_not_saved)
-				}
+			const localFavs = this.readLocalFavs(anonymousStorageKey)
+			if (!this.loggedIn) {
+				return localFavs
 			}
-			return localFavs
+			const userStorageKey = this.getFavStorageKey(this.userCode)
+			const mergedLocal = [...new Set([
+				...this.readLocalFavs(userStorageKey),
+				...localFavs,
+			])]
+			try {
+				const merged = await this.apiRequest(
+					'submissions/favourites/merge/',
+					'POST',
+					mergedLocal
+				)
+				if (Array.isArray(merged)) {
+					localStorage.setItem(userStorageKey, JSON.stringify(merged))
+					localStorage.removeItem(anonymousStorageKey)
+					return merged
+				}
+			} catch {
+				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+			}
+			return mergedLocal
 		},
 		async loadPublicFavs () {
 			if (!this.publicFavsUrl) return []
@@ -937,17 +966,25 @@ export default {
 			if (this.errorMessages.includes(message)) return
 			this.errorMessages.push(message)
 		},
+		showAnonymousFavsInfo () {
+			if (this.loggedIn || this.favsReadOnly) return
+			const message = this.translationMessages.favs_anonymous_notice
+			if (message) this.pushErrorMessage(message)
+		},
 		pruneFavs (favs, schedule) {
-			// we're not pushing the changed list to the server, as if a talk vanished but will appear again,
-			// we want it to still be faved
-			const talkSet = new Set((schedule.talks || []).map(e => e.code))
-			return favs.filter(e => talkSet.has(e))
+			const talkSet = new Set((schedule.talks || []).map(talk => talk.code))
+			return favs.filter(code => talkSet.has(code))
 		},
 		saveFavs () {
-			if (!this.loggedIn) return
+			const storageKey = this.getFavStorageKey(this.loggedIn ? this.userCode : null)
+			try {
+				localStorage.setItem(storageKey, JSON.stringify(this.favs))
+			} catch {
+				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+			}
 		},
 		toggleSessionModalFav (id) {
-			if (!this.loggedIn) return
+			if (this.favsReadOnly) return
 			if (this.favSet.has(id)) {
 				this.unfav(id)
 			} else {
@@ -955,7 +992,6 @@ export default {
 			}
 		},
 		async fav (id) {
-			if (!this.loggedIn) return
 			if (this.favsReadOnly) return
 			if (this.favSet.has(id)) return
 			this.favs.push(id)
@@ -964,6 +1000,10 @@ export default {
 				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) + 1)
 			}
 			this.saveFavs()
+			if (!this.loggedIn) {
+				this.showAnonymousFavsInfo()
+				return
+			}
 			try {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
 			} catch (error) {
@@ -972,7 +1012,6 @@ export default {
 			}
 		},
 		async unfav (id) {
-			if (!this.loggedIn) return
 			if (this.favsReadOnly) return
 			this.favs = this.favs.filter(elem => elem !== id)
 			const talk = this.schedule?.talks?.find(t => t.code === id)
@@ -980,6 +1019,7 @@ export default {
 				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) - 1)
 			}
 			this.saveFavs()
+			if (!this.loggedIn) return
 			try {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
 			} catch (error) {
@@ -1018,7 +1058,11 @@ export default {
 				return;
 			}
 
-			const speakerSessions = (this.sessionsBySpeaker[speaker.code] || [])
+			const speakerSessions = (
+				this.sessionsBySpeaker[speaker.code?.toLowerCase()]
+				|| this.sessionsBySpeaker[speaker.code]
+				|| []
+			)
 
 			// Show speaker immediately with loading state
 			this.modalContent = {
@@ -1056,7 +1100,7 @@ export default {
 			ev.preventDefault()
 
 			const talk = this.talksLookup[session.id]
-			const exporters = session.exporters || (this.onHomeServer ? this.computedExporters(session.id) : null)
+			const exporters = session.exporters || (this.onHomeServer && !this.exportsDisabled ? this.computedExporters(session.id) : null)
 
 			// Show session immediately with loading state
 			this.modalContent = {

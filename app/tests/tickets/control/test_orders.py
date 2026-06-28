@@ -28,7 +28,7 @@ from eventyay.base.models import (
     User,
     Voucher,
 )
-from eventyay.base.exporters.orderlist import OrderListExporter
+from eventyay.base.exporters.orderlist import OrderListExporter, OrderPositionListExporter
 from eventyay.base.payment import PaymentException
 from eventyay.control.forms.orders import ExporterForm
 from eventyay.base.services.invoices import (
@@ -321,6 +321,40 @@ def test_order_export_orders_include_name_parts_from_position(env):
     assert data[headers.index('Name')] == 'Ada Lovelace'
     assert data[headers.index('Given name')] == 'Ada'
     assert data[headers.index('Family name')] == 'Lovelace'
+
+
+@pytest.mark.django_db
+def test_order_position_list_exporter_matches_combined_positions_sheet(env):
+    event, user, order, ticket = env
+
+    combined_exporter = OrderListExporter(event)
+    dedicated_exporter = OrderPositionListExporter(event)
+    form_data = {'paid_only': True}
+
+    combined_rows = [
+        row
+        for row in combined_exporter.iterate_positions(form_data)
+        if not isinstance(row, combined_exporter.ProgressSetTotal)
+    ]
+    dedicated_rows = [
+        row
+        for row in dedicated_exporter.iterate_list(form_data)
+        if not isinstance(row, dedicated_exporter.ProgressSetTotal)
+    ]
+
+    assert combined_rows == dedicated_rows
+
+
+@pytest.mark.django_db
+def test_order_position_list_exporter_csv_render(env):
+    event, user, order, ticket = env
+    exporter = OrderPositionListExporter(event)
+
+    filename, content_type, content = exporter.render({'_format': 'default', 'paid_only': True})
+
+    assert filename == f'{event.slug}_orderpositions.csv'
+    assert content_type.startswith('text/csv')
+    assert order.code in content.decode()
 
 
 @pytest.mark.django_db

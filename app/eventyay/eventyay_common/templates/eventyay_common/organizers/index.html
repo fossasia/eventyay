@@ -26,7 +26,7 @@
             </a>
         </p>
     {% endif %}
-	<table class="table table-condensed table-hover">
+	<table class="table table-condensed table-hover events-table">
 		<thead>
 			<tr>
                 <th>
@@ -47,21 +47,23 @@
 		<tbody>
 			{% for organizer in organizers %}
 			<tr>
-				<td><strong>
+				<td class="event-name-col" data-label="{% translate 'Name' %}"><strong>
                     <a href='{% url "eventyay_common:organizer.dashboard" organizer=organizer.slug %}'>{{ organizer.name }}</a>
                 </strong></td>
-                <td>{{ organizer.slug }}</td>
+                <td data-label="{% translate 'Short form' %}" class="events-table__cell--no-border">{{ organizer.slug }}</td>
                 <td class="text-right flip">
-                    <a href='{% url "eventyay_common:organizer.edit" organizer=organizer.slug  %}'
-                            class="btn btn-sm btn-default" title='{% translate "Edit" %}'
-                            data-toggle="tooltip">
-                        <span class="fa fa-edit"></span>
-                    </a>
-                    <a href='{% url "eventyay_common:organizer.teams" organizer=organizer.slug  %}?section=permissions'
-                            class="btn btn-sm btn-default" title='{% translate "Manage teams & permissions" %}'
-                            data-toggle="tooltip">
-                        <span class="fa fa-users"></span>
-                    </a>
+                    <div class="action-buttons">
+                        <a href='{% url "eventyay_common:organizer.edit" organizer=organizer.slug  %}'
+                                class="btn btn-sm btn-default" title='{% translate "Edit" %}'
+                                data-toggle="tooltip">
+                            <span class="fa fa-edit"></span>
+                        </a>
+                        <a href='{% url "eventyay_common:organizer.teams" organizer=organizer.slug  %}?section=permissions'
+                                class="btn btn-sm btn-default" title='{% translate "Manage teams & permissions" %}'
+                                data-toggle="tooltip">
+                            <span class="fa fa-users"></span>
+                        </a>
+                    </div>
                 </td>
 			</tr>
 			{% endfor %}

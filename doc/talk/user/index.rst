@@ -17,5 +17,6 @@ updating it in the coming months.
 
    sessions
    event/widget
+   event/etherpad
    markdown
    faq

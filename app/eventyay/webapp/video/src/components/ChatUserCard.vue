@@ -21,10 +21,10 @@
 						.block(v-else, @click="userAction = 'block'") {{ $t('UserAction:action.block:label') }}
 						template(v-if="hasPermission('room:chat.moderate') && user.id !== ownUser.id")
 							.divider {{ $t('UserAction:moderator-actions:title') }}
-							.reactivate(v-if="user.moderation_state", @click="userAction = 'reactivate'")
-								| {{ user.moderation_state === 'banned' ? $t('UserAction:action.unban:label') : $t('UserAction:action.unsilence:label') }}
 							.ban(v-if="user.moderation_state !== 'banned'", @click="userAction = 'ban'") {{ $t('UserAction:action.ban:label') }}
 							.silence(v-if="!user.moderation_state", @click="userAction = 'silence'") {{ $t('UserAction:action.silence:label') }}
+							.reactivate(v-if="user.moderation_state", @click="userAction = 'reactivate'")
+								| {{ user.moderation_state === 'banned' ? $t('UserAction:action.unban:label') : $t('UserAction:action.unsilence:label') }}
 	user-action-prompt(v-if="userAction", :action="userAction", :user="user", @close="$emit('close')")
 </template>
 <script>

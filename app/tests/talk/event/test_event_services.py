@@ -6,8 +6,8 @@ from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretalx.common.models.log import ActivityLog
-from pretalx.event.services import (
+from eventyay.base.models.log import ActivityLog
+from eventyay.event.services import (
     periodic_event_services,
     task_periodic_event_services,
     task_periodic_schedule_export,

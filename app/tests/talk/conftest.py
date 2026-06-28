@@ -9,18 +9,17 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from lxml import etree
 
-from pretalx.common.models.settings import GlobalSettings
-from pretalx.event.models import Event, Organiser, Team, TeamInvite
-from pretalx.mail.models import MailTemplate
-from pretalx.person.models import SpeakerInformation, SpeakerProfile, User, UserApiToken
-from pretalx.person.models.auth_token import ENDPOINTS, generate_api_token
-from pretalx.schedule.models import Availability, Room, TalkSlot
-from pretalx.submission.models import (
+from eventyay.base.models.settings import GlobalSettings
+from eventyay.base.models import Event, Organizer as Organiser, Team, TeamInvite
+from eventyay.base.models import MailTemplate
+from eventyay.base.models import SpeakerProfile, User
+from eventyay.base.models.information import SpeakerInformation
+from eventyay.base.models.auth_token import ENDPOINTS, UserApiToken, generate_api_token
+from eventyay.base.models import Availability, Room, TalkSlot
+from eventyay.base.models import (
     Answer,
     AnswerOption,
     Feedback,
-    Question,
-    QuestionVariant,
     Resource,
     Review,
     Submission,
@@ -28,8 +27,10 @@ from pretalx.submission.models import (
     SubmitterAccessCode,
     Tag,
     Track,
+    TalkQuestion as Question,
+    TalkQuestionVariant as QuestionVariant,
 )
-from pretalx.submission.models.question import QuestionRequired
+from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
 
 
 @pytest.fixture(scope="session", autouse=True)
