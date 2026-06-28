@@ -162,11 +162,13 @@ export default {
 			display: flex
 			flex-direction: column
 			padding: 48px 32px 32px
+			min-height: 0
 		.actions
 			margin-top: 32px
 			align-self: stretch
 			display: flex
 			justify-content: flex-end
+			flex-shrink: 0
 		#btn-cancel
 			themed-button-secondary()
 			margin-right: 8px
