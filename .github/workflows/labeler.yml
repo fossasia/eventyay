@@ -1,0 +1,37 @@
+name: Pull Request Labeler
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+    branches: [dev, main]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: PR number to label (manual test or backfill)
+        required: true
+        type: string
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const { runPrLabeler } = await import(
+              `${process.env.GITHUB_WORKSPACE}/.github/scripts/pr-labeler-lib.mjs`
+            );
+            await runPrLabeler({
+              github,
+              context,
+              core,
+              prNumber: context.eventName === 'workflow_dispatch'
+                ? Number(context.payload.inputs['pr-number'])
+                : undefined,
+            });
