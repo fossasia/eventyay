@@ -18,7 +18,7 @@
             </ul>
         {% endif %}
         {% if forbidden %}
-            <p>{% blocktrans trimmed %}The following vouchers can't be deleted as they already have been redeemed, but they will be set to fully redeemed instead.{% endblocktrans %}</p>
+            <p>{% blocktrans trimmed %}The following vouchers can't be deleted as they already have been redeemed or used in an order.{% endblocktrans %}</p>
             <ul>
                 {% for s in forbidden %}
                     <li>

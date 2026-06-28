@@ -513,13 +513,13 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
                 request,
                 'pretixcontrol/vouchers/delete_bulk.html',
                 {
-                    'allowed': self.objects.filter(redeemed=0),
-                    'forbidden': self.objects.exclude(redeemed=0),
+                    'allowed': self.objects.filter(redeemed=0, orderposition__isnull=True),
+                    'forbidden': self.objects.exclude(redeemed=0, orderposition__isnull=True),
                 },
             )
         elif request.POST.get('action') == 'delete_confirm':
-            allowed = [obj for obj in self.objects if obj.allow_delete()]
-            forbidden = [obj for obj in self.objects if not obj.allow_delete()]
+            allowed = self.objects.filter(redeemed=0, orderposition__isnull=True)
+            forbidden = self.objects.exclude(redeemed=0, orderposition__isnull=True)
 
             for obj in allowed:
                 obj.log_action('eventyay.voucher.deleted', user=self.request.user)
@@ -528,7 +528,7 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
                 obj.delete()
 
             if forbidden:
-                messages.error(request, _('Deletion failed for some vouchers because they have already been redeemed.'))
+                messages.error(request, _('Deletion failed for some vouchers because they have already been redeemed or used in an order.'))
                 if allowed:
                     messages.success(request, _('The other selected vouchers have been deleted.'))
             else:

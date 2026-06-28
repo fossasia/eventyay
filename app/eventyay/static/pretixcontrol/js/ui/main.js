@@ -966,16 +966,17 @@ $(function () {
     });
 
     // Voucher page specific delete selected toggle
-    if ($('.table-quotas').length && $('button[name="action"][value="delete"]').length) {
-        var $vouchersForm = $('button[name="action"][value="delete"]').closest('form');
-        var $vouchersDeleteBtn = $('button[name="action"][value="delete"]');
-        var $vouchersCheckboxes = $vouchersForm.find('input[name="voucher"]');
+    var $vouchersDeleteBtn = $('button[name="action"][value="delete"]');
+    var $vouchersForm = $vouchersDeleteBtn.closest('form');
+    var $vouchersCheckboxes = $vouchersForm.find('input[name="voucher"]');
 
-        var updateVouchersDeleteBtn = function() {
+    // Only run this behavior on the voucher list (other pages also use .table-quotas + a delete button).
+    if ($vouchersCheckboxes.length) {
+        var updateVouchersDeleteBtn = function () {
             $vouchersDeleteBtn.toggle($vouchersCheckboxes.filter(':checked').length > 0);
         };
 
-        $vouchersForm.on('change', 'input[name="voucher"], input[data-toggle-table]', function() {
+        $vouchersForm.on('change', 'input[name="voucher"], input[data-toggle-table]', function () {
             setTimeout(updateVouchersDeleteBtn, 50);
         });
 
