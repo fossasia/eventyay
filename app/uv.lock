@@ -1388,7 +1388,7 @@ dependencies = [
     { name = "tzdata" },
     { name = "urllib3" },
     { name = "urlman" },
-    { name = "vat-moss-forked" },
+    { name = "vat-moss-lite" },
     { name = "vine" },
     { name = "vobject" },
     { name = "wcwidth" },
@@ -1623,7 +1623,7 @@ requires-dist = [
     { name = "tzdata", specifier = ">=2026.2" },
     { name = "urllib3", specifier = ">=2.7.0" },
     { name = "urlman", specifier = ">=2.0.3" },
-    { name = "vat-moss-forked", specifier = ">=2020.3.20.0.11.0" },
+    { name = "vat-moss-lite", specifier = ">=0.12.1" },
     { name = "vine", specifier = ">=5.1.0" },
     { name = "vobject", specifier = ">=0.9.9" },
     { name = "wcwidth", specifier = ">=0.8.1" },
@@ -3766,12 +3766,12 @@ wheels = [
 ]
 
 [[package]]
-name = "vat-moss-forked"
-version = "2020.3.20.0.11.0"
+name = "vat-moss-lite"
+version = "0.12.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a1/c9/9f4ab5b92746937c239522713e2af072fa256156647fdb529f66f1fe07f9/vat_moss_forked-2020.3.20.0.11.0.tar.gz", hash = "sha256:d46836079687a20375cae0336946015060c71a30faa30642c8ea726daf638095", size = 19891, upload-time = "2020-03-20T09:52:19.662Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6e/73/0aaa1e188919320f7c56d0df0e43aa86760789537f4a033bcdc1a2090dd8/vat_moss_lite-0.12.1.tar.gz", hash = "sha256:99075c1ef28d1d903ac1e1784298b3eedaf6d1870f27c79b963988d3c392c6a2", size = 45061, upload-time = "2026-06-20T07:33:22.53Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/02/a614d6ed7af4b2f4d8dd80261a88f9302b05cef4eb2e2caf6773703deb9e/vat_moss_forked-2020.3.20.0.11.0-py3-none-any.whl", hash = "sha256:80f489da56836f5d3ad8e5b29621238a18888fa8669ebf9dd975c3666174471f", size = 23862, upload-time = "2020-03-20T09:52:17.269Z" },
+    { url = "https://files.pythonhosted.org/packages/15/02/a632fade84dab4979c5bb4b371e658972a8ed866c04250cce436287ec817/vat_moss_lite-0.12.1-py3-none-any.whl", hash = "sha256:5ca2ebd673cc7f9d9bf3a6f0d6f85cf26d4f8579be7dbbccfc577a38ec781fe0", size = 29154, upload-time = "2026-06-20T07:33:21.41Z" },
 ]
 
 [[package]]
