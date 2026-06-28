@@ -92,14 +92,7 @@ def featured_submissions_for_event(event):
 
     return (
         event.submissions.filter(is_featured=True)
-        .exclude(
-            state__in=(
-                SubmissionStates.REJECTED,
-                SubmissionStates.CANCELED,
-                SubmissionStates.WITHDRAWN,
-                SubmissionStates.DELETED,
-            )
-        )
+        .exclude(state__in=SubmissionStates.terminal_states)
         .select_related('event', 'event__organizer', 'submission_type')
         .prefetch_related('speakers')
         .order_by('title')
