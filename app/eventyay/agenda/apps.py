@@ -12,6 +12,7 @@ class AgendaConfig(AppConfig):
 
     def ready(self):
         from .phrases import AgendaPhrases  # noqa
+        from . import etherpad  # noqa
         from eventyay.schedule.signals import schedule_release
 
         def on_schedule_release(sender, schedule, **kwargs):

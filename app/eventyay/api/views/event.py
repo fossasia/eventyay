@@ -559,19 +559,80 @@ def talk_schedule_public(request, *args, **kwargs):
 
 
 class CustomerOrderCheckView(APIView):
+    """
+    Check a customer's ticket / order for a given event.
+
+    POST body (both fields are required):
+        {
+            "email": "attendee@example.com",
+            "code":  "ABCDE"
+        }
+    """
+
     authentication_classes = ()
     permission_classes = ()
 
-    @scopes_disabled()
     def post(self, request, *args, **kwargs):
-        # Disabled because it uses pretix Organizer and Order models
-        return Response({'detail': 'CustomerOrderCheckView disabled (pretix dependency).'}, status=501)
+        organizer_slug = kwargs.get('organizer')
+        event_slug = kwargs.get('event')
 
+        with scopes_disabled():
+            organizer = get_object_or_404(Organizer, slug=organizer_slug)
+            event = get_object_or_404(Event, slug=event_slug, organizer=organizer)
 
-#     def post(self, request, *args, **kwargs):
-#         organizer = Organizer.objects.get(...)
-#         order_list = Order.objects.filter(...)
-#         ...
+        email = request.data.get('email')
+        code = request.data.get('code')
+        email = str(email).strip() if isinstance(email, str) else ''
+        code = str(code).strip().upper() if isinstance(code, str) else ''
+
+        if not email or not code:
+            return Response(
+                {'detail': 'Please supply both email and code.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from eventyay.base.models.orders import Order
+
+        with scopes_disabled():
+            qs = Order.objects.filter(event=event)
+            if code:
+                # Use exact (case-insensitive) match — normalization is for OCR/handwriting
+                # and would corrupt codes like QXUG02 (2→Z gives QXUG0Z, no match)
+                qs = qs.filter(code__iexact=code)
+            if email:
+                qs = qs.filter(email__iexact=email)
+
+            orders = list(qs.prefetch_related('all_positions', 'all_positions__product'))
+
+            result = []
+            for order in orders:
+                positions = []
+                for pos in order.all_positions.all():
+                    positions.append({
+                        'id': pos.pk,
+                        'product': str(pos.product.name),
+                        'price': str(pos.price),
+                        'attendee_name': pos.attendee_name_cached or '',
+                        'attendee_email': pos.attendee_email or '',
+                        'seat': str(pos.seat) if pos.seat else None,
+                    })
+                result.append({
+                    'code': order.code,
+                    'status': order.status,
+                    'email': order.email or '',
+                    'total': str(order.total),
+                    'datetime': order.datetime.isoformat(),
+                    'positions': positions,
+                })
+
+        if not result:
+            return Response(
+                {'detail': 'No orders found matching the supplied criteria.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(result[0], status=status.HTTP_200_OK)
+
 
 
 class EventView(APIView):

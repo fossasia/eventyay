@@ -21,7 +21,7 @@ from rest_framework import serializers
 from eventyay.api.serializers.fields import (
     ListMultipleChoiceField,
     UploadedFileField,
-    UploadedFileOrURLField,
+    UploadedFileNoNewURLField,
 )
 from eventyay.api.serializers.i18n import I18nField, I18nURLField
 from eventyay.base.configurations.lazy_i18n_string_list_base import (
@@ -53,9 +53,9 @@ def country_choice_kwargs():
 
 
 def primary_font_kwargs():
-    from eventyay.presale.style import get_fonts
+    from eventyay.presale.style import SYSTEM_FONT_CHOICES, get_fonts
 
-    choices = [('Open Sans', 'Open Sans')]
+    choices = list(SYSTEM_FONT_CHOICES)
     choices += [(a, {'title': a, 'data': v}) for a, v in get_fonts().items()]
     return {
         'choices': choices,
@@ -1576,7 +1576,7 @@ DEFAULT_SETTINGS = {
         'form_class': forms.EmailField,
         'form_kwargs': dict(
             label=_('Contact address'),
-            help_text=_("We'll show this publicly to allow attendees to contact you."),
+            help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
         ),
     },
     'imprint_url': {
@@ -2089,7 +2089,7 @@ Your {event} team"""
                 'Recommended size: 1920 × 640 px (the center 1920 × 320 px will always be visible). Images will be automatically optimized to max 3000 px wide on save.'
             ),
         ),
-        'serializer_class': UploadedFileOrURLField,
+        'serializer_class': UploadedFileNoNewURLField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
@@ -2109,7 +2109,7 @@ Your {event} team"""
                 'The logo will be automatically optimized on save (max 1000 px wide), except for SVG and animated images which remain unmodified.'
             ),
         ),
-        'serializer_class': UploadedFileOrURLField,
+        'serializer_class': UploadedFileNoNewURLField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],

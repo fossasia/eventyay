@@ -52,13 +52,21 @@
     {% has_event_perm "base.update_speakerprofile" request.user request request.event as can_update_speaker %}
     <div data-ajax-results-region>
     <div class="table-responsive-md">
-        <table class="table table-sm table-flip table-sticky">
+        <table class="table table-sm table-flip table-sticky speaker-list-table">
             <thead>
                 <tr>
                     <th>{% translate "Name" %}</th>
                     <th class="numeric">{% translate "Accepted Proposals" %}</th>
                     <th class="numeric">{% translate "Proposals" %}</th>
-                    <th class="text-center">{% translate "Featured" %}</th>
+                    <th class="text-center">
+                        {% translate "Featured" %}
+                        {% if can_update_speaker %}
+                            <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate 'Show this speaker in the list of featured speakers.' %}"></i>
+                            <a href="{% querystring sort='-is_featured' %}" aria-label="{% translate 'Sort featured speakers first' %}"><i class="fa fa-caret-down"></i></a>
+                            <a href="{% querystring sort='is_featured' %}" aria-label="{% translate 'Sort non-featured speakers first' %}"><i class="fa fa-caret-up"></i></a>
+                        {% endif %}
+                    </th>
+                    <th>{% translate "Sessions" %}</th>
                     <th></th>
                 </tr>
             </thead>
@@ -72,15 +80,15 @@
                         </td>
                         <td class="numeric">{{ profile.accepted_submission_count }}</td>
                         <td class="numeric">{{ profile.submission_count }}</td>
-                        <td class="speaker_featured text-center">
+                        <td class="submission_featured text-center">
                             {% if can_update_speaker %}
-                                <div class="form-check d-inline-block" title="{% translate "Show this speaker in the list of featured speakers." %}">
+                                <div class="form-check d-inline-block" title="{% translate 'Show this speaker in the list of featured speakers.' %}">
                                     <input
                                         type="checkbox"
                                         id="featured_speaker_{{ profile.user.code }}"
                                         data-id="{{ profile.user.code }}"
                                         data-url="{{ profile.orga_urls.toggle_featured }}"
-                                        class="submission_featured speaker_featured"
+                                        class="submission_featured"
                                         aria-label="{% translate 'Show this speaker in the list of featured speakers.' %}"
                                         {% if profile.is_featured %}checked{% endif %}
                                     >
@@ -93,34 +101,52 @@
                             <i class="done fa fa-check d-none text-success"></i>
                             <i class="fail fa fa-times d-none"></i>
                         </td>
-                        <td class="text-right">
+                        <td class="speaker-sessions-cell">
+                            {% if profile.user.list_sessions %}
+                                <ul class="list-unstyled mb-0 speaker-session-list">
+                                    {% for submission in profile.user.list_sessions %}
+                                        <li>
+                                            <a href="{{ submission.orga_urls.base }}" title="{{ submission.title }}">{{ submission.title }}</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="speaker-actions-cell text-right">
+                            <div class="speaker-actions-wrap">
                             {% if profile.accepted_submission_count %}
                                 {% if can_mark_speaker %}
-                                    <a class="btn btn-sm btn-{{ profile.has_arrived|yesno:"success,info" }}" href="{{ profile.orga_urls.toggle_arrived }}?from=list">
-                                        {% if profile.has_arrived %}
-                                            {% translate "Mark speaker as not arrived" %}
-                                        {% else %}
-                                            {% translate "Mark speaker as arrived" %}
-                                        {% endif %}
-                                    </a>
+                                    <form action="{{ profile.orga_urls.toggle_arrived }}?next={{ request.get_full_path|urlencode }}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm {% if profile.has_arrived %}btn-speaker-not-arrived{% else %}btn-speaker-arrived{% endif %}">
+                                            {% if profile.has_arrived %}
+                                                {% translate "Mark speaker as not arrived" %}
+                                            {% else %}
+                                                {% translate "Mark speaker as arrived" %}
+                                            {% endif %}
+                                        </button>
+                                    </form>
                                 {% else %}
                                     {% if profile.has_arrived %}
-                                        <a><i class="fa fa-check"></i> {% translate "Arrived" %}</a>
+                                        <span><i class="fa fa-check"></i> {% translate "Arrived" %}</span>
                                     {% else %}
-                                        <a><i class="fa fa-times"></i> {% translate "Not arrived" %}</a>
+                                        <span><i class="fa fa-times"></i> {% translate "Not arrived" %}</span>
                                     {% endif %}
                                 {% endif %}
                             {% endif %}
                             {% if can_update_speaker %}
-                                <button draggable="true" class="btn btn-sm btn-primary ml-1 dragsort-button" title="{% translate "Move item" %}">
+                                <button draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate "Move item" %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
                             {% endif %}
+                            </div>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5">{% translate "No submitters found." %}</td>
+                        <td colspan="6">{% translate "No submitters found." %}</td>
                     </tr>
                 {% endfor %}
             </tbody>

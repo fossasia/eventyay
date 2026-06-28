@@ -20,6 +20,20 @@ def test_single_talk_json_export(slot, client):
 
 
 @pytest.mark.django_db
+def test_single_talk_json_export_attachment_urls_are_absolute(slot, client, confirmed_resource):
+    assert confirmed_resource.submission_id == slot.submission_id
+    response = client.get(slot.submission.urls.export_json, follow=True)
+    assert response.status_code == 200
+    content = json.loads(response.text)
+    talk = content["talks"][0]
+    assert talk["attachments"]
+    attachment_url = talk["attachments"][0]["url"]
+    assert attachment_url.startswith(("http://", "https://"))
+    assert attachment_url.endswith(confirmed_resource.resource.url)
+    assert content["base_url"].startswith(("http://", "https://"))
+
+
+@pytest.mark.django_db
 def test_single_talk_xml_export(slot, client):
     response = client.get(slot.submission.urls.export_xml, follow=True)
     assert response.status_code == 200

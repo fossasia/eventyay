@@ -4,8 +4,8 @@ import pytest
 from django.db import transaction
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Organizer, Team, User
-from tests.base import SoupTest, extract_form_fields
+from eventyay.base.models import Event, Organizer, Team, User
+from tests.tickets.base import SoupTest, extract_form_fields
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ class OrganizerTest(SoupTest):
             name='30C3',
             slug='30c3',
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
-            plugins='pretix.plugins.banktransfer,tests.testdummy',
+            plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
         )
 
         t = Team.objects.create(
@@ -72,7 +72,7 @@ class OrganizerTest(SoupTest):
             nonlocal called
             called = True
 
-        self.monkeypatch.setattr('pretix.presale.style.regenerate_organizer_css.apply_async', set_called)
+        self.monkeypatch.setattr('eventyay.presale.style.regenerate_organizer_css.apply_async', set_called)
         assert not self.orga1.settings.presale_css_checksum
         doc = self.get_doc('/control/organizer/%s/edit' % (self.orga1.slug,))
         doc.select('[name=settings-primary_color]')[0]['value'] = '#33c33c'

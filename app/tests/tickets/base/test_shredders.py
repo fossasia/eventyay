@@ -8,7 +8,7 @@ from django.core.files.base import ContentFile
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import (
+from eventyay.base.models import (
     CachedCombinedTicket,
     CachedTicket,
     Event,
@@ -19,9 +19,9 @@ from pretix.base.models import (
     Organizer,
     QuestionAnswer,
 )
-from pretix.base.services.invoices import generate_invoice, invoice_pdf_task
-from pretix.base.services.tickets import generate
-from pretix.base.shredder import (
+from eventyay.base.services.invoices import generate_invoice, invoice_pdf_task
+from eventyay.base.services.tickets import generate
+from eventyay.base.shredder import (
     AttendeeInfoShredder,
     CachedTicketShredder,
     EmailAddressShredder,
@@ -42,7 +42,7 @@ def event():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer,pretix.plugins.ticketoutputpdf',
+        plugins='eventyay.plugins.banktransfer,eventyay.plugins.ticketoutputpdf',
     )
     with scope(organizer=o):
         yield event

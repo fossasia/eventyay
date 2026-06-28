@@ -1,0 +1,60 @@
+name: Validate Ticket Test Collection
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "app/tests/tickets/**"
+      - "app/tests/testutils/**"
+      - "app/eventyay/**"
+      - "app/pyproject.toml"
+      - ".github/workflows/test-collection.yml"
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: eventyay
+          POSTGRES_PASSWORD: eventyay
+          POSTGRES_DB: eventyay-db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U eventyay -d eventyay-db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system packages (gettext)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Sync dependencies (test group)
+        run: uv sync --directory app --group test
+
+      - name: Run test collection
+        env:
+          EVY_POSTGRES_USER: eventyay
+          EVY_POSTGRES_PASSWORD: eventyay
+          EVY_POSTGRES_DB: eventyay-db
+          EVY_POSTGRES_HOST: localhost
+          EVY_POSTGRES_PORT: "5432"
+          GITHUB_WORKFLOW: "true"
+        working-directory: app
+        run: uv run pytest --collect-only tests/tickets/ -q

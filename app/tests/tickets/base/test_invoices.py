@@ -9,18 +9,18 @@ from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scope, scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
     Invoice,
     InvoiceAddress,
-    Item,
-    ItemVariation,
+    Product as Item,
+    ProductVariation as ItemVariation,
     Order,
     OrderPosition,
     Organizer,
 )
-from pretix.base.models.orders import OrderFee
-from pretix.base.services.invoices import (
+from eventyay.base.models.orders import OrderFee
+from eventyay.base.services.invoices import (
     build_preview_invoice_pdf,
     generate_cancellation,
     generate_invoice,
@@ -28,8 +28,8 @@ from pretix.base.services.invoices import (
     invoice_qualified,
     regenerate_invoice,
 )
-from pretix.base.services.orders import OrderChangeManager
-from pretix.base.settings import GlobalSettingsObject
+from eventyay.base.services.orders import OrderChangeManager
+from eventyay.base.settings import GlobalSettingsObject
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def env():
             name='Dummy',
             slug='dummy',
             date_from=now(),
-            plugins='pretix.plugins.banktransfer',
+            plugins='eventyay.plugins.banktransfer',
         )
         o = Order.objects.create(
             code='FOO',
@@ -553,7 +553,7 @@ def test_invoice_number_prefixes(env):
         name='Dummy',
         slug='dummy2',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     order2 = Order.objects.create(
         event=event2,
