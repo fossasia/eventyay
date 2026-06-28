@@ -34,6 +34,7 @@ from eventyay.base.models import (
     BBBServer,
     SystemLog,
     JanusServer,
+    JitsiServer,
     StreamingServer,
     TurnServer,
     Event,
@@ -47,6 +48,7 @@ from eventyay.control.forms.server_management import (
     BBBServerForm,
     ConftoolSyncPostersForm,
     JanusServerForm,
+    JitsiServerForm,
     PlannedUsageFormSet,
     ProfileForm,
     SignupForm,
@@ -568,6 +570,77 @@ class JanusServerDelete(AdminBase, DeleteView):
         self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
+
+
+class JitsiServerList(AdminBase, ListView):
+    template_name = "control/jitsi_list.html"
+    queryset = JitsiServer.objects.select_related("event_exclusive").order_by("url")
+    context_object_name = "servers"
+
+
+class JitsiServerCreate(AdminBase, CreateView):
+    template_name = "control/jitsi_form.html"
+    form_class = JitsiServerForm
+    success_url = "/admin/video/jitsi/"
+
+    @transaction.atomic()
+    def form_valid(self, form):
+        self.object = form.save()
+
+        LogEntry.objects.create(
+            content_object=form.instance,
+            user=self.request.user,
+            action_type="jitsiserver.created",
+            data=_redact_jitsi_server_log_data(form.cleaned_data),
+        )
+        messages.success(self.request, _("Ok!"))
+        return super().form_valid(form)
+
+
+class JitsiServerUpdate(AdminBase, UpdateView):
+    template_name = "control/jitsi_form.html"
+    form_class = JitsiServerForm
+    queryset = JitsiServer.objects.all()
+    success_url = "/admin/video/jitsi/"
+
+    def form_valid(self, form):
+        self.object = form.save()
+
+        LogEntry.objects.create(
+            content_object=form.instance,
+            user=self.request.user,
+            action_type="jitsiserver.updated",
+            data=_redact_jitsi_server_log_data(form.cleaned_data),
+        )
+        messages.success(self.request, _("Ok!"))
+        return super().form_valid(form)
+
+
+class JitsiServerDelete(AdminBase, DeleteView):
+    template_name = "control/jitsi_delete.html"
+    queryset = JitsiServer.objects.all()
+    success_url = "/admin/video/jitsi/"
+    context_object_name = "server"
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        LogEntry.objects.create(
+            content_object=self.object,
+            user=self.request.user,
+            action_type="jitsiserver.deleted",
+            data={},
+        )
+        success_url = self.get_success_url()
+        self.object.delete()
+        messages.success(self.request, _("Ok!"))
+        return HttpResponseRedirect(success_url)
+
+
+def _redact_jitsi_server_log_data(data):
+    return {
+        key: "*****" if key == "app_secret" and value else str(value)
+        for key, value in data.items()
+    }
 
 
 class TurnServerList(AdminBase, ListView):

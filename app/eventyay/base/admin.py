@@ -6,7 +6,7 @@ from .models import (
     Announcement, AuditLog, auth, base, BBBCall, BBBServer, BillingInvoice,
     billing, Channel, ChatEvent, checkin, choices, Device, devices, event,
     Exhibitor, SystemLog, fields, Gate, GiftCard, GiftCardAcceptance,
-    GiftCardTransaction, giftcards, Invoice, invoices, JanusServer, log, notifications, Order, OrderPayment, OrderRefund,
+    GiftCardTransaction, giftcards, Invoice, invoices, JanusServer, JitsiServer, log, notifications, Order, OrderPayment, OrderRefund,
     orders, organizer, page, Poll, Poster, roomquestion, Quota, Room, roulette,
     seating, StreamingServer, tax, Team, TeamInvite, TurnServer, vouchers,
     WaitingListEntry, waitinglist, room, exhibitor, poll, poster, chat
@@ -121,6 +121,7 @@ admin.site.register(roulette.RoulettePairing)
 admin.site.register(BBBServer)
 admin.site.register(BBBCall)
 admin.site.register(JanusServer)
+admin.site.register(JitsiServer)
 admin.site.register(TurnServer)
 admin.site.register(StreamingServer)
 

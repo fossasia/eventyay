@@ -76,7 +76,8 @@ def _strip_jitsi_secrets(data, many=False):
                 continue
             config = module.get("config")
             if isinstance(config, dict):
-                config.pop("app_secret", None)
+                for key in ("domain", "jwt_enabled", "app_id", "key_id", "app_secret"):
+                    config.pop(key, None)
 
 
 class RoomModule(BaseModule):

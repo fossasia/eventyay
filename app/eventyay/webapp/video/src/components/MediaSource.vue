@@ -505,6 +505,7 @@ async function createJitsiIframe(config, hideIfBackground) {
 	const iframe = jitsiApi.getIFrame();
 	if (!iframe) return;
 	iframe.classList.add('iframe-media-source');
+	iframe.classList.add('jitsi-media-source');
 	if (hideIfBackground) {
 		iframe.classList.add('hide-if-background');
 	}
@@ -525,6 +526,7 @@ function createJitsiDirectIframe(config, hideIfBackground, container) {
 	const iframe = document.createElement('iframe');
 	iframe.src = getJitsiRoomUrl(config);
 	iframe.classList.add('iframe-media-source');
+	iframe.classList.add('jitsi-media-source');
 	if (hideIfBackground) {
 		iframe.classList.add('hide-if-background');
 	}
@@ -752,14 +754,22 @@ defineExpose({ isPlaying });
 iframe.iframe-media-source
 	transition: all .3s ease
 	border: none
+	&.jitsi-media-source
+		// Jitsi External API writes inline width/height on the generated iframe.
+		// Force it back into the same measured media placeholder used by BBB/Zoom.
+		&:not(.size-tiny):not(.background)
+			top: var(--mediasource-placeholder-top, 104px) !important
+			left: var(--mediasource-placeholder-left, var(--sidebar-width)) !important
+			width: var(--mediasource-placeholder-width, 100vw) !important
+			height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh)) !important
 	&.background
 		pointer-events: none
-		height: 48px
-		width: 86px
+		height: 48px !important
+		width: 86px !important
 		z-index: 101
 		&.hide-if-background
-			width: 0
-			height: 0
+			width: 0 !important
+			height: 0 !important
 .c-media-source .iframe-consent-gate
 	position: fixed
 	display: flex

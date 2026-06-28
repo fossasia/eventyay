@@ -123,7 +123,6 @@ def default_roles():
     speaker = participant + [
         Permission.ROOM_BBB_MODERATE,
         Permission.ROOM_JANUSCALL_MODERATE,
-        Permission.ROOM_JITSI_MODERATE,
         Permission.ROOM_POLL_EARLY_RESULTS,
     ]
     moderator = speaker + [
@@ -180,7 +179,7 @@ def default_grants():
 JITSI_ROLE_PERMISSION_AUGMENTS = {
     'participant': [Permission.ROOM_JITSI_JOIN],
     'room_owner': [Permission.ROOM_JITSI_JOIN],
-    'speaker': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
+    'speaker': [Permission.ROOM_JITSI_JOIN],
     'moderator': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
     'admin': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
     'apiuser': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
@@ -2205,6 +2204,7 @@ class Event(
 
         self.bbbserver_set.update(event_exclusive=None)
         self.janusserver_set.update(event_exclusive=None)
+        self.jitsiserver_set.update(event_exclusive=None)
         self.turnserver_set.update(event_exclusive=None)
 
         self.vouchers.all().delete()

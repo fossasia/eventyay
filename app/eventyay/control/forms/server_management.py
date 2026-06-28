@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from eventyay.base.models import (
     BBBServer,
     JanusServer,
+    JitsiServer,
     Room,
     StreamingServer,
     TurnServer,
@@ -228,6 +229,20 @@ class JanusServerForm(HasSecretsMixin, forms.ModelForm):
             "event_exclusive",
         )
         field_classes = {"room_create_key": SecretKeyField}
+
+
+class JitsiServerForm(HasSecretsMixin, forms.ModelForm):
+    class Meta:
+        model = JitsiServer
+        fields = (
+            "url",
+            "active",
+            "app_id",
+            "key_id",
+            "app_secret",
+            "event_exclusive",
+        )
+        field_classes = {"app_secret": SecretKeyField}
 
 
 class TurnServerForm(HasSecretsMixin, forms.ModelForm):

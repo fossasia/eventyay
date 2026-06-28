@@ -84,26 +84,19 @@ def validate_room_config_patch(room, body):
         partial=True,
     )
     if "module_config" in body:
-        _preserve_jitsi_secret(room, body["module_config"])
+        _sanitize_jitsi_config(body["module_config"])
     return partial_validated_update(serializer, body)
 
 
-def _preserve_jitsi_secret(room, module_config):
+def _sanitize_jitsi_config(module_config):
     if not isinstance(module_config, list):
-        return
-    old_jitsi_modules = [
-        m for m in room.module_config or [] if m.get("type") == "call.jitsi"
-    ]
-    old_jitsi = old_jitsi_modules[0] if old_jitsi_modules else None
-    old_secret = (old_jitsi or {}).get("config", {}).get("app_secret")
-    if not old_secret:
         return
     for module in module_config:
         if module.get("type") != "call.jitsi":
             continue
         config = module.setdefault("config", {})
-        if not config.get("app_secret"):
-            config["app_secret"] = old_secret
+        for key in ("domain", "jwt_enabled", "app_id", "key_id", "app_secret"):
+            config.pop(key, None)
 
 
 @database_sync_to_async
