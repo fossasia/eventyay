@@ -18,6 +18,7 @@
 import { mapGetters } from 'vuex'
 import ROOM_TYPES from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
+import { PLAYBACK_MODE_ALWAYS_ON } from 'lib/stage-streams'
 import EditForm from './EditForm'
 
 export default {
@@ -45,6 +46,12 @@ export default {
 		this.updateType()
 	},
 	methods: {
+		getStartingModuleConfig(type) {
+			if (type.id === 'stage') {
+				return { playback_mode: PLAYBACK_MODE_ALWAYS_ON }
+			}
+			return {}
+		},
 		updateType() {
 			this.type = this.$route.params.type
 			if (!this.type || !this.chosenType) return
@@ -54,7 +61,7 @@ export default {
 				sorting_priority: '',
 				pretalx_id: '',
 				force_join: false,
-				module_config: [{type: this.chosenType.startingModule, config: {}}],
+				module_config: [{type: this.chosenType.startingModule, config: this.getStartingModuleConfig(this.chosenType)}],
 			}
 		}
 	}
