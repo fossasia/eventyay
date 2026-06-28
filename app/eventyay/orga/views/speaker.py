@@ -160,27 +160,27 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
             return False
 
         with transaction.atomic(), scope(event=self.request.event):
-            profiles_qs = speaker_profiles_for_user(self.request.event, self.request.user)
-            sorted_ids = list(self.sort_queryset(profiles_qs).values_list('pk', flat=True))
-            profile_by_id = {profile.pk: profile for profile in profiles_qs.only('pk', 'position')}
-            if not all(pk in profile_by_id for pk in requested_ids):
+            profiles = list(
+                speaker_profiles_for_user(self.request.event, self.request.user)
+                .select_related('user')
+                .order_by(*self._speaker_list_ordering())
+            )
+            profile_by_id = {profile.pk: profile for profile in profiles}
+            valid_requested_ids = [pk for pk in requested_ids if pk in profile_by_id]
+            if not valid_requested_ids:
                 return False
 
-            if len(requested_ids) == len(sorted_ids):
-                new_order = requested_ids
-            else:
-                positions = [sorted_ids.index(pk) for pk in requested_ids]
-                if len(positions) != len(requested_ids):
-                    return False
-                start, end = min(positions), max(positions)
-                if end - start + 1 != len(requested_ids):
-                    return False
-                if set(sorted_ids[start : end + 1]) != set(requested_ids):
-                    return False
-                new_order = sorted_ids[:start] + requested_ids + sorted_ids[end + 1 :]
+            requested_set = set(valid_requested_ids)
+            requested_iter = iter(valid_requested_ids)
+            reordered_ids = []
+            for profile in profiles:
+                if profile.pk in requested_set:
+                    reordered_ids.append(next(requested_iter))
+                else:
+                    reordered_ids.append(profile.pk)
 
             updates = []
-            for position, profile_id in enumerate(new_order):
+            for position, profile_id in enumerate(reordered_ids):
                 profile = profile_by_id[profile_id]
                 if profile.position != position:
                     profile.position = position
