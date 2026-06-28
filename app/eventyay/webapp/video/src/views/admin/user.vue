@@ -7,11 +7,11 @@
 			.actions(v-if="user.id !== ownUser.id")
 				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="openDM") message
 				bunt-button.btn-call(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="startCall") call
-				bunt-button.btn-reactivate(v-if="hasPermission('world:users.manage') && user.moderation_state", @click="userAction = 'reactivate'")
-					| {{ user.moderation_state === 'banned' ? 'unban' : 'unsilence'}}
 				bunt-button.btn-delete(v-if="hasPermission('world:users.manage') && !user.deleted", @click="userAction = 'delete'") {{ $t('UserAction:action.delete:label') }}
 				bunt-button.btn-ban(v-if="hasPermission('world:users.manage') && !user.deleted && user.moderation_state !== 'banned'", @click="userAction = 'ban'") ban
 				bunt-button.btn-silence(v-if="hasPermission('world:users.manage') && !user.deleted && !user.moderation_state", @click="userAction = 'silence'") silence
+				bunt-button.btn-reactivate(v-if="hasPermission('world:users.manage') && user.moderation_state", @click="userAction = 'reactivate'")
+					| {{ user.moderation_state === 'banned' ? 'unban' : 'unsilence'}}
 				bunt-button#btn-save(v-if="edit", :disabled="v$.$invalid && v$.$dirty", :loading="saving", @click="save") {{ $t('preferences/index:btn-save:label') }}
 				bunt-button#btn-edit(v-if="!user.deleted", @click="edit=true") edit
 		scrollbars.user-info(y)
@@ -20,7 +20,11 @@
 				bunt-button#btn-change-avatar(@click="showChangeAvatar = true", v-if="edit") {{ $t('preferences/index:btn-change-avatar:label') }}
 			bunt-input.display-name(name="displayName", :label="$t('profile/GreetingPrompt:displayname:label')", v-model.trim="user.profile.display_name", :validation="v$.user.profile.display_name", :disabled="!edit")
 			bunt-input(name="id", label="ID", :modelValue="user.id", :disabled="true")
-			bunt-input(name="token_id", label="External ID", :modelValue="user.token_id", :disabled="true")
+			bunt-input(name="token_id", label="Login UID (JWT uid)", :modelValue="user.token_id || '–'", :disabled="true")
+			bunt-input(name="email", label="Email", :modelValue="user.email || '–'", :disabled="true")
+			bunt-input(name="wikimedia_username", label="Wikimedia / Wikimania username", :modelValue="user.wikimedia_username || '–'", :disabled="true")
+			bunt-input(name="order_code", label="Order code", :modelValue="user.order_code || '–'", :disabled="true")
+			bunt-input(name="ticket_code", label="Ticket code (position secret)", :modelValue="user.ticket_code || '–'", :disabled="true")
 			bunt-input(name="mod_state", label="Moderation state", :modelValue="user.moderation_state || '-'", :disabled="true")
 			change-additional-fields(v-model="user.profile.fields", :disabled="!edit")
 	bunt-progress-circular(v-else, size="huge")
