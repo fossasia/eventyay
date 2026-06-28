@@ -29,7 +29,6 @@
 			v-model:includeRoomSortKey="sortIncludeRoom",
 			v-model:includeDateSortKey="sortIncludeDate",
 			v-model:includePopularitySortKey="sortIncludePopularity",
-			:loggedIn="loggedIn",
 			:popularityFeatureEnabled="popularityFeatureEnabled",
 			:popularitySortAvailable="popularitySortAvailable",
 			@selectDay="changeDay($event)",
@@ -116,7 +115,6 @@ export default {
 		scheduleData: { default: null },
 		scheduleFav: { default: null },
 		scheduleUnfav: { default: null },
-		loggedIn: { default: false },
 		scheduleExporters: { default: () => [] },
 		scheduleMetaData: { default: () => ({}) }
 	},
@@ -210,7 +208,7 @@ export default {
 		},
 		showFavCountOnSchedule() {
 			const flags = this.scheduleData?.schedule?.feature_flags || this.resolvedSchedule?.feature_flags || {}
-			return isPopularityVisibleOnSchedule({ flags, loggedIn: this.loggedIn })
+			return isPopularityVisibleOnSchedule({ flags })
 		},
 		hasError() {
 			return !!(this.errorLoading || this.scheduleData?.errorLoading)
@@ -390,7 +388,7 @@ export default {
 		},
 		popularitySortAvailable() {
 			const flags = this.resolvedSchedule?.feature_flags || {}
-			return isPopularitySortAvailable({ flags, loggedIn: this.loggedIn })
+			return isPopularitySortAvailable({ flags })
 		},
 		sortOptions() {
 			const options = ['title', 'title_desc']
@@ -556,7 +554,6 @@ export default {
 			this.currentDay = dayStr
 		},
 		toggleFavs() {
-			if (!this.loggedIn) return
 			this.onlyFavs = !this.onlyFavs
 			if (this.onlyFavs) this.resetFilters()
 		},
@@ -577,12 +574,10 @@ export default {
 			localStorage.setItem('userTimezone', this.currentTimezone)
 		},
 		onFav(id) {
-			if (!this.loggedIn) return
 			if (this.scheduleFav) this.scheduleFav(id)
 			this.$emit('fav', id)
 		},
 		onUnfav(id) {
-			if (!this.loggedIn) return
 			if (this.scheduleUnfav) this.scheduleUnfav(id)
 			this.$emit('unfav', id)
 		},

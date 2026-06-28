@@ -1,9 +1,11 @@
 from django.dispatch import receiver
 from django.urls import resolve, reverse
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.signals import logentry_display
 from eventyay.control.signals import nav_event
+from eventyay.plugins.sendmail.models import EmailQueue
 
 
 @receiver(nav_event, dispatch_uid='sendmail_nav')
@@ -11,9 +13,15 @@ def control_nav_import(sender, request=None, **kwargs):
     url = resolve(request.path_info)
     if not request.user.has_event_permission(request.organizer, request.event, 'can_change_orders', request=request):
         return []
+    pending_mails = EmailQueue.objects.filter(event=request.event, sent_at__isnull=True).count()
+
     return [
         {
-            'label': _('Message center'),
+            'label': format_html(
+                '{} <span class="badge badge-warning">{}</span>',
+                _('Message center'),
+                pending_mails,
+            ) if pending_mails > 0 else _('Message center'),
             'url': reverse(
                 'plugins:sendmail:outbox',
                 kwargs={
