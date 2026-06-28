@@ -13,7 +13,6 @@ import Scrollbars from 'components/Scrollbars'
 import LinkIconButton from 'components/link-icon-button'
 import MediaQueries from 'components/mixins/media-queries'
 import dynamicLineClamp from './components/directives/dynamic-line-clamp'
-import scrollbarDirective from './components/directives/scrollbar'
 import 'styles/global.styl'
 import '@mdi/font/css/materialdesignicons.css'
 import 'quill/dist/quill.core.css'
@@ -52,7 +51,6 @@ async function init({ token, inviteToken }) {
   app.use(MediaQueries)
   app.use(emojiPlugin)
   app.use(dynamicLineClamp)
-  app.use(scrollbarDirective)
   // Initialize i18n and theme
   await i18nInit(app)
   app.config.globalProperties.$features = features

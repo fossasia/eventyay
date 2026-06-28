@@ -124,6 +124,13 @@ export function areScheduleExportsDisabled ({ version = '', scheduleMetaVersion 
 	return false
 }
 
+export function resolveScheduleApiBase ({ baseUrl = '', apiUrl = '', remoteApiUrl = '', onHomeServer = false } = {}) {
+	if (baseUrl) return baseUrl
+	if (onHomeServer && apiUrl) return apiUrl
+	if (remoteApiUrl) return remoteApiUrl
+	return apiUrl || ''
+}
+
 export function parseBooleanAnswer (value) {
 	if (typeof value === 'boolean') return value
 	return ['true', '1', 'yes'].includes(String(value).toLowerCase())

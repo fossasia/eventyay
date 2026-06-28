@@ -71,7 +71,7 @@ if [ "$EVY_NPM_DEV" = "1" ]; then
   start_vite "schedule-editor" 8080 ""
   start_vite "video" 8880 ""
   start_vite "webcheckin" 8081 ""
-  start_vite "schedule" 8082 "--config vite.config.wc.js"
+  start_vite "schedule" 8082 ""
 
   cd /usr/src/app
   echo "All Vite dev servers started."

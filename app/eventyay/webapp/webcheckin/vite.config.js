@@ -9,6 +9,10 @@ export default defineConfig({
   // Ensure generated chunk/asset URLs are relative to the entry file so they work
   // when served from Django's static URL.
   base: './',
+  define: {
+    __BUNDLED_DEV__: 'false',
+    __SERVER_FORWARD_CONSOLE__: 'false',
+  },
   plugins: [vue()],
   build: {
     outDir: process.env.OUT_DIR

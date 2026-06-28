@@ -3,6 +3,7 @@ import vuePug from 'eslint-plugin-vue-pug'
 import js from '@eslint/js'
 import tseslint from '@typescript-eslint/eslint-plugin'
 import tsParser from '@typescript-eslint/parser'
+import globals from 'globals'
 
 export default [
   // Base JavaScript recommended rules
@@ -77,13 +78,9 @@ export default [
       ecmaVersion: 2022,
       sourceType: 'module',
       globals: {
-        // Browser globals
-        window: 'readonly',
-        document: 'readonly',
-        console: 'readonly',
+        ...globals.browser,
         process: 'readonly',
-        // Add other browser globals as needed
-      }
+      },
     },
     
     rules: {

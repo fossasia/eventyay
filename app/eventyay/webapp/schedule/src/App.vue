@@ -130,7 +130,7 @@ const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersLis
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, resolveScheduleApiBase, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending } from '~/utils'
 
 function getCsrfToken () {
 	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
@@ -293,6 +293,7 @@ export default {
 			getSessionTime,
 			markdownIt,
 			sortBy: 'title',
+			scrollParent: null,
 			scrollParentWidth: Infinity,
 			schedule: null,
 			userTimezone: null,
@@ -903,7 +904,15 @@ export default {
 			return this.apiRequest(path, method, data, baseUrl)
 		},
 		async apiRequest (path, method, data, baseUrl) {
-			const base = baseUrl || this.apiUrl
+			const base = resolveScheduleApiBase({
+				baseUrl,
+				apiUrl: this.apiUrl,
+				remoteApiUrl: this.remoteApiUrl,
+				onHomeServer: this.onHomeServer,
+			})
+			if (!base) {
+				throw new Error('schedule API base URL is not configured')
+			}
 			const url = `${base}${path}`
 			const headers = new Headers()
 			if (this.onHomeServer) {

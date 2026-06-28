@@ -15,26 +15,31 @@ const stylusOptions = {
 
 export default {
 	define: {
-    	'process.env': {},
-  	},
+		'process.env': {},
+		__BUNDLED_DEV__: 'false',
+		__SERVER_FORWARD_CONSOLE__: 'false',
+	},
 	base: process.env.BASE_URL || '/',
 	plugins: [
 		gettext(), vue()
 	],
 	css: {
+		preprocessorMaxWorkers: 0,
 		preprocessorOptions: {
 			stylus: stylusOptions,
 			styl: stylusOptions
 		}
 	},
 	resolve: {
+		dedupe: ['vue'],
 		mainFields: ['browser', 'module', 'jsnext:main', 'jsnext'],
 		extensions: ['.js', '.json', '.vue', '.ts', '.tsx'],
-		alias: {
-			'~': path.resolve(__dirname, './src'),
-			'moment-timezone': 'moment-timezone/builds/moment-timezone-with-data-10-year-range.js',
-			'@': path.resolve(__dirname, './src')
-		}
+		alias: [
+			{ find: '~', replacement: path.resolve(__dirname, './src') },
+			{ find: '@', replacement: path.resolve(__dirname, './src') },
+			{ find: 'moment-timezone', replacement: 'moment-timezone/builds/moment-timezone-with-data-10-year-range.js' },
+			{ find: /^buntpapier$/, replacement: path.resolve(__dirname, 'node_modules/buntpapier/src/index.js') },
+		],
 	},
 	build: {
 		outDir: process.env.OUT_DIR ? `${process.env.OUT_DIR}/schedule-editor` : 'dist',
@@ -45,24 +50,27 @@ export default {
 		rollupOptions: {
 			input: 'src/main.ts',
 			output: {
-				manualChunks: {
-					// Separate Vue and its ecosystem
-					vue: ['vue'],
-					// Separate moment and moment-timezone
-					moment: ['moment-timezone', 'moment'],
-					// Separate i18next
-					i18n: ['i18next'],
-					// Separate UI framework
-					buntpapier: ['buntpapier'],
-					// Separate schema validation
-					zod: ['zod']
-				}
+				manualChunks(id) {
+					if (id.includes('node_modules/vue/') || id.endsWith('/vue')) {
+						return 'vue'
+					}
+					if (id.includes('moment-timezone') || id.includes('/moment/')) {
+						return 'moment'
+					}
+					if (id.includes('node_modules/i18next')) {
+						return 'i18n'
+					}
+					if (id.includes('node_modules/zod')) {
+						return 'zod'
+					}
+				},
 			}
 		},
 		target: 'es2022',
 	},
 	optimizeDeps: {
-		exclude: ['moment']
+		exclude: ['moment', 'buntpapier'],
+		include: ['fuzzysearch', 'popper.js', 'resize-observer-polyfill'],
 	},
 	server: {
 	  port: '8080'

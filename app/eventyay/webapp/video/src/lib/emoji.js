@@ -1,12 +1,18 @@
-import data from 'emoji-mart/data/twitter.json'
+import data from '@emoji-mart/data'
 import EmojiRegex from 'emoji-regex'
-import { getEmojiDataFromNative as _getEmojiDataFromNative } from 'emoji-mart'
-import { uncompress } from 'emoji-mart/dist-es/utils/data.js'
 import MarkdownIt from 'markdown-it'
 
-// force uncompress data, because we don't use emoji-mart methods
-if (data.compressed) {
-	uncompress(data)
+const nativeEmojiIndex = new Map()
+for (const [id, emoji] of Object.entries(data.emojis)) {
+	for (const skin of emoji.skins || []) {
+		if (skin.native) {
+			nativeEmojiIndex.set(skin.native, {
+				...emoji,
+				id,
+				short_names: [id],
+			})
+		}
+	}
 }
 
 const emojiRegex = EmojiRegex()
@@ -24,7 +30,6 @@ export function startsWithEmoji(string) {
 export function nativeToOps(string) {
 	return string.split(splitEmojiRegex).map(match => {
 		if (emojiRegex.test(match)) {
-			// slightly wasteful to test for emoji again
 			return {insert: {emoji: match}}
 		} else {
 			return {insert: match}
@@ -33,7 +38,7 @@ export function nativeToOps(string) {
 }
 
 export function getEmojiDataFromNative(native) {
-	return data.emojis[_getEmojiDataFromNative(native, 'twitter', data).id]
+	return nativeEmojiIndex.get(native) || {short_names: [native]}
 }
 
 export function nativeToUrl(unicodeEmoji) {
@@ -55,7 +60,6 @@ export function markdownEmoji(md) {
 		const tokens = []
 
 		text.replace(emojiRegex, function(match, offset, src) {
-			// Add new tokens to pending list
 			if (offset > lastPos) {
 				token = new Token('text', '', 0)
 				token.content = text.slice(lastPos, offset)
@@ -83,8 +87,6 @@ export function markdownEmoji(md) {
 			if (blockToken.type !== 'inline') continue
 			let tokens = blockToken.children
 
-			// We scan from the end, to keep position when new tags added.
-			// Use reversed logic in links start/end match
 			for (let i = tokens.length - 1; i >= 0; i--) {
 				const token = tokens[i]
 
@@ -93,7 +95,6 @@ export function markdownEmoji(md) {
 				}
 
 				if (token.type === 'text' && autolinkLevel === 0 && emojiRegex.test(token.content)) {
-					// replace current node
 					blockToken.children = tokens = md.utils.arrayReplaceAt(
 						tokens, i, splitTextToken(token.content, state.Token)
 					)
@@ -109,21 +110,17 @@ export function markdownEmoji(md) {
 	}
 }
 
-// global markdown instance to emojify plaintext
 const markdownIt = MarkdownIt('zero', {})
 markdownIt.use(markdownEmoji)
 
 export function emojifyString(input) {
-	// Guard against non-string inputs to avoid markdown-it crashing with state.src.replace
 	if (input == null) return ''
 	let text = input
 	if (typeof text !== 'string') {
-		// Attempt to pick a meaningful string if a common shape is used
 		if (typeof input.name === 'string') text = input.name
 		else if (typeof input.title === 'string') text = input.title
 		else if (typeof input.text === 'string') text = input.text
 		else {
-			// Fallback: do not attempt to render arbitrary objects
 			return ''
 		}
 	}
