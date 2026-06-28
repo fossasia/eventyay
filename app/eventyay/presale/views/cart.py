@@ -7,6 +7,7 @@ from urllib.parse import quote
 from django.conf import settings
 from django.contrib import messages
 from django.core.cache import caches
+from django.core.cache.backends.base import InvalidCacheBackendError
 from django.db.models import Q
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -54,7 +55,7 @@ from eventyay.presale.views.robots import NoSearchIndexViewMixin
 
 try:
     widget_data_cache = caches['redis']
-except:
+except InvalidCacheBackendError:
     widget_data_cache = caches['default']
 
 
