@@ -1,0 +1,255 @@
+/* ===================================================================
+   Language Grid Widget
+   Replaces the long checkbox list with a searchable, collapsible grid.
+   =================================================================== */
+
+/* -- Container -- */
+.language-grid-widget {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    position: relative;
+}
+
+/* -- Summary bar (always visible) -- */
+.language-grid-summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+    min-height: 42px;
+    cursor: pointer;
+    user-select: none;
+    background: #fafafa;
+    border-radius: 4px 4px 0 0;
+    transition: background 0.15s ease;
+}
+
+.language-grid-summary:hover {
+    background: #f0f0f0;
+}
+
+.language-grid-summary:focus {
+    outline: 2px solid #2185d0;
+    outline-offset: 2px;
+}
+
+.language-grid-summary:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.language-grid-summary:focus-visible {
+    outline: 2px solid #2185d0;
+    outline-offset: 2px;
+}
+
+.language-grid-toggle-icon {
+    margin-left: auto;
+    font-size: 14px;
+    color: #666;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.language-grid-widget.is-expanded .language-grid-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.language-grid-summary-label {
+    font-size: 13px;
+    color: #888;
+    white-space: nowrap;
+}
+
+/* -- Selected badges -- */
+.language-grid-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.language-grid-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    border-radius: 12px;
+    background: #e8f4fd;
+    color: #1a73a7;
+    border: 1px solid #c4dfe6;
+    white-space: nowrap;
+}
+
+.language-grid-badge-overflow {
+    padding: 2px 8px;
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+}
+
+/* -- Collapsible panel -- */
+.language-grid-panel {
+    border-top: 1px solid #ddd;
+    padding: 12px;
+}
+
+.language-grid-widget.is-ready .language-grid-panel {
+    display: none;
+}
+
+.language-grid-widget.is-expanded .language-grid-panel {
+    display: block;
+}
+
+/* -- Search input -- */
+.language-grid-search-wrap {
+    margin-bottom: 10px;
+}
+
+input.language-grid-search {
+    width: 100%;
+    padding: 7px 12px 7px 32px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    outline: none;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") 10px center no-repeat;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+
+input.language-grid-search:focus {
+    border-color: #2185d0;
+    box-shadow: 0 0 0 2px rgba(33, 133, 208, 0.15);
+}
+
+/* -- Grid of language cells -- */
+.language-grid-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 4px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 2px;
+}
+
+.language-grid-no-results {
+    display: none;
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px 12px;
+    color: #999;
+    font-size: 13px;
+}
+
+.language-grid-no-results.is-visible {
+    display: block;
+}
+
+/* -- Individual language cell -- */
+.language-grid-cell {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: background 0.12s ease, border-color 0.12s ease;
+    cursor: pointer;
+}
+
+.language-grid-cell.is-hidden {
+    display: none;
+}
+
+.language-grid-cell:hover {
+    background: #f5f8fa;
+    border-color: #e0e0e0;
+}
+
+.language-grid-cell.is-checked {
+    background: #e8f4fd;
+    border-color: #c4dfe6;
+}
+
+/* Override Bootstrap .checkbox, .form-check styles that may wrap our cells */
+.language-grid-cell .form-check,
+.language-grid-cell .checkbox {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.language-grid-cell input[type="checkbox"] {
+    margin: 0 8px 0 0;
+    flex-shrink: 0;
+    cursor: pointer;
+    position: static;
+}
+
+.language-grid-cell label {
+    font-size: 13px;
+    font-weight: normal;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+/* Translation badge (for non-official/incubating languages in control panel) */
+.language-grid-cell .badge {
+    font-size: 10px;
+    margin-left: 4px;
+}
+
+/* -- Toolbar (deselect all) -- */
+.language-grid-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.language-grid-toolbar button {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 3px 10px;
+    font-size: 12px;
+    color: #555;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.language-grid-toolbar button:hover {
+    background: #f0f0f0;
+    border-color: #999;
+}
+
+/* -- Responsive -- */
+@media (max-width: 991px) {
+    .language-grid-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
+
+@media (max-width: 767px) {
+    .language-grid-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        max-height: 260px;
+    }
+
+    .language-grid-summary {
+        padding: 6px 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .language-grid-grid {
+        grid-template-columns: 1fr;
+    }
+}
