@@ -71,7 +71,7 @@ class EventCommonSettingsForm(SettingsForm):
             if isinstance(new_value, UploadedFile) and current_file:
                 default_storage.delete(current_file)
 
-                base_path, _ = os.path.splitext(current_file)
+                base_path, unused_ext = os.path.splitext(current_file)
                 orig_ext = self.event.settings.get(f'{image_field}_original_ext', as_type=str)
                 if orig_ext:
                     default_storage.delete(f'{base_path}_original.{orig_ext}')
@@ -110,9 +110,9 @@ class EventCommonSettingsForm(SettingsForm):
             uploaded.seek(0)
             return uploaded
 
-        clean_name, _ = os.path.splitext(uploaded.name or setting_key)
+        clean_name, unused_ext = os.path.splitext(uploaded.name or setting_key)
         new_filename = self.get_new_filename(clean_name)
-        base_path, _ = os.path.splitext(new_filename)
+        base_path, unused_ext = os.path.splitext(new_filename)
 
         # Persist the optimized file.
         optimized_name = f'{base_path}.{result.optimized_ext}'

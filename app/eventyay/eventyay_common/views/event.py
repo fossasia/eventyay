@@ -714,7 +714,7 @@ class EventUpdate(
                     current_file = resolve_media_path(current_value)
                     if current_file:
                         default_storage.delete(current_file)
-                        base_path, _ = os.path.splitext(current_file)
+                        base_path, unused_ext = os.path.splitext(current_file)
                         orig_ext = request.event.settings.get(f'{setting_key}_original_ext', as_type=str)
                         if orig_ext:
                             default_storage.delete(f'{base_path}_original.{orig_ext}')

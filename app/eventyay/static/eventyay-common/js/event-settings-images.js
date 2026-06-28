@@ -68,6 +68,15 @@
                 clearTimeout(parseInt(button.dataset.timeoutId));
                 delete button.dataset.timeoutId;
             }
+            if (button.dataset.intervalId) {
+                clearInterval(parseInt(button.dataset.intervalId));
+                delete button.dataset.intervalId;
+            }
+            const container = button.closest('.initial-file-container') || button.parentNode;
+            const msgSpan = container.querySelector('.delete-confirm-msg');
+            if (msgSpan) {
+                msgSpan.style.display = 'none';
+            }
         }
 
         deleteButtons.forEach(button => {
@@ -86,9 +95,32 @@
                     button.className = 'btn btn-warning btn-xs btn-delete-image-ajax';
                     const icon = button.querySelector('i');
                     if (icon) {
-                        icon.className = 'fa fa-check';
+                        icon.className = 'fa fa-trash';
                     }
-                    button.setAttribute('title', window.i18n ? window.i18n.gettext('Click again to confirm') : 'Click again to confirm');
+                    const confirmText = window.i18n ? window.i18n.gettext('Click again to confirm') : 'Click again to confirm';
+                    button.setAttribute('title', confirmText);
+
+                    const container = button.closest('.initial-file-container') || button.parentNode;
+                    let msgSpan = container.querySelector('.delete-confirm-msg');
+                    if (!msgSpan) {
+                        msgSpan = document.createElement('span');
+                        msgSpan.className = 'delete-confirm-msg text-warning small';
+                        msgSpan.style.cssText = 'margin-left: 8px; font-weight: 500; vertical-align: middle;';
+                        button.parentNode.insertBefore(msgSpan, button.nextSibling);
+                    }
+
+                    let secondsLeft = 3;
+                    msgSpan.textContent = `${confirmText} (${secondsLeft}s)`;
+                    msgSpan.className = 'delete-confirm-msg text-warning small';
+                    msgSpan.style.display = 'inline-block';
+
+                    const intervalId = setInterval(() => {
+                        secondsLeft--;
+                        if (secondsLeft > 0) {
+                            msgSpan.textContent = `${confirmText} (${secondsLeft}s)`;
+                        }
+                    }, 1000);
+                    button.dataset.intervalId = intervalId;
 
                     // Automatically revert after 3 seconds of inactivity
                     const timeoutId = setTimeout(() => {
@@ -102,6 +134,16 @@
                 if (button.dataset.timeoutId) {
                     clearTimeout(parseInt(button.dataset.timeoutId));
                     delete button.dataset.timeoutId;
+                }
+                if (button.dataset.intervalId) {
+                    clearInterval(parseInt(button.dataset.intervalId));
+                    delete button.dataset.intervalId;
+                }
+                const container = button.closest('.initial-file-container') || button.parentNode;
+                const msgSpan = container.querySelector('.delete-confirm-msg');
+                if (msgSpan) {
+                    msgSpan.className = 'delete-confirm-msg text-danger small';
+                    msgSpan.textContent = window.i18n ? window.i18n.gettext('Deleting...') : 'Deleting...';
                 }
 
                 button.disabled = true;
@@ -151,13 +193,6 @@
                         if (pair) {
                             pair.dataset.hasCurrentFile = 'false';
                             pair.setAttribute('data-has-current-file', 'false');
-                        }
-                        
-                        // Clear any file selected in input and trigger change to sync state
-                        const fileInput = document.querySelector(`input[name="${fieldName}"]`);
-                        if (fileInput) {
-                            fileInput.value = '';
-                            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
                         }
                     } else {
                         alert(data.error || 'Failed to delete the image.');
