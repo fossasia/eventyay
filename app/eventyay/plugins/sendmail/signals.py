@@ -11,9 +11,18 @@ def control_nav_import(sender, request=None, **kwargs):
     url = resolve(request.path_info)
     if not request.user.has_event_permission(request.organizer, request.event, 'can_change_orders', request=request):
         return []
+    from eventyay.plugins.sendmail.models import EmailQueue
+    pending_mails = EmailQueue.objects.filter(event=request.event, sent_at__isnull=True).count()
+    
+    if pending_mails > 0:
+        from django.utils.html import format_html
+        label = format_html('{} <span class="badge" style="background-color: #f0ad4e; margin-left: 5px;">{}</span>', _('Message center'), pending_mails)
+    else:
+        label = _('Message center')
+
     return [
         {
-            'label': _('Message center'),
+            'label': label,
             'url': reverse(
                 'plugins:sendmail:outbox',
                 kwargs={
