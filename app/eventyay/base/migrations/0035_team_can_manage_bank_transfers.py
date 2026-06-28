@@ -9,7 +9,7 @@ def grant_bank_transfer_to_order_editors(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0033_alter_event_private_testmode_default'),
+        ('base', '0034_migrate_native_stream_schedules'),
     ]
 
     operations = [
