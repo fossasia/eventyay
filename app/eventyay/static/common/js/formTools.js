@@ -618,7 +618,7 @@ const initFileSizeCheck = (element) => {
             unwarnFileSize(element)
             return true
         } else {
-            const maxsize = parseInt(element.dataset.maxsize , 10)
+            const maxsize = parseInt(element.dataset.maxsize, 10)
             if (files[0].size > maxsize) {
                 warnFileSize(element)
                 return false
@@ -638,7 +638,7 @@ const initFileSizeCheck = (element) => {
                 const isValid = (
                     !fileInput.files
                     || !fileInput.files.length
-                    || fileInput.files[0].size <= parseInt(fileInput.dataset.maxsize , 10)
+                    || fileInput.files[0].size <= parseInt(fileInput.dataset.maxsize, 10)
                 )
                 if (!isValid) {
                     warnFileSize(fileInput)
@@ -783,11 +783,24 @@ const initFormButton = (form) => {
         if (submitButton.hasAttribute('data-no-loading') || submitButton.id === 'button-sudo' || submitButton.id === 'button-shop') return;
         const submitButtonText = submitButton.textContent
         let lastSubmit = 0
-        form.addEventListener("submit", () => {
+        form.addEventListener("submit", (event) => {
             // We can't disable the button immediately, because then, the browser will
             // not send the button's value to the server. Instead, we'll just delay the
             // disabling a bit.
-            submitButton.innerHTML = `<i class="fa fa-spinner fa-spin pr-0"></i> ${submitButtonText}`
+            if (event.submitter === submitButton) {
+
+                const spinner = document.createElement('i');
+
+                spinner.className = 'fa fa-spinner fa-spin pr-0';
+
+                submitButton.textContent = '';
+
+                submitButton.append(spinner, ` ${submitButtonText}`);
+
+                submitButton.setAttribute("aria-busy", "true")
+
+            }
+
             lastSubmit = Date.now()
             setTimeout(() => {
                 submitButton.classList.add("disabled")
@@ -806,6 +819,7 @@ const initFormButton = (form) => {
                 if (Date.now() - lastSubmit > 5000) {
                     submitButton.classList.remove("disabled")
                     submitButton.innerHTML = submitButtonText
+                    submitButton.removeAttribute("aria-busy")
                 }
             }
         }
