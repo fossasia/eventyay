@@ -161,16 +161,16 @@ export function isPopularityFeatureEnabled (flags = {}) {
 	return !!flags.session_popularity_enabled
 }
 
-export function isPopularityVisibleOnSchedule ({ flags = {}, loggedIn = false } = {}) {
-	if (!loggedIn || !isPopularityFeatureEnabled(flags)) return false
+export function isPopularityVisibleOnSchedule ({ flags = {} } = {}) {
+	if (!isPopularityFeatureEnabled(flags)) return false
 	if ('session_popularity_show_on_schedule' in flags) {
 		return !!flags.session_popularity_show_on_schedule
 	}
 	return !!(flags.session_popularity_show_on_calendar || flags.session_popularity_show_on_list)
 }
 
-export function isPopularitySortAvailable ({ flags = {}, loggedIn = false } = {}) {
-	return loggedIn && isPopularityFeatureEnabled(flags)
+export function isPopularitySortAvailable ({ flags = {} } = {}) {
+	return isPopularityFeatureEnabled(flags)
 }
 
 export function isFeaturedSpeakersSortAvailable ({ flags = {}, speakers = [] } = {}) {
