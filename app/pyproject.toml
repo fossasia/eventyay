@@ -227,7 +227,7 @@ build-backend = "setuptools.build_meta"
 dev = [
     "django-debug-toolbar>=7.0.0",
     "django-extensions>=4.1",
-    "wlc>=2.0.0",
+    "wlc>=2.0.1",
 ]
 docs = [
     "docutils>=0.22.4",

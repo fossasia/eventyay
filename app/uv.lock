@@ -1640,7 +1640,7 @@ requires-dist = [
 dev = [
     { name = "django-debug-toolbar", specifier = ">=7.0.0" },
     { name = "django-extensions", specifier = ">=4.1" },
-    { name = "wlc", specifier = ">=2.0.0" },
+    { name = "wlc", specifier = ">=2.0.1" },
 ]
 docs = [
     { name = "docutils", specifier = ">=0.22.4" },
@@ -3862,7 +3862,7 @@ wheels = [
 
 [[package]]
 name = "wlc"
-version = "2.0.0"
+version = "2.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argcomplete" },
@@ -3871,9 +3871,9 @@ dependencies = [
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/15/71/dc7bf36c5c6470036c4b6001e09936e0b82b273512c83d148f592752ac9e/wlc-2.0.0.tar.gz", hash = "sha256:bd499954d3e27e8bb211d2eb9bb5a91cdd4120ed9d5fb8c273296ff22f97d826", size = 95676, upload-time = "2026-04-21T13:37:40.347Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/3c/d187ba8fd78e5aa7bd1b301ab955c5c80cefe6f66f898db7e7ec72efa6a4/wlc-2.0.1.tar.gz", hash = "sha256:da0e930dc5f90172e358a4a52064ede89d5146e66fc660145fd9522820306276", size = 97181, upload-time = "2026-06-26T11:25:00.51Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/95/6bdffae22117627e9f679bf0a251cab9da9fc4cea575e539158a41b2df92/wlc-2.0.0-py3-none-any.whl", hash = "sha256:8acd51cfd5b3e92973dbaf9923f23da148a22008e696b3307c44b0d77cfd337f", size = 37986, upload-time = "2026-04-21T13:37:38.329Z" },
+    { url = "https://files.pythonhosted.org/packages/db/4d/214741145f39560dfcfd6bd9778b5413ca1bf4e60c06e654b16ce83885b9/wlc-2.0.1-py3-none-any.whl", hash = "sha256:18c0f70f32e7ffa6075fad7437cc2a8724dc808f8614c57781774888c88eb6f5", size = 38496, upload-time = "2026-06-26T11:24:59.247Z" },
 ]
 
 [[package]]
