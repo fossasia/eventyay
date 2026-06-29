@@ -9,7 +9,7 @@ def remove_placeholder_emails(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0032_submission_etherpad_url'),
+        ('base', '0035_user_is_spam'),
     ]
 
     operations = [
