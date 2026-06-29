@@ -655,6 +655,7 @@ iframe.iframe-media-source
 	align-items: center
 	background-color: $clr-blue-grey-200
 	z-index: 1
+	overflow: hidden
 	// Fallbacks prevent the overlay from shrinking to its text when
 	// --mediasource-placeholder-* are not yet available.
 	&:not(.size-tiny):not(.background)
