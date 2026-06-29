@@ -22,6 +22,7 @@ from eventyay.agenda.views.utils import (
     build_speaker_schedule_json,
     build_speakers_list_schedule_json,
     is_public_speakers_empty,
+    is_public_speakers_list_empty,
     redirect_to_presale_with_warning,
     redirect_when_public_speakers_unavailable,
     speaker_profile_display_order,
@@ -53,7 +54,7 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
         return can_list_released_schedule_speakers(self.request.user, self.request.event)
 
     def dispatch(self, request, *args, **kwargs):
-        if is_public_speakers_empty(request):
+        if is_public_speakers_list_empty(request):
             return redirect_to_presale_with_warning(request, _('No published speakers.'))
         if not can_list_released_schedule_speakers(request.user, request.event):
             return redirect_when_public_speakers_unavailable(request)
