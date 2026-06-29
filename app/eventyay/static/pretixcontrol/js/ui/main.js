@@ -1116,7 +1116,7 @@ $(function () {
     // Only run this behavior on the voucher list (other pages also use .table-quotas + a delete button).
     if ($vouchersCheckboxes.length) {
         var updateVouchersDeleteBtn = function () {
-            $vouchersDeleteBtn.toggle($vouchersCheckboxes.filter(':checked').length > 0);
+            $vouchersDeleteBtn.toggleClass('hidden', $vouchersCheckboxes.filter(':checked').length === 0);
         };
 
         $vouchersForm.on('change', 'input[name="voucher"], input[data-toggle-table]', function () {
