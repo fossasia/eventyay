@@ -1114,7 +1114,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         except OrderError as e:
             raise ValidationError(str(e))
         except Quota.QuotaExceededException:
-            raise ValidationError({'error_code': 'QUOTA_EXCEEDED', 'detail': 'Quota exceeded.'})
+            raise QuotaExceededAPIException()
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.get('partial', False)
