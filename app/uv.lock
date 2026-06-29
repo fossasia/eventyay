@@ -1551,7 +1551,7 @@ requires-dist = [
     { name = "maxminddb", specifier = ">=3.0.0" },
     { name = "more-itertools", specifier = ">=11.1.0" },
     { name = "msgspec", specifier = ">=0.21.1" },
-    { name = "mt-940", specifier = ">=4.30.0" },
+    { name = "mt-940", specifier = ">=5.0.0" },
     { name = "multidict", specifier = ">=6.7.0" },
     { name = "nh3", specifier = ">=0.3.5" },
     { name = "oauthlib", specifier = ">=3.2.2" },
@@ -1684,7 +1684,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#a46d7c2949513df6a8754b6381ae8617fc77236d" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#77b60a9986bf262d7906cd1fd5d8eb0168408440" }
 dependencies = [
     { name = "flake8" },
 ]
@@ -2207,11 +2207,11 @@ wheels = [
 
 [[package]]
 name = "mt-940"
-version = "4.30.0"
+version = "5.0.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c4/bd/11a984d1896516b4cb45df899b1f9d520df1a5e51a7f5b92ad35f5c2a560/mt-940-4.30.0.tar.gz", hash = "sha256:da14e2ec84d6c6e85604d2a6b8a800b08ec6000351acde501c41eb662819295c", size = 21828, upload-time = "2023-04-13T11:06:15.264Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/aa/64/39abc6f3967663760943afd13e46908cf422299e784cb012127031987140/mt_940-5.0.0.tar.gz", hash = "sha256:82d914988837a95bae21e772c74fb925b716735723f718c3ddd93cf3ad2b0f3a", size = 26138, upload-time = "2026-06-22T01:16:12.936Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/86/c0baa3dcac450f784f776e5f245805da14c12f5caa26bfbb03710eb46582/mt_940-4.30.0-py2.py3-none-any.whl", hash = "sha256:66fa0c1e942478fd7970b791be017b1ca46556f54d44115008f3982e97ae0a9b", size = 20351, upload-time = "2023-04-13T11:06:13.252Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/9c/b9f58c0cc2058476c75d5106fbf0b76b894346038abdbbb12d8fd4ec129f/mt_940-5.0.0-py3-none-any.whl", hash = "sha256:731ad50dd74bd9b4c74c7baab62dead534e30867ef00217841060dd7a7e3201a", size = 29133, upload-time = "2026-06-22T01:16:11.754Z" },
 ]
 
 [[package]]
