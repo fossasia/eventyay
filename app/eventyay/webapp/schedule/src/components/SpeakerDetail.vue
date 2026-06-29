@@ -1,7 +1,11 @@
 <template lang="pug">
 .c-speaker-detail
+	detail-back-nav(:event-url="eventUrl")
+		detail-top-actions(
+			:export-options="speakerExportOptions",
+			:qrcodes-url="speakerQrcodesUrl")
 	.speaker-wrapper(v-if="speakerDetailReady")
-		.speaker-header(:class="{'has-export': speakerExportOptions.length}")
+		.speaker-header
 			.speaker-avatar
 				img(v-if="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :src="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :alt="resolvedSpeaker.name")
 				.avatar-placeholder(v-else)
@@ -10,7 +14,6 @@
 			.speaker-content-area
 				.speaker-title
 					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
-				export-dropdown.speaker-export(v-if="speakerExportOptions.length || isWipPreview", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl", :disabled="isWipPreview")
 		.field-section.biography-section(v-if="resolvedSpeaker.biography")
 			h2.field-heading {{ t.biography }}
 			.field-content
@@ -47,14 +50,15 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer } from '../utils'
+import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl, sessionsForSpeaker } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
 import Session from './Session.vue'
-import ExportDropdown from './ExportDropdown.vue'
+import DetailBackNav from './DetailBackNav.vue'
+import DetailTopActions from './DetailTopActions.vue'
 
 export default {
 	name: 'SpeakerDetail',
-	components: { MarkdownContent, Session, ExportDropdown },
+	components: { MarkdownContent, Session, DetailBackNav, DetailTopActions },
 	inject: {
 		eventUrl: { default: null },
 		remoteApiUrl: { default: '' },
@@ -72,7 +76,8 @@ export default {
 			}
 		},
 		translationMessages: { default: () => ({}) },
-		isWipPreview: { default: false }
+		isWipPreview: { default: false },
+		exportsDisabled: { default: false },
 	},
 	props: {
 		speaker: Object,
@@ -106,9 +111,7 @@ export default {
 	computed: {
 		speakerQrcodesUrl() {
 			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code
-			if (!code || !this.eventUrl) return ''
-			const base = this.eventUrl.replace(/\/?$/, '/')
-			return `${base}schedule/widgets/qrcodes/speaker/${code}.json`
+			return buildQrcodesUrl(this.eventUrl, 'speaker', code)
 		},
 		t() {
 			const m = this.translationMessages || {}
@@ -147,26 +150,15 @@ export default {
 		resolvedSessions() {
 			if (this.sessions?.length) return this.sessions
 			const id = this.speakerId || this.speaker?.code
-			if (id && this.scheduleData?.sessionsBySpeaker?.[id]) {
-				return this.scheduleData.sessionsBySpeaker[id]
-			}
-			if (id && this.scheduleData) {
-				const list = this.scheduleData.sessions || []
-				const out = []
-				for (let i = 0; i < list.length; i++) {
-					const s = list[i]
-					const spk = s.speakers
-					if (!spk) continue
-					for (let j = 0; j < spk.length; j++) {
-						if (spk[j] && spk[j].code === id) {
-							out.push(s)
-							break
-						}
-					}
-				}
-				return out
-			}
-			return []
+			if (!id) return []
+			const fromBySpeaker = sessionsForSpeaker(this.scheduleData?.sessionsBySpeaker, id)
+			if (fromBySpeaker.length) return fromBySpeaker
+			const list = this.scheduleData?.sessions || []
+			const normalizedId = id.toLowerCase()
+			return list.filter((session) => (session.speakers || []).some((sp) => {
+				const code = typeof sp === 'string' ? sp : sp?.code
+				return code && code.toLowerCase() === normalizedId
+			}))
 		},
 		resolvedFavs() {
 			if (this.favs?.length) return this.favs
@@ -224,6 +216,7 @@ export default {
 			return `${this.eventUrl}speakers/${code}`
 		},
 		speakerExportOptions() {
+			if (this.exportsDisabled || !this.resolvedSessions?.length) return []
 			const exporters = this.resolvedSpeaker?.exporters
 			const base = this.speakerBaseUrl
 			if (!exporters && !base) return []
@@ -303,10 +296,6 @@ export default {
 	.speaker-content-area
 		flex: 1
 		min-width: 0
-		display: flex
-		align-items: center
-		justify-content: space-between
-		gap: 12px
 	.speaker-title
 		width: 100%
 		display: flex
@@ -314,9 +303,6 @@ export default {
 		h2
 			margin: 0
 			text-align: left
-	.speaker-export
-		flex-shrink: 0
-		align-self: center
 	.speaker-avatar
 		flex-shrink: 0
 		width: 128px
@@ -355,7 +341,7 @@ export default {
 			.field-content
 				font-size: 16px
 	.answer-link
-		color: var(--clr-primary)
+		color: var(--pretalx-clr-primary, var(--clr-primary))
 		text-decoration: none
 		word-break: break-all
 		&:hover
@@ -372,17 +358,11 @@ export default {
 			flex-direction: column
 			align-items: center
 			text-align: center
-			&.has-export
-				padding-top: 32px
 			.speaker-content-area
 				width: 100%
 				flex-direction: column
 				align-items: center
 				gap: 4px
-				.speaker-export
-					position: absolute
-					top: 0
-					right: 0
 				.speaker-title h2
 					text-align: center
 		.speaker-avatar

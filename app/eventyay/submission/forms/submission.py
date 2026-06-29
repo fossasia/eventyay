@@ -46,15 +46,6 @@ class EventLocalizedSafeModelChoiceField(SafeModelChoiceField):
 class InfoForm(
     CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, RequestRequire, PublicContent, forms.ModelForm
 ):
-    additional_speaker = forms.EmailField(
-        label=_('Additional Speaker'),
-        help_text=_(
-            'If you have a co-speaker, please add their email address here, and we will invite them '
-            'to create an account. If you have more than one co-speaker, you can add more speakers '
-            'after finishing the proposal process.'
-        ),
-        required=False,
-    )
     image = ImageField(
         required=False,
         label=_('Session image'),
@@ -63,7 +54,7 @@ class InfoForm(
     slides = SlidesField(required=False, label=_('Slides'))
     content_locale = forms.ChoiceField(label=phrases.base.language)
 
-    def __init__(self, event, remove_additional_speaker=False, **kwargs):
+    def __init__(self, event, **kwargs):
         self.event = event
         self.readonly = kwargs.pop('readonly', False)
         self.access_code = kwargs.pop('access_code', None)
@@ -88,8 +79,6 @@ class InfoForm(
         super().__init__(initial=initial, **kwargs)
         self.submission = self.instance
 
-        if remove_additional_speaker and 'additional_speaker' in self.fields:
-            self.fields.pop('additional_speaker')
         if 'abstract' in self.fields:
             self.fields['abstract'].widget.attrs['rows'] = 2
 
@@ -417,7 +406,6 @@ class InfoForm(
             'track',
             'duration',
             'content_locale',
-            'additional_speaker',
         ]
         public_fields = ['title', 'abstract', 'description', 'image', 'slides']
         widgets = {

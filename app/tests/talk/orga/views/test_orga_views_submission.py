@@ -5,9 +5,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretalx.common.models.log import ActivityLog
-from pretalx.submission.models import Submission, SubmissionStates
-from pretalx.submission.models.question import QuestionRequired, QuestionVariant
+from eventyay.base.models.log import ActivityLog
+from eventyay.base.models import Submission, SubmissionStates
+from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired, TalkQuestionVariant as QuestionVariant
 
 
 @pytest.mark.django_db
