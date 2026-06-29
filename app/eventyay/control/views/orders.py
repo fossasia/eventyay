@@ -125,7 +125,7 @@ from eventyay.base.signals import (
     register_ticket_outputs,
 )
 from eventyay.base.templatetags.money import money_filter
-from eventyay.base.templatetags.rich_text import markdown_compile_email
+from eventyay.base.templatetags.rich_text import compile_email_body
 from eventyay.base.views.mixins import OrderQuestionsViewMixin
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.forms.filter import (
@@ -272,6 +272,9 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
             o.icnt = data['icnt']
             o.sales_channel_obj = scs[o.sales_channel]
 
+        for o in ctx['orders']:
+            o.bulk_approval_eligible = o.status == Order.STATUS_PENDING and o.require_approval
+
         if ctx['page_obj'].paginator.count < 1000:
             # Performance safeguard: Only count positions if the data set is small
             ctx['sums'] = (
@@ -324,19 +327,38 @@ class OrderBulkAction(EventPermissionRequiredMixin, View):
                 selected_by_code = {order.code: order for order in selected_orders}
                 selected_orders = [selected_by_code[code] for code in selected_codes]
 
-                invalid = [
-                    order.code
+                eligible_orders = [
+                    order
+                    for order in selected_orders
+                    if order.status == Order.STATUS_PENDING and order.require_approval
+                ]
+                skipped_orders = [
+                    order
                     for order in selected_orders
                     if order.status != Order.STATUS_PENDING or not order.require_approval
                 ]
-                if invalid:
+
+                if not eligible_orders:
                     messages.error(
                         self.request,
-                        _('Bulk actions are only possible if all selected orders are pending approval.'),
+                        _('None of the selected orders are pending approval. Bulk actions require at least one approval-pending order.'),
                     )
                     return self._redirect_back()
 
-                for order in selected_orders:
+                if skipped_orders:
+                    messages.warning(
+                        self.request,
+                        ngettext(
+                            '%(count)d order was skipped because it is not pending approval: %(codes)s',
+                            '%(count)d orders were skipped because they are not pending approval: %(codes)s',
+                            len(skipped_orders),
+                        ) % {
+                            'count': len(skipped_orders),
+                            'codes': ', '.join(o.code for o in skipped_orders),
+                        },
+                    )
+
+                for order in eligible_orders:
                     if action == 'approve':
                         invoice = approve_order_without_side_effects(order, user=self.request.user)
                         # Signals and emails must only run after the bulk transaction commits.
@@ -362,9 +384,9 @@ class OrderBulkAction(EventPermissionRequiredMixin, View):
                 ngettext(
                     '%(count)d order has been approved.',
                     '%(count)d orders have been approved.',
-                    len(selected_orders),
+                    len(eligible_orders),
                 )
-                % {'count': len(selected_orders)},
+                % {'count': len(eligible_orders)},
             )
         else:
             messages.success(
@@ -372,9 +394,9 @@ class OrderBulkAction(EventPermissionRequiredMixin, View):
                 ngettext(
                     '%(count)d order has been denied and is now canceled.',
                     '%(count)d orders have been denied and are now canceled.',
-                    len(selected_orders),
+                    len(eligible_orders),
                 )
-                % {'count': len(selected_orders)},
+                % {'count': len(eligible_orders)},
             )
         return self._redirect_back()
 
@@ -2394,7 +2416,7 @@ class OrderSendMail(EventPermissionRequiredMixin, OrderViewMixin, FormView):
         if self.request.POST.get('action') == 'preview':
             self.preview_output = {
                 'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': markdown_compile_email(email_content),
+                'html': compile_email_body(email_content),
             }
             return self.get(self.request, *self.args, **self.kwargs)
         else:
@@ -2465,7 +2487,7 @@ class OrderPositionSendMail(OrderSendMail):
         if self.request.POST.get('action') == 'preview':
             self.preview_output = {
                 'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': markdown_compile_email(email_content),
+                'html': compile_email_body(email_content),
             }
             return self.get(self.request, *self.args, **self.kwargs)
         else:

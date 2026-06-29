@@ -44,7 +44,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 	.stream-indicator(v-if="canOpenStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
 			path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
-	.session-icons(v-if="loggedIn")
+	.session-icons(v-if="!favsReadOnly")
 		fav-button(@toggleFav="toggleFav")
 
 </template>
@@ -116,7 +116,7 @@ export default {
 			}
 		},
 		getJoinRoomLink: { default: () => () => '' },
-		loggedIn: { default: false },
+		favsReadOnly: { default: false },
 		translationMessages: { default: () => ({}) }
 	},
 	components: {
@@ -195,7 +195,7 @@ export default {
 			}
 		},
 		hasFavCount () {
-			return this.loggedIn && this.showFavCount && normalizePopularityCount(this.session) > 0
+			return this.showFavCount && normalizePopularityCount(this.session) > 0
 		},
 		favCountLabel () {
 			const count = normalizePopularityCount(this.session)
@@ -206,7 +206,7 @@ export default {
 			return m.schedule_do_not_record || 'This session will not be recorded.'
 		},
 		hasAnyRightIcons () {
-			return this.loggedIn || this.canOpenStream || this.session.do_not_record
+			return !this.favsReadOnly || this.canOpenStream || this.session.do_not_record
 		},
 		isShortSession () {
 			let minutes = 0
@@ -223,7 +223,7 @@ export default {
 	},
 	methods: {
 		toggleFav () {
-			if (!this.loggedIn) return
+			if (this.favsReadOnly) return
 			if (this.faved) {
 				this.$emit('unfav', this.session.id)
 			} else {
