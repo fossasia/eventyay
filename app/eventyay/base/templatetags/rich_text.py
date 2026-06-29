@@ -179,7 +179,7 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
 )
 
 
-def expand_email_preview_placeholders(html: str, event, *, locale: str | None = None) -> str:
+def expand_email_preview_placeholders(html_body: str, event, *, locale: str | None = None) -> str:
     """Replace ``{placeholder}`` tokens with sample values for editor preview.
 
     Uses the same sample rendering as the Message center's full-form preview so
@@ -206,7 +206,7 @@ def expand_email_preview_placeholders(html: str, event, *, locale: str | None = 
                     html.escape(str(placeholder.render_sample(event))),
                 )
             )
-        return html.format_map(context_dict)
+        return html_body.format_map(context_dict)
 
 
 def compile_email_body(source: str) -> str:
