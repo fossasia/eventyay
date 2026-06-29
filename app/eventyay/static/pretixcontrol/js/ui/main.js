@@ -935,12 +935,13 @@ $(function () {
 
         var $form = $toggle.closest("form");
         var update = function() {
-            var nrOfChecked = $checkboxes.filter(":checked").length;
-            var allChecked = nrOfChecked == $checkboxes.length;
-            var $checked = $checkboxes.filter(":checked");
-            var nrEligibleChecked = $checked.filter('[data-batch-eligible="true"]').length;
-            var nrIneligibleChecked = nrOfChecked - nrEligibleChecked;
-            var $actionHint = $batchSelectActions.find("[data-batch-action-hint]");
+             var nrOfChecked = $checkboxes.filter(":checked").length;
+             var allChecked = nrOfChecked == $checkboxes.length;
+             var $checked = $checkboxes.filter(":checked");
+             var eligibilityMode = $batchSelectActions.is("[data-batch-disabled-reason-ineligible]");
+             var nrEligibleChecked = eligibilityMode ? $checked.filter('[data-batch-eligible="true"]').length : nrOfChecked;
+             var nrIneligibleChecked = eligibilityMode ? (nrOfChecked - nrEligibleChecked) : 0;
+             var $actionHint = $batchSelectActions.find("[data-batch-action-hint]");
             var reasonNone = $batchSelectActions.attr("data-batch-disabled-reason-none");
             var reasonAllIneligible = $batchSelectActions.attr("data-batch-disabled-reason-ineligible");
             var reasonPartialSkip = $batchSelectActions.attr("data-batch-partial-skip-notice");

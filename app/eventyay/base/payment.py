@@ -283,8 +283,8 @@ class BasePaymentProvider:
                     forms.DecimalField(
                         label=_('Minimum amount'),
                         help_text=_(
-                            'This payment will be available only if the amount is equal to or exceeds the given '
-                            'value. The amount for this purpose may be computed without taking the fees imposed '
+                            'This payment will be available only if the order total is equal to or exceeds the given '
+                            'value. The order total for this purpose may be computed without taking the fees imposed '
                             'by this payment method into account.'
                         ),
                         localize=True,
@@ -298,8 +298,8 @@ class BasePaymentProvider:
                     forms.DecimalField(
                         label=_('Maximum amount'),
                         help_text=_(
-                            'This payment will be available only if the amount is equal to or below the given '
-                            'value. The amount for this purpose may be computed without taking the fees imposed '
+                            'This payment will be available only if the order total is equal to or below the given '
+                            'value. The order total for this purpose may be computed without taking the fees imposed '
                             'by this payment method into account.'
                         ),
                         localize=True,
