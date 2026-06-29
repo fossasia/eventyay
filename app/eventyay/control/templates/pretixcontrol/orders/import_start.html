@@ -23,15 +23,15 @@
 
             <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
                 {% csrf_token %}
-                <div class="form-group" style="display: flex; align-items: center; margin-left: 0; margin-right: 0; margin-bottom: 20px;">
-                    <label class="control-label" style="padding-top: 0 !important; margin-bottom: 0; font-weight: bold; min-width: 120px; margin-right: 15px; text-align: left;" for="file">
+                <div class="form-group form-group-flex">
+                    <label class="control-label form-group-flex-label" for="file">
                         {% trans "Import file" %} *
                     </label>
-                    <div style="flex: 1; max-width: 500px;">
-                        <input id="file" type="file" name="file" required/>
+                    <div class="form-group-flex-input">
+                        <input id="file" type="file" name="file" accept=".csv" required/>
                     </div>
                 </div>
-                <div class="form-group submit-group" style="margin: 20px -15px -15px -15px !important; padding: 15px;">
+                <div class="form-group submit-group import-submit-group">
                     <button class="btn btn-primary btn-lg" type="submit">
                         <span class="fa fa-upload"></span> {% trans "Upload and continue" %}
                     </button>

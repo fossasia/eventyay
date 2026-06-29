@@ -877,3 +877,28 @@ table td > .checkbox input[type="checkbox"] {
   display: flex;
   align-items: center;
 }
+
+.form-group-flex {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.form-group-flex-label {
+  padding-top: 0 !important;
+  margin-bottom: 0 !important;
+  font-weight: bold;
+  min-width: 120px;
+  margin-right: 15px;
+  text-align: left;
+}
+
+.form-group-flex-input {
+  flex: 1;
+  max-width: 500px;
+}
+
+.import-submit-group {
+  margin: 20px -15px -15px -15px !important;
+  padding: 15px;
+}
