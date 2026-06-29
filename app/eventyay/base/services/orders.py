@@ -2150,7 +2150,7 @@ class OrderChangeManager:
                     else:
                         gc.transactions.create(value=-op.position.price, order=self.order)
 
-                for opa in op.position.addons.all():
+                for opa in op.position.addons.filter(canceled=False):
                     self.order.log_action(
                         'eventyay.event.order.changed.cancel',
                         user=self.user,
@@ -2169,7 +2169,7 @@ class OrderChangeManager:
                         Voucher.objects.filter(pk=opa.voucher.pk).update(redeemed=Greatest(0, F('redeemed') - 1))
                     assign_ticket_secret(
                         event=self.event,
-                        position=op.position,
+                        position=opa,
                         force_invalidate_if_revokation_list_used=True,
                         force_invalidate=False,
                         save=False,
