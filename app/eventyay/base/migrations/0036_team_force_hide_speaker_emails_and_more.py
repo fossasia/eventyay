@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0034_migrate_native_stream_schedules'),
+        ('base', '0035_user_is_spam'),
     ]
 
     operations = [
