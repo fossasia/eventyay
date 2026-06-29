@@ -347,6 +347,12 @@ def build_landing_featured_speakers_widget_schedule(event, user, featured_profil
         base_data['talks'] = filtered.get('talks', [])
         base_data['tracks'] = filtered.get('tracks', [])
         base_data['rooms'] = filtered.get('rooms', [])
+        _append_missing_pending_submissions(
+            base_data,
+            event,
+            user,
+            featured_speaker_user_codes,
+        )
     else:
         filtered = _apply_pending_speaker_talks(
             base_data,
@@ -977,6 +983,20 @@ def is_public_schedule_empty(request):
         and request.event.get_feature_flag('show_schedule')
         and request.event.current_schedule
         and not request.event.has_schedule_content
+    )
+
+
+def is_public_speakers_list_empty(request):
+    """True when the public speakers overview page has nothing to show."""
+    if can_list_released_schedule_speakers(request.user, request.event):
+        return not public_speakers_list_available(request.user, request.event)
+    if has_public_featured_speakers(request.user, request.event):
+        return False
+    return bool(
+        request.event.is_public
+        and request.event.get_feature_flag('show_schedule')
+        and request.event.current_schedule
+        and not request.event.speakers.exists()
     )
 
 
