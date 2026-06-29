@@ -371,14 +371,14 @@ export default {
 			if (this.$refs.video.paused) {
 				this.playbackRequested = true
 				this.$refs.video.play()
-				this.player.startLoad()
+				this.player?.startLoad()
 				// force live edge after unpausing
 				// TODO make this less yarring
 				this.$refs.video.currentTime = this.$refs.video.buffered.end(this.$refs.video.buffered.length - 1)
 			} else {
 				this.playbackRequested = false
 				this.$refs.video.pause()
-				this.player.stopLoad()
+				this.player?.stopLoad()
 			}
 		},
 		chooseLevel(level) {
