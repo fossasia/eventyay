@@ -939,9 +939,11 @@ $(function () {
             var allChecked = nrOfChecked == $checkboxes.length;
             var $checked = $checkboxes.filter(":checked");
             var nrEligibleChecked = $checked.filter('[data-batch-eligible="true"]').length;
+            var nrIneligibleChecked = nrOfChecked - nrEligibleChecked;
             var $actionHint = $batchSelectActions.find("[data-batch-action-hint]");
             var reasonNone = $batchSelectActions.attr("data-batch-disabled-reason-none");
-            var reasonIneligible = $batchSelectActions.attr("data-batch-disabled-reason-ineligible");
+            var reasonAllIneligible = $batchSelectActions.attr("data-batch-disabled-reason-ineligible");
+            var reasonPartialSkip = $batchSelectActions.attr("data-batch-partial-skip-notice");
             var actionsDisabled = false;
             var disabledReason = "";
 
@@ -951,12 +953,15 @@ $(function () {
             if (!allChecked) $selectAll.find("input").prop("checked", false);
 
             if (!nrOfChecked) {
+                // Nothing selected at all — disable
                 actionsDisabled = true;
                 disabledReason = reasonNone || "";
-            } else if (reasonIneligible && nrEligibleChecked !== nrOfChecked) {
+            } else if (nrEligibleChecked === 0) {
+                // All selected are ineligible — disable
                 actionsDisabled = true;
-                disabledReason = reasonIneligible;
+                disabledReason = reasonAllIneligible || "";
             }
+            // else: at least one eligible order — keep enabled (mixed or all eligible)
 
             $actionButtons.prop("disabled", actionsDisabled);
             if (actionsDisabled && disabledReason) {
@@ -965,8 +970,15 @@ $(function () {
                 $actionButtons.removeAttr("title");
             }
             if ($actionHint.length) {
-                if (nrOfChecked > 0 && reasonIneligible && nrEligibleChecked !== nrOfChecked) {
-                    $actionHint.text(reasonIneligible).prop("hidden", false);
+                if (!nrOfChecked) {
+                    $actionHint.text("").prop("hidden", true);
+                } else if (nrEligibleChecked === 0) {
+                    // All ineligible: show hard error hint
+                    $actionHint.text(reasonAllIneligible || "").prop("hidden", false);
+                } else if (nrIneligibleChecked > 0 && reasonPartialSkip) {
+                    // Mixed: show partial-skip notice
+                    var skipMsg = reasonPartialSkip.replace("{count}", nrIneligibleChecked);
+                    $actionHint.text(skipMsg).prop("hidden", false);
                 } else {
                     $actionHint.text("").prop("hidden", true);
                 }
@@ -982,22 +994,22 @@ $(function () {
                 var $batchSelectActions = $(this).find(".batch-select-actions");
                 var $checkboxes = $(this).find("tbody input[type=checkbox]");
                 var reasonNone = $batchSelectActions.attr("data-batch-disabled-reason-none");
-                var reasonIneligible = $batchSelectActions.attr("data-batch-disabled-reason-ineligible");
                 var $actionHint = $batchSelectActions.find("[data-batch-action-hint]");
                 var nrOfChecked = $checkboxes.filter(":checked").length;
                 var nrEligibleChecked = $checkboxes.filter(":checked").filter('[data-batch-eligible="true"]').length;
-                var message = "";
 
                 if (!nrOfChecked) {
-                    message = reasonNone;
-                } else if (nrEligibleChecked !== nrOfChecked) {
-                    message = reasonIneligible;
-                }
-
-                if (message) {
                     ev.preventDefault();
                     if ($actionHint.length) {
-                        $actionHint.text(message).prop("hidden", false);
+                        $actionHint.text(reasonNone || "").prop("hidden", false);
+                    }
+                    return false;
+                }
+                if (nrEligibleChecked === 0) {
+                    var reasonAllIneligible = $batchSelectActions.attr("data-batch-disabled-reason-ineligible");
+                    ev.preventDefault();
+                    if ($actionHint.length) {
+                        $actionHint.text(reasonAllIneligible || "").prop("hidden", false);
                     }
                     return false;
                 }

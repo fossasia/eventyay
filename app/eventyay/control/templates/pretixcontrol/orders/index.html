@@ -232,7 +232,8 @@
             {% if "can_change_orders" in request.eventpermset %}
                 <div class="batch-select-actions batch-select-actions-orders"
                      data-batch-disabled-reason-none="{% trans "Select at least one order." %}"
-                     data-batch-disabled-reason-ineligible="{% trans "Bulk actions are only possible if all selected orders are pending approval." %}">
+                     data-batch-disabled-reason-ineligible="{% trans "None of the selected orders are pending approval. Only approval-pending orders can be approved or denied." %}"
+                     data-batch-partial-skip-notice="{% trans "{count} selected order(s) are not pending approval and will be skipped." %}">
                     <div class="btn-group dropup order-bulk-actions-menu">
                         <button type="button" class="btn btn-default btn-save dropdown-toggle"
                                 data-toggle="dropdown" aria-haspopup="true"

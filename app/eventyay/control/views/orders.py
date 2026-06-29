@@ -327,19 +327,38 @@ class OrderBulkAction(EventPermissionRequiredMixin, View):
                 selected_by_code = {order.code: order for order in selected_orders}
                 selected_orders = [selected_by_code[code] for code in selected_codes]
 
-                invalid = [
-                    order.code
+                eligible_orders = [
+                    order
+                    for order in selected_orders
+                    if order.status == Order.STATUS_PENDING and order.require_approval
+                ]
+                skipped_orders = [
+                    order
                     for order in selected_orders
                     if order.status != Order.STATUS_PENDING or not order.require_approval
                 ]
-                if invalid:
+
+                if not eligible_orders:
                     messages.error(
                         self.request,
-                        _('Bulk actions are only possible if all selected orders are pending approval.'),
+                        _('None of the selected orders are pending approval. Bulk actions require at least one approval-pending order.'),
                     )
                     return self._redirect_back()
 
-                for order in selected_orders:
+                if skipped_orders:
+                    messages.warning(
+                        self.request,
+                        ngettext(
+                            '%(count)d order was skipped because it is not pending approval: %(codes)s',
+                            '%(count)d orders were skipped because they are not pending approval: %(codes)s',
+                            len(skipped_orders),
+                        ) % {
+                            'count': len(skipped_orders),
+                            'codes': ', '.join(o.code for o in skipped_orders),
+                        },
+                    )
+
+                for order in eligible_orders:
                     if action == 'approve':
                         invoice = approve_order_without_side_effects(order, user=self.request.user)
                         # Signals and emails must only run after the bulk transaction commits.
@@ -365,9 +384,9 @@ class OrderBulkAction(EventPermissionRequiredMixin, View):
                 ngettext(
                     '%(count)d order has been approved.',
                     '%(count)d orders have been approved.',
-                    len(selected_orders),
+                    len(eligible_orders),
                 )
-                % {'count': len(selected_orders)},
+                % {'count': len(eligible_orders)},
             )
         else:
             messages.success(
@@ -375,9 +394,9 @@ class OrderBulkAction(EventPermissionRequiredMixin, View):
                 ngettext(
                     '%(count)d order has been denied and is now canceled.',
                     '%(count)d orders have been denied and are now canceled.',
-                    len(selected_orders),
+                    len(eligible_orders),
                 )
-                % {'count': len(selected_orders)},
+                % {'count': len(eligible_orders)},
             )
         return self._redirect_back()
 
