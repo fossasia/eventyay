@@ -190,6 +190,11 @@ class User(
     wikimedia_username = models.CharField(max_length=255, blank=True, null=True, verbose_name=('Wikimedia username'))
     is_active = models.BooleanField(default=True, verbose_name=_('Is active'))
     is_staff = models.BooleanField(default=False, verbose_name=_('Is site admin'))
+    is_spam = models.BooleanField(
+        default=False,
+        verbose_name=_('Is marked as spam'),
+        help_text=_('Spam accounts are blocked from logging in but remain in the database.'),
+    )
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name=_('Date joined'))
     locale = models.CharField(
         max_length=50, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE, verbose_name=_('Language')
@@ -1061,6 +1066,8 @@ the eventyay team"""
         if include_admin_info:
             d["moderation_state"] = self.moderation_state
             d["token_id"] = self.token_id
+            d["email"] = self.email
+            d["wikimedia_username"] = self.wikimedia_username
         if include_client_state:
             d["client_state"] = self.client_state
         if include_personal_data:

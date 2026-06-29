@@ -46,6 +46,7 @@ class LoginForm(forms.Form):
         'invalid_login': _('This combination of credentials is not known to our system.'),
         'rate_limit': _('For security reasons, please wait 5 minutes before you try again.'),
         'inactive': _('This account is inactive.'),
+        'spam': _('This account has been suspended. Please contact the site administrator.'),
     }
     
     def __init__(self, backend, request=None, *args, **kwargs):
@@ -120,6 +121,11 @@ class LoginForm(forms.Form):
             raise forms.ValidationError(
                 self.error_messages['inactive'],
                 code='inactive',
+            )
+        if user.is_spam:
+            raise forms.ValidationError(
+                self.error_messages['spam'],
+                code='spam',
             )
 
     def get_user(self):
@@ -241,6 +247,7 @@ class ReauthForm(forms.Form):
     error_messages = {
         'invalid_login': _('This combination of credentials is not known to our system.'),
         'inactive': _('This account is inactive.'),
+        'spam': _('This account has been suspended. Please contact the site administrator.'),
     }
 
     def __init__(self, backend, user, request=None, *args, **kwargs):
@@ -273,4 +280,9 @@ class ReauthForm(forms.Form):
             raise forms.ValidationError(
                 self.error_messages['inactive'],
                 code='inactive',
+            )
+        if user.is_spam:
+            raise forms.ValidationError(
+                self.error_messages['spam'],
+                code='spam',
             )

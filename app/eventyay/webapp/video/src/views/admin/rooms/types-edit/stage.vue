@@ -1,68 +1,112 @@
 <template lang="pug">
 .c-stage-settings
-	h2 Stream
-	bunt-select(name="stream-source", v-model="streamSource", :options="STREAM_SOURCE_OPTIONS", label="Stream source")
-	template(v-if="modules['livestream.native']")
-		bunt-input(name="url", v-model="modules['livestream.native'].config.hls_url", label="HLS URL")
-		upload-url-input(name="streamOfflineImage", v-model="modules['livestream.native'].config.streamOfflineImage", label="Stream offline image")
-		bunt-input(name="muxenvkey", v-if="$features.enabled('muxdata')", v-model="modules['livestream.native'].config.mux_env_key", label="MUX data environment key")
-		bunt-input(name="subtitle_url", v-model="modules['livestream.native'].config.subtitle_url", label="URL for external subtitles")
-		h4 Alternative Streams
-		.alternative(v-for="(a, i) in (modules['livestream.native'].config.alternatives || [])" :key="i")
-			bunt-input(name="label", v-model="a.label", label="Label")
-			bunt-input(name="hls_url", v-model="a.hls_url", label="HLS URL")
-			bunt-icon-button(@click="deleteAlternativeStream(i)") delete-outline
-		bunt-button(@click="modules['livestream.native'].config.alternatives = [...(modules['livestream.native'].config.alternatives || []), {label: '', hls_url: ''}]") Add alternative stream
-	// YouTube stream settings
-	bunt-input(v-else-if="modules['livestream.youtube']", name="ytid", v-model="modules['livestream.youtube'].config.ytid", label="YouTube Video ID or URL", :validation="v$.modules['livestream.youtube'].config.ytid", @blur="normalizePrimaryYoutubeId")
-	// Language and URL input for YouTube stream
-	.language-urls(v-if="modules['livestream.youtube']")
-		h4 Languages and Audio Source
-		.language-url-entry(v-for="(entry, index) in modules['livestream.youtube'].config.languageUrls" :key="index")
-			bunt-select(name="language", v-model="entry.language", :options="ISO_LANGUAGE_OPTIONS", label="Language")
-			bunt-input(name="youtube_id" v-model="entry.youtube_id" label="Audio Source (YouTube ID or WHEP URL)" @blur="normalizeLanguageYoutubeId(entry)")
-			bunt-icon-button(@click="deleteLanguageUrl(index)") delete-outline
-		bunt-button(@click="addLanguageUrl") + Add Language and Audio Source
-		// Switch button for no-cookies domain
-		.bunt-switch-container
-			bunt-switch(name="enablePrivacyEnhancedMode", v-model="enablePrivacyEnhancedMode", label="Enable No-Cookies")
-			bunt-switch(name="loop", v-model="loop", label="Loop")
-			bunt-switch(name="modestBranding", v-model="modestBranding", label="Enable Modest Branding")
-			bunt-switch(name="hideControls", v-model="hideControls", label="Hide Controls", hint="Note: Hiding controls disables autoplay (browsers require muted autoplay, but users can't unmute without controls)")
-			bunt-switch(name="noRelated", v-model="noRelated", label="Hide Related Videos")
-			bunt-switch(name="disableKb", v-model="disableKb", label="Disable Keyboard Controls")
-			bunt-switch(name="showInfo", v-model="showInfo", label="Hide Video Info")
-	bunt-input(v-else-if="modules['livestream.iframe']", name="iframe-player", v-model="modules['livestream.iframe'].config.url", label="Iframe player url", hint="iframe player should be autoplaying and support resizing to small sizes for background playing")
-	sidebar-addons(v-bind="$props")
+	h2 Stream type
+	.ui-radio-options
+		label.ui-radio-option(v-for="option in PLAYBACK_MODE_OPTIONS", :key="option.id")
+			input(
+				type="radio",
+				:name="playbackModeInputName",
+				:value="option.id",
+				:checked="playbackMode === option.id",
+				@change="playbackMode = option.id"
+			)
+			.radio-copy
+				.ui-radio-title {{ option.label }}
+				.ui-radio-description {{ option.description }}
+	template(v-if="playbackMode === PLAYBACK_MODE_ALWAYS_ON")
+		h2 Default stream source
+		bunt-select(name="stream-source", v-model="streamSource", :options="STREAM_SOURCE_OPTIONS", option-value="id", option-label="label", label="Stream source")
+		template(v-if="modules['livestream.native']")
+			bunt-input(name="url", v-model="modules['livestream.native'].config.hls_url", label="HLS URL")
+			upload-url-input(name="streamOfflineImage", v-model="modules['livestream.native'].config.streamOfflineImage", label="Stream offline image")
+			bunt-input(name="muxenvkey", v-if="$features.enabled('muxdata')", v-model="modules['livestream.native'].config.mux_env_key", label="MUX data environment key")
+			bunt-input(name="subtitle_url", v-model="modules['livestream.native'].config.subtitle_url", label="URL for external subtitles")
+			h4 Alternative Streams
+			.alternative(v-for="(a, i) in (modules['livestream.native'].config.alternatives || [])" :key="i")
+				bunt-input(name="label", v-model="a.label", label="Label")
+				bunt-input(name="hls_url", v-model="a.hls_url", label="HLS URL")
+				bunt-icon-button(@click="deleteAlternativeStream(i)") delete-outline
+			bunt-button(@click="modules['livestream.native'].config.alternatives = [...(modules['livestream.native'].config.alternatives || []), {label: '', hls_url: ''}]") Add alternative stream
+		// YouTube stream settings
+		bunt-input(v-else-if="modules['livestream.youtube']", name="ytid", v-model="modules['livestream.youtube'].config.ytid", label="YouTube Video ID or URL", :validation="v$.modules['livestream.youtube'].config.ytid", @blur="normalizePrimaryYoutubeId")
+		// Language and URL input for YouTube stream
+		.language-urls(v-if="modules['livestream.youtube']")
+			h4 Languages and Audio Source
+			.language-url-entry(v-for="(entry, index) in modules['livestream.youtube'].config.languageUrls" :key="index")
+				bunt-select(name="language", v-model="entry.language", :options="ISO_LANGUAGE_OPTIONS", label="Language")
+				bunt-input(name="youtube_id" v-model="entry.youtube_id" label="Audio Source (YouTube ID or WHEP URL)" @blur="normalizeLanguageYoutubeId(entry)")
+				bunt-icon-button(@click="deleteLanguageUrl(index)") delete-outline
+			bunt-button(@click="addLanguageUrl") + Add Language and Audio Source
+			// Switch button for no-cookies domain
+			.bunt-switch-container
+				bunt-switch(name="enablePrivacyEnhancedMode", v-model="enablePrivacyEnhancedMode", label="Enable No-Cookies")
+				bunt-switch(name="loop", v-model="loop", label="Loop")
+				bunt-switch(name="modestBranding", v-model="modestBranding", label="Enable Modest Branding")
+				bunt-switch(name="hideControls", v-model="hideControls", label="Hide Controls", hint="Note: Hiding controls disables autoplay (browsers require muted autoplay, but users can't unmute without controls)")
+				bunt-switch(name="noRelated", v-model="noRelated", label="Limit related videos to same channel")
+				bunt-switch(name="disableKb", v-model="disableKb", label="Disable Keyboard Controls")
+				bunt-switch(name="showInfo", v-model="showInfo", label="Hide Video Info")
+		bunt-input(v-else-if="modules['livestream.iframe']", name="iframe-player", v-model="modules['livestream.iframe'].config.url", label="Iframe player url", :hint="IFRAME_PROVIDER_HELP_TEXT")
 </template>
 <script>
 import { defineComponent } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
-import features from 'features'
 import UploadUrlInput from 'components/UploadUrlInput'
 import mixin from './mixin'
-import SidebarAddons from './SidebarAddons'
 import {youtubeid, normalizeYoutubeVideoId} from 'lib/validators'
 import ISO6391 from 'iso-639-1'
+import {
+	PLAYBACK_MODE_ALWAYS_ON,
+	PLAYBACK_MODE_OPTIONS,
+	PLAYBACK_MODE_SCHEDULE_DRIVEN,
+	IFRAME_PROVIDER_HELP_TEXT,
+	getStagePlaybackMode,
+	getStreamSourceOptions
+} from 'lib/stage-streams'
 
-const STREAM_SOURCE_OPTIONS = [
-	{ id: 'hls', label: 'HLS', module: 'livestream.native' },
-	{ id: 'youtube', label: 'YouTube', module: 'livestream.youtube' }
-]
+const STREAM_SOURCE_OPTIONS = getStreamSourceOptions()
+const STREAM_SOURCE_BY_ID = STREAM_SOURCE_OPTIONS.reduce((acc, option) => {
+	acc[option.id] = option
+	return acc
+}, {})
+const STREAM_SOURCE_BY_MODULE = STREAM_SOURCE_OPTIONS.reduce((acc, option) => {
+	acc[option.module] = option
+	return acc
+}, {})
+let playbackModeInputId = 0
 
-if (features.enabled('iframe-player')) {
-	STREAM_SOURCE_OPTIONS.push({ id: 'iframe', label: 'Iframe player', module: 'livestream.iframe' })
+function cloneConfig(config) {
+	return JSON.parse(JSON.stringify(config || {}))
+}
+
+function getDefaultStreamConfig(streamSource, playbackMode = PLAYBACK_MODE_ALWAYS_ON) {
+	const config = { playback_mode: playbackMode }
+	if (playbackMode === PLAYBACK_MODE_SCHEDULE_DRIVEN) return config
+	if (streamSource === 'hls') {
+		config.hls_url = ''
+	} else if (streamSource === 'youtube') {
+		config.ytid = ''
+		config.languageUrls = []
+	} else if (streamSource === 'iframe') {
+		config.url = ''
+	}
+	return config
 }
 
 export default defineComponent({
-	components: { UploadUrlInput, SidebarAddons },
+	components: { UploadUrlInput },
 	mixins: [mixin],
 	setup: () => ({ v$: useVuelidate() }),
 	data() {
 		return {
 			STREAM_SOURCE_OPTIONS,
 			ISO_LANGUAGE_OPTIONS: [],
-			b_streamSource: null
+			b_streamSource: null,
+			streamSourceConfigs: {},
+			playbackModeInputName: `playback-mode-${++playbackModeInputId}`,
+			PLAYBACK_MODE_ALWAYS_ON,
+			PLAYBACK_MODE_OPTIONS,
+			IFRAME_PROVIDER_HELP_TEXT
 		}
 	},
 	validations() {
@@ -79,14 +123,24 @@ export default defineComponent({
 		}
 	},
 	computed: {
+		playbackMode: {
+			get() {
+				return getStagePlaybackMode(this.currentStreamModule())
+			},
+			set(value) {
+				if (value === PLAYBACK_MODE_SCHEDULE_DRIVEN) {
+					this.setScheduleDrivenModule()
+					return
+				}
+				this.ensureStreamSourceModule(this.b_streamSource || 'hls', value)
+			}
+		},
 		streamSource: {
 			get() {
 				return this.b_streamSource
 			},
 			set(value) {
-				this.b_streamSource = value
-				STREAM_SOURCE_OPTIONS.map(option => option.module).forEach(module => this.removeModule(module))
-				this.addModule(STREAM_SOURCE_OPTIONS.find(option => option.id === value).module)
+				this.ensureStreamSourceModule(value, this.playbackMode)
 			}
 		},
 		enablePrivacyEnhancedMode: {
@@ -163,6 +217,47 @@ export default defineComponent({
 		}
 	},
 	methods: {
+		currentStreamModule() {
+			return this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
+		},
+		rememberCurrentStreamConfig() {
+			const module = this.currentStreamModule()
+			if (!module) return
+			if (getStagePlaybackMode(module) === PLAYBACK_MODE_SCHEDULE_DRIVEN) return
+
+			const option = STREAM_SOURCE_BY_MODULE[module.type]
+			if (option) this.streamSourceConfigs[option.id] = cloneConfig(module.config)
+		},
+		getStoredStreamConfig(streamSource, playbackMode) {
+			if (playbackMode === PLAYBACK_MODE_SCHEDULE_DRIVEN) {
+				return getDefaultStreamConfig(streamSource, playbackMode)
+			}
+			const storedConfig = this.streamSourceConfigs[streamSource]
+			const config = storedConfig
+				? cloneConfig(storedConfig)
+				: getDefaultStreamConfig(streamSource, playbackMode)
+			config.playback_mode = playbackMode
+			return config
+		},
+		replaceStreamSourceModule(streamSource, playbackMode, updateSelectedSource = true) {
+			const option = STREAM_SOURCE_BY_ID[streamSource]
+			if (!option) return
+			this.rememberCurrentStreamConfig()
+			this.config.module_config = this.config.module_config.filter(module =>
+				!STREAM_SOURCE_OPTIONS.some(sourceOption => sourceOption.module === module.type)
+			)
+			this.config.module_config.push({
+				type: option.module,
+				config: this.getStoredStreamConfig(streamSource, playbackMode)
+			})
+			if (updateSelectedSource) this.b_streamSource = streamSource
+		},
+		setScheduleDrivenModule() {
+			this.replaceStreamSourceModule('hls', PLAYBACK_MODE_SCHEDULE_DRIVEN, false)
+		},
+		ensureStreamSourceModule(streamSource, playbackMode) {
+			this.replaceStreamSourceModule(streamSource, playbackMode)
+		},
 		normalizePrimaryYoutubeId() {
 			const val = this.modules['livestream.youtube']?.config?.ytid
 			if (!val) return
@@ -218,6 +313,8 @@ export default defineComponent({
 })
 </script>
 <style lang="stylus">
+.c-stage-settings
+	// no local radio styles needed anymore
 .bunt-switch-container
 	margin-top: 16px
 </style>
