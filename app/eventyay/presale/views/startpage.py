@@ -161,24 +161,16 @@ class UpcomingEventsView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_common_base_context(self.request))
+        today = timezone.localdate()
         with scopes_disabled():
-            qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
-            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            events = list(qs.order_by('date_from'))
-            visible_events = [event for event in events if not event.has_component_testmode]
-
-            today = timezone.localdate()
-            upcoming_events = []
-            for event in visible_events:
-                event_end = event.date_to or event.date_from
-                if timezone.is_aware(event_end):
-                    event_end_date = timezone.localtime(event_end).date()
-                else:
-                    event_end_date = event_end.date()
-                in_future = event_end_date >= today
-                if in_future and event.startpage_visible and not event.startpage_featured:
-                    upcoming_events.append(event)
-            ctx['events'] = upcoming_events
+            qs = (
+                Event.objects.select_related('organizer')
+                .prefetch_related('_settings_objects')
+                .filter(live=True, startpage_visible=True, startpage_featured=False)
+                .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
+                .order_by('date_from')
+            )
+            ctx['events'] = [e for e in qs if not e.has_component_testmode]
         return ctx
 
 
@@ -188,24 +180,16 @@ class PastEventsView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_common_base_context(self.request))
+        today = timezone.localdate()
         with scopes_disabled():
-            qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
-            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            events = list(qs.order_by('date_from'))
-            visible_events = [event for event in events if not event.has_component_testmode]
-
-            today = timezone.localdate()
-            past_events = []
-            for event in visible_events:
-                event_end = event.date_to or event.date_from
-                if timezone.is_aware(event_end):
-                    event_end_date = timezone.localtime(event_end).date()
-                else:
-                    event_end_date = event_end.date()
-                in_future = event_end_date >= today
-                if not in_future and event.startpage_visible:
-                    past_events.append(event)
-            ctx['events'] = list(reversed(past_events))
+            qs = (
+                Event.objects.select_related('organizer')
+                .prefetch_related('_settings_objects')
+                .filter(live=True, startpage_visible=True)
+                .filter(Q(date_to__lt=today) | Q(date_to__isnull=True, date_from__lt=today))
+                .order_by('date_from')
+            )
+            ctx['events'] = list(reversed([e for e in qs if not e.has_component_testmode]))
         return ctx
 
 
@@ -216,6 +200,7 @@ class FollowedEventsView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_common_base_context(self.request))
+        today = timezone.localdate()
         with scopes_disabled():
             followed_org_ids = OrganizerFollower.objects.filter(
                 user=self.request.user
@@ -226,23 +211,12 @@ class FollowedEventsView(TemplateView):
                     live=True,
                 )
                 .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
+                .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
                 .select_related('organizer')
                 .prefetch_related('_settings_objects')
                 .order_by('date_from')
             )
-            visible_events = [e for e in qs if not e.has_component_testmode]
-
-            today = timezone.localdate()
-            followed_upcoming_events = []
-            for event in visible_events:
-                event_end = event.date_to or event.date_from
-                if timezone.is_aware(event_end):
-                    event_end_date = timezone.localtime(event_end).date()
-                else:
-                    event_end_date = event_end.date()
-                in_future = event_end_date >= today
-                if in_future:
-                    followed_upcoming_events.append(event)
+            followed_upcoming_events = [e for e in qs if not e.has_component_testmode]
 
             organizer_groups = []
             seen_organizers = {}
