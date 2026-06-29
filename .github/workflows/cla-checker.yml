@@ -1,0 +1,77 @@
+name: FOSSASIA Custom CLA Checker
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  statuses: write
+
+jobs:
+  cla-verification:
+    name: CLA verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch private CLA ledger
+        id: fetch-ledger
+        env:
+          ORG_READ_TOKEN: ${{ secrets.FOSSASIA_CLA_LEDGER_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${ORG_READ_TOKEN}" ]; then
+            echo "Error: FOSSASIA_CLA_LEDGER_TOKEN is not configured."
+            exit 1
+          fi
+
+          curl -fsSL \
+            -H "Authorization: Bearer ${ORG_READ_TOKEN}" \
+            -H "Accept: application/vnd.github.raw+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/fossasia/cla-signatures-private/contents/signatures.json \
+            -o signatures.json
+
+          python -m json.tool signatures.json >/dev/null
+
+      - name: Verify contributor signature
+        id: check-signature
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+
+          pr_author = os.environ["PR_AUTHOR"]
+          print(f"Checking CLA signature for user: {pr_author}")
+
+          with open("signatures.json", encoding="utf-8") as ledger:
+              signatures = json.load(ledger)
+
+          if not isinstance(signatures, list) or not all(isinstance(name, str) for name in signatures):
+              print("Error: signatures.json must be a JSON array of strings.")
+              sys.exit(1)
+
+          if pr_author in signatures:
+              print(f"Success: {pr_author} has signed the CLA.")
+              sys.exit(0)
+
+          print(f"Error: {pr_author} has not signed the CLA.")
+          sys.exit(1)
+          PY
+
+      - name: Comment on unsigned PR
+        if: failure() && steps.fetch-ledger.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Thank you for your pull request.\n\nBefore maintainers can review and merge your code, please sign the FOSSASIA Contributor License Agreement.\n\nAfter your GitHub username is added to the CLA ledger, update your PR to run this check again.`
+            })
