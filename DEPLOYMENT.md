@@ -152,6 +152,35 @@ fi
 
 Change at least `SERVER_NAME` and the `CHANGEME` entries.
 
+## Branch based exhibition plugin deployment
+
+The `eventyay/eventyay-next` Docker images install `fossasia/eventyay-exhibition`
+from the same deployment branch as the Eventyay image:
+
+| Environment | Domain | Image tag | eventyay-exhibition branch |
+|---|---|---|---|
+| Development | `dev.eventyay.com` | `dev` | `dev` |
+| Production | `eventyay.com` | `main` | `main` |
+
+The Docker publish workflow passes the Git branch name to
+`EVENTYAY_EXHIBITION_BRANCH` while building the image. Pull requests against
+`dev` test the development branch, and pushes to `main` build the production
+image. The production deployment should keep `TAG=main`; development should
+keep `TAG=dev`.
+
+To verify a deployed container, inspect the baked branch value:
+
+```$USER@server
+docker compose exec web sh -c 'echo "$EVENTYAY_EXHIBITION_BRANCH"'
+```
+
+Rollback by changing `TAG` in `.env` to the last known good image tag, then run:
+
+```$USER@server
+docker compose pull
+docker compose up -d
+```
+
 ## Install the nginx entry
 
 ```root@server

@@ -55,5 +55,6 @@ jobs:
           tags: eventyay-next:${{ github.sha }}
           build-args: |
             GITHUB_TOKEN=${{ secrets.EVENTYAY_TOKEN }}
+            EVENTYAY_EXHIBITION_BRANCH=${{ github.base_ref }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

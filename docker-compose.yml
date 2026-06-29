@@ -2,7 +2,10 @@ name: eventyay-next
 
 services:
   web:
-    build: ./app
+    build:
+      context: ./app
+      args:
+        EVENTYAY_EXHIBITION_BRANCH: dev
     platform: linux/amd64
     container_name: eventyay-next-web
     command: python manage.py runserver 0.0.0.0:8000
@@ -29,7 +32,10 @@ services:
       - redis
 
   worker:
-    build: ./app
+    build:
+      context: ./app
+      args:
+        EVENTYAY_EXHIBITION_BRANCH: dev
     platform: linux/amd64
     container_name: eventyay-next-worker
     entrypoint: celery -A eventyay worker -l info

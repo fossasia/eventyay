@@ -31,9 +31,15 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # copy project files
 COPY . .
 
+ARG EVENTYAY_EXHIBITION_BRANCH=dev
+
 # install dependencies (using build tools)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --all-extras --all-groups
+
+RUN case "$EVENTYAY_EXHIBITION_BRANCH" in dev|main) ;; *) echo "Unsupported eventyay-exhibition branch: $EVENTYAY_EXHIBITION_BRANCH" >&2; exit 1 ;; esac && \
+    uv pip install --python /usr/src/app/.venv/bin/python --force-reinstall \
+      "exhibition @ git+https://github.com/fossasia/eventyay-exhibition.git@${EVENTYAY_EXHIBITION_BRANCH}"
 
 # Run npm stuff (needs nodejs)
 RUN make npminstall
@@ -86,6 +92,8 @@ COPY --from=builder /bin/uv /bin/uv
 # Expose virtual env
 ENV VIRTUAL_ENV=/usr/src/app/.venv
 ENV PATH="/usr/src/app/.venv/bin:$PATH"
+ARG EVENTYAY_EXHIBITION_BRANCH=dev
+ENV EVENTYAY_EXHIBITION_BRANCH=${EVENTYAY_EXHIBITION_BRANCH}
 
 # Create .secrets to suppress warnings about missing directory
 RUN mkdir -p /usr/src/app/.secrets

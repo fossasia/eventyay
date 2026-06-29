@@ -32,4 +32,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: GITHUB_TOKEN=${{ secrets.EVENTYAY_TOKEN }}
+          build-args: |
+            GITHUB_TOKEN=${{ secrets.EVENTYAY_TOKEN }}
+            EVENTYAY_EXHIBITION_BRANCH=${{ github.ref_name }}

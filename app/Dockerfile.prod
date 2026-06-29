@@ -25,10 +25,15 @@ RUN apt-get update && \
 
 # install python dependencies
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#non-editable-installs
+ARG EVENTYAY_EXHIBITION_BRANCH=main
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --locked --no-install-project --no-editable
+
+RUN case "$EVENTYAY_EXHIBITION_BRANCH" in dev|main) ;; *) echo "Unsupported eventyay-exhibition branch: $EVENTYAY_EXHIBITION_BRANCH" >&2; exit 1 ;; esac && \
+    uv pip install --python $APP_HOME/.venv/bin/python --force-reinstall \
+      "exhibition @ git+https://github.com/fossasia/eventyay-exhibition.git@${EVENTYAY_EXHIBITION_BRANCH}"
 
 COPY Makefile Makefile
 
@@ -100,6 +105,8 @@ USER app
 ENV VIRTUAL_ENV="$APP_HOME/.venv"
 ENV PATH="$APP_HOME/.venv/bin:$PATH"
 ENV EVY_RUNNING_ENVIRONMENT=production
+ARG EVENTYAY_EXHIBITION_BRANCH=main
+ENV EVENTYAY_EXHIBITION_BRANCH=${EVENTYAY_EXHIBITION_BRANCH}
 
 
 RUN python manage.py compilemessages -i .venv
