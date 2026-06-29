@@ -40,8 +40,4 @@ function update() {
         });
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', scheduleNextUpdate);
-} else {
-    scheduleNextUpdate();
-}
+scheduleNextUpdate();
