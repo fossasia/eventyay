@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-06-27 09:15+0000\n"
+"PO-Revision-Date: 2026-06-29 10:01+0000\n"
 "Last-Translator: Szymon Grabarczuk <sgrabarczuk@wikimedia.org>\n"
 "Language-Team: Polish <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "pl/>\n"
@@ -7840,7 +7840,7 @@ msgstr "Inne wystąpienie w tej samej sali nakłada się z tym wystąpieniem."
 #: base/models/schedule.py:433
 #, python-brace-format
 msgid "{speaker} is not available at the scheduled time."
-msgstr "{speaker} nie jest dostępny w zaplanowanym czasie."
+msgstr "{speaker} nie jest dostępny/-a w zaplanowanym czasie."
 
 #: base/models/schedule.py:458
 #, python-brace-format
@@ -27803,7 +27803,7 @@ msgid ""
 msgstr ""
 "Pola niestandardowe umożliwiają uzyskanie dodatkowych informacji od "
 "prelegentów, takich jak np. rozmiar ubrania, preferencje żywieniowe czy "
-"wymogi odnośnie zakwaterowania. Można je konfigurować zarówno na poziomie "
+"wymogi odnośnie do zakwaterowania. Można je konfigurować zarówno na poziomie "
 "zgłoszenia, jak i prelegenta."
 
 #: orga/templates/orga/cfp/forms.html:82
