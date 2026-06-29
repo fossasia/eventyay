@@ -81,8 +81,10 @@ class TestSanitizeRichText:
         assert 'Just plain text.' in result
 
     def test_nested_xss_in_attribute(self):
-        result = sanitize_rich_text('<p title="<script>alert(1)</script>">text</p>')
-        assert '<script>' not in result
+        # nh3 escapes quotes to prevent breakout, but leaves safe chars like < and > unescaped
+        result = sanitize_rich_text('<a title=\'"><script>alert(1)</script>\'>text</a>')
+        assert '&quot;>' in result
+        assert '<script>alert(1)</script>' in result
 
     def test_br_allowed(self):
         result = sanitize_rich_text('<p>line1<br>line2</p>')
