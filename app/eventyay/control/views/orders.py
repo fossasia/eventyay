@@ -125,7 +125,7 @@ from eventyay.base.signals import (
     register_ticket_outputs,
 )
 from eventyay.base.templatetags.money import money_filter
-from eventyay.base.templatetags.rich_text import compile_email_body
+from eventyay.base.templatetags.rich_text import markdown_compile_email
 from eventyay.base.views.mixins import OrderQuestionsViewMixin
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.forms.filter import (
@@ -2416,7 +2416,7 @@ class OrderSendMail(EventPermissionRequiredMixin, OrderViewMixin, FormView):
         if self.request.POST.get('action') == 'preview':
             self.preview_output = {
                 'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': compile_email_body(email_content),
+                'html': markdown_compile_email(email_content),
             }
             return self.get(self.request, *self.args, **self.kwargs)
         else:
@@ -2487,7 +2487,7 @@ class OrderPositionSendMail(OrderSendMail):
         if self.request.POST.get('action') == 'preview':
             self.preview_output = {
                 'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': compile_email_body(email_content),
+                'html': markdown_compile_email(email_content),
             }
             return self.get(self.request, *self.args, **self.kwargs)
         else:
