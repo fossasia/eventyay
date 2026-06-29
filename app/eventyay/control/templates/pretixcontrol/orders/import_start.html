@@ -12,28 +12,27 @@
         </div>
     </nav>
 
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">{% trans "Upload a new file" %}</h3>
+    <p>
+        {% blocktrans trimmed %}
+            Upload a CSV file.
+            In the next step you will map CSV columns to fields and preview the data.
+        {% endblocktrans %}
+    </p>
+
+    <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
+        {% csrf_token %}
+        <div class="form-group" style="display: flex; align-items: center; margin-left: 0; margin-right: 0; margin-bottom: 20px;">
+            <label class="control-label" style="padding-top: 0 !important; margin-bottom: 0; font-weight: bold; min-width: 120px; margin-right: 15px; text-align: left;" for="file">
+                {% trans "Import file" %} *
+            </label>
+            <div style="flex: 1; max-width: 500px;">
+                <input id="file" type="file" name="file" required/>
+            </div>
         </div>
-        <div class="panel-body">
-            <form action="" method="post" enctype="multipart/form-data" class="form-inline">
-                {% csrf_token %}
-                <p>
-                    {% blocktrans trimmed %}
-                        The uploaded file should be a CSV file with a header row. You will be able to assign the
-                        meanings of the different columns in the next step.
-                    {% endblocktrans %}
-                </p>
-                <div class="form-group">
-                    <label for="file">{% trans "Import file" %}: </label>
-                    <input id="file" type="file" name="file" data-eventyay-file-wrapper="disabled"/>
-                </div>
-                <div class="clearfix"></div>
-                <button class="btn btn-primary pull-right flip" type="submit">
-                    <span class="icon icon-upload"></span> {% trans "Start import" %}
-                </button>
-            </form>
+        <div class="form-group submit-group">
+            <button class="btn btn-primary btn-lg" type="submit">
+                <span class="fa fa-upload"></span> {% trans "Upload and continue" %}
+            </button>
         </div>
-    </div>
+    </form>
 {% endblock %}
