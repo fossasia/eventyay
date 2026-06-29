@@ -1880,3 +1880,41 @@ class TaskFilterForm(forms.Form):
             qs = qs.filter(enabled=False)
 
         return qs
+
+
+class AdminOrderFilterForm(forms.Form):
+    query = forms.CharField(
+        label=_('Search for…'),
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': _('Order code or email')}),
+    )
+
+    status = forms.ChoiceField(
+        label=_('Status'),
+        required=False,
+        choices=(
+            ('', _('All statuses')),
+            (Order.STATUS_PENDING, _('Pending')),
+            (Order.STATUS_PAID, _('Paid')),
+            (Order.STATUS_EXPIRED, _('Expired')),
+            (Order.STATUS_CANCELED, _('Canceled')),
+        ),
+    )
+
+    def filter_qs(self, qs):
+        if not self.is_valid():
+            return qs
+
+        fdata = self.cleaned_data
+
+        if fdata.get('query'):
+            q = fdata['query'].strip()
+            qs = qs.filter(
+                Q(code__icontains=Order.normalize_code(q))
+                | Q(email__icontains=q)
+            )
+
+        if fdata.get('status'):
+            qs = qs.filter(status=fdata['status'])
+
+        return qs
