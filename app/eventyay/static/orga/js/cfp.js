@@ -1,3 +1,38 @@
+function setupCfpMobileTableLabels() {
+    const tables = document.querySelectorAll(".cfp-forms-page .cfp-option-table")
+    if (!tables.length) {
+        return
+    }
+
+    const applyLabels = () => {
+        tables.forEach((table) => {
+            const headers = Array.from(table.querySelectorAll("thead th")).map(
+                (header) => header.textContent.trim(),
+            )
+
+            table.querySelectorAll("tbody tr").forEach((row) => {
+                row.querySelectorAll("td").forEach((cell, index) => {
+                    const label = headers[index + 1] || ""
+                    if (label) {
+                        cell.dataset.label = label
+                    } else {
+                        delete cell.dataset.label
+                    }
+                })
+            })
+        })
+    }
+
+    applyLabels()
+
+    const mobileQuery = window.matchMedia("(max-width: 768px)")
+    if (typeof mobileQuery.addEventListener === "function") {
+        mobileQuery.addEventListener("change", applyLabels)
+    } else if (typeof mobileQuery.addListener === "function") {
+        mobileQuery.addListener(applyLabels)
+    }
+}
+
 document
     .querySelectorAll(".cfp-option-table .require input")
     .forEach((element) => {
@@ -11,6 +46,8 @@ document
     });
 
 document.addEventListener("DOMContentLoaded", () => {
+    setupCfpMobileTableLabels()
+
     const contentLocaleToggle = document.querySelector("tr[dragsort-id='content_locale'] .toggle-switch[data-field-id] input[type='checkbox']");
     const settingsBtns = document.querySelectorAll(".content-locale-settings-btn");
     const dialog = document.getElementById("content-locale-dialog");
