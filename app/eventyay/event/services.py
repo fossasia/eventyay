@@ -31,28 +31,33 @@ def task_periodic_event_services(event_slug):
 
     _now = now()
     with scope(event=event):
-        if not event.settings.sent_mail_event_created and (
-            dt.timedelta(0) <= (_now - event.log_entries.last().timestamp) <= dt.timedelta(days=1)
+        last_log_entry = event.log_entries.last()
+        if not event.settings.sent_mail_event_created and last_log_entry and (
+            dt.timedelta(0) <= (_now - last_log_entry.timestamp) <= dt.timedelta(days=1)
         ):
-            event.send_orga_mail(event.settings.mail_text_event_created)
-            event.settings.sent_mail_event_created = True
+            if hasattr(event, 'send_orga_mail'):
+                event.send_orga_mail(event.settings.mail_text_event_created)
+                event.settings.sent_mail_event_created = True
 
         if (
             not event.settings.sent_mail_cfp_closed
             and event.cfp.deadline
             and dt.timedelta(0) <= (_now - event.cfp.deadline) <= dt.timedelta(days=1)
         ):
-            event.send_orga_mail(event.settings.mail_text_cfp_closed)
-            event.settings.sent_mail_cfp_closed = True
+            if hasattr(event, 'send_orga_mail'):
+                event.send_orga_mail(event.settings.mail_text_cfp_closed)
+                event.settings.sent_mail_cfp_closed = True
 
         if (
             not event.settings.sent_mail_event_over
-            and ((_now.date() - dt.timedelta(days=3)) <= event.date_to <= (_now.date() - dt.timedelta(days=1)))
+            and event.date_to
+            and (dt.timedelta(days=1) <= (_now - event.date_to) <= dt.timedelta(days=3))
             and event.current_schedule
             and event.current_schedule.talks.filter(is_visible=True).count()
         ):
-            event.send_orga_mail(event.settings.mail_text_event_over, stats=True)
-            event.settings.sent_mail_event_over = True
+            if hasattr(event, 'send_orga_mail'):
+                event.send_orga_mail(event.settings.mail_text_event_over, stats=True)
+                event.settings.sent_mail_event_over = True
 
 
 @app.task(name='eventyay.event.periodic_schedule_export')

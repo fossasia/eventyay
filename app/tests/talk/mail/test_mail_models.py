@@ -1,10 +1,9 @@
 import pytest
 from django_scopes import scope, scopes_disabled
 
+from eventyay.base.models import QueuedMail, User
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.mail import TolerantDict
-from eventyay.base.models import QueuedMail
-from eventyay.base.models import User
 
 
 @pytest.mark.parametrize(

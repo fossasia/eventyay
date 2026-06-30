@@ -10,8 +10,11 @@ from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nModelForm
 
+from eventyay.base.forms.widgets import SplitDateTimePickerWidget
+from eventyay.control.forms import SplitDateTimeField
+
 from eventyay.common.exceptions import SendMailException
-from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag
+from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag, ScheduledAtValidationMixin
 from eventyay.common.forms.renderers import InlineFormRenderer, TabularFormRenderer
 from eventyay.common.forms.widgets import EnhancedSelectMultiple, SelectMultipleWithCount
 from eventyay.common.language import language
@@ -23,6 +26,25 @@ from eventyay.submission.forms import SubmissionFilterForm
 from eventyay.base.models import Track
 from eventyay.base.models.submission import Submission, SubmissionStates
 
+class TalkSplitDateTimePickerWidget(SplitDateTimePickerWidget):
+    """Talk-specific widget that uses native HTML5 date and time inputs."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        date_attrs = self.widgets[0].attrs.copy()
+        time_attrs = self.widgets[1].attrs.copy()
+        date_attrs['class'] = ' '.join(
+            c for c in date_attrs.get('class', '').split() if c != 'datepickerfield'
+        )
+        time_attrs['class'] = ' '.join(
+            c for c in time_attrs.get('class', '').split() if c != 'timepickerfield'
+        )
+        date_attrs['type'] = 'date'
+        time_attrs['type'] = 'time'
+        self.widgets = (
+            forms.DateInput(attrs=date_attrs, format='%Y-%m-%d'),
+            forms.TimeInput(attrs=time_attrs, format='%H:%M:%S'),
+        )
 
 class MailTemplateForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
@@ -143,7 +165,7 @@ class DraftRemindersForm(MailTemplateForm):
         fields = ['subject', 'text']
 
 
-class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
+class MailDetailForm(ScheduledAtValidationMixin, ReadOnlyFlag, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance or not self.instance.to_users.all().count():
@@ -179,21 +201,46 @@ class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
 
     class Meta:
         model = QueuedMail
-        fields = ['to', 'to_users', 'reply_to', 'cc', 'bcc', 'subject', 'text']
-        widgets = {'to_users': EnhancedSelectMultiple}
+        fields = ['to', 'to_users', 'reply_to', 'cc', 'bcc', 'subject', 'text', 'scheduled_at']
+        field_classes = {
+            'scheduled_at': SplitDateTimeField,
+        }
+        widgets = {
+            'to_users': EnhancedSelectMultiple,
+            'scheduled_at': TalkSplitDateTimePickerWidget(),
+        }
+        help_texts = {
+            'scheduled_at': _('If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
+        }
 
 
-class WriteMailBaseForm(MailTemplateForm):
+class WriteMailBaseForm(ScheduledAtValidationMixin, MailTemplateForm):
     skip_queue = forms.BooleanField(
         label=_('Send immediately'),
         required=False,
         help_text=_('If you check this, the emails will be sent immediately, instead of being put in the outbox.'),
+    )
+    scheduled_at = forms.SplitDateTimeField(
+        label=_('Send later'),
+        required=False,
+        help_text=_('Leave empty to send immediately or queue to outbox. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
+        widget=TalkSplitDateTimePickerWidget(),
     )
 
     def __init__(self, *args, may_skip_queue=False, **kwargs):
         super().__init__(*args, **kwargs)
         if not may_skip_queue:
             self.fields.pop('skip_queue', None)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        skip_queue = cleaned_data.get('skip_queue')
+        scheduled_at = cleaned_data.get('scheduled_at')
+        if skip_queue and scheduled_at is not None:
+            raise forms.ValidationError(
+                _('You cannot select "Send immediately" and also specify a scheduled time.')
+            )
+        return cleaned_data
 
 
 class WriteTeamsMailForm(WriteMailBaseForm):
@@ -208,7 +255,9 @@ class WriteTeamsMailForm(WriteMailBaseForm):
 
         # Placing reviewer emails in the outbox would lead to a **ton** of permission
         # issues: who is allowed to see them, who to edit/send them, etc.
+        # Reviewer emails are always sent immediately, no scheduling.
         self.fields.pop('skip_queue')
+        self.fields.pop('scheduled_at', None)
 
         reviewer_teams = self.event.teams.filter(is_reviewer=True)
         other_teams = self.event.teams.exclude(is_reviewer=True)
@@ -403,6 +452,7 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
                 mails_by_user[context['user']].append((mail, context))
 
         result = []
+        scheduled_at = self.cleaned_data.get('scheduled_at')
         for user, user_mails in mails_by_user.items():
             # Deduplicate emails: we don't want speakers to receive the same
             # email twice, just because they have multiple submissions.
@@ -412,13 +462,15 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
             # Now we can create the emails and add the speakers to them
             for mail_list in mail_dict.values():
                 mail = mail_list[0][0]
+                if scheduled_at:
+                    mail.scheduled_at = scheduled_at
                 mail.save()
                 mail.to_users.add(user)
                 for __, context in mail_list:
                     if submission := context.get('submission'):
                         mail.submissions.add(submission)
                 result.append(mail)
-        if self.cleaned_data.get('skip_queue'):
+        if self.cleaned_data.get('skip_queue') and not scheduled_at:
             for mail in result:
                 mail.send()
         return result

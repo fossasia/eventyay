@@ -9,9 +9,11 @@ from django.utils.translation import ngettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, View
 from django_context_decorator import context
 
+from eventyay.base.models.mail import MailTemplate, QueuedMail, get_prefixed_subject
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.language import language
 from eventyay.common.mail import TolerantDict
+from eventyay.common.tasks import send_scheduled_queuedmail
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
@@ -23,7 +25,7 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     Sortable,
 )
-from eventyay.base.models.mail import MailTemplate, QueuedMail, get_prefixed_subject
+from eventyay.helpers.timezone import format_scheduled_datetime
 from eventyay.mail.signals import request_pre_send
 from eventyay.orga.forms.mails import (
     DraftRemindersForm,
@@ -157,8 +159,11 @@ class OutboxSend(ActionConfirmMixin, OutboxList):
                     for error in errors:
                         messages.error(request, error)
                     return redirect(self.request.event.orga_urls.outbox)
-                mail.send(requestor=self.request.user)
-                messages.success(request, _('The mail has been sent.'))
+                try:
+                    mail.send(requestor=self.request.user)
+                    messages.success(request, _('The mail has been sent.'))
+                except SendMailException as e:
+                    messages.error(request, str(e))
             return redirect(self.request.event.orga_urls.outbox)
         return super().dispatch(request, *args, **kwargs)
 
@@ -177,9 +182,15 @@ class OutboxSend(ActionConfirmMixin, OutboxList):
                 messages.error(request, error)
             return redirect(self.request.event.orga_urls.outbox)
         count = mails.count()
+        sent_count = 0
         for mail in mails:
-            mail.send(requestor=self.request.user)
-        messages.success(request, _('{count} mails have been sent.').format(count=count))
+            try:
+                mail.send(requestor=self.request.user)
+                sent_count += 1
+            except SendMailException as e:
+                messages.error(request, str(e))
+        if sent_count:
+            messages.success(request, _('{count} mails have been sent.').format(count=sent_count))
         return redirect(self.request.event.orga_urls.outbox)
 
 
@@ -295,8 +306,11 @@ class MailDetail(PermissionRequired, ActionFromUrl, CreateOrUpdateView):
                 for error in errors:
                     messages.error(self.request, error)
                 return redirect(self.get_success_url())
-            form.instance.send()
-            messages.success(self.request, _('The email has been sent.'))
+            try:
+                form.instance.send()
+                messages.success(self.request, _('The email has been sent.'))
+            except SendMailException as e:
+                messages.error(self.request, str(e))
         else:  # action == 'save'
             messages.success(
                 self.request,
@@ -403,11 +417,37 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
             return self.get(self.request, *self.args, **self.kwargs)
 
         result = form.save()
+        scheduled_at = form.cleaned_data.get('scheduled_at')
         if len(result) and result[0].sent:
             self.success_url = self.request.event.orga_urls.sent_mails
             messages.success(
                 self.request,
                 _('{count} emails have been sent.').format(count=len(result)),
+            )
+        elif scheduled_at:
+            if not result:
+                messages.error(
+                    self.request,
+                    _('No emails could be created. Please check your recipient selection.')
+                )
+                return redirect(self.request.event.orga_urls.compose_mails_sessions)
+            self.success_url = self.request.event.orga_urls.outbox
+            for mail in result:
+                mail.log_action(
+                    'eventyay.mail.scheduled',
+                    person=self.request.user,
+                    orga=True,
+                    data={'scheduled_at': scheduled_at.isoformat()},
+                )
+            for mail in result:
+                send_scheduled_queuedmail.apply_async(args=[mail.pk], eta=scheduled_at)
+            messages.success(
+                self.request,
+                _('{count} emails have been scheduled for {datetime} ({timezone}).').format(
+                    count=len(result),
+                    datetime=format_scheduled_datetime(self.request.event, scheduled_at),
+                    timezone=self.request.event.timezone,
+                ),
             )
         else:
             self.success_url = self.request.event.orga_urls.outbox
