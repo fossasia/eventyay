@@ -31,11 +31,6 @@ def build_vue3_frontend_apps():
     subprocess.check_call(['npm', 'ci'], cwd=app_dir)
     subprocess.check_call(['npm', 'run', 'build:wc'], cwd=app_dir, env=env)
 
-    # Build webcheckin
-    app_dir = FRONTEND_DEV_DIR / 'webcheckin'
-    subprocess.check_call(['npm', 'ci'], cwd=app_dir)
-    subprocess.check_call(['npm', 'run', 'build'], cwd=app_dir, env=env)
-
     # Build video SPA
     app_dir = FRONTEND_DEV_DIR / 'video'
     subprocess.check_call(['npm', 'ci'], cwd=app_dir)

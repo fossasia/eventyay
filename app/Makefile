@@ -30,7 +30,5 @@ npminstall:
 	npm ci --prefix=eventyay/webapp/schedule
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/schedule-editor
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build:wc --prefix=eventyay/webapp/schedule
-	npm ci --prefix=eventyay/webapp/webcheckin
-	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/webcheckin
 	npm ci --prefix=eventyay/webapp/video
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/video

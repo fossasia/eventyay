@@ -270,10 +270,11 @@ The repository contains several frontend applications under ``app/eventyay/webap
    app/eventyay/webapp/
    ├── schedule/              Schedule display web component
    ├── schedule-editor/       Schedule editor frontend
-   ├── video/                 Online event video frontend
-   └── webcheckin/            Web check in frontend
+   └── video/                 Online event video frontend
 
 The root app ``Makefile`` installs and builds these frontend applications through npm and places compiled assets into the Django app data directory.
+
+Check-in uses the separate ``eventyay-checkin`` plugin (not built by the Makefile ``npminstall`` target).
 
 By default, Docker serves prebuilt frontend assets. To enable hot module replacement for frontend development, set this in ``.env.dev``:
 
@@ -285,7 +286,6 @@ When enabled, Vite dev servers start automatically inside the container for the 
 
 - ``schedule-editor`` runs on port ``8080``.
 - ``video`` runs on port ``8880``.
-- ``webcheckin`` runs on port ``8081``.
 - ``schedule`` runs on port ``8082``.
 
 You do not normally need to visit these ports directly. The frontend works alongside ``http://localhost:8000`` with hot module replacement.

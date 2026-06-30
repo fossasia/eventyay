@@ -60,6 +60,11 @@
                 <a href="{% url "eventyay_common:organizer.devices" organizer=request.organizer.slug %}"
                    class="btn btn-default btn-lg"><i class="fa fa-tablet"></i> {% trans "Connected devices" %}</a>
             {% endif %}
+            {% if can_open_checkin_app %}
+                <a href="{{ checkin_app_url }}" class="btn btn-default btn-lg" target="_blank" rel="noopener">
+                    <i class="fa fa-external-link"></i> {% trans "Open eventyay Check-in" %}
+                </a>
+            {% endif %}
         </div>
     {% else %}
         <p>
@@ -70,6 +75,11 @@
             {% if can_change_organizer_settings %}
                 <a href="{% url "eventyay_common:organizer.devices" organizer=request.organizer.slug %}"
                    class="btn btn-default"><i class="fa fa-tablet"></i> {% trans "Connected devices" %}</a>
+            {% endif %}
+            {% if can_open_checkin_app %}
+                <a href="{{ checkin_app_url }}" class="btn btn-default" target="_blank" rel="noopener">
+                    <i class="fa fa-external-link"></i> {% trans "Open eventyay Check-in" %}
+                </a>
             {% endif %}
         </p>
         <div class="table-responsive">

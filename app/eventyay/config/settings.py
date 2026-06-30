@@ -362,7 +362,6 @@ _OURS_APPS = (
     'eventyay.plugins.returnurl',
     'eventyay.plugins.scheduledtasks',
     'eventyay.plugins.ticketoutputpdf',
-    'eventyay.plugins.webcheckin',
     'eventyay.schedule',
     'eventyay.submission',
 )
@@ -1499,7 +1498,6 @@ VITE_DEV_MODE = conf.npm_dev
 VITE_DEV_SERVER_PORTS = {
     'schedule-editor': 'http://localhost:8080',
     'video': 'http://localhost:8880',
-    'webcheckin': 'http://localhost:8081',
     'schedule': 'http://localhost:8082',
 }
 

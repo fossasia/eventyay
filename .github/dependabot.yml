@@ -33,9 +33,3 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
-
-  - package-ecosystem: "npm"
-    directory: "/app/eventyay/webapp/webcheckin"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10

@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
+from eventyay.control.checkin_app import get_eventyay_checkin_app_url, user_can_open_checkin_app
 from eventyay.control.signals import (
     nav_event,
     nav_event_settings,
@@ -320,6 +321,28 @@ def get_event_navigation(request: HttpRequest):
         )
 
     if 'can_view_orders' in request.eventpermset:
+        checkin_children = [
+            {
+                'label': _('Check-in lists'),
+                'url': reverse(
+                    'control:event.orders.checkinlists',
+                    kwargs={
+                        'event': request.event.slug,
+                        'organizer': request.event.organizer.slug,
+                    },
+                ),
+                'active': 'event.orders.checkin' in url.url_name,
+            },
+        ]
+        if user_can_open_checkin_app(request):
+            checkin_children.append(
+                {
+                    'label': _('eventyay Check-in'),
+                    'url': get_eventyay_checkin_app_url(request),
+                    'external': True,
+                    'active': False,
+                }
+            )
         nav.append(
             {
                 'label': pgettext_lazy('navigation', 'Check-in'),
@@ -332,19 +355,7 @@ def get_event_navigation(request: HttpRequest):
                 ),
                 'active': False,
                 'icon': 'check-square-o',
-                'children': [
-                    {
-                        'label': _('Check-in lists'),
-                        'url': reverse(
-                            'control:event.orders.checkinlists',
-                            kwargs={
-                                'event': request.event.slug,
-                                'organizer': request.event.organizer.slug,
-                            },
-                        ),
-                        'active': 'event.orders.checkin' in url.url_name,
-                    },
-                ],
+                'children': checkin_children,
             }
         )
 
