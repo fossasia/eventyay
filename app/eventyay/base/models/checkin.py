@@ -33,8 +33,8 @@ class CheckinList(LoggedModel):
         verbose_name=_('Gates'),
         blank=True,
         help_text=_(
-            'Does not have any effect for the validation of tickets, only for the automatic configuration of '
-            'check-in devices.'
+            'Assign gates to devices for automatic configuration. When per-gate check-in limits are '
+            'enabled, the device gate is used to enforce them.'
         ),
     )
     allow_entry_after_exit = models.BooleanField(verbose_name=_('Allow re-entering after an exit scan'), default=True)
@@ -42,6 +42,24 @@ class CheckinList(LoggedModel):
         verbose_name=_('Allow multiple entries per ticket'),
         help_text=_('Use this option to turn off warnings if a ticket is scanned a second time.'),
         default=False,
+    )
+    limit_one_checkin_per_day = models.BooleanField(
+        verbose_name=_('Limit to one check-in per day'),
+        help_text=_('Each ticket can only be checked in once per calendar day on this list.'),
+        default=True,
+    )
+    limit_one_checkin_per_gate = models.BooleanField(
+        verbose_name=_('Limit to one check-in per gate'),
+        help_text=_('Each ticket can only be checked in once per gate on this list.'),
+        default=True,
+    )
+    display_popup_fields = JSONField(
+        default=list,
+        blank=True,
+        verbose_name=_('Check-in app display fields'),
+        help_text=_(
+            'Additional attendee registration fields to display on the check-in success pop-up screen.'
+        ),
     )
     exit_all_at = models.DateTimeField(verbose_name=_('Automatically check out everyone at'), null=True, blank=True)
     auto_checkin_sales_channels = MultiStringField(
@@ -155,6 +173,76 @@ class CheckinList(LoggedModel):
 
     def __str__(self):
         return self.name
+
+    DISPLAY_POPUP_STANDARD_FIELDS = (
+        ('company', _('Company')),
+        ('job_title', _('Job title')),
+        ('attendee_email', _('Email')),
+        ('seat', _('Seat')),
+    )
+    POPUP_STANDARD_FIELD_KEYS = frozenset(key for key, _ in DISPLAY_POPUP_STANDARD_FIELDS)
+
+    @classmethod
+    def display_popup_questions(cls, event):
+        return event.questions.filter(active=True, hidden=False).order_by('position')
+
+    @classmethod
+    def display_popup_field_choices(cls, event):
+        choices = list(cls.DISPLAY_POPUP_STANDARD_FIELDS)
+        for question in cls.display_popup_questions(event):
+            choices.append((f'question_{question.pk}', str(question.question)))
+        return choices
+
+    @classmethod
+    def normalize_display_popup_field_key(cls, value):
+        key = str(value or '').strip()
+        if not key:
+            return None
+        if key in cls.POPUP_STANDARD_FIELD_KEYS:
+            return key
+        if key.startswith('question_'):
+            return key
+        if key.isdigit():
+            return f'question_{key}'
+        return None
+
+    @classmethod
+    def normalize_display_popup_fields(cls, values):
+        if not values:
+            return []
+        cleaned = []
+        for value in values:
+            key = cls.normalize_display_popup_field_key(value)
+            if key and key not in cleaned:
+                cleaned.append(key)
+        return cleaned
+
+    @classmethod
+    def validate_display_popup_fields(cls, event, values):
+        if values is None:
+            return []
+        if not isinstance(values, (list, tuple)):
+            raise ValidationError(_('Display fields must be a list.'))
+
+        valid_question_ids = set(cls.display_popup_questions(event).values_list('pk', flat=True))
+        cleaned = []
+        for value in values:
+            key = cls.normalize_display_popup_field_key(value)
+            if not key:
+                raise ValidationError(_('Invalid display field: {key}').format(key=value))
+            if key in cls.POPUP_STANDARD_FIELD_KEYS:
+                if key not in cleaned:
+                    cleaned.append(key)
+                continue
+            try:
+                question_id = int(key.split('_', 1)[1])
+            except (ValueError, IndexError) as exc:
+                raise ValidationError(_('Invalid question field: {key}').format(key=key)) from exc
+            if question_id not in valid_question_ids:
+                raise ValidationError(_('Unknown or inactive question field: {key}').format(key=key))
+            if key not in cleaned:
+                cleaned.append(key)
+        return cleaned
 
     @classmethod
     def validate_rules(cls, rules, seen_nonbool=False, depth=0):
