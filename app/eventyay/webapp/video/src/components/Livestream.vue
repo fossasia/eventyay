@@ -65,6 +65,22 @@ const HLS_DEFAULT_CONFIG = {
 	manifestLoadingMaxRetryTimeout: 5000
 }
 
+const createPlayerState = (buffering = true) => ({
+	isLive: null,
+	buffering,
+	seeking: false,
+	currentTime: 0,
+	duration: 0,
+	bufferedRanges: null,
+	hoveredProgress: null,
+	levels: null,
+	autoLevel: null,
+	manualLevel: null,
+	showLevelChooser: false,
+	textTracks: [],
+	showCaptionsChooser: false
+})
+
 export default {
 	components: {},
 	props: {
@@ -88,28 +104,14 @@ export default {
 	data() {
 		return {
 			theme,
-			isLive: null,
 			playing: true,
 			playbackRequested: true,
-			buffering: true,
-			seeking: false,
 			offline: false,
 			fullscreen: false,
 			volume: 1,
 			muted: false,
 			automuted: false,
-			currentTime: 0,
-			duration: 0,
-			bufferedRanges: null,
-			hoveredProgress: null,
-			// Quality levels
-			levels: null,
-			autoLevel: null,
-			manualLevel: null,
-			showLevelChooser: false,
-			// Captions
-			textTracks: [],
-			showCaptionsChooser: false,
+			...createPlayerState(),
 			// Alternative sources
 			showSourceChooser: false,
 			chosenAlternative: null,
@@ -231,20 +233,7 @@ export default {
 				video.load()
 			}
 			this.nativeMetadataHandler = null
-
-			this.isLive = null
-			this.buffering = false
-			this.seeking = false
-			this.currentTime = 0
-			this.duration = 0
-			this.bufferedRanges = null
-			this.hoveredProgress = null
-			this.levels = null
-			this.autoLevel = null
-			this.manualLevel = null
-			this.showLevelChooser = false
-			this.textTracks = []
-			this.showCaptionsChooser = false
+			Object.assign(this, createPlayerState(false))
 		},
 		scheduleRetry(player, callback, delay) {
 			const timer = setTimeout(() => {
@@ -306,7 +295,7 @@ export default {
 				player.on(Hls.Events.LEVEL_LOADED, (event, data) => {
 					this.isLive = data.details.live
 					if (!data.details.live && this.onlyLive) {
-						this.player?.destroy()
+						this.destroyPlayer()
 						this.offline = true
 					}
 				})
