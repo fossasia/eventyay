@@ -14,6 +14,7 @@ import dateutil
 import pycountry
 import pytz
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.db.models import (
     Case,
@@ -46,6 +47,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import NumberParseException
 
+from eventyay.base.admission_validity import assign_issued_admission_bounds
 from eventyay.base.banlist import banned
 from eventyay.base.decimal import round_decimal
 from eventyay.base.email import get_email_context
@@ -2188,6 +2190,18 @@ class OrderPosition(AbstractPosition):
     web_secret = models.CharField(max_length=32, default=generate_secret, db_index=True)
     pseudonymization_id = models.CharField(max_length=16, unique=True, db_index=True)
     canceled = models.BooleanField(default=False)
+    admission_valid_from = models.DateTimeField(
+        verbose_name=_('Issued admission valid from'),
+        help_text=_('Check-in allowed from this time for this ticket (copied from the product when the order was placed).'),
+        null=True,
+        blank=True,
+    )
+    admission_valid_until = models.DateTimeField(
+        verbose_name=_('Issued admission valid until'),
+        help_text=_('Check-in allowed until this time for this ticket (copied from the product when the order was placed).'),
+        null=True,
+        blank=True,
+    )
 
     all = ScopedManager(organizer='order__event__organizer')
     objects = ActivePositionManager()
@@ -2196,6 +2210,18 @@ class OrderPosition(AbstractPosition):
         verbose_name = _('Order position')
         verbose_name_plural = _('Order positions')
         ordering = ('positionid', 'id')
+        indexes = [
+            GinIndex(
+                fields=['attendee_name_cached'],
+                name='orderpos_name_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+            GinIndex(
+                fields=['attendee_email'],
+                name='orderpos_email_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+        ]
 
     @cached_property
     def sort_key(self):
@@ -2323,6 +2349,9 @@ class OrderPosition(AbstractPosition):
 
         if not self.pseudonymization_id:
             self.assign_pseudonymization_id()
+
+        if not self.pk:
+            assign_issued_admission_bounds(self)
 
         return super().save(*args, **kwargs)
 
