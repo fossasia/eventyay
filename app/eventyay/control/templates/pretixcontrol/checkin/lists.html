@@ -8,6 +8,13 @@
                 <h1>{% trans "Check-in lists" %}</h1>
             </div>
             {% include "pretixcontrol/event/component_link.html" %}
+            {% if can_change_organizer_settings and organizer_devices_url %}
+                <div class="navigation-button">
+                    <a href="{{ organizer_devices_url }}" class="header-nav btn btn-outline-success">
+                        <i class="fa fa-tablet"></i> {% trans "Connected devices" %}
+                    </a>
+                </div>
+            {% endif %}
         </div>
     </nav>
     <p>
@@ -57,7 +64,7 @@
                    class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Create a new check-in list" %}</a>
             {% endif %}
             {% if can_change_organizer_settings %}
-                <a href="{% url "eventyay_common:organizer.devices" organizer=request.organizer.slug %}"
+                <a href="{% url "eventyay_common:organizer.devices" organizer=request.organizer.slug %}?from_event={{ request.event.slug }}"
                    class="btn btn-default btn-lg"><i class="fa fa-tablet"></i> {% trans "Connected devices" %}</a>
             {% endif %}
         </div>
@@ -68,7 +75,7 @@
                    class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Create a new check-in list" %}</a>
             {% endif %}
             {% if can_change_organizer_settings %}
-                <a href="{% url "eventyay_common:organizer.devices" organizer=request.organizer.slug %}"
+                <a href="{% url "eventyay_common:organizer.devices" organizer=request.organizer.slug %}?from_event={{ request.event.slug }}"
                    class="btn btn-default"><i class="fa fa-tablet"></i> {% trans "Connected devices" %}</a>
             {% endif %}
         </p>
