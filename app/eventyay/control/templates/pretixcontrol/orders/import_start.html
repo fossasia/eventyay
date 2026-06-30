@@ -13,27 +13,27 @@
     </nav>
 
     <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">{% trans "Upload a new file" %}</h3>
+        </div>
         <div class="panel-body">
-            <p>
-                {% blocktrans trimmed %}
-                    Upload a CSV file.
-                    In the next step you will map CSV columns to fields and preview the data.
-                {% endblocktrans %}
-            </p>
-
             <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
                 {% csrf_token %}
-                <div class="form-group form-group-flex">
-                    <label class="control-label form-group-flex-label" for="file">
-                        {% trans "Import file" %} *
-                    </label>
-                    <div class="form-group-flex-input">
+                <p>
+                    {% blocktrans trimmed %}
+                        The uploaded file should be a CSV file with a header row. You will be able to assign the
+                        meanings of the different columns in the next step.
+                    {% endblocktrans %}
+                </p>
+                <div class="form-group">
+                    <label class="col-md-2 control-label" for="file">{% trans "Import file" %}:</label>
+                    <div class="col-md-5">
                         <input id="file" type="file" name="file" accept=".csv" required/>
                     </div>
                 </div>
-                <div class="form-group submit-group import-submit-group">
-                    <button class="btn btn-primary btn-lg" type="submit">
-                        <span class="fa fa-upload"></span> {% trans "Upload and continue" %}
+                <div class="form-group submit-group">
+                    <button class="btn btn-primary btn-save" type="submit">
+                        <span class="icon icon-upload"></span> {% trans "Upload and continue" %}
                     </button>
                 </div>
             </form>
