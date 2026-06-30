@@ -651,13 +651,6 @@ footer {
   }
 }
 
-.outbox-toolbar .outbox-bulk-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.35rem;
-}
-
 .dashboard-history {
   max-height: none;
 
@@ -1910,35 +1903,32 @@ h2 .user-name-display img {
     margin-right: 0;
   }
 
-  #page-content .outbox-toolbar.search-submit-group {
+  #page-content .submit-group:has(#outbox-search) {
     flex-direction: column;
     gap: 0.35rem;
   }
 
-  #page-content .outbox-toolbar .search-form {
+  #page-content .submit-group:has(#outbox-search) > div:first-child {
     width: 100%;
   }
 
-  #page-content .outbox-toolbar .search-form > .form-group,
-  #page-content .outbox-toolbar .search-form > .d-flex {
-    width: 100%;
-    margin-right: 0;
-    margin-bottom: 0.35rem;
-  }
-
-  #page-content .outbox-toolbar .search-form button[type="submit"] {
+  #page-content .submit-group:has(#outbox-search) .search-form button[type="submit"] {
     margin-bottom: 0;
   }
 
-  #page-content .outbox-toolbar .outbox-bulk-actions {
+  #page-content .submit-group:has(#outbox-search) .outbox-bulk-actions {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  #page-content .submit-group:has(#outbox-search) .outbox-bulk-actions > div {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
     width: 100%;
-    align-items: stretch;
   }
 
-  #page-content .outbox-toolbar .outbox-bulk-actions .btn {
+  #page-content .submit-group:has(#outbox-search) .outbox-bulk-actions .btn {
     width: 100%;
     margin: 0;
     border-radius: var(--size-border-radius, 4px);
