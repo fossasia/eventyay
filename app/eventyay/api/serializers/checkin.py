@@ -6,6 +6,7 @@ from eventyay.api.serializers.event import SubEventSerializer
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import Checkin, CheckinList
+from eventyay.base.models.devices import Device
 
 
 class CheckinListSerializer(I18nAwareModelSerializer):
@@ -26,6 +27,9 @@ class CheckinListSerializer(I18nAwareModelSerializer):
             'auto_checkin_sales_channels',
             'allow_multiple_entries',
             'allow_entry_after_exit',
+            'allow_exit',
+            'limit_one_checkin_per_day',
+            'limit_one_checkin_per_gate',
             'rules',
             'exit_all_at',
         )
@@ -85,9 +89,13 @@ class CheckinRedeemInputSerializer(serializers.Serializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['lists'].child_relation.queryset = CheckinList.objects.filter(
+        qs = CheckinList.objects.filter(
             event__in=self.context['events']
         ).select_related('event')
+        request = self.context.get('request')
+        if request and isinstance(request.auth, Device) and request.auth.limit_to_checkin_lists.exists():
+            qs = qs.filter(pk__in=request.auth.limit_to_checkin_lists.values_list('pk', flat=True))
+        self.fields['lists'].child_relation.queryset = qs
 
 
 class MiniCheckinListSerializer(I18nAwareModelSerializer):

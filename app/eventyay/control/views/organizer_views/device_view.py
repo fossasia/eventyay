@@ -173,6 +173,30 @@ class DeviceConnectView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMix
         )
         return ctx
 
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if self.object.initialized:
+            messages.error(request, _('This device is already initialized.'))
+            return redirect(
+                reverse(
+                    'eventyay_common:organizer.devices',
+                    kwargs={
+                        'organizer': self.request.organizer.slug,
+                    },
+                )
+            )
+        from eventyay.base.models.devices import generate_initialization_token
+        self.object.initialization_token = generate_initialization_token()
+        self.object.save()
+        self.object.log_action('eventyay.device.token_regenerated', user=self.request.user)
+        messages.success(request, _('The setup code has been regenerated.'))
+        return redirect(
+            reverse(
+                'eventyay_common:organizer.devices.connect',
+                kwargs={'organizer': self.request.organizer.slug, 'device': self.object.pk},
+            )
+        )
+
 
 class DeviceRevokeView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, DetailView):
     model = Device

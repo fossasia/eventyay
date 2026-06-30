@@ -40,7 +40,7 @@
                     <th>{% trans "Hardware model" %}</th>
                     <th>{% trans "Software" %}</th>
                     <th>{% trans "Setup date" %}</th>
-                    <th>{% trans "Events" %}</th>
+                    <th>{% trans "Events / Lists" %}</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -84,6 +84,16 @@
                                             <a href="{% url 'control:event.index' organizer=request.organizer.slug event=e.slug %}">
                                                 {{ e }}
                                             </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            {% if d.limit_to_checkin_lists.exists %}
+                                <strong>{% trans "Limit to lists:" %}</strong>
+                                <ul>
+                                    {% for cl in d.limit_to_checkin_lists.all %}
+                                        <li>
+                                            {{ cl.event.name }} &ndash; {{ cl.name }}
                                         </li>
                                     {% endfor %}
                                 </ul>

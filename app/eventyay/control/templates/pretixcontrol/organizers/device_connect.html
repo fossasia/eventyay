@@ -23,6 +23,13 @@
                 <br>
                 <strong>{% trans "System URL:" %}</strong> {{ settings.SITE_URL }}<br>
                 <strong>{% trans "Token:" %}</strong> {{ device.initialization_token }}
+                <br><br>
+                <form action="" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-default btn-sm">
+                        <i class="fa fa-refresh"></i> {% trans "Regenerate setup code" %}
+                    </button>
+                </form>
             </li>
         </ol>
     </div>

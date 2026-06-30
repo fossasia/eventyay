@@ -89,6 +89,9 @@ class CheckinListForm(forms.ModelForm):
             'auto_checkin_sales_channels',
             'allow_multiple_entries',
             'allow_entry_after_exit',
+            'allow_exit',
+            'limit_one_checkin_per_day',
+            'limit_one_checkin_per_gate',
             'rules',
             'gates',
             'exit_all_at',
@@ -133,6 +136,9 @@ class SimpleCheckinListForm(forms.ModelForm):
             'limit_products',
             'include_pending',
             'allow_entry_after_exit',
+            'allow_exit',
+            'limit_one_checkin_per_day',
+            'limit_one_checkin_per_gate',
             'gates',
         ]
         widgets = {

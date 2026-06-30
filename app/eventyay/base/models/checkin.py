@@ -38,6 +38,21 @@ class CheckinList(LoggedModel):
         ),
     )
     allow_entry_after_exit = models.BooleanField(verbose_name=_('Allow re-entering after an exit scan'), default=True)
+    allow_exit = models.BooleanField(
+        verbose_name=_('Allow exit scans'),
+        help_text=_('If this is disabled, exit scans will be rejected.'),
+        default=False,
+    )
+    limit_one_checkin_per_day = models.BooleanField(
+        verbose_name=_('Limit to one entry per day'),
+        help_text=_('If this is enabled, every ticket can only be scanned once per calendar day.'),
+        default=False,
+    )
+    limit_one_checkin_per_gate = models.BooleanField(
+        verbose_name=_('Limit to one entry per gate'),
+        help_text=_('If this is enabled, every ticket can only be scanned once per gate.'),
+        default=False,
+    )
     allow_multiple_entries = models.BooleanField(
         verbose_name=_('Allow multiple entries per ticket'),
         help_text=_('Use this option to turn off warnings if a ticket is scanned a second time.'),

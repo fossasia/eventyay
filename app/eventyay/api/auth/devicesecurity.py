@@ -24,7 +24,7 @@ class AllowListSecurityProfile:
 
 class EventyayCheckinSecurityProfile(AllowListSecurityProfile):
     identifier = 'eventyay_checkin'
-    verbose_name = _('eventyay_checkin')
+    verbose_name = _('Check-In Staff')
     allowlist = (
         ('GET', 'api-v1:version'),
         ('GET', 'api-v1:device.eventselection'),
@@ -54,7 +54,7 @@ class EventyayCheckinSecurityProfile(AllowListSecurityProfile):
 
 class EventyayCheckinNoSyncSecurityProfile(AllowListSecurityProfile):
     identifier = 'eventyay_checkin_online_kiosk'
-    verbose_name = _('eventyay_checkin (kiosk mode, online only)')
+    verbose_name = _('Badge Station (kiosk)')
     allowlist = (
         ('GET', 'api-v1:version'),
         ('GET', 'api-v1:device.eventselection'),

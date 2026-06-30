@@ -95,6 +95,7 @@ class Device(LoggedModel):
     api_token = models.CharField(max_length=190, unique=True, null=True)
     all_events = models.BooleanField(default=False, verbose_name=_('All events (including newly created ones)'))
     limit_events = models.ManyToManyField('Event', verbose_name=_('Limit to events'), blank=True)
+    limit_to_checkin_lists = models.ManyToManyField('CheckinList', verbose_name=_('Limit to check-in lists'), blank=True)
     revoked = models.BooleanField(default=False)
     name = models.CharField(max_length=190, verbose_name=_('Name'))
     created = models.DateTimeField(auto_now_add=True, verbose_name=_('Setup date'))

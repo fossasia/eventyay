@@ -97,6 +97,8 @@ class CheckinListViewSet(viewsets.ModelViewSet):
         qs = self.request.event.checkin_lists.prefetch_related(
             'limit_products',
         )
+        if isinstance(self.request.auth, Device) and self.request.auth.limit_to_checkin_lists.exists():
+            qs = qs.filter(pk__in=self.request.auth.limit_to_checkin_lists.values_list('pk', flat=True))
 
         if 'subevent' in self.request.query_params.getlist('expand'):
             qs = qs.prefetch_related(
@@ -688,10 +690,6 @@ def _redeem_process(
                     user=user,
                     auth=auth,
                 )
-                Checkin.objects.create(
-                    position=op,
-                    **common_checkin_args,
-                )
 
             serializer_context = _setup_context(request, expand, op.order.event, pdf_data, user, auth)
             position_data = CheckinListOrderPositionSerializer(op, context=serializer_context).data
@@ -778,7 +776,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
     @cached_property
     def checkinlist(self):
         try:
-            return get_object_or_404(CheckinList, event=self.request.event, pk=self.kwargs.get('list'))
+            return get_object_or_404(self.get_queryset(), pk=self.kwargs.get('list'))
         except ValueError:
             raise Http404()
 
@@ -1057,7 +1055,7 @@ class CheckinRedeemView(views.APIView):
             )
         else:
             raise ValueError('Unknown authentication method')
-        serializer = CheckinRedeemInputSerializer(data=request.data, context={'events': events})
+        serializer = CheckinRedeemInputSerializer(data=request.data, context={'events': events, 'request': request})
         serializer.is_valid(raise_exception=True)
         return _redeem_process(
             checkinlists=serializer.validated_data['lists'],
@@ -1135,6 +1133,9 @@ class CheckinSearchView(ListAPIView):
             int(list_id) for list_id in self.request.query_params.getlist('list') if list_id.isdigit()
         ]
         checkin_lists = CheckinList.objects.filter(event__in=events, id__in=requested_list_ids).select_related('event')
+
+        if isinstance(auth, Device) and auth.limit_to_checkin_lists.exists():
+            checkin_lists = checkin_lists.filter(pk__in=auth.limit_to_checkin_lists.values_list('pk', flat=True))
 
         if len(checkin_lists) != len(requested_list_ids):
             missing_lists = set(requested_list_ids) - {lst.pk for lst in checkin_lists}

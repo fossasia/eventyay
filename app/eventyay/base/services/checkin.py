@@ -105,13 +105,13 @@ class LazyRuleVars:
 
     @cached_property
     def entries_today(self):
-        tz = self._clist.event.timezone
+        tz = self._clist.event.tz
         midnight = now().astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
         return self._position.checkins.filter(type=Checkin.TYPE_ENTRY, list=self._clist, datetime__gte=midnight).count()
 
     @cached_property
     def entries_days(self):
-        tz = self._clist.event.timezone
+        tz = self._clist.event.tz
         with override(tz):
             return (
                 self._position.checkins.filter(list=self._clist, type=Checkin.TYPE_ENTRY)
@@ -226,7 +226,8 @@ class SQLLogic:
                     output_field=IntegerField(),
                 )
             elif values[0] == 'entries_today':
-                midnight = now().astimezone(self.list.event.timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+                tz = self.list.event.tz
+                midnight = now().astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
                 return Coalesce(
                     Subquery(
                         Checkin.objects.filter(
@@ -244,7 +245,7 @@ class SQLLogic:
                     output_field=IntegerField(),
                 )
             elif values[0] == 'entries_days':
-                tz = self.list.event.timezone
+                tz = self.list.event.tz
                 return Coalesce(
                     Subquery(
                         Checkin.objects.filter(
@@ -448,11 +449,25 @@ def perform_checkin(
                 require_answers,
             )
 
+        if type == Checkin.TYPE_EXIT and not clist.allow_exit and not force:
+            raise CheckInError(_('Exit scans are not allowed on this check-in list.'), 'exit_not_allowed')
+
         if type == Checkin.TYPE_ENTRY and clist.rules and not force:
             rule_data = LazyRuleVars(op, clist, dt)
             logic = get_logic_environment(op.subevent or clist.event)
             if not logic.apply(clist.rules, rule_data):
                 raise CheckInError(_('This entry is not permitted due to custom rules.'), 'rules')
+
+        if type == Checkin.TYPE_ENTRY and not force:
+            if clist.limit_one_checkin_per_day:
+                tz = clist.event.tz
+                midnight = dt.astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
+                if op.checkins.filter(type=Checkin.TYPE_ENTRY, list=clist, datetime__gte=midnight).exists():
+                    raise CheckInError(_('This ticket has already been used today.'), 'already_redeemed')
+
+            if clist.limit_one_checkin_per_gate and auth and getattr(auth, 'gate_id', None):
+                if op.checkins.filter(type=Checkin.TYPE_ENTRY, list=clist, gate_id=auth.gate_id).exists():
+                    raise CheckInError(_('This ticket has already been used at this gate.'), 'already_redeemed')
 
         device = None
         if isinstance(auth, Device):
