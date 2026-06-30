@@ -12,6 +12,12 @@ class BadgeOutputProvider(BaseTicketOutput):
     download_button_text = _('Download Badge')
     multi_download_enabled = True
 
+    @property
+    def is_enabled(self) -> bool:
+        if 'eventyay.plugins.badges' not in self.event.plugins:
+            return False
+        return self.event.badge_layouts.exists()
+
     def generate(self, op: OrderPosition) -> Tuple[str, str, bytes]:
         try:
             from .exporters import OPTIONS, render_pdf

@@ -62,6 +62,39 @@ def get_badge_hidden_fields(position):
     return hidden_fields
 
 
+def validate_badge_hidden_fields(event, position, hidden_fields):
+    from django.core.exceptions import ValidationError
+
+    if 'eventyay.plugins.badges' not in event.plugins:
+        raise ValidationError(_('Badge customization is not enabled for this event.'))
+
+    layout = get_badge_layout_for_position(event, position)
+    if not layout or not layout.allow_customization:
+        raise ValidationError(_('Badge customization is not allowed for this ticket.'))
+
+    allowed_keys = {key for key, _ in get_badge_bundle_option_choices(event, position)}
+    normalized = [str(value) for value in (hidden_fields or [])]
+    invalid_keys = sorted({key for key in normalized if key not in allowed_keys})
+    if invalid_keys:
+        raise ValidationError(
+            _('Invalid badge field keys: {keys}').format(keys=', '.join(invalid_keys))
+        )
+    return normalized
+
+
+def save_badge_hidden_fields(position, hidden_fields):
+    from eventyay.base.models import CachedFile
+
+    config_position = get_badge_config_position(position)
+    meta = dict(config_position.meta_info_data or {})
+    question_form_data = dict(meta.get('question_form_data', {}))
+    question_form_data[BADGE_HIDDEN_FIELDS_KEY] = list(hidden_fields)
+    meta['question_form_data'] = question_form_data
+    config_position.meta_info_data = meta
+    config_position.save(update_fields=['meta_info'])
+    CachedFile.objects.filter(filename__startswith=f'badge_{position.pk}_').delete()
+
+
 def get_badge_bundle_root(position):
     return position.addon_to if position.addon_to_id else position
 
