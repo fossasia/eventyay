@@ -33,6 +33,14 @@ import JanusCall from 'components/JanusCall';
 import JanusChannelCall from 'components/JanusChannelCall';
 import Livestream from 'components/Livestream';
 import { WhepClient } from 'lib/webrtc/whep';
+import {
+	getStagePlaybackMode,
+	PLAYBACK_MODE_SCHEDULE_DRIVEN,
+	STREAM_TYPE_HLS,
+	STREAM_TYPE_IFRAME,
+	STREAM_TYPE_VIMEO,
+	STREAM_TYPE_YOUTUBE,
+} from 'lib/stage-streams';
 
 // Props & Emits
 defineOptions({
@@ -89,12 +97,14 @@ const module = computed(() => {
 
 const shouldUseLivestream = computed(() => {
 	if (!props.room || !module.value) return false;
-	if (module.value.type !== 'livestream.native') return false;
-	const streamType = props.room?.currentStream?.stream_type;
-	if (streamType && streamType !== 'hls') {
-		return false;
+	const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
+	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
+
+	if (streamType) {
+		return streamType === STREAM_TYPE_HLS;
 	}
-	return true;
+
+	return module.value.type === 'livestream.native';
 });
 
 // When stream schedules are enabled, the backend returns 404 (mapped to null) if
@@ -107,24 +117,28 @@ const iframeOffline = computed(() => {
 	if (!props.room || !module.value) return false;
 	if (shouldUseLivestream.value) return false;
 
-	const streamType = props.room?.currentStream?.stream_type;
+	const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
+	const currentStream = isScheduleDriven ? props.room?.currentStream : null;
+	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
-	const isIFrame = streamType === 'iframe' || moduleType === 'livestream.iframe';
-	const isYouTube = streamType === 'youtube' || moduleType === 'livestream.youtube';
-	const isVimeo = streamType === 'vimeo';
+	const isIFrame = streamType === STREAM_TYPE_IFRAME || moduleType === 'livestream.iframe';
+	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || moduleType === 'livestream.youtube';
+	const isVimeo = streamType === STREAM_TYPE_VIMEO;
 
 	if (!isIFrame && !isYouTube && !isVimeo) return false;
 
-	// Prefer schedule-provided stream URL when present.
-	const scheduleUrl = props.room?.currentStream?.url || null;
+	const scheduleUrl = currentStream?.url || null;
+
 	if (isYouTube) {
 		if (scheduleUrl && normalizeYoutubeVideoId(scheduleUrl)) return false;
+		if (isScheduleDriven) return true;
 		const ytid = module.value.config?.ytid || null;
 		if (ytid && normalizeYoutubeVideoId(ytid)) return false;
 		return true;
 	}
 
 	if (scheduleUrl) return false;
+	if (isScheduleDriven) return true;
 	const moduleUrl = module.value.config?.url || null;
 	return !moduleUrl;
 });
@@ -197,8 +211,9 @@ watch(
 
 watch(youtubeTransUrl, async (audioSource) => {
 	if (!props.room) return;
-	const streamType = props.room?.currentStream?.stream_type;
-	const isYouTube = streamType === 'youtube' || module.value?.type === 'livestream.youtube';
+	const isScheduleDriven = module.value && getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
+	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
+	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || module.value?.type === 'livestream.youtube';
 	if (!isYouTube) return;
 
 	// Teardown previous whep client
@@ -306,14 +321,17 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		let iframeUrl;
 		let hideIfBackground = false;
 		let isYouTube = false;
-		const streamType = props.room?.currentStream?.stream_type;
-		const effectiveModuleType = streamType === 'youtube' 
-			? 'livestream.youtube' 
-			: streamType === 'vimeo'
+		const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
+		const currentStream = isScheduleDriven ? props.room?.currentStream : null;
+		const streamType = currentStream?.stream_type;
+		const effectiveModuleType = streamType === STREAM_TYPE_YOUTUBE
+			? 'livestream.youtube'
+			: streamType === STREAM_TYPE_VIMEO
 			? 'livestream.vimeo'
-			: streamType === 'iframe'
+			: streamType === STREAM_TYPE_IFRAME
 			? 'livestream.iframe'
-			: module.value.type;
+			: (!isScheduleDriven ? module.value.type : null);
+
 		switch (effectiveModuleType) {
 			case 'call.bigbluebutton': {
 				({ url: iframeUrl } = await api.call('bbb.room_url', {
@@ -330,27 +348,17 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				break;
 			}
 			case 'livestream.iframe': {
-				if (props.room?.currentStream?.url) {
-					iframeUrl = props.room.currentStream.url;
-				} else {
-					iframeUrl = module.value.config.url;
-				}
+				iframeUrl = currentStream?.url || module.value.config.url;
 				break;
 			}
 			case 'livestream.vimeo': {
-				if (props.room?.currentStream?.url) {
-					const vimeoMatch = props.room.currentStream.url.match(/vimeo\.com\/(?:.*\/)?(\d+)/);
+				const vimeoUrl = currentStream?.url || module.value.config?.url;
+				if (vimeoUrl) {
+					const vimeoMatch = vimeoUrl.match(/vimeo\.com\/(?:.*\/)?(\d+)/);
 					if (vimeoMatch) {
 						iframeUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=${autoplay.value ? '1' : '0'}&muted=${mute ? '1' : '0'}`;
 					} else {
-						iframeUrl = props.room.currentStream.url;
-					}
-				} else if (module.value.config?.url) {
-					const vimeoMatch = module.value.config.url.match(/vimeo\.com\/(?:.*\/)?(\d+)/);
-					if (vimeoMatch) {
-						iframeUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=${autoplay.value ? '1' : '0'}&muted=${mute ? '1' : '0'}`;
-					} else {
-						iframeUrl = module.value.config.url;
+						iframeUrl = vimeoUrl;
 					}
 				}
 				break;
@@ -358,9 +366,9 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			case 'livestream.youtube': {
 				isYouTube = true;
 				let ytid;
-				if (streamType === 'youtube' && props.room?.currentStream?.url) {
-					ytid = normalizeYoutubeVideoId(props.room.currentStream.url);
-				} else if (module.value.type === 'livestream.youtube' && module.value.config?.ytid) {
+				if (streamType === STREAM_TYPE_YOUTUBE && currentStream?.url) {
+					ytid = normalizeYoutubeVideoId(currentStream.url);
+				} else if (!isScheduleDriven && module.value.type === 'livestream.youtube' && module.value.config?.ytid) {
 					ytid = normalizeYoutubeVideoId(module.value.config.ytid);
 				} else {
 					ytid = null;
@@ -381,7 +389,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 					shouldMute,
 					config.hideControls,
 					config.noRelated,
-					config.showinfo,
+					config.showInfo,
 					config.disableKb,
 					config.loop,
 					config.modestBranding,
@@ -420,7 +428,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		}
 		// Set iframe permissions and attributes
 		iframe.allow =
-			'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' +
+			'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *; encrypted-media *' +
 			(autoplay.value ? '; autoplay *' : '');
 		iframe.allowFullscreen = true;
 		iframe.setAttribute('allowusermedia', 'true');
@@ -655,6 +663,7 @@ iframe.iframe-media-source
 	align-items: center
 	background-color: $clr-blue-grey-200
 	z-index: 1
+	overflow: hidden
 	// Fallbacks prevent the overlay from shrinking to its text when
 	// --mediasource-placeholder-* are not yet available.
 	&:not(.size-tiny):not(.background)

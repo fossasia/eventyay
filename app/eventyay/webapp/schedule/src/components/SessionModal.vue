@@ -4,7 +4,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 		button.close-button(@click="close()") ✕
 		template(v-if="modalContent && modalContent.contentType === 'session'")
 			h3 {{ modalContent.contentObject.title }}
-				.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
+				.button-container(v-if="!favsReadOnly", :class="isFaved ? 'faved' : ''")
 					fav-button(@toggleFav="$emit('toggleFav', modalContent.contentObject.id)")
 
 			.card-content
@@ -141,7 +141,7 @@ export default {
 	inject: {
 		remoteApiUrl: { default: '' },
 		eventUrl: { default: '' },
-		loggedIn: { default: false },
+		favsReadOnly: { default: false },
 		showJoinRoom: { default: false },
 		getJoinRoomLink: { default: () => () => '' },
 		translationMessages: { default: () => ({}) },
