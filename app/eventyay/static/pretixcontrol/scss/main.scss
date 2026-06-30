@@ -1188,6 +1188,17 @@ h1 .label {
     }
 }
 
+.device-event-nav {
+    margin: 0 0 12px;
+}
+
+.device-event-breadcrumb {
+    margin-bottom: 0;
+    padding: 8px 0;
+    background: transparent;
+    font-size: 14px;
+}
+
 /* Leaflet image path overrides for compressed leaflet.css */
 .leaflet-container {
     .leaflet-control-layers-toggle {

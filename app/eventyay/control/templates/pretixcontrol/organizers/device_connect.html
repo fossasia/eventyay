@@ -3,32 +3,59 @@
 {% load static %}
 {% load bootstrap3 %}
 {% block inner %}
+    {% include "pretixcontrol/organizers/device_event_nav.html" %}
     <h1>{% trans "Connect to device:" %} {{ device.name }}</h1>
+
+    {% if device.initialized %}
+        <div class="alert alert-success">
+            {% trans "This device is connected. Generate a new setup code below to disconnect it and register again." %}
+        </div>
+        <div class="alert alert-info">
+            {% trans "If you try to register with an old setup code, the check-in app will show: “This setup code has already been used.” Generate a new code below before scanning again." %}
+        </div>
+    {% endif %}
 
     <div>
         <ol>
             <li>
-                {% trans "Download an app that is compatible with eventyay. For example, our check-in app <strong>eventyay Check-in</strong> is available on all major platforms." %}<br>
-                <a href="https://eventyay.com/about/{% if "de" in request.LANGUAGE_CODE %}de{% else %}en{% endif %}/scan"
-                        class="btn btn-default" target="_blank">
-                    {% trans "Download eventyay Check-in" %}
-                </a>
+                {% if checkin_app_is_dev %}
+                    {% blocktrans trimmed with checkin_url=checkin_app_url %}
+                        Open the <strong>eventyay Check-in</strong> web app in your browser at
+                        <a href="{{ checkin_url }}" target="_blank" rel="noopener">{{ checkin_url }}</a>.
+                    {% endblocktrans %}
+                {% else %}
+                    {% blocktrans trimmed with checkin_url=checkin_app_url %}
+                        Open the <strong>eventyay Check-in</strong> web app in your browser at
+                        <a href="{{ checkin_url }}" target="_blank" rel="noopener">{{ checkin_url }}</a>.
+                    {% endblocktrans %}
+                {% endif %}
             </li>
             <li>
-                {% trans "Open the app that you want to connect and optionally reset it to the original state." %}
+                {% trans "Choose a station type (Check-In Staff, Badge Station, or Lead Scanner) and scan the configuration code below, or enter the URL and token manually." %}
             </li>
             <li>{% trans "Scan the following configuration code:" %}<br><br>
                 <script type="text/json" data-replace-with-qr>{{ qrdata|safe }}</script><br>
-                {% trans "If your app/device does not support scanning a QR code, you can also enter the following information:" %}
+                {% trans "If your device does not support scanning a QR code, you can also enter the following information:" %}
                 <br>
-                <strong>{% trans "System URL:" %}</strong> {{ settings.SITE_URL }}<br>
+                <strong>{% trans "System URL:" %}</strong> {{ registration_site_url }}<br>
                 <strong>{% trans "Token:" %}</strong> {{ device.initialization_token }}
+                <div class="panel panel-default mt-4 mb-0">
+                    <div class="panel-body">
+                        <form action="" method="post" class="form-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-default">
+                                {% trans "Generate new setup code" %}
+                            </button>
+                        </form>
+                        <p class="help-block mb-0 mt-3">
+                            {% trans "Use this if registration failed or you need to disconnect this device and register it again. Each code works only once. The check-in app for this device will be signed out within a few seconds." %}
+                        </p>
+                    </div>
+                </div>
             </li>
         </ol>
     </div>
-    <a href= "{% url 'eventyay_common:organizer.devices' organizer=request.organizer.slug %}"
-            class="btn btn-default"><i class="fa fa-arrow-left"></i>
-        {% trans "Device overview" %}
-    </a>
-    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/devices.js" %}"></script>
+    {% if not device.initialized %}
+        <script type="text/javascript" src="{% static "pretixcontrol/js/ui/devices.js" %}"></script>
+    {% endif %}
 {% endblock %}
