@@ -1,7 +1,7 @@
 import pytest
 
-from venueless.core.models import BBBServer, World
-from venueless.core.services.bbb import choose_server
+from eventyay.base.models import BBBServer, World
+from eventyay.base.services.bbb import choose_server
 
 
 @pytest.fixture

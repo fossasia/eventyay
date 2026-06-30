@@ -5,7 +5,7 @@ import pytest
 from channels.testing import WebsocketCommunicator
 
 from tests.utils import get_token
-from venueless.routing import application
+from eventyay.config.asgi import application
 
 
 @asynccontextmanager

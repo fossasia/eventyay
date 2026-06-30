@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 import pytest
 from channels.testing import WebsocketCommunicator
 
-from venueless.routing import application
+from eventyay.config.asgi import application
 
 
 @asynccontextmanager

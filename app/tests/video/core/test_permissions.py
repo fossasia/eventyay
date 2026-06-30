@@ -1,8 +1,8 @@
 import pytest
 from channels.db import database_sync_to_async
 
-from venueless.core.models import User
-from venueless.core.permissions import Permission
+from eventyay.base.models import User
+from eventyay.core.permissions import Permission
 
 
 @pytest.mark.django_db
