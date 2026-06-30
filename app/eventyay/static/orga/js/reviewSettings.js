@@ -38,13 +38,15 @@ const addNewScores = (ev) => {
     const newID = `new` + Math.floor(Math.random() * 1000)
     const newRow = `
     <div class="row form-group">
-        <div class="col-md-9 flip ml-auto d-flex hide-label mb-1">
+        <div class="col-md-3"></div>
+        <div class="col-md-9 d-flex hide-label mb-1">
             <div class="mr-2 score-score">
                 <input type="number" name="scores-${formID}-value_${newID}" step="0.1" class="form-control" id="id_scores-${formID}-value_${newID}" placeholder="2">
             </div>
             <div class="score-label">
                 <input type="text" name="scores-${formID}-label_${newID}" maxlength="20" class="form-control" id="id_scores-${formID}-label_${newID}" placeholder="👍">
             </div>
+            <div role="button" class="new-score btn btn-danger flip ml-auto" data-score="${newID}"><i class="fa fa-trash"></i></div>
         </div>
     </div>`
     const newElement = document.createElement("div")
