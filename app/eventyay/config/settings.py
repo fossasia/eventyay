@@ -409,7 +409,8 @@ CORS_URLS_REGEX = (
     r".*/widget[s]?/.*|"
     r".*/schedule/widget/.*|"
     r".*/static/event\.css|"
-    r".*/static/schedule/.*\.js"
+    r".*/static/schedule/.*\.js|"
+    r"/api/v1/.*"
     r")$"
 )
 
@@ -434,6 +435,7 @@ AUTH_USER_MODEL = 'base.User'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 _LIBRARY_MIDDLEWARES = (
+    'eventyay.api.middleware.PrivateNetworkAccessMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -1332,9 +1334,9 @@ REST_FRAMEWORK = {
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
     'PAGE_SIZE': 50,
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'eventyay.api.auth.device.DeviceTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'eventyay.api.auth.token.TeamTokenAuthentication',
-        'eventyay.api.auth.device.DeviceTokenAuthentication',
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),

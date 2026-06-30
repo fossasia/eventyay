@@ -217,6 +217,7 @@ urlpatterns = [
         name='device.initialize',
     ),
     path('device/update', device.UpdateView.as_view(), name='device.update'),
+    path('device/session', device.SessionView.as_view(), name='device.session'),
     path('device/roll', device.RollKeyView.as_view(), name='device.roll'),
     path('device/revoke', device.RevokeKeyView.as_view(), name='device.revoke'),
     path(
