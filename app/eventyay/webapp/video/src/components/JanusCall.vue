@@ -66,6 +66,7 @@ export default {
 	display: flex
 	flex-direction: column
 	position: relative
+	overflow: hidden
 
 	&.size-tiny
 		height: 48px
