@@ -39,6 +39,25 @@ class AgendaConfig(AppConfig):
 
         schedule_release.connect(on_schedule_release, dispatch_uid='agenda.on_schedule_release')
 
+        from eventyay.base.models import SubmissionStates
+        from eventyay.submission.signals import submission_state_change
+
+        def on_submission_state_change(sender, submission, **kwargs):
+            if submission.state not in SubmissionStates.terminal_states:
+                return
+            from eventyay.agenda.views.utils import (
+                clear_featured_speakers_without_active_submissions,
+                clear_schedule_caches,
+            )
+
+            clear_featured_speakers_without_active_submissions(sender, submission.speakers.all())
+            clear_schedule_caches(sender, submission=submission)
+
+        submission_state_change.connect(
+            on_submission_state_change,
+            dispatch_uid='agenda.on_submission_state_change',
+        )
+
 
 with suppress(ImportError):
     from eventyay import celery_app as celery  # noqa

@@ -72,6 +72,10 @@ const reinitializeBehaviors = function(resultsContainer) {
         window.eventyayInitStartpageToggles();
     }
 
+    if (typeof window.eventyayInitBatchSelection === 'function') {
+        window.eventyayInitBatchSelection(resultsContainer);
+    }
+
     resultsContainer.dispatchEvent(new CustomEvent('eventyay:ajax-results-replaced', {
         bubbles: true,
         detail: {
