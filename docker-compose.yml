@@ -15,10 +15,12 @@ services:
       - /usr/src/app/eventyay/webapp/video/node_modules
       - /usr/src/app/eventyay/webapp/schedule-editor/node_modules
       - /usr/src/app/eventyay/webapp/schedule/node_modules
+      - /usr/src/plugins/eventyay-checkin/node_modules
     ports:
       - 8000:8000
       - 8080:8080
       - 8082:8082
+      - 8085:8085
       - 8880:8880
     env_file:
       - ./.env.dev
@@ -40,6 +42,7 @@ services:
       - /usr/src/app/eventyay/webapp/video/node_modules
       - /usr/src/app/eventyay/webapp/schedule-editor/node_modules
       - /usr/src/app/eventyay/webapp/schedule/node_modules
+      - /usr/src/plugins/eventyay-checkin/node_modules
     env_file:
       - ./.env.dev
     environment:

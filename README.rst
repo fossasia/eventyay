@@ -287,6 +287,7 @@ When enabled, Vite dev servers start automatically inside the container for the 
 - ``schedule-editor`` runs on port ``8080``.
 - ``video`` runs on port ``8880``.
 - ``schedule`` runs on port ``8082``.
+- ``eventyay-checkin`` runs on port ``8085`` (plugin checkout mounted at ``plugins/eventyay-checkin``).
 
 You do not normally need to visit these ports directly. The frontend works alongside ``http://localhost:8000`` with hot module replacement.
 

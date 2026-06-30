@@ -25,7 +25,7 @@
     {% for nav in admin_nav_items %}
         <li>
             <a href="{{ nav.url }}" {% if nav.active %}class="active{% if nav.children %} has-children{% endif %}"{% elif nav.children %}class="has-children"{% endif %}
-                    {% if nav.external %}target="_blank"{% endif %}>
+                    {% if nav.external %}target="_blank" rel="noopener noreferrer"{% endif %}>
                 {% if nav.icon %}
                     {% if "<svg" in nav.icon %}
                         {{ nav.icon|safe }}
@@ -43,7 +43,7 @@
                     {% for item in nav.children %}
                         <li>
                             <a href="{{ item.url }}"
-                                    {% if item.external %}target="_blank"{% endif %}
+                                    {% if item.external %}target="_blank" rel="noopener noreferrer"{% endif %}
                                     {% if item.active %}class="active"{% endif %}>
                                 <span class="sidebar-text">{{ item.label }}</span>
                             </a>

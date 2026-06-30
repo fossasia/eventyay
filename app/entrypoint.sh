@@ -44,16 +44,25 @@ if [ "$EVY_NPM_DEV" = "1" ]; then
   WEBAPP_DIR=/usr/src/app/eventyay/webapp
 
   start_vite() {
-    local app=$1 port=$2 config_arg=$3
-    local app_dir="$WEBAPP_DIR/$app"
+    local app=$1 port=$2 config_arg=$3 custom_dir=$4
+    local app_dir
+    if [ -n "$custom_dir" ]; then
+      app_dir="$custom_dir"
+    else
+      app_dir="$WEBAPP_DIR/$app"
+    fi
     if [ ! -d "$app_dir" ]; then
       echo "WARNING: $app_dir does not exist, skipping."
       return
     fi
+    if [ ! -f "$app_dir/package.json" ]; then
+      echo "WARNING: $app_dir/package.json does not exist, skipping $app."
+      return
+    fi
     echo "Starting $app Vite dev server on port $port..."
     cd "$app_dir" || return
-    if [ -d "node_modules" ]; then
-      echo "  node_modules exists, skipping npm ci for $app"
+    if [ -d "node_modules" ] && [ -d "node_modules/.bin" ]; then
+      echo "  node_modules exists and is populated, skipping npm ci for $app"
     else
       echo "  Running npm ci for $app..."
       npm ci || { echo "ERROR: npm ci failed for $app"; return; }
@@ -71,6 +80,7 @@ if [ "$EVY_NPM_DEV" = "1" ]; then
   start_vite "schedule-editor" 8080 ""
   start_vite "video" 8880 ""
   start_vite "schedule" 8082 "--config vite.config.wc.js"
+  start_vite "eventyay-checkin" 8085 "" "/usr/src/plugins/eventyay-checkin"
 
   cd /usr/src/app
   echo "All Vite dev servers started."
