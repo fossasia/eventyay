@@ -35,8 +35,8 @@
                 sessions
             {% endblocktranslate %} 
         </span>
-        <p class="flip ml-auto">
-            <div>
+        <div class="submission-page-actions">
+            <div class="submission-page-actions__primary">
                 {% if can_send_mails %}
                     <a class="btn btn-outline-info mt-2" href="{{ request.event.orga_urls.compose_mails_sessions }}{% querystring page='' %}">
                         <i class="fa fa-envelope"></i>
@@ -60,7 +60,7 @@
             <div>
                 {% include "orga/event/component_link.html" %}
             </div>
-        </p>
+        </div>
     </h2>
 
     {% include "orga/includes/submission_filter_form.html" %}

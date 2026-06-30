@@ -313,10 +313,10 @@
     }
 
     .cfp-forms-page .cfp-option-table tbody td.text-right {
-        flex-wrap: nowrap;
-        justify-content: flex-start;
+        flex-wrap: wrap;
+        justify-content: flex-end;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.35rem;
     }
 
     .cfp-forms-page .cfp-option-table tbody td.text-right::before {
