@@ -8,7 +8,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
-from eventyay.base.models import TaxRule
+from eventyay.base.models import Question, TaxRule
 from eventyay.base.services.cart import update_tax_rates
 from eventyay.base.services.system_questions import (
     get_system_question_asked_required,
@@ -267,6 +267,12 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                 ):
                     return False
                 if parentid not in answ:
+                    # A TYPE_BOOLEAN parent that was left unchecked has no stored
+                    # QuestionAnswer (save() deletes empty answers). Treat absence
+                    # as a 'False' answer so children with dependency_values=['False']
+                    # are still considered visible and validated.
+                    if parentq.type == Question.TYPE_BOOLEAN:
+                        return 'False' in qvals
                     return False
                 return (
                     ('True' in qvals and answ[parentid].answer == 'True')
