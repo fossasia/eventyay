@@ -29,6 +29,7 @@ from rest_framework.response import Response
 
 from eventyay.api.models import OAuthAccessToken
 from eventyay.api.serializers.order import (
+    CheckinListOrderPositionSerializer,
     InvoiceSerializer,
     OrderCreateSerializer,
     OrderPaymentCreateSerializer,
@@ -908,6 +909,10 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                     ),
                 ),
             ).select_related('product', 'variation', 'product__category', 'addon_to', 'seat')
+        elif self.request.query_params.get('exclude_details', 'false') == 'true':
+            qs = qs.prefetch_related(
+                'checkins',
+            ).select_related('product', 'order', 'order__event', 'order__event__organizer', 'seat')
         else:
             qs = qs.prefetch_related(
                 'checkins',
@@ -1077,11 +1082,15 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
     def download(self, request, output, **kwargs):
         provider = self._get_output_provider(output)
         pos = self.get_object()
+        badge_download = (
+            output == 'badge' and 'eventyay.plugins.badges' in self.request.event.plugins
+        )
 
-        if pos.order.status != Order.STATUS_PAID:
-            raise PermissionDenied('Downloads are not available for unpaid orders.')
-        if not pos.generate_ticket:
-            raise PermissionDenied('Downloads are not enabled for this product.')
+        if not badge_download:
+            if pos.order.status != Order.STATUS_PAID:
+                raise PermissionDenied('Downloads are not available for unpaid orders.')
+            if not pos.generate_ticket:
+                raise PermissionDenied('Downloads are not enabled for this product.')
 
         ct = CachedTicket.objects.filter(order_position=pos, provider=provider.identifier, file__isnull=False).last()
         if not ct or not ct.file:
@@ -1123,6 +1132,24 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                 {'detail': 'Method "PUT" not allowed.'},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
+        if 'badge_hidden_fields' in request.data:
+            from django.core.exceptions import ValidationError as DjangoValidationError
+
+            from eventyay.plugins.badges.utils import save_badge_hidden_fields, validate_badge_hidden_fields
+
+            op = self.get_object()
+            try:
+                hidden_fields = validate_badge_hidden_fields(
+                    op.order.event,
+                    op,
+                    request.data.get('badge_hidden_fields'),
+                )
+            except DjangoValidationError as exc:
+                raise ValidationError(exc.messages)
+
+            save_badge_hidden_fields(op, hidden_fields)
+            serializer = CheckinListOrderPositionSerializer(op, context=self.get_serializer_context())
+            return Response(serializer.data)
         return super().update(request, *args, **kwargs)
 
     def perform_update(self, serializer):

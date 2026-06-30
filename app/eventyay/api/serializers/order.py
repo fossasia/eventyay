@@ -294,7 +294,9 @@ class PositionDownloadsField(serializers.Field):
                 or not instance.order.event.settings.ticket_download_pending
             ):
                 return []
-        if not instance.generate_ticket:
+
+        has_badges_plugin = 'eventyay.plugins.badges' in instance.order.event.plugins
+        if not instance.generate_ticket and not has_badges_plugin:
             return []
 
         request = self.context['request']
@@ -302,22 +304,30 @@ class PositionDownloadsField(serializers.Field):
         responses = register_ticket_outputs.send(instance.order.event)
         for receiver, response in responses:
             provider = response(instance.order.event)
-            if provider.is_enabled:
-                res.append(
-                    {
-                        'output': provider.identifier,
-                        'url': reverse(
-                            'api-v1:orderposition-download',
-                            kwargs={
-                                'organizer': instance.order.event.organizer.slug,
-                                'event': instance.order.event.slug,
-                                'pk': instance.pk,
-                                'output': provider.identifier,
-                            },
-                            request=request,
-                        ),
-                    }
-                )
+            if not provider.is_enabled:
+                continue
+            if provider.identifier != 'badge' and not instance.generate_ticket:
+                continue
+            if provider.identifier == 'badge':
+                from eventyay.plugins.badges.utils import get_badge_layout_for_position
+
+                if not get_badge_layout_for_position(instance.order.event, instance):
+                    continue
+            res.append(
+                {
+                    'output': provider.identifier,
+                    'url': reverse(
+                        'api-v1:orderposition-download',
+                        kwargs={
+                            'organizer': instance.order.event.organizer.slug,
+                            'event': instance.order.event.slug,
+                            'pk': instance.pk,
+                            'output': provider.identifier,
+                        },
+                        request=request,
+                    ),
+                }
+            )
         return res
 
 
@@ -477,6 +487,17 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
                 )
         return data
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not data.get('attendee_email'):
+            data['attendee_email'] = instance.order.email or ''
+        if not data.get('company'):
+            try:
+                data['company'] = instance.order.invoice_address.company or ''
+            except InvoiceAddress.DoesNotExist:
+                pass
+        return data
+
     def update(self, instance, validated_data):
         # Even though all fields that shouldn't be edited are marked as read_only in the serializer
         # (hopefully), we'll be extra careful here and be explicit about the model fields we update.
@@ -567,11 +588,55 @@ class AttendeeNamePartsField(serializers.Field):
         return p
 
 
+class AttendeeEmailField(serializers.Field):
+    def to_representation(self, instance: OrderPosition):
+        email = instance.attendee_email
+        if not email:
+            email = instance.order.email
+        return email or ''
+
+
 class CheckinListOrderPositionSerializer(OrderPositionSerializer):
     require_attention = serializers.BooleanField(source='require_checkin_attention', read_only=True)
     attendee_name = AttendeeNameField(source='*')
     attendee_name_parts = AttendeeNamePartsField(source='*')
+    attendee_email = AttendeeEmailField(source='*')
     order__status = serializers.SlugRelatedField(read_only=True, slug_field='status', source='order')
+    admission_valid_from = serializers.SerializerMethodField(read_only=True)
+    admission_valid_until = serializers.SerializerMethodField(read_only=True)
+    badge_customization = serializers.SerializerMethodField(read_only=True)
+
+    def _issued_admission_bounds(self, obj):
+        from eventyay.base.admission_validity import get_issued_admission_bounds
+
+        return get_issued_admission_bounds(obj)
+
+    def get_admission_valid_from(self, obj):
+        return self._issued_admission_bounds(obj)[0]
+
+    def get_admission_valid_until(self, obj):
+        return self._issued_admission_bounds(obj)[1]
+
+    def get_badge_customization(self, obj):
+        if 'eventyay.plugins.badges' not in obj.order.event.plugins:
+            return None
+        from eventyay.plugins.badges.utils import (
+            get_badge_bundle_option_choices,
+            get_badge_hidden_fields,
+            get_badge_layout_for_position,
+        )
+
+        layout = get_badge_layout_for_position(obj.order.event, obj)
+        if not layout or not layout.allow_customization:
+            return None
+        return {
+            'allow_customization': True,
+            'fields': [
+                {'key': key, 'label': label}
+                for key, label in get_badge_bundle_option_choices(obj.order.event, obj)
+            ],
+            'hidden_fields': get_badge_hidden_fields(obj),
+        }
 
     class Meta:
         model = OrderPosition
@@ -607,6 +672,9 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
             'seat',
             'require_attention',
             'order__status',
+            'admission_valid_from',
+            'admission_valid_until',
+            'badge_customization',
         )
 
     def __init__(self, *args, **kwargs):
