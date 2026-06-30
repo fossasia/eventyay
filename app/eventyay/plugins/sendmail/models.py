@@ -126,7 +126,10 @@ class EmailQueue(models.Model):
 
         recipients = self.recipients.all()
         if not recipients.exists():
-            return False  # Nothing to send
+            if self.scheduled_at is not None:
+                self.scheduled_at = None
+                self.save(update_fields=['scheduled_at'])
+            return False
 
         subject = LazyI18nString(self.subject)
         message = LazyI18nString(self.message)
@@ -158,7 +161,12 @@ class EmailQueue(models.Model):
 
     def _finalize_send_status(self):
         self.sent_at = now() if all(r.sent for r in self.recipients.all()) else None
-        self.save(update_fields=["sent_at"])
+        # Clear scheduled_at after the first send attempt so the periodic poller
+        # does not keep picking this row up when some recipients permanently
+        # failed (bounces, invalid addresses). Users can still retry failed
+        # recipients manually from the outbox.
+        self.scheduled_at = None
+        self.save(update_fields=["sent_at", "scheduled_at"])
 
     def _send_to_recipient(self, recipient, subject, message, async_send=True):
         email = recipient.email
