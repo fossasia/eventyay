@@ -56,9 +56,9 @@ const asyncTask = (() => {
                 }
                 if (isLong) {
                     if (data.started) {
-                        setStatus('Your request is currently being processed. Depending on the size of your event, this might take up to a few minutes.')
+                        setStatus(gettext('Your request is currently being processed. Depending on the size of your event, this might take up to a few minutes.'))
                     } else {
-                        setStatus('Your request has been queued on the server and will soon be processed.')
+                        setStatus(gettext('Your request has been queued on the server and will soon be processed.'))
                     }
                 }
                 pollTimeout = setTimeout(poll, 250)
@@ -69,10 +69,10 @@ const asyncTask = (() => {
     }
 
     const submit = (form) => {
-        const headline = form.dataset.asynctaskHeadline || 'We are processing your request \u2026'
+        const headline = form.dataset.asynctaskHeadline || gettext('We are processing your request …')
         isLong = form.hasAttribute('data-asynctask-long')
         show(headline)
-        setStatus('We are currently sending your request to the server.')
+        setStatus(gettext('We are currently sending your request to the server.'))
 
         const body = new URLSearchParams(new FormData(form))
         body.append('ajax', '1')
@@ -92,13 +92,13 @@ const asyncTask = (() => {
                 taskId = data.async_id
                 checkUrl = data.check_url
                 if (isLong && data.started) {
-                    setStatus('Your request is currently being processed. Depending on the size of your event, this might take up to a few minutes.')
+                    setStatus(gettext('Your request is currently being processed. Depending on the size of your event, this might take up to a few minutes.'))
                 }
                 pollTimeout = setTimeout(poll, 100)
             })
             .catch(() => {
                 hide()
-                alert('An error occurred. Please try again.')
+                alert(gettext('An error occurred. Please try again.'))
             })
     }
 
