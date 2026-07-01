@@ -179,10 +179,14 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         if not self.event:
             return []
         request = self.context.get('request')
-        if (
-            request
-            and is_reviewer_only_for_event(request.user, self.event)
-            and not can_view_speaker_names(request.user, self.event)
+        from eventyay.talk_rules.orga import enforces_hide_speaker_names
+
+        if request and (
+            enforces_hide_speaker_names(request.user, self.event)
+            or (
+                is_reviewer_only_for_event(request.user, self.event)
+                and not can_view_speaker_names(request.user, self.event)
+            )
         ):
             return []
         profiles = SpeakerProfile.objects.filter(event=self.event, user__in=obj.speakers.all()).distinct()

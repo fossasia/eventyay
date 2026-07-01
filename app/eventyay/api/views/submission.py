@@ -289,10 +289,11 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         can_view_speakers = self.request.user.has_perm(
             'schedule.list_schedule', self.event
         ) or self.request.user.has_perm('base.orga_list_speakerprofile', self.event)
-        from eventyay.talk_rules.orga import can_view_speaker_names
+        from eventyay.talk_rules.orga import can_view_speaker_names, enforces_hide_speaker_names
 
-        if self.request.user.has_perm('base.orga_list_submission', self.event) and not can_view_speaker_names(
-            self.request.user, self.event
+        if self.request.user.has_perm('base.orga_list_submission', self.event) and (
+            enforces_hide_speaker_names(self.request.user, self.event)
+            or not can_view_speaker_names(self.request.user, self.event)
         ):
             can_view_speakers = False
         if self.request.query_params.get('anon'):

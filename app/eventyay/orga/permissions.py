@@ -9,6 +9,10 @@ from eventyay.talk_rules.person import is_reviewer
 rules.add_perm('base.change_settings', can_change_event_settings)
 
 rules.add_perm(
-    'base.orga_view_speaker_emails', 
-    ~enforces_hide_speaker_emails & ~enforces_hide_speaker_names & (orga_can_change_submissions | (is_reviewer & can_view_speaker_emails))
+    'base.orga_view_speaker_emails',
+    (
+        ~enforces_hide_speaker_emails
+        & ~enforces_hide_speaker_names
+        & (orga_can_change_submissions | (is_reviewer & can_view_speaker_emails))
+    ),
 )

@@ -299,8 +299,8 @@ def can_be_reviewed(user, obj):
 def _reviewer_teams_for_event(user, event):
     return user.teams.filter(
         Q(all_events=True) | Q(limit_events=event),
+        organizer=event.organizer,
         is_reviewer=True,
-        members__in=[user],
     )
 
 
