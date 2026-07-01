@@ -727,7 +727,7 @@ def test_compose_session_mail_does_not_duplicate_template(
     orga_client, event, mail_template, other_submission
 ):
     with scope(event=event):
-        template_count = event.mail_templates.filter(is_auto_created=False).count()
+        template_count = event.mail_templates.count()
         QueuedMail.objects.filter(sent__isnull=True).delete()
     response = orga_client.post(
         event.orga_urls.compose_mails_sessions + f'?template={mail_template.pk}',
@@ -742,7 +742,7 @@ def test_compose_session_mail_does_not_duplicate_template(
     )
     assert response.status_code == 200
     with scope(event=event):
-        assert event.mail_templates.filter(is_auto_created=False).count() == template_count
+        assert event.mail_templates.count() == template_count
         mail = QueuedMail.objects.get(sent__isnull=True)
         assert mail.template_id == mail_template.pk
 
@@ -752,7 +752,7 @@ def test_compose_session_mail_with_edited_content_does_not_duplicate_template(
     orga_client, event, mail_template, other_submission
 ):
     with scope(event=event):
-        template_count = event.mail_templates.filter(is_auto_created=False).count()
+        template_count = event.mail_templates.count()
         QueuedMail.objects.filter(sent__isnull=True).delete()
     response = orga_client.post(
         event.orga_urls.compose_mails_sessions + f'?template={mail_template.pk}',
@@ -767,7 +767,7 @@ def test_compose_session_mail_with_edited_content_does_not_duplicate_template(
     )
     assert response.status_code == 200
     with scope(event=event):
-        assert event.mail_templates.filter(is_auto_created=False).count() == template_count
+        assert event.mail_templates.count() == template_count
         mail_template.refresh_from_db()
         assert str(mail_template.subject) == 'Some Mail'
         mail = QueuedMail.objects.get(sent__isnull=True)
@@ -780,7 +780,7 @@ def test_compose_teams_mail_does_not_duplicate_template(
     orga_client, review_user, event, mail_template
 ):
     with scope(event=event):
-        template_count = event.mail_templates.filter(is_auto_created=False).count()
+        template_count = event.mail_templates.count()
     djmail.outbox = []
     response = orga_client.post(
         event.orga_urls.compose_mails_teams + f'?template={mail_template.pk}',
@@ -793,7 +793,7 @@ def test_compose_teams_mail_does_not_duplicate_template(
     )
     assert response.status_code == 200
     with scope(event=event):
-        assert event.mail_templates.filter(is_auto_created=False).count() == template_count
+        assert event.mail_templates.count() == template_count
 
 
 @pytest.mark.django_db

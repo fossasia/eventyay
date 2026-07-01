@@ -206,8 +206,7 @@ class WriteMailBaseForm(MailTemplateForm):
         return template
 
     def attach_template_reference(self, mail):
-        if self.source_template and self.source_template.pk:
-            mail.template = self.source_template
+        mail.template = self.source_template if (self.source_template and self.source_template.pk) else None
 
 
 class WriteTeamsMailForm(WriteMailBaseForm):
