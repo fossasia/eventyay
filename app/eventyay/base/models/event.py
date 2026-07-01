@@ -179,7 +179,7 @@ def default_grants():
 JITSI_ROLE_PERMISSION_AUGMENTS = {
     'participant': [Permission.ROOM_JITSI_JOIN],
     'room_owner': [Permission.ROOM_JITSI_JOIN],
-    'speaker': [Permission.ROOM_JITSI_JOIN],
+    'speaker': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
     'moderator': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
     'admin': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
     'apiuser': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],

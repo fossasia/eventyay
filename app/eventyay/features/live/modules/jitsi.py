@@ -1,8 +1,8 @@
 import logging
 import time
 
-from channels.db import database_sync_to_async
 import jwt
+from channels.db import database_sync_to_async
 
 from eventyay.base.services.jitsi import (
     JitsiServerUnavailable,
@@ -99,6 +99,7 @@ class JitsiModule(BaseModule):
                 {
                     "disableRemoteMute": True,
                     "disableInviteFunctions": True,
+                    "disableModeratorIndicator": True,
                     "toolbarButtons": JITSI_PARTICIPANT_TOOLBAR_BUTTONS,
                 }
             )

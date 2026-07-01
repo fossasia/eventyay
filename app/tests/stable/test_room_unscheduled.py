@@ -41,7 +41,7 @@ def test_stale_event_roles_are_augmented_with_jitsi_permissions():
 
     assert Permission.ROOM_JITSI_JOIN.value in roles['participant']
     assert Permission.ROOM_JITSI_JOIN.value in roles['speaker']
-    assert Permission.ROOM_JITSI_MODERATE.value not in roles['speaker']
+    assert Permission.ROOM_JITSI_MODERATE.value in roles['speaker']
     assert Permission.ROOM_JITSI_MODERATE.value in roles['moderator']
 
 

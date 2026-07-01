@@ -99,10 +99,22 @@ const module = computed(() => {
 	);
 });
 
+const isLivestreamModule = computed(() =>
+	[
+		'livestream.native',
+		'livestream.youtube',
+		'livestream.iframe',
+	].includes(module.value?.type)
+);
+
+const isScheduleDrivenStage = computed(() =>
+	isLivestreamModule.value &&
+	getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN
+);
+
 const shouldUseLivestream = computed(() => {
 	if (!props.room || !module.value) return false;
-	const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
-	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 
 	if (streamType) {
 		return streamType === STREAM_TYPE_HLS;
@@ -121,7 +133,7 @@ const iframeOffline = computed(() => {
 	if (!props.room || !module.value) return false;
 	if (shouldUseLivestream.value) return false;
 
-	const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
+	const isScheduleDriven = isScheduleDrivenStage.value;
 	const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
@@ -215,8 +227,7 @@ watch(
 
 watch(youtubeTransUrl, async (audioSource) => {
 	if (!props.room) return;
-	const isScheduleDriven = module.value && getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
-	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || module.value?.type === 'livestream.youtube';
 	if (!isYouTube) return;
 
@@ -328,7 +339,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		let hideIfBackground = false;
 		let isYouTube = false;
 		let jitsiConfig = null;
-		const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
+		const isScheduleDriven = isScheduleDrivenStage.value;
 		const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 		const streamType = currentStream?.stream_type;
 		const effectiveModuleType = streamType === STREAM_TYPE_YOUTUBE
