@@ -326,6 +326,7 @@ def resolve_checkin_api_error(error):
         'product': ('error', 'product', 400),
         'subevent': ('error', 'subevent', 400),
         'unpaid': ('error', 'unpaid', 400),
+        'canceled': ('error', 'canceled', 400),
         'rules': ('error', 'rules', 400),
     }
     return mapping.get(error.code, ('error', error.code, 400))
@@ -344,7 +345,7 @@ def checkin_error_response_data(error):
 def checkin_reason_explanation(error, position, event):
     if error.code == 'invalid_time':
         return format_issued_admission_validity(position, event) or str(error)
-    if error.code in ('rules', 'checkout_required'):
+    if error.code in ('rules', 'checkout_required', 'product', 'subevent', 'unpaid', 'canceled'):
         return str(error)
     return None
 
@@ -512,9 +513,18 @@ def perform_checkin(
     """
     dt = datetime or now()
 
-    if op.canceled or op.order.status not in (Order.STATUS_PAID, Order.STATUS_PENDING):
+    if op.canceled:
         raise CheckInError(
-            _('This order position has been canceled.'),
+            _('This ticket has been canceled and cannot be used for check-in.'),
+            'canceled' if canceled_supported else 'unpaid',
+        )
+    if op.order.status not in (Order.STATUS_PAID, Order.STATUS_PENDING):
+        if op.order.status == Order.STATUS_CANCELED:
+            msg = _('This order was canceled. Check-in is not allowed.')
+        else:
+            msg = _('This order cannot be checked in.')
+        raise CheckInError(
+            msg,
             'canceled' if canceled_supported else 'unpaid',
         )
 
@@ -531,11 +541,17 @@ def perform_checkin(
 
     with transaction.atomic():
         # Lock order positions
-        op = OrderPosition.all.select_for_update().get(pk=op.pk)
+        op = OrderPosition.all.select_for_update().select_related('product').get(pk=op.pk)
+
+        if type == Checkin.TYPE_ENTRY and not force and not op.product.admission:
+            raise CheckInError(
+                _('This product does not grant admission.'),
+                'product',
+            )
 
         if not clist.all_products and op.product_id not in [i.pk for i in clist.limit_products.all()]:
             raise CheckInError(
-                _('This order position has an invalid product for this check-in list.'),
+                _('This ticket type is not accepted at this check-in list.'),
                 'product',
             )
         elif clist.subevent_id and op.subevent_id != clist.subevent_id:

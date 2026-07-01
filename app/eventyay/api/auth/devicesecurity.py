@@ -71,9 +71,12 @@ _CHECKIN_CORE_ALLOWLIST = (
     ('POST', 'api-v1:checkinlistpos-redeem'),
     ('POST', 'api-v1:checkin.redeem'),
     ('GET', 'api-v1:orderposition-list'),
+    ('GET', 'api-v1:orderposition-detail'),
     ('PATCH', 'api-v1:orderposition-detail'),
     ('GET', 'api-v1:orderposition-download'),
     ('GET', 'api-v1:orderposition-answer'),
+    ('GET', 'api-v1:order-detail'),
+    ('GET', 'api-v1:order-download'),
     ('POST', 'api-v1:upload'),
     ('GET', 'badges:api-badge-download'),
     ('GET', 'plugins:badges:api-badge-download'),
@@ -97,7 +100,7 @@ class EventyayCheckinSecurityProfile(AllowListSecurityProfile):
         'Ticket check-in, attendee search and edits, live registration, and badge printing.'
     )
     includes_profiles = ('eventyay_checkin_online_kiosk',)
-    allowlist = _CHECKIN_STAFF_EXTRA_ALLOWLIST
+    allowlist = _CHECKIN_CORE_ALLOWLIST + _CHECKIN_STAFF_EXTRA_ALLOWLIST
 
 
 class EventyayCheckinNoSyncSecurityProfile(AllowListSecurityProfile):

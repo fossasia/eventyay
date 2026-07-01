@@ -146,22 +146,45 @@ def validate_badge_field_overrides(event, position, field_overrides):
     return normalized
 
 
-def save_badge_customization(position, *, hidden_fields=None, field_overrides=None):
-    from eventyay.base.models import CachedFile
+def _invalidate_badge_cache_for_position(position):
+    from eventyay.base.models import CachedFile, CachedTicket
 
+    position_ids = [bundle_position.pk for bundle_position in get_badge_bundle_positions(position)]
+    CachedTicket.objects.filter(
+        order_position_id__in=position_ids,
+        provider='badge',
+    ).delete()
+    for position_id in position_ids:
+        CachedFile.objects.filter(filename__startswith=f'badge_{position_id}_').delete()
+
+
+def save_badge_customization(position, *, hidden_fields=None, field_overrides=None):
     config_position = get_badge_config_position(position)
     meta = dict(config_position.meta_info_data or {})
     question_form_data = dict(meta.get('question_form_data', {}))
+    changed = False
 
     if hidden_fields is not None:
-        question_form_data[BADGE_HIDDEN_FIELDS_KEY] = list(hidden_fields)
+        new_hidden = list(hidden_fields)
+        current_hidden = get_badge_hidden_fields(position)
+        if sorted(new_hidden) != sorted(current_hidden):
+            question_form_data[BADGE_HIDDEN_FIELDS_KEY] = new_hidden
+            changed = True
+
     if field_overrides is not None:
-        question_form_data[BADGE_FIELD_OVERRIDES_KEY] = dict(field_overrides)
+        new_overrides = dict(field_overrides)
+        if new_overrides != get_badge_field_overrides(position):
+            question_form_data[BADGE_FIELD_OVERRIDES_KEY] = new_overrides
+            changed = True
+
+    if not changed:
+        return False
 
     meta['question_form_data'] = question_form_data
     config_position.meta_info_data = meta
     config_position.save(update_fields=['meta_info'])
-    CachedFile.objects.filter(filename__startswith=f'badge_{position.pk}_').delete()
+    _invalidate_badge_cache_for_position(position)
+    return True
 
 
 def get_badge_field_display_values(event, position):

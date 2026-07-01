@@ -669,6 +669,7 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
             'pdf_data',
             'seat',
             'require_attention',
+            'canceled',
             'order__status',
             'admission_valid_from',
             'admission_valid_until',
