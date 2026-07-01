@@ -163,7 +163,8 @@ class EmailBodyField(CharField):
         preview_url: str = '',
         **kwargs,
     ) -> None:
-        kwargs.setdefault('widget', EmailEditorWidget(placeholders=placeholders, preview_url=preview_url))
+        if 'widget' not in kwargs:
+            kwargs['widget'] = EmailEditorWidget(placeholders=placeholders, preview_url=preview_url)
         super().__init__(*args, **kwargs)
 
     def clean(self, value: str) -> str:

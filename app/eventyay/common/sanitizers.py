@@ -18,7 +18,7 @@ _RICH_TEXT_TAGS: frozenset[str] = frozenset({
 
 _EMAIL_TAGS: frozenset[str] = _RICH_TEXT_TAGS | frozenset({'span'})
 
-_LINK_ATTRIBUTES: dict[str, set[str]] = {'a': {'href', 'title'}}
+_LINK_ATTRIBUTES: dict[str, set[str]] = {'a': {'href'}}
 
 _EMAIL_ATTRIBUTES: dict[str, set[str]] = {
     **_LINK_ATTRIBUTES,

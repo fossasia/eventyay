@@ -220,7 +220,8 @@ def compile_email_body(source: str) -> str:
         return source
     source = str(source)
     if _is_tiptap_email_html(source):
-        return source
+        from eventyay.common.sanitizers import sanitize_email_html
+        return sanitize_email_html(source)
     return markdown_compile_email(source)
 
 

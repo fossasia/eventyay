@@ -9,7 +9,6 @@
  * the real loader tag as a fallback.
  */
 
-(() => {
   const resolveLoaderEl = () => {
     const cur = document.currentScript
     if (cur?.dataset?.tiptapJs) return cur
@@ -80,4 +79,3 @@
   } else {
     boot()
   }
-})()
