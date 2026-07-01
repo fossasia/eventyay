@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
 from eventyay.api.auth.devicesecurity import DEVICE_SECURITY_PROFILES
@@ -23,13 +24,25 @@ from eventyay.control.views.organizer_views.organizer_detail_view_mixin import (
 
 
 def _device_event_navigation_context(request, *, current_label=None):
-    slug = request.GET.get('from_event') or request.session.get('device_return_event')
-    if not slug:
+    slug = request.GET.get('from_event')
+    if slug:
+        event = request.organizer.events.filter(slug=slug).first()
+        if not event:
+            request.session.pop('device_return_event', None)
+            return {}
+        request.session['device_return_event'] = slug
+    elif request.method == 'GET':
+        request.session.pop('device_return_event', None)
         return {}
-    event = request.organizer.events.filter(slug=slug).first()
-    if not event:
-        return {}
-    request.session['device_return_event'] = slug
+    else:
+        slug = request.session.get('device_return_event')
+        if not slug:
+            return {}
+        event = request.organizer.events.filter(slug=slug).first()
+        if not event:
+            request.session.pop('device_return_event', None)
+            return {}
+
     devices_url = reverse(
         'eventyay_common:organizer.devices',
         kwargs={'organizer': request.organizer.slug},
@@ -41,6 +54,7 @@ def _device_event_navigation_context(request, *, current_label=None):
             kwargs={'organizer': request.organizer.slug, 'event': slug},
         ),
         'organizer_devices_url': f'{devices_url}?from_event={slug}',
+        'device_from_event_query': f'?from_event={slug}',
     }
     if current_label is not None:
         ctx['device_nav_current'] = current_label
@@ -56,9 +70,14 @@ def _devices_success_url(request):
         'eventyay_common:organizer.devices',
         kwargs={'organizer': request.organizer.slug},
     )
+    return _append_device_from_event(request, url)
+
+
+def _append_device_from_event(request, url):
     slug = request.session.get('device_return_event')
     if slug and request.organizer.events.filter(slug=slug).exists():
-        return f'{url}?from_event={slug}'
+        separator = '&' if '?' in url else '?'
+        return f'{url}{separator}from_event={slug}'
     return url
 
 
@@ -71,6 +90,32 @@ def _device_security_profiles_context():
         for profile in DEVICE_SECURITY_PROFILES.values()
         if getattr(profile, 'usage_description', None)
     ]
+
+
+def _reset_device_setup(device, *, user=None, auth=None):
+    had_active_session = bool(device.api_token and device.initialized)
+    device.initialization_token = generate_initialization_token()
+    device.api_token = None
+    device.initialized = None
+    device.revoked = False
+    device.save(
+        update_fields=['initialization_token', 'api_token', 'initialized', 'revoked']
+    )
+    device.log_action(
+        'eventyay.device.setup_token_reset',
+        user=user,
+        auth=auth,
+        data={'had_active_session': had_active_session},
+    )
+    return had_active_session
+
+
+def _device_connect_url(request, device_pk):
+    url = reverse(
+        'eventyay_common:organizer.devices.connect',
+        kwargs={'organizer': request.organizer.slug, 'device': device_pk},
+    )
+    return _append_device_from_event(request, url)
 
 
 class DeviceCreateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, CreateView):
@@ -91,10 +136,7 @@ class DeviceCreateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
         return ctx
 
     def get_success_url(self):
-        return reverse(
-            'eventyay_common:organizer.devices.connect',
-            kwargs={'organizer': self.request.organizer.slug, 'device': self.object.pk},
-        )
+        return _device_connect_url(self.request, self.object.pk)
 
     def form_valid(self, form):
         form.instance.organizer = self.request.organizer
@@ -187,12 +229,7 @@ class DeviceUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
         return ctx
 
     def get_success_url(self):
-        return reverse(
-            'eventyay_common:organizer.devices',
-            kwargs={
-                'organizer': self.request.organizer.slug,
-            },
-        )
+        return _devices_success_url(self.request)
 
     def form_valid(self, form):
         if form.has_changed():
@@ -229,20 +266,7 @@ class DeviceConnectView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMix
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        had_active_session = bool(self.object.api_token and self.object.initialized)
-
-        self.object.initialization_token = generate_initialization_token()
-        self.object.api_token = None
-        self.object.initialized = None
-        self.object.revoked = False
-        self.object.save(
-            update_fields=['initialization_token', 'api_token', 'initialized', 'revoked']
-        )
-        self.object.log_action(
-            'eventyay.device.setup_token_reset',
-            user=self.request.user,
-            data={'had_active_session': had_active_session},
-        )
+        had_active_session = _reset_device_setup(self.object, user=self.request.user)
         if had_active_session:
             messages.success(
                 request,
@@ -253,12 +277,7 @@ class DeviceConnectView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMix
             )
         else:
             messages.success(request, _('A new setup code has been generated. Scan or enter the updated QR code.'))
-        return redirect(
-            reverse(
-                'eventyay_common:organizer.devices.connect',
-                kwargs={'organizer': self.request.organizer.slug, 'device': self.object.pk},
-            )
-        )
+        return redirect(_device_connect_url(request, self.object.pk))
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -288,6 +307,25 @@ class DeviceConnectView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMix
         return ctx
 
 
+class DeviceRegenerateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, View):
+    permission = 'can_change_organizer_settings'
+
+    def post(self, request, *args, **kwargs):
+        device = get_object_or_404(Device, organizer=request.organizer, pk=kwargs.get('device'))
+        had_active_session = _reset_device_setup(device, user=request.user)
+        if had_active_session:
+            messages.success(
+                request,
+                _(
+                    'A new setup code has been generated. This device has been disconnected and must '
+                    'be registered again with the updated QR code.'
+                ),
+            )
+        else:
+            messages.success(request, _('A new setup code has been generated. Scan or enter the updated QR code.'))
+        return redirect(_device_connect_url(request, device.pk))
+
+
 class DeviceRevokeView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, DetailView):
     model = Device
     template_name = 'pretixcontrol/organizers/device_revoke.html'
@@ -300,7 +338,7 @@ class DeviceRevokeView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(
-            _device_return_checkinlists_context(self.request, current_label=_('Revoke access'))
+            _device_return_checkinlists_context(self.request, current_label=_('Revoke'))
         )
         ctx['devices_url'] = _devices_success_url(self.request)
         return ctx

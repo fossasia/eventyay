@@ -2,12 +2,12 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% block inner %}
-    {% include "pretixcontrol/organizers/device_event_nav.html" %}
     {% if device %}
         <h1>{% trans "Device:" %} {{ device.name }}</h1>
     {% else %}
         <h1>{% trans "Connect a new device" %}</h1>
     {% endif %}
+    {% include "pretixcontrol/organizers/device_event_nav.html" %}
     <form class="form-horizontal" action="" method="post">
         {% if device %}
             <div class="row">
@@ -62,6 +62,11 @@
             <button type="submit" class="btn btn-primary btn-save">
                 {% trans "Save" %}
             </button>
+            {% if organizer_devices_url %}
+                <a href="{{ organizer_devices_url }}" class="btn btn-default">
+                    {% trans "Cancel" %}
+                </a>
+            {% endif %}
         </div>
 
         {% if device %}

@@ -323,8 +323,12 @@ def resolve_checkin_api_error(error):
         'already_redeemed': ('error', 'already_redeemed', 400),
         'checkout_required': ('error', 'checkout_required', 400),
         'invalid_time': ('error', 'invalid_time', 400),
+        'product': ('error', 'product', 400),
+        'subevent': ('error', 'subevent', 400),
+        'unpaid': ('error', 'unpaid', 400),
+        'rules': ('error', 'rules', 400),
     }
-    return mapping.get(error.code, ('error', str(error), 400))
+    return mapping.get(error.code, ('error', error.code, 400))
 
 
 def checkin_error_response_data(error):
@@ -535,7 +539,7 @@ def perform_checkin(
         elif clist.subevent_id and op.subevent_id != clist.subevent_id:
             raise CheckInError(
                 _('This order position has an invalid date for this check-in list.'),
-                'product',
+                'subevent',
             )
         elif (
             op.order.status != Order.STATUS_PAID

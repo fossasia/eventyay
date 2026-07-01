@@ -230,14 +230,6 @@ class CheckinListList(EventPermissionRequiredMixin, PaginationMixin, ListView):
         ctx['can_change_organizer_settings'] = self.request.user.has_organizer_permission(
             self.request.organizer, 'can_change_organizer_settings', self.request
         )
-        if ctx['can_change_organizer_settings']:
-            ctx['organizer_devices_url'] = (
-                reverse(
-                    'eventyay_common:organizer.devices',
-                    kwargs={'organizer': self.request.organizer.slug},
-                )
-                + f'?from_event={self.request.event.slug}'
-            )
 
         return ctx
 

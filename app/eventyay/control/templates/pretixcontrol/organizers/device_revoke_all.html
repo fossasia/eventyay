@@ -2,8 +2,8 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% block inner %}
-  {% include "pretixcontrol/organizers/device_event_nav.html" %}
   <h1>{% trans "Revoke and remove all devices" %}</h1>
+  {% include "pretixcontrol/organizers/device_event_nav.html" %}
   <form action="" method="post" class="form-horizontal">
     {% csrf_token %}
     <p>

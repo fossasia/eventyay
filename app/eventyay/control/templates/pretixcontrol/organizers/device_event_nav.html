@@ -1,20 +1,13 @@
 {% load i18n %}
 {% if return_checkinlists_url %}
-    <nav class="device-event-nav" aria-label="{% trans 'Event navigation' %}">
-        <ol class="breadcrumb device-event-breadcrumb">
-            <li>
-                <a href="{{ return_checkinlists_url }}">{% trans "Check-in lists" %}</a>
-            </li>
-            <li{% if not device_nav_current %} class="active"{% endif %}>
-                {% if device_nav_current %}
-                    <a href="{{ organizer_devices_url }}">{% trans "Connected devices" %}</a>
-                {% else %}
-                    {% trans "Connected devices" %}
-                {% endif %}
-            </li>
-            {% if device_nav_current %}
-                <li class="active">{{ device_nav_current }}</li>
-            {% endif %}
-        </ol>
-    </nav>
+    <p class="clearfix device-page-actions device-subpage-nav">
+        <a href="{{ return_checkinlists_url }}" class="btn btn-default">
+            <i class="fa fa-arrow-left"></i> {% trans "Return to check-in lists" %}
+        </a>
+        {% if organizer_devices_url and device_nav_current %}
+            <a href="{{ organizer_devices_url }}" class="btn btn-default">
+                {% trans "Connected devices" %}
+            </a>
+        {% endif %}
+    </p>
 {% endif %}

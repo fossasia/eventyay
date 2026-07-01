@@ -8,13 +8,6 @@
                 <h1>{% trans "Check-in lists" %}</h1>
             </div>
             {% include "pretixcontrol/event/component_link.html" %}
-            {% if can_change_organizer_settings and organizer_devices_url %}
-                <div class="navigation-button">
-                    <a href="{{ organizer_devices_url }}" class="header-nav btn btn-outline-success">
-                        <i class="fa fa-tablet"></i> {% trans "Connected devices" %}
-                    </a>
-                </div>
-            {% endif %}
         </div>
     </nav>
     <p>

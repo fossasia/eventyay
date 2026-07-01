@@ -819,6 +819,12 @@ $(function () {
         e.stopPropagation();
         return false;
     });
+    $(document).on("submit", "form.device-regenerate-form", function (e) {
+        var msg = $(this).data("confirm");
+        if (msg && !window.confirm(msg)) {
+            e.preventDefault();
+        }
+    });
     if ($(".items-on-quota").length) {
         $(".items-on-quota .panel").each(function () {
             var $panel = $(this);
