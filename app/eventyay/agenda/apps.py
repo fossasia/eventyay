@@ -37,7 +37,7 @@ class AgendaConfig(AppConfig):
             except Exception:
                 LOGGER.exception('Failed to enqueue warm_schedule_caches for schedule pk=%s', schedule.pk)
 
-        schedule_release.connect(on_schedule_release, dispatch_uid='agenda.on_schedule_release')
+        schedule_release.connect(on_schedule_release, dispatch_uid='agenda.on_schedule_release', weak=False)
 
         from eventyay.base.models import SubmissionStates
         from eventyay.submission.signals import submission_state_change
@@ -56,6 +56,7 @@ class AgendaConfig(AppConfig):
         submission_state_change.connect(
             on_submission_state_change,
             dispatch_uid='agenda.on_submission_state_change',
+            weak=False,
         )
 
 
