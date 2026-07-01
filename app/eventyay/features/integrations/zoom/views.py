@@ -14,7 +14,7 @@ from eventyay.base.models import Event
 
 
 def generate_signature(data):
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     payload = {
         "appKey": data["apiKey"],
         "sdkKey": data["apiKey"],

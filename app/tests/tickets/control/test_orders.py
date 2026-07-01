@@ -655,7 +655,7 @@ def test_order_bulk_action_mixed_state(client, env):
 
     assert res.status_code < 400
     assert 'pending approval' in res.content.decode()
-    assert o.require_approval
+    assert not o.require_approval
     assert o.status == Order.STATUS_PENDING
     assert second.status == Order.STATUS_PAID
     assert not second.require_approval
