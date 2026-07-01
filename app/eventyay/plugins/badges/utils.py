@@ -73,7 +73,14 @@ def validate_badge_hidden_fields(event, position, hidden_fields):
         raise ValidationError(_('Badge customization is not allowed for this ticket.'))
 
     allowed_keys = {key for key, _ in get_badge_bundle_option_choices(event, position)}
-    normalized = [str(value) for value in (hidden_fields or [])]
+    if hidden_fields is None:
+        normalized = []
+    elif isinstance(hidden_fields, str):
+        normalized = [hidden_fields]
+    elif isinstance(hidden_fields, (list, tuple)):
+        normalized = [str(value) for value in hidden_fields]
+    else:
+        raise ValidationError(_('badge_hidden_fields must be a list of field keys.'))
     invalid_keys = sorted({key for key in normalized if key not in allowed_keys})
     if invalid_keys:
         raise ValidationError(

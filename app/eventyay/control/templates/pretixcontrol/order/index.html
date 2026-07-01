@@ -356,7 +356,7 @@
                                 {% position_admission_validity_text line request.event as validity_text %}
                                 {% if validity_text %}
                                     <br/>
-                                    <span class="fa fa-clock-o fa-fw"></span>
+                                    <span class="fa fa-clock-o fa-fw" aria-hidden="true"></span>
                                     {% trans "Valid:" %} {{ validity_text }}
                                 {% endif %}
                                 {% if not line.canceled %}

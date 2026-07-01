@@ -450,6 +450,8 @@ def _entry_limit_violated(op, clist, dt, gate):
         return False
 
     last_ci = op.checkins.order_by('-datetime').filter(list=clist).only('type').first()
+    # After an exit scan, allow_entry_after_exit may permit re-entry; skip limit check here
+    # so entry limits apply only while the attendee is considered inside the venue.
     if last_ci and last_ci.type == Checkin.TYPE_EXIT:
         return False
 

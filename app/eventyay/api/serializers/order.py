@@ -602,20 +602,9 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
     attendee_name_parts = AttendeeNamePartsField(source='*')
     attendee_email = AttendeeEmailField(source='*')
     order__status = serializers.SlugRelatedField(read_only=True, slug_field='status', source='order')
-    admission_valid_from = serializers.SerializerMethodField(read_only=True)
-    admission_valid_until = serializers.SerializerMethodField(read_only=True)
+    admission_valid_from = serializers.DateTimeField(read_only=True)
+    admission_valid_until = serializers.DateTimeField(read_only=True)
     badge_customization = serializers.SerializerMethodField(read_only=True)
-
-    def _issued_admission_bounds(self, obj):
-        from eventyay.base.admission_validity import get_issued_admission_bounds
-
-        return get_issued_admission_bounds(obj)
-
-    def get_admission_valid_from(self, obj):
-        return self._issued_admission_bounds(obj)[0]
-
-    def get_admission_valid_until(self, obj):
-        return self._issued_admission_bounds(obj)[1]
 
     def get_badge_customization(self, obj):
         if 'eventyay.plugins.badges' not in obj.order.event.plugins:
