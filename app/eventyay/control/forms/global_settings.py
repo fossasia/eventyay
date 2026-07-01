@@ -3,7 +3,7 @@ from typing import List, Union
 
 from django import forms
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
@@ -406,6 +406,20 @@ class GlobalSettingsForm(SettingsForm):
                         decimal_places=2,
                         max_digits=10,
                         help_text=_('A percentage fee will be charged for each ticket sold.'),
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
+                    ),
+                ),
+                (
+                    'ticket_fee_max',
+                    forms.DecimalField(
+                        label=_('Maximum fee'),
+                        required=False,
+                        decimal_places=2,
+                        max_digits=13,
+                        help_text=_(
+                            'The maximum service fee amount that can be charged per billing cycle. '
+                            'Set to 0 for no limit.'
+                        ),
                         validators=[MinValueValidator(0)],
                     ),
                 ),
@@ -503,6 +517,7 @@ class GlobalSettingsForm(SettingsForm):
             ]),
             ('ticket_fee', _('Ticket fee'), [
                 'ticket_fee_percentage',
+                'ticket_fee_max',
             ]),
             ('billing_validation', _('Billing validation'), [
                 'billing_validation',
@@ -618,6 +633,51 @@ class StartPageSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()
         super().__init__(*args, obj=self.obj, **kwargs)
+
+
+class TicketFeeCountryForm(forms.Form):
+    country = forms.ChoiceField(
+        label=_('Country'),
+        required=False,
+        help_text=_('Optional. Selecting a country auto-fills the currency.'),
+    )
+    currency = forms.ChoiceField(
+        label=_('Currency'),
+        required=True,
+        help_text=_('Currency is auto-filled when you select a country. Change only if needed.'),
+    )
+    service_fee_percentage = forms.DecimalField(
+        label=_('Service fee %'),
+        required=True,
+        decimal_places=2,
+        max_digits=10,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text=_('Percentage of total order amount charged as a platform fee (0–100). Set 0 for no fee.'),
+    )
+    max_fee = forms.DecimalField(
+        label=_('Maximum fee'),
+        required=True,
+        decimal_places=2,
+        max_digits=13,
+        validators=[MinValueValidator(0)],
+        help_text=_('Cap on the fee in the selected currency. Set 0 for no limit.'),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from django.conf import settings as django_settings
+        from eventyay.helpers.countries import FastCountryField
+        country_field = FastCountryField()
+        self.fields['country'].choices = [('', _('— Select country —'))] + list(
+            country_field.get_choices(include_blank=False)
+        )
+        self.fields['currency'].choices = [('', _('— Select currency —'))] + [
+            (c.alpha_3, f'{c.alpha_3} – {c.name}')
+            for c in django_settings.CURRENCIES
+        ]
+        for field in self.fields.values():
+            field.widget.attrs.setdefault('form', 'country-fee-add-form')
+            field.widget.attrs.setdefault('class', 'form-control')
 
 
 class StripeKeyValidator:

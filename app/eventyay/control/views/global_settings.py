@@ -20,14 +20,16 @@ from python_http_client.exceptions import HTTPError
 from eventyay.api.models import OAuthApplication
 from eventyay.base.email import CustomSMTPBackend, SendGridEmail
 from eventyay.base.models import LogEntry, OrderPayment, OrderRefund
+from eventyay.base.models.billing import TicketFeeCountrySetting
 from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.global_settings import (
     GlobalSettingsForm,
     SSOConfigForm,
-    UpdateSettingsForm,
     StartPageSettingsForm,
+    TicketFeeCountryForm,
+    UpdateSettingsForm,
 )
 from eventyay.control.permissions import (
     AdministratorPermissionRequiredMixin,
@@ -40,6 +42,12 @@ logger = logging.getLogger(__name__)
 class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     template_name = 'pretixcontrol/global_settings.html'
     form_class = GlobalSettingsForm
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['country_fees'] = TicketFeeCountrySetting.objects.all()
+        ctx['country_fee_form'] = TicketFeeCountryForm()
+        return ctx
 
     def form_valid(self, form):
         form.save()
@@ -299,6 +307,39 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
 
         return redirect(reverse('eventyay_admin:admin.global.settings'))
 
+class TicketFeeCountryCreateView(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        form = TicketFeeCountryForm(request.POST)
+        if form.is_valid():
+            TicketFeeCountrySetting.objects.update_or_create(
+                currency=form.cleaned_data['currency'].upper(),
+                defaults={
+                    'country': form.cleaned_data['country'],
+                    'service_fee_percentage': form.cleaned_data['service_fee_percentage'],
+                    'max_fee': form.cleaned_data['max_fee'],
+                },
+            )
+            messages.success(request, _('Currency fee setting saved.'))
+        else:
+            field_errors = '; '.join(
+                '{}: {}'.format(form.fields[f].label if f in form.fields else f, ', '.join(errs))
+                for f, errs in form.errors.items()
+                if f != '__all__'
+            )
+            non_field = ', '.join(form.non_field_errors())
+            detail = ' | '.join(filter(None, [field_errors, non_field]))
+            messages.error(request, _('Could not save: %(errors)s') % {'errors': detail})
+        return redirect(reverse('eventyay_admin:admin.global.settings') + '#tab-ticket_fee')
+
+
+class TicketFeeCountryDeleteView(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        setting = get_object_or_404(TicketFeeCountrySetting, pk=pk)
+        setting.delete()
+        messages.success(request, _('Country fee setting deleted.'))
+        return redirect(reverse('eventyay_admin:admin.global.settings') + '#tab-ticket_fee')
+
+
 class LogDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         le = get_object_or_404(LogEntry, pk=request.GET.get('pk'))
@@ -315,3 +356,5 @@ class RefundDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         p = get_object_or_404(OrderRefund, pk=request.GET.get('pk'))
         return JsonResponse({'data': p.info_data})
+
+

@@ -6,6 +6,7 @@
 
 {% block custom_header %}
     <script type="text/javascript" src="{% static "move-email-elements/moveEmailElements.js" %}"></script>
+    <script type="text/javascript" src="{% static "pretixcontrol/js/country_currency_map.js" %}"></script>
 {% endblock %}
 
 {% block inner %}
@@ -15,7 +16,7 @@
         <ul class="nav nav-tabs" role="tablist">
             {% for group_key, group_label, field_names in form.field_groups %}
                 <li role="presentation" class="{% if forloop.first %}active{% endif %}">
-                    <a href="#tab{{ forloop.counter }}" aria-controls="tab{{ forloop.counter }}" role="tab" data-toggle="tab">
+                    <a href="#tab-{{ group_key }}" aria-controls="tab-{{ group_key }}" role="tab" data-toggle="tab">
                         {{ group_label }}
                     </a>
                 </li>
@@ -24,7 +25,7 @@
 
         <div class="tab-content">
             {% for group_key, group_label, field_names in form.field_groups %}
-                <div role="tabpanel" class="tab-pane {% if forloop.first %}active{% endif %}" id="tab{{ forloop.counter }}">
+                <div role="tabpanel" class="tab-pane {% if forloop.first %}active{% endif %}" id="tab-{{ group_key }}">
                     {% if group_key == "payment_gateways" %}
                         <fieldset class="payment-gateway-section">
                             <legend>{% translate "Stripe — Organizer Billing" %}</legend>
@@ -213,6 +214,95 @@
                                 </span>
                             </div>
                         </div>
+                    {% elif group_key == "ticket_fee" %}
+                        {% for field_name in field_names %}
+                            {% with form|getitem:field_name as field %}
+                                {% bootstrap_field field layout='control' %}
+                            {% endwith %}
+                        {% endfor %}
+
+                        <hr>
+                        <h4>{% translate "Country-Specific Fee Overrides" %}</h4>
+                        <p class="help-block">
+                            {% translate "Country-specific settings take precedence over the global fee percentage and maximum fee above." %}
+                        </p>
+
+                        <table class="table table-condensed table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% translate "Country" %}</th>
+                                    <th>{% translate "Currency" %}</th>
+                                    <th>{% translate "Service fee %" %}</th>
+                                    <th>{% translate "Maximum fee" %}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cf in country_fees %}
+                                <tr>
+                                    <td>{{ cf.get_country_display }}</td>
+                                    <td>{{ cf.currency }}</td>
+                                    <td>{{ cf.service_fee_percentage }}%</td>
+                                    <td>{% if cf.max_fee %}{{ cf.max_fee }}{% else %}{% translate "No limit" %}{% endif %}</td>
+                                    <td class="text-right">
+                                        <button type="submit"
+                                                form="country-fee-delete-{{ cf.pk }}"
+                                                class="btn btn-xs btn-danger"
+                                                aria-label="{% blocktranslate with country=cf.get_country_display %}Delete fee override for {{ country }}{% endblocktranslate %}">
+                                            <i class="fa fa-trash" aria-hidden="true"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-muted text-center">
+                                        {% translate "No country-specific overrides configured." %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <p><strong>{% translate "Add country override" %}</strong></p>
+                        <div class="row">
+                            <div class="col-sm-6 col-md-4">
+                                {% bootstrap_field country_fee_form.country show_help=True layout='vertical' %}
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                {% bootstrap_field country_fee_form.currency show_help=True layout='vertical' %}
+                            </div>
+                            <div class="col-sm-6 col-md-2">
+                                <div class="form-group">
+                                    <label class="control-label" for="{{ country_fee_form.service_fee_percentage.id_for_label }}">{% translate "Service fee %" %}</label>
+                                    <div class="input-group">
+                                        {{ country_fee_form.service_fee_percentage }}
+                                        <span class="input-group-addon">%</span>
+                                    </div>
+                                    <p class="help-block">{{ country_fee_form.service_fee_percentage.help_text }}</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <div class="form-group">
+                                    <label class="control-label" for="{{ country_fee_form.max_fee.id_for_label }}">{% translate "Maximum fee" %}</label>
+                                    <div class="input-group">
+                                        {{ country_fee_form.max_fee }}
+                                        <span class="input-group-addon"
+                                              data-toggle="tooltip"
+                                              data-placement="top"
+                                              title="{{ country_fee_form.max_fee.help_text }}">
+                                            <i class="fa fa-info-circle" aria-hidden="true"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-2 col-md-offset-10">
+                                <button type="submit" form="country-fee-add-form" class="btn btn-primary btn-block">
+                                    <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add" %}
+                                </button>
+                            </div>
+                        </div>
                     {% else %}
                         {% for field_name in field_names %}
                             {% with form|getitem:field_name as field %}
@@ -238,4 +328,19 @@
           method="post">
         {% csrf_token %}
     </form>
+
+    {# Country fee add/delete forms — OUTSIDE main form to prevent invalid HTML nesting.      #}
+    {# Inputs and buttons in the Ticket fee tab reference these via the HTML5 form= attribute. #}
+    <form id="country-fee-add-form"
+          action="{% url 'eventyay_admin:admin.global.settings.country_fee.add' %}"
+          method="post">
+        {% csrf_token %}
+    </form>
+    {% for cf in country_fees %}
+    <form id="country-fee-delete-{{ cf.pk }}"
+          action="{% url 'eventyay_admin:admin.global.settings.country_fee.delete' cf.pk %}"
+          method="post">
+        {% csrf_token %}
+    </form>
+    {% endfor %}
 {% endblock %}

@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager
 
 from eventyay.base.models import LoggedModel
+from eventyay.helpers.countries import FastCountryField
 
 from .choices import PriceModeChoices
 
@@ -63,3 +64,43 @@ class BillingInvoice(LoggedModel):
         verbose_name = 'Billing Invoice'
         verbose_name_plural = 'Billing Invoices'
         ordering = ('-created_at',)
+
+
+class TicketFeeCountrySetting(models.Model):
+    """
+    Currency-specific service fee override. Takes precedence over the global
+    ``ticket_fee_percentage`` / ``ticket_fee_max`` stored in ``GlobalSettingsObject``.
+
+    The override is keyed by ``currency`` (unique) and resolved by matching
+    ``event.currency`` at billing time.  The ``country`` field is optional and
+    informational only — it is used in the admin UI to auto-populate the currency
+    dropdown but plays no role in the billing calculation.
+    """
+
+    country = FastCountryField(verbose_name=_('Country'), blank=True)
+    currency = models.CharField(max_length=3, verbose_name=_('Currency'), unique=True)
+    service_fee_percentage = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_('Service fee percentage'),
+    )
+    max_fee = models.DecimalField(
+        max_digits=13,
+        decimal_places=2,
+        verbose_name=_('Maximum fee'),
+        help_text=_('Set to 0 for no limit.'),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('Currency fee setting')
+        verbose_name_plural = _('Currency fee settings')
+        ordering = ('currency',)
+
+    def save(self, *args, **kwargs):
+        self.currency = self.currency.upper()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.currency} — {self.service_fee_percentage}% (max {self.max_fee})'
