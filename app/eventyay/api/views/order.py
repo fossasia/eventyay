@@ -363,8 +363,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                     send_mail=send_mail,
                     count_waitinglist=False,
                 )
-            except Quota.QuotaExceededException:
-                raise QuotaExceededAPIException()
+            except Quota.QuotaExceededException as e:
+                raise QuotaExceededAPIException(str(e))
             except PaymentException as e:
                 return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
             except SendMailException:
@@ -438,8 +438,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 auth=request.auth if isinstance(request.auth, (Device, TeamAPIToken, OAuthAccessToken)) else None,
                 send_mail=send_mail,
             )
-        except Quota.QuotaExceededException:
-            raise QuotaExceededAPIException()
+        except Quota.QuotaExceededException as e:
+            raise QuotaExceededAPIException(str(e))
         except OrderError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return self.retrieve(request, [], **kwargs)
@@ -1113,8 +1113,8 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
             ocm.commit()
         except OrderError as e:
             raise ValidationError(str(e))
-        except Quota.QuotaExceededException:
-            raise QuotaExceededAPIException()
+        except Quota.QuotaExceededException as e:
+            raise QuotaExceededAPIException(str(e))
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.get('partial', False)
@@ -1196,8 +1196,8 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                         force=request.data.get('force', False),
                         send_mail=send_mail,
                     )
-                except Quota.QuotaExceededException:
-                    raise QuotaExceededAPIException()
+                except Quota.QuotaExceededException as e:
+                    raise QuotaExceededAPIException(str(e))
                 except SendMailException:
                     pass
 
@@ -1242,8 +1242,8 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                 send_mail=send_mail,
                 force=force,
             )
-        except Quota.QuotaExceededException:
-            raise QuotaExceededAPIException()
+        except Quota.QuotaExceededException as e:
+            raise QuotaExceededAPIException(str(e))
         except PaymentException as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except SendMailException:
