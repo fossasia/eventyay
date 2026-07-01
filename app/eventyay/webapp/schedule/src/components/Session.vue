@@ -36,7 +36,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 					span.speaker-separator(v-if="i + 1 < namedSpeakers.length", aria-hidden="true") ,
 			span.speakers-overflow-hint(
 				v-if="speakersHiddenCount > 0",
-				:aria-label="speakersOverflowLabel") +{{ speakersHiddenCount }} more
+				:aria-label="speakersOverflowLabel") {{ speakersOverflowHint }}
 		.tags-box(v-if="showTags && session.tags && session.tags.length")
 			.tags(v-for="tag_item of session.tags")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
@@ -234,9 +234,17 @@ export default {
 		speakersAriaLabel () {
 			return this.namedSpeakers.map(speaker => speaker.name).join(', ')
 		},
+		speakersOverflowHint () {
+			if (!this.speakersHiddenCount) return ''
+			const m = this.translationMessages || {}
+			const template = m.schedule_speakers_overflow_hint || '+%(count)s more'
+			return template.replace('%(count)s', this.speakersHiddenCount)
+		},
 		speakersOverflowLabel () {
 			if (!this.speakersHiddenCount) return ''
-			return `+${this.speakersHiddenCount} more speakers`
+			const m = this.translationMessages || {}
+			const template = m.schedule_speakers_overflow_label || '+%(count)s more speakers'
+			return template.replace('%(count)s', this.speakersHiddenCount)
 		}
 	},
 	watch: {
@@ -271,7 +279,9 @@ export default {
 		setupSpeakersOverflowObserver () {
 			this._speakersResizeObserver?.disconnect?.()
 			if (!this.isShortSession) {
-				this.speakersHiddenCount = 0
+				if (this.speakersHiddenCount !== 0) {
+					this.speakersHiddenCount = 0
+				}
 				return
 			}
 			const row = this.$refs.speakersRow
@@ -288,7 +298,9 @@ export default {
 		updateSpeakersOverflow () {
 			const row = this.$refs.speakersRow
 			if (!row || !this.isShortSession || !this.namedSpeakers.length) {
-				this.speakersHiddenCount = 0
+				if (this.speakersHiddenCount !== 0) {
+					this.speakersHiddenCount = 0
+				}
 				return
 			}
 			const rowRect = row.getBoundingClientRect()
@@ -300,7 +312,10 @@ export default {
 				}
 			}
 			visible = Math.min(visible, this.namedSpeakers.length)
-			this.speakersHiddenCount = Math.max(0, this.namedSpeakers.length - visible)
+			const hidden = Math.max(0, this.namedSpeakers.length - visible)
+			if (hidden !== this.speakersHiddenCount) {
+				this.speakersHiddenCount = hidden
+			}
 		}
 	}
 }
@@ -329,6 +344,15 @@ sessionTextExpand()
 	overflow-wrap: anywhere
 	word-break: break-word
 	text-overflow: clip
+
+expandClampedSessionText()
+	.title.title-clamped
+		sessionTextExpand()
+	.speakers.names-clamped
+		max-height: none
+		overflow: visible
+	.speakers-overflow-hint
+		display: none
 
 .c-linear-schedule-session, .break
 	z-index: 10
@@ -632,15 +656,11 @@ sessionTextExpand()
 			border-left: none
 			.title
 				color: var(--pretalx-clr-primary)
+	&:focus-visible
+		expandClampedSessionText()
 	@media (hover: hover) and (pointer: fine)
 		&:hover
-			.title.title-clamped
-				sessionTextExpand()
-			.speakers.names-clamped
-				max-height: none
-				overflow: visible
-			.speakers-overflow-hint
-				display: none
+			expandClampedSessionText()
 @media(hover: none)
 	.c-linear-schedule-session .session-icons .btn-fav-container
 		display: inline-flex
