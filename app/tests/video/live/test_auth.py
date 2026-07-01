@@ -104,7 +104,7 @@ async def test_auth_without_client_id():
 @pytest.mark.parametrize("index", [0, 1])
 async def test_auth_with_jwt_token(index, world):
     config = world.config["JWT_secrets"][index]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -151,7 +151,7 @@ async def test_auth_with_jwt_token(index, world):
 @pytest.mark.django_db
 async def test_auth_with_invalid_jwt_token(world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -253,7 +253,7 @@ async def test_wrong_user_command():
 @pytest.mark.django_db
 async def test_auth_with_jwt_token_update_traits(world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -307,7 +307,7 @@ async def test_auth_with_jwt_token_update_traits(world):
 @pytest.mark.django_db
 async def test_auth_with_jwt_token_twice(world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -446,7 +446,7 @@ async def test_fetch_user():
 @pytest.mark.django_db
 async def test_auth_with_jwt_token_and_permission_traits(world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -522,7 +522,7 @@ async def test_auth_private_rooms_in_world_config(
     world, bbb_room, chat_room, stream_room
 ):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -835,7 +835,7 @@ async def test_block_user(world):
 @pytest.mark.django_db
 async def test_list_search_users(world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -1006,7 +1006,7 @@ async def test_list_search_users(world):
 @pytest.mark.django_db
 async def test_badges(world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],

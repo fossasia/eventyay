@@ -48,6 +48,7 @@ import Hls from 'hls.js'
 import mux from 'mux-embed'
 import config from 'config'
 import theme from 'theme'
+import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN, STREAM_TYPE_HLS } from 'lib/stage-streams'
 
 const RETRY_INTERVAL = 5000
 // TODO look at capLevelToPlayerSize
@@ -81,7 +82,7 @@ export default {
 		},
 		onlyLive: {
 			type: Boolean,
-			default: true
+			default: false
 		}
 	},
 	data() {
@@ -140,9 +141,12 @@ export default {
 			return 'quality-high'
 		},
 		hlsUrl() {
-			if (this.room?.currentStream?.url && this.room.currentStream.stream_type === 'hls') {
+			const isScheduleDriven = getStagePlaybackMode(this.module) === PLAYBACK_MODE_SCHEDULE_DRIVEN
+			if (isScheduleDriven && this.room?.currentStream?.url && this.room.currentStream.stream_type === STREAM_TYPE_HLS) {
 				return this.room.currentStream.url
 			}
+			if (isScheduleDriven) return null
+
 			if (this.chosenAlternative) {
 				const alternative = (this.module.config.alternatives || []).find((a) => a.label === this.chosenAlternative)
 				if (alternative && alternative.hls_url) {
@@ -164,7 +168,7 @@ export default {
 				const newUrl = newStream?.url ?? null
 				const oldUrl = oldStream?.url ?? null
 				if (newId !== oldId || newUrl !== oldUrl) {
-					if (newStream && newStream.stream_type === 'hls') {
+					if (newStream && newStream.stream_type === STREAM_TYPE_HLS) {
 						this.offline = false
 					}
 					this.$nextTick(() => {
@@ -723,6 +727,7 @@ export default {
 		justify-content: center
 		align-items: center
 		background-color: $clr-blue-grey-200
+		overflow: hidden
 		.offline-message
 			font-size: 36px
 		.offline-image
