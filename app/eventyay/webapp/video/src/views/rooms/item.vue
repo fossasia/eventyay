@@ -151,6 +151,13 @@ export default {
 				youtubeTranslation: translationConfig
 			})
 		},
+		hasStreamSchedule() {
+			return !!(
+				this.modules['livestream.native'] ||
+				this.modules['livestream.youtube'] ||
+				this.modules['livestream.iframe']
+			)
+		},
 		initializeLanguages() {
 			this.languages = []
 			let languageUrls = null
