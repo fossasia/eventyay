@@ -36,7 +36,7 @@
             {{ proposal_title }})
         </span>
         <div class="ml-auto mb-1">
-            {% if can_mark_speakers and accepted_submissions.exists %}
+            {% if can_mark_speaker and accepted_submissions.exists %}
                 {% include "orga/includes/mark_speakers_arrived.html" with speaker=form.instance %}
             {% endif %}
             <a href="{{ form.instance.orga_urls.password_reset }}" class="btn btn-info flip">{{ phrases.base.password_reset_heading }}</a>

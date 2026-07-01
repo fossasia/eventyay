@@ -61,6 +61,13 @@ class AuthModule(BaseModule):
         """Return event config dict (never None)."""
         return (getattr(self.consumer.event, "config", None) or {}) if self.consumer.event else {}
 
+    async def _include_admin_user_info(self):
+        """Admin user list/detail fields match EVENT_USERS_LIST UI, not only manage."""
+        return await self.consumer.event.has_permission_async(
+            user=self.consumer.user,
+            permission=Permission.EVENT_USERS_LIST,
+        )
+
     async def login(self, body):
         kwargs = {
             "event": self.consumer.event,
@@ -299,9 +306,7 @@ class AuthModule(BaseModule):
     @command("fetch")
     @require_event_permission(Permission.EVENT_VIEW)
     async def fetch(self, body):
-        admin = await self.consumer.event.has_permission_async(
-            user=self.consumer.user, permission=Permission.EVENT_USERS_MANAGE
-        )
+        admin = await self._include_admin_user_info()
         if "ids" in body:
             users = await get_public_users(
                 self.consumer.event.id,
@@ -355,10 +360,7 @@ class AuthModule(BaseModule):
         body = body or {}
         users = await get_public_users(
             self.consumer.event.pk,
-            include_admin_info=await self.consumer.event.has_permission_async(
-                user=self.consumer.user,
-                permission=Permission.EVENT_USERS_MANAGE,
-            ),
+            include_admin_info=await self._include_admin_user_info(),
             type=body.get("type", User.UserType.PERSON),
             include_banned=not body
             or body.get("include_banned", True)
@@ -395,10 +397,7 @@ class AuthModule(BaseModule):
                 search_term=body["search_term"],
                 badge=badge,
                 search_fields=search_fields,
-                include_admin_info=await self.consumer.event.has_permission_async(
-                    user=self.consumer.user,
-                    permission=Permission.EVENT_USERS_MANAGE,
-                ),
+                include_admin_info=await self._include_admin_user_info(),
                 include_banned=body.get("include_banned", True)
                 and await self.consumer.event.has_permission_async(
                     user=self.consumer.user,
@@ -598,7 +597,7 @@ class AuthModule(BaseModule):
                 user["token"] = None
                 return user
             jwt_config = jwt_secrets[0]
-            iat = datetime.datetime.utcnow()
+            iat = datetime.datetime.now(datetime.timezone.utc)
             exp = iat + datetime.timedelta(days=365)
             payload = {
                 "iss": jwt_config.get("issuer", ""),
