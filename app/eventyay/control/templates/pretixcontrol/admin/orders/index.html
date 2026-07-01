@@ -90,15 +90,24 @@
                                 {{ order.event }}
                             </a>
                         </td>
-                        <td>{{ order.organizer }}</td>
+                        <td>
+                            <a href="{% url 'eventyay_common:organizer.events' organizer=order.organizer_slug %}">
+                                {{ order.organizer }}
+                            </a>
+                        </td>
                         <td>{{ order.email }}</td>
                         <td>
                             <span class="label
                                 {% if order.status_code == 'p' %}label-success
                                 {% elif order.status_code == 'n' %}label-warning
-                                {% elif order.status_code == 'e' %}label-default
+                                {% elif order.status_code == 'e' %}label-danger
                                 {% elif order.status_code == 'c' %}label-danger
                                 {% endif %}">
+                                {% if order.status_code == 'p' %}<span class="fa fa-check"></span>
+                                {% elif order.status_code == 'n' %}<span class="fa fa-money"></span>
+                                {% elif order.status_code == 'e' %}<span class="fa fa-clock-o"></span>
+                                {% elif order.status_code == 'c' %}<span class="fa fa-times"></span>
+                                {% endif %}
                                 {{ order.status }}
                             </span>
                         </td>
