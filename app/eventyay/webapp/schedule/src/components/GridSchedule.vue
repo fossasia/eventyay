@@ -532,7 +532,7 @@ export default {
 		},
 		scrollToDayStart (day) {
 			const dayStr = moment.isMoment(day) ? day.clone().tz(this.timezone).startOf('day').format('YYYY-MM-DD') : day
-			const el = this.$el.querySelector(`[data-slice-day="${dayStr}"]`)
+			const el = this.$el.querySelector(`.timeslice.datebreak[data-slice-day="${dayStr}"]`)
 			if (!el) return
 			this.scrollElementIntoViewWithClearance(el)
 		},
@@ -608,8 +608,9 @@ export default {
 			document.addEventListener('mouseup', onMouseUp)
 		},
 		onIntersect (entries) {
-			const entry = entries.sort((a, b) => b.ts - a.ts).find(entry => entry.isIntersecting)
-			if (!entry) return
+			const intersecting = entries.filter(entry => entry.isIntersecting)
+			if (!intersecting.length) return
+			const entry = intersecting.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
 			const dayStr = entry.target.dataset.sliceDay
 			if (!dayStr || dayStr === this.currentDay) return
 			// Only update the active day indicator — don't trigger a scroll jump.

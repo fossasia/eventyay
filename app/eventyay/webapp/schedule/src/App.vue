@@ -299,6 +299,8 @@ export default {
 			now: moment(),
 			currentDay: null,
 			forceScrollDay: 0,
+			userNavigatingToDay: null,
+			_dayNavTimeout: null,
 			currentTimezone: null,
 			favs: [],
 			userCode: null,
@@ -861,11 +863,35 @@ export default {
 			}
 		},
 		setCurrentDay (day) {
-			// Find best match among days, because timezones can muddle this
-			const matchingDays = this.days.filter(d => d.format('YYYY-MM-DD') === day.format('YYYY-MM-DD'))
-			if (matchingDays.length) {
-				this.currentDay = matchingDays[0].format('YYYY-MM-DD')
+			const dayStr = day.format('YYYY-MM-DD')
+			if (this.userNavigatingToDay && dayStr !== this.userNavigatingToDay) {
+				return
 			}
+			const matchingDays = this.days.filter(d => d.format('YYYY-MM-DD') === dayStr)
+			if (!matchingDays.length) return
+			const nextDay = matchingDays[0].format('YYYY-MM-DD')
+			if (nextDay === this.currentDay) {
+				if (this.userNavigatingToDay === nextDay) {
+					this.clearDayNavigationLock()
+				}
+				return
+			}
+			this.currentDay = nextDay
+			if (this.userNavigatingToDay === nextDay) {
+				this.clearDayNavigationLock()
+			}
+		},
+		clearDayNavigationLock () {
+			if (this._dayNavTimeout) {
+				clearTimeout(this._dayNavTimeout)
+				this._dayNavTimeout = null
+			}
+			this.userNavigatingToDay = null
+		},
+		beginDayNavigation (dayId) {
+			this.clearDayNavigationLock()
+			this.userNavigatingToDay = dayId
+			this._dayNavTimeout = setTimeout(() => this.clearDayNavigationLock(), 2000)
 		},
 		changeDay (day) {
 			if (day.clone().startOf('day').format('YYYY-MM-DD') === this.currentDay) return
@@ -882,11 +908,14 @@ export default {
 			} catch (e) {
 				window.location.hash = dayId
 			}
-			if (dayId === this.currentDay) {
-				this.forceScrollDay++
-				return
+			if (dayId !== this.currentDay) {
+				this.beginDayNavigation(dayId)
+				this.currentDay = dayId
 			}
-			this.currentDay = dayId
+			// Always scroll on toolbar click. When the day is already visible,
+			// scroll-sync may have set currentDay with _scrollDayUpdate, which
+			// skips the currentDay watcher — forceScrollDay handles that case.
+			this.forceScrollDay++
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
