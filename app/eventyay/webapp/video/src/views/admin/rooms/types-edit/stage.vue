@@ -35,6 +35,7 @@
 			.language-url-entry(v-for="(entry, index) in modules['livestream.youtube'].config.languageUrls" :key="index")
 				bunt-select(name="language", v-model="entry.language", :options="ISO_LANGUAGE_OPTIONS", label="Language")
 				bunt-input(name="youtube_id" v-model="entry.youtube_id" label="Audio Source (YouTube ID or WHEP URL)" @blur="normalizeLanguageYoutubeId(entry)")
+				bunt-switch(name="use_video" v-model="entry.use_video" label="Use video from this interpretation channel" hint="If enabled, attendees will see both the audio and video from this interpretation channel. If disabled, attendees will hear the interpretation audio while continuing to see the original main video.")
 				bunt-icon-button(@click="deleteLanguageUrl(index)") delete-outline
 			bunt-button(@click="addLanguageUrl") + Add Language and Audio Source
 			// Switch button for no-cookies domain
@@ -290,7 +291,7 @@ export default defineComponent({
 			if (!this.modules['livestream.youtube'].config.languageUrls) {
 				this.modules['livestream.youtube'].config.languageUrls = []
 			}
-			this.modules['livestream.youtube'].config.languageUrls.push({ language: '', youtube_id: '' })
+			this.modules['livestream.youtube'].config.languageUrls.push({ language: '', youtube_id: '', use_video: false })
 		},
 		deleteLanguageUrl(index) {
 			if (!this.modules['livestream.youtube']?.config.languageUrls) return
