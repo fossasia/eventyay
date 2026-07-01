@@ -42,6 +42,7 @@ export default {
 		sendLanguageChange() {
 			const selected = this.languages.find(item => item.language === this.selectedLanguage)
 			const audioSource = selected?.youtube_id || null
+			const useVideo = selected?.use_video || false
 			
 			let normalizedSource = null
 			if (audioSource) {
@@ -56,7 +57,7 @@ export default {
 				}
 			}
 			
-			this.$emit('languageChanged', normalizedSource)
+			this.$emit('languageChanged', { url: normalizedSource, useVideo })
 		}
 	}
 }

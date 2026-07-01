@@ -190,10 +190,23 @@ class WriteMailBaseForm(MailTemplateForm):
         help_text=_('If you check this, the emails will be sent immediately, instead of being put in the outbox.'),
     )
 
-    def __init__(self, *args, may_skip_queue=False, **kwargs):
+    def __init__(self, *args, may_skip_queue=False, source_template=None, **kwargs):
+        self.source_template = source_template
         super().__init__(*args, **kwargs)
         if not may_skip_queue:
             self.fields.pop('skip_queue', None)
+
+    def build_send_template(self):
+        """Build an unsaved template for rendering outgoing mails without persisting it."""
+        template = MailTemplate(event=self.event)
+        template.subject = self.cleaned_data['subject']
+        template.text = self.cleaned_data['text']
+        template.reply_to = self.cleaned_data.get('reply_to') or ''
+        template.bcc = self.cleaned_data.get('bcc') or ''
+        return template
+
+    def attach_template_reference(self, mail):
+        mail.template = self.source_template
 
 
 class WriteTeamsMailForm(WriteMailBaseForm):
@@ -236,24 +249,22 @@ class WriteTeamsMailForm(WriteMailBaseForm):
 
     @transaction.atomic
     def save(self):
-        self.instance.event = self.event
-        self.instance.is_auto_created = True
-        template = super().save()
+        send_template = self.build_send_template()
         result = []
         users = self.get_recipients()
         for user in users:
             # This happens when there are template errors
             with suppress(SendMailException):
-                result.append(
-                    template.to_mail(
-                        user=user,
-                        event=self.event,
-                        locale=user.locale,
-                        context_kwargs={'user': user, 'event': self.event},
-                        skip_queue=True,
-                        commit=False,
-                    )
+                mail = send_template.to_mail(
+                    user=user,
+                    event=self.event,
+                    locale=user.locale,
+                    context_kwargs={'user': user, 'event': self.event},
+                    skip_queue=True,
+                    commit=False,
                 )
+                self.attach_template_reference(mail)
+                result.append(mail)
         return result
 
 
@@ -381,9 +392,7 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
 
     @transaction.atomic
     def save(self):
-        self.instance.event = self.event
-        self.instance.is_auto_created = True
-        template = super().save()
+        send_template = self.build_send_template()
 
         mails_by_user = defaultdict(list)
         contexts = self.get_recipients()
@@ -392,7 +401,7 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
                 locale = context['user'].locale
                 if submission := context.get('submission'):
                     locale = submission.get_email_locale(context['user'].locale)
-                mail = template.to_mail(
+                mail = send_template.to_mail(
                     user=None,
                     event=self.event,
                     locale=locale,
@@ -400,6 +409,7 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
                     commit=False,
                     allow_empty_address=True,
                 )
+                self.attach_template_reference(mail)
                 mails_by_user[context['user']].append((mail, context))
 
         result = []
