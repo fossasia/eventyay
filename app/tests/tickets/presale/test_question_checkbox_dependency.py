@@ -10,7 +10,11 @@ from eventyay.base.models import (
     Organizer,
     Product,
     Question,
+    QuestionAnswer,
     Quota,
+)
+from eventyay.presale.checkoutflowstep.questions_step import (
+    question_is_visible_for_stored_answers,
 )
 
 
@@ -51,6 +55,8 @@ def _add_to_ask(product, *questions):
 def _build_form(env, data):
     prefix = str(env['cart'].id)
     payload = {f'{prefix}-{k}': v for k, v in data.items()}
+    with scopes_disabled():
+        env['cart'].answerlist = list(env['cart'].answers.all())
     return BaseQuestionsForm(
         data=payload,
         event=env['event'],
@@ -280,3 +286,127 @@ def test_multi_checkbox_nothing_selected_skips_followup(env):
 
     form = _build_form(env, {})
     assert form.is_valid(), form.errors
+
+
+def _make_boolean_parent_and_child(env, dep_values):
+    with scopes_disabled():
+        parent = env['event'].questions.create(
+            question='I have dietary restrictions',
+            type=Question.TYPE_BOOLEAN,
+            required=False,
+        )
+        child = env['event'].questions.create(
+            question='Please describe',
+            type=Question.TYPE_TEXT,
+            required=True,
+            dependency_question=parent,
+            dependency_values=dep_values,
+        )
+        env['product'].questions.add(parent, child)
+    return parent, child
+
+
+@pytest.mark.django_db
+def test_stored_answers_boolean_unchecked_shows_false_child(env):
+    parent, child = _make_boolean_parent_and_child(env, ['False'])
+    assert question_is_visible_for_stored_answers(
+        parent.pk, child.dependency_values, {parent.pk: parent, child.pk: child}, {}
+    ) is True
+
+
+@pytest.mark.django_db
+def test_stored_answers_boolean_unchecked_hides_true_child(env):
+    parent, child = _make_boolean_parent_and_child(env, ['True'])
+    assert question_is_visible_for_stored_answers(
+        parent.pk, child.dependency_values, {parent.pk: parent, child.pk: child}, {}
+    ) is False
+
+
+@pytest.mark.django_db
+def test_stored_answers_boolean_checked_shows_true_child(env):
+    parent, child = _make_boolean_parent_and_child(env, ['True'])
+    with scopes_disabled():
+        answer = QuestionAnswer.objects.create(
+            cartposition=env['cart'], question=parent, answer='True'
+        )
+    assert question_is_visible_for_stored_answers(
+        parent.pk,
+        child.dependency_values,
+        {parent.pk: parent, child.pk: child},
+        {parent.pk: answer},
+    ) is True
+
+
+@pytest.mark.django_db
+def test_stored_answers_boolean_checked_hides_false_child(env):
+    parent, child = _make_boolean_parent_and_child(env, ['False'])
+    with scopes_disabled():
+        answer = QuestionAnswer.objects.create(
+            cartposition=env['cart'], question=parent, answer='True'
+        )
+    assert question_is_visible_for_stored_answers(
+        parent.pk,
+        child.dependency_values,
+        {parent.pk: parent, child.pk: child},
+        {parent.pk: answer},
+    ) is False
+
+
+@pytest.mark.django_db
+def test_stored_answers_multi_checkbox_selected_option_matches(env):
+    with scopes_disabled():
+        parent = env['event'].questions.create(
+            question='Workshops?',
+            type=Question.TYPE_CHOICE_MULTIPLE,
+            required=False,
+        )
+        opt_a = parent.options.create(answer='A', identifier='WSA')
+        parent.options.create(answer='B', identifier='WSB')
+        child = env['event'].questions.create(
+            question='Workshop A details',
+            type=Question.TYPE_TEXT,
+            required=True,
+            dependency_question=parent,
+            dependency_values=['WSA'],
+        )
+        env['product'].questions.add(parent, child)
+        answer = QuestionAnswer.objects.create(
+            cartposition=env['cart'], question=parent, answer='A'
+        )
+        answer.options.add(opt_a)
+    assert question_is_visible_for_stored_answers(
+        parent.pk,
+        child.dependency_values,
+        {parent.pk: parent, child.pk: child},
+        {parent.pk: answer},
+    ) is True
+
+
+@pytest.mark.django_db
+def test_stored_answers_multi_checkbox_other_option_hides_child(env):
+    with scopes_disabled():
+        parent = env['event'].questions.create(
+            question='Workshops?',
+            type=Question.TYPE_CHOICE_MULTIPLE,
+            required=False,
+        )
+        parent.options.create(answer='A', identifier='WSA')
+        opt_b = parent.options.create(answer='B', identifier='WSB')
+        child = env['event'].questions.create(
+            question='Workshop A details',
+            type=Question.TYPE_TEXT,
+            required=True,
+            dependency_question=parent,
+            dependency_values=['WSA'],
+        )
+        env['product'].questions.add(parent, child)
+        answer = QuestionAnswer.objects.create(
+            cartposition=env['cart'], question=parent, answer='B'
+        )
+        answer.options.add(opt_b)
+    assert question_is_visible_for_stored_answers(
+        parent.pk,
+        child.dependency_values,
+        {parent.pk: parent, child.pk: child},
+        {parent.pk: answer},
+    ) is False

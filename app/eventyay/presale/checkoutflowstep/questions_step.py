@@ -32,6 +32,25 @@ from eventyay.presale.views.cart import get_or_create_cart_id
 from eventyay.presale.views.questions import QuestionsViewMixin
 
 
+def question_is_visible_for_stored_answers(parentid, qvals, question_cache, answ):
+    if parentid not in question_cache:
+        return False
+    parentq = question_cache[parentid]
+    if parentq.dependency_question_id and not question_is_visible_for_stored_answers(
+        parentq.dependency_question_id, parentq.dependency_values, question_cache, answ
+    ):
+        return False
+    if parentid not in answ:
+        if parentq.type == Question.TYPE_BOOLEAN:
+            return 'False' in qvals
+        return False
+    return (
+        ('True' in qvals and answ[parentid].answer == 'True')
+        or ('False' in qvals and answ[parentid].answer == 'False')
+        or (any(qval in [o.identifier for o in answ[parentid].options.all()] for qval in qvals))
+    )
+
+
 class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
     priority = 50
     identifier = 'questions'
@@ -259,26 +278,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
             question_cache = {q.pk: q for q in cp.product.questions_to_ask}
 
             def question_is_visible(parentid, qvals):
-                if parentid not in question_cache:
-                    return False
-                parentq = question_cache[parentid]
-                if parentq.dependency_question_id and not question_is_visible(
-                    parentq.dependency_question_id, parentq.dependency_values
-                ):
-                    return False
-                if parentid not in answ:
-                    # A TYPE_BOOLEAN parent that was left unchecked has no stored
-                    # QuestionAnswer (save() deletes empty answers). Treat absence
-                    # as a 'False' answer so children with dependency_values=['False']
-                    # are still considered visible and validated.
-                    if parentq.type == Question.TYPE_BOOLEAN:
-                        return 'False' in qvals
-                    return False
-                return (
-                    ('True' in qvals and answ[parentid].answer == 'True')
-                    or ('False' in qvals and answ[parentid].answer == 'False')
-                    or (any(qval in [o.identifier for o in answ[parentid].options.all()] for qval in qvals))
-                )
+                return question_is_visible_for_stored_answers(parentid, qvals, question_cache, answ)
 
             def question_is_required(q):
                 return q.required and (
