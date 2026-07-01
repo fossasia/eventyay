@@ -2206,10 +2206,13 @@ class OrderPosition(AbstractPosition):
 
     @cached_property
     def require_checkin_attention(self):
+        variation_attention = (
+            getattr(self.variation, 'checkin_attention', False) if self.variation_id else False
+        )
         return (
             self.order.checkin_attention
             or self.product.checkin_attention
-            or (self.variation_id and self.variation.checkin_attention)
+            or variation_attention
         )
 
     @property
@@ -2219,6 +2222,15 @@ class OrderPosition(AbstractPosition):
         return (self.order.event.settings.ticket_download_addons or not self.addon_to_id) and (
             self.event.settings.ticket_download_nonadm or self.product.admission
         )
+
+    @property
+    def ticket_qrcode_content(self):
+        """Return the JSON-encoded QR code content matching the ticket PDF barcode."""
+        return json.dumps({
+            'event': str(self.order.event),
+            'ticket': self.secret,
+            'lead': self.pseudonymization_id,
+        })
 
     @classmethod
     def transform_cart_positions(cls, cp: List, order) -> list:

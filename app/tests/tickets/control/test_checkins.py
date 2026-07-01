@@ -6,12 +6,12 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from freezegun import freeze_time
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Checkin,
     Event,
-    Item,
-    ItemAddOn,
-    ItemCategory,
+    Product as Item,
+    ProductAddOn as ItemAddOn,
+    ProductCategory as ItemCategory,
     LogEntry,
     Order,
     OrderPosition,
@@ -19,7 +19,7 @@ from pretix.base.models import (
     Team,
     User,
 )
-from pretix.control.views.dashboards import checkin_widget
+from eventyay.control.views.dashboards import checkin_widget
 
 from ..base import SoupTest, extract_form_fields
 
@@ -32,7 +32,7 @@ def dashboard_env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer,tests.testdummy',
+        plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
     )
     event.settings.set('ticketoutput_testdummy__enabled', True)
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
@@ -124,7 +124,7 @@ def checkin_list_env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer,tests.testdummy',
+        plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
     )
     event.settings.set('ticketoutput_testdummy__enabled', True)
     event.settings.set('attendee_names_asked', True)
@@ -367,7 +367,7 @@ def checkin_list_with_addon_env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer,tests.testdummy',
+        plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
     )
     event.settings.set('ticketoutput_testdummy__enabled', True)
     event.settings.set('attendee_names_asked', True)

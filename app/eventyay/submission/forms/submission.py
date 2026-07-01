@@ -46,15 +46,6 @@ class EventLocalizedSafeModelChoiceField(SafeModelChoiceField):
 class InfoForm(
     CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, RequestRequire, PublicContent, forms.ModelForm
 ):
-    additional_speaker = forms.EmailField(
-        label=_('Additional Speaker'),
-        help_text=_(
-            'If you have a co-speaker, please add their email address here, and we will invite them '
-            'to create an account. If you have more than one co-speaker, you can add more speakers '
-            'after finishing the proposal process.'
-        ),
-        required=False,
-    )
     image = ImageField(
         required=False,
         label=_('Session image'),
@@ -63,7 +54,7 @@ class InfoForm(
     slides = SlidesField(required=False, label=_('Slides'))
     content_locale = forms.ChoiceField(label=phrases.base.language)
 
-    def __init__(self, event, remove_additional_speaker=False, **kwargs):
+    def __init__(self, event, **kwargs):
         self.event = event
         self.readonly = kwargs.pop('readonly', False)
         self.access_code = kwargs.pop('access_code', None)
@@ -88,8 +79,6 @@ class InfoForm(
         super().__init__(initial=initial, **kwargs)
         self.submission = self.instance
 
-        if remove_additional_speaker and 'additional_speaker' in self.fields:
-            self.fields.pop('additional_speaker')
         if 'abstract' in self.fields:
             self.fields['abstract'].widget.attrs['rows'] = 2
 
@@ -165,8 +154,16 @@ class InfoForm(
         if instance and instance.pk:
             pks |= {instance.submission_type.pk}
         if len(pks) == 1:
-            self.default_values['submission_type'] = submission_types.get(pk=list(pks)[0])
-            self.fields.pop('submission_type')
+            single_type = submission_types.get(pk=list(pks)[0])
+            self.default_values['submission_type'] = single_type
+            # Keep the field visible but disabled — speakers can see which session
+            # type they are submitting for even when there is only one available.
+            self.fields['submission_type'].queryset = submission_types.filter(pk=single_type.pk)
+            self.fields['submission_type'].required = True
+            self.fields['submission_type'].empty_label = None
+            self.fields['submission_type'].disabled = True
+            # Ensure the initial value is set so Django's disabled-field logic picks it up.
+            self.initial['submission_type'] = single_type
         else:
             self.fields['submission_type'].queryset = submission_types.filter(pk__in=pks)
             self.fields['submission_type'].required = True
@@ -409,7 +406,6 @@ class InfoForm(
             'track',
             'duration',
             'content_locale',
-            'additional_speaker',
         ]
         public_fields = ['title', 'abstract', 'description', 'image', 'slides']
         widgets = {

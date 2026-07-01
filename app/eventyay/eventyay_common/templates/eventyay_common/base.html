@@ -16,6 +16,7 @@
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
             <link rel="stylesheet" href="{% static 'eventyay-common/css/dashboard.css' %}">
             <link rel="stylesheet" href="{% static 'eventyay-common/css/settings.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/language-grid.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_markdown_editor.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
 		{% endcompress %}
@@ -76,6 +77,7 @@
             <script defer src="{% static 'common/js/formTools.js' %}"></script>
             <script defer src="{% static 'common/js/modalDialog.js' %}"></script>
             <script type="module" src="{% static 'eventyay-common/js/ajax-filter.js' %}"></script>
+            <script type="module" src="{% static 'eventyay-common/js/language-grid.js' %}"></script>
 		{% endcompress %}
         {{ html_head|safe }}
 
@@ -133,6 +135,11 @@
                                 <i class="fa fa-eye"></i>
                             </a>
                         {% endif %}
+                    {% elif request.organizer %}
+                        <a href="{% eventurl request.organizer 'presale:organizer.index' %}" title="{% translate 'Public profile' %}" target="_blank" rel="noopener noreferrer"
+                                class="navbar-toggle mobile-navbar-view-link">
+                            <i class="fa fa-eye"></i>
+                        </a>
                     {% endif %}
                 </div>
                 <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
@@ -151,6 +158,12 @@
                                     <i class="fa fa-eye"></i> {% translate 'View event' %}
                                 </a>
                             {% endif %}
+                        </li>
+                    {% elif request.organizer %}
+                        <li>
+                            <a href="{% eventurl request.organizer 'presale:organizer.index' %}" title="{% translate 'Public profile' %}" target="_blank" rel="noopener noreferrer">
+                                <i class="fa fa-eye"></i> {% translate 'Public profile' %}
+                            </a>
                         </li>
                     {% endif %}
                 </ul>

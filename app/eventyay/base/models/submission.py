@@ -108,6 +108,7 @@ class SubmissionStates(Choices):
     }
 
     accepted_states = (ACCEPTED, CONFIRMED)
+    terminal_states = (REJECTED, DELETED, CANCELED, WITHDRAWN)
 
     @staticmethod
     def get_color(state):
@@ -261,6 +262,13 @@ class Submission(GenerateCode, PretalxModel):
         verbose_name=_('Show this session in public list of featured sessions.'),
     )
     do_not_record = models.BooleanField(default=False, verbose_name=_('Don’t record this session.'))
+    etherpad_url = models.URLField(
+        max_length=500,
+        null=True,
+        blank=True,
+        verbose_name=_('Etherpad URL'),
+        help_text=_('Collaborative notes pad for this session. Notes are hosted on the configured Etherpad instance.'),
+    )
     image = models.ImageField(
         null=True,
         blank=True,
@@ -363,6 +371,7 @@ class Submission(GenerateCode, PretalxModel):
         comments = '{base}comments/'
         quick_schedule = '{self.event.orga_urls.schedule}quick/{self.code}/'
         history = '{base}history/'
+        etherpad_generate = '{base}etherpad/generate'
 
     @property
     def image_url(self):
@@ -488,14 +497,11 @@ class Submission(GenerateCode, PretalxModel):
             old_state = self.state
             self.state = new_state
             self.pending_state = None
-            if new_state in (
-                SubmissionStates.REJECTED,
-                SubmissionStates.DELETED,
-                SubmissionStates.CANCELED,
-                SubmissionStates.WITHDRAWN,
-            ):
+            update_fields = ['state', 'pending_state']
+            if new_state in SubmissionStates.terminal_states:
                 self.is_featured = False
-            self.save(update_fields=['state', 'pending_state'])
+                update_fields.append('is_featured')
+            self.save(update_fields=update_fields)
             self.update_talk_slots()
             submission_state_change.send_robust(
                 self.event,
@@ -1059,6 +1065,13 @@ class Submission(GenerateCode, PretalxModel):
     def remove_speaker(self, speaker, orga=True, user=None):
         if self.speakers.filter(code=speaker.code).exists():
             self.speakers.remove(speaker)
+            from eventyay.agenda.views.utils import (
+                clear_featured_speakers_without_active_submissions,
+                clear_schedule_caches,
+            )
+
+            clear_featured_speakers_without_active_submissions(self.event, [speaker])
+            clear_schedule_caches(self.event, speaker=speaker)
             self.log_action(
                 'eventyay.submission.speakers.remove',
                 person=user or speaker,

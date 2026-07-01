@@ -24,7 +24,7 @@ def event():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     with scope(organizer=o):
         yield event

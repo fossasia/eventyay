@@ -7,10 +7,10 @@ from django.test import TransactionTestCase
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
-    ItemVariation,
+    Product as Item,
+    ProductVariation as ItemVariation,
     Order,
     OrderPosition,
     Organizer,
@@ -19,7 +19,7 @@ from pretix.base.models import (
     User,
     Voucher,
 )
-from tests.base import SoupTestMixin, extract_form_fields
+from tests.tickets.base import SoupTestMixin, extract_form_fields
 
 
 class VoucherFormTest(SoupTestMixin, TransactionTestCase):

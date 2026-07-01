@@ -12,6 +12,7 @@ class AgendaConfig(AppConfig):
 
     def ready(self):
         from .phrases import AgendaPhrases  # noqa
+        from . import etherpad  # noqa
         from eventyay.schedule.signals import schedule_release
 
         def on_schedule_release(sender, schedule, **kwargs):
@@ -36,7 +37,27 @@ class AgendaConfig(AppConfig):
             except Exception:
                 LOGGER.exception('Failed to enqueue warm_schedule_caches for schedule pk=%s', schedule.pk)
 
-        schedule_release.connect(on_schedule_release, dispatch_uid='agenda.on_schedule_release')
+        schedule_release.connect(on_schedule_release, dispatch_uid='agenda.on_schedule_release', weak=False)
+
+        from eventyay.base.models import SubmissionStates
+        from eventyay.submission.signals import submission_state_change
+
+        def on_submission_state_change(sender, submission, **kwargs):
+            if submission.state not in SubmissionStates.terminal_states:
+                return
+            from eventyay.agenda.views.utils import (
+                clear_featured_speakers_without_active_submissions,
+                clear_schedule_caches,
+            )
+
+            clear_featured_speakers_without_active_submissions(sender, submission.speakers.all())
+            clear_schedule_caches(sender, submission=submission)
+
+        submission_state_change.connect(
+            on_submission_state_change,
+            dispatch_uid='agenda.on_submission_state_change',
+            weak=False,
+        )
 
 
 with suppress(ImportError):

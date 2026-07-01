@@ -15,6 +15,7 @@ from django.utils.safestring import SafeString
 from django.utils.translation import gettext_lazy as _
 from i18nfield.utils import I18nJSONEncoder
 
+from eventyay.agenda.export_resources import frab_public_resource_attachments, frab_public_resource_links
 from eventyay import __version__
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.submission import Submission
@@ -26,6 +27,14 @@ from eventyay.common.utils.language import localize_event_text
 if TYPE_CHECKING:
     from eventyay.base.models.schedule import Schedule
     from eventyay.base.models.slot import TalkSlot
+
+
+def filter_featured_public_talk_slots(queryset):
+    """Limit talk slots to featured sessions with a visible, non-deleted room."""
+    return queryset.filter(
+        submission__is_featured=True,
+        room__isnull=False,
+    ).exclude(room__deleted=True)
 
 
 class RoomData(TypedDict):
@@ -72,6 +81,8 @@ class ScheduleData(BaseExporter):
         schedule = self.schedule
 
         base_qs = schedule.talks.all() if self.with_accepted else schedule.talks.filter(is_visible=True)
+        if getattr(self, 'featured_only', False):
+            base_qs = filter_featured_public_talk_slots(base_qs)
         talks = (
             base_qs.select_related(
                 'submission',
@@ -326,7 +337,6 @@ class FrabJsonExporter(ScheduleData):
         }
 
     def serialize_talk(self, talk, room):
-        resources = list(talk.submission.resources.all())
         persons = []
         for person in talk.submission.speakers.all():
             profile = self.get_speaker_profile(person)
@@ -362,26 +372,10 @@ class FrabJsonExporter(ScheduleData):
             'recording_license': '',
             'do_not_record': talk.submission.do_not_record,
             'persons': persons,
-            'links': [
-                {
-                    'title': localize_event_text(resource.description),
-                    'url': resource.link,
-                    'type': 'related',
-                }
-                for resource in resources
-                if resource.link
-            ],
+            'links': frab_public_resource_links(talk.submission, self.event),
             'feedback_url': talk.submission.urls.feedback.full(),
             'origin_url': talk.submission.urls.public.full(),
-            'attachments': [
-                {
-                    'title': localize_event_text(resource.description),
-                    'url': resource.resource.url,
-                    'type': 'related',
-                }
-                for resource in resources
-                if not resource.link
-            ],
+            'attachments': frab_public_resource_attachments(talk.submission, self.event),
         }
 
     def render(self, **kwargs):
@@ -433,6 +427,8 @@ class ICalExporter(BaseExporter):
             .select_related('submission', 'room', 'submission__event')
             .order_by('start')
         )
+        if getattr(self, 'featured_only', False):
+            talks = filter_featured_public_talk_slots(talks)
         for talk in talks:
             if self.favs_retrieve and talk.submission and talk.submission.code not in self.talk_ids:
                 continue
@@ -472,6 +468,8 @@ class FavedICalExporter(BaseExporter):
         if not schedule:
             return None
         slots = schedule.scheduled_talks.filter(submission__favourites__user__in=[request.user])
+        if getattr(self, 'featured_only', False):
+            slots = slots.filter(submission__is_featured=True)
 
         cal = vobject.iCalendar()
         cal.add('prodid').value = f'-//pretalx//{netloc}//{request.event.slug}//faved'

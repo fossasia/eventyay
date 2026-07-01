@@ -279,14 +279,6 @@ class FormFlowStep(TemplateFlowStep):
         previous_data = self.cfp_session.get('data')
         submission_title = previous_data.get('info', {}).get('title')
         result['submission_title'] = '' if submission_title == AUTO_DRAFT_TITLE else submission_title
-        # Add information about uploaded files for display in templates
-        saved_files = self.cfp_session.get('files', {}).get(self.identifier, {}) or {}
-        result['uploaded_files'] = {
-            field: (
-                [entry.get('name') for entry in file_dict] if isinstance(file_dict, list) else file_dict.get('name')
-            )
-            for field, file_dict in saved_files.items()
-        }
         return result
 
     def post(self, request):
@@ -474,14 +466,6 @@ class InfoStep(GenericFlowStep, FormFlowStep):
                 ),
             )
 
-            additional_speaker = (form.cleaned_data.get('additional_speaker') or '').strip()
-            if additional_speaker:
-                try:
-                    submission.send_invite(to=[additional_speaker], _from=request.user)
-                except SendMailException as exception:
-                    logging.getLogger('').warning(str(exception))
-                    messages.warning(self.request, phrases.cfp.submission_email_fail)
-
         access_code = getattr(request, 'access_code', None)
         if access_code:
             submission.access_code = access_code
@@ -574,6 +558,9 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         result['enforce_account_name_match'] = True
         return result
 
+    def get_extra_form_kwargs(self):
+        return {'add_additional_speaker': True}
+
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
         email = getattr(self.request.user, 'email', None)
@@ -589,6 +576,15 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         form.is_valid()
         form.user = request.user
         form.save()
+
+        additional_speaker = (form.cleaned_data.get('additional_speaker') or '').strip()
+        submission = getattr(request, 'submission', None)
+        if not draft and additional_speaker and submission:
+            try:
+                submission.send_invite(to=[additional_speaker], _from=request.user)
+            except SendMailException as exception:
+                logger.warning('Failed to send co-speaker invite email: %s', exception)
+                messages.warning(request, phrases.cfp.submission_email_fail)
 
     @property
     def label(self):

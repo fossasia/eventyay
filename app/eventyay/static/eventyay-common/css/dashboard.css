@@ -28,3 +28,139 @@
         transform: scale(1.05);
     }
 }
+
+/* Mobile card layout for dashboard list tables (events, orders, sessions, organizers). */
+@media (max-width: 991px) {
+    table.events-table thead {
+        display: none;
+    }
+
+    table.events-table > tbody > tr {
+        display: block;
+        position: relative;
+        border: 1px solid #e3e3e3;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    table.events-table > tbody > tr > td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: none;
+        padding: 8px 5px;
+        text-align: right;
+        border-bottom: 1px solid #f5f5f5;
+    }
+
+    table.events-table > tbody > tr > td:last-child,
+    table.events-table > tbody > tr > td.events-table__cell--no-border {
+        border-bottom: none;
+    }
+
+    table.events-table > tbody > tr > td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #555;
+        text-align: left;
+        padding-right: 15px;
+        flex-shrink: 0;
+    }
+
+    table.events-table > tbody > tr > td.event-name-col {
+        display: block;
+        width: 100%;
+        text-align: left;
+        font-size: 1.15em;
+        padding-bottom: 12px;
+        padding-right: 90px;
+        word-break: break-word;
+        border-bottom: none;
+    }
+
+    table.events-table > tbody > tr > td.event-name-col::before {
+        display: none;
+    }
+
+    table.events-table > tbody > tr > td.event-date-col {
+        display: block;
+        text-align: right;
+    }
+
+    table.events-table > tbody > tr > td.event-date-col::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+    table.events-table > tbody > tr > td.event-date-col::before {
+        float: left;
+        margin-bottom: 0;
+    }
+
+    table.events-table > tbody > tr > .flip {
+        position: absolute;
+        top: 16px;
+        right: 15px;
+        border-bottom: none;
+        padding: 0;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    table.events-table > tbody > tr > .flip::before {
+        display: none;
+    }
+
+    table.events-table .action-buttons {
+        display: flex;
+        gap: 5px;
+        justify-content: flex-end;
+    }
+
+    .filter-form .col-xs-12 {
+        margin-bottom: 10px;
+    }
+
+    .filter-form .filter-actions {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .filter-form .filter-actions .btn {
+        flex: 1 1 50%;
+        max-width: 50%;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        margin: 0;
+    }
+
+    [data-ajax-results-region] > p {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    [data-ajax-results-region] > p .btn {
+        flex: 1;
+        margin: 0;
+        white-space: normal;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 44px;
+        border-radius: 6px;
+    }
+}

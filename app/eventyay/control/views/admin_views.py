@@ -241,7 +241,7 @@ class EventAdminToken(AdminBase, DetailView):
         secret = jwt_config["secret"]
         audience = jwt_config["audience"]
         issuer = jwt_config["issuer"]
-        iat = datetime.datetime.utcnow()
+        iat = datetime.datetime.now(datetime.timezone.utc)
         exp = iat + datetime.timedelta(days=7)
         payload = {
             "iss": issuer,
@@ -761,12 +761,13 @@ class BBBMoveRoom(AdminBase, FormView):
         except BBBCall.DoesNotExist:
             messages.error(self.request, _("No BBB session found for this room."))
             return HttpResponseRedirect(self.request.path)
+        source_server = c.server
         try:
             u = get_url(
                 "end",
                 {"meetingID": c.meeting_id, "password": c.moderator_pw},
-                server.url,
-                server.secret,
+                source_server.url,
+                source_server.secret,
             )
             r = requests.get(u, timeout=15)
             r.raise_for_status()

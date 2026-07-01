@@ -31,3 +31,27 @@
 hr + .resource-option-row {
   margin-top: -12px;
 }
+
+.slides-file-label {
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.slides-filename-label {
+  font-size: 0.95em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slides-error-msg {
+  display: none;
+  font-size: 0.9em;
+  font-weight: bold;
+}
+
+.slides-storage-warning {
+  display: none;
+  font-size: 0.9em;
+  font-weight: bold;
+}

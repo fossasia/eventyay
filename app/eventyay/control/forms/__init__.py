@@ -10,11 +10,11 @@ from django.forms.utils import from_current_timezone
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+
 from eventyay.base.forms import I18nModelForm
 
 # Import for backwards compatibility with old import paths
 from eventyay.base.forms.widgets import (  # noqa
-
     DatePickerWidget,
     SplitDateTimePickerWidget,
     TimePickerWidget,
@@ -79,21 +79,30 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
 
         @property
         def name(self):
+            if isinstance(self.file, str):
+                return self.file.split('?')[0].split('/')[-1]
             if hasattr(self.file, 'display_name'):
                 return self.file.display_name
             return self.file.name
 
         @property
         def is_img(self):
-            return any(self.file.name.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif'))
+            if isinstance(self.file, str):
+                return False
+            name = self.name
+            return any(name.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif'))
 
         def __str__(self):
+            if isinstance(self.file, str):
+                return self.file.split('?')[0].split('/')[-1]
             if hasattr(self.file, 'display_name'):
                 return self.file.display_name
             return os.path.basename(self.file.name).split('.', 1)[-1]
 
         @property
         def url(self):
+            if isinstance(self.file, str):
+                return self.file
             return self.file.url
 
     def get_context(self, name, value, attrs):
@@ -101,6 +110,13 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
         ctx['widget']['value'] = self.FakeFile(value)
         ctx['widget']['cachedfile'] = None
         return ctx
+
+    def is_initial(self, value):
+        # Backward-compat: plain string means a legacy external URL is stored.
+        # Treat it as an initial value so the template shows the link + clear checkbox.
+        if isinstance(value, str) and value:
+            return True
+        return super().is_initial(value)
 
 
 class CachedFileInput(forms.ClearableFileInput):
@@ -150,14 +166,14 @@ class SizeFileField(forms.FileField):
     def __init__(self, *args, **kwargs):
         self.max_size = kwargs.pop('max_size', None)
         super().__init__(*args, **kwargs)
-        
+
         if self.max_size:
             size_warning = _('Please do not upload files larger than {size}!').format(
                 size=SizeFileField._sizeof_fmt(self.max_size)
             )
             self.widget.attrs['data-maxsize'] = self.max_size
             self.widget.attrs['data-sizewarning'] = size_warning
-            
+
             if size_warning not in (self.help_text or ''):
                 self.help_text = f'{self.help_text} {size_warning}'.strip() if self.help_text else size_warning
 
@@ -187,13 +203,13 @@ class ExtFileField(SizeFileField):
         ext_whitelist = kwargs.pop('ext_whitelist')
         self.ext_whitelist = [i.lower() for i in ext_whitelist]
         super().__init__(*args, **kwargs)
-        
+
         if self.ext_whitelist:
             self.widget.attrs['accept'] = ','.join(self.ext_whitelist)
-            
+
             supported_formats = ', '.join(sorted(self.ext_whitelist))
             extension_help = _('Supported formats: {formats}').format(formats=supported_formats)
-            
+
             if extension_help not in (self.help_text or ''):
                 self.help_text = f'{self.help_text} {extension_help}'.strip() if self.help_text else extension_help
 
@@ -276,7 +292,8 @@ class SlugWidget(forms.TextInput):
 
 
 class MultipleLanguagesWidget(forms.CheckboxSelectMultiple):
-    option_template_name = 'pretixcontrol/multi_languages_widget.html'
+    template_name = 'pretixcontrol/language_grid_select.html'
+    option_template_name = 'pretixcontrol/multi_languages_grid_option.html'
 
     def sort(self):
         self.choices = sorted(
@@ -339,3 +356,35 @@ class SplitDateTimeField(forms.SplitDateTimeField):
 
 class FontSelect(forms.RadioSelect):
     option_template_name = 'pretixcontrol/font_option.html'
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        from eventyay.base.models import Event  # noqa: PLC0415
+        from eventyay.presale.style import (  # noqa: PLC0415
+            BASE_SANS_STACK,
+            SYSTEM_FONTS,
+            escape_font_name,
+            get_fonts,
+        )
+
+        font_key = value
+        if font_key == '' and hasattr(self, 'obj'):
+            if isinstance(self.obj, Event) and hasattr(self.obj, 'organizer'):
+                font_key = self.obj.organizer.settings.get('primary_font') or 'Open Sans'
+            else:
+                font_key = 'Open Sans'
+
+        if not hasattr(self, '_fonts_dict'):
+            self._fonts_dict = get_fonts()
+
+        font_family = None
+        if font_key in SYSTEM_FONTS:
+            font_family = SYSTEM_FONTS[font_key]
+        elif font_key in self._fonts_dict:
+            escaped_font = escape_font_name(font_key)
+            font_family = f'"{escaped_font}", {BASE_SANS_STACK}'
+        else:
+            font_family = SYSTEM_FONTS.get('Open Sans')
+
+        option['font_family'] = font_family
+        return option
