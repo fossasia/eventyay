@@ -647,16 +647,18 @@ export default {
 			this._onStackedToolbarMqChange = () => {
 				this.$nextTick(() => this.updateDayNavigation())
 			}
-			this._stackedToolbarMq.addEventListener('change', this._onStackedToolbarMqChange)
+			if (typeof this._stackedToolbarMq.addEventListener === 'function') {
+				this._stackedToolbarMq.addEventListener('change', this._onStackedToolbarMqChange)
+			} else if (typeof this._stackedToolbarMq.addListener === 'function') {
+				this._stackedToolbarMq.addListener(this._onStackedToolbarMqChange)
+			}
 		}
 		this.$nextTick(() => {
 			this.updateVersionBannerHeight()
 			this.updateToolbarHeight()
 			if (typeof ResizeObserver !== 'undefined') {
 				this._versionBannerResizeObserver = new ResizeObserver(() => {
-					this.updateVersionBannerHeight()
-					this.updateToolbarHeight()
-					this.updateDayNavigation()
+					this.scheduleToolbarLayoutUpdate()
 				})
 				if (this.$refs.versionBanner) this._versionBannerResizeObserver.observe(this.$refs.versionBanner)
 				this._versionBannerResizeObserver.observe(this.$el)
@@ -674,15 +676,28 @@ export default {
 	beforeUnmount() {
 		document.removeEventListener('click', this.outsideClick, true)
 		document.removeEventListener('fullscreenchange', this.onFullscreenChange)
-		this._stackedToolbarMq?.removeEventListener('change', this._onStackedToolbarMqChange)
+		if (this._stackedToolbarMq && this._onStackedToolbarMqChange) {
+			if (typeof this._stackedToolbarMq.removeEventListener === 'function') {
+				this._stackedToolbarMq.removeEventListener('change', this._onStackedToolbarMqChange)
+			} else if (typeof this._stackedToolbarMq.removeListener === 'function') {
+				this._stackedToolbarMq.removeListener(this._onStackedToolbarMqChange)
+			}
+		}
+		if (this._toolbarLayoutRaf) {
+			cancelAnimationFrame(this._toolbarLayoutRaf)
+			this._toolbarLayoutRaf = null
+		}
 		this._versionBannerResizeObserver?.disconnect?.()
 	},
 	methods: {
-		isStackedToolbarLayout() {
-			if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-				return false
-			}
-			return window.matchMedia(`(max-width: ${STACKED_TOOLBAR_MAX_WIDTH}px)`).matches
+		scheduleToolbarLayoutUpdate() {
+			if (this._toolbarLayoutRaf) return
+			this._toolbarLayoutRaf = requestAnimationFrame(() => {
+				this._toolbarLayoutRaf = null
+				this.updateVersionBannerHeight()
+				this.updateToolbarHeight()
+				this.updateDayNavigation()
+			})
 		},
 		updateVersionBannerHeight() {
 			const host = this.$el?.parentElement
@@ -936,16 +951,23 @@ export default {
 					return
 				}
 
-				for (let count = this.days.length - 1; count >= 1; count--) {
-					this.maxVisibleDays = count
+				let lo = 1
+				let hi = this.days.length - 1
+				let bestFit = 1
+				while (lo <= hi) {
+					const mid = Math.floor((lo + hi) / 2)
+					this.maxVisibleDays = mid
 					await this.$nextTick()
 					if (fits()) {
-						this.ensureCurrentDayVisible()
-						return
+						bestFit = mid
+						lo = mid + 1
+					} else {
+						hi = mid - 1
 					}
 				}
 
-				this.maxVisibleDays = 1
+				this.maxVisibleDays = bestFit
+				await this.$nextTick()
 				this.ensureCurrentDayVisible()
 			} finally {
 				this._updatingDayNav = false
