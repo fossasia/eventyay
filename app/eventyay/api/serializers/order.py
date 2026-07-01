@@ -611,6 +611,8 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
             return None
         from eventyay.plugins.badges.utils import (
             get_badge_bundle_option_choices,
+            get_badge_field_display_values,
+            get_badge_field_overrides,
             get_badge_hidden_fields,
             get_badge_layout_for_position,
         )
@@ -618,13 +620,20 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
         layout = get_badge_layout_for_position(obj.order.event, obj)
         if not layout or not layout.allow_customization:
             return None
+        display_values = get_badge_field_display_values(obj.order.event, obj)
         return {
             'allow_customization': True,
+            'allow_badge_editing': layout.allow_badge_editing,
             'fields': [
-                {'key': key, 'label': label}
+                {
+                    'key': key,
+                    'label': label,
+                    'value': display_values.get(key, ''),
+                }
                 for key, label in get_badge_bundle_option_choices(obj.order.event, obj)
             ],
             'hidden_fields': get_badge_hidden_fields(obj),
+            'field_overrides': get_badge_field_overrides(obj),
         }
 
     class Meta:

@@ -1132,22 +1132,45 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                 {'detail': 'Method "PUT" not allowed.'},
                 status=status.HTTP_405_METHOD_NOT_ALLOWED,
             )
-        if 'badge_hidden_fields' in request.data:
+        if 'badge_hidden_fields' in request.data or 'badge_field_overrides' in request.data:
             from django.core.exceptions import ValidationError as DjangoValidationError
 
-            from eventyay.plugins.badges.utils import save_badge_hidden_fields, validate_badge_hidden_fields
+            from eventyay.plugins.badges.utils import (
+                get_badge_field_overrides,
+                get_badge_hidden_fields,
+                save_badge_customization,
+                validate_badge_field_overrides,
+                validate_badge_hidden_fields,
+            )
 
             op = self.get_object()
             try:
-                hidden_fields = validate_badge_hidden_fields(
-                    op.order.event,
-                    op,
-                    request.data.get('badge_hidden_fields'),
+                hidden_fields = (
+                    validate_badge_hidden_fields(
+                        op.order.event,
+                        op,
+                        request.data.get('badge_hidden_fields'),
+                    )
+                    if 'badge_hidden_fields' in request.data
+                    else get_badge_hidden_fields(op)
+                )
+                field_overrides = (
+                    validate_badge_field_overrides(
+                        op.order.event,
+                        op,
+                        request.data.get('badge_field_overrides'),
+                    )
+                    if 'badge_field_overrides' in request.data
+                    else get_badge_field_overrides(op)
                 )
             except DjangoValidationError as exc:
                 raise ValidationError(exc.messages)
 
-            save_badge_hidden_fields(op, hidden_fields)
+            save_badge_customization(
+                op,
+                hidden_fields=hidden_fields if 'badge_hidden_fields' in request.data else None,
+                field_overrides=field_overrides if 'badge_field_overrides' in request.data else None,
+            )
             serializer = CheckinListOrderPositionSerializer(op, context=self.get_serializer_context())
             return Response(serializer.data)
         return super().update(request, *args, **kwargs)
