@@ -1104,12 +1104,24 @@ table .color-square {
 .submission-page-actions {
   margin-left: auto;
   text-align: right;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
 }
 
 .submission-page-actions__primary {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.submission-page-actions__nav .navigation-button {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
 }
 
@@ -1807,16 +1819,27 @@ h2 .user-name-display img {
     white-space: normal;
   }
 
+  #page-content .submission-list-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   #page-content .submission-page-actions {
     margin-left: 0;
     width: 100%;
     text-align: left;
+    align-items: stretch;
+    flex-direction: column;
   }
 
   #page-content .submission-page-actions__primary {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
+  }
+
+  #page-content .submission-page-actions__nav {
+    justify-content: flex-start;
   }
 
   #page-content .submission-page-actions .btn-link {

@@ -18,7 +18,7 @@ function applyTableFlipLabels(root = document) {
                 const label = headers[index + headerOffset] || ""
                 if (label) {
                     cell.dataset.label = label
-                } else {
+                } else if (!cell.dataset.label) {
                     delete cell.dataset.label
                 }
             })

@@ -46,7 +46,7 @@ const addNewScores = (ev) => {
             <div class="score-label">
                 <input type="text" name="scores-${formID}-label_${newID}" maxlength="20" class="form-control" id="id_scores-${formID}-label_${newID}" placeholder="👍">
             </div>
-            <div role="button" class="new-score btn btn-danger flip ml-auto" data-score="${newID}"><i class="fa fa-trash"></i></div>
+            <div role="button" class="delete-score btn btn-danger flip ml-auto" data-score="${newID}"><i class="fa fa-trash"></i></div>
         </div>
     </div>`
     const newElement = document.createElement("div")
@@ -74,6 +74,25 @@ const addListener = () => {
         .querySelectorAll("#score-formset div.btn.new-score")
         .forEach((element) => {
             element.addEventListener("click", addNewScores)
+        })
+    document
+        .querySelectorAll("#score-formset div.btn.delete-score")
+        .forEach((element) => {
+            element.addEventListener("click", (ev) => {
+                const scoreID = ev.currentTarget.dataset.score
+                const row = ev.currentTarget.closest(".row.form-group")
+                const parentElement = ev.currentTarget.closest(".score-group")
+                const scoresList = parentElement.querySelector(
+                    "input[type=text][id$=new_scores]",
+                )
+                if (row) row.remove()
+                if (scoresList) {
+                    scoresList.value = scoresList.value
+                        .split(",")
+                        .filter((v) => v !== scoreID)
+                        .join(",")
+                }
+            })
         })
 }
 
