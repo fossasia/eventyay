@@ -30,7 +30,7 @@ class AllowListSecurityProfile:
             keys.append((request.method, f'{namespace}:{url_name}'))
             namespace_parts = namespace.split(':')
             for index in range(len(namespace_parts)):
-                keys.append((request.method, f'{':'.join(namespace_parts[index:])}:{url_name}'))
+                keys.append((request.method, f"{':'.join(namespace_parts[index:])}:{url_name}"))
         keys.append((request.method, url_name))
         return keys
 
