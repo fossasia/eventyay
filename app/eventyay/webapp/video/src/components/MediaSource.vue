@@ -225,7 +225,8 @@ watch(youtubeTranslation, async (transConfig) => {
 	}
 
 	const audioSource = transConfig?.url || null;
-	const useVideo = transConfig?.useVideo || false;
+	const requestedUseVideo = transConfig?.useVideo || false;
+	const useVideo = requestedUseVideo && !!(audioSource && normalizeYoutubeVideoId(audioSource));
 
 	if (useVideo) {
 		isPlayingTranslationVideo.value = true;
@@ -383,7 +384,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			case 'livestream.youtube': {
 				isYouTube = true;
 				let ytid;
-				if (youtubeTranslation.value?.useVideo && youtubeTranslation.value?.url) {
+				if (youtubeTranslation.value?.useVideo && youtubeTranslation.value?.url && normalizeYoutubeVideoId(youtubeTranslation.value.url)) {
 					ytid = normalizeYoutubeVideoId(youtubeTranslation.value.url);
 				} else if (streamType === STREAM_TYPE_YOUTUBE && currentStream?.url) {
 					ytid = normalizeYoutubeVideoId(currentStream.url);
