@@ -304,3 +304,32 @@ def test_can_change_vouchers_implies_can_view_vouchers(event, user):
 
     assert user.has_event_permission(event.organizer, event, 'can_view_vouchers')
     assert 'can_view_vouchers' in user.get_event_permission_set(event.organizer, event)
+
+
+@pytest.mark.django_db
+def test_can_manage_bank_transfers_implies_can_view_orders_in_queryset(event, user):
+    team = Team.objects.create(organizer=event.organizer, can_manage_bank_transfers=True, all_events=True)
+    team.members.add(user)
+    user._teamcache = {}
+
+    with scope(organizer=event.organizer):
+        events = list(user.get_events_with_permission('can_view_orders'))
+        assert event in events
+
+        organizers = list(user.get_organizers_with_permission('can_view_orders'))
+        assert event.organizer in organizers
+
+
+@pytest.mark.django_db
+def test_can_change_orders_implies_can_view_orders_in_queryset(event, user):
+    team = Team.objects.create(organizer=event.organizer, can_change_orders=True, all_events=True)
+    team.members.add(user)
+    user._teamcache = {}
+
+    with scope(organizer=event.organizer):
+        events = list(user.get_events_with_permission('can_view_orders'))
+        assert event in events
+
+        organizers = list(user.get_organizers_with_permission('can_view_orders'))
+        assert event.organizer in organizers
+
