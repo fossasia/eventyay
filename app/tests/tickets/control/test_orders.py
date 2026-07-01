@@ -14,6 +14,7 @@ from eventyay.base.models import (
     GiftCard,
     InvoiceAddress,
     Product as Item,
+    ProductCategory as ItemCategory,
     Order,
     OrderFee,
     OrderPayment,
@@ -25,6 +26,7 @@ from eventyay.base.models import (
     Quota,
     Team,
     User,
+    Voucher,
 )
 from eventyay.base.exporters.orderlist import OrderListExporter, OrderPositionListExporter
 from eventyay.base.payment import PaymentException
@@ -1954,6 +1956,89 @@ class OrderChangeTests(SoupTest):
         self.op1.refresh_from_db()
         self.op2.refresh_from_db()
         assert self.order.total == self.op1.price + self.op2.price
+
+    def test_reinstate_success(self):
+        """Reinstating a canceled position uncancels it and restores the order total."""
+        self.client.post(
+            '/control/event/{}/{}/orders/{}/{}/reinstate'.format(
+                self.event.organizer.slug, self.event.slug, self.order.code, self.op3.pk
+            ),
+        )
+        with scopes_disabled():
+            self.op3.refresh_from_db()
+            self.order.refresh_from_db()
+        assert not self.op3.canceled
+        assert self.order.total == self.op1.price + self.op2.price + self.op3.price
+
+    def test_reinstate_with_addon(self):
+        """Reinstating a base position also reinstates its canceled add-ons."""
+        with scopes_disabled():
+            addon_cat = ItemCategory.objects.create(event=self.event, name='Add-ons', is_addon=True)
+            addon_item = Item.objects.create(
+                event=self.event, name='Addon', tax_rule=self.tr7, default_price=Decimal('5.00')
+            )
+            addon_item.category = addon_cat
+            addon_item.save()
+            self.quota.items.add(addon_item)
+            self.op3.canceled = False
+            self.op3.save()
+            addon_pos = OrderPosition.objects.create(
+                order=self.order,
+                item=addon_item,
+                variation=None,
+                price=Decimal('5.00'),
+                addon_to=self.op3,
+                canceled=True,
+            )
+            self.op3.canceled = True
+            self.op3.save()
+
+        self.client.post(
+            '/control/event/{}/{}/orders/{}/{}/reinstate'.format(
+                self.event.organizer.slug, self.event.slug, self.order.code, self.op3.pk
+            ),
+        )
+        with scopes_disabled():
+            self.op3.refresh_from_db()
+            addon_pos.refresh_from_db()
+        assert not self.op3.canceled
+        assert not addon_pos.canceled
+
+    def test_reinstate_increments_voucher_redeemed(self):
+        """Reinstating a position that used a voucher increments the voucher's redeemed count."""
+        with scopes_disabled():
+            voucher = Voucher.objects.create(
+                event=self.event, item=self.ticket, redeemed=0, max_usages=5
+            )
+            self.op3.voucher = voucher
+            self.op3.save()
+
+        self.client.post(
+            '/control/event/{}/{}/orders/{}/{}/reinstate'.format(
+                self.event.organizer.slug, self.event.slug, self.order.code, self.op3.pk
+            ),
+        )
+        with scopes_disabled():
+            voucher.refresh_from_db()
+        assert voucher.redeemed == 1
+
+    def test_reinstate_fails_when_quota_exhausted(self):
+        """Reinstate is rejected when the quota has no remaining capacity."""
+        with scopes_disabled():
+            self.quota.size = 0
+            self.quota.save()
+
+        response = self.client.post(
+            '/control/event/{}/{}/orders/{}/{}/reinstate'.format(
+                self.event.organizer.slug, self.event.slug, self.order.code, self.op3.pk
+            ),
+            follow=True,
+        )
+        assert response.status_code == 200
+        with scopes_disabled():
+            self.op3.refresh_from_db()
+        # Should still be canceled — quota error blocked the reinstate
+        assert self.op3.canceled
 
 
 @pytest.mark.django_db
