@@ -21,12 +21,22 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 		.is-live(v-if="showLiveBadge && isLive") live
 	.info(:class="{'has-icons': hasAnyRightIcons}")
 		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
-		.speakers(v-if="namedSpeakers.length", :class="{'names-clamped': isShortSession}")
-			template(v-for="(speaker, i) of namedSpeakers", :key="speaker.code || i")
-				span.speaker
-					img(v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url", :src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url", alt="", aria-hidden="true")
-					span {{ speaker.name }}
-				span(v-if="i + 1 < namedSpeakers.length") , 
+		.speakers-row(v-if="namedSpeakers.length")
+			.speakers(
+				ref="speakersRow",
+				:class="{'names-clamped': isShortSession}",
+				:aria-label="speakersAriaLabel")
+				span.speaker(v-for="(speaker, i) of namedSpeakers", :key="speaker.code || i")
+					img(
+						v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+						:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+						alt="",
+						aria-hidden="true")
+					span.speaker-label {{ speaker.name }}
+					span.speaker-separator(v-if="i + 1 < namedSpeakers.length", aria-hidden="true") ,
+			span.speakers-overflow-hint(
+				v-if="speakersHiddenCount > 0",
+				:aria-label="speakersOverflowLabel") +{{ speakersHiddenCount }} more
 		.tags-box(v-if="showTags && session.tags && session.tags.length")
 			.tags(v-for="tag_item of session.tags")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
@@ -128,6 +138,7 @@ export default {
 			getLocalizedString,
 			getSessionTime,
 			getContrastColor,
+			speakersHiddenCount: 0,
 		}
 	},
 	computed: {
@@ -219,7 +230,28 @@ export default {
 		},
 		namedSpeakers () {
 			return (this.session.speakers || []).filter(s => (s.name || '').trim())
+		},
+		speakersAriaLabel () {
+			return this.namedSpeakers.map(speaker => speaker.name).join(', ')
+		},
+		speakersOverflowLabel () {
+			if (!this.speakersHiddenCount) return ''
+			return `+${this.speakersHiddenCount} more speakers`
 		}
+	},
+	watch: {
+		namedSpeakers () {
+			this.$nextTick(() => this.updateSpeakersOverflow())
+		},
+		isShortSession () {
+			this.$nextTick(() => this.setupSpeakersOverflowObserver())
+		}
+	},
+	mounted () {
+		this.$nextTick(() => this.setupSpeakersOverflowObserver())
+	},
+	beforeUnmount () {
+		this._speakersResizeObserver?.disconnect?.()
 	},
 	methods: {
 		toggleFav () {
@@ -235,6 +267,40 @@ export default {
 			if (link) {
 				window.open(link, '_blank', 'noopener,noreferrer')
 			}
+		},
+		setupSpeakersOverflowObserver () {
+			this._speakersResizeObserver?.disconnect?.()
+			if (!this.isShortSession) {
+				this.speakersHiddenCount = 0
+				return
+			}
+			const row = this.$refs.speakersRow
+			if (!row || typeof ResizeObserver === 'undefined') {
+				this.updateSpeakersOverflow()
+				return
+			}
+			this._speakersResizeObserver = new ResizeObserver(() => {
+				this.updateSpeakersOverflow()
+			})
+			this._speakersResizeObserver.observe(row)
+			this.updateSpeakersOverflow()
+		},
+		updateSpeakersOverflow () {
+			const row = this.$refs.speakersRow
+			if (!row || !this.isShortSession || !this.namedSpeakers.length) {
+				this.speakersHiddenCount = 0
+				return
+			}
+			const rowRect = row.getBoundingClientRect()
+			let visible = 0
+			for (const el of row.querySelectorAll('.speaker')) {
+				const rect = el.getBoundingClientRect()
+				if (rect.bottom <= rowRect.bottom + 1 && rect.top >= rowRect.top - 1 && rect.left < rowRect.right) {
+					visible += 1
+				}
+			}
+			visible = Math.min(visible, this.namedSpeakers.length)
+			this.speakersHiddenCount = Math.max(0, this.namedSpeakers.length - visible)
 		}
 	}
 }
@@ -405,25 +471,57 @@ sessionTextExpand()
 			margin-right: 0
 			&.title-clamped
 				sessionTextClamp(2)
+		.speakers-row
+			display: flex
+			align-items: center
+			gap: 4px
+			min-width: 0
+			.speakers-overflow-hint
+				flex: 0 0 auto
+				white-space: nowrap
+				font-size: 12px
+				color: $clr-secondary-text-light
+				font-weight: 500
 		.speakers
+			--session-speaker-line-height: 24px
+			--session-speaker-avatar-size: 24px
 			color: $clr-secondary-text-light
 			display: flex
-			flex-wrap: wrap
+			flex-flow: row wrap
 			align-items: center
+			align-content: flex-start
+			gap: 0 6px
+			flex: 1 1 auto
 			min-width: 0
-			line-height: 24px
+			line-height: var(--session-speaker-line-height)
+			word-break: normal
+			overflow-wrap: normal
 			.speaker
 				display: inline-flex
 				align-items: center
+				flex: 0 0 auto
+				max-width: 100%
+				white-space: nowrap
+				overflow-wrap: normal
 				img
 					background-color: $clr-white
 					border-radius: 50%
-					height: 24px
-					width: @height
+					height: var(--session-speaker-avatar-size)
+					width: var(--session-speaker-avatar-size)
 					margin: 0 6px 0 0
 					object-fit: cover
+					flex: 0 0 auto
+				.speaker-label
+					min-width: 0
+					overflow: hidden
+					text-overflow: ellipsis
+					white-space: nowrap
+				.speaker-separator
+					flex: 0 0 auto
+					white-space: nowrap
 			&.names-clamped
-				sessionTextClamp(1)
+				max-height: var(--session-speaker-line-height)
+				overflow: hidden
 		.abstract
 			margin: 8px 0 12px 0
 			// TODO make this take up more space if available?
@@ -536,8 +634,13 @@ sessionTextExpand()
 				color: var(--pretalx-clr-primary)
 	@media (hover: hover) and (pointer: fine)
 		&:hover
-			.title.title-clamped, .speakers.names-clamped
+			.title.title-clamped
 				sessionTextExpand()
+			.speakers.names-clamped
+				max-height: none
+				overflow: visible
+			.speakers-overflow-hint
+				display: none
 @media(hover: none)
 	.c-linear-schedule-session .session-icons .btn-fav-container
 		display: inline-flex
