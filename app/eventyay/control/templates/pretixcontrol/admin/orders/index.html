@@ -97,19 +97,29 @@
                         </td>
                         <td>{{ order.email }}</td>
                         <td>
-                            <span class="label
-                                {% if order.status_code == 'p' %}label-success
-                                {% elif order.status_code == 'n' %}label-warning
-                                {% elif order.status_code == 'e' %}label-danger
-                                {% elif order.status_code == 'c' %}label-danger
-                                {% endif %}">
-                                {% if order.status_code == 'p' %}<span class="fa fa-check"></span>
-                                {% elif order.status_code == 'n' %}<span class="fa fa-money"></span>
-                                {% elif order.status_code == 'e' %}<span class="fa fa-clock-o"></span>
-                                {% elif order.status_code == 'c' %}<span class="fa fa-times"></span>
-                                {% endif %}
-                                {{ order.status }}
-                            </span>
+                            {% if order.status_code == 'p' %}
+                                <span class="label label-success">
+                                    <span class="fa fa-check" aria-hidden="true"></span>
+                                    {{ order.status }}
+                                </span>
+                            {% elif order.status_code == 'n' %}
+                                <span class="label label-warning">
+                                    <span class="fa fa-money" aria-hidden="true"></span>
+                                    {{ order.status }}
+                                </span>
+                            {% elif order.status_code == 'e' %}
+                                <span class="label label-danger">
+                                    <span class="fa fa-clock-o" aria-hidden="true"></span>
+                                    {{ order.status }}
+                                </span>
+                            {% elif order.status_code == 'c' %}
+                                <span class="label label-danger">
+                                    <span class="fa fa-times" aria-hidden="true"></span>
+                                    {{ order.status }}
+                                </span>
+                            {% else %}
+                                <span class="label label-default">{{ order.status }}</span>
+                            {% endif %}
                         </td>
                         <td>{{ order.total|money:order.currency }}</td>
                         <td>{{ order.date }}</td>

@@ -1902,9 +1902,6 @@ class AdminOrderFilterForm(forms.Form):
     )
 
     def filter_qs(self, qs):
-        if not self.is_valid():
-            return qs
-
         fdata = self.cleaned_data
 
         if fdata.get('query'):

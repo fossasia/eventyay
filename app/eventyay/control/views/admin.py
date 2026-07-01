@@ -336,10 +336,10 @@ class AdminOrderListView(PaginationMixin, ListView):
         if not self.request.user.has_active_staff_session(
             self.request.session.session_key
         ):
-            allowed_organizers = self.request.user.teams.values_list(
-                'organizer', flat=True
-            )
-            qs = qs.filter(event__organizer_id__in=allowed_organizers)
+            allowed_events = self.request.user.get_events_with_permission(
+                'can_view_orders', request=self.request
+            ).values_list('id', flat=True)
+            qs = qs.filter(event_id__in=allowed_events)
 
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
