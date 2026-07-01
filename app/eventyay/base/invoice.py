@@ -5,7 +5,7 @@ from io import BytesIO
 from typing import Tuple
 
 import nh3
-import vat_moss.exchange_rates
+import vat_moss_lite.exchange_rates
 from django.contrib.staticfiles import finders
 from django.dispatch import receiver
 from django.utils.formats import date_format, localize
@@ -744,7 +744,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
 
         def fmt(val):
             try:
-                return vat_moss.exchange_rates.format(val, self.invoice.foreign_currency_display)
+                return vat_moss_lite.exchange_rates.format(val, self.invoice.foreign_currency_display)
             except ValueError:
                 return localize(val) + ' ' + self.invoice.foreign_currency_display
 
