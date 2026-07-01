@@ -144,8 +144,8 @@ $(function () {
             type: 'GET',
             success: function (data) {
                 if (data.type === "B") {
-                    $val.append($("<option>").attr("value", "True").text(gettext("Yes")));
-                    $val.append($("<option>").attr("value", "False").text(gettext("No")));
+                    $val.append($("<option>").attr("value", "True").text(gettext("is checked")));
+                    $val.append($("<option>").attr("value", "False").text(gettext("is not checked")));
                 } else {
                     for (var i = 0; i < data.options.length; i++) {
                         var opt = data.options[i];
