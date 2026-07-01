@@ -445,6 +445,8 @@ def schedule_messages(request, **kwargs):
         'schedule_do_not_record': _('This session will not be recorded.'),
         'back': _('Back'),
         'schedule_pending_secondary': _('Coming soon'),
+        'schedule_speakers_overflow_hint': _('+%(count)s more'),
+        'schedule_speakers_overflow_label': _('+%(count)s more speakers'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(
