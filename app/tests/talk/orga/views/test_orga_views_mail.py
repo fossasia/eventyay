@@ -720,3 +720,92 @@ def test_orga_can_compose_single_mail_from_wrong_template(
     assert response.status_code == 200
     with scope(event=event):
         assert str(mail_template.subject) not in response.text
+
+
+@pytest.mark.django_db
+def test_compose_session_mail_does_not_duplicate_template(
+    orga_client, event, mail_template, other_submission
+):
+    with scope(event=event):
+        template_count = event.mail_templates.filter(is_auto_created=False).count()
+        QueuedMail.objects.filter(sent__isnull=True).delete()
+    response = orga_client.post(
+        event.orga_urls.compose_mails_sessions + f'?template={mail_template.pk}',
+        follow=True,
+        data={
+            'submissions': [other_submission.code],
+            'bcc': '',
+            'reply_to': '',
+            'subject_0': str(mail_template.subject),
+            'text_0': str(mail_template.text),
+        },
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert event.mail_templates.filter(is_auto_created=False).count() == template_count
+        mail = QueuedMail.objects.get(sent__isnull=True)
+        assert mail.template_id == mail_template.pk
+
+
+@pytest.mark.django_db
+def test_compose_session_mail_with_edited_content_does_not_duplicate_template(
+    orga_client, event, mail_template, other_submission
+):
+    with scope(event=event):
+        template_count = event.mail_templates.filter(is_auto_created=False).count()
+        QueuedMail.objects.filter(sent__isnull=True).delete()
+    response = orga_client.post(
+        event.orga_urls.compose_mails_sessions + f'?template={mail_template.pk}',
+        follow=True,
+        data={
+            'submissions': [other_submission.code],
+            'bcc': '',
+            'reply_to': '',
+            'subject_0': 'One-off subject {name}',
+            'text_0': 'One-off body for {submission_title}',
+        },
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert event.mail_templates.filter(is_auto_created=False).count() == template_count
+        mail_template.refresh_from_db()
+        assert str(mail_template.subject) == 'Some Mail'
+        mail = QueuedMail.objects.get(sent__isnull=True)
+        assert mail.template_id == mail_template.pk
+        assert 'One-off body' in mail.text
+
+
+@pytest.mark.django_db
+def test_compose_teams_mail_does_not_duplicate_template(
+    orga_client, review_user, event, mail_template
+):
+    with scope(event=event):
+        template_count = event.mail_templates.filter(is_auto_created=False).count()
+    djmail.outbox = []
+    response = orga_client.post(
+        event.orga_urls.compose_mails_teams + f'?template={mail_template.pk}',
+        follow=True,
+        data={
+            'recipients': f'{review_user.teams.first().pk}',
+            'subject_0': str(mail_template.subject),
+            'text_0': str(mail_template.text),
+        },
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert event.mail_templates.filter(is_auto_created=False).count() == template_count
+
+
+@pytest.mark.django_db
+def test_mail_template_list_hides_auto_created_templates(orga_client, event, mail_template):
+    with scope(event=event):
+        MailTemplate.objects.create(
+            event=event,
+            subject='Hidden duplicate',
+            text='Should not appear in list',
+            is_auto_created=True,
+        )
+    response = orga_client.get(event.orga_urls.mail_templates, follow=True)
+    assert response.status_code == 200
+    assert 'Hidden duplicate' not in response.text
+    assert str(mail_template.subject) in response.text
