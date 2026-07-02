@@ -347,6 +347,8 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     :type can_view_orders: bool
     :param can_change_orders: If ``True``, the members can change details of orders of the associated events.
     :type can_change_orders: bool
+    :param can_manage_bank_transfers: If ``True``, the members can import bank data and manage bank transfer refunds.
+    :type can_manage_bank_transfers: bool
     :param can_checkin_orders: If ``True``, the members can perform check-in related actions.
     :type can_checkin_orders: bool
     :param can_view_vouchers: If ``True``, the members can inspect details of all vouchers of the associated events.
@@ -383,6 +385,11 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     can_change_items = models.BooleanField(default=False, verbose_name=_('Can change product settings'))
     can_view_orders = models.BooleanField(default=False, verbose_name=_('Can view orders'))
     can_change_orders = models.BooleanField(default=False, verbose_name=_('Can change orders'))
+    can_manage_bank_transfers = models.BooleanField(
+        default=False,
+        verbose_name=_('Can manage bank transfers'),
+        help_text=_('Import bank data and export refunds for bank transfer payments.'),
+    )
     can_checkin_orders = models.BooleanField(
         default=False,
         verbose_name=_('Can perform check-ins'),
@@ -400,15 +407,27 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             'object': str(self.organizer),
         }
 
-    def permission_set(self) -> set:
+    PERMISSION_IMPLICATIONS = {
+        'can_change_orders': ('can_view_orders',),
+        'can_change_vouchers': ('can_view_vouchers',),
+        'can_manage_bank_transfers': ('can_view_orders',),
+    }
+
+    def _granted_permissions(self) -> set:
         attribs = dir(self)
         return {
             attr
             for attr in attribs
             if (attr.startswith('can_') or attr.startswith('is_'))
             and getattr(self, attr, False) is True
-            and self.has_permission(attr)
         }
+
+    def permission_set(self) -> set:
+        granted = self._granted_permissions()
+        implied = set()
+        for perm in granted:
+            implied.update(self.PERMISSION_IMPLICATIONS.get(perm, ()))
+        return granted | implied
 
     @property
     def can_change_settings(self):  # Legacy compatiblilty
@@ -416,7 +435,12 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
 
     def has_permission(self, perm_name):
         try:
-            return getattr(self, perm_name)
+            if getattr(self, perm_name):
+                return True
+            for perm in self._granted_permissions():
+                if perm_name in self.PERMISSION_IMPLICATIONS.get(perm, ()):
+                    return True
+            return False
         except AttributeError:
             raise ValueError('Invalid required permission: %s' % perm_name)
 

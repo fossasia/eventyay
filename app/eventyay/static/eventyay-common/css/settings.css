@@ -38,6 +38,16 @@
     margin-bottom: 1%;
 }
 
+.team-permission-children {
+    margin-left: 1.5em;
+    padding-left: 1em;
+    border-left: 2px solid #ddd;
+}
+
+.team-permission-children--disabled {
+    opacity: 0.65;
+}
+
 .custom-form {
     padding-left: 1px;
 }

@@ -94,6 +94,7 @@ class TeamForm(forms.ModelForm):
             'can_change_items',
             'can_view_orders',
             'can_change_orders',
+            'can_manage_bank_transfers',
             'can_checkin_orders',
             'can_view_vouchers',
             'can_change_vouchers',
@@ -155,6 +156,7 @@ class TeamForm(forms.ModelForm):
             'can_change_items',
             'can_view_orders',
             'can_change_orders',
+            'can_manage_bank_transfers',
             'can_checkin_orders',
             'can_view_vouchers',
             'can_change_vouchers',
@@ -176,7 +178,14 @@ class TeamForm(forms.ModelForm):
                 _("Please pick at least one permission for this team!")
             )
             self.add_error(None, error)
-        
+
+        if data.get('can_change_orders'):
+            data['can_view_orders'] = True
+        if data.get('can_change_vouchers'):
+            data['can_view_vouchers'] = True
+        if data.get('can_manage_bank_transfers'):
+            data['can_view_orders'] = True
+
         if self.instance.pk and not data['can_change_teams']:
             if (
                 not self.instance.organizer.teams.exclude(pk=self.instance.pk)

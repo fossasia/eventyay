@@ -142,6 +142,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_change_items',
             'can_view_orders',
             'can_change_orders',
+            'can_manage_bank_transfers',
             'can_view_vouchers',
             'can_change_vouchers',
             'can_checkin_orders',
