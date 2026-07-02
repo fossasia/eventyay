@@ -18,5 +18,5 @@ def has_attribute(value, key):
     try:
         value[key]
         return True
-    except:
+    except (KeyError, TypeError):
         return False
