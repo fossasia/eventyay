@@ -339,6 +339,7 @@
 	"RoomsSidebar:admin-rooms:label": "Salles",
 	"RoomsSidebar:admin-kiosks:label": "Kiosques",
 	"RoomsSidebar:admin-users:label": "Utilisateurs",
+	"RoomsSidebar:admin-video-admin:label": "Video Admin",
 	"RoomsSidebar:admin-announcements:label": "Annonces",
 	"RoomsSidebar:browse-channels-button:label": "Parcourir toutes les chaînes",
 	"RoomsSidebar:channels-headline:text": "Chaînes",

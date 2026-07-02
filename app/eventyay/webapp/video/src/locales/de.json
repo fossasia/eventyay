@@ -340,6 +340,7 @@
 	"RoomsSidebar:admin-rooms:label": "Räume",
 	"RoomsSidebar:admin-kiosks:label": "Kioske",
 	"RoomsSidebar:admin-users:label": "Nutzer",
+	"RoomsSidebar:admin-video-admin:label": "Video Admin",
 	"RoomsSidebar:admin-announcements:label": "Ankündigungen",
 	"RoomsSidebar:browse-channels-button:label": "Alle Kanäle durchsuchen",
 	"RoomsSidebar:channels-headline:text": "Kanäle",
