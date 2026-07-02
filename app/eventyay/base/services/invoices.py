@@ -5,7 +5,7 @@ import urllib.error
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
-import vat_moss.exchange_rates
+import vat_moss_lite.exchange_rates
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.serializers.json import DjangoJSONEncoder
@@ -439,7 +439,7 @@ def fetch_ecb_rates(sender, **kwargs):
         return
 
     try:
-        date, rates = vat_moss.exchange_rates.fetch()
+        date, rates = vat_moss_lite.exchange_rates.fetch()
         gs.settings.ecb_rates_date = date
         gs.settings.ecb_rates_dict = json.dumps(rates, cls=DjangoJSONEncoder)
     except urllib.error.URLError:

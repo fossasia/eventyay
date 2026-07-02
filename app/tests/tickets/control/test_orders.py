@@ -1961,7 +1961,7 @@ def test_check_vatid(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='ATU1234567', country=Country('AT'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-success' in response.content.decode()
@@ -1974,7 +1974,7 @@ def test_check_vatid_no_entered(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, country=Country('AT'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-danger' in response.content.decode()
@@ -1987,7 +1987,7 @@ def test_check_vatid_invalid_country(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='ATU1234567', country=Country('FR'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-danger' in response.content.decode()
@@ -2000,7 +2000,7 @@ def test_check_vatid_noneu_country(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='CHU1234567', country=Country('CH'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-danger' in response.content.decode()
@@ -2013,7 +2013,7 @@ def test_check_vatid_no_country(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='ATU1234567')
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-danger' in response.content.decode()
@@ -2024,7 +2024,7 @@ def test_check_vatid_no_country(client, env):
 @pytest.mark.django_db
 def test_check_vatid_no_invoiceaddress(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-danger' in response.content.decode()
@@ -2035,12 +2035,12 @@ def test_check_vatid_invalid(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='ATU1234567', country=Country('AT'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
 
         def raiser(*args, **kwargs):
-            import vat_moss.errors
+            import vat_moss_lite.errors
 
-            raise vat_moss.errors.InvalidError('Fail')
+            raise vat_moss_lite.errors.InvalidError('Fail')
 
         mock_validate.side_effect = raiser
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
@@ -2054,12 +2054,12 @@ def test_check_vatid_unavailable(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='ATU1234567', country=Country('AT'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
 
         def raiser(*args, **kwargs):
-            import vat_moss.errors
+            import vat_moss_lite.errors
 
-            raise vat_moss.errors.WebServiceUnavailableError('Fail')
+            raise vat_moss_lite.errors.WebServiceUnavailableError('Fail')
 
         mock_validate.side_effect = raiser
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
