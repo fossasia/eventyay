@@ -1,0 +1,140 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+{% load urlreplace %}
+{% load bootstrap3 %}
+{% load money %}
+
+{% block title %}{% translate "All Orders" %}{% endblock %}
+
+{% block content %}
+<h1>{% translate "All Orders" %}</h1>
+<p>{% translate "This is a list of all orders across all events." %}</p>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">{% translate "Filter" %}</h3>
+    </div>
+    <div class="panel-body">
+        <form method="get" class="row filter-form">
+            <div class="col-md-5 col-sm-6 col-xs-12 form-group">
+                {% bootstrap_field filter_form.query layout='inline' %}
+            </div>
+            <div class="col-md-3 col-sm-6 col-xs-12 form-group">
+                {% bootstrap_field filter_form.status layout='inline' %}
+            </div>
+            <div class="col-md-4 col-sm-6 col-xs-12 form-group">
+                {% include "eventyay_common/filter_actions.html" %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div data-ajax-results-region>
+    {% if orders %}
+        <div class="table-responsive">
+            <table class="table table-condensed table-hover">
+                <thead>
+                    <tr>
+                        <th>
+                            {% translate "Order Code" %}
+                            <a href="?{% url_replace request 'ordering' 'code' %}" aria-label="{% translate 'Sort by order code ascending' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
+                            <a href="?{% url_replace request 'ordering' '-code' %}" aria-label="{% translate 'Sort by order code descending' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        </th>
+                        <th>
+                            {% translate "Event" %}
+                            <a href="?{% url_replace request 'ordering' 'event' %}" aria-label="{% translate 'Sort by event ascending' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
+                            <a href="?{% url_replace request 'ordering' '-event' %}" aria-label="{% translate 'Sort by event descending' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        </th>
+                        <th>
+                            {% translate "Organizer" %}
+                            <a href="?{% url_replace request 'ordering' 'organizer' %}" aria-label="{% translate 'Sort by organizer ascending' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
+                            <a href="?{% url_replace request 'ordering' '-organizer' %}" aria-label="{% translate 'Sort by organizer descending' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        </th>
+                        <th>
+                            {% translate "Email" %}
+                            <a href="?{% url_replace request 'ordering' 'email' %}" aria-label="{% translate 'Sort by email ascending' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
+                            <a href="?{% url_replace request 'ordering' '-email' %}" aria-label="{% translate 'Sort by email descending' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        </th>
+                        <th>
+                            {% translate "Status" %}
+                            <a href="?{% url_replace request 'ordering' 'status' %}" aria-label="{% translate 'Sort by status ascending' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
+                            <a href="?{% url_replace request 'ordering' '-status' %}" aria-label="{% translate 'Sort by status descending' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        </th>
+                        <th>
+                            {% translate "Total" %}
+                            <a href="?{% url_replace request 'ordering' 'total' %}" aria-label="{% translate 'Sort by total ascending' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
+                            <a href="?{% url_replace request 'ordering' '-total' %}" aria-label="{% translate 'Sort by total descending' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        </th>
+                        <th>
+                            {% translate "Date" %}
+                            <a href="?{% url_replace request 'ordering' 'date' %}" aria-label="{% translate 'Sort by date ascending' %}"><i class="fa fa-caret-up" aria-hidden="true"></i></a>
+                            <a href="?{% url_replace request 'ordering' '-date' %}" aria-label="{% translate 'Sort by date descending' %}"><i class="fa fa-caret-down" aria-hidden="true"></i></a>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>
+                            <strong>
+                                <a href="{% url 'control:event.order' event=order.event_slug organizer=order.organizer_slug code=order.order_code %}">
+                                    {{ order.order_code }}
+                                </a>
+                            </strong>
+                            {% if order.testmode %}
+                                <span class="label label-warning">{% translate "TEST MODE" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'control:event.index' organizer=order.organizer_slug event=order.event_slug %}">
+                                {{ order.event }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{% url 'eventyay_common:organizer.events' organizer=order.organizer_slug %}">
+                                {{ order.organizer }}
+                            </a>
+                        </td>
+                        <td>{{ order.email }}</td>
+                        <td>
+                            {% if order.status_code == 'p' %}
+                                <span class="label label-success">
+                                    <span class="fa fa-check" aria-hidden="true"></span>
+                                    {{ order.status }}
+                                </span>
+                            {% elif order.status_code == 'n' %}
+                                <span class="label label-warning">
+                                    <span class="fa fa-money" aria-hidden="true"></span>
+                                    {{ order.status }}
+                                </span>
+                            {% elif order.status_code == 'e' %}
+                                <span class="label label-danger">
+                                    <span class="fa fa-clock-o" aria-hidden="true"></span>
+                                    {{ order.status }}
+                                </span>
+                            {% elif order.status_code == 'c' %}
+                                <span class="label label-danger">
+                                    <span class="fa fa-times" aria-hidden="true"></span>
+                                    {{ order.status }}
+                                </span>
+                            {% else %}
+                                <span class="label label-default">{{ order.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ order.total|money:order.currency }}</td>
+                        <td>{{ order.date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% include "pretixcontrol/pagination.html" %}
+
+    {% else %}
+        <div class="empty-collection">
+            <p>{% translate "No orders found." %}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
