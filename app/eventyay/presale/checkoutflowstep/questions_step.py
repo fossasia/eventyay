@@ -8,7 +8,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
-from eventyay.base.models import TaxRule
+from eventyay.base.models import Question, TaxRule
 from eventyay.base.services.cart import update_tax_rates
 from eventyay.base.services.system_questions import (
     get_system_question_asked_required,
@@ -30,6 +30,25 @@ from eventyay.presale.signals import (
 from eventyay.presale.views import CartMixin, get_cart_is_free
 from eventyay.presale.views.cart import get_or_create_cart_id
 from eventyay.presale.views.questions import QuestionsViewMixin
+
+
+def question_is_visible_for_stored_answers(parentid, qvals, question_cache, answ):
+    if parentid not in question_cache:
+        return False
+    parentq = question_cache[parentid]
+    if parentq.dependency_question_id and not question_is_visible_for_stored_answers(
+        parentq.dependency_question_id, parentq.dependency_values, question_cache, answ
+    ):
+        return False
+    if parentid not in answ:
+        if parentq.type == Question.TYPE_BOOLEAN:
+            return 'False' in qvals
+        return False
+    return (
+        ('True' in qvals and answ[parentid].answer == 'True')
+        or ('False' in qvals and answ[parentid].answer == 'False')
+        or (any(qval in [o.identifier for o in answ[parentid].options.all()] for qval in qvals))
+    )
 
 
 class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
@@ -259,20 +278,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
             question_cache = {q.pk: q for q in cp.product.questions_to_ask}
 
             def question_is_visible(parentid, qvals):
-                if parentid not in question_cache:
-                    return False
-                parentq = question_cache[parentid]
-                if parentq.dependency_question_id and not question_is_visible(
-                    parentq.dependency_question_id, parentq.dependency_values
-                ):
-                    return False
-                if parentid not in answ:
-                    return False
-                return (
-                    ('True' in qvals and answ[parentid].answer == 'True')
-                    or ('False' in qvals and answ[parentid].answer == 'False')
-                    or (any(qval in [o.identifier for o in answ[parentid].options.all()] for qval in qvals))
-                )
+                return question_is_visible_for_stored_answers(parentid, qvals, question_cache, answ)
 
             def question_is_required(q):
                 return q.required and (
