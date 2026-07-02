@@ -1,6 +1,220 @@
 {% extends "pretixcontrol/admin/base.html" %}
-{% load i18n %}
+{% load i18n humanize %}
+{% load static %}
 {% block title %}{% trans "Dashboard" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'pretixcontrol/css/admin-page.css' %}">
+{% endblock %}
 {% block content %}
     <h1>{% trans "Admin Dashboard" %}</h1>
+    <p>{% trans "Overview of platform activity across users, events, orders, and programme." %}</p>
+    <section class="admin-section" aria-labelledby="admin-overview-heading">
+        <h2 id="admin-overview-heading" class="sr-only">{% trans "Platform overview" %}</h2>
+        <div class="dashboard">
+            <div class="widget-container widget-small">
+                <a href="{% url 'eventyay_admin:admin.users' %}" class="widget">
+                    <div class="numwidget">
+                        <span class="num">{{ users_total|intcomma }}</span>
+                        <span class="text">{% trans "Users" %}</span>
+                    </div>
+                </a>
+            </div>
+            <div class="widget-container widget-small">
+                <a href="{% url 'eventyay_admin:admin.events' %}" class="widget">
+                    <div class="numwidget">
+                        <span class="num">{{ events_total|intcomma }}</span>
+                        <span class="text">{% trans "Events" %}</span>
+                    </div>
+                </a>
+            </div>
+            <div class="widget-container widget-small">
+                <a href="{% url 'eventyay_admin:admin.organizers' %}" class="widget">
+                    <div class="numwidget">
+                        <span class="num">{{ organizers_total|intcomma }}</span>
+                        <span class="text">{% trans "Organizers" %}</span>
+                    </div>
+                </a>
+            </div>
+            <div class="widget-container widget-small">
+                <a href="{% url 'eventyay_admin:admin.attendees' %}" class="widget">
+                    <div class="numwidget">
+                        <span class="num">{{ orders_total|intcomma }}</span>
+                        <span class="text">{% trans "Orders" %}</span>
+                    </div>
+                </a>
+            </div>
+            <div class="widget-container widget-small">
+                <div class="widget">
+                    <div class="numwidget numwidget-revenue">
+                        {% if orders_revenue %}
+                            {% for rev in orders_revenue|slice:":3" %}
+                                <div class="revenue-line">{{ rev.total|floatformat:2 }} <span class="revenue-currency">{{ rev.event__currency }}</span></div>
+                            {% endfor %}
+                            {% if orders_revenue|length > 3 %}
+                                <div class="revenue-overflow">…</div>
+                            {% endif %}
+                        {% else %}
+                            <span class="num">0.00</span>
+                        {% endif %}
+                        <span class="text">{% trans "Revenue" %}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="widget-container widget-small">
+                <a href="{% url 'eventyay_admin:admin.submissions' %}" class="widget">
+                    <div class="numwidget">
+                        <span class="num">{{ sessions_total|intcomma }}</span>
+                        <span class="text">{% trans "Sessions" %}</span>
+                    </div>
+                </a>
+            </div>
+            <div class="widget-container widget-small">
+                <a href="{% url 'eventyay_admin:admin.submissions' %}" class="widget">
+                    <div class="numwidget">
+                        <span class="num">{{ speakers_total|intcomma }}</span>
+                        <span class="text">{% trans "Speakers" %}</span>
+                    </div>
+                </a>
+            </div>
+            <div class="widget-container widget-small">
+                <a href="{% url 'eventyay_admin:admin.attendees' %}" class="widget">
+                    <div class="numwidget">
+                        <span class="num">{{ attendees_total|intcomma }}</span>
+                        <span class="text">{% trans "Attendees" %}</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+    <section class="admin-section" aria-labelledby="admin-details-heading">
+        <h2 id="admin-details-heading" class="sr-only">{% trans "Details" %}</h2>
+        <div class="row dashboard-panels">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{% trans "Users" %}</h3>
+                    </div>
+                    <table class="table table-condensed table-hover">
+                        <tbody>
+                            <tr>
+                                <td>{% trans "Verified" %}</td>
+                                <td class="text-right">{{ users_verified|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Unverified" %}</td>
+                                <td class="text-right">{{ users_unverified|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "New users (last 24 hours)" %}</td>
+                                <td class="text-right">{{ users_new_24h|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "New users (last 7 days)" %}</td>
+                                <td class="text-right">{{ users_new_7d|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "New users (last 30 days)" %}</td>
+                                <td class="text-right">{{ users_new_30d|intcomma }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="panel-footer">
+                        <a href="{% url 'eventyay_admin:admin.users' %}">{% trans "Manage users" %}</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{% trans "Events" %}</h3>
+                    </div>
+                    <table class="table table-condensed table-hover">
+                        <tbody>
+                            <tr>
+                                <td>{% trans "Published" %}</td>
+                                <td class="text-right">{{ events_live|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Draft" %}</td>
+                                <td class="text-right">{{ events_draft|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Past" %}</td>
+                                <td class="text-right">{{ events_past|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Event series" %}</td>
+                                <td class="text-right">{{ events_series|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Organizers" %}</td>
+                                <td class="text-right">{{ organizers_total|intcomma }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="panel-footer">
+                        <a href="{% url 'eventyay_admin:admin.events' %}">{% trans "Manage events" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row dashboard-panels">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{% trans "Orders" %}</h3>
+                    </div>
+                    <table class="table table-condensed table-hover">
+                        <tbody>
+                            <tr>
+                                <td>{% trans "Paid" %}</td>
+                                <td class="text-right">{{ orders_paid|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Pending" %}</td>
+                                <td class="text-right">{{ orders_pending|intcomma }}</td>
+                            </tr>
+                            {% for rev in orders_revenue|slice:":3" %}
+                                <tr>
+                                    <td>{% trans "Revenue" %} ({{ rev.event__currency }})</td>
+                                    <td class="text-right">{{ rev.total|floatformat:2 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td>{% trans "Revenue" %}</td>
+                                    <td class="text-right">0.00</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="panel-footer">
+                        <a href="{% url 'eventyay_admin:admin.attendees' %}">{% trans "View orders" %}</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{% trans "Programme" %}</h3>
+                    </div>
+                    <table class="table table-condensed table-hover">
+                        <tbody>
+                            <tr>
+                                <td>{% trans "Sessions" %}</td>
+                                <td class="text-right">{{ sessions_total|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Speakers" %}</td>
+                                <td class="text-right">{{ speakers_total|intcomma }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="panel-footer">
+                        <a href="{% url 'eventyay_admin:admin.submissions' %}">{% trans "View submissions" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 {% endblock %}
