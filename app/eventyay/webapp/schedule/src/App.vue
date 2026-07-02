@@ -943,8 +943,8 @@ export default {
 					localStorage.removeItem(anonymousStorageKey)
 					return merged
 				}
-			} catch {
-				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+			} catch (error) {
+				console.error('Failed to merge favourites: %s', error)
 			}
 			return mergedLocal
 		},
@@ -979,8 +979,8 @@ export default {
 			const storageKey = this.getFavStorageKey(this.loggedIn ? this.userCode : null)
 			try {
 				localStorage.setItem(storageKey, JSON.stringify(this.favs))
-			} catch {
-				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+			} catch (error) {
+				console.error('Failed to save favourites locally: %s', error)
 			}
 		},
 		toggleSessionModalFav (id) {
@@ -1008,7 +1008,6 @@ export default {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
 			} catch (error) {
 				console.error('Failed to save favourite: %s', error)
-				this.pushErrorMessage(this.translationMessages.favs_not_saved)
 			}
 		},
 		async unfav (id) {
@@ -1024,7 +1023,6 @@ export default {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
 			} catch (error) {
 				console.error('Failed to remove favourite: %s', error)
-				this.pushErrorMessage(this.translationMessages.favs_not_saved)
 			}
 			if (!this.favs.length) this.onlyFavs = false
 		},
