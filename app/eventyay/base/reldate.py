@@ -374,7 +374,7 @@ class SerializerRelativeDateField(serializers.CharField):
                 if r.data.time is not None:
                     raise ValidationError('Do not specify a time for a date field')
             return r
-        except:
+        except (ValueError, Exception):
             raise ValidationError('Invalid relative date')
 
     def to_representation(self, value: RelativeDateWrapper):
