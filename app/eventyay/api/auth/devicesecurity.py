@@ -56,6 +56,7 @@ _CHECKIN_CORE_ALLOWLIST = (
     ('GET', 'api-v1:device.session'),
     ('GET', 'api-v1:device.eventselection'),
     ('POST', 'api-v1:device.update'),
+    ('POST', 'api-v1:device.verify-setup-token'),
     ('POST', 'api-v1:device.revoke'),
     ('POST', 'api-v1:device.roll'),
     ('GET', 'api-v1:events-list'),

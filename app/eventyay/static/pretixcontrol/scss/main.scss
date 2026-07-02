@@ -1210,6 +1210,50 @@ h1 .label {
   margin-bottom: 0;
 }
 
+.help-block.device-connect-token-hint {
+  max-width: 640px;
+  color: $brand-danger;
+}
+
+.pretix-confirm-dialog {
+  border: none;
+  border-radius: $border-radius-large;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  width: 420px;
+  max-width: 90vw;
+  background: $body-bg;
+  overflow: hidden;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+  }
+
+  &__title {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: $text-color;
+  }
+
+  &__message {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: $text-muted;
+    white-space: pre-wrap;
+  }
+
+  &__actions {
+    .btn + .btn {
+      margin-left: 8px;
+    }
+  }
+}
+
 .device-event-links {
   margin: 0;
 

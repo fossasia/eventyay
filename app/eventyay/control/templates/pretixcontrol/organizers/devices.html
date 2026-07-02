@@ -107,7 +107,10 @@
                             {% elif d.api_token %}
                                 <form class="form-inline helper-display-inline device-regenerate-form" method="post"
                                       action="{% url 'eventyay_common:organizer.devices.regenerate' organizer=request.organizer.slug device=d.id %}"
-                                      data-confirm="{% filter escapejs %}{% blocktrans with device_name=d.name trimmed %}Regenerate the setup code for “{{ device_name }}”? The check-in app will be signed out and must be registered again with the new QR code.{% endblocktrans %}{% endfilter %}">
+                                      data-confirm-title="{% trans "Regenerate setup code" %}"
+                                      data-confirm-label="{% trans "Regenerate" %}"
+                                      data-confirm-class="btn-danger"
+                                      data-confirm="{% blocktrans with device_name=d.name trimmed %}Regenerate the setup code for “{{ device_name }}”? The check-in app will be signed out and must be registered again with the new QR code.{% endblocktrans %}">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-default btn-sm">
                                         <i class="fa fa-refresh"></i> {% trans "Regenerate" %}

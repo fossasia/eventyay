@@ -87,7 +87,9 @@ class CheckinListForm(forms.ModelForm):
             required=False,
             choices=popup_choices,
             widget=forms.CheckboxSelectMultiple,
-            initial=self.instance.display_popup_fields if self.instance.pk else [],
+            initial=CheckinList.normalize_display_popup_fields(
+                self.instance.display_popup_fields if self.instance.pk else []
+            ),
         )
 
     class Meta:

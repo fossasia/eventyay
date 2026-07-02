@@ -1,4 +1,5 @@
 import logging
+import secrets
 
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.functions import Coalesce
@@ -30,6 +31,10 @@ class UpdateRequestSerializer(serializers.Serializer):
     hardware_model = serializers.CharField(max_length=190)
     software_brand = serializers.CharField(max_length=190)
     software_version = serializers.CharField(max_length=190)
+
+
+class VerifySetupTokenSerializer(serializers.Serializer):
+    token = serializers.CharField(max_length=190)
 
 
 class GateSerializer(serializers.ModelSerializer):
@@ -117,7 +122,27 @@ class SessionView(APIView):
 
     def get(self, request, format=None):
         device = request.auth
-        return Response({'ok': True, 'device_id': device.device_id})
+        return Response({
+            'ok': True,
+            'device_id': device.device_id,
+            'security_profile': device.security_profile,
+        })
+
+
+class VerifySetupTokenView(APIView):
+    """Confirm the device setup token before sensitive on-device configuration."""
+
+    authentication_classes = (DeviceTokenAuthentication,)
+
+    def post(self, request, format=None):
+        serializer = VerifySetupTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        device = request.auth
+        submitted = serializer.validated_data['token']
+        expected = device.initialization_token or ''
+        if len(submitted) != len(expected) or not secrets.compare_digest(submitted, expected):
+            raise ValidationError({'token': ['Invalid setup token.']})
+        return Response({'ok': True})
 
 
 class RollKeyView(APIView):

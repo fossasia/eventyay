@@ -178,7 +178,6 @@ class CheckinList(LoggedModel):
         ('company', _('Company')),
         ('job_title', _('Job title')),
         ('attendee_email', _('Email')),
-        ('seat', _('Seat')),
     )
     POPUP_STANDARD_FIELD_KEYS = frozenset(key for key, _ in DISPLAY_POPUP_STANDARD_FIELDS)
 
