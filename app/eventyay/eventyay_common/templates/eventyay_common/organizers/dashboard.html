@@ -62,6 +62,24 @@
         </div>
       </div>
       {% endif %}
+      {% if meetup_creation_enabled %}
+      <div class="col-md-4 col-sm-6">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+              <span class="fa fa-users"></span>
+              {% trans "Create Meetup" %}
+            </h3>
+          </div>
+          <div class="panel-body">
+            <p>{% trans "Set up a new meetup event under this organizer." %}</p>
+            <a href="{% url 'eventyay_common:events.add' %}?organizer={{ request.organizer.slug }}&amp;meetup=1" class="btn btn-default">
+              {% trans "Create Meetup" %}
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     {% endif %}
     {% if "can_change_organizer_settings" in request.orgapermset %}
       <div class="col-md-4 col-sm-6">
