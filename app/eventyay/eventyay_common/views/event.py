@@ -35,7 +35,7 @@ from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled, is_meetup_creation_enabled
 from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
@@ -152,6 +152,7 @@ class EventList(PaginationMixin, ListView):
                     (round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100),
                 )
         ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
+        ctx['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
         return ctx
 
     @cached_property
@@ -191,6 +192,9 @@ class EventCreateView(TemplateView):
         request_get = self.request.GET
 
         initial_form['is_video_creation'] = True
+        if request_get.get('meetup') == '1':
+            initial_form['is_video_creation'] = False
+            initial_form['is_meetup'] = True
         initial_form['locales'] = ['en']
         initial_form['create_for'] = EventCreatedFor.BOTH.value
         initial_form['has_subevents'] = request_get.get('series') == '1'
@@ -265,6 +269,9 @@ class EventCreateView(TemplateView):
         is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
         if is_series and not is_event_series_creation_enabled(request):
             raise PermissionDenied(_('Event series creation is currently disabled.'))
+        is_meetup = request.GET.get('meetup') == '1' or request.POST.get('is_meetup') == 'on'
+        if is_meetup and not is_meetup_creation_enabled(request):
+            raise PermissionDenied(_('Meetup creation is currently disabled.'))
         return super().dispatch(request, *args, **kwargs)
 
     def get_foundation_form(self):
@@ -318,6 +325,7 @@ class EventCreateView(TemplateView):
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
         context['clone_from'] = self.clone_from
         context['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
+        context['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
         context['type_preselected'] = 'series' in self.request.GET
         return context
 
