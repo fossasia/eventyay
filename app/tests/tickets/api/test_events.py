@@ -1142,8 +1142,8 @@ def test_patch_event_settings_file(token_client, organizer, event):
         {'logo_image': 'https://cdn.example.com/header.png'},
         format='json',
     )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] == 'https://cdn.example.com/header.png'
+    assert resp.status_code == 400
+    assert resp.data == {'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.']}
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
@@ -1176,47 +1176,11 @@ def test_patch_event_settings_external_image_urls(token_client, organizer, event
         },
         format='json',
     )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] == normalized_header_url
-    assert resp.data['event_logo_image'] == logo_url
-
-    resp = token_client.get(
-        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        format='json',
-    )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] == normalized_header_url
-    assert resp.data['event_logo_image'] == logo_url
-
-    event = Event.objects.get(pk=event.pk)
-    assert event.visible_header_image_url == normalized_header_url
-    assert event.visible_logo_url == logo_url
-    assert event.social_image == normalized_header_url
-
-    resp = token_client.patch(
-        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        {
-            'logo_image': None,
-            'event_logo_image': None,
-        },
-        format='json',
-    )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] is None
-    assert resp.data['event_logo_image'] is None
-
-    resp = token_client.get(
-        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        format='json',
-    )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] is None
-    assert resp.data['event_logo_image'] is None
-
-    event = Event.objects.get(pk=event.pk)
-    assert event.visible_header_image_url is None
-    assert event.visible_logo_url is None
-    assert event.social_image is None
+    assert resp.status_code == 400
+    assert resp.data == {
+        'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.'],
+        'event_logo_image': ['External image URLs are no longer accepted. Please upload a file instead.'],
+    }
 
 
 @pytest.mark.django_db
@@ -1228,7 +1192,7 @@ def test_patch_event_settings_external_image_urls_reject_invalid_urls(token_clie
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.data == {'logo_image': ['Enter a valid URL.']}
+    assert resp.data == {'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.']}
 
 
 @pytest.mark.django_db
@@ -1237,7 +1201,7 @@ def test_patch_event_settings_preview_image(token_client, organizer, event):
         '/api/v1/upload',
         data={
             'media_type': 'image/png',
-            'file': ContentFile('preview.png', 'invalid png content'),
+            'file': ContentFile(b'invalid png content', name='preview.png'),
         },
         format='upload',
         HTTP_CONTENT_DISPOSITION='attachment; filename="preview.png"',
@@ -1249,7 +1213,7 @@ def test_patch_event_settings_preview_image(token_client, organizer, event):
         '/api/v1/upload',
         data={
             'media_type': 'image/png',
-            'file': ContentFile('header.png', 'invalid png content'),
+            'file': ContentFile(b'invalid png content', name='header.png'),
         },
         format='upload',
         HTTP_CONTENT_DISPOSITION='attachment; filename="header.png"',
@@ -1261,7 +1225,7 @@ def test_patch_event_settings_preview_image(token_client, organizer, event):
         '/api/v1/upload',
         data={
             'media_type': 'image/png',
-            'file': ContentFile('logo.png', 'invalid png content'),
+            'file': ContentFile(b'invalid png content', name='logo.png'),
         },
         format='upload',
         HTTP_CONTENT_DISPOSITION='attachment; filename="logo.png"',

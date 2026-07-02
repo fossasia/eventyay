@@ -2108,7 +2108,7 @@ Your {event} team"""
                 'If unset, the platform falls back to displaying the event header image, then the event logo, '
                 'and finally a default calendar placeholder icon. '
                 'It should be optimized for a rectangular card. '
-                'We recommend an aspect ratio of 16:9 or 3:2, and at least 800 x 450 px for best display results.'
+                'We recommend an aspect ratio of 16:9, and at least 800 x 450 px for best display results.'
             ),
         ),
         'serializer_class': UploadedFileField,

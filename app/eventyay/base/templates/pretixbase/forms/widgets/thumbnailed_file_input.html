@@ -3,7 +3,7 @@
 <div class="initial-file-container thumbnailed-file-initial">
     {{ widget.initial_text }}: <a href="{{ widget.value.url }}" class="thumbnailed-file-link">{{ widget.value }}</a>
     {% if widget.value.is_img and widget.event_settings_image_tools %}
-        <a href="{{ widget.value.url }}" class="btn btn-default btn-xs preview-image-eye thumbnailed-file-preview-eye" data-lightbox="{{ widget.name }}" title="{% trans "Preview Image" %}">
+        <a href="{{ widget.value.url }}" class="btn btn-default btn-xs preview-image-eye thumbnailed-file-preview-eye" data-lightbox="{{ widget.name }}" title="{% trans 'Preview Image' %}" aria-label="{% trans 'Preview Image' %}">
             <i class="fa fa-eye"></i>
         </a>
     {% endif %}
@@ -13,7 +13,7 @@
             <label for="{{ widget.checkbox_id }}" class="thumbnailed-file-checkbox-label">{{ widget.clear_checkbox_label }}</label>
         </span>
         {% if widget.event_settings_image_tools %}
-            <button type="button" class="btn btn-danger btn-xs btn-delete-image-ajax thumbnailed-file-delete-ajax" data-field="{{ widget.name }}" title="{% trans "Delete Image" %}">
+            <button type="button" class="btn btn-danger btn-xs btn-delete-image-ajax thumbnailed-file-delete-ajax" data-field="{{ widget.name }}" title="{% trans 'Delete Image' %}" aria-label="{% trans 'Delete Image' %}">
                 <i class="fa fa-trash"></i>
             </button>
         {% endif %}

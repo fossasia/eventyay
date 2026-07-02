@@ -23,7 +23,7 @@ Header image
 
 Event preview image
     This image is used specifically on the platform start page event cards and other event listing
-    views. It should be optimized for a rectangular card. We recommend a 16:9 or 3:2 aspect ratio
+    views. It should be optimized for a rectangular card. We recommend a 16:9 aspect ratio
     and at least 800 x 450 pixels for the best display results. Supported file types are JPEG, PNG,
     GIF, and WEBP. If no preview image is uploaded, the display falls back to the header image,
     then the logo, and finally a placeholder calendar icon.
