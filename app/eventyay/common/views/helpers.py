@@ -16,4 +16,7 @@ def get_static(request, path, content_type, organizer=None, event=None, **kwargs
         logger.warning("Static asset %s not found", path)
         raise Http404()
     logger.debug("Serving static asset %s", path)
-    return FileResponse(open(path, 'rb'), content_type=content_type, as_attachment=False)
+    try:
+        return FileResponse(open(path, 'rb'), content_type=content_type, as_attachment=False)
+    except OSError:
+        raise Http404()
