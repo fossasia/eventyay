@@ -1660,4 +1660,3 @@ class ContactOrganizerTest(EventTestMixin, TestCase):
             resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': 'Hello organizer!'})
         self.assertEqual(resp.status_code, 429)
         self.assertFalse(resp.json()['success'])
-

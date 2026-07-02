@@ -159,7 +159,7 @@ export default {
 						room,
 						notifications: notifications > 99 ? '99+' : notifications
 					})
-				} else if (room.modules.some(module => ['call.bigbluebutton', 'call.janus', 'call.zoom'].includes(module.type))) {
+				} else if (room.modules.some(module => ['call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi'].includes(module.type))) {
 					rooms.videoChat.push(room)
 				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe'].includes(module.type))) {
 					let session

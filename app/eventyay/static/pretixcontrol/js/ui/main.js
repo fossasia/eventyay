@@ -279,7 +279,7 @@ var form_handlers = function (el) {
             $note = $("<div class='help-block contrast-state'></div>");
             $host.append($note);
         }
-        
+
         var name = $input.attr("name") || "";
         var compareRgb = {r: 255, g: 255, b: 255};
         var backgroundName = gettext("white background");
@@ -340,7 +340,7 @@ var form_handlers = function (el) {
             colorString = pickerColor && pickerColor.toString ? pickerColor.toString() : null;
         updateColorPreview($input, colorString);
         updateContrastState($input, rgb);
-        
+
         if (!e.isTriggeredByDependency) {
             var name = $input.attr("name") || "";
             if (name.indexOf("header_background_color") !== -1 || name.indexOf("primary_color") !== -1) {

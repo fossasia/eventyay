@@ -9,7 +9,7 @@
 			// Added dropdown menu for audio translations near the reactions bar
 			reactions-bar(:expanded="true", @expand="activeStageTool = 'reaction'")
 			AudioTranslationDropdown(v-if="languages.length > 1", :languages="languages", @languageChanged="handleLanguageChange")
-	media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom']")
+	media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom'] || modules['call.jitsi']")
 	roulette(v-else-if="modules['networking.roulette'] && $features.enabled('roulette')", :module="modules['networking.roulette']", :room="room")
 	landing-page(v-else-if="modules['page.landing']", :module="modules['page.landing']")
 	markdown-page(v-else-if="modules['page.markdown']", :module="modules['page.markdown']")
@@ -101,7 +101,7 @@ export default {
 		},
 		'room.id'(roomId) {
 			this.$store.dispatch('stopStreamPolling')
-			if (roomId) {
+			if (roomId && this.hasStreamSchedule()) {
 				this.$store.dispatch('startStreamPolling', roomId)
 			}
 		},
@@ -114,7 +114,7 @@ export default {
 		} else if (this.modules.poll) {
 			this.activeSidebarTab = 'polls'
 		}
-		if (this.room?.id) {
+		if (this.room?.id && this.hasStreamSchedule()) {
 			await this.$nextTick()
 			this.$store.dispatch('startStreamPolling', this.room.id)
 		}
@@ -130,6 +130,13 @@ export default {
 		},
 		handleLanguageChange(translationConfig) {
 			this.$store.commit('updateYoutubeTransAudio', translationConfig)
+		},
+		hasStreamSchedule() {
+			return !!(
+				this.modules['livestream.native'] ||
+				this.modules['livestream.youtube'] ||
+				this.modules['livestream.iframe']
+			)
 		},
 		initializeLanguages() {
 			this.languages = []

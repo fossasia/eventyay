@@ -83,7 +83,20 @@ def validate_room_config_patch(room, body):
         data=body,
         partial=True,
     )
+    if "module_config" in body:
+        _sanitize_jitsi_config(body["module_config"])
     return partial_validated_update(serializer, body)
+
+
+def _sanitize_jitsi_config(module_config):
+    if not isinstance(module_config, list):
+        return
+    for module in module_config:
+        if module.get("type") != "call.jitsi":
+            continue
+        config = module.setdefault("config", {})
+        for key in ("domain", "jwt_enabled", "app_id", "key_id", "app_secret"):
+            config.pop(key, None)
 
 
 def uses_schedule_driven_stage(module_config):
