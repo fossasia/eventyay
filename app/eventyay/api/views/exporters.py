@@ -57,7 +57,7 @@ class ExportersMixin:
         cf = get_object_or_404(CachedFile, id=kwargs['cfid'])
         if cf.file:
             resp = ChunkBasedFileResponse(cf.file.file, content_type=cf.type)
-            resp['Content-Disposition'] = 'attachment; filename="{}"'.format(cf.filename)
+            resp['Content-Disposition'] = f'attachment; filename="{cf.filename}"'
             return resp
         elif not settings.HAS_CELERY:
             return Response(
@@ -133,14 +133,34 @@ class EventExportersViewSet(ExportersMixin, viewsets.ViewSet):
 class OrganizerExportersViewSet(ExportersMixin, viewsets.ViewSet):
     permission = None
 
+    def get_permission_holder(self):
+        """
+        Return the object that should be used for permission-based event queries.
+
+        Prefer `request.auth` if it exposes `get_events_with_permission`, otherwise
+        fall back to `request.user`.
+        """
+        perm_holder = getattr(self.request, "auth", None)
+        if perm_holder is not None and hasattr(perm_holder, "get_events_with_permission"):
+            return perm_holder
+        return self.request.user
+
+    def get_events_queryset(self):
+        """
+        Return the queryset of events the current permission holder is allowed to
+        view orders for, limited to the current request's organizer.
+        """
+        perm_holder = self.get_permission_holder()
+        return (
+            perm_holder
+            .get_events_with_permission("can_view_orders", request=self.request)
+            .filter(organizer=self.request.organizer)
+        )
+
     @cached_property
     def exporters(self):
         exporters = []
-        events = (
-            (self.request.auth or self.request.user)
-            .get_events_with_permission('can_view_orders', request=self.request)
-            .filter(organizer=self.request.organizer)
-        )
+        events = self.get_events_queryset()
         responses = register_multievent_data_exporters.send(self.request.organizer)
         for ex in sorted(
             [response(events) for r, response in responses if response],
@@ -152,9 +172,7 @@ class OrganizerExportersViewSet(ExportersMixin, viewsets.ViewSet):
 
     def get_serializer_kwargs(self):
         return {
-            'events': self.request.auth.get_events_with_permission('can_view_orders', request=self.request).filter(
-                organizer=self.request.organizer
-            )
+            'events': self.get_events_queryset()
         }
 
     def do_export(self, cf, instance, data):
