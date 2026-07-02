@@ -83,3 +83,73 @@
     margin-right: 3px;
     font-size: 10px;
 }
+
+/* Team permission nesting */
+.team-permission-children {
+    margin-left: 24px;
+    padding-left: 10px;
+    border-left: 2px solid #ddd;
+}
+
+.team-permission-children--disabled {
+    opacity: 0.5;
+}
+
+/* Event / track selector widget */
+.event-track-filter-label {
+    font-weight: normal;
+    margin-bottom: 5px;
+}
+
+.event-track-filter {
+    max-width: 400px;
+}
+
+.event-track-filter-row {
+    margin-bottom: 10px;
+}
+
+.event-tracks-wrapper {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    background: #fafafa;
+}
+
+.event-tracks-placeholder {
+    padding: 10px;
+    text-align: center;
+}
+
+.event-track-group {
+    display: none;
+}
+
+.event-track-group-header {
+    font-weight: bold;
+    margin-bottom: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    color: #337ab7;
+}
+
+.event-track-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.event-track-item {
+    padding: 3px 0;
+}
+
+.event-track-item label {
+    font-weight: normal;
+}
+
+.event-track-actions {
+    margin-top: 5px;
+}
+
+.track-hint {
+    padding-top: 7px;
+}

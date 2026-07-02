@@ -26,6 +26,7 @@ from eventyay.api.serializers.schedule import (
 )
 from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
+from eventyay.talk_rules.tracks import apply_track_limit_to_slots, user_has_track_limits
 
 
 @extend_schema_view(
@@ -311,6 +312,9 @@ class TalkSlotViewSet(
 
         if not is_any_filter_active:
             queryset = queryset.filter(schedule=self.event.current_schedule)
+
+        if self.event and user_has_track_limits(self.event, self.request.user):
+            queryset = apply_track_limit_to_slots(queryset, self.event, self.request.user)
 
         return queryset
 
