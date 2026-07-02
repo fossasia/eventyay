@@ -169,11 +169,14 @@
                             </td>
                             <td>
                                 <ul class="list-unstyled">
-                                {% for pos in o.all_positions.all %}
-                                    {% if not pos.canceled %}
-                                        <li>{{ pos.product.name }}</li>
-                                    {% endif %}
+                                {% for pos in o.active_positions|slice:":2" %}
+                                    <li>{{ pos.product.name }}</li>
                                 {% endfor %}
+                                {% if o.active_positions|length > 2 %}
+                                    <li>
+                                        <a href="#" data-toggle="tooltip" title="{% for pos in o.active_positions|slice:"2:" %}{{ pos.product.name }}{% if not forloop.last %}, {% endif %}{% endfor %}">&hellip;</a>
+                                    </li>
+                                {% endif %}
                                 </ul>
                             </td>
                             <td class="text-right flip">

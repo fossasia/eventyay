@@ -195,7 +195,13 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
     permission = 'can_view_orders'
 
     def get_queryset(self):
-        qs = Order.objects.filter(event=self.request.event).select_related('invoice_address').prefetch_related('all_positions__product')
+        qs = Order.objects.filter(event=self.request.event).select_related('invoice_address').prefetch_related(
+            Prefetch(
+                'all_positions',
+                queryset=OrderPosition.objects.filter(canceled=False).select_related('product'),
+                to_attr='active_positions'
+            )
+        )
 
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
