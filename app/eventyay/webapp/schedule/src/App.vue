@@ -628,7 +628,10 @@ export default {
 			}
 		},
 		loggedIn () {
-			if (!this.schedule) return
+			if (!this.schedule || !this.remoteApiUrl) return
+			if (!this.apiUrl) {
+				this.apiUrl = this.remoteApiUrl
+			}
 			this.loadFavs().then((favs) => {
 				this.favs = this.pruneFavs(favs, this.schedule)
 			})
@@ -662,6 +665,7 @@ export default {
 		if (messagesEl) {
 			this.onHomeServer = true
 			this.userCode = messagesEl.dataset.userCode ?? null
+			this.apiUrl = this.remoteApiUrl
 			if (messagesEl.dataset.loggedIn === 'true') {
 				this.loggedIn = true
 			}
@@ -717,7 +721,7 @@ export default {
 			this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
 			this.now = moment.tz(this.currentTimezone)
 			setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
-			this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
+			this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
 			if (this.publicFavsUrl) {
 				this.favsReadOnly = true
 				this.onlyFavs = true
@@ -783,7 +787,7 @@ export default {
 		})
 
 		// set API URL before loading favs
-		this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
+		this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
 		if (this.publicFavsUrl) {
 			this.favsReadOnly = true
 			this.onlyFavs = true
@@ -932,7 +936,10 @@ export default {
 			return this.apiRequest(path, method, data, baseUrl)
 		},
 		async apiRequest (path, method, data, baseUrl) {
-			const base = baseUrl || this.apiUrl
+			const base = baseUrl || this.apiUrl || this.remoteApiUrl
+			if (!base) {
+				throw new Error('API base URL is not configured')
+			}
 			const url = `${base}${path}`
 			const headers = new Headers()
 			if (this.onHomeServer) {
@@ -965,15 +972,16 @@ export default {
 				const merged = await this.apiRequest(
 					'submissions/favourites/merge/',
 					'POST',
-					mergedLocal
+					mergedLocal,
+					this.remoteApiUrl
 				)
 				if (Array.isArray(merged)) {
 					localStorage.setItem(userStorageKey, JSON.stringify(merged))
 					localStorage.removeItem(anonymousStorageKey)
 					return merged
 				}
-			} catch (error) {
-				console.warn('Failed to merge favourites with server, using local copy:', error)
+			} catch {
+				// Server sync is optional; local favourites are already loaded.
 			}
 			return mergedLocal
 		},
@@ -1043,9 +1051,9 @@ export default {
 				return
 			}
 			try {
-				await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
-			} catch (error) {
-				console.warn('Failed to sync favourite to account:', error)
+				await this.apiRequest(`submissions/${id}/favourite/`, 'POST', undefined, this.remoteApiUrl)
+			} catch {
+				// Local favourite is already saved.
 			}
 		},
 		async unfav (id) {
@@ -1067,9 +1075,9 @@ export default {
 				return
 			}
 			try {
-				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
-			} catch (error) {
-				console.warn('Failed to sync favourite removal to account:', error)
+				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE', undefined, this.remoteApiUrl)
+			} catch {
+				// Local favourite is already saved.
 			}
 			if (!this.favs.length) this.onlyFavs = false
 		},
