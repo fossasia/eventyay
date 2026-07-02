@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from django.apps import AppConfig
@@ -9,6 +10,8 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework.renderers import BaseRenderer
 
 from eventyay import __version__ as version
+
+logger = logging.getLogger(__name__)
 
 
 class PDFRenderer(BaseRenderer):
@@ -61,7 +64,7 @@ class BadgesApp(AppConfig):
                 default=True,
             )
             media_dir = os.path.join(os.path.dirname(__file__), 'media')
-            print("\n\n\n", media_dir, "\n\n\n")
+            logger.debug("Badge media directory: %s", media_dir)
             templates_path = os.path.join(
                 os.path.dirname(__file__),
                 'templates',
