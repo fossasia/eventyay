@@ -42,6 +42,8 @@ class DeviceForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         published_events = organizer.events.filter(live=True, tickets_published=True)
         self.fields['limit_events'].queryset = published_events.order_by('-has_subevents', '-date_from')
+        self.fields['limit_events'].label = _('Events')
+        self.fields['limit_events']._required = True
         self.fields['all_events'].label = _('All events (including newly created and published ones)')
         self.fields['gate'].queryset = organizer.gates.all()
         if not self.instance.pk:

@@ -39,7 +39,7 @@
                 <br>
                 <strong>{% trans "System URL:" %}</strong> {{ registration_site_url }}<br>
                 <strong>{% trans "Token:" %}</strong> {{ device.initialization_token }}
-                <div class="panel panel-default mt-4 mb-0">
+                <div class="panel panel-default device-connect-regenerate-panel">
                     <div class="panel-body">
                         <form action="" method="post" class="form-inline">
                             {% csrf_token %}
@@ -56,6 +56,6 @@
         </ol>
     </div>
     {% if not device.initialized %}
-        <script type="text/javascript" src="{% static 'pretixcontrol/js/ui/devices.js' %}"></script>
+        <script type="text/javascript" src="{% static 'pretixcontrol/js/ui/devices.js' %}?v=3"></script>
     {% endif %}
 {% endblock %}

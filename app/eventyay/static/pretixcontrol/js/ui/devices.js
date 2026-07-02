@@ -2,14 +2,25 @@
 
 $(function () {
     var reloaded = false;
+    var pollUrl = new URL(window.location.href);
+    pollUrl.searchParams.set('ajax', 'true');
+
     var update = function () {
-        $.getJSON(location.href + '?ajax=true', {}, function (data) {
-            if (data.initialized) {
-                if (!reloaded) {
-                    reloaded = true;
-                    location.reload();
+        $.ajax({
+            url: pollUrl.pathname + pollUrl.search,
+            dataType: 'json',
+            global: false,
+            success: function (data) {
+                if (data.initialized) {
+                    if (!reloaded) {
+                        reloaded = true;
+                        location.reload();
+                    }
+                } else {
+                    window.setTimeout(update, 500);
                 }
-            } else {
+            },
+            error: function () {
                 window.setTimeout(update, 500);
             }
         });

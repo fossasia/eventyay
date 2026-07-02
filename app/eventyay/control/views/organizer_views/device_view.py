@@ -110,6 +110,12 @@ def _reset_device_setup(device, *, user=None, auth=None):
     return had_active_session
 
 
+def _is_device_connect_ajax(request):
+    if request.GET.get('ajax'):
+        return True
+    return 'ajax=true' in (request.META.get('QUERY_STRING') or '')
+
+
 def _device_connect_url(request, device_pk):
     url = reverse(
         'eventyay_common:organizer.devices.connect',
@@ -260,7 +266,7 @@ class DeviceConnectView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMix
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        if 'ajax' in request.GET:
+        if _is_device_connect_ajax(request):
             return JsonResponse({'initialized': bool(self.object.initialized)})
         return super().get(request, *args, **kwargs)
 
