@@ -21,7 +21,7 @@ server {
 	
 	set $cors_origin "";
 	set $cors_allowed_origin 0;
-	if ($http_origin ~* ^https://access\.eventyay\.com$) {
+	if ($http_origin ~* ^https://(access\.eventyay\.com|app\.netlify\.com|.*\.netlify\.app)$) {
 		set $cors_origin $http_origin;
 		set $cors_allowed_origin 1;
 	}
