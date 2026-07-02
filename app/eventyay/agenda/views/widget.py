@@ -274,10 +274,9 @@ def widget_schedule_chunk(request, organizer=None, event=None, filename=None, **
     if not file_path:
         raise Http404
     try:
-        f = open(file_path, 'rb')
+        response = FileResponse(open(file_path, 'rb'), content_type='application/javascript; charset=utf-8')
     except OSError:
         raise Http404
-    response = FileResponse(f, content_type='application/javascript; charset=utf-8')
     response['Cache-Control'] = 'public, max-age=86400'
     response['Access-Control-Allow-Origin'] = '*'
     return response
