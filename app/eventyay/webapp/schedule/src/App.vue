@@ -973,7 +973,7 @@ export default {
 					return merged
 				}
 			} catch (error) {
-				console.error('Failed to merge favourites: %s', error)
+				console.warn('Failed to merge favourites with server, using local copy:', error)
 			}
 			return mergedLocal
 		},
@@ -1008,8 +1008,11 @@ export default {
 			const storageKey = this.getFavStorageKey(this.loggedIn ? this.userCode : null)
 			try {
 				localStorage.setItem(storageKey, JSON.stringify(this.favs))
+				return true
 			} catch (error) {
-				console.error('Failed to save favourites locally: %s', error)
+				console.error('Failed to save favourites locally:', error)
+				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+				return false
 			}
 		},
 		toggleSessionModalFav (id) {
@@ -1023,12 +1026,18 @@ export default {
 		async fav (id) {
 			if (this.favsReadOnly) return
 			if (this.favSet.has(id)) return
+			const previousFavs = [...this.favs]
 			this.favs.push(id)
 			const talk = this.schedule?.talks?.find(t => t.code === id)
+			const previousFavCount = talk ? Number(talk.fav_count || 0) : 0
 			if (talk) {
-				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) + 1)
+				talk.fav_count = Math.max(0, previousFavCount + 1)
 			}
-			this.saveFavs()
+			if (!this.saveFavs()) {
+				this.favs = previousFavs
+				if (talk) talk.fav_count = previousFavCount
+				return
+			}
 			if (!this.loggedIn) {
 				this.showAnonymousFavsInfo()
 				return
@@ -1036,22 +1045,31 @@ export default {
 			try {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
 			} catch (error) {
-				console.error('Failed to save favourite: %s', error)
+				console.warn('Failed to sync favourite to account:', error)
 			}
 		},
 		async unfav (id) {
 			if (this.favsReadOnly) return
+			const previousFavs = [...this.favs]
 			this.favs = this.favs.filter(elem => elem !== id)
 			const talk = this.schedule?.talks?.find(t => t.code === id)
+			const previousFavCount = talk ? Number(talk.fav_count || 0) : 0
 			if (talk) {
-				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) - 1)
+				talk.fav_count = Math.max(0, previousFavCount - 1)
 			}
-			this.saveFavs()
-			if (!this.loggedIn) return
+			if (!this.saveFavs()) {
+				this.favs = previousFavs
+				if (talk) talk.fav_count = previousFavCount
+				return
+			}
+			if (!this.loggedIn) {
+				if (!this.favs.length) this.onlyFavs = false
+				return
+			}
 			try {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
 			} catch (error) {
-				console.error('Failed to remove favourite: %s', error)
+				console.warn('Failed to sync favourite removal to account:', error)
 			}
 			if (!this.favs.length) this.onlyFavs = false
 		},
