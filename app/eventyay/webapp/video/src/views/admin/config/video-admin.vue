@@ -74,7 +74,11 @@ export default {
 		},
 		open(path) {
 			const nextPath = this.normalizedPath(path)
-			if (nextPath === this.activePath) return
+			if (nextPath === this.activePath) {
+				this.frameReady = false
+				this.$refs.frame.src = this.adminUrl(nextPath)
+				return
+			}
 			this.activePath = nextPath
 			this.frameReady = false
 			this.$router.replace({
