@@ -35,7 +35,8 @@ export default {
 	data() {
 		return {
 			activePath: '',
-			frameReady: false
+			frameReady: false,
+			frameWindow: null
 		}
 	},
 	computed: {
@@ -54,6 +55,9 @@ export default {
 	},
 	created() {
 		this.activePath = this.normalizedPath(this.$route.query.admin_path)
+	},
+	beforeUnmount() {
+		this.removeFrameBeforeUnloadListener()
 	},
 	watch: {
 		'$route.query.admin_path'(path) {
@@ -93,6 +97,8 @@ export default {
 				this.frameReady = true
 				return
 			}
+
+			this.addFrameBeforeUnloadListener(doc.defaultView)
 
 			if (!doc.getElementById('video-admin-embedded-style')) {
 				const style = doc.createElement('style')
@@ -135,13 +141,27 @@ export default {
 			})
 		},
 		embedAdminUrl(element, attribute) {
-			const value = element.getAttribute(attribute)
+			const value = attribute === 'href' ? element.href : element.action
 			if (!value) return
-			const url = new URL(value, window.location.origin)
+			const url = new URL(value)
 			if (url.origin !== window.location.origin || !url.pathname.startsWith(ADMIN_BASE)) return
 			url.searchParams.set('embedded', '1')
 			element.setAttribute(attribute, `${url.pathname}${url.search}${url.hash}`)
 			if (element.tagName === 'A') element.setAttribute('target', '_self')
+		},
+		addFrameBeforeUnloadListener(frameWindow) {
+			if (!frameWindow || frameWindow === this.frameWindow) return
+			this.removeFrameBeforeUnloadListener()
+			this.frameWindow = frameWindow
+			this.frameWindow.addEventListener('beforeunload', this.handleFrameBeforeUnload)
+		},
+		removeFrameBeforeUnloadListener() {
+			if (!this.frameWindow) return
+			this.frameWindow.removeEventListener('beforeunload', this.handleFrameBeforeUnload)
+			this.frameWindow = null
+		},
+		handleFrameBeforeUnload() {
+			this.frameReady = false
 		}
 	}
 }
@@ -182,12 +202,19 @@ export default {
 			min-height: 36px
 			line-height: 20px
 			color: $clr-primary-text-light
-			padding: 8px 20px
+			padding: 8px 18px
 			text-decoration: none
+			border-left: 3px solid transparent
 			&.active
-				background-color: $clr-grey-200
+				background-color: white
+				border-left-color: $clr-primary
+				color: $clr-primary
+				font-weight: 500
 			&:hover
 				background-color: $clr-grey-300
+			&:focus-visible
+				outline: 2px solid $clr-primary
+				outline-offset: -2px
 	.video-admin-frame-wrap
 		position: relative
 		flex: auto
@@ -209,4 +236,29 @@ export default {
 		opacity: 0
 		&.ready
 			opacity: 1
+	@media (max-width: 720px)
+		.ui-page-header
+			h1
+				font-size: 22px
+		.video-admin-layout
+			flex-direction: column
+		.video-admin-sidebar
+			width: 100%
+			display: flex
+			overflow-x: auto
+			overflow-y: hidden
+			padding: 0
+			border-right: 0
+			border-bottom: border-separator()
+			a
+				flex: none
+				min-height: 40px
+				padding: 10px 14px
+				border-left: 0
+				border-bottom: 3px solid transparent
+				white-space: nowrap
+				&.active
+					border-bottom-color: $clr-primary
+		.video-admin-frame-wrap
+			min-height: 420px
 </style>

@@ -74,7 +74,7 @@ transition(name="sidebar")
 					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('RoomsSidebar:admin-rooms:label') }}
 					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:kiosks.manage')") {{ $t('RoomsSidebar:admin-kiosks:label') }}
 					router-link.room(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}") {{ $t('RoomsSidebar:admin-config:label') }}
-					router-link.room(v-if="isAdminMode", :to="{name: 'admin:video-admin'}") {{ $t('RoomsSidebar:admin-video-admin:label') }}
+					router-link.room(v-if="isAdminMode", :to="{name: 'admin:video-admin'}") Video Admin
 		transition(name="prompt")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")
