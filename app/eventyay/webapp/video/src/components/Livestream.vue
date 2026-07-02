@@ -727,6 +727,7 @@ export default {
 		justify-content: center
 		align-items: center
 		background-color: $clr-blue-grey-200
+		overflow: hidden
 		.offline-message
 			font-size: 36px
 		.offline-image
