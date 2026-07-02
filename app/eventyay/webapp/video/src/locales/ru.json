@@ -339,6 +339,7 @@
 	"RoomsSidebar:admin-rooms:label": "Комнаты",
 	"RoomsSidebar:admin-kiosks:label": "Киоски",
 	"RoomsSidebar:admin-users:label": "Пользователи",
+	"RoomsSidebar:admin-video-admin:label": "Video Admin",
 	"RoomsSidebar:admin-announcements:label": "Объявления",
 	"RoomsSidebar:browse-channels-button:label": "Просмотреть все каналы",
 	"RoomsSidebar:channels-headline:text": "Каналы",
