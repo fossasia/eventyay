@@ -10,6 +10,8 @@
 {{ block.super }}
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
 <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
+<script defer src="{% static 'eventyay-common/js/smtp-toggle.js' %}"></script>
+<script type="module" src="{% static 'pretixcontrol/js/ui/secret-toggle.js' %}"></script>
 {{ sform.media }}
 {% endblock %}
 {% block inside %}
@@ -44,7 +46,8 @@
 <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
     {% csrf_token %}
     {% bootstrap_form_errors form %}
-    {% bootstrap_form_errors sform %} {# Added to show sform errors #}
+    {% bootstrap_form_errors sform %}
+    {% bootstrap_form_errors email_form %}
     {% comment %} TODO: Reintroduce component selection when unified component initialization is stable. {% endcomment %}
     <div class="tabbed-form">
         <fieldset>
@@ -197,6 +200,72 @@
             {% bootstrap_field form.is_public layout="control" %}
             {% bootstrap_field form.startpage_visible layout="control" %}
             {% bootstrap_field sform.meta_noindex layout="control" %}
+        </fieldset>
+        <fieldset id="email-settings-tab">
+            <legend>{% trans "Email" %}</legend>
+            <div class="alert alert-info">
+                {% blocktrans trimmed %}
+                    All outgoing event emails — both <strong>Tickets</strong> and <strong>Talks</strong> —
+                    share the settings on this page. Component-specific email templates can still be
+                    customised on each component's own email settings page.
+                {% endblocktrans %}
+            </div>
+
+            <h4 class="settings-sub-heading">{% trans "General" %}</h4>
+            {% bootstrap_field email_form.mail_from layout="control" %}
+            {% bootstrap_field email_form.mail_from_name layout="control" %}
+            {% bootstrap_field email_form.mail_reply_to layout="control" %}
+            {% bootstrap_field email_form.mail_bcc layout="control" %}
+            {% bootstrap_field email_form.mail_prefix layout="control" %}
+            {% bootstrap_field email_form.mail_text_signature layout="control" %}
+
+            <h4 class="settings-sub-heading">{% trans "Email design" %}</h4>
+            <div class="form-group">
+                <label class="col-md-3 control-label">{% trans "HTML mail renderer" %}</label>
+                <div class="col-md-9">
+                    <div class="row">
+                        {% for r in renderers.values %}
+                        <div class="col-md-4">
+                            <div class="well maildesignpreview text-center">
+                                <label class="radio">
+                                    <input type="radio"
+                                           name="{{ email_form.mail_html_renderer.html_name }}"
+                                           value="{{ r.identifier }}"
+                                           {% if email_form.mail_html_renderer.value == r.identifier %}checked{% endif %}>
+                                    {{ r.verbose_name }}
+                                </label>
+                                <img src="{% static r.thumbnail_filename %}" class="img-responsive" alt="{{ r.verbose_name }}">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <h4 class="settings-sub-heading">{% trans "Email gateway" %}</h4>
+            {% bootstrap_field email_form.smtp_use_custom layout="control" %}
+            <div id="smtp-custom-fields">
+                {% bootstrap_field email_form.email_vendor layout="control" %}
+                <div id="sendgrid-fields">
+                    {% bootstrap_field email_form.send_grid_api_key layout="control" %}
+                </div>
+                <div id="smtp-server-fields">
+                    {% bootstrap_field email_form.smtp_host layout="control" %}
+                    {% bootstrap_field email_form.smtp_port layout="control" %}
+                    {% bootstrap_field email_form.smtp_username layout="control" %}
+                    {% bootstrap_field email_form.smtp_password layout="control" %}
+                    {% bootstrap_field email_form.smtp_use_tls layout="control" %}
+                    {% bootstrap_field email_form.smtp_use_ssl layout="control" %}
+                </div>
+                {% bootstrap_field email_form.test_email layout="control" %}
+                <div class="form-group">
+                    <div class="col-md-9 col-md-offset-3">
+                        <button type="submit" class="btn btn-default" name="test" value="1">
+                            {% trans "Save and send test email" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
         </fieldset>
     </div>
     <div class="form-group submit-group">
