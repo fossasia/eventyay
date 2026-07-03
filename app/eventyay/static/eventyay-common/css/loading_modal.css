@@ -25,7 +25,7 @@ body.loading #wrapper, body.loading #page-wrapper {
 #loadingmodal .big-icon, #ajaxerr .big-icon {
     margin-top: 50px;
     font-size: 200px;
-    color: #2185d0;
+    color: var(--brand-primary, #2185d0);
 }
 
 #loadingmodal .modal-card, #ajaxerr .modal-card {
@@ -90,7 +90,7 @@ body.loading #wrapper, body.loading #page-wrapper {
     -webkit-animation: fa-spin 8s infinite linear;
     animation: fa-spin 8s infinite linear;
     font-size: 200px;
-    color: #2185d0;
+    color: var(--brand-primary, #2185d0);
 }
 
 /* Explicit styling for progress bars to ensure consistency across panels */

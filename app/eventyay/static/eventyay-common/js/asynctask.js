@@ -51,7 +51,12 @@ const setProgress = (pct) => {
 
 const poll = () => {
     fetch(checkUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok) {
+                throw new Error('Network response was not ok')
+            }
+            return r.json()
+        })
         .then(data => {
             if (data.ready && data.redirect) {
                 hide()
@@ -92,12 +97,29 @@ const submit = (form) => {
         body,
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
     })
-        .then(r => r.json())
+        .then(async r => {
+            const contentType = r.headers.get('content-type')
+            if (contentType && contentType.includes('text/html')) {
+                const html = await r.text()
+                document.open()
+                document.write(html)
+                document.close()
+                return null
+            }
+            if (!r.ok) {
+                throw new Error('Network response was not ok')
+            }
+            return r.json()
+        })
         .then(data => {
+            if (!data) return
             if (data.redirect) {
                 hide()
                 location.href = data.redirect
                 return
+            }
+            if (!data.check_url) {
+                throw new Error('check_url missing')
             }
             taskId = data.async_id
             checkUrl = data.check_url
