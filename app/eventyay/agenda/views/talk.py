@@ -519,7 +519,9 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
             return self._google_calendar_redirect(slot, request)
         if provider == 'webcal':
             webcal_url = ical_url.replace('https://', 'webcal://').replace('http://', 'webcal://')
-            return HttpResponseRedirect(webcal_url)
+            response = HttpResponse(status=302)
+            response['Location'] = webcal_url
+            return response
         raise Http404
 
     def _google_calendar_redirect(self, slot, request):
