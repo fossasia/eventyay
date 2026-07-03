@@ -19,15 +19,15 @@
                 {% endblocktrans %}
             </p>
 
-            <a href="javascript:history.back()"
-                    class="btn btn-default btn-lg"><i class="fa fa-arrow-left"></i> {% trans "Return to Check-in Lists" %}</a>
+            <button type="button" onclick="window.history.back()"
+                    class="btn btn-default btn-lg"><i class="fa fa-arrow-left"></i> {% trans "Return to Check-in Lists" %}</button>
             <a href="{% url 'eventyay_common:organizer.devices.add' organizer=request.organizer.slug %}"
                     class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Connect a device" %}</a>
         </div>
     {% else %}
         <p class="clearfix">
-            <a href="javascript:history.back()"
-                    class="btn btn-default"><i class="fa fa-arrow-left"></i> {% trans "Return to Check-in Lists" %}</a>
+            <button type="button" onclick="window.history.back()"
+                    class="btn btn-default"><i class="fa fa-arrow-left"></i> {% trans "Return to Check-in Lists" %}</button>
             <a href="{% url 'eventyay_common:organizer.devices.add' organizer=request.organizer.slug %}"
                     class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Connect a device" %}</a>
             <a href="{% url 'eventyay_common:organizer.devices.revoke-all' organizer=request.organizer.slug %}"
