@@ -162,33 +162,33 @@ Sheet Structure
 
 The script creates a ``heartbeats`` tab with these columns:
 
-================== ================================================
-Column             Description
-================== ================================================
-received_at_utc    Server timestamp when received
-instance_id        UUID of this Eventyay installation
-eventyay_version   Version string (e.g., "0.1")
-schema_version     Payload schema version
-build_metadata     Git branch/commit info
-canonical_base_url SHA256 hash of base URL
-deployment_type    docker / kubernetes / native
-os_family          Linux / Darwin / Windows
-database_type      postgresql / mysql / sqlite
-database_version   Major version number
-enabled_plugins    JSON array of plugin names
-events_bucket      Bucketed event count
-attendees_bucket   Bucketed attendee count
-tickets_issued_bucket Bucketed ticket count
-paid_tickets_bucket  Paid ticket count bucket
-free_tickets_bucket  Free ticket count bucket
-orders_bucket      Bucketed order count
-uptime_bucket      Uptime range in days
-background_jobs_enabled Boolean Celery status
-storage_backend    file / s3 / etc.
-error_count_bucket Error metrics (placeholder, always "0")
-maintainer_contact Optional email address
-raw_payload        Full JSON for debugging
-================== ================================================
+========================= ================================================
+Column                    Description
+========================= ================================================
+received_at_utc           Server timestamp when received
+instance_id               UUID of this Eventyay installation
+eventyay_version          Version string (e.g., "0.1")
+schema_version            Payload schema version
+build_metadata            Git branch/commit info
+canonical_base_url        SHA256 hash of base URL
+deployment_type           docker / kubernetes / native
+os_family                 Linux / Darwin / Windows
+database_type             postgresql / mysql / sqlite
+database_version          Major version number
+enabled_plugins           JSON array of plugin names
+events_bucket             Bucketed event count
+attendees_bucket          Bucketed attendee count
+tickets_issued_bucket     Bucketed ticket count
+paid_tickets_bucket       Paid ticket count bucket
+free_tickets_bucket       Free ticket count bucket
+orders_bucket             Bucketed order count
+uptime_bucket             Uptime range in days
+background_jobs_enabled   Boolean Celery status
+storage_backend           file / s3 / etc.
+error_count_bucket        Error metrics (placeholder, always "0")
+maintainer_contact        Optional email address
+raw_payload               Full JSON for debugging
+========================= ================================================
 
 Features Implemented
 --------------------
