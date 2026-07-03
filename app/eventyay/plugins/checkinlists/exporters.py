@@ -130,7 +130,6 @@ class CheckInListMixin(BaseExporter):
                             ('attendee_name', _('Attendee name')),
                             ('product', _('Product')),
                             ('price', _('Price')),
-                            ('timestamp', _('Timestamp (Check-in and Check-out)')),
                             ('auto_checked_in', _('Automatically checked in')),
                             ('status', _('Status (Paid)')),
                             ('email', _('E-mail')),
@@ -142,11 +141,13 @@ class CheckInListMixin(BaseExporter):
                             ('comment', _('Comment')),
                             ('seat', _('Seat details')),
                             ('address', _('Address')),
+                            ('timestamp', _('Timestamp (Check-in and Check-out)')),
                         ],
                         initial=[
-                            'order_code', 'attendee_name', 'product', 'price', 'timestamp',
+                            'order_code', 'attendee_name', 'product', 'price',
                             'auto_checked_in', 'status', 'email', 'phone', 'company', 'voucher',
-                            'order_date', 'requires_attention', 'comment', 'seat', 'address'
+                            'order_date', 'requires_attention', 'comment', 'seat', 'address',
+                            'timestamp'
                         ],
                         required=False,
                     ),
@@ -379,6 +380,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
         }
         
         total_weight = sum(weights.get(c, 0.1) for c in dynamic_cols) + (0.35 if questions else 0)
+        total_weight = total_weight or 1.0
         
         dyn_colwidths = []
         header_map = {
@@ -416,6 +418,11 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
             dyn_colwidths.append((w / total_weight) * (doc.width - sum(fixed_colwidths)))
             
         colwidths = fixed_colwidths + dyn_colwidths
+        
+        for q in questions:
+            w = 0.35 / len(questions)
+            colwidths.append((w / total_weight) * (doc.width - sum(fixed_colwidths)))
+            
         tdata = [headers]
 
         tstyledata = [
@@ -643,9 +650,7 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
             headers.append(_('Product'))
         if 'price' in columns:
             headers.append(_('Price'))
-        if 'timestamp' in columns:
-            headers.append(_('Checked in'))
-            headers.append(_('Checked out'))
+
         if 'auto_checked_in' in columns:
             headers.append(_('Automatically checked in'))
         
@@ -697,6 +702,10 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
                 _('Country'),
                 pgettext('address', 'State'),
             ]
+            
+        if 'timestamp' in columns:
+            headers.append(_('Checked in'))
+            headers.append(_('Checked out'))
         yield headers
 
         yield self.ProgressSetTotal(total=qs.count())
@@ -741,23 +750,6 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
                 row.append(str(op.product) + (' – ' + str(op.variation.value) if op.variation else ''))
             if 'price' in columns:
                 row.append(op.price)
-            if 'timestamp' in columns:
-                row.append(
-                    date_format(
-                        last_checked_in.astimezone(self.event.tz),
-                        'SHORT_DATETIME_FORMAT',
-                    )
-                    if last_checked_in
-                    else ''
-                )
-                row.append(
-                    date_format(
-                        last_checked_out.astimezone(self.event.tz),
-                        'SHORT_DATETIME_FORMAT',
-                    )
-                    if last_checked_out
-                    else ''
-                )
             if 'auto_checked_in' in columns:
                 row.append(_('Yes') if op.auto_checked_in else _('No'))
             
@@ -838,6 +830,24 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
                     op.country if op.country else '',
                     op.state or '',
                 ]
+                
+            if 'timestamp' in columns:
+                row.append(
+                    date_format(
+                        last_checked_in.astimezone(self.event.tz),
+                        'SHORT_DATETIME_FORMAT',
+                    )
+                    if last_checked_in
+                    else ''
+                )
+                row.append(
+                    date_format(
+                        last_checked_out.astimezone(self.event.tz),
+                        'SHORT_DATETIME_FORMAT',
+                    )
+                    if last_checked_out
+                    else ''
+                )
 
             yield row
 
