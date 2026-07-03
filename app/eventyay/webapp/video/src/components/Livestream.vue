@@ -67,6 +67,7 @@ const HLS_DEFAULT_CONFIG = {
 
 export default {
 	components: {},
+	emits: ['playback-state-changed'],
 	props: {
 		room: {
 			type: Object,
@@ -440,9 +441,11 @@ export default {
 		},
 		playingVideo() {
 			this.playing = true
+			this.$emit('playback-state-changed', true)
 		},
 		pausingVideo() {
 			this.playing = false
+			this.$emit('playback-state-changed', false)
 		},
 		onProgressPointerdown(event) {
 			this.$refs.progress.setPointerCapture(event.pointerId)
