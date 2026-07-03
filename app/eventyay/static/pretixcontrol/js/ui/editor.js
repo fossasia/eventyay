@@ -1000,15 +1000,6 @@ var editor = {
         }, 'json');
     },
 
-    _on_page_size_change: function () {
-        var width = parseFloat($("#pdf-info-width").val());
-        var height = parseFloat($("#pdf-info-height").val());
-        if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
-            return;
-        }
-        editor._create_empty_background();
-    },
-
     init: function () {
         editor.$pdfcv = $("#pdf-canvas");
         editor.pdf_url = editor.$pdfcv.attr("data-pdf-url");
@@ -1032,7 +1023,6 @@ var editor = {
 
 
         $("#pdf-empty").on("click", editor._create_empty_background);
-        $("#pdf-info-width, #pdf-info-height").on("change", editor._on_page_size_change);
         $('#fileupload').fileupload({
             url: location.href,
             dataType: 'json',
