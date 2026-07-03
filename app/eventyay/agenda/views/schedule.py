@@ -443,6 +443,7 @@ def schedule_messages(request, **kwargs):
         'view_profile': _('View speaker profile'),
         'no_starred_sessions': _('No starred sessions.'),
         'schedule_do_not_record': _('This session will not be recorded.'),
+        'schedule_has_interpretation': _('This session has live interpretation.'),
         'back': _('Back'),
         'schedule_pending_secondary': _('Coming soon'),
         'schedule_speakers_overflow_hint': _('+%(count)s more'),

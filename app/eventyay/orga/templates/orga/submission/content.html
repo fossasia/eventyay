@@ -120,6 +120,15 @@
             </div>
         {% endif %}
 
+        {% if submission.has_interpretation %}
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">{% translate "This session has live interpretation." %}</label>
+                <div class="col-md-9">
+                    <i class="fa fa-check text-success"></i> {% translate "Yes" %}
+                </div>
+            </div>
+        {% endif %}
+
         {% if submission.is_featured %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Show this session in public list of featured sessions." %}</label>

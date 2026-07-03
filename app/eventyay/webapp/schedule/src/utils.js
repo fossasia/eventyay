@@ -239,6 +239,7 @@ export function talkToSession (talk, {
 		abstract: talk.abstract,
 		description: talk.description,
 		do_not_record: talk.do_not_record,
+		has_interpretation: talk.has_interpretation,
 		duration: talk.duration,
 		speakers,
 		track,

@@ -6,6 +6,8 @@
 				.room
 				.room(v-for="(room, index) of rooms", :key="room.id || index")
 					span.room-name(:title="getLocalizedString(room.name)") {{ getLocalizedString(room.name) }}
+					svg.room-interpretation(v-if="room.has_interpretation", viewBox="0 0 24 24", width="16", height="16", fill="currentColor", xmlns="http://www.w3.org/2000/svg", :title="roomInterpretationTooltip", aria-hidden="true")
+						path(d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z")
 					span.room-description(v-if="getLocalizedString(room.description)", @mouseenter="showRoomTooltip($event, room)", @mouseleave="hideRoomTooltip") ?
 				.room(v-if="hasSessionsWithoutRoom") no location
 		.room-tooltip(v-if="roomTooltip.visible", :style="roomTooltipStyle") {{ roomTooltip.text }}
@@ -29,6 +31,7 @@
 					:timezone="timezone",
 					:style="getSessionStyle(session)",
 					:showAbstract="false", :showRoom="false",
+					:showSessionType="true",
 					:showFavCount="showFavCount",
 					:faved="favSet.has(session.id)",
 					:hasAmPm="hasAmPm",
@@ -54,6 +57,8 @@
 					.room
 					.room(v-for="(room, index) of chunk", :key="room.id || index")
 						span.room-name {{ getLocalizedString(room.name) }}
+						svg.room-interpretation(v-if="room.has_interpretation", viewBox="0 0 24 24", width="16", height="16", fill="currentColor", xmlns="http://www.w3.org/2000/svg", :title="roomInterpretationTooltip", aria-hidden="true")
+						path(d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z")
 				.print-grid(:style="getPrintChunkGridStyle(chunk)")
 					template(v-for="slice of visibleTimeslices")
 						.timeslice(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
@@ -67,6 +72,7 @@
 							:timezone="timezone",
 							:style="getChunkSessionStyle(session, chunk)",
 							:showAbstract="false", :showRoom="false",
+							:showSessionType="true",
 							:showFavCount="showFavCount",
 							:faved="favSet.has(session.id)",
 							:hasAmPm="hasAmPm",
@@ -131,6 +137,9 @@ export default {
 			default: 30
 		}
 	},
+	inject: {
+		translationMessages: { default: () => ({}) }
+	},
 	data () {
 		return {
 			getLocalizedString,
@@ -175,6 +184,10 @@ export default {
 		},
 		hasSessionsWithoutRoom () {
 			return this.sessions.some(s => !s.room)
+		},
+		roomInterpretationTooltip () {
+			const m = this.translationMessages || {}
+			return m.schedule_has_interpretation || 'This session has live interpretation.'
 		},
 		printRoomChunks () {
 			const chunkSize = 4
@@ -663,6 +676,10 @@ export default {
 					overflow: hidden
 					white-space: nowrap
 					text-overflow: ellipsis
+				.room-interpretation
+					flex-shrink: 0
+					color: $clr-secondary-text-light
+					font-size: 0.85em
 				.room-description
 					display: inline-flex
 					justify-content: center

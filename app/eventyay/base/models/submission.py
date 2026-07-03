@@ -262,6 +262,10 @@ class Submission(GenerateCode, PretalxModel):
         verbose_name=_('Show this session in public list of featured sessions.'),
     )
     do_not_record = models.BooleanField(default=False, verbose_name=_('Don’t record this session.'))
+    has_interpretation = models.BooleanField(
+        default=False,
+        verbose_name=_('This session has live interpretation.'),
+    )
     etherpad_url = models.URLField(
         max_length=500,
         null=True,
