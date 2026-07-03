@@ -317,7 +317,7 @@ class SubmissionListView(ListView):
         return ctx
 
 
-class AdminOrderListView(PaginationMixin, ListView):
+class AdminOrderListView(PaginationMixin, AdministratorPermissionRequiredMixin, ListView):
     template_name = 'pretixcontrol/admin/orders/index.html'
     context_object_name = 'orders'
     paginate_by = 25

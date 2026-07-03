@@ -1921,10 +1921,11 @@ class AdminOrderFilterForm(forms.Form):
 
         if fdata.get('query'):
             q = fdata['query'].strip()
-            qs = qs.filter(
-                Q(code__icontains=Order.normalize_code(q))
-                | Q(email__icontains=q)
-            )
+            if q:
+                qs = qs.filter(
+                    Q(code__icontains=Order.normalize_code(q))
+                    | Q(email__icontains=q)
+                )
 
         if fdata.get('status'):
             qs = qs.filter(status=fdata['status'])

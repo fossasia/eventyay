@@ -122,7 +122,7 @@
                             {% endif %}
                         </td>
                         <td>{{ order.total|money:order.currency }}</td>
-                        <td>{{ order.date }}</td>
+                        <td>{{ order.date|date:"SHORT_DATETIME_FORMAT" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
