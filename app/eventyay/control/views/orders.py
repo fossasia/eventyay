@@ -7,7 +7,8 @@ from datetime import datetime, time, timedelta
 from decimal import Decimal, DecimalException
 from urllib.parse import quote, urlencode
 
-import vat_moss.id
+import vat_moss_lite.errors
+import vat_moss_lite.id
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -194,7 +195,13 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
     permission = 'can_view_orders'
 
     def get_queryset(self):
-        qs = Order.objects.filter(event=self.request.event).select_related('invoice_address')
+        qs = Order.objects.filter(event=self.request.event).select_related('invoice_address').prefetch_related(
+            Prefetch(
+                'all_positions',
+                queryset=OrderPosition.objects.filter(canceled=False).select_related('product'),
+                to_attr='active_positions'
+            )
+        )
 
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
@@ -1693,15 +1700,15 @@ class OrderCheckVATID(OrderView):
                 return redirect(self.get_order_url())
 
             try:
-                result = vat_moss.id.validate(ia.vat_id)
+                result = vat_moss_lite.id.validate(ia.vat_id)
                 if result:
                     country_code, normalized_id, company_name = result
                     ia.vat_id_validated = True
                     ia.vat_id = normalized_id
                     ia.save()
-            except vat_moss.errors.InvalidError:
+            except vat_moss_lite.errors.InvalidError:
                 messages.error(self.request, _('This VAT ID is not valid.'))
-            except vat_moss.errors.WebServiceUnavailableError:
+            except vat_moss_lite.errors.WebServiceUnavailableError:
                 logger.exception('VAT ID checking failed for country {}'.format(ia.country))
                 messages.error(
                     self.request,

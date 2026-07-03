@@ -221,16 +221,25 @@ class OrderFilterForm(FilterForm):
             matching_invoices = Invoice.objects.filter(
                 Q(invoice_no__iexact=u) | Q(invoice_no__iexact=u.zfill(5)) | Q(full_invoice_no__iexact=u)
             ).values_list('order_id', flat=True)
+            pos_name_q = Q()
+            for part in u.split():
+                pos_name_q &= Q(attendee_name_cached__icontains=part)
+
             matching_positions = OrderPosition.objects.filter(
                 Q(
-                    Q(attendee_name_cached__icontains=u)
+                    pos_name_q
                     | Q(attendee_email__icontains=u)
                     | Q(secret__istartswith=u)
                     | Q(pseudonymization_id__istartswith=u)
                 )
             ).values_list('order_id', flat=True)
+
+            ia_name_q = Q()
+            for part in u.split():
+                ia_name_q &= Q(name_cached__icontains=part)
+
             matching_invoice_addresses = InvoiceAddress.objects.filter(
-                Q(Q(name_cached__icontains=u) | Q(company__icontains=u))
+                Q(ia_name_q | Q(company__icontains=u))
             ).values_list('order_id', flat=True)
             matching_orders = Order.objects.filter(code | Q(email__icontains=u) | Q(comment__icontains=u)).values_list(
                 'id', flat=True
@@ -630,7 +639,10 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
         if fdata.get('invoice_address_company'):
             qs = qs.filter(invoice_address__company__icontains=fdata.get('invoice_address_company'))
         if fdata.get('invoice_address_name'):
-            qs = qs.filter(invoice_address__name_cached__icontains=fdata.get('invoice_address_name'))
+            q = Q()
+            for part in fdata.get('invoice_address_name').split():
+                q &= Q(invoice_address__name_cached__icontains=part)
+            qs = qs.filter(q)
         if fdata.get('invoice_address_street'):
             qs = qs.filter(invoice_address__street__icontains=fdata.get('invoice_address_street'))
         if fdata.get('invoice_address_zipcode'):
@@ -640,7 +652,10 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
         if fdata.get('invoice_address_country'):
             qs = qs.filter(invoice_address__country=fdata.get('invoice_address_country'))
         if fdata.get('attendee_name'):
-            qs = qs.filter(all_positions__attendee_name_cached__icontains=fdata.get('attendee_name'))
+            q = Q()
+            for part in fdata.get('attendee_name').split():
+                q &= Q(all_positions__attendee_name_cached__icontains=part)
+            qs = qs.filter(q)
         if fdata.get('attendee_address_company'):
             qs = qs.filter(all_positions__company__icontains=fdata.get('attendee_address_company')).distinct()
         if fdata.get('attendee_address_street'):
