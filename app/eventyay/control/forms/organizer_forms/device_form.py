@@ -14,13 +14,27 @@ class DeviceForm(forms.ModelForm):
             live=True,
             tickets_published=True,
         ).order_by('-has_subevents', '-date_from')
+        self.fields['limit_events'].required = True
         self.fields['all_events'].label = _('All events (including newly created and published ones)')
         self.fields['gate'].queryset = organizer.gates.all()
 
     def clean(self):
         cleaned_data = super().clean()
-        if not cleaned_data.get('all_events') and not cleaned_data.get('limit_events'):
-            raise ValidationError(_('Your device will not have access to anything, please select some events.'))
+        all_events = cleaned_data.get('all_events')
+        limit_events = cleaned_data.get('limit_events')
+
+        if not limit_events:
+            if all_events:
+                if 'limit_events' in self._errors:
+                    del self._errors['limit_events']
+                cleaned_data['limit_events'] = self.fields['limit_events'].queryset.none()
+            else:
+                if 'limit_events' in self._errors:
+                    del self._errors['limit_events']
+                self.add_error(
+                    'limit_events',
+                    _('Your device will not have access to anything, please select some events.')
+                )
 
         return cleaned_data
 
