@@ -15,8 +15,9 @@
                 </a>
             </li>
             <li>
-                {% trans "Open the app that you want to connect and optionally reset it to the original state." %}
+                {% trans "Open the check-in app on the device you want to connect." %}
             </li>
+            <li>{% trans "Select your purpose." %}</li>
             <li>{% trans "Scan the following configuration code:" %}<br><br>
                 <script type="text/json" data-replace-with-qr>{{ qrdata|safe }}</script><br>
                 {% trans "If your app/device does not support scanning a QR code, you can also enter the following information:" %}
