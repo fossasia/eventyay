@@ -11,9 +11,9 @@ from eventyay.base.models import Event, Invoice, Order, OrderPosition, Organizer
 from eventyay.celery_app import app
 
 if settings.HAS_REDIS:
-    import django_redis
+    from django.core.cache import caches
 
-    redis = django_redis.get_redis_connection('redis')
+    redis = django_redis.caches['default'].client.get_client()
 
 REDIS_KEY = 'eventyay_metrics'
 _INF = float('inf')

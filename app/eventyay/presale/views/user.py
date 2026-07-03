@@ -30,9 +30,9 @@ class ResendLinkView(EventViewMixin, TemplateView):
         user = self.link_form.cleaned_data.get('email')
 
         if settings.HAS_REDIS:
-            from django_redis import get_redis_connection
+            from django.core.cache import caches
 
-            rc = get_redis_connection('redis')
+            rc = caches['default'].client.get_client()
             if rc.exists('pretix_resend_{}_{}'.format(request.event.pk, user)):
                 messages.error(
                     request,

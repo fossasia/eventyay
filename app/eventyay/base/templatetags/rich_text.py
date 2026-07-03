@@ -1,19 +1,16 @@
 import html
 import urllib.parse
 from copy import copy
-from functools import partial
 
-# TODO: Remove bleach import
-import bleach
 import markdown
-# TODO: Remove bleach import
-from bleach import DEFAULT_CALLBACKS
-# TODO: Remove bleach import
-from bleach.linkifier import build_email_re, build_url_re
+import nh3
+from bs4 import BeautifulSoup
 from django import template
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.safestring import mark_safe
+from i18nfield.strings import LazyI18nString
+from linkify_it import LinkifyIt
 from markdownify import markdownify as html_to_markdown
 
 try:
@@ -25,149 +22,143 @@ except ImportError:
 
     TLD_SET = sorted(tld_set, key=len, reverse=True)
 
-from i18nfield.strings import LazyI18nString
-
 from eventyay.common.views.redirect import safelink as sl
 
 register = template.Library()
 
 ALLOWED_TAGS = {
-    'a',
-    'abbr',
-    'acronym',
-    'b',
-    'blockquote',
-    'br',
-    'code',
-    'del',
-    'div',
-    'em',
-    'hr',
-    'i',
-    'li',
-    'ol',
-    'strong',
-    'u',
-    'ul',
-    'p',
-    'pre',
-    'span',
-    'table',
-    'tbody',
-    'thead',
-    'tr',
-    'td',
-    'th',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
+    'a', 'abbr', 'acronym', 'b', 'blockquote', 'br', 'code', 'del', 'div', 'em',
+    'hr', 'i', 'li', 'ol', 'strong', 'u', 'ul', 'p', 'pre', 'span', 'table',
+    'tbody', 'thead', 'tr', 'td', 'th', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
 }
 
 ALLOWED_ATTRIBUTES = {
-    'a': ['href', 'title', 'class'],
-    'abbr': ['title'],
-    'acronym': ['title'],
-    'table': ['width'],
-    'td': ['width', 'align'],
-    'div': ['class'],
-    'p': ['class'],
-    'span': ['class', 'title'],
+    'a': {'href', 'title', 'class'},
+    'abbr': {'title'},
+    'acronym': {'title'},
+    'table': {'width'},
+    'td': {'width', 'align'},
+    'div': {'class'},
+    'p': {'class'},
+    'span': {'class', 'title'},
 }
 
 ALLOWED_PROTOCOLS = {'http', 'https', 'mailto', 'tel'}
 
-# TODO: Remove bleach library
-URL_RE = build_url_re(tlds=TLD_SET)
-EMAIL_RE = build_email_re(tlds=TLD_SET)
+linkifier = LinkifyIt().tlds(TLD_SET)
 
 
-def link_callback(attrs, is_new, safelink=True):
-    url = attrs.get((None, 'href'), '/')
-    if url.startswith('mailto:') or url.startswith('tel:') or url_has_allowed_host_and_scheme(url, allowed_hosts=None):
-        return attrs
-    attrs[None, 'target'] = '_blank'
-    attrs[None, 'rel'] = 'noopener'
-    if safelink:
-        url = html.unescape(url)
-        attrs[None, 'href'] = sl(url)
-    else:
-        url = html.unescape(url)
-        attrs[None, 'href'] = urllib.parse.urljoin(settings.SITE_URL, url)
-    return attrs
+def process_links(html_content, safelink=True):
+    if not html_content:
+        return ''
+    soup = BeautifulSoup(html_content, 'html.parser')
+
+    # 1. Linkify text nodes
+    for text_node in soup.find_all(string=True):
+        parent = text_node.parent
+        if parent and parent.name in ['a', 'pre', 'code']:
+            continue
+
+        matches = linkifier.match(text_node)
+        if matches:
+            new_html = ""
+            last_idx = 0
+            for match in matches:
+                new_html += html.escape(text_node[last_idx:match.index])
+                url = match.url
+                text = match.text
+                new_html += f'<a href="{html.escape(url)}">{html.escape(text)}</a>'
+                last_idx = match.last_index
+            new_html += html.escape(text_node[last_idx:])
+
+            new_soup = BeautifulSoup(new_html, 'html.parser')
+            text_node.replace_with(new_soup)
+
+    # 2. Apply safelink and target/rel callbacks
+    for a_tag in soup.find_all('a'):
+        href = a_tag.get('href')
+        if not href:
+            continue
+
+        if href.startswith('mailto:') or href.startswith('tel:') or url_has_allowed_host_and_scheme(href, allowed_hosts=None):
+            continue
+
+        a_tag['target'] = '_blank'
+        a_tag['rel'] = 'noopener'
+
+        if safelink:
+            href_unescaped = html.unescape(href)
+            a_tag['href'] = sl(href_unescaped)
+        else:
+            href_unescaped = html.unescape(href)
+            a_tag['href'] = urllib.parse.urljoin(settings.SITE_URL, href_unescaped)
+
+    # bs4 adds html/body tags sometimes if the fragment resembles a full doc,
+    # but for typical rich text snippets, it should just return the fragment.
+    # To be safe, if we only parsed a fragment, soup will output it directly.
+    return str(soup)
 
 
-safelink_callback = partial(link_callback, safelink=True)
-abslink_callback = partial(link_callback, safelink=False)
+class CleanerWrapper:
+    def __init__(self, tags, attributes, protocols, safelink=True, strip_a=False):
+        self.tags = set(tags)
+        self.attributes = {k: set(v) for k, v in attributes.items()} if attributes else {}
+        self.protocols = set(protocols) if protocols else set()
+        self.safelink = safelink
+        self.strip_a = strip_a
 
-# TODO: Implement nh3 equivalent
-CLEANER = bleach.Cleaner(
+    def clean(self, html_content):
+        sanitized = nh3.clean(
+            html_content,
+            tags=self.tags,
+            attributes=self.attributes,
+            url_schemes=self.protocols
+        )
+
+        if self.strip_a:
+            return sanitized
+
+        return process_links(sanitized, safelink=self.safelink)
+
+
+CLEANER = CleanerWrapper(
     tags=ALLOWED_TAGS,
     attributes=ALLOWED_ATTRIBUTES,
     protocols=ALLOWED_PROTOCOLS,
-    filters=[
-        partial(
-            bleach.linkifier.LinkifyFilter,
-            url_re=URL_RE,
-            parse_email=True,
-            email_re=EMAIL_RE,
-            skip_tags={'pre', 'code'},
-            callbacks=DEFAULT_CALLBACKS + [safelink_callback],
-        )
-    ],
+    safelink=True
 )
 
-# TODO: Implement nh3 equivalent
-ABSLINK_CLEANER = bleach.Cleaner(
+ABSLINK_CLEANER = CleanerWrapper(
     tags=ALLOWED_TAGS,
     attributes=ALLOWED_ATTRIBUTES,
     protocols=ALLOWED_PROTOCOLS,
-    filters=[
-        partial(
-            bleach.linkifier.LinkifyFilter,
-            url_re=URL_RE,
-            parse_email=True,
-            email_re=EMAIL_RE,
-            skip_tags={'pre', 'code'},
-            callbacks=DEFAULT_CALLBACKS + [abslink_callback],
-        )
-    ],
+    safelink=False
 )
 
-# TODO: Implement nh3 equivalent
-NO_LINKS_CLEANER = bleach.Cleaner(
+NO_LINKS_CLEANER = CleanerWrapper(
     tags=copy(ALLOWED_TAGS) - {'a'},
     attributes=ALLOWED_ATTRIBUTES,
     protocols=ALLOWED_PROTOCOLS,
-    strip=True,
+    strip_a=True
 )
 
 STRIKETHROUGH_RE = '(~{2})(.+?)(~{2})'
 
-# TODO: Implement nh3 equivalent
+
 def markdown_compile_email(source):
-    linker = bleach.Linker(
-        url_re=URL_RE,
-        email_re=EMAIL_RE,
-        callbacks=DEFAULT_CALLBACKS + [abslink_callback],
-        parse_email=True,
+    md_html = markdown.markdown(
+        source,
+        extensions=[
+            'markdown.extensions.sane_lists',
+        ],
     )
-    return linker.linkify(
-        bleach.clean(
-            markdown.markdown(
-                source,
-                extensions=[
-                    'markdown.extensions.sane_lists',
-                    #  'markdown.extensions.nl2br' # disabled for backwards-compatibility
-                ],
-            ),
-            tags=ALLOWED_TAGS,
-            attributes=ALLOWED_ATTRIBUTES,
-            protocols=ALLOWED_PROTOCOLS,
-        )
+    sanitized = nh3.clean(
+        md_html,
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRIBUTES,
+        url_schemes=ALLOWED_PROTOCOLS
     )
+    return process_links(sanitized, safelink=False)
 
 
 class StrikeThroughExtension(markdown.Extension):

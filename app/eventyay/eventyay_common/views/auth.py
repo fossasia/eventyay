@@ -538,9 +538,9 @@ def send_password_reset(email: str, has_redis: bool, request: HttpRequest):
     user = cast(User, User.objects.get(email__iexact=email))
 
     if has_redis:
-        from django_redis import get_redis_connection
+        from django.core.cache import caches
 
-        rc = get_redis_connection('redis')
+        rc = caches['default'].client.get_client()
         if rc.exists(f'eventyay_pwreset_{user.id}'):
             user.log_action('eventyay.eventyay_common.auth.user.forgot_password.denied.repeated')
             raise RepeatedResetDenied()

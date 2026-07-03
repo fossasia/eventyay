@@ -73,9 +73,9 @@ class UserSettingsForm(forms.ModelForm):
         old_pw = self.cleaned_data.get('old_pw')
 
         if old_pw and settings.HAS_REDIS:
-            from django_redis import get_redis_connection
+            from django.core.cache import caches
 
-            rc = get_redis_connection('redis')
+            rc = caches['default'].client.get_client()
             cnt = rc.incr('pretix_pwchange_%s' % self.user.pk)
             rc.expire('pretix_pwchange_%s' % self.user.pk, 300)
             if cnt > 10:

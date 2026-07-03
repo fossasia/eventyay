@@ -89,9 +89,9 @@ class LoginForm(forms.Form):
     def clean(self):
         if all(k in self.cleaned_data for k, f in self.fields.items() if f.required):
             if self.ratelimit_key:
-                from django_redis import get_redis_connection
+                from django.core.cache import caches
 
-                rc = get_redis_connection('redis')
+                rc = caches['default'].client.get_client()
                 cnt = rc.get(self.ratelimit_key)
                 if cnt and int(cnt) > 10:
                     raise forms.ValidationError(self.error_messages['rate_limit'], code='rate_limit')

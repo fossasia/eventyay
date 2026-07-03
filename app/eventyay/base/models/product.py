@@ -18,7 +18,7 @@ from django.utils.timezone import is_naive, make_aware, now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_countries.fields import Country
-from django_redis import get_redis_connection
+from django.core.cache import caches
 from django_scopes import ScopedManager
 from i18nfield.fields import I18nCharField, I18nTextField
 
@@ -1606,7 +1606,7 @@ class Quota(LoggedModel):
 
     def rebuild_cache(self, now_dt=None):
         if settings.HAS_REDIS:
-            rc = get_redis_connection('redis')
+            rc = caches['default'].client.get_client()
             rc.hdel(f'quotas:{self.event_id}:availabilitycache', str(self.pk))
             self.availability(now_dt=now_dt)
 

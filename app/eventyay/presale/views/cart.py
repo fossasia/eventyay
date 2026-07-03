@@ -53,10 +53,7 @@ from eventyay.presale.views.event import (
 )
 from eventyay.presale.views.robots import NoSearchIndexViewMixin
 
-try:
-    widget_data_cache = caches['redis']
-except InvalidCacheBackendError:
-    widget_data_cache = caches['default']
+widget_data_cache = caches['default']
 
 
 class CartActionMixin:

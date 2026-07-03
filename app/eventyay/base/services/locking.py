@@ -123,11 +123,11 @@ def release_event_db(event):
 
 
 def redis_lock_from_event(event):
-    from django_redis import get_redis_connection
+    from django.core.cache import caches
     from redis.lock import Lock
 
     if not hasattr(event, '_lock') or not event._lock:
-        rc = get_redis_connection('redis')
+        rc = caches['default'].client.get_client()
         event._lock = Lock(redis=rc, name='pretix_event_%s' % event.id, timeout=LOCK_TIMEOUT)
     return event._lock
 

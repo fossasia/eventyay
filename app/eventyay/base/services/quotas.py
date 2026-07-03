@@ -19,7 +19,7 @@ from django.db.models import (
     When,
 )
 from django.utils.timezone import now
-from django_redis import get_redis_connection
+from django.core.cache import caches
 
 from eventyay.base.models import (
     CartPosition,
@@ -127,7 +127,7 @@ class QuotaAvailability:
                 raise ValueError('If you set allow_cache, you need to set count_waitinglist.')
 
             elif settings.HAS_REDIS:
-                rc = get_redis_connection('redis')
+                rc = caches['default'].client.get_client()
                 quotas_by_event = defaultdict(list)
                 for q in quotas_original:
                     quotas_by_event[q.event_id].append(q)
@@ -170,7 +170,7 @@ class QuotaAvailability:
         if not settings.HAS_REDIS or not quotas:
             return
 
-        rc = get_redis_connection('redis')
+        rc = caches['default'].client.get_client()
         # We write the computed availability to redis in a per-event hash as
         #
         #   quota_id -> (availability_state, availability_number, timestamp).

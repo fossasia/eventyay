@@ -1047,14 +1047,6 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': REDIS_URL,
     },
-    # TODO: Remove. Use the 'default' cache everywhere.
-    'redis': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': REDIS_URL,
-        'OPTIONS': {
-            'REDIS_CLIENT_KWARGS': {'health_check_interval': 30},
-        },
-    },
 }
 
 # Use Redis for session storage

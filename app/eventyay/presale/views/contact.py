@@ -28,11 +28,11 @@ class ContactOrganizerView(EventViewMixin, View):
         client_ip = get_client_ip(request)
         if not client_ip:
             return False
-        from django_redis import get_redis_connection
+        from django.core.cache import caches
         from redis.exceptions import RedisError
         key = 'contact_ratelimit_{}'.format(hashlib.sha1(client_ip.encode()).hexdigest())
         try:
-            rc = get_redis_connection('redis')
+            rc = caches['default'].client.get_client()
             count = rc.get(key)
             if count and int(count) >= _RATE_LIMIT_MAX:
                 return True
