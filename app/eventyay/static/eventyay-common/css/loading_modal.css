@@ -115,3 +115,107 @@ body.loading #wrapper, body.loading #page-wrapper {
 #loadingmodal .progress-bar-success {
     background-color: #5cb85c;
 }
+
+/* Minimized state */
+body.loading-minimized #wrapper, body.loading-minimized #page-wrapper {
+    -webkit-filter: none;
+    -moz-filter: none;
+    -ms-filter: none;
+    -o-filter: none;
+    filter: none;
+}
+
+.loading-minimized #loadingmodal {
+    background: transparent;
+    width: auto;
+    height: auto;
+    bottom: 20px;
+    right: 20px;
+    top: auto;
+    left: auto;
+    padding: 0;
+}
+
+.loading-minimized #loadingmodal .modal-card {
+    margin: 0;
+    top: 0;
+    width: 350px;
+    min-height: 0;
+    padding: 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    background: white;
+}
+
+.loading-minimized #loadingmodal .modal-card-icon,
+.loading-minimized #loadingmodal .modal-card-content p.text,
+.loading-minimized #loadingmodal .modal-card-content p.status {
+    display: none;
+}
+
+.loading-minimized #loadingmodal .modal-card-content {
+    margin-left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.loading-minimized #loadingmodal .modal-card-content h3 {
+    font-size: 16px;
+    margin: 0;
+    padding: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    font-weight: normal;
+    order: 1;
+}
+
+.loading-minimized .modal-card-content .pull-right {
+    float: none !important;
+    order: 2;
+    margin-left: auto;
+}
+
+.loading-minimized .loadingmodal-minimize {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    background-color: var(--brand-primary, #2185d0) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 0 !important;
+    width: 48px !important;
+    height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+
+.loading-minimized .loadingmodal-minimize:hover {
+    background-color: #1a69a4;
+    color: white;
+}
+
+.loading-minimized .loadingmodal-minimize .fa-window-minimize::before {
+    content: "\f2d0";
+}
+
+.loading-minimized #loadingmodal .progress {
+    width: 100%;
+    margin: 0;
+    height: 12px;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: #f5f5f5;
+}
+
+#loadingmodal .progress-bar.active,
+#loadingmodal .progress-bar-striped.active {
+    -webkit-animation: progress-bar-stripes 3s linear infinite;
+    -o-animation: progress-bar-stripes 3s linear infinite;
+    animation: progress-bar-stripes 3s linear infinite;
+}

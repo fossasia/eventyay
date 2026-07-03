@@ -18,7 +18,13 @@ const show = (headline) => {
     const h3 = el.querySelector('h3')
     if (h3) h3.textContent = headline
     const progress = el.querySelector('.progress')
-    if (progress) progress.style.display = 'none'
+    if (progress) progress.style.display = ''
+    const bar = el.querySelector('.progress-bar')
+    if (bar) {
+        bar.style.width = '0%'
+        bar.classList.add('progress-bar-striped', 'active')
+    }
+    document.body.classList.remove('loading-minimized')
     document.body.classList.add('loading')
 }
 
@@ -31,6 +37,8 @@ const hide = () => {
     checkUrl = null
     isSubmitting = false
     document.body.classList.remove('loading')
+    document.body.classList.remove('loading-minimized')
+    sessionStorage.removeItem('eventyay_async_task_common')
 }
 
 const setStatus = (text) => {
@@ -46,7 +54,10 @@ const setProgress = (pct) => {
     const progress = el.querySelector('.progress')
     const bar = el.querySelector('.progress-bar')
     if (progress) progress.style.display = ''
-    if (bar) bar.style.width = pct + '%'
+    if (bar) {
+        bar.classList.remove('progress-bar-striped', 'active')
+        bar.style.width = pct + '%'
+    }
 }
 
 const poll = () => {
@@ -58,9 +69,33 @@ const poll = () => {
             return r.json()
         })
         .then(data => {
-            if (data.ready && data.redirect) {
-                hide()
-                location.href = data.redirect
+            if (data.ready) {
+                const bar = document.querySelector('#loadingmodal .progress-bar')
+                if (bar) {
+                    bar.classList.remove('progress-bar-striped', 'active')
+                    bar.classList.add('bg-success', 'progress-bar-success')
+                    bar.style.width = '100%'
+                }
+                const btnIcon = document.querySelector('#loadingmodal .loadingmodal-minimize i')
+                if (btnIcon) {
+                    btnIcon.className = 'fa fa-check'
+                }
+                const h3 = document.querySelector('#loadingmodal h3')
+                if (h3) {
+                    h3.textContent = gettext('Task completed')
+                }
+                const bigIcon = document.querySelector('#loadingmodal .big-rotating-icon')
+                if (bigIcon) {
+                    bigIcon.className = 'fa fa-check big-rotating-icon'
+                    bigIcon.style.animation = 'none'
+                    bigIcon.style.color = '#5cb85c'
+                }
+                
+                sessionStorage.removeItem('eventyay_async_task_common')
+                
+                setTimeout(() => {
+                    hide()
+                }, 2000)
                 return
             }
             if (typeof data.percentage === 'number') {
@@ -123,6 +158,15 @@ const submit = (form) => {
             }
             taskId = data.async_id
             checkUrl = data.check_url
+            
+            sessionStorage.setItem('eventyay_async_task_common', JSON.stringify({
+                id: taskId,
+                checkUrl: checkUrl,
+                isLong: isLong,
+                headline: document.querySelector('#loadingmodal h3') ? document.querySelector('#loadingmodal h3').textContent : '',
+                minimized: document.body.classList.contains('loading-minimized')
+            }))
+
             if (isLong && data.started) {
                 setStatus(gettext('Your request is currently being processed. Depending on the size of your event, this might take up to a few minutes.'))
             }
@@ -141,6 +185,41 @@ const init = () => {
         e.preventDefault()
         submit(form)
     })
+    
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.loadingmodal-minimize')
+        if (!btn) return
+        e.preventDefault()
+        document.body.classList.toggle('loading-minimized')
+        
+        const storedTask = sessionStorage.getItem('eventyay_async_task_common')
+        if (storedTask) {
+            try {
+                const task = JSON.parse(storedTask)
+                task.minimized = document.body.classList.contains('loading-minimized')
+                sessionStorage.setItem('eventyay_async_task_common', JSON.stringify(task))
+            } catch (err) {}
+        }
+    })
+
+    const storedTask = sessionStorage.getItem('eventyay_async_task_common')
+    if (storedTask) {
+        try {
+            const task = JSON.parse(storedTask)
+            taskId = task.id
+            checkUrl = task.checkUrl
+            isLong = task.isLong
+            
+            show(task.headline || gettext('We are processing your request …'))
+            if (task.minimized) {
+                document.body.classList.add('loading-minimized')
+            }
+            
+            pollTimeout = setTimeout(poll, 100)
+        } catch (e) {
+            sessionStorage.removeItem('eventyay_async_task_common')
+        }
+    }
 }
 
 if (document.readyState === 'loading') {
