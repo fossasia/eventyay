@@ -2060,6 +2060,13 @@ h2 .user-name-display img {
   }
 
   /* Mobile list cards */
+  #page-content .table-responsive-sm,
+  #page-content .table-responsive-always {
+    background: var(--color-grey-lightest);
+    border-radius: var(--size-border-radius, 4px);
+    padding: 0.75rem;
+  }
+
   #page-content .table-flip tbody tr:has(td:first-child .color-square),
   #page-content .table-flip tbody tr:has(td:first-child .fa-user-secret) {
     position: relative;
@@ -2164,6 +2171,45 @@ h2 .user-name-display img {
     justify-content: flex-end;
     gap: 0.35rem;
     margin-left: auto;
+  }
+
+  #page-content .table-flip tbody td.col-tags .d-flex {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.35rem;
+  }
+
+  #page-content .table-flip tbody td.col-tags .badge {
+    margin: 0;
+  }
+
+  #page-content .table-flip tbody td.col-state {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  #score-formset [data-formset-body] > .list-group,
+  #review-phases-formset [data-formset-body] > .list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: transparent;
+    border: none;
+  }
+
+  #score-formset [data-formset-body] > .card,
+  #review-phases-formset [data-formset-body] > .card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  #score-formset .score-group.list-group-item,
+  #review-phases-formset .review-phase.list-group-item {
+    border: 1px solid var(--color-border);
+    border-radius: var(--size-border-radius, 4px);
+    box-shadow: var(--shadow-light);
+    margin: 0;
   }
 }
 

@@ -196,17 +196,20 @@
     }
 
     .cfp-forms-page .cfp-option-table tbody {
-        display: block;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
     }
 
     .cfp-forms-page .cfp-option-table tbody tr {
         display: block;
-        margin: 0.5rem 0;
+        margin: 0;
         padding: 0;
         border: 1px solid var(--color-border);
         border-radius: var(--size-border-radius, 4px);
         background-color: var(--color-bg, #fff);
         overflow: hidden;
+        box-shadow: var(--shadow-light);
     }
 
     .cfp-forms-page .cfp-option-table tbody tr:hover {

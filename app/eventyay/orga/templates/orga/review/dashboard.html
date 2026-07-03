@@ -266,9 +266,9 @@
                             {% endfor %}
                             {% if filter_form.track %}<td class="col-track">{{ submission.track.name }}</td>{% endif %}
                             {% if filter_form.tags %}<td class="col-tags">
-                                <div class="d-flex flex-column">
+                                <div class="d-flex flex-wrap">
                                     {% for tag in submission.tags.all %}
-                                        {{ tag.tag }}
+                                        <span class="badge" {% if tag.color %}style="background-color: {{ tag.color }}"{% endif %}>{{ tag.tag }}</span>
                                     {% endfor %}
                                 </div>
                             </td>{% endif %}
