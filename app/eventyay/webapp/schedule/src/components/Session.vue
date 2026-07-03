@@ -19,7 +19,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 				.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer(v-if="!isSchedulePending")
 		.is-live(v-if="showLiveBadge && isLive") live
-	.info(:class="{'has-icons': hasAnyRightIcons, 'grid-session-info': showSessionType}")
+	.info(:class="{'has-icons': hasAnyRightIcons, 'grid-session-info': showSessionType, 'has-bottom-icons': hasBottomIcons}", :style="bottomIconsPaddingStyle")
 		template(v-if="showSessionType")
 			.title(:class="gridTitleClampClass", :title="gridMetaTitle(getLocalizedString(session.title))") {{ getLocalizedString(session.title) }}
 			.session-type(v-if="sessionTypeLabel", :class="{'single-line-clamped': isGridVeryShort}", :title="gridMetaTitle(sessionTypeLabel)") {{ sessionTypeLabel }}
@@ -48,12 +48,16 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 		.bottom-info
 			.track(v-if="session.track", :class="{'single-line-clamped': isGridVeryShort}", :title="gridMetaTitle(getLocalizedString(session.track.name))") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room", :title="getLocalizedString(session.room.name)") {{ getLocalizedString(session.room.name) }}
-		.do_not_record(v-if="session.do_not_record", :title="doNotRecordTooltip", :aria-label="doNotRecordTooltip")
-			svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
-				g(transform="translate(-9.3465481,-5.441411)")
-					rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
-					path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
-					path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
+		.session-bottom-icons(v-if="hasBottomIcons")
+			.interpretation(v-if="showRoomInterpretation", :title="roomInterpretationTooltip", :aria-label="roomInterpretationTooltip")
+				svg.globe-icon(viewBox="0 0 24 24", width="18", height="18", fill="currentColor", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
+					path(d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z")
+			.do_not_record(v-if="session.do_not_record", :title="doNotRecordTooltip", :aria-label="doNotRecordTooltip")
+				svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
+					g(transform="translate(-9.3465481,-5.441411)")
+						rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
+						path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
+						path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
 	span.fav-count(v-if="hasFavCount", :aria-label="favCountLabel") {{ favCountLabel }}
 	.stream-indicator(v-if="canOpenStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
@@ -223,6 +227,21 @@ export default {
 		doNotRecordTooltip () {
 			const m = this.translationMessages || {}
 			return m.schedule_do_not_record || 'This session will not be recorded.'
+		},
+		roomInterpretationTooltip () {
+			const m = this.translationMessages || {}
+			return m.schedule_room_has_interpretation || 'This room has live interpretation.'
+		},
+		showRoomInterpretation () {
+			return Boolean(this.session.room?.has_interpretation)
+		},
+		hasBottomIcons () {
+			return this.showRoomInterpretation || this.session.do_not_record
+		},
+		bottomIconsPaddingStyle () {
+			if (!this.hasBottomIcons) return {}
+			const count = (this.showRoomInterpretation ? 1 : 0) + (this.session.do_not_record ? 1 : 0)
+			return { '--session-bottom-icons-width': `${count * 32}px` }
 		},
 		sessionTypeLabel () {
 			return getSessionTypeLabel(this.session.session_type)
@@ -656,6 +675,27 @@ expandClampedSessionText()
 				white-space: nowrap
 				overflow: hidden
 				text-overflow: ellipsis
+		&.has-bottom-icons .bottom-info
+			padding-right: var(--session-bottom-icons-width, 32px)
+		.session-bottom-icons
+			position: absolute
+			right: 2px
+			bottom: 2px
+			display: flex
+			align-items: center
+			z-index: 5
+			.interpretation, .do_not_record
+				width: 32px
+				height: 32px
+				display: flex
+				justify-content: center
+				align-items: center
+				line-height: 0
+				flex-shrink: 0
+			.interpretation
+				color: $clr-secondary-text-light
+				.globe-icon
+					display: block
 		&.grid-session-info
 			min-width: 0
 			overflow: hidden
@@ -667,17 +707,6 @@ expandClampedSessionText()
 				text-overflow: clip
 				overflow-wrap: anywhere
 				word-break: break-word
-		.do_not_record
-			position: absolute
-			bottom: 2px
-			right: 2px
-			width: 32px
-			height: 32px
-			display: flex
-			justify-content: center
-			align-items: center
-			line-height: 0
-			z-index: 5
 	.tags-box
 		display: flex
 		flex-wrap: wrap
