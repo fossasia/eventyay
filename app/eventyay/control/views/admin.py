@@ -333,14 +333,6 @@ class AdminOrderListView(PaginationMixin, AdministratorPermissionRequiredMixin, 
     def get_queryset(self):
         qs = Order.objects.select_related('event', 'event__organizer')
 
-        if not self.request.user.has_active_staff_session(
-            self.request.session.session_key
-        ):
-            allowed_events = self.request.user.get_events_with_permission(
-                'can_view_orders', request=self.request
-            ).values_list('id', flat=True)
-            qs = qs.filter(event_id__in=allowed_events)
-
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
 
