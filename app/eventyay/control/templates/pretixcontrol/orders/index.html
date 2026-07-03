@@ -128,6 +128,7 @@
                             <a href="?{% url_replace request 'ordering' '-datetime' %}"><i class="fa fa-caret-down"></i></a>
                             <a href="?{% url_replace request 'ordering' 'datetime' %}"><i class="fa fa-caret-up"></i></a>
                         </th>
+                        <th>{% trans "Products" %}</th>
                         <th class="text-right flip">{% trans "Order paid / total" %}
                             <a href="?{% url_replace request 'ordering' '-total' %}"><i class="fa fa-caret-down"></i></a>
                             <a href="?{% url_replace request 'ordering' 'total' %}"><i class="fa fa-caret-up"></i></a></th>
@@ -165,6 +166,22 @@
                                 <span class="fa fa-{{ o.sales_channel_obj.icon }} text-muted"
                                       data-toggle="tooltip" title="{% trans o.sales_channel_obj.verbose_name %}"></span>
                                 {{ o.datetime|date:"SHORT_DATETIME_FORMAT" }}
+                            </td>
+                            <td>
+                                <ul class="list-unstyled order-product-list">
+                                {% for pos in o.active_positions %}
+                                    {% if forloop.counter <= 2 %}
+                                        <li>
+                                            {{ pos.product.name }}
+                                            {% if forloop.counter == 2 and not forloop.last %}
+                                                <span class="product-ellipsis">&hellip;</span>
+                                            {% endif %}
+                                        </li>
+                                    {% else %}
+                                        <li class="product-hidden" style="display: none;">{{ pos.product.name }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                                </ul>
                             </td>
                             <td class="text-right flip">
                                 {% if o.has_cancellation_request %}
@@ -213,6 +230,7 @@
                                     {{ s }} orders
                                 {% endblocktrans %}
                             </th>
+                            <th></th>
                             <th class="text-right flip">
                                 {% if sums.s|default_if_none:"none" != "none" %}
                                     {{ sums.s|money:request.event.currency }}
@@ -268,4 +286,12 @@
 {% endblock %}
 {% block custom_header %}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
+    <style>
+        .order-product-list:hover .product-hidden {
+            display: list-item !important;
+        }
+        .order-product-list:hover .product-ellipsis {
+            display: none !important;
+        }
+    </style>
 {% endblock %}
