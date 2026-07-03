@@ -628,7 +628,10 @@ export default {
 			}
 		},
 		loggedIn () {
-			if (!this.schedule) return
+			if (!this.schedule || !this.remoteApiUrl) return
+			if (!this.apiUrl) {
+				this.apiUrl = this.remoteApiUrl
+			}
 			this.loadFavs().then((favs) => {
 				this.favs = this.pruneFavs(favs, this.schedule)
 			})
@@ -662,6 +665,7 @@ export default {
 		if (messagesEl) {
 			this.onHomeServer = true
 			this.userCode = messagesEl.dataset.userCode ?? null
+			this.apiUrl = this.remoteApiUrl
 			if (messagesEl.dataset.loggedIn === 'true') {
 				this.loggedIn = true
 			}
@@ -717,7 +721,7 @@ export default {
 			this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
 			this.now = moment.tz(this.currentTimezone)
 			setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
-			this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
+			this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
 			if (this.publicFavsUrl) {
 				this.favsReadOnly = true
 				this.onlyFavs = true
@@ -783,7 +787,7 @@ export default {
 		})
 
 		// set API URL before loading favs
-		this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
+		this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
 		if (this.publicFavsUrl) {
 			this.favsReadOnly = true
 			this.onlyFavs = true
@@ -932,7 +936,10 @@ export default {
 			return this.apiRequest(path, method, data, baseUrl)
 		},
 		async apiRequest (path, method, data, baseUrl) {
-			const base = baseUrl || this.apiUrl
+			const base = baseUrl || this.apiUrl || this.remoteApiUrl
+			if (!base) {
+				throw new Error('API base URL is not configured')
+			}
 			const url = `${base}${path}`
 			const headers = new Headers()
 			if (this.onHomeServer) {
@@ -965,7 +972,8 @@ export default {
 				const merged = await this.apiRequest(
 					'submissions/favourites/merge/',
 					'POST',
-					mergedLocal
+					mergedLocal,
+					this.remoteApiUrl
 				)
 				if (Array.isArray(merged)) {
 					localStorage.setItem(userStorageKey, JSON.stringify(merged))
@@ -973,7 +981,7 @@ export default {
 					return merged
 				}
 			} catch {
-				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+				// Server sync is optional; local favourites are already loaded.
 			}
 			return mergedLocal
 		},
@@ -1008,8 +1016,11 @@ export default {
 			const storageKey = this.getFavStorageKey(this.loggedIn ? this.userCode : null)
 			try {
 				localStorage.setItem(storageKey, JSON.stringify(this.favs))
-			} catch {
+				return true
+			} catch (error) {
+				console.error('Failed to save favourites locally:', error)
 				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+				return false
 			}
 		},
 		toggleSessionModalFav (id) {
@@ -1023,37 +1034,50 @@ export default {
 		async fav (id) {
 			if (this.favsReadOnly) return
 			if (this.favSet.has(id)) return
+			const previousFavs = [...this.favs]
 			this.favs.push(id)
 			const talk = this.schedule?.talks?.find(t => t.code === id)
+			const previousFavCount = talk ? Number(talk.fav_count || 0) : 0
 			if (talk) {
-				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) + 1)
+				talk.fav_count = Math.max(0, previousFavCount + 1)
 			}
-			this.saveFavs()
+			if (!this.saveFavs()) {
+				this.favs = previousFavs
+				if (talk) talk.fav_count = previousFavCount
+				return
+			}
 			if (!this.loggedIn) {
 				this.showAnonymousFavsInfo()
 				return
 			}
 			try {
-				await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
-			} catch (error) {
-				console.error('Failed to save favourite: %s', error)
-				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+				await this.apiRequest(`submissions/${id}/favourite/`, 'POST', undefined, this.remoteApiUrl)
+			} catch {
+				// Local favourite is already saved.
 			}
 		},
 		async unfav (id) {
 			if (this.favsReadOnly) return
+			const previousFavs = [...this.favs]
 			this.favs = this.favs.filter(elem => elem !== id)
 			const talk = this.schedule?.talks?.find(t => t.code === id)
+			const previousFavCount = talk ? Number(talk.fav_count || 0) : 0
 			if (talk) {
-				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) - 1)
+				talk.fav_count = Math.max(0, previousFavCount - 1)
 			}
-			this.saveFavs()
-			if (!this.loggedIn) return
+			if (!this.saveFavs()) {
+				this.favs = previousFavs
+				if (talk) talk.fav_count = previousFavCount
+				return
+			}
+			if (!this.loggedIn) {
+				if (!this.favs.length) this.onlyFavs = false
+				return
+			}
 			try {
-				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
-			} catch (error) {
-				console.error('Failed to remove favourite: %s', error)
-				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE', undefined, this.remoteApiUrl)
+			} catch {
+				// Local favourite is already saved.
 			}
 			if (!this.favs.length) this.onlyFavs = false
 		},

@@ -157,7 +157,7 @@ class VideoSPAView(View):
                         'we are not responsible for data loss in this case.'
                     )),
                     'favs_not_saved': str(_(
-                        'Could not sync favourites to your account. They remain stored locally in this browser.'
+                        'Could not save favourites in this browser. Please check your browser storage settings.'
                     )),
                     'no_matching_options': str(_('Sorry, no matching options.')),
                     'view_changelog': str(_('View Changelog')),
