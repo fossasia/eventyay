@@ -760,16 +760,16 @@ class CreateEventView(APIView):
                 event.domain = f'{protocol}://{domain_path}'
                 return JsonResponse(model_to_dict(event, exclude=['roles']), status=201)
             except IntegrityError as e:
-                logger.error(f'Database integrity error while saving event: {e}')
+                logger.error('Database integrity error while saving event: %s', e)
                 return JsonResponse(
                     {'error': 'An event with this ID already exists or database constraint violated'},
                     status=400,
                 )
             except ValidationError as e:
-                logger.error(f'Validation error while saving event: {e}')
+                logger.error('Validation error while saving event: %s', e)
                 return JsonResponse({'error': str(e)}, status=400)
             except Exception as e:
-                logger.error(f'Unexpected error creating event: {e}')
+                logger.error('Unexpected error creating event: %s', e)
                 return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
         else:
             return JsonResponse(
