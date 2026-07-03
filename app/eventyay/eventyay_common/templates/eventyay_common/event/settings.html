@@ -219,29 +219,6 @@
             {% bootstrap_field email_form.mail_prefix layout="control" %}
             {% bootstrap_field email_form.mail_text_signature layout="control" %}
 
-            <h4 class="settings-sub-heading">{% trans "Email design" %}</h4>
-            <div class="form-group">
-                <label class="col-md-3 control-label">{% trans "HTML mail renderer" %}</label>
-                <div class="col-md-9">
-                    <div class="row">
-                        {% for r in renderers.values %}
-                        <div class="col-md-4">
-                            <div class="well maildesignpreview text-center">
-                                <label class="radio">
-                                    <input type="radio"
-                                           name="{{ email_form.mail_html_renderer.html_name }}"
-                                           value="{{ r.identifier }}"
-                                           {% if email_form.mail_html_renderer.value == r.identifier %}checked{% endif %}>
-                                    {{ r.verbose_name }}
-                                </label>
-                                <img src="{% static r.thumbnail_filename %}" class="img-responsive" alt="{{ r.verbose_name }}">
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
             <h4 class="settings-sub-heading">{% trans "Email gateway" %}</h4>
             {% bootstrap_field email_form.smtp_use_custom layout="control" %}
             <div id="smtp-custom-fields">
@@ -263,6 +240,40 @@
                         <button type="submit" class="btn btn-default" name="test" value="1">
                             {% trans "Save and send test email" %}
                         </button>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        <fieldset id="email-design-tab">
+            <legend>{% trans "Email design" %}</legend>
+            <div class="alert alert-info">
+                {% blocktrans trimmed %}
+                    The HTML mail renderer controls the visual design of outgoing <strong>ticket</strong> emails.
+                    Talk emails use a fixed layout and are not affected by this choice.
+                {% endblocktrans %}
+            </div>
+            <div class="form-group">
+                <label class="col-md-3 control-label">{% trans "HTML mail renderer" %}</label>
+                <div class="col-md-9">
+                    <div class="row">
+                        {% for r in renderers.values %}
+                        <div class="col-md-4">
+                            <div class="well maildesignpreview text-center">
+                                <label class="radio">
+                                    <input type="radio"
+                                           name="{{ email_form.mail_html_renderer.html_name }}"
+                                           value="{{ r.identifier }}"
+                                           {% if email_form.mail_html_renderer.value == r.identifier %}checked{% endif %}>
+                                    {{ r.verbose_name }}
+                                </label>
+                                <img src="{% static r.thumbnail_filename %}" class="img-responsive" alt="{{ r.verbose_name }}">
+                                <a class="btn btn-default btn-sm" target="_blank" rel="noopener"
+                                        href='{% url "control:event.settings.mail.preview.layout" event=request.event.slug organizer=request.event.organizer.slug %}?renderer={{ r.identifier }}'>
+                                    {% trans "Preview" %}
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
