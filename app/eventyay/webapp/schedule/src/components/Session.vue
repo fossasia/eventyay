@@ -692,6 +692,10 @@ expandClampedSessionText()
 				align-items: center
 				line-height: 0
 				flex-shrink: 0
+				pointer-events: auto
+				cursor: help
+				svg
+					pointer-events: none
 			.interpretation
 				color: $clr-secondary-text-light
 				.globe-icon
