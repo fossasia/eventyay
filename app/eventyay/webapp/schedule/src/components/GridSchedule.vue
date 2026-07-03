@@ -6,7 +6,7 @@
 				.room
 				.room(v-for="(room, index) of rooms", :key="room.id || index")
 					span.room-name(:title="getLocalizedString(room.name)") {{ getLocalizedString(room.name) }}
-					svg.room-interpretation(v-if="room.has_interpretation", viewBox="0 0 24 24", width="16", height="16", fill="currentColor", xmlns="http://www.w3.org/2000/svg", :title="roomInterpretationTooltip", aria-hidden="true")
+					svg.room-interpretation(v-if="room.has_interpretation", viewBox="0 0 24 24", width="16", height="16", fill="currentColor", xmlns="http://www.w3.org/2000/svg", :title="roomInterpretationTooltip", :aria-label="roomInterpretationTooltip", role="img", focusable="false")
 						path(d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z")
 					span.room-description(v-if="getLocalizedString(room.description)", @mouseenter="showRoomTooltip($event, room)", @mouseleave="hideRoomTooltip") ?
 				.room(v-if="hasSessionsWithoutRoom") no location
@@ -57,8 +57,8 @@
 					.room
 					.room(v-for="(room, index) of chunk", :key="room.id || index")
 						span.room-name {{ getLocalizedString(room.name) }}
-						svg.room-interpretation(v-if="room.has_interpretation", viewBox="0 0 24 24", width="16", height="16", fill="currentColor", xmlns="http://www.w3.org/2000/svg", :title="roomInterpretationTooltip", aria-hidden="true")
-						path(d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z")
+						svg.room-interpretation(v-if="room.has_interpretation", viewBox="0 0 24 24", width="16", height="16", fill="currentColor", xmlns="http://www.w3.org/2000/svg", :title="roomInterpretationTooltip", :aria-label="roomInterpretationTooltip", role="img", focusable="false")
+							path(d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z")
 				.print-grid(:style="getPrintChunkGridStyle(chunk)")
 					template(v-for="slice of visibleTimeslices")
 						.timeslice(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
@@ -187,7 +187,7 @@ export default {
 		},
 		roomInterpretationTooltip () {
 			const m = this.translationMessages || {}
-			return m.schedule_has_interpretation || 'This session has live interpretation.'
+			return m.schedule_room_has_interpretation || 'This room has live interpretation.'
 		},
 		printRoomChunks () {
 			const chunkSize = 4
@@ -312,6 +312,12 @@ export default {
 			})
 			// remove gap at the end of the schedule
 			if (compactedSlices[compactedSlices.length - 1].gap) compactedSlices.pop()
+			for (let i = 0; i < compactedSlices.length; i++) {
+				const next = compactedSlices[i + 1]
+				if (next?.datebreak || !next) {
+					compactedSlices[i].dayEnd = true
+				}
+			}
 			return compactedSlices
 		},
 		visibleTimeslices () {
@@ -504,7 +510,8 @@ export default {
 		getSliceClasses (slice) {
 			return {
 				datebreak: slice.datebreak,
-				gap: slice.gap
+				gap: slice.gap,
+				'day-end': slice.dayEnd
 			}
 		},
 		getSliceStyle (slice) {
@@ -773,6 +780,7 @@ export default {
 		&.datebreak
 			font-weight: 700
 			border-top: 3px solid $clr-dividers-light
+			border-bottom: 3px solid $clr-dividers-light
 			white-space: pre
 			padding-top: 2px
 			font-size: 12px
@@ -801,6 +809,9 @@ export default {
 		width: 100%
 		&.datebreak
 			height: 3px
+		&.day-end
+			height: 3px
+			background-color: $clr-grey-500
 	.now
 		z-index: 20
 		position: sticky

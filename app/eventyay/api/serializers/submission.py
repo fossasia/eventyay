@@ -151,7 +151,6 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             'notes',
             'image',
             'do_not_record',
-            'has_interpretation',
             'content_locale',
         ]
         for field in request_require_fields:
@@ -252,7 +251,6 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             'slot_count',
             'content_locale',
             'do_not_record',
-            'has_interpretation',
             'image',
             'resources',
             'slots',

@@ -212,7 +212,6 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             'internal_notes',
             'content_locale',
             'do_not_record',
-            'has_interpretation',
             'duration',
             'slot_count',
             'image',

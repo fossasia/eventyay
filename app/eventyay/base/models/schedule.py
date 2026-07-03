@@ -924,7 +924,6 @@ class Schedule(PretalxModel):
                         fav_counts.get(talk.submission.code, 0) if (popularity_enabled and talk.submission) else 0
                     ),
                     'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
-                    'has_interpretation': talk.submission.has_interpretation,
                     'tags': talk.submission.get_tag(),
                     'session_type': talk.submission.submission_type.name,
                     'content_locale': talk.submission.content_locale if show_content_locale else '',
