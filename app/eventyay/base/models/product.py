@@ -1606,7 +1606,7 @@ class Quota(LoggedModel):
 
     def rebuild_cache(self, now_dt=None):
         if settings.HAS_REDIS:
-            rc = caches['default'].client.get_client()
+            rc = caches['default']._cache.get_client()
             rc.hdel(f'quotas:{self.event_id}:availabilitycache', str(self.pk))
             self.availability(now_dt=now_dt)
 

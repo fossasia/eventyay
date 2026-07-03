@@ -91,7 +91,7 @@ class LoginForm(forms.Form):
             if self.ratelimit_key:
                 from django.core.cache import caches
 
-                rc = caches['default'].client.get_client()
+                rc = caches['default']._cache.get_client()
                 cnt = rc.get(self.ratelimit_key)
                 if cnt and int(cnt) > 10:
                     raise forms.ValidationError(self.error_messages['rate_limit'], code='rate_limit')

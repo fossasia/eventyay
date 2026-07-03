@@ -32,7 +32,7 @@ class ContactOrganizerView(EventViewMixin, View):
         from redis.exceptions import RedisError
         key = 'contact_ratelimit_{}'.format(hashlib.sha1(client_ip.encode()).hexdigest())
         try:
-            rc = caches['default'].client.get_client()
+            rc = caches['default']._cache.get_client()
             count = rc.get(key)
             if count and int(count) >= _RATE_LIMIT_MAX:
                 return True

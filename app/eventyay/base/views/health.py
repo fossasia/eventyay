@@ -13,7 +13,7 @@ def healthcheck(request):
     if settings.HAS_REDIS:
         from django.core.cache import caches
 
-        redis = django_redis.caches['default'].client.get_client()
+        redis = caches['default']._cache.get_client()
         redis.set('_healthcheck', 1)
         if not redis.exists('_healthcheck'):
             return HttpResponse('Redis not available.', status=503)

@@ -32,7 +32,7 @@ class ResendLinkView(EventViewMixin, TemplateView):
         if settings.HAS_REDIS:
             from django.core.cache import caches
 
-            rc = caches['default'].client.get_client()
+            rc = caches['default']._cache.get_client()
             if rc.exists('pretix_resend_{}_{}'.format(request.event.pk, user)):
                 messages.error(
                     request,

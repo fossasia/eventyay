@@ -127,7 +127,7 @@ def redis_lock_from_event(event):
     from redis.lock import Lock
 
     if not hasattr(event, '_lock') or not event._lock:
-        rc = caches['default'].client.get_client()
+        rc = caches['default']._cache.get_client()
         event._lock = Lock(redis=rc, name='pretix_event_%s' % event.id, timeout=LOCK_TIMEOUT)
     return event._lock
 

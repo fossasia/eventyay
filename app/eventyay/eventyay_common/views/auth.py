@@ -540,7 +540,7 @@ def send_password_reset(email: str, has_redis: bool, request: HttpRequest):
     if has_redis:
         from django.core.cache import caches
 
-        rc = caches['default'].client.get_client()
+        rc = caches['default']._cache.get_client()
         if rc.exists(f'eventyay_pwreset_{user.id}'):
             user.log_action('eventyay.eventyay_common.auth.user.forgot_password.denied.repeated')
             raise RepeatedResetDenied()

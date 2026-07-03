@@ -13,7 +13,7 @@ from eventyay.celery_app import app
 if settings.HAS_REDIS:
     from django.core.cache import caches
 
-    redis = caches['default'].client.get_client()
+    redis = caches['default']._cache.get_client()
 
 REDIS_KEY = 'eventyay_metrics'
 _INF = float('inf')
