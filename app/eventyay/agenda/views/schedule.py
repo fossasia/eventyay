@@ -384,7 +384,7 @@ def schedule_messages(request, **kwargs):
             'we are not responsible for data loss in this case.'
         ),
         'favs_not_saved': _(
-            'Could not sync favourites to your account. They remain stored locally in this browser.'
+            'Could not save favourites in this browser. Please check your browser storage settings.'
         ),
         'no_matching_options': _('Sorry, no matching options.'),
         'view_changelog': _('View Changelog'),
@@ -445,6 +445,8 @@ def schedule_messages(request, **kwargs):
         'schedule_do_not_record': _('This session will not be recorded.'),
         'back': _('Back'),
         'schedule_pending_secondary': _('Coming soon'),
+        'schedule_speakers_overflow_hint': _('+%(count)s more'),
+        'schedule_speakers_overflow_label': _('+%(count)s more speakers'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(
