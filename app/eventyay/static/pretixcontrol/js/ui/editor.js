@@ -115,6 +115,8 @@ var editor = {
     page_width_mm: null,
     page_height_mm: null,
     _page_resize_in_progress: false,
+    _pending_background_action: null,
+    _pending_background_after_load: null,
     _window_loaded: false,
     _fabric_loaded: false,
     _last_active_object: null,
@@ -164,6 +166,8 @@ var editor = {
     },
 
     _handle_background_error: function (message) {
+        editor._pending_background_action = null;
+        editor._pending_background_after_load = null;
         alert(message || gettext("Error while updating the background PDF, please try again."));
         editor._finish_background_action(true);
     },
@@ -449,6 +453,49 @@ var editor = {
         return true;
     },
 
+    _flush_editor_state: function () {
+        editor._update_values_from_toolbox();
+        editor._sync_active_text_object_from_toolbox();
+    },
+
+    _page_size_differs_from_fields: function () {
+        if (!editor.pdf_page) {
+            return false;
+        }
+        var width = parseFloat($("#pdf-info-width").val());
+        var height = parseFloat($("#pdf-info-height").val());
+        if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+            return false;
+        }
+        if (editor.page_width_mm === null) {
+            return false;
+        }
+        return Math.abs(width - editor.page_width_mm) >= 0.05 ||
+            Math.abs(height - editor.page_height_mm) >= 0.05;
+    },
+
+    _run_after_pending_background: function (callback) {
+        if (editor._page_resize_in_progress) {
+            editor._pending_background_action = callback;
+            return;
+        }
+        if (editor._page_size_differs_from_fields()) {
+            editor._pending_background_action = callback;
+            editor._apply_page_size_from_fields();
+            return;
+        }
+        callback();
+    },
+
+    _run_pending_background_after_load: function () {
+        if (!editor._pending_background_after_load) {
+            return;
+        }
+        var pending = editor._pending_background_after_load;
+        editor._pending_background_after_load = null;
+        pending();
+    },
+
     _load_pdf: function (dump) {
         // TODO: Loading indicators
         var url = editor.pdf_url;
@@ -535,6 +582,7 @@ var editor = {
 
         editor._fabric_loaded = true;
         console.log("Fabric loaded");
+        editor._run_pending_background_after_load();
         if (editor._window_loaded) {
             editor._ready();
         }
@@ -781,7 +829,10 @@ var editor = {
                 editor.page_height_mm = height;
                 editor.dirty = true;
             }
-            editor._apply_background_response(data);
+            if (editor._apply_background_response(data) && editor._pending_background_action) {
+                editor._pending_background_after_load = editor._pending_background_action;
+                editor._pending_background_action = null;
+            }
         }, "json").fail(function () {
             editor._handle_background_error();
         });
@@ -1034,30 +1085,41 @@ var editor = {
         }
     },
 
-    _save: function () {
+    _perform_save: function () {
         $("#editor-save").prop('disabled', true).prepend('<span class="fa fa-cog fa-spin"></span>');
-        editor._sync_active_text_object_from_toolbox();
         var dump = editor.dump();
         $.post(window.location.href, {
             'data': JSON.stringify(dump),
-            'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val(),
+            'csrfmiddlewaretoken': editor._csrf_token(),
             'background': editor.uploaded_file_id,
         }, function (data) {
+            $("#editor-save span.fa-spin").remove();
+            $("#editor-save").prop('disabled', false);
             if (data.status === 'ok') {
-                $("#editor-save span").remove();
-                $("#editor-save").prop('disabled', false);
                 editor.dirty = false;
                 editor.uploaded_file_id = null;
             } else {
                 alert(gettext('Saving failed.'));
             }
-        }, 'json');
+        }, 'json').fail(function () {
+            $("#editor-save span.fa-spin").remove();
+            $("#editor-save").prop('disabled', false);
+            alert(gettext('Saving failed.'));
+        });
+    },
+
+    _save: function (e) {
+        if (e) {
+            e.preventDefault();
+        }
+        editor._flush_editor_state();
+        editor._run_after_pending_background(function () {
+            editor._perform_save();
+        });
         return false;
     },
 
-    _preview: function (e) {
-        e.preventDefault();
-        editor._sync_active_text_object_from_toolbox();
+    _perform_preview: function () {
         var formData = new FormData();
         formData.append('data', JSON.stringify(editor.dump()));
         formData.append('background', editor.uploaded_file_id || '');
@@ -1080,6 +1142,14 @@ var editor = {
             alert(gettext("Preview failed."));
         }).finally(function () {
             $("#editor-preview").prop("disabled", false);
+        });
+    },
+
+    _preview: function (e) {
+        e.preventDefault();
+        editor._flush_editor_state();
+        editor._run_after_pending_background(function () {
+            editor._perform_preview();
         });
         return false;
     },
@@ -1133,8 +1203,12 @@ var editor = {
         $("#editor-add-poweredby").click(function() {editor._add_poweredby("dark")});
         editor.$cva.get(0).tabIndex = 1000;
         editor.$cva.on("keydown", editor._on_keydown);
-        $("#editor-save").on("click", editor._save);
-        $("#editor-preview").on("click", editor._preview);
+        $("#editor-save").on("mousedown", function (e) {
+            e.preventDefault();
+        }).on("click", editor._save);
+        $("#editor-preview").on("mousedown", function (e) {
+            e.preventDefault();
+        }).on("click", editor._preview);
         $("#preview-modal").appendTo("body");
         $("#preview-modal").on("hidden.bs.modal", editor._revoke_preview_blob);
         window.onbeforeunload = function () {
