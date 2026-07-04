@@ -73,8 +73,6 @@ const whepAudioEl = ref(null);
 const translationIframeEl = ref(null);
 let whepClient = null;
 
-const mainPlayerPaused = ref(false);
-
 // Template refs
 const livestream = ref(null);
 const janus = ref(null);
@@ -83,6 +81,7 @@ const janus = ref(null);
 const streamingRoom = computed(() => store.state.streamingRoom);
 const youtubeTranslation = computed(() => store.state.youtubeTranslation);
 const autoplay = computed(() => store.getters.autoplay);
+const mainPlayerPaused = ref(!autoplay.value);
 
 const module = computed(() => {
 	if (!props.room) return null;
@@ -168,6 +167,7 @@ watch(
 
 watch(module, (value, oldValue) => {
 	if (isEqual(value, oldValue)) return;
+	resetMainPlayerPaused();
 	destroyIframe();
 	if (shouldUseLivestream.value) return;
 	initializeIframe(false);
@@ -175,6 +175,7 @@ watch(module, (value, oldValue) => {
 
 watch(shouldUseLivestream, (shouldUse, oldShouldUse) => {
 	if (shouldUse === oldShouldUse) return;
+	resetMainPlayerPaused();
 	if (shouldUse) {
 		destroyIframe();
 	} else {
@@ -186,6 +187,7 @@ watch(
 	() => props.room?.currentStream,
 	(newStream, oldStream) => {
 		if (!isEqual(newStream, oldStream) && module.value) {
+			resetMainPlayerPaused();
 			if (shouldUseLivestream.value) {
 				return;
 			}
@@ -390,6 +392,10 @@ function onMainPlayerPlaybackChanged(isPlaying) {
 	} else {
 		pauseTranslationAudio();
 	}
+}
+
+function resetMainPlayerPaused() {
+	mainPlayerPaused.value = !autoplay.value;
 }
 
 function onTranslationIframeLoaded() {
