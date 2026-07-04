@@ -4,31 +4,102 @@
 {% load bootstrap3 %}
 {% block inner %}
     <h1>{% trans "Connect to device:" %} {{ device.name }}</h1>
+    {% include "pretixcontrol/organizers/device_event_nav.html" %}
+
+    {% if device.initialized %}
+        <div class="alert alert-success">
+            {% trans "This device is connected. Generate a new setup code below to disconnect it and register again." %}
+        </div>
+        <div class="alert alert-info">
+            {% trans "If you try to register with an old setup code, the check-in app will show: “This setup code has already been used.” Generate a new code below before scanning again." %}
+        </div>
+    {% endif %}
 
     <div>
         <ol>
             <li>
-                {% trans "Use a check-in app that is compatible with eventyay. For example, our web-based <strong>eventyay Check-in</strong> app." %}<br>
-                <a href="https://access.eventyay.com"
-                        class="btn btn-default" target="_blank">
-                    {% trans "Open eventyay Check-in" %}
-                </a>
+                {% if checkin_app_is_dev %}
+                    {% blocktrans trimmed with checkin_url=checkin_app_url %}
+                        Open the <strong>eventyay Check-in</strong> web app in your browser at
+                        <a href="{{ checkin_url }}" target="_blank" rel="noopener">{{ checkin_url }}</a>.
+                    {% endblocktrans %}
+                {% else %}
+                    {% blocktrans trimmed with checkin_url=checkin_app_url %}
+                        Open the <strong>eventyay Check-in</strong> web app in your browser at
+                        <a href="{{ checkin_url }}" target="_blank" rel="noopener">{{ checkin_url }}</a>.
+                    {% endblocktrans %}
+                {% endif %}
             </li>
             <li>
-                {% trans "Open the check-in app on the device you want to connect." %}
+                {% trans "Choose a station type (Check-In Staff, Badge Station, or Lead Scanner) and scan the configuration code below, or enter the URL and token manually." %}
             </li>
-            <li>{% trans "Select your purpose and scan the following configuration code:" %}<br><br>
+            <li>{% trans "Scan the following configuration code:" %}<br><br>
                 <script type="text/json" data-replace-with-qr>{{ qrdata|safe }}</script><br>
-                {% trans "If your app/device does not support scanning a QR code, you can also enter the following information:" %}
+                {% trans "If your device does not support scanning a QR code, you can also enter the following information:" %}
                 <br>
-                <strong>{% trans "System URL:" %}</strong> {{ settings.SITE_URL }}<br>
-                <strong>{% trans "Token:" %}</strong> {{ device.initialization_token }}
+                <p class="mt-3 mb-1"><strong>{% trans "System URL:" %}</strong></p>
+                <div class="input-group device-connect-copy-group" style="max-width: 640px;">
+                    <input type="text" class="form-control" readonly id="device_connect_url"
+                           value="{{ registration_site_url }}">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-default btn-clipboard"
+                                data-clipboard-target="#device_connect_url">
+                            <i class="fa fa-clipboard" aria-hidden="true"></i>
+                            <span class="sr-only">{% trans "Copy" %}</span>
+                        </button>
+                    </div>
+                </div>
+                <p class="mb-1"><strong>{% trans "Token:" %}</strong></p>
+                <div class="input-group device-connect-copy-group" style="max-width: 640px;">
+                    <input type="text" class="form-control" readonly id="device_connect_token"
+                           value="{{ device.initialization_token }}">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-default btn-clipboard"
+                                data-clipboard-target="#device_connect_token">
+                            <i class="fa fa-clipboard" aria-hidden="true"></i>
+                            <span class="sr-only">{% trans "Copy" %}</span>
+                        </button>
+                        <button type="button" class="btn btn-default" id="device_connect_download_token"
+                                data-download-filename="eventyay-device-{{ device.pk }}-setup.json">
+                            <i class="fa fa-download" aria-hidden="true"></i>
+                            {% trans "Download" %}
+                        </button>
+                    </div>
+                </div>
+                <p class="help-block device-connect-token-hint">
+                    {% blocktrans trimmed %}
+                        Each setup token belongs to this device only and can register one check-in app session.
+                        We recommend copying or downloading it if this device will be used for multiple events or
+                        multiple check-in lists—staff will need it to unlock Configure when switching event or list.
+                    {% endblocktrans %}
+                </p>
+                <script type="application/json" id="device_connect_credentials">{{ qrdata|safe }}</script>
+                <div class="panel panel-default device-connect-regenerate-panel">
+                    <div class="panel-body">
+                        <form action="" method="post" class="form-inline"
+                              data-confirm-title="{% trans "Generate new setup code" %}"
+                              data-confirm-label="{% trans "Generate" %}"
+                              data-confirm-class="btn-danger"
+                              {% if device.initialized %}
+                              data-confirm="{% blocktrans trimmed %}Generate a new setup code? The check-in app will be signed out and must be registered again with the new QR code.{% endblocktrans %}"
+                              {% else %}
+                              data-confirm="{% blocktrans trimmed %}Generate a new setup code? The current QR code and token will stop working.{% endblocktrans %}"
+                              {% endif %}>
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-default">
+                                {% trans "Generate new setup code" %}
+                            </button>
+                        </form>
+                        <p class="help-block mb-0 mt-3">
+                            {% trans "Use this if registration failed or you need to disconnect this device and register it again. Each code works only once. The check-in app for this device will be signed out within a few seconds." %}
+                        </p>
+                    </div>
+                </div>
             </li>
         </ol>
     </div>
-    <a href= "{% url 'eventyay_common:organizer.devices' organizer=request.organizer.slug %}"
-            class="btn btn-default"><i class="fa fa-arrow-left"></i>
-        {% trans "Device overview" %}
-    </a>
-    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/devices.js" %}"></script>
+    {% if not device.initialized %}
+        <span id="device_connect_poll" hidden></span>
+    {% endif %}
+    <script type="text/javascript" src="{% static 'pretixcontrol/js/ui/devices.js' %}?v=4"></script>
 {% endblock %}
