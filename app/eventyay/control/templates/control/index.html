@@ -2,56 +2,6 @@
 {% load i18n %}
 
 {% block video_admin_content %}
-<div class="video-admin-header">
-    <h1 class="page-header">{% trans "Video admin dashboard" %}</h1>
-</div>
-
-<p class="text-muted page-intro">
-    {% trans "Manage video events and provider configuration from one place." %}
-</p>
-
-<div class="video-admin-dashboard-grid">
-    <a class="video-admin-dashboard-card" href="{% url 'eventyay_admin:video_admin:event.list' %}">
-        <span class="fa fa-calendar" aria-hidden="true"></span>
-        <span>
-            <strong>{% trans "Events" %}</strong>
-            <small>{% trans "Create video events, update settings, and generate admin links." %}</small>
-        </span>
-    </a>
-    <a class="video-admin-dashboard-card" href="{% url 'eventyay_admin:video_admin:jitsiserver.list' %}">
-        <span class="fa fa-video-camera" aria-hidden="true"></span>
-        <span>
-            <strong>{% trans "Jitsi servers" %}</strong>
-            <small>{% trans "Configure Jitsi Meet servers for video rooms and moderator-aware joins." %}</small>
-        </span>
-    </a>
-    <a class="video-admin-dashboard-card" href="{% url 'eventyay_admin:video_admin:bbbserver.list' %}">
-        <span class="fa fa-users" aria-hidden="true"></span>
-        <span>
-            <strong>{% trans "BBB servers" %}</strong>
-            <small>{% trans "Configure BigBlueButton servers and room placement." %}</small>
-        </span>
-    </a>
-    <a class="video-admin-dashboard-card" href="{% url 'eventyay_admin:video_admin:janusserver.list' %}">
-        <span class="fa fa-exchange" aria-hidden="true"></span>
-        <span>
-            <strong>{% trans "Janus servers" %}</strong>
-            <small>{% trans "Configure Janus servers used by native video rooms." %}</small>
-        </span>
-    </a>
-    <a class="video-admin-dashboard-card" href="{% url 'eventyay_admin:video_admin:turnserver.list' %}">
-        <span class="fa fa-random" aria-hidden="true"></span>
-        <span>
-            <strong>{% trans "TURN servers" %}</strong>
-            <small>{% trans "Configure relay servers for WebRTC connectivity." %}</small>
-        </span>
-    </a>
-    <a class="video-admin-dashboard-card" href="{% url 'eventyay_admin:video_admin:streamingserver.list' %}">
-        <span class="fa fa-play-circle" aria-hidden="true"></span>
-        <span>
-            <strong>{% trans "Streaming servers" %}</strong>
-            <small>{% trans "Configure streaming backends for livestream rooms." %}</small>
-        </span>
-    </a>
-</div>
+<h1 class="page-header">{% trans "Video admin dashboard" %}</h1>
+<p class="text-muted">{% trans "More insights coming soon." %}</p>
 {% endblock %}
