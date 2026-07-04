@@ -5,6 +5,7 @@ from decimal import Decimal
 import dateutil.parser
 import nh3
 import pytz
+from django.core.exceptions import ObjectDoesNotExist
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.formats import date_format
@@ -151,6 +152,22 @@ def _display_order_changed(event: Event, logentry: LogEntry, action_type: str):
                 posid=data.get('positionid', '?'),
                 old_product=old_product,
                 old_price=money_filter(Decimal(data['old_price']), event.currency),
+            )
+        )
+    elif action_type == 'eventyay.event.order.changed.reinstate':
+        try:
+            product = str(event.products.get(pk=data['product']))
+            if data.get('variation'):
+                product += ' - ' + str(ProductVariation.objects.get(pk=data['variation']))
+        except ObjectDoesNotExist:
+            product = _('(deleted product)')
+        return (
+            text
+            + ' '
+            + _('Position #{posid} ({product}, {price}) reinstated.').format(
+                posid=data.get('positionid', '?'),
+                product=product,
+                price=money_filter(Decimal(data['price']), event.currency),
             )
         )
     elif action_type == 'eventyay.event.order.changed.add':
