@@ -29,6 +29,7 @@
 					:timezone="timezone",
 					:style="getSessionStyle(session)",
 					:showAbstract="false", :showRoom="false",
+					:showSessionType="true",
 					:showFavCount="showFavCount",
 					:faved="favSet.has(session.id)",
 					:hasAmPm="hasAmPm",
@@ -67,6 +68,7 @@
 							:timezone="timezone",
 							:style="getChunkSessionStyle(session, chunk)",
 							:showAbstract="false", :showRoom="false",
+							:showSessionType="true",
 							:showFavCount="showFavCount",
 							:faved="favSet.has(session.id)",
 							:hasAmPm="hasAmPm",
@@ -130,6 +132,9 @@ export default {
 			type: Number,
 			default: 30
 		}
+	},
+	inject: {
+		translationMessages: { default: () => ({}) }
 	},
 	data () {
 		return {
@@ -299,6 +304,12 @@ export default {
 			})
 			// remove gap at the end of the schedule
 			if (compactedSlices[compactedSlices.length - 1].gap) compactedSlices.pop()
+			for (let i = 0; i < compactedSlices.length; i++) {
+				const next = compactedSlices[i + 1]
+				if (next?.datebreak || !next) {
+					compactedSlices[i].dayEnd = true
+				}
+			}
 			return compactedSlices
 		},
 		visibleTimeslices () {
@@ -491,7 +502,8 @@ export default {
 		getSliceClasses (slice) {
 			return {
 				datebreak: slice.datebreak,
-				gap: slice.gap
+				gap: slice.gap,
+				'day-end': slice.dayEnd
 			}
 		},
 		getSliceStyle (slice) {
@@ -756,6 +768,7 @@ export default {
 		&.datebreak
 			font-weight: 700
 			border-top: 3px solid $clr-dividers-light
+			border-bottom: 3px solid $clr-dividers-light
 			white-space: pre
 			padding-top: 2px
 			font-size: 12px
@@ -784,6 +797,9 @@ export default {
 		width: 100%
 		&.datebreak
 			height: 3px
+		&.day-end
+			height: 3px
+			background-color: $clr-grey-500
 	.now
 		z-index: 20
 		position: sticky
