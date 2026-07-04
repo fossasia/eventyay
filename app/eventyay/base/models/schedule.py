@@ -1016,6 +1016,7 @@ class Schedule(PretalxModel):
                 'name': room.name,
                 'description': room.description if room.description else '',
                 'video_url': getattr(room, 'video_url', ''),
+                'has_interpretation': room.has_interpretation,
             }
             for room in sorted(rooms, key=lambda r: (r.position if r.position is not None else 9999, r.id))
         ]
