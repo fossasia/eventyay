@@ -384,7 +384,7 @@ def schedule_messages(request, **kwargs):
             'we are not responsible for data loss in this case.'
         ),
         'favs_not_saved': _(
-            'Could not sync favourites to your account. They remain stored locally in this browser.'
+            'Could not save favourites in this browser. Please check your browser storage settings.'
         ),
         'no_matching_options': _('Sorry, no matching options.'),
         'view_changelog': _('View Changelog'),
@@ -443,6 +443,7 @@ def schedule_messages(request, **kwargs):
         'view_profile': _('View speaker profile'),
         'no_starred_sessions': _('No starred sessions.'),
         'schedule_do_not_record': _('This session will not be recorded.'),
+        'schedule_room_has_interpretation': _('This room has live interpretation.'),
         'back': _('Back'),
         'schedule_pending_secondary': _('Coming soon'),
         'schedule_speakers_overflow_hint': _('+%(count)s more'),
