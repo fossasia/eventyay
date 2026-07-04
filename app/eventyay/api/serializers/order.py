@@ -572,6 +572,8 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
     attendee_name = AttendeeNameField(source='*')
     attendee_name_parts = AttendeeNamePartsField(source='*')
     order__status = serializers.SlugRelatedField(read_only=True, slug_field='status', source='order')
+    admission_valid_from = serializers.DateTimeField(read_only=True)
+    admission_valid_until = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = OrderPosition
@@ -606,6 +608,8 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
             'pdf_data',
             'seat',
             'require_attention',
+            'admission_valid_from',
+            'admission_valid_until',
             'order__status',
         )
 

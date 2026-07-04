@@ -4,6 +4,7 @@
 {% load rich_text %}
 {% load money %}
 {% load presale_locale %}
+{% load admission_validity %}
 {% blocktrans asvar s_taxes %}taxes{% endblocktrans %}
 {% for line in cart.positions %}
     <div class="row cart-row {% if download %}has-downloads{% endif %}{% if editable %}editable{% endif %}">
@@ -34,6 +35,11 @@
                         {{ line.subevent.date_from|date:"TIME_FORMAT" }}
                     </span>
                 {% endif %}
+            {% endif %}
+            {% product_admission_validity_text line.product event line.subevent line.variation as validity_text %}
+            {% if validity_text %}
+                <br /><span class="fa fa-clock-o fa-fw" aria-hidden="true"></span>
+                {% trans "Valid:" %} {{ validity_text }}
             {% endif %}
 
             {% if line.issued_gift_cards %}

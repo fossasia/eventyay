@@ -31,6 +31,7 @@ from eventyay.base.models import (
     OrderPosition,
     QuestionOption,
 )
+from eventyay.base.admission_validity import get_issued_admission_bounds
 from eventyay.base.signals import checkin_created, order_placed, periodic_task
 from eventyay.helpers.jsonlogic import Logic
 from eventyay.helpers.jsonlogic_query import (
@@ -374,6 +375,15 @@ def _save_answers(op, answers, given_answers):
             del prefetched_objects_cache['answers']
 
 
+def _admission_validity_violated(op, dt):
+    valid_from, valid_until = get_issued_admission_bounds(op)
+
+    if valid_from and dt < valid_from:
+        raise CheckInError(_('This ticket is not valid yet.'), 'invalid_time')
+    if valid_until and dt > valid_until:
+        raise CheckInError(_('This ticket is no longer valid.'), 'invalid_time')
+
+
 def perform_checkin(
     op: OrderPosition,
     clist: CheckinList,
@@ -423,7 +433,13 @@ def perform_checkin(
 
     with transaction.atomic():
         # Lock order positions
-        op = OrderPosition.all.select_for_update().get(pk=op.pk)
+        op = OrderPosition.all.select_for_update().select_related('product').get(pk=op.pk)
+
+        if type == Checkin.TYPE_ENTRY and not force and not op.product.admission:
+            raise CheckInError(
+                _('This product does not grant admission.'),
+                'product',
+            )
 
         if not clist.all_products and op.product_id not in [i.pk for i in clist.limit_products.all()]:
             raise CheckInError(
@@ -447,6 +463,9 @@ def perform_checkin(
                 'incomplete',
                 require_answers,
             )
+
+        if type == Checkin.TYPE_ENTRY and not force:
+            _admission_validity_violated(op, dt)
 
         if type == Checkin.TYPE_ENTRY and clist.rules and not force:
             rule_data = LazyRuleVars(op, clist, dt)

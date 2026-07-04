@@ -8,6 +8,7 @@
 {% load eventsignal %}
 {% load l10n %}
 {% load phone_format %}
+{% load admission_validity %}
 {% load static %}
 {% block title %}
     {% blocktrans trimmed with code=order.code %}
@@ -351,6 +352,12 @@
                                         <span class="fa fa-clock-o"></span>
                                         {{ line.subevent.date_from|date:"TIME_FORMAT" }}
                                     {% endif %}
+                                {% endif %}
+                                {% position_admission_validity_text line request.event as validity_text %}
+                                {% if validity_text %}
+                                    <br/>
+                                    <span class="fa fa-clock-o fa-fw" aria-hidden="true"></span>
+                                    {% trans "Valid:" %} {{ validity_text }}
                                 {% endif %}
                                 {% if not line.canceled %}
                                     <div class="position-buttons">

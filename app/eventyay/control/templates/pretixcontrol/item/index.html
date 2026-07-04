@@ -121,6 +121,16 @@
                         <legend>{% trans "Tickets & check-in" %}</legend>
                         {% bootstrap_field form.generate_tickets layout="control" %}
                         {% bootstrap_field form.checkin_attention layout="control" %}
+                        {% if form.admission.value %}
+                            {% bootstrap_field form.admission_validity_mode layout="control" %}
+                            {% bootstrap_field form.admission_valid_from layout="control" %}
+                            {% bootstrap_field form.admission_valid_until layout="control" %}
+                            {% bootstrap_field form.admission_valid_from_offset_minutes layout="control" %}
+                            {% bootstrap_field form.admission_valid_until_offset_minutes layout="control" %}
+                            <p class="help-block">
+                                {% trans "Choose how check-in validity is determined. Fixed times apply explicit start/end datetimes. Event or date modes use the event or assigned date range, optionally shifted by minute offsets." %}
+                            </p>
+                        {% endif %}
                     </fieldset>
                     <fieldset id="tab-item-additional-settings">
                         <legend>{% trans "Additional settings" %}</legend>
