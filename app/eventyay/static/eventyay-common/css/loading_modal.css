@@ -173,29 +173,44 @@ body.loading-minimized #wrapper, body.loading-minimized #page-wrapper {
     order: 1;
 }
 
-.loading-minimized .modal-card-content .pull-right {
-    float: none !important;
+body #loadingmodal .btn.loadingmodal-minimize {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    color: #333;
+    border-radius: 3px;
+    width: auto;
+    height: auto;
+    display: inline-block;
+    padding: 1px 5px;
+}
+
+body #loadingmodal .btn.loadingmodal-minimize i {
+    color: #333;
+}
+
+body.loading-minimized #loadingmodal .modal-card-content .pull-right {
+    float: none;
     order: 2;
     margin-left: auto;
 }
 
-.loading-minimized .loadingmodal-minimize {
-    position: relative !important;
-    top: auto !important;
-    right: auto !important;
-    background-color: var(--brand-primary, #2185d0) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 0 !important;
-    width: 48px !important;
-    height: 48px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
+body.loading-minimized #loadingmodal .btn.loadingmodal-minimize {
+    position: relative;
+    top: auto;
+    right: auto;
+    background-color: var(--brand-primary, #2185d0);
+    color: white;
+    border: none;
+    border-radius: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
-.loading-minimized .loadingmodal-minimize:hover {
+body.loading-minimized #loadingmodal .btn.loadingmodal-minimize:hover {
     background-color: #1a69a4;
     color: white;
 }
