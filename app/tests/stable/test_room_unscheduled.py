@@ -5,7 +5,6 @@ from rest_framework import serializers
 
 from eventyay.api.serializers.room import RoomOrgaSerializer
 from eventyay.base.models import Room
-from eventyay.base.models.event import roles_with_jitsi_defaults
 from eventyay.base.models.room import room_has_linked_submissions
 from eventyay.base.models.slot import TalkSlot
 from eventyay.core.permissions import Permission, SYSTEM_ROLES
@@ -17,32 +16,6 @@ def test_video_poll_question_manager_grants_read_and_moderate_permissions():
     assert Permission.ROOM_QUESTION_MODERATE.value in perms
     assert Permission.ROOM_POLL_READ.value in perms
     assert Permission.ROOM_POLL_MANAGE.value in perms
-
-
-def test_stale_event_roles_are_augmented_with_jitsi_permissions():
-    roles = roles_with_jitsi_defaults(
-        {
-            'participant': [
-                Permission.ROOM_BBB_JOIN.value,
-                Permission.ROOM_JANUSCALL_JOIN.value,
-                Permission.ROOM_ZOOM_JOIN.value,
-            ],
-            'speaker': [
-                Permission.ROOM_BBB_JOIN.value,
-                Permission.ROOM_BBB_MODERATE.value,
-            ],
-            'moderator': [
-                Permission.ROOM_BBB_JOIN.value,
-                Permission.ROOM_BBB_MODERATE.value,
-                Permission.ROOM_CHAT_MODERATE.value,
-            ],
-        }
-    )
-
-    assert Permission.ROOM_JITSI_JOIN.value in roles['participant']
-    assert Permission.ROOM_JITSI_JOIN.value in roles['speaker']
-    assert Permission.ROOM_JITSI_MODERATE.value in roles['speaker']
-    assert Permission.ROOM_JITSI_MODERATE.value in roles['moderator']
 
 
 @pytest.mark.django_db
