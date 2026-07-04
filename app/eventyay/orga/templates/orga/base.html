@@ -5,6 +5,7 @@
 {% load presale_locale %}
 {% load staff_session %}
 {% load i18n %}
+{% load statici18n %}
 {% load rules %}
 {% load static %}
 {% load vite %}
@@ -52,17 +53,24 @@
             <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_layout.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_rtl.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/loading_modal.css' %}" />
         {% endcompress %}
         {% if request.event and request.event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ request.event.urls.settings_css }}?target=orga&c={{ request.event.visible_primary_color|urlencode }}" />{% endif %}
         {% block stylesheets %}{% endblock stylesheets %}
         {# Keep toastuiLoader outside the compress block so document.currentScript keeps data-toastui-* (see common/js/toastuiLoader.js). #}
         <script defer src="{% static 'common/js/toastuiLoader.js' %}" data-toastui-css="{% static 'vendored/toastui-editor/toastui-editor.min.css' %}" data-toastui-js="{% static 'vendored/toastui-editor/toastui-editor.min.js' %}" data-toastui-lang="{{ request.LANGUAGE_CODE|slice:':2' }}" data-toastui-t-undo="{% translate 'Undo' %}" data-toastui-t-redo="{% translate 'Redo' %}" data-toastui-t-underline="{% translate 'Underline' %}"></script>
+        {% if DEBUG %}
+            <script type='text/javascript' src='{% url "javascript-catalog" lang=request.LANGUAGE_CODE %}' defer></script>
+        {% else %}
+            <script src='{% statici18n request.LANGUAGE_CODE %}' async></script>
+        {% endif %}
         {% compress js %}
             <script defer src="{% static 'common/js/base.js' %}"></script>
             <script defer src="{% static 'orga/js/tableFlipLabels.js' %}"></script>
             <script defer src="{% static 'common/js/collapse.js' %}"></script>
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
             <script defer src="{% static 'orga/js/main.js' %}"></script>
+            <script type="module" src="{% static 'eventyay-common/js/asynctask.js' %}"></script>
             <script defer src="{% static 'orga/js/typeahead.js' %}"></script>
             <script defer src="{% static 'vendored/choices/choices.min.js' %}"></script>
             <script defer src="{% static 'vendored/marked.min.js' %}"></script> {# used by orga JS for markdown rendering (e.g. orga/js/cfp_flow.js) #}
@@ -518,5 +526,25 @@
             </div>
         </div>
         {% include "common/includes/modals.html" %}
+        <div id="loadingmodal">
+            <div class="modal-card">
+                <div class="modal-card-icon">
+                    <i class="fa fa-cog big-rotating-icon" aria-hidden="true"></i>
+                </div>
+                <div class="modal-card-content">
+                    <div class="pull-right">
+                        <button type="button" class="btn btn-default btn-xs loadingmodal-minimize" title="{% trans "Minimize" %}">
+                            <i class="fa fa-window-minimize"></i>
+                        </button>
+                    </div>
+                    <h3></h3>
+                    <p class="text"></p>
+                    <p class="status">{% trans "If this takes longer than a few minutes, please contact us." %}</p>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-success"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </body>
 </html>

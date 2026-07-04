@@ -378,6 +378,17 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
         """
         return f'{self.id}-{slugify(self.name)}'
 
+    @property
+    def has_interpretation(self) -> bool:
+        for module in self.module_config or []:
+            if module.get('type') != 'livestream.youtube':
+                continue
+            config = module.get('config') or {}
+            for entry in config.get('languageUrls') or []:
+                if entry.get('language') and entry.get('youtube_id'):
+                    return True
+        return False
+
     def get_current_stream(self, at_time=None):
         """Get the currently active stream schedule for this room."""
         from django.utils.timezone import now

@@ -414,6 +414,9 @@ var editor = {
                 editor.pdf_scale = scale;
                 editor.pdf_viewport = viewport;
 
+                $("#pdf-info-width").val(editor._px2mm(viewport.width).toFixed(2));
+                $("#pdf-info-height").val(editor._px2mm(viewport.height).toFixed(2));
+
                 // Render PDF page into canvas context
                 var renderContext = {
                     canvasContext: context,
@@ -671,8 +674,6 @@ var editor = {
         } else {
             $("#toolbox").removeAttr("data-type");
             $("#toolbox-heading").text(gettext("Ticket design"));
-            $("#pdf-info-width").val(editor._px2mm(editor.pdf_viewport.width).toFixed(2));
-            $("#pdf-info-height").val(editor._px2mm(editor.pdf_viewport.height).toFixed(2));
         }
         editor._update_toolbox_values();
     },

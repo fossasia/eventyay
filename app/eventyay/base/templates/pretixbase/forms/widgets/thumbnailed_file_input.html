@@ -1,7 +1,31 @@
-{% load thumb %}
-{% if widget.is_initial %}{{ widget.initial_text }}: <a href="{{ widget.value.url }}">{{ widget.value }}</a>{% if not widget.required %}
-    <input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}">
-    <label for="{{ widget.checkbox_id }}">{{ widget.clear_checkbox_label }}</label>{% endif %}{% if widget.value.is_img %}<br><a href="{{ widget.value.url }}" data-lightbox="{{ widget.name }}"><img src="{{ widget.value|thumb:"200x100" }}" /></a>{% endif %}<br>
-    {{ widget.input_text }}:{% endif %}
+{% load thumb i18n %}
+{% if widget.is_initial %}
+<div class="initial-file-container thumbnailed-file-initial">
+    {{ widget.initial_text }}: <a href="{{ widget.value.url }}" class="thumbnailed-file-link">{{ widget.value }}</a>
+    {% if widget.value.is_img and widget.event_settings_image_tools %}
+        <a href="{{ widget.value.url }}" class="btn btn-default btn-xs preview-image-eye thumbnailed-file-preview-eye" data-lightbox="{{ widget.name }}" title="{% trans 'Preview Image' %}" aria-label="{% trans 'Preview Image' %}">
+            <i class="fa fa-eye"></i>
+        </a>
+    {% endif %}
+    {% if not widget.required %}
+        <span class="delete-checkbox-wrapper thumbnailed-file-delete-wrapper">
+            <input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}" class="thumbnailed-file-checkbox">
+            <label for="{{ widget.checkbox_id }}" class="thumbnailed-file-checkbox-label">{{ widget.clear_checkbox_label }}</label>
+        </span>
+        {% if widget.event_settings_image_tools %}
+            <button type="button" class="btn btn-danger btn-xs btn-delete-image-ajax thumbnailed-file-delete-ajax" data-field="{{ widget.name }}" title="{% trans 'Delete Image' %}" aria-label="{% trans 'Delete Image' %}">
+                <i class="fa fa-trash"></i>
+            </button>
+        {% endif %}
+    {% endif %}
+</div>
+{% if widget.value.is_img and not widget.event_settings_image_tools %}
+<br><a href="{{ widget.value.url }}" data-lightbox="{{ widget.name }}"><img src="{{ widget.value|thumb:"200x100" }}" /></a><br>
+{% endif %}
+<div class="input-text-container thumbnailed-file-input-text">
+    {{ widget.input_text }}:
+</div>
+{% endif %}
 <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
+
 {% if widget.cachedfile %}<input type="hidden" name="{{ widget.hidden_name }}" value="{{ widget.cachedfile.id }}">{% endif %}
