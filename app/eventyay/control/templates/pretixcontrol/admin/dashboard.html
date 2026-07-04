@@ -37,7 +37,7 @@
                 </a>
             </div>
             <div class="widget-container widget-small">
-                <a href="{% url 'eventyay_admin:admin.attendees' %}" class="widget">
+                <a href="{% url 'eventyay_admin:admin.orders' %}" class="widget">
                     <div class="numwidget">
                         <span class="num">{{ orders_total|intcomma }}</span>
                         <span class="text">{% trans "Orders" %}</span>
@@ -189,7 +189,7 @@
                         </tbody>
                     </table>
                     <div class="panel-footer">
-                        <a href="{% url 'eventyay_admin:admin.attendees' %}">{% trans "View orders" %}</a>
+                        <a href="{% url 'eventyay_admin:admin.orders' %}">{% trans "View orders" %}</a>
                     </div>
                 </div>
             </div>
