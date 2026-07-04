@@ -24,6 +24,7 @@ from django.views.generic import (
 )
 from django_celery_beat.models import PeriodicTask, PeriodicTasks
 from django_context_decorator import context
+from django_scopes import scopes_disabled
 
 from django.utils.timezone import make_aware, is_aware
 from django.utils.functional import cached_property
@@ -35,7 +36,7 @@ from eventyay.control.forms.admin.admin import UpdateSettingsForm
 
 from eventyay.base.models.checkin import Checkin
 from eventyay.base.models.event import Event
-from eventyay.base.models.orders import OrderPosition
+from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.models.submission import Submission
@@ -43,7 +44,7 @@ from eventyay.base.models.vouchers import InvoiceVoucher
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm
-from eventyay.control.forms.filter import OrganizerFilterForm, SubmissionFilterForm, TaskFilterForm
+from eventyay.control.forms.filter import AdminOrderFilterForm, OrganizerFilterForm, SubmissionFilterForm, TaskFilterForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin
 from eventyay.control.views.main import EventList
@@ -248,7 +249,6 @@ class SubmissionListView(AdministratorPermissionRequiredMixin, ListView):
         return SubmissionFilterForm(data=self.request.GET)
 
     def get(self, request, *args, **kwargs):
-        from django_scopes import scopes_disabled
         with scopes_disabled():
             return super().get(request, *args, **kwargs)
 
@@ -302,6 +302,71 @@ class SubmissionListView(AdministratorPermissionRequiredMixin, ListView):
                 'tags': ', '.join(t.tag for t in s.tags.all()),
             }
             for s in ctx['submissions']
+        ]
+        return ctx
+
+
+class AdminOrderListView(PaginationMixin, AdministratorPermissionRequiredMixin, ListView):
+    template_name = 'pretixcontrol/admin/orders/index.html'
+    context_object_name = 'orders'
+    paginate_by = 25
+
+    @cached_property
+    def filter_form(self):
+        return AdminOrderFilterForm(data=self.request.GET)
+
+    def get(self, request, *args, **kwargs):
+        with scopes_disabled():
+            return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = Order.objects.select_related('event', 'event__organizer')
+
+        if self.filter_form.is_valid():
+            qs = self.filter_form.filter_qs(qs)
+
+        ordering = self.request.GET.get('ordering')
+        ordering_map = {
+            'code': 'code',
+            '-code': '-code',
+            'email': 'email',
+            '-email': '-email',
+            'event': 'event__name',
+            '-event': '-event__name',
+            'organizer': 'event__organizer__name',
+            '-organizer': '-event__organizer__name',
+            'status': 'status',
+            '-status': '-status',
+            'total': 'total',
+            '-total': '-total',
+            'date': 'datetime',
+            '-date': '-datetime',
+        }
+        sort_field = ordering_map.get(ordering, '-datetime')
+        tie_breaker = '-pk' if sort_field.startswith('-') else 'pk'
+        qs = qs.order_by(sort_field, tie_breaker)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['filter_form'] = self.filter_form
+        ctx['orders'] = [
+            {
+                'order_code': o.code,
+                'event': o.event.name,
+                'event_slug': o.event.slug,
+                'organizer': o.event.organizer.name,
+                'organizer_slug': o.event.organizer.slug,
+                'email': o.email or '',
+                'status': o.get_status_display(),
+                'status_code': o.status,
+                'total': o.total,
+                'currency': o.event.currency,
+                'date': o.datetime,
+                'testmode': o.testmode,
+            }
+            for o in ctx['orders']
         ]
         return ctx
 
