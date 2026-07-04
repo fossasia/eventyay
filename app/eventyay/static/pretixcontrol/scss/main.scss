@@ -670,7 +670,13 @@ details summary {
 
 .pos-canceled * {
     color: $brand-danger;
-    text-decoration: line-through !important;
+    text-decoration: line-through;
+}
+
+.pos-canceled .position-buttons,
+.pos-canceled .position-buttons * {
+    text-decoration: none;
+    color: $text-color;
 }
 
 h1 .label {
