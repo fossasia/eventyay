@@ -3,13 +3,13 @@ document.addEventListener('DOMContentLoaded', () => {
   widgets.forEach(widget => {
     const id = widget.getAttribute('data-id');
     const isReRender = widget.getAttribute('data-is-re-render') === 'true';
-
+    
     const input = document.getElementById(id);
     const label = document.getElementById(id + '_label');
     const errorMsg = document.getElementById(id + '_error');
     const storageWarningMsg = document.getElementById(id + '_storage_warning');
     const storageKey = 'file_upload_' + id;
-
+    
     function b64toFile(b64Data, contentType, filename) {
         const sliceSize = 512;
         const byteCharacters = atob(b64Data);
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (input && label) {
       label.dataset.original = label.textContent.trim();
-
+      
       // Restore from sessionStorage on load if re-rendering due to errors
       try {
           if (isReRender) {
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (input.files && input.files.length > 0) {
           const maxSize = parseInt(input.getAttribute('data-maxsize'), 10);
           let exceedsMaxSize = false;
-
+          
           if (maxSize) {
             for (let i = 0; i < input.files.length; i++) {
               if (input.files[i].size > maxSize) {
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
           }
-
+          
           if (exceedsMaxSize) {
             // Show error, clear input
             errorMsg.style.display = 'block';
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try { sessionStorage.removeItem(storageKey); } catch(e) {}
             return;
           }
-
+          
           errorMsg.style.display = 'none';
           if (storageWarningMsg) {
             storageWarningMsg.style.display = 'none';
@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const filesData = [];
           const filesToProcess = input.files.length;
           let processed = 0;
-
+          
           Array.from(input.files).forEach(file => {
               const reader = new FileReader();
               reader.onload = e => {

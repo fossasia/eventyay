@@ -350,7 +350,7 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
         for submission in submissions:
             speakers = list(submission.speakers.all())
             current_slots = submission.current_slots or []
-
+            
             # Use schedule slots if the submission is scheduled; otherwise fallback to just the speakers
             if current_slots:
                 for slot in current_slots:
