@@ -1478,6 +1478,43 @@ class OrderTestCase(BaseQuotaTestCase):
         assert not self.order.user_cancel_allowed
 
     @classscope(attr='o')
+    def test_user_cancelable_positions_excludes_base_with_noncancelable_addon(self):
+        base_item = Item.objects.create(
+            event=self.event,
+            name='Ticket',
+            default_price=23,
+            admission=True,
+            allow_cancel=True,
+        )
+        addon_category = ItemCategory.objects.create(
+            event=self.event,
+            name='Add-ons',
+            is_addon=True,
+        )
+        addon_item = Item.objects.create(
+            event=self.event,
+            name='Backstage pass',
+            category=addon_category,
+            default_price=5,
+            allow_cancel=False,
+        )
+        base_item.addons.create(addon_category=addon_category)
+
+        base_position = OrderPosition.objects.create(order=self.order, item=base_item, variation=None, price=23)
+        addon_position = OrderPosition.objects.create(
+            order=self.order,
+            item=addon_item,
+            variation=None,
+            price=5,
+            addon_to=base_position,
+        )
+
+        cancelable_ids = {op.pk for op in self.order.user_cancelable_positions}
+
+        assert base_position.pk not in cancelable_ids
+        assert addon_position.pk not in cancelable_ids
+
+    @classscope(attr='o')
     def test_can_cancel_order_multiple(self):
         item1 = Item.objects.create(
             event=self.event,

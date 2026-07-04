@@ -570,6 +570,143 @@ class Order(LockModel, LoggedModel):
             fee += self.event.settings.cancel_allow_user_paid_keep
         return round_decimal(fee, self.event.currency)
 
+    @cached_property
+    @scopes_disabled()
+    def user_existing_cancellation_fee(self):
+        return self.fees.filter(fee_type=OrderFee.FEE_TYPE_CANCELLATION).aggregate(s=Sum('value'))['s'] or Decimal(
+            '0.00'
+        )
+
+    @cached_property
+    @scopes_disabled()
+    def user_cancelable_positions(self):
+        """
+        Returns all active order positions that can currently be canceled by the user.
+        """
+        from .checkin import Checkin
+
+        if self.cancellation_requests.exists() or not self.cancel_allowed():
+            return []
+
+        if self.status not in (Order.STATUS_PENDING, Order.STATUS_PAID):
+            return []
+
+        if self.user_cancel_deadline and now() > self.user_cancel_deadline:
+            return []
+
+        if self.status == Order.STATUS_PENDING and not self.event.settings.cancel_allow_user:
+            return []
+
+        if self.status == Order.STATUS_PAID:
+            if self.total == Decimal('0.00'):
+                if not self.event.settings.cancel_allow_user:
+                    return []
+            elif not self.event.settings.cancel_allow_user_paid:
+                return []
+
+        positions = list(
+            self.positions.all()
+            .annotate(has_checkin=Exists(Checkin.objects.filter(position_id=OuterRef('pk'))))
+            .select_related('product')
+            .prefetch_related('issued_gift_cards')
+        )
+
+        def is_position_cancelable(op):
+            if not op.product.allow_cancel or op.has_checkin:
+                return False
+            if any(gc.value != op.price for gc in op.issued_gift_cards.all()):
+                return False
+            return True
+
+        addons_by_base = {}
+        for op in positions:
+            if op.addon_to_id:
+                addons_by_base.setdefault(op.addon_to_id, []).append(op)
+
+        per_position_cancelable = {op.pk: is_position_cancelable(op) for op in positions}
+
+        cancelable = []
+        for op in positions:
+            if not per_position_cancelable.get(op.pk, False):
+                continue
+
+            if not op.addon_to_id:
+                addons = addons_by_base.get(op.pk, [])
+                if any(not per_position_cancelable.get(addon.pk, False) for addon in addons):
+                    continue
+
+            cancelable.append(op)
+
+        return cancelable
+
+    @property
+    @scopes_disabled()
+    def user_partial_cancel_allowed(self) -> bool:
+        """
+        Returns whether or not this order can be partially canceled by the user.
+        """
+        if self.event.settings.allow_modifications == 'no':
+            return False
+
+        if self.status == Order.STATUS_PAID and self.total != Decimal('0.00'):
+            # Partial cancellation currently executes immediately.
+            # In approval mode, only full-order cancellation requests are supported.
+            if self.event.settings.cancel_allow_user_paid_require_approval:
+                return False
+
+        return self.count_positions > 1 and bool(self.user_cancelable_positions)
+
+    @cached_property
+    @scopes_disabled()
+    def is_partially_canceled(self) -> bool:
+        if self.count_positions == 0:
+            return False
+        return self.all_positions.count() > self.count_positions
+
+    def user_partial_cancel_fee(self, canceled_total: Decimal) -> Decimal:
+        if canceled_total <= Decimal('0.00'):
+            return Decimal('0.00')
+
+        if self.status != Order.STATUS_PAID or self.total <= Decimal('0.00'):
+            return Decimal('0.00')
+
+        fee = Decimal('0.00')
+
+        # Percentage fee: apply directly to canceled_total
+        if self.event.settings.cancel_allow_user_paid_keep_percentage:
+            fee += (
+                self.event.settings.cancel_allow_user_paid_keep_percentage
+                / Decimal('100.0') * canceled_total
+            )
+
+        # Flat fee and keep-existing-fees: prorate from the remaining uncharged amount
+        flat_base = Decimal('0.00')
+        if self.event.settings.cancel_allow_user_paid_keep_fees:
+            flat_base += (
+                self.fees.filter(
+                    fee_type__in=(
+                        OrderFee.FEE_TYPE_PAYMENT,
+                        OrderFee.FEE_TYPE_SHIPPING,
+                        OrderFee.FEE_TYPE_SERVICE,
+                    ),
+                    canceled=False,
+                ).aggregate(s=Sum('value'))['s']
+                or Decimal('0.00')
+            )
+        if self.event.settings.cancel_allow_user_paid_keep:
+            flat_base += self.event.settings.cancel_allow_user_paid_keep
+
+        if flat_base > Decimal('0.00'):
+            already_charged = self.user_existing_cancellation_fee
+            remaining_to_charge = max(Decimal('0.00'), flat_base - already_charged)
+            if remaining_to_charge > Decimal('0.00'):
+                remaining_total = self.total - already_charged
+                if remaining_total > Decimal('0.00'):
+                    fee += remaining_to_charge * canceled_total / remaining_total
+
+        fee = round_decimal(fee, self.event.currency)
+        return min(canceled_total, fee)
+
     @property
     @scopes_disabled()
     def user_change_allowed(self) -> bool:
@@ -619,32 +756,11 @@ class Order(LockModel, LoggedModel):
         """
         Returns whether or not this order can be canceled by the user.
         """
-        from .checkin import Checkin
+        positions = self.user_cancelable_positions
+        if not positions:
+            return False
 
-        if self.cancellation_requests.exists() or not self.cancel_allowed():
-            return False
-        positions = list(
-            self.positions.all()
-            .annotate(has_checkin=Exists(Checkin.objects.filter(position_id=OuterRef('pk'))))
-            .select_related('product')
-            .prefetch_related('issued_gift_cards')
-        )
-        cancelable = all([op.product.allow_cancel and not op.has_checkin for op in positions])
-        if not cancelable or not positions:
-            return False
-        for op in positions:
-            for gc in op.issued_gift_cards.all():
-                if gc.value != op.price:
-                    return False
-        if self.user_cancel_deadline and now() > self.user_cancel_deadline:
-            return False
-        if self.status == Order.STATUS_PENDING:
-            return self.event.settings.cancel_allow_user
-        elif self.status == Order.STATUS_PAID:
-            if self.total == Decimal('0.00'):
-                return self.event.settings.cancel_allow_user
-            return self.event.settings.cancel_allow_user_paid
-        return False
+        return len(positions) == self.count_positions
 
     def propose_auto_refunds(self, amount: Decimal, payments: list = None):
         # Algorithm to choose which payments are to be refunded to create the least hassle
