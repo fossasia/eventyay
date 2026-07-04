@@ -4,6 +4,7 @@ import logging
 import random
 import string
 from datetime import UTC, datetime
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
@@ -13,6 +14,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseNotModified, Http
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.encoding import force_str
+from django.utils.html import strip_tags
 from django.utils.translation import activate, get_language, gettext_lazy as _
 from django_context_decorator import context
 from i18nfield.utils import I18nJSONEncoder
@@ -48,6 +50,27 @@ from eventyay.talk_rules.submission import (
 JSON_SCRIPT_ESCAPES = {ord('>'): '\\u003E', ord('<'): '\\u003C', ord('&'): '\\u0026'}
 
 CACHE_TTL = 600
+
+MAX_CALENDAR_REDIRECT_URL_LENGTH = 3000
+
+
+def build_google_calendar_url(title, dates, location, details) -> str:
+    base_url = 'https://calendar.google.com/calendar/render'
+    params = {
+        'action': 'TEMPLATE',
+        'text': str(title or ''),
+        'dates': dates,
+        'location': str(location or ''),
+    }
+    plain_details = strip_tags(str(details or ''))
+    if not plain_details:
+        return f'{base_url}?{urlencode(params)}'
+    params['details'] = plain_details
+    while len(f'{base_url}?{urlencode(params)}') > MAX_CALENDAR_REDIRECT_URL_LENGTH and params['details']:
+        params['details'] = params['details'][:-16]
+    if not params['details']:
+        del params['details']
+    return f'{base_url}?{urlencode(params)}'
 
 
 def escape_json_for_script(json_str: str) -> str:
@@ -347,6 +370,12 @@ def build_landing_featured_speakers_widget_schedule(event, user, featured_profil
         base_data['talks'] = filtered.get('talks', [])
         base_data['tracks'] = filtered.get('tracks', [])
         base_data['rooms'] = filtered.get('rooms', [])
+        _append_missing_pending_submissions(
+            base_data,
+            event,
+            user,
+            featured_speaker_user_codes,
+        )
     else:
         filtered = _apply_pending_speaker_talks(
             base_data,
@@ -977,6 +1006,20 @@ def is_public_schedule_empty(request):
         and request.event.get_feature_flag('show_schedule')
         and request.event.current_schedule
         and not request.event.has_schedule_content
+    )
+
+
+def is_public_speakers_list_empty(request):
+    """True when the public speakers overview page has nothing to show."""
+    if can_list_released_schedule_speakers(request.user, request.event):
+        return not public_speakers_list_available(request.user, request.event)
+    if has_public_featured_speakers(request.user, request.event):
+        return False
+    return bool(
+        request.event.is_public
+        and request.event.get_feature_flag('show_schedule')
+        and request.event.current_schedule
+        and not request.event.speakers.exists()
     )
 
 

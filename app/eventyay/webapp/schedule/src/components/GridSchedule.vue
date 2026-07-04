@@ -29,6 +29,7 @@
 					:timezone="timezone",
 					:style="getSessionStyle(session)",
 					:showAbstract="false", :showRoom="false",
+					:showSessionType="true",
 					:showFavCount="showFavCount",
 					:faved="favSet.has(session.id)",
 					:hasAmPm="hasAmPm",
@@ -67,6 +68,7 @@
 							:timezone="timezone",
 							:style="getChunkSessionStyle(session, chunk)",
 							:showAbstract="false", :showRoom="false",
+							:showSessionType="true",
 							:showFavCount="showFavCount",
 							:faved="favSet.has(session.id)",
 							:hasAmPm="hasAmPm",
@@ -130,6 +132,9 @@ export default {
 			type: Number,
 			default: 30
 		}
+	},
+	inject: {
+		translationMessages: { default: () => ({}) }
 	},
 	data () {
 		return {
@@ -299,6 +304,12 @@ export default {
 			})
 			// remove gap at the end of the schedule
 			if (compactedSlices[compactedSlices.length - 1].gap) compactedSlices.pop()
+			for (let i = 0; i < compactedSlices.length; i++) {
+				const next = compactedSlices[i + 1]
+				if (next?.datebreak || !next) {
+					compactedSlices[i].dayEnd = true
+				}
+			}
 			return compactedSlices
 		},
 		visibleTimeslices () {
@@ -491,7 +502,8 @@ export default {
 		getSliceClasses (slice) {
 			return {
 				datebreak: slice.datebreak,
-				gap: slice.gap
+				gap: slice.gap,
+				'day-end': slice.dayEnd
 			}
 		},
 		getSliceStyle (slice) {
@@ -532,7 +544,7 @@ export default {
 		},
 		scrollToDayStart (day) {
 			const dayStr = moment.isMoment(day) ? day.clone().tz(this.timezone).startOf('day').format('YYYY-MM-DD') : day
-			const el = this.$el.querySelector(`[data-slice-day="${dayStr}"]`)
+			const el = this.$el.querySelector(`.timeslice.datebreak[data-slice-day="${dayStr}"]`)
 			if (!el) return
 			this.scrollElementIntoViewWithClearance(el)
 		},
@@ -608,8 +620,9 @@ export default {
 			document.addEventListener('mouseup', onMouseUp)
 		},
 		onIntersect (entries) {
-			const entry = entries.sort((a, b) => b.ts - a.ts).find(entry => entry.isIntersecting)
-			if (!entry) return
+			const intersecting = entries.filter(entry => entry.isIntersecting)
+			if (!intersecting.length) return
+			const entry = intersecting.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
 			const dayStr = entry.target.dataset.sliceDay
 			if (!dayStr || dayStr === this.currentDay) return
 			// Only update the active day indicator — don't trigger a scroll jump.
@@ -755,6 +768,7 @@ export default {
 		&.datebreak
 			font-weight: 700
 			border-top: 3px solid $clr-dividers-light
+			border-bottom: 3px solid $clr-dividers-light
 			white-space: pre
 			padding-top: 2px
 			font-size: 12px
@@ -783,6 +797,9 @@ export default {
 		width: 100%
 		&.datebreak
 			height: 3px
+		&.day-end
+			height: 3px
+			background-color: $clr-grey-500
 	.now
 		z-index: 20
 		position: sticky

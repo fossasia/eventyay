@@ -239,6 +239,11 @@ const routes = [
 				props: true
 			},
 			{
+				path: 'admin/video-admin',
+				name: 'admin:video-admin',
+				component: () => import('views/admin/config/video-admin')
+			},
+			{
 				path: 'admin/config',
 				component: () => import('views/admin/config'),
 				children: [{

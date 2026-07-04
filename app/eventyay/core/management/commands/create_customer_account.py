@@ -48,7 +48,6 @@ class Command(BaseCommand):
                             email=order.email,
                             name_parts=name_parts_data,
                             is_active=True,
-                            is_verified=False,
                             locale=get_language_without_region(),
                         )
                         customer.set_unusable_password()

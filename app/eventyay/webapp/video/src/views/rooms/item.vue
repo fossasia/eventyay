@@ -128,8 +128,8 @@ export default {
 			if (tab === this.activeSidebarTab) return
 			this.unreadTabs[tab] = true
 		},
-		handleLanguageChange(languageUrl) {
-			this.$store.commit('updateYoutubeTransAudio', languageUrl)
+		handleLanguageChange(translationConfig) {
+			this.$store.commit('updateYoutubeTransAudio', translationConfig)
 		},
 		hasStreamSchedule() {
 			return !!(
@@ -144,7 +144,7 @@ export default {
 				this.languages = this.modules['livestream.youtube'].config.languageUrls
 			}
 			if (!this.languages.find(lang => lang.language === 'Original')) {
-				this.languages.unshift({language: 'Original', youtube_id: null})
+				this.languages.unshift({language: 'Original', youtube_id: null, use_video: false})
 			}
 			// Reset translation only when actually changing rooms, not on component remount
 			const currentRoomId = this.room?.id

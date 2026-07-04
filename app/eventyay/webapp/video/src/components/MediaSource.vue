@@ -81,7 +81,7 @@ const janus = ref(null);
 
 // Mapped state/getters
 const streamingRoom = computed(() => store.state.streamingRoom);
-const youtubeTransUrl = computed(() => store.state.youtubeTransUrl);
+const youtubeTranslation = computed(() => store.state.youtubeTranslation);
 const autoplay = computed(() => store.getters.autoplay);
 
 const module = computed(() => {
@@ -225,7 +225,9 @@ watch(
 	}
 )
 
-watch(youtubeTransUrl, async (audioSource) => {
+const isPlayingTranslationVideo = ref(false);
+
+watch(youtubeTranslation, async (transConfig) => {
 	if (!props.room) return;
 	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || module.value?.type === 'livestream.youtube';
@@ -235,6 +237,22 @@ watch(youtubeTransUrl, async (audioSource) => {
 	if (whepClient) {
 		whepClient.disconnect();
 		whepClient = null;
+	}
+
+	const audioSource = transConfig?.url || null;
+	const requestedUseVideo = transConfig?.useVideo || false;
+	const useVideo = requestedUseVideo && !!(audioSource && normalizeYoutubeVideoId(audioSource));
+
+	if (useVideo) {
+		isPlayingTranslationVideo.value = true;
+		languageIframeUrl.value = null; // Clear any audio iframe
+		destroyIframe();
+		await initializeIframe(false);
+		return;
+	} else if (isPlayingTranslationVideo.value) {
+		isPlayingTranslationVideo.value = false;
+		destroyIframe();
+		await initializeIframe(false);
 	}
 
 	// Handle translation: mute main player and connect audio source
@@ -392,7 +410,9 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			case 'livestream.youtube': {
 				isYouTube = true;
 				let ytid;
-				if (streamType === STREAM_TYPE_YOUTUBE && currentStream?.url) {
+				if (youtubeTranslation.value?.useVideo && youtubeTranslation.value?.url && normalizeYoutubeVideoId(youtubeTranslation.value.url)) {
+					ytid = normalizeYoutubeVideoId(youtubeTranslation.value.url);
+				} else if (streamType === STREAM_TYPE_YOUTUBE && currentStream?.url) {
 					ytid = normalizeYoutubeVideoId(currentStream.url);
 				} else if (!isScheduleDriven && module.value.type === 'livestream.youtube' && module.value.config?.ytid) {
 					ytid = normalizeYoutubeVideoId(module.value.config.ytid);
@@ -478,8 +498,8 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		// Wait for iframe to load before sending postMessage commands
 		if (isYouTube) {
 			iframe.onload = () => {
-				// If translation is already selected, mute the main player
-				if (youtubeTransUrl.value) {
+				// If translation is already selected, mute the main player (if audio-only)
+				if (youtubeTranslation.value?.url && !youtubeTranslation.value?.useVideo) {
 					setTimeout(() => muteYouTubePlayer(), 1000);
 				}
 			};
@@ -806,6 +826,7 @@ iframe.iframe-media-source
 	align-items: center
 	background-color: $clr-blue-grey-200
 	z-index: 1
+	overflow: hidden
 	// Fallbacks prevent the overlay from shrinking to its text when
 	// --mediasource-placeholder-* are not yet available.
 	&:not(.size-tiny):not(.background)

@@ -108,6 +108,7 @@
         <form action="{% url "control:event.orders.bulk_action" event=request.event.slug organizer=request.event.organizer.slug %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <div data-ajax-results-region>
             <div class="table-responsive">
                 <table class="table table-condensed table-hover table-orders">
                     <thead>
@@ -127,6 +128,7 @@
                             <a href="?{% url_replace request 'ordering' '-datetime' %}"><i class="fa fa-caret-down"></i></a>
                             <a href="?{% url_replace request 'ordering' 'datetime' %}"><i class="fa fa-caret-up"></i></a>
                         </th>
+                        <th>{% trans "Products" %}</th>
                         <th class="text-right flip">{% trans "Order paid / total" %}
                             <a href="?{% url_replace request 'ordering' '-total' %}"><i class="fa fa-caret-down"></i></a>
                             <a href="?{% url_replace request 'ordering' 'total' %}"><i class="fa fa-caret-up"></i></a></th>
@@ -141,7 +143,7 @@
                         <tr>
                             <td>
                                 {% if "can_change_orders" in request.eventpermset %}
-                                    <label aria-label="{% trans "select row for batch-operation" %}" class="batch-select-label"><input type="checkbox" name="order" class="batch-select-checkbox" value="{{ o.code }}"/></label>
+                                    <label aria-label="{% trans "select row for batch-operation" %}" class="batch-select-label"><input type="checkbox" name="order" class="batch-select-checkbox" value="{{ o.code }}"{% if o.bulk_approval_eligible %} data-batch-eligible="true"{% endif %}/></label>
                                 {% endif %}
                             </td>
                             <td>
@@ -164,6 +166,22 @@
                                 <span class="fa fa-{{ o.sales_channel_obj.icon }} text-muted"
                                       data-toggle="tooltip" title="{% trans o.sales_channel_obj.verbose_name %}"></span>
                                 {{ o.datetime|date:"SHORT_DATETIME_FORMAT" }}
+                            </td>
+                            <td>
+                                <ul class="list-unstyled order-product-list">
+                                {% for pos in o.active_positions %}
+                                    {% if forloop.counter <= 2 %}
+                                        <li>
+                                            {{ pos.product.name }}
+                                            {% if forloop.counter == 2 and not forloop.last %}
+                                                <span class="product-ellipsis">&hellip;</span>
+                                            {% endif %}
+                                        </li>
+                                    {% else %}
+                                        <li class="product-hidden" style="display: none;">{{ pos.product.name }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                                </ul>
                             </td>
                             <td class="text-right flip">
                                 {% if o.has_cancellation_request %}
@@ -212,6 +230,7 @@
                                     {{ s }} orders
                                 {% endblocktrans %}
                             </th>
+                            <th></th>
                             <th class="text-right flip">
                                 {% if sums.s|default_if_none:"none" != "none" %}
                                     {{ sums.s|money:request.event.currency }}
@@ -229,10 +248,13 @@
                 </table>
             </div>
             {% if "can_change_orders" in request.eventpermset %}
-                <div class="batch-select-actions batch-select-actions-orders">
+                <div class="batch-select-actions batch-select-actions-orders"
+                     data-batch-disabled-reason-none="{% trans 'Select at least one order.' %}"
+                     data-batch-disabled-reason-ineligible="{% trans 'None of the selected orders are pending approval. Only approval-pending orders can be approved or denied.' %}"
+                     data-batch-partial-skip-notice="{% trans '{count} selected orders are not pending approval and will be skipped.' %}">
                     <div class="btn-group dropup order-bulk-actions-menu">
                         <button type="button" class="btn btn-default btn-save dropdown-toggle"
-                                data-toggle="dropdown" data-batch-action aria-haspopup="true"
+                                data-toggle="dropdown" aria-haspopup="true"
                                 aria-expanded="false">
                             <span data-batch-count-label>{% trans "Select action" %}</span>
                             <span class="caret"></span>
@@ -254,12 +276,22 @@
                             </li>
                         </ul>
                     </div>
+                    <p class="order-bulk-action-hint text-muted" data-batch-action-hint hidden></p>
                 </div>
             {% endif %}
+            {% include "pretixcontrol/pagination.html" %}
+            </div>
         </form>
-        {% include "pretixcontrol/pagination.html" %}
     {% endif %}
 {% endblock %}
 {% block custom_header %}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
+    <style>
+        .order-product-list:hover .product-hidden {
+            display: list-item !important;
+        }
+        .order-product-list:hover .product-ellipsis {
+            display: none !important;
+        }
+    </style>
 {% endblock %}
