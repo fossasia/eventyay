@@ -1,0 +1,111 @@
+{% extends 'pretixpresale/event/base.html' %}
+{% load i18n %}
+{% load eventurl %}
+{% load money %}
+{% load presale_locale %}
+{% block title %}{% trans 'Cancel selected tickets' %}{% endblock %}
+{% block content %}
+    <h2>
+        {% blocktrans trimmed with code=order.code %}
+            Cancel tickets in order: {{ code }}
+        {% endblocktrans %}
+    </h2>
+    <form method="post"
+            action="{% eventurl request.event 'presale:event.order.cancel.positions.do' secret=order.secret order=order.code %}"
+            data-asynctask>
+        <p>
+            {% blocktrans trimmed %}
+                Select one or more tickets that you want to cancel. Selected tickets will be invalidated.
+                Remaining tickets in this order stay valid.
+            {% endblocktrans %}
+        </p>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <strong>{% trans 'Tickets in this order' %}</strong>
+            </div>
+            <ul class="list-group">
+                {% for row in position_rows %}
+                    <li class="list-group-item">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="positions" value="{{ row.position.pk }}">
+                                <strong>#{{ row.position.positionid }}</strong>
+                                {{ row.position.product.name|event_localize }}
+                                {% if row.position.variation %}
+                                    – {{ row.position.variation.value|event_localize }}
+                                {% endif %}
+                                {% if row.position.addon_to_id %}
+                                    <small class="text-muted">
+                                        ({% blocktrans trimmed with parent=row.position.addon_to.positionid %}
+                                            Add-on to ticket #{{ parent }}
+                                        {% endblocktrans %})
+                                    </small>
+                                {% endif %}
+                            </label>
+                            {% if row.addons %}
+                                <small class="text-warning">
+                                    <span class="fa fa-exclamation-triangle" aria-hidden="true"></span>
+                                    {% blocktrans trimmed count n=row.addons|length %}
+                                        Canceling this ticket will also cancel its add-on.
+                                    {% plural %}
+                                        Canceling this ticket will also cancel its {{ n }} add-ons.
+                                    {% endblocktrans %}
+                                </small>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">
+                            {% blocktrans trimmed with total=row.position_total|money:request.event.currency %}
+                                Ticket value: {{ total }}
+                            {% endblocktrans %}
+                            {% if is_paid_order %}
+                                {% blocktrans trimmed with fee=row.cancellation_fee|money:request.event.currency refund=row.refund_amount|money:request.event.currency %}
+                                    • Estimated cancellation fee: {{ fee }} • Estimated refund: {{ refund }}
+                                {% endblocktrans %}
+                            {% endif %}
+                        </small>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% if is_paid_order %}
+            {% if request.event.settings.cancel_allow_user_paid_refund_as_giftcard == 'force' %}
+                <p>
+                    <strong>
+                        {% trans 'Refunds for canceled tickets will be issued as a gift card for future purchases.' %}
+                    </strong>
+                </p>
+            {% elif request.event.settings.cancel_allow_user_paid_refund_as_giftcard == 'option' %}
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="giftcard" value="true" checked id="id_giftcard">
+                        <strong>{% trans 'Issue refund as gift card' %}</strong>
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="giftcard" value="false" id="id_payout">
+                        <strong>{% trans 'Send refund to original payment method' %}</strong>
+                    </label>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        {% csrf_token %}
+        <div class="row checkout-button-row">
+            <div class="col-md-4">
+                <a class="btn btn-block btn-default btn-lg"
+                        href="{% eventurl request.event 'presale:event.order' secret=order.secret order=order.code %}">
+                    {% trans 'No, take me back' %}
+                </a>
+            </div>
+            <div class="col-md-4 col-md-offset-4">
+                <button class="btn btn-block btn-delete btn-danger btn-lg" type="submit">
+                    {% trans 'Yes, cancel selected tickets' %}
+                </button>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    </form>
+{% endblock %}
