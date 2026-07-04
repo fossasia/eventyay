@@ -479,6 +479,12 @@ def get_admin_navigation(request):
             'icon': 'sticky-note-o',
         },
         {
+            'label': _('All Orders'),
+            'url': reverse('eventyay_admin:admin.orders'),
+            'active': 'orders' in url.url_name,
+            'icon': 'shopping-cart',
+        },
+        {
             'label': _('Task management'),
             'url': reverse('eventyay_admin:admin.task_management'),
             'active': 'task_management' in url.url_name,
