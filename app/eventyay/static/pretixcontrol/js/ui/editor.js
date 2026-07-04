@@ -115,6 +115,7 @@ var editor = {
     page_width_mm: null,
     page_height_mm: null,
     _page_resize_in_progress: false,
+    _page_size_timer: null,
     _window_loaded: false,
     _fabric_loaded: false,
     _last_active_object: null,
@@ -405,7 +406,7 @@ var editor = {
         return true;
     },
 
-    _load_pdf: function (dump) {
+    _load_pdf: function (dump, keepPageSizeFields) {
         // TODO: Loading indicators
         var url = editor.pdf_url;
         // TODO: Handle cross-origin issues if static files are on a different origin
@@ -435,10 +436,20 @@ var editor = {
                 editor.pdf_scale = scale;
                 editor.pdf_viewport = viewport;
 
-                $("#pdf-info-width").val(editor._px2mm(viewport.width).toFixed(2));
-                $("#pdf-info-height").val(editor._px2mm(viewport.height).toFixed(2));
-                editor.page_width_mm = parseFloat($("#pdf-info-width").val());
-                editor.page_height_mm = parseFloat($("#pdf-info-height").val());
+                if (!keepPageSizeFields) {
+                    var setPageSize = function (selector, mm) {
+                        var el = $(selector);
+                        if (!el.is(":focus")) {
+                            el.val(mm.toFixed(2));
+                        }
+                    };
+                    var widthMm = editor._px2mm(viewport.width);
+                    var heightMm = editor._px2mm(viewport.height);
+                    setPageSize("#pdf-info-width", widthMm);
+                    setPageSize("#pdf-info-height", heightMm);
+                    editor.page_width_mm = parseFloat($("#pdf-info-width").val());
+                    editor.page_height_mm = parseFloat($("#pdf-info-height").val());
+                }
 
                 // Render PDF page into canvas context
                 var renderContext = {
@@ -491,6 +502,10 @@ var editor = {
 
         editor._fabric_loaded = true;
         console.log("Fabric loaded");
+        if (editor._recheck_page_size_after_load) {
+            editor._recheck_page_size_after_load = false;
+            editor._on_page_size_field_change();
+        }
         if (editor._window_loaded) {
             editor._ready();
         }
@@ -702,10 +717,17 @@ var editor = {
     },
 
     _on_page_size_field_change: function () {
-        if (editor._page_resize_in_progress) {
-            return;
-        }
-        editor._apply_page_size_from_fields();
+        window.clearTimeout(editor._page_size_timer);
+        editor._page_size_timer = window.setTimeout(function () {
+            if ($("#pdf-info-width").is(":focus") || $("#pdf-info-height").is(":focus")) {
+                return;
+            }
+            if (editor._page_resize_in_progress) {
+                editor._on_page_size_field_change();
+                return;
+            }
+            editor._apply_page_size_from_fields();
+        }, 0);
     },
 
     _apply_page_size_from_fields: function () {
@@ -743,7 +765,7 @@ var editor = {
                 editor.page_height_mm = height;
                 editor.uploaded_file_id = data.id;
                 editor.dirty = true;
-                editor._replace_pdf_file(data.url);
+                editor._replace_pdf_file(data.url, true);
             } else {
                 alert(data.error || gettext("Error while updating the background PDF, please try again."));
             }
@@ -1070,12 +1092,13 @@ var editor = {
         return false;
     },
 
-    _replace_pdf_file: function (url) {
+    _replace_pdf_file: function (url, keepPageSizeFields) {
         editor.pdf_url = url;
         editor._sync_active_text_object_from_toolbox();
         var dump = editor.dump();
         editor.fabric.dispose();
-        editor._load_pdf(dump);
+        editor._recheck_page_size_after_load = !!keepPageSizeFields;
+        editor._load_pdf(dump, keepPageSizeFields);
     },
 
     _source_show: function () {
@@ -1107,7 +1130,7 @@ var editor = {
         }, function (data) {
             if (data.status === "ok") {
                 editor.uploaded_file_id = data.id;
-                editor._replace_pdf_file(data.url);
+                editor._replace_pdf_file(data.url, true);
             } else {
                 alert(data.error || gettext("Error while uploading your PDF file, please try again."));
                 $("#loading-container, #loading-upload").hide();
@@ -1142,7 +1165,7 @@ var editor = {
 
 
         $("#pdf-empty").on("click", editor._create_empty_background);
-        $("#pdf-info-width, #pdf-info-height").on("change", editor._on_page_size_field_change);
+        $("#pdf-info-width, #pdf-info-height").on("change focusout", editor._on_page_size_field_change);
         $('#fileupload').fileupload({
             url: location.href,
             dataType: 'json',
