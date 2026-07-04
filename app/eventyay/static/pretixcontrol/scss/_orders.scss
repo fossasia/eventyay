@@ -61,7 +61,10 @@
 }
 
 .batch-select-actions-orders {
-    margin-top: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 
     .order-bulk-actions-menu {
         > .btn {
@@ -125,6 +128,6 @@
     }
 
     .order-bulk-action-hint {
-        margin: 8px 0 0;
+        margin: 0;
     }
 }

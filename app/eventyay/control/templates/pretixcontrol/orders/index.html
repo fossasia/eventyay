@@ -109,6 +109,40 @@
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <div data-ajax-results-region>
+            {% if "can_change_orders" in request.eventpermset %}
+                <div class="batch-select-actions batch-select-actions-orders"
+                     data-batch-disabled-reason-none="{% trans 'Select at least one order.' %}"
+                     data-batch-disabled-reason-ineligible="{% trans 'None of the selected orders are pending approval. Only approval-pending orders can be approved or denied.' %}"
+                     data-batch-partial-skip-notice="{% trans '{count} selected orders are not pending approval and will be skipped.' %}">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="btn-group dropdown order-bulk-actions-menu">
+                            <button type="button" class="btn btn-default btn-save dropdown-toggle"
+                                    data-toggle="dropdown" aria-haspopup="true"
+                                    aria-expanded="false">
+                                <span data-batch-count-label>{% trans "Select action" %}</span>
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu">
+                                <li>
+                                    <button type="submit" class="order-bulk-action-item" name="action"
+                                            value="approve" data-batch-action>
+                                        <span class="fa fa-thumbs-up text-success" aria-hidden="true"></span>
+                                        {% trans "Approve selected orders" %}
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="submit" class="order-bulk-action-item" name="action"
+                                            value="deny" data-batch-action>
+                                        <span class="fa fa-thumbs-down text-danger" aria-hidden="true"></span>
+                                        {% trans "Deny selected orders" %}
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                        <p class="order-bulk-action-hint text-muted" data-batch-action-hint hidden style="margin: 0;"></p>
+                    </div>
+                </div>
+            {% endif %}
             <div class="table-responsive">
                 <table class="table table-condensed table-hover table-orders">
                     <thead>
@@ -247,38 +281,6 @@
                     {% endif %}
                 </table>
             </div>
-            {% if "can_change_orders" in request.eventpermset %}
-                <div class="batch-select-actions batch-select-actions-orders"
-                     data-batch-disabled-reason-none="{% trans 'Select at least one order.' %}"
-                     data-batch-disabled-reason-ineligible="{% trans 'None of the selected orders are pending approval. Only approval-pending orders can be approved or denied.' %}"
-                     data-batch-partial-skip-notice="{% trans '{count} selected orders are not pending approval and will be skipped.' %}">
-                    <div class="btn-group dropup order-bulk-actions-menu">
-                        <button type="button" class="btn btn-default btn-save dropdown-toggle"
-                                data-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false">
-                            <span data-batch-count-label>{% trans "Select action" %}</span>
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu" role="menu">
-                            <li>
-                                <button type="submit" class="order-bulk-action-item" name="action"
-                                        value="approve" data-batch-action>
-                                    <span class="fa fa-thumbs-up text-success" aria-hidden="true"></span>
-                                    {% trans "Approve selected orders" %}
-                                </button>
-                            </li>
-                            <li>
-                                <button type="submit" class="order-bulk-action-item" name="action"
-                                        value="deny" data-batch-action>
-                                    <span class="fa fa-thumbs-down text-danger" aria-hidden="true"></span>
-                                    {% trans "Deny selected orders" %}
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                    <p class="order-bulk-action-hint text-muted" data-batch-action-hint hidden></p>
-                </div>
-            {% endif %}
             {% include "pretixcontrol/pagination.html" %}
             </div>
         </form>
