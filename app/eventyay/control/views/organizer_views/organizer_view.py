@@ -90,6 +90,7 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
             can_change_vouchers=True,
             can_change_submissions=True,
             is_reviewer=True,
+            is_exhibition_reviewer=True,
             can_video_create_stages=True,
             can_video_create_channels=True,
             can_video_direct_message=True,

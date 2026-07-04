@@ -463,6 +463,15 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         default=False,
     )
 
+    is_exhibition_reviewer = models.BooleanField(
+        default=False,
+        verbose_name=_('Exhibitor Reviewer — can only review exhibitor proposals'),
+        help_text=_(
+            'Can screen and evaluate exhibitor and sponsor proposals but cannot edit event setup, '
+            'manage exhibitors, or change other settings.'
+        ),
+    )
+
     can_video_create_stages = models.BooleanField(
         default=False,
         verbose_name=_('Video: Can create stages'),
