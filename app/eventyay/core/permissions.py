@@ -204,6 +204,7 @@ def default_roles():
     room_owner = participant + [
         Permission.ROOM_INVITE,
         Permission.ROOM_DELETE,
+        Permission.ROOM_JITSI_MODERATE,
     ]
     speaker = participant + [
         Permission.ROOM_BBB_MODERATE,

@@ -76,10 +76,19 @@ def test_stale_event_roles_are_augmented_with_jitsi_permissions():
             Permission.ROOM_BBB_MODERATE.value,
         ],
     )
+    room_owner_permissions = permissions_with_jitsi_defaults(
+        'room_owner',
+        [
+            Permission.ROOM_BBB_JOIN.value,
+            Permission.ROOM_INVITE.value,
+            Permission.ROOM_DELETE.value,
+        ],
+    )
 
     assert Permission.ROOM_JITSI_JOIN.value in participant_permissions
     assert Permission.ROOM_JITSI_JOIN.value in speaker_permissions
     assert Permission.ROOM_JITSI_MODERATE.value not in speaker_permissions
+    assert Permission.ROOM_JITSI_MODERATE.value in room_owner_permissions
     moderator_permissions = permissions_with_jitsi_defaults(
         'moderator',
         [

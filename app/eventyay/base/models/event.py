@@ -102,7 +102,7 @@ def event_logo_path(instance, filename):
 
 JITSI_ROLE_PERMISSION_AUGMENTS = {
     'participant': [Permission.ROOM_JITSI_JOIN],
-    'room_owner': [Permission.ROOM_JITSI_JOIN],
+    'room_owner': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
     'speaker': [Permission.ROOM_JITSI_JOIN],
     'moderator': [Permission.ROOM_JITSI_JOIN, Permission.ROOM_JITSI_MODERATE],
     'admin': [

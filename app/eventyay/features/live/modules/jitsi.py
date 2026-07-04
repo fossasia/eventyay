@@ -36,6 +36,19 @@ JITSI_PARTICIPANT_TOOLBAR_BUTTONS = [
     "videoquality",
 ]
 
+MAX_JITSI_ROOM_NAME_LENGTH = 200
+
+
+def normalize_jitsi_room_name(configured_room_name, room_id):
+    room_name = (configured_room_name or "").strip()
+    if (
+        not room_name
+        or room_name == "*"
+        or len(room_name) > MAX_JITSI_ROOM_NAME_LENGTH
+    ):
+        return f"room-{room_id}"
+    return room_name
+
 
 class JitsiModule(BaseModule):
     prefix = "jitsi"
@@ -60,7 +73,10 @@ class JitsiModule(BaseModule):
 
         server = normalize_server_url(server_model.url)
         domain = server["domain"] if server else None
-        room_name = self.module_config.get("room_name") or f"room-{self.room.id}"
+        room_name = normalize_jitsi_room_name(
+            self.module_config.get("room_name"),
+            self.room.id,
+        )
         if not domain:
             raise ConsumerException("jitsi.missing_domain")
         if not server_model.app_id or not server_model.app_secret:

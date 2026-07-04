@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0033_alter_event_private_testmode_default'),
+        ('base', '0050_checkin_list_limits_and_popup_fields'),
     ]
 
     operations = [
@@ -22,7 +22,15 @@ class Migration(migrations.Migration):
                 ('app_id', models.CharField(max_length=200)),
                 ('app_secret', models.CharField(max_length=300)),
                 ('key_id', models.CharField(blank=True, max_length=200)),
-                ('event_exclusive', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='base.event')),
+                (
+                    'event_exclusive',
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='base.event',
+                    ),
+                ),
             ],
         ),
     ]
