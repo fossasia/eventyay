@@ -74,6 +74,26 @@ REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT = _(
 )
 
 
+ORGANIZER_EMAIL_MODEL_DEFAULT = Event._meta.get_field('email').default
+ORGANIZER_EMAIL_PLACEHOLDER = _('name@example.org')
+
+
+def apply_organizer_email_placeholder(field):
+    field.widget.attrs['placeholder'] = ORGANIZER_EMAIL_PLACEHOLDER
+
+
+def get_default_organizer_email() -> str:
+    default_email = GlobalSettingsObject().settings.mail_from or settings.MAIL_FROM
+    return str(default_email or ORGANIZER_EMAIL_MODEL_DEFAULT).strip()
+
+
+def normalize_organizer_email_initial(email) -> str:
+    cleaned_email = str(email or '').strip()
+    if cleaned_email in {get_default_organizer_email(), ORGANIZER_EMAIL_MODEL_DEFAULT}:
+        return ''
+    return cleaned_email
+
+
 class EventWizardFoundationForm(forms.Form):
     locales = forms.MultipleChoiceField(
         choices=settings.LANGUAGES,
@@ -191,6 +211,7 @@ class EventWizardBasicsForm(I18nModelForm):
             'location',
             'geo_lat',
             'geo_lon',
+            'email',
         ]
         field_classes = {
             'date_from': SplitDateTimeField,
