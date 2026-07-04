@@ -1,5 +1,6 @@
+import datetime as dt
 import io
-from urllib.parse import quote, urljoin, urlparse
+from urllib.parse import urljoin, urlparse
 
 import vobject
 from django.conf import settings
@@ -19,6 +20,7 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay.agenda.export_resources import public_resource_attachments, public_resource_links
 from eventyay.agenda.views.utils import (
     WipAgendaPreviewPageMixin,
+    build_google_calendar_url,
     build_speaker_schedule_json,
     build_speakers_list_schedule_json,
     is_public_speakers_empty,
@@ -26,11 +28,6 @@ from eventyay.agenda.views.utils import (
     redirect_to_presale_with_warning,
     redirect_when_public_speakers_unavailable,
     speaker_profile_display_order,
-)
-from eventyay.talk_rules.agenda import (
-    agenda_speaker_talks,
-    can_list_released_schedule_speakers,
-    should_hide_public_speaker_sessions,
 )
 from eventyay.base.models import SpeakerProfile, TalkQuestionTarget, User
 from eventyay.common.text.path import safe_filename
@@ -41,6 +38,11 @@ from eventyay.common.views.mixins import (
     Filterable,
     PermissionRequired,
     SocialMediaCardMixin,
+)
+from eventyay.talk_rules.agenda import (
+    agenda_speaker_talks,
+    can_list_released_schedule_speakers,
+    should_hide_public_speaker_sessions,
 )
 
 
@@ -342,24 +344,24 @@ class SpeakerTalksCalendarRedirectView(EventPermissionRequired, View):
                 ),
             )
             webcal_url = ical_url.replace('https://', 'webcal://').replace('http://', 'webcal://')
-            return HttpResponseRedirect(webcal_url)
+            response = HttpResponse(status=302)
+            response['Location'] = webcal_url
+            return response
         raise Http404()
 
     def google_calendar_redirect(self, slot, request):
         sub = slot.submission
         start = slot.start
         end = slot.real_end
-        dates = f'{start:%Y%m%dT%H%M%SZ}/{end:%Y%m%dT%H%M%SZ}'
+        if not start or not end:
+            raise Http404()
+        start_utc = start.astimezone(dt.UTC)
+        end_utc = end.astimezone(dt.UTC)
+        dates = f'{start_utc:%Y%m%dT%H%M%SZ}/{end_utc:%Y%m%dT%H%M%SZ}'
         title = localize_event_text(sub.title)
         location = localize_event_text(slot.room.name) if slot.room else ''
         details = localize_event_text(sub.abstract) if request.event.cfp.public_abstract else ''
-        url = (
-            'https://calendar.google.com/calendar/render?action=TEMPLATE'
-            f'&text={quote(str(title))}'
-            f'&dates={dates}'
-            f'&location={quote(str(location))}'
-            f'&details={quote(str(details))}'
-        )
+        url = build_google_calendar_url(title, dates, location, details)
         return HttpResponseRedirect(url)
 
 

@@ -1,5 +1,5 @@
 <template lang="pug">
-a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession, 'schedule-pending-session': isSchedulePending, 'has-fav-count': hasFavCount}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
+a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending, 'has-fav-count': hasFavCount}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
 	.time-box
 		.start.schedule-pending(v-if="isSchedulePending")
 			svg.schedule-pending-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
@@ -19,8 +19,12 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 				.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer(v-if="!isSchedulePending")
 		.is-live(v-if="showLiveBadge && isLive") live
-	.info(:class="{'has-icons': hasAnyRightIcons}")
-		.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
+	.info(:class="{'has-icons': hasAnyRightIcons, 'grid-session-info': showSessionType, 'has-bottom-icons': hasBottomIcons}", :style="bottomIconsPaddingStyle")
+		template(v-if="showSessionType")
+			.title(:class="gridTitleClampClass", :title="gridMetaTitle(getLocalizedString(session.title))") {{ getLocalizedString(session.title) }}
+			.session-type(v-if="sessionTypeLabel", :class="{'single-line-clamped': isGridVeryShort}", :title="gridMetaTitle(sessionTypeLabel)") {{ sessionTypeLabel }}
+		template(v-else)
+			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
 		.speakers-row(v-if="namedSpeakers.length")
 			.speakers(
 				ref="speakersRow",
@@ -42,14 +46,18 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
 		.abstract(v-if="showAbstract", v-html="abstractText")
 		.bottom-info
-			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
+			.track(v-if="session.track", :class="{'single-line-clamped': isGridVeryShort}", :title="gridMetaTitle(getLocalizedString(session.track.name))") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room", :title="getLocalizedString(session.room.name)") {{ getLocalizedString(session.room.name) }}
-		.do_not_record(v-if="session.do_not_record", :title="doNotRecordTooltip", :aria-label="doNotRecordTooltip")
-			svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
-				g(transform="translate(-9.3465481,-5.441411)")
-					rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
-					path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
-					path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
+		.session-bottom-icons(v-if="hasBottomIcons")
+			.interpretation(v-if="showRoomInterpretation", :title="roomInterpretationTooltip", :aria-label="roomInterpretationTooltip")
+				svg.globe-icon(viewBox="0 0 24 24", width="18", height="18", fill="currentColor", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
+					path(d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z")
+			.do_not_record(v-if="session.do_not_record", :title="doNotRecordTooltip", :aria-label="doNotRecordTooltip")
+				svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
+					g(transform="translate(-9.3465481,-5.441411)")
+						rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
+						path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
+						path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
 	span.fav-count(v-if="hasFavCount", :aria-label="favCountLabel") {{ favCountLabel }}
 	.stream-indicator(v-if="canOpenStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
@@ -60,7 +68,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 </template>
 <script>
 import MarkdownIt from 'markdown-it'
-import { getLocalizedString, getPrettyDuration, getSessionTime, getContrastColor, normalizePopularityCount } from '../utils'
+import { getLocalizedString, getPrettyDuration, getSessionTime, getContrastColor, normalizePopularityCount, getSessionTypeLabel } from '../utils'
 import FavButton from './FavButton.vue'
 
 const markdownIt = MarkdownIt({
@@ -85,6 +93,10 @@ export default {
 			default: false
 		},
 		showTags: {
+			type: Boolean,
+			default: false
+		},
+		showSessionType: {
 			type: Boolean,
 			default: false
 		},
@@ -216,17 +228,52 @@ export default {
 			const m = this.translationMessages || {}
 			return m.schedule_do_not_record || 'This session will not be recorded.'
 		},
+		roomInterpretationTooltip () {
+			const m = this.translationMessages || {}
+			return m.schedule_room_has_interpretation || 'This room has live interpretation.'
+		},
+		showRoomInterpretation () {
+			return Boolean(this.session.room?.has_interpretation)
+		},
+		hasBottomIcons () {
+			return this.showRoomInterpretation || this.session.do_not_record
+		},
+		bottomIconsPaddingStyle () {
+			if (!this.hasBottomIcons) return {}
+			const count = (this.showRoomInterpretation ? 1 : 0) + (this.session.do_not_record ? 1 : 0)
+			return { '--session-bottom-icons-width': `${count * 32}px` }
+		},
+		sessionTypeLabel () {
+			return getSessionTypeLabel(this.session.session_type)
+		},
 		hasAnyRightIcons () {
 			return !this.favsReadOnly || this.canOpenStream || this.session.do_not_record
 		},
 		isShortSession () {
-			let minutes = 0
-			if (this.session.start && this.session.end && this.session.end.diff) {
-				minutes = this.session.end.diff(this.session.start, 'minutes')
-			} else if (this.session.duration) {
-				minutes = this.session.duration
-			}
+			const minutes = this.sessionDurationMinutes
 			return minutes > 0 && minutes <= 15
+		},
+		isGridVeryShort () {
+			return this.showSessionType && this.isVeryShortSession
+		},
+		gridTitleClampClass () {
+			if (!this.isGridVeryShort) {
+				return {}
+			}
+			return { 'single-line-clamped': true }
+		},
+		sessionDurationMinutes () {
+			if (this.session.duration) {
+				return Number(this.session.duration)
+			}
+			if (this.session.start && this.session.end?.diff) {
+				return Math.round(this.session.end.diff(this.session.start, 'minutes', true))
+			}
+			return 0
+		},
+		isVeryShortSession () {
+			const minutes = this.sessionDurationMinutes
+			return minutes > 0 && minutes <= 10
 		},
 		namedSpeakers () {
 			return (this.session.speakers || []).filter(s => (s.name || '').trim())
@@ -262,6 +309,10 @@ export default {
 		this._speakersResizeObserver?.disconnect?.()
 	},
 	methods: {
+		gridMetaTitle (text) {
+			if (!this.isGridVeryShort || !text) return null
+			return text
+		},
 		toggleFav () {
 			if (this.favsReadOnly) return
 			if (this.faved) {
@@ -345,9 +396,44 @@ sessionTextExpand()
 	word-break: break-word
 	text-overflow: clip
 
+sessionMetaClamp()
+	min-width: 0
+	max-width: 100%
+	width: 100%
+	flex: 0 1 auto
+	display: block
+	overflow: hidden
+	white-space: nowrap
+	text-overflow: ellipsis
+	overflow-wrap: normal
+	word-break: normal
+
+sessionMetaExpand()
+	white-space: normal
+	overflow: visible
+	text-overflow: clip
+	overflow-wrap: anywhere
+	word-break: break-word
+	max-width: none
+	width: auto
+	flex: 1 1 100%
+
+expandGridVeryShortSession()
+	z-index: 20
+	.info.grid-session-info
+		overflow: visible
+		.bottom-info
+			overflow: visible
+			align-items: flex-start
+			align-content: flex-start
+		.single-line-clamped
+			sessionMetaExpand()
+
 expandClampedSessionText()
 	.title.title-clamped
 		sessionTextExpand()
+	.single-line-clamped
+		sessionMetaExpand()
 	.speakers.names-clamped
 		max-height: none
 		overflow: visible
@@ -495,6 +581,22 @@ expandClampedSessionText()
 			margin-right: 0
 			&.title-clamped
 				sessionTextClamp(2)
+		.single-line-clamped
+			sessionMetaClamp()
+		.session-type
+			font-size: 12px
+			font-weight: 600
+			text-transform: uppercase
+			letter-spacing: 0.04em
+			color: $clr-secondary-text-light
+			margin-bottom: 2px
+			display: block
+			min-width: 0
+			max-width: 100%
+			&:not(.single-line-clamped)
+				white-space: normal
+				overflow-wrap: anywhere
+				word-break: break-word
 		.speakers-row
 			display: flex
 			align-items: center
@@ -556,11 +658,15 @@ expandClampedSessionText()
 			align-items: flex-end
 			gap: 4px
 			min-width: 0
+			overflow: hidden
 			.track
-				flex: 1
+				flex: 1 1 0%
 				min-width: 0
 				color: var(--track-color)
-				ellipsis()
+				&:not(.single-line-clamped)
+					ellipsis()
+				&.single-line-clamped
+					sessionMetaClamp()
 			.room
 				flex: 1
 				min-width: 0
@@ -569,17 +675,42 @@ expandClampedSessionText()
 				white-space: nowrap
 				overflow: hidden
 				text-overflow: ellipsis
-		.do_not_record
+		&.has-bottom-icons .bottom-info
+			padding-right: var(--session-bottom-icons-width, 32px)
+		.session-bottom-icons
 			position: absolute
-			bottom: 2px
 			right: 2px
-			width: 32px
-			height: 32px
+			bottom: 2px
 			display: flex
-			justify-content: center
 			align-items: center
-			line-height: 0
 			z-index: 5
+			.interpretation, .do_not_record
+				width: 32px
+				height: 32px
+				display: flex
+				justify-content: center
+				align-items: center
+				line-height: 0
+				flex-shrink: 0
+				pointer-events: auto
+				cursor: help
+				svg
+					pointer-events: none
+			.interpretation
+				color: $clr-secondary-text-light
+				.globe-icon
+					display: block
+		&.grid-session-info
+			min-width: 0
+			overflow: hidden
+			.bottom-info .track:not(.single-line-clamped)
+				display: block
+				flex: 1 1 auto
+				white-space: normal
+				overflow: visible
+				text-overflow: clip
+				overflow-wrap: anywhere
+				word-break: break-word
 	.tags-box
 		display: flex
 		flex-wrap: wrap
@@ -617,7 +748,7 @@ expandClampedSessionText()
 		position: absolute
 		top: 10px
 		right: 38px
-		z-index: 12
+		z-index: 25
 		display: inline-flex
 		align-items: center
 		justify-content: center
@@ -650,6 +781,8 @@ expandClampedSessionText()
 	&.has-fav-count
 		.info.has-icons
 			padding-right: 68px
+	&.grid-very-short
+		position: relative
 	&:hover
 		.info
 			border: 1px solid var(--track-color)
@@ -661,6 +794,8 @@ expandClampedSessionText()
 	@media (hover: hover) and (pointer: fine)
 		&:hover
 			expandClampedSessionText()
+		&.grid-very-short:hover
+			expandGridVeryShortSession()
 @media(hover: none)
 	.c-linear-schedule-session .session-icons .btn-fav-container
 		display: inline-flex
