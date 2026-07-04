@@ -112,6 +112,9 @@ var editor = {
     dirty: false,
     pdf_url: null,
     uploaded_file_id: null,
+    page_width_mm: null,
+    page_height_mm: null,
+    _page_resize_in_progress: false,
     _window_loaded: false,
     _fabric_loaded: false,
     _last_active_object: null,
@@ -130,6 +133,68 @@ var editor = {
 
     _pt2px: function (v) {
         return v * editor.pdf_scale / editor.pdf_page.userUnit;
+    },
+
+    _csrf_token: function () {
+        return $("input[name=csrfmiddlewaretoken]").val();
+    },
+
+    _set_background_busy: function (busy, showProgress) {
+        $("#fileupload").prop("disabled", busy);
+        $("#pdf-info-width, #pdf-info-height").prop("disabled", busy);
+        $(".background-button").toggleClass("disabled", busy);
+        if (!busy) {
+            return;
+        }
+        $("#loading-container, #loading-upload").show();
+        $("#loading-upload .progress").toggle(!!showProgress);
+        if (showProgress) {
+            $("#loading-upload .progress-bar").css("width", 0);
+        }
+    },
+
+    _finish_background_action: function (hideLoading) {
+        editor._page_resize_in_progress = false;
+        $("#fileupload").prop("disabled", false);
+        $("#pdf-info-width, #pdf-info-height").prop("disabled", false);
+        $(".background-button").removeClass("disabled");
+        if (hideLoading) {
+            $("#loading-container, #loading-upload").hide();
+        }
+    },
+
+    _handle_background_error: function (message) {
+        alert(message || gettext("Error while updating the background PDF, please try again."));
+        editor._finish_background_action(true);
+    },
+
+    _apply_background_response: function (data) {
+        if (data.status !== "ok") {
+            editor._handle_background_error(data.error);
+            return false;
+        }
+        editor.uploaded_file_id = data.id;
+        editor._finish_background_action(false);
+        editor._replace_pdf_file(data.url);
+        return true;
+    },
+
+    _revoke_preview_blob: function () {
+        var $iframe = $("#preview-iframe");
+        var oldUrl = $iframe.data("blob-url");
+        if (!oldUrl) {
+            return;
+        }
+        URL.revokeObjectURL(oldUrl);
+        $iframe.removeData("blob-url");
+        $iframe.attr("src", "about:blank");
+    },
+
+    _show_preview_blob: function (blob) {
+        editor._revoke_preview_blob();
+        var url = URL.createObjectURL(blob);
+        $("#preview-iframe").data("blob-url", url).attr("src", url);
+        $("#preview-modal").modal("show");
     },
 
     dump: function (objs) {
@@ -416,6 +481,8 @@ var editor = {
 
                 $("#pdf-info-width").val(editor._px2mm(viewport.width).toFixed(2));
                 $("#pdf-info-height").val(editor._px2mm(viewport.height).toFixed(2));
+                editor.page_width_mm = parseFloat($("#pdf-info-width").val());
+                editor.page_height_mm = parseFloat($("#pdf-info-height").val());
 
                 // Render PDF page into canvas context
                 var renderContext = {
@@ -676,6 +743,48 @@ var editor = {
             $("#toolbox-heading").text(gettext("Ticket design"));
         }
         editor._update_toolbox_values();
+    },
+
+    _on_page_size_field_change: function () {
+        if (editor._page_resize_in_progress) {
+            return;
+        }
+        editor._apply_page_size_from_fields();
+    },
+
+    _apply_page_size_from_fields: function () {
+        if (editor._page_resize_in_progress || !editor.pdf_page) {
+            return;
+        }
+        var width = parseFloat($("#pdf-info-width").val());
+        var height = parseFloat($("#pdf-info-height").val());
+        if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+            return;
+        }
+        if (editor.page_width_mm !== null &&
+                Math.abs(width - editor.page_width_mm) < 0.05 &&
+                Math.abs(height - editor.page_height_mm) < 0.05) {
+            return;
+        }
+
+        editor._page_resize_in_progress = true;
+        editor._set_background_busy(true, false);
+        $.post(window.location.href, {
+            csrfmiddlewaretoken: editor._csrf_token(),
+            resizebackground: "true",
+            width: width,
+            height: height,
+            background: editor.uploaded_file_id || "",
+        }, function (data) {
+            if (data.status === "ok") {
+                editor.page_width_mm = width;
+                editor.page_height_mm = height;
+                editor.dirty = true;
+            }
+            editor._apply_background_response(data);
+        }, "json").fail(function () {
+            editor._handle_background_error();
+        });
     },
 
     _error: function (msg) {
@@ -946,19 +1055,41 @@ var editor = {
         return false;
     },
 
-    _preview: function () {
+    _preview: function (e) {
+        e.preventDefault();
         editor._sync_active_text_object_from_toolbox();
-        $("#preview-form input[name=data]").val(JSON.stringify(editor.dump()));
-        $("#preview-form input[name=background]").val(editor.uploaded_file_id);
-        $("#preview-form").get(0).submit();
+        var formData = new FormData();
+        formData.append('data', JSON.stringify(editor.dump()));
+        formData.append('background', editor.uploaded_file_id || '');
+        formData.append('preview', 'true');
+        formData.append("csrfmiddlewaretoken", editor._csrf_token());
+
+        $("#editor-preview").prop("disabled", true);
+        fetch(window.location.href, {
+            method: "POST",
+            body: formData,
+            credentials: "same-origin",
+        }).then(function (response) {
+            if (!response.ok) {
+                throw new Error("Preview failed");
+            }
+            return response.blob();
+        }).then(function (blob) {
+            editor._show_preview_blob(blob);
+        }).catch(function () {
+            alert(gettext("Preview failed."));
+        }).finally(function () {
+            $("#editor-preview").prop("disabled", false);
+        });
+        return false;
     },
 
     _replace_pdf_file: function (url) {
         editor.pdf_url = url;
         editor._sync_active_text_object_from_toolbox();
-        d = editor.dump();
+        var dump = editor.dump();
         editor.fabric.dispose();
-        editor._load_pdf(d);
+        editor._load_pdf(dump);
     },
 
     _source_show: function () {
@@ -977,27 +1108,17 @@ var editor = {
     },
 
     _create_empty_background: function () {
-        $("#loading-container, #loading-upload").show();
-        $("#loading-upload .progress").show();
-        $('#loading-upload .progress-bar').css('width', 0);
-        $("#fileupload").prop('disabled', true);
-        $(".background-button").addClass("disabled");
+        editor._set_background_busy(true, true);
         $.post(window.location.href, {
-            'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val(),
-            'emptybackground': 'true',
-            'width': $("#pdf-info-width").val(),
-            'height': $("#pdf-info-height").val(),
+            csrfmiddlewaretoken: editor._csrf_token(),
+            emptybackground: "true",
+            width: $("#pdf-info-width").val(),
+            height: $("#pdf-info-height").val(),
         }, function (data) {
-            if (data.status === "ok") {
-                editor.uploaded_file_id = data.id;
-                editor._replace_pdf_file(data.url);
-            } else {
-                alert(data.result.error || gettext("Error while uploading your PDF file, please try again."));
-                $("#loading-container, #loading-upload").hide();
-            }
-            $("#fileupload").prop('disabled', false);
-            $(".background-button").removeClass("disabled");
-        }, 'json');
+            editor._apply_background_response(data);
+        }, "json").fail(function () {
+            editor._handle_background_error();
+        });
     },
 
     init: function () {
@@ -1014,6 +1135,8 @@ var editor = {
         editor.$cva.on("keydown", editor._on_keydown);
         $("#editor-save").on("click", editor._save);
         $("#editor-preview").on("click", editor._preview);
+        $("#preview-modal").appendTo("body");
+        $("#preview-modal").on("hidden.bs.modal", editor._revoke_preview_blob);
         window.onbeforeunload = function () {
             if (editor.dirty) {
                 return gettext("Do you really want to leave the editor without saving your changes?");
@@ -1023,6 +1146,7 @@ var editor = {
 
 
         $("#pdf-empty").on("click", editor._create_empty_background);
+        $("#pdf-info-width, #pdf-info-height").on("change", editor._on_page_size_field_change);
         $('#fileupload').fileupload({
             url: location.href,
             dataType: 'json',

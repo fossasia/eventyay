@@ -26,7 +26,7 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <div class="pull-right flip">
-                        <div class="btn-group">
+                        <div class="btn-group editor-panel-toolbar">
                             <button type="button" class="btn btn-default btn-xs" id="toolbox-source"
                                     title="{% trans "Code" %}">
                                 <span class="fa fa-code"></span>
@@ -152,7 +152,7 @@
             <div class="panel panel-default" id="toolbox">
                 <div class="panel-heading">
                     <div class="pull-right object-buttons flip">
-                        <div class="btn-group">
+                        <div class="btn-group editor-panel-toolbar">
                             <button type="button" class="btn btn-default btn-xs" id="toolbox-cut"
                                     title="{% trans "Cut" %}">
                                 <span class="fa fa-cut"></span>
@@ -161,9 +161,9 @@
                                     title="{% trans "Copy" %}">
                                 <span class="fa fa-copy"></span>
                             </button>
-                            <button type="button" class="btn btn-delete btn-danger btn-xs" id="toolbox-delete"
+                            <button type="button" class="btn btn-default btn-xs" id="toolbox-delete"
                                     title="{% trans "Delete" %}">
-                                <span class="fa fa-trash"></span>
+                                <span class="fa fa-trash text-danger"></span>
                             </button>
                         </div>
                     </div>
@@ -416,12 +416,9 @@
                 </div>
             </div>
 
-            <form method="post" action="" id="preview-form" target="_blank">
+            <form method="post" action="" id="preview-form">
                 <div class="form-group submit-group">
                     {% csrf_token %}
-                    <input type="hidden" value="" name="data">
-                    <input type="hidden" value="" name="background">
-                    <input type="hidden" value="true" name="preview">
                     <button type="button" class="btn btn-default btn-lg" id="editor-preview">
                         {% trans "Preview" %}
                     </button>
@@ -432,6 +429,24 @@
             </form>
         </div>
     </div>
+
+    <div class="modal fade" id="preview-modal" tabindex="-1" role="dialog" aria-labelledby="preview-modal-title">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"
+                            title="{% trans "Close preview" %}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="preview-modal-title">{% trans "Preview" %}</h4>
+                </div>
+                <div class="modal-body">
+                    <iframe id="preview-iframe" class="pdf-preview-iframe" title="{% trans "Preview" %}"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="{% static "pdfjs/pdf.js" %}"></script>
     <script type="text/javascript" src="{% static "fabric/fabric.min.js" %}"></script>
     <script type="text/javascript" src="{% static "pretixcontrol/js/ui/editor.js" %}"></script>

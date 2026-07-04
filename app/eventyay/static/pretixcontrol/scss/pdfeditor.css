@@ -74,6 +74,42 @@ body {
     min-width: 244px;
 }
 
+.editor-panel-toolbar > .btn {
+    padding: 2px 6px;
+    font-size: 12px;
+    line-height: 1.42857143;
+    min-width: 24px;
+}
+
+.editor-panel-toolbar > .btn .fa {
+    width: 1em;
+    text-align: center;
+}
+
+body #preview-modal.modal {
+    z-index: 1200;
+}
+
+body.modal-open .modal-backdrop {
+    z-index: 1190;
+}
+
+#preview-modal .modal-dialog {
+    width: 90%;
+    max-width: 900px;
+    margin-top: 72px;
+}
+
+#preview-modal .modal-body {
+    padding-top: 24px;
+}
+
+#preview-modal .pdf-preview-iframe {
+    width: 100%;
+    min-height: 70vh;
+    border: none;
+}
+
 #toolbox input.show-spinner {
     -moz-appearance: number-input;
     -webkit-appearance: number-input;
