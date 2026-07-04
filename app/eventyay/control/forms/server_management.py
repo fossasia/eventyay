@@ -19,6 +19,7 @@ from eventyay.base.models.event import (
     EventPlannedUsage as PlannedUsage,
     default_feature_flags,
 )
+from eventyay.base.services.jitsi import normalize_server_url
 
 User = get_user_model()
 SECRET_REDACTED = "*****"
@@ -168,7 +169,10 @@ class EventForm(forms.ModelForm):
         else:
             flags = default_feature_flags()
         for feature in FEATURE_FLAGS:
-            flags[feature] = feature in selected
+            if feature in selected:
+                flags[feature] = True
+            else:
+                flags.pop(feature, None)
         return flags
 
 
@@ -232,6 +236,12 @@ class JanusServerForm(HasSecretsMixin, forms.ModelForm):
 
 
 class JitsiServerForm(HasSecretsMixin, forms.ModelForm):
+    def clean_url(self):
+        normalized = normalize_server_url(self.cleaned_data["url"])
+        if not normalized:
+            raise ValidationError(_("Enter a valid Jitsi server URL."))
+        return normalized["url"]
+
     class Meta:
         model = JitsiServer
         fields = (
