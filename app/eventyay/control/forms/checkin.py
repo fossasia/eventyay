@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django import forms
 from django.urls import reverse
 from django.utils.timezone import get_current_timezone, make_aware, now
+from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes.forms import (
     SafeModelChoiceField,
@@ -77,6 +78,20 @@ class CheckinListForm(forms.ModelForm):
         else:
             del self.fields['subevent']
 
+        popup_choices = CheckinList.display_popup_field_choices(self.event)
+        self.fields['display_popup_fields'] = forms.MultipleChoiceField(
+            label=_('Additional check-in pop-up fields'),
+            help_text=_(
+                'Select additional attendee registration data fields to display on the check-in success pop-up screen.'
+            ),
+            required=False,
+            choices=popup_choices,
+            widget=forms.CheckboxSelectMultiple,
+            initial=CheckinList.normalize_display_popup_fields(
+                self.instance.display_popup_fields if self.instance.pk else []
+            ),
+        )
+
     class Meta:
         model = CheckinList
         localized_fields = '__all__'
@@ -89,6 +104,8 @@ class CheckinListForm(forms.ModelForm):
             'auto_checkin_sales_channels',
             'allow_multiple_entries',
             'allow_entry_after_exit',
+            'limit_one_checkin_per_day',
+            'limit_one_checkin_per_gate',
             'rules',
             'gates',
             'exit_all_at',
@@ -109,7 +126,20 @@ class CheckinListForm(forms.ModelForm):
     def clean(self):
         d = super().clean()
         CheckinList.validate_rules(d.get('rules'))
+        validated_fields = CheckinList.validate_display_popup_fields(
+            self.event,
+            self.cleaned_data.get('display_popup_fields', []),
+        )
+        self.cleaned_data['display_popup_fields'] = validated_fields
         return d
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.display_popup_fields = self.cleaned_data.get('display_popup_fields', [])
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 class SimpleCheckinListForm(forms.ModelForm):

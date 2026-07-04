@@ -40,6 +40,24 @@
                 {% bootstrap_field form.include_pending layout="control" %}
                 {% bootstrap_field form.all_products layout="control" %}
                 {% bootstrap_field form.limit_products layout="control" %}
+                <fieldset>
+                    <legend>{% trans "Check-in App Display" %}</legend>
+                    <p class="help-block">
+                        {% blocktrans trimmed %}
+                            Select additional attendee registration data fields to display on the check-in success pop-up screen.
+                        {% endblocktrans %}
+                    </p>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">{% trans "Always shown" %}</label>
+                        <div class="col-md-9">
+                            <ul class="help-block list-unstyled" style="margin-bottom: 12px;">
+                                <li><input type="checkbox" checked disabled> {% trans "Attendee name" %}</li>
+                                <li><input type="checkbox" checked disabled> {% trans "Ticket name / variant" %}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% bootstrap_field form.display_popup_fields layout="control" %}
+                </fieldset>
             </fieldset>
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
@@ -65,6 +83,8 @@
 
                 {% bootstrap_field form.allow_multiple_entries layout="control" %}
                 {% bootstrap_field form.allow_entry_after_exit layout="control" %}
+                {% bootstrap_field form.limit_one_checkin_per_day layout="control" %}
+                {% bootstrap_field form.limit_one_checkin_per_gate layout="control" %}
                 {% bootstrap_field form.exit_all_at layout="control" %}
                 {% bootstrap_field form.auto_checkin_sales_channels layout="control" %}
                 {% if form.gates %}

@@ -6,7 +6,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.timezone import is_aware, make_aware, now
+from django.utils.timezone import is_aware, make_aware
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DeleteView, ListView
 from pytz import UTC
@@ -14,7 +14,7 @@ from pytz import UTC
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import Checkin, Order, OrderPosition
 from eventyay.base.models.checkin import CheckinList
-from eventyay.base.signals import checkin_created
+from eventyay.base.services.checkin import CheckInError, perform_checkin
 from eventyay.control.forms.checkin import CheckinListForm
 from eventyay.control.forms.filter import CheckInFilterForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
@@ -159,52 +159,34 @@ class CheckInListShow(EventPermissionRequiredMixin, PaginationMixin, ListView):
 
             messages.success(request, _('The selected check-ins have been reverted.'))
         else:
+            checkin_type = Checkin.TYPE_EXIT if request.POST.get('checkout') == 'true' else Checkin.TYPE_ENTRY
+            succeeded = 0
+            failed = 0
             for op in positions:
                 if op.order.status == Order.STATUS_PAID or (
                     self.list.include_pending and op.order.status == Order.STATUS_PENDING
                 ):
-                    t = Checkin.TYPE_EXIT if request.POST.get('checkout') == 'true' else Checkin.TYPE_ENTRY
+                    try:
+                        perform_checkin(
+                            op,
+                            self.list,
+                            {},
+                            ignore_unpaid=self.list.include_pending,
+                            questions_supported=False,
+                            user=request.user,
+                            type=checkin_type,
+                        )
+                        succeeded += 1
+                    except CheckInError:
+                        failed += 1
 
-                    lci = op.checkins.filter(list=self.list).first()
-                    if (
-                        self.list.allow_multiple_entries
-                        or t != Checkin.TYPE_ENTRY
-                        or (lci and lci.type != Checkin.TYPE_ENTRY)
-                    ):
-                        ci = Checkin.objects.create(position=op, list=self.list, datetime=now(), type=t)
-                        created = True
-                    else:
-                        try:
-                            ci, created = Checkin.objects.get_or_create(
-                                position=op,
-                                list=self.list,
-                                defaults={
-                                    'datetime': now(),
-                                },
-                            )
-                        except Checkin.MultipleObjectsReturned:
-                            ci, created = (
-                                Checkin.objects.filter(position=op, list=self.list).first(),
-                                False,
-                            )
-
-                    op.order.log_action(
-                        'pretix.event.checkin',
-                        data={
-                            'position': op.id,
-                            'positionid': op.positionid,
-                            'first': created,
-                            'forced': False,
-                            'datetime': now(),
-                            'type': t,
-                            'list': self.list.pk,
-                            'web': True,
-                        },
-                        user=request.user,
-                    )
-                    checkin_created.send(op.order.event, checkin=ci)
-
-            messages.success(request, _('The selected tickets have been marked as checked in.'))
+            if succeeded:
+                messages.success(request, _('The selected tickets have been marked as checked in.'))
+            if failed:
+                messages.warning(
+                    request,
+                    _('%(count)s ticket(s) could not be updated due to check-in rules.') % {'count': failed},
+                )
 
         return redirect(
             reverse(
