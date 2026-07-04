@@ -8,6 +8,8 @@ from .models import BadgeLayout, BadgeProduct
 
 
 BADGE_HIDDEN_FIELDS_KEY = 'badge_hidden_fields'
+BADGE_FIELD_OVERRIDES_KEY = 'badge_field_overrides'
+BADGE_FIELD_OVERRIDE_MAX_LENGTH = 190
 
 
 def clear_badge_layout_cache(event):
@@ -60,6 +62,161 @@ def get_badge_hidden_fields(position):
     if isinstance(hidden_fields, str):
         return [hidden_fields]
     return hidden_fields
+
+
+def get_badge_field_overrides(position):
+    config_position = get_badge_config_position(position)
+    root_question_form_data = config_position.meta_info_data.get('question_form_data', {})
+    raw = root_question_form_data.get(BADGE_FIELD_OVERRIDES_KEY)
+    if raw is None:
+        raw = position.meta_info_data.get('question_form_data', {}).get(BADGE_FIELD_OVERRIDES_KEY, {})
+    if not isinstance(raw, dict):
+        return {}
+    return {str(key): str(value) for key, value in raw.items()}
+
+
+def _badge_customization_layout(event, position):
+    from django.core.exceptions import ValidationError
+
+    layout = get_badge_layout_for_position(event, position)
+    if not layout or not layout.allow_customization:
+        raise ValidationError(_('Badge customization is not allowed for this ticket.'))
+    return layout
+
+
+def validate_badge_hidden_fields(event, position, hidden_fields):
+    from django.core.exceptions import ValidationError
+
+    if 'eventyay.plugins.badges' not in event.plugins:
+        raise ValidationError(_('Badge customization is not enabled for this event.'))
+
+    layout = _badge_customization_layout(event, position)
+
+    allowed_keys = {key for key, _ in get_badge_bundle_option_choices(event, position)}
+    if hidden_fields is None:
+        normalized = []
+    elif isinstance(hidden_fields, str):
+        normalized = [hidden_fields]
+    elif isinstance(hidden_fields, (list, tuple)):
+        normalized = [str(value) for value in hidden_fields]
+    else:
+        raise ValidationError(_('badge_hidden_fields must be a list of field keys.'))
+    invalid_keys = sorted({key for key in normalized if key not in allowed_keys})
+    if invalid_keys:
+        raise ValidationError(
+            _('Invalid badge field keys: {keys}').format(keys=', '.join(invalid_keys))
+        )
+    return normalized
+
+
+def save_badge_hidden_fields(position, hidden_fields):
+    save_badge_customization(position, hidden_fields=hidden_fields)
+
+
+def validate_badge_field_overrides(event, position, field_overrides):
+    from django.core.exceptions import ValidationError
+
+    if 'eventyay.plugins.badges' not in event.plugins:
+        raise ValidationError(_('Badge customization is not enabled for this event.'))
+
+    layout = _badge_customization_layout(event, position)
+    if not layout.allow_badge_editing:
+        raise ValidationError(_('Badge editing is not allowed for this ticket.'))
+
+    allowed_keys = {key for key, _label in get_badge_bundle_option_choices(event, position)}
+    if field_overrides is None:
+        return {}
+    if not isinstance(field_overrides, dict):
+        raise ValidationError(_('badge_field_overrides must be an object of field keys to text values.'))
+
+    normalized = {}
+    for key, value in field_overrides.items():
+        key = str(key)
+        if key not in allowed_keys:
+            raise ValidationError(
+                _('Invalid badge field keys: {keys}').format(keys=', '.join(sorted({key})))
+            )
+        text = str(value or '').strip()
+        if len(text) > BADGE_FIELD_OVERRIDE_MAX_LENGTH:
+            raise ValidationError(
+                _('Badge field text for {key} is too long.').format(key=key)
+            )
+        if text:
+            normalized[key] = text
+    return normalized
+
+
+def _invalidate_badge_cache_for_position(position):
+    from eventyay.base.models import CachedFile, CachedTicket
+
+    position_ids = [bundle_position.pk for bundle_position in get_badge_bundle_positions(position)]
+    CachedTicket.objects.filter(
+        order_position_id__in=position_ids,
+        provider='badge',
+    ).delete()
+    for position_id in position_ids:
+        CachedFile.objects.filter(filename__startswith=f'badge_{position_id}_').delete()
+
+
+def save_badge_customization(position, *, hidden_fields=None, field_overrides=None):
+    config_position = get_badge_config_position(position)
+    meta = dict(config_position.meta_info_data or {})
+    question_form_data = dict(meta.get('question_form_data', {}))
+    changed = False
+
+    if hidden_fields is not None:
+        new_hidden = list(hidden_fields)
+        current_hidden = get_badge_hidden_fields(position)
+        if sorted(new_hidden) != sorted(current_hidden):
+            question_form_data[BADGE_HIDDEN_FIELDS_KEY] = new_hidden
+            changed = True
+
+    if field_overrides is not None:
+        new_overrides = dict(field_overrides)
+        if new_overrides != get_badge_field_overrides(position):
+            question_form_data[BADGE_FIELD_OVERRIDES_KEY] = new_overrides
+            changed = True
+
+    if not changed:
+        return False
+
+    meta['question_form_data'] = question_form_data
+    config_position.meta_info_data = meta
+    config_position.save(update_fields=['meta_info'])
+    _invalidate_badge_cache_for_position(position)
+    return True
+
+
+def get_badge_field_display_values(event, position):
+    from eventyay.base.pdf import get_variables
+
+    layout = get_badge_layout_for_position(event, position)
+    if not layout or not layout.allow_customization:
+        return {}
+
+    ask_user_keys = set(layout.ask_user_fields_data)
+    overrides = get_badge_field_overrides(position)
+    variables = get_variables(event)
+    order = position.order
+    ev = position.subevent or event
+    values = {}
+
+    for field in get_badge_customizable_fields(event, layout):
+        key = field['key']
+        if key not in ask_user_keys:
+            continue
+        if key in overrides:
+            values[key] = overrides[key]
+            continue
+        variable = variables.get(key)
+        if variable and 'evaluate' in variable:
+            try:
+                values[key] = str(variable['evaluate'](position, order, ev) or '')
+            except Exception:
+                values[key] = ''
+        else:
+            values[key] = str(field.get('sample') or '')
+    return values
 
 
 def get_badge_bundle_root(position):
