@@ -1101,6 +1101,88 @@ h1 .label {
     }
 }
 
+.device-page-actions {
+  margin-bottom: 16px;
+
+  .btn + .btn {
+    margin-left: 6px;
+  }
+}
+
+.device-regenerate-form {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.device-subpage-nav {
+  margin-top: 0;
+}
+
+.device-connect-regenerate-panel {
+  margin-top: 40px;
+  margin-bottom: 0;
+}
+
+.help-block.device-connect-token-hint {
+  max-width: 640px;
+  color: $brand-danger;
+}
+
+.pretix-confirm-dialog {
+  border: none;
+  border-radius: $border-radius-large;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  width: 420px;
+  max-width: 90vw;
+  background: $body-bg;
+  overflow: hidden;
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+  }
+
+  &__title {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: $text-color;
+  }
+
+  &__message {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: $text-muted;
+    white-space: pre-wrap;
+  }
+
+  &__actions {
+    .btn + .btn {
+      margin-left: 8px;
+    }
+  }
+}
+
+.device-event-links {
+  margin: 0;
+
+  li + li {
+    margin-top: 4px;
+  }
+
+  a {
+    font-weight: 600;
+  }
+
+  .fa {
+    margin-right: 4px;
+  }
+}
+
 /* Leaflet image path overrides for compressed leaflet.css */
 .leaflet-container {
     .leaflet-control-layers-toggle {
