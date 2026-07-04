@@ -114,6 +114,8 @@ var editor = {
     uploaded_file_id: null,
     page_width_mm: null,
     page_height_mm: null,
+    page_aspect_ratio: null,
+    page_size_lock_aspect: false,
     _page_resize_in_progress: false,
     _page_size_timer: null,
     _window_loaded: false,
@@ -134,6 +136,12 @@ var editor = {
 
     _pt2px: function (v) {
         return v * editor.pdf_scale / editor.pdf_page.userUnit;
+    },
+
+    _update_page_aspect_ratio: function () {
+        if (editor.page_width_mm > 0 && editor.page_height_mm > 0) {
+            editor.page_aspect_ratio = editor.page_width_mm / editor.page_height_mm;
+        }
     },
 
     _revoke_preview_blob: function () {
@@ -449,6 +457,7 @@ var editor = {
                     setPageSize("#pdf-info-height", heightMm);
                     editor.page_width_mm = parseFloat($("#pdf-info-width").val());
                     editor.page_height_mm = parseFloat($("#pdf-info-height").val());
+                    editor._update_page_aspect_ratio();
                 }
 
                 // Render PDF page into canvas context
@@ -716,6 +725,23 @@ var editor = {
         editor._update_toolbox_values();
     },
 
+    _on_page_size_dimension_input: function (source) {
+        if (!editor.page_size_lock_aspect || !editor.page_aspect_ratio) {
+            return;
+        }
+        if (source === "width") {
+            var width = parseFloat($("#pdf-info-width").val());
+            if (!isNaN(width) && width > 0) {
+                $("#pdf-info-height").val((width / editor.page_aspect_ratio).toFixed(2));
+            }
+            return;
+        }
+        var height = parseFloat($("#pdf-info-height").val());
+        if (!isNaN(height) && height > 0) {
+            $("#pdf-info-width").val((height * editor.page_aspect_ratio).toFixed(2));
+        }
+    },
+
     _on_page_size_field_change: function () {
         window.clearTimeout(editor._page_size_timer);
         editor._page_size_timer = window.setTimeout(function () {
@@ -739,10 +765,21 @@ var editor = {
         if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
             return;
         }
-        if (editor.page_width_mm !== null &&
-                Math.abs(width - editor.page_width_mm) < 0.05 &&
-                Math.abs(height - editor.page_height_mm) < 0.05) {
+
+        var widthChanged = editor.page_width_mm === null ||
+            Math.abs(width - editor.page_width_mm) >= 0.05;
+        var heightChanged = editor.page_height_mm === null ||
+            Math.abs(height - editor.page_height_mm) >= 0.05;
+        if (!widthChanged && !heightChanged) {
             return;
+        }
+
+        if (!editor.page_size_lock_aspect) {
+            if (widthChanged && !heightChanged) {
+                height = editor.page_height_mm;
+            } else if (heightChanged && !widthChanged) {
+                width = editor.page_width_mm;
+            }
         }
 
         editor._page_resize_in_progress = true;
@@ -763,6 +800,7 @@ var editor = {
             if (data.status === "ok") {
                 editor.page_width_mm = width;
                 editor.page_height_mm = height;
+                editor._update_page_aspect_ratio();
                 editor.uploaded_file_id = data.id;
                 editor.dirty = true;
                 editor._replace_pdf_file(data.url, true);
@@ -776,6 +814,19 @@ var editor = {
             $(".background-button").removeClass("disabled");
             alert(gettext("Error while updating the background PDF, please try again."));
         });
+    },
+
+    _toggle_page_size_lock: function () {
+        editor.page_size_lock_aspect = !editor.page_size_lock_aspect;
+        var $btn = $("#pdf-info-lock-aspect");
+        $btn.toggleClass("active", editor.page_size_lock_aspect);
+        $btn.attr("aria-pressed", editor.page_size_lock_aspect ? "true" : "false");
+        $btn.find(".fa")
+            .toggleClass("fa-link", editor.page_size_lock_aspect)
+            .toggleClass("fa-unlink", !editor.page_size_lock_aspect);
+        if (editor.page_size_lock_aspect) {
+            editor._update_page_aspect_ratio();
+        }
     },
 
     _error: function (msg) {
@@ -1165,6 +1216,13 @@ var editor = {
 
 
         $("#pdf-empty").on("click", editor._create_empty_background);
+        $("#pdf-info-lock-aspect").on("click", editor._toggle_page_size_lock);
+        $("#pdf-info-width").on("input", function () {
+            editor._on_page_size_dimension_input("width");
+        });
+        $("#pdf-info-height").on("input", function () {
+            editor._on_page_size_dimension_input("height");
+        });
         $("#pdf-info-width, #pdf-info-height").on("change focusout", editor._on_page_size_field_change);
         $('#fileupload').fileupload({
             url: location.href,
