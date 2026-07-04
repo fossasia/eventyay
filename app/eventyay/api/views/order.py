@@ -908,6 +908,10 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                     ),
                 ),
             ).select_related('product', 'variation', 'product__category', 'addon_to', 'seat')
+        elif self.request.query_params.get('exclude_details', 'false') == 'true':
+            qs = qs.prefetch_related(
+                'checkins',
+            ).select_related('product', 'order', 'order__event', 'order__event__organizer', 'seat')
         else:
             qs = qs.prefetch_related(
                 'checkins',

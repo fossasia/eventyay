@@ -10,6 +10,7 @@ from rest_framework import serializers
 from eventyay.api.serializers.event import MetaDataField
 from eventyay.api.serializers.fields import UploadedFileField
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
+from eventyay.base.admission_validity import is_catalog_admission_currently_valid
 from eventyay.base.models import (
     Product,
     ProductAddOn,
@@ -224,6 +225,29 @@ class ProductSerializer(I18nAwareModelSerializer):
             'meta_data',
         )
         read_only_fields = ('has_variations',)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context.get('filter_catalog_admission_validity'):
+            return data
+
+        event = self.context['event']
+        subevent = self.context.get('admission_validity_subevent')
+        if not instance.has_variations:
+            return data
+
+        variation_lookup = {variation.pk: variation for variation in instance.variations.all()}
+        data['variations'] = [
+            variation_data
+            for variation_data in data.get('variations', [])
+            if is_catalog_admission_currently_valid(
+                instance,
+                variation_lookup.get(variation_data['id']),
+                event,
+                subevent,
+            )
+        ]
+        return data
 
     def validate(self, data):
         data = super().validate(data)

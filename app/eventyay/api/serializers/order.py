@@ -21,12 +21,14 @@ from eventyay.api.serializers.product import (
     InlineProductVariationSerializer,
     ProductSerializer,
 )
+from eventyay.base.admission_validity import is_catalog_admission_currently_valid
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.decimal import round_decimal
 from eventyay.base.i18n import language
 from eventyay.base.models import (
     CachedFile,
     Checkin,
+    Device,
     Invoice,
     InvoiceAddress,
     InvoiceLine,
@@ -998,6 +1000,19 @@ class OrderPositionCreateSerializer(I18nAwareModelSerializer):
         if data.get('country'):
             if not pycountry.countries.get(alpha_2=data.get('country').code):
                 raise ValidationError({'country': ['Invalid country code.']})
+
+        request = self.context.get('request')
+        product = data.get('product')
+        if request and isinstance(request.auth, Device) and product:
+            if not is_catalog_admission_currently_valid(
+                product,
+                data.get('variation'),
+                self.context['event'],
+                data.get('subevent'),
+            ):
+                raise ValidationError(
+                    {'product': ['This product is not available for registration at this time.']}
+                )
 
         if data.get('state'):
             cc = str(data.get('country') or self.instance.country or '')

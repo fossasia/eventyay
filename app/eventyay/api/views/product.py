@@ -21,8 +21,10 @@ from eventyay.api.serializers.product import (
     QuotaSerializer,
 )
 from eventyay.api.views import ConditionalListView
+from eventyay.base.admission_validity import is_product_catalog_admission_orderable
 from eventyay.base.models import (
     CartPosition,
+    Device,
     Product,
     ProductAddOn,
     ProductBundle,
@@ -68,6 +70,20 @@ class ProductViewSet(ConditionalListView, viewsets.ModelViewSet):
             .all()
         )
 
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        if isinstance(self.request.auth, Device):
+            subevent = None
+            subevent_id = self.request.query_params.get('subevent')
+            if subevent_id:
+                subevent = self.request.event.subevents.filter(pk=subevent_id).first()
+            queryset = [
+                product
+                for product in queryset
+                if is_product_catalog_admission_orderable(product, self.request.event, subevent)
+            ]
+        return queryset
+
     def perform_create(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
@@ -80,6 +96,11 @@ class ProductViewSet(ConditionalListView, viewsets.ModelViewSet):
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx['event'] = self.request.event
+        if isinstance(self.request.auth, Device):
+            ctx['filter_catalog_admission_validity'] = True
+            subevent_id = self.request.query_params.get('subevent')
+            if subevent_id:
+                ctx['admission_validity_subevent'] = self.request.event.subevents.filter(pk=subevent_id).first()
         return ctx
 
     def perform_update(self, serializer):

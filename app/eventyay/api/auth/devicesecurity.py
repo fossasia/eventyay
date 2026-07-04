@@ -86,15 +86,22 @@ _CHECKIN_CORE_ALLOWLIST = (
 # Badge Station (kiosk): scan, check-in, search, badge download.
 _BADGE_STATION_ALLOWLIST = _CHECKIN_CORE_ALLOWLIST
 
+# Check-In Staff: additional endpoints for live walk-in registration.
+_CHECKIN_STAFF_EXTRA_ALLOWLIST = (
+    ('GET', 'api-v1:product-list'),
+    ('POST', 'api-v1:order-list'),
+    ('POST', 'api-v1:order-mark-paid'),
+)
+
 
 class EventyayCheckinSecurityProfile(AllowListSecurityProfile):
     identifier = 'eventyay_checkin'
     verbose_name = _('Check-In Staff')
     usage_description = _(
-        'Ticket check-in, attendee search and edits, and badge printing.'
+        'Ticket check-in, attendee search and edits, live registration, and badge printing.'
     )
     includes_profiles = ('eventyay_checkin_online_kiosk',)
-    allowlist = _CHECKIN_CORE_ALLOWLIST
+    allowlist = _CHECKIN_CORE_ALLOWLIST + _CHECKIN_STAFF_EXTRA_ALLOWLIST
 
 
 class EventyayCheckinNoSyncSecurityProfile(AllowListSecurityProfile):
