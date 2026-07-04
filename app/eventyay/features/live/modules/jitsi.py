@@ -6,7 +6,7 @@ from channels.db import database_sync_to_async
 
 from eventyay.base.services.jitsi import (
     JitsiServerUnavailable,
-    choose_server_or_raise,
+    choose_server_for_room,
     normalize_server_url,
 )
 from eventyay.core.permissions import Permission
@@ -64,10 +64,12 @@ class JitsiModule(BaseModule):
             raise ConsumerException("jitsi.join.missing_profile")
 
         try:
-            server_model = await database_sync_to_async(choose_server_or_raise)(
-                event=self.consumer.event,
+            server_model = await database_sync_to_async(choose_server_for_room)(
+                room=self.room,
                 prefer_server=self.module_config.get("prefer_server"),
             )
+            if server_model is None:
+                raise JitsiServerUnavailable
         except JitsiServerUnavailable:
             raise ConsumerException("jitsi.server_unavailable")
 
