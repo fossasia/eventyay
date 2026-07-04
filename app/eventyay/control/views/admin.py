@@ -61,7 +61,7 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
         return context
 
 
-class OrganizerList(PaginationMixin, ListView):
+class OrganizerList(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
     model = Organizer
     context_object_name = 'organizers'
     template_name = 'pretixcontrol/admin/organizers.html'
@@ -70,10 +70,7 @@ class OrganizerList(PaginationMixin, ListView):
         qs = Organizer.objects.all()
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
-        if self.request.user.has_active_staff_session(self.request.session.session_key):
-            return qs
-        else:
-            return qs.filter(pk__in=self.request.user.teams.values_list('organizer', flat=True))
+        return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -85,7 +82,7 @@ class OrganizerList(PaginationMixin, ListView):
         return OrganizerFilterForm(data=self.request.GET, request=self.request)
 
 
-class AdminEventList(EventList):
+class AdminEventList(AdministratorPermissionRequiredMixin, EventList):
     """Inherit from EventList to add a custom template for the admin event list."""
 
     template_name = 'pretixcontrol/admin/events/index.html'
@@ -153,7 +150,7 @@ class AdminEventStartpageToggle(AdministratorPermissionRequiredMixin, View):
         )
 
 
-class AttendeeListView(ListView):
+class AttendeeListView(AdministratorPermissionRequiredMixin, ListView):
     template_name = 'pretixcontrol/admin/attendees/index.html'
     context_object_name = 'attendees'
     paginate_by = 25
@@ -173,10 +170,6 @@ class AttendeeListView(ListView):
             )
             .filter(order__status='p')
         )
-
-        if not self.request.user.has_active_staff_session(self.request.session.session_key):
-            allowed_organizers = self.request.user.teams.values_list('organizer', flat=True)
-            qs = qs.filter(order__event__organizer_id__in=allowed_organizers)
 
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
@@ -246,7 +239,7 @@ class AttendeeListView(ListView):
         return ctx
 
 
-class SubmissionListView(ListView):
+class SubmissionListView(AdministratorPermissionRequiredMixin, ListView):
     template_name = 'pretixcontrol/admin/submissions/index.html'
     context_object_name = 'submissions'
     paginate_by = 25
@@ -266,10 +259,6 @@ class SubmissionListView(ListView):
             )
             .prefetch_related('speakers', 'tags')
         )
-
-        if not self.request.user.has_active_staff_session(self.request.session.session_key):
-            allowed_organizers = self.request.user.teams.values_list('organizer', flat=True)
-            qs = qs.filter(event__organizer_id__in=allowed_organizers)
 
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
@@ -382,7 +371,7 @@ class AdminOrderListView(PaginationMixin, AdministratorPermissionRequiredMixin, 
         return ctx
 
 
-class TaskList(PaginationMixin, ListView):
+class TaskList(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
     template_name = 'pretixcontrol/admin/task_management/task_management.html'
     context_object_name = 'tasks'
     model = PeriodicTask

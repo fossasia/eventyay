@@ -116,6 +116,9 @@ def save_room(event, room, update_fields, old_data, by_user):
     room.save(update_fields=update_fields)
     if 'module_config' in update_fields:
         clear_stream_schedules_unless_schedule_driven(room)
+        from eventyay.agenda.views.utils import clear_schedule_caches
+
+        clear_schedule_caches(event)
     new = RoomConfigSerializer(room).data
 
     AuditLog.objects.create(
