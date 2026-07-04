@@ -128,10 +128,25 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     @action(detail=False, url_path='by-version')
     def redirect_version(self, request, event, organizer=None):
         version = request.query_params.get('version')
-        schedule = get_object_or_404(self.event.schedules, version=version)
+        if not version:
+            return Response(
+                {"detail": "The 'version' query parameter is required. Please provide a schedule version name."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        try:
+            schedule = self.event.schedules.get(version=version)
+        except Schedule.DoesNotExist:
+            if version.isdigit() and self.event.schedules.filter(pk=version).exists():
+                return Response(
+                    {"detail": f"You provided a schedule ID ({version}) instead of a version name. Please provide the version name or use the detail endpoint."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            raise Http404
+
         if not self.has_perm('view', schedule):
             raise Http404
-        redirect_url = reverse('api:schedule-detail', kwargs={'event': event, 'pk': schedule.pk})
+        redirect_url = reverse('api-v1:schedule-detail', kwargs={'event': event, 'pk': schedule.pk})
         return HttpResponseRedirect(redirect_url)
 
     @extend_schema(
