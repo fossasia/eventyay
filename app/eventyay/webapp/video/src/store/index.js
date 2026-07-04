@@ -51,6 +51,15 @@ export default new Vuex.Store({
 				return !!state.permissions?.includes(permission) || (permission.startsWith('room:') && state.activeRoom?.permissions?.includes(permission))
 			}
 		},
+		isAdminMode(state) {
+			if (!state.token) return false
+			try {
+				const token = jwtDecode(state.token)
+				return Array.isArray(token.traits) && token.traits.includes('admin')
+			} catch {
+				return false
+			}
+		},
 		autoplay(state) {
 			if (state.autoplayUserSetting !== null) return state.autoplayUserSetting
 			if (!state.token) return true
