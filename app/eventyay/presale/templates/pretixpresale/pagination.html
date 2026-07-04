@@ -2,7 +2,7 @@
 {% load urlreplace %}
 {% if is_paginated %}
     <nav class="text-center">
-        <ul class="pagination">
+        <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
                 <li>
                     <a href="?{% url_replace request 'page' page_obj.previous_page_number %}">

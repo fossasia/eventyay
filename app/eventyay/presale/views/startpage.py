@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView
+from django.views.generic import ListView, TemplateView
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 
@@ -155,12 +155,13 @@ def _common_base_context(request):
     return ctx
 
 
-class UpcomingEventsView(TemplateView):
+class UpcomingEventsView(ListView):
+    model = Event
+    context_object_name = 'events'
     template_name = 'pretixpresale/events/upcoming.html'
+    paginate_by = 12
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update(_common_base_context(self.request))
+    def get_queryset(self):
         today = timezone.localdate()
         with scopes_disabled():
             qs = (
@@ -170,7 +171,11 @@ class UpcomingEventsView(TemplateView):
                 .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
                 .order_by('date_from')
             )
-            ctx['events'] = [e for e in qs if not e.has_component_testmode]
+            return [e for e in qs if not e.has_component_testmode]
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(_common_base_context(self.request))
         return ctx
 
 
