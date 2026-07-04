@@ -238,7 +238,7 @@ class JanusServerForm(HasSecretsMixin, forms.ModelForm):
 class JitsiServerForm(HasSecretsMixin, forms.ModelForm):
     def clean_url(self):
         normalized = normalize_server_url(self.cleaned_data["url"])
-        if not normalized:
+        if not normalized or normalized["protocol"] not in ("http:", "https:"):
             raise ValidationError(_("Enter a valid Jitsi server URL."))
         return normalized["url"]
 

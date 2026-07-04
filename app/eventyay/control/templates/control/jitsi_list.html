@@ -2,12 +2,15 @@
 {% load i18n %}
 
 {% block video_admin_content %}
-<h1 class="page-header">{% trans "Jitsi servers" %}</h1>
-<div class="video-admin-btn-row">
-    <a href="{% url 'eventyay_admin:video_admin:jitsiserver.create' %}" class="btn btn-primary btn-sm">
-        <span class="fa fa-plus"></span> {% trans "Add new server" %}
-    </a>
+<div class="video-admin-header">
+    <h1 class="page-header">{% trans "Jitsi servers" %}</h1>
+    <div class="video-admin-actions-right">
+        <a href="{% url 'eventyay_admin:video_admin:jitsiserver.create' %}" class="btn btn-primary btn-sm" aria-label="{% trans 'Add new Jitsi server' %}">
+            <span class="fa fa-plus" aria-hidden="true"></span> {% trans "Add new server" %}
+        </a>
+    </div>
 </div>
+
 <div class="video-admin-table-wrapper">
 <table class="table table-striped table-hover video-admin-table">
     <thead>
