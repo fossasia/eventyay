@@ -351,6 +351,53 @@ class Product(LoggedModel):
         help_text=_('Whether or not buying this product allows a person to enter your event'),
         default=False,
     )
+    ADMISSION_VALIDITY_MODE_NONE = ''
+    ADMISSION_VALIDITY_MODE_FIXED = 'fixed'
+    ADMISSION_VALIDITY_MODE_SUBEVENT = 'subevent'
+    ADMISSION_VALIDITY_MODE_EVENT = 'event'
+    ADMISSION_VALIDITY_MODE_CHOICES = (
+        (ADMISSION_VALIDITY_MODE_NONE, _('No check-in time restriction')),
+        (ADMISSION_VALIDITY_MODE_FIXED, _('Fixed start and end')),
+        (ADMISSION_VALIDITY_MODE_SUBEVENT, _('Valid during assigned event date')),
+        (ADMISSION_VALIDITY_MODE_EVENT, _('Valid during entire event')),
+    )
+    admission_validity_mode = models.CharField(
+        verbose_name=_('Admission validity mode'),
+        help_text=_('How check-in validity is determined for tickets of this product.'),
+        max_length=20,
+        choices=ADMISSION_VALIDITY_MODE_CHOICES,
+        blank=True,
+        default=ADMISSION_VALIDITY_MODE_NONE,
+    )
+    admission_valid_from = models.DateTimeField(
+        verbose_name=_('Admission valid from'),
+        help_text=_('Used when admission validity mode is "Fixed start and end".'),
+        null=True,
+        blank=True,
+    )
+    admission_valid_until = models.DateTimeField(
+        verbose_name=_('Admission valid until'),
+        help_text=_('Used when admission validity mode is "Fixed start and end".'),
+        null=True,
+        blank=True,
+    )
+    admission_valid_from_offset_minutes = models.IntegerField(
+        verbose_name=_('Admission valid from offset (minutes)'),
+        help_text=_(
+            'For event or date-based validity: minutes after the window start when check-in becomes allowed.'
+        ),
+        null=True,
+        blank=True,
+    )
+    admission_valid_until_offset_minutes = models.IntegerField(
+        verbose_name=_('Admission valid until offset (minutes)'),
+        help_text=_(
+            'For event or date-based validity: minutes after the window start when check-in stops. '
+            'Leave empty to use the window end.'
+        ),
+        null=True,
+        blank=True,
+    )
     generate_tickets = models.BooleanField(
         verbose_name=_('Generate tickets'),
         blank=True,
@@ -721,6 +768,35 @@ class Product(LoggedModel):
             if from_date > until_date:
                 raise ValidationError(_("The product's availability cannot end before it starts."))
 
+    @staticmethod
+    def clean_admission_valid(valid_from, valid_until):
+        if valid_from is not None and valid_until is not None and valid_from > valid_until:
+            raise ValidationError(_('Admission validity cannot end before it starts.'))
+
+    @staticmethod
+    def clean_admission_validity(mode, valid_from, valid_until, offset_from=None, offset_until=None):
+        effective_mode = mode or ''
+        if not effective_mode and (valid_from or valid_until):
+            effective_mode = Product.ADMISSION_VALIDITY_MODE_FIXED
+        if effective_mode == Product.ADMISSION_VALIDITY_MODE_FIXED:
+            Product.clean_admission_valid(valid_from, valid_until)
+        if effective_mode in (
+            Product.ADMISSION_VALIDITY_MODE_SUBEVENT,
+            Product.ADMISSION_VALIDITY_MODE_EVENT,
+        ) and offset_from is not None and offset_until is not None:
+            if offset_from > offset_until:
+                raise ValidationError(_('Admission validity offset cannot end before it starts.'))
+
+    @staticmethod
+    def clean_admission_validity_data(data):
+        Product.clean_admission_validity(
+            data.get('admission_validity_mode'),
+            data.get('admission_valid_from'),
+            data.get('admission_valid_until'),
+            data.get('admission_valid_from_offset_minutes'),
+            data.get('admission_valid_until_offset_minutes'),
+        )
+
     @property
     def meta_data(self):
         data = {p.name: p.default for p in self.event.product_meta_properties.all()}
@@ -781,6 +857,43 @@ class ProductVariation(models.Model):
             'If set, this will be displayed next to the current price to show that the current price is a '
             'discounted one. This is just a cosmetic setting and will not actually impact pricing.'
         ),
+    )
+    admission_validity_mode = models.CharField(
+        verbose_name=_('Admission validity mode'),
+        help_text=_('Overrides the product admission validity mode when set.'),
+        max_length=20,
+        choices=Product.ADMISSION_VALIDITY_MODE_CHOICES,
+        blank=True,
+        default=Product.ADMISSION_VALIDITY_MODE_NONE,
+    )
+    admission_valid_from = models.DateTimeField(
+        verbose_name=_('Admission valid from'),
+        help_text=_('Used when admission validity mode is "Fixed start and end".'),
+        null=True,
+        blank=True,
+    )
+    admission_valid_until = models.DateTimeField(
+        verbose_name=_('Admission valid until'),
+        help_text=_('Used when admission validity mode is "Fixed start and end".'),
+        null=True,
+        blank=True,
+    )
+    admission_valid_from_offset_minutes = models.IntegerField(
+        verbose_name=_('Admission valid from offset (minutes)'),
+        help_text=_(
+            'For event or date-based validity: minutes after the window start when check-in becomes allowed.'
+        ),
+        null=True,
+        blank=True,
+    )
+    admission_valid_until_offset_minutes = models.IntegerField(
+        verbose_name=_('Admission valid until offset (minutes)'),
+        help_text=_(
+            'For event or date-based validity: minutes after the window start when check-in stops. '
+            'Leave empty to use the window end.'
+        ),
+        null=True,
+        blank=True,
     )
 
     objects = ScopedManager(organizer='product__event__organizer')
