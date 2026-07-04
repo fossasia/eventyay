@@ -22,6 +22,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from django.views.generic import TemplateView
 from pypdf import PdfReader, PdfWriter
+from pypdf.errors import PdfReadError
 from reportlab.lib.units import mm
 
 from eventyay.base.i18n import language
@@ -36,6 +37,7 @@ from eventyay.presale.style import get_fonts
 logger = logging.getLogger(__name__)
 
 _INVALID_PAGE_SIZE_ERROR = _('Invalid height/width given.')
+_BACKGROUND_PDF_READ_ERROR = _('Could not read the background PDF.')
 
 
 def open_stored_pdf_file(file_field, *, default_path):
@@ -43,7 +45,10 @@ def open_stored_pdf_file(file_field, *, default_path):
 
     if isinstance(file_field, File) and file_field.name:
         return default_storage.open(file_field.name, 'rb')
-    return open(finders.find(default_path), 'rb')
+    path = finders.find(default_path)
+    if not path:
+        raise FileNotFoundError(f'Static PDF not found: {default_path}')
+    return open(path, 'rb')
 
 
 class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
@@ -236,11 +241,16 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
             return None, JsonResponse({'status': 'error', 'error': _('No background PDF available to resize.')})
 
         try:
-            reader = PdfReader(BytesIO(bg_file.read()))
-        finally:
-            bg_file.close()
+            try:
+                reader = PdfReader(BytesIO(bg_file.read()))
+            finally:
+                bg_file.close()
 
-        page = reader.pages[0]
+            page = reader.pages[0]
+        except (PdfReadError, IndexError):
+            logger.exception('Failed to read background PDF for resize')
+            return None, JsonResponse({'status': 'error', 'error': _BACKGROUND_PDF_READ_ERROR})
+
         page.scale_to(width_mm * mm, height_mm * mm)
         writer = PdfWriter()
         writer.add_page(page)
