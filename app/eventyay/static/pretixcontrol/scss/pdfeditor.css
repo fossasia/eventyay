@@ -70,6 +70,16 @@ body {
     margin-bottom: 0;
 }
 
+#pdf-info-lock-aspect {
+    margin-top: 2px;
+}
+
+#pdf-info-lock-aspect.active {
+    color: #fff;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+}
+
 #editor-toolbox-area .colorpicker.colorpicker-2x {
     min-width: 244px;
 }

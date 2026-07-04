@@ -223,13 +223,17 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
             }
         )
 
-    def _background_cached_response(self, buffer, *, save_name='background.pdf'):
+    def _make_preview_cached_file(self):
         c = CachedFile(web_download=True)
         c.expires = now() + timedelta(days=7)
         c.date = now()
         c.filename = 'background_preview.pdf'
         c.type = 'application/pdf'
         c.save()
+        return c
+
+    def _background_cached_response(self, buffer, *, save_name='background.pdf'):
+        c = self._make_preview_cached_file()
         c.file.save(save_name, ContentFile(buffer.read()))
         c.refresh_from_db()
         return self._cached_file_json_response(c)
@@ -292,11 +296,7 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
             error, fileobj = self.process_upload()
             if error:
                 return JsonResponse({'status': 'error', 'error': error})
-            c = CachedFile(web_download=True)
-            c.expires = now() + timedelta(days=7)
-            c.date = now()
-            c.filename = 'background_preview.pdf'
-            c.type = 'application/pdf'
+            c = self._make_preview_cached_file()
             c.file = fileobj
             c.save()
             c.refresh_from_db()

@@ -121,6 +121,7 @@ var editor = {
     _window_loaded: false,
     _fabric_loaded: false,
     _last_active_object: null,
+    _PAGE_SIZE_TOLERANCE: 0.05,
 
     _px2mm: function (v) {
         return v / editor.pdf_scale / 72 * editor.pdf_page.userUnit * 25.4;
@@ -136,6 +137,94 @@ var editor = {
 
     _pt2px: function (v) {
         return v * editor.pdf_scale / editor.pdf_page.userUnit;
+    },
+
+    _csrf_token: function () {
+        return $("input[name=csrfmiddlewaretoken]").val();
+    },
+
+    _set_background_buttons_busy: function (busy, showUploadProgress) {
+        editor._page_resize_in_progress = busy;
+        $("#fileupload").prop("disabled", busy);
+        $("#pdf-info-width, #pdf-info-height").prop("disabled", busy);
+        $(".background-button").toggleClass("disabled", busy);
+        if (showUploadProgress) {
+            $("#loading-container, #loading-upload").show();
+            $("#loading-upload .progress").show();
+            $("#loading-upload .progress-bar").css("width", 0);
+        }
+    },
+
+    _get_page_size_from_fields: function () {
+        var width = parseFloat($("#pdf-info-width").val());
+        var height = parseFloat($("#pdf-info-height").val());
+        if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+            return null;
+        }
+        return {width: width, height: height};
+    },
+
+    _page_dimension_changed: function (value, stored) {
+        return stored === null || Math.abs(value - stored) >= editor._PAGE_SIZE_TOLERANCE;
+    },
+
+    _resolve_page_resize_size: function (size) {
+        var widthChanged = editor._page_dimension_changed(size.width, editor.page_width_mm);
+        var heightChanged = editor._page_dimension_changed(size.height, editor.page_height_mm);
+        if (!widthChanged && !heightChanged) {
+            return null;
+        }
+        var width = size.width;
+        var height = size.height;
+        if (!editor.page_size_lock_aspect) {
+            if (widthChanged && !heightChanged) {
+                height = editor.page_height_mm;
+            } else if (heightChanged && !widthChanged) {
+                width = editor.page_width_mm;
+            }
+        }
+        return {width: width, height: height};
+    },
+
+    _set_page_size_field: function (dimension, mm) {
+        $("#pdf-info-" + dimension).val(mm.toFixed(2));
+    },
+
+    _sync_page_size_fields_from_viewport: function (viewport) {
+        ["width", "height"].forEach(function (dimension) {
+            var el = $("#pdf-info-" + dimension);
+            if (!el.is(":focus")) {
+                var px = dimension === "width" ? viewport.width : viewport.height;
+                el.val(editor._px2mm(px).toFixed(2));
+            }
+        });
+        editor.page_width_mm = parseFloat($("#pdf-info-width").val());
+        editor.page_height_mm = parseFloat($("#pdf-info-height").val());
+        editor._update_page_aspect_ratio();
+    },
+
+    _apply_background_ok: function (data, size, keepPageSizeFields) {
+        editor.page_width_mm = size.width;
+        editor.page_height_mm = size.height;
+        editor._update_page_aspect_ratio();
+        editor.uploaded_file_id = data.id;
+        editor.dirty = true;
+        editor._replace_pdf_file(data.url, keepPageSizeFields);
+    },
+
+    _finish_save_button: function ($btn, defaultLabel, ok) {
+        $btn.find("span.fa-spin").remove();
+        $btn.prop("disabled", false);
+        if (!ok) {
+            alert(gettext("Saving failed."));
+            return;
+        }
+        editor.dirty = false;
+        editor.uploaded_file_id = null;
+        $btn.html('<span class="fa fa-check"></span> ' + gettext("Saved"));
+        window.setTimeout(function () {
+            $btn.text(defaultLabel);
+        }, 2000);
     },
 
     _update_page_aspect_ratio: function () {
@@ -445,19 +534,7 @@ var editor = {
                 editor.pdf_viewport = viewport;
 
                 if (!keepPageSizeFields) {
-                    var setPageSize = function (selector, mm) {
-                        var el = $(selector);
-                        if (!el.is(":focus")) {
-                            el.val(mm.toFixed(2));
-                        }
-                    };
-                    var widthMm = editor._px2mm(viewport.width);
-                    var heightMm = editor._px2mm(viewport.height);
-                    setPageSize("#pdf-info-width", widthMm);
-                    setPageSize("#pdf-info-height", heightMm);
-                    editor.page_width_mm = parseFloat($("#pdf-info-width").val());
-                    editor.page_height_mm = parseFloat($("#pdf-info-height").val());
-                    editor._update_page_aspect_ratio();
+                    editor._sync_page_size_fields_from_viewport(viewport);
                 }
 
                 // Render PDF page into canvas context
@@ -725,20 +802,18 @@ var editor = {
         editor._update_toolbox_values();
     },
 
-    _on_page_size_dimension_input: function (source) {
+    _on_page_size_dimension_input: function (changed) {
         if (!editor.page_size_lock_aspect || !editor.page_aspect_ratio) {
             return;
         }
-        if (source === "width") {
-            var width = parseFloat($("#pdf-info-width").val());
-            if (!isNaN(width) && width > 0) {
-                $("#pdf-info-height").val((width / editor.page_aspect_ratio).toFixed(2));
-            }
+        var size = editor._get_page_size_from_fields();
+        if (!size) {
             return;
         }
-        var height = parseFloat($("#pdf-info-height").val());
-        if (!isNaN(height) && height > 0) {
-            $("#pdf-info-width").val((height * editor.page_aspect_ratio).toFixed(2));
+        if (changed === "width") {
+            editor._set_page_size_field("height", size.width / editor.page_aspect_ratio);
+        } else {
+            editor._set_page_size_field("width", size.height * editor.page_aspect_ratio);
         }
     },
 
@@ -760,58 +835,32 @@ var editor = {
         if (editor._page_resize_in_progress || !editor.pdf_page) {
             return;
         }
-        var width = parseFloat($("#pdf-info-width").val());
-        var height = parseFloat($("#pdf-info-height").val());
-        if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+        var size = editor._get_page_size_from_fields();
+        if (!size) {
+            return;
+        }
+        size = editor._resolve_page_resize_size(size);
+        if (!size) {
             return;
         }
 
-        var widthChanged = editor.page_width_mm === null ||
-            Math.abs(width - editor.page_width_mm) >= 0.05;
-        var heightChanged = editor.page_height_mm === null ||
-            Math.abs(height - editor.page_height_mm) >= 0.05;
-        if (!widthChanged && !heightChanged) {
-            return;
-        }
-
-        if (!editor.page_size_lock_aspect) {
-            if (widthChanged && !heightChanged) {
-                height = editor.page_height_mm;
-            } else if (heightChanged && !widthChanged) {
-                width = editor.page_width_mm;
-            }
-        }
-
-        editor._page_resize_in_progress = true;
-        $("#fileupload").prop("disabled", true);
-        $("#pdf-info-width, #pdf-info-height").prop("disabled", true);
-        $(".background-button").addClass("disabled");
+        var resizeSize = size;
+        editor._set_background_buttons_busy(true);
         $.post(window.location.href, {
-            csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val(),
+            csrfmiddlewaretoken: editor._csrf_token(),
             resizebackground: "true",
-            width: width,
-            height: height,
+            width: resizeSize.width,
+            height: resizeSize.height,
             background: editor.uploaded_file_id || "",
         }, function (data) {
-            editor._page_resize_in_progress = false;
-            $("#fileupload").prop("disabled", false);
-            $("#pdf-info-width, #pdf-info-height").prop("disabled", false);
-            $(".background-button").removeClass("disabled");
+            editor._set_background_buttons_busy(false);
             if (data.status === "ok") {
-                editor.page_width_mm = width;
-                editor.page_height_mm = height;
-                editor._update_page_aspect_ratio();
-                editor.uploaded_file_id = data.id;
-                editor.dirty = true;
-                editor._replace_pdf_file(data.url, true);
+                editor._apply_background_ok(data, resizeSize, true);
             } else {
                 alert(data.error || gettext("Error while updating the background PDF, please try again."));
             }
         }, "json").fail(function () {
-            editor._page_resize_in_progress = false;
-            $("#fileupload").prop("disabled", false);
-            $("#pdf-info-width, #pdf-info-height").prop("disabled", false);
-            $(".background-button").removeClass("disabled");
+            editor._set_background_buttons_busy(false);
             alert(gettext("Error while updating the background PDF, please try again."));
         });
     },
@@ -1081,7 +1130,6 @@ var editor = {
             e.preventDefault();
         }
         var $btn = $("#editor-save");
-        var savedLabel = gettext("Saved");
         var defaultLabel = $btn.data("default-label");
         if (!defaultLabel) {
             defaultLabel = $.trim($btn.text());
@@ -1091,25 +1139,12 @@ var editor = {
         editor._sync_active_text_object_from_toolbox();
         $.post(window.location.href, {
             data: JSON.stringify(editor.dump()),
-            csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val(),
+            csrfmiddlewaretoken: editor._csrf_token(),
             background: editor.uploaded_file_id,
         }, function (data) {
-            $btn.find("span.fa-spin").remove();
-            $btn.prop("disabled", false);
-            if (data.status === "ok") {
-                editor.dirty = false;
-                editor.uploaded_file_id = null;
-                $btn.html('<span class="fa fa-check"></span> ' + savedLabel);
-                window.setTimeout(function () {
-                    $btn.text(defaultLabel);
-                }, 2000);
-            } else {
-                alert(gettext("Saving failed."));
-            }
+            editor._finish_save_button($btn, defaultLabel, data.status === "ok");
         }, "json").fail(function () {
-            $btn.find("span.fa-spin").remove();
-            $btn.prop("disabled", false);
-            alert(gettext("Saving failed."));
+            editor._finish_save_button($btn, defaultLabel, false);
         });
         return false;
     },
@@ -1121,7 +1156,7 @@ var editor = {
         formData.append("data", JSON.stringify(editor.dump()));
         formData.append("background", editor.uploaded_file_id || "");
         formData.append("preview", "true");
-        formData.append("csrfmiddlewaretoken", $("input[name=csrfmiddlewaretoken]").val());
+        formData.append("csrfmiddlewaretoken", editor._csrf_token());
 
         $("#editor-preview").prop("disabled", true);
         fetch(window.location.href, {
@@ -1168,13 +1203,9 @@ var editor = {
     },
 
     _create_empty_background: function () {
-        $("#loading-container, #loading-upload").show();
-        $("#loading-upload .progress").show();
-        $("#loading-upload .progress-bar").css("width", 0);
-        $("#fileupload").prop("disabled", true);
-        $(".background-button").addClass("disabled");
+        editor._set_background_buttons_busy(true, true);
         $.post(window.location.href, {
-            csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val(),
+            csrfmiddlewaretoken: editor._csrf_token(),
             emptybackground: "true",
             width: $("#pdf-info-width").val(),
             height: $("#pdf-info-height").val(),
@@ -1186,8 +1217,7 @@ var editor = {
                 alert(data.error || gettext("Error while uploading your PDF file, please try again."));
                 $("#loading-container, #loading-upload").hide();
             }
-            $("#fileupload").prop("disabled", false);
-            $(".background-button").removeClass("disabled");
+            editor._set_background_buttons_busy(false);
         }, "json");
     },
 
@@ -1217,11 +1247,8 @@ var editor = {
 
         $("#pdf-empty").on("click", editor._create_empty_background);
         $("#pdf-info-lock-aspect").on("click", editor._toggle_page_size_lock);
-        $("#pdf-info-width").on("input", function () {
-            editor._on_page_size_dimension_input("width");
-        });
-        $("#pdf-info-height").on("input", function () {
-            editor._on_page_size_dimension_input("height");
+        $("#pdf-info-width, #pdf-info-height").on("input", function () {
+            editor._on_page_size_dimension_input(this.id === "pdf-info-width" ? "width" : "height");
         });
         $("#pdf-info-width, #pdf-info-height").on("change focusout", editor._on_page_size_field_change);
         $('#fileupload').fileupload({
@@ -1235,18 +1262,13 @@ var editor = {
                     alert(data.result.error || gettext("Error while uploading your PDF file, please try again."));
                     $("#loading-container, #loading-upload").hide();
                 }
-                $("#fileupload").prop('disabled', false);
-                $(".background-button").removeClass("disabled");
+                editor._set_background_buttons_busy(false);
             },
             add: function (e, data) {
                 data.formData = {
-                    'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()
+                    csrfmiddlewaretoken: editor._csrf_token()
                 };
-                $("#loading-container, #loading-upload").show();
-                $("#loading-upload .progress").show();
-                $('#loading-upload .progress-bar').css('width', 0);
-                $("#fileupload").prop('disabled', true);
-                $(".background-button").addClass("disabled");
+                editor._set_background_buttons_busy(true, true);
                 data.process().done(function () {
                     data.submit();
                 });

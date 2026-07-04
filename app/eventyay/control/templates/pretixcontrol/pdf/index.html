@@ -173,21 +173,23 @@
                 </div>
                 <div class="panel-body" id="toolbox-body">
                     <div class="row control-group pdf-info">
-                        <div class="col-sm-5">
+                        <div class="col-sm-6">
                             <label>{% trans "Width (mm)" %}</label><br>
                             <input type="number" id="pdf-info-width" class="input-block-level form-control show-spinner">
                         </div>
-                        <div class="col-sm-5">
+                        <div class="col-sm-6">
                             <label>{% trans "Height (mm)" %}</label><br>
                             <input type="number" id="pdf-info-height" class="input-block-level form-control show-spinner">
                         </div>
-                        <div class="col-sm-2">
-                            <label class="sr-only">{% trans "Lock page proportions" %}</label><br>
-                            <button type="button" class="btn btn-default" id="pdf-info-lock-aspect"
+                    </div>
+                    <div class="row control-group pdf-info">
+                        <div class="col-sm-12">
+                            <button type="button" class="btn btn-default btn-xs" id="pdf-info-lock-aspect"
                                     title="{% trans 'Lock width and height proportions' %}"
                                     aria-pressed="false"
                                     aria-label="{% trans 'Lock width and height proportions' %}">
                                 <span class="fa fa-unlink" aria-hidden="true"></span>
+                                {% trans "Lock proportions" %}
                             </button>
                         </div>
                     </div>
