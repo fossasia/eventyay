@@ -74,18 +74,6 @@ body {
     min-width: 244px;
 }
 
-.editor-panel-toolbar > .btn {
-    padding: 2px 6px;
-    font-size: 12px;
-    line-height: 1.42857143;
-    min-width: 24px;
-}
-
-.editor-panel-toolbar > .btn .fa {
-    width: 1em;
-    text-align: center;
-}
-
 body #preview-modal.modal {
     z-index: 1200;
 }

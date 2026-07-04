@@ -52,13 +52,6 @@ class EditorView(BaseEditorView):
     def get_default_background(self):
         return static('pretixpresale/pdf/ticket_default_a4.pdf')
 
-    def _open_saved_background_pdf(self):
-        fexisting = self.request.event.settings.get(self.get_background_settings_key(), as_type=File)
-        return open_stored_pdf_file(
-            fexisting,
-            default_path='pretixpresale/pdf/ticket_default_a4.pdf',
-        )
-
     def generate(self, p: OrderPosition, override_layout=None, override_background=None):
         prov = self.get_output(override_layout=override_layout, override_background=override_background)
         fname, mimet, data = prov.generate(p)
