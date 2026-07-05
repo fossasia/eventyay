@@ -42,7 +42,7 @@
     "mux-embed": "^5.18.1",
     "mux.js": "^6.3.0",
     "pdfjs-dist": "^6.1.200",
-    "preact": "^10.29.3",
+    "preact": "^10.29.4",
     "quill": "^2.0.3",
     "random-js": "^2.1.0",
     "register-service-worker": "^1.7.2",
