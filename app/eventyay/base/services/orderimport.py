@@ -84,11 +84,14 @@ def import_orders(self, event: Event, fileid: str, settings: dict, locale: str, 
     user = User.objects.get(pk=user)
     with language(locale, event.settings.region):
         cols = get_all_columns(event, settings)
-        parsed = parse_csv(cf.file)
+        parsed = list(parse_csv(cf.file))
         data = []
+        total = len(parsed)
 
         # Run validation
         for i, record in enumerate(parsed):
+            if total > 0 and i % max(1, total // 10) == 0:
+                self.update_state(state='PROGRESS', meta={'value': round(i / total * 25)})
             values = {}
             for c in cols:
                 val = c.resolve(settings, record)
@@ -144,6 +147,8 @@ def import_orders(self, event: Event, fileid: str, settings: dict, locale: str, 
                 orders.clear()
                 order = None
                 for i, record in enumerate(data):
+                    if total > 0 and i % max(1, total // 10) == 0:
+                        self.update_state(state='PROGRESS', meta={'value': 25 + round(i / total * 25)})
                     try:
                         if order is None or settings['orders'] == 'many':
                             order = Order(
@@ -168,7 +173,9 @@ def import_orders(self, event: Event, fileid: str, settings: dict, locale: str, 
                     except ImportError as e:
                         raise ImportError(_('Invalid data in row {row}: {message}').format(row=i, message=str(e)))
 
-                for o in orders:
+                for i, o in enumerate(orders):
+                    if len(orders) > 0 and i % max(1, len(orders) // 10) == 0:
+                        self.update_state(state='PROGRESS', meta={'value': 50 + round(i / max(1, len(orders)) * 25)})
                     o.total = sum([c.price for c in o._positions])  # currently no support for fees
                     if o.total == Decimal('0.00'):
                         o.status = Order.STATUS_PAID
@@ -210,7 +217,9 @@ def import_orders(self, event: Event, fileid: str, settings: dict, locale: str, 
                         data={'source': 'import'},
                     )
 
-        for o in orders:
+        for i, o in enumerate(orders):
+            if len(orders) > 0 and i % max(1, len(orders) // 10) == 0:
+                self.update_state(state='PROGRESS', meta={'value': 75 + round(i / max(1, len(orders)) * 25)})
             with language(o.locale, event.settings.region):
                 order_placed.send(event, order=o)
                 if o.status == Order.STATUS_PAID:
