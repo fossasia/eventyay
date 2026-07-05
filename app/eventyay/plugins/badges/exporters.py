@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 import tempfile
 from collections import OrderedDict
 from decimal import Decimal
@@ -286,21 +285,14 @@ def render_nup_page(nup_pdf: PdfWriter, input_pages, opt: dict):
 
 
 def merge_pages(file_paths: List[str], output_file: BinaryIO):
-    if settings.PDFTK:
-        subprocess.run(
-            [settings.PDFTK, *file_paths, 'cat', 'output', '-', 'compress'],
-            check=True,
-            stdout=output_file,
-        )
-    else:
-        merger = PdfWriter()
-        merger.add_metadata({
-            '/Title': 'Badges',
-            '/Creator': 'eventyay',
-        })
-        for pdf in file_paths:
-            merger.append(pdf)
-        merger.write(output_file)
+    merger = PdfWriter()
+    merger.add_metadata({
+        '/Title': 'Badges',
+        '/Creator': 'eventyay',
+    })
+    for pdf in file_paths:
+        merger.append(pdf)
+    merger.write(output_file)
 
 
 def render_nup(input_files: List[str], num_pages: int, output_file: BinaryIO, opt: dict):
