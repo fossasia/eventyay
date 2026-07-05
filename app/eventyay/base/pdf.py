@@ -722,6 +722,11 @@ class Renderer:
         self.event = event
         if self.background_file:
             self.bg_bytes = self.background_file.read()
+            try:
+                self.background_file.close()
+            except OSError:
+                pass
+            self.background_file = None
             self.bg_pdf = PdfReader(BytesIO(self.bg_bytes), strict=False)
             correct_page_media_box(self.bg_pdf.pages[0])
         else:

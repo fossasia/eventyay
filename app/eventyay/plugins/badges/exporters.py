@@ -324,7 +324,6 @@ def render_nup(input_files: List[str], num_pages: int, output_file: BinaryIO, op
                     offset += len(badges_pdf.pages)
                     badges_pdf = PdfReader(input_files.pop(0))
                 chunk.append(badges_pdf.pages[j - offset])
-            badges_pdf.flattened_pages = None
 
             nup_pdf = PdfWriter()
             nup_pdf.add_metadata({
@@ -344,8 +343,7 @@ def render_nup(input_files: List[str], num_pages: int, output_file: BinaryIO, op
                 return
 
         if temp_dir:
-            file_paths = [os.path.join(temp_dir.name, fp) for fp in nup_pdf_files]
-            merge_pages(file_paths, output_file)
+            merge_pages(nup_pdf_files, output_file)
     finally:
         if temp_dir:
             try:
