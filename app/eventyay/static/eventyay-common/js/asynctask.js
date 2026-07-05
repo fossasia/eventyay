@@ -1,7 +1,11 @@
 /**
- * Async task handler for orga pages.
- * Intercepts forms with [data-asynctask] and shows a loading overlay
- * while polling for task completion, matching the tickets import UI.
+ * Import-specific async task handler.
+ * Intercepts forms with [data-import-task] and shows a loading overlay
+ * with progress bar, minimize button, and session persistence.
+ *
+ * This script is ONLY for import flows (attendees, speakers, schedule).
+ * General async tasks (exports, downloads, etc.) are handled by
+ * pretixbase/js/asynctask.js via [data-asynctask].
  */
 
 let taskId = null
@@ -24,6 +28,8 @@ const show = (headline) => {
         bar.style.width = '0%'
         bar.classList.add('progress-bar-striped', 'active')
     }
+    const minimizeBtn = el.querySelector('.loadingmodal-minimize')
+    if (minimizeBtn) minimizeBtn.style.display = ''
     document.body.classList.remove('loading-minimized')
     document.body.classList.add('loading')
 }
@@ -38,7 +44,7 @@ const hide = () => {
     isSubmitting = false
     document.body.classList.remove('loading')
     document.body.classList.remove('loading-minimized')
-    sessionStorage.removeItem('eventyay_async_task_common')
+    sessionStorage.removeItem('eventyay_async_task_import')
 }
 
 const setStatus = (text) => {
@@ -90,12 +96,19 @@ const poll = () => {
                     bigIcon.style.animation = 'none'
                     bigIcon.style.color = '#5cb85c'
                 }
-                
-                sessionStorage.removeItem('eventyay_async_task_common')
-                
-                setTimeout(() => {
-                    hide()
-                }, 2000)
+
+                sessionStorage.removeItem('eventyay_async_task_import')
+
+                if (data.redirect) {
+                    setTimeout(() => {
+                        hide()
+                        location.href = data.redirect
+                    }, 2000)
+                } else {
+                    setTimeout(() => {
+                        hide()
+                    }, 2000)
+                }
                 return
             }
             if (typeof data.percentage === 'number') {
@@ -119,8 +132,8 @@ const submit = (form) => {
     if (isSubmitting) return
     isSubmitting = true
 
-    const headline = form.dataset.asynctaskHeadline || gettext('We are processing your request …')
-    isLong = form.hasAttribute('data-asynctask-long')
+    const headline = form.dataset.importTaskHeadline || gettext('We are processing your request …')
+    isLong = form.hasAttribute('data-import-task-long')
     show(headline)
     setStatus(gettext('We are currently sending your request to the server.'))
 
@@ -158,8 +171,8 @@ const submit = (form) => {
             }
             taskId = data.async_id
             checkUrl = data.check_url
-            
-            sessionStorage.setItem('eventyay_async_task_common', JSON.stringify({
+
+            sessionStorage.setItem('eventyay_async_task_import', JSON.stringify({
                 id: taskId,
                 checkUrl: checkUrl,
                 isLong: isLong,
@@ -179,45 +192,56 @@ const submit = (form) => {
 }
 
 const init = () => {
+    const importForms = document.querySelectorAll('form[data-import-task]')
+    if (importForms.length > 0) {
+        const content = document.querySelector('#loadingmodal .modal-card-content')
+        if (content && !content.querySelector('.loadingmodal-minimize')) {
+            const div = document.createElement('div')
+            div.className = 'pull-right'
+            div.innerHTML = `<button type="button" class="btn btn-default btn-xs loadingmodal-minimize" title="${gettext('Minimize')}"><i class="fa fa-window-minimize"></i></button>`
+            content.insertBefore(div, content.firstChild)
+        }
+    }
+
     document.addEventListener('submit', (e) => {
-        const form = e.target.closest('form[data-asynctask]')
+        const form = e.target.closest('form[data-import-task]')
         if (!form) return
         e.preventDefault()
         submit(form)
     })
-    
+
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.loadingmodal-minimize')
         if (!btn) return
         e.preventDefault()
         document.body.classList.toggle('loading-minimized')
-        
-        const storedTask = sessionStorage.getItem('eventyay_async_task_common')
+
+        const storedTask = sessionStorage.getItem('eventyay_async_task_import')
         if (storedTask) {
             try {
                 const task = JSON.parse(storedTask)
                 task.minimized = document.body.classList.contains('loading-minimized')
-                sessionStorage.setItem('eventyay_async_task_common', JSON.stringify(task))
+                sessionStorage.setItem('eventyay_async_task_import', JSON.stringify(task))
             } catch (err) {}
         }
     })
 
-    const storedTask = sessionStorage.getItem('eventyay_async_task_common')
+    const storedTask = sessionStorage.getItem('eventyay_async_task_import')
     if (storedTask) {
         try {
             const task = JSON.parse(storedTask)
             taskId = task.id
             checkUrl = task.checkUrl
             isLong = task.isLong
-            
+
             show(task.headline || gettext('We are processing your request …'))
             if (task.minimized) {
                 document.body.classList.add('loading-minimized')
             }
-            
+
             pollTimeout = setTimeout(poll, 100)
         } catch (e) {
-            sessionStorage.removeItem('eventyay_async_task_common')
+            sessionStorage.removeItem('eventyay_async_task_import')
         }
     }
 }
