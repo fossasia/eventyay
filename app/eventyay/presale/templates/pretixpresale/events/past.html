@@ -1,4 +1,4 @@
-{% extends "pretixpresale/events/event_list_page_base.html" %}
+{% extends "pretixpresale/startpage_base.html" %}
 {% load i18n %}
 {% block page_title %}{% trans "Past Events" %}{% endblock %}
 {% block content %}
@@ -12,4 +12,5 @@
     {% endfor %}
   </div>
 </section>
+{% include "pretixpresale/pagination.html" %}
 {% endblock %}

@@ -10,7 +10,7 @@ from django_scopes import scopes_disabled
 from eventyay.common.views.mixins import PaginationMixin
 from i18nfield.strings import LazyI18nString
 
-from eventyay.base.models import Event, OrganizerFollower
+from eventyay.base.models import Event, Organizer, OrganizerFollower
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_admin_mode_active
@@ -156,6 +156,7 @@ def _common_base_context(request):
     return ctx
 
 
+@method_decorator(scopes_disabled(), name='dispatch')
 class UpcomingEventsView(PaginationMixin, ListView):
     model = Event
     context_object_name = 'events'
@@ -164,15 +165,16 @@ class UpcomingEventsView(PaginationMixin, ListView):
 
     def get_queryset(self):
         today = timezone.localdate()
-        with scopes_disabled():
-            qs = (
-                Event.objects.select_related('organizer')
-                .prefetch_related('_settings_objects')
-                .filter(live=True, startpage_visible=True, startpage_featured=False)
-                .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
-                .order_by('date_from')
-            )
-            return [e for e in qs if not e.has_component_testmode]
+        qs = (
+            Event.objects.select_related('organizer')
+            .prefetch_related('_settings_objects')
+            .filter(live=True, startpage_visible=True, startpage_featured=False)
+            .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
+            .filter(testmode=False)
+            .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
+            .order_by('date_from')
+        )
+        return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -181,26 +183,35 @@ class UpcomingEventsView(PaginationMixin, ListView):
         return ctx
 
 
-class PastEventsView(TemplateView):
+@method_decorator(scopes_disabled(), name='dispatch')
+class PastEventsView(PaginationMixin, ListView):
+    model = Event
+    context_object_name = 'events'
     template_name = 'pretixpresale/events/past.html'
+    paginate_by = 20
+
+    def get_queryset(self):
+        today = timezone.localdate()
+        qs = (
+            Event.objects.select_related('organizer')
+            .prefetch_related('_settings_objects')
+            .filter(live=True, startpage_visible=True)
+            .filter(Q(date_to__lt=today) | Q(date_to__isnull=True, date_from__lt=today))
+            .filter(testmode=False)
+            .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
+            .order_by('-date_from')
+        )
+        return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        ctx['pagination_sizes'] = [20, 50, 100]
         ctx.update(_common_base_context(self.request))
-        today = timezone.localdate()
-        with scopes_disabled():
-            qs = (
-                Event.objects.select_related('organizer')
-                .prefetch_related('_settings_objects')
-                .filter(live=True, startpage_visible=True)
-                .filter(Q(date_to__lt=today) | Q(date_to__isnull=True, date_from__lt=today))
-                .order_by('date_from')
-            )
-            ctx['events'] = list(reversed([e for e in qs if not e.has_component_testmode]))
         return ctx
 
 
 @method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
+@method_decorator(scopes_disabled(), name='dispatch')
 class FollowedEventsView(TemplateView):
     template_name = 'pretixpresale/events/followed.html'
 
@@ -208,36 +219,34 @@ class FollowedEventsView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_common_base_context(self.request))
         today = timezone.localdate()
-        with scopes_disabled():
-            followed_org_ids = OrganizerFollower.objects.filter(
-                user=self.request.user
-            ).values_list('organizer_id', flat=True)
-            qs = (
+
+        followed_org_ids = OrganizerFollower.objects.filter(
+            user=self.request.user
+        ).values_list('organizer_id', flat=True)
+
+        organizers = Organizer.objects.filter(id__in=followed_org_ids)
+
+        organizer_groups = []
+        for org in organizers:
+            events_qs = (
                 Event.objects.filter(
-                    organizer_id__in=followed_org_ids,
+                    organizer=org,
                     live=True,
                 )
                 .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
                 .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
+                .filter(testmode=False)
+                .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
                 .select_related('organizer')
                 .prefetch_related('_settings_objects')
-                .order_by('date_from')
+                .order_by('date_from')[:9]
             )
-            followed_upcoming_events = [e for e in qs if not e.has_component_testmode]
+            org_events = list(events_qs)
+            if org_events:
+                organizer_groups.append({
+                    'organizer': org,
+                    'events': org_events
+                })
 
-            organizer_groups = []
-            seen_organizers = {}
-            for event in followed_upcoming_events:
-                org = event.organizer
-                if org not in seen_organizers:
-                    group = {
-                        'organizer': org,
-                        'events': []
-                    }
-                    organizer_groups.append(group)
-                    seen_organizers[org] = group
-                seen_organizers[org]['events'].append(event)
-
-            ctx['organizer_groups'] = organizer_groups
-            ctx['events'] = followed_upcoming_events
+        ctx['organizer_groups'] = organizer_groups
         return ctx
