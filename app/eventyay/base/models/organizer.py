@@ -463,12 +463,21 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         default=False,
     )
 
+    can_change_exhibition_proposals = models.BooleanField(
+        default=False,
+        verbose_name=_('Reviewer Manager — can review and manage exhibitor proposals'),
+        help_text=_(
+            'Can review proposals and approve or reject exhibitor and sponsor applications. '
+            'This provides full proposal-management permissions beyond standard reviewing, '
+            'without granting access to the rest of the event setup.'
+        ),
+    )
     is_exhibition_reviewer = models.BooleanField(
         default=False,
         verbose_name=_('Exhibitor Reviewer — can only review exhibitor proposals'),
         help_text=_(
-            'Can screen and evaluate exhibitor and sponsor proposals but cannot edit event setup, '
-            'manage exhibitors, or change other settings.'
+            'Can review and provide feedback on exhibitor and sponsor proposals but cannot '
+            'approve, reject, or otherwise manage them.'
         ),
     )
 
