@@ -13,11 +13,11 @@
         </a>
       </h3>
       <div class="startpage-event-list">
-        {% for event in org_group.events|slice:":4" %}
+        {% for event in org_group.events|slice:":8" %}
           {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
         {% endfor %}
       </div>
-      {% if org_group.events|length > 4 %}
+      {% if org_group.events|length > 8 %}
         <div class="organizer-more text-center">
           <a class="btn btn-link" href="{% eventurl org_group.organizer "presale:organizer.index" %}">
             {% trans "View all events from this organizer" %}
