@@ -173,6 +173,41 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             if not self.event.cfp.public_content_locale:
                 self.fields.pop('content_locale', None)
 
+    def create(self, validated_data):
+        tags_data = validated_data.pop('tags', [])
+        image = validated_data.pop('image', None)
+        validated_data['event'] = self.event
+        if 'get_duration' in validated_data:
+            validated_data['duration'] = validated_data.pop('get_duration')
+        if not validated_data.get('content_locale'):
+            validated_data['content_locale'] = self.event.locale
+
+        submission = super().create(validated_data)
+
+        if tags_data:
+            submission.tags.set(tags_data)
+        if image:
+            submission.image.save(Path(image.name).name, image, save=True)
+            submission.save(update_fields=('image',))
+            submission.process_image('image', generate_thumbnail=True)
+        return submission
+
+    def update(self, instance, validated_data):
+        tags_data = validated_data.pop('tags', [])
+        image = validated_data.pop('image', None)
+        validated_data['event'] = self.event
+        if 'get_duration' in validated_data:
+            validated_data['duration'] = validated_data.pop('get_duration')
+
+        submission = super().update(instance, validated_data)
+
+        if tags_data:
+            submission.tags.set(tags_data)
+        if image:
+            submission.image.save(Path(image.name).name, image)
+            submission.process_image('image', generate_thumbnail=True)
+        return submission
+
     @extend_schema_field(list[str])
     def get_speakers(self, obj):
         if not self.event:
@@ -319,42 +354,17 @@ class SubmissionOrgaSerializer(SubmissionSerializer):
         return value
 
     def create(self, validated_data):
-        tags_data = validated_data.pop('tags', [])
-        image = validated_data.pop('image', None)
-        validated_data['event'] = self.event
-        if 'get_duration' in validated_data:
-            validated_data['duration'] = validated_data.pop('get_duration')
-        if not validated_data.get('content_locale'):
-            validated_data['content_locale'] = self.event.locale
-
-        submission = super().create(validated_data)
-
-        if tags_data:
-            submission.tags.set(tags_data)
-        if image:
-            submission.image.save(Path(image.name).name, image, save=True)
-            submission.save(update_fields=('image',))
-            submission.process_image('image', generate_thumbnail=True)
-        return submission
+        return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        tags_data = validated_data.pop('tags', [])
-        image = validated_data.pop('image', None)
-        validated_data['event'] = self.event
-        duration_changed = False
-        if 'get_duration' in validated_data:
-            validated_data['duration'] = validated_data.pop('get_duration')
-            duration_changed = validated_data['duration'] != instance.duration
+        duration_changed = 'get_duration' in validated_data and (
+            validated_data['get_duration'] != instance.duration
+        )
         slot_count_changed = 'slot_count' in validated_data and validated_data['slot_count'] != instance.slot_count
         track_changed = 'track' in validated_data and validated_data['track'] != instance.track
 
         submission = super().update(instance, validated_data)
 
-        if tags_data:
-            submission.tags.set(tags_data)
-        if image:
-            submission.image.save(Path(image.name).name, image)
-            submission.process_image('image', generate_thumbnail=True)
         if duration_changed:
             submission.update_duration()
         if slot_count_changed:
