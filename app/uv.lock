@@ -955,16 +955,17 @@ wheels = [
 
 [[package]]
 name = "django-multifactor"
-version = "0.8.7"
+version = "0.9.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "cryptography" },
     { name = "django" },
     { name = "fido2" },
     { name = "pyotp" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/36/b27ed3c41e74373ccf8d41d14604ddc2430c3290b85cc105cb628ce51e9d/django_multifactor-0.8.7.tar.gz", hash = "sha256:d1eeb6abbf367e134ae7be06a76a45dc9771c29223988f19173a2e420b7568fd", size = 48854, upload-time = "2026-04-07T09:32:12.485Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/ba/72f77e2471484e1c1cab178db5943f8bba39ce41dad3f9ec83482ddf1be5/django_multifactor-0.9.3.tar.gz", hash = "sha256:07027ab2e489fdc6d487582be46e914c7c222bfdee68774100b53e776e6e084c", size = 61852, upload-time = "2026-06-26T17:19:16.572Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/89/f5f2ee45fdfbacd0c925428d67ff48d5c38af91bde8af9b0008861ab6609/django_multifactor-0.8.7-py3-none-any.whl", hash = "sha256:20ac360e6adc85f939d77e2ca102de2aaf545cde479deeb2184d36af893f7782", size = 60150, upload-time = "2026-04-07T09:32:13.655Z" },
+    { url = "https://files.pythonhosted.org/packages/24/b6/d2795bd857731b9dcad5125b6e14cf5dd7a67af94b47389c4b6cf09b9a44/django_multifactor-0.9.3-py3-none-any.whl", hash = "sha256:c75f31d8beec6b91fe522c7382fa31c649b2a6575169009b8a50409602eeea9f", size = 80439, upload-time = "2026-06-26T17:19:17.598Z" },
 ]
 
 [[package]]
@@ -1501,7 +1502,7 @@ requires-dist = [
     { name = "django-libsass", specifier = ">=0.9" },
     { name = "django-localflavor", specifier = ">=4.0" },
     { name = "django-markup", specifier = ">=1.9.1" },
-    { name = "django-multifactor", specifier = ">=0.8.7" },
+    { name = "django-multifactor", specifier = ">=0.9.3" },
     { name = "django-oauth-toolkit", specifier = ">=3.3.0" },
     { name = "django-otp", specifier = ">=1.7.0" },
     { name = "django-pdb", specifier = ">=0.6.2" },
