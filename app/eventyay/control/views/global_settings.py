@@ -161,7 +161,7 @@ class UpdateCheckView(StaffMemberRequiredMixin, FormView):
         return reverse('eventyay_admin:admin.global.update')
 
 
-class MessageView(TemplateView):
+class MessageView(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = 'pretixcontrol/global_message.html'
 
 

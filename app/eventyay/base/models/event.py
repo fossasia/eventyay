@@ -49,7 +49,7 @@ from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
-from eventyay.common.text.path import path_with_hash
+from eventyay.common.text.path import path_with_hash, resolve_media_path as _resolve_media_path
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls, is_http_url
 from eventyay.consts import TIMEZONE_CHOICES
@@ -529,6 +529,7 @@ class EventMixin:
 # - We want to avoid the `objects = ScopedManager()` (we may use it later, after the making "enext" stable enough).
 # - We don't want to inherit the LogMixin (already have LoggedModel).
 @settings_hierarkey.add(parent_field='organizer', cache_namespace='event')
+
 class Event(
     EventMixin, LoggedModel, TimestampedModel, FileCleanupMixin, RulesModelMixin, models.Model, metaclass=RulesModelBase
 ):
@@ -2432,109 +2433,22 @@ class Event(
         The logo_image setting is actually used for HEADER images (see default_setting.py),
         so we must NOT use it here to prevent header images from appearing as logos.
         """
-
-        def _extract_path(obj):
-            if not obj:
-                return None
-            if isinstance(obj, dict):
-                return obj.get('name') or obj.get('path') or obj.get('url')
-            if hasattr(obj, 'name') and obj.name:
-                return obj.name
-            if hasattr(obj, 'url'):
-                return obj.url
-            return str(obj)
-
         # Only check event_logo_image - NOT logo_image (which is for header images)
-        for key in ('event_logo_image',):
-            settings_logo = self.settings.get(key, as_type=str, default=None)
-            path = _extract_path(settings_logo)
-            if not path:
-                continue
-
-            # Keep full URLs
-            if is_http_url(path):
-                return path
-
-            # Strip file:// scheme if present
-            parsed = urlparse(path)
-            if parsed.scheme == 'file':
-                path = f'{parsed.netloc}{parsed.path}'
-
-            # Normalize absolute filesystem paths to be relative to MEDIA_ROOT
-            abs_path = os.path.abspath(path)
-            media_root = os.path.abspath(settings.MEDIA_ROOT)
-            try:
-                rel_to_media = os.path.relpath(abs_path, media_root)
-                if not rel_to_media.startswith('..'):
-                    path = rel_to_media
-            except OSError:
-                logger.exception('Failed to relativize path %s against MEDIA_ROOT %s', abs_path, media_root)
-
-            # Drop leading media prefixes
-            for prefix in ('/media/', 'media/'):
-                if path.startswith(prefix):
-                    path = path[len(prefix) :]
-
-            # Collapse to pub/… if present
-            if '/pub/' in path and not path.startswith('pub/'):
-                path = path[path.index('pub/') :]
-
-            path = path.lstrip('/')
-            if path:
-                return path
-
-        return None
+        raw = self.settings.get('event_logo_image', as_type=str, default=None)
+        return _resolve_media_path(raw)
 
     @cached_property
     def _visible_header_image_path(self):
         """
         Resolve a usable header image path/URL from common settings, falling back to the legacy field.
+
+        The header image is stored under ``logo_image`` for historical reasons; ``header_image`` is
+        the legacy model field.
         """
-
-        def _extract_path(obj):
-            if not obj:
-                return None
-            if isinstance(obj, dict):
-                return obj.get('name') or obj.get('path') or obj.get('url')
-            if hasattr(obj, 'name') and obj.name:
-                return obj.name
-            if hasattr(obj, 'url'):
-                return obj.url
-            return str(obj)
-
-        # header image for the site is stored in common settings under logo_image (historical)
-        # and in the legacy field header_image; prefer the settings value first
+        # Prefer settings key first (historical name), then legacy model field
         for key in ('logo_image', 'header_image'):
-            settings_header = self.settings.get(key, as_type=str, default=None)
-            path = _extract_path(settings_header)
-            if not path:
-                continue
-
-            if is_http_url(path):
-                return path
-
-            parsed = urlparse(path)
-            if parsed.scheme == 'file':
-                path = f'{parsed.netloc}{parsed.path}'
-
-            abs_path = os.path.abspath(path)
-            media_root = os.path.abspath(settings.MEDIA_ROOT)
-            try:
-                rel_to_media = os.path.relpath(abs_path, media_root)
-                if not rel_to_media.startswith('..'):
-                    path = rel_to_media
-            except OSError:
-                logger.exception(
-                    'Failed to relativize header image path %s against MEDIA_ROOT %s', abs_path, media_root
-                )
-
-            for prefix in ('/media/', 'media/'):
-                if path.startswith(prefix):
-                    path = path[len(prefix) :]
-            if '/pub/' in path and not path.startswith('pub/'):
-                path = path[path.index('pub/') :]
-
-            path = path.lstrip('/')
+            raw = self.settings.get(key, as_type=str, default=None)
+            path = _resolve_media_path(raw)
             if path:
                 return path
 
@@ -2542,6 +2456,56 @@ class Event(
             return self.header_image.name
 
         return None
+
+    @cached_property
+    def _visible_preview_image_path(self):
+        """
+        Resolve a usable preview image path/URL from the ``event_preview_image`` setting.
+        Returns a storage-relative path (e.g. ``pub/…``) or an absolute HTTP URL.
+        """
+        raw = self.settings.get('event_preview_image', as_type=str, default=None)
+        return _resolve_media_path(raw)
+
+    @cached_property
+    def visible_preview_image_url(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_preview_image_path:
+            return None
+        with suppress(Exception):
+            if is_http_url(str(self._visible_preview_image_path)):
+                return self._visible_preview_image_path
+            return default_storage.url(self._visible_preview_image_path)
+        return None
+
+    @cached_property
+    def preview_image_url_with_fallback(self):
+        """
+        Return the resolved URL of the preview image, falling back to header image, then logo.
+        If none of these are set, it returns None (which the start page card template handles by
+        rendering a default calendar placeholder icon).
+
+        For local (non-HTTP) paths, a thumbnail is generated at 800×450 with a fill-crop (``^``).
+        ``get_thumbnail`` caches results on disk using a deterministic key derived from the path
+        and geometry, so repeated calls for the same image are cheap (file-existence check only).
+        This method itself is a ``@cached_property``, so it is only invoked once per ``Event``
+        instance per request — no thundering-herd risk within a single request.
+        """
+        path = self._visible_preview_image_path or self._visible_header_image_path or self._visible_logo_path
+        if not path:
+            return None
+
+        if is_http_url(str(path)):
+            return path
+
+        try:
+            return get_thumbnail(path, '800x450^').thumb.url
+        except Exception:
+            logger.exception('Failed to create preview thumbnail for path: %s', path)
+            try:
+                return default_storage.url(path)
+            except Exception:
+                return None
 
     @cached_property
     def visible_logo_url(self):
