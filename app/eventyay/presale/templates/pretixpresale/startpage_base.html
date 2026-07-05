@@ -193,7 +193,8 @@
             <header class="startpage-hero-header">
                 <div class="event-hero startpage-hero">
                     <div class="event-hero-overlay">
-                        <div class="event-brand">
+                        <div class="event-brand{% block event_brand_class %}{% endblock %}">
+                            {% block back_button %}{% endblock %}
                             <div class="event-hero-text">
                                 <div class="event-title">
                                     {{ startpage_header_text }}
