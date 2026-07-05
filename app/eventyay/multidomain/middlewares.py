@@ -29,7 +29,22 @@ LOCAL_HOST_NAMES = ('testserver', 'localhost')
 
 class MultiDomainMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        host = request.get_host()
+        # We cannot use request.get_host() here because Django's get_host() validates
+        # against settings.ALLOWED_HOSTS. In a multi-tenant environment, organizers
+        # can use custom domains that are not explicitly listed in ALLOWED_HOSTS.
+        # Therefore, we manually extract the host and validate it against the KnownDomain
+        # model below to prevent DisallowedHost exceptions for valid custom domains.
+
+        if settings.USE_X_FORWARDED_HOST and ('X-Forwarded-Host' in request.headers):
+            host = request.headers['X-Forwarded-Host']
+        elif 'Host' in request.headers:
+            host = request.headers['Host']
+        else:
+            # Reconstruct the host using the algorithm from PEP 333.
+            host = request.META['SERVER_NAME']
+            server_port = str(request.META['SERVER_PORT'])
+            if server_port != ('443' if request.is_secure() else '80'):
+                host = '%s:%s' % (host, server_port)
 
         domain, port = split_domain_port(host)
         default_domain, default_port = split_domain_port(urlparse(settings.SITE_URL).netloc)
