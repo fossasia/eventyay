@@ -255,7 +255,7 @@ test = [
     "pytest-django>=4.9.0",
     "pytest-env>=1.6.0",
     "pytest-mock>=3.15.1",
-    "pytest-rerunfailures>=16.3",
+    "pytest-rerunfailures>=16.4",
     "pytest-sugar>=1.1.1",
     "pytest-xdist>=3.6.1",
 ]
