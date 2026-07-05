@@ -1171,8 +1171,10 @@ EMAIL_USE_TLS = conf.email_use_tls
 EMAIL_USE_SSL = not conf.email_use_tls
 # DEFAULT_FROM_EMAIL is used for emails sent to regular users.
 # SERVER_EMAIL is used for error emails sent to admins/developers.
+# MAIL_FROM is kept for backwards compatibility with internal code.
 DEFAULT_FROM_EMAIL = conf.default_from_email
 SERVER_EMAIL = conf.default_from_email
+MAIL_FROM = DEFAULT_FROM_EMAIL
 
 # TODO: Remove (why we need to use different values from default?)
 SESSION_COOKIE_NAME = 'eventyay_session'
