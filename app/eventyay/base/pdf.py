@@ -723,6 +723,7 @@ class Renderer:
         if self.background_file:
             self.bg_bytes = self.background_file.read()
             self.bg_pdf = PdfReader(BytesIO(self.bg_bytes), strict=False)
+            correct_page_media_box(self.bg_pdf.pages[0])
         else:
             self.bg_bytes = None
             self.bg_pdf = None
@@ -908,6 +909,15 @@ class Renderer:
         canvas.restoreState()
 
     def draw_page(self, canvas: Canvas, order: Order, op: OrderPosition, show_page=True):
+        if self.bg_pdf:
+            bg_page = self.bg_pdf.pages[0]
+            page_size = (
+                bg_page.mediabox[2] - bg_page.mediabox[0],
+                bg_page.mediabox[3] - bg_page.mediabox[1],
+            )
+            if bg_page.get('/Rotate') in (90, 270):
+                page_size = page_size[::-1]
+            canvas.setPageSize(page_size)
         for o in self.layout:
             if o['type'] == 'barcodearea':
                 self._draw_barcodearea(canvas, op, o)
@@ -917,10 +927,18 @@ class Renderer:
                 self._draw_textarea(canvas, op, order, o)
             elif o['type'] == 'poweredby':
                 self._draw_poweredby(canvas, op, o)
-            if self.bg_pdf:
-                canvas.setPageSize((self.bg_pdf.pages[0].mediabox[2], self.bg_pdf.pages[0].mediabox[3]))
         if show_page:
             canvas.showPage()
+
+    def merge_foreground_buffer(self, buffer):
+        buffer.seek(0)
+        fg_pdf = PdfReader(buffer, strict=False)
+        if not self.bg_pdf:
+            return list(fg_pdf.pages)
+        bg_page = self.bg_pdf.pages[0]
+        for page in fg_pdf.pages:
+            page.merge_page(bg_page, over=False)
+        return list(fg_pdf.pages)
 
     def render_background(self, buffer, title=_('Ticket')):
         if settings.PDFTK:
@@ -945,16 +963,11 @@ class Renderer:
                 with open(os.path.join(d, 'out.pdf'), 'rb') as f:
                     return BytesIO(f.read())
         else:
-            from pypdf import PdfReader, PdfWriter
+            from pypdf import PdfWriter
 
-            buffer.seek(0)
-            new_pdf = PdfReader(buffer)
             output = PdfWriter()
-
-            for page in new_pdf.pages:
-                bg_page = copy.copy(self.bg_pdf.pages[0])
-                bg_page.merge_page(page)
-                output.add_page(bg_page)
+            for page in self.merge_foreground_buffer(buffer):
+                output.add_page(page)
 
             output.add_metadata(
                 {
@@ -966,3 +979,30 @@ class Renderer:
             output.write(outbuffer)
             outbuffer.seek(0)
             return outbuffer
+
+
+def correct_page_media_box(page):
+    import pypdf
+    from pypdf.generic import NameObject, RectangleObject
+
+    if page.rotation != 0:
+        page.transfer_rotation_to_content()
+    media_box = page.mediabox
+    trsf = pypdf.Transformation()
+    if media_box.bottom != 0:
+        trsf = trsf.translate(0, -media_box.bottom)
+    if media_box.left != 0:
+        trsf = trsf.translate(-media_box.left, 0)
+    page.add_transformation(trsf, False)
+    for box in ('/MediaBox', '/CropBox', '/BleedBox', '/TrimBox', '/ArtBox'):
+        if box in page:
+            rect = RectangleObject(page[box])
+            pt1 = trsf.apply_on(rect.lower_left)
+            pt2 = trsf.apply_on(rect.upper_right)
+            page[NameObject(box)] = RectangleObject((
+                min(pt1[0], pt2[0]),
+                min(pt1[1], pt2[1]),
+                max(pt1[0], pt2[0]),
+                max(pt1[1], pt2[1]),
+            ))
+
