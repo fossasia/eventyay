@@ -435,6 +435,11 @@ urlpatterns = [
                     name='event.order.position.sendmail',
                 ),
                 url(
+                    r'^orders/(?P<code>[0-9A-Z]+)/(?P<position>\d+)/reinstate$',
+                    orders.OrderPositionReinstate.as_view(),
+                    name='event.order.position.reinstate',
+                ),
+                url(
                     r'^orders/(?P<code>[0-9A-Z]+)/mail_history$',
                     orders.OrderEmailHistory.as_view(),
                     name='event.order.mail_history',

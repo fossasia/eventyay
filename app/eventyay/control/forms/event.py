@@ -668,6 +668,7 @@ class EventSettingsForm(SettingsForm):
         'logo_image',
         'logo_image_large',
         'event_logo_image',
+        'event_preview_image',
         'logo_show_title',
         'og_image',
         'menu_label_tickets',
