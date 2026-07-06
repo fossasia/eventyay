@@ -10,6 +10,7 @@ from django.utils.timezone import now
 
 from eventyay.base.models.storage_model import StoredFile
 from eventyay.consts import SizeKey
+from eventyay.helpers.http import get_default_user_agent
 
 
 def get_extension_from_response(response):
@@ -61,7 +62,7 @@ def store_image(response, event):  # TODO deduplicate
 
 def retrieve_url(url):
     headers = {
-        'User-Agent': f'{settings.INSTANCE_NAME}/1.0 ({settings.SITE_URL})',
+        'User-Agent': get_default_user_agent(),
     }
     response = requests.get(url, headers=headers, timeout=10)
     if response.status_code == 200:

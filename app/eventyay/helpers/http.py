@@ -1,6 +1,7 @@
 import random
 import socket
 
+import eventyay
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponsePermanentRedirect, HttpResponseRedirect, StreamingHttpResponse
@@ -56,3 +57,11 @@ def smtp_reachable(host: str | None, port: int | None, timeout: int | float | No
     )
     cache.set(cache_key, reachable, timeout=cache_ttl)
     return reachable
+
+
+def get_default_user_agent() -> str:
+    """Return a consistent User-Agent string for outgoing HTTP requests."""
+    instance_name = getattr(settings, 'INSTANCE_NAME', '') or 'eventyay'
+    site_url = getattr(settings, 'SITE_URL', '') or 'https://eventyay.com'
+    version = getattr(eventyay, '__version__', '') or 'unknown'
+    return f'{instance_name}/{version} ({site_url})'

@@ -8,6 +8,7 @@ from django.core.cache import cache
 
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.utils.language import localize_event_text
+from eventyay.helpers.http import get_default_user_agent
 
 
 logger = logging.getLogger(__name__)
@@ -300,7 +301,7 @@ def _geocode_with_nominatim(query: str) -> list[dict]:
             'limit': 5,
         },
         headers={
-            'User-Agent': f'{django_settings.INSTANCE_NAME}/1.0 ({django_settings.SITE_URL})',
+            'User-Agent': get_default_user_agent(),
         },
         timeout=10,
     )
