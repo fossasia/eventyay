@@ -208,7 +208,7 @@
         border: 1px solid var(--color-border);
         border-radius: var(--size-border-radius, 4px);
         background-color: var(--color-bg, #fff);
-        overflow: hidden;
+        overflow: visible;
         box-shadow: var(--shadow-light);
     }
 

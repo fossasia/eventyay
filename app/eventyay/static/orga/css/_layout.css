@@ -2089,33 +2089,13 @@ h2 .user-name-display img {
   }
 
   #page-content .table-flip tbody tr:has(td:first-child .color-square) td:nth-child(2),
-  #page-content .table-flip tbody tr:has(td:first-child .fa-user-secret) td:nth-child(2),
-  #page-content .table-flip tbody tr:has(td:first-child:empty) td:nth-child(2) {
-    display: block;
-    text-align: left;
-    font-weight: 600;
-    font-size: 0.95rem;
-    border-bottom: 1px solid var(--color-grey-light);
-    justify-content: flex-start;
+  #page-content .table-flip tbody tr:has(td:first-child .fa-user-secret) td:nth-child(2) {
+    padding-right: 2.5rem;
   }
-
-  #page-content .table-flip tbody tr:has(td:first-child .color-square) td:nth-child(2)::before,
-  #page-content .table-flip tbody tr:has(td:first-child .fa-user-secret) td:nth-child(2)::before,
-  #page-content .table-flip tbody tr:has(td:first-child:empty) td:nth-child(2)::before {
-    content: none;
-  }
-
-  #page-content .table-flip tbody tr:not(:has(td:first-child .color-square)):not(:has(td:first-child .fa-user-secret)) td:first-child:has(a) {
-    display: block;
-    text-align: left;
-    font-weight: 600;
-    font-size: 0.95rem;
-    border-bottom: 1px solid var(--color-grey-light);
-    justify-content: flex-start;
-  }
-
-  #page-content .table-flip tbody tr:not(:has(td:first-child .color-square)):not(:has(td:first-child .fa-user-secret)) td:first-child:has(a)::before {
-    content: none;
+  
+  #page-content .table-flip tbody tr:has(td:first-child .color-square) td:first-child:has(a),
+  #page-content .table-flip tbody tr:has(td:first-child .fa-user-secret) td:first-child:has(a) {
+    padding-right: 2.5rem;
   }
 
   #page-content .table-flip tbody td.numeric {

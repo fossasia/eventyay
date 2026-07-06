@@ -134,11 +134,13 @@
                         </td>
                         {% if can_view_speakers %}
                             <td>
-                                {% for speaker in submission.speakers.all %}
-                                    <a href="{% url 'orga:speakers.view' organizer=request.event.organizer.slug event=request.event.slug code=speaker.code %}">
-                                        {% include "orga/includes/user_name.html" with user=speaker %}
-                                    </a><br>
-                                {% endfor %}
+                                <div>
+                                    {% for speaker in submission.speakers.all %}
+                                        <a href="{% url 'orga:speakers.view' organizer=request.event.organizer.slug event=request.event.slug code=speaker.code %}">
+                                            {% include "orga/includes/user_name.html" with user=speaker %}
+                                        </a>{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
                             </td>
                         {% endif %}
                         {% if show_submission_types %}<td>{{ submission.submission_type.name }}</td>{% endif %}
