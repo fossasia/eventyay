@@ -16,7 +16,7 @@
         </a>
 
         {% if request.event.live or is_organiser %}
-            {% if show_tickets_tab %}
+            {% if show_tickets_tab and not is_meetup_event %}
                 {% get_localized_menu_label request.event 'menu_label_tickets' as label %}
                 <a href="{% eventurl request.event 'presale:event.index' %}#tickets" id="nav-tab-tickets" class="header-tab">
                     <i class="fa fa-ticket"></i> {{ label }}

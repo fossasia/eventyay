@@ -1,0 +1,81 @@
+{% load i18n %}
+{% load eventurl %}
+{% load bootstrap3 %}
+{% load login_url %}
+
+<section class="meetup-rsvp" aria-label="{% trans 'Event registration' %}">
+
+    {% if request.user.is_authenticated %}
+
+        {% if attendee_already_registered %}
+            <div class="panel panel-success" role="status">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <span class="fa fa-check-circle" aria-hidden="true"></span>
+                        {% trans "You're registered!" %}
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>{% trans "You're all set for this event. We look forward to seeing you!" %}</p>
+                </div>
+            </div>
+
+        {% else %}
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{% trans "Reserve your spot" %}</h3>
+                </div>
+                <div class="panel-body">
+                    <p>{% trans "Click the button below to register for this event instantly." %}</p>
+                    <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <span class="fa fa-calendar-check-o" aria-hidden="true"></span>
+                            {% trans "Register" %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        {% endif %}
+
+    {% elif guest_checkout_allowed %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{% trans "Register for this event" %}</h3>
+            </div>
+            <div class="panel-body">
+                <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}" novalidate>
+                    {% csrf_token %}
+                    {% bootstrap_form_errors rsvp_guest_form %}
+                    {% bootstrap_field rsvp_guest_form.attendee_name layout="horizontal" %}
+                    {% bootstrap_field rsvp_guest_form.attendee_email layout="horizontal" %}
+                    <div class="form-group">
+                        <div class="col-md-offset-3 col-md-9">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="fa fa-user-plus" aria-hidden="true"></span>
+                                {% trans "Register" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    {% else %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{% trans "Registration required" %}</h3>
+            </div>
+            <div class="panel-body">
+                <p>{% trans "Please log in to register for this event." %}</p>
+                <a href="{% build_login_url %}?next={{ request.path }}" class="btn btn-primary">
+                    <span class="fa fa-sign-in" aria-hidden="true"></span>
+                    {% trans "Log in" %}
+                </a>
+            </div>
+        </div>
+
+    {% endif %}
+
+</section>

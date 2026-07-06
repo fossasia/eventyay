@@ -3,18 +3,22 @@
 {% load bootstrap3 %}
 {% load static %}
 
-{% block title %}{% trans "Create a new event" %}{% endblock %}
+{% block title %}{% if is_meetup %}{% trans "Create a new meetup" %}{% else %}{% trans "Create a new event" %}{% endif %}{% endblock %}
 
 {% block custom_header %}
     <script defer src="{% static "eventyay-common/js/ui/event-create.js" %}"></script>
+    {% if is_meetup %}
+    <script type="module" src="{% static 'eventyay-common/js/ui/meetup-video-fields.js' %}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
-    <h1>{% trans "Create a new event" %}</h1>
+    <h1>{% if is_meetup %}{% trans "Create a new meetup" %}{% else %}{% trans "Create a new event" %}{% endif %}</h1>
     {% if has_organizer %}
         {{ organizer_slug_options|json_script:"event-create-organizers" }}
         <form action="" method="post" class="form-horizontal">
             {% csrf_token %}
+            {% if is_meetup %}<input type="hidden" name="is_meetup" value="on">{% endif %}
             {% bootstrap_form_errors foundation_form %}
             {% bootstrap_form_errors basics_form %}
 
@@ -62,7 +66,7 @@
             {% endcomment %}
 
             <fieldset>
-                <legend>{% trans "Event setup" %}</legend>
+                <legend>{% if is_meetup %}{% trans "Meetup setup" %}{% else %}{% trans "Event setup" %}{% endif %}</legend>
                 <div class="form-group{% if foundation_form.organizer.errors %} has-error{% endif %}">
                     <label class="col-md-3 control-label" for="{{ foundation_form.organizer.id_for_label }}">
                         {{ foundation_form.organizer.label }}
@@ -73,7 +77,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-md-3 control-label">{% trans "Event type" %}</label>
+                    <label class="col-md-3 control-label">{% if is_meetup %}{% trans "Meetup type" %}{% else %}{% trans "Event type" %}{% endif %}</label>
                     <div class="col-md-9">
                         <p class="form-control-static">
                             {% if foundation_form.has_subevents.value %}
@@ -86,7 +90,7 @@
                         </p>
                         <p class="help-block">
                             {% blocktrans trimmed %}
-                                The event type is set from the entry point. To choose a different type, go back and use the appropriate button.
+                                The meetup type is set from the entry point. To choose a different type, go back and use the appropriate button.
                             {% endblocktrans %}
                         </p>
                         <input type="hidden" name="{{ foundation_form.has_subevents.html_name }}" value="{{ foundation_form.has_subevents.value|yesno:'on,' }}">
@@ -118,12 +122,21 @@
                             <span class="text-danger ml-2"><small>{% trans "Slug not available" %}</small></span>
                         {% endif %}
                         <div class="help-block">
-                            {% blocktrans trimmed %}
-                            This is the address your event will be available at. Should be short, only contain lowercase letters
-                            and numbers, and must be unique. We recommend some kind of abbreviation with less than 30 characters
-                            that can be easily remembered. You cannot change the slug later on! If you don't provide a slug,
-                            a random one will be generated for you.
-                            {% endblocktrans %}
+                            {% if is_meetup %}
+                                {% blocktrans trimmed %}
+                                This is the address your meetup will be available at. Should be short, only contain lowercase letters
+                                and numbers, and must be unique. We recommend some kind of abbreviation with less than 30 characters
+                                that can be easily remembered. You cannot change the slug later on! If you don't provide a slug,
+                                a random one will be generated for you.
+                                {% endblocktrans %}
+                            {% else %}
+                                {% blocktrans trimmed %}
+                                This is the address your event will be available at. Should be short, only contain lowercase letters
+                                and numbers, and must be unique. We recommend some kind of abbreviation with less than 30 characters
+                                that can be easily remembered. You cannot change the slug later on! If you don't provide a slug,
+                                a random one will be generated for you.
+                                {% endblocktrans %}
+                            {% endif %}
                         </div>
                         <div class="slug-length alert alert-warning helper-display-none-soft">
                             {% blocktrans trimmed %}
@@ -136,8 +149,20 @@
                 {% if basics_form.date_to %}
                     {% bootstrap_field basics_form.date_to layout="control" %}
                 {% endif %}
-                {% bootstrap_field basics_form.currency layout="control" %}
+                 {% if not is_meetup %}
+                    {% bootstrap_field basics_form.currency layout="control" %}
+                {% endif %}
             </fieldset>
+
+            {% if is_meetup %}
+            <fieldset>
+                <legend>{% trans "Video stream" %}</legend>
+                {% bootstrap_field basics_form.video_type layout="control" %}
+                <div id="video-url-group" {% if not basics_form.video_type.value %}hidden{% endif %}>
+                    {% bootstrap_field basics_form.video_url layout="control" %}
+                </div>
+            </fieldset>
+            {% endif %}
 
             <fieldset>
                 <legend>{% trans "Location" %}</legend>
@@ -187,13 +212,17 @@
 
             <div class="form-group submit-group">
                 <button type="submit" class="btn btn-primary btn-save pull-right flip">
-                    {% trans "Create event" %}
+                    {% if is_meetup %}{% trans "Create meetup" %}{% else %}{% trans "Create event" %}{% endif %}
                 </button>
             </div>
         </form>
     {% else %}
         <div class="alert alert-danger">
-            {% trans "Every event needs to be created as part of an organizer account. Currently, you do not have access to any organizer accounts." %}
+            {% if is_meetup %}
+                {% trans "Every meetup needs to be created as part of an organizer account. Currently, you do not have access to any organizer accounts." %}
+            {% else %}
+                {% trans "Every event needs to be created as part of an organizer account. Currently, you do not have access to any organizer accounts." %}
+            {% endif %}
         </div>
         {% if staff_session %}
             <a href='{% url "eventyay_common:organizers.add" %}' class="btn btn-default">

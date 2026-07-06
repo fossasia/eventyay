@@ -5,13 +5,15 @@ import re
 import smtplib
 from datetime import datetime, timedelta
 from datetime import timezone as tz
+from decimal import Decimal
 from enum import StrEnum
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 from python_http_client.exceptions import HTTPError
 
 import jwt
 from django.conf import settings
+from django.utils.crypto import get_random_string
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.files import File
@@ -31,6 +33,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, TemplateView
 from django_scopes import scope
 from pytz import timezone
+from i18nfield.strings import LazyI18nString
 from rest_framework import views
 from django.views import View
 from django.apps import apps
@@ -38,6 +41,8 @@ from django.apps import apps
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.base.services.notifications import notify_organizer_followers
+from eventyay.base.models.room import Room
+from eventyay.base.models.product import Product
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
@@ -46,7 +51,7 @@ from eventyay.eventyay_common.video.permissions import video_attendee_trait
 from eventyay.presale.style import regenerate_css
 from eventyay.common.text.path import resolve_media_path
 from eventyay.base.services.quotas import QuotaAvailability
-from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
+from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm, MeetupEventWizardBasicsForm, get_video_module_config
 from eventyay.control.forms.filter import EventFilterForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin, UpdateView
@@ -67,6 +72,90 @@ from eventyay.multidomain.urlreverse import build_absolute_uri
 from ..forms.event import EventUpdateForm
 
 logger = logging.getLogger(__name__)
+
+
+def _provision_meetup_event(event, basics_form, request=None):
+    event.settings.set('event_type', 'meetup')
+
+    event.live = True
+    event.tickets_published = True
+    event.save(update_fields=['live', 'tickets_published'])
+
+    if not event.config or not event.config.get("JWT_secrets"):
+        secret = get_random_string(length=64)
+        event.config = {
+            "JWT_secrets": [
+                {
+                    "issuer": "any",
+                    "audience": "eventyay",
+                    "secret": secret,
+                }
+            ]
+        }
+        event.save(update_fields=['config'])
+
+    jwt_config = event.config["JWT_secrets"][0]
+    secret = jwt_config["secret"]
+    audience = jwt_config["audience"]
+    issuer = jwt_config["issuer"]
+
+    event.settings.set('venueless_secret', secret)
+    event.settings.set('venueless_issuer', issuer)
+    event.settings.set('venueless_audience', audience)
+    event.settings.set('venueless_all_products', True)
+    event.settings.set('venueless_show_public_link', True)
+
+    if request:
+        scheme = 'https' if request.is_secure() else 'http'
+        base_host = request.get_host()
+        video_url_setting = f"{scheme}://{base_host}{event.urls.video_base}"
+    else:
+        site_url = getattr(settings, 'SITE_URL', 'http://localhost:8000')
+        video_url_setting = urljoin(site_url, event.urls.video_base)
+
+    event.settings.set('venueless_url', video_url_setting)
+
+    video_type = basics_form.cleaned_data.get('video_type', '') if hasattr(basics_form, 'cleaned_data') else ''
+    video_url = basics_form.cleaned_data.get('video_url', '') if hasattr(basics_form, 'cleaned_data') else ''
+
+    module_config = get_video_module_config(video_type, video_url)
+
+    locale = getattr(event, 'locale', 'en') or 'en'
+
+    with scope(event=event):
+        room = Room(
+            event=event,
+            name=LazyI18nString({locale: 'Main Room'}),
+            module_config=module_config,
+            deleted=False,
+        )
+        room.save()
+
+        product = Product(
+            event=event,
+            name=LazyI18nString({locale: 'RSVP Ticket'}),
+            default_price=Decimal('0.00'),
+            admission=True,
+            active=True,
+        )
+        product.save()
+
+        quota = Quota(
+            event=event,
+            name='RSVP',
+            size=None,
+        )
+        quota.save()
+        quota.products.add(product)
+
+    event.log_action(
+        'eventyay.event.meetup.created',
+        data={
+            'video_type': video_type,
+            'video_url': video_url,
+        },
+    )
+
 
 class EventList(PaginationMixin, ListView):
     model = Event
@@ -274,12 +363,18 @@ class EventCreateView(TemplateView):
                 pass
         return None
 
+    @property
+    def is_meetup_request(self):
+        return (
+            self.request.GET.get('meetup') == '1'
+            or self.request.POST.get('is_meetup') == 'on'
+        )
+
     def dispatch(self, request, *args, **kwargs):
         is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
         if is_series and not is_event_series_creation_enabled(request):
             raise PermissionDenied(_('Event series creation is currently disabled.'))
-        is_meetup = request.GET.get('meetup') == '1' or request.POST.get('is_meetup') == 'on'
-        if is_meetup and not is_meetup_creation_enabled(request):
+        if self.is_meetup_request and not is_meetup_creation_enabled(request):
             raise PermissionDenied(_('Meetup creation is currently disabled.'))
         return super().dispatch(request, *args, **kwargs)
 
@@ -296,7 +391,8 @@ class EventCreateView(TemplateView):
         if foundation_data is None:
             foundation_data = self.get_foundation_initial()
         organizer = foundation_data.get('organizer') or self.get_fallback_organizer()
-        return EventWizardBasicsForm(
+        form_class = MeetupEventWizardBasicsForm if self.is_meetup_request else EventWizardBasicsForm
+        return form_class(
             data=self.request.POST if bind and self.request.method == 'POST' else None,
             initial=self.get_basics_initial(foundation_data),
             prefix='basics',
@@ -336,6 +432,7 @@ class EventCreateView(TemplateView):
         context['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         context['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
         context['type_preselected'] = 'series' in self.request.GET
+        context['is_meetup'] = self.is_meetup_request
         return context
 
     def post(self, request, *args, **kwargs):
@@ -550,6 +647,9 @@ class EventCreateView(TemplateView):
                     user=self.request.user,
                 )
 
+            if self.is_meetup_request:
+                _provision_meetup_event(event, basics_form, self.request)
+
         return redirect(
             reverse(
                 'eventyay_common:event.index',
@@ -624,6 +724,7 @@ class EventUpdate(
         context['header_links_formset'] = self.header_links_formset
         context['footer_links_formset'] = self.footer_links_formset
         context['is_video_enabled'] = is_video_enabled(self.object)
+        context['is_meetup_event'] = self.object.settings.get('event_type') == 'meetup'
         context['is_talk_event_created'] = False
         if (
             self.object.settings.create_for == EventCreatedFor.BOTH

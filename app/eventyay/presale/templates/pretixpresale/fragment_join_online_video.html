@@ -5,26 +5,51 @@
     <div class="modal-card join-online-video">
         <div class="modal-card-content-join">
             <div>
-                <h3>
-                    {% translate "This is a ticketed event. If you ordered a ticket as a guest user, you don't have an account but can still access the ticket using the secret link in your ticket confirmation email. On the tickets page there is also a link to join online sessions." %}
-                </h3>
-                <h3>
-                    {% translate 'As a ticket holder please also check your email for the unique link to join online sessions.' %}
-                </h3>
+                {% if is_meetup_event %}
+                    <h3>
+                        {% translate "This is a registered event. If you registered as a guest user, you don't have an account but can still access the event using the secret link in your confirmation email. On the event page there is also a link to join online sessions." %}
+                    </h3>
+                    <h3>
+                        {% translate 'As a registered attendee, please also check your email for the unique link to join online sessions.' %}
+                    </h3>
+                {% else %}
+                    <h3>
+                        {% translate "This is a ticketed event. If you ordered a ticket as a guest user, you don't have an account but can still access the ticket using the secret link in your ticket confirmation email. On the tickets page there is also a link to join online sessions." %}
+                    </h3>
+                    <h3>
+                        {% translate 'As a ticket holder please also check your email for the unique link to join online sessions.' %}
+                    </h3>
+                {% endif %}
                 {% if request.event %}
-                    <p class="text">
-                        {% translate "Can't find your ticket?" %}
-                        <a class="btn btn-link" href="{% eventurl request.event 'presale:event.resend_link' %}">
-                            {% translate 'Resend the email' %}
-                        </a>
-                        {% translate 'to receive it.' %}
-                    </p>
-                    <p class="text">
-                        {% translate 'Want to order a ticket?' %}
-                        <a class="btn btn-link" href="{% eventurl request.event 'presale:event.index' %}">
-                            {% translate 'Get a ticket here' %}
-                        </a>
-                    </p>
+                    {% if is_meetup_event %}
+                        <p class="text">
+                            {% translate "Can't find your registration?" %}
+                            <a class="btn btn-link" href="{% eventurl request.event 'presale:event.resend_link' %}">
+                                {% translate 'Resend the email' %}
+                            </a>
+                            {% translate 'to receive it.' %}
+                        </p>
+                        <p class="text">
+                            {% translate 'Want to register for this event?' %}
+                            <a class="btn btn-link" href="{% eventurl request.event 'presale:event.index' %}">
+                                {% translate 'Register here' %}
+                            </a>
+                        </p>
+                    {% else %}
+                        <p class="text">
+                            {% translate "Can't find your ticket?" %}
+                            <a class="btn btn-link" href="{% eventurl request.event 'presale:event.resend_link' %}">
+                                {% translate 'Resend the email' %}
+                            </a>
+                            {% translate 'to receive it.' %}
+                        </p>
+                        <p class="text">
+                            {% translate 'Want to order a ticket?' %}
+                            <a class="btn btn-link" href="{% eventurl request.event 'presale:event.index' %}">
+                                {% translate 'Get a ticket here' %}
+                            </a>
+                        </p>
+                    {% endif %}
                 {% endif %}
                 {% if not request.user.is_authenticated %}
                     <p class="text">

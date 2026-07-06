@@ -8,12 +8,13 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from importlib import import_module
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse, urljoin
 
 import isoweek
 import jwt
 import pytz
 from django.conf import settings
+from django.utils.crypto import get_random_string
 from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
@@ -536,6 +537,22 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        is_meetup_event = self.request.event.settings.get('event_type') == 'meetup'
+        context['is_meetup_event'] = is_meetup_event
+
+        if is_meetup_event and self.request.user.is_authenticated:
+            with scope(event=self.request.event):
+                context['attendee_already_registered'] = self.request.event.orders.filter(
+                    email=self.request.user.email,
+                    status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
+                ).exists()
+        else:
+            context['attendee_already_registered'] = False
+
+        if is_meetup_event:
+            from eventyay.presale.views.meetup import GuestRsvpForm
+            context['rsvp_guest_form'] = getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm()
+
         # Show voucher option if an event is selected and vouchers exist
         vouchers_exist = self.request.event.cache.get('vouchers_exist')
         if vouchers_exist is None:
@@ -906,10 +923,59 @@ class EventAuth(View):
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class JoinOnlineVideoView(EventViewMixin, View):
     def get(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return login_redirect_with_next(request)
+        event = self.request.event
+        is_allowed, order_position, order = self.validate_access(request, *args, **kwargs)
+        if not is_allowed:
+            return HttpResponse(status=403, content='user_not_allowed')
 
-        # First check if video is configured
+        if event.settings.get('event_type') == 'meetup':
+            if (
+                not event.settings.venueless_url
+                or not event.settings.venueless_issuer
+                or not event.settings.venueless_audience
+                or not event.settings.venueless_secret
+            ):
+                from django.db import transaction
+                with transaction.atomic():
+                    event_locked = Event.objects.select_for_update().get(pk=event.pk)
+                    if (
+                        not event_locked.settings.venueless_url
+                        or not event_locked.settings.venueless_issuer
+                        or not event_locked.settings.venueless_audience
+                        or not event_locked.settings.venueless_secret
+                    ):
+                        if not event_locked.config or not event_locked.config.get("JWT_secrets"):
+                            cfg = event_locked.config or {}
+                            if not cfg.get("JWT_secrets"):
+                                secret = get_random_string(length=64)
+                                cfg["JWT_secrets"] = [
+                                    {
+                                        "issuer": "any",
+                                        "audience": "eventyay",
+                                        "secret": secret,
+                                    }
+                                ]
+                                event_locked.config = cfg
+                                event_locked.save(update_fields=['config'])
+
+                        jwt_config = event_locked.config["JWT_secrets"][0]
+                        secret = jwt_config["secret"]
+                        audience = jwt_config["audience"]
+                        issuer = jwt_config["issuer"]
+
+                        event_locked.settings.set('venueless_secret', secret)
+                        event_locked.settings.set('venueless_issuer', issuer)
+                        event_locked.settings.set('venueless_audience', audience)
+                        event_locked.settings.set('venueless_all_products', True)
+                        event_locked.settings.set('venueless_show_public_link', True)
+
+                        scheme = 'https' if request.is_secure() else 'http'
+                        base_host = request.get_host()
+                        video_url_setting = f"{scheme}://{base_host}{event_locked.urls.video_base}"
+                        event_locked.settings.set('venueless_url', video_url_setting)
+                        event_locked.settings.flush()
+                        event.settings.flush()
+
         if (
             not self.request.event.settings.venueless_url
             or not self.request.event.settings.venueless_issuer
@@ -918,12 +984,6 @@ class JoinOnlineVideoView(EventViewMixin, View):
         ):
             logger.error('Video Online configuration is not available for this event.')
             raise PermissionDenied(_('Please go back and try again.'))
-
-        # Validate if customer allow to join this online video
-        is_allowed, order_position, order = self.validate_access(request, *args, **kwargs)
-        if not is_allowed:
-            # Show popup
-            return HttpResponse(status=403, content='user_not_allowed')
 
         redirect_url = self.generate_token_url(request, order_position, order)
         logger.info('Redirecting to %s...', redirect_url)
@@ -938,26 +998,27 @@ class JoinOnlineVideoView(EventViewMixin, View):
             allowed_statuses.append(Order.STATUS_PENDING)
 
         # Get all PAID orders of customer which belong to this event
-        # CRITICAL FIX: Only paid orders should grant video access
-        # Also include orders where the user is an attendee
-        order_list = (
-            Order.objects.filter(
-                Q(event=self.request.event)
-                & (
-                    Q(email__iexact=self.request.user.email)
-                    | Q(all_positions__attendee_email__iexact=self.request.user.email)
+        with scope(event=self.request.event):
+            order_list = list(
+                Order.objects.filter(
+                    Q(event=self.request.event)
+                    & (
+                        Q(email__iexact=self.request.user.email)
+                        | Q(all_positions__attendee_email__iexact=self.request.user.email)
+                    )
+                    & Q(status__in=allowed_statuses)
                 )
-                & Q(status__in=allowed_statuses)  # Check allowed statuses (PAID, and optionally PENDING)
+                .select_related('event')
+                .order_by('-datetime')
+                .distinct()
             )
-            .select_related('event')
-            .order_by('-datetime')
-            .distinct()
-        )
         # Check qs is empty
         if not order_list:
             # no paid order found
             return False, None, None
-        
+
+        if self.request.event.settings.get('event_type') == 'meetup':
+            return True, None, order_list[0]
         list_allow_ticket_type = self.request.event.settings.venueless_products
         all_products_allowed = self.request.event.settings.venueless_all_products
         

@@ -10,12 +10,17 @@ from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
 from pytz import common_timezones
 
+from django_scopes import scope
+from i18nfield.strings import LazyI18nString
+
 from eventyay.base.forms import I18nModelForm, SettingsForm
 from eventyay.base.models import Event
+from eventyay.base.models.room import Room
 from eventyay.base.settings import validate_event_settings
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.urls import get_file_url_path, is_http_url
 from eventyay.control.forms import MultipleLanguagesWidget, SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
+from eventyay.control.forms.event import VIDEO_TYPE_CHOICES, get_video_module_config
 from eventyay.helpers.image_optimize import optimize_uploaded_image
 from eventyay.multidomain.models import KnownDomain
 
@@ -65,6 +70,16 @@ class EventCommonSettingsForm(SettingsForm):
         settings_dict = self.get_initial_settings()
         settings_dict.update(data)
         validate_event_settings(self.event, settings_dict)
+
+        # Validation for meetup video fields
+        if self.event.settings.get('event_type') == 'meetup':
+            video_type = data.get('video_type')
+            video_url = data.get('video_url')
+            if video_type and not video_url:
+                self.add_error('video_url', _('A URL is required when a video type is selected.'))
+            if video_url and not video_type:
+                self.add_error('video_type', _('A video type is required when a URL is provided.'))
+
         return data
 
     def save(self):
@@ -95,6 +110,28 @@ class EventCommonSettingsForm(SettingsForm):
                     logger.error(f'Crop failed for {image_field}. Data keys: {[k for k in self.data.keys() if "crop" in k]}. Error: {e}')
                     crop_box = None
                 self.cleaned_data[image_field] = self._save_optimized(new_value, image_field, crop_box)
+
+        # Meetup video settings save logic
+        if self.event.settings.get('event_type') == 'meetup' and 'video_type' in self.cleaned_data:
+            video_type = self.cleaned_data.get('video_type')
+            video_url = self.cleaned_data.get('video_url', '')
+            module_config = get_video_module_config(video_type, video_url)
+
+            # Save to room
+            with scope(event=self.event):
+                room = Room.objects.filter(event=self.event, deleted=False).first()
+                if room:
+                    room.module_config = module_config
+                    room.save()
+                else:
+                    locale = getattr(self.event, 'locale', 'en') or 'en'
+                    room = Room(
+                        event=self.event,
+                        name=LazyI18nString({locale: 'Main Room'}),
+                        module_config=module_config,
+                        deleted=False,
+                    )
+                    room.save()
 
         return super().save()
 
@@ -143,6 +180,40 @@ class EventCommonSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs['obj']
         super().__init__(*args, **kwargs)
+
+        # Meetup video stream support
+        if self.event.settings.get('event_type') == 'meetup':
+            self.fields['video_type'] = forms.ChoiceField(
+                choices=VIDEO_TYPE_CHOICES,
+                required=False,
+                label=_('Video stream type'),
+                help_text=_('Configure a live video stream for this meetup.'),
+            )
+            self.fields['video_url'] = forms.URLField(
+                required=False,
+                label=_('Video URL / stream identifier'),
+                help_text=_('YouTube video URL, HLS stream URL, or embed URL.'),
+            )
+
+            # Retrieve existing video settings from the event's room module_config
+            with scope(event=self.event):
+                room = Room.objects.filter(event=self.event, deleted=False).first()
+                if room and room.module_config:
+                    try:
+                        cfg = room.module_config[0]
+                        cfg_type = cfg.get('type')
+                        cfg_data = cfg.get('config', {})
+                        if cfg_type == 'livestream.youtube':
+                            self.initial['video_type'] = 'youtube'
+                            self.initial['video_url'] = cfg_data.get('ytid', '')
+                        elif cfg_type == 'livestream.native':
+                            self.initial['video_type'] = 'hls'
+                            self.initial['video_url'] = cfg_data.get('hls_url', '')
+                        elif cfg_type == 'livestream.iframe':
+                            self.initial['video_type'] = 'iframe'
+                            self.initial['video_url'] = cfg_data.get('url', '')
+                    except (IndexError, AttributeError, KeyError, TypeError):
+                        pass
         localized_language_choices = get_language_choices_native_with_ui_name()
         for fname in ('locales', 'content_locales'):
             if fname in self.fields:
