@@ -60,7 +60,10 @@ def store_image(response, event):  # TODO deduplicate
 
 
 def retrieve_url(url):
-    response = requests.get(url, timeout=10)  # TODO: user agent
+    headers = {
+        'User-Agent': f'{settings.INSTANCE_NAME}/1.0 ({settings.SITE_URL})',
+    }
+    response = requests.get(url, headers=headers, timeout=10)
     if response.status_code == 200:
         return response
 
