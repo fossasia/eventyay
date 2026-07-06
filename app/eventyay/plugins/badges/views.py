@@ -23,7 +23,7 @@ from eventyay.base.models import CachedFile, OrderPosition, Question, QuestionAn
 from eventyay.base.services.tickets import invalidate_cache
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.permissions import EventPermissionRequiredMixin
-from eventyay.control.views.pdf import BaseEditorView
+from eventyay.control.views.pdf import BaseEditorView, open_stored_pdf_file
 from eventyay.helpers.models import modelcopy
 from eventyay.plugins.badges.forms import BadgeLayoutForm, BadgeLayoutSettingsForm
 from eventyay.plugins.badges.tasks import badges_create_pdf
@@ -343,6 +343,12 @@ class LayoutEditorView(BaseEditorView):
 
     def get_current_background(self):
         return self.layout.background.url if self.layout.background else self.get_default_background()
+
+    def _open_saved_background_pdf(self):
+        return open_stored_pdf_file(
+            self.layout.background,
+            default_path='pretixplugins/badges/badge_default_a6l.pdf',
+        )
 
     def save_background(self, f: CachedFile):
         if self.layout.background:
