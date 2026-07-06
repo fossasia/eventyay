@@ -32,6 +32,7 @@ const show = (headline) => {
     if (minimizeBtn) minimizeBtn.style.display = ''
     document.body.classList.remove('loading-minimized')
     document.body.classList.add('loading')
+    document.body.classList.add('is-import-task')
 }
 
 const hide = () => {
@@ -44,6 +45,7 @@ const hide = () => {
     isSubmitting = false
     document.body.classList.remove('loading')
     document.body.classList.remove('loading-minimized')
+    document.body.classList.remove('is-import-task')
     sessionStorage.removeItem('eventyay_async_task_import')
 }
 
@@ -99,16 +101,9 @@ const poll = () => {
 
                 sessionStorage.removeItem('eventyay_async_task_import')
 
-                if (data.redirect) {
-                    setTimeout(() => {
-                        hide()
-                        location.href = data.redirect
-                    }, 2000)
-                } else {
-                    setTimeout(() => {
-                        hide()
-                    }, 2000)
-                }
+                setTimeout(() => {
+                    hide()
+                }, 2000)
                 return
             }
             if (typeof data.percentage === 'number') {
@@ -193,7 +188,8 @@ const submit = (form) => {
 
 const init = () => {
     const importForms = document.querySelectorAll('form[data-import-task]')
-    if (importForms.length > 0) {
+    const storedTask = sessionStorage.getItem('eventyay_async_task_import')
+    if (importForms.length > 0 || storedTask) {
         const content = document.querySelector('#loadingmodal .modal-card-content')
         if (content && !content.querySelector('.loadingmodal-minimize')) {
             const div = document.createElement('div')
@@ -226,7 +222,6 @@ const init = () => {
         }
     })
 
-    const storedTask = sessionStorage.getItem('eventyay_async_task_import')
     if (storedTask) {
         try {
             const task = JSON.parse(storedTask)

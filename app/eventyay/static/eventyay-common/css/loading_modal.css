@@ -234,3 +234,7 @@ body.loading-minimized #loadingmodal .btn.loadingmodal-minimize:hover {
     -o-animation: progress-bar-stripes 3s linear infinite;
     animation: progress-bar-stripes 3s linear infinite;
 }
+
+body:not(.is-import-task) #loadingmodal .btn.loadingmodal-minimize {
+    display: none;
+}
