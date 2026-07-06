@@ -6,7 +6,7 @@
     {% if search_query %}
         <section class="startpage-events" aria-label="{% trans "Live events" %}">
             <div class="startpage-search-content-bar">
-                <form class="startpage-search-form" action="{% url "presale:index" %}" method="get" role="search">
+                <form class="startpage-search-form" action="{% url 'presale:index' %}" method="get" role="search">
                     <div class="startpage-search startpage-search-content">
                         <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans "Search" %}">
                             <i class="fa fa-search" aria-hidden="true"></i>

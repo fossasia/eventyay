@@ -41,7 +41,7 @@
                     {% trans "Show per page:" %}
                 </small>
                 {% for size in pagination_sizes %}
-                    <a href="?{% url_replace request "page_size" size "page" "1" %}">
+                    <a href="?{% url_replace request 'page_size' size 'page' '1' %}">
                         {% if page_size == size %}<strong>{% endif %}{{ size }}{% if page_size == size %}</strong>{% endif %}</a>{% if not forloop.last %} |{% endif %}
                 {% endfor %}
             </div>

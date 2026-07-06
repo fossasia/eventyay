@@ -10,10 +10,10 @@
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
         <meta charset="utf-8">
-        <title>{% block page_title %}{% trans "Start page" %}{% endblock %} :: {{ site_name }}</title>
+        <title>{% block page_title %}{% trans 'Start page' %}{% endblock %} :: {{ site_name }}</title>
         {% block meta_tags %}
-        <meta name="title" content="{% trans "Start page" %} {{ site_name }}">
-        <meta name="description" content="{% trans "Browse live events on" %} {{ site_name }}">
+        <meta name="title" content="{% trans 'Start page' %} {{ site_name }}">
+        <meta name="description" content="{% trans 'Browse live events on' %} {{ site_name }}">
         {% endblock %}
         <meta name="application-name" content="{{ site_name }}">
         <meta name="generator" content="{{ site_name }}">
@@ -73,7 +73,7 @@
                 </button>
             {% endif %}
             <div class="navbar-header">
-                <a class="navbar-brand" href="{% url "presale:index" %}">
+                <a class="navbar-brand" href="{% url 'presale:index' %}">
                     <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
                     <span class="hidden-xs">{{ site_name }}</span>
                 </a>
@@ -82,7 +82,7 @@
                 {% block search_nav %}
                 {% if not search_query %}
                 <li class="startpage-search-nav">
-                    <form class="startpage-search-form" action="{% url "presale:index" %}" method="get" role="search">
+                    <form class="startpage-search-form" action="{% url 'presale:index' %}" method="get" role="search">
                         <div class="startpage-search">
                             <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans "Search" %}">
                                 <i class="fa fa-search" aria-hidden="true"></i>
@@ -111,7 +111,7 @@
                 {% if show_link_in_header_for_start_page %}
                     {% for page in show_link_in_header_for_start_page %}
                         <li>
-                            <a href="{% url "page" slug=page.slug %}" title="{{ page.title|safe }}">
+                            <a href="{% url 'page' slug=page.slug %}" title="{{ page.title|safe }}">
                                 {{ page.title|safe }}
                             </a>
                         </li>
