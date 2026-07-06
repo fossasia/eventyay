@@ -18,7 +18,6 @@
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_markdown_editor.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/language-grid.css' %}" />
-            <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/loading_modal.css' %}" />
 		{% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}"
@@ -61,7 +60,7 @@
             <script type="text/javascript" src="{% static "leaflet/leaflet.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/geo.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/details.js" %}"></script>
-            <script type="module" src="{% static "eventyay-common/js/asynctask.js" %}"></script>
+            <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
             <script type="text/javascript" src="{% static "sortable/Sortable.js" %}"></script>
             <script type="module" src="{% static "common/js/dropdown.js" %}"></script>
             <script type="text/javascript" src="{% static "colorpicker/bootstrap-colorpicker.js" %}"></script>
@@ -443,11 +442,6 @@
                     <i class="fa fa-cog big-rotating-icon"></i>
                 </div>
                 <div class="modal-card-content">
-                    <div class="pull-right">
-                        <button type="button" class="btn btn-default btn-xs loadingmodal-minimize" title="{% trans "Minimize" %}">
-                            <i class="fa fa-window-minimize"></i>
-                        </button>
-                    </div>
                     <h3></h3>
                     <p class="text"></p>
                     <p class="status">{% trans "If this takes longer than a few minutes, please contact us." %}</p>
