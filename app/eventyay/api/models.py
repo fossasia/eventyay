@@ -120,6 +120,9 @@ class WebHook(models.Model):
     class Meta:
         ordering = ('id',)
 
+    def __str__(self):
+        return self.target_url
+
     @property
     def action_types(self):
         return [l.action_type for l in self.listeners.all()]
@@ -131,6 +134,9 @@ class WebHookEventListener(models.Model):
 
     class Meta:
         ordering = ('action_type',)
+
+    def __str__(self):
+        return self.action_type
 
 
 class WebHookCall(models.Model):
@@ -148,6 +154,9 @@ class WebHookCall(models.Model):
     class Meta:
         ordering = ('-datetime',)
 
+    def __str__(self):
+        return f"{self.action_type} @ {self.target_url}"
+
 
 class ApiCall(models.Model):
     idempotency_key = models.CharField(max_length=190, db_index=True)
@@ -164,3 +173,6 @@ class ApiCall(models.Model):
 
     class Meta:
         unique_together = (('idempotency_key', 'auth_hash'),)
+
+    def __str__(self):
+        return f"{self.request_method} {self.request_path}"
