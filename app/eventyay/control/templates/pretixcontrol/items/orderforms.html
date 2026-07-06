@@ -212,7 +212,7 @@
                                 </ul>
                                 {% with count=system_field_products.attendee_name_parts|length %}
                                     {% if count > 5 %}
-                                        <button type="button" class="btn btn-default btn-sm" data-products-toggle
+                                        <button type="button" class="btn btn-default btn-sm" data-products-toggle aria-expanded="false"
                                             data-show-more="{% blocktranslate trimmed with remaining=count|add:"-5" %}Show more (+{{ remaining }}){% endblocktranslate %}"
                                             data-show-less="{% translate "Show less" %}">
                                             {% blocktranslate trimmed with remaining=count|add:"-5" %}Show more (+{{ remaining }}){% endblocktranslate %}
