@@ -53,6 +53,7 @@ settings_hierarkey.add_default('venueless_talk_schedule_url', '', str)
 settings_hierarkey.add_default('venueless_show_public_link', False, bool)
 settings_hierarkey.add_default('talk_schedule_public', None, bool)
 settings_hierarkey.add_default('create_for', 'all', str)
+settings_hierarkey.add_default('event_type', '', str)
 
 # Etherpad collaborative notes integration
 settings_hierarkey.add_default('etherpad_enabled', False, bool)

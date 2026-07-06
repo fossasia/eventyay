@@ -11,6 +11,7 @@ import eventyay.presale.views.organizer
 import eventyay.presale.views.robots
 import eventyay.presale.views.theme
 import eventyay.presale.views.user
+import eventyay.presale.views.meetup
 import eventyay.presale.views.waiting
 import eventyay.presale.views.widget
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
@@ -77,6 +78,11 @@ frame_wrapped_urls = [
         'waitinglist',
         eventyay.presale.views.waiting.WaitingView.as_view(),
         name='event.waitinglist',
+    ),
+    path(
+        'rsvp/',
+        eventyay.presale.views.meetup.MeetupRsvpView.as_view(),
+        name='event.rsvp',
     ),
     path('', eventyay.presale.views.event.EventIndex.as_view(), name='event.index'),
 ]

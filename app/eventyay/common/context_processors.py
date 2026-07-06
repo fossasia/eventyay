@@ -9,7 +9,9 @@ from django.http import Http404, HttpRequest
 from django.urls import resolve
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
-from django_scopes import get_scope
+from django_scopes import get_scope, scope
+
+from eventyay.base.models.room import Room
 
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.cfp.signals import footer_link, html_head
@@ -121,7 +123,20 @@ def system_information(request):
             context['header_links'] = [
                 {'label': link.label, 'url': link.url} for link in event.extra_links.all() if link.role == 'header'
             ]
-            context['show_online_video_link'] = bool(event.settings.venueless_url) and event.settings.get('venueless_show_public_link', False)
+            is_meetup = event.settings.get('event_type') == 'meetup'
+            context['is_meetup_event'] = is_meetup
+            context['is_meetup'] = is_meetup
+
+            meetup_video_active = False
+            if is_meetup:
+                with scope(event=event):
+                    room = Room.objects.filter(event=event, deleted=False).first()
+                    meetup_video_active = bool(room and room.module_config)
+
+            context['show_online_video_link'] = (
+                meetup_video_active if is_meetup else
+                (bool(event.settings.venueless_url) and event.settings.get('venueless_show_public_link', False))
+            )
         for __, response in footer_link.send(event, request=request):
             if isinstance(response, list):
                 _footer += response
