@@ -480,6 +480,14 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             'approve, reject, or otherwise manage them.'
         ),
     )
+    hide_exhibition_applicant_emails = models.BooleanField(
+        default=False,
+        verbose_name=_('Hide emails of applicants'),
+        help_text=_(
+            'When enabled, Exhibitor Reviewers on this team cannot see the email addresses '
+            'of proposal applicants, but can still review the rest of the proposal.'
+        ),
+    )
 
     can_video_create_stages = models.BooleanField(
         default=False,

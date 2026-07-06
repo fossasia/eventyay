@@ -103,6 +103,7 @@ class TeamForm(forms.ModelForm):
             'limit_tracks',
             'can_change_exhibition_proposals',
             'is_exhibition_reviewer',
+            'hide_exhibition_applicant_emails',
             'can_video_create_stages',
             'can_video_create_channels',
             'can_video_direct_message',
