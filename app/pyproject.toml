@@ -244,6 +244,7 @@ lint = [
     "ruff>=0.15.13",
 ]
 test = [
+    "aioresponses>=0.7.9",
     "coverage>=7.14.1",
     "coveralls>=4.0.2",
     "faker>=40.23.0",

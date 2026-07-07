@@ -19,7 +19,7 @@ from eventyay.base.models import (
     RouletteRequest,
 )
 from eventyay.base.services.user import create_user, update_user
-from eventyay.storage.models import StoredFile
+from eventyay.base.models.storage_model import StoredFile
 
 
 @pytest.mark.django_db

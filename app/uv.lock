@@ -53,6 +53,19 @@ wheels = [
 ]
 
 [[package]]
+name = "aioresponses"
+version = "0.7.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/28/fb/e3f08af812b3e66fca511ea1babb9dfddeca5965dea2a4d13b6926e0b1c2/aioresponses-0.7.9.tar.gz", hash = "sha256:1dcfa28938fc006f046a98383a7c07ac180be7a492c1ed557f5cd7b0805357d3", size = 34072, upload-time = "2026-06-23T21:23:23.828Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/55/4c77cda7e69c1ac81a32e6895a361e0da9350eb7835a2ddb161a37ef1ce9/aioresponses-0.7.9-py2.py3-none-any.whl", hash = "sha256:94f9617f841c5bd7ee088ed783284f2cf4e6acc85d3933d92fc2fc7bd572a1b0", size = 12832, upload-time = "2026-06-23T21:23:22.426Z" },
+]
+
+[[package]]
 name = "aiosignal"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1422,6 +1435,7 @@ lint = [
     { name = "ruff" },
 ]
 test = [
+    { name = "aioresponses" },
     { name = "coverage" },
     { name = "coveralls" },
     { name = "faker" },
@@ -1655,6 +1669,7 @@ docs = [
 ]
 lint = [{ name = "ruff", specifier = ">=0.15.13" }]
 test = [
+    { name = "aioresponses", specifier = ">=0.7.9" },
     { name = "coverage", specifier = ">=7.14.1" },
     { name = "coveralls", specifier = ">=4.0.2" },
     { name = "faker", specifier = ">=40.23.0" },
