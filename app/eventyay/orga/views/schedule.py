@@ -485,7 +485,9 @@ class QuickScheduleView(PermissionRequired, UpdateView):
         return kwargs
 
     def get_object(self):
-        return self.request.event.wip_schedule.talks.filter(submission__code__iexact=self.kwargs.get('code')).first()
+        qs = self.request.event.wip_schedule.talks.filter(submission__code__iexact=self.kwargs.get('code'))
+        qs = apply_track_limit_to_slots(qs, self.request.event, self.request.user)
+        return qs.first()
 
     def form_valid(self, form):
         form.save()
