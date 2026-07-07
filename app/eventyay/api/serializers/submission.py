@@ -235,6 +235,51 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                 data['resources'] = [resource_id for resource_id in resources if resource_id in public_resource_ids]
         return data
 
+    def create(self, validated_data):
+        tags_data = validated_data.pop('tags', [])
+        image = validated_data.pop('image', None)
+        validated_data['event'] = self.event
+        if 'get_duration' in validated_data:
+            validated_data['duration'] = validated_data.pop('get_duration')
+        if not validated_data.get('content_locale'):
+            validated_data['content_locale'] = self.event.locale
+
+        submission = super().create(validated_data)
+
+        if tags_data:
+            submission.tags.set(tags_data)
+        if image:
+            submission.image.save(Path(image.name).name, image, save=True)
+            submission.save(update_fields=('image',))
+            submission.process_image('image', generate_thumbnail=True)
+        return submission
+
+    def update(self, instance, validated_data):
+        tags_data = validated_data.pop('tags', [])
+        image = validated_data.pop('image', None)
+        validated_data['event'] = self.event
+        duration_changed = False
+        if 'get_duration' in validated_data:
+            validated_data['duration'] = validated_data.pop('get_duration')
+            duration_changed = validated_data['duration'] != instance.duration
+        slot_count_changed = 'slot_count' in validated_data and validated_data.get('slot_count') != instance.slot_count
+        track_changed = 'track' in validated_data and validated_data.get('track') != instance.track
+
+        submission = super().update(instance, validated_data)
+
+        if tags_data:
+            submission.tags.set(tags_data)
+        if image:
+            submission.image.save(Path(image.name).name, image)
+            submission.process_image('image', generate_thumbnail=True)
+        if duration_changed:
+            submission.update_duration()
+        if slot_count_changed:
+            submission.update_talk_slots()
+        if track_changed:
+            submission.update_review_scores()
+        return submission
+
     class Meta:
         model = Submission
         fields = [
@@ -318,50 +363,7 @@ class SubmissionOrgaSerializer(SubmissionSerializer):
             raise serializers.ValidationError('Slot count may only be 1 in this event.')
         return value
 
-    def create(self, validated_data):
-        tags_data = validated_data.pop('tags', [])
-        image = validated_data.pop('image', None)
-        validated_data['event'] = self.event
-        if 'get_duration' in validated_data:
-            validated_data['duration'] = validated_data.pop('get_duration')
-        if not validated_data.get('content_locale'):
-            validated_data['content_locale'] = self.event.locale
 
-        submission = super().create(validated_data)
-
-        if tags_data:
-            submission.tags.set(tags_data)
-        if image:
-            submission.image.save(Path(image.name).name, image, save=True)
-            submission.save(update_fields=('image',))
-            submission.process_image('image', generate_thumbnail=True)
-        return submission
-
-    def update(self, instance, validated_data):
-        tags_data = validated_data.pop('tags', [])
-        image = validated_data.pop('image', None)
-        validated_data['event'] = self.event
-        duration_changed = False
-        if 'get_duration' in validated_data:
-            validated_data['duration'] = validated_data.pop('get_duration')
-            duration_changed = validated_data['duration'] != instance.duration
-        slot_count_changed = 'slot_count' in validated_data and validated_data['slot_count'] != instance.slot_count
-        track_changed = 'track' in validated_data and validated_data['track'] != instance.track
-
-        submission = super().update(instance, validated_data)
-
-        if tags_data:
-            submission.tags.set(tags_data)
-        if image:
-            submission.image.save(Path(image.name).name, image)
-            submission.process_image('image', generate_thumbnail=True)
-        if duration_changed:
-            submission.update_duration()
-        if slot_count_changed:
-            submission.update_talk_slots()
-        if track_changed:
-            submission.update_review_scores()
-        return submission
 
     class Meta(SubmissionSerializer.Meta):
         fields = SubmissionSerializer.Meta.fields + [

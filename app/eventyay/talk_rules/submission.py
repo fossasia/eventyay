@@ -320,6 +320,10 @@ def questions_for_user(request, event, user):
     if user.has_perm('base.update_talkquestion', event) or is_admin_mode_active(request):
         # Organizers with edit permissions can see everything
         return event.talkquestions(manager='all_objects').filter(is_imported=False)
+    
+    eventpermset = getattr(request, 'eventpermset', set())
+    if 'can_change_event_settings' in eventpermset or 'can_change_submissions' in eventpermset:
+        return event.talkquestions(manager='all_objects').filter(is_imported=False)
     if not user.is_anonymous and is_only_reviewer(user, event) and can_view_speaker_names(user, event):
         return event.talkquestions(manager='all_objects').filter(
             Q(is_visible_to_reviewers=True) | Q(target=TalkQuestionTarget.REVIEWER),
