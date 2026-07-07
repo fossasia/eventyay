@@ -1,4 +1,5 @@
 import pytest
+from asgiref.sync import async_to_sync
 from django.core.exceptions import ValidationError
 from django_scopes import scope
 from rest_framework import serializers
@@ -129,3 +130,25 @@ def test_validate_room_config_patch_ignores_read_only_body_fields(event):
         )
     assert validated_data == {'name': 'Updated'}
     assert update_fields == {'name'}
+
+
+@pytest.mark.django_db
+def test_save_room_module_config_clears_schedule_caches_with_scope(event):
+    from eventyay.base.services.room import save_room
+
+    with scope(event=event):
+        room = Room.objects.create(event=event, name='Janus Room')
+        old_data = {'module_config': []}
+
+    room.module_config = [{'type': 'call.janus', 'config': {}}]
+
+    async_to_sync(save_room)(
+        event,
+        room,
+        ['module_config'],
+        old_data=old_data,
+        by_user=None,
+    )
+
+    room.refresh_from_db()
+    assert room.module_config == [{'type': 'call.janus', 'config': {}}]

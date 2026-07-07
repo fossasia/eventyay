@@ -104,6 +104,25 @@ def test_create_always_on_hls_stage_stores_base_stream(monkeypatch):
     }
 
 
+def test_create_janus_room(monkeypatch):
+    created = _patch_room_creation(monkeypatch)
+    event = SimpleNamespace(id="event-id", has_permission_async=_allow_permission)
+
+    result = async_to_sync(event_service.create_room)(
+        event,
+        {
+            "name": "Janus Room",
+            "description": "a description",
+            "modules": [{"type": "call.janus", "config": {"ignored": True}}],
+        },
+        object(),
+    )
+
+    assert result == {"room": "room-id", "channel": None}
+    assert created["with_channel"] is False
+    assert created["data"]["module_config"] == [{"type": "call.janus", "config": {}}]
+
+
 @pytest.mark.django_db
 def test_stream_schedule_choices_do_not_expose_native():
     choices = [choice[0] for choice in StreamSchedule._meta.get_field("stream_type").choices]

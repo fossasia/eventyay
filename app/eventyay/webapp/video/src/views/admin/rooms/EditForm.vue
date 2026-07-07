@@ -135,7 +135,7 @@ export default {
 					({ room: roomId } = await this.$store.dispatch('createRoom', {
 						name: this.config.name,
 						description: this.config.description,
-						modules: []
+						modules: this.config.module_config
 					}))
 				}
 				const updated = await api.call('room.config.patch', {

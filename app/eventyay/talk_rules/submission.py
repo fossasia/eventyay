@@ -126,8 +126,7 @@ def event_has_featured_speakers(event):
 
 def schedule_widget_featured_cache_key_part(event):
     """Vary schedule JSON cache when featured rules, popularity, or release state change."""
-    flags = event.feature_flags or {}
-    popularity_enabled = bool(flags.get('session_popularity_enabled', False))
+    popularity_enabled = bool(event.get_feature_flag('session_popularity_enabled'))
     return (
         f'sess={_show_featured_setting(event)}|'
         f'spk={_show_featured_speakers_setting(event)}|'
