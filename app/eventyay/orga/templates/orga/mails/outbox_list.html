@@ -20,7 +20,7 @@
         <div>
             {% include "common/includes/search_form.html" with omit_wrapper=True form_id="outbox-search" no_filter_form=True %}
         </div>
-        <div class="d-flex flex-column align-items-end">
+        <div class="d-flex flex-column align-items-end outbox-bulk-actions">
             <div>
                 <button type="submit" form="outbox-search" formaction="{{ request.event.orga_urls.send_outbox }}" formmethod="get" class="btn btn-success">
                     {% translate "Send all" %}
@@ -50,7 +50,7 @@
             </div>
         {% endif %}
     <div class="table-responsive-sm">
-        <table class="table table-sm table-flip table-sticky">
+        <table class="table table-sm table-flip table-sticky outbox-mail-table">
             <thead>
                 <tr>
                     <th>

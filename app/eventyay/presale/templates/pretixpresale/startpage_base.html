@@ -1,0 +1,242 @@
+{% load compress %}
+{% load safelink %}
+{% load i18n %}
+{% load static %}
+{% load eventurl %}
+{% load statici18n %}
+{% load presale_locale %}
+
+<!DOCTYPE html>
+<html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
+    <head>
+        <meta charset="utf-8">
+        <title>{% block page_title %}{% trans 'Start page' %}{% endblock %} :: {{ site_name }}</title>
+        {% block meta_tags %}
+        <meta name="title" content="{% trans 'Start page' %} {{ site_name }}">
+        <meta name="description" content="{% trans 'Browse live events on' %} {{ site_name }}">
+        {% endblock %}
+        <meta name="application-name" content="{{ site_name }}">
+        <meta name="generator" content="{{ site_name }}">
+        {{ html_head|safe }}
+        <meta name="robots" content="index, follow">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#2185d0">
+        <meta name="HandheldFriendly" content="True"/>
+        {% include "common/includes/favicon.html" %}
+
+        <script src="{% static "jquery/js/jquery-3.7.1.min.js" %}"></script>
+
+        {% compress css %}
+            <link rel="stylesheet" type="text/x-scss" href="{% static "fontawesome/scss/font-awesome.scss" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_reset.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/base.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_variables.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_fonts.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_tooltip.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_pretalx.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_rtl.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_stages.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "cfp/css/_layout.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_agenda.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_speaker.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_navbar.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
+            <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/startpage.scss" %}" />
+        {% endcompress %}
+        {% if css_file %}
+            <link rel="stylesheet" type="text/css" href="{{ css_file }}" />
+        {% endif %}
+        {% compress js %}
+            <script defer src="{% static 'common/js/base.js' %}"></script>
+            <script defer src="{% static 'common/js/lightbox.js' %}"></script>
+            <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
+            <script type="module" src="{% static 'pretixpresale/js/startpage-sidebar.js' %}"></script>
+            <script defer src="{% static 'pretixpresale/js/startpage.js' %}"></script>
+        {% endcompress %}
+        {% if DEBUG %}
+            <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}" async></script>
+        {% else %}
+            <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
+        {% endif %}
+    </head>
+    <body class="startpage-body {% if search_query %}startpage-search-results-page{% endif %}{% if request.user.is_authenticated %} startpage-auth{% endif %}" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
+        {{ base_path|json_script:"base_path" }}
+        {{ staff_session|json_script:"is_admin_mode" }}
+        {{ html_page_header|safe }}
+
+        <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+            {% if request.user.is_authenticated %}
+                <button type="button" class="navbar-toggle-sidebar navbar-toggle" id="sidebar-toggle" data-toggle="sidebar" aria-controls="startpage-sidebar" aria-expanded="false">
+                    <span class="sr-only">{% trans "Toggle sidebar" %}</span>
+                    <i class="fa fa-bars fa-lg" aria-hidden="true"></i>
+                </button>
+            {% endif %}
+            <div class="navbar-header">
+                <a class="navbar-brand" href="{% url 'presale:index' %}">
+                    <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
+                    <span class="hidden-xs">{{ site_name }}</span>
+                </a>
+            </div>
+            <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+                {% block search_nav %}
+                {% if not search_query %}
+                <li class="startpage-search-nav">
+                    <form class="startpage-search-form" action="{% url 'presale:index' %}" method="get" role="search">
+                        <div class="startpage-search">
+                            <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans "Search" %}">
+                                <i class="fa fa-search" aria-hidden="true"></i>
+                            </button>
+                            <input
+                                id="startpage-search-input"
+                                name="q"
+                                type="search"
+                                autocomplete="off"
+                                placeholder="{% trans "Search events" %}"
+                                aria-label="{% trans "Search events" %}"
+                                value="{{ search_query|default:'' }}"
+                            />
+                            <div
+                                class="startpage-search-results"
+                                id="startpage-search-results"
+                                role="listbox"
+                                data-empty-text="{% trans "No matching events" %}"
+                                data-search-url="{% url 'presale:index' %}"
+                            ></div>
+                        </div>
+                    </form>
+                </li>
+                {% endif %}
+                {% endblock %}
+                {% if show_link_in_header_for_start_page %}
+                    {% for page in show_link_in_header_for_start_page %}
+                        <li>
+                            <a href="{% url 'page' slug=page.slug %}" title="{{ page.title|safe }}">
+                                {{ page.title|safe }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                {% endif %}
+                {% if request.user.is_staff and not staff_session %}
+                    <li>
+                        <form action="{% url 'control:user.sudo' %}?next={{ request.get_full_path|urlencode }}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-link" id="button-sudo" aria-label="{% trans 'Admin mode' %}">
+                                <i class="fa fa-id-card" aria-hidden="true"></i>
+                                <span class="hidden-xs">{% trans 'Admin mode' %}</span>
+                            </button>
+                        </form>
+                    </li>
+                {% elif request.user.is_staff and staff_session %}
+                    <li>
+                        <a href="{% url 'control:user.sudo.stop' %}" class="danger" aria-label="{% trans 'End admin session' %}">
+                            <i class="fa fa-id-card" aria-hidden="true"></i>
+                            <span class="hidden-xs">{% trans 'End admin session' %}</span>
+                        </a>
+                    </li>
+                {% endif %}
+                {% include "common/fragment_language_switch_public.html" %}
+                {% if request.user.is_authenticated %}
+                    {% include "common/fragment_profile_dropdown.html" %}
+                {% else %}
+                    <li>
+                        <a href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}" aria-label="{% trans 'Login' %}">
+                            <i class="fa fa-sign-in"></i> <span class="hidden-xs">{% trans "Login" %}</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% if request.user.is_authenticated %}
+            <aside class="startpage-sidebar" id="startpage-sidebar" aria-label="{% trans 'Main navigation' %}" aria-hidden="true" inert>
+                <div class="startpage-sidebar-inner">
+                    <div class="startpage-sidebar-context">
+                        <a href="{% url 'eventyay_common:dashboard' %}" class="dropdown-toggle">
+                            <span class="fa-stack fa-lg" aria-hidden="true">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-dashboard fa-stack-1x fa-inverse"></i>
+                            </span>
+                            <div class="context-indicator">
+                                <span class="context-name">{% trans "Main dashboard" %}</span>
+                            </div>
+                        </a>
+                    </div>
+                    <ul class="startpage-sidebar-nav">
+                        {% for nav in nav_items %}
+                            <li>
+                                <a href="{{ nav.url }}" {% if nav.active %}class="active"{% endif %}{% if nav.external %} target="_blank"{% endif %}>
+                                    {% if nav.icon %}
+                                        {% if "<svg" in nav.icon %}
+                                            {{ nav.icon|safe }}
+                                        {% else %}
+                                            <span class="fa fa-fw fa-{{ nav.icon }}" aria-hidden="true"></span>
+                                        {% endif %}
+                                    {% endif %}
+                                    <span class="sidebar-text">{{ nav.label }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </aside>
+            <div class="startpage-sidebar-backdrop" hidden></div>
+        {% endif %}
+
+        <div id="top-bg" class="header startpage-header">
+            {% if startpage_header_image_url %}
+                <img src="{{ startpage_header_image_url }}" id="header-image" alt="{% trans "Start page header" %}">
+            {% endif %}
+            <div class="header-image-overlay"></div>
+        </div>
+
+        <div class="container presale-container" id="main-container">
+            <header class="startpage-hero-header">
+                <div class="event-hero startpage-hero">
+                    <div class="event-hero-overlay">
+                        <div class="event-brand{% block event_brand_class %}{% endblock %}">
+                            {% block back_button %}{% endblock %}
+                            <div class="event-hero-text">
+                                <div class="event-title">
+                                    {{ startpage_header_text }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div class="card" id="main-card">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+                <main>
+                    {% block content %}{% endblock %}
+                </main>
+            </div>
+            <footer>
+                {% include "common/powered_by.html" %}
+                {% if footer_text %}
+                    · {{ footer_text|safe }}
+                {% endif %}
+                {% for footer in footer_links %}
+                    · <a href="{% safelink footer.url %}" target="_blank" rel="noopener">{{ footer.label }}</a>
+                {% endfor %}
+                <ul class="list-inline text-center startpage-footer-links">
+                    {% if show_link_in_footer_for_start_page %}
+                        {% for page in show_link_in_footer_for_start_page %}
+                            <li>
+                                <a href='{% url "page" slug=page.slug %}' title='{{ page.title|safe }}'>
+                                    {{ page.title|safe }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </footer>
+        </div>
+        {% include "pretixpresale/includes/share_dialog.html" %}
+        {% include "common/includes/modals.html" %}
+        {{ html_foot|safe }}
+    </body>
+</html>

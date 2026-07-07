@@ -1,0 +1,41 @@
+{% extends "pretixpresale/startpage_base.html" %}
+{% load i18n %}
+{% load eventurl %}
+{% block page_title %}{% trans "Events from Followed Organizers" %}{% endblock %}
+{% block event_brand_class %} event-list-header-brand{% endblock %}
+{% block back_button %}
+<a class="event-home-back d-print-none" href="{% url 'presale:index' %}" aria-label="{% trans 'Home' %}">
+  <span class="event-home-back-pill">
+    <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
+    <span class="event-home-back-label" aria-hidden="true">{% trans "Home" %}</span>
+  </span>
+</a>
+{% endblock %}
+{% block content %}
+<section class="startpage-events" aria-label="{% trans "Events from followed organizers" %}">
+  <h2>{% trans "Events from Followed Organizers" %}</h2>
+  {% for org_group in organizer_groups %}
+    <div class="organizer-section">
+      <h3 class="organizer-title">
+        <a href="{% eventurl org_group.organizer 'presale:organizer.index' %}">
+          {{ org_group.organizer.name }}
+        </a>
+      </h3>
+      <div class="startpage-event-list">
+        {% for event in org_group.events|slice:":8" %}
+          {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+        {% endfor %}
+      </div>
+      {% if org_group.events|length > 8 %}
+        <div class="organizer-more text-center">
+          <a class="btn btn-link" href="{% eventurl org_group.organizer 'presale:organizer.index' %}">
+            {% trans "View all events from this organizer" %}
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  {% empty %}
+    <p class="startpage-empty">{% trans "No upcoming events from organizers you follow." %}</p>
+  {% endfor %}
+</section>
+{% endblock %}
