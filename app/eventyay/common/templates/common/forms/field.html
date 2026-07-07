@@ -1,10 +1,11 @@
 {% load i18n %}
-<div class="form-group {{ form_group_class }}{% with classes=field.css_classes %}{% if classes %} {{ classes }}{% endif %}{% endwith %}">
+<div class="form-group {{ form_group_class }}{% if field.help_text %} has-help{% endif %}{% with classes=field.css_classes %}{% if classes %} {{ classes }}{% endif %}{% endwith %}">
     {% block field_label_left %}
         {% if field.field.widget.input_type != "checkbox" or field.field.widget.allow_multiple_selected %}
             <label for="{{ field.auto_id }}" class="{{ label_class }}">
                 <span>{{ field.label }}<span class="d-inline text-danger">{% if field.field.required %} *{% endif %}</span></span>
                 {% if not field.field.required %}<span class="optional">{% translate "Optional" %}</span>{% endif %}
+                {% if field.help_text %}<span class="field-help-toggle" role="button" tabindex="0" aria-label="{% translate "Show help" %}">?</span>{% endif %}
             </label>
         {% endif %}
     {% endblock %}

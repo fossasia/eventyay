@@ -1881,7 +1881,7 @@ h2 .user-name-display img {
     white-space: normal;
   }
 
-  /* Tab bar action buttons: full-width row below the tabs. */
+  /* Tab bar action buttons: full-width stacked column, aligned edge to edge. */
   #page-content [role="tablist"] .ml-auto.flip.d-flex {
     width: 100%;
     flex-direction: column;
@@ -1890,6 +1890,13 @@ h2 .user-name-display img {
     margin-top: 0.5rem;
   }
 
+  #page-content [role="tablist"] .ml-auto.flip.d-flex > .btn,
+  #page-content [role="tablist"] .ml-auto.flip.d-flex > .dropdown {
+    width: 100%;
+    margin: 0;
+  }
+
+  #page-content [role="tablist"] .ml-auto.flip.d-flex > .btn,
   #page-content [role="tablist"] .ml-auto.flip.d-flex summary.btn {
     width: 100%;
     text-align: center;
@@ -1951,6 +1958,83 @@ h2 .user-name-display img {
   #page-content .value-pill i.fa {
     margin-right: 0;
     color: #fff;
+  }
+
+  /* Submission header: present the proposal title and status as a card. */
+  #page-content #main-title h2 {
+    background: var(--color-grey-lightest);
+    border: 1px solid var(--color-grey-light);
+    border-radius: var(--size-border-radius, 6px);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.2rem;
+    line-height: 1.35;
+  }
+
+  #page-content #main-title .submission-state-dropdown,
+  #page-content #main-title .submission-readonly-badge,
+  #page-content #main-title form.d-inline {
+    display: block;
+    margin-left: 0;
+    margin-top: 0.6rem;
+    text-align: center;
+  }
+
+  /* Field help text collapsed behind a ? badge, revealed on focus/hover.
+     Kept in the DOM (sr-only) so aria-describedby stays accessible. */
+  #page-content .form-group.has-help > label {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  #page-content .form-group.has-help > label .field-help-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  #page-content .form-group.has-help .form-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+  }
+
+  #page-content .form-group.has-help:focus-within .form-text,
+  #page-content .form-group.has-help:hover .form-text {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    margin: 0.4rem 0 0;
+    padding: 0.4rem 0.6rem;
+    background: var(--color-grey-lightest);
+    border-radius: var(--size-border-radius, 6px);
+  }
+
+  /* The submit button aligns under the language field on mobile; drop its
+     desktop label-height spacer. */
+  #page-content .add-speaker-btn-spacer {
+    display: none;
   }
 
   /* Search / filter forms */

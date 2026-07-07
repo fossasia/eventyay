@@ -718,6 +718,9 @@ a {
 .mw-100 {
   max-width: 100% !important;
 }
+.field-help-toggle {
+  display: none;
+}
 .offset-md-3 {
   margin-left: 25%;
 }
