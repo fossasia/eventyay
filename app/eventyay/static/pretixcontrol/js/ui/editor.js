@@ -1137,11 +1137,14 @@ var editor = {
         }
         $btn.prop("disabled", true).prepend('<span class="fa fa-cog fa-spin"></span> ');
         editor._sync_active_text_object_from_toolbox();
-        $.post(window.location.href, {
+        var payload = {
             data: JSON.stringify(editor.dump()),
             csrfmiddlewaretoken: editor._csrf_token(),
-            background: editor.uploaded_file_id,
-        }, function (data) {
+        };
+        if (editor.uploaded_file_id) {
+            payload.background = editor.uploaded_file_id;
+        }
+        $.post(window.location.href, payload, function (data) {
             editor._finish_save_button($btn, defaultLabel, data.status === "ok");
         }, "json").fail(function () {
             editor._finish_save_button($btn, defaultLabel, false);
