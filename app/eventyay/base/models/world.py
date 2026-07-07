@@ -495,6 +495,9 @@ class PlannedUsage(models.Model):
     class Meta:
         ordering = ("start",)
 
+    def __str__(self):
+        return f'PlannedUsage {self.pk}: {self.world} ({self.start} - {self.end})'
+
     def as_ical(self):
         event = icalendar.Event()
         event["uid"] = f"{self.world.id}-{self.id}"
@@ -519,6 +522,9 @@ class WorldView(models.Model):
     user = models.ForeignKey(
         to="user", related_name="world_views", on_delete=models.CASCADE
     )
+
+    def __str__(self):
+        return f'WorldView {self.pk}: {self.world} by {self.user}'
 
     class Meta:
         indexes = [
