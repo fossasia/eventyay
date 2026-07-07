@@ -77,7 +77,7 @@ class CopyDraftMixin:
 
 
             except (EmailQueue.DoesNotExist, ValueError, TypeError) as e:
-                logger.warning('Failed to load EmailQueue for copyToDraft: %s' % e)
+                logger.warning('Failed to load EmailQueue for copyToDraft: %s', e)
 
 
 class QueryFilterOrderingMixin:
