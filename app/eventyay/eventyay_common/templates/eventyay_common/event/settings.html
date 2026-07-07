@@ -1,6 +1,5 @@
 {% extends "eventyay_common/event/settings_base.html" %}
-{% load static %}
-{% load i18n %}
+{% load i18n static %}
 {% load bootstrap3 %}
 {% load hierarkey_form %}
 {% load formset_tags %}
@@ -176,6 +175,7 @@
             {% bootstrap_field sform.event_logo_image layout="control" %}
             {% bootstrap_field sform.logo_show_title layout="control" %}
             {% bootstrap_field sform.logo_image layout="control" %}
+            {% bootstrap_field sform.event_preview_image layout="control" %}
             {% bootstrap_field sform.logo_image_large layout="control" %}
             {% bootstrap_field sform.og_image layout="control" %}
             {% url "eventyay_common:organizer.edit" organizer=request.organizer.slug as org_url %}
@@ -304,4 +304,5 @@
     <script src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
     <script src="{% static 'eventyay-common/image_cropper.js' %}"></script>
 </form>
+<script src="{% static 'eventyay-common/js/event-settings-images.js' %}" type="module"></script>
 {% endblock %}
