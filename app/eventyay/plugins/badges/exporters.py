@@ -248,6 +248,8 @@ def _fit_badge_to_slot(page, slot_width, slot_height):
         return None
 
     scale = min(slot_width / page_width, slot_height / page_height)
+    offset_x = (slot_width - page_width * scale) / 2
+    offset_y = (slot_height - page_height * scale) / 2
     writer = PdfWriter()
     fitted = writer.add_blank_page(
         width=Decimal('%.5f' % slot_width),
@@ -255,7 +257,7 @@ def _fit_badge_to_slot(page, slot_width, slot_height):
     )
     fitted.merge_transformed_page(
         page,
-        Transformation().scale(scale, scale),
+        Transformation().scale(scale, scale).translate(offset_x, offset_y),
         expand=False,
     )
     return fitted
