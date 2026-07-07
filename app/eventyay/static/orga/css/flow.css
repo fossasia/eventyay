@@ -131,3 +131,36 @@
   text-align: right;
   font-weight: bold;
 }
+
+@media (max-width: 768px) {
+  #flow {
+    margin-right: 0;
+  }
+  
+  #flow #steps > .step {
+    margin: 10px;
+    margin-bottom: 24px;
+  }
+  
+  #flow #steps > .step .step-header {
+    height: 100px;
+    width: calc(100% - 20px);
+  }
+  
+  #flow #steps > .step .step-main-container {
+    padding: 15px;
+    margin-top: 100px;
+  }
+
+  #dirty-flow {
+    left: 15px;
+    right: 15px;
+  }
+
+  #flow-modal {
+    width: 95%;
+    padding: 16px;
+    top: 50px;
+  }
+}
+
