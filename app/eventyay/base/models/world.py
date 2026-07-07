@@ -25,7 +25,7 @@ from eventyay.base.models.exhibitor import ContactRequest, ExhibitorStaff, Exhib
 from eventyay.base.models.feedback import Feedback
 from eventyay.base.models.poll import Poll
 from eventyay.base.models.poster import PosterPresenter
-from eventyay.base.models.question import RoomQuestion
+from eventyay.base.models.roomquestion import RoomQuestion
 from eventyay.base.models.room import Reaction, RoomView
 from eventyay.base.models.storage_model import StoredFile
 
