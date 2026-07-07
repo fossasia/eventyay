@@ -38,7 +38,7 @@
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-between;
-    gap: 4px;
+    gap: 0.5rem;
     margin-top: 10px;
   }
 
