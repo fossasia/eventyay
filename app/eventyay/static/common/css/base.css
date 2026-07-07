@@ -1123,6 +1123,7 @@ a.event-public-text-link:visited {
     border-bottom: 1px solid var(--color-grey-light);
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     padding: 0.55rem 0.75rem;
     text-align: right;
     justify-content: flex-end;
@@ -1133,7 +1134,7 @@ a.event-public-text-link:visited {
   }
   .table-flip tbody td::before {
     content: attr(data-label);
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
     max-width: 50%;
     text-align: left;
@@ -1141,6 +1142,12 @@ a.event-public-text-link:visited {
     font-weight: 600;
     color: var(--color-text-muted, #6c757d);
     margin-right: auto;
+  }
+
+  .table-flip tbody td:not(.numeric):not(.text-right):not(.action-column):not(.submission_featured):not(.speaker-actions-cell):not(.col-tags):not(.col-state) > * {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
   .table-flip tbody td:not([data-label])::before,
   .table-flip tbody td[data-label=""]::before {
