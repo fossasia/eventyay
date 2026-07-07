@@ -1981,15 +1981,16 @@ h2 .user-name-display img {
   }
 
   /* Field help text collapsed behind a ? badge, revealed on focus/hover.
-     Kept in the DOM (sr-only) so aria-describedby stays accessible. */
-  #page-content .form-group.has-help > label {
+     Scoped to the add-speaker form; kept in the DOM (sr-only) so
+     aria-describedby stays accessible. */
+  #page-content .speaker-inline-form .form-group > label {
     display: inline-flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 0.35rem;
   }
 
-  #page-content .form-group.has-help > label .field-help-toggle {
+  #page-content .speaker-inline-form .form-group > label .field-help-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2005,7 +2006,7 @@ h2 .user-name-display img {
     cursor: pointer;
   }
 
-  #page-content .form-group.has-help .form-text {
+  #page-content .speaker-inline-form .form-group .form-text {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -2017,8 +2018,8 @@ h2 .user-name-display img {
     border: 0;
   }
 
-  #page-content .form-group.has-help:focus-within .form-text,
-  #page-content .form-group.has-help:hover .form-text {
+  #page-content .speaker-inline-form .form-group:focus-within .form-text,
+  #page-content .speaker-inline-form .form-group:hover .form-text {
     position: static;
     width: auto;
     height: auto;
