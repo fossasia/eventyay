@@ -17,19 +17,16 @@ const initAvailabilities = (element) => {
                 .getEvents()
                 .map(function (e) {
                     if (e.groupId) return
+                    const res = {}
+                    if (e.id) res.id = e.id
                     if (e.allDay) {
-                        return {
-                            start: moment(e.start).format(
-                                "YYYY-MM-DD HH:mm:ss",
-                            ),
-                            end: moment(e.end).format("YYYY-MM-DD HH:mm:ss"),
-                        }
+                        res.start = moment(e.start).format("YYYY-MM-DD HH:mm:ss")
+                        res.end = moment(e.end).format("YYYY-MM-DD HH:mm:ss")
                     } else {
-                        return {
-                            start: e.start.toISOString(),
-                            end: e.end.toISOString(),
-                        }
+                        res.start = e.start.toISOString()
+                        res.end = e.end.toISOString()
                     }
+                    return res
                 })
                 .filter((a) => !!a),
         }

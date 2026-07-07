@@ -111,9 +111,15 @@ class AvailabilitiesFormMixin(forms.Form):
         message = _('The submitted availability does not comply with the required format.')
         if not isinstance(rawavail, dict):
             raise forms.ValidationError(message)
-        rawavail.pop('id', None)
+        
+        if 'id' in rawavail:
+            try:
+                rawavail['id'] = int(rawavail['id'])
+            except (ValueError, TypeError):
+                rawavail.pop('id')
+                
         rawavail.pop('allDay', None)
-        if set(rawavail.keys()) != {'start', 'end'}:
+        if set(rawavail.keys()) - {'id'} != {'start', 'end'}:
             raise forms.ValidationError(message)
 
         try:
@@ -171,9 +177,33 @@ class AvailabilitiesFormMixin(forms.Form):
 
     def _replace_availabilities(self, instance, availabilities):
         with transaction.atomic():
-            # TODO: do not recreate objects unnecessarily, give the client the IDs, so we can track modifications and leave unchanged objects alone
-            instance.availabilities.all().delete()
-            Availability.objects.bulk_create(availabilities)
+            existing_availabilities = {av.id: av for av in instance.availabilities.all()}
+            incoming_ids = {av.id for av in availabilities if getattr(av, 'id', None) is not None}
+
+            to_delete = set(existing_availabilities.keys()) - incoming_ids
+            if to_delete:
+                Availability.objects.filter(id__in=to_delete).delete()
+
+            to_create = []
+            to_update = []
+
+            for avail in availabilities:
+                if getattr(avail, 'id', None) is None:
+                    to_create.append(avail)
+                else:
+                    existing = existing_availabilities.get(avail.id)
+                    if existing:
+                        existing.start = avail.start
+                        existing.end = avail.end
+                        to_update.append(existing)
+                    else:
+                        avail.id = None
+                        to_create.append(avail)
+
+            if to_update:
+                Availability.objects.bulk_update(to_update, ['start', 'end'])
+            if to_create:
+                Availability.objects.bulk_create(to_create)
 
     def save(self, *args, **kwargs):
         if return_instance := hasattr(super(), 'save'):
