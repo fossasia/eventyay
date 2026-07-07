@@ -1143,13 +1143,14 @@ a.event-public-text-link:visited {
     color: var(--color-text-muted, #6c757d);
     margin-right: auto;
   }
-  /* Prevent long values (session titles, speaker names) from overflowing
-     onto the ::before label: let the value shrink and wrap instead. */
-  .table-flip tbody td > * {
+  /* Let long textual values (e.g. session titles, speaker names) shrink and
+     wrap instead of overflowing onto the ::before label. Scoped to text-value
+     cells only; control cells (buttons, icons, checkboxes, badges) are excluded
+     so their children keep their intrinsic sizing. */
+  .table-flip tbody td:not(.numeric):not(.text-right):not(.action-column):not(.submission_featured):not(.speaker-actions-cell):not(.col-tags):not(.col-state) > * {
     min-width: 0;
     max-width: 100%;
-    overflow-wrap: break-word;
-    word-break: break-word;
+    overflow-wrap: anywhere;
   }
   .table-flip tbody td:not([data-label])::before,
   .table-flip tbody td[data-label=""]::before {
