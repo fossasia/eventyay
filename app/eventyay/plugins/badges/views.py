@@ -3,7 +3,6 @@ from datetime import timedelta
 from io import BytesIO
 
 from django.contrib import messages
-from django.contrib.staticfiles import finders
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import transaction
@@ -29,7 +28,7 @@ from eventyay.plugins.badges.forms import BadgeLayoutForm, BadgeLayoutSettingsFo
 from eventyay.plugins.badges.tasks import badges_create_pdf
 from eventyay.plugins.badges.utils import clear_badge_layout_cache
 
-from .exporters import BadgeRenderer
+from .exporters import BadgeRenderer, _open_layout_background
 from .models import BadgeLayout
 
 
@@ -322,10 +321,8 @@ class LayoutEditorView(BaseEditorView):
         buffer = BytesIO()
         if override_background:
             bgf = default_storage.open(override_background.name, 'rb')
-        elif isinstance(self.layout.background, File) and self.layout.background.name:
-            bgf = default_storage.open(self.layout.background.name, 'rb')
         else:
-            bgf = open(finders.find('pretixplugins/badges/badge_default_a6l.pdf'), 'rb')
+            bgf = _open_layout_background(self.layout)
         r = BadgeRenderer(
             self.request.event,
             override_layout or self.get_current_layout(),
@@ -351,6 +348,19 @@ class LayoutEditorView(BaseEditorView):
         )
 
     def save_background(self, f: CachedFile):
+        # The editor creates a blank placeholder PDF for on-canvas sizing. Do not
+        # replace the layout artwork when the user only saves field positions.
+        if not f.file:
+            return
+        if f.file.name.endswith('empty.pdf'):
+            return
+        try:
+            if f.file.size < 15_000:
+                with f.file.open('rb') as handle:
+                    if b'ReportLab Generated PDF' in handle.read(120):
+                        return
+        except OSError:
+            pass
         if self.layout.background:
             self.layout.background.delete()
         self.layout.background.save('background.pdf', f.file)
