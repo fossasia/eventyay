@@ -137,7 +137,7 @@ class AsyncMixin:
         elif exception.__class__.__name__ in self.known_errortypes:
             return str(exception)
         else:
-            logger.error('Unexpected exception: %r' % exception)
+            logger.error('Unexpected exception: %r', exception)
             return _('An unexpected error has occurred, please try again later.')
 
     def get_success_message(self, value):

@@ -165,7 +165,7 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
             try:
                 default_storage.delete(fexisting.name)
             except OSError:  # pragma: no cover
-                logger.error('Deleting file %s failed.' % fexisting.name)
+                logger.error('Deleting file %s failed.', fexisting.name)
 
         # Create new file
         nonce = get_random_string(length=8)
