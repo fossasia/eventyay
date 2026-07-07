@@ -77,7 +77,7 @@ class BadgesApp(AppConfig):
             for template_name, template_data in templates.items():
                 design_name = template_data['name']
                 template_path = os.path.join(media_dir, f'{design_name}.pdf')
-                if os.path.exists(templates_path):
+                if os.path.exists(template_path):
                     with open(template_path, 'rb') as f:
                         content = f.read()
                     content_file = ContentFile(content, name=f'{design_name}.pdf')
