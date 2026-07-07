@@ -116,6 +116,7 @@ from .turn import TurnServer
 from .type import SubmissionType
 from .vouchers import InvoiceVoucher, Voucher
 from .waitinglist import WaitingListEntry
+from .world import PlannedUsage, World, WorldView
 
 
 __all__ = [
@@ -259,6 +260,8 @@ __all__ = [
     'Voucher',
     'WaitingListEntry',
     'WebAuthnDevice',
+    'World',
+    'WorldView',
     'cachedcombinedticket_name',
     'cachedfile_name',
     'cachedticket_name',
