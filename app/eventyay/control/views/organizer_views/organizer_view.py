@@ -200,6 +200,41 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+        if request.POST.get('ajax') == 'delete_image':
+            setting_key = request.POST.get('setting_key', '').strip()
+            if not setting_key:
+                field = request.POST.get('field', '').strip()
+                if field.startswith('settings-'):
+                    setting_key = field[len('settings-'):]
+                else:
+                    setting_key = field
+
+            from eventyay.base.settings import DEFAULTS
+            if setting_key in DEFAULTS and DEFAULTS[setting_key].get('type') is File:
+                current_value = self.object.settings.get(setting_key, as_type=str)
+                if current_value:
+                    from eventyay.common.text.path import resolve_media_path
+                    from django.core.files.storage import default_storage
+                    import os
+                    current_file = resolve_media_path(current_value)
+                    if current_file and not str(current_file).startswith(('http://', 'https://')):
+                        default_storage.delete(current_file)
+                        base_path, unused_ext = os.path.splitext(current_file)
+                        orig_ext = self.object.settings.get(f'{setting_key}_original_ext', as_type=str)
+                        if orig_ext:
+                            default_storage.delete(f'{base_path}_original.{orig_ext}')
+
+                if self.object.settings.get(setting_key) is not None:
+                    del self.object.settings[setting_key]
+                orig_ext_key = f"{setting_key}_original_ext"
+                if self.object.settings.get(orig_ext_key) is not None:
+                    del self.object.settings[orig_ext_key]
+                self.request.organizer.log_action('pretix.organizer.settings', user=request.user, data={setting_key: None})
+                from django.http import JsonResponse
+                return JsonResponse({'success': True})
+            from django.http import JsonResponse
+            return JsonResponse({'success': False, 'error': 'Invalid field'}, status=400)
+
         form = self.get_form()
         if form.is_valid() and self.sform.is_valid():
             return self.form_valid(form)

@@ -2163,16 +2163,17 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Logo'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'Upload your organizer logo. Accepted formats: PNG, JPEG, GIF. '
-                'The logo is displayed in the page header.'
+                'Upload your organizer logo. The logo is displayed at up to 160 px tall (max-height), width proportional. '
+                'We recommend a minimum of 320 px in height for crisp display on retina screens. '
+                'The logo will be automatically optimized on save (max 1000 px wide), except for SVG and animated images which remain unmodified.'
             ),
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },
@@ -2183,17 +2184,17 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Header image'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
                 'This image appears at the top of all organizer pages, replacing the default color or pattern. '
-                'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
-                'We recommend an image 1140 px wide and 120 px in height (can be increased with the setting below).'
+                'We recommend an image 1920 px wide and 640 px in height (the center 1920 × 320 px will always be visible). '
+                'Images will be automatically optimized to max 3000 px wide on save.'
             ),
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },

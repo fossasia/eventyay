@@ -97,7 +97,7 @@
             {% if current_event and current_event.visible_header_image_url %}
                 {# not lazy-loading to avoid flash #}
                 <img src="{{ current_event.visible_header_image_url }}" id="header-image" alt="{{ current_event.name|event_localize }}">
-            {% elif request.organizer and organizer_header %}
+            {% elif not current_event and request.organizer and organizer_header %}
                 {% if organizer.settings.organizer_header_image_large %}
                     <img src="{{ organizer_header|thumb:'1920x5000' }}" id="header-image" alt="{{ organizer.name }}">
                 {% else %}

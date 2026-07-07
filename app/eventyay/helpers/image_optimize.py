@@ -36,6 +36,8 @@ MAX_WIDTH: dict[str, int] = {
     'logo_image': 3000,       # header/banner image
     'event_logo_image': 1000, # event logo
     'event_preview_image': 1200, # event preview card image
+    'organizer_logo_image': 1000,
+    'organizer_header_image': 3000,
 }
 
 JPEG_QUALITY = 85
