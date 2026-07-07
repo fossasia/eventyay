@@ -1090,6 +1090,98 @@ a.event-public-text-link:visited {
   display: block;
 }
 
+@media (max-width: 768px) {
+  /* Generic mobile table flip layout */
+  .table-flip {
+    display: block;
+    width: 100%;
+  }
+  .table-flip thead {
+    display: none;
+  }
+  .table-flip tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .table-flip tbody tr {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--size-border-radius, 4px);
+    background-color: var(--color-bg, #fff);
+    overflow: visible;
+    box-shadow: var(--shadow-light);
+  }
+  .table-flip tbody tr:hover {
+    background-color: var(--color-bg, #fff);
+  }
+  .table-flip tbody th,
+  .table-flip tbody td {
+    border-top: none;
+    border-bottom: 1px solid var(--color-grey-light);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 0.55rem 0.75rem;
+    text-align: right;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+  .table-flip tbody td:last-child {
+    border-bottom: none;
+  }
+  .table-flip tbody td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 50%;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-text-muted, #6c757d);
+    margin-right: auto;
+  }
+
+  .table-flip tbody td:not(.numeric):not(.text-right):not(.action-column):not(.submission_featured):not(.speaker-actions-cell):not(.col-tags):not(.col-state) > * {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .table-flip tbody td:not([data-label])::before,
+  .table-flip tbody td[data-label=""]::before {
+    content: none;
+  }
+  .table-flip tbody td.text-right {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .table-flip tbody td:empty {
+    display: none;
+  }
+  .table-flip tbody td.text-right,
+  .table-flip tbody td.action-column {
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .table-flip tbody td.text-right .btn,
+  .table-flip tbody td.text-right a.btn,
+  .table-flip tbody td.text-right button.btn,
+  .table-flip tbody td.action-column .btn,
+  .table-flip tbody td.action-column a.btn,
+  .table-flip tbody td.action-column button.btn {
+    margin: 0;
+    border-radius: var(--size-border-radius, 4px);
+    flex: 0 0 auto;
+  }
+  .table-flip .action-column > * {
+    margin-left: 0;
+  }
+}
+
 @media print {
   *,
   *::before,
