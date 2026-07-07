@@ -236,6 +236,8 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         return data
 
     def create(self, validated_data):
+        if not self.event:
+            raise serializers.ValidationError('Event is required for submissions.')
         tags_data = validated_data.pop('tags', [])
         image = validated_data.pop('image', None)
         validated_data['event'] = self.event
@@ -255,6 +257,8 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         return submission
 
     def update(self, instance, validated_data):
+        if not self.event:
+            raise serializers.ValidationError('Event is required for submissions.')
         tags_data = validated_data.pop('tags', [])
         image = validated_data.pop('image', None)
         validated_data['event'] = self.event
