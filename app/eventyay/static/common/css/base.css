@@ -1143,10 +1143,7 @@ a.event-public-text-link:visited {
     color: var(--color-text-muted, #6c757d);
     margin-right: auto;
   }
-  /* Let long textual values (e.g. session titles, speaker names) shrink and
-     wrap instead of overflowing onto the ::before label. Scoped to text-value
-     cells only; control cells (buttons, icons, checkboxes, badges) are excluded
-     so their children keep their intrinsic sizing. */
+
   .table-flip tbody td:not(.numeric):not(.text-right):not(.action-column):not(.submission_featured):not(.speaker-actions-cell):not(.col-tags):not(.col-state) > * {
     min-width: 0;
     max-width: 100%;
