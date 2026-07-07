@@ -6,7 +6,7 @@ import pytest
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 
-from tests.utils import get_token
+from tests.video.utils import get_token
 from eventyay.base.services.chat import ChatService
 from eventyay.core.utils.redis import aredis
 from eventyay.config.asgi import application

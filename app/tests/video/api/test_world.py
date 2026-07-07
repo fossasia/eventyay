@@ -1,7 +1,7 @@
 import pytest
 from django.conf import settings
 
-from tests.utils import get_token_header
+from tests.video.utils import get_token_header
 from eventyay.base.services.user import create_user
 
 

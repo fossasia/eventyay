@@ -8,7 +8,7 @@ from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.utils.timezone import now
 
-from tests.utils import get_token
+from tests.video.utils import get_token
 from eventyay.base.models import User
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.services.user import get_user_by_token_id

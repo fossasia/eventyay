@@ -6,7 +6,7 @@ import pytest
 from aioresponses import aioresponses
 from channels.db import database_sync_to_async
 
-from tests.utils import LoggingCommunicator
+from tests.video.utils import LoggingCommunicator
 from eventyay.base.models import User
 from eventyay.config.asgi import application
 

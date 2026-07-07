@@ -4,8 +4,8 @@ import uuid
 import pytest
 from channels.db import database_sync_to_async
 
-from tests.live.test_chat import world_communicator
-from tests.utils import get_token
+from tests.video.live.test_chat import world_communicator
+from tests.video.utils import get_token
 from eventyay.base.models import User
 
 # Tests on notification handling accross clients are in test_chat_direct, so we test mostly the mention parsing here

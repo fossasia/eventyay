@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import pytest
 from channels.testing import WebsocketCommunicator
 
-from tests.utils import get_token
+from tests.video.utils import get_token
 from eventyay.config.asgi import application
 
 
