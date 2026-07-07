@@ -46,13 +46,13 @@
             {% endif %}
         </div>
     </div>
-    <div class="d-md-flex justify-content-between">
-        <h2>{% translate "Review Proposals" %}</h2>
+    <div class="d-md-flex flex-md-row-reverse justify-content-between">
         {% include "orga/event/component_link.html" %}
+        <h2>{% translate "Review Proposals" %}</h2>
     </div>
 
-    <div class="ml-auto mb-2 d-flex">
-        <details class="dropdown flip ml-auto fix-height mr-2" aria-haspopup="menu" role="menu">
+    <div class="review-toolbar mb-2 d-flex">
+        <details class="dropdown flip fix-height" aria-haspopup="menu" role="menu">
             <summary class="btn btn-outline-secondary">
                 {% translate "Columns" %} <i class="fa fa-caret-down ml-1"></i>
             </summary>
@@ -266,9 +266,9 @@
                             {% endfor %}
                             {% if filter_form.track %}<td class="col-track">{{ submission.track.name }}</td>{% endif %}
                             {% if filter_form.tags %}<td class="col-tags">
-                                <div class="d-flex flex-column">
+                                <div class="d-flex flex-wrap">
                                     {% for tag in submission.tags.all %}
-                                        {{ tag.tag }}
+                                        <span class="badge" {% if tag.color %}style="background-color: {{ tag.color }}"{% endif %}>{{ tag.tag }}</span>
                                     {% endfor %}
                                 </div>
                             </td>{% endif %}
