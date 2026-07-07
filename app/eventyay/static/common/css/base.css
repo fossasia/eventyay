@@ -719,7 +719,7 @@ a {
   max-width: 100% !important;
 }
 .offset-md-3 {
-  margin-left: 25% !important;
+  margin-left: 25%;
 }
 .col-md-1,
 .col-md-2,
@@ -1072,6 +1072,20 @@ pl-0 {
   .col-md-12 {
     flex: 0 0 100%;
     max-width: 100%;
+  }
+  /* Clear desktop column offsets when columns stack full width. */
+  .offset-md-1,
+  .offset-md-2,
+  .offset-md-3,
+  .offset-md-4,
+  .offset-md-5,
+  .offset-md-6,
+  .offset-md-7,
+  .offset-md-8,
+  .offset-md-9,
+  .offset-md-10,
+  .offset-md-11 {
+    margin-left: 0;
   }
 }
 

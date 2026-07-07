@@ -16,7 +16,7 @@
     {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
 
     {% for speaker in speakers %}
-        <div class="card mb-3"><div class="card-body">
+        <div class="card mb-3 speaker-detail-card"><div class="card-body">
             <h3 class="card-title">
                 <a href="{% url 'orga:speakers.view' organizer=request.event.organizer.slug event=request.event.slug code=speaker.user.code %}">
                     {{ speaker.user.get_display_name }}
@@ -74,7 +74,11 @@
                     {% for answer in speaker.reviewer_answers %}
                         <div class="mb-1">
                             <strong>{{ answer.question.question }}:</strong>
-                            <span class="ml-1">{% include "common/question_answer.html" with answer=answer %}</span>
+                            {% if answer.question.variant == "boolean" %}
+                                <span class="ml-1 value-pill {% if answer.boolean_answer %}value-pill--positive{% else %}value-pill--negative{% endif %}">{% include "common/question_answer.html" with answer=answer %}</span>
+                            {% else %}
+                                <span class="ml-1">{% include "common/question_answer.html" with answer=answer %}</span>
+                            {% endif %}
                         </div>
                     {% endfor %}
                 </div>
