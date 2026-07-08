@@ -400,8 +400,8 @@ CORE_MODULES = (
 )
 
 # Widgets are public embeds served to any origin, so all origins must be allowed.
-# CORS_URLS_REGEX restricts which URL paths receive the header — only widget and
-# event-CSS endpoints.
+# CORS_URLS_REGEX restricts which URL paths receive the header — widget endpoints,
+# event CSS, and /api/v1 (check-in app on access.eventyay.com or local Vite dev).
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_URLS_REGEX = (
@@ -409,7 +409,8 @@ CORS_URLS_REGEX = (
     r".*/widget[s]?/.*|"
     r".*/schedule/widget/.*|"
     r".*/static/event\.css|"
-    r".*/static/schedule/.*\.js"
+    r".*/static/schedule/.*\.js|"
+    r"/api/v1/.*"
     r")$"
 )
 
@@ -434,6 +435,7 @@ AUTH_USER_MODEL = 'base.User'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 _LIBRARY_MIDDLEWARES = (
+    'eventyay.api.middleware.PrivateNetworkAccessMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -1081,6 +1083,12 @@ CELERY_TASK_QUEUES = (
     Queue('notifications', routing_key='notifications.#'),
 )
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_BEAT_SCHEDULE = {
+    'eventyay-periodic-task-signal': {
+        'task': 'eventyay.common.tasks.send_periodic_signal',
+        'schedule': 60.0,
+    },
+}
 CELERY_TASK_TRACK_STARTED = True
 # Keep Django/eventyay logging configuration in workers and avoid redirecting stdout/stderr.
 # This ensures logger output remains visible as configured and is not swallowed by Celery.
@@ -1332,9 +1340,9 @@ REST_FRAMEWORK = {
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
     'PAGE_SIZE': 50,
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'eventyay.api.auth.device.DeviceTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'eventyay.api.auth.token.TeamTokenAuthentication',
-        'eventyay.api.auth.device.DeviceTokenAuthentication',
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
@@ -1520,7 +1528,7 @@ DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
 PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
 
 CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
- 
+
 if IS_DEVELOPMENT:
     # Support for Android emulators and port forwarding
     if '*' not in ALLOWED_HOSTS:

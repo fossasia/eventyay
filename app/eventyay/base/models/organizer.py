@@ -436,7 +436,16 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         rules_permissions = TEAM_PERMISSIONS
 
     # From Talk
-    limit_tracks = models.ManyToManyField(to='Track', verbose_name=_('Limit to tracks'), blank=True)
+    limit_tracks = models.ManyToManyField(
+        to='Track',
+        verbose_name=_('Limit to tracks'),
+        blank=True,
+        help_text=_(
+            'Restrict this team’s access to proposals, sessions, reviews, speakers, and schedule '
+            'data for the selected tracks only. Leave empty for access to all tracks in the '
+            'team’s events.'
+        ),
+    )
     can_change_submissions = models.BooleanField(
         default=False,
         verbose_name=_('Reviewer Manager — can edit and manage submissions'),
@@ -454,11 +463,18 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         ),
     )
     force_hide_speaker_names = models.BooleanField(
-        verbose_name=_('Always hide speaker names'),
+        verbose_name=_('Hide all speaker details'),
         help_text=_(
             'Normally, anonymisation is configured in the event review settings. '
             'This setting will <strong>override the event settings</strong> '
-            'and always hide speaker names for this team.'
+            'and always hide all speaker details for this team.'
+        ),
+        default=False,
+    )
+    force_hide_speaker_emails = models.BooleanField(
+        verbose_name=_('Hide speaker emails only'),
+        help_text=_(
+            'When enabled, reviewers will not be able to see speaker email addresses, but can still see other speaker details.'
         ),
         default=False,
     )

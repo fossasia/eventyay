@@ -2,6 +2,7 @@ import rules
 from django.db.models import Count, Exists, OuterRef, Q, Subquery
 
 from .person import is_only_reviewer, is_reviewer
+from .tracks import apply_track_limit, get_allowed_tracks
 
 
 @rules.predicate
@@ -295,18 +296,45 @@ def can_be_reviewed(user, obj):
     return bool(state and phase)
 
 
+def _reviewer_teams_for_event(user, event):
+    return user.teams.filter(
+        Q(all_events=True) | Q(limit_events=event),
+        organizer=event.organizer,
+        is_reviewer=True,
+    )
+
+
+def _submission_allowed_for_track_limits(submission, event, user):
+    allowed = get_allowed_tracks(event, user, reviewers_only=True)
+    if allowed is None:
+        return True
+    if not submission.track_id:
+        return False
+    return submission.track_id in {track.pk for track in allowed}
+
+
 @rules.predicate
 def has_reviewer_access(user, obj):
+    from eventyay.base.models import Submission
+
     obj = getattr(obj, 'submission', obj)
-    if not obj or not obj.event or not obj.event.active_review_phase:
+    if not isinstance(obj, Submission):
         return False
-    if obj.event.active_review_phase.proposal_visibility == 'all':
-        return obj.event.teams.filter(
-            Q(limit_tracks__isnull=True) | Q(limit_tracks__in=[obj.track]),
-            members__in=[user],
-            is_reviewer=True,
-        ).exists()
-    return user in obj.assigned_reviewers.all()
+    if not obj.event or not obj.event.active_review_phase:
+        return False
+
+    if obj.assigned_reviewers.filter(pk=user.pk).exists():
+        return _submission_allowed_for_track_limits(obj, obj.event, user)
+
+    phase = obj.event.active_review_phase
+    if phase.proposal_visibility != 'all':
+        return False
+
+    teams = _reviewer_teams_for_event(user, obj.event)
+    if not teams.exists():
+        return False
+
+    return teams.filter(Q(limit_tracks__isnull=True) | Q(limit_tracks=obj.track)).exists()
 
 
 def questions_for_user(request, event, user):
@@ -348,28 +376,27 @@ def annotate_assigned(queryset, event, user):
 
 
 def get_reviewer_tracks(event, user):
-    teams = event.teams.filter(members__in=[user], limit_tracks__isnull=False).prefetch_related(
-        'limit_tracks', 'limit_tracks__event'
-    )
-    tracks = set()
-    for team in teams:
-        tracks.update(team.limit_tracks.filter(event=event))
-    return tracks
+    """Backward-compatible helper returning a set; empty set means unlimited."""
+    allowed = get_allowed_tracks(event, user, reviewers_only=True)
+    if allowed is None:
+        return set()
+    return allowed
 
 
 def limit_for_reviewers(queryset, event, user, reviewer_tracks=None, add_assignments=False):
     if not (phase := event.active_review_phase):
-        queryset = event.submissions.none()
+        return event.submissions.none()
     queryset = queryset.exclude(speakers__in=[user])
-    if phase and phase.proposal_visibility == 'assigned':
-        queryset = annotate_assigned(queryset, event, user)
-        return queryset.filter(is_assigned__gte=1)
-    if add_assignments:
-        queryset = annotate_assigned(queryset, event, user)
     if reviewer_tracks is None:
-        reviewer_tracks = get_reviewer_tracks(event, user)
-    if reviewer_tracks:
-        return queryset.filter(track__in=reviewer_tracks)
+        allowed = get_allowed_tracks(event, user, reviewers_only=True)
+    else:
+        allowed = reviewer_tracks if reviewer_tracks else None
+    if add_assignments or phase.proposal_visibility == 'assigned':
+        queryset = annotate_assigned(queryset, event, user)
+    if phase.proposal_visibility == 'assigned':
+        queryset = queryset.filter(is_assigned__gte=1)
+    if allowed is not None:
+        queryset = queryset.filter(track__in=allowed) if allowed else queryset.none()
     return queryset
 
 
@@ -381,7 +408,8 @@ def submissions_for_user(event, user):
         if is_only_reviewer(user, event):
             return limit_for_reviewers(event.submissions.all(), event, user)
         if user.has_perm('base.orga_list_submission', event):
-            return event.submissions.all()
+            queryset = event.submissions.all()
+            return apply_track_limit(queryset, event, user)
 
     # Fall through: both anon users and users without permissions
     # get here, e.g. speakers or attendees.

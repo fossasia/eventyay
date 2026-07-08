@@ -364,7 +364,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     count_waitinglist=False,
                 )
             except Quota.QuotaExceededException as e:
-                return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                raise QuotaExceededAPIException(str(e))
             except PaymentException as e:
                 return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
             except SendMailException:
@@ -439,7 +439,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 send_mail=send_mail,
             )
         except Quota.QuotaExceededException as e:
-            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            raise QuotaExceededAPIException(str(e))
         except OrderError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return self.retrieve(request, [], **kwargs)
@@ -1114,7 +1114,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         except OrderError as e:
             raise ValidationError(str(e))
         except Quota.QuotaExceededException as e:
-            raise ValidationError(str(e))
+            raise QuotaExceededAPIException(str(e))
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.get('partial', False)
@@ -1155,6 +1155,10 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         order_modified.send(sender=serializer.instance.order.event, order=serializer.instance.order)
 
 
+def get_order_for_nested_route(request, order_pk):
+    return get_object_or_404(Order, pk=order_pk, event=request.event)
+
+
 class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = OrderPaymentSerializer
     queryset = OrderPayment.objects.none()
@@ -1164,12 +1168,12 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        ctx['order'] = get_object_or_404(Order, code=self.kwargs['order'], event=self.request.event)
+        ctx['order'] = get_order_for_nested_route(self.request, self.kwargs['order'])
         ctx['event'] = self.request.event
         return ctx
 
     def get_queryset(self):
-        order = get_object_or_404(Order, code=self.kwargs['order'], event=self.request.event)
+        order = get_order_for_nested_route(self.request, self.kwargs['order'])
         return order.payments.all()
 
     def create(self, request, *args, **kwargs):
@@ -1192,8 +1196,8 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                         force=request.data.get('force', False),
                         send_mail=send_mail,
                     )
-                except Quota.QuotaExceededException:
-                    pass
+                except Quota.QuotaExceededException as e:
+                    raise QuotaExceededAPIException(str(e))
                 except SendMailException:
                     pass
 
@@ -1239,7 +1243,7 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                 force=force,
             )
         except Quota.QuotaExceededException as e:
-            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            raise QuotaExceededAPIException(str(e))
         except PaymentException as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except SendMailException:
@@ -1373,7 +1377,7 @@ class RefundViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     lookup_field = 'local_id'
 
     def get_queryset(self):
-        order = get_object_or_404(Order, code=self.kwargs['order'], event=self.request.event)
+        order = get_order_for_nested_route(self.request, self.kwargs['order'])
         return order.refunds.all()
 
     @action(detail=True, methods=['POST'])
@@ -1460,7 +1464,7 @@ class RefundViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        ctx['order'] = get_object_or_404(Order, code=self.kwargs['order'], event=self.request.event)
+        ctx['order'] = get_order_for_nested_route(self.request, self.kwargs['order'])
         return ctx
 
     def create(self, request, *args, **kwargs):
@@ -1534,6 +1538,12 @@ class RetryException(APIException):
     status_code = 409
     default_detail = 'The requested resource is not ready, please retry later.'
     default_code = 'retry_later'
+
+
+class QuotaExceededAPIException(APIException):
+    status_code = 409
+    default_detail = 'Quota exceeded.'
+    default_code = 'QUOTA_EXCEEDED'
 
 
 class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
