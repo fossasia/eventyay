@@ -31,6 +31,7 @@ from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.base.settings import validate_organizer_settings
 from eventyay.helpers.urls import build_absolute_uri
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -183,6 +184,7 @@ class TeamSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
     limit_events = EventSlugField(slug_field='slug', many=True)
+    limit_checkin_lists = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     device_id = serializers.IntegerField(read_only=True)
     unique_serial = serializers.CharField(read_only=True)
     hardware_brand = serializers.CharField(read_only=True)
@@ -211,6 +213,7 @@ class DeviceSerializer(serializers.ModelSerializer):
             'software_brand',
             'software_version',
             'security_profile',
+            'limit_checkin_lists',
         )
 
 
