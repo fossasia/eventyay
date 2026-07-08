@@ -466,7 +466,7 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             'scheduled_at': _('Send later'),
         }
         help_texts = {
-            'reply_to': _("Any changes to the Reply-To field will apply only to this queued email."),
+            'reply_to': _("Any changes to the Reply-To field apply only to this queued email. If left empty, the event's default Reply-To will be used."),
             'bcc': _("Any changes to the BCC field will apply only to this queued email."),
             'scheduled_at': _("Leave empty to send immediately. If set, the email will be sent at this time."),
         }
