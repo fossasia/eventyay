@@ -95,6 +95,11 @@ class Device(LoggedModel):
     api_token = models.CharField(max_length=190, unique=True, null=True)
     all_events = models.BooleanField(default=False, verbose_name=_('All events (including newly created ones)'))
     limit_events = models.ManyToManyField('Event', verbose_name=_('Limit to events'), blank=True)
+    limit_checkin_lists = models.ManyToManyField(
+        'CheckinList',
+        verbose_name=_('Limit to check-in lists'),
+        blank=True,
+    )
     revoked = models.BooleanField(default=False)
     name = models.CharField(max_length=190, verbose_name=_('Name'))
     created = models.DateTimeField(auto_now_add=True, verbose_name=_('Setup date'))
@@ -128,7 +133,12 @@ class Device(LoggedModel):
         super().save(*args, **kwargs)
 
     def permission_set(self) -> set:
-        return {'can_view_orders', 'can_change_orders', 'can_manage_gift_cards'}
+        return {
+            'can_view_orders',
+            'can_change_orders',
+            'can_checkin_orders',
+            'can_manage_gift_cards',
+        }
 
     @staticmethod
     def _is_live_and_published(event) -> bool:
