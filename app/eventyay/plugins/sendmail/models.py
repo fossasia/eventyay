@@ -1,8 +1,10 @@
 import logging
+from collections import defaultdict
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nTextField
 
 from eventyay.base.email import get_email_context
@@ -10,7 +12,8 @@ from eventyay.base.models.auth import User
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import InvoiceAddress, Order, OrderPosition
 from eventyay.base.i18n import LazyI18nString
-from eventyay.base.services.mail import mail
+from eventyay.base.services.mail import mail, SendMailException as MailTransportError
+from eventyay.common.exceptions import SendMailException
 
 
 logger = logging.getLogger(__name__)
@@ -83,6 +86,12 @@ class EmailQueue(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     sent_at = models.DateTimeField(null=True, blank=True)
+    scheduled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_('If set, the email will be sent at this time instead of immediately.'),
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -111,9 +120,16 @@ class EmailQueue(models.Model):
         """
         if self.sent_at:
             return False  # Already sent
+
+        if self.scheduled_at and self.scheduled_at > now():
+            raise SendMailException(_('This email is scheduled for the future and cannot be sent yet.'))
+
         recipients = self.recipients.all()
         if not recipients.exists():
-            return False  # Nothing to send
+            if self.scheduled_at is not None:
+                self.scheduled_at = None
+                self.save(update_fields=['scheduled_at'])
+            return False
 
         subject = LazyI18nString(self.subject)
         message = LazyI18nString(self.message)
@@ -145,10 +161,14 @@ class EmailQueue(models.Model):
 
     def _finalize_send_status(self):
         self.sent_at = now() if all(r.sent for r in self.recipients.all()) else None
-        self.save(update_fields=["sent_at"])
+        # Clear scheduled_at after the first send attempt so the periodic poller
+        # does not keep picking this row up when some recipients permanently
+        # failed (bounces, invalid addresses). Users can still retry failed
+        # recipients manually from the outbox.
+        self.scheduled_at = None
+        self.save(update_fields=["sent_at", "scheduled_at"])
 
     def _send_to_recipient(self, recipient, subject, message, async_send=True):
-        from eventyay.base.services.mail import SendMailException
         email = recipient.email
         if not email:
             return False
@@ -190,11 +210,11 @@ class EmailQueue(models.Model):
             recipient.sent = True
             recipient.error = None
             recipient.save(update_fields=["sent", "error"])
-        except SendMailException as se:
+        except MailTransportError as se:
             recipient.sent = False
             recipient.error = str(se)
             recipient.save(update_fields=["sent", "error"])
-            logger.exception("SendMailException error while sending to %s", email)
+            logger.exception("Mail transport error while sending to %s", email)
         except Exception as e:
             recipient.sent = False
             recipient.error = f"Internal error: {str(e)}"
@@ -214,7 +234,6 @@ class EmailQueue(models.Model):
         """
         Resolves recipients and populates to_users with metadata.
         """
-        from collections import defaultdict
 
         filters = getattr(self, 'filters_data', None)
         if not filters:

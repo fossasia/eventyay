@@ -1,8 +1,10 @@
 import logging
+import secrets
 
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.functions import Coalesce
 from django.utils.timezone import now
+from django_scopes import scopes_disabled
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -11,6 +13,7 @@ from rest_framework.views import APIView
 from eventyay.api.auth.device import DeviceTokenAuthentication
 from eventyay.base.models import CheckinList, Device, SubEvent
 from eventyay.base.models.devices import Gate, generate_api_token
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +33,10 @@ class UpdateRequestSerializer(serializers.Serializer):
     software_version = serializers.CharField(max_length=190)
 
 
+class VerifySetupTokenSerializer(serializers.Serializer):
+    token = serializers.CharField(max_length=190)
+
+
 class GateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gate
@@ -43,6 +50,7 @@ class GateSerializer(serializers.ModelSerializer):
 class DeviceSerializer(serializers.ModelSerializer):
     organizer = serializers.SlugRelatedField(slug_field='slug', read_only=True)
     gate = GateSerializer(read_only=True)
+    limit_checkin_lists = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Device
@@ -54,6 +62,7 @@ class DeviceSerializer(serializers.ModelSerializer):
             'name',
             'security_profile',
             'gate',
+            'limit_checkin_lists',
         ]
 
 
@@ -65,10 +74,11 @@ class InitializeView(APIView):
         serializer = InitializationRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            device = Device.objects.get(initialization_token=serializer.validated_data.get('token'))
-        except Device.DoesNotExist:
-            raise ValidationError({'token': ['Unknown initialization token.']})
+        with scopes_disabled():
+            try:
+                device = Device.objects.get(initialization_token=serializer.validated_data.get('token'))
+            except Device.DoesNotExist:
+                raise ValidationError({'token': ['Unknown initialization token.']})
 
         if device.initialized:
             raise ValidationError({'token': ['This initialization token has already been used.']})
@@ -103,6 +113,36 @@ class UpdateView(APIView):
 
         serializer = DeviceSerializer(device)
         return Response(serializer.data)
+
+
+class SessionView(APIView):
+    """Lightweight session check for connected check-in clients."""
+
+    authentication_classes = (DeviceTokenAuthentication,)
+
+    def get(self, request, format=None):
+        device = request.auth
+        return Response({
+            'ok': True,
+            'device_id': device.device_id,
+            'security_profile': device.security_profile,
+        })
+
+
+class VerifySetupTokenView(APIView):
+    """Confirm the device setup token before sensitive on-device configuration."""
+
+    authentication_classes = (DeviceTokenAuthentication,)
+
+    def post(self, request, format=None):
+        serializer = VerifySetupTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        device = request.auth
+        submitted = serializer.validated_data['token']
+        expected = device.initialization_token or ''
+        if len(submitted) != len(expected) or not secrets.compare_digest(submitted, expected):
+            raise ValidationError({'token': ['Invalid setup token.']})
+        return Response({'ok': True})
 
 
 class RollKeyView(APIView):
@@ -148,6 +188,10 @@ class EventSelectionView(APIView):
         if self.request.auth.gate:
             has_cl = CheckinList.objects.filter(event=OuterRef('pk'), gates__in=[self.request.auth.gate])
             qs = qs.annotate(has_cl=Exists(has_cl)).filter(has_cl=True)
+        if self.request.auth.limit_checkin_lists.exists():
+            allowed_list_ids = self.request.auth.limit_checkin_lists.values_list('pk', flat=True)
+            has_cl = CheckinList.objects.filter(event=OuterRef('pk'), pk__in=allowed_list_ids)
+            qs = qs.annotate(has_allowed_cl=Exists(has_cl)).filter(has_allowed_cl=True)
         return qs
 
     @property
@@ -173,6 +217,14 @@ class EventSelectionView(APIView):
                 gates__in=[self.request.auth.gate],
             )
             qs = qs.annotate(has_cl=Exists(has_cl)).filter(has_cl=True)
+        if self.request.auth.limit_checkin_lists.exists():
+            allowed_list_ids = self.request.auth.limit_checkin_lists.values_list('pk', flat=True)
+            has_cl = CheckinList.objects.filter(
+                Q(subevent__isnull=True) | Q(subevent=OuterRef('pk')),
+                event_id=OuterRef('event_id'),
+                pk__in=allowed_list_ids,
+            )
+            qs = qs.annotate(has_allowed_cl=Exists(has_cl)).filter(has_allowed_cl=True)
         return qs
 
     def get(self, request, format=None):
@@ -258,6 +310,9 @@ class EventSelectionView(APIView):
 
         if self.request.auth.gate:
             checkinlist_qs = checkinlist_qs.filter(gates__in=[self.request.auth.gate])
+        if self.request.auth.limit_checkin_lists.exists():
+            allowed_list_ids = self.request.auth.limit_checkin_lists.values_list('pk', flat=True)
+            checkinlist_qs = checkinlist_qs.filter(pk__in=allowed_list_ids)
 
         checkinlist = None
         if current_checkinlist:

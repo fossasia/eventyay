@@ -3,6 +3,7 @@
 {% load bootstrap3 %}
 {% block inner %}
   <h1>{% trans "Revoke and remove all devices" %}</h1>
+  {% include "pretixcontrol/organizers/device_event_nav.html" %}
   <form action="" method="post" class="form-horizontal">
     {% csrf_token %}
     <p>
@@ -19,7 +20,7 @@
       {% trans "This action cannot be undone." %}
     </div>
     <div class="form-group submit-group">
-      <a href="{% url 'eventyay_common:organizer.devices' organizer=request.organizer.slug %}" class="btn btn-default btn-cancel">
+      <a href="{{ devices_url }}" class="btn btn-default btn-cancel">
         {% trans "Cancel" %}
       </a>
       <button type="submit" class="btn btn-danger btn-save">
