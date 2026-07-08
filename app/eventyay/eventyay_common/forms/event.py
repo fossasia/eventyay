@@ -187,7 +187,7 @@ class EventUpdateForm(I18nModelForm):
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
 
         # Configure email field with canonical label and help text
-        self.fields['email'].required = True
+        self.fields['email'].required = False
         self.fields['email'].label = _('Organizer email address')
         self.fields['email'].help_text = _("Attendees can reach you through a contact form. Messages will be forwarded to this address.")
 
