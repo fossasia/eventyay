@@ -20,7 +20,7 @@
             in <strong>Event Settings › Email</strong>.
             The settings on this page control Ticket-specific email content and formatting only.
         {% endblocktrans %}
-        <a href="{% url 'eventyay_common:event.update' organizer=request.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-default" style="margin-left:8px;">
+        <a href="{% url 'eventyay_common:event.update' organizer=request.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-default ml-2">
             {% trans "Go to Email Settings" %}
         </a>
     </div>

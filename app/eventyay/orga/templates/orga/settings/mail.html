@@ -27,7 +27,7 @@
             under <strong>Event Settings › Email</strong> and apply to both the Tickets and Talks
             components.
         {% endblocktranslate %}
-        <a href="{% url 'eventyay_common:event.update' organizer=request.event.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-outline-info" style="margin-left:8px;">
+        <a href="{% url 'eventyay_common:event.update' organizer=request.event.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-outline-info ml-2">
             {% translate "Go to Email Settings" %}
         </a>
     </div>
