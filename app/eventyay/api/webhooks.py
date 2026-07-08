@@ -323,7 +323,22 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                resp = requests.post(
+                    webhook.target_url,
+                    json=payload,
+                    allow_redirects=False,
+                    timeout=30,
+                    stream=True,
+                )
+                
+                body_bytes = b""
+                for chunk in resp.iter_content(chunk_size=4096):
+                    if chunk:
+                        body_bytes += chunk
+                        if len(body_bytes) >= settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]:
+                            break
+                response_body = body_bytes[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]].decode('utf-8', errors='replace')
+
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
@@ -332,7 +347,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=resp.status_code,
                     payload=json.dumps(payload),
-                    response_body=resp.text[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    response_body=response_body,
                     success=200 <= resp.status_code <= 299,
                 )
                 if resp.status_code == 410:
@@ -352,6 +367,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     return_code=0,
                     payload=json.dumps(payload),
                     response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    success=False,
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)
