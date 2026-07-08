@@ -1806,6 +1806,9 @@ class OrderPayment(models.Model):
                 )
                 return
 
+            original_state = locked_instance.state
+            original_payment_date = locked_instance.payment_date
+            original_info = locked_instance.info
             locked_instance.state = self.PAYMENT_STATE_CONFIRMED
             locked_instance.payment_date = payment_date or now()
             locked_instance.info = self.info  # required for backwards compatibility
@@ -1858,14 +1861,24 @@ class OrderPayment(models.Model):
             lockfn = self.order.event.lock
 
         with lockfn():
-            self._mark_paid(
-                force,
-                count_waitinglist,
-                user,
-                auth,
-                overpaid=payment_sum - refund_sum > self.order.total,
-                ignore_date=ignore_date,
-            )
+            try:
+                self._mark_paid(
+                    force,
+                    count_waitinglist,
+                    user,
+                    auth,
+                    overpaid=payment_sum - refund_sum > self.order.total,
+                    ignore_date=ignore_date,
+                )
+            except Quota.QuotaExceededException:
+                with transaction.atomic():
+                    locked_instance = OrderPayment.objects.select_for_update().get(pk=self.pk)
+                    locked_instance.state = original_state
+                    locked_instance.payment_date = original_payment_date
+                    locked_instance.info = original_info
+                    locked_instance.save(update_fields=['state', 'payment_date', 'info'])
+                self.refresh_from_db()
+                raise
 
         invoice = None
         if invoice_qualified(self.order):
