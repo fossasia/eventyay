@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0036_orderposition_search_trigram_indexes'),
+        ('base', '0037_device_checkin_lists_and_security'),
     ]
 
     operations = [
