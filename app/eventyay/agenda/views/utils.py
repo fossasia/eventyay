@@ -1073,21 +1073,30 @@ def clear_featured_speakers_without_active_submissions(event, speakers):
 
 def clear_schedule_caches(event, submission=None, speaker=None):
     """Clear all eagenda schedule caches for the event's schedules."""
-    schedules = event.schedules.all()
-    keys = []
-    settings_part = schedule_widget_featured_cache_key_part(event)
-    for schedule in schedules:
-        for featured in (0, 1):
-            keys.append(f'eagenda:schedule:{schedule.pk}:{featured}')
-            keys.append(f'eagenda:schedule:{schedule.pk}:{featured}:{settings_part}')
-            keys.append(f'eagenda:enriched:{schedule.pk}:{featured}')
-            if submission:
-                keys.append(f'eagenda:talk:{schedule.pk}:{submission.code}:{featured}')
-            if speaker:
-                keys.append(f'eagenda:speaker:{schedule.pk}:{speaker.code}:{featured}')
-            elif submission:
-                for sp in submission.speakers.all():
-                    keys.append(f'eagenda:speaker:{schedule.pk}:{sp.code}:{featured}')
+    from django_scopes import scope
+
+    with scope(event=event):
+        schedule_pks = list(event.schedules.values_list('pk', flat=True))
+        settings_part = schedule_widget_featured_cache_key_part(event)
+        if speaker:
+            speaker_codes = [speaker.code]
+        elif submission:
+            speaker_codes = list(submission.speakers.values_list('code', flat=True))
+        else:
+            speaker_codes = []
+
+        keys = []
+        for schedule_pk in schedule_pks:
+            for featured in (0, 1):
+                keys.append(f'eagenda:schedule:{schedule_pk}:{featured}')
+                keys.append(f'eagenda:schedule:{schedule_pk}:{featured}:{settings_part}')
+                keys.append(f'eagenda:enriched:{schedule_pk}:{featured}')
+                if submission:
+                    keys.append(f'eagenda:talk:{schedule_pk}:{submission.code}:{featured}')
+                keys.extend(
+                    f'eagenda:speaker:{schedule_pk}:{code}:{featured}'
+                    for code in speaker_codes
+                )
 
     cache.delete_many(keys)
 
