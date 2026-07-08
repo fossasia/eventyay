@@ -121,3 +121,19 @@
     margin-bottom: 6px;
     font-weight: 500;
 }
+
+#cropperModal {
+    z-index: 1060;
+}
+#cropperModal .modal-dialog {
+    margin-top: 80px;
+}
+#cropperModal .img-container {
+    max-height: 500px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+#cropperImage {
+    max-width: 100%;
+}
