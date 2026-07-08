@@ -2141,8 +2141,10 @@ h2 .user-name-display img {
 
   #page-content .search-form,
   #page-content .filter-form {
-    flex-direction: column;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem 0.5rem;
+    align-items: start;
     width: 100%;
   }
 
@@ -2156,7 +2158,14 @@ h2 .user-name-display img {
   #page-content .filter-form .form-group {
     width: 100%;
     margin-right: 0;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0;
+  }
+
+  #page-content .search-form > .form-group:first-of-type,
+  #page-content .search-form button,
+  #page-content .search-form [role="button"],
+  #page-content .filter-form button {
+    grid-column: 1 / -1;
   }
 
   #page-content .search-form .form-control,
@@ -2239,13 +2248,15 @@ h2 .user-name-display img {
     margin-left: 0;
     margin-right: 0;
     width: 100%;
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
     gap: 0.35rem;
   }
 
   #page-content .review-toolbar > details.dropdown {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+    width: auto;
     margin-left: 0;
     margin-right: 0;
   }
