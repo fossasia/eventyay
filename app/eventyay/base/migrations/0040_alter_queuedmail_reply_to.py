@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0038_team_force_hide_speaker_emails_and_more'),
+        ('base', '0039_queuedmail_scheduled_at'),
     ]
 
     operations = [
