@@ -11,12 +11,14 @@ from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nMarkdownTextarea, PlaceholderValidator, SettingsForm
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
+from eventyay.control.forms import SplitDateTimeField
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import Product
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.orders import Order
+from eventyay.common.forms.mixins import ScheduledAtValidationMixin
 from eventyay.consts import SizeKey
 from eventyay.control.forms import CachedFileField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
@@ -29,7 +31,7 @@ def contains_web_channel_validate(value):
     if 'web' not in value:
         raise ValidationError(_("The 'web' sales channel must be selected."))
 
-class MailForm(forms.Form):
+class MailForm(ScheduledAtValidationMixin, forms.Form):
     recipients = forms.ChoiceField(label=_('Send email to'), widget=forms.RadioSelect, initial='orders', choices=[])
     order_status = forms.MultipleChoiceField()  # overridden later
     subject = forms.CharField(label=_('Subject'))
@@ -102,6 +104,12 @@ class MailForm(forms.Form):
         widget=SplitDateTimePickerWidget(),
         label=pgettext_lazy('subevent', 'Only send to customers with orders created before'),
         required=False,
+    )
+    scheduled_at = SplitDateTimeField(
+        widget=SplitDateTimePickerWidget(),
+        label=_('Send later'),
+        required=False,
+        help_text=_('Leave empty to send immediately. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
     )
     browser_timezone = forms.CharField(
         widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
@@ -428,7 +436,7 @@ class MailContentSettingsForm(SettingsForm):
                 self._set_field_placeholders(k, v)
 
 
-class EmailQueueEditForm(forms.ModelForm):
+class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
     new_attachment = forms.FileField(
         required=False,
         label=_("New attachment"),
@@ -447,18 +455,25 @@ class EmailQueueEditForm(forms.ModelForm):
         fields = [
             'reply_to',
             'bcc',
+            'scheduled_at',
         ]
+        field_classes = {
+            'scheduled_at': SplitDateTimeField,
+        }
         labels = {
             'reply_to': _('Reply-To'),
             'bcc': _('BCC'),
+            'scheduled_at': _('Send later'),
         }
         help_texts = {
             'reply_to': _("Any changes to the Reply-To field will apply only to this queued email."),
             'bcc': _("Any changes to the BCC field will apply only to this queued email."),
+            'scheduled_at': _("Leave empty to send immediately. If set, the email will be sent at this time."),
         }
         widgets = {
             'reply_to': forms.TextInput(attrs={'class': 'form-control'}),
             'bcc': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
+            'scheduled_at': SplitDateTimePickerWidget(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -556,7 +571,7 @@ class EmailQueueEditForm(forms.ModelForm):
         return instance
 
 
-class TeamMailForm(forms.Form):
+class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
     attachment = CachedFileField(
         label=_('Attachment'),
         required=False,
@@ -601,4 +616,10 @@ class TeamMailForm(forms.Form):
             queryset=Team.objects.filter(organizer=self.event.organizer),
             widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
             label=_("Send to members of these teams")
+        )
+        self.fields['scheduled_at'] = SplitDateTimeField(
+            widget=SplitDateTimePickerWidget(),
+            label=_('Send later'),
+            required=False,
+            help_text=_('Leave empty to send immediately. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
         )

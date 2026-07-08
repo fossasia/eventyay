@@ -1,18 +1,17 @@
 import logging
+
 import nh3
-import uuid
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Exists, Subquery, OuterRef, Q
+from django.db.models import Exists, OuterRef, Q, Subquery
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.utils import timezone as dj_timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _, ngettext_lazy
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
-from urllib.parse import urlencode
 
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.i18n import language
@@ -22,16 +21,15 @@ from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.services.mail import TolerantDict
 from eventyay.base.templatetags.rich_text import markdown_compile_email
 from eventyay.control.permissions import EventPermissionRequiredMixin
-from eventyay.helpers.timezone import get_browser_timezone, attach_timezone_to_naive_clock_time
+from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
+from eventyay.helpers.timezone import attach_timezone_to_naive_clock_time, get_browser_timezone, format_scheduled_datetime
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
 from eventyay.plugins.sendmail.mixins import CopyDraftMixin, QueryFilterOrderingMixin
 from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter, EmailQueueToUser
 from eventyay.plugins.sendmail.tasks import send_queued_mail
-from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
-from .forms import MailContentSettingsForm, TeamMailForm
-
 
 from . import forms
+from .forms import MailContentSettingsForm, TeamMailForm
 
 
 logger = logging.getLogger(__name__)
@@ -139,6 +137,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
 
             return self.get(self.request, *self.args, **self.kwargs)
 
+        scheduled_at = form.cleaned_data.get('scheduled_at')
         qm = EmailQueue.objects.create(
             event=self.request.event,
             user=self.request.user,
@@ -149,6 +148,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             reply_to=self.request.event.settings.get('contact_mail') or '',
             bcc=self.request.event.settings.get('mail_bcc'),
             composing_for=ComposingFor.ATTENDEES,
+            scheduled_at=scheduled_at,
         )
 
         EmailQueueFilter.objects.create(
@@ -169,10 +169,25 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
 
         qm.populate_to_users()
 
-        messages.success(
-            self.request,
-            _('Your email has been sent to the outbox.')
-        )
+        if scheduled_at:
+            send_queued_mail.apply_async(args=[self.request.event.pk, qm.pk], eta=scheduled_at)
+            self.request.event.log_action(
+                'eventyay.sendmail.scheduled',
+                user=self.request.user,
+                data={'email_queue_id': qm.pk, 'scheduled_at': scheduled_at.isoformat()},
+            )
+            messages.success(
+                self.request,
+                _('Your email has been scheduled for {datetime} ({timezone}).').format(
+                    datetime=format_scheduled_datetime(self.request.event, scheduled_at),
+                    timezone=self.request.event.timezone,
+                )
+            )
+        else:
+            messages.success(
+                self.request,
+                _('Your email has been sent to the outbox.')
+            )
 
         return redirect(
             'plugins:sendmail:send',
@@ -229,6 +244,11 @@ class OutboxListView(EventPermissionRequiredMixin, QueryFilterOrderingMixin, Lis
     permission_required = 'can_change_orders'
     paginate_by = 25
 
+    def get_template_names(self):
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return ['pretixplugins/sendmail/outbox_list_content.html']
+        return super().get_template_names()
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
@@ -241,6 +261,7 @@ class OutboxListView(EventPermissionRequiredMixin, QueryFilterOrderingMixin, Lis
         ]
         ctx['current_ordering'] = ordering
         ctx['query'] = query
+        ctx['pending_mail_count'] = ctx['paginator'].count
 
         MAX_ERRORS_TO_SHOW = 2
         for mail in ctx['mails']:
@@ -583,6 +604,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             return self.form_invalid(form)
 
         # Create the EmailQueue instance
+        scheduled_at = form.cleaned_data.get('scheduled_at')
         mail_instance = EmailQueue.objects.create(
             event=event,
             user=user,
@@ -593,6 +615,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             reply_to=event.settings.get('contact_mail') or '',
             bcc=event.settings.get('mail_bcc'),
             attachments=[form.cleaned_data['attachment'].id] if form.cleaned_data.get('attachment') else [],
+            scheduled_at=scheduled_at,
         )
 
         # Create associated filter data for teams
@@ -625,10 +648,25 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         ]
         EmailQueueToUser.objects.bulk_create(recipient_objs)
 
-        messages.success(
-            self.request,
-            _('Your email has been sent to the outbox.')
-        )
+        if scheduled_at:
+            send_queued_mail.apply_async(args=[event.pk, mail_instance.pk], eta=scheduled_at)
+            event.log_action(
+                'eventyay.sendmail.scheduled',
+                user=user,
+                data={'email_queue_id': mail_instance.pk, 'scheduled_at': scheduled_at.isoformat()},
+            )
+            messages.success(
+                self.request,
+                _('Your email has been scheduled for {datetime} ({timezone}).').format(
+                    datetime=format_scheduled_datetime(self.request.event, scheduled_at),
+                    timezone=self.request.event.timezone,
+                )
+            )
+        else:
+            messages.success(
+                self.request,
+                _('Your email has been sent to the outbox.')
+            )
 
         return redirect(reverse('plugins:sendmail:compose_email_teams', kwargs={
             'organizer': event.organizer.slug,

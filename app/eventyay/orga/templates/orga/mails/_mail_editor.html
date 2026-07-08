@@ -50,6 +50,11 @@
                 <fieldset>
                     {{ form.subject.as_field_group }}
                     {{ form.text.as_field_group }}
+                    {% block scheduled_at %}
+                        {% if form.scheduled_at %}
+                            {{ form.scheduled_at.as_field_group }}
+                        {% endif %}
+                    {% endblock scheduled_at %}
                 </fieldset>
             </section>
             <div class="col col-md-2" id="placeholder-column">
