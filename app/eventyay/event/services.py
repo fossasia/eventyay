@@ -87,10 +87,12 @@ def task_periodic_schedule_export(event_slug):
 
 @receiver(periodic_task)
 def periodic_event_services(sender, **kwargs):
-    for event in Event.objects.select_related('current_schedule').prefetch_related(
-        '_settings_objects',
-        'review_phases',
-    ):
+    with scopes_disabled():
+        events = list(Event.objects.prefetch_related(
+            '_settings_objects',
+            'review_phases',
+        ))
+    for event in events:
         with scope(event=event):
             task_periodic_event_services.apply_async(args=(event.slug,), ignore_result=True)
             if event.current_schedule and event.get_feature_flag('export_html_on_release'):
