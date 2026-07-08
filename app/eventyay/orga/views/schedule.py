@@ -35,6 +35,7 @@ from eventyay.common.views.mixins import (
 from eventyay.orga.forms.schedule import ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
 from eventyay.base.services.event import notify_event_change
+from eventyay.talk_rules.tracks import apply_track_limit_to_slots, filter_schedule_talk_data, get_allowed_tracks
 
 logger = logging.getLogger(__name__)
 
@@ -305,6 +306,16 @@ class TalkList(EventPermissionRequired, View):
             }
         result['now'] = now().strftime('%Y-%m-%d %H:%M:%S%z')
         result['locales'] = request.event.locales
+        allowed = get_allowed_tracks(request.event, request.user)
+        if allowed is not None:
+            allowed_ids = {track.pk for track in allowed}
+            result['talks'] = filter_schedule_talk_data(result['talks'], allowed_ids)
+            result['tracks'] = [track for track in result.get('tracks', []) if track['id'] in allowed_ids]
+            valid_speaker_codes = set()
+            for talk in result.get('talks', []):
+                for speaker_code in talk.get('speakers', []):
+                    valid_speaker_codes.add(speaker_code)
+            result['speakers'] = [speaker for speaker in result.get('speakers', []) if speaker['code'] in valid_speaker_codes]
         return JsonResponse(result, encoder=I18nJSONEncoder)
 
     @csrf_exempt
@@ -339,10 +350,18 @@ class ScheduleWarnings(EventPermissionRequired, View):
     permission_required = 'base.release_schedule'
 
     def get(self, request, *args, **kwargs):
+        warnings = self.request.event.wip_schedule.get_all_talk_warnings()
+        allowed = get_allowed_tracks(request.event, request.user)
+        if allowed is not None:
+            allowed_ids = {track.pk for track in allowed}
+            warnings = {
+                talk: warns for talk, warns in warnings.items()
+                if not talk.submission_id or talk.submission.track_id in allowed_ids
+            }
         return JsonResponse(
             {
-                talk.submission.code: warnings
-                for talk, warnings in self.request.event.wip_schedule.get_all_talk_warnings().items()
+                talk.submission.code: warns
+                for talk, warns in warnings.items()
             }
         )
 
@@ -375,9 +394,10 @@ class ScheduleAvailabilities(EventPermissionRequired, View):
 
         result = {}
 
+        qs = self.request.event.wip_schedule.talks.filter(submission__isnull=False)
+        qs = apply_track_limit_to_slots(qs, self.request.event, self.request.user)
         for talk in (
-            self.request.event.wip_schedule.talks.filter(submission__isnull=False)
-            .select_related('submission')
+            qs.select_related('submission')
             .prefetch_related('submission__speakers')
         ):
             speakers = list(talk.submission.speakers.all())
@@ -398,7 +418,9 @@ class TalkUpdate(PermissionRequired, View):
     permission_required = 'base.update_talkslot'
 
     def get_object(self):
-        return self.request.event.wip_schedule.talks.filter(pk=self.kwargs.get('pk')).first()
+        qs = self.request.event.wip_schedule.talks.filter(pk=self.kwargs.get('pk'))
+        qs = apply_track_limit_to_slots(qs, self.request.event, self.request.user)
+        return qs.first()
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
@@ -463,7 +485,9 @@ class QuickScheduleView(PermissionRequired, UpdateView):
         return kwargs
 
     def get_object(self):
-        return self.request.event.wip_schedule.talks.filter(submission__code__iexact=self.kwargs.get('code')).first()
+        qs = self.request.event.wip_schedule.talks.filter(submission__code__iexact=self.kwargs.get('code'))
+        qs = apply_track_limit_to_slots(qs, self.request.event, self.request.user)
+        return qs.first()
 
     def form_valid(self, form):
         form.save()
