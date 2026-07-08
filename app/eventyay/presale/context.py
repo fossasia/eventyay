@@ -151,12 +151,17 @@ def _default_context(request):
                         exc_info=True,
                     )
         ctx['languages'] = [_safe_language_info(code) for code in request.organizer.settings.locales]
-
-    if hasattr(request, 'organizer'):
         if request.organizer.settings.presale_css_file and not hasattr(request, 'event'):
             ctx['css_file'] = default_storage.url(request.organizer.settings.presale_css_file)
-        ctx['organizer_logo'] = request.organizer.settings.get('organizer_logo_image', as_type=str, default='')[7:]
-        ctx['organizer_header'] = request.organizer.settings.get('organizer_header_image', as_type=str, default='')[7:]
+
+        logo_path = request.organizer.settings.get('organizer_logo_image', as_type=str, default='')
+        ctx['organizer_logo'] = logo_path[7:] if logo_path.startswith('file://') else logo_path
+        ctx['organizer_logo_url'] = default_storage.url(ctx['organizer_logo']) if ctx['organizer_logo'] else None
+
+        header_path = request.organizer.settings.get('organizer_header_image', as_type=str, default='')
+        ctx['organizer_header'] = header_path[7:] if header_path.startswith('file://') else header_path
+        ctx['organizer_header_url'] = default_storage.url(ctx['organizer_header']) if ctx['organizer_header'] else None
+
         ctx['organizer_homepage_text'] = request.organizer.settings.get(
             'organizer_homepage_text', as_type=LazyI18nString
         )

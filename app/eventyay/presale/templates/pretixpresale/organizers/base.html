@@ -41,7 +41,11 @@
     {{ block.super }}
     <meta property="og:title" content="{{ organizer.name }}"/>
     {% if organizer_logo %}
-        <meta property="og:image" content="{{ organizer_logo|thumb:'5000x120' }}"/>
+        {% if organizer_logo|lower|slice:"-4:" == ".gif" or organizer_logo|lower|slice:"-4:" == ".svg" %}
+            <meta property="og:image" content="{{ organizer_logo_url }}"/>
+        {% else %}
+            <meta property="og:image" content="{{ organizer_logo|thumb:'5000x120' }}"/>
+        {% endif %}
     {% endif %}
     <meta property="og:type" content="website"/>
     <meta property="og:url" content="{% abseventurl organizer "presale:organizer.index" %}"/>
@@ -62,7 +66,11 @@
 
 {% block event_logo %}
     {% if organizer_logo %}
-        <img loading="lazy" src="{{ organizer_logo|thumb:'1000x1000' }}" id="event-logo" alt="{{ organizer.name }}" class="organizer-logo">
+        {% if organizer_logo|lower|slice:"-4:" == ".gif" or organizer_logo|lower|slice:"-4:" == ".svg" %}
+            <img loading="lazy" src="{{ organizer_logo_url }}" id="event-logo" alt="{{ organizer.name }}" class="organizer-logo">
+        {% else %}
+            <img loading="lazy" src="{{ organizer_logo|thumb:'1000x1000' }}" id="event-logo" alt="{{ organizer.name }}" class="organizer-logo">
+        {% endif %}
     {% endif %}
 {% endblock %}
 
