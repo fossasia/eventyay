@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 
 from django import forms
 from django.conf import settings
@@ -94,10 +95,28 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
 
         def __str__(self):
             if isinstance(self.file, str):
-                return self.file.split('?')[0].split('/')[-1]
-            if hasattr(self.file, 'display_name'):
-                return self.file.display_name
-            return os.path.basename(self.file.name).split('.', 1)[-1]
+                name = self.file.split('?')[0].split('/')[-1]
+            elif hasattr(self.file, 'display_name'):
+                name = self.file.display_name
+            else:
+                name = os.path.basename(self.file.name)
+            
+            # Iteratively strip hash nonces and duplicate extensions.
+            changed = True
+            while changed:
+                changed = False
+                parts = name.split('.')
+                if len(parts) >= 3 and parts[-1] == parts[-2]:
+                    parts.pop(-2)
+                    name = '.'.join(parts)
+                    changed = True
+                parts = name.split('.')
+                if len(parts) >= 3 and re.match(r'^[a-zA-Z0-9]{8}$', parts[-2]):
+                    parts.pop(-2)
+                    name = '.'.join(parts)
+                    changed = True
+
+            return name
 
         @property
         def url(self):
@@ -109,6 +128,9 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
         ctx = super().get_context(name, value, attrs)
         ctx['widget']['value'] = self.FakeFile(value)
         ctx['widget']['cachedfile'] = None
+        ctx['widget']['event_settings_image_tools'] = bool(
+            attrs and attrs.get('data-event-settings-image-tools') == 'enabled'
+        )
         return ctx
 
     def is_initial(self, value):
@@ -156,6 +178,9 @@ class CachedFileInput(forms.ClearableFileInput):
             value = self.FakeFile(value)
 
         ctx = super().get_context(name, value, attrs)
+        ctx['widget']['event_settings_image_tools'] = bool(
+            attrs and attrs.get('data-event-settings-image-tools') == 'enabled'
+        )
         ctx['widget']['value'] = value
         ctx['widget']['cachedfile'] = value.file if isinstance(value, self.FakeFile) else None
         ctx['widget']['hidden_name'] = name + '-cachedfile'
