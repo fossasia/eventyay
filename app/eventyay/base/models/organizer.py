@@ -437,8 +437,8 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         try:
             if getattr(self, perm_name):
                 return True
-            for perm in self._granted_permissions():
-                if perm_name in self.PERMISSION_IMPLICATIONS.get(perm, ()):
+            for p, implications in self.PERMISSION_IMPLICATIONS.items():
+                if perm_name in implications and getattr(self, p):
                     return True
             return False
         except AttributeError:
