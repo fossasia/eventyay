@@ -716,7 +716,7 @@ a {
   float: right !important;
 }
 .mw-100 {
-  max-width: 100% !important;
+  max-width: 100%;
 }
 .field-help-toggle {
   display: none;
