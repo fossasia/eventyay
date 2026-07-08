@@ -519,7 +519,7 @@ var form_handlers = function (el) {
         dependency.on("change", update);
     });
 
-    el.find("div.scrolling-multiple-choice").each(function () {
+    el.find("div.scrolling-multiple-choice, ul.scrolling-multiple-choice").each(function () {
         if ($(this).find(".choice-options-all").length > 0) {
             return;
         }
@@ -710,6 +710,88 @@ var form_handlers = function (el) {
 
     el.find("input[name*=question], select[name*=question]").change(questions_toggle_dependent);
     questions_toggle_dependent();
+
+    if (el.find('input[name="limit_checkin_lists"]').length) {
+        var eventMap = {};
+        var $mapEl = document.getElementById('device-checkin-list-event-map');
+        if ($mapEl) {
+            try {
+                eventMap = JSON.parse($mapEl.textContent);
+            } catch (ignore) {
+                eventMap = {};
+            }
+        }
+
+        var $deviceForm = el.find('input[name="limit_checkin_lists"]').first().closest('form');
+        var $allEvents = $deviceForm.find('#id_all_events');
+        var $eventCheckboxes = $deviceForm.find('input[name="limit_events"]');
+        var $checkinListGroup = $deviceForm.find('input[name="limit_checkin_lists"]').first().closest('.form-group');
+        var $helpBlock = $checkinListGroup.find('.help-block').first();
+        var defaultHelpText = $helpBlock.text();
+
+        var getEventIdForList = function ($checkbox) {
+            var eventId = $checkbox.attr('data-event-id');
+            if (eventId) {
+                return String(eventId);
+            }
+            return eventMap[String($checkbox.val())] || '';
+        };
+
+        var getSelectedEventIds = function () {
+            if ($allEvents.prop('checked')) {
+                return null;
+            }
+            var selected = [];
+            $eventCheckboxes.each(function () {
+                if (this.checked) {
+                    selected.push(String(this.value));
+                }
+            });
+            return selected;
+        };
+
+        var updateDeviceCheckinListVisibility = function () {
+            var selectedEventIds = getSelectedEventIds();
+            var showAll = selectedEventIds === null;
+            var hasEventSelection = showAll || selectedEventIds.length > 0;
+            var visibleCount = 0;
+
+            $deviceForm.find('input[name="limit_checkin_lists"]').each(function () {
+                var $checkbox = $(this);
+                var eventId = getEventIdForList($checkbox);
+                var $item = $checkbox.closest('li');
+                if (!$item.length) {
+                    $item = $checkbox.closest('label').parent('div');
+                }
+                var visible = hasEventSelection && (showAll || (eventId && selectedEventIds.indexOf(eventId) !== -1));
+
+                $item.toggle(visible);
+                if (visible) {
+                    visibleCount += 1;
+                } else if ($checkbox.prop('checked')) {
+                    $checkbox.prop('checked', false);
+                }
+            });
+
+            if (!$helpBlock.length) {
+                return;
+            }
+            if (!hasEventSelection) {
+                $helpBlock.text(gettext('Select one or more events above to see matching check-in lists.'));
+            } else if (visibleCount === 0) {
+                $helpBlock.text(gettext('No check-in lists exist for the selected events yet.'));
+            } else {
+                $helpBlock.text(defaultHelpText);
+            }
+        };
+
+        updateDeviceCheckinListVisibility();
+        $allEvents.on('change', updateDeviceCheckinListVisibility);
+        $eventCheckboxes.on('change', updateDeviceCheckinListVisibility);
+        $deviceForm.find('#id_security_profile').on('change', function () {
+            window.setTimeout(updateDeviceCheckinListVisibility, 150);
+        });
+    }
 };
 
 $(function () {
