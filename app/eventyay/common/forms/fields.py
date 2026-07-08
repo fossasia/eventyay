@@ -203,10 +203,15 @@ class I18nEmailBodyFormField(I18nFormField):
 
     def clean(self, value):
         result = super().clean(value)
-        if isinstance(result, LazyI18nString) and isinstance(result.data, dict):
-            return LazyI18nString(
-                {locale: sanitize_email_html(text) if text else text for locale, text in result.data.items()}
-            )
+        if isinstance(result, LazyI18nString):
+            if isinstance(result.data, dict):
+                return LazyI18nString(
+                    {locale: sanitize_email_html(text) if text else text for locale, text in result.data.items()}
+                )
+            elif isinstance(result.data, str):
+                return LazyI18nString(sanitize_email_html(result.data) if result.data else result.data)
+        elif isinstance(result, str):
+            return sanitize_email_html(result) if result else result
         return result
 
 

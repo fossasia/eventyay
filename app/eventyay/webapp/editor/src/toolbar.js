@@ -82,7 +82,13 @@ export function buildToolbar(editor, { profile, placeholders = [], previewUrl = 
 }
 
 function showLinkPopover(editor, anchor) {
-  document.querySelectorAll('.tiptap-link-popover').forEach((el) => el.remove())
+  document.querySelectorAll('.tiptap-link-popover').forEach((el) => {
+    if (typeof el.closePopover === 'function') {
+      el.closePopover()
+    } else {
+      el.remove()
+    }
+  })
 
   const wrapper = document.createElement('span')
   wrapper.className = 'tiptap-link-popover'
@@ -121,6 +127,7 @@ function showLinkPopover(editor, anchor) {
     document.removeEventListener('click', onDocumentClick)
     document.removeEventListener('keydown', onKeydown)
   }
+  wrapper.closePopover = close
 
   const applyLink = () => {
     const url = input.value.trim()

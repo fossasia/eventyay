@@ -2,7 +2,6 @@ import json
 import logging
 import operator
 import re
-import smtplib
 from collections import OrderedDict
 from decimal import Decimal
 from itertools import groupby
@@ -15,7 +14,6 @@ from django.core.files import File
 from django.db import transaction
 from django.db.models import ProtectedError
 from django.forms import inlineformset_factory
-from python_http_client.exceptions import HTTPError
 from django.http import (
     Http404,
     HttpResponse,
@@ -757,16 +755,23 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             },
         )
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['renderers'] = self.request.event.get_html_mail_renderers()
-        return ctx
-
     def get_form(self):
         form = super().get_form()
 
-        # List of email-content fields to exclude
         exclude_fields = [
+            # Fields now managed in the common Email settings tab
+            'mail_prefix',
+            'mail_from',
+            'mail_from_name',
+            'mail_reply_to',
+            'mail_bcc',
+            'mail_text_signature',
+            'mail_html_renderer',
+            'mail_attach_tickets',
+            'mail_attach_ical',
+            'mail_sales_channel_placed_paid',
+            'mail_sales_channel_download_reminder',
+            # Email-content template fields (edited per-email on dedicated pages)
             'mail_text_order_placed',
             'mail_send_order_placed_attendee',
             'mail_text_order_placed_attendee',
@@ -812,54 +817,7 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
                     data={k: form.cleaned_data.get(k) for k in form.changed_data},
                 )
 
-            if request.POST.get('test', '0').strip() == '1':
-                backend = self.request.event.get_mail_backend(force_custom=True, timeout=10)
-                try:
-                    to_addrs = None
-                    test_email = form.cleaned_data.get('test_email')
-                    if test_email:
-                        to_addrs = [address for address in (a.strip() for a in test_email.split(',')) if address]
-                        if not to_addrs:
-                            to_addrs = None
-                    backend.test(self.request.event.settings.mail_from, to_addrs=to_addrs)
-                except HTTPError as e:
-                    logger.exception('Event SendGrid test failed (event=%s)', self.request.event.slug)
-                    messages.error(
-                        self.request,
-                        _('SendGrid test email failed to connect or send. HTTP Error: %s') % str(e),
-                    )
-                except (smtplib.SMTPException, OSError) as e:
-                    logger.exception('Event SMTP test failed (event=%s)', self.request.event.slug)
-                    messages.warning(
-                        self.request,
-                        _('Test email failed to connect or send: %s') % str(e),
-                    )
-                except Exception as e:
-                    logger.exception('Unexpected error during test email (event=%s)', self.request.event.slug)
-                    messages.error(
-                        self.request,
-                        _('An error occurred while testing the email configuration: %s') % str(e),
-                    )
-                else:
-                    if form.cleaned_data.get('smtp_use_custom'):
-                        messages.success(
-                            self.request,
-                            _(
-                                'Your changes have been saved and the test email '
-                                'was sent successfully.'
-                            ),
-                        )
-                    else:
-                        messages.success(
-                            self.request,
-                            _(
-                                "We've been able to send a test email with the configuration you entered. "
-                                'Remember to enable "Use custom email", otherwise your custom '
-                                'email configuration will not be used.'
-                            ),
-                        )
-            else:
-                messages.success(self.request, _('Your changes have been saved.'))
+            messages.success(self.request, _('Your changes have been saved.'))
             return redirect(self.get_success_url())
         else:
             messages.error(
@@ -977,7 +935,7 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
     and returns ``{ "html": "<p>...</p>" }``.
     """
 
-    permission = 'can_change_orders'
+    permission = ('can_change_orders', 'can_change_event_settings')
 
     def post(self, request, *args, **kwargs):
         try:
