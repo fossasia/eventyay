@@ -184,6 +184,17 @@
                     </div>
                     <div class="row control-group pdf-info">
                         <div class="col-sm-12">
+                            <button type="button" class="btn btn-default btn-xs" id="pdf-info-lock-aspect"
+                                    title="{% trans 'Lock width and height proportions' %}"
+                                    aria-pressed="false"
+                                    aria-label="{% trans 'Lock width and height proportions' %}">
+                                <span class="fa fa-unlink" aria-hidden="true"></span>
+                                {% trans "Lock proportions" %}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row control-group pdf-info">
+                        <div class="col-sm-12">
                             <label>{% trans "Background PDF" %}</label><br>
                             <p>
                                 <button class="btn btn-default background-button" id="pdf-empty">
@@ -416,22 +427,38 @@
                 </div>
             </div>
 
-            <form method="post" action="" id="preview-form" target="_blank">
+            <form method="post" action="" id="preview-form">
                 <div class="form-group submit-group">
                     {% csrf_token %}
-                    <input type="hidden" value="" name="data">
-                    <input type="hidden" value="" name="background">
-                    <input type="hidden" value="true" name="preview">
                     <button type="button" class="btn btn-default btn-lg" id="editor-preview">
                         {% trans "Preview" %}
                     </button>
-                    <button type="submit" class="btn btn-primary btn-save" id="editor-save">
+                    <button type="button" class="btn btn-primary btn-save" id="editor-save">
                         {% trans "Save" %}
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
+    <div class="modal fade" id="preview-modal" tabindex="-1" role="dialog" aria-labelledby="preview-modal-title">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="{% trans 'Close preview' %}"
+                            title="{% trans 'Close preview' %}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="preview-modal-title">{% trans "Preview" %}</h4>
+                </div>
+                <div class="modal-body">
+                    <iframe id="preview-iframe" class="pdf-preview-iframe" title="{% trans 'Preview' %}"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="{% static "pdfjs/pdf.js" %}"></script>
     <script type="text/javascript" src="{% static "fabric/fabric.min.js" %}"></script>
     <script type="text/javascript" src="{% static "pretixcontrol/js/ui/editor.js" %}"></script>
