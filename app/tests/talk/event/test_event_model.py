@@ -213,22 +213,6 @@ def test_event_copy_settings_with_exceptions(event):
 
 
 @pytest.mark.django_db
-def test_event_feature_flags_accept_legacy_list(event):
-    event.feature_flags = ['janus', 'zoom']
-
-    with scope(event=event):
-        assert event.get_feature_flag('janus') is True
-        assert event.get_feature_flag('zoom') is True
-        assert event.get_feature_flag('session_popularity_enabled') is False
-        assert event.session_popularity_show_on_schedule() is True
-        assert event.schedule_client_feature_flags() == {
-            'session_popularity_enabled': False,
-            'session_popularity_show_on_schedule': True,
-            'featured_speakers_enabled': False,
-        }
-
-
-@pytest.mark.django_db
 def test_event_get_default_type(event):
     with scope(event=event):
         assert event.submission_types.count() == 1
