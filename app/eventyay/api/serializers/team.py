@@ -63,6 +63,7 @@ class TeamSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             "can_change_submissions",
             "is_reviewer",
             "force_hide_speaker_names",
+            "force_hide_speaker_emails",
         )
         expandable_fields = {
             "limit_tracks": (
