@@ -257,6 +257,9 @@ export default {
 		if (this.connectionRetryTimeout) {
 			window.clearTimeout(this.connectionRetryTimeout)
 		}
+		if (this.slowLinkInterval) {
+			window.clearInterval(this.slowLinkInterval)
+		}
 		if (this.soundMeterInterval) {
 			window.clearInterval(this.soundMeterInterval)
 		}

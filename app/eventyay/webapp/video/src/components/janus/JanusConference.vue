@@ -280,6 +280,9 @@ export default {
 		if (this.connectionRetryTimeout) {
 			window.clearTimeout(this.connectionRetryTimeout)
 		}
+		if (this.slowLinkInterval) {
+			window.clearInterval(this.slowLinkInterval)
+		}
 	},
 	mounted() {
 		LOG_ENTRIES.splice(0, LOG_ENTRIES.length)
@@ -861,7 +864,7 @@ export default {
 											}
 										} else {
 											this.fetchUser(p)
-											this.participants.push(p.id)
+											this.participants.push(p)
 										}
 									}
 								} else if (msg.leaving) {
