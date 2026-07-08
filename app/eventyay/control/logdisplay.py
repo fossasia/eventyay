@@ -688,6 +688,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.device.changed': _('The device has been changed.'),
         'eventyay.device.revoked': _('Access of the device has been revoked.'),
         'eventyay.device.initialized': _('The device has been initialized.'),
+        'eventyay.device.setup_token_reset': _('A new device setup code has been generated.'),
         'eventyay.device.keyroll': _('The access token of the device has been regenerated.'),
         'eventyay.device.updated': _('The device has notified the server of an hardware or software update.'),
         'eventyay.giftcards.created': _('The gift card has been created.'),
