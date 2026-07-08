@@ -118,7 +118,7 @@
         </div></div>
     {% endfor %}
 
-    {% if can_edit_speakers %}<div class="card mb-3"><div class="card-body">
+    {% if can_edit_speakers %}<div class="card mb-3 speaker-add-card"><div class="card-body">
         <form method="POST" class="form d-flex w-100 flex-column speaker-inline-form">
             {% csrf_token %}
             <div class="d-flex flex-row flex-wrap">

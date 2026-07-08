@@ -531,6 +531,25 @@ aside.sidebar {
   }
 }
 
+.submission-page-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  border-bottom: var(--color-border) solid 1px;
+  margin-bottom: 16px;
+}
+
+.submission-page-tabs__nav[role="tablist"] {
+  flex: 1 1 auto;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.submission-page-tabs__actions {
+  margin-bottom: 0;
+  padding-bottom: 0.35rem;
+}
+
 .speaker-info {
   display: flex;
   flex-direction: row;
@@ -1864,6 +1883,25 @@ h2 .user-name-display img {
     gap: 0.5rem;
   }
 
+  #page-content #main-title .navigation-button {
+    order: -1;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    width: 100%;
+    margin-left: 0;
+    margin-bottom: 0.25rem;
+  }
+
+  #page-content #main-title .navigation-button .header-nav {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.3rem;
+    white-space: nowrap;
+  }
+
   #page-content .navigation-button {
     display: flex;
     flex-wrap: wrap;
@@ -1881,26 +1919,76 @@ h2 .user-name-display img {
     white-space: normal;
   }
 
-  /* Tab bar action buttons: full-width stacked column, aligned edge to edge. */
-  #page-content [role="tablist"] .ml-auto.flip.d-flex {
-    width: 100%;
+  #page-content .submission-page-tabs {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.35rem;
-    margin-top: 0.5rem;
+    border-bottom: none;
+    margin-bottom: 1rem;
   }
 
-  #page-content [role="tablist"] .ml-auto.flip.d-flex > .btn,
-  #page-content [role="tablist"] .ml-auto.flip.d-flex > .dropdown {
+  #page-content .submission-page-tabs__nav[role="tablist"] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-bottom: var(--color-border) solid 1px;
+    margin-bottom: 0.5rem;
+  }
+
+  #page-content .submission-page-tabs__nav[role="tablist"] a[role="tab"] {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.65rem;
+  }
+
+  #page-content .submission-page-tabs__actions {
+    flex-direction: row;
+    align-items: stretch;
     width: 100%;
+    margin-left: 0;
+    padding-bottom: 0;
+    gap: 0.35rem;
+  }
+
+  #page-content .submission-page-tabs__actions > .btn {
+    flex: 1 1 0;
+    min-width: 0;
     margin: 0;
   }
 
-  #page-content [role="tablist"] .ml-auto.flip.d-flex > .btn,
-  #page-content [role="tablist"] .ml-auto.flip.d-flex summary.btn {
+  #page-content .submission-page-tabs__actions > details.dropdown {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: stretch;
+    margin: 0;
+  }
+
+  #page-content .submission-page-tabs__actions > .btn,
+  #page-content .submission-page-tabs__actions > details.dropdown summary.btn {
     width: 100%;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
     text-align: center;
     white-space: normal;
+  }
+
+  #page-content .submission-page-tabs__actions > details.dropdown summary.btn {
+    flex: 1;
+    white-space: nowrap;
+    padding-inline: 0.85rem;
+  }
+
+  #page-content .submission-page-tabs__actions > .btn .fa,
+  #page-content .submission-page-tabs__actions > details.dropdown summary.btn .fa {
+    flex-shrink: 0;
+    margin: 0;
   }
 
   /* Read-only detail views: stack label above value like the outer list cards. */
@@ -1957,7 +2045,7 @@ h2 .user-name-display img {
 
   #page-content .value-pill i.fa {
     margin-right: 0;
-    color: #fff;
+    color: #fff !important;
   }
 
   /* Submission header: present the proposal title and status as a card. */
