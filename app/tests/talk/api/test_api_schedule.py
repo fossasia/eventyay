@@ -199,7 +199,7 @@ def test_redirect_version_nonexistent_version(client, event):
 @pytest.mark.django_db
 def test_redirect_version_missing_query_param(client, event):
     response = client.get(event.api_urls.schedules + "by-version/")
-    assert response.status_code == 401
+    assert response.status_code == 400
 
 
 @pytest.mark.django_db

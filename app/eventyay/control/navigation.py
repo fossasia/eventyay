@@ -70,17 +70,6 @@ def get_event_navigation(request: HttpRequest):
                 'active': url.url_name == 'event.settings.tickets',
             },
             {
-                'label': _('E-mail'),
-                'url': reverse(
-                    'control:event.settings.mail',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': url.url_name == 'event.settings.mail',
-            },
-            {
                 'label': _('Tax rules'),
                 'url': reverse(
                     'control:event.settings.tax',
