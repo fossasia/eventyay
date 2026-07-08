@@ -9,7 +9,7 @@ def remove_placeholder_emails(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0037_alter_queuedmail_reply_to'),
+        ('base', '0040_alter_queuedmail_reply_to'),
     ]
 
     operations = [
