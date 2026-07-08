@@ -71,11 +71,12 @@ async def _recv_response(websocket, transaction):
         except (json.JSONDecodeError, TypeError) as e:
             raise JanusError("Janus returned an invalid JSON response") from e
 
-        if resp.get("janus") == "ack":
+        janus_type = resp.get("janus")
+        if janus_type in ("ack", "keepalive"):
             continue
-        if resp.get("transaction") not in (None, transaction):
+        if resp.get("transaction") != transaction:
             continue
-        if resp.get("janus") == "error":
+        if janus_type == "error":
             error = resp.get("error") or {}
             reason = error.get("reason") or repr(resp)
             raise JanusError(reason)

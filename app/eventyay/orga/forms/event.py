@@ -132,7 +132,7 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         self.is_administrator = kwargs.pop('is_administrator', False)
         super().__init__(*args, **kwargs)
         self.initial['custom_css_text'] = self.instance.custom_css.read().decode() if self.instance.custom_css else ''
-        flags = self.instance._feature_flags_as_mapping()
+        flags = self.instance.feature_flags_as_mapping()
         if 'show_featured_speakers' not in flags and 'show_featured' in flags:
             self.fields['show_featured_speakers'].initial = flags['show_featured']
         self._configure_session_popularity_fields(flags)

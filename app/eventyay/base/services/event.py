@@ -368,7 +368,7 @@ async def create_room(event, data, creator):
             raise ValidationError(
                 "This user is not allowed to create a room of this type.",
                 code="denied",
-        )
+            )
         m = [m for m in data.get("modules", []) if m["type"] == "call.bigbluebutton"][0]
         m["config"] = event.config.get("bbb_defaults", {})
         m["config"].pop("secret", None)  # legacy

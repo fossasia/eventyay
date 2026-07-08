@@ -2570,7 +2570,7 @@ class Event(
     def event(self):
         return self
 
-    def _feature_flags_as_mapping(self):
+    def feature_flags_as_mapping(self):
         flags = self.feature_flags or {}
         if isinstance(flags, dict):
             return flags
@@ -2579,13 +2579,13 @@ class Event(
         return {}
 
     def get_feature_flag(self, feature):
-        flags = self._feature_flags_as_mapping()
+        flags = self.feature_flags_as_mapping()
         if feature in flags:
             return flags[feature]
         return default_feature_flags().get(feature, False)
 
     def session_popularity_show_on_schedule(self):
-        flags = self._feature_flags_as_mapping()
+        flags = self.feature_flags_as_mapping()
         if 'session_popularity_show_on_schedule' in flags:
             return bool(flags['session_popularity_show_on_schedule'])
         return bool(
