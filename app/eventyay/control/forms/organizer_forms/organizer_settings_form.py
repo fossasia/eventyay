@@ -97,19 +97,30 @@ class OrganizerSettingsForm(SettingsForm):
                     default_storage.delete(f'{base_path}_original.{orig_ext}')
 
             if isinstance(new_value, UploadedFile):
-                try:
-                    prefix = self.add_prefix(image_field)
-                    crop_x = int(float(self.data.get(f'{prefix}_crop_x', '')))
-                    crop_y = int(float(self.data.get(f'{prefix}_crop_y', '')))
-                    crop_w = int(float(self.data.get(f'{prefix}_crop_w', '')))
-                    crop_h = int(float(self.data.get(f'{prefix}_crop_h', '')))
-                    if crop_w <= 0 or crop_h <= 0:
-                        raise ValueError('Invalid crop dimensions')
-                    crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
-                    self.obj.settings.set(f'{image_field}_crop_data', f'{crop_x},{crop_y},{crop_w},{crop_h}')
-                except (ValueError, TypeError) as e:
-                    logger.error(f'Crop failed for {image_field}. Data keys: {[k for k in self.data.keys() if "crop" in k]}. Error: {e}')
-                    crop_box = None
+                prefix = self.add_prefix(image_field)
+                crop_fields = {
+                    'x': self.data.get(f'{prefix}_crop_x'),
+                    'y': self.data.get(f'{prefix}_crop_y'),
+                    'w': self.data.get(f'{prefix}_crop_w'),
+                    'h': self.data.get(f'{prefix}_crop_h'),
+                }
+                crop_box = None
+                if all(v not in (None, '') for v in crop_fields.values()):
+                    try:
+                        crop_x = int(float(crop_fields['x']))
+                        crop_y = int(float(crop_fields['y']))
+                        crop_w = int(float(crop_fields['w']))
+                        crop_h = int(float(crop_fields['h']))
+                        if crop_w <= 0 or crop_h <= 0:
+                            raise ValueError('Invalid crop dimensions')
+                        crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
+                        self.obj.settings.set(
+                            f'{image_field}_crop_data',
+                            f'{crop_x},{crop_y},{crop_w},{crop_h}',
+                        )
+                    except (ValueError, TypeError) as e:
+                        logger.warning('Invalid crop data for %s (%r): %s', image_field, crop_fields, e)
+                        crop_box = None
                 self.cleaned_data[image_field] = self._save_optimized(new_value, image_field, crop_box)
 
         return super().save()
@@ -121,7 +132,7 @@ class OrganizerSettingsForm(SettingsForm):
         """
         try:
             result = optimize_uploaded_image(uploaded, setting_key, crop_box)
-        except Exception:
+        except (ValueError, OSError):
             logger.exception(
                 'Image optimization failed for %s; storing original unmodified',
                 setting_key,
