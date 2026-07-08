@@ -878,7 +878,7 @@ class Event(
         speakers = '{base}speakers/'
         reviews = '{base}reviews/'
         rooms = '{base}rooms/'
-        questions = '{base}questions/'
+        questions = '{base}talkquestions/'
         question_options = '{base}question-options/'
         answers = '{base}answers/'
         tags = '{base}tags/'
