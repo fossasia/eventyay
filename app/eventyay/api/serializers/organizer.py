@@ -25,6 +25,7 @@ from eventyay.base.models import (
     User,
 )
 from eventyay.base.models.seating import SeatingPlanLayoutValidator
+from eventyay.base.models.track import Track
 from eventyay.base.services.mail import SendMailException, mail
 from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.base.settings import validate_organizer_settings
@@ -127,6 +128,17 @@ class EventSlugField(serializers.SlugRelatedField):
 
 class TeamSerializer(serializers.ModelSerializer):
     limit_events = EventSlugField(slug_field='slug', many=True)
+    limit_tracks = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Track.objects.none(),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        organizer = self.context.get('organizer')
+        if organizer is not None:
+            self.fields['limit_tracks'].queryset = Track.objects.filter(event__organizer=organizer)
 
     class Meta:
         model = Team
@@ -135,6 +147,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'name',
             'all_events',
             'limit_events',
+            'limit_tracks',
             'can_create_events',
             'can_change_teams',
             'can_change_organizer_settings',
@@ -152,6 +165,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_change_exhibition_proposals',
             'is_exhibition_reviewer',
             'hide_exhibition_applicant_emails',
+            'force_hide_speaker_emails',
             'can_video_create_stages',
             'can_video_create_channels',
             'can_video_direct_message',
