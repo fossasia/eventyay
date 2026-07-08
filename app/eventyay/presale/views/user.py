@@ -66,7 +66,7 @@ class ResendLinkView(EventViewMixin, TemplateView):
             )
         except SendMailException:
             logger = logging.getLogger('pretix.presale.user')
-            logger.exception('A mail resending order links to {} could not be sent.'.format(user))
+            logger.exception(f'A mail resending order links to {user} could not be sent.')
             messages.error(
                 self.request,
                 _('We have trouble sending emails right now, please check back later.'),

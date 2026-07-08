@@ -1050,7 +1050,7 @@ class BaseInvoiceAddressForm(forms.ModelForm):
             except (vat_moss_lite.errors.InvalidError, ValueError):
                 raise ValidationError(_('This VAT ID is not valid. Please re-check your input.'))
             except vat_moss_lite.errors.WebServiceUnavailableError:
-                logger.exception('VAT ID checking failed for country {}'.format(data.get('country')))
+                logger.exception(f'VAT ID checking failed for country {data.get("country")}')
                 self.instance.vat_id_validated = False
                 if self.request and self.vat_warning:
                     messages.warning(
@@ -1063,7 +1063,7 @@ class BaseInvoiceAddressForm(forms.ModelForm):
                         ),
                     )
             except (vat_moss_lite.errors.WebServiceError, HTTPError):
-                logger.exception('VAT ID checking failed for country {}'.format(data.get('country')))
+                logger.exception(f'VAT ID checking failed for country {data.get("country")}')
                 self.instance.vat_id_validated = False
                 if self.request and self.vat_warning:
                     messages.warning(

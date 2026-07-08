@@ -1709,7 +1709,7 @@ class OrderCheckVATID(OrderView):
             except vat_moss_lite.errors.InvalidError:
                 messages.error(self.request, _('This VAT ID is not valid.'))
             except vat_moss_lite.errors.WebServiceUnavailableError:
-                logger.exception('VAT ID checking failed for country {}'.format(ia.country))
+                logger.exception(f'VAT ID checking failed for country {ia.country}')
                 messages.error(
                     self.request,
                     _(

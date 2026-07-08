@@ -1829,7 +1829,7 @@ class OrderPayment(models.Model):
         )
 
         if self.order.status in (Order.STATUS_PAID, Order.STATUS_CANCELED):
-            logger.info('Confirmed payment {} but order is in status {}.'.format(self.full_id, self.order.status))
+            logger.info(f'Confirmed payment {self.full_id} but order is in status {self.order.status}.')
             return
 
         payment_sum = self.order.payments.filter(

@@ -894,7 +894,7 @@ class Renderer:
         try:
             text = '<br/>'.join(get_display(reshaper.reshape(l)) for l in text.split('<br/>'))
         except Exception:
-            logger.exception('Reshaping/Bidi fixes failed on string {}'.format(repr(text)))
+            logger.exception(f'Reshaping/Bidi fixes failed on string {repr(text)}')
 
         p = Paragraph(text, style=style)
         w, h = p.wrapOn(canvas, float(o['width']) * mm, 1000 * mm)

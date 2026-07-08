@@ -85,7 +85,7 @@ class AuthorizationView(BaseAuthorizationView):
             return self.error_response(error, application)
 
         self.success_url = uri
-        logger.debug('Success url for the request: {0}'.format(self.success_url))
+        logger.debug(f'Success url for the request: {self.success_url}')
 
         msgs = [
             _('The application "{application_name}" has been authorized to access your account.').format(
