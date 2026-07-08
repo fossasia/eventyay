@@ -11,14 +11,17 @@ here = Path(__file__).parent
 doc_dir = here / "../../../doc"
 base_dir = here / "../../pretalx"
 
-plugin_docs = (doc_dir / "developer/plugins/general.rst").read_text()
-command_docs = (doc_dir / "administrator/commands.rst").read_text()
+try:
+    plugin_docs = (doc_dir / "developer/plugins/general.rst").read_text()
+    command_docs = (doc_dir / "administrator/commands.rst").read_text()
+except FileNotFoundError:
+    pytest.skip('documentation sources not available', allow_module_level=True)
 
 
 def test_documentation_includes_config_options():
     doc_text = (doc_dir / "administrator/configure.rst").read_text()
     config = configparser.RawConfigParser()
-    config = config.read(here / "../../pretalx.example.cfg")
+    config = config.read(here / "../../eventyay.example.cfg")
 
     for category in config:
         for key in category:

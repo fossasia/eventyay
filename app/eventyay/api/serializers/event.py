@@ -779,6 +779,9 @@ class EventSettingsSerializer(SettingsSerializer):
         'cancel_allow_user_paid_require_approval',
         'change_allow_user_until',
         'change_allow_user_price',
+        'header_background_color',
+        'header_text_color',
+        'navigation_text_color',
         'primary_color',
         'theme_color_success',
         'theme_color_danger',
@@ -789,8 +792,11 @@ class EventSettingsSerializer(SettingsSerializer):
         'logo_image',
         'logo_image_large',
         'event_logo_image',
+        'event_preview_image',
         'logo_show_title',
         'og_image',
+        'menu_label_tickets',
+        'menu_label_join_video',
     ]
 
     def __init__(self, *args, **kwargs):

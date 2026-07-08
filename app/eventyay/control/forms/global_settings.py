@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
 from eventyay.base.forms import SecretKeySettingsField, SettingsForm
-from eventyay.base.settings import GlobalSettingsObject
+from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 
 
@@ -22,6 +22,8 @@ class GlobalSettingsForm(SettingsForm):
         global_settings = self.obj.settings
         if global_settings.get('billing_validation') is None:
             global_settings.set('billing_validation', True)
+        if global_settings.get(EVENT_SERIES_CREATION_ENABLED) is None:
+            global_settings.set(EVENT_SERIES_CREATION_ENABLED, True)
         if global_settings.get('smtp_port') is None or global_settings.get('smtp_port') == '':
             self.obj.settings.set('smtp_port', settings.EMAIL_PORT)
         if global_settings.get('smtp_host') is None or global_settings.get('smtp_host') == '':
@@ -55,6 +57,17 @@ class GlobalSettingsForm(SettingsForm):
                         help_text=_(
                             'Billing validation lets you require organizers to set up a billing method before they can create events. '
                             'When this option is enabled, no new event can be created until a valid billing method has been added.'
+                        ),
+                    ),
+                ),
+                (
+                    EVENT_SERIES_CREATION_ENABLED,
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Allow event series creation'),
+                        help_text=_(
+                            'When enabled, organizers can create event series or time slot bookings in addition to singular events. '
+                            'Disable this to restrict event creation to singular events and non-event shops only.'
                         ),
                     ),
                 ),
@@ -104,6 +117,18 @@ class GlobalSettingsForm(SettingsForm):
                     SecretKeySettingsField(
                         required=False,
                         label=_('MapQuest API key for geocoding'),
+                    ),
+                ),
+                (
+                    'nominatim_geocoding_enabled',
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Enable public Nominatim geocoding'),
+                        help_text=_(
+                            'Can be used alongside OpenCage or MapQuest as a fallback. In development, Nominatim '
+                            'is used automatically when no API key is configured. Only enable in production if your '
+                            'deployment can comply with the public Nominatim usage policy.'
+                        ),
                     ),
                 ),
                 (
@@ -414,6 +439,44 @@ class GlobalSettingsForm(SettingsForm):
                         required=False,
                     ),
                 ),
+                # Etherpad collaborative notes
+                (
+                    'etherpad_enabled',
+                    forms.BooleanField(
+                        label=_('Enable Etherpad integration'),
+                        help_text=_('Allow events to attach collaborative Etherpad notes to their sessions.'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'etherpad_base_url',
+                    forms.URLField(
+                        label=_('Default Etherpad instance URL'),
+                        help_text=_('Base URL of the Etherpad instance, e.g. {sample}').format(sample='https://pad.example.org'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'etherpad_api_key',
+                    SecretKeySettingsField(
+                        label=_('Etherpad API key'),
+                        help_text=_(
+                            'API key of the Etherpad instance (found in APIKEY.txt). Required only for automatic pad '
+                            'creation; without it, pad links are generated as plain URLs that Etherpad creates on first visit.'
+                        ),
+                        required=False,
+                    ),
+                ),
+                (
+                    'etherpad_pad_name_pattern',
+                    forms.CharField(
+                        label=_('Pad name pattern'),
+                        help_text=_(
+                            'Pattern used to generate pad names. Available placeholders: {placeholders}.'
+                        ).format(placeholders='{event}, {submission}, {token}'),
+                        required=False,
+                    ),
+                ),
             ]
         )
 
@@ -460,13 +523,30 @@ class GlobalSettingsForm(SettingsForm):
                 'billing_validation',
             ]),
             ('maps', _('Maps'), [
-                'opencagedata_apikey', 'mapquest_apikey', 'leaflet_tiles', 'leaflet_tiles_attribution',
+                'opencagedata_apikey', 'mapquest_apikey', 'nominatim_geocoding_enabled', 'leaflet_tiles', 'leaflet_tiles_attribution',
             ]),
             ('organizers', _('Organizers'), [
                 'allow_all_users_create_organizer',
                 'allow_payment_users_create_organizer',
             ]),
+            ('event_creation', _('Event Creation'), [
+                EVENT_SERIES_CREATION_ENABLED,
+            ]),
+            ('etherpad', _('Etherpad'), [
+                'etherpad_enabled',
+                'etherpad_base_url',
+                'etherpad_api_key',
+                'etherpad_pad_name_pattern',
+            ]),
         ]
+
+    def clean_etherpad_pad_name_pattern(self):
+        pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
+        if pattern and '{submission}' not in pattern and '{token}' not in pattern:
+            raise forms.ValidationError(
+                _('The pattern must contain {submission} or {token} so each session gets a unique pad.')
+            )
+        return pattern
 
     def clean(self):
         data = super().clean()

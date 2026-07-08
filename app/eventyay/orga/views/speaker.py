@@ -1,26 +1,23 @@
-from datetime import timedelta
-
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Q
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
 from django.db.models.expressions import OrderBy
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
+from urllib.parse import urlencode
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 from django_context_decorator import context
 from django_scopes import scope
 
-from eventyay.agenda.views.utils import get_schedule_exporters
 from eventyay.base.models import Answer, SpeakerProfile, User
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
-from eventyay.base.models.submission import SubmissionStates
+from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.talkimport import import_speakers
 from eventyay.base.views.tasks import AsyncAction
@@ -39,8 +36,7 @@ from eventyay.common.views.mixins import (
     Sortable,
 )
 from eventyay.consts import SizeKey
-from eventyay.orga.forms.importers import CSVImportForm, SpeakerImportProcessForm
-from eventyay.orga.forms.speaker import SpeakerExportForm
+from eventyay.orga.forms.importers import SpeakerImportProcessForm
 from eventyay.person.forms import (
     SpeakerFilterForm,
     SpeakerInformationForm,
@@ -55,10 +51,27 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     template_name = 'orga/speaker/list.html'
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
-    sortable_fields = ('position', 'user__email', 'user__fullname')
-    default_sort_field = None
-    secondary_sort = {'position': ('user__fullname',)}
+    sortable_fields = ('position', 'user__email', 'user__fullname', 'is_featured')
+    default_sort_field = 'position'
+    secondary_sort = {'position': ('user__fullname',), 'is_featured': ('position', 'user__fullname')}
     permission_required = 'base.orga_list_speakerprofile'
+
+    def _speaker_list_ordering(self, *, descending=False):
+        direction = (
+            OrderBy(F('position'), descending=True, nulls_last=True)
+            if descending
+            else OrderBy(F('position'), nulls_last=True)
+        )
+        return (direction, 'user__fullname', 'pk')
+
+    def sort_queryset(self, qs):
+        sort_key = self.request.GET.get('sort') or ''
+        if not sort_key or sort_key == 'default':
+            sort_key = getattr(self, 'default_sort_field', None) or ''
+        plain_key = sort_key[1:] if sort_key.startswith('-') else sort_key
+        if plain_key == 'position':
+            return qs.order_by(*self._speaker_list_ordering(descending=sort_key.startswith('-')))
+        return super().sort_queryset(qs)
 
     def get_filter_form(self):
         with scope(event=self.request.event):
@@ -82,11 +95,6 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
                         & Q(user__submissions__state__in=SubmissionStates.accepted_states),
                         distinct=True,
                     ),
-                )
-                .order_by(
-                    OrderBy(F('position'), nulls_last=True),
-                    'user__fullname',
-                    'pk',
                 )
             )
 
@@ -114,7 +122,24 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
                 answers = Answer.objects.filter(question_id=question, person_id=OuterRef('user_id'))
                 qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=False)
             qs = qs.distinct()
-            return self.sort_queryset(qs)
+            return self.sort_queryset(qs).prefetch_related(
+                Prefetch(
+                    'user__submissions',
+                    queryset=self._speaker_sessions_queryset(),
+                    to_attr='list_sessions',
+                )
+            )
+
+    def _speaker_sessions_queryset(self):
+        qs = (
+            self.request.event.submissions.exclude(
+                state__in=(SubmissionStates.DELETED, SubmissionStates.DRAFT),
+            )
+            .order_by('title')
+        )
+        if is_only_reviewer(self.request.user, self.request.event):
+            qs = limit_for_reviewers(qs, self.request.event, self.request.user)
+        return qs
 
     def post(self, request, *args, **kwargs):
         if not request.user.has_perm('base.update_speakerprofile', request.event):
@@ -131,16 +156,14 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
             requested_ids = [int(pk) for pk in order.split(',') if pk]
         except ValueError:
             return False
-        if not requested_ids:
-            return False
-        if len(requested_ids) != len(set(requested_ids)):
+        if not requested_ids or len(requested_ids) != len(set(requested_ids)):
             return False
 
         with transaction.atomic(), scope(event=self.request.event):
             profiles = list(
                 speaker_profiles_for_user(self.request.event, self.request.user)
                 .select_related('user')
-                .order_by(OrderBy(F('position'), nulls_last=True), 'user__fullname', 'pk')
+                .order_by(*self._speaker_list_ordering())
             )
             profile_by_id = {profile.pk: profile for profile in profiles}
             valid_requested_ids = [pk for pk in requested_ids if pk in profile_by_id]
@@ -165,6 +188,9 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
 
             if updates:
                 SpeakerProfile.objects.bulk_update(updates, ['position'])
+                from eventyay.agenda.views.utils import clear_schedule_caches
+
+                clear_schedule_caches(self.request.event)
 
         return True
 
@@ -296,11 +322,11 @@ class SpeakerPasswordReset(SpeakerViewMixin, ActionConfirmMixin, DetailView):
 
 
 class SpeakerToggleArrived(SpeakerViewMixin, View):
-    permission_required = 'base.update_speakerprofile'
+    permission_required = 'base.mark_arrived_speakerprofile'
 
-    def dispatch(self, request, event, code):
+    def post(self, request, *args, **kwargs):
         self.profile.has_arrived = not self.profile.has_arrived
-        self.profile.save()
+        self.profile.save(update_fields=['has_arrived'])
         action = 'eventyay.speaker.arrived' if self.profile.has_arrived else 'eventyay.speaker.unarrived'
         self.object.log_action(
             action,
@@ -309,8 +335,15 @@ class SpeakerToggleArrived(SpeakerViewMixin, View):
             # orga=True,
         )
         if url := self.request.GET.get('next'):
-            if url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
+            if url_has_allowed_host_and_scheme(
+                url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
                 return redirect(url)
+        return redirect(self.request.event.orga_urls.speakers)
+
+    def get(self, request, *args, **kwargs):
         return redirect(self.profile.orga_urls.base)
 
 
@@ -326,6 +359,9 @@ class SpeakerToggleFeatured(SpeakerViewMixin, View):
             data={'event': self.request.event.slug},
             user=self.request.user,
         )
+        from eventyay.agenda.views.utils import clear_schedule_caches
+
+        clear_schedule_caches(self.request.event)
         return HttpResponse()
 
 
@@ -349,61 +385,6 @@ class SpeakerInformationView(OrgaCRUDView):
         return _('Speaker Information Notes')
 
 
-class SpeakerExport(EventPermissionRequired, FormView):
-    permission_required = 'base.update_event'
-    template_name = 'orga/speaker/export.html'
-    form_class = SpeakerExportForm
-
-    def get_form_kwargs(self):
-        result = super().get_form_kwargs()
-        result['event'] = self.request.event
-        return result
-
-    @context
-    def exporters(self):
-        return [exporter for exporter in get_schedule_exporters(self.request) if exporter.group == 'speaker']
-
-    @context
-    def tablist(self):
-        return {
-            'custom': _('CSV/JSON exports'),
-            'general': _('More exports'),
-            'api': _('API'),
-        }
-
-    def form_valid(self, form):
-        result = form.export_data()
-        if not result:
-            messages.success(self.request, _('No data to be exported'))
-            return redirect(self.request.path)
-        return result
-
-
-class SpeakerImportView(EventPermissionRequired, FormView):
-    permission_required = 'base.update_event'
-    template_name = 'orga/speaker/import.html'
-    form_class = CSVImportForm
-    IMPORT_FILENAME = 'speaker_import.csv'
-
-    def form_valid(self, form):
-        session = self.request.session
-        if not session.session_key:
-            session.save()
-        if not session.session_key:
-            messages.error(self.request, _('Could not establish a session for file upload. Please try again.'))
-            return redirect(self.request.path)
-        cf = CachedFile.objects.create(
-            expires=now() + timedelta(days=1),
-            date=now(),
-            filename=self.IMPORT_FILENAME,
-            type='text/csv',
-            web_download=False,
-            session_key=session.session_key,
-        )
-        cf.file.save(self.IMPORT_FILENAME, form.cleaned_data['file'])
-        return redirect(self.request.event.orga_urls.speakers_import + str(cf.id) + '/')
-
-
 class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequired, AsyncAction, FormView):
     permission_required = 'base.update_event'
     template_name = 'orga/speaker/import_process.html'
@@ -413,7 +394,14 @@ class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequir
     IMPORT_FILENAME = 'speaker_import.csv'
 
     import_process_url_name = 'settings.import_export.speakers_import_process'
-    import_page_url_name = 'speakers_import'
+    import_page_url_name = 'import_export_settings'
+    import_target = 'speaker'
+
+    @cached_property
+    def import_settings_url(self):
+        base = self.request.event.orga_urls.import_export_settings
+        query = urlencode({'import_target': self.import_target})
+        return f'{base}?{query}#tab-import'
 
     def dispatch(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
@@ -422,7 +410,7 @@ class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequir
             _ = self.file
         except Http404:
             messages.error(request, _('The uploaded CSV file is missing or expired. Please upload it again.'))
-            return redirect(self.import_redirect_url)
+            return redirect(self.import_settings_url)
         return super().dispatch(request, *args, **kwargs)
 
     @cached_property
@@ -466,13 +454,13 @@ class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequir
             return self.get_result(request)
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.import_redirect_url)
+            return redirect(self.import_settings_url)
         return FormView.get(self, request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.import_redirect_url)
+            return redirect(self.import_settings_url)
         return FormView.post(self, request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -486,12 +474,10 @@ class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequir
         )
 
     def get_success_url(self, value):
-        if self.import_redirect_url != self.request.event.orga_urls.speakers_import:
-            return self.import_redirect_url
-        return self.request.event.orga_urls.speakers
+        return self.import_settings_url
 
     def get_error_url(self):
-        return self.import_redirect_url
+        return self.import_settings_url
 
     def get_success_message(self, value):
         if isinstance(value, dict):

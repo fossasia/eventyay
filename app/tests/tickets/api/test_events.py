@@ -8,16 +8,17 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
-from pretix.base.models import (
+from pytz import UTC
+
+from eventyay.base.models import (
     Event,
     InvoiceAddress,
     Order,
     OrderPosition,
     SeatingPlan,
 )
-from pretix.base.models.orders import OrderFee
-from pretix.testutils.mock import mocker_context
-from pytz import UTC
+from eventyay.base.models.orders import OrderFee
+from tests.testutils.mock import mocker_context
 
 
 @pytest.fixture
@@ -92,7 +93,7 @@ TEST_EVENT_RES = {
     'seat_category_mapping': {},
     'meta_data': {'type': 'Conference'},
     'timezone': 'Europe/Berlin',
-    'plugins': ['pretix.plugins.banktransfer', 'pretix.plugins.ticketoutputpdf'],
+    'plugins': ['eventyay.plugins.banktransfer', 'eventyay.plugins.ticketoutputpdf'],
     'item_meta_properties': {
         'day': 'Monday',
     },
@@ -338,7 +339,7 @@ def test_event_create_with_clone(token_client, organizer, event, meta_prop):
             'location': None,
             'slug': '2030',
             'meta_data': {'type': 'Conference'},
-            'plugins': ['pretix.plugins.ticketoutputpdf'],
+            'plugins': ['eventyay.plugins.ticketoutputpdf'],
             'timezone': 'Europe/Vienna',
         },
         format='json',
@@ -347,7 +348,7 @@ def test_event_create_with_clone(token_client, organizer, event, meta_prop):
     assert resp.status_code == 201
     with scopes_disabled():
         cloned_event = Event.objects.get(organizer=organizer.pk, slug='2030')
-        assert cloned_event.plugins == 'pretix.plugins.ticketoutputpdf'
+        assert cloned_event.plugins == 'eventyay.plugins.ticketoutputpdf'
         assert cloned_event.is_public is False
         assert cloned_event.testmode
         assert (
@@ -381,7 +382,7 @@ def test_event_create_with_clone(token_client, organizer, event, meta_prop):
     assert resp.status_code == 201
     with scopes_disabled():
         cloned_event = Event.objects.get(organizer=organizer.pk, slug='2031')
-        assert cloned_event.plugins == 'pretix.plugins.banktransfer,pretix.plugins.ticketoutputpdf'
+        assert cloned_event.plugins == 'eventyay.plugins.banktransfer,eventyay.plugins.ticketoutputpdf'
         assert cloned_event.is_public is True
         assert (
             organizer.events.get(slug='2031')
@@ -622,31 +623,31 @@ def test_event_update_plugins(token_client, organizer, event, free_item, free_qu
         '/api/v1/organizers/{}/events/{}/'.format(organizer.slug, event.slug),
         {
             'plugins': [
-                'pretix.plugins.ticketoutputpdf',
+                'eventyay.plugins.ticketoutputpdf',
             ]
         },
         format='json',
     )
     assert resp.status_code == 200
     assert set(resp.data.get('plugins')) == {
-        'pretix.plugins.ticketoutputpdf',
+        'eventyay.plugins.ticketoutputpdf',
     }
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/'.format(organizer.slug, event.slug),
-        {'plugins': {'pretix.plugins.banktransfer'}},
+        {'plugins': {'eventyay.plugins.banktransfer'}},
         format='json',
     )
     assert resp.status_code == 200
-    assert resp.data.get('plugins') == ['pretix.plugins.banktransfer']
+    assert resp.data.get('plugins') == ['eventyay.plugins.banktransfer']
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/'.format(organizer.slug, event.slug),
-        {'plugins': {'pretix.plugins.test'}},
+        {'plugins': {'eventyay.plugins.test'}},
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.content.decode() == '{"plugins":["Unknown plugin: \'pretix.plugins.test\'."]}'
+    assert resp.content.decode() == '{"plugins":["Unknown plugin: \'eventyay.plugins.test\'."]}'
 
 
 @pytest.mark.django_db
@@ -946,11 +947,17 @@ def test_event_create_with_seating_maps(token_client, organizer, event, meta_pro
 @pytest.mark.django_db
 def test_get_event_settings(token_client, organizer, event):
     event.settings.imprint_url = 'https://example.org'
+    event.settings.header_background_color = '#ffee00'
+    event.settings.header_text_color = '#111111'
+    event.settings.navigation_text_color = '#222222'
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
     )
     assert resp.status_code == 200
     assert resp.data['imprint_url'] == 'https://example.org'
+    assert resp.data['header_background_color'] == '#ffee00'
+    assert resp.data['header_text_color'] == '#111111'
+    assert resp.data['navigation_text_color'] == '#222222'
 
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/settings/?explain=true'.format(organizer.slug, event.slug),
@@ -967,7 +974,7 @@ def test_get_event_settings(token_client, organizer, event):
 @pytest.mark.django_db
 def test_patch_event_settings(token_client, organizer, event):
     with mocker_context() as mocker:
-        mocked = mocker.patch('pretix.presale.style.regenerate_css.apply_async')
+        mocked = mocker.patch('eventyay.presale.style.regenerate_css.apply_async')
         organizer.settings.imprint_url = 'https://example.org'
         resp = token_client.patch(
             '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
@@ -986,6 +993,25 @@ def test_patch_event_settings(token_client, organizer, event):
             format='json',
         )
         assert resp.status_code == 200
+        mocked.assert_any_call(args=(event.pk,))
+
+        resp = token_client.patch(
+            '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+            {
+                'header_background_color': '#ffee00',
+                'header_text_color': '#111111',
+                'navigation_text_color': '#222222',
+            },
+            format='json',
+        )
+        assert resp.status_code == 200
+        assert resp.data['header_background_color'] == '#ffee00'
+        assert resp.data['header_text_color'] == '#111111'
+        assert resp.data['navigation_text_color'] == '#222222'
+        event.settings.flush()
+        assert event.settings.header_background_color == '#ffee00'
+        assert event.settings.header_text_color == '#111111'
+        assert event.settings.navigation_text_color == '#222222'
         mocked.assert_any_call(args=(event.pk,))
 
         resp = token_client.patch(
@@ -1116,8 +1142,8 @@ def test_patch_event_settings_file(token_client, organizer, event):
         {'logo_image': 'https://cdn.example.com/header.png'},
         format='json',
     )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] == 'https://cdn.example.com/header.png'
+    assert resp.status_code == 400
+    assert resp.data == {'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.']}
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
@@ -1150,47 +1176,11 @@ def test_patch_event_settings_external_image_urls(token_client, organizer, event
         },
         format='json',
     )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] == normalized_header_url
-    assert resp.data['event_logo_image'] == logo_url
-
-    resp = token_client.get(
-        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        format='json',
-    )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] == normalized_header_url
-    assert resp.data['event_logo_image'] == logo_url
-
-    event = Event.objects.get(pk=event.pk)
-    assert event.visible_header_image_url == normalized_header_url
-    assert event.visible_logo_url == logo_url
-    assert event.social_image == normalized_header_url
-
-    resp = token_client.patch(
-        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        {
-            'logo_image': None,
-            'event_logo_image': None,
-        },
-        format='json',
-    )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] is None
-    assert resp.data['event_logo_image'] is None
-
-    resp = token_client.get(
-        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        format='json',
-    )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] is None
-    assert resp.data['event_logo_image'] is None
-
-    event = Event.objects.get(pk=event.pk)
-    assert event.visible_header_image_url is None
-    assert event.visible_logo_url is None
-    assert event.social_image is None
+    assert resp.status_code == 400
+    assert resp.data == {
+        'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.'],
+        'event_logo_image': ['External image URLs are no longer accepted. Please upload a file instead.'],
+    }
 
 
 @pytest.mark.django_db
@@ -1202,4 +1192,156 @@ def test_patch_event_settings_external_image_urls_reject_invalid_urls(token_clie
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.data == {'logo_image': ['Enter a valid URL.']}
+    assert resp.data == {'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.']}
+
+
+@pytest.mark.django_db
+def test_patch_event_settings_preview_image(token_client, organizer, event):
+    r1 = token_client.post(
+        '/api/v1/upload',
+        data={
+            'media_type': 'image/png',
+            'file': ContentFile(b'invalid png content', name='preview.png'),
+        },
+        format='upload',
+        HTTP_CONTENT_DISPOSITION='attachment; filename="preview.png"',
+    )
+    assert r1.status_code == 201
+    preview_file_id = r1.data['id']
+
+    r2 = token_client.post(
+        '/api/v1/upload',
+        data={
+            'media_type': 'image/png',
+            'file': ContentFile(b'invalid png content', name='header.png'),
+        },
+        format='upload',
+        HTTP_CONTENT_DISPOSITION='attachment; filename="header.png"',
+    )
+    assert r2.status_code == 201
+    header_file_id = r2.data['id']
+
+    r3 = token_client.post(
+        '/api/v1/upload',
+        data={
+            'media_type': 'image/png',
+            'file': ContentFile(b'invalid png content', name='logo.png'),
+        },
+        format='upload',
+        HTTP_CONTENT_DISPOSITION='attachment; filename="logo.png"',
+    )
+    assert r3.status_code == 201
+    logo_file_id = r3.data['id']
+
+    # Test settings patch
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+        {
+            'event_preview_image': preview_file_id,
+            'logo_image': header_file_id,
+            'event_logo_image': logo_file_id,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    assert resp.data['event_preview_image'].startswith('http')
+    assert resp.data['logo_image'].startswith('http')
+    assert resp.data['event_logo_image'].startswith('http')
+
+    # Check model property resolution
+    event = Event.objects.get(pk=event.pk)
+    assert event.visible_preview_image_url is not None
+    assert event.visible_header_image_url is not None
+    assert event.visible_logo_url is not None
+
+    # Check fallback logic: event_preview_image is chosen first
+    assert event.preview_image_url_with_fallback == event.visible_preview_image_url
+
+    # Clear preview image and check fallback to header image
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+        {
+            'event_preview_image': None,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    event.settings.flush()
+    event = Event.objects.get(pk=event.pk)
+    assert event.visible_preview_image_url is None
+    assert event.preview_image_url_with_fallback == event.visible_header_image_url
+
+    # Clear header image and check fallback to logo
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+        {
+            'logo_image': None,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    event.settings.flush()
+    event = Event.objects.get(pk=event.pk)
+    assert event.visible_header_image_url is None
+    assert event.preview_image_url_with_fallback == event.visible_logo_url
+
+    # Clear logo image and check fallback is None
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+        {
+            'event_logo_image': None,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    event.settings.flush()
+    event = Event.objects.get(pk=event.pk)
+    assert event.visible_logo_url is None
+    assert event.preview_image_url_with_fallback is None
+
+
+@pytest.mark.django_db
+def test_preview_image_url_with_fallback_local_file_thumbnail(token_client, organizer, event):
+    """
+    When event_preview_image is a storage-relative path (not an HTTP URL),
+    preview_image_url_with_fallback should call get_thumbnail and return its URL.
+    This exercises the thumbnailing branch introduced in the PR.
+    """
+    local_path = 'pub/previews/my-event.png'
+    event.settings.event_preview_image = local_path
+
+    thumb_url = 'http://testserver/media/pub/previews/my-event.800x450.png'
+
+    with mock.patch('eventyay.helpers.thumb.get_thumbnail') as mock_thumb:
+        mock_thumb.return_value.thumb.url = thumb_url
+        # Flush cached_property so it recalculates.
+        event.__dict__.pop('_visible_preview_image_path', None)
+        event.__dict__.pop('preview_image_url_with_fallback', None)
+        result = event.preview_image_url_with_fallback
+
+    mock_thumb.assert_called_once_with(local_path, '800x450^')
+    assert result == thumb_url
+
+
+@pytest.mark.django_db
+def test_preview_image_url_with_fallback_local_file_thumbnail_exception(token_client, organizer, event):
+    """
+    When get_thumbnail raises (e.g. corrupt image), preview_image_url_with_fallback
+    should fall back to default_storage.url(path) instead of propagating the exception.
+    """
+    local_path = 'pub/previews/corrupt.png'
+    event.settings.event_preview_image = local_path
+
+    storage_url = 'http://testserver/media/pub/previews/corrupt.png'
+
+    with mock.patch('eventyay.helpers.thumb.get_thumbnail', side_effect=Exception('bad image')):
+        with mock.patch(
+            'eventyay.base.models.event.default_storage'
+        ) as mock_storage:
+            mock_storage.url.return_value = storage_url
+            event.__dict__.pop('_visible_preview_image_path', None)
+            event.__dict__.pop('preview_image_url_with_fallback', None)
+            result = event.preview_image_url_with_fallback
+
+    mock_storage.url.assert_called_once_with(local_path)
+    assert result == storage_url

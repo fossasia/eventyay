@@ -1,11 +1,16 @@
 import json
 
 from django import forms
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 
 from eventyay.base.models import Submission, SubmissionStates, TalkSlot
+from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
+from eventyay.base.models.room import rooms_for_talk_assignment
+from eventyay.base.services.etherpad import validate_etherpad_url
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.mixins import ReadOnlyFlag, RequestRequire
 from eventyay.common.forms.renderers import InlineFormLabelRenderer, InlineFormRenderer
@@ -85,7 +90,7 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         if not self.instance.pk or self.instance.state in SubmissionStates.accepted_states:
             self.fields['room'] = forms.ModelChoiceField(
                 required=False,
-                queryset=event.rooms.filter(deleted=False),
+                queryset=rooms_for_talk_assignment(event, has_submission=True),
                 label=TalkSlot._meta.get_field('room').verbose_name,
                 initial=initial_slot.get('room'),
                 widget=EnhancedSelect,
@@ -116,10 +121,16 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         elif 'track' in self.fields:
             self.fields['track'].queryset = event.tracks.all()
         if 'content_locale' in self.fields:
-            if len(event.content_locales) == 1:
+            saved_visibility = self.event.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
+            if len(self.event.content_locales) <= 1 or saved_visibility == 'do_not_ask':
                 self.fields.pop('content_locale')
             else:
-                self.fields['content_locale'].choices = self.event.named_content_locales
+                choices = list(self.event.named_content_locales)
+                if self.instance and self.instance.pk and self.instance.content_locale:
+                    choice_codes = {c[0] for c in choices}
+                    if self.instance.content_locale not in choice_codes:
+                        choices.append((self.instance.content_locale, self.instance.get_content_locale_display()))
+                self.fields['content_locale'].choices = choices
         # If duration is not required, point out that the default is the session type's duration,
         # but only if there is more than one session type, because otherwise users will be
         # confused what that is.
@@ -132,6 +143,20 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             self.fields['duration'].help_text += ' ' + str(
                 _('Leave empty to use the default duration for the session type.')
             )
+        # Show the field only when both the platform and the event enable Etherpad.
+        gs = GlobalSettingsObject().settings
+        platform_ready = bool(gs.etherpad_enabled and gs.etherpad_base_url)
+        if not (platform_ready and event.get_feature_flag('etherpad_enabled')):
+            self.fields.pop('etherpad_url', None)
+
+    def clean_etherpad_url(self):
+        url = self.cleaned_data.get('etherpad_url')
+        if url:
+            try:
+                validate_etherpad_url(url)
+            except DjangoValidationError as exc:
+                raise forms.ValidationError(_('Please enter a valid Etherpad URL.')) from exc
+        return url
 
     def clean(self):
         data = super().clean()
@@ -148,7 +173,7 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
 
     def save(self, *args, **kwargs):
         if 'content_locale' not in self.fields:
-            self.instance.content_locale = self.event.locale
+            self.instance.content_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
         instance = super().save(*args, **kwargs)
         if self.is_creating:
             instance._set_state(self.cleaned_data['state'], force=True)
@@ -192,6 +217,7 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             'image',
             'slides',
             'is_featured',
+            'etherpad_url',
         ]
         widgets = {
             'tags': EnhancedSelectMultiple(color_field='color'),

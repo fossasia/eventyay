@@ -44,9 +44,16 @@
 }
 
 .logentry {
+    word-break: break-word;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
     .meta {
         font-size: 12px;
         margin: 0 0 5px;
+    }
+    p {
+        word-break: break-word;
     }
     p:last-child {
         margin-bottom: 0;
@@ -103,6 +110,11 @@
             background: transparent;
             color: $text-muted;
             cursor: not-allowed;
+
+            &:hover,
+            &:focus {
+                background: transparent;
+            }
         }
 
         .fa {
@@ -110,5 +122,9 @@
             text-align: center;
             flex-shrink: 0;
         }
+    }
+
+    .order-bulk-action-hint {
+        margin: 8px 0 0;
     }
 }

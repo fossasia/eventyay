@@ -77,38 +77,39 @@
                 </form>
                 {% endif %}
             </div>
-            {% if vouchers|length == 0 %}
-                <div class="empty-collection">
-                    <p>
-                        {% if request.GET.search or request.GET.tag or request.GET.status or request.GET.subevent %}
-                            {% trans "Your search did not match any vouchers." %}
-                        {% else %}
-                            {% blocktrans trimmed %}
-                                You haven't created any vouchers yet.
-                            {% endblocktrans %}
-                        {% endif %}
-                    </p>
+            <div data-ajax-results-region>
+                {% if vouchers|length == 0 %}
+                    <div class="empty-collection">
+                        <p>
+                            {% if request.GET.search or request.GET.tag or request.GET.status or request.GET.subevent %}
+                                {% trans "Your search did not match any vouchers." %}
+                            {% else %}
+                                {% blocktrans trimmed %}
+                                    You haven't created any vouchers yet.
+                                {% endblocktrans %}
+                            {% endif %}
+                        </p>
 
-                    <a href="{% url "control:event.vouchers.add" organizer=request.event.organizer.slug event=request.event.slug %}"
-                            class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Create a new voucher" %}</a>
-                    <a href="{% url "control:event.vouchers.bulk" organizer=request.event.organizer.slug event=request.event.slug %}"
-                            class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Create multiple new vouchers" %}</a>
-                </div>
-            {% else %}
-                <p>
-                    <a href="{% url "control:event.vouchers.add" organizer=request.event.organizer.slug event=request.event.slug %}"
-                            class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Create a new voucher" %}</a>
-                    <a href="{% url "control:event.vouchers.bulk" organizer=request.event.organizer.slug event=request.event.slug %}"
-                            class="btn btn-default"><i class="fa fa-plus"></i>
-                        {% trans "Create multiple new vouchers" %}</a>
-                    <a href="?{% url_replace request "download" "yes" "tab" tab %}"
-                            class="btn btn-default"><i class="fa fa-download"></i>
-                        {% trans "Download list" %}</a>
-                </p>
-                <form action="{% url "control:event.vouchers.bulkaction"  organizer=request.event.organizer.slug event=request.event.slug %}" method="post">
-                    {% csrf_token %}
-                    <div class="table-responsive">
-                        <table class="table table-hover table-quotas">
+                        <a href="{% url "control:event.vouchers.add" organizer=request.event.organizer.slug event=request.event.slug %}"
+                                class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Create a new voucher" %}</a>
+                        <a href="{% url "control:event.vouchers.bulk" organizer=request.event.organizer.slug event=request.event.slug %}"
+                                class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Create multiple new vouchers" %}</a>
+                    </div>
+                {% else %}
+                    <p>
+                        <a href="{% url "control:event.vouchers.add" organizer=request.event.organizer.slug event=request.event.slug %}"
+                                class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Create a new voucher" %}</a>
+                        <a href="{% url "control:event.vouchers.bulk" organizer=request.event.organizer.slug event=request.event.slug %}"
+                                class="btn btn-default"><i class="fa fa-plus"></i>
+                            {% trans "Create multiple new vouchers" %}</a>
+                        <a href="?{% url_replace request "download" "yes" "tab" tab %}"
+                                class="btn btn-default"><i class="fa fa-download"></i>
+                            {% trans "Download list" %}</a>
+                    </p>
+                    <form action="{% url "control:event.vouchers.bulkaction"  organizer=request.event.organizer.slug event=request.event.slug %}" method="post">
+                        {% csrf_token %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-quotas">
                             <thead>
                             <tr>
                                 <th>
@@ -208,16 +209,17 @@
                                 </tr>
                             {% endfor %}
                             </tbody>
-                        </table>
-                    </div>
-                    {% if "can_change_vouchers" in request.eventpermset %}
-                        <button type="submit" class="btn btn-default btn-save" name="action" value="delete">
-                            {% trans "Delete selected" %}
-                        </button>
-                    {% endif %}
-                </form>
-                {% include "pretixcontrol/pagination.html" %}
-            {% endif %}
+                            </table>
+                        </div>
+                        {% if "can_change_vouchers" in request.eventpermset %}
+                            <button type="submit" class="btn btn-default btn-save hidden" name="action" value="delete">
+                                {% trans "Delete selected" %}
+                            </button>
+                        {% endif %}
+                    </form>
+                    {% include "pretixcontrol/pagination.html" %}
+                {% endif %}
+            </div>
         </div>
         <div id="tags" class="tab-pane {% if tab == "tags" %}active{% endif %}">
             <p>
@@ -238,17 +240,18 @@
                     </form>
                 </div>
             {% endif %}
-            {% if tags|length == 0 %}
-                <div class="empty-collection">
-                    <p>
-                        {% blocktrans trimmed %}
-                            You haven't added any tags to vouchers yet.
-                        {% endblocktrans %}
-                    </p>
-                </div>
-            {% else %}
-                <div class="table-responsive">
-                    <table class="table table-hover table-condensed">
+            <div data-ajax-results-region>
+                {% if tags|length == 0 %}
+                    <div class="empty-collection">
+                        <p>
+                            {% blocktrans trimmed %}
+                                You haven't added any tags to vouchers yet.
+                            {% endblocktrans %}
+                        </p>
+                    </div>
+                {% else %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-condensed">
                         <thead>
                         <tr>
                             <th>{% trans "Tag" %}</th>
@@ -280,9 +283,10 @@
                             </tr>
                         {% endfor %}
                         </tbody>
-                    </table>
-                </div>
-            {% endif %}
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 {% endblock %}

@@ -2,8 +2,8 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Device, Event, Organizer, Team, User
-from pretix.base.models.devices import generate_api_token
+from eventyay.base.models import Device, Event, Organizer, Team, User
+from eventyay.base.models.devices import generate_api_token
 
 
 @pytest.fixture

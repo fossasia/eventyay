@@ -1,26 +1,367 @@
-import datetime as dt
-import json
 import operator
 from collections import namedtuple
 from datetime import timedelta
 from functools import reduce
 
-import jwt
-import requests
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
+from django.core.cache import cache
 from django.core.paginator import InvalidPage, Paginator
 from django.db.models import Q
 from django.db.transaction import atomic
-from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
+from django_scopes import scopes_disabled
 
+from eventyay.eventyay_common.utils import encode_email
 from eventyay.features.live.channels import GROUP_USER
 from eventyay.base.models import AuditLog
 from eventyay.base.models.auth import User
 from eventyay.base.models.room import AnonymousInvite
-from eventyay.base.models.event import Event, EventView
+from eventyay.base.models.event import EventView
+from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.core.permissions import Permission
+
+_WIKI_PROFILE_FIELD_KEYS = (
+    "wikimedia_username",
+    "wikimania_username",
+    "wiki_username",
+)
+
+# Non-empty sentinel: Redis cache may not round-trip empty strings reliably.
+_EMAIL_HASH_CACHE_MISS = "-"
+
+
+def display_wikimedia_username_from_profile(profile, stored_username):
+    if stored_username:
+        return stored_username
+    fields = (profile or {}).get("fields") or {}
+    for key in _WIKI_PROFILE_FIELD_KEYS:
+        val = fields.get(key)
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    return ""
+
+
+def _is_email_hash_uid_token(token_id):
+    if not token_id or len(token_id) != 7:
+        return False
+    return all(c in "0123456789ABCDEFabcdef" for c in token_id)
+
+
+def _ticket_lookup(mapping, token_id):
+    """Return a ticket/account row dict keyed by token_id (case-insensitive)."""
+    if not token_id or not mapping:
+        return {}
+    if token_id in mapping:
+        return mapping[token_id]
+    token_upper = token_id.upper()
+    for key, value in mapping.items():
+        if key.upper() == token_upper:
+            return value
+    return {}
+
+
+def _order_email_hash_keys(email):
+    """Return upper-case hash keys for an order email (raw and lowercased)."""
+    normalized = (email or "").strip()
+    if not normalized:
+        return ()
+    keys = {encode_email(normalized).upper()}
+    lowered = normalized.lower()
+    if lowered != normalized:
+        keys.add(encode_email(lowered).upper())
+    return tuple(keys)
+
+
+def _make_ticket_row(order_code, ticket_code, contact_email):
+    return {
+        "order_code": order_code,
+        "ticket_code": ticket_code,
+        "contact_email": (contact_email or "").strip(),
+    }
+
+
+def _cache_email_hash_hits(event_id, email):
+    for h in _order_email_hash_keys(email):
+        cache.set(f'video:email_hash:{event_id}:{h}', email, 1800)
+
+
+def _unresolved_hash_tokens(token_ids, ticket_by_token):
+    return [
+        t
+        for t in token_ids
+        if t and _is_email_hash_uid_token(t) and not _ticket_lookup(ticket_by_token, t)
+    ]
+
+
+def admin_public_fields_from_user_row(user_row, ticket_by_token, account_by_token=None):
+    """Admin-only list fields derived from a User values() row and ticket lookup."""
+    tid = user_row["token_id"]
+    ticket = _ticket_lookup(ticket_by_token, tid)
+    account = _ticket_lookup(account_by_token, tid)
+    return {
+        "moderation_state": user_row["moderation_state"],
+        "token_id": tid,
+        "email": (user_row.get("email") or "").strip()
+        or ticket.get("contact_email", "")
+        or account.get("email", ""),
+        "wikimedia_username": display_wikimedia_username_from_profile(
+            user_row["profile"],
+            user_row.get("wikimedia_username") or account.get("wikimedia_username"),
+        ),
+        "order_code": ticket.get("order_code"),
+        "ticket_code": ticket.get("ticket_code"),
+    }
+
+
+def resolve_wikimedia_usernames_by_email(emails):
+    """Return a lowercase email -> Wikimedia username map from account users."""
+    uniq = list(dict.fromkeys((e or "").strip().lower() for e in emails if e))
+    if not uniq:
+        return {}
+    email_conditions = reduce(
+        operator.or_, (Q(email__iexact=e) for e in uniq), Q()
+    )
+    with scopes_disabled():
+        rows = list(
+            User.objects.filter(event__isnull=True)
+            .filter(email_conditions)
+            .exclude(wikimedia_username__isnull=True)
+            .exclude(wikimedia_username__exact="")
+            .values("email", "wikimedia_username")
+        )
+    result = {}
+    for row in rows:
+        email = (row.get("email") or "").strip().lower()
+        if email and email not in result:
+            result[email] = (row.get("wikimedia_username") or "").strip()
+    return result
+
+
+def resolve_account_fields_by_token_ids(token_ids):
+    """Map video JWT uid (email hash) to account email and Wikimedia username."""
+    hash_tokens = [t for t in token_ids if t and _is_email_hash_uid_token(t)]
+    if not hash_tokens:
+        return {}
+    wanted = {t.upper() for t in hash_tokens}
+    result = {}
+    with scopes_disabled():
+        for row in (
+            User.objects.filter(event__isnull=True)
+            .exclude(email__isnull=True)
+            .exclude(email__exact="")
+            .values("email", "wikimedia_username")
+            .iterator(chunk_size=2000)
+        ):
+            email = (row.get("email") or "").strip()
+            if not email:
+                continue
+            for h in _order_email_hash_keys(email):
+                if h in wanted and h not in result:
+                    result[h] = {
+                        "email": email,
+                        "wikimedia_username": (
+                            row.get("wikimedia_username") or ""
+                        ).strip(),
+                    }
+            if len(result) >= len(wanted):
+                break
+    keyed = {
+        token: result[token.upper()]
+        for token in hash_tokens
+        if token.upper() in result
+    }
+    return keyed
+
+
+def _latest_paid_ticket_row_for_email(event_id, email):
+    """Return the latest paid ticket row for an order email on this event."""
+    normalized = (email or "").strip()
+    if not normalized:
+        return None
+    with scopes_disabled():
+        pos = (
+            OrderPosition.objects.filter(
+                order__event_id=event_id,
+                order__email__iexact=normalized,
+                order__status=Order.STATUS_PAID,
+                addon_to__isnull=True,
+                canceled=False,
+            )
+            .select_related("order")
+            .order_by("-order__datetime", "positionid")
+            .first()
+        )
+    if not pos:
+        return None
+    return _make_ticket_row(pos.order.code, pos.secret, pos.order.email)
+
+
+def build_admin_ticket_rows_by_token(event_id, token_ids):
+    """
+    Map a video user's JWT ``uid`` (stored as ``User.token_id``) to Pretix order data.
+
+    Tokens are either ``OrderPosition.pseudonymization_id`` or ``encode_email(order.email)``
+    (seven hex characters) as used by presale video join links.
+    """
+    uniq = list(dict.fromkeys(t for t in token_ids if t))
+    if not uniq:
+        return {}
+    result = {}
+    pseudonym_q = reduce(
+        operator.or_, (Q(pseudonymization_id__iexact=t) for t in uniq), Q()
+    )
+    with scopes_disabled():
+        for row in OrderPosition.objects.filter(
+            pseudonym_q,
+            order__event_id=event_id,
+            addon_to__isnull=True,
+            canceled=False,
+            order__status=Order.STATUS_PAID,
+        ).values(
+            "pseudonymization_id",
+            "secret",
+            "order__code",
+            "order__email",
+        ):
+            pid = row["pseudonymization_id"]
+            for t in uniq:
+                if pid and t and pid.upper() == t.upper() and not _ticket_lookup(result, t):
+                    result[t] = _make_ticket_row(
+                        row["order__code"], row["secret"], row["order__email"]
+                    )
+                    break
+    need_hash = [
+        t
+        for t in uniq
+        if not _ticket_lookup(result, t) and _is_email_hash_uid_token(t)
+    ]
+    if need_hash:
+        need_hash_upper = {t.upper() for t in need_hash}
+        hash_to_email = {}
+
+        # Satisfy as many tokens as possible from the per-token cache.
+        # Each entry is small (one email string) and stable — a token_id derived
+        # from encode_email(email) never changes for a given address.
+        uncached = set()
+        for h in need_hash_upper:
+            val = cache.get(f'video:email_hash:{event_id}:{h}')
+            if val is not None:
+                if val and val != _EMAIL_HASH_CACHE_MISS:
+                    hash_to_email[h] = val
+                # Sentinel marks a cached negative lookup (no matching email).
+            else:
+                uncached.add(h)
+
+        # Stream DB only for tokens that were not in cache.
+        if uncached:
+            with scopes_disabled():
+                for email in (
+                    Order.objects.filter(event_id=event_id)
+                    .filter(status=Order.STATUS_PAID)
+                    .exclude(email__isnull=True)
+                    .exclude(email__exact="")
+                    .values_list('email', flat=True)
+                    .iterator(chunk_size=2000)
+                ):
+                    matched_hash = None
+                    for h in _order_email_hash_keys(email):
+                        if h in uncached and h not in hash_to_email:
+                            matched_hash = h
+                            break
+                    if matched_hash:
+                        hash_to_email[matched_hash] = email
+                        _cache_email_hash_hits(event_id, email)
+                        uncached.discard(matched_hash)
+                        if not uncached:
+                            break
+        for h in need_hash_upper:
+            if h not in hash_to_email:
+                cache.set(
+                    f'video:email_hash:{event_id}:{h}', _EMAIL_HASH_CACHE_MISS, 1800
+                )
+
+        resolved = [
+            hash_to_email[t.upper()]
+            for t in need_hash
+            if t.upper() in hash_to_email
+        ]
+        emails = list(dict.fromkeys(resolved))
+        positions_by_email = {}
+        if emails:
+            email_conditions = reduce(
+                operator.or_, (Q(order__email__iexact=e) for e in emails), Q()
+            )
+            with scopes_disabled():
+                rows = (
+                    OrderPosition.objects.filter(
+                        email_conditions,
+                        order__event_id=event_id,
+                        order__status=Order.STATUS_PAID,
+                        addon_to__isnull=True,
+                        canceled=False,
+                    )
+                    .select_related("order")
+                    .order_by("order__email", "-order__datetime", "positionid")
+                )
+                for pos in rows:
+                    key = (pos.order.email or "").strip().lower()
+                    if key and key not in positions_by_email:
+                        positions_by_email[key] = _make_ticket_row(
+                            pos.order.code, pos.secret, pos.order.email
+                        )
+        for t in need_hash:
+            email = hash_to_email.get(t.upper())
+            if not email:
+                continue
+            row = positions_by_email.get(email.strip().lower())
+            if row:
+                result[t] = dict(row)
+    return result
+
+
+def build_admin_ticket_lookups(event_id, token_ids):
+    """Return ticket and account lookup maps for admin user list fields."""
+    uniq = list(dict.fromkeys(t for t in token_ids if t))
+    ticket_by_token = build_admin_ticket_rows_by_token(event_id, uniq)
+    unresolved = _unresolved_hash_tokens(uniq, ticket_by_token)
+    account_by_token = (
+        resolve_account_fields_by_token_ids(unresolved) if unresolved else {}
+    )
+    for token in unresolved:
+        email = (_ticket_lookup(account_by_token, token).get("email") or "").strip()
+        if not email:
+            continue
+        row = _latest_paid_ticket_row_for_email(event_id, email)
+        if row:
+            ticket_by_token[token] = row
+            _cache_email_hash_hits(event_id, email)
+    return ticket_by_token, account_by_token
+
+
+def _resolve_admin_fields_for_users(event_id, users_data):
+    """Build admin-only list fields for event-scoped user rows."""
+    if not users_data:
+        return {}
+    token_ids = [u["token_id"] for u in users_data if u.get("token_id")]
+    ticket_by_token, account_by_token = build_admin_ticket_lookups(event_id, token_ids)
+    admin_fields_by_id = {}
+    emails_to_resolve = []
+    for u in users_data:
+        fields = admin_public_fields_from_user_row(
+            u, ticket_by_token, account_by_token
+        )
+        admin_fields_by_id[u["id"]] = fields
+        if fields.get("email") and not fields.get("wikimedia_username"):
+            emails_to_resolve.append(fields["email"])
+    if emails_to_resolve:
+        email_to_wikimedia = resolve_wikimedia_usernames_by_email(emails_to_resolve)
+        for fields in admin_fields_by_id.values():
+            if not fields.get("wikimedia_username"):
+                email = (fields.get("email") or "").strip().lower()
+                if email and email in email_to_wikimedia:
+                    fields["wikimedia_username"] = email_to_wikimedia[email]
+    return admin_fields_by_id
 
 
 def get_user_by_id(event_id, user_id):
@@ -49,11 +390,27 @@ def get_public_user(event_id, id, include_admin_info=False, trait_badges_map=Non
     user = get_user_by_id(event_id, id)
     if not user:
         return None
-    return user.serialize_public(
+    data = user.serialize_public(
         include_admin_info=include_admin_info,
         trait_badges_map=trait_badges_map,
         include_client_state=include_admin_info and user.type == User.UserType.KIOSK,
     )
+    if include_admin_info:
+        admin_fields = _resolve_admin_fields_for_users(
+            event_id,
+            [
+                {
+                    "id": user.id,
+                    "token_id": user.token_id,
+                    "moderation_state": user.moderation_state,
+                    "email": user.email or "",
+                    "wikimedia_username": user.wikimedia_username or "",
+                    "profile": user.profile,
+                }
+            ],
+        ).get(user.id, {})
+        data.update(admin_fields)
+    return data
 
 
 @database_sync_to_async
@@ -84,6 +441,31 @@ def get_public_users(
         qs = qs.filter(type=type)
     if not include_banned:
         qs = qs.exclude(moderation_state=User.ModerationState.BANNED)
+
+    value_fields = (
+        "id",
+        "type",
+        "profile",
+        "deleted",
+        "moderation_state",
+        "token_id",
+        "traits",
+        "last_login",
+        "pretalx_id",
+        "client_state",
+    )
+
+    if include_admin_info:
+        users_data = list(qs.values(*value_fields, "email", "wikimedia_username"))
+    else:
+        users_data = qs.values(*value_fields).iterator()
+
+    admin_fields_by_id = (
+        _resolve_admin_fields_for_users(event_id, users_data)
+        if include_admin_info and users_data
+        else {}
+    )
+
     return [
         dict(
             id=str(u["id"]),
@@ -112,26 +494,12 @@ def get_public_users(
                 else {}
             ),
             **(
-                {
-                    "moderation_state": u["moderation_state"],
-                    "token_id": u["token_id"],
-                }
+                admin_fields_by_id.get(u["id"], {})
                 if include_admin_info
                 else {}
             ),
         )
-        for u in qs.values(
-            "id",
-            "type",
-            "profile",
-            "deleted",
-            "moderation_state",
-            "token_id",
-            "traits",
-            "last_login",
-            "pretalx_id",
-            "client_state",
-        )
+        for u in users_data
     ]
 
 
@@ -594,18 +962,32 @@ def list_users(
         qs = qs.filter(reduce(operator.or_, conditions))
 
     try:
+        value_fields = (
+            "id",
+            "profile",
+            "traits",
+            "last_login",
+            "moderation_state",
+            "token_id",
+            "pretalx_id",
+        )
+        if include_admin_info:
+            qs_values = qs.order_by("profile__display_name").values(
+                *value_fields,
+                "email",
+                "wikimedia_username",
+            )
+        else:
+            qs_values = qs.order_by("profile__display_name").values(*value_fields)
         p = Paginator(
-            qs.order_by("profile__display_name").values(
-                "id",
-                "profile",
-                "traits",
-                "last_login",
-                "moderation_state",
-                "token_id",
-                "pretalx_id",
-            ),
+            qs_values,
             page_size,
         ).page(page)
+        admin_fields_by_id = (
+            _resolve_admin_fields_for_users(event_id, p.object_list)
+            if include_admin_info and p.object_list
+            else {}
+        )
         return {
             "results": sorted(
                 (
@@ -629,10 +1011,7 @@ def list_users(
                             else []
                         ),
                         **(
-                            dict(
-                                moderation_state=u["moderation_state"],
-                                token_id=u["token_id"],
-                            )
+                            admin_fields_by_id.get(u["id"], {})
                             if include_admin_info
                             else {}
                         ),

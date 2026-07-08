@@ -23,24 +23,28 @@
 						hr.featured-speaker-divider
 						.featured-speaker-sessions
 							h4 {{ t.sessions }}
-							.featured-speaker-session(v-for="session in speaker.sessions", :key="session.id")
-								small.featured-speaker-session-time {{ formatSessionDateTime(session) }}
+							.featured-speaker-session(
+								v-for="session in speaker.sessions",
+								:key="session.id",
+								:class="{'featured-speaker-session-pending': isTalkSchedulePending(session)}"
+							)
+								small.featured-speaker-session-time {{ isTalkSchedulePending(session) ? t.schedule_pending : formatSessionDateTime(session) }}
 								a.featured-speaker-session-link(
 									:href="getSessionLink(session)",
 									:style="getSessionStyle(session)",
 									@click="onSessionClick($event, session)"
 								)
-									span.featured-speaker-session-slot {{ formatSessionSlot(session) }}
+									span.featured-speaker-session-slot(v-if="!isTalkSchedulePending(session)") {{ formatSessionSlot(session) }}
 									span.featured-speaker-session-title {{ getLocalizedString(session.title) }}
 					.featured-speaker-profile-link
 						a(:href="getSpeakerLink(speaker)", @click="onSpeakerClick($event, speaker)") {{ t.view_profile }}
-	p.featured-speakers-more
+	p.featured-speakers-more(v-if="showMoreSpeakersLink")
 		a.more-link(:href="moreSpeakersUrl") {{ t.more_speakers }}
 </template>
 
 <script>
+import { getLocalizedString, compareFeaturedSpeakers, talksToScheduleSessions, buildSessionsBySpeaker, sessionsForSpeaker, sortSessionsByStart, isTalkSchedulePending } from '../utils'
 import moment from 'moment-timezone'
-import { getLocalizedString } from '../utils'
 import MarkdownContent from './MarkdownContent'
 
 export default {
@@ -64,7 +68,8 @@ export default {
 				return () => {}
 			}
 		},
-		translationMessages: { default: () => ({}) }
+		translationMessages: { default: () => ({}) },
+		speakersListPublic: { default: null },
 	},
 	props: {
 		showAll: {
@@ -75,6 +80,7 @@ export default {
 	data() {
 		return {
 			getLocalizedString,
+			isTalkSchedulePending,
 		}
 	},
 	computed: {
@@ -86,11 +92,19 @@ export default {
 				sessions: m.sessions || 'Sessions',
 				view_profile: m.view_profile || 'View speaker profile',
 				more_speakers: m.more_speakers || 'More speakers',
+				schedule_pending: m.schedule_pending_secondary || 'Coming soon',
 			}
 		},
 		moreSpeakersUrl() {
 			const base = (this.eventUrl || '').replace(/\/?$/, '/')
 			return `${base}speakers/`
+		},
+		showMoreSpeakersLink() {
+			if (this.speakersListPublic === false) return false
+			const schedule = this.scheduleData?.schedule
+			if (!schedule?.speakers_list_public) return false
+			if (schedule.exports_disabled) return false
+			return true
 		},
 		trackById() {
 			const schedule = this.scheduleData?.schedule
@@ -105,73 +119,34 @@ export default {
 			const rawTalks = schedule?.talks || []
 			const timezone = this.scheduleData?.timezone || schedule?.timezone
 			if (!schedule?.speakers?.length) return []
-			const speakerCodeFromAny = (sp) => {
-				if (!sp) return null
-				if (typeof sp === 'string') return sp
-				return sp.code || null
-			}
 			const featured = schedule.speakers
 				.filter(s => this.showAll || s?.is_featured)
 				.slice()
-				.sort((a, b) => {
-					// If showing all, strictly put featured first
-					if (this.showAll) {
-						if (a.is_featured && !b.is_featured) return -1
-						if (!a.is_featured && b.is_featured) return 1
-					}
-					const ap = Number.isFinite(a.featured_position) ? a.featured_position : 1e9
-					const bp = Number.isFinite(b.featured_position) ? b.featured_position : 1e9
-					if (ap !== bp) return ap - bp
-					return (a.name || '').localeCompare(b.name || '')
-				})
+				.sort((a, b) => compareFeaturedSpeakers(a, b, { featuredFirst: this.showAll }))
 
 			const speakerByCode = (schedule.speakers || []).reduce((acc, s) => {
 				if (s?.code) acc[s.code] = s
 				return acc
 			}, {})
-			const trackById = this.trackById
-			const roomById = (schedule.rooms || []).reduce((acc, r) => {
+			const tracksLookup = this.trackById
+			const roomsLookup = (schedule.rooms || []).reduce((acc, r) => {
 				if (r?.id != null) acc[r.id] = r
 				return acc
 			}, {})
 
-			const normalizeRawTalk = (talk) => {
-				const start = talk?.start && timezone ? moment.tz(talk.start, timezone) : null
-				const end = talk?.end && timezone ? moment.tz(talk.end, timezone) : null
-				const speakerCodes = (talk?.speakers || []).map(speakerCodeFromAny).filter(Boolean)
-				return {
-					id: talk?.code,
-					title: talk?.title,
-					start,
-					end,
-					speakers: speakerCodes
-						.map(code => speakerByCode[code] || { code })
-						.filter(Boolean),
-					track: trackById[talk?.track],
-					room: roomById[talk?.room],
-					content_locale: talk?.content_locale,
-				}
-			}
-
-			const normalizedRawSessions = rawTalks
-				.map(normalizeRawTalk)
-				.filter(session => session?.start && session?.end)
+			const normalizedRawSessions = talksToScheduleSessions(rawTalks, {
+				timezone,
+				speakersLookup: speakerByCode,
+				tracksLookup,
+				roomsLookup,
+			}).filter(session => session.schedule_pending || (session.start && session.end))
 			const sessionsPool = resolvedSessions.length ? resolvedSessions : normalizedRawSessions
 			const sessionsBySpeaker = resolvedSessions.length && this.scheduleData?.sessionsBySpeaker
 				? this.scheduleData.sessionsBySpeaker
-				: sessionsPool
-					.flatMap((session) => (session.speakers || []).map((sp) => [speakerCodeFromAny(sp), session]))
-					.reduce((acc, [code, session]) => {
-						if (!code) return acc
-						if (!acc[code]) acc[code] = []
-						acc[code].push(session)
-						return acc
-					}, {})
+				: buildSessionsBySpeaker(sessionsPool, { lowercaseKeys: false })
 
 			return featured.map(speaker => {
-				const speakerSessions = (sessionsBySpeaker[speaker.code] || [])
-					.slice()
-					.sort((a, b) => (a.start && b.start ? a.start.diff(b.start) : 0))
+				const speakerSessions = sortSessionsByStart(sessionsForSpeaker(sessionsBySpeaker, speaker.code))
 				return {
 					...speaker,
 					sessions: speakerSessions,
@@ -355,6 +330,10 @@ export default {
 		margin-bottom: 12px
 		&:last-child
 			margin-bottom: 0
+
+	.featured-speaker-session-pending
+		.featured-speaker-session-time
+			color: var(--pretalx-clr-primary, var(--clr-primary))
 
 	.featured-speaker-session-time
 		display: block

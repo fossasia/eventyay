@@ -1,4 +1,5 @@
 import datetime
+import json
 import time
 from decimal import Decimal
 
@@ -8,10 +9,10 @@ from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 from pytz import timezone
 
-from pretix.base.models import Event, Order, Organizer, Team, User
-from pretix.base.models.organizer import OrganizerBillingModel
-from pretix.testutils.mock import mocker_context
-from tests.base import SoupTest, extract_form_fields
+from eventyay.base.models import Event, Order, Organizer, Team, User
+from eventyay.base.models.organizer import OrganizerBillingModel
+from tests.testutils.mock import mocker_context
+from tests.tickets.base import SoupTest, extract_form_fields
 
 
 class EventsTest(SoupTest):
@@ -41,7 +42,7 @@ class EventsTest(SoupTest):
             name='30C3',
             slug='30c3',
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
-            plugins='pretix.plugins.banktransfer,tests.testdummy',
+            plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
         )
         self.event2 = Event.objects.create(
             organizer=self.orga1,
@@ -130,7 +131,7 @@ class EventsTest(SoupTest):
             self.event1.settings.get('payment_banktransfer_bank_details', as_type=LazyI18nString).localize('en')
             == 'Foo'
         )
-        assert 'pretix.plugins.banktransfer' in self.event1.plugins
+        assert 'eventyay.plugins.banktransfer' in self.event1.plugins
         with scopes_disabled():
             assert self.event1.items.count() == 2
             i = self.event1.items.first()
@@ -182,7 +183,7 @@ class EventsTest(SoupTest):
             self.event1.settings.get('payment_banktransfer_bank_details', as_type=LazyI18nString).localize('en')
             == 'Foo'
         )
-        assert 'pretix.plugins.banktransfer' in self.event1.plugins
+        assert 'eventyay.plugins.banktransfer' in self.event1.plugins
         with scopes_disabled():
             assert self.event1.items.count() == 2
             i = self.event1.items.first()
@@ -238,7 +239,7 @@ class EventsTest(SoupTest):
             self.event1.settings.get('payment_banktransfer_bank_details', as_type=LazyI18nString).localize('en')
             == 'Foo'
         )
-        assert 'pretix.plugins.banktransfer' in self.event1.plugins
+        assert 'eventyay.plugins.banktransfer' in self.event1.plugins
         with scopes_disabled():
             assert self.event1.items.count() == 2
             i = self.event1.items.first()
@@ -508,7 +509,7 @@ class EventsTest(SoupTest):
 
     def test_display_settings(self):
         with mocker_context() as mocker:
-            mocked = mocker.patch('pretix.presale.style.regenerate_css.apply_async')
+            mocked = mocker.patch('eventyay.presale.style.regenerate_css.apply_async')
 
             doc = self.get_doc('/control/event/%s/%s/settings/' % (self.orga1.slug, self.event1.slug))
             data = extract_form_fields(doc.select('form')[0])
@@ -555,7 +556,7 @@ class EventsTest(SoupTest):
 
     def test_email_settings(self):
         with mocker_context() as mocker:
-            mocked = mocker.patch('pretix.base.email.CustomSMTPBackend.test')
+            mocked = mocker.patch('eventyay.base.email.CustomSMTPBackend.test')
 
             doc = self.get_doc('/control/event/%s/%s/settings/email' % (self.orga1.slug, self.event1.slug))
             data = extract_form_fields(doc.select('form')[0])
@@ -595,6 +596,29 @@ class EventsTest(SoupTest):
             },
         )
         assert doc.select('.has-error')
+
+    def test_create_event_slug_url_options_for_multiple_organizers(self):
+        team = Team.objects.create(organizer=self.orga2, can_create_events=True)
+        team.members.add(self.user)
+
+        doc = self.get_doc('/control/events/add')
+        slug_options = json.loads(doc.select('#event-create-organizers')[0].text)
+
+        assert slug_options[str(self.orga1.pk)]['prefix'].endswith('/ccc/')
+        assert slug_options[str(self.orga2.pk)]['prefix'].endswith('/mrm/')
+        assert slug_options[str(self.orga1.pk)]['rngUrl'].endswith('/organizer/ccc/slugrng')
+        assert slug_options[str(self.orga2.pk)]['rngUrl'].endswith('/organizer/mrm/slugrng')
+        assert doc.select('.slug-widget-prefix')[0].text == ''
+        assert 'disabled' in doc.select('#event-slug-random-generate')[0].attrs
+
+    def test_create_event_slug_url_uses_selected_organizer(self):
+        team = Team.objects.create(organizer=self.orga2, can_create_events=True)
+        team.members.add(self.user)
+
+        doc = self.get_doc('/control/events/add?organizer=mrm')
+
+        assert doc.select('.slug-widget-prefix')[0].text.endswith('/mrm/')
+        assert doc.select('#event-slug-random-generate')[0]['data-rng-url'].endswith('/organizer/mrm/slugrng')
 
     def test_create_invalid_default_language(self):
         doc = self.post_doc(
@@ -1185,7 +1209,7 @@ class EventDeletionTest(SoupTest):
             name='30C3',
             slug='30c3',
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
-            plugins='pretix.plugins.banktransfer,tests.testdummy',
+            plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
             has_subevents=False,
         )
 

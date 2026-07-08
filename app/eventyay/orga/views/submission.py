@@ -1,6 +1,5 @@
 import json
 from collections import Counter
-from datetime import timedelta
 from operator import itemgetter
 
 from dateutil import rrule
@@ -11,15 +10,15 @@ from django.contrib.syndication.views import Feed
 from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.forms.models import BaseModelFormSet, inlineformset_factory
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import feedgenerator
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
+from urllib.parse import urlencode
 
 from eventyay.base.models import (
     Answer,
@@ -36,6 +35,11 @@ from eventyay.base.models import (
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.services.etherpad import (
+    EtherpadConfigurationError,
+    EtherpadError,
+    generate_pad_for_submission,
+)
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.talkimport import import_submissions
 from eventyay.base.views.tasks import AsyncAction
@@ -53,7 +57,7 @@ from eventyay.common.views.mixins import (
     Sortable,
 )
 from eventyay.consts import SizeKey
-from eventyay.orga.forms.importers import CSVImportForm, SessionImportProcessForm
+from eventyay.orga.forms.importers import SessionImportProcessForm
 from eventyay.orga.forms.submission import (
     AddSpeakerForm,
     AddSpeakerInlineForm,
@@ -240,6 +244,41 @@ class SubmissionSpeakersDelete(SubmissionViewMixin, View):
         else:
             messages.warning(request, _('The speaker was not part of this proposal.'))
         return redirect(submission.orga_urls.speakers)
+
+
+class SubmissionEtherpadGenerate(SubmissionViewMixin, View):
+    permission_required = 'base.update_submission'
+
+    def post(self, request, *args, **kwargs):
+        submission = self.object
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+        def fail(message, status=400):
+            if is_ajax:
+                return JsonResponse({'error': str(message)}, status=status)
+            messages.error(request, message)
+            return redirect(submission.orga_urls.edit)
+
+        if not request.event.get_feature_flag('etherpad_enabled'):
+            return fail(_('Etherpad is not enabled for this event.'))
+
+        force = request.POST.get('force') == 'true'
+        try:
+            url = generate_pad_for_submission(request.event, submission, force=force)
+        except (EtherpadConfigurationError, EtherpadError) as exc:
+            return fail(exc)
+
+        submission.etherpad_url = url
+        submission.save(update_fields=['etherpad_url'])
+        submission.log_action(
+            'eventyay.submission.etherpad.generate',
+            person=request.user,
+            orga=True,
+        )
+        if is_ajax:
+            return JsonResponse({'url': url})
+        messages.success(request, _('An Etherpad link has been generated for this session.'))
+        return redirect(submission.orga_urls.edit)
 
 
 class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView):
@@ -507,6 +546,9 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
             action = 'eventyay.submission.' + ('create' if created else 'update')
             form.instance.log_action(action, person=self.request.user, orga=True)
             self.request.event.cache.set('rebuild_schedule_export', True, None)
+            if 'is_featured' in form.changed_data:
+                from eventyay.agenda.views.utils import clear_schedule_caches
+                clear_schedule_caches(self.request.event, submission=form.instance)
         return redirect(self.get_success_url())
 
     def get_form_kwargs(self):
@@ -637,6 +679,8 @@ class ToggleFeatured(SubmissionViewMixin, View):
     def post(self, *args, **kwargs):
         self.object.is_featured = not self.object.is_featured
         self.object.save(update_fields=['is_featured'])
+        from eventyay.agenda.views.utils import clear_schedule_caches
+        clear_schedule_caches(self.request.event, submission=self.object)
         return HttpResponse()
 
 
@@ -1055,31 +1099,6 @@ class ApplyPendingBulk(EventPermissionRequired, BaseSubmissionList):
         return self.request.GET.get('next')
 
 
-class SubmissionImportView(EventPermissionRequired, FormView):
-    permission_required = 'base.update_event'
-    template_name = 'orga/submission/import.html'
-    form_class = CSVImportForm
-    IMPORT_FILENAME = 'session_import.csv'
-
-    def form_valid(self, form):
-        session = self.request.session
-        if not session.session_key:
-            session.save()
-        if not session.session_key:
-            messages.error(self.request, _('Could not establish a session for file upload. Please try again.'))
-            return redirect(self.request.path)
-        cf = CachedFile.objects.create(
-            expires=now() + timedelta(days=1),
-            date=now(),
-            filename=self.IMPORT_FILENAME,
-            type='text/csv',
-            web_download=False,
-            session_key=session.session_key,
-        )
-        cf.file.save(self.IMPORT_FILENAME, form.cleaned_data['file'])
-        return redirect(self.request.event.orga_urls.submissions_import + str(cf.id) + '/')
-
-
 class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionRequired, AsyncAction, FormView):
     permission_required = 'base.update_event'
     template_name = 'orga/submission/import_process.html'
@@ -1089,7 +1108,14 @@ class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionReq
     IMPORT_FILENAME = 'session_import.csv'
 
     import_process_url_name = 'settings.import_export.submissions_import_process'
-    import_page_url_name = 'submissions_import'
+    import_page_url_name = 'import_export_settings'
+    import_target = 'session'
+
+    @cached_property
+    def import_settings_url(self):
+        base = self.request.event.orga_urls.import_export_settings
+        query = urlencode({'import_target': self.import_target})
+        return f'{base}?{query}#tab-import'
 
     def dispatch(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
@@ -1098,7 +1124,7 @@ class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionReq
             _ = self.file
         except Http404:
             messages.error(request, _('The uploaded CSV file is missing or expired. Please upload it again.'))
-            return redirect(self.import_redirect_url)
+            return redirect(self.import_settings_url)
         return super().dispatch(request, *args, **kwargs)
 
     @cached_property
@@ -1142,13 +1168,13 @@ class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionReq
             return self.get_result(request)
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.import_redirect_url)
+            return redirect(self.import_settings_url)
         return FormView.get(self, request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.import_redirect_url)
+            return redirect(self.import_settings_url)
         return FormView.post(self, request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -1162,12 +1188,10 @@ class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionReq
         )
 
     def get_success_url(self, value):
-        if self.import_redirect_url != self.request.event.orga_urls.submissions_import:
-            return self.import_redirect_url
-        return self.request.event.orga_urls.submissions
+        return self.import_settings_url
 
     def get_error_url(self):
-        return self.import_redirect_url
+        return self.import_settings_url
 
     def get_success_message(self, value):
         if isinstance(value, dict):

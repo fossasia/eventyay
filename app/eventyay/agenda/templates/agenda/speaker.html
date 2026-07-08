@@ -1,6 +1,7 @@
 {% extends "agenda/base.html" %}
 
 {% load compress %}
+{% load vite %}
 {% load html_signal %}
 {% load i18n %}
 {% load static %}
@@ -27,9 +28,10 @@
 {% block agenda_content %}
 {% html_signal "eventyay.agenda.signals.html_above_speaker_pages" sender=request.event request=request profile=profile %}
 <div>
-    <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
+    <script id="pretalx-schedule-data" type="application/json">{{ schedule_json|safe }}</script>
+    {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback='schedule/pretalx-schedule.js' %}
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
-    <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="speaker" speaker-code="{{ profile.user.code }}" enrich-data style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
+    <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="speaker" speaker-code="{{ profile.user.code }}" enrich-data {% if schedule_version %}version="{{ schedule_version }}"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
     {% endwith %}
     <noscript>
         <h1>{{ profile.user.get_display_name }}</h1>

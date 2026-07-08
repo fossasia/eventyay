@@ -6,15 +6,16 @@ import pytz
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import (
+from eventyay.base.models import (
+    Checkin,
     Event,
     InvoiceAddress,
-    Item,
+    Product as Item,
     Order,
     OrderPosition,
     Organizer,
 )
-from pretix.plugins.checkinlists.exporters import CSVCheckinList
+from eventyay.plugins.checkinlists.exporters import CSVCheckinList, CheckinLogList
 
 
 @pytest.fixture
@@ -27,7 +28,7 @@ def event():
             name='Dummy',
             slug='dummy',
             date_from=now(),
-            plugins='pretix.plugins.checkinlists,tests.testdummy',
+            plugins='eventyay.plugins.checkinlists,tests.tickets.testdummy',
         )
         event.settings.set('attendee_names_asked', True)
         event.settings.set('name_scheme', 'title_given_middle_family')
@@ -259,3 +260,68 @@ def test_csv_order_by_inherited_name_parts(event):  # noqa
 "BAR","Mr Albert J Zulu","Mr","Albert","J","Zulu","Ticket","23.00","","","No","hutjztuxhkbtwnesv2suqv26k6ttytyy",
 "dummy@dummy.test","'+498912345678","BARCORP","","2019-02-22","14:00:00","No","","","","","","","","","","",""
 """)
+
+
+@pytest.mark.django_db
+def test_csv_includes_all_checkins(event):
+    cl = event.checkin_lists.first()
+    with scope(organizer=event.organizer):
+        op = OrderPosition.objects.get(secret='hutjztuxhkbtwnesv2suqv26k6ttytxx')
+        Checkin.objects.create(
+            position=op,
+            list=cl,
+            type=Checkin.TYPE_ENTRY,
+            datetime=datetime.datetime(2019, 2, 22, 15, 0, 0, tzinfo=pytz.UTC),
+        )
+        Checkin.objects.create(
+            position=op,
+            list=cl,
+            type=Checkin.TYPE_ENTRY,
+            datetime=datetime.datetime(2019, 2, 22, 16, 0, 0, tzinfo=pytz.UTC),
+        )
+
+    c = CSVCheckinList(event)
+    _, _, content = c.render(
+        {
+            'list': cl.pk,
+            'secrets': False,
+            'sort': 'name',
+            '_format': 'default',
+            'questions': [],
+        }
+    )
+    rows = [line for line in clean(content.decode()).split('\n') if line.startswith('"FOO"')]
+    assert len(rows) == 2
+    assert '2019-02-22' in rows[0]
+    assert '2019-02-22' in rows[1]
+    assert rows[0] != rows[1]
+
+
+@pytest.mark.django_db
+def test_checkinlog_includes_all_checkins(event):
+    cl = event.checkin_lists.first()
+    with scope(organizer=event.organizer):
+        op = OrderPosition.objects.get(secret='hutjztuxhkbtwnesv2suqv26k6ttytxx')
+        Checkin.objects.create(
+            position=op,
+            list=cl,
+            type=Checkin.TYPE_ENTRY,
+            datetime=datetime.datetime(2019, 2, 22, 15, 0, 0, tzinfo=pytz.UTC),
+        )
+        Checkin.objects.create(
+            position=op,
+            list=cl,
+            type=Checkin.TYPE_ENTRY,
+            datetime=datetime.datetime(2019, 2, 22, 16, 0, 0, tzinfo=pytz.UTC),
+        )
+
+    exporter = CheckinLogList(event)
+    _, _, content = exporter.render(
+        {
+            'list': cl.pk,
+            'products': [event.items.first().pk],
+            '_format': 'default',
+        }
+    )
+    rows = [line for line in clean(content.decode()).split('\n') if 'hutjztuxhkbtwnesv2suqv26k6ttytxx' in line]
+    assert len(rows) == 2

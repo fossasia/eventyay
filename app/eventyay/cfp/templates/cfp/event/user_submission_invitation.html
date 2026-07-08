@@ -6,7 +6,7 @@
 {% load static %}
 
 {% load presale_locale %}
-{% block title %}{{ submission.title|event_localize }} :: {% endblock title %}
+{% block title %}{{ submission.display_title }} :: {% endblock title %}
 
 {% block cfp_header %}
     {% include "cfp/includes/forms_header.html" %}

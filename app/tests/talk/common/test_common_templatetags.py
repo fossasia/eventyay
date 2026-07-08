@@ -1,13 +1,13 @@
 import pytest
+from django.contrib.auth.models import AnonymousUser
 from django_scopes import scope
 
-from eventyay.common.templatetags.event_tags import can_view_featured_sessions_public
-from pretalx.common.templatetags.copyable import copyable
-from pretalx.common.templatetags.html_signal import html_signal
-from pretalx.common.templatetags.rich_text import rich_text
-from pretalx.common.templatetags.times import times
-from pretalx.common.templatetags.xmlescape import xmlescape
-
+from eventyay.common.templatetags.event_tags import can_list_schedule, can_view_featured_sessions_public
+from eventyay.common.templatetags.copyable import copyable
+from eventyay.common.templatetags.html_signal import html_signal
+from eventyay.base.templatetags.rich_text import rich_text
+from eventyay.common.templatetags.times import times
+from eventyay.common.templatetags.xmlescape import xmlescape
 
 @pytest.mark.parametrize(
     "number,output",
@@ -99,7 +99,7 @@ def test_html_signal(event, slug, signal):
         event.plugins = "tests"
         event.save()
         result = html_signal(
-            f"pretalx.cfp.signals.{signal}", sender=event, request=None
+            f"eventyay.cfp.signals.{signal}", sender=event, request=None
         )
         assert bool(result) is not slug
 
@@ -138,3 +138,25 @@ def test_can_view_featured_sessions_public_respects_never_with_staff_session(eve
     user.has_active_staff_session = always_active_staff_session
 
     assert can_view_featured_sessions_public({'request': request}, event=event) is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'show_schedule,expected',
+    (
+        (True, True),
+        (False, False),
+    ),
+)
+def test_can_list_schedule_anonymous_respects_show_schedule(event, rf, show_schedule, expected):
+    with scope(event=event):
+        event.talks_published = True
+        event.feature_flags['show_schedule'] = show_schedule
+        event.save()
+        event.release_schedule('v1')
+
+    request = rf.get('/')
+    request.event = event
+    request.user = AnonymousUser()
+
+    assert can_list_schedule({'request': request}, event=event) is expected

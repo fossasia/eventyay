@@ -1,0 +1,370 @@
+#content-locale-dialog {
+    min-width: 400px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#content-locale-dialog .dialog-content {
+    padding: 20px;
+}
+
+.content-locale-dialog-footer {
+    text-align: right;
+    margin-top: 1rem;
+}
+
+.content-locale-settings-btn.hidden {
+    display: none;
+}
+
+.content-locale-checkbox-list {
+    height: 250px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 768px) {
+    #content-locale-dialog {
+        min-width: auto;
+        width: 95%;
+        max-width: 95vw;
+    }
+    .content-locale-checkbox-list {
+        max-height: 40vh;
+        height: auto;
+    }
+}
+
+.content-locale-checkbox-list .checkbox {
+    display: block;
+    width: 100%;
+    margin: 5px 0;
+}
+
+.content-locale-checkbox-list label {
+    font-weight: normal;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.content-locale-checkbox-list input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+#content-locale-search {
+    margin-top: 14px;
+}
+
+/* Sticky table headers on desktop only */
+@media (min-width: 769px) {
+    body:has(.cfp-forms-page) {
+        overflow-x: auto;
+    }
+
+    #page-content:has(.cfp-forms-page) {
+        overflow-x: clip;
+        overflow-y: visible;
+    }
+
+    .cfp-forms-page .table-responsive-always {
+        overflow: visible;
+    }
+
+    .cfp-forms-page fieldset legend {
+        border-bottom: none;
+        margin-bottom: 0.75rem;
+    }
+
+    .cfp-forms-page table.table-sticky thead {
+        top: var(--navbar-height, 56px);
+        z-index: 100;
+        box-shadow: none;
+    }
+
+    .cfp-forms-page table.table-sticky thead th {
+        position: sticky;
+        top: var(--navbar-height, 56px);
+        background-color: var(--color-bg, #fff);
+        z-index: 101;
+        border-top: none;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .cfp-forms-page .cfp-option-table tbody tr:first-child th,
+    .cfp-forms-page .cfp-option-table tbody tr:first-child td {
+        border-top: none;
+    }
+}
+
+/* Mobile: card layout, no sticky header */
+@media (max-width: 768px) {
+    #page-content:has(.cfp-forms-page) {
+        overflow-x: clip;
+        overflow-y: visible;
+    }
+
+    .cfp-forms-page {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .cfp-forms-page fieldset {
+        border: none;
+        padding: 0;
+        margin: 0 0 1rem;
+    }
+
+    .cfp-forms-page fieldset legend {
+        position: sticky;
+        top: var(--navbar-height, 50px);
+        z-index: 102;
+        display: block;
+        width: 100%;
+        float: none;
+        background-color: var(--color-bg, #fff);
+        padding: 0.65rem 0;
+        margin-bottom: 0.5rem;
+        font-size: 1.05rem;
+        font-weight: bold;
+        border-bottom: none;
+    }
+
+    .cfp-forms-page fieldset legend > div {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .cfp-forms-page > h2.d-flex {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .cfp-forms-page > h2.d-flex .cfp-forms-heading-actions {
+        width: 100%;
+        margin-inline-start: 0;
+    }
+
+    .cfp-forms-page .cfp-forms-heading-actions .btn {
+        width: 100%;
+        max-width: 100%;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .cfp-forms-page .cfp-forms-new-field-actions {
+        width: 100%;
+        margin-inline-start: 0;
+        justify-content: stretch;
+    }
+
+    .cfp-forms-page .cfp-forms-new-field-actions .btn {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .cfp-forms-page .row > .cfp-forms-new-field-actions {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .cfp-forms-page .table-responsive-always {
+        overflow: visible;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .cfp-forms-page .cfp-option-table {
+        display: block;
+        width: 100%;
+    }
+
+    .cfp-forms-page .cfp-option-table thead {
+        display: none;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody tr {
+        display: block;
+        margin: 0;
+        padding: 0;
+        border: 1px solid var(--color-border);
+        border-radius: var(--size-border-radius, 4px);
+        background-color: var(--color-bg, #fff);
+        overflow: visible;
+        box-shadow: var(--shadow-light);
+    }
+
+    .cfp-forms-page .cfp-option-table tbody tr:hover {
+        background-color: var(--color-bg, #fff);
+    }
+
+    .cfp-forms-page .cfp-option-table tbody th,
+    .cfp-forms-page .cfp-option-table tbody td {
+        border-top: none;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody th {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        padding: 0.6rem 0.75rem;
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--color-grey-light);
+        text-align: left;
+        font-size: 0.95rem;
+        line-height: 1.35;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding: 0.55rem 0.75rem;
+        border: none;
+        border-bottom: 1px solid var(--color-grey-light);
+        white-space: normal;
+        text-align: right;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td:last-child {
+        border-bottom: none;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td:empty {
+        display: none;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td::before {
+        content: attr(data-label);
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 50%;
+        text-align: left;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--color-text-muted, #6c757d);
+        margin-right: auto;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td:not([data-label])::before,
+    .cfp-forms-page .cfp-option-table tbody td[data-label=""]::before {
+        content: none;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td:has(> div),
+    .cfp-forms-page .cfp-option-table tbody td:has(> .form-group) {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td:has(> div)::before,
+    .cfp-forms-page .cfp-option-table tbody td:has(> .form-group)::before {
+        flex: 0 1 auto;
+        max-width: 50%;
+        margin-right: auto;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td > div,
+    .cfp-forms-page .cfp-option-table tbody td > .form-group {
+        display: flex;
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 0;
+        justify-content: flex-end;
+        flex-direction: column;
+        align-items: flex-end;
+        margin-left: 0;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td > div .form-text,
+    .cfp-forms-page .cfp-option-table tbody td > div small,
+    .cfp-forms-page .cfp-option-table tbody td > div .helptext,
+    .cfp-forms-page .cfp-option-table tbody td > .form-group .form-text,
+    .cfp-forms-page .cfp-option-table tbody td > .form-group small,
+    .cfp-forms-page .cfp-option-table tbody td > .form-group .helptext {
+        flex: 1 1 100%;
+        width: 100%;
+        white-space: normal;
+        word-break: break-word;
+        text-align: left;
+        margin-top: 0.25rem;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td.text-right {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td.text-right::before {
+        flex: 1 1 auto;
+        max-width: none;
+        margin-bottom: 0;
+        margin-right: 0.5rem;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td.text-right .btn,
+    .cfp-forms-page .cfp-option-table tbody td.text-right a.btn {
+        margin: 0;
+        flex: 0 0 auto;
+        border-radius: var(--size-border-radius, 4px);
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td .form-group {
+        justify-content: flex-end;
+        align-items: flex-end;
+        flex-shrink: 0;
+        margin-bottom: 0;
+    }
+
+    .cfp-forms-page .cfp-option-table tbody td .toggle-switch,
+    .cfp-forms-page .cfp-option-table tbody td .required-status-wrapper {
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+    .cfp-forms-page .cfp-option-table .required-status-wrapper::after {
+        display: none;
+    }
+
+    .cfp-forms-page .cfp-option-table .required-status-dropdown {
+        width: 7.5rem;
+        max-width: 46vw;
+        padding-right: 8px;
+    }
+
+    .cfp-forms-page .cfp-option-table input:not([type="checkbox"]):not([type="radio"]) {
+        margin: 0;
+    }
+
+    .cfp-forms-page .cfp-option-table input[type="number"] {
+        width: 5rem;
+        max-width: 100%;
+    }
+}

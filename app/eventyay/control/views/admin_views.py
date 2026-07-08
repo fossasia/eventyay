@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.utils.decorators import method_decorator
 from eventyay.base.models.auth import User
 from django.db import transaction
 from django.db.models import Count, F, Max, OuterRef, Subquery
@@ -28,6 +29,7 @@ from django.views.generic import (
     UpdateView,
     View,
 )
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from eventyay.base.models import (
     BBBCall,
@@ -60,6 +62,7 @@ from eventyay.base.models.log import LogEntry
 from eventyay.control.tasks import clear_event_data
 
 
+@method_decorator(xframe_options_sameorigin, name='dispatch')
 class SuperuserBase(UserPassesTestMixin):
     login_url = "/control/auth/login/"
 
@@ -90,6 +93,7 @@ class UserUpdate(SuperuserBase, UpdateView):
         return super().form_valid(form)
 
 
+@method_decorator(xframe_options_sameorigin, name='dispatch')
 class AdminBase(UserPassesTestMixin):
     """Simple View mixin for now, but will make it easier to
     improve permissions in the future."""
@@ -97,9 +101,6 @@ class AdminBase(UserPassesTestMixin):
     login_url = "/control/auth/login/"
 
     def test_func(self):
-        secret_key = self.request.GET.get("control_token")
-        if secret_key and secret_key == settings.CONTROL_SECRET:
-            return True
         return self.request.user.is_staff
 
 
@@ -241,7 +242,7 @@ class EventAdminToken(AdminBase, DetailView):
         secret = jwt_config["secret"]
         audience = jwt_config["audience"]
         issuer = jwt_config["issuer"]
-        iat = datetime.datetime.utcnow()
+        iat = datetime.datetime.now(datetime.timezone.utc)
         exp = iat + datetime.timedelta(days=7)
         payload = {
             "iss": issuer,
@@ -761,12 +762,13 @@ class BBBMoveRoom(AdminBase, FormView):
         except BBBCall.DoesNotExist:
             messages.error(self.request, _("No BBB session found for this room."))
             return HttpResponseRedirect(self.request.path)
+        source_server = c.server
         try:
             u = get_url(
                 "end",
                 {"meetingID": c.meeting_id, "password": c.moderator_pw},
-                server.url,
-                server.secret,
+                source_server.url,
+                source_server.secret,
             )
             r = requests.get(u, timeout=15)
             r.raise_for_status()

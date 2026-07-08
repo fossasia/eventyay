@@ -1,10 +1,10 @@
 <template lang="pug">
 .c-schedule-toolbar(:class="{'mobile-filters-open': mobileFiltersOpen, 'mobile-more-open': mobileMoreOpen}")
-	.version-warning-banner(v-if="version && !isCurrent", ref="versionBanner")
+	.version-warning-banner(v-if="!isFeaturedPage && showVersionWarningBanner", ref="versionBanner")
 		span.version-warning-text {{ versionWarningText }}
-		a.current-version-link(v-if="currentScheduleUrl", :href="currentScheduleUrl")
+		a.current-version-link(v-if="currentScheduleUrl && !isWipPreview", :href="currentScheduleUrl")
 			|  {{ t.go_to_current_version }}
-	.toolbar-row
+	.toolbar-row(ref="toolbarRow")
 		.toolbar-left
 			button.toolbar-btn.mobile-toggle-btn.mobile-filter-toggle.icon-only(
 				class="tooltip-align-left"
@@ -81,8 +81,7 @@
 							span.filter-dropdown-label {{ item.label }}
 					.filter-dropdown-empty(v-else) No {{ languageGroup.title.toLowerCase() }} available
 			button.toolbar-btn.icon-only.fav-toggle(
-				v-if="loggedIn && favsCount",
-				:class="{active: onlyFavs, disabled: !onlyFavs}",
+				v-if="favsCount",
 				:disabled="!favsCount",
 				:aria-label="t.starred",
 				:aria-pressed="onlyFavs ? 'true' : 'false'",
@@ -129,11 +128,11 @@
 							span.sort-inclusion-label {{ t.sort_include_datetime }}
 							button.sort-toggle-slider(type="button", :class="{on: includeDateSortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_datetime", :aria-checked="includeDateSortKeyModel ? 'true' : 'false'", @click.prevent.stop="toggleDatetimeSort")
 								span.toggle-slider(aria-hidden="true")
-						.sort-inclusion-row
+						.sort-inclusion-row(v-if="popularitySortAvailable")
 							span.sort-inclusion-label {{ t.sort_include_popularity }}
 							button.sort-toggle-slider(type="button", :class="{on: includePopularitySortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_popularity", :aria-checked="includePopularitySortKeyModel ? 'true' : 'false'", @click.prevent.stop="togglePopularitySort")
 								span.toggle-slider(aria-hidden="true")
-			button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.cal : t.list", :aria-label="sessionsMode ? t.cal : t.list")
+			button.toolbar-btn.sessions-toggle(v-if="!isFeaturedPage", :class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.cal : t.list", :aria-label="sessionsMode ? t.cal : t.list")
 				template(v-if="sessionsMode")
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 						rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
@@ -149,8 +148,8 @@
 						line(x1="3", y1="12", x2="3.01", y2="12")
 						line(x1="3", y1="18", x2="3.01", y2="18")
 				span.sessions-toggle-label {{ sessionsMode ? t.cal : t.list }}
-		.toolbar-center(v-if="days && days.length > 1")
-			button.day-arrow(:disabled="dayWindowStart <= 0", @click="shiftDays(-2)", :title="t.previous_days", :aria-label="t.previous_days")
+		.toolbar-center(v-if="!isListView && days && days.length > 1", ref="dayNavCenter")
+			button.day-arrow(v-if="showDayArrows", :disabled="dayWindowStart <= 0", @click="shiftDays(-1)", :title="t.previous_days", :aria-label="t.previous_days")
 				svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 					path(d="M15 18l-6-6 6-6")
 			button.day-btn(
@@ -159,7 +158,7 @@
 				:class="{active: currentDay === day.id}",
 				@click="$emit('selectDay', day.id)")
 				| {{ day.label }}
-			button.day-arrow(:disabled="dayWindowStart + 3 >= days.length", @click="shiftDays(2)", :title="t.next_days", :aria-label="t.next_days")
+			button.day-arrow(v-if="showDayArrows", :disabled="dayWindowStart + dayWindowSize >= days.length", @click="shiftDays(1)", :title="t.next_days", :aria-label="t.next_days")
 				svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 					path(d="M9 18l6-6-6-6")
 		.toolbar-right
@@ -226,11 +225,12 @@
 								)
 									span {{ option.label }}
 				.timezone-label(v-else) {{ scheduleTimezone }}
-				.exporter-area(v-if="resolvedExporters.length")
+				.exporter-area(v-if="resolvedExporters.length || exportsDisabled")
 					.exporter-dropdown(ref="exportDropdown")
-						button.toolbar-btn.icon-only(
-							@click="exportOpen = !exportOpen",
-							:aria-label="t.add_to_calendar",
+						button.toolbar-btn.icon-only.tooltip-align-right(
+							:class="{disabled: exportsDisabled}",
+							@click="!exportsDisabled && (exportOpen = !exportOpen)",
+							:aria-label="exportsDisabled ? publicOnlyFeatureHint : t.add_to_calendar",
 							:aria-expanded="exportOpen ? 'true' : 'false'",
 							aria-haspopup="menu")
 							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
@@ -255,9 +255,13 @@
 								transition(name="fade")
 									.qr-hover(v-if="hoveredExporter === exp && exp.qrcode_svg", v-html="exp.qrcode_svg")
 			.toolbar-secondary(:class="{open: mobileMoreOpen}", ref="mobileMorePanel")
-				.version-area(v-if="versionOptions.length || changelogUrl")
+				.version-area(v-if="!isFeaturedPage && (versionOptions.length || changelogUrl || isWipPreview)")
 					.version-dropdown(ref="versionDropdown")
-						button.toolbar-btn.version-btn(@click="versionOpen = !versionOpen")
+						button.toolbar-btn.version-btn.tooltip-align-right(
+							:class="{disabled: isWipPreview}",
+							@click="!isWipPreview && (versionOpen = !versionOpen)",
+							:aria-label="isWipPreview ? publicOnlyFeatureHint : undefined"
+						)
 							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 								path(d="M12 8v4l3 3")
 								circle(cx="12", cy="12", r="10")
@@ -320,7 +324,6 @@
 </template>
 
 <script>
-// FA icon name → inline SVG path mapping (shadow DOM blocks external CSS)
 const FA_SVG_MAP = {
 	'fa-calendar': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
 	'fa-code': '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
@@ -330,11 +333,12 @@ const FA_SVG_MAP = {
 	'fa-question-circle-o': '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
 }
 
+const STACKED_TOOLBAR_MAX_WIDTH = 1024
+
 export default {
 	name: 'ScheduleToolbar',
 	inject: {
 		translationMessages: { default: () => ({}) },
-		loggedIn: { default: false }
 	},
 	props: {
 		version: { type: String, default: '' },
@@ -366,9 +370,12 @@ export default {
 		includeDateSortKey: { type: Boolean, default: false },
 		includePopularitySortKey: { type: Boolean, default: false },
 		popularityFeatureEnabled: { type: Boolean, default: false },
-		loggedIn: { type: Boolean, default: false },
+		popularitySortAvailable: { type: Boolean, default: false },
+		exportsDisabled: { type: Boolean, default: false },
 		sortOptions: { type: Array, default: () => ['title', 'title_desc'] },
-		timeDensityMinutes: { type: Number, default: 30 }
+		timeDensityMinutes: { type: Number, default: 30 },
+		isFeaturedPage: { type: Boolean, default: false },
+		isListView: { type: Boolean, default: false }
 	},
 	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
@@ -382,6 +389,7 @@ export default {
 			isFullscreen: false,
 			openFilterDropdowns: {},
 			dayWindowStart: 0,
+			maxVisibleDays: Infinity,
 			recordingOpen: false,
 			sortOpen: false,
 			densityOpen: false,
@@ -416,8 +424,10 @@ export default {
 				exit_fullscreen: m.exit_fullscreen || 'Exit Fullscreen',
 				latest: m.latest || 'Latest',
 				version_warning_editable: m.version_warning_editable || 'You are currently viewing the editable schedule version, which is unreleased and may change at any time.',
+				version_warning_wip: m.version_warning_wip || 'You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.',
 				version_warning_old: m.version_warning_old || 'You are currently viewing an older schedule version.',
 				add_to_calendar: m.add_to_calendar || 'Add to calendar',
+				public_schedule_only: m.public_schedule_only || 'Only available on the public schedule once a schedule is released and public.',
 				export: m.export || 'Export',
 				current: m.current || 'current',
 				list_view: m.list_view || 'List View',
@@ -482,6 +492,7 @@ export default {
 			}
 			return allowed
 				.filter(v => ['title', 'title_desc', 'popularity'].includes(v))
+				.filter(v => v !== 'popularity' || this.popularitySortAvailable)
 				.map(v => ({ value: v, label: labelMap[v] || v }))
 		},
 		currentSortLabel() {
@@ -489,7 +500,29 @@ export default {
 			return current ? current.label : this.t.sort_by_title
 		},
 		resolvedExporters() {
-			return this.exporters || []
+			let list = this.exporters || []
+			if (this.isFeaturedPage) {
+				list = list.filter(exp => !exp.identifier.includes('-my') && !exp.identifier.includes('my-') && exp.identifier !== 'faved.ics')
+			}
+			return list
+		},
+		isWipPreview() {
+			if (this.version === 'wip') {
+				return true
+			}
+			if (typeof window !== 'undefined') {
+				return window.location.pathname.includes('/schedule/v/wip/')
+			}
+			return false
+		},
+		showVersionWarningBanner() {
+			if (this.isWipPreview) {
+				return true
+			}
+			return Boolean(this.version && !this.isCurrent)
+		},
+		publicOnlyFeatureHint() {
+			return this.t.public_schedule_only
 		},
 		languageGroup() {
 			return (this.filterGroups || []).find(g => g.refKey === 'language') || null
@@ -510,6 +543,9 @@ export default {
 			}))
 		},
 		versionWarningText() {
+			if (this.isWipPreview) {
+				return this.t.version_warning_wip
+			}
 			if (!this.version) {
 				return this.t.version_warning_editable
 			}
@@ -566,10 +602,20 @@ export default {
 			get() { return this.recordingFilter || 'all' },
 			set(value) { this.$emit('update:recordingFilter', value) }
 		},
+		dayWindowSize() {
+			if (!this.days || this.days.length <= 1) return 0
+			if (!Number.isFinite(this.maxVisibleDays) || this.maxVisibleDays >= this.days.length) {
+				return this.days.length
+			}
+			return Math.max(1, this.maxVisibleDays)
+		},
+		showDayArrows() {
+			return Boolean(this.days && this.days.length > 1 && this.days.length > this.dayWindowSize)
+		},
 		visibleDays() {
 			if (!this.days || this.days.length <= 1) return []
 			return this.days
-				.slice(this.dayWindowStart, this.dayWindowStart + 3)
+				.slice(this.dayWindowStart, this.dayWindowStart + this.dayWindowSize)
 				.map(day => ({
 					id: day.format('YYYY-MM-DD'),
 					label: day.format('ddd D MMM')
@@ -577,49 +623,82 @@ export default {
 		}
 	},
 	watch: {
-		currentDay(newDay) {
-			if (!this.days || this.days.length <= 1) return
-			const idx = this.days.findIndex(d => d.format('YYYY-MM-DD') === newDay)
-			if (idx < 0) return
-			if (idx < this.dayWindowStart) {
-				this.dayWindowStart = Math.max(0, idx)
-			} else if (idx >= this.dayWindowStart + 3) {
-				this.dayWindowStart = Math.min(this.days.length - 3, idx - 2)
-			}
+		currentDay() {
+			this.ensureCurrentDayVisible()
 		},
 		days: {
 			immediate: true,
-			handler(newDays) {
-				if (!newDays || newDays.length <= 1) return
-				const idx = newDays.findIndex(d => d.format('YYYY-MM-DD') === this.currentDay)
-				if (idx >= 0) {
-					this.dayWindowStart = Math.max(0, Math.min(idx, newDays.length - 3))
-				}
+			handler() {
+				this.$nextTick(() => this.updateDayNavigation())
 			}
+		},
+		showDayArrows() {
+			this.ensureCurrentDayVisible()
+		},
+		searchExpanded() {
+			this.$nextTick(() => this.updateDayNavigation())
 		}
 	},
 	mounted() {
 		document.addEventListener('click', this.outsideClick, true)
 		document.addEventListener('fullscreenchange', this.onFullscreenChange)
+		if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+			this._stackedToolbarMq = window.matchMedia(`(max-width: ${STACKED_TOOLBAR_MAX_WIDTH}px)`)
+			this._onStackedToolbarMqChange = () => {
+				this.$nextTick(() => this.updateDayNavigation())
+			}
+			if (typeof this._stackedToolbarMq.addEventListener === 'function') {
+				this._stackedToolbarMq.addEventListener('change', this._onStackedToolbarMqChange)
+			} else if (typeof this._stackedToolbarMq.addListener === 'function') {
+				this._stackedToolbarMq.addListener(this._onStackedToolbarMqChange)
+			}
+		}
 		this.$nextTick(() => {
 			this.updateVersionBannerHeight()
 			this.updateToolbarHeight()
 			if (typeof ResizeObserver !== 'undefined') {
 				this._versionBannerResizeObserver = new ResizeObserver(() => {
-					this.updateVersionBannerHeight()
-					this.updateToolbarHeight()
+					this.scheduleToolbarLayoutUpdate()
 				})
 				if (this.$refs.versionBanner) this._versionBannerResizeObserver.observe(this.$refs.versionBanner)
 				this._versionBannerResizeObserver.observe(this.$el)
+				if (this.$refs.toolbarRow) {
+					this._versionBannerResizeObserver.observe(this.$refs.toolbarRow)
+					for (const selector of ['.toolbar-left', '.toolbar-center', '.toolbar-right']) {
+						const el = this.$refs.toolbarRow.querySelector(selector)
+						if (el) this._versionBannerResizeObserver.observe(el)
+					}
+				}
 			}
+			this.updateDayNavigation()
 		})
 	},
 	beforeUnmount() {
 		document.removeEventListener('click', this.outsideClick, true)
 		document.removeEventListener('fullscreenchange', this.onFullscreenChange)
+		if (this._stackedToolbarMq && this._onStackedToolbarMqChange) {
+			if (typeof this._stackedToolbarMq.removeEventListener === 'function') {
+				this._stackedToolbarMq.removeEventListener('change', this._onStackedToolbarMqChange)
+			} else if (typeof this._stackedToolbarMq.removeListener === 'function') {
+				this._stackedToolbarMq.removeListener(this._onStackedToolbarMqChange)
+			}
+		}
+		if (this._toolbarLayoutRaf) {
+			cancelAnimationFrame(this._toolbarLayoutRaf)
+			this._toolbarLayoutRaf = null
+		}
 		this._versionBannerResizeObserver?.disconnect?.()
 	},
 	methods: {
+		scheduleToolbarLayoutUpdate() {
+			if (this._toolbarLayoutRaf) return
+			this._toolbarLayoutRaf = requestAnimationFrame(() => {
+				this._toolbarLayoutRaf = null
+				this.updateVersionBannerHeight()
+				this.updateToolbarHeight()
+				this.updateDayNavigation()
+			})
+		},
 		updateVersionBannerHeight() {
 			const host = this.$el?.parentElement
 			if (!host) return
@@ -833,8 +912,76 @@ export default {
 			item.selected = !item.selected
 			this.$emit('filterToggle', item)
 		},
-		shiftDays(delta) {
-			const max = Math.max(0, this.days.length - 3)
+		ensureCurrentDayVisible() {
+			if (!this.days || this.days.length <= 1) return
+			if (!this.showDayArrows) {
+				this.dayWindowStart = 0
+				return
+			}
+			const idx = this.days.findIndex(d => d.format('YYYY-MM-DD') === this.currentDay)
+			if (idx < 0) return
+			const size = this.dayWindowSize
+			if (idx < this.dayWindowStart) {
+				this.dayWindowStart = Math.max(0, idx)
+			} else if (idx >= this.dayWindowStart + size) {
+				this.dayWindowStart = Math.min(this.days.length - size, idx - size + 1)
+			}
+		},
+		async updateDayNavigation() {
+			if (this._updatingDayNav) return
+			const center = this.$refs.dayNavCenter
+			if (!center || !this.days?.length || this.days.length <= 1) {
+				this.maxVisibleDays = Infinity
+				return
+			}
+
+			this._updatingDayNav = true
+			try {
+				const fits = () => {
+					const available = this.getDayNavAvailableWidth()
+					if (available <= 0) return false
+					return center.scrollWidth <= available + 1
+				}
+
+				this.maxVisibleDays = this.days.length
+				await this.$nextTick()
+				await new Promise(resolve => requestAnimationFrame(resolve))
+				if (fits()) {
+					this.dayWindowStart = 0
+					return
+				}
+
+				let lo = 1
+				let hi = this.days.length - 1
+				let bestFit = 1
+				while (lo <= hi) {
+					const mid = Math.floor((lo + hi) / 2)
+					this.maxVisibleDays = mid
+					await this.$nextTick()
+					if (fits()) {
+						bestFit = mid
+						lo = mid + 1
+					} else {
+						hi = mid - 1
+					}
+				}
+
+				this.maxVisibleDays = bestFit
+				await this.$nextTick()
+				this.ensureCurrentDayVisible()
+			} finally {
+				this._updatingDayNav = false
+			}
+		},
+		getDayNavAvailableWidth() {
+			const center = this.$refs.dayNavCenter
+			if (!center) return 0
+			return Math.max(0, center.clientWidth)
+		},
+		shiftDays(direction) {
+			const step = Math.max(1, this.dayWindowSize - 1)
+			const delta = direction < 0 ? -step : step
+			const max = Math.max(0, this.days.length - this.dayWindowSize)
 			this.dayWindowStart = Math.max(0, Math.min(max, this.dayWindowStart + delta))
 		},
 		toggleSearch() {
@@ -922,15 +1069,6 @@ export default {
 			position: relative
 			&.disabled
 				opacity: 0.6
-			&.active::after
-				content: ''
-				position: absolute
-				right: 6px
-				top: 6px
-				width: 7px
-				height: 7px
-				border-radius: 50%
-				background: var(--pretalx-clr-primary, #3aa57c)
 			&:disabled
 				opacity: 0.5
 				cursor: default
@@ -1140,6 +1278,7 @@ export default {
 			font-size: 13px
 			font-weight: 500
 			white-space: nowrap
+			flex-shrink: 0
 			color: #555
 			&:hover
 				background-color: rgba(0, 0, 0, 0.05)
@@ -1468,6 +1607,33 @@ export default {
 				opacity: 1
 				transform: translateX(-50%) translateY(0)
 				transition: opacity 0.05s ease, transform 0.05s ease
+		&.disabled
+			opacity: 0.5
+			cursor: not-allowed
+			&[aria-label]
+				position: relative
+				&::after
+					content: attr(aria-label)
+					position: absolute
+					top: calc(100% + 6px)
+					right: 0
+					transform: translateY(-2px)
+					opacity: 0
+					pointer-events: none
+					background-color: rgba(0, 0, 0, 0.87)
+					color: #fff
+					padding: 6px 8px
+					border-radius: 4px
+					font-size: 12px
+					line-height: 1.3
+					white-space: normal
+					width: max-content
+					max-width: 280px
+					z-index: 1000
+				&:hover::after, &:focus-visible::after
+					opacity: 1
+					transform: translateY(0)
+					transition: opacity 0.05s ease, transform 0.05s ease
 		&.icon-only.tooltip-align-left[aria-label]
 			&::after
 				left: 0
@@ -1543,60 +1709,28 @@ export default {
 	&.open
 		transform: rotate(180deg)
 
-@media (max-width: 600px)
+@media (min-width: 1025px)
 	.c-schedule-toolbar
-		.filter-title,
-		.filter-title-text,
-		.filter-dot,
-		.filter-dropdown-label,
-		label.filter-dropdown-item,
-		button.toolbar-btn,
-		button.toolbar-btn span,
-		button.toolbar-btn .filter-title,
-		button.toolbar-btn .filter-title-text {
-			color: #111
-		}
-		svg.tb-icon,
-		svg.chevron-icon {
-			stroke: #111
-			color: #111
-			fill: none
-		}
-		.language-filter-area svg.tb-icon {
-			fill: #111
-			color: #111
-			stroke: none
-		}
-		.sessions-toggle-label
-			display: none
-		.sessions-toggle[aria-label]
-			position: relative
-			&::after
-				content: attr(aria-label)
-				position: absolute
-				left: 50%
-				top: calc(100% + 6px)
-				transform: translateX(-50%) translateY(-2px)
-				opacity: 0
-				pointer-events: none
-				background-color: rgba(0, 0, 0, 0.87)
-				color: #fff
-				padding: 4px 8px
-				border-radius: 4px
-				font-size: 12px
-				line-height: 1.2
-				white-space: nowrap
-				z-index: 1000
-			&:hover::after, &:focus-visible::after
-				opacity: 1
-				transform: translateX(-50%) translateY(0)
-				transition: opacity 0.05s ease, transform 0.05s ease
+		.toolbar-row
+			display: grid
+			grid-template-columns: auto minmax(0, 1fr) auto
+			align-items: center
+			gap: 8px
+		.toolbar-left
+			flex: none
+			min-width: 0
+		.toolbar-center
+			flex: none
+			justify-content: center
+			min-width: 0
+			max-width: 100%
 		.toolbar-right
-			.fullscreen-quick
-				display: inline-flex
-				order: 98
-		.toolbar-btn.icon-only[aria-label]::after
-			display: none
+			flex: none
+			min-width: 0
+			justify-self: end
+
+@media (max-width: 1024px)
+	.c-schedule-toolbar
 		.toolbar-row
 			display: grid
 			grid-template-columns: minmax(0, 1fr) auto
@@ -1604,11 +1738,14 @@ export default {
 			align-items: center
 			height: auto
 			min-height: 40px
-			padding: 6px
+			padding: 6px 8px
 			gap: 6px
 			.toolbar-left
 				grid-area: left
 				position: relative
+				flex: none
+				min-width: 0
+				max-width: 100%
 				gap: 4px
 				.language-filter-area
 					display: inline-flex
@@ -1666,34 +1803,36 @@ export default {
 							height: 14px
 			.toolbar-center
 				grid-area: center
+				flex: none
 				width: 100%
+				max-width: 100%
 				justify-content: center
 				padding-top: 2px
 				.day-btn
 					padding: 4px 8px
-					font-size: 13px
+					font-size: 12px
 			.day-arrow svg
 				width: 16px
 				height: 16px
 		.toolbar-right
 			grid-area: right
 			flex: 0 0 auto
+			flex-wrap: nowrap
 			gap: 4px
 			align-items: center
 			justify-content: flex-end
-			.search-area .search-compact .search-input
-				width: 130px
-				font-size: 13px
-			.toolbar-right-quick
-				display: flex
-				align-items: center
-				gap: 2px
-				.timezone-label
-					display: none
+			max-width: 100%
+			.fullscreen-quick
+				display: inline-flex
+				order: 98
 			.mobile-toggle-btn
 				display: inline-flex
 				order: 99
 				margin-left: 2px
+			.toolbar-right-quick
+				display: flex
+				align-items: center
+				gap: 2px
 			.toolbar-secondary
 				display: none
 				position: absolute
@@ -1759,6 +1898,73 @@ export default {
 				.sessions-toggle-menu
 					display: flex
 					justify-content: flex-start
+
+@media (max-width: 600px)
+	.c-schedule-toolbar
+		.filter-title,
+		.filter-title-text,
+		.filter-dot,
+		.filter-dropdown-label,
+		label.filter-dropdown-item,
+		button.toolbar-btn,
+		button.toolbar-btn span,
+		button.toolbar-btn .filter-title,
+		button.toolbar-btn .filter-title-text {
+			color: #111
+		}
+		svg.tb-icon,
+		svg.chevron-icon {
+			stroke: #111
+			color: #111
+			fill: none
+		}
+		.language-filter-area svg.tb-icon {
+			fill: #111
+			color: #111
+			stroke: none
+		}
+		.sessions-toggle-label
+			display: none
+		.sessions-toggle[aria-label]
+			position: relative
+			&::after
+				content: attr(aria-label)
+				position: absolute
+				left: 50%
+				top: calc(100% + 6px)
+				transform: translateX(-50%) translateY(-2px)
+				opacity: 0
+				pointer-events: none
+				background-color: rgba(0, 0, 0, 0.87)
+				color: #fff
+				padding: 4px 8px
+				border-radius: 4px
+				font-size: 12px
+				line-height: 1.2
+				white-space: nowrap
+				z-index: 1000
+			&:hover::after, &:focus-visible::after
+				opacity: 1
+				transform: translateX(-50%) translateY(0)
+				transition: opacity 0.05s ease, transform 0.05s ease
+		.toolbar-right
+			.fullscreen-quick
+				display: inline-flex
+				order: 98
+		.toolbar-btn.icon-only[aria-label]::after
+			display: none
+		.toolbar-row
+			padding: 6px
+			.toolbar-center
+				.day-btn
+					font-size: 13px
+		.toolbar-right
+			.search-area .search-compact .search-input
+				width: 130px
+				font-size: 13px
+			.toolbar-right-quick
+				.timezone-label
+					display: none
 			.toolbar-btn,
 			.toolbar-btn.icon-only,
 			button.toolbar-btn,

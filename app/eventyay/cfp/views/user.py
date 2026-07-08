@@ -148,7 +148,7 @@ class SubmissionsListView(LoggedInEventPageMixin, ListView):
             event=self.request.event,
             speakers__in=[self.request.user],
             state=SubmissionStates.DRAFT,
-        )
+        ).order_by('-updated')
 
     def get_queryset(self):
         return self.request.event.submissions.filter(speakers__in=[self.request.user])
@@ -360,6 +360,13 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
     def can_edit(self):
         return self.object.editable
 
+    def is_draft_action(self):
+        return (
+            self.object.state == SubmissionStates.DRAFT
+            and self.request.method == 'POST'
+            and self.request.POST.get('action', 'submit') != 'dedraft'
+        )
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
@@ -367,8 +374,8 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
             self.request.event.cfp_flow.config.get('steps', {}).get('info', {}).get('fields')
         )
         kwargs['readonly'] = not self.can_edit
-        # At this stage, new speakers can be added via the dedicated form
-        kwargs['remove_additional_speaker'] = True
+        kwargs['not_strict'] = self.is_draft_action()
+        kwargs['draft_save'] = self.is_draft_action()
         return kwargs
 
     def form_valid(self, form):
@@ -384,15 +391,6 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
                     form.instance.update_duration()
                 if form.instance.pk and 'track' in form.changed_data:
                     form.instance.update_review_scores()
-                if form.instance.pk and 'additional_speaker' in form.changed_data:
-                    try:
-                        form.instance.send_invite(
-                            to=[form.cleaned_data.get('additional_speaker')],
-                            _from=self.request.user,
-                        )
-                    except SendMailException as exception:
-                        logger.warning('Failed to send email with error: %s', exception)
-                        messages.warning(self.request, phrases.cfp.submission_email_fail)
                 form.instance.log_action('eventyay.submission.update', person=self.request.user)
                 self.request.event.cache.set('rebuild_schedule_export', True, None)
             if (

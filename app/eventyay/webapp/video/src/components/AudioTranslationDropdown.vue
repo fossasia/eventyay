@@ -41,10 +41,23 @@ export default {
 	methods: {
 		sendLanguageChange() {
 			const selected = this.languages.find(item => item.language === this.selectedLanguage)
-			const youtubeId = selected?.youtube_id || null
-			// Accept either raw ID or URL in the language list entries, but emit only a normalized ID or null.
-			const normalizedYoutubeId = youtubeId ? normalizeYoutubeVideoId(youtubeId) : null
-			this.$emit('languageChanged', normalizedYoutubeId)
+			const audioSource = selected?.youtube_id || null
+			const useVideo = selected?.use_video || false
+			
+			let normalizedSource = null
+			if (audioSource) {
+				normalizedSource = normalizeYoutubeVideoId(audioSource)
+				if (!normalizedSource) {
+					try {
+						new URL(audioSource)
+						normalizedSource = audioSource
+					} catch (e) {
+						normalizedSource = null
+					}
+				}
+			}
+			
+			this.$emit('languageChanged', { url: normalizedSource, useVideo })
 		}
 	}
 }

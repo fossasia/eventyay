@@ -20,7 +20,7 @@ from eventyay.orga.views import (
 
 app_name = 'orga'
 urlpatterns = [
-    path("", RedirectView.as_view(url="event", permanent=False), name="base"),
+    path('', RedirectView.as_view(pattern_name='eventyay_common:dashboard', permanent=False), name='base'),
     path("reset/", auth.ResetView.as_view(), name="auth.reset"),
     path("reset/<token>", auth.RecoverView.as_view(), name="auth.recover"),
     path('me', person.UserSettings.as_view(), name='user.view'),  # Change this to common/account/general.
@@ -66,9 +66,10 @@ urlpatterns = [
             ]
         ),
     ),
-    path("event/", dashboard.DashboardEventListView.as_view(), name="event.list"),
+    path('event/<slug:event>/', dashboard.legacy_orga_event_redirect, name='event.legacy'),
+    path('event/', dashboard.DashboardEventListView.as_view(), name='event.list'),
     path(
-        'event/<slug:event>/',
+        'event/<orgslug:organizer>/<slug:event>/',
         include(
             [
                 path("delete", event.EventDelete.as_view(), name="event.delete"),
@@ -127,6 +128,16 @@ urlpatterns = [
                     'settings/import-export/submissions/import/<uuid:file>/',
                     submission.SubmissionImportProcessView.as_view(),
                     name='settings.import_export.submissions_import_process',
+                ),
+                path(
+                    'settings/import-export/schedule/export/trigger',
+                    schedule.ScheduleExportTriggerView.as_view(),
+                    name='settings.import_export.schedule_export_trigger',
+                ),
+                path(
+                    'settings/import-export/schedule/export/download',
+                    schedule.ScheduleExportDownloadView.as_view(),
+                    name='settings.import_export.schedule_export_download',
                 ),
                 path(
                     'cfp/',
@@ -222,16 +233,6 @@ urlpatterns = [
                     namespace='orga',
                 ),
                 path(
-                    'submissions/import/',
-                    submission.SubmissionImportView.as_view(),
-                    name='submissions.import',
-                ),
-                path(
-                    'submissions/import/<uuid:file>/',
-                    submission.SubmissionImportProcessView.as_view(),
-                    name='submissions.import.process',
-                ),
-                path(
                     'submissions/<code>/',
                     include(
                         [
@@ -291,6 +292,11 @@ urlpatterns = [
                                 name='submissions.speakers.delete',
                             ),
                             path(
+                                'etherpad/generate',
+                                submission.SubmissionEtherpadGenerate.as_view(),
+                                name='submissions.etherpad.generate',
+                            ),
+                            path(
                                 'reviews/',
                                 review.ReviewSubmission.as_view(),
                                 name='submissions.reviews',
@@ -339,21 +345,6 @@ urlpatterns = [
                     ),
                 ),
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
-                path(
-                    'speakers/export/',
-                    speaker.SpeakerExport.as_view(),
-                    name='speakers.export',
-                ),
-                path(
-                    'speakers/import/',
-                    speaker.SpeakerImportView.as_view(),
-                    name='speakers.import',
-                ),
-                path(
-                    'speakers/import/<uuid:file>/',
-                    speaker.SpeakerImportProcessView.as_view(),
-                    name='speakers.import.process',
-                ),
                 path(
                     'speakers/<code>/',
                     include(
@@ -411,27 +402,7 @@ urlpatterns = [
                     review.ReviewAssignment.as_view(),
                     name='reviews.assign',
                 ),
-                path(
-                    'reviews/export/',
-                    review.ReviewExport.as_view(),
-                    name='reviews.export',
-                ),
                 path('schedule/', schedule.ScheduleView.as_view(), name='schedule.main'),
-                path(
-                    'schedule/export/',
-                    schedule.ScheduleExportView.as_view(),
-                    name='schedule.export',
-                ),
-                path(
-                    'schedule/export/trigger',
-                    schedule.ScheduleExportTriggerView.as_view(),
-                    name='schedule.export.trigger',
-                ),
-                path(
-                    'schedule/export/download',
-                    schedule.ScheduleExportDownloadView.as_view(),
-                    name='schedule.export.download',
-                ),
                 path(
                     'schedule/release',
                     schedule.ScheduleReleaseView.as_view(),

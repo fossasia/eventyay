@@ -11,6 +11,7 @@
         {% include "orga/event/component_link.html" %}
     </div>
     {% include "common/includes/search_form.html" %}
+    <div data-ajax-results-region>
     <div class="table-responsive-sm">
         <table class="table table-sm table-flip table-sticky">
             <thead>
@@ -43,7 +44,7 @@
                         <td>
                             {% for user in mail.to_users.all %}
                                 {% if user in request.event.submitters %}
-                                    <a href="{% url "orga:speakers.view" event=request.event.slug code=user.code %}">
+                                    <a href="{% url 'orga:speakers.view' organizer=request.event.organizer.slug event=request.event.slug code=user.code %}">
                                         {{ user }}
                                     </a>{% else %}{{ user }}{% endif %}{% if not forloop.last or mail.to %}, {% endif %}
                             {% endfor %}
@@ -76,5 +77,6 @@
     </div>
 
     {% include "orga/includes/pagination.html" %}
+    </div>
 
 {% endblock mail_content %}

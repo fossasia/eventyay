@@ -216,6 +216,7 @@ const initToastUiMarkdownTextarea = (textarea) => {
         previewStyle: 'tab',
         usageStatistics: false,
         hideModeSwitch: true,
+        autofocus: false,
         initialValue: String(textarea.value || ''),
         plugins: [underlinePlugin],
         toolbarItems: [
@@ -226,13 +227,37 @@ const initToastUiMarkdownTextarea = (textarea) => {
     textarea.__eventyayToastUiEditor = editor
     mount.__eventyayToastUiEditor = editor
 
-    const fieldLang = textarea.getAttribute('lang') || textarea.lang
-    if (fieldLang) {
-        const ww = mount.querySelector?.('.toastui-editor-ww-container')
-        if (ww) ww.setAttribute('lang', fieldLang)
-        const md = mount.querySelector?.('.toastui-editor-md-container')
-        if (md) md.setAttribute('lang', fieldLang)
+    const applyLanguageDirection = () => {
+        const fieldLang = textarea.getAttribute('lang') || textarea.lang
+        const fieldDir = textarea.getAttribute('dir') || textarea.dir
+
+        const flagTargets = mount.querySelectorAll?.([
+            '.toastui-editor-ww-container',
+            '.toastui-editor-md-container',
+        ].join(',')) || []
+
+        flagTargets.forEach((element) => {
+            if (fieldLang) element.setAttribute('lang', fieldLang)
+            if (fieldDir) element.setAttribute('dir', fieldDir)
+        })
+
+        if (!fieldDir) return
+
+        const editorTargets = mount.querySelectorAll?.([
+            '.toastui-editor-contents',
+            '.ProseMirror',
+            '.toastui-editor-md-preview',
+            '.toastui-editor-md-code',
+            '.cm-editor',
+            '.cm-content',
+        ].join(',')) || []
+
+        editorTargets.forEach((element) => {
+            element.setAttribute('dir', fieldDir)
+        })
     }
+    applyLanguageDirection()
+    requestAnimationFrame(applyLanguageDirection)
 
     const installAbsoluteLinkOnlyValidation = () => {
         if (!window.MutationObserver) return () => { }
@@ -428,6 +453,8 @@ const initToastUiMarkdownTextarea = (textarea) => {
                 editor.changeMode(isMarkdownMode ? 'markdown' : 'wysiwyg', true)
             }
 
+            requestAnimationFrame(applyLanguageDirection)
+
             syncToTextarea()
         })
         updateModeToggleUi(toggleButton)
@@ -591,7 +618,7 @@ const initFileSizeCheck = (element) => {
             unwarnFileSize(element)
             return true
         } else {
-            const maxsize = parseInt(element.dataset.maxsize , 10)
+            const maxsize = parseInt(element.dataset.maxsize, 10)
             if (files[0].size > maxsize) {
                 warnFileSize(element)
                 return false
@@ -611,7 +638,7 @@ const initFileSizeCheck = (element) => {
                 const isValid = (
                     !fileInput.files
                     || !fileInput.files.length
-                    || fileInput.files[0].size <= parseInt(fileInput.dataset.maxsize , 10)
+                    || fileInput.files[0].size <= parseInt(fileInput.dataset.maxsize, 10)
                 )
                 if (!isValid) {
                     warnFileSize(fileInput)
@@ -753,13 +780,27 @@ const initFormChanges = (form) => {
 
 const initFormButton = (form) => {
     form.querySelectorAll("button[type=submit]").forEach(submitButton => {
+        if (submitButton.hasAttribute('data-no-loading') || submitButton.id === 'button-sudo' || submitButton.id === 'button-shop') return;
         const submitButtonText = submitButton.textContent
         let lastSubmit = 0
-        form.addEventListener("submit", () => {
+        form.addEventListener("submit", (event) => {
             // We can't disable the button immediately, because then, the browser will
             // not send the button's value to the server. Instead, we'll just delay the
             // disabling a bit.
-            submitButton.innerHTML = `<i class="fa fa-spinner fa-spin pr-0"></i> ${submitButtonText}`
+            if (event.submitter === submitButton) {
+
+                const spinner = document.createElement('i');
+
+                spinner.className = 'fa fa-spinner fa-spin pr-0';
+
+                submitButton.textContent = '';
+
+                submitButton.append(spinner, ` ${submitButtonText}`);
+
+                submitButton.setAttribute("aria-busy", "true")
+
+            }
+
             lastSubmit = Date.now()
             setTimeout(() => {
                 submitButton.classList.add("disabled")
@@ -778,6 +819,7 @@ const initFormButton = (form) => {
                 if (Date.now() - lastSubmit > 5000) {
                     submitButton.classList.remove("disabled")
                     submitButton.innerHTML = submitButtonText
+                    submitButton.removeAttribute("aria-busy")
                 }
             }
         }

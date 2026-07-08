@@ -10,8 +10,9 @@ from django.http.request import QueryDict
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
-from pretalx.submission.forms import InfoForm
-from pretalx.submission.models import Submission, SubmissionType
+from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
+from eventyay.submission.forms import InfoForm
+from eventyay.base.models import Submission, SubmissionStates, SubmissionType
 
 
 class TestWizard:
@@ -52,7 +53,6 @@ class TestWizard:
         submission_type=None,
         event=None,
         track=None,
-        additional_speaker=None,
     ):
         submission_data = {
             "title": title,
@@ -62,7 +62,6 @@ class TestWizard:
             "notes": notes,
             "slot_count": slot_count,
             "submission_type": submission_type,
-            "additional_speaker": additional_speaker or "",
         }
         if track:
             submission_data["track"] = getattr(track, "pk", track)
@@ -119,8 +118,9 @@ class TestWizard:
         next_step="me/submissions",
         event=None,
         success=True,
+        additional_speaker=None,
     ):
-        data = {"name": name, "biography": bio}
+        data = {"name": name, "biography": bio, "additional_speaker": additional_speaker or ""}
         response, current_url = self.get_response_and_url(client, url, data=data)
         assert (
             f"/{next_step}/" in current_url
@@ -370,10 +370,9 @@ class TestWizard:
             submission_type=submission_type,
             next_step="profile",
             event=event,
-            additional_speaker="additional@example.com",
         )
         response, current_url = self.perform_profile_form(
-            client, response, current_url, event=event
+            client, response, current_url, event=event, additional_speaker="additional@example.com"
         )
         submission = self.assert_submission(event)
         user = self.assert_user(submission)
@@ -397,10 +396,9 @@ class TestWizard:
             submission_type=submission_type,
             next_step="profile",
             event=event,
-            additional_speaker="additional@example.com",
         )
         response, current_url = self.perform_profile_form(
-            client, response, current_url, event=event
+            client, response, current_url, event=event, additional_speaker="additional@example.com"
         )
         submission = self.assert_submission(event)
         user = self.assert_user(submission)
@@ -692,6 +690,76 @@ class TestWizard:
             assert event.submissions.count() == 2
             assert speaker_question.answers.count() == 1
 
+    @pytest.mark.django_db
+    def test_wizard_can_save_partial_draft(self, event, client, user, submission_type):
+        client.force_login(user)
+
+        response, current_url = self.perform_init_wizard(client, event=event)
+        response = client.post(
+            current_url,
+            data={
+                "title": "",
+                "submission_type": "",
+                "content_locale": "en",
+                "description": "Draft description",
+                "action": "draft",
+            },
+            follow=True,
+        )
+
+        assert response.status_code == 200
+        assert "/me/submissions" in response.request["PATH_INFO"]
+        with scope(event=event):
+            draft = Submission.all_objects.get(event=event, state=SubmissionStates.DRAFT)
+            assert draft.title == AUTO_DRAFT_TITLE
+            assert draft.description == "Draft description"
+            assert draft.submission_type is not None
+            assert draft.speakers.filter(pk=user.pk).exists()
+
+            form = InfoForm(event, instance=draft)
+            assert form["title"].value() == ""
+
+    @pytest.mark.django_db
+    def test_wizard_rejects_completely_blank_draft(self, event, client, user, submission_type):
+        client.force_login(user)
+
+        response, current_url = self.perform_init_wizard(client, event=event)
+        response = client.post(
+            current_url,
+            data={
+                "title": "",
+                "submission_type": "",
+                "content_locale": "en",
+                "slot_count": 1,
+                "action": "draft",
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.text.count("Please fill at least one field.") == 1
+        with scope(event=event):
+            assert not Submission.all_objects.filter(event=event, state=SubmissionStates.DRAFT).exists()
+
+    @pytest.mark.django_db
+    def test_wizard_rejects_completely_blank_continue(self, event, client, user, submission_type):
+        client.force_login(user)
+
+        response, current_url = self.perform_init_wizard(client, event=event)
+        response = client.post(
+            current_url,
+            data={
+                "title": "",
+                "submission_type": "",
+                "content_locale": "en",
+                "slot_count": 1,
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.text.count("Please fill at least one field.") == 1
+        with scope(event=event):
+            assert Submission.all_objects.filter(event=event).count() == 0
+
 
 @pytest.mark.django_db
 def test_infoform_set_submission_type(event, other_event):
@@ -701,9 +769,9 @@ def test_infoform_set_submission_type(event, other_event):
     with scope(event=event):
         f = InfoForm(event)
         assert len(event.submission_types.all()) == 1
-        assert "submission_type" not in f.fields
+        assert "submission_type" in f.fields
+        assert f.fields["submission_type"].disabled is True
         assert f.initial["submission_type"] == event.submission_types.first()
-        assert "submission_type" not in f.fields
 
 
 @pytest.mark.django_db

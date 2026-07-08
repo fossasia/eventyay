@@ -46,6 +46,7 @@ from eventyay.orga.forms.event import (
 from eventyay.orga.forms.importers import CSVImportForm
 from eventyay.orga.forms.schedule import ScheduleExportForm
 from eventyay.orga.forms.speaker import SpeakerExportForm
+from eventyay.orga.forms.review import ReviewExportForm
 from eventyay.person.forms import UserForm
 from eventyay.base.models import ReviewPhase, ReviewScoreCategory, User
 from eventyay.agenda.views.utils import get_schedule_exporters
@@ -98,154 +99,21 @@ class EventDetail(EventSettingsPermission, ActionFromUrl, UpdateView):
         return result
 
 
-class EventLive(EventSettingsPermission, TemplateView):
-    template_name = 'orga/event/live.html'
+class EventLive(View):
+    def _central_url(self, request):
+        return reverse(
+            'eventyay_common:event.live',
+            kwargs={
+                'organizer': request.event.organizer.slug,
+                'event': request.event.slug,
+            },
+        )
 
-    def get_context_data(self, **kwargs):
-        result = super().get_context_data(**kwargs)
-        warnings = []
-        suggestions = []
-        # TODO: move to signal
-        if not self.request.event.cfp.text or len(str(self.request.event.cfp.text)) < 50:
-            warnings.append(
-                {
-                    'text': _('The CfP doesn’t have a full text yet.'),
-                    'url': self.request.event.cfp.urls.text,
-                }
-            )
-        # TODO: test that mails can be sent
-        if (
-            self.request.event.get_feature_flag('use_tracks')
-            and self.request.event.cfp.request_track
-            and self.request.event.tracks.count() < 2
-        ):
-            suggestions.append(
-                {
-                    'text': _(
-                        'You want submitters to choose the tracks for their proposals, but you do not offer tracks for selection. Add at least one track!'
-                    ),
-                    'url': self.request.event.cfp.urls.tracks,
-                }
-            )
-        if self.request.event.submission_types.count() == 1:
-            suggestions.append(
-                {
-                    'text': _('You have configured only one session type so far.'),
-                    'url': self.request.event.cfp.urls.types,
-                }
-            )
-        if not self.request.event.talkquestions.exists():
-            suggestions.append(
-                {
-                    'text': _('You have configured no custom fields yet.'),
-                    'url': self.request.event.cfp.urls.new_question,
-                }
-            )
-        result['warnings'] = warnings
-        result['suggestions'] = suggestions
-        result['private_testmode_talks'] = self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
-        result['talks_testmode'] = self.request.event.settings.get('talks_testmode', False, as_type=bool)
-        result['talks_published'] = self.request.event.talks_published
-        return result
+    def get(self, request, *args, **kwargs):
+        return redirect(self._central_url(request))
 
     def post(self, request, *args, **kwargs):
-        event = request.event
-        if request.POST.get('talks_published') == 'true':
-            if not event.live:
-                messages.error(self.request, _('Publish the event before publishing talks.'))
-                return redirect(event.orga_urls.live)
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.talks_published = True
-                event.settings.private_testmode_talks = False
-                event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
-                event.save()
-                if previous_private != event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.deactivated',
-                        user=self.request.user,
-                        data={},
-                    )
-            messages.success(self.request, _('Talk pages are now published.'))
-        elif request.POST.get('talks_published') == 'false':
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.talks_published = False
-                event.settings.private_testmode_talks = True
-                event.private_testmode = True
-                if event.settings.get('talks_testmode', False, as_type=bool):
-                    event.settings.talks_testmode = False
-                event.save()
-                if previous_private != event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.activated',
-                        user=self.request.user,
-                        data={},
-                    )
-            messages.success(self.request, _('Talk pages have been unpublished.'))
-        elif request.POST.get('talk_testmode') == 'true':
-            if not event.talks_published:
-                messages.error(
-                    self.request,
-                    _('Talk pages must be published before enabling talk test mode.'),
-                )
-                return redirect(event.orga_urls.live)
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.settings.talks_testmode = True
-                if event.startpage_visible or event.startpage_featured:
-                    event.startpage_visible = False
-                    event.startpage_featured = False
-                if event.settings.get('private_testmode_talks', False, as_type=bool):
-                    event.settings.private_testmode_talks = False
-                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
-                event.save()
-                if previous_private and not event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.deactivated',
-                        user=self.request.user,
-                        data={},
-                    )
-                self.request.event.log_action('eventyay.event.talk_testmode.activated', user=self.request.user, data={})
-            messages.success(self.request, _('Talk pages are now in test mode!'))
-        elif request.POST.get('talk_testmode') == 'false':
-            with transaction.atomic():
-                event.settings.talks_testmode = False
-                event.save()
-                self.request.event.log_action('eventyay.event.talk_testmode.deactivated', user=self.request.user, data={})
-            messages.success(self.request, _('Talk pages are now in production mode.'))
-        elif request.POST.get('private_testmode_talks_action'):
-            enable = request.POST.get('private_testmode_talks_action') == 'enable'
-            if enable and event.talks_published:
-                messages.error(self.request, _('Private test mode cannot be enabled while talks are published.'))
-                return redirect(event.orga_urls.live)
-            with transaction.atomic():
-                previous_private = event.private_testmode
-                event.settings.private_testmode_talks = enable
-                if enable:
-                    event.private_testmode = True
-                    event.settings.talks_testmode = False
-                else:
-                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
-                if event.private_testmode and event.testmode:
-                    event.testmode = False
-                    self.request.event.log_action(
-                        'eventyay.event.testmode.deactivated',
-                        user=self.request.user,
-                        data={'delete': False},
-                    )
-                event.save()
-                if previous_private != event.private_testmode:
-                    self.request.event.log_action(
-                        'eventyay.event.private_testmode.activated' if event.private_testmode else 'eventyay.event.private_testmode.deactivated',
-                        user=self.request.user,
-                        data={},
-                    )
-            messages.success(
-                self.request,
-                _('Private test mode is now enabled for talks.') if enable else _('Private test mode is now disabled for talks.'),
-            )
-        return redirect(event.orga_urls.live)
+        return redirect(self._central_url(request))
 
 
 class EventHistory(EventSettingsPermission, ListView):
@@ -487,7 +355,7 @@ class InvitationView(FormView):
     def post(self, *args, **kwargs):
         if not self.request.user.is_anonymous:
             self.accept_invite(self.request.user)
-            return redirect(reverse('orga:event.list'))
+            return redirect(reverse('eventyay_common:dashboard'))
         return super().post(*args, **kwargs)
 
     def form_valid(self, form):
@@ -502,7 +370,7 @@ class InvitationView(FormView):
 
         self.accept_invite(user)
         login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect(reverse('orga:event.list'))
+        return redirect(reverse('eventyay_common:dashboard'))
 
     @transaction.atomic()
     def accept_invite(self, user):
@@ -538,7 +406,7 @@ class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         self.get_object().shred(person=self.request.user)
-        return redirect(reverse('orga:event.list'))
+        return redirect(reverse('eventyay_common:dashboard'))
 
 @method_decorator(csp_update({'SCRIPT_SRC': "'self' 'unsafe-eval'"}), name='dispatch')
 class WidgetSettings(EventSettingsPermission, FormView):
@@ -596,10 +464,21 @@ class TargetChoice(models.TextChoices):
         return {target: config for target, config in cls.import_target_items()}
 
 
+class ExportTargetChoice(models.TextChoices):
+    SPEAKER = 'speaker', _('Speakers')
+    SCHEDULE = 'session', _('Schedule')
+    REVIEW = 'review', _('Reviews')
+
+    @classmethod
+    def export_choices(cls):
+        return tuple((target, target.label) for target in cls)
+
+
 class ImportExportSettings(EventSettingsPermission, TemplateView):
     template_name = 'orga/settings/import_export.html'
     import_choices = TargetChoice.import_choices()
     import_targets = TargetChoice.import_targets()
+    export_choices = ExportTargetChoice.export_choices()
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
@@ -610,8 +489,9 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         }
         result['active_tab'] = kwargs.get('active_tab')
         result['import_choices'] = self.import_choices
+        result['export_choices'] = self.export_choices
         result['import_target'] = kwargs.get('import_target') or self.request.GET.get('import_target') or TargetChoice.SPEAKER
-        result['export_target'] = kwargs.get('export_target') or self.request.GET.get('export_target') or TargetChoice.SPEAKER
+        result['export_target'] = kwargs.get('export_target') or self.request.GET.get('export_target') or ExportTargetChoice.SPEAKER
         result['import_form'] = kwargs.get('import_form') or CSVImportForm()
         result['speaker_export_form'] = kwargs.get('speaker_export_form') or SpeakerExportForm(
             event=self.request.event,
@@ -621,6 +501,11 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             event=self.request.event,
             prefix='session',
         )
+        result['review_export_form'] = kwargs.get('review_export_form') or ReviewExportForm(
+            event=self.request.event,
+            user=self.request.user,
+            prefix='review',
+        )
         all_exporters = get_schedule_exporters(self.request)
         result['speaker_exporters'] = [e for e in all_exporters if e.group == 'speaker']
         result['session_exporters'] = [e for e in all_exporters if e.group != 'speaker']
@@ -628,6 +513,17 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
+
+        # Support for legacy schedule export payloads without prefix
+        if not action and 'export_format' in request.POST:
+            mutable_post = request.POST.copy()
+            mutable_post['action'] = 'export'
+            mutable_post['export_target'] = TargetChoice.SCHEDULE.value
+            for key, value in request.POST.lists():
+                mutable_post.setlist(f'session-{key}', value)
+            request.POST = mutable_post
+            action = 'export'
+
         if action == 'import':
             return self.handle_import()
         if action == 'export':
@@ -670,54 +566,54 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         cached_file.file.save(import_filename, import_form.cleaned_data['file'])
         process_url = reverse(
             target_config['process_url_name'],
-            kwargs={'event': self.request.event.slug, 'file': cached_file.id},
+            kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug, 'file': cached_file.id},
         )
         return redirect(process_url)
 
     def handle_export(self):
-        export_target = self.request.POST.get('export_target', TargetChoice.SPEAKER)
+        export_target = self.request.POST.get('export_target', ExportTargetChoice.SPEAKER)
 
         try:
-            target = TargetChoice(export_target)
+            target = ExportTargetChoice(export_target)
         except ValueError:
-            messages.error(self.request, _('Please choose whether to export speakers or schedule.'))
-            context = self.get_context_data(export_target=TargetChoice.SPEAKER, active_tab='export')
+            messages.error(self.request, _('Please choose a valid export target.'))
+            context = self.get_context_data(export_target=ExportTargetChoice.SPEAKER, active_tab='export')
             return self.render_to_response(context, status=400)
 
-        if target == TargetChoice.SPEAKER:
-            speaker_export_form = SpeakerExportForm(
-                self.request.POST,
-                event=self.request.event,
-                prefix='speaker',
+        speaker_kwargs = {'event': self.request.event, 'prefix': 'speaker'}
+        session_kwargs = {'event': self.request.event, 'prefix': 'session'}
+        review_kwargs = {'event': self.request.event, 'user': self.request.user, 'prefix': 'review'}
+
+        if target == ExportTargetChoice.SPEAKER:
+            speaker_kwargs['data'] = self.request.POST
+        elif target == ExportTargetChoice.SCHEDULE:
+            session_kwargs['data'] = self.request.POST
+        else:  # ExportTargetChoice.REVIEW
+            review_kwargs['data'] = self.request.POST
+
+        speaker_export_form = SpeakerExportForm(**speaker_kwargs)
+        session_export_form = ScheduleExportForm(**session_kwargs)
+        review_export_form = ReviewExportForm(**review_kwargs)
+
+        active_form = {
+            ExportTargetChoice.SPEAKER: speaker_export_form,
+            ExportTargetChoice.SCHEDULE: session_export_form,
+            ExportTargetChoice.REVIEW: review_export_form,
+        }[target]
+
+        if not active_form.is_valid():
+            context = self.get_context_data(
+                export_target=target,
+                speaker_export_form=speaker_export_form,
+                session_export_form=session_export_form,
+                review_export_form=review_export_form,
+                active_tab='export',
             )
-            session_export_form = ScheduleExportForm(event=self.request.event, prefix='session')
-            if not speaker_export_form.is_valid():
-                context = self.get_context_data(
-                    export_target=target,
-                    speaker_export_form=speaker_export_form,
-                    session_export_form=session_export_form,
-                    active_tab='export',
-                )
-                return self.render_to_response(context, status=400)
-            result = speaker_export_form.export_data()
-        else:  # TargetChoice.SCHEDULE
-            speaker_export_form = SpeakerExportForm(event=self.request.event, prefix='speaker')
-            session_export_form = ScheduleExportForm(
-                self.request.POST,
-                event=self.request.event,
-                prefix='session',
-            )
-            if not session_export_form.is_valid():
-                context = self.get_context_data(
-                    export_target=target,
-                    speaker_export_form=speaker_export_form,
-                    session_export_form=session_export_form,
-                    active_tab='export',
-                )
-                return self.render_to_response(context, status=400)
-            result = session_export_form.export_data()
+            return self.render_to_response(context, status=400)
+
+        result = active_form.export_data()
 
         if not result:
-            messages.success(self.request, _('No data to be exported'))
+            messages.warning(self.request, _('No data to be exported'))
             return redirect(f'{self.request.path}?export_target={target.value}#tab-export')
         return result

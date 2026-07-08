@@ -1,7 +1,11 @@
 <template lang="pug">
 .c-speaker-detail
-	.speaker-wrapper(v-if="resolvedSpeaker")
-		.speaker-header(:class="{'has-export': speakerExportOptions.length}")
+	detail-back-nav(:event-url="eventUrl")
+		detail-top-actions(
+			:export-options="speakerExportOptions",
+			:qrcodes-url="speakerQrcodesUrl")
+	.speaker-wrapper(v-if="speakerDetailReady")
+		.speaker-header
 			.speaker-avatar
 				img(v-if="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :src="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :alt="resolvedSpeaker.name")
 				.avatar-placeholder(v-else)
@@ -10,8 +14,21 @@
 			.speaker-content-area
 				.speaker-title
 					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
-				export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl")
-		markdown-content.biography(v-if="resolvedSpeaker.biography", :markdown="resolvedSpeaker.biography")
+		.field-section.biography-section(v-if="resolvedSpeaker.biography")
+			h2.field-heading {{ t.biography }}
+			.field-content
+				markdown-content(:markdown="resolvedSpeaker.biography")
+		.field-section(v-for="answer in longAnswers", :key="answer.id")
+			h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
+			.field-content
+				markdown-content(:markdown="answer.answer_string || answer.answer")
+		.field-section(v-for="answer in inlineAnswers", :key="answer.id")
+			h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
+			.field-content
+				a.answer-link(v-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && answer.answer_file && answer.answer_file.url", :href="answer.answer_file.url", target="_blank", rel="noopener noreferrer") {{ answer.answer || answer.answer_file.url }}
+				a.answer-link(v-else-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && answer.answer", :href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
+				span(v-else-if="answer.question.variant === 'boolean'") {{ parseBooleanAnswer(answer.answer) ? t.yes : t.no }}
+				span(v-else-if="answer.answer_string || answer.answer") {{ answer.answer_string || answer.answer }}
 		.speaker-sessions(v-if="resolvedSessions && resolvedSessions.length")
 			h3 {{ t.sessions }}
 			session(
@@ -33,15 +50,18 @@
 
 <script>
 import moment from 'moment-timezone'
+import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl, sessionsForSpeaker } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
 import Session from './Session.vue'
-import ExportDropdown from './ExportDropdown.vue'
+import DetailBackNav from './DetailBackNav.vue'
+import DetailTopActions from './DetailTopActions.vue'
 
 export default {
 	name: 'SpeakerDetail',
-	components: { MarkdownContent, Session, ExportDropdown },
+	components: { MarkdownContent, Session, DetailBackNav, DetailTopActions },
 	inject: {
 		eventUrl: { default: null },
+		remoteApiUrl: { default: '' },
 		scheduleData: { default: null },
 		scheduleFav: { default: null },
 		scheduleUnfav: { default: null },
@@ -55,7 +75,9 @@ export default {
 				return () => {}
 			}
 		},
-		translationMessages: { default: () => ({}) }
+		translationMessages: { default: () => ({}) },
+		isWipPreview: { default: false },
+		exportsDisabled: { default: false },
 	},
 	props: {
 		speaker: Object,
@@ -78,12 +100,18 @@ export default {
 		onHomeServer: Boolean
 	},
 	emits: ['fav', 'unfav'],
+	data() {
+		return {
+			getLocalizedString,
+			parseBooleanAnswer,
+			fetchedApiContent: null,
+			apiContentLoaded: false,
+		}
+	},
 	computed: {
 		speakerQrcodesUrl() {
 			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code
-			if (!code || !this.eventUrl) return ''
-			const base = this.eventUrl.replace(/\/?$/, '/')
-			return `${base}schedule/widgets/qrcodes/speaker/${code}.json`
+			return buildQrcodesUrl(this.eventUrl, 'speaker', code)
 		},
 		t() {
 			const m = this.translationMessages || {}
@@ -92,6 +120,9 @@ export default {
 				ical: m.ical || 'iCal',
 				sessions: m.sessions || 'Sessions',
 				export: m.export || 'Exports',
+				yes: m.yes || 'Yes',
+				no: m.no || 'No',
+				biography: m.biography || 'Biography',
 			}
 		},
 		resolvedSpeaker() {
@@ -119,26 +150,15 @@ export default {
 		resolvedSessions() {
 			if (this.sessions?.length) return this.sessions
 			const id = this.speakerId || this.speaker?.code
-			if (id && this.scheduleData?.sessionsBySpeaker?.[id]) {
-				return this.scheduleData.sessionsBySpeaker[id]
-			}
-			if (id && this.scheduleData) {
-				const list = this.scheduleData.sessions || []
-				const out = []
-				for (let i = 0; i < list.length; i++) {
-					const s = list[i]
-					const spk = s.speakers
-					if (!spk) continue
-					for (let j = 0; j < spk.length; j++) {
-						if (spk[j] && spk[j].code === id) {
-							out.push(s)
-							break
-						}
-					}
-				}
-				return out
-			}
-			return []
+			if (!id) return []
+			const fromBySpeaker = sessionsForSpeaker(this.scheduleData?.sessionsBySpeaker, id)
+			if (fromBySpeaker.length) return fromBySpeaker
+			const list = this.scheduleData?.sessions || []
+			const normalizedId = id.toLowerCase()
+			return list.filter((session) => (session.speakers || []).some((sp) => {
+				const code = typeof sp === 'string' ? sp : sp?.code
+				return code && code.toLowerCase() === normalizedId
+			}))
 		},
 		resolvedFavs() {
 			if (this.favs?.length) return this.favs
@@ -160,27 +180,60 @@ export default {
 			if (this.scheduleData?.hasAmPm !== undefined) return this.scheduleData.hasAmPm
 			return new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12
 		},
+		effectiveSpeakerApiContent() {
+			return this.resolvedSpeaker?.apiContent || this.fetchedApiContent
+		},
+		speakerDetailReady() {
+			return this.resolvedSpeaker && (this.effectiveSpeakerApiContent || this.apiContentLoaded || !this.computedApiBaseUrl)
+		},
+		computedApiBaseUrl() {
+			if (this.remoteApiUrl) return this.remoteApiUrl
+			if (!this.eventUrl) return null
+			try {
+				const url = new URL(this.eventUrl, window.location.origin)
+				const segments = url.pathname.split('/').filter(s => s.length > 0)
+				const slug = segments[segments.length - 1] || ''
+				return `${url.origin}/api/v1/events/${slug}/`
+			} catch {
+				return null
+			}
+		},
+		longAnswers() {
+			const answers = this.effectiveSpeakerApiContent?.answers
+			if (!Array.isArray(answers)) return []
+			return answers.filter(a => a.question && a.question.is_public !== false &&
+				(a.question.variant === 'text' || a.question.variant === 'string'))
+		},
+		inlineAnswers() {
+			const answers = this.effectiveSpeakerApiContent?.answers
+			if (!Array.isArray(answers)) return []
+			return answers.filter(a => a.question && a.question.is_public !== false &&
+				a.question.variant !== 'text' && a.question.variant !== 'string')
+		},
 		speakerBaseUrl() {
 			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code
 			if (!code || !this.eventUrl) return null
 			return `${this.eventUrl}speakers/${code}`
 		},
 		speakerExportOptions() {
+			if (this.exportsDisabled || !this.resolvedSessions?.length) return []
 			const exporters = this.resolvedSpeaker?.exporters
 			const base = this.speakerBaseUrl
-			// Need either inline exporters data or a base URL to build URLs
 			if (!exporters && !base) return []
-			const qr = exporters?.qrcodes || {}
-			const items = [
-				{ id: 'google_calendar', label: 'Add to Google Calendar', url: exporters?.google_calendar || (base && `${base}/talks/export/google-calendar`), icon: 'fa-google', qrcode_svg: qr.google_calendar },
-				{ id: 'webcal', label: 'Add to Other Calendar', url: exporters?.webcal || (base && `${base}/talks/export/webcal`), icon: 'fa-calendar', qrcode_svg: qr.webcal },
-				{ id: 'ics', label: 'iCal', url: exporters?.ics || (base && `${base}/talks.ics`), icon: 'fa-calendar', qrcode_svg: qr.ics },
-				{ id: 'json', label: 'JSON (frab compatible)', url: exporters?.json || (base && `${base}/talks.json`), icon: 'fa-code', qrcode_svg: qr.json },
-				{ id: 'xml', label: 'XML (frab compatible)', url: exporters?.xml || (base && `${base}/talks.xml`), icon: 'fa-code', qrcode_svg: qr.xml },
-				{ id: 'xcal', label: 'XCal (frab compatible)', url: exporters?.xcal || (base && `${base}/talks.xcal`), icon: 'fa-calendar', qrcode_svg: qr.xcal },
-			].filter(o => o.url)
-
-			return items
+			const merged = base ? { ...computeSpeakerExporters(base), ...(exporters || {}) } : exporters
+			return buildExportMenuItems(merged)
+		},
+	},
+	watch: {
+		resolvedSpeaker: {
+			handler() {
+				if (!this.effectiveSpeakerApiContent) this.fetchApiContent()
+			},
+			immediate: true
+		},
+		speakerId() {
+			this.fetchedApiContent = null
+			this.apiContentLoaded = false
 		}
 	},
 	methods: {
@@ -191,6 +244,32 @@ export default {
 		onUnfav(id) {
 			if (this.scheduleUnfav) this.scheduleUnfav(id)
 			this.$emit('unfav', id)
+		},
+		async fetchApiContent() {
+			if (this.effectiveSpeakerApiContent || this.fetchedApiContent !== null || this.apiContentLoaded) return
+			if (!this.computedApiBaseUrl) {
+				this.apiContentLoaded = true
+				return
+			}
+			const code = this.speakerId || this.resolvedSpeaker?.code
+			if (!code) {
+				this.apiContentLoaded = true
+				return
+			}
+			try {
+				const url = `${this.computedApiBaseUrl}speakers/${code}/?expand=answers.question`
+				const response = await fetch(url)
+				if (!response.ok) {
+					console.warn('[SpeakerDetail] API response not ok:', response.status, url)
+					return
+				}
+				const data = await response.json()
+				this.fetchedApiContent = data
+			} catch (e) {
+				console.warn('[SpeakerDetail] fetch failed:', e)
+			} finally {
+				this.apiContentLoaded = true
+			}
 		}
 	}
 }
@@ -217,10 +296,6 @@ export default {
 	.speaker-content-area
 		flex: 1
 		min-width: 0
-		display: flex
-		align-items: center
-		justify-content: space-between
-		gap: 12px
 	.speaker-title
 		width: 100%
 		display: flex
@@ -228,9 +303,6 @@ export default {
 		h2
 			margin: 0
 			text-align: left
-	.speaker-export
-		flex-shrink: 0
-		align-self: center
 	.speaker-avatar
 		flex-shrink: 0
 		width: 128px
@@ -250,9 +322,30 @@ export default {
 				width: 60%
 				height: 60%
 				color: rgba(0,0,0,0.3)
-	.biography
-		margin-bottom: 16px
-		font-size: 16px
+	.field-section
+		margin: 16px 0 0 0
+		.field-heading
+			margin: 0 0 6px 0
+			font-size: 14px
+			font-weight: 700
+			color: $clr-secondary-text-light
+		.field-content
+			padding: 8px 12px
+			p
+				margin: 0.25em 0
+				&:first-child
+					margin-top: 0
+				&:last-child
+					margin-bottom: 0
+		&.biography-section
+			.field-content
+				font-size: 16px
+	.answer-link
+		color: var(--pretalx-clr-primary, var(--clr-primary))
+		text-decoration: none
+		word-break: break-all
+		&:hover
+			text-decoration: underline
 	.speaker-sessions
 		h3
 			margin-bottom: 8px
@@ -265,17 +358,11 @@ export default {
 			flex-direction: column
 			align-items: center
 			text-align: center
-			&.has-export
-				padding-top: 32px
 			.speaker-content-area
 				width: 100%
 				flex-direction: column
 				align-items: center
 				gap: 4px
-				.speaker-export
-					position: absolute
-					top: 0
-					right: 0
 				.speaker-title h2
 					text-align: center
 		.speaker-avatar

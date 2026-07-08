@@ -4,7 +4,8 @@
 
 {% eventurl event "presale:event.index" as event_url %}
 {% abseventurl event "presale:event.index" as event_url_abs %}
-{% with event.visible_logo_url|default:event.visible_header_image_url as event_image_url %}
+{% with event.preview_image_url_with_fallback as event_image_url %}
+{% with event.social_image_signature as share_image_signature %}
 <article
     class="startpage-event-card"
     data-event-name="{{ event.name|event_localize|escape }}"
@@ -13,8 +14,8 @@
     data-event-image="{{ event_image_url|default:''|escape }}"
 >
     <a class="startpage-event-media" href="{{ event_url }}">
-        {% if event.visible_header_image_url %}
-            <img src="{{ event.visible_header_image_url }}" alt="{{ event.name|event_localize }}">
+        {% if event_image_url %}
+            <img src="{{ event_image_url }}" alt="{{ event.name|event_localize }}">
         {% else %}
             <div class="startpage-event-media-placeholder">
                 <i class="fa fa-calendar"></i>
@@ -31,7 +32,7 @@
             </a>
             {% if event.location %}
                 <span class="startpage-event-location">
-                    <i class="fa fa-map-marker"></i>
+                    <i class="fa fa-map-marker" aria-hidden="true"></i>
                     {{ event.location|event_localize }}
                 </span>
             {% endif %}
@@ -42,14 +43,15 @@
             {% trans "View event" %}
         </a>
         {% if event.has_component_testmode %}
-            <span class="startpage-testmode-badge" title="{% trans "Test mode enabled" %}">
+            <span class="startpage-testmode-badge" title="{% trans 'Test mode enabled' %}">
                 <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
-                {% trans "Test Mode" %}
+                {% trans 'Test Mode' %}
             </span>
         {% endif %}
-        <button class="startpage-event-share" type="button" data-url="{{ event_url_abs }}" aria-label="{% trans "Copy event link" %}" title="{% trans "Copy event link" %}">
-            <i class="fa fa-share-alt"></i>
+        <button class="startpage-event-share" type="button" data-url="{{ event_url_abs }}" data-share-image-signature="{{ share_image_signature|default:''|escape }}" data-share-label="{% trans 'Share event' %}" aria-label="{% trans 'Share event' %}" title="{% trans 'Share event' %}">
+            <i class="fa fa-share-alt" aria-hidden="true"></i>
         </button>
     </div>
 </article>
+{% endwith %}
 {% endwith %}

@@ -3,7 +3,7 @@ import logging
 from enum import StrEnum
 from http import HTTPStatus
 from typing import TypeVar
-from urllib.parse import quote, unquote, urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 import jwt
 import vobject
@@ -21,8 +21,16 @@ from django_context_decorator import context
 from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
+from eventyay.agenda.export_resources import public_resource_attachments, public_resource_links
 from eventyay.agenda.signals import register_recording_provider
-from eventyay.agenda.views.utils import build_enriched_schedule_json, encode_email, is_email_like
+from eventyay.agenda.views.utils import (
+    WipAgendaPreviewPageMixin,
+    build_enriched_schedule_json,
+    build_google_calendar_url,
+    build_talk_schedule_json,
+    encode_email,
+    is_email_like,
+)
 from eventyay.base.models import (
     Event,
     Order,
@@ -43,6 +51,7 @@ from eventyay.common.views.mixins import (
     SocialMediaCardMixin,
 )
 from eventyay.submission.forms import FeedbackForm
+from eventyay.talk_rules.agenda import agenda_schedule_for_user, filter_agenda_slots
 
 
 logger = logging.getLogger(__name__)
@@ -63,6 +72,7 @@ class VideoJoinError(StrEnum):
 
 class TalkMixin(PermissionRequired):
     permission_required = 'base.view_public_submission'
+    wip_preview = False
 
     def get_queryset(self):
         return self.request.event.submissions.prefetch_related(
@@ -84,6 +94,21 @@ class TalkMixin(PermissionRequired):
 
     def get_permission_object(self):
         return self.submission
+
+    def agenda_schedule(self):
+        return agenda_schedule_for_user(
+            self.request.event,
+            self.request.user,
+            wip_preview=self.wip_preview,
+        )
+
+    def filter_visible_slots(self, qs):
+        return filter_agenda_slots(
+            qs,
+            self.request.user,
+            self.request.event,
+            wip_preview=self.wip_preview,
+        )
 
 
 def talk_starrers(request, event, slug, **kwargs):
@@ -164,7 +189,11 @@ class TalkView(TalkMixin, TemplateView):
 
     @context
     def schedule_json(self):
-        return build_enriched_schedule_json(self.request)
+        return build_talk_schedule_json(self.request, self.submission.code)
+
+    @context
+    def schedule_version(self):
+        return ''
 
     def get_contrast_color(self, bg_color):
         if not bg_color:
@@ -207,7 +236,7 @@ class TalkView(TalkMixin, TemplateView):
         from django.db.models import Prefetch
 
         ctx = super().get_context_data(**kwargs)
-        schedule = self.request.event.current_schedule or self.request.event.wip_schedule
+        schedule = self.agenda_schedule()
         if not self.request.user.has_perm('base.view_schedule', schedule):
             return ctx
         qs = schedule.talks.filter(room__isnull=False).select_related('room') if schedule else TalkSlot.objects.none()
@@ -216,7 +245,9 @@ class TalkView(TalkMixin, TemplateView):
         for tag_item in ctx['submission_tags']:
             tag_item.contrast_color = self.get_contrast_color(tag_item.color)
         other_slots = (
-            schedule.talks.exclude(submission_id=self.submission.pk).filter(is_visible=True)
+            self.filter_visible_slots(
+                schedule.talks.exclude(submission_id=self.submission.pk)
+            )
             if schedule
             else TalkSlot.objects.none()
         )
@@ -255,6 +286,18 @@ class TalkView(TalkMixin, TemplateView):
     @cached_property
     def answers(self):
         return self.submission.public_answers
+
+
+class WipTalkView(WipAgendaPreviewPageMixin, TalkView):
+    def has_permission(self):
+        wip = self.request.event.wip_schedule
+        if not wip:
+            return False
+        return self.submission.slots.filter(schedule=wip).exists()
+
+    @context
+    def schedule_json(self):
+        return build_enriched_schedule_json(self.request, wip_preview=True)
 
 
 class TalkReviewView(TalkView):
@@ -312,9 +355,9 @@ class TalkReviewView(TalkView):
 class SingleICalView(EventPageMixin, TalkMixin, View):
     def get(self, request, event, **kwargs):
         code = self.submission.code
-        schedule = self.request.event.current_schedule or self.request.event.wip_schedule
+        schedule = self.agenda_schedule()
         talk_slots = (
-            self.submission.slots.filter(schedule=schedule, is_visible=True)
+            self.filter_visible_slots(self.submission.slots.filter(schedule=schedule))
             if schedule
             else self.submission.slots.none()
         )
@@ -338,11 +381,11 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
 
     def get(self, request, event, slug, **kwargs):
         fmt = kwargs.get('format', '')
-        schedule = request.event.current_schedule or request.event.wip_schedule
+        schedule = self.agenda_schedule()
         if not schedule:
             raise Http404
         talk_slots = (
-            self.submission.slots.filter(schedule=schedule, is_visible=True)
+            self.filter_visible_slots(self.submission.slots.filter(schedule=schedule))
             .select_related('room', 'submission', 'submission__track', 'submission__submission_type')
             .prefetch_related('submission__speakers', 'submission__resources')
         )
@@ -409,18 +452,8 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
                         }
                         for p in sub.speakers.all()
                     ],
-                    'links': [
-                        {'title': localize_event_text(r.description), 'url': r.link}
-                        for r in sub.resources.all()
-                        if event.cfp.is_resource_public(r)
-                        if r.link
-                    ],
-                    'attachments': [
-                        {'title': localize_event_text(r.description), 'url': r.resource.url}
-                        for r in sub.resources.all()
-                        if event.cfp.is_resource_public(r)
-                        if not r.link
-                    ],
+                    'links': public_resource_links(sub, event),
+                    'attachments': public_resource_attachments(sub, event),
                 }
             )
         data = {
@@ -460,15 +493,18 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
 
     def get(self, request, event, slug, **kwargs):
         provider = kwargs.get('provider', '')
-        schedule = request.event.current_schedule or request.event.wip_schedule
+        schedule = self.agenda_schedule()
         if not schedule:
             raise Http404
-        talk_slots = self.submission.slots.filter(schedule=schedule, is_visible=True)
+        talk_slots = self.filter_visible_slots(self.submission.slots.filter(schedule=schedule))
         if not talk_slots.exists():
             raise Http404
 
         slot = talk_slots.first()
-        ical_url = request.build_absolute_uri(
+        parsed_base = urlparse(get_base_url(request.event))
+        base_url = f'{parsed_base.scheme}://{parsed_base.netloc}'
+        ical_url = urljoin(
+            base_url,
             reverse(
                 'agenda:ical',
                 kwargs={
@@ -476,32 +512,32 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
                     'event': event,
                     'slug': slug,
                 },
-            )
+            ),
         )
 
         if provider == 'google-calendar':
             return self._google_calendar_redirect(slot, request)
         if provider == 'webcal':
             webcal_url = ical_url.replace('https://', 'webcal://').replace('http://', 'webcal://')
-            return HttpResponseRedirect(webcal_url)
+            response = HttpResponse(status=302)
+            response['Location'] = webcal_url
+            return response
         raise Http404
 
     def _google_calendar_redirect(self, slot, request):
         sub = slot.submission
         start = slot.start
         end = slot.real_end
+        if not start or not end:
+            raise Http404
+        start_utc = start.astimezone(dt.UTC)
+        end_utc = end.astimezone(dt.UTC)
         fmt = '%Y%m%dT%H%M%SZ'
-        dates = f'{start.strftime(fmt)}/{end.strftime(fmt)}'
+        dates = f'{start_utc.strftime(fmt)}/{end_utc.strftime(fmt)}'
         title = localize_event_text(sub.title)
         location = localize_event_text(slot.room.name) if slot.room else ''
         details = localize_event_text(sub.abstract) if request.event.cfp.public_abstract else ''
-        url = (
-            'https://calendar.google.com/calendar/render?action=TEMPLATE'
-            f'&text={quote(str(title))}'
-            f'&dates={dates}'
-            f'&location={quote(str(location))}'
-            f'&details={quote(str(details))}'
-        )
+        url = build_google_calendar_url(title, dates, location, details)
         return HttpResponseRedirect(url)
 
 

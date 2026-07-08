@@ -10,10 +10,36 @@ from django.views.generic import TemplateView
 from django_context_decorator import context
 from django_scopes import scopes_disabled
 
+from django.http import Http404
+
+def legacy_orga_event_redirect(request, event):
+    from eventyay.base.models import Event
+    with scopes_disabled():
+        events = Event.objects.filter(slug__iexact=event)
+        if events.count() == 1:
+            e = events.first()
+            url = f"/orga/event/{e.organizer.slug}/{e.slug}/"
+            if request.META.get('QUERY_STRING'):
+                url += '?' + request.META['QUERY_STRING']
+            return redirect(url, permanent=True)
+        if events.count() > 1 and request.user.is_authenticated:
+            user_events = events.filter(
+                Q(organizer__id__in=request.user.teams.values_list('organizer_id', flat=True)) |
+                Q(submissions__speakers__in=[request.user])
+            ).distinct()
+            if user_events.count() == 1:
+                e = user_events.first()
+                url = f"/orga/event/{e.organizer.slug}/{e.slug}/"
+                if request.META.get('QUERY_STRING'):
+                    url += '?' + request.META['QUERY_STRING']
+                return redirect(url, permanent=True)
+        raise Http404()
+
 from eventyay.base.models import Submission, SubmissionStates
 from eventyay.base.models.event import Event
 from eventyay.base.models.log import LogEntry
 from eventyay.base.models.organizer import Organizer
+from eventyay.base.settings import is_event_series_creation_enabled
 from eventyay.common.text.phrases import phrases
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
@@ -32,7 +58,7 @@ def start_redirect_view(request):
             return redirect(orga_events.pop().orga_urls.base)
         return redirect(speaker_events.pop().urls.user_submissions)
 
-    return redirect(reverse('orga:event.list'))
+    return redirect(reverse('eventyay_common:dashboard'))
 
 
 class DashboardEventListView(TemplateView):
@@ -75,6 +101,7 @@ class DashboardEventListView(TemplateView):
         context['speaker_events'] = (
             Event.objects.filter(submissions__speakers__in=[self.request.user]).distinct().order_by('-date_from')
         )
+        context['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         return context
 
 

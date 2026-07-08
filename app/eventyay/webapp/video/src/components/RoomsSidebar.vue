@@ -10,7 +10,7 @@ transition(name="sidebar")
 					router-link.room(v-if="!homeRoom || page !== homeRoom", :to="{name: 'room', params: {roomId: page.id}}", v-html="$emojify(page.name)")
 			.group-title#stages-title(v-if="roomsByType.stage.length || hasPermission('world:rooms.create.stage')")
 				span {{ $t('RoomsSidebar:stages-headline:text') }}
-				bunt-icon-button(v-if="hasPermission('world:rooms.create.stage')", @click="showStageCreationPrompt = true") plus
+				bunt-icon-button(v-if="hasPermission('world:rooms.create.stage')", tooltip="Create Stage", :tooltip-fixed="true", @click="showStageCreationPrompt = true") plus
 			.stages(role="group", aria-describedby="stages-title")
 				router-link.stage(v-for="stage of roomsByType.stage", :to="homeRoom && stage.room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: stage.room.id}}", :class="{active: stage.room.id === $route.params.roomId, session: stage.session, live: stage.session && stage.room.schedule_data, 'has-image': stage.image, 'starts-with-emoji': startsWithEmoji(stage.room.name)}")
 					template(v-if="stage.session")
@@ -66,7 +66,7 @@ transition(name="sidebar")
 				.group-title {{ $t('RoomsSidebar:posters-headline:text') }}
 				.admin
 					router-link(:to="{name: 'posters'}") {{ $t('RoomsSidebar:posters-manage:label') }}
-			template(v-if="hasPermission('world:users.list') || hasPermission('world:update') || hasPermission('world:announce') || hasPermission('room:update') || hasPermission('world:kiosks.manage')")
+			template(v-if="hasPermission('world:users.list') || hasPermission('world:update') || hasPermission('world:announce') || hasPermission('room:update') || hasPermission('world:kiosks.manage') || isAdminMode")
 				.group-title {{ $t('RoomsSidebar:admin-headline:text') }}
 				.admin
 					router-link.room(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')") {{ $t('RoomsSidebar:admin-announcements:label') }}
@@ -74,6 +74,7 @@ transition(name="sidebar")
 					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('RoomsSidebar:admin-rooms:label') }}
 					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:kiosks.manage')") {{ $t('RoomsSidebar:admin-kiosks:label') }}
 					router-link.room(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}") {{ $t('RoomsSidebar:admin-config:label') }}
+					router-link.room(v-if="isAdminMode", :to="{name: 'admin:video-admin'}") Video Admin
 		transition(name="prompt")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")
@@ -114,7 +115,7 @@ export default {
 		...mapState('schedule', ['schedule']),
 		...mapState('chat', ['joinedChannels', 'call']),
 		...mapState('exhibition', ['staffedExhibitions']),
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
 		...mapGetters('chat', ['hasUnreadMessages', 'notificationCount']),
 		...mapGetters('schedule', ['sessions', 'currentSessionPerRoom']),
 		homeRoom() {

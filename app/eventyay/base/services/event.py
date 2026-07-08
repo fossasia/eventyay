@@ -80,17 +80,10 @@ class EventConfigSerializer(serializers.Serializer):
 
 @database_sync_to_async
 def _get_event(event_id):
-    """Retrieve Event by primary key or slug.
-    Frontend passes <event_identifier> in /video/<event_identifier>/ and websocket /ws/event/<event_identifier>/.
-    Previously only numeric primary key worked; now also accept slug.
-    """
-    # Try numeric ID first if it looks like one
+    """Retrieve Event by primary key or slug."""
     if isinstance(event_id, str) and event_id.isdigit():
-        evt = Event.objects.filter(id=int(event_id)).first()
-        if evt:
-            return evt
-    # Fallback: match by slug OR (string) id (covers atypical string PK setups)
-    return Event.objects.filter(Q(slug=event_id) | Q(id=event_id)).first()
+        return Event.objects.filter(Q(slug=event_id) | Q(id=int(event_id))).first()
+    return Event.objects.filter(slug=event_id).first()
 
 
 async def get_event(event_id):
@@ -99,26 +92,30 @@ async def get_event(event_id):
 
 
 def get_rooms(event, user):
-    qs = (
-        event.rooms.filter(deleted=False)
-        .order_by('sorting_priority', 'id')
-        .prefetch_related("channel")
-        .annotate(
-            current_roomviews=Subquery(
-                RoomView.objects.filter(room_id=OuterRef("pk"), end__isnull=True)
-                .values("room_id")
-                .order_by()
-                .annotate(
-                    # Count('user_id', distinct=True) would be more accurate, but might be slow, and we don't need accurate
-                    c=Count("user_id")
+    from django_scopes import scope
+
+    with scope(event=event):
+        qs = (
+            event.rooms.filter(deleted=False)
+            .with_has_linked_sessions()
+            .order_by('sorting_priority', 'id')
+            .prefetch_related("channel")
+            .annotate(
+                current_roomviews=Subquery(
+                    RoomView.objects.filter(room_id=OuterRef("pk"), end__isnull=True)
+                    .values("room_id")
+                    .order_by()
+                    .annotate(
+                        # Count('user_id', distinct=True) would be more accurate, but might be slow, and we don't need accurate
+                        c=Count("user_id")
+                    )
+                    .values("c")
                 )
-                .values("c")
             )
         )
-    )
-    if user:
-        qs = qs.with_permission(event=event, user=user)
-    return list(qs)
+        if user:
+            qs = qs.with_permission(event=event, user=user)
+        return list(qs)
 
 
 @database_sync_to_async
@@ -297,7 +294,64 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
 
 async def create_room(event, data, creator):
     types = {m["type"] for m in data.get("modules", [])}
-    if "chat.native" in types:
+    livestream_types = {
+        "livestream.native",
+        "livestream.youtube",
+        "livestream.iframe",
+    }
+    livestream_modules = [
+        m for m in data.get("modules", []) if m.get("type") in livestream_types
+    ]
+
+    if livestream_modules:
+        allowed_stage_types = livestream_types | {"chat.native"}
+        if len(livestream_modules) != 1 or types - allowed_stage_types:
+            raise ValidationError(
+                f"The dynamic creation of rooms with the modules {types} is currently not allowed.",
+                code="invalid",
+            )
+        if not await event.has_permission_async(
+            user=creator, permission=Permission.EVENT_ROOMS_CREATE_STAGE
+        ):
+            raise ValidationError(
+                "This user is not allowed to create a room of this type.",
+                code="denied",
+            )
+
+        module = livestream_modules[0]
+        config = module.get("config", {}) or {}
+        playback_mode = config.get("playback_mode") or "always_on"
+        if playback_mode not in {"schedule_driven", "always_on"}:
+            raise ValidationError(
+                "Invalid stage playback mode.",
+                code="invalid",
+            )
+
+        clean_config = {"playback_mode": playback_mode}
+        if playback_mode == "always_on":
+            if module["type"] == "livestream.native":
+                clean_config["hls_url"] = config.get("hls_url", "")
+            elif module["type"] == "livestream.youtube":
+                clean_config["ytid"] = config.get("ytid", "")
+                for key in (
+                    "enablePrivacyEnhancedMode",
+                    "loop",
+                    "modestBranding",
+                    "hideControls",
+                    "noRelated",
+                    "disableKb",
+                    "showInfo",
+                ):
+                    if config.get(key):
+                        clean_config[key] = True
+            elif module["type"] == "livestream.iframe":
+                clean_config["url"] = config.get("url", "")
+        module["config"] = clean_config
+
+        if "chat.native" in types:
+            m = [m for m in data.get("modules", []) if m["type"] == "chat.native"][0]
+            m["config"] = {"volatile": m.get("config", {}).get("volatile", False)}
+    elif "chat.native" in types:
         if not await event.has_permission_async(
             user=creator, permission=Permission.EVENT_ROOMS_CREATE_CHAT
         ):
@@ -318,16 +372,6 @@ async def create_room(event, data, creator):
         m = [m for m in data.get("modules", []) if m["type"] == "call.bigbluebutton"][0]
         m["config"] = event.config.get("bbb_defaults", {})
         m["config"].pop("secret", None)  # legacy
-    elif "livestream.native" in types:
-        if not await event.has_permission_async(
-            user=creator, permission=Permission.EVENT_ROOMS_CREATE_STAGE
-        ):
-            raise ValidationError(
-                "This user is not allowed to create a room of this type.",
-                code="denied",
-            )
-        m = [m for m in data.get("modules", []) if m["type"] == "livestream.native"][0]
-        m["config"] = {"hls_url": m.get("config", {}).get("hls_url", "")}
     elif types == set():
         if not await event.has_permission_async(
             user=creator, permission=Permission.ROOM_UPDATE
@@ -379,7 +423,7 @@ def generate_tokens(event, number, traits, days, by_user, long=False):
     secret = jwt_config["secret"]
     audience = jwt_config["audience"]
     issuer = jwt_config["issuer"]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=days)
     result = []
     bulk_create = []

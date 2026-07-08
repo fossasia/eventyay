@@ -4,11 +4,26 @@ body.page-agenda #main-container > header {
   margin-top: 24px;
 }
 
+body.page-agenda {
+  --page-inset-block-start: 0.75rem;
+  --page-inset-inline: 1rem;
+  --page-inset-block-end: 1rem;
+}
+
+@media (max-width: 768px) {
+  body.page-agenda {
+    --page-inset-block-start: 0.5rem;
+    --page-inset-inline: 0.75rem;
+    --page-inset-block-end: 0.875rem;
+  }
+}
+
 /* Featured page typography */
 body.page-agenda .featured-page {
   --featured-intro-size: 0.9375rem;
   --featured-body-size: 0.9375rem;
   --featured-meta-size: 0.875rem;
+  padding: var(--page-inset-block-start) var(--page-inset-inline) var(--page-inset-block-end);
 }
 
 body.page-agenda .featured-page > .talk-title.featured-page-title {
@@ -175,12 +190,18 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
   #main-card {
     margin: 0 auto;
     main {
-      padding: 5px;
       width: 100%;
+    }
+    main:not(:has(.featured-page)) {
+      padding: calc(var(--page-inset-block-start) / 2) calc(var(--page-inset-inline) / 2)
+        calc(var(--page-inset-block-end) / 2);
+    }
+    main:has(.featured-page) {
+      padding: 0;
     }
   }
 
-  /* The container main now provides the 5px padding. We can set it to 0 or leave as minimal here. */
+  /* The container main now provides the inset. Keep the widget flush inside #fahrplan. */
   pretalx-schedule[view="schedule"],
   #fahrplan {
     padding: 0 !important;
@@ -192,7 +213,11 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
     padding-left: 0;
     padding-right: 0;
     padding-bottom: 0;
-    #main-card main {
+    #main-card main:not(:has(.featured-page)) {
+      padding: calc(var(--page-inset-block-start) / 2) calc(var(--page-inset-inline) / 2)
+        calc(var(--page-inset-block-end) / 2);
+    }
+    #main-card main:has(.featured-page) {
       padding: 0;
     }
   }
@@ -510,4 +535,110 @@ article .pretalx-session .pretalx-session-info .abstract {
 
 .markdown-column .form-group {
   flex-direction: column;
+}
+
+dialog.agenda-wip-preview-leave-dialog {
+  border: none;
+  padding: 0;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  max-width: min(460px, calc(100vw - 32px));
+  width: 100%;
+}
+
+dialog.agenda-wip-preview-leave-dialog[open] {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  animation: agenda-wip-preview-leave-dialog-in 0.2s ease-out;
+}
+
+dialog.agenda-wip-preview-leave-dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+}
+
+@keyframes agenda-wip-preview-leave-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px));
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.agenda-wip-preview-leave-dialog__card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 32px 28px 24px;
+  text-align: center;
+}
+
+.agenda-wip-preview-leave-dialog__icon {
+  margin: 0 0 16px;
+}
+
+.agenda-wip-preview-leave-dialog__icon .fa {
+  font-size: 48px;
+  color: var(--color-primary, #2185d0);
+  line-height: 1;
+}
+
+.agenda-wip-preview-leave-dialog__card h3 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.agenda-wip-preview-leave-dialog__message {
+  margin: 0 0 24px;
+  line-height: 1.5;
+  color: #444;
+}
+
+.agenda-wip-preview-leave-dialog__actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.agenda-wip-preview-leave-dialog__actions .btn {
+  min-width: 132px;
+}
+
+@media (max-width: 480px) {
+  .agenda-wip-preview-leave-dialog__actions {
+    flex-direction: column-reverse;
+  }
+
+  .agenda-wip-preview-leave-dialog__actions .btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.etherpad-session-block {
+  margin: 8px 16px 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.etherpad-session-block .etherpad-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.etherpad-session-block .etherpad-note {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
 }

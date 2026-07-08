@@ -1,6 +1,10 @@
 <template lang="pug">
 .c-export-dropdown(ref="dropdown")
-	button.export-toggle(@click="toggle")
+	button.export-toggle(
+		@click="toggle",
+		:class="{disabled}",
+		:aria-label="disabled ? resolvedDisabledHint : undefined"
+	)
 		svg.export-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 			path(d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4")
 			polyline(points="7 10 12 15 17 10")
@@ -43,6 +47,14 @@ export default {
 		qrcodesUrl: {
 			type: String,
 			default: ''
+		},
+		disabled: {
+			type: Boolean,
+			default: false
+		},
+		disabledHint: {
+			type: String,
+			default: ''
 		}
 	},
 	emits: ['export'],
@@ -70,7 +82,11 @@ export default {
 			const m = this.translationMessages || {}
 			return {
 				exports: m.exports || 'Exports',
+				public_schedule_only: m.public_schedule_only || 'Only available on the public schedule once a schedule is released and public.',
 			}
+		},
+		resolvedDisabledHint() {
+			return this.disabledHint || this.t.public_schedule_only
 		},
 		exportOptions() {
 			const q = this.qrcodes || {}
@@ -94,6 +110,7 @@ export default {
 			return FA_SVG_MAP[icon] || '<circle cx="12" cy="12" r="10"/>'
 		},
 		toggle() {
+			if (this.disabled) return
 			this.isOpen = !this.isOpen
 			if (this.isOpen) {
 				this.ensureQrcodesLoaded()
@@ -176,6 +193,35 @@ export default {
 		gap: 4px
 		&:hover
 			background-color: rgba(0, 0, 0, 0.05)
+		&.disabled
+			opacity: 0.5
+			cursor: not-allowed
+			&[aria-label]
+				position: relative
+				&::after
+					content: attr(aria-label)
+					position: absolute
+					top: calc(100% + 6px)
+					right: 0
+					transform: translateY(-2px)
+					opacity: 0
+					pointer-events: none
+					background-color: rgba(0, 0, 0, 0.87)
+					color: #fff
+					padding: 6px 8px
+					border-radius: 4px
+					font-size: 12px
+					line-height: 1.3
+					white-space: normal
+					width: max-content
+					max-width: 280px
+					z-index: 1000
+				&:hover::after, &:focus-visible::after
+					opacity: 1
+					transform: translateY(0)
+					transition: opacity 0.05s ease, transform 0.05s ease
+			&:hover
+				background-color: transparent
 	.export-icon
 		width: 16px
 		height: 16px

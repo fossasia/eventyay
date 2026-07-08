@@ -35,6 +35,7 @@ from eventyay.base.models import (
 )
 from eventyay.cfp.flow import CfPFlow
 from eventyay.common.forms import I18nFormSet
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
 from eventyay.common.text.serialize import I18nStrJSONEncoder
 from eventyay.common.views.generic import OrgaCRUDView
@@ -155,8 +156,32 @@ class CfPForms(EventPermissionRequired, TemplateView):
             .annotate(answer_count=Count('answers'))
             .order_by('position')
         )
-        context['create_url'] = reverse('orga:cfp.questions.create', kwargs={'event': self.request.event.slug})
-        
+        context['create_url'] = reverse(
+            'orga:cfp.questions.create',
+            kwargs={'organizer': self.request.event.organizer.slug,
+                    'event': self.request.event.slug},
+        )
+
+        available_codes = [code for code, _ in self.request.event.available_content_locales]
+        choices = get_language_choices_native_with_ui_name(codes=available_codes)
+        existing_codes = {c[0] for c in choices}
+        for code, name in self.request.event.available_content_locales:
+            if code not in existing_codes:
+                choices.append((code, name))
+        event_languages = list(self.request.event.settings.locales or [])
+        context['event_languages'] = event_languages
+        selected_content_locales = self.request.event.settings.content_locales
+        context['selected_content_locales'] = selected_content_locales
+        sform = self.sform
+        content_locales_key = sform.add_prefix('content_locales')
+        if sform.is_bound and content_locales_key in sform.data:
+            effective_content_locales = sform.data.getlist(content_locales_key)
+        else:
+            effective_content_locales = selected_content_locales if selected_content_locales is not None else event_languages
+        effective_set = set(effective_content_locales)
+        context['all_languages'] = sorted(choices, key=lambda x: (x[0] not in effective_set, x[1]))
+        context['effective_content_locales'] = effective_content_locales
+
         # Pass saved field order to template for JavaScript reordering.
         # normalize_field_order ensures every built-in field is present at
         # its canonical position — covering both configs with no built-ins
@@ -210,6 +235,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         event = self.request.event
         submission_counts = event.submissions.aggregate(
             title=Count('id', filter=~Q(title='')),
+            submission_type=Count('id', filter=Q(submission_type__isnull=False)),
             abstract=Count('id', filter=~Q(abstract='')),
             description=Count('id', filter=~Q(description='')),
             notes=Count('id', filter=~Q(notes='')),

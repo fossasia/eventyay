@@ -15,8 +15,14 @@
 
             <a href='{% url "eventyay_common:events.add" %}' class="btn btn-primary btn-lg">
                 <span class="fa fa-plus"></span>
-                {% trans "Create a new event" %}
+                {% trans "Create Event" %}
             </a>
+            {% if event_series_creation_enabled %}
+            <a href='{% url "eventyay_common:events.add" %}?series=1' class="btn btn-default btn-lg">
+                {% include "eventyay_common/includes/icon_calendar_series.html" %}
+                {% trans "Create Event Series" %}
+            </a>
+            {% endif %}
         </div>
     {% else %}
         <div class="panel panel-default">
@@ -42,15 +48,22 @@
                 </form>
             </div>
         </div>
-        <p>
-            <a href='{% url "eventyay_common:events.add" %}' class="btn btn-default">
-                <span class="fa fa-plus"></span>
-                {% trans "Create a new event" %}
-            </a>
-        </p>
-        <table class="table table-condensed table-hover">
-            <thead>
-            <tr>
+        <div data-ajax-results-region>
+            <p>
+                <a href='{% url "eventyay_common:events.add" %}' class="btn btn-default">
+                    <span class="fa fa-plus"></span>
+                    {% trans "Create Event" %}
+                </a>
+                {% if event_series_creation_enabled %}
+                <a href='{% url "eventyay_common:events.add" %}?series=1' class="btn btn-default">
+                    {% include "eventyay_common/includes/icon_calendar_series.html" %}
+                    {% trans "Create Event Series" %}
+                </a>
+                {% endif %}
+            </p>
+            <table class="table table-condensed table-hover events-table">
+                <thead>
+                <tr>
                 <th>
                     {% trans "Event name" %}
                 </th>
@@ -84,17 +97,17 @@
                 <th class="text-right flip">
                     {% trans "Actions" %}
                 </th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for e in events %}
-                <tr>
-                    <td class="event-name-col">
+                </tr>
+                </thead>
+                <tbody>
+                {% for e in events %}
+                    <tr>
+                    <td class="event-name-col" data-label="{% trans 'Event name' %}">
                         <strong><a href='{% url "eventyay_common:event.index" organizer=e.organizer.slug event=e.slug %}'>{{ e.name }}</a></strong>
                     </td>
-                    <td>{{ e.slug }}</td>
-                    <td>{{ e.organizer }}</td>
-                    <td class="event-date-col">
+                    <td data-label="{% trans 'Short form' %}">{{ e.slug }}</td>
+                    <td data-label="{% trans 'Organizer' %}">{{ e.organizer }}</td>
+                    <td class="event-date-col" data-label="{% trans 'Date' %}">
                         {% if e.has_subevents %}
                             {{ e.min_from|default_if_none:""|date:"SHORT_DATETIME_FORMAT" }}
                         {% else %}
@@ -115,7 +128,7 @@
                             <span class="fa fa-globe text-muted" data-toggle="tooltip" title="{{ e.timezone }}"></span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="{% trans 'Paid tickets' %}">
                         {% for q in e.first_quotas|slice:":3" %}
                             {% include "pretixcontrol/fragment_quota_box_paid.html" with quota=q %}
                         {% endfor %}
@@ -127,7 +140,7 @@
                             </a>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="{% trans 'Shop' %}" class="events-table__cell--no-border">
                         {% if not e.live %}
                             <span class="label label-danger">{% trans "Shop disabled" %}</span>
                         {% elif e.presale_has_ended %}
@@ -150,10 +163,11 @@
                             <span class="fa fa-edit"></span>
                         </a>
                     </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        {% include "pretixcontrol/pagination.html" %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% include "pretixcontrol/pagination.html" %}
+        </div>
     {% endif %}
 {% endblock %}

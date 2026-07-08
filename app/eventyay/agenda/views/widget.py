@@ -5,18 +5,29 @@ from urllib.parse import unquote
 from csp.decorators import csp_exempt
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.staticfiles import finders
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.templatetags.static import static
 from django.views.decorators.gzip import gzip_page
 from django.views.decorators.http import condition
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.base.models import SpeakerProfile, TalkSlot
-from eventyay.base.models.schedule import make_qr_svg
+from eventyay.base.models.schedule import make_speaker_qr_map, make_talk_qr_map
 from eventyay.common.views import conditional_cache_page
-from eventyay.talk_rules.agenda import is_widget_visible
+from eventyay.presale.style import (
+    SYSTEM_FONTS,
+    get_font_stylesheet,
+    get_fonts,
+    resolve_font,
+)
+from eventyay.talk_rules.agenda import (
+    can_access_schedule_widget,
+    can_view_wip_schedule,
+    is_widget_visible,
+    wip_preview_build_data,
+)
 from eventyay.talk_rules.submission import (
-    are_featured_submissions_visible,
+    are_featured_speakers_visible,
     schedule_widget_featured_cache_key_part,
 )
 
@@ -27,7 +38,18 @@ WIDGET_PATH = 'schedule/pretalx-schedule.js'
 
 
 def color_etag(request, organizer=None, event=None, **kwargs):
-    return request.event.visible_primary_color or 'none'
+    header_background_color = request.event.settings.get('header_background_color')
+    header_text_color = request.event.settings.get('header_text_color')
+    navigation_text_color = request.event.settings.get('navigation_text_color')
+    primary_font = request.event.settings.get('primary_font')
+    parts = [
+        request.event.visible_primary_color or '',
+        header_background_color or '',
+        header_text_color or '',
+        navigation_text_color or '',
+        primary_font or '',
+    ]
+    return '|'.join(parts) if any(parts) else 'none'
 
 
 def widget_js_etag(request, organizer=None, event=None, **kwargs):
@@ -108,14 +130,15 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
         response = JsonResponse({})
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         return response
-    if not request.user.has_perm('base.view_widget_schedule', event):
+    if not can_access_schedule_widget(request.user, event):
         raise Http404()
 
     version = version or unquote(request.GET.get('v') or '')
     schedule = None
     if version and version == 'wip':
-        if not request.user.has_perm('base.orga_view_schedule', event):
+        if not can_view_wip_schedule(request.user, event):
             raise Http404()
         schedule = request.event.wip_schedule
     elif version:
@@ -127,11 +150,13 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
 
     enrich = request.GET.get('enrich') in {'1', 'true', 'True'}
     include_qrcodes = request.GET.get('qrcodes') in {'1', 'true', 'True'}
+    preview = wip_preview_build_data(request.user, event, schedule)
     result = schedule.build_data(
         all_talks=not schedule.version,
         enrich=enrich,
-        include_featured_speaker_metadata=are_featured_submissions_visible(AnonymousUser(), event),
+        include_featured_speaker_metadata=are_featured_speakers_visible(AnonymousUser(), event),
         include_qrcodes=include_qrcodes,
+        respect_public_visibility=not preview,
     )
     response = JsonResponse(result, encoder=I18nJSONEncoder)
     response['Access-Control-Allow-Headers'] = 'authorization,content-type'
@@ -157,14 +182,15 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
         response = JsonResponse({})
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         return response
-    if not request.user.has_perm('base.view_widget_schedule', event):
+    if not can_access_schedule_widget(request.user, event):
         raise Http404()
 
     version = version or unquote(request.GET.get('v') or '')
     schedule = None
     if version and version == 'wip':
-        if not request.user.has_perm('base.orga_view_schedule', event):
+        if not can_view_wip_schedule(request.user, event):
             raise Http404()
         schedule = request.event.wip_schedule
     elif version:
@@ -176,12 +202,10 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
     # Validate that the requested entity exists in this event/schedule to avoid
     # unbounded cache entries and unnecessary CPU work for random codes.
     if kind == 'talk':
-        exists = TalkSlot.objects.filter(
-            schedule=schedule,
-            is_visible=True,
-            submission__isnull=False,
-            submission__code__iexact=code,
-        ).exists()
+        talk_filter = {'schedule': schedule, 'submission__isnull': False, 'submission__code__iexact': code}
+        if not wip_preview_build_data(request.user, event, schedule):
+            talk_filter['is_visible'] = True
+        exists = TalkSlot.objects.filter(**talk_filter).exists()
         if not exists:
             raise Http404()
     elif kind == 'speaker':
@@ -201,24 +225,9 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
 
     full_base = str(event.urls.base.full())
     if kind == 'talk':
-        qrcodes = {
-            'ics': make_qr_svg(f'{full_base}talk/{code}.ics'),
-            'json': make_qr_svg(f'{full_base}talk/{code}.json'),
-            'xml': make_qr_svg(f'{full_base}talk/{code}.xml'),
-            'xcal': make_qr_svg(f'{full_base}talk/{code}.xcal'),
-            'google_calendar': make_qr_svg(f'{full_base}talk/{code}/export/google-calendar'),
-            'webcal': make_qr_svg(f'{full_base}talk/{code}/export/webcal'),
-        }
+        qrcodes = make_talk_qr_map(full_base, code)
     elif kind == 'speaker':
-        spk_full_base = f'{full_base}speakers/{code}'
-        qrcodes = {
-            'ics': make_qr_svg(f'{spk_full_base}/talks.ics'),
-            'json': make_qr_svg(f'{spk_full_base}/talks.json'),
-            'xml': make_qr_svg(f'{spk_full_base}/talks.xml'),
-            'xcal': make_qr_svg(f'{spk_full_base}/talks.xcal'),
-            'google_calendar': make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
-            'webcal': make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
-        }
+        qrcodes = make_speaker_qr_map(f'{full_base}speakers/{code}')
 
     response = JsonResponse({'qrcodes': qrcodes}, encoder=I18nJSONEncoder)
     response['Access-Control-Allow-Headers'] = 'authorization,content-type'
@@ -230,18 +239,18 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
 @gzip_page
 @csp_exempt()
 def widget_script(request, organizer=None, event=None, **kwargs):
-    # This page basically just serves a static file under a known path (ideally, the
-    # administrators could and should even turn on gzip compression for the
-    # /<event>/widget/schedule.js path, as it cuts down the transferred data
-    # by about 80% for the schedule.js file, which is the largest file on the
-    # main schedule page).
     # Keep this endpoint backwards-compatible for third-party embeds that use a classic
     # <script src=".../widgets/schedule.js"></script> tag. We serve a tiny loader that
     # injects the actual ESM widget bundle from the static URL.
     # IMPORTANT: this endpoint is typically embedded cross-origin. A relative /static/ URL would
     # resolve against the embedding page's origin, not ours. We therefore build an absolute URL
     # based on the current script's URL at runtime.
-    module_src = static(WIDGET_PATH)
+    from django.urls import reverse
+    if request.event:
+        module_src = reverse('agenda:widget.schedule.chunk', kwargs={'organizer': request.organizer.slug, 'event': request.event.slug, 'filename': 'pretalx-schedule.js'})
+    else:
+        module_src = static(WIDGET_PATH)
+
     loader = (
         "(function(){"
         f"var staticPath={module_src!r};"
@@ -259,19 +268,60 @@ def widget_script(request, organizer=None, event=None, **kwargs):
     return response
 
 
+@csp_exempt()
+def widget_schedule_chunk(request, organizer=None, event=None, filename=None, **kwargs):
+    file_path = finders.find(f'schedule/{filename}')
+    if not file_path:
+        raise Http404
+    try:
+        f = open(file_path, 'rb')
+    except OSError:
+        raise Http404
+    response = FileResponse(f, content_type='application/javascript; charset=utf-8')
+    response['Cache-Control'] = 'public, max-age=86400'
+    response['Access-Control-Allow-Origin'] = '*'
+    return response
+
+
 @condition(etag_func=color_etag)
 @csp_exempt()
 def event_css(request, organizer=None, event=None, **kwargs):
-    # If this event has custom colours, we send back a simple CSS file that sets the
-    # root colours for the event.
-    result = ''
+    # If this event has custom colours or font, we send back a simple CSS file that sets the
+    # root colours and font properties for the event.
+    variables = []
+    header_background_color = request.event.settings.get('header_background_color')
+    header_text_color = request.event.settings.get('header_text_color')
+    navigation_text_color = request.event.settings.get('navigation_text_color')
+    primary_font = request.event.settings.get('primary_font')
+
     if request.event.visible_primary_color:
         if request.GET.get('target') == 'orga':
             # The organizer area sometimes needs the event’s colour, but shouldn’t use
             # it as primary colour automatically.
-            result = ':root {' + f'--color-primary-event: {request.event.visible_primary_color};' + '}'
+            variables.append(f'--color-primary-event: {request.event.visible_primary_color};')
         else:
-            result = ':root {' + f'--color-primary: {request.event.visible_primary_color};' + '}'
+            variables.append(f'--color-primary: {request.event.visible_primary_color};')
+    if header_background_color:
+        variables.append(f'--color-header-background: {header_background_color};')
+    if header_text_color:
+        variables.append(f'--color-header-text: {header_text_color};')
+    if navigation_text_color:
+        variables.append(f'--color-header-navigation: {navigation_text_color};')
+
+    font_css = ''
+    if primary_font and request.GET.get('target') != 'orga':
+        resolved_font, font_family_value = resolve_font(request.event)
+        if resolved_font and resolved_font not in SYSTEM_FONTS:
+            fonts_dict = get_fonts()
+            if resolved_font in fonts_dict:
+                font_css = get_font_stylesheet(resolved_font, fonts=fonts_dict, for_sass=False)
+
+        if font_family_value:
+            variables.append(f'--font-family: {font_family_value};')
+            variables.append(f'--font-family-title: {font_family_value};')
+
+    root_css = f':root {{{" ".join(variables)}}}' if variables else ''
+    result = f'{font_css}\n{root_css}'.strip()
     response = HttpResponse(result, content_type='text/css')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'

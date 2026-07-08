@@ -10,6 +10,7 @@
 {% load rich_text %}
 {% load compress %}
 {% load static %}
+{% load vite %}
 {% load presale_locale %}
 {% load event_tags %}
 {% load staff_session %}
@@ -18,16 +19,24 @@
     {{ block.super }}
     <meta property="og:title" content="{{ ev.name|event_localize }}" />
     <meta property="og:description" content="{{ ev.get_date_range_display }}" />
-    {% if subevent %}
-        <meta property="og:url" content="{% abseventurl request.event "presale:event.index" subevent=subevent.pk %}" />
-    {% else %}
-        <meta property="og:url" content="{% abseventurl request.event "presale:event.index" %}" />
-    {% endif %}
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
 
     <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+    {% if ev.location or venue_map_location %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/venue-map.css' %}" />
+        {% endcompress %}
+    {% endif %}
+    {% if venue_map_location %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
+        {% endcompress %}
+        <script type="text/javascript" src="{% static 'leaflet/leaflet.js' %}"></script>
+        <script type="module" src="{% static 'pretixpresale/js/ui/public_geo.js' %}"></script>
+    {% endif %}
 {% endblock %}
 {% block testmode_alert %}{% endblock testmode_alert %}
 {% block content %}
@@ -206,27 +215,6 @@
     {% endif %}
 
     {% if subevent or not event.has_subevents %}
-        {% if not ev.presale_is_running %}
-            <div class="alert alert-info">
-                {% if ev.presale_has_ended %}
-                    {% if event.settings.presale_has_ended_text %}
-                        {{ event.settings.presale_has_ended_text|event_localize|rich_text }}
-                    {% else %}
-                        {% blocktrans trimmed %}
-                            The presale period for this event is over.
-                        {% endblocktrans %}
-                    {% endif %}
-                {% elif event.settings.presale_start_show_date %}
-                    {% blocktrans trimmed with date=ev.effective_presale_start|date:"SHORT_DATE_FORMAT" time=ev.effective_presale_start|time:"TIME_FORMAT" %}
-                        The presale for this event will start on {{ date }} at {{ time }}.
-                    {% endblocktrans %}
-                {% else %}
-                    {% blocktrans trimmed %}
-                        The presale for this event has not yet started.
-                    {% endblocktrans %}
-                {% endif %}
-            </div>
-        {% endif %}
         {% if not cart_namespace or subevent %}
             <div>
                 {% if ev.location %}
@@ -295,6 +283,27 @@
     {% if subevent or not event.has_subevents %}
         {% include "pretixpresale/event/fragment_testmode_alert.html" %}
         <div id="tickets"></div>
+        {% if not ev.presale_is_running %}
+            <div class="alert alert-info">
+                {% if ev.presale_has_ended %}
+                    {% if event.settings.presale_has_ended_text %}
+                        {{ event.settings.presale_has_ended_text|event_localize|rich_text }}
+                    {% else %}
+                        {% blocktrans trimmed %}
+                            The presale period for this event is over.
+                        {% endblocktrans %}
+                    {% endif %}
+                {% elif event.settings.presale_start_show_date %}
+                    {% blocktrans trimmed with date=ev.effective_presale_start|date:"SHORT_DATE_FORMAT" time=ev.effective_presale_start|time:"TIME_FORMAT" %}
+                        The presale for this event will start on {{ date }} at {{ time }}.
+                    {% endblocktrans %}
+                {% else %}
+                    {% blocktrans trimmed %}
+                        The presale for this event has not yet started.
+                    {% endblocktrans %}
+                {% endif %}
+            </div>
+        {% endif %}
         {% if can_view_tickets %}
             {% if request.event.live or is_organiser %}
                 {% if ev.presale_is_running or event.settings.show_products_outside_presale_period %}
@@ -375,8 +384,8 @@
         {% if featured_speakers %}
             <section class="front-page" id="featured-speakers" aria-label="{% trans 'Featured Speakers' %}">
                 <script id="pretalx-schedule-data" type="application/json">{{ featured_speakers_widget_schedule_json|safe }}</script>
-                <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
-                <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="featured-speakers" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
+                {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback='schedule/pretalx-schedule.js' %}
+                <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="featured-speakers" speakers-list-public="{% if featured_speakers_list_public %}true{% else %}false{% endif %}" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
             </section>
         {% endif %}
     {% endif %}
@@ -409,5 +418,34 @@
         {% endif %}
     {% endif %}
     {% eventsignal event "eventyay.presale.signals.front_page_after_content" subevent=subevent request=request %}
+    {% if ev.location or venue_map_location %}
+        <section class="front-page venue-map">
+            <h2 id="venue" class="content-header">{% trans "Getting here" %}</h2>
+            <div class="venue-map-layout">
+                {% if venue_map_location %}
+                    <div class="venue-map-main">
+                        <div class="public-geodata-group"
+                             data-lat="{{ venue_map_location.lat }}"
+                             data-lon="{{ venue_map_location.lon }}"
+                             data-tiles="{{ global_settings.leaflet_tiles }}"
+                             data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
+                             data-icon="{% static 'leaflet/images/marker-icon.png' %}"
+                             data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
+                            <div class="public-geodata-map" aria-hidden="true"></div>
+                        </div>
+                    </div>
+                {% endif %}
+                {% if ev.location %}
+                    <div class="venue-map-details{% if not venue_map_location %} venue-map-details-only{% endif %}">
+                        <h3 class="venue-map-heading">{% trans "Address" %}</h3>
+                        <p>{{ ev.location|event_localize|linebreaksbr }}</p>
+                        {% if not venue_map_location %}
+                            <p class="venue-map-unavailable">{% trans "Map location is currently unavailable for this address." %}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
     </main>
 {% endblock %}

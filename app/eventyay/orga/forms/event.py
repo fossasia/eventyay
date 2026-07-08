@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
 from django.forms import inlineformset_factory
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -27,7 +28,8 @@ from eventyay.common.forms.widgets import (
 from eventyay.common.text.css import validate_css
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import Event, EventExtraLink
-from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
+from eventyay.base.settings import GlobalSettingsObject
+from eventyay.orga.forms.widgets import HeaderSelect
 from eventyay.base.models import ReviewPhase, ReviewScore, ReviewScoreCategory
 
 ENCRYPTED_PASSWORD_PLACEHOLDER = '*' * 24
@@ -35,6 +37,21 @@ ENCRYPTED_PASSWORD_PLACEHOLDER = '*' * 24
 SCHEDULE_DISPLAY_CHOICES = (
     ('grid', _('Grid')),
     ('list', _('List')),
+)
+
+SHOW_FEATURED_VISIBILITY_CHOICES = (
+    ('never', _('Never')),
+    ('after_schedule', _('Once the first schedule version is published')),
+    ('always', _('Always')),
+)
+
+SHOW_FEATURED_SESSIONS_HELP = _(
+    'Controls when the featured sessions page and nav tab are shown. '
+    'Mark sessions as featured for content — Always alone does not populate the page.'
+)
+SHOW_FEATURED_SPEAKERS_HELP = _(
+    'Controls the featured speakers block on the event info page. '
+    'Mark speakers as featured for content — Always alone does not populate the page.'
 )
 
 
@@ -52,29 +69,16 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         ),
         required=False,
     )
-    show_schedule = forms.BooleanField(
-        label=_('Show schedule publicly'),
-        help_text=_('Unset to hide your schedule, e.g. if you want to use the HTML export exclusively.'),
-        required=False,
-    )
-    schedule = forms.ChoiceField(
-        label=phrases.orga.event_schedule_format_label,
-        choices=SCHEDULE_DISPLAY_CHOICES,
-        required=True,
-    )
     show_featured = forms.ChoiceField(
         label=_('Show featured sessions'),
-        choices=(
-            ('never', _('Never')),
-            ('after_schedule', _('Once the first schedule version is published'),),
-            ('always', _('Always')),
-        ),
-        help_text=_(
-            'Never: the featured page and nav entry are always hidden. '
-            '"Once the first schedule version is published": featured sessions are hidden until you '
-            'release a schedule version; after the first release the featured page and tab appear. '
-            'Always: the featured page and tab are always visible (even before a schedule is released).'
-        ),
+        choices=SHOW_FEATURED_VISIBILITY_CHOICES,
+        help_text=SHOW_FEATURED_SESSIONS_HELP,
+        required=True,
+    )
+    show_featured_speakers = forms.ChoiceField(
+        label=_('Show featured speakers'),
+        choices=SHOW_FEATURED_VISIBILITY_CHOICES,
+        help_text=SHOW_FEATURED_SPEAKERS_HELP,
         required=True,
     )
     use_feedback = forms.BooleanField(
@@ -87,14 +91,9 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         help_text=_('Enables session popularity (favourites) counts and sorting options in the schedule webapp.'),
         required=False,
     )
-    session_popularity_show_on_calendar = forms.BooleanField(
-        label=_('Show popularity on calendar view'),
-        help_text=_('Shows favourite counts on session cards in the calendar/grid view. Only used if popularity is enabled.'),
-        required=False,
-    )
-    session_popularity_show_on_list = forms.BooleanField(
-        label=_('Show popularity on list view'),
-        help_text=_('Shows favourite counts on session cards in the list view. Only used if popularity is enabled.'),
+    session_popularity_show_on_schedule = forms.BooleanField(
+        label=_('Show popularity on schedule'),
+        help_text=_('Shows favourite counts on session cards in the schedule.'),
         required=False,
     )
     export_html_on_release = forms.BooleanField(
@@ -117,23 +116,62 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         required=False,
         widget=HeaderSelect,
     )
-    meta_noindex = forms.BooleanField(label=_('Ask search engines not to index the event pages'), required=False)
+    etherpad_enabled = forms.BooleanField(
+        label=_('Enable Etherpad for sessions'),
+        help_text=_('Allow collaborative Etherpad notes to be attached to sessions in this event.'),
+        required=False,
+    )
+    etherpad_auto_generate = forms.BooleanField(
+        label=_('Auto-generate Etherpad links'),
+        help_text=_('Offer a one-click button to create a pad for sessions that do not have one yet.'),
+        required=False,
+    )
+    etherpad_public = forms.BooleanField(
+        label=_('Show Etherpad links publicly'),
+        help_text=_('If unset, the pad link is hidden from public session pages and only visible to organisers.'),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         self.is_administrator = kwargs.pop('is_administrator', False)
         super().__init__(*args, **kwargs)
         self.initial['custom_css_text'] = self.instance.custom_css.read().decode() if self.instance.custom_css else ''
-        self.fields['show_featured'].help_text = (
-            str(self.fields['show_featured'].help_text)
-            + ' '
-            + str(_('You can find the page <a {href}>here</a>.')).format(href=f'href="{self.instance.urls.featured}"')
-        )
+        flags = self.instance.feature_flags or {}
+        if 'show_featured_speakers' not in flags and 'show_featured' in flags:
+            self.fields['show_featured_speakers'].initial = flags['show_featured']
+        self._configure_session_popularity_fields(flags)
+        # Show Etherpad event toggles only when the platform has the integration enabled.
+        gs = GlobalSettingsObject().settings
+        if not (gs.etherpad_enabled and gs.etherpad_base_url):
+            for field_name in ('etherpad_enabled', 'etherpad_auto_generate', 'etherpad_public'):
+                self.fields.pop(field_name, None)
 
-    def clean_show_featured(self):
-        value = self.cleaned_data.get('show_featured', '')
+    def _configure_session_popularity_fields(self, flags):
+        if 'session_popularity_show_on_schedule' not in flags:
+            self.fields['session_popularity_show_on_schedule'].initial = bool(
+                flags.get('session_popularity_show_on_calendar', True)
+                or flags.get('session_popularity_show_on_list', True)
+            )
+        if not self._is_session_popularity_enabled():
+            self.fields['session_popularity_show_on_schedule'].disabled = True
+
+    def _is_session_popularity_enabled(self):
+        if self.is_bound:
+            return self.data.get('session_popularity_enabled') in ('on', 'true', 'True', '1')
+        flags = self.instance.feature_flags or {}
+        return bool(flags.get('session_popularity_enabled', False))
+
+    @staticmethod
+    def _normalize_featured_visibility(value):
         if value == 'pre_schedule':
             return 'after_schedule'
         return value
+
+    def clean_show_featured(self):
+        return self._normalize_featured_visibility(self.cleaned_data.get('show_featured', ''))
+
+    def clean_show_featured_speakers(self):
+        return self._normalize_featured_visibility(self.cleaned_data.get('show_featured_speakers', ''))
 
     def clean_custom_css(self):
         if self.cleaned_data.get('custom_css') or self.files.get('custom_css'):
@@ -160,6 +198,13 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
 
     def clean(self):
         data = super().clean()
+        enabled = bool(data.get('session_popularity_enabled'))
+        if enabled:
+            data['session_popularity_show_on_schedule'] = bool(
+                data.get('session_popularity_show_on_schedule', True)
+            )
+        else:
+            data['session_popularity_show_on_schedule'] = False
         return data
 
     def save(self, *args, **kwargs):
@@ -178,17 +223,17 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         ]
         json_fields = {
             'imprint_url': 'display_settings',
-            'show_schedule': 'feature_flags',
-            'schedule': 'display_settings',
             'show_featured': 'feature_flags',
+            'show_featured_speakers': 'feature_flags',
             'use_feedback': 'feature_flags',
             'session_popularity_enabled': 'feature_flags',
-            'session_popularity_show_on_calendar': 'feature_flags',
-            'session_popularity_show_on_list': 'feature_flags',
+            'session_popularity_show_on_schedule': 'feature_flags',
             'export_html_on_release': 'feature_flags',
             'html_export_url': 'display_settings',
             'header_pattern': 'display_settings',
-            'meta_noindex': 'display_settings',
+            'etherpad_enabled': 'feature_flags',
+            'etherpad_auto_generate': 'feature_flags',
+            'etherpad_public': 'display_settings',
         }
 
 
@@ -207,8 +252,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     )
     signature = forms.CharField(
         label=_('Mail signature'),
-        help_text=_('The signature will be added to outgoing mails, preceded by “-- ”. ')
-        + phrases.base.use_markdown,
+        help_text='',
         required=False,
         widget=forms.Textarea,
     )
@@ -254,6 +298,11 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['signature'].help_text = format_lazy(
+            '{} <span class="markdown-hint">{}</span>',
+            _('The signature will be added to outgoing mails, preceded by “-- ”. '),
+            _('You can use Markdown in this field.'),
+        )
         if self.fields['smtp_password'].initial:
             self.fields['smtp_password'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
 
@@ -382,28 +431,9 @@ class WidgetSettingsForm(JsonSubfieldMixin, forms.Form):
         required=False,
     )
 
-    session_popularity_enabled = forms.BooleanField(
-        label=_('Activate most popular session feature'),
-        help_text=_('Enables session popularity (favourites) counts and sorting options in the schedule webapp.'),
-        required=False,
-    )
-    session_popularity_show_on_calendar = forms.BooleanField(
-        label=_('Show popularity on calendar view'),
-        help_text=_('Shows favourite counts on session cards in the calendar/grid view. Only used if popularity is enabled.'),
-        required=False,
-    )
-    session_popularity_show_on_list = forms.BooleanField(
-        label=_('Show popularity on list view'),
-        help_text=_('Shows favourite counts on session cards in the list view. Only used if popularity is enabled.'),
-        required=False,
-    )
-
     class Meta:
         json_fields = {
             'show_widget_if_not_public': 'feature_flags',
-            'session_popularity_enabled': 'feature_flags',
-            'session_popularity_show_on_calendar': 'feature_flags',
-            'session_popularity_show_on_list': 'feature_flags',
         }
 
 

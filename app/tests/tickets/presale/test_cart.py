@@ -9,14 +9,14 @@ from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
 
-from pretix.base.decimal import round_decimal
-from pretix.base.models import (
+from eventyay.base.decimal import round_decimal
+from eventyay.base.models import (
     CartPosition,
     Event,
     InvoiceAddress,
-    Item,
-    ItemCategory,
-    ItemVariation,
+    Product as Item,
+    ProductCategory as ItemCategory,
+    ProductVariation as ItemVariation,
     Organizer,
     Question,
     QuestionAnswer,
@@ -24,21 +24,21 @@ from pretix.base.models import (
     SeatingPlan,
     Voucher,
 )
-from pretix.base.models.items import (
-    ItemAddOn,
-    ItemBundle,
-    SubEventItem,
-    SubEventItemVariation,
+from eventyay.base.models.product import (
+    ProductAddOn as ItemAddOn,
+    ProductBundle as ItemBundle,
+    SubEventProduct as SubEventItem,
+    SubEventProductVariation as SubEventItemVariation,
 )
-from pretix.base.services.cart import (
+from eventyay.base.services.cart import (
     CartError,
     CartManager,
     error_messages,
     update_tax_rates,
 )
-from pretix.testutils.scope import classscope
-from pretix.testutils.sessions import get_cart_session_key
-from tests.testdummy.signals import FoobarSalesChannel
+from tests.testutils.scope import classscope
+from tests.testutils.sessions import get_cart_session_key
+from tests.tickets.testdummy.signals import FoobarSalesChannel
 
 
 class CartTestMixin:
@@ -52,7 +52,7 @@ class CartTestMixin:
             slug='30c3',
             date_from=datetime.datetime(now().year + 1, 12, 26, tzinfo=datetime.timezone.utc),
             live=True,
-            plugins='pretix.plugins.banktransfer',
+            plugins='eventyay.plugins.banktransfer',
             sales_channels=['web', 'bar'],
         )
         self.tr19 = self.event.tax_rules.create(rate=Decimal('19.00'))
@@ -757,6 +757,103 @@ class CartTest(CartTestMixin, TestCase):
         self.assertEqual(objs[0].item, self.ticket)
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
+
+    def test_free_price_too_high_absolute(self):
+        """price_too_high: submitted price exceeds the hard limit of 100,000,000."""
+        self.ticket.free_price = True
+        self.ticket.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '1', 'price_%d' % self.ticket.id: '100000001.00'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        assert 'alert-danger' in response.rendered_content
+        with scopes_disabled():
+            assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
+
+    def test_free_price_too_low_with_min(self):
+        """price_too_low: submitted price is below free_price_min; error shows full price range."""
+        self.ticket.free_price = True
+        self.ticket.free_price_min = Decimal('20.00')
+        self.ticket.free_price_max = Decimal('30.00')
+        self.ticket.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '1', 'price_%d' % self.ticket.id: '10.00'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        assert 'alert-danger' in response.rendered_content
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        alert = doc.select_one('.alert-danger')
+        self.assertIsNotNone(alert, 'Expected cart validation error alert')
+        alert_text = alert.text
+        self.assertIn('20.00', alert_text)
+        self.assertIn('30.00', alert_text)
+        self.assertIn(self.event.currency, alert_text)
+        with scopes_disabled():
+            assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
+
+    def test_free_price_too_high_max(self):
+        """price_too_high_max: submitted price exceeds free_price_max; error shows full price range."""
+        self.ticket.free_price = True
+        self.ticket.free_price_min = Decimal('20.00')
+        self.ticket.free_price_max = Decimal('30.00')
+        self.ticket.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '1', 'price_%d' % self.ticket.id: '50.00'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        assert 'alert-danger' in response.rendered_content
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        alert = doc.select_one('.alert-danger')
+        self.assertIsNotNone(alert, 'Expected cart validation error alert')
+        alert_text = alert.text
+        self.assertIn('20.00', alert_text)
+        self.assertIn('30.00', alert_text)
+        self.assertIn(self.event.currency, alert_text)
+        with scopes_disabled():
+            assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
+
+    def test_free_price_too_low_when_default_price_is_effective_minimum(self):
+        """Checkout minimum is max(default_price, free_price_min), not only free_price_min."""
+        self.ticket.free_price = True
+        self.ticket.default_price = Decimal('30.00')
+        self.ticket.free_price_min = Decimal('10.00')
+        self.ticket.free_price_max = Decimal('40.00')
+        self.ticket.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '1', 'price_%d' % self.ticket.id: '25.00'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        assert 'alert-danger' in response.rendered_content
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('30.00', doc.select('.alert-danger')[0].text)
+        self.assertIn('40.00', doc.select('.alert-danger')[0].text)
+        self.assertIn(self.event.currency, doc.select('.alert-danger')[0].text)
+        with scopes_disabled():
+            assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
 
     def test_variation_inactive(self):
         self.shirt_red.active = False

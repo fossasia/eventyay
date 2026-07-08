@@ -1,9 +1,11 @@
 import pytest
+from django import forms
 from django.http import HttpResponseNotAllowed
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
-from pretalx.cfp.flow import BaseCfPStep, i18n_string
+from eventyay.cfp.forms.cfp import CfPFormMixin
+from eventyay.cfp.flow import BaseCfPStep, i18n_string
 
 
 @pytest.mark.parametrize(
@@ -85,3 +87,34 @@ def test_base_cfp_step_attributes():
     assert step.done(None) is None
     assert isinstance(step.get(None), HttpResponseNotAllowed)
     assert isinstance(step.post(None), HttpResponseNotAllowed)
+
+
+def test_cfp_form_mixin_scrubs_incomplete_errors_in_not_strict_mode():
+    class PartialValueField(forms.MultiValueField):
+        def __init__(self, *args, **kwargs):
+            super().__init__(
+                fields=(
+                    forms.CharField(required=True),
+                    forms.CharField(required=True),
+                ),
+                require_all_fields=False,
+                *args,
+                **kwargs,
+            )
+
+        def compress(self, data_list):
+            return data_list
+
+    class DraftSplitForm(CfPFormMixin, forms.Form):
+        availability = PartialValueField(required=True)
+
+    form = DraftSplitForm(
+        data={
+            'availability_0': '2026-05-26',
+            'availability_1': '',
+        },
+        not_strict=True,
+    )
+
+    assert form.is_valid()
+    assert not form.errors

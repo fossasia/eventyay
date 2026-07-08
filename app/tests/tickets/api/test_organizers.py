@@ -1,7 +1,7 @@
 import pytest
 from django.core.files.base import ContentFile
 
-from pretix.testutils.mock import mocker_context
+from tests.testutils.mock import mocker_context
 
 TEST_ORGANIZER_RES = {'name': 'Dummy', 'slug': 'dummy'}
 
@@ -23,6 +23,9 @@ def test_organizer_detail(token_client, organizer):
 @pytest.mark.django_db
 def test_get_settings(token_client, organizer):
     organizer.settings.event_list_type = 'week'
+    organizer.settings.header_background_color = '#ffee00'
+    organizer.settings.header_text_color = '#111111'
+    organizer.settings.navigation_text_color = '#222222'
     resp = token_client.get(
         '/api/v1/organizers/{}/settings/'.format(
             organizer.slug,
@@ -30,6 +33,9 @@ def test_get_settings(token_client, organizer):
     )
     assert resp.status_code == 200
     assert resp.data['event_list_type'] == 'week'
+    assert resp.data['header_background_color'] == '#ffee00'
+    assert resp.data['header_text_color'] == '#111111'
+    assert resp.data['navigation_text_color'] == '#222222'
 
     resp = token_client.get(
         '/api/v1/organizers/{}/settings/?explain=true'.format(organizer.slug),
@@ -45,7 +51,7 @@ def test_get_settings(token_client, organizer):
 @pytest.mark.django_db
 def test_patch_settings(token_client, organizer):
     with mocker_context() as mocker:
-        mocked = mocker.patch('pretix.presale.style.regenerate_organizer_css.apply_async')
+        mocked = mocker.patch('eventyay.presale.style.regenerate_organizer_css.apply_async')
 
         organizer.settings.event_list_type = 'week'
         resp = token_client.patch(
@@ -91,6 +97,25 @@ def test_patch_settings(token_client, organizer):
             format='json',
         )
         assert resp.status_code == 200
+        mocked.assert_any_call(args=(organizer.pk,))
+
+        resp = token_client.patch(
+            '/api/v1/organizers/{}/settings/'.format(organizer.slug),
+            {
+                'header_background_color': '#ffee00',
+                'header_text_color': '#111111',
+                'navigation_text_color': '#222222',
+            },
+            format='json',
+        )
+        assert resp.status_code == 200
+        assert resp.data['header_background_color'] == '#ffee00'
+        assert resp.data['header_text_color'] == '#111111'
+        assert resp.data['navigation_text_color'] == '#222222'
+        organizer.settings.flush()
+        assert organizer.settings.header_background_color == '#ffee00'
+        assert organizer.settings.header_text_color == '#111111'
+        assert organizer.settings.navigation_text_color == '#222222'
         mocked.assert_any_call(args=(organizer.pk,))
 
 

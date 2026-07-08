@@ -342,8 +342,9 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
         kwargs['event'] = self.request.event
         initial = kwargs.get('initial', {})
         if 'template' in self.request.GET:
-            template = MailTemplate.objects.filter(pk=self.request.GET.get('template')).first()
+            template = self.request.event.mail_templates.filter(pk=self.request.GET.get('template')).first()
             if template:
+                kwargs['source_template'] = template
                 initial['subject'] = template.subject
                 initial['text'] = template.text
                 initial['reply_to'] = template.reply_to
@@ -492,7 +493,11 @@ class MailTemplateView(OrgaCRUDView):
     }
 
     def get_queryset(self):
-        return self.request.event.mail_templates.all().order_by('role')
+        qs = self.request.event.mail_templates.filter(is_auto_created=False).order_by('role')
+        for template in qs:
+            if template.role:
+                self.request.event._ensure_mail_template_locales(template, template.role)
+        return qs
 
     def get_generic_title(self, instance=None):
         if instance:

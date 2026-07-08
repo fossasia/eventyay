@@ -1,6 +1,7 @@
 import datetime as dt
 import logging
 import re
+import os
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from enum import StrEnum
@@ -10,12 +11,15 @@ import jwt
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.core.files import File
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import iri_to_uri
 from django.utils.functional import cached_property
@@ -28,15 +32,17 @@ from rest_framework import views
 from django.views import View
 from django.apps import apps
 
-from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.base.services.notifications import notify_organizer_followers
+from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS
+from eventyay.base.settings import DEFAULTS, SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
 from eventyay.presale.style import regenerate_css
+from eventyay.common.text.path import resolve_media_path
 from eventyay.base.services.quotas import QuotaAvailability
-from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardFoundationForm
+from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
 from eventyay.control.forms.filter import EventFilterForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin, UpdateView
@@ -52,6 +58,7 @@ from eventyay.eventyay_common.utils import (
 from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
 from eventyay.eventyay_common.video.permissions import collect_user_video_traits
 from eventyay.helpers.plugin_enable import is_video_enabled
+from eventyay.multidomain.urlreverse import build_absolute_uri
 from ..forms.event import EventUpdateForm
 
 logger = logging.getLogger(__name__)
@@ -148,6 +155,7 @@ class EventList(PaginationMixin, ListView):
                     100,
                     (round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100),
                 )
+        ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         return ctx
 
     @cached_property
@@ -155,39 +163,76 @@ class EventList(PaginationMixin, ListView):
         return EventFilterForm(data=self.request.GET, request=self.request)
 
 
-class EventCreateView(SafeSessionWizardView):
-    form_list = [
-        ('foundation', EventWizardFoundationForm),
-        ('basics', EventWizardBasicsForm),
-    ]
-    templates = {
-        'foundation': 'eventyay_common/events/create_foundation.html',
-        'basics': 'eventyay_common/events/create_basics.html',
-    }
-    condition_dict = {}
+class EventCreateView(TemplateView):
+    template_name = 'eventyay_common/events/create.html'
+    legacy_session_key = 'event_create_legacy_wizard_data'
 
-    def get_form_initial(self, step):
-        initial_form = super().get_form_initial(step)
-        request_user = self.request.user
+    def get_create_organizer_queryset(self):
+        queryset = Organizer.objects.all()
+        if not self.request.user.has_active_staff_session(self.request.session.session_key):
+            queryset = queryset.filter(
+                id__in=self.request.user.teams.filter(can_create_events=True).values_list('organizer', flat=True)
+            )
+        return queryset
+
+    def get_fallback_organizer(self):
+        return self.get_create_organizer_queryset().first()
+
+    def get_organizer_slug_options(self):
+        return {
+            str(organizer.pk): {
+                'prefix': build_absolute_uri(organizer, 'presale:organizer.index'),
+                'rngUrl': reverse('control:events.add.slugrng', kwargs={'organizer': organizer.slug}),
+            }
+            for organizer in self.get_create_organizer_queryset()
+        }
+
+    def get_clone_queryset(self):
+        return EventWizardCopyForm.copy_from_queryset(self.request.user, self.request.session)
+
+    def get_foundation_initial(self):
+        initial_form = {}
         request_get = self.request.GET
 
-        if step == 'foundation':
-            initial_form['is_video_creation'] = True
-            initial_form['locales'] = ['en']
-            initial_form['content_locales'] = ['en']
-            initial_form['create_for'] = EventCreatedFor.BOTH
-            if 'organizer' in request_get:
-                try:
-                    queryset = Organizer.objects.all()
-                    if not request_user.has_active_staff_session(self.request.session.session_key):
-                        queryset = queryset.filter(
-                            id__in=request_user.teams.filter(can_create_events=True).values_list('organizer', flat=True)
-                        )
-                    initial_form['organizer'] = queryset.get(slug=request_get.get('organizer'))
-                except Organizer.DoesNotExist:
-                    pass
+        initial_form['is_video_creation'] = True
+        initial_form['locales'] = ['en']
+        initial_form['create_for'] = EventCreatedFor.BOTH.value
+        initial_form['has_subevents'] = request_get.get('series') == '1'
+        queryset = self.get_create_organizer_queryset()
+        if 'organizer' in request_get:
+            try:
+                initial_form['organizer'] = queryset.get(slug=request_get.get('organizer'))
+            except Organizer.DoesNotExist:
+                pass
+        elif queryset.count() == 1:
+            initial_form['organizer'] = queryset.first()
 
-        elif step == 'basics':
+        return initial_form
+
+    def get_basics_initial(self, foundation_data=None):
+        if foundation_data is None:
+            foundation_data = {}
+
+        clone_from = self.clone_from
+        initial_form = {}
+        if clone_from:
+            initial_form.update(
+                {
+                    'name': clone_from.name,
+                    'currency': clone_from.currency,
+                    'date_from': clone_from.date_from,
+                    'date_to': clone_from.date_to,
+                    'presale_start': clone_from.presale_start,
+                    'presale_end': clone_from.presale_end,
+                    'location': clone_from.location,
+                    'geo_lat': clone_from.geo_lat,
+                    'geo_lon': clone_from.geo_lon,
+                    'email': clone_from.email,
+                    'timezone': clone_from.settings.get('timezone') or clone_from.timezone,
+                    'locale': clone_from.settings.get('locale') or clone_from.locale,
+                }
+            )
+        else:
             initial_form['locale'] = 'en'
 
             # Set default dates: 3 months from now, 9 AM to 5 PM in user's timezone
@@ -203,62 +248,218 @@ class EventCreateView(SafeSessionWizardView):
             # Set default timezone to user's system timezone (consistent with manual entry)
             initial_form['timezone'] = get_current_timezone_name()
 
+        locales = foundation_data.get('locales') or self.get_foundation_initial().get('locales') or ['en']
+        if initial_form.get('locale') not in locales:
+            initial_form['locale'] = locales[0]
+
         return initial_form
 
+    @cached_property
+    def clone_from(self):
+        if hasattr(self, '_clone_from'):
+            return self._clone_from
+        if self.request.GET.get('clone'):
+            try:
+                return self.get_clone_queryset().get(pk=self.request.GET.get('clone'))
+            except Event.DoesNotExist:
+                pass
+        return None
+
     def dispatch(self, request, *args, **kwargs):
+        is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
+        if is_series and not is_event_series_creation_enabled(request):
+            raise PermissionDenied(_('Event series creation is currently disabled.'))
         return super().dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, form, **kwargs):
-        context = super().get_context_data(form, **kwargs)
-        context['create_for'] = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
-        context['has_organizer'] = self.request.user.teams.filter(can_create_events=True).exists()
-        if self.steps.current == 'basics':
-            context['organizer'] = self.get_cleaned_data_for_step('foundation').get('organizer')
+    def get_foundation_form(self):
+        return EventWizardFoundationForm(
+            data=self.request.POST if self.request.method == 'POST' else None,
+            initial=self.get_foundation_initial(),
+            prefix='foundation',
+            user=self.request.user,
+            session=self.request.session,
+        )
+
+    def get_basics_form(self, foundation_data=None, bind=True):
+        if foundation_data is None:
+            foundation_data = self.get_foundation_initial()
+        organizer = foundation_data.get('organizer') or self.get_fallback_organizer()
+        return EventWizardBasicsForm(
+            data=self.request.POST if bind and self.request.method == 'POST' else None,
+            initial=self.get_basics_initial(foundation_data),
+            prefix='basics',
+            user=self.request.user,
+            session=self.request.session,
+            organizer=organizer,
+            has_subevents=foundation_data.get('has_subevents', False),
+            locales=foundation_data.get('locales') or ['en'],
+            content_locales=foundation_data.get('content_locales'),
+            is_video_creation=foundation_data.get('is_video_creation', True),
+            restrict_locale_choices=False,
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        foundation_form = kwargs.get('foundation_form') or self.get_foundation_form()
+        foundation_data = foundation_form.cleaned_data if foundation_form.is_bound and foundation_form.is_valid() else None
+        organizer = foundation_data.get('organizer') if foundation_data else foundation_form.initial.get('organizer')
+        has_organizer = self.get_create_organizer_queryset().exists()
+        basics_form = kwargs.get('basics_form')
+        if has_organizer and basics_form is None:
+            basics_form = self.get_basics_form(foundation_data)
+        if basics_form and not organizer:
+            basics_form.fields['slug'].widget.prefix = ''
+
+        context['foundation_form'] = foundation_form
+        context['basics_form'] = basics_form
+        context['create_for'] = EventCreatedFor.BOTH.value
+        context['has_organizer'] = has_organizer
+        context['organizer'] = organizer
+        context['organizer_slug_options'] = self.get_organizer_slug_options()
+        context['organizer_slug_rng_url'] = (
+            reverse('control:events.add.slugrng', kwargs={'organizer': organizer.slug}) if organizer else ''
+        )
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
+        context['clone_from'] = self.clone_from
+        context['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
+        context['type_preselected'] = 'series' in self.request.GET
         return context
 
-    def render(self, form=None, **kwargs):
-        if self.steps.current == 'basics' and 'create_for' in self.request.POST:
-            self.storage.extra_data['create_for'] = self.request.POST.get('create_for')
-        if self.steps.current != 'foundation':
-            form_data = self.get_cleaned_data_for_step('foundation')
-            if form_data is None:
-                return self.render_goto_step('foundation')
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('ajax') == 'event-i18n-fields':
+            return self.render_event_i18n_fields()
 
-        return super().render(form, **kwargs)
+        if 'event_wizard-current_step' in request.POST:
+            return self.post_legacy_wizard(request)
 
-    def get_form_kwargs(self, step=None):
-        kwargs = {
-            'user': self.request.user,
-            'session': self.request.session,
+        foundation_form = self.get_foundation_form()
+        foundation_valid = foundation_form.is_valid()
+        foundation_data = foundation_form.cleaned_data if foundation_valid else {}
+        basics_form = self.get_basics_form(foundation_data)
+
+        if foundation_valid and basics_form.is_valid():
+            return self.create_event(foundation_form, basics_form)
+
+        messages.error(self.request, _('We could not create the event. See below for details.'))
+        return self.render_to_response(
+            self.get_context_data(foundation_form=foundation_form, basics_form=basics_form)
+        )
+
+    def render_event_i18n_fields(self):
+        if not self.get_create_organizer_queryset().exists():
+            return JsonResponse({'error': _('You cannot create events for any organizer.')}, status=403)
+
+        valid_locale_codes = {code for code, _name in settings.LANGUAGES}
+        locales = [
+            locale for locale in self.request.POST.getlist('foundation-locales') if locale in valid_locale_codes
+        ]
+        if not locales:
+            return JsonResponse({'error': _('Select at least one active language.')}, status=400)
+
+        basics_form = self.get_basics_form({'locales': locales}, bind=False)
+        for field_name in ('name', 'location'):
+            values = {
+                locale: self.request.POST.get(f'basics-{field_name}_{index}', '')
+                for index, (locale, _name) in enumerate(settings.LANGUAGES)
+                if f'basics-{field_name}_{index}' in self.request.POST
+            }
+            if values:
+                basics_form.initial[field_name] = values
+        fields = render_to_string(
+            'eventyay_common/events/fragment_event_i18n_fields.html',
+            {'basics_form': basics_form},
+            request=self.request,
+        )
+        return JsonResponse({'fields': fields})
+
+    def post_legacy_wizard(self, request):
+        step = request.POST.get('event_wizard-current_step')
+        if step == 'foundation':
+            foundation_form = self.get_foundation_form()
+            if foundation_form.is_valid():
+                request.session[self.legacy_session_key] = {'foundation': self.serialize_post_data(request.POST)}
+                basics_form = self.get_basics_form(foundation_form.cleaned_data)
+                return self.render_to_response(
+                    self.get_context_data(foundation_form=foundation_form, basics_form=basics_form)
+                )
+            return self.render_to_response(
+                self.get_context_data(foundation_form=foundation_form, basics_form=self.get_basics_form({}))
+            )
+
+        legacy_data = request.session.get(self.legacy_session_key, {})
+        foundation_post = legacy_data.get('foundation')
+        if not foundation_post:
+            return redirect(request.path)
+
+        foundation_form = EventWizardFoundationForm(
+            data=foundation_post,
+            initial=self.get_foundation_initial(),
+            prefix='foundation',
+            user=self.request.user,
+            session=self.request.session,
+        )
+        if not foundation_form.is_valid():
+            return self.render_to_response(
+                self.get_context_data(foundation_form=foundation_form, basics_form=self.get_basics_form({}))
+            )
+
+        if step == 'basics':
+            basics_form = self.get_basics_form(foundation_form.cleaned_data)
+            if basics_form.is_valid():
+                legacy_data['basics'] = self.serialize_post_data(request.POST)
+                request.session[self.legacy_session_key] = legacy_data
+            return self.render_to_response(
+                self.get_context_data(foundation_form=foundation_form, basics_form=basics_form)
+            )
+
+        if step == 'copy':
+            basics_post = legacy_data.get('basics')
+            if not basics_post:
+                return redirect(request.path)
+            basics_form = EventWizardBasicsForm(
+                data=basics_post,
+                initial=self.get_basics_initial(foundation_form.cleaned_data),
+                prefix='basics',
+                user=self.request.user,
+                session=self.request.session,
+                organizer=foundation_form.cleaned_data['organizer'],
+                has_subevents=foundation_form.cleaned_data.get('has_subevents', False),
+                locales=foundation_form.cleaned_data.get('locales') or ['en'],
+                content_locales=foundation_form.cleaned_data.get('content_locales'),
+                is_video_creation=foundation_form.cleaned_data.get('is_video_creation', True),
+                restrict_locale_choices=False,
+            )
+            copy_from_event = request.POST.get('copy-copy_from_event')
+            if copy_from_event:
+                try:
+                    self._clone_from = self.get_clone_queryset().get(pk=copy_from_event)
+                except Event.DoesNotExist:
+                    self._clone_from = None
+            if basics_form.is_valid():
+                request.session.pop(self.legacy_session_key, None)
+                return self.create_event(foundation_form, basics_form)
+            return self.render_to_response(
+                self.get_context_data(foundation_form=foundation_form, basics_form=basics_form)
+            )
+
+        return redirect(request.path)
+
+    @staticmethod
+    def serialize_post_data(post_data):
+        return {
+            key: values if len(values) > 1 else values[0]
+            for key, values in ((key, post_data.getlist(key)) for key in post_data)
         }
-        if step != 'foundation':
-            form_data = self.get_cleaned_data_for_step('foundation')
-            if form_data is None:
-                form_data = {
-                    'organizer': Organizer(slug='_nonexisting'),
-                    'has_subevents': False,
-                    'locales': ['en'],
-                    'is_video_creation': True,
-                }
-            kwargs.update(form_data)
-        return kwargs
 
-    def get_template_names(self):
-        return [self.templates[self.steps.current]]
-
-    def done(self, form_list, form_dict, **kwargs):
-        foundation_data = self.get_cleaned_data_for_step('foundation')
-        basics_data = self.get_cleaned_data_for_step('basics')
-
-        create_for = self.storage.extra_data.get('create_for')
-
+    def create_event(self, foundation_form, basics_form):
+        foundation_data = foundation_form.cleaned_data
+        basics_data = basics_form.cleaned_data
         self.request.organizer = foundation_data['organizer']
         has_permission = check_create_permission(self.request)
         final_is_video_creation = foundation_data.get('is_video_creation', True) and has_permission
 
         with transaction.atomic(), language(basics_data['locale']):
-            event = form_dict['basics'].instance
+            event = basics_form.instance
             event.organizer = foundation_data['organizer']
 
             default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
@@ -281,32 +482,42 @@ class EventCreateView(SafeSessionWizardView):
             event.has_subevents = foundation_data['has_subevents']
             event.is_video_creation = final_is_video_creation
             event.testmode = False
-            event.private_testmode = True
-            form_dict['basics'].save()
+            event.private_testmode = False
+            basics_form.save()
+            if self.clone_from:
+                event.clone_from(self.clone_from, new_secrets=True)
 
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)
-            # New events start unpublished; set_defaults enables private test mode for tickets/talks by default.
             event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
-            event.settings.set('locale', basics_data['locale'])
-            event.settings.set('locales', foundation_data['locales'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
-            event.settings.set('content_locales', content_locales)
+            event.update_language_configuration(
+                locales=foundation_data['locales'],
+                content_locales=content_locales,
+                default_locale=basics_data['locale']
+            )
+            event.refresh_from_db()
+            cfp = event.cfp
+            if 'content_locale' not in cfp.fields:
+                cfp.fields['content_locale'] = default_fields()['content_locale'].copy()
+            if len(foundation_data['locales']) > 1:
+                cfp.fields['content_locale']['visibility'] = 'required'
+                cfp.fields['content_locale']['public'] = True
+            else:
+                cfp.fields['content_locale']['visibility'] = 'do_not_ask'
+                cfp.fields['content_locale']['public'] = False
+            cfp.save(update_fields=['fields'])
             # Persist timezone on the event model as well so downstream consumers see the updated value
             event.timezone = basics_data['timezone']
-            event.save(update_fields=['timezone'])
-            
-            # Save imprint_url to settings (consistent with EventCommonSettingsForm)
-            if basics_data.get('imprint_url'):
-                event.settings.set('imprint_url', basics_data['imprint_url'])
+            event.save(update_fields=['timezone', 'locale_array', 'content_locale_array'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
-            create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
+            create_for = EventCreatedFor.BOTH.value
             event.settings.set('create_for', create_for)
 
             # Smart defaults work for all event types
-            if create_for in [EventCreatedFor.BOTH, EventCreatedFor.TICKET, EventCreatedFor.TALK]:
+            if create_for in [EventCreatedFor.BOTH.value, EventCreatedFor.TICKET.value, EventCreatedFor.TALK.value]:
                 event_dict = {
                     'organiser_slug': event.organizer.slug,
                     'name': event.name.data,
@@ -410,11 +621,19 @@ class EventUpdate(
             self.object.save(update_fields=['timezone'])
         form.instance.update_language_configuration(
             locales=self.sform.cleaned_data.get('locales'),
-            content_locales=self.sform.cleaned_data.get('content_locales'),
             default_locale=self.sform.cleaned_data.get('locale'),
         )
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
+
+        has_updates = any(
+            (
+                form.has_changed(),
+                self.sform.has_changed(),
+                self.header_links_formset.has_changed(),
+                self.footer_links_formset.has_changed(),
+            )
+        )
 
         if self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
             transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
@@ -426,6 +645,8 @@ class EventUpdate(
                     'active.'
                 ),
             )
+        elif has_updates:
+            messages.success(self.request, _('Your changes have been saved.'))
 
         return super().form_valid(form)
 
@@ -477,6 +698,35 @@ class EventUpdate(
         return True
 
     def post(self, request, *args, **kwargs):
+        if request.POST.get('ajax') == 'delete_image':
+            setting_key = request.POST.get('setting_key', '').strip()
+            if not setting_key:
+                field = request.POST.get('field', '').strip()
+                if field.startswith('settings-'):
+                    setting_key = field[len('settings-'):]
+                else:
+                    setting_key = field
+
+            if setting_key in DEFAULTS and DEFAULTS[setting_key].get('type') is File:
+                current_value = request.event.settings.get(setting_key, as_type=str)
+                if current_value:
+                    current_file = resolve_media_path(current_value)
+                    if current_file and not str(current_file).startswith(('http://', 'https://')):
+                        default_storage.delete(current_file)
+                        base_path, unused_ext = os.path.splitext(current_file)
+                        orig_ext = request.event.settings.get(f'{setting_key}_original_ext', as_type=str)
+                        if orig_ext:
+                            default_storage.delete(f'{base_path}_original.{orig_ext}')
+
+                if request.event.settings.get(setting_key) is not None:
+                    del request.event.settings[setting_key]
+                orig_ext_key = f"{setting_key}_original_ext"
+                if request.event.settings.get(orig_ext_key) is not None:
+                    del request.event.settings[orig_ext_key]
+                request.event.log_action('eventyay.event.settings.changed', user=request.user, data={setting_key: None})
+                return JsonResponse({'success': True})
+            return JsonResponse({'success': False, 'error': 'Invalid field'}, status=400)
+
         if self.enable_talk_system(request):
             return redirect(self.get_success_url())
 
@@ -633,7 +883,9 @@ class EventLive(TemplateView):
                 event.live = True
                 event.save()
                 self.request.event.log_action('eventyay.event.live.activated', user=self.request.user, data={})
+                transaction.on_commit(lambda: notify_organizer_followers.apply_async(args=(event.pk,)))
             messages.success(self.request, _('Your event is now online.'))
+
         elif request.POST.get('live') == 'false':
             with transaction.atomic():
                 event.live = False

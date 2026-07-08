@@ -43,7 +43,9 @@
                             </form>
                         {% endif %}
                     {% else %}
-                        {% include "cfp/event/fragment_state.html" with state=submission.state as_badge=True %}
+                        <span class="ml-3 submission-readonly-badge align-middle">
+                            {% include "cfp/event/fragment_state.html" with state=submission.state as_badge=True %}
+                        </span>
                     {% endif %}
                 </span>
             </h2>

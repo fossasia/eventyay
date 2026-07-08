@@ -40,6 +40,7 @@ for k, v in DEFAULTS.items():
 # Eventyay Video (integrated)
 settings_hierarkey.add_default('venueless_start', None, RelativeDateWrapper)
 settings_hierarkey.add_default('venueless_text', None, LazyI18nString)
+settings_hierarkey.add_default('review_help_text', None, LazyI18nString)
 settings_hierarkey.add_default('venueless_allow_pending', 'False', bool)
 settings_hierarkey.add_default('venueless_all_products', 'True', bool)
 settings_hierarkey.add_default('venueless_products', '[]', list)
@@ -50,7 +51,14 @@ settings_hierarkey.add_default('venueless_issuer', '', str)
 settings_hierarkey.add_default('venueless_audience', '', str)
 settings_hierarkey.add_default('venueless_talk_schedule_url', '', str)
 settings_hierarkey.add_default('venueless_show_public_link', False, bool)
+settings_hierarkey.add_default('talk_schedule_public', None, bool)
 settings_hierarkey.add_default('create_for', 'all', str)
+
+# Etherpad collaborative notes integration
+settings_hierarkey.add_default('etherpad_enabled', False, bool)
+settings_hierarkey.add_default('etherpad_base_url', '', str)
+settings_hierarkey.add_default('etherpad_api_key', '', str)
+settings_hierarkey.add_default('etherpad_pad_name_pattern', '{event}-{submission}-{token}', str)
 
 # Telemetry settings for anonymous usage data collection
 # These are used by GlobalSettingsObject via settings_hierarkey
@@ -94,6 +102,20 @@ settings_hierarkey.add_type(RelativeDateWrapper, serialize=_serialize_rdw, unser
 @settings_hierarkey.set_global(cache_namespace='global')
 class GlobalSettingsObject(GlobalSettingsBase):
     slug = '_global'
+
+
+EVENT_SERIES_CREATION_ENABLED = 'event_series_creation_enabled'
+
+
+def is_event_series_creation_enabled(request=None) -> bool:
+    _cache_attr = '_event_series_creation_enabled'
+    if request is not None and hasattr(request, _cache_attr):
+        return getattr(request, _cache_attr)
+    gs = GlobalSettingsObject()
+    result = gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
+    if request is not None:
+        setattr(request, _cache_attr, result)
+    return result
 
 
 class SettingsSandbox:
@@ -143,9 +165,20 @@ class SettingsSandbox:
         self._event.settings.set(self._convert_key(key), value)
 
 
+def validate_primary_font(primary_font):
+    if primary_font:
+        from eventyay.presale.style import SYSTEM_FONTS, get_fonts  # noqa: PLC0415
+        if primary_font not in SYSTEM_FONTS and primary_font not in get_fonts():
+            raise ValidationError(
+                {'primary_font': _('The selected font is not allowed.')}
+            )
+
+
 def validate_event_settings(event, settings_dict):
-    from eventyay.base.models import Event
-    from eventyay.base.signals import validate_event_settings
+    from eventyay.base.models import Event  # noqa: PLC0415
+    from eventyay.base.signals import validate_event_settings  # noqa: PLC0415
+
+    validate_primary_font(settings_dict.get('primary_font'))
 
     default_locale = settings_dict.get('locale')
     locales = settings_dict.get('locales', [])
@@ -153,14 +186,6 @@ def validate_event_settings(event, settings_dict):
         locales = list(locales)
     if default_locale and default_locale not in locales:
         raise ValidationError({'locale': _('Your default locale must also be enabled for your event (see box above).')})
-    content_locales = settings_dict.get('content_locales')
-    if content_locales is None:
-        content_locales = locales
-    elif not isinstance(content_locales, list):
-        content_locales = list(content_locales)
-    if content_locales:
-        if set(content_locales) - set(locales):
-            raise ValidationError({'content_locales': _('Content languages must be a subset of the active languages.')})
     if settings_dict.get('attendee_names_required') and not settings_dict.get('attendee_names_asked'):
         raise ValidationError(
             {'attendee_names_required': _('You cannot require specifying attendee names if you do not ask for them.')}
@@ -206,12 +231,7 @@ def validate_event_settings(event, settings_dict):
 
 
 def validate_organizer_settings(organizer, settings_dict):
-    # This is not doing anything for the time being.
-    # But earlier we called validate_event_settings for the organizer, too - and that didn't do anything for
-    # organizer-settings either.
-    #
-    # N.B.: When actually fleshing out this stub, adding it to the OrganizerUpdateForm should be considered.
-    pass
+    validate_primary_font(settings_dict.get('primary_font'))
 
 
 def global_settings_object(holder):

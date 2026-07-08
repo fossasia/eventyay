@@ -16,12 +16,17 @@ class OrganizerSettingsForm(SettingsForm):
         'organizer_homepage_text',
         'organizer_link_back',
         'organizer_logo_image_large',
+        'community_follow_enabled',
+        'community_show_follower_count',
         'giftcard_length',
         'giftcard_expiry_years',
         'locales',
         'region',
         'event_team_provisioning',
         'primary_color',
+        'header_background_color',
+        'header_text_color',
+        'navigation_text_color',
         'theme_color_success',
         'theme_color_danger',
         'theme_color_background',
@@ -43,13 +48,10 @@ class OrganizerSettingsForm(SettingsForm):
             'as it will be resized on smaller screens.'
         ),
     )
-    favicon = ExtFileField(
-        label=_('Favicon'),
-        ext_whitelist=('.ico', '.png', '.jpg', '.gif', '.jpeg'),
-        required=False,
-        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_FAVICON],
-        help_text=_(
-            'If you provide a favicon, we will show it instead of the default pretix icon. '
-            'We recommend a size of at least 200x200px to accommodate most devices.'
-        ),
-    )
+
+    def clean(self):
+        data = super().clean()
+        from eventyay.base.settings import validate_organizer_settings
+        validate_organizer_settings(self.obj, data)
+        return data
+

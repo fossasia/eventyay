@@ -3,7 +3,7 @@ import json
 import bs4
 import pytest
 from django_scopes import scope, scopes_disabled
-from pretalx.submission.models.question import QuestionRequired
+from eventyay.base.models.question import TalkQuestionRequired as QuestionRequired
 
 from eventyay.person.forms import SpeakerProfileForm
 from eventyay.person.forms.profile import AVATAR_LICENSE_TEXT_VALIDATION_ERROR
@@ -101,6 +101,29 @@ def test_orga_can_edit_speaker(orga_client, speaker, event, submission):
         assert count + 1 == profile.logged_actions().all().count()
     assert speaker.fullname == "BESTSPEAKAR", response.text
     assert speaker.email == "foo@foooobar.de"
+
+
+@pytest.mark.django_db
+def test_speaker_profile_form_not_strict_allows_missing_required_fields(speaker, event):
+    event.cfp.fields["avatar"]["visibility"] = "required"
+    event.cfp.save()
+
+    with scope(event=event):
+        form = SpeakerProfileForm(
+            data={
+                "fullname": "",
+                "email": "",
+                "biography": "Draft bio",
+            },
+            event=event,
+            user=speaker,
+            not_strict=True,
+        )
+
+        assert form.is_valid()
+        assert "fullname" not in form.errors
+        assert "email" not in form.errors
+        assert "avatar" not in form.errors
 
 
 @pytest.mark.django_db
@@ -356,6 +379,78 @@ def test_speaker_list_has_featured_and_drag_controls(
     assert f'dragsort-url="{event.orga_urls.speakers}"' in response.text
     assert f'featured_speaker_{speaker.code}' in response.text
     assert "dragsort-button" in response.text
+
+
+@pytest.mark.django_db
+def test_speaker_list_sorts_by_featured(
+    orga_client, speaker, other_speaker, event, submission, other_submission
+):
+    with scope(event=event):
+        featured_profile = speaker.event_profile(event)
+        featured_profile.is_featured = True
+        featured_profile.save(update_fields=['is_featured'])
+
+    response = orga_client.get(event.orga_urls.speakers + '?sort=-is_featured', follow=True)
+    assert response.status_code == 200
+    assert 'sort=-is_featured' in response.text or 'sort=%2Dis_featured' in response.text
+
+    def speaker_names_in_table(response):
+        doc = bs4.BeautifulSoup(response.content, 'lxml')
+        table = doc.select_one('table tbody')
+        assert table is not None
+        return [link.get_text(strip=True) for link in table.select('td a[href*="/speakers/"]')]
+
+    names = speaker_names_in_table(response)
+    assert names[0] == speaker.fullname
+
+
+@pytest.mark.django_db
+def test_speaker_arrival_buttons_use_distinct_styles(orga_client, speaker, event, accepted_submission):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        profile.has_arrived = False
+        profile.save(update_fields=['has_arrived'])
+
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    assert 'btn-speaker-arrived' in response.text
+    assert 'Mark speaker as arrived' in response.text
+
+    profile.has_arrived = True
+    with scope(event=event):
+        profile.save(update_fields=['has_arrived'])
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert 'btn-speaker-not-arrived' in response.text
+    assert 'Mark speaker as not arrived' in response.text
+
+
+@pytest.mark.django_db
+def test_speaker_list_shows_linked_sessions(orga_client, speaker, event, submission):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    assert submission.title in response.text
+    assert submission.orga_urls.base in response.text
+    assert 'speaker-session-list' in response.text
+
+
+@pytest.mark.django_db
+def test_speaker_arrived_toggle_from_list_stays_on_list(orga_client, speaker, event, accepted_submission):
+    list_url = event.orga_urls.speakers + '?sort=-is_featured'
+    with scope(event=event):
+        toggle_url = speaker.event_profile(event).orga_urls.toggle_arrived
+    response = orga_client.post(f'{toggle_url}?next={list_url}', follow=True)
+    assert response.status_code == 200
+    assert response.request['PATH_INFO'].rstrip('/').endswith('/speakers')
+    assert 'sort=-is_featured' in response.request.get('QUERY_STRING', '')
+
+
+@pytest.mark.django_db
+def test_speaker_arrived_toggle_without_next_returns_to_list(orga_client, speaker, event, accepted_submission):
+    with scope(event=event):
+        toggle_url = speaker.event_profile(event).orga_urls.toggle_arrived
+    response = orga_client.post(toggle_url, follow=True)
+    assert response.status_code == 200
+    assert response.request['PATH_INFO'].rstrip('/').endswith('/speakers')
 
 
 @pytest.mark.django_db

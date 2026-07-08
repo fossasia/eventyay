@@ -59,3 +59,65 @@
 .form-narrow {
     max-width: 600px;
 }
+
+/* Reusable beta badge */
+.badge-beta {
+    display: inline-block;
+    padding: 2px 6px;
+    margin-left: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #fff;
+    background-color: #c05600; /* Darker orange for WCAG contrast */
+    border-radius: 3px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+.badge-beta .fa {
+    margin-right: 3px;
+    font-size: 10px;
+}
+
+/* Thumbnailed file input widget styles */
+.thumbnailed-file-initial {
+    margin-bottom: 8px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.thumbnailed-file-link {
+    vertical-align: middle;
+}
+.thumbnailed-file-preview-eye {
+    margin-left: 8px;
+    vertical-align: middle;
+}
+.thumbnailed-file-delete-wrapper {
+    margin-left: 10px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.thumbnailed-file-checkbox {
+    vertical-align: middle;
+}
+.thumbnailed-file-checkbox-label {
+    font-weight: normal;
+    cursor: pointer;
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+.thumbnailed-file-delete-ajax {
+    display: none;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+.thumbnailed-file-input-text {
+    margin-top: 8px;
+    margin-bottom: 6px;
+    font-weight: 500;
+}

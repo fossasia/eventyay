@@ -2,7 +2,7 @@ import pytest
 from django.conf import settings
 from django.utils.timezone import now
 
-from pretix.base.models import Event, Organizer
+from eventyay.base.models import Event, Organizer
 
 
 @pytest.fixture

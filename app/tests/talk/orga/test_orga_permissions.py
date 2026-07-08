@@ -1,9 +1,9 @@
 import pytest
 from django.contrib.auth.models import AnonymousUser
 
-from pretalx.event.rules import (
+from eventyay.talk_rules.event import (
     can_change_event_settings,
-    can_change_organiser_settings,
+    can_change_organizer_settings as can_change_organiser_settings,
     can_change_teams,
 )
 

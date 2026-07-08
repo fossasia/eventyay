@@ -10,7 +10,13 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.models import AuditLog, Channel, User
 from eventyay.base.models.event import Event
-from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
+from eventyay.base.models.room import (
+    Room,
+    RoomConfigSerializer,
+    RoomView,
+    get_room_with_linked_sessions,
+    partial_validated_update,
+)
 from eventyay.base.services.user import get_public_users
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
@@ -66,10 +72,53 @@ async def get_viewers(event: Event, room: Room):
     return users
 
 
+def validate_room_config_patch(room, body):
+    """
+    Validate a partial room config update in a sync DB context.
+
+    Returns (validated_data, update_fields) on success, or (None, None) if invalid.
+    """
+    serializer = RoomConfigSerializer(
+        get_room_with_linked_sessions(room),
+        data=body,
+        partial=True,
+    )
+    return partial_validated_update(serializer, body)
+
+
+def uses_schedule_driven_stage(module_config):
+    stage_modules = {
+        'livestream.native',
+        'livestream.youtube',
+        'livestream.iframe',
+    }
+    for module in module_config or []:
+        if module.get('type') not in stage_modules:
+            continue
+        config = module.get('config') or {}
+        return config.get('playback_mode') == 'schedule_driven'
+    return False
+
+
+def clear_stream_schedules_unless_schedule_driven(room):
+    if uses_schedule_driven_stage(room.module_config):
+        return False
+    if not room.stream_schedules.exists():
+        return False
+    room.stream_schedules.all().delete()
+    async_to_sync(broadcast_stream_change)(room.pk, None, reload=True)
+    return True
+
+
 @database_sync_to_async
 @atomic
 def save_room(event, room, update_fields, old_data, by_user):
     room.save(update_fields=update_fields)
+    if 'module_config' in update_fields:
+        clear_stream_schedules_unless_schedule_driven(room)
+        from eventyay.agenda.views.utils import clear_schedule_caches
+
+        clear_schedule_caches(event)
     new = RoomConfigSerializer(room).data
 
     AuditLog.objects.create(

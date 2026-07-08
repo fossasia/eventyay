@@ -2,28 +2,30 @@
 .pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px'}", :class="draggedSession ? ['is-dragging'] : []", @pointerup="stopDragging")
 	template(v-if="schedule")
 		#main-wrapper
-			#unassigned.no-print(v-scrollbar.y="", @pointerenter="isUnassigning = true", @pointerleave="isUnassigning = false")
-				.density-controls
-					button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
-						i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
-						span.density-btn-text {{ condensedView ? $t('Normal view') : $t('Condensed view') }}
-					.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
-						span.time-density-display {{ timeDensityMinutes }} min
-						i.fa.fa-chevron-down(aria-hidden="true")
-						.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
-							.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
-								span {{ mins }} min
-								i.fa.fa-check(v-if="timeDensityMinutes === mins")
-				.title
-					bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
-					#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
-						i.fa.fa-sort
-					#unassigned-sort-menu(v-if="showUnassignedSortMenu")
-						.sort-method(v-for="method of unassignedSortMethods", @click="unassignedSort === method.name ? unassignedSortDirection = unassignedSortDirection * -1 : unassignedSort = method.name; showUnassignedSortMenu = false")
-							span {{ method.label }}
-							i.fa.fa-sort-amount-asc(v-if="unassignedSort === method.name && unassignedSortDirection === 1")
-							i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
-				session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", @startDragging="startNewBreak", @click="showNewBreakHint", v-tooltip.fixed="{text: newBreakTooltip, show: newBreakTooltip}", @pointerleave="removeNewBreakHint")
+			#unassigned.no-print(v-scrollbar.y="", @pointerenter="isUnassigning = true", @pointerleave="onUnassignedLeave")
+				.unassigned-header
+					.density-controls
+						button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
+							i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
+							span.density-btn-text {{ condensedView ? $t('Normal view') : $t('Condensed view') }}
+						.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
+							span.time-density-display {{ timeDensityMinutes }} min
+							i.fa.fa-chevron-down(aria-hidden="true")
+							.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
+								.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
+									span {{ mins }} min
+									i.fa.fa-check(v-if="timeDensityMinutes === mins")
+					.title
+						bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
+						#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
+							i.fa.fa-sort
+						#unassigned-sort-menu(v-if="showUnassignedSortMenu")
+							.sort-method(v-for="method of unassignedSortMethods", @click="unassignedSort === method.name ? unassignedSortDirection = unassignedSortDirection * -1 : unassignedSort = method.name; showUnassignedSortMenu = false")
+								span {{ method.label }}
+								i.fa.fa-sort-amount-asc(v-if="unassignedSort === method.name && unassignedSortDirection === 1")
+								i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
+					session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
+					.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
 				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id")
 				.deleted-room-sessions(v-if="deletedRoomSessions.length")
 					h3 {{ $t('Deleted Room Sessions') }}
@@ -43,7 +45,7 @@
 					:end="days.at(-1).clone().endOf('day')",
 					:currentDay="currentDay",
 					:draggedSession="draggedSession",
-					@changeDay="currentDay = $event",
+					@changeDay="changeDay",
 					@startDragging="startDragging",
 					@rescheduleSession="rescheduleSession",
 					@createSession="createSession",
@@ -51,14 +53,14 @@
 			#session-editor-wrapper(v-if="editorSession", @click="editorSession = null")
 				form#session-editor(@click.stop="", @submit.prevent="editorSave")
 					h3.session-editor-title(v-if="editorSession.code")
-						a(v-if="editorSession.code", :href="`/orga/event/${eventSlug}/submissions/${editorSession.code}/`") {{ getLocalizedString(editorSession.title) }}
+						a(v-if="organizerSlug && eventSlug", :href="`${api.getOrgaEventBase()}/submissions/${editorSession.code}/`") {{ getLocalizedString(editorSession.title) }}
 						span(v-else) {{ getLocalizedString(editorSession.title) }}
 					.data
 						.data-row(v-if="editorSession.code && editorSession.speakers && editorSession.speakers.length > 0").form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Speakers') }}
 							.col-md-9.data-value
 								span(v-for="speaker, index of editorSession.speakers")
-									a(v-if="speaker.code", :href="`/orga/event/${eventSlug}/speakers/${speaker.code}/`") {{ speaker.name || speaker.code }}
+									a(v-if="organizerSlug && eventSlug && speaker.code", :href="`${api.getOrgaEventBase()}/speakers/${speaker.code}/`") {{ speaker.name || speaker.code }}
 									span(v-else) {{ speaker.name }}
 									span(v-if="index != editorSession.speakers.length - 1") {{', '}}
 								span.text-warning(v-if="editorSession.speakers.some(s => !s.name)")  ({{ $t('some speakers have not shared their names') }})
@@ -140,6 +142,7 @@ interface Talk {
   submission?: Record<string, unknown>
   uncreated?: boolean
   availabilities?: AvailabilityEntry[]
+  do_not_record?: boolean
 }
 
 interface SessionData {
@@ -157,6 +160,7 @@ interface SessionData {
   deletedRoom?: boolean
   uncreated?: boolean
   availabilities?: AvailabilityEntry[]
+  do_not_record?: boolean
 }
 
 interface SortMethod {
@@ -182,6 +186,7 @@ const props = defineProps<{
 }>()
 
 const eventSlug = ref<string | null>(null)
+const organizerSlug = ref<string | null>(null)
 const scrollParentWidth = ref<number>(Infinity)
 const schedule = ref<Schedule | null>(null)
 const availabilities = reactive<{ rooms: Record<string, AvailabilityEntry[]>; talks: Record<string, AvailabilityEntry[]> }>({
@@ -297,6 +302,7 @@ const unscheduled = computed<SessionData[]>(() => {
       track: tracksLookup.value[lookupKey(session.track)],
       duration: session.duration,
       state: session.state,
+      do_not_record: session.do_not_record,
     } as SessionData)
   }
   if (unassignedFilterString.value.length) {
@@ -348,6 +354,7 @@ const deletedRoomSessions = computed<SessionData[]>(() => {
       track: tracksLookup.value[lookupKey(session.track)],
       state: session.state,
       deletedRoom: true,
+      do_not_record: session.do_not_record,
     }))
 })
 
@@ -378,6 +385,7 @@ const sessions = computed<SessionData[]>(() => {
     track: tracksLookup.value[lookupKey(session.track)],
     state: session.state,
     room: roomsLookup.value[lookupKey(session.room)],
+    do_not_record: session.do_not_record,
   }))
 
   sessionList.sort((a, b) => a.start!.diff(b.start!))
@@ -572,6 +580,17 @@ function removeNewBreakHint() {
   newBreakTooltip.value = ''
 }
 
+function onNewBreakKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    removeNewBreakHint()
+  }
+}
+
+function onUnassignedLeave() {
+  isUnassigning.value = false
+  removeNewBreakHint()
+}
+
 interface DragStartEvent {
   event: PointerEvent
   session: Partial<SessionData & Talk>
@@ -586,6 +605,7 @@ function startNewBreak({ event }: DragStartEvent) {
 }
 
 function startDragging({ event, session }: DragStartEvent) {
+  isUnassigning.value = false
   if (availabilities && availabilities.talks[session.id! ?? 0] && availabilities.talks[session.id! ?? 0].length !== 0) {
     session.availabilities = availabilities.talks[session.id! ?? 0]
   }
@@ -652,7 +672,9 @@ onBeforeMount(async () => {
   eventTimezone.value = schedule.value.timezone
   moment.tz.setDefault(eventTimezone.value)
   locales.value = schedule.value.locales
-  eventSlug.value = window.location.pathname.split('/')[3] ?? null
+  const match = window.location.pathname.match(/\/orga\/event\/([^/]+)\/([^/]+)/);
+  organizerSlug.value = match ? match[1] : null;
+  eventSlug.value = match ? match[2] : null;
   currentDay.value = days.value[0]
   window.setTimeout(pollUpdates, 10 * 100)
   await fetchAdditionalScheduleData()
@@ -759,7 +781,15 @@ onUnmounted(() => {
 			margin-right: 12px
 		> .bunt-scrollbar-rail-y
 			margin: 0
-		> .density-controls
+		.unassigned-header
+			position: sticky
+			top: 0
+			z-index: 10
+			background-color: $clr-white
+			padding-bottom: 8px
+			display: flex
+			flex-direction: column
+		.unassigned-header > .density-controls
 			display: flex
 			align-items: center
 			justify-content: flex-start
@@ -847,7 +877,8 @@ onUnmounted(() => {
 					margin-left: 6px
 					font-weight: 500
 					white-space: nowrap
-		> .title
+		.unassigned-header > .title
+			position: relative
 			padding 4px 0
 			font-size: 18px
 			text-align: center
@@ -875,6 +906,19 @@ onUnmounted(() => {
 					background-color: $clr-dividers-light
 		.new-break.c-linear-schedule-session
 			min-height: 48px
+			&:focus-visible
+				outline: 2px solid var(--color-primary, #3b82f6)
+				outline-offset: 2px
+		.new-break-hint
+			display: block
+			background: rgba(0, 0, 0, 0.6)
+			color: white
+			font-size: 13px
+			line-height: 1.4
+			padding: 6px 10px
+			border-radius: 4px
+			pointer-events: none
+			margin: 0 12px 8px 8px
 		#unassigned-sort-menu
 			color: $clr-primary-text-light
 			display: flex

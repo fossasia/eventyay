@@ -16,14 +16,14 @@ from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
 
-from pretix.base.decimal import round_decimal
-from pretix.base.models import (
+from eventyay.base.decimal import round_decimal
+from eventyay.base.models import (
     CartPosition,
     Event,
     Invoice,
     InvoiceAddress,
-    Item,
-    ItemCategory,
+    Product as Item,
+    ProductCategory as ItemCategory,
     Order,
     OrderPayment,
     OrderPosition,
@@ -34,16 +34,16 @@ from pretix.base.models import (
     SeatingPlan,
     Voucher,
 )
-from pretix.base.models.items import (
-    ItemAddOn,
-    ItemBundle,
-    ItemVariation,
-    SubEventItem,
-    SubEventItemVariation,
+from eventyay.base.models.product import (
+    ProductAddOn as ItemAddOn,
+    ProductBundle as ItemBundle,
+    ProductVariation as ItemVariation,
+    SubEventProduct as SubEventItem,
+    SubEventProductVariation as SubEventItemVariation,
 )
-from pretix.base.services.orders import OrderError, _perform_order
-from pretix.testutils.scope import classscope
-from pretix.testutils.sessions import get_cart_session_key
+from eventyay.base.services.orders import OrderError, _perform_order
+from tests.testutils.scope import classscope
+from tests.testutils.sessions import get_cart_session_key
 
 
 class BaseCheckoutTestCase:
@@ -56,7 +56,7 @@ class BaseCheckoutTestCase:
             name='30C3',
             slug='30c3',
             date_from=datetime.datetime(now().year + 1, 12, 26, tzinfo=datetime.timezone.utc),
-            plugins='pretix.plugins.stripe,pretix.plugins.banktransfer',
+            plugins='eventyay.plugins.stripe,eventyay.plugins.banktransfer',
             live=True,
         )
         self.tr19 = self.event.tax_rules.create(rate=19)
@@ -168,7 +168,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
                 expires=now() + timedelta(minutes=10),
             )
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('AT', 'AT123456', 'Foo')
             self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
@@ -196,7 +196,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_reverse_charge_enable_then_disable(self):
         self.test_reverse_charge()
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('AT', 'AT123456', 'Foo')
             self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
@@ -235,12 +235,12 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
                 expires=now() + timedelta(minutes=10),
             )
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
 
             def raiser(*args, **kwargs):
-                import vat_moss.errors
+                import vat_moss_lite.errors
 
-                raise vat_moss.errors.InvalidError()
+                raise vat_moss_lite.errors.InvalidError()
 
             mock_validate.side_effect = raiser
             resp = self.client.post(
@@ -278,7 +278,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
                 expires=now() + timedelta(minutes=10),
             )
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('AU', 'AU123456', 'Foo')
             self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
@@ -319,7 +319,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
                 expires=now() + timedelta(minutes=10),
             )
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('AT', 'AT123456', 'Foo')
             self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
@@ -359,7 +359,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
                 expires=now() + timedelta(minutes=10),
             )
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('AT', 'AT123456', 'Foo')
             resp = self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
@@ -396,12 +396,12 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
                 expires=now() + timedelta(minutes=10),
             )
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
 
             def raiser(*args, **kwargs):
-                import vat_moss.errors
+                import vat_moss_lite.errors
 
-                raise vat_moss.errors.WebServiceUnavailableError('Fail')
+                raise vat_moss_lite.errors.WebServiceUnavailableError('Fail')
 
             mock_validate.side_effect = raiser
             self.client.post(
@@ -450,7 +450,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
                 expires=now() + timedelta(minutes=10),
             )
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('AT', 'AT123456', 'Foo')
             self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
@@ -471,7 +471,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         cr1.refresh_from_db()
         assert cr1.price == Decimal('19.33')
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('DE', 'DE123456', 'Foo')
             self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
@@ -535,7 +535,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         cr1.refresh_from_db()
         assert cr1.price == Decimal('23.00')
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('AT', 'AT123456', 'Foo')
             r = self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
@@ -570,7 +570,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
                 expires=now() + timedelta(minutes=10),
             )
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('AT', 'AT123456', 'Foo')
             self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
@@ -626,7 +626,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
                 voucher=self.event.vouchers.create(),
             )
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('AT', 'AT123456', 'Foo')
             self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
@@ -660,7 +660,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_country_taxing_switch(self):
         self._test_country_taxing()
 
-        with mock.patch('vat_moss.id.validate') as mock_validate:
+        with mock.patch('vat_moss_lite.id.validate') as mock_validate:
             mock_validate.return_value = ('AT', 'AT123456', 'Foo')
             self.client.post(
                 '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),

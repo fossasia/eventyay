@@ -18,13 +18,14 @@ def default_settings():
         'count_length_in': 'chars',
         'show_deadline': True,
         'hide_after_deadline': False,
+        'cfp_enable_gravatar': True,
     }
 
 
 # Canonical lists of built-in CFP field keys, grouped by target.
 # Every other module should import these instead of hard-coding field names.
 BUILTIN_SESSION_FIELDS = (
-    'title', 'abstract', 'description', 'notes', 'track',
+    'title', 'submission_type', 'abstract', 'description', 'notes', 'track',
     'duration', 'slot_count', 'content_locale', 'image', 'slides', 'do_not_record',
 )
 BUILTIN_SPEAKER_FIELDS = (
@@ -80,6 +81,10 @@ def default_fields():
             'max_length': None,
             'public': True,
         },
+        'submission_type': {
+            'visibility': 'required',
+            'public': True,
+        },
         'abstract': {
             'visibility': 'required',
             'min_length': None,
@@ -123,7 +128,7 @@ def field_helper(cls):
         return self.fields.get(field, default_fields()[field])['visibility'] == 'required'
 
     def is_field_public(self, field):
-        if field in {'title', 'track', 'duration', 'fullname'}:
+        if field in {'title', 'submission_type', 'track', 'duration', 'fullname'}:
             return True
         return self.fields.get(field, default_fields()[field]).get(
             'public', default_fields()[field].get('public', False)
@@ -258,3 +263,8 @@ class CfP(PretalxModel):
         if self.deadline:
             deadlines.append(self.deadline)
         return max(deadlines) if deadlines else None
+
+    @property
+    def enable_gravatar(self) -> bool:
+        """Check if Gravatar is enabled for this event's CfP."""
+        return self.settings.get('cfp_enable_gravatar', True)

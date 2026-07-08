@@ -1,5 +1,6 @@
 import copy
 import datetime as dt
+import hashlib
 import logging
 import os
 import string
@@ -15,7 +16,7 @@ import icalendar
 import jwt
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.core.exceptions import MultipleObjectsReturned, ValidationError
+from django.core.exceptions import MultipleObjectsReturned, SuspiciousFileOperation, ValidationError
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.core.mail import get_connection
@@ -25,7 +26,7 @@ from django.core.validators import (
     MinValueValidator,
     RegexValidator,
 )
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Prefetch, Q, Subquery, Value
 from django.template.defaultfilters import date as _date
 from django.urls import reverse
@@ -48,7 +49,7 @@ from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
-from eventyay.common.text.path import path_with_hash
+from eventyay.common.text.path import path_with_hash, resolve_media_path as _resolve_media_path
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls, is_http_url
 from eventyay.consts import TIMEZONE_CHOICES
@@ -66,7 +67,7 @@ from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.http import smtp_reachable
 from eventyay.helpers.json import safe_string
-from eventyay.helpers.thumb import get_thumbnail
+from eventyay.helpers.thumb import ThumbnailError, get_thumbnail
 from eventyay.talk_rules.event import (
     can_change_event_settings,
     can_create_events,
@@ -193,10 +194,10 @@ def default_feature_flags():
     return {
         'show_schedule': True,
         'show_featured': 'never',
+        'show_featured_speakers': 'never',
         'show_widget_if_not_public': False,
         'session_popularity_enabled': False,
-        'session_popularity_show_on_calendar': True,
-        'session_popularity_show_on_list': True,
+        'session_popularity_show_on_schedule': True,
         'export_html_on_release': False,
         'use_tracks': True,
         'use_feedback': True,
@@ -206,6 +207,8 @@ def default_feature_flags():
         'chat-moderation': True,
         'polls': True,
         'schedule-control': True,
+        'etherpad_enabled': False,
+        'etherpad_auto_generate': False,
     }
 
 
@@ -215,8 +218,8 @@ def default_display_settings():
         'imprint_url': None,
         'header_pattern': '',
         'html_export_url': '',
-        'meta_noindex': False,
         'texts': {'agenda_session_above': '', 'agenda_session_below': ''},
+        'etherpad_public': False,
     }
 
 
@@ -327,6 +330,8 @@ class EventMixin:
         setting. Times are not shown.
         """
         tz = tz or ZoneInfo(key=self.settings.timezone)
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         if (not self.settings.show_date_to and not force_show_end) or not self.date_to:
             return _date(self.date_from.astimezone(tz), 'DATE_FORMAT')
         return daterange(self.date_from.astimezone(tz), self.date_to.astimezone(tz))
@@ -524,6 +529,7 @@ class EventMixin:
 # - We want to avoid the `objects = ScopedManager()` (we may use it later, after the making "enext" stable enough).
 # - We don't want to inherit the LogMixin (already have LoggedModel).
 @settings_hierarkey.add(parent_field='organizer', cache_namespace='event')
+
 class Event(
     EventMixin, LoggedModel, TimestampedModel, FileCleanupMixin, RulesModelMixin, models.Model, metaclass=RulesModelBase
 ):
@@ -570,7 +576,7 @@ class Event(
     CURRENCY_CHOICES = [(c.alpha_3, c.alpha_3 + ' - ' + c.name) for c in settings.CURRENCIES]
     organizer = models.ForeignKey(Organizer, related_name='events', on_delete=models.PROTECT)
     testmode = models.BooleanField(default=False)
-    private_testmode = models.BooleanField(default=True)
+    private_testmode = models.BooleanField(default=False)
     name = I18nCharField(
         max_length=200,
         verbose_name=_('Event name'),
@@ -806,7 +812,7 @@ class Event(
         """URL patterns for organizer/admin panel views of this event."""
 
         base_path = settings.BASE_PATH
-        base = '{base_path}/orga/event/{self.slug}/'
+        base = '{base_path}/orga/event/{self.organizer.slug}/{self.slug}/'
         login = '{base}login/'
         live = '{base}live'
         delete = '{base}delete'
@@ -834,21 +840,21 @@ class Event(
         feedback = '{submissions}feedback/'
         apply_pending = '{submissions}apply-pending/'
         speakers = '{base}speakers/'
-        speakers_import = '{speakers}import/'
-        submissions_import = '{submissions}import/'
         settings = edit_settings = '{base}settings/'
         review_settings = '{settings}review/'
         mail_settings = edit_mail_settings = '{settings}mail'
         widget_settings = '{settings}widget'
         import_export_settings = '{settings}import-export/'
+        import_export_schedule_export_trigger = '{import_export_settings}schedule/export/trigger'
+        import_export_schedule_export_download = '{import_export_settings}schedule/export/download'
         team_settings = '{settings}team/'
         new_team = '{settings}team/new'
         room_settings = '{schedule}rooms/'
         new_room = '{room_settings}new/'
         schedule = '{base}schedule/'
-        schedule_export = '{schedule}export/'
-        schedule_export_trigger = '{schedule_export}trigger'
-        schedule_export_download = '{schedule_export}download'
+        schedule_export = '{import_export_settings}?export_target=session#tab-export'
+        schedule_export_trigger = '{import_export_schedule_export_trigger}'
+        schedule_export_download = '{import_export_schedule_export_download}'
         release_schedule = '{schedule}release'
         reset_schedule = '{schedule}reset'
         toggle_schedule = '{schedule}toggle'
@@ -925,8 +931,8 @@ class Event(
         self.settings.invoice_email_attachment = True
         self.settings.name_scheme = 'given_family'
         self.settings.ticket_download = True
-        self.settings.private_testmode_tickets = True
-        self.settings.private_testmode_talks = True
+        self.settings.private_testmode_tickets = False
+        self.settings.private_testmode_talks = False
 
     @property
     def social_image(self):
@@ -939,18 +945,35 @@ class Event(
             return value
 
         img = None
-        logo_file = get_image_value('logo_image')
         og_file = get_image_value('og_image')
         if og_file:
             if is_http_url(og_file):
                 return og_file
-            img = get_thumbnail(og_file, '1200').thumb.url
-        elif logo_file:
-            if is_http_url(logo_file):
-                return logo_file
-            img = get_thumbnail(logo_file, '5000x120').thumb.url
+            try:
+                img = get_thumbnail(og_file, '1200').thumb.url
+            except (OSError, SuspiciousFileOperation, ThumbnailError) as exc:
+                logger.warning('Failed to load og_image thumbnail for %s: %s', og_file, exc)
+
+        if not img:
+            if self.visible_logo_url:
+                img = self.visible_logo_url
+            elif self.visible_header_image_url:
+                img = self.visible_header_image_url
+
         if img:
+            if is_http_url(img):
+                return img
+            if urlparse(img).scheme:
+                return None
             return urljoin(build_absolute_uri(self, 'presale:event.index'), img)
+
+    @property
+    def social_image_signature(self):
+        og_image = self.settings.get('og_image', as_type=str, default='') or ''
+        image_source = og_image or self.visible_logo_url or self.visible_header_image_url or ''
+        if not image_source:
+            return ''
+        return hashlib.sha1(image_source.encode('utf-8')).hexdigest()[:12]
 
     def _seats(self, ignore_voucher=None):
         from .seating import Seat
@@ -988,15 +1011,47 @@ class Event(
 
     def save(self, *args, **kwargs):
         was_created = not bool(self.pk)
+        locales_changed = False
+        
+        # Check if locales have changed by comparing locale_array directly
+        if not was_created:
+            try:
+                old_instance = self.__class__.objects.get(pk=self.pk)
+                # Compute locales directly from locale_array to avoid cached_property issues
+                old_locales = set(code for code in old_instance.locale_array.split(',') if code)
+                new_locales = set(code for code in self.locale_array.split(',') if code)
+                if old_locales != new_locales:
+                    locales_changed = True
+            except self.__class__.DoesNotExist:
+                pass
+        
         if self.date_from and not self.date_to:
             self.date_to = self.date_from + timedelta(hours=24)
 
         obj = super().save(*args, **kwargs)
         self.cache.clear()
+        
+        # Clear cached_property for locales and related properties to ensure fresh calculation
+        if 'locales' in self.__dict__:
+            del self.__dict__['locales']
+        if 'content_locales' in self.__dict__:
+            del self.__dict__['content_locales']
 
         if was_created:
             self.build_initial_data()
+        elif locales_changed:
+            # Backfill all existing mail templates with new locales
+            self._backfill_all_mail_template_locales()
+        
         return obj
+
+    def _backfill_all_mail_template_locales(self):
+        """Backfill all existing mail templates with newly added locales."""
+        from eventyay.base.models import MailTemplate
+        
+        with scope(event=self):
+            for template in self.mail_templates.all():
+                self._ensure_mail_template_locales(template, template.role)
 
     def get_plugins(self):
         """
@@ -1031,13 +1086,13 @@ class Event(
 
         return ObjectRelatedCache(self)
 
-    def lock(self):
+    def lock(self, blocking=False, blocking_timeout=None):
         """
         Returns a contextmanager that can be used to lock an event for bookings.
         """
         from eventyay.base.services import locking
 
-        return locking.LockManager(self)
+        return locking.LockManager(self, blocking=blocking, blocking_timeout=blocking_timeout)
 
     def __getstate__(self):
         """
@@ -1956,23 +2011,23 @@ class Event(
 
     @property
     def talk_schedule_url(self):
-        return self.urls.schedule.full
+        return self.urls.schedule
 
     @property
     def talk_session_url(self):
-        return self.urls.talks.full
+        return self.urls.talks
 
     @property
     def talk_speaker_url(self):
-        return self.urls.speakers.full
+        return self.urls.speakers
 
     @property
     def talk_dashboard_url(self):
-        return reverse('orga:event.dashboard', kwargs={'event': self.slug})
+        return reverse('orga:event.dashboard', kwargs={'organizer': self.organizer.slug, 'event': self.slug})
 
     @property
     def talk_settings_url(self):
-        return reverse('orga:settings.event.view', kwargs={'event': self.slug})
+        return reverse('orga:settings.event.view', kwargs={'organizer': self.organizer.slug, 'event': self.slug})
 
     @cached_property
     def live_issues(self):
@@ -2259,24 +2314,27 @@ class Event(
         content_locales: list[str] | None = None,
         default_locale: str | None = None,
     ) -> None:
+
         locales_list = list(locales or [])
-        if content_locales is None:
-            content_locales_list = locales_list
-        else:
-            content_locales_list = list(content_locales)
+
         if locales_list:
             self.locale_array = ','.join(locales_list)
-        if content_locales_list:
-            self.content_locale_array = ','.join(content_locales_list)
+            self.settings.set('locales', locales_list)
         if default_locale:
             self.locale = default_locale
-        if locales_list or content_locales_list or default_locale:
+            self.settings.set('locale', default_locale)
+
+        if content_locales is not None:
+            content_locales_list = list(content_locales)
+            self.content_locale_array = ','.join(content_locales_list)
+            self.settings.set('content_locales', content_locales_list)
+        if locales_list or content_locales is not None or default_locale:
             self._clear_language_caches()
 
     @cached_property
     def is_multilingual(self) -> bool:
         """Is ``True`` if the event supports more than one locale."""
-        return len(self.content_locales) > 1
+        return len(self.locales) > 1
 
     @cached_property
     def named_locales(self) -> list:
@@ -2375,109 +2433,22 @@ class Event(
         The logo_image setting is actually used for HEADER images (see default_setting.py),
         so we must NOT use it here to prevent header images from appearing as logos.
         """
-
-        def _extract_path(obj):
-            if not obj:
-                return None
-            if isinstance(obj, dict):
-                return obj.get('name') or obj.get('path') or obj.get('url')
-            if hasattr(obj, 'name') and obj.name:
-                return obj.name
-            if hasattr(obj, 'url'):
-                return obj.url
-            return str(obj)
-
         # Only check event_logo_image - NOT logo_image (which is for header images)
-        for key in ('event_logo_image',):
-            settings_logo = self.settings.get(key, as_type=str, default=None)
-            path = _extract_path(settings_logo)
-            if not path:
-                continue
-
-            # Keep full URLs
-            if is_http_url(path):
-                return path
-
-            # Strip file:// scheme if present
-            parsed = urlparse(path)
-            if parsed.scheme == 'file':
-                path = f'{parsed.netloc}{parsed.path}'
-
-            # Normalize absolute filesystem paths to be relative to MEDIA_ROOT
-            abs_path = os.path.abspath(path)
-            media_root = os.path.abspath(settings.MEDIA_ROOT)
-            try:
-                rel_to_media = os.path.relpath(abs_path, media_root)
-                if not rel_to_media.startswith('..'):
-                    path = rel_to_media
-            except OSError:
-                logger.exception('Failed to relativize path %s against MEDIA_ROOT %s', abs_path, media_root)
-
-            # Drop leading media prefixes
-            for prefix in ('/media/', 'media/'):
-                if path.startswith(prefix):
-                    path = path[len(prefix) :]
-
-            # Collapse to pub/… if present
-            if '/pub/' in path and not path.startswith('pub/'):
-                path = path[path.index('pub/') :]
-
-            path = path.lstrip('/')
-            if path:
-                return path
-
-        return None
+        raw = self.settings.get('event_logo_image', as_type=str, default=None)
+        return _resolve_media_path(raw)
 
     @cached_property
     def _visible_header_image_path(self):
         """
         Resolve a usable header image path/URL from common settings, falling back to the legacy field.
+
+        The header image is stored under ``logo_image`` for historical reasons; ``header_image`` is
+        the legacy model field.
         """
-
-        def _extract_path(obj):
-            if not obj:
-                return None
-            if isinstance(obj, dict):
-                return obj.get('name') or obj.get('path') or obj.get('url')
-            if hasattr(obj, 'name') and obj.name:
-                return obj.name
-            if hasattr(obj, 'url'):
-                return obj.url
-            return str(obj)
-
-        # header image for the site is stored in common settings under logo_image (historical)
-        # and in the legacy field header_image; prefer the settings value first
+        # Prefer settings key first (historical name), then legacy model field
         for key in ('logo_image', 'header_image'):
-            settings_header = self.settings.get(key, as_type=str, default=None)
-            path = _extract_path(settings_header)
-            if not path:
-                continue
-
-            if is_http_url(path):
-                return path
-
-            parsed = urlparse(path)
-            if parsed.scheme == 'file':
-                path = f'{parsed.netloc}{parsed.path}'
-
-            abs_path = os.path.abspath(path)
-            media_root = os.path.abspath(settings.MEDIA_ROOT)
-            try:
-                rel_to_media = os.path.relpath(abs_path, media_root)
-                if not rel_to_media.startswith('..'):
-                    path = rel_to_media
-            except OSError:
-                logger.exception(
-                    'Failed to relativize header image path %s against MEDIA_ROOT %s', abs_path, media_root
-                )
-
-            for prefix in ('/media/', 'media/'):
-                if path.startswith(prefix):
-                    path = path[len(prefix) :]
-            if '/pub/' in path and not path.startswith('pub/'):
-                path = path[path.index('pub/') :]
-
-            path = path.lstrip('/')
+            raw = self.settings.get(key, as_type=str, default=None)
+            path = _resolve_media_path(raw)
             if path:
                 return path
 
@@ -2485,6 +2456,56 @@ class Event(
             return self.header_image.name
 
         return None
+
+    @cached_property
+    def _visible_preview_image_path(self):
+        """
+        Resolve a usable preview image path/URL from the ``event_preview_image`` setting.
+        Returns a storage-relative path (e.g. ``pub/…``) or an absolute HTTP URL.
+        """
+        raw = self.settings.get('event_preview_image', as_type=str, default=None)
+        return _resolve_media_path(raw)
+
+    @cached_property
+    def visible_preview_image_url(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_preview_image_path:
+            return None
+        with suppress(Exception):
+            if is_http_url(str(self._visible_preview_image_path)):
+                return self._visible_preview_image_path
+            return default_storage.url(self._visible_preview_image_path)
+        return None
+
+    @cached_property
+    def preview_image_url_with_fallback(self):
+        """
+        Return the resolved URL of the preview image, falling back to header image, then logo.
+        If none of these are set, it returns None (which the start page card template handles by
+        rendering a default calendar placeholder icon).
+
+        For local (non-HTTP) paths, a thumbnail is generated at 800×450 with a fill-crop (``^``).
+        ``get_thumbnail`` caches results on disk using a deterministic key derived from the path
+        and geometry, so repeated calls for the same image are cheap (file-existence check only).
+        This method itself is a ``@cached_property``, so it is only invoked once per ``Event``
+        instance per request — no thundering-herd risk within a single request.
+        """
+        path = self._visible_preview_image_path or self._visible_header_image_path or self._visible_logo_path
+        if not path:
+            return None
+
+        if is_http_url(str(path)):
+            return path
+
+        try:
+            return get_thumbnail(path, '800x450^').thumb.url
+        except Exception:
+            logger.exception('Failed to create preview thumbnail for path: %s', path)
+            try:
+                return default_storage.url(path)
+            except Exception:
+                return None
 
     @cached_property
     def visible_logo_url(self):
@@ -2550,6 +2571,26 @@ class Event(
         if feature in self.feature_flags:
             return self.feature_flags[feature]
         return default_feature_flags().get(feature, False)
+
+    def session_popularity_show_on_schedule(self):
+        flags = self.feature_flags or {}
+        if 'session_popularity_show_on_schedule' in flags:
+            return bool(flags['session_popularity_show_on_schedule'])
+        return bool(
+            flags.get('session_popularity_show_on_calendar', True)
+            or flags.get('session_popularity_show_on_list', True)
+        )
+
+    def schedule_client_feature_flags(self):
+        """Feature flags exposed to schedule webapp clients via inline JSON."""
+        from eventyay.talk_rules.submission import are_featured_speakers_visible
+
+        popularity_enabled = bool(self.feature_flags.get('session_popularity_enabled', False))
+        return {
+            'session_popularity_enabled': popularity_enabled,
+            'session_popularity_show_on_schedule': self.session_popularity_show_on_schedule(),
+            'featured_speakers_enabled': are_featured_speakers_visible(None, self),
+        }
 
     @cached_property
     def duration(self):
@@ -2762,17 +2803,83 @@ class Event(
     def get_mail_template(self, role):
         from eventyay.base.models import MailTemplate
         from eventyay.mail.default_templates import get_default_template
+        from i18nfield.strings import LazyI18nString
 
         try:
             with scope(event=self):
-                return self.mail_templates.get(role=role)
+                template = self.mail_templates.get(role=role)
         except MailTemplate.DoesNotExist:
-            subject, text = get_default_template(role)
+            default_subject, default_text = get_default_template(role)
+            # Initialize with all event locales from the start
+            subject_data = {}
+            text_data = {}
+            for locale in self.locales:
+                if locale:
+                    subject_data[locale] = str(default_subject.localize(locale))
+                    text_data[locale] = str(default_text.localize(locale))
+            
+            subject = LazyI18nString(subject_data) if subject_data else default_subject
+            text = LazyI18nString(text_data) if text_data else default_text
+            
             with scope(event=self):
                 template, __ = MailTemplate.objects.get_or_create(
                     event=self, role=role, defaults={'subject': subject, 'text': text}
                 )
+        return self._ensure_mail_template_locales(template, role)
+
+    def _ensure_mail_template_locales(self, template, role):
+        from eventyay.mail.default_templates import get_default_template
+
+        default_subject, default_text = get_default_template(role)
+        
+        # Pre-check: do we have all locales without needing a write?
+        locales_to_check = set(locale for locale in self.locales if locale)
+        all_locales_present = True
+        
+        for field_name, default_value in (('subject', default_subject), ('text', default_text)):
+            current_value = getattr(template, field_name)
+            if not (
+                hasattr(current_value, 'data')
+                and isinstance(current_value.data, dict)
+                and hasattr(default_value, 'localize')
+            ):
+                continue
+            
+            if locales_to_check - set(current_value.data.keys()):
+                all_locales_present = False
+                break
+        
+        # Early return if all locales are already present
+        if all_locales_present:
             return template
+        
+        # Only enter transaction if we need to backfill missing locales
+        with scope(event=self), transaction.atomic():
+            if template.pk:
+                template = template.__class__.objects.select_for_update().get(pk=template.pk)
+
+            changed_fields = []
+            for field_name, default_value in (('subject', default_subject), ('text', default_text)):
+                current_value = getattr(template, field_name)
+                if not (
+                    hasattr(current_value, 'data')
+                    and isinstance(current_value.data, dict)
+                    and hasattr(default_value, 'localize')
+                ):
+                    continue
+
+                field_changed = False
+                for locale in self.locales:
+                    if locale and locale not in current_value.data:
+                        current_value.data[locale] = str(default_value.localize(locale))
+                        field_changed = True
+
+                if field_changed:
+                    changed_fields.append(field_name)
+
+            if changed_fields:
+                template.save(update_fields=changed_fields)
+        return template
 
     def build_initial_data(self):
         from eventyay.base.models import CfP, MailTemplateRoles, Schedule

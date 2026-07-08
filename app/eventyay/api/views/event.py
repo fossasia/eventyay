@@ -44,7 +44,7 @@ from eventyay.api.serializers.event import (
 from eventyay.api.serializers.rooms import EventSerializer as RoomsEventSerializer
 from eventyay.api.utils import get_protocol
 from eventyay.api.views import ConditionalListView
-from eventyay.base.models import Device, SubEvent, TaxRule, TeamAPIToken, User
+from eventyay.base.models import Device, Organizer, SubEvent, TaxRule, TeamAPIToken, User
 from eventyay.base.models.event import Event
 from eventyay.base.payment import ManualPayment
 from eventyay.base.services.event import notify_event_change
@@ -510,7 +510,7 @@ def check_token_permission(token, permission_required):
     decoded_data = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
     # Check if user existed
     User.objects.get(email=decoded_data['email'])
-    if decoded_data.get('has_perms') not in permission_required:
+    if decoded_data.get('has_perms') != permission_required:
         return False
     return True
 
@@ -519,43 +519,120 @@ def check_token_permission(token, permission_required):
 @require_POST
 @scopes_disabled()
 def talk_schedule_public(request, *args, **kwargs):
-    # Disabled because it uses pretix Organizer model
-    return JsonResponse({'status': 'disabled (pretix dependency)'}, status=501)
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        logger.error('Authorization header missing or invalid')
+        return JsonResponse({'status': 'Authorization header missing or invalid'}, status=403)
 
-
-# def talk_schedule_public(request, *args, **kwargs):
-#     auth_header = request.headers.get('Authorization')
-#     if auth_header and auth_header.startswith('Bearer '):
-#         token = auth_header.split(' ')[1]
-#         try:
-#             if not check_token_permission(token, 'orga.edit_schedule'):
-#                 return JsonResponse(
-#                     {'status': 'User does not have permission to show schedule on menu'},
-#                     status=403,
-#                 )
-#             organiser = get_object_or_404(Organizer, slug=kwargs['organizer'])
-#             event = get_object_or_404(Event, slug=kwargs['event'], organizer=organiser)
-#             request_data = json.loads(request.body)
-#             event.settings.talk_schedule_public = request_data.get('is_show_schedule') or False
-#             return JsonResponse({'status': 'success'}, status=200)
-#         except jwt.ExpiredSignatureError:
-#             ...
+    token = auth_header.split(' ')[1]
+    try:
+        if not check_token_permission(token, 'base.edit_schedule'):
+            return JsonResponse(
+                {'status': 'User does not have permission to show schedule on menu'},
+                status=403,
+            )
+        organizer = get_object_or_404(Organizer, slug=kwargs['organizer'])
+        event = get_object_or_404(Event, slug=kwargs['event'], organizer=organizer)
+        request_data = json.loads(request.body)
+        is_show_schedule = bool(request_data.get('is_show_schedule'))
+        flags = dict(event.feature_flags)
+        flags['show_schedule'] = is_show_schedule
+        event.feature_flags = flags
+        event.settings.talk_schedule_public = is_show_schedule
+        event.save(update_fields=['feature_flags'])
+        return JsonResponse({'status': 'success'}, status=200)
+    except jwt.ExpiredSignatureError:
+        logger.error('Token has expired')
+        return JsonResponse({'status': 'Token has expired'}, status=401)
+    except jwt.InvalidTokenError:
+        logger.error('Invalid token')
+        return JsonResponse({'status': 'Invalid token'}, status=401)
+    except User.DoesNotExist:
+        logger.error('User not found for schedule-public token')
+        return JsonResponse({'status': 'User not found'}, status=401)
+    except json.JSONDecodeError:
+        logger.error('Invalid JSON payload for schedule-public')
+        return JsonResponse({'status': 'Invalid JSON payload'}, status=400)
+    except Exception:
+        logger.exception('Internal server error in talk_schedule_public')
+        return JsonResponse({'status': 'Internal server error'}, status=500)
 
 
 class CustomerOrderCheckView(APIView):
+    """
+    Check a customer's ticket / order for a given event.
+
+    POST body (both fields are required):
+        {
+            "email": "attendee@example.com",
+            "code":  "ABCDE"
+        }
+    """
+
     authentication_classes = ()
     permission_classes = ()
 
-    @scopes_disabled()
     def post(self, request, *args, **kwargs):
-        # Disabled because it uses pretix Organizer and Order models
-        return Response({'detail': 'CustomerOrderCheckView disabled (pretix dependency).'}, status=501)
+        organizer_slug = kwargs.get('organizer')
+        event_slug = kwargs.get('event')
 
+        with scopes_disabled():
+            organizer = get_object_or_404(Organizer, slug=organizer_slug)
+            event = get_object_or_404(Event, slug=event_slug, organizer=organizer)
 
-#     def post(self, request, *args, **kwargs):
-#         organizer = Organizer.objects.get(...)
-#         order_list = Order.objects.filter(...)
-#         ...
+        email = request.data.get('email')
+        code = request.data.get('code')
+        email = str(email).strip() if isinstance(email, str) else ''
+        code = str(code).strip().upper() if isinstance(code, str) else ''
+
+        if not email or not code:
+            return Response(
+                {'detail': 'Please supply both email and code.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from eventyay.base.models.orders import Order
+
+        with scopes_disabled():
+            qs = Order.objects.filter(event=event)
+            if code:
+                # Use exact (case-insensitive) match — normalization is for OCR/handwriting
+                # and would corrupt codes like QXUG02 (2→Z gives QXUG0Z, no match)
+                qs = qs.filter(code__iexact=code)
+            if email:
+                qs = qs.filter(email__iexact=email)
+
+            orders = list(qs.prefetch_related('all_positions', 'all_positions__product'))
+
+            result = []
+            for order in orders:
+                positions = []
+                for pos in order.all_positions.all():
+                    positions.append({
+                        'id': pos.pk,
+                        'product': str(pos.product.name),
+                        'price': str(pos.price),
+                        'attendee_name': pos.attendee_name_cached or '',
+                        'attendee_email': pos.attendee_email or '',
+                        'seat': str(pos.seat) if pos.seat else None,
+                    })
+                result.append({
+                    'code': order.code,
+                    'status': order.status,
+                    'email': order.email or '',
+                    'total': str(order.total),
+                    'datetime': order.datetime.isoformat(),
+                    'positions': positions,
+                })
+
+        if not result:
+            return Response(
+                {'detail': 'No orders found matching the supplied criteria.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(result[0], status=status.HTTP_200_OK)
+
 
 
 class EventView(APIView):
@@ -683,16 +760,16 @@ class CreateEventView(APIView):
                 event.domain = f'{protocol}://{domain_path}'
                 return JsonResponse(model_to_dict(event, exclude=['roles']), status=201)
             except IntegrityError as e:
-                logger.error(f'Database integrity error while saving event: {e}')
+                logger.error('Database integrity error while saving event: %s', e)
                 return JsonResponse(
                     {'error': 'An event with this ID already exists or database constraint violated'},
                     status=400,
                 )
             except ValidationError as e:
-                logger.error(f'Validation error while saving event: {e}')
+                logger.error('Validation error while saving event: %s', e)
                 return JsonResponse({'error': str(e)}, status=400)
             except Exception as e:
-                logger.error(f'Unexpected error creating event: {e}')
+                logger.error('Unexpected error creating event: %s', e)
                 return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
         else:
             return JsonResponse(

@@ -8,6 +8,7 @@
 {% load tz %}
 {% load static %}
 {% load eventurl %}
+{% load nav_tags %}
 
 {% with current_event=request.event|default:None %}
 <!DOCTYPE html>
@@ -19,7 +20,7 @@
         <meta name="description" content="{% block meta_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
         <meta name="application-name" content="{{ site_name }}">
         <meta name="generator" content="{{ site_name }}">
-        <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
+        <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% elif request.organizer %}{{ request.organizer.name }}, {{ request.organizer.slug }},{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
         {% if current_event and current_event.display_settings.meta_noindex %}
             <meta name="robots" content="noindex, nofollow">
         {% else %}
@@ -28,13 +29,19 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="{% if current_event %}{{ current_event.visible_primary_color }}{% else %}#2185d0{% endif %}">
         <meta name="HandheldFriendly" content="True"/>
-        {% block meta_image %}{% if current_event %}<meta property="thumbnail" content="{{ current_event.urls.social_image.full }}">
-            <meta property="og:image" content="{{ current_event.urls.social_image.full }}">
-        {% endif %}{% endblock meta_image %}
+        {% block meta_image %}
+            {% if current_event %}
+                {% with event_social_image=current_event.social_image|default:current_event.urls.social_image.full %}
+                    {% append_si event_social_image request.GET.si as event_social_image_url %}
+                    <meta property="thumbnail" content="{{ event_social_image_url }}">
+                    <meta property="og:image" content="{{ event_social_image_url }}">
+                {% endwith %}
+            {% endif %}
+        {% endblock meta_image %}
         <meta property="og:title" content="{% block social_title %}{% endblock social_title %}{% if current_event %} {{ current_event.name|event_localize }}{% endif %}">
         <meta property="og:description" content="{% block social_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock social_description %}">
         <meta property="og:url" content="{% if current_event and current_event.display_settings.html_export_url %}{{ current_event.display_settings.html_export_url }}{{ request.path|slice:"1:" }}{% else %}{{ request.build_absolute_uri }}{% endif %}">
-        <meta property="twitter:card" content="summary">
+        <meta property="twitter:card" content="summary_large_image">
 
         {% block favicons %}
             {% include "common/includes/favicon.html" %}
@@ -62,10 +69,15 @@
             <link rel="stylesheet" type="text/css" href="{% static "cfp/css/_layout.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_agenda.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_speaker.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_contact_modal.css" %}" />
         {% endcompress %}
         {% block stylesheets %}{% endblock stylesheets %}
         {% block public_stylesheets %}{% endblock public_stylesheets %}
-        {% if current_event and current_event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ current_event.urls.settings_css }}?c={{ current_event.visible_primary_color|urlencode }}" />{% endif %}
+        {% if current_event %}
+            {% if current_event.visible_primary_color or current_event_font %}
+                <link rel="stylesheet" type="text/css" href="{{ current_event.urls.settings_css }}?c={{ current_event.visible_primary_color|urlencode }}&f={{ current_event_font|urlencode }}" />
+            {% endif %}
+        {% endif %}
         {% if current_event and current_event.custom_css %}<link rel="stylesheet" type="text/css" href="{{ current_event.custom_css.url }}"/>{% endif %}
         {% compress js %}
             <script defer src="{% static 'common/js/base.js' %}"></script>
@@ -73,6 +85,7 @@
             <script src="{% static 'agenda/js/join-online-event.js' %}"></script>
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
             <script defer src="{% static 'common/js/nav-tabs.js' %}"></script>
+            <script type="module" src="{% static 'common/js/contact-modal.js' %}"></script>
         {% endcompress %}
         {% block scripts %}{% endblock scripts %}
         {% block custom_header %}{% endblock custom_header %}
@@ -122,19 +135,37 @@
         {% endblock site_notice %}
         <div class="container{% block container_width %}{% endblock container_width %}" id="main-container">
             <header>
-                {% if current_event and not is_html_export %}
-                    <a href="{% url 'presale:index' %}" class="event-home-back d-print-none" aria-label="{% translate 'Home' %}">
-                        <span class="event-home-back-pill">
-                            <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
-                            <span class="event-home-back-label" aria-hidden="true">{% translate 'Home' %}</span>
-                        </span>
-                    </a>
-                {% endif %}
+                {% block presale_back_navigation %}
+                    {% if current_event and not is_html_export %}
+                        {% if current_event.settings.organizer_link_back %}
+                            <a href="{% eventurl current_event.organizer "presale:organizer.index" %}" class="event-home-back d-print-none" aria-label="{% blocktranslate trimmed with name=current_event.organizer.name %}Back to {{ name }}{% endblocktranslate %}">
+                                <span class="event-home-back-pill">
+                                    <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
+                                    <span class="event-home-back-label" aria-hidden="true">{% blocktranslate trimmed with name=current_event.organizer.name %}{{ name }}{% endblocktranslate %}</span>
+                                </span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'presale:index' %}" class="event-home-back d-print-none" aria-label="{% translate 'Home' %}">
+                                <span class="event-home-back-pill">
+                                    <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
+                                    <span class="event-home-back-label" aria-hidden="true">{% translate 'Home' %}</span>
+                                </span>
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                {% endblock presale_back_navigation %}
                 <div class="event-hero">
                     <div class="event-hero-overlay">
-                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% endif %}">
+                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% elif request.organizer and organizer_logo %} event-brand--has-logo{% endif %}{% if current_event and current_event.settings.logo_image_large %} event-brand--logo-large{% elif not current_event and request.organizer and request.organizer.settings.organizer_logo_image_large %} event-brand--logo-large{% endif %}">
+                            {% if current_event %}
+                                {% if cart_namespace %}
+                                    {% eventurl current_event 'presale:event.index' cart_namespace=cart_namespace as event_public_presale_home %}
+                                {% else %}
+                                    {% eventurl current_event 'presale:event.index' as event_public_presale_home %}
+                                {% endif %}
+                            {% endif %}
                             <div class="event-logo">
-                                <a href="{% block nav_link %}{% endblock nav_link %}">
+                                <a href="{% block nav_link %}{% if current_event %}{{ event_public_presale_home }}{% endif %}{% endblock nav_link %}">
                                     {% block event_logo %}
                                         {% if current_event and current_event.visible_logo_url %}
                                             <img loading="lazy" src="{{ current_event.visible_logo_url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
@@ -142,30 +173,27 @@
                                     {% endblock event_logo %}
                                 </a>
                             </div>
-                            {% if current_event %}
-                                {% if cart_namespace %}
-                                    {% eventurl current_event 'presale:event.index' cart_namespace=cart_namespace as event_public_presale_home %}
-                                {% else %}
-                                    {% eventurl current_event 'presale:event.index' as event_public_presale_home %}
-                                {% endif %}
-                                <div class="event-hero-text">
-                                    <a class="event-title event-public-text-link" href="{{ event_public_presale_home }}">{{ current_event.name|event_localize }}</a>
-                                    {% if current_event.date_from %}
-                                        {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
-                                            {% timezone tz_name %}
-                                                <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
-                                                    {{ current_event.date_from|date:"l, j F, Y g:i A" }} ({{ tz_name }})
-                                                </a>
-                                                {% if current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
+                            {% block hero_text %}
+                                {% if current_event %}
+                                    <div class="event-hero-text">
+                                        <a class="event-title event-public-text-link" href="{{ event_public_presale_home }}">{{ current_event.name|event_localize }}</a>
+                                        {% if current_event.date_from %}
+                                            {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
+                                                {% timezone tz_name %}
                                                     <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
-                                                        {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y g:i A" }} ({{ tz_name }})
+                                                        {{ current_event.date_from|date:"l, j F, Y g:i A" }} ({{ tz_name }})
                                                     </a>
-                                                {% endif %}
-                                            {% endtimezone %}
-                                        {% endwith %}
-                                    {% endif %}
-                                </div>
-                            {% endif %}
+                                                    {% if current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
+                                                        <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
+                                                            {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y g:i A" }} ({{ tz_name }})
+                                                        </a>
+                                                    {% endif %}
+                                                {% endtimezone %}
+                                            {% endwith %}
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endblock hero_text %}
                         </div>
                         {% if show_online_video_link %}
                             {% if request.resolver_match.namespace == 'agenda' %}
@@ -173,10 +201,11 @@
                             {% else %}
                                 {% eventurl current_event 'presale:event.onlinevideo.join' as join_event_url %}
                             {% endif %}
+                            {% get_localized_menu_label current_event 'menu_label_join_video' as label %}
                             <div class="header-join-video-floating-mobile">
-                                    <a href="{{ join_event_url }}" class="btn btn-primary btn-join-video-icon-only join-video-link d-flex align-items-center justify-content-center" title="{% translate 'Join online video' %}" aria-label="{% translate 'Join online video' %}">
+                                    <a href="{{ join_event_url }}" class="btn btn-primary btn-join-video-icon-only join-video-link d-flex align-items-center justify-content-center" title="{{ label }}" aria-label="{{ label }}">
                                         <i class="fa fa-video-camera" aria-hidden="true"></i>
-                                        <span class="join-video-text">{% translate "Join online video" %}</span>
+                                        <span class="join-video-text">{{ label }}</span>
                                     </a>
                                 </div>
                         {% endif %}
@@ -203,7 +232,7 @@
             <div class="card" id="main-card">
                 {% block alerts %}
                     {% if messages %}
-                        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+                        {% for message in messages %}<div class="alert {{ message.tags }}">{{ message }}</div>{% endfor %}
                     {% endif %}
                 {% endblock alerts %}
                 <main>
@@ -221,12 +250,20 @@
                 {% endif %}
                 {% include "common/powered_by.html" %}
                 {% if current_event %}
+                    {% if current_event.settings.contact_mail or current_event.email %}
+                        ·
+                        <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
+                    {% endif %}
+                {% elif request.organizer and request.organizer.settings.contact_mail %}
                     ·
-                    <a href="mailto:{{ current_event.email }}">{% translate "Contact us" %}</a>
+                    <a href="mailto:{{ request.organizer.settings.contact_mail }}">{% translate "Contact event organizer" %}</a>
                 {% endif %}
                 {% if current_event and current_event.display_settings.imprint_url %}
                     ·
                     <a href="{{ current_event.display_settings.imprint_url }}" target="_blank" rel="noopener">{% translate "Imprint" %}</a>
+                {% elif request.organizer and request.organizer.settings.imprint_url %}
+                    ·
+                    <a href="{% safelink request.organizer.settings.imprint_url %}" target="_blank" rel="noopener">{% translate "Imprint" %}</a>
                 {% endif %}
                 {% for footer in footer_links %}
                     ·
@@ -235,6 +272,12 @@
             </footer>
         </div>
         {% include "common/includes/modals.html" %}
+        {% if current_event %}
+            {% if current_event.settings.contact_mail or current_event.email %}
+                {% eventurl current_event "presale:event.contact" as contact_url %}
+                {% include "common/includes/contact_organizer_modal.html" with contact_url=contact_url %}
+            {% endif %}
+        {% endif %}
         {% block body_bottom %}{% endblock body_bottom %}
     </body>
 </html>

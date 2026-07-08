@@ -5,8 +5,9 @@ from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
+from i18nfield.strings import LazyI18nString
 
-from pretalx.event.models import Event
+from eventyay.base.models import Event
 
 
 @pytest.fixture
@@ -61,6 +62,29 @@ def test_initial_data(event):
         assert event.get_mail_template('submission.state.rejected')
         assert event.schedules.count()
         assert event.wip_schedule
+
+
+@pytest.mark.django_db
+def test_default_mail_template_is_initialized_for_all_event_locales(event):
+    with scope(event=event):
+        template = event.get_mail_template('submission.state.accepted')
+        assert set(template.subject.data.keys()) == set(event.locales)
+        assert set(template.text.data.keys()) == set(event.locales)
+
+
+@pytest.mark.django_db
+def test_default_mail_template_backfills_missing_locale_entries(event):
+    with scope(event=event):
+        template = event.get_mail_template('submission.state.accepted')
+        template.subject = LazyI18nString({'en': 'custom subject'})
+        template.text = LazyI18nString({'en': 'custom text'})
+        template.save(update_fields=['subject', 'text'])
+
+        template = event.get_mail_template('submission.state.accepted')
+        assert template.subject.data['en'] == 'custom subject'
+        assert template.text.data['en'] == 'custom text'
+        assert 'de' in template.subject.data
+        assert 'de' in template.text.data
 
 
 @pytest.mark.parametrize(
@@ -289,7 +313,7 @@ def test_event_update_review_phase_keep_outdated_phase(event):
 
 @pytest.mark.django_db
 def test_event_update_review_phase_activate_next_phase(event):
-    from pretalx.submission.models.review import ReviewPhase
+    from eventyay.base.models.review import ReviewPhase
 
     with scope(event=event):
         event.review_phases.all().delete()

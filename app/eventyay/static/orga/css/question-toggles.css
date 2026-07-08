@@ -202,6 +202,65 @@ select.required-status-dropdown[data-current="after_deadline"] {
     cursor: not-allowed;
 }
 
+.profile-picture-settings-popover {
+    position: fixed;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    width: min(280px, calc(100vw - 16px));
+    min-height: 140px;
+    padding: 16px;
+    color: #212529;
+    text-align: left;
+    white-space: normal;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 0;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+}
+
+.profile-picture-settings-title {
+    color: #212529;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.profile-picture-settings-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.profile-picture-settings-help {
+    display: block;
+    line-height: 1.4;
+}
+
+.profile-picture-settings-popover::after {
+    position: absolute;
+    right: 18px;
+    width: 10px;
+    height: 10px;
+    content: "";
+    background: #fff;
+    transform: rotate(45deg);
+}
+
+.profile-picture-settings-popover[data-placement="above"]::after {
+    bottom: -6px;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+}
+
+.profile-picture-settings-popover[data-placement="below"]::after {
+    top: -6px;
+    border-top: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+}
+
 .cfp-inline-help-wrapper {
     position: relative;
     display: inline-block;

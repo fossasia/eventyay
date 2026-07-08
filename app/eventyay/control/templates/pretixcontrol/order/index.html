@@ -367,7 +367,7 @@
                                                 </form>
                                             {% endfor %}
                                         {% endif %}
-                                        <button type="submit" data-toggle="qrcode" data-qrcode="{{ line.secret }}"
+                                        <button type="submit" data-toggle="qrcode" data-qrcode="{{ line.ticket_qrcode_content }}"
                                                 class="btn btn-xs btn-default">
                                             <span class="fa fa-qrcode"></span> {% trans "Ticket code" %}
                                         </button>
@@ -380,6 +380,18 @@
                                         {% endif %}
                                         {% eventsignal event "eventyay.control.signals.order_position_buttons" order=order position=line request=request %}
                                     </div>
+                                {% else %}
+                                    {% if order.status == 'p' or order.status == 'n' %}
+                                        <div class="position-buttons">
+                                            <form method="post"
+                                                  action="{% url "control:event.order.position.reinstate" event=request.event.slug organizer=request.event.organizer.slug code=order.code position=line.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-xs btn-default">
+                                                    <span class="fa fa-undo"></span> {% trans "Reinstate ticket" %}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% endif %}
                                 {% endif %}
                                 {% if line.issued_gift_cards %}
                                     <dl>

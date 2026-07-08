@@ -5,7 +5,7 @@
 {% load eventurl %}
 {% load urlreplace %}
 {% load thumb %}
-{% block title %}{% trans "Event list" %}{% endblock %}
+{% block pagetitle %}{% trans "Event list" %}{% endblock %}
 {% block custom_header %}
     {{ block.super }}
     <meta property="og:title" content="{{ organizer.name }}"/>
@@ -15,44 +15,17 @@
     <meta property="og:type" content="website"/>
     <meta property="og:url" content="{% abseventurl organizer "presale:organizer.index" %}"/>
 {% endblock %}
-{% block content %}
+{% block page_content %}
     <div>
         {% if organizer_homepage_text %}
             {{ organizer_homepage_text | rich_text }}
         {% endif %}
     </div>
-    {% if "old" in request.GET %}
-        <h3>{% trans "Past events" %}</h3>
-    {% else %}
-        <h3>{% trans "Upcoming events" %}</h3>
-    {% endif %}
-    <div>
-        <div class="btn-group" role="group">
-            <a href="?{% url_replace request "style" "list" "week" "" "year" "" "month" "" %}" type="button"
-                    class="btn btn-default active">
-                <span class="fa fa-list" aria-hidden="true"></span>
-                {% trans "List" %}
-            </a>
-            <a href="?{% url_replace request "style" "week" "month" "" "old" "" "page" "" %}" type="button"
-                    class="btn btn-default">
-                <span class="fa fa-calendar" aria-hidden="true"></span>
-                {% trans "Week" %}
-            </a>
-            <a href="?{% url_replace request "style" "calendar" "week" "" "old" "" "page" "" %}" type="button"
-                    class="btn btn-default">
-                <span class="fa fa-calendar" aria-hidden="true"></span>
-                {% trans "Month" %}
-            </a>
-        </div>
-        <a href="{% eventurl request.organizer "presale:organizer.ical" %}?{% url_replace request "locale" request.LANGUAGE_CODE "page" "" "old" "" "week" "" "style" "" "month" "" "year" "" %}"
-                class="btn btn-default">
-            <span class="fa fa-calendar-plus-o" aria-hidden="true"></span>
-            {% trans "iCal" %}
-        </a>
+    <div class="organizer-list-header">
         {% if "old" in request.GET %}
-            <a href="?{% url_replace request "old" "" %}" class="btn btn-link">{% trans "Show upcoming" %}</a>
+            <h2 class="content-header">{% trans "Past events" %}</h2>
         {% else %}
-            <a href="?{% url_replace request "old" "1" %}" class="btn btn-link">{% trans "Show past events" %}</a>
+            <h2 class="content-header">{% trans "Upcoming events" %}</h2>
         {% endif %}
     </div>
     <div class="event-list">
@@ -95,7 +68,6 @@
                     {% else %}
                         &nbsp;
                     {% endif %}
-                    <td>
                 </div>
                 <div class="col-md-2 col-xs-6">
                     {% if e.has_subevents %}
@@ -129,7 +101,7 @@
                     {% endif %}
                 </div>
                 <div class="col-md-2 col-xs-6 text-right flip">
-                    <a class="btn btn-primary btn-block" href="{{ url }}">
+                    <a class="btn btn-block" href="{{ url }}">
                         {% if e.has_subevents %}<span class="fa fa-ticket" aria-hidden="true"></span> {% trans "Tickets" %}
                         {% elif e.presale_is_running and e.best_availability_state == 100 %}
                             <span class="fa fa-ticket" aria-hidden="true"></span> {% trans "Tickets" %}

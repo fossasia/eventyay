@@ -42,6 +42,7 @@ from eventyay.base.services.system_questions import (
     state_to_asked_required,
 )
 from eventyay.base.settings import (
+    EVENT_SERIES_CREATION_ENABLED,
     GlobalSettingsObject,
     PERSON_NAME_SCHEMES,
     PERSON_NAME_TITLE_GROUPS,
@@ -99,20 +100,13 @@ def clean_organizer_email(email):
 class EventWizardFoundationForm(forms.Form):
     locales = forms.MultipleChoiceField(
         choices=settings.LANGUAGES,
-        label=_('Active languages'),
+        label=_('Event languages'),
         widget=MultipleLanguagesWidget,
         help_text=_(
             "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
             "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
             "event's default language instead."
         ),
-    )
-    content_locales = forms.MultipleChoiceField(
-        choices=settings.LANGUAGES,
-        label=_('Content languages'),
-        widget=MultipleLanguagesWidget,
-        required=False,
-        help_text=_('Users will be able to submit proposals in these languages.'),
     )
     has_subevents = forms.BooleanField(
         label=_('This is an event series'),
@@ -131,7 +125,6 @@ class EventWizardFoundationForm(forms.Form):
         super().__init__(*args, **kwargs)
         localized_language_choices = get_language_choices_native_with_ui_name()
         self.fields['locales'].choices = localized_language_choices
-        self.fields['content_locales'].choices = localized_language_choices
         qs = Organizer.objects.all()
         if not self.user.has_active_staff_session(self.session.session_key):
             qs = qs.filter(id__in=self.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
@@ -149,7 +142,7 @@ class EventWizardFoundationForm(forms.Form):
                     'data-placeholder': _('Organizer'),
                 }
             ),
-            empty_label=None,
+            empty_label=_('Organizer') if is_required else None,
             required=is_required,
         )
         self.fields['organizer'].widget.choices = self.fields['organizer'].choices
@@ -162,14 +155,12 @@ class EventWizardFoundationForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         locales = cleaned_data.get('locales', [])
-        content_locales = cleaned_data.get('content_locales')
 
-        if not content_locales:
-            return cleaned_data
-
-        if set(content_locales) - set(locales):
+        gs = GlobalSettingsObject()
+        series_enabled = gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
+        if not series_enabled and cleaned_data.get('has_subevents'):
             raise ValidationError({
-                'content_locales': _('Content languages must be a subset of the active languages.')
+                'has_subevents': _('Event series creation is disabled by the administrator.')
             })
 
         return cleaned_data
@@ -198,13 +189,6 @@ class EventWizardBasicsForm(I18nModelForm):
         ),
         required=False,
     )
-    imprint_url = forms.URLField(
-        label=_('Imprint URL'),
-        help_text=_('This should point e.g. to a part of your website '
-                    'that has your contact details and legal information.'),
-        required=False,
-    )
-
     team = forms.ModelChoiceField(
         label=_('Grant access to team'),
         help_text=_(
@@ -252,20 +236,25 @@ class EventWizardBasicsForm(I18nModelForm):
         self.has_subevents = kwargs.pop('has_subevents')
         self.is_video_creation = kwargs.pop('is_video_creation')
         self.user = kwargs.pop('user')
+        self.restrict_locale_choices = kwargs.pop('restrict_locale_choices', True)
         kwargs.pop('session')
         kwargs.pop('content_locales', None)
         super().__init__(*args, **kwargs)
         if 'timezone' not in self.initial:
             self.initial['timezone'] = get_current_timezone_name()
-        self.fields['locale'].choices = [(a, b) for a, b in settings.LANGUAGES if a in self.locales]
+        if self.restrict_locale_choices:
+            self.fields['locale'].choices = [(a, b) for a, b in settings.LANGUAGES if a in self.locales]
+        else:
+            self.fields['locale'].choices = settings.LANGUAGES
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
         self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
+        self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
         self.fields['email'].required = False
         self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
+        self.fields['email'].help_text = _("Attendees can reach you through a contact form. Messages will be forwarded to this address.")
         email_initial = self.initial.get('email', self.fields['email'].initial)
         normalized_email = normalize_organizer_email_initial(email_initial)
         self.initial['email'] = normalized_email
@@ -427,7 +416,7 @@ class EventWizardDisplayForm(forms.Form):
     )
     email = forms.EmailField(
         label=_('Organizer email address'),
-        help_text=_("We'll show this publicly to allow attendees to contact you."),
+        help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
         required=False,
     )
 
@@ -552,6 +541,10 @@ class EventUpdateForm(I18nModelForm):
         kwargs.setdefault('initial', {})
         self.instance = kwargs['instance']
         super().__init__(*args, **kwargs)
+        self.fields['location'].widget.attrs['rows'] = '3'
+        self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
+        self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
+        self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['sales_channels'] = forms.MultipleChoiceField(
             label=self.fields['sales_channels'].label,
             help_text=self.fields['sales_channels'].help_text,
@@ -574,6 +567,9 @@ class EventUpdateForm(I18nModelForm):
         localized_fields = '__all__'
         fields = [
             'currency',
+            'location',
+            'geo_lat',
+            'geo_lon',
             'presale_start',
             'presale_end',
             'sales_channels',
@@ -631,7 +627,6 @@ class EventSettingsForm(SettingsForm):
         'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
-        'meta_noindex',
         'redirect_to_checkout_directly',
         'frontpage_subevent_ordering',
         'event_list_type',
@@ -673,8 +668,11 @@ class EventSettingsForm(SettingsForm):
         'logo_image',
         'logo_image_large',
         'event_logo_image',
+        'event_preview_image',
         'logo_show_title',
         'og_image',
+        'menu_label_tickets',
+        'menu_label_join_video',
     ]
 
     def clean(self):
@@ -799,7 +797,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
-        'meta_noindex',
         'redirect_to_checkout_directly',
         'frontpage_subevent_ordering',
         'event_list_type',

@@ -33,6 +33,7 @@ from eventyay.common.exceptions import SendMailException
 from eventyay.common.language import language
 from eventyay.common.text.phrases import phrases
 from eventyay.person.forms import SpeakerProfileForm, UserForm
+from eventyay.submission.constants import AUTO_DRAFT_TITLE
 from eventyay.submission.forms import InfoForm
 
 
@@ -274,17 +275,10 @@ class FormFlowStep(TemplateFlowStep):
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
-        result['form'] = self.get_form()
+        result.setdefault('form', self.get_form())
         previous_data = self.cfp_session.get('data')
-        result['submission_title'] = previous_data.get('info', {}).get('title')
-        # Add information about uploaded files for display in templates
-        saved_files = self.cfp_session.get('files', {}).get(self.identifier, {}) or {}
-        result['uploaded_files'] = {
-            field: (
-                [entry.get('name') for entry in file_dict] if isinstance(file_dict, list) else file_dict.get('name')
-            )
-            for field, file_dict in saved_files.items()
-        }
+        submission_title = previous_data.get('info', {}).get('title')
+        result['submission_title'] = '' if submission_title == AUTO_DRAFT_TITLE else submission_title
         return result
 
     def post(self, request):
@@ -307,18 +301,12 @@ class FormFlowStep(TemplateFlowStep):
             warning_messages = getattr(form, 'warning_messages', None) or []
             for warning in filter(None, warning_messages):
                 messages.warning(self.request, warning)
-
-            error_message = '\n\n'.join(
-                (f'{form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
-                for key, values in form.errors.items()
-            )
-            if error_message:
-                messages.error(self.request, error_message)
-            return self.get(request)
+            form.hide_top_errors = True
+            return self.render(form=form)
         self.set_data(form.cleaned_data)
         self.set_files(form.files)
         next_url = self.get_next_url(request)
-        return redirect(next_url) if next_url else None
+        return redirect(next_url) if next_url else redirect(request.path)
 
     def set_data(self, data):
         self.cfp_session['data'][self.identifier] = json.loads(
@@ -376,10 +364,27 @@ class GenericFlowStep:
         # always be used, particularly in the CfP editor
         return {}
 
+    def is_draft_save_action(self):
+        return self.request.method == 'POST' and self.request.POST.get('action') == 'draft'
+
+    def should_use_non_strict_validation(self):
+        if self.request.method != 'POST':
+            return False
+        if self.is_draft_save_action():
+            return True
+        current_step = getattr(getattr(self.request, 'resolver_match', None), 'kwargs', {}).get('step')
+        return (
+            self.request.POST.get('action') == 'submit'
+            and current_step == self.identifier
+            and bool(self.get_next_applicable(self.request))
+        )
+
     def get_form_kwargs(self):
         return {
             'event': self.request.event,
             'field_configuration': self.config.get('fields'),
+            'not_strict': self.should_use_non_strict_validation(),
+            'draft_save': self.is_draft_save_action(),
             **self.get_extra_form_kwargs(),
         }
 
@@ -400,6 +405,30 @@ class InfoStep(GenericFlowStep, FormFlowStep):
         result = super().get_form_kwargs()
         result['access_code'] = getattr(self.request, 'access_code', None)
         return result
+
+    def get_form(self, from_storage=False):
+        form = super().get_form(from_storage=from_storage)
+        if not getattr(form, 'draft_save', False) or not form.is_bound:
+            return form
+
+        access_code = getattr(self.request, 'access_code', None)
+        form_data = copy.deepcopy(form.data)
+        if not form_data.get('title'):
+            # Use an internal, language-independent sentinel for empty draft titles.
+            form_data['title'] = AUTO_DRAFT_TITLE
+
+        if 'submission_type' in form.fields and not form_data.get('submission_type'):
+            default_submission_type = (
+                form.default_values.get('submission_type')
+                or getattr(access_code, 'submission_type', None)
+                or self.event.cfp.default_type
+                or form.fields['submission_type'].queryset.first()
+            )
+            if default_submission_type:
+                form_data['submission_type'] = str(default_submission_type.pk)
+
+        form.data = form_data
+        return form
 
     def get_form_initial(self):
         result = super().get_form_initial()
@@ -436,14 +465,6 @@ class InfoStep(GenericFlowStep, FormFlowStep):
                     'up to the submission deadline, and you will be notified of any changes or questions.'
                 ),
             )
-
-            additional_speaker = (form.cleaned_data.get('additional_speaker') or '').strip()
-            if additional_speaker:
-                try:
-                    submission.send_invite(to=[additional_speaker], _from=request.user)
-                except SendMailException as exception:
-                    logging.getLogger('').warning(str(exception))
-                    messages.warning(self.request, phrases.cfp.submission_email_fail)
 
         access_code = getattr(request, 'access_code', None)
         if access_code:
@@ -537,6 +558,9 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         result['enforce_account_name_match'] = True
         return result
 
+    def get_extra_form_kwargs(self):
+        return {'add_additional_speaker': True}
+
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
         email = getattr(self.request.user, 'email', None)
@@ -552,6 +576,15 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         form.is_valid()
         form.user = request.user
         form.save()
+
+        additional_speaker = (form.cleaned_data.get('additional_speaker') or '').strip()
+        submission = getattr(request, 'submission', None)
+        if not draft and additional_speaker and submission:
+            try:
+                submission.send_invite(to=[additional_speaker], _from=request.user)
+            except SendMailException as exception:
+                logger.warning('Failed to send co-speaker invite email: %s', exception)
+                messages.warning(request, phrases.cfp.submission_email_fail)
 
     @property
     def label(self):

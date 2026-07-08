@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 from django.utils.timezone import now
 
-from pretix.base.models import Event, Order, Organizer, Team, User
+from eventyay.base.models import Event, Order, Organizer, Team, User
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
     Order.objects.create(
@@ -42,6 +42,12 @@ superuser_urls = [
     'admin/users/1/impersonate',
     'admin/users/1/reset',
     'admin/sudo/sessions/',
+    'admin/organizers/',
+    'admin/events/',
+    'admin/attendees/',
+    'admin/submissions/',
+    'admin/task_management',
+    'admin/global/message/',
 ]
 
 staff_urls = [
@@ -236,7 +242,7 @@ def test_wrong_event(perf_patch, client, env, url):
         name='Dummy',
         slug='dummy2',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     t = Team.objects.create(organizer=env[2], can_change_event_settings=True)
     t.members.add(env[1])
@@ -362,7 +368,7 @@ def test_limited_event_permission_for_other_event(perf_patch, client, env, perm,
         name='Dummy',
         slug='dummy2',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     t = Team.objects.create(organizer=env[2], can_change_event_settings=True)
     t.members.add(env[1])

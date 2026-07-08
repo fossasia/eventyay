@@ -156,6 +156,8 @@ class BaseSettings(_BaseSettings):
     admin_audit_comments_asked: bool = False
     # To select a variant from CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.
     call_for_speaker_login_button_label: str = 'default'
+    # Set to 1 to enable Vite dev servers with HMR for live frontend development.
+    npm_dev: bool = False
 
     @classmethod
     def settings_customise_sources(
@@ -195,7 +197,6 @@ class BaseSettings(_BaseSettings):
     upload_size_image: int = 10
     upload_size_pdf: int = 10
     upload_size_xlsx: int = 2
-    upload_size_favicon: int = 1
     upload_size_attachment: int = 10
     upload_size_mail: int = 4
     upload_size_question: int = 20
@@ -296,6 +297,7 @@ _LIBRARY_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'django.contrib.postgres',
     'django_filters',
     'django_otp',
     'django_otp.plugins.otp_totp',
@@ -303,7 +305,6 @@ _LIBRARY_APPS = (
     'django_celery_beat',
     'django.forms',
     'djangoformsetjs',
-    'django_pdb',
     'jquery',
     'rest_framework.authtoken',
     'rules.apps.AutodiscoverRulesConfig',
@@ -325,6 +326,9 @@ if DEBUG and importlib.util.find_spec('django_extensions'):
 
 if DEBUG and importlib.util.find_spec('debug_toolbar'):
     _LIBRARY_APPS += ('debug_toolbar',)
+
+if DEBUG and importlib.util.find_spec('django_pdb'):
+    _LIBRARY_APPS += ('django_pdb',)
 
 _OURS_APPS = (
     'eventyay.agenda',
@@ -393,6 +397,20 @@ CORE_MODULES = (
         'eventyay.plugins.checkinlists',
         'eventyay.plugins.reports',
     )
+)
+
+# Widgets are public embeds served to any origin, so all origins must be allowed.
+# CORS_URLS_REGEX restricts which URL paths receive the header — only widget and
+# event-CSS endpoints.
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_URLS_REGEX = (
+    r"^(?:"
+    r".*/widget[s]?/.*|"
+    r".*/schedule/widget/.*|"
+    r".*/static/event\.css|"
+    r".*/static/schedule/.*\.js"
+    r")$"
 )
 
 # TODO: This list is only for display. It should not be here.
@@ -1477,10 +1495,13 @@ LINKEDIN_CLIENT_ID = conf.linkedin_client_id
 LINKEDIN_CLIENT_SECRET = conf.linkedin_client_secret
 
 FRONTEND_DIR = BASE_DIR / 'webapp'
-VITE_DEV_SERVER_PORT = 8080
-VITE_DEV_SERVER = f'http://localhost:{VITE_DEV_SERVER_PORT}'
-VITE_DEV_MODE = False  # Set to False to use static files instead of dev server
-VITE_IGNORE = False  # Used to ignore `collectstatic`/`rebuild`
+VITE_DEV_MODE = conf.npm_dev
+VITE_DEV_SERVER_PORTS = {
+    'schedule-editor': 'http://localhost:8080',
+    'video': 'http://localhost:8880',
+    'webcheckin': 'http://localhost:8081',
+    'schedule': 'http://localhost:8082',
+}
 
 # Not sure if they need to be configurable.
 ENTROPY = {

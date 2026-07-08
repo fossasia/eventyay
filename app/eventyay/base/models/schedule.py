@@ -22,15 +22,19 @@ from django_scopes import scope
 from i18nfield.fields import I18nTextField
 from qrcode.image.svg import SvgPathFillImage
 
+from eventyay.agenda.export_resources import enriched_resource_entry
 from eventyay.agenda.signals import register_recording_provider
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
-from eventyay.talk_rules.agenda import can_view_schedule, is_agenda_visible, is_widget_visible
-from eventyay.talk_rules.orga import can_view_speaker_names
-from eventyay.talk_rules.person import is_reviewer
+from eventyay.talk_rules.agenda import (
+    can_view_schedule,
+    can_view_wip_schedule,
+    is_agenda_visible,
+    is_widget_visible,
+)
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
 from .auth import (
@@ -66,6 +70,32 @@ def make_qr_svg(url: str) -> str:
     return xml_tostring(image.get_image()).decode()
 
 
+def make_talk_qr_map(base_url: str, code: str) -> dict:
+    """Return the QR-code SVG dict for a single talk's export URLs."""
+    b = base_url.rstrip('/')
+    return {
+        'ics': make_qr_svg(f'{b}/talk/{code}.ics'),
+        'json': make_qr_svg(f'{b}/talk/{code}.json'),
+        'xml': make_qr_svg(f'{b}/talk/{code}.xml'),
+        'xcal': make_qr_svg(f'{b}/talk/{code}.xcal'),
+        'google_calendar': make_qr_svg(f'{b}/talk/{code}/export/google-calendar'),
+        'webcal': make_qr_svg(f'{b}/talk/{code}/export/webcal'),
+    }
+
+
+def make_speaker_qr_map(speaker_base_url: str) -> dict:
+    """Return the QR-code SVG dict for a speaker's talks export URLs."""
+    b = speaker_base_url.rstrip('/')
+    return {
+        'ics': make_qr_svg(f'{b}/talks.ics'),
+        'json': make_qr_svg(f'{b}/talks.json'),
+        'xml': make_qr_svg(f'{b}/talks.xml'),
+        'xcal': make_qr_svg(f'{b}/talks.xcal'),
+        'google_calendar': make_qr_svg(f'{b}/talks/export/google-calendar'),
+        'webcal': make_qr_svg(f'{b}/talks/export/webcal'),
+    }
+
+
 class Schedule(PretalxModel):
     """The Schedule model contains all scheduled.
 
@@ -97,12 +127,10 @@ class Schedule(PretalxModel):
         ordering = ('-published',)
         unique_together = (('event', 'version'),)
         rules_permissions = {
-            'list': can_view_schedule,
-            'view_widget': is_widget_visible | orga_can_change_submissions,
-            'view': (~is_wip & is_agenda_visible)
-            | orga_can_change_submissions
-            | (is_reviewer & can_view_speaker_names),
-            'orga_view': orga_can_change_submissions | (is_reviewer & can_view_speaker_names),
+            'list': (~is_wip & can_view_schedule) | can_view_wip_schedule,
+            'view_widget': is_widget_visible | can_view_wip_schedule,
+            'view': (~is_wip & is_agenda_visible) | can_view_wip_schedule,
+            'orga_view': can_view_wip_schedule,
             'release': orga_can_change_submissions,
         }
 
@@ -222,6 +250,7 @@ class Schedule(PretalxModel):
             .filter(
                 room__isnull=False,
                 room__deleted=False,
+                room__is_unscheduled=False,
                 start__isnull=False,
                 is_visible=True,
                 submission__isnull=False,
@@ -231,7 +260,7 @@ class Schedule(PretalxModel):
 
     @cached_property
     def breaks(self):
-        return self.talks.select_related('room').filter(submission__isnull=True, room__deleted=False)
+        return self.talks.select_related('room').filter(submission__isnull=True, room__deleted=False, room__is_unscheduled=False)
 
     @cached_property
     def slots(self):
@@ -755,6 +784,7 @@ class Schedule(PretalxModel):
         all_rooms=False,
         enrich=False,
         *,
+        submission_codes=None,
         include_featured_speaker_metadata=True,
         include_qrcodes=False,
         respect_public_visibility=True,
@@ -764,7 +794,11 @@ class Schedule(PretalxModel):
         ``include_featured_speaker_metadata``: when False, clears ``is_featured`` and
         ``featured_position`` on each speaker so clients respect org "show featured sessions"
         without duplicating that logic in the frontend.
+
         ``respect_public_visibility``: when False, keeps organizer-only field data.
+
+        ``submission_codes``: optional collection of submission codes; when given, only those
+        talks are included.  Useful for building per-talk or per-speaker slim payloads.
         """
         talks = self.talks.all()
         if not all_talks:
@@ -773,6 +807,8 @@ class Schedule(PretalxModel):
             talks = talks.filter(room__isnull=False).exclude(room__deleted=True)
         if filter_updated:
             talks = talks.filter(updated__gte=filter_updated)
+        if submission_codes is not None:
+            talks = talks.filter(submission__code__in=submission_codes)
         talks = talks.select_related(
             'submission',
             'room',
@@ -790,21 +826,19 @@ class Schedule(PretalxModel):
         talks = talks.order_by('start')
 
         popularity_enabled = bool(self.event.feature_flags.get('session_popularity_enabled', False))
-        show_popularity_calendar = bool(self.event.feature_flags.get('session_popularity_show_on_calendar', True))
-        show_popularity_list = bool(self.event.feature_flags.get('session_popularity_show_on_list', True))
         show_content_locale = not respect_public_visibility or self.event.cfp.public_content_locale
 
         talk_list = list(talks)
         fav_counts: dict[str, int] = {}
         if popularity_enabled:
-            submission_codes = [t.submission.code for t in talk_list if t.submission]
-            if submission_codes:
+            visible_codes = [t.submission.code for t in talk_list if t.submission]
+            if visible_codes:
                 with scope(event=self.event):
                     fav_counts = {
                         row['submission__code']: row['count']
                         for row in SubmissionFavourite.objects.filter(
                             submission__event=self.event,
-                            submission__code__in=submission_codes,
+                            submission__code__in=visible_codes,
                         )
                         .values('submission__code')
                         .annotate(count=Count('id'))
@@ -839,7 +873,7 @@ class Schedule(PretalxModel):
                     ss,
                 )
             )
-        rooms: set[Room] = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
+        rooms: set[Room] = set(self.event.rooms.filter(deleted=False, is_unscheduled=False)) if all_rooms else set()
         tracks: set[Track] = set()
         speakers: set[User] = set()
         result = {
@@ -849,11 +883,7 @@ class Schedule(PretalxModel):
             'event_start': self.event.date_from.isoformat(),
             'event_end': self.event.date_to.isoformat(),
             'content_locales': self.event.content_locales if show_content_locale else [],
-            'feature_flags': {
-                'session_popularity_enabled': popularity_enabled,
-                'session_popularity_show_on_calendar': show_popularity_calendar,
-                'session_popularity_show_on_list': show_popularity_list,
-            },
+            'feature_flags': self.event.schedule_client_feature_flags(),
         }
         show_do_not_record = self.event.cfp.request_do_not_record
         show_abstract = self.event.cfp.public_abstract
@@ -869,8 +899,8 @@ class Schedule(PretalxModel):
                 if response and not isinstance(response, Exception) and getattr(response, 'get_recording', None):
                     recording_providers.append(response)
         for talk in talk_list:
-            # Only add room if it's not deleted
-            if talk.room and not talk.room.deleted:
+            # Only add room if it's not deleted and not unscheduled
+            if talk.room and not talk.room.deleted and not talk.room.is_unscheduled:
                 rooms.add(talk.room)
             if talk.submission:
                 tracks.add(talk.submission.track)
@@ -921,13 +951,9 @@ class Schedule(PretalxModel):
                             talk_data['stream_type'] = match.stream_type
                 if enrich:
                     talk_data['resources'] = [
-                        {
-                            'resource': resource.resource.url if resource.resource else resource.link,
-                            'description': str(resource.description),
-                            'link': resource.link,
-                        }
+                        enriched_resource_entry(resource)
                         for resource in talk.submission.resources.all()
-                        if (resource.resource or resource.link) and (show_slides or resource.kind != 'slides')
+                        if resource.url and (show_slides or resource.kind != 'slides')
                     ]
                     talk_data['answers'] = [
                         {
@@ -953,14 +979,7 @@ class Schedule(PretalxModel):
                         'webcal': webcal_url,
                     }
                     if include_qrcodes:
-                        talk_data['exporters']['qrcodes'] = {
-                            'ics': make_qr_svg(f'{full_base_url}talk/{code}.ics'),
-                            'json': make_qr_svg(f'{full_base_url}talk/{code}.json'),
-                            'xml': make_qr_svg(f'{full_base_url}talk/{code}.xml'),
-                            'xcal': make_qr_svg(f'{full_base_url}talk/{code}.xcal'),
-                            'google_calendar': make_qr_svg(f'{full_base_url}talk/{code}/export/google-calendar'),
-                            'webcal': make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
-                        }
+                        talk_data['exporters']['qrcodes'] = make_talk_qr_map(full_base_url, code)
                     # Recording iframe from provider plugins
                     recording_iframe = ''
                     for provider in recording_providers:
@@ -997,6 +1016,7 @@ class Schedule(PretalxModel):
                 'name': room.name,
                 'description': room.description if room.description else '',
                 'video_url': getattr(room, 'video_url', ''),
+                'has_interpretation': room.has_interpretation,
             }
             for room in sorted(rooms, key=lambda r: (r.position if r.position is not None else 9999, r.id))
         ]
@@ -1049,14 +1069,7 @@ class Schedule(PretalxModel):
                     'webcal': spk_webcal,
                 }
                 if include_qrcodes:
-                    speaker_data['exporters']['qrcodes'] = {
-                        'ics': make_qr_svg(f'{spk_full_base}/talks.ics'),
-                        'json': make_qr_svg(f'{spk_full_base}/talks.json'),
-                        'xml': make_qr_svg(f'{spk_full_base}/talks.xml'),
-                        'xcal': make_qr_svg(f'{spk_full_base}/talks.xcal'),
-                        'google_calendar': make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
-                        'webcal': make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
-                    }
+                    speaker_data['exporters']['qrcodes'] = make_speaker_qr_map(spk_full_base)
             speaker_list.append(speaker_data)
         result['speakers'] = speaker_list
         return result

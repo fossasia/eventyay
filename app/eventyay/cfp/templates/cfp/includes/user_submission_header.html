@@ -10,7 +10,7 @@
 {% endcompress %}
 
 <h2>
-    {{ quotation_open }}{{ submission.title|event_localize }}{{ quotation_close }}
+    {{ quotation_open }}{{ submission.display_title }}{{ quotation_close }}
     {% if submission.state == "draft" %}
         <span class="badge color-secondary">{% translate "Draft" %}</span>
     {% endif %}
@@ -41,7 +41,7 @@
     </h3>
 {% endif %}
 <div class="submission-info d-flex">
-    {% if submission.submission_type and request.event.submission_types.all|length > 1 %}
+    {% if submission.submission_type %}
         <p class="mr-1 ml-1">
             <strong>{% translate "Session type" %}</strong>: {{ submission.submission_type.name|event_localize }}
         </p>

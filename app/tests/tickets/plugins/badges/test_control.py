@@ -2,9 +2,9 @@ import datetime
 
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Item, Organizer, Team, User
-from pretix.plugins.badges.models import BadgeItem
-from tests.base import SoupTest, extract_form_fields
+from eventyay.base.models import Event, Product as Item, Organizer, Team, User
+from eventyay.plugins.badges.models import BadgeProduct as BadgeItem
+from tests.tickets.base import SoupTest, extract_form_fields
 
 
 class BadgeLayoutFormTest(SoupTest):
@@ -17,7 +17,7 @@ class BadgeLayoutFormTest(SoupTest):
             organizer=self.orga1,
             name='30C3',
             slug='30c3',
-            plugins='pretix.plugins.badges',
+            plugins='eventyay.plugins.badges',
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
         )
         self.item1 = Item.objects.create(event=self.event1, name='Standard', default_price=0, position=1)

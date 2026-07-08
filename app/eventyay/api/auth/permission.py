@@ -53,25 +53,34 @@ class EventPermission(BasePermission):
             )
 
     def _has_event_permission(
-        self, request, perm_holder, required_permission, event_slug, organizer_slug=None
+        self, request, perm_holder, required_permission, event_slug, organizer_slug=None, *, allow_public_read=False
     ):
         request.event = self._resolve_event(event_slug, organizer_slug=organizer_slug)
         if not request.event:
             return False
+
+        request.organizer = request.event.organizer
+
+        # Allow public read-only access only for endpoints that explicitly opt in.
+        if allow_public_read and request.method in SAFE_METHODS and not required_permission:
+            request.eventpermset = set()
+            return True
+
         if not perm_holder.has_event_permission(
             request.event.organizer, request.event, request=request
         ):
             return False
 
-        request.organizer = request.event.organizer
         self._set_eventpermset(request, perm_holder)
         return self._has_required_permission(required_permission, request.eventpermset)
 
     def has_permission(self, request, view):
-        if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
-            return False
-
         required_permission = self._get_required_permission(request, view)
+        allow_public_read = getattr(view, 'allow_public_read', False)
+
+        if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
+            if request.method not in SAFE_METHODS or required_permission or not allow_public_read:
+                return False
 
         if request.user.is_authenticated:
             try:
@@ -91,9 +100,12 @@ class EventPermission(BasePermission):
                 required_permission,
                 event_slug=kwargs['event'],
                 organizer_slug=kwargs.get('organizer'),
+                allow_public_read=allow_public_read,
             ):
                 return False
         elif 'organizer' in kwargs:
+            if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
+                return False
             if not request.organizer or not perm_holder.has_organizer_permission(request.organizer, request=request):
                 return False
             if isinstance(perm_holder, User) and perm_holder.has_active_staff_session(request.session.session_key):

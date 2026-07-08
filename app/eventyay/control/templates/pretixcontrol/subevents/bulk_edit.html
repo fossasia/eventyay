@@ -34,6 +34,7 @@
                 {% bootstrap_field form.location layout="bulkedit" %}
                 {% include "pretixcontrol/event/fragment_geodata_autoupdate.html" %}
                 <div class="form-group geodata-group"
+                        data-geocode-url="{% url 'control:global.geocode' %}"
                         data-tiles="{{ global_settings.leaflet_tiles|default_if_none:"" }}"
                         data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
                         data-icon="{% static "leaflet/images/marker-icon.png" %}"

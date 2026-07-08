@@ -1,16 +1,19 @@
 <template lang="pug">
 .c-talk-detail
-	.talk-wrapper(v-if="resolvedTalk")
+	detail-back-nav
+		detail-top-actions(
+			:export-options="talkExportOptions",
+			:qrcodes-url="talkQrcodesUrl",
+			:show-fav="!favsReadOnly",
+			:faved="isFaved",
+			@toggleFav="toggleFav")
+	.talk-wrapper(v-if="talkDetailReady")
 		.talk
-			.talk-header(:class="{'has-actions': talkExportOptions.length || loggedIn}")
+			.talk-header
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
-				.header-actions
-					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl")
-					.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
-						fav-button(@toggleFav="toggleFav")
 			.info
-				span.info-main {{ datetime }} {{ roomName }}
-				span.session-language(v-if="sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
+				span.info-main {{ sessionTimeLabel }}
+				span.session-language(v-if="!isSchedulePending && sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
 			.field-section.abstract-section(v-if="resolvedTalk.abstract")
 				h2.field-heading Abstract
 				.field-content
@@ -19,8 +22,19 @@
 				h2.field-heading Description
 				.field-content
 					markdown-content(:markdown="resolvedTalk.description")
-			.public-answers(v-if="resolvedTalk.answers && resolvedTalk.answers.length > 0")
-				.field-section(v-for="answer in resolvedTalk.answers", :key="answer.question_id")
+			.field-section(v-for="answer in longAnswers", :key="answer.id")
+				h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
+				.field-content
+					markdown-content(:markdown="answer.answer")
+			.field-section(v-for="answer in inlineAnswers", :key="answer.id")
+				h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
+				.field-content
+					a.answer-link(v-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && answer.answer_file && answer.answer_file.url", :href="answer.answer_file.url", target="_blank", rel="noopener noreferrer") {{ answer.answer || answer.answer_file.url }}
+					a.answer-link(v-else-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && answer.answer", :href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
+					span(v-else-if="answer.question.variant === 'boolean'") {{ parseBooleanAnswer(answer.answer) ? t.yes : t.no }}
+					span(v-else-if="answer.answer") {{ answer.answer }}
+			.public-answers(v-if="publicScheduleAnswers.length > 0")
+				.field-section(v-for="answer in publicScheduleAnswers", :key="answer.question_id")
 					h2.field-heading {{ answer.question }}
 					.field-content
 						markdown-content(:markdown="answer.answer")
@@ -31,6 +45,20 @@
 					span {{ t.view_video }}
 			slot(name="actions")
 				a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="onJoinRoomClick") {{ t.join_room }}
+		.downloads(v-if="displayResources.length > 0")
+			.header {{ t.downloads }}
+			a.download(v-for="{resource, link, description} of displayResources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
+				.icon-container
+					svg.download-icon(viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+						path(d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71")
+						path(d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71")
+				.filename-container
+					.filename {{ description }}
+					.file-meta {{ getFileExtensionLabel(resource || link) }}
+				svg.download-action-icon(viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round")
+					path(d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4")
+					polyline(points="7 10 12 15 17 10")
+					line(x1="12" y1="15" x2="12" y2="3")
 		.speakers(v-if="resolvedTalk.speakers && resolvedTalk.speakers.length > 0")
 			.header {{ t.speakers }} ({{ resolvedTalk.speakers.length }})
 			.speakers-list
@@ -47,13 +75,7 @@
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || t.speaker_name_not_provided }}
 					markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
-		.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
-			.header {{ t.downloads }}
-			.downloads-list
-				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
-					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
-					.filename {{ description }}
-		.starrers(v-if="popularityFeatureEnabled && loggedIn && starrers && starrers.total > 0")
+		.starrers(v-if="popularityFeatureEnabled && starrers && starrers.total > 0")
 			.header
 				span {{ t.starred_by }} ({{ starrers.total }})
 				button.expand-toggle(type="button", @click="toggleStarrersExpanded") {{ starrersExpanded ? t.hide_list : t.view_all }}
@@ -88,14 +110,14 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, getIconByFileEnding } from '../utils'
+import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems, parseBooleanAnswer, resolveAbsoluteUrl, buildQrcodesUrl } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
-import FavButton from './FavButton.vue'
-import ExportDropdown from './ExportDropdown.vue'
+import DetailBackNav from './DetailBackNav.vue'
+import DetailTopActions from './DetailTopActions.vue'
 
 export default {
 	name: 'TalkDetail',
-	components: { MarkdownContent, FavButton, ExportDropdown },
+	components: { MarkdownContent, DetailBackNav, DetailTopActions },
 	inject: {
 		scheduleData: { default: null },
 		scheduleFav: {
@@ -122,8 +144,11 @@ export default {
 		getJoinRoomLink: { default: () => () => '' },
 		generateStarrerLinkUrl: { default: () => (user) => user.url || '' },
 		onStarrerLinkClick: { default: () => () => {} },
-		loggedIn: { default: false },
-		translationMessages: { default: () => ({}) }
+		favsReadOnly: { default: false },
+		translationMessages: { default: () => ({}) },
+		isWipPreview: { default: false },
+		exportsDisabled: { default: false },
+		remoteApiUrl: { default: null },
 	},
 	props: {
 		talk: Object,
@@ -131,6 +156,10 @@ export default {
 		baseUrl: {
 			type: String,
 			default: ''
+		},
+		apiContent: {
+			type: Object,
+			default: null
 		}
 	},
 	emits: ['joinRoom'],
@@ -138,16 +167,19 @@ export default {
 		return {
 			getLocalizedString,
 			getIconByFileEnding,
+			parseBooleanAnswer,
 			starrers: { total: 0, public_total: 0, items: [] },
 			starrersLoading: false,
 			starrersExpanded: false,
+			fetchedApiContent: null,
+			fetchedSubmission: null,
+			apiContentLoaded: false,
 		}
 	},
 	computed: {
 		talkQrcodesUrl() {
-			if (!this.baseUrl || !this.resolvedTalk?.id) return ''
-			const base = this.baseUrl.replace(/\/?$/, '/')
-			return `${base}schedule/widgets/qrcodes/talk/${this.resolvedTalk.id}.json`
+			const code = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
+			return buildQrcodesUrl(this.baseUrl, 'talk', code)
 		},
 		t() {
 			const m = this.translationMessages || {}
@@ -162,6 +194,8 @@ export default {
 				view_all: m.view_all || 'View all',
 				hide_list: m.hide_list || 'Hide',
 				session_language: m.session_language || 'Language',
+				yes: m.yes || 'Yes',
+				no: m.no || 'No',
 			}
 		},
 		uiLocale () {
@@ -205,10 +239,11 @@ export default {
 				if (lu && lu[this.talkId]) return lu[this.talkId]
 				const sessions = this.scheduleData.sessions || []
 				for (let i = 0; i < sessions.length; i++) {
-					if (sessions[i].id === this.talkId) return sessions[i]
+					if (sessions[i].code === this.talkId || sessions[i].id === this.talkId) return sessions[i]
 				}
 				return null
 			}
+			if (this.fetchedSubmission) return this.fetchedSubmission
 			return null
 		},
 		computedJoinRoomLink() {
@@ -218,13 +253,26 @@ export default {
 		isFaved() {
 			if (!this.resolvedTalk) return false
 			const favSet = this.scheduleData?.favSet
-			if (favSet && typeof favSet.has === 'function') return favSet.has(this.resolvedTalk.id)
+			const favId = this.resolvedTalk.code || this.resolvedTalk.id || this.talkId
+			if (favSet && typeof favSet.has === 'function') return favSet.has(favId)
 			const favs = this.scheduleData?.favs || []
-			return favs.includes(this.resolvedTalk.id)
+			return favs.includes(favId)
 		},
 		datetime() {
-			if (!this.resolvedTalk) return ''
+			if (!this.resolvedTalk || this.isSchedulePending) return ''
 			return moment(this.resolvedTalk.start).format('L LT') + ' - ' + moment(this.resolvedTalk.end).format('LT')
+		},
+		isSchedulePending () {
+			return Boolean(this.resolvedTalk?.schedule_pending || !this.resolvedTalk?.start)
+		},
+		schedulePendingText () {
+			const m = this.translationMessages || {}
+			return m.schedule_pending_secondary || 'Coming soon'
+		},
+		sessionTimeLabel () {
+			if (this.isSchedulePending) return this.schedulePendingText
+			const parts = [this.datetime, this.roomName].filter(Boolean)
+			return parts.join(' ')
 		},
 		roomName() {
 			if (!this.resolvedTalk) return ''
@@ -238,27 +286,82 @@ export default {
 			if (!now || !this.resolvedTalk) return false
 			return this.resolvedTalk.start < now && this.resolvedTalk.end > now
 		},
-		talkExportOptions() {
-			const exporters = this.resolvedTalk?.exporters
-			if (!exporters) return []
-			const qr = exporters.qrcodes || {}
-			const items = [
-				{ id: 'google_calendar', label: 'Add to Google Calendar', url: exporters.google_calendar, icon: 'fa-google', qrcode_svg: qr.google_calendar },
-				{ id: 'webcal', label: 'Add to Other Calendar', url: exporters.webcal, icon: 'fa-calendar', qrcode_svg: qr.webcal },
-				{ id: 'ics', label: 'iCal', url: exporters.ics, icon: 'fa-calendar', qrcode_svg: qr.ics },
-				{ id: 'json', label: 'JSON (frab compatible)', url: exporters.json, icon: 'fa-code', qrcode_svg: qr.json },
-				{ id: 'xml', label: 'XML (frab compatible)', url: exporters.xml, icon: 'fa-code', qrcode_svg: qr.xml },
-				{ id: 'xcal', label: 'XCal (frab compatible)', url: exporters.xcal, icon: 'fa-calendar', qrcode_svg: qr.xcal },
-			].filter(o => o.url)
+		effectiveApiContent() {
+			return this.apiContent || this.fetchedApiContent
+		},
+		talkDetailReady() {
+			return this.resolvedTalk && (this.effectiveApiContent || this.apiContentLoaded || !this.computedApiBaseUrl)
+		},
+		computedApiBaseUrl() {
+			if (this.remoteApiUrl) return this.remoteApiUrl
+			if (!this.baseUrl) return null
+			try {
+				const url = new URL(this.baseUrl, window.location.origin)
+				const segments = url.pathname.split('/').filter(s => s.length > 0)
+				const slug = segments[segments.length - 1] || ''
+				return `${url.origin}/api/v1/events/${slug}/`
+			} catch {
+				return null
+			}
+		},
+		longAnswers() {
+			const answers = this.effectiveApiContent?.answers
+			if (!Array.isArray(answers)) return []
+			return answers.filter(a => a.question && a.question.is_public !== false &&
+				(a.question.variant === 'text' || a.question.variant === 'string'))
+		},
+		inlineAnswers() {
+			const answers = this.effectiveApiContent?.answers
+			if (!Array.isArray(answers)) return []
+			return answers.filter(a => a.question && a.question.is_public !== false &&
+				a.question.variant !== 'text' && a.question.variant !== 'string')
+		},
+		publicScheduleAnswers() {
+			if (this.effectiveApiContent?.answers?.length) return []
+			const answers = this.resolvedTalk?.answers || []
+			if (!this.resolvedTalk?.resources?.length && !this.displayResources.length) return answers
 
-			return items
+			const downloadsLabel = (this.t.downloads || '').trim().toLowerCase()
+			return answers.filter((answer) => (answer.question || '').trim().toLowerCase() !== downloadsLabel)
+		},
+		displayResources() {
+			const resources = this.effectiveApiContent?.resources ?? this.resolvedTalk?.resources ?? []
+			return resources.map(r => {
+				const resPath = r.resource || r.link
+				if (resPath) {
+					const cleanPath = resPath.split(/[?#]/)[0]
+					if (cleanPath.toLowerCase().endsWith('.pdf') && !resPath.includes('#')) {
+						return {
+							...r,
+							resource: r.resource ? `${r.resource}#resource` : undefined,
+							link: r.link ? `${r.link}#resource` : undefined
+						}
+					}
+				}
+				return r
+			})
+		},
+		talkExportOptions() {
+			if (this.exportsDisabled || this.isSchedulePending) return []
+			const code = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
+			const exporters = this.resolvedTalk?.exporters ||
+				(this.baseUrl && code ? computeTalkExporters(this.baseUrl, code) : null)
+			return buildExportMenuItems(exporters)
 		}
 	},
 	watch: {
+		talkId: {
+			handler() {
+				this.fetchedApiContent = null
+				this.fetchedSubmission = null
+				this.apiContentLoaded = false
+			}
+		},
 		resolvedTalk: {
 			handler() {
 				this.starrersExpanded = false
 				this.loadStarrers({ limit: this.inlineStarrersLimit })
+				if (!this.apiContent) this.fetchApiContent()
 			},
 			immediate: true
 		}
@@ -276,15 +379,16 @@ export default {
 			this.onStarrerLinkClick(event, user)
 		},
 		getStarrersUrl({ limit } = {}) {
-			if (!this.baseUrl || !this.resolvedTalk?.id) return ''
+			const code = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
+			if (!this.baseUrl || !code) return ''
 			try {
-				const url = new URL(`talk/${this.resolvedTalk.id}/starrers.json`, this.baseUrl)
+				const url = new URL(`talk/${code}/starrers.json`, this.baseUrl)
 				if (typeof limit === 'number') url.searchParams.set('limit', String(limit))
 				return url.href
 			} catch {
 				const base = this.baseUrl.replace(/\/$/, '')
-				if (typeof limit !== 'number') return `${base}/talk/${this.resolvedTalk.id}/starrers.json`
-				return `${base}/talk/${this.resolvedTalk.id}/starrers.json?limit=${encodeURIComponent(String(limit))}`
+				if (typeof limit !== 'number') return `${base}/talk/${code}/starrers.json`
+				return `${base}/talk/${code}/starrers.json?limit=${encodeURIComponent(String(limit))}`
 			}
 		},
 		async loadStarrers({ limit } = {}) {
@@ -317,13 +421,17 @@ export default {
 			}
 		},
 		getAbsoluteResourceUrl(resource) {
-			if (!this.baseUrl) return resource
-			try {
-				const base = (new URL(this.baseUrl)).origin
-				return new URL(resource, base).href
-			} catch {
-				return resource
+			return resolveAbsoluteUrl(resource, this.baseUrl)
+		},
+		getFileExtensionLabel(path) {
+			if (!path) return 'Resource'
+			if (/^https?:\/\//i.test(path) && !/\.[a-z0-9]+$/i.test(path)) {
+				return 'External Link'
 			}
+			const parts = path.split(/[#?]/)[0].split('.')
+			if (parts.length < 2) return 'Resource'
+			const ext = parts[parts.length - 1].toUpperCase()
+			return `${ext} Document`
 		},
 		getSpeakerLink(speaker) {
 			return this.generateSpeakerLinkUrl({speaker})
@@ -335,14 +443,39 @@ export default {
 			this.$emit('joinRoom', event)
 		},
 		async toggleFav() {
-			if (!this.loggedIn) return
+			if (this.favsReadOnly) return
 			if (!this.resolvedTalk) return
+			const favId = this.resolvedTalk.code || this.resolvedTalk.id || this.talkId
 			if (this.isFaved) {
-				await this.scheduleUnfav(this.resolvedTalk.id)
+				await this.scheduleUnfav(favId)
 			} else {
-				await this.scheduleFav(this.resolvedTalk.id)
+				await this.scheduleFav(favId)
 			}
 			await this.loadStarrers({ limit: this.starrersExpanded ? 0 : this.inlineStarrersLimit })
+		},
+		async fetchApiContent() {
+			if (this.apiContent || this.fetchedApiContent !== null || this.apiContentLoaded) return
+			if (!this.computedApiBaseUrl) {
+				this.apiContentLoaded = true
+				return
+			}
+			const id = this.resolvedTalk?.code || this.resolvedTalk?.id || this.talkId
+			if (!id) {
+				this.apiContentLoaded = true
+				return
+			}
+			try {
+				const url = `${this.computedApiBaseUrl}submissions/${id}/?expand=answers.question,resources`
+				const response = await fetch(url)
+				if (!response.ok) return
+				const data = await response.json()
+				this.fetchedApiContent = data
+				if (!this.talk && !this.scheduleData) this.fetchedSubmission = data
+			} catch {
+				// silently ignore network / auth errors
+			} finally {
+				this.apiContentLoaded = true
+			}
 		}
 	}
 }
@@ -361,21 +494,9 @@ export default {
 		flex: none
 		margin: 16px
 		.talk-header
-			display: flex
-			justify-content: space-between
-			align-items: center
-			gap: 16px
 			margin-bottom: 8px
 			h1
-				flex: 1
 				margin: 0
-			.header-actions
-				display: flex
-				align-items: center
-				gap: 8px
-				flex-shrink: 0
-				.button-container
-					flex-shrink: 0
 		.info
 			font-size: 18px
 			color: $clr-secondary-text-light
@@ -400,6 +521,12 @@ export default {
 				.field-content
 					font-size: 16px
 					font-weight: 600
+		.answer-link
+			color: var(--pretalx-clr-primary, var(--clr-primary))
+			text-decoration: none
+			word-break: break-all
+			&:hover
+				text-decoration: underline
 		.video-stream
 			margin-top: 16px
 			.view-video-btn
@@ -424,7 +551,7 @@ export default {
 			font-weight: 600
 			text-decoration: none
 			color: $clr-white
-			background-color: var(--clr-primary)
+			background-color: var(--pretalx-clr-primary, var(--clr-primary))
 			&:hover
 				opacity: 0.9
 	.starrers
@@ -445,7 +572,7 @@ export default {
 				background: transparent
 				padding: 0
 				font: inherit
-				color: var(--clr-primary)
+				color: var(--pretalx-clr-primary, var(--clr-primary))
 				cursor: pointer
 				text-decoration: underline
 				font-weight: 600
@@ -505,7 +632,7 @@ export default {
 					&:hover
 						.name
 							text-decoration: underline
-							color: var(--clr-primary)
+							color: var(--pretalx-clr-primary, var(--clr-primary))
 					.avatar-circle
 						border-radius: 50%
 						height: 32px
@@ -544,7 +671,7 @@ export default {
 				color: $clr-primary-text-light
 				&:hover
 					.name
-						color: var(--clr-primary)
+						color: var(--pretalx-clr-primary, var(--clr-primary))
 						text-decoration: underline
 			.avatar-circle
 				border-radius: 50%
@@ -571,30 +698,77 @@ export default {
 		display: flex
 		flex-direction: column
 		border: border-separator()
-		border-radius: 4px
+		border-radius: 6px
+		background-color: $clr-white
+		overflow: hidden
 		.header
 			border-bottom: border-separator()
-			padding: 8px
+			padding: 10px 12px
+			font-weight: 600
+			font-size: 16px
+			color: $clr-primary-text-light
+			background-color: $clr-grey-50
 		.download
 			display: flex
 			align-items: center
-			gap: 8px
-			padding: 8px
+			gap: 12px
+			padding: 12px
 			text-decoration: none
 			color: $clr-primary-text-light
 			border-top: border-separator()
+			transition: background-color 0.2s ease, transform 0.15s ease
 			&:first-child
 				border-top: none
 			&:hover
-				background-color: $clr-grey-100
+				background-color: unquote("color-mix(in srgb, var(--pretalx-clr-primary) 8%, transparent)")
+				.icon-container
+					background-color: var(--pretalx-clr-primary)
+					color: $clr-white
 				.filename
-					text-decoration: underline
-					color: var(--clr-primary)
-			.mdi
-				font-size: 24px
+					color: var(--pretalx-clr-primary)
+					text-decoration: none
+				.download-action-icon
+					opacity: 1
+					color: var(--pretalx-clr-primary)
+			.icon-container
+				display: flex
+				align-items: center
+				justify-content: center
+				width: 36px
+				height: 36px
+				border-radius: 50%
+				background-color: $clr-grey-100
+				color: $clr-secondary-text-light
+				transition: background-color 0.2s ease, color 0.2s ease
 				flex-shrink: 0
-			.filename
-				font-weight: 600
+				.mdi
+					font-size: 20px
+					line-height: 1
+			.filename-container
+				flex: 1
+				min-width: 0
+				display: flex
+				flex-direction: column
+				gap: 2px
+				.filename
+					font-weight: 600
+					font-size: 14px
+					overflow: hidden
+					text-overflow: ellipsis
+					white-space: nowrap
+					transition: color 0.2s ease
+				.file-meta
+					font-size: 11px
+					color: $clr-secondary-text-light
+			.download-action-icon
+				color: $clr-grey-400
+				font-size: 20px
+				margin-left: auto
+				display: flex
+				align-items: center
+				justify-content: center
+				opacity: 0
+				transition: opacity 0.2s ease, color 0.2s ease
 	@media (max-width: 768px)
 		.speakers
 			margin: 0 16px 16px
@@ -608,12 +782,8 @@ export default {
 		.talk
 			margin: 10px
 			.talk-header
-				flex-direction: column-reverse
-				align-items: flex-end
 				h1
 					font-size: 20px
-				.header-actions
-					gap: 4px
 			.info
 				font-size: 15px
 			.abstract

@@ -17,7 +17,7 @@
             <h3 class="panel-title">{% trans "Upload a new file" %}</h3>
         </div>
         <div class="panel-body">
-            <form action="" method="post" enctype="multipart/form-data" class="form-inline">
+            <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
                 {% csrf_token %}
                 <p>
                     {% blocktrans trimmed %}
@@ -26,12 +26,16 @@
                     {% endblocktrans %}
                 </p>
                 <div class="form-group">
-                    <label for="file">{% trans "Import file" %}: </label> <input id="file" type="file" name="file"/>
+                    <label class="col-md-2 control-label" for="file">{% trans "Import file" %}:</label>
+                    <div class="col-md-5">
+                        <input id="file" type="file" name="file" accept=".csv" required/>
+                    </div>
                 </div>
-                <div class="clearfix"></div>
-                <button class="btn btn-primary pull-right flip" type="submit">
-                    <span class="icon icon-upload"></span> {% trans "Start import" %}
-                </button>
+                <div class="form-group submit-group">
+                    <button class="btn btn-primary btn-save" type="submit">
+                        <span class="icon icon-upload"></span> {% trans "Upload and continue" %}
+                    </button>
+                </div>
             </form>
         </div>
     </div>

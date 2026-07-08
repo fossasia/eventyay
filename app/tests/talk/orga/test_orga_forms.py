@@ -1,7 +1,8 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.orga.forms import SubmissionForm
+from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
+from eventyay.orga.forms import SubmissionForm
 
 
 @pytest.mark.django_db
@@ -16,3 +17,9 @@ def test_submissionform_content_locale_choices(event):
             ("de", "Deutsch"),
             ("fr", "Français"),
         ]
+
+
+def test_event_common_settings_form_has_separate_header_color_controls():
+    assert 'header_background_color' in EventCommonSettingsForm.auto_fields
+    assert 'header_text_color' in EventCommonSettingsForm.auto_fields
+    assert 'navigation_text_color' in EventCommonSettingsForm.auto_fields

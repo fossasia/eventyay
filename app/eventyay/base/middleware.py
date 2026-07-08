@@ -27,6 +27,8 @@ from eventyay.multidomain.urlreverse import (
 
 _supported = None
 
+DEFAULT_LEAFLET_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+
 
 class LocaleMiddleware(MiddlewareMixin):
     """
@@ -246,6 +248,21 @@ def get_external_image_csp_sources(request: HttpRequest) -> list[str]:
 class SecurityMiddleware(MiddlewareMixin):
     CSP_EXEMPT = ('/api/v1/docs/',)
 
+    @staticmethod
+    def _vite_dev_csp_entries():
+        """Return (http_origins, ws_origins) lists for all Vite dev servers."""
+        http_origins = []
+        ws_origins = []
+        for url in settings.VITE_DEV_SERVER_PORTS.values():
+            split = urlsplit(url)
+            if not split.scheme or not split.netloc:
+                continue
+
+            http_origins.append(f'{split.scheme}://{split.netloc}')
+            ws_scheme = 'wss' if split.scheme == 'https' else 'ws'
+            ws_origins.append(f'{ws_scheme}://{split.netloc}')
+        return http_origins, ws_origins
+
     def process_response(self, request, resp):
         if settings.DEBUG and resp.status_code >= 400:
             # Don't use CSP on debug error page as it breaks of Django's fancy error
@@ -265,8 +282,16 @@ class SecurityMiddleware(MiddlewareMixin):
         img_src = []
         external_img_src = get_external_image_csp_sources(request)
         gs = global_settings_object(request)
-        if gs.settings.leaflet_tiles:
-            img_src.append(gs.settings.leaflet_tiles[: gs.settings.leaflet_tiles.index('/', 10)].replace('{s}', '*'))
+        leaflet_tiles = gs.settings.leaflet_tiles or DEFAULT_LEAFLET_TILES
+        try:
+            img_src.append(leaflet_tiles[: leaflet_tiles.index('/', 10)].replace('{s}', '*'))
+        except (ValueError, IndexError):
+            pass
+
+        vite_http = []
+        vite_ws = []
+        if settings.DEBUG or settings.VITE_DEV_MODE:
+            vite_http, vite_ws = self._vite_dev_csp_entries()
 
         h = {
             'default-src': ['{static}'],
@@ -275,7 +300,7 @@ class SecurityMiddleware(MiddlewareMixin):
                 'https://static.cloudflareinsights.com',
                 'https://checkout.stripe.com',
                 'https://js.stripe.com',
-                'http://localhost:8080',
+                *vite_http,
                 "'unsafe-eval'",  # Required for buntpapier and other libraries that use eval()
             ],
             'object-src': ["'none'"],
@@ -300,12 +325,21 @@ class SecurityMiddleware(MiddlewareMixin):
                 'https:',
                 'blob:',
             ],
-            'img-src': ['{static}', '{media}', 'data:', 'https://*.stripe.com', 'https://twemoji.maxcdn.com']
+            'img-src': [
+                '{static}',
+                '{media}',
+                'data:',
+                'https://*.stripe.com',
+                'https://twemoji.maxcdn.com',
+                'https://www.gravatar.com',
+                'https://secure.gravatar.com',
+            ]
             + external_img_src
             + img_src,
             'font-src': [
                 '{static}',
                 'https://fonts.gstatic.com',  # fix Google Fonts
+                *vite_http,
             ],
             'media-src': ['{static}', 'data:', 'https:', 'blob:'],
             # form-action is not only used to match on form actions, but also on URLs
@@ -323,8 +357,9 @@ class SecurityMiddleware(MiddlewareMixin):
                 "'unsafe-eval'",  # Required for Vue.js and buntpapier libraries
                 "'unsafe-inline'",  # Required for server-injected configuration scripts
             ]
-            if settings.DEBUG:
-                h['script-src-elem'].insert(1, 'http://localhost:8080')  # Development only
+            if settings.DEBUG or settings.VITE_DEV_MODE:
+                for origin in vite_http:
+                    h['script-src-elem'].insert(1, origin)
         if settings.LOG_CSP:
             base_path = settings.BASE_PATH
             h['report-uri'] = [f'{base_path}/csp_report/']
@@ -359,10 +394,10 @@ class SecurityMiddleware(MiddlewareMixin):
                     domain = f'{domain}:{siteurlsplit.port}'
                 dynamicdomain += ' ' + domain
 
-        # Add DEBUG mode settings before rendering CSP
-        if settings.DEBUG:
-            h.setdefault('script-src', []).extend(["'unsafe-inline'", 'http://localhost:8080'])
-            h.setdefault('connect-src', []).extend(['http://localhost:8080', 'ws://localhost:8080'])
+        # Add development mode settings before rendering CSP
+        if settings.DEBUG or settings.VITE_DEV_MODE:
+            h.setdefault('script-src', []).extend(["'unsafe-inline'", *vite_http])
+            h.setdefault('connect-src', []).extend([*vite_http, *vite_ws])
 
         if request.path not in self.CSP_EXEMPT and not getattr(resp, '_csp_ignore', False):
             for k, v in h.items():

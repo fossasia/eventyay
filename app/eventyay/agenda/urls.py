@@ -61,6 +61,11 @@ def get_schedule_urls(regex_prefix, name_prefix=''):
 
 app_name = 'agenda'
 urlpatterns = [
+    re_path(
+        r'^widgets/(?P<filename>pretalx-schedule[-\w.]*\.js)$',
+        widget.widget_schedule_chunk,
+        name='widget.schedule.chunk',
+    ),
     path(
         'widgets/schedule.js',
         widget.widget_script,
@@ -87,6 +92,9 @@ urlpatterns = [
     ),
     *get_schedule_urls('schedule'),
     *get_schedule_urls('schedule/v/<version>', 'versioned-'),
+    path('schedule/v/wip/talk/<slug>/', talk.WipTalkView.as_view(), name='versioned-wip-talk.detail'),
+    path('schedule/v/wip/speakers/', speaker.WipSpeakerList.as_view(), name='versioned-wip-speakers'),
+    path('schedule/v/wip/speakers/<code>/', speaker.WipSpeakerView.as_view(), name='versioned-wip-speaker'),
     path('featured/', featured.FeaturedView.as_view(), name='featured'),
     path('speakers/', speaker.SpeakerList.as_view(), name='speakers'),
     path(

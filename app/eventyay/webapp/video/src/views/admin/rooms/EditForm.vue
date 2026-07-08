@@ -5,10 +5,13 @@
 			.generic-settings
 				bunt-input(name="name", v-model="localizedName", label="Name", :validation="v$.config.name")
 				bunt-input(name="description", v-model="localizedDescription", label="Description")
+				div(:title="config.has_linked_sessions ? \"Room has linked sessions and can't be marked unscheduled\" : ''")
+					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", label="Unscheduled room (hide from schedule/sessions)", :disabled="config.has_linked_sessions")
 				template(v-if="inferredType")
 					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
-			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules")
-			stream-schedule(v-if="!creating && config.id && inferredType && inferredType.id === 'stage'", :room-id="String(config.id)")
+			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
+			stream-schedule(ref="streamSchedule", v-if="showStreamSchedule", :room-id="config.id ? String(config.id) : null", :room-name="localizedName", :open-create-on-mount="openStreamScheduleCreateOnMount", @opened-create-on-mount="clearOpenStreamScheduleCreateQuery", @create-requires-room="createRoomForStreamSchedule")
+			sidebar-addons(v-if="inferredType && inferredType.id === 'stage'", :config="config", :modules="modules", :creating="creating")
 	.ui-form-actions
 		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ creating ? 'create' : 'save' }}
 		.errors {{ validationErrors.join(', ') }}
@@ -22,6 +25,7 @@ import { required } from 'lib/validators'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
 import ROOM_TYPES, { inferType } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
+import { PLAYBACK_MODE_SCHEDULE_DRIVEN, getStagePlaybackMode } from 'lib/stage-streams'
 import Stage from './types-edit/stage'
 import PageStatic from './types-edit/page-static'
 import PageIframe from './types-edit/page-iframe'
@@ -32,9 +36,10 @@ import ChannelRoulette from './types-edit/channel-roulette'
 import Posters from './types-edit/posters'
 import PageLanding from './types-edit/page-landing'
 import StreamSchedule from './StreamSchedule'
+import SidebarAddons from './types-edit/SidebarAddons'
 
 export default {
-	components: { StreamSchedule },
+	components: { StreamSchedule, SidebarAddons },
 	mixins: [ValidationErrorsMixin],
 	props: {
 		config: {
@@ -79,6 +84,18 @@ export default {
 		inferredType() {
 			return inferType(this.config)
 		},
+		stagePlaybackMode() {
+			if (!this.modules) return null
+			const module = this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
+			return getStagePlaybackMode(module)
+		},
+		showStreamSchedule() {
+			return this.inferredType?.id === 'stage' &&
+				this.stagePlaybackMode === PLAYBACK_MODE_SCHEDULE_DRIVEN
+		},
+		openStreamScheduleCreateOnMount() {
+			return !this.creating && this.config.id && this.showStreamSchedule && this.$route.query.schedule === 'new'
+		},
 		localizedName: {
 			get() {
 				return this.$localize(this.config.name)
@@ -106,7 +123,7 @@ export default {
 		}
 	},
 	methods: {
-		async save() {
+		async save({ openScheduleAfterCreate = false, streamScheduleDraft = null } = {}) {
 			this.error = null
 			this.v$.$touch()
 			if (this.v$.$invalid) return
@@ -127,18 +144,36 @@ export default {
 					description: this.config.description,
 					picture: this.config.picture,
 					force_join: this.config.force_join,
+					is_unscheduled: this.config.is_unscheduled,
 					module_config: this.config.module_config,
 				})
 				Object.assign(this.config, updated)
 				this.saving = false
 				if (this.creating) {
-					this.$router.push({name: 'admin:rooms:item', params: {roomId}})
+					if (streamScheduleDraft) {
+						sessionStorage.setItem(`streamScheduleDraft:${roomId}`, JSON.stringify(streamScheduleDraft))
+					}
+					const query = this.inferredType?.id === 'stage' &&
+						this.stagePlaybackMode === PLAYBACK_MODE_SCHEDULE_DRIVEN &&
+						openScheduleAfterCreate
+						? { schedule: 'new' }
+						: undefined
+					this.$router.push({name: 'admin:rooms:item', params: {roomId}, query})
 				}
 			} catch (error) {
 				console.error(error)
 				this.saving = false
 				this.error = error.message || error
 			}
+		},
+		clearOpenStreamScheduleCreateQuery() {
+			if (this.$route.query.schedule !== 'new') return
+			const query = { ...this.$route.query }
+			delete query.schedule
+			this.$router.replace({ query })
+		},
+		createRoomForStreamSchedule(streamScheduleDraft) {
+			return this.save({ openScheduleAfterCreate: true, streamScheduleDraft })
 		}
 	}
 }

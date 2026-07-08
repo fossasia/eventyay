@@ -1,14 +1,14 @@
 import re
 import uuid
 from contextlib import asynccontextmanager
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from aiohttp.http_exceptions import HttpProcessingError
 from aioresponses import aioresponses
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
-
-from venueless.core.models import User
+from venueless.core.models import BBBCall, BBBServer, User
 from venueless.routing import application
 
 
@@ -166,6 +166,93 @@ async def test_bbb_exception(bbb_room):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
+async def test_no_bbb_server_available(bbb_room):
+    await database_sync_to_async(BBBServer.objects.all().delete)()
+
+    async with world_communicator(named=True) as c:
+        await c.send_json_to(["bbb.room_url", 123, {"room": str(bbb_room.id)}])
+
+        response = await c.receive_json_from()
+        assert response == ["error", 123, {"code": "bbb.failed"}]
+        assert not await database_sync_to_async(
+            BBBCall.objects.filter(room=bbb_room).exists
+        )()
+
+        await c.send_json_to(["bbb.bla", 124, {"room": str(bbb_room.id)}])
+        response = await c.receive_json_from()
+        assert response == ["error", 124, {"code": "bbb.unsupported_command"}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_no_replacement_bbb_server_available(bbb_room):
+    server = await database_sync_to_async(BBBServer.objects.get)()
+    call = await database_sync_to_async(BBBCall.objects.create)(
+        room=bbb_room,
+        event=bbb_room.event,
+        server=server,
+    )
+    server.active = False
+    await database_sync_to_async(server.save)(update_fields=["active"])
+
+    async with world_communicator(named=True) as c:
+        await c.send_json_to(["bbb.room_url", 123, {"room": str(bbb_room.id)}])
+
+        response = await c.receive_json_from()
+        assert response == ["error", 123, {"code": "bbb.failed"}]
+
+        await c.send_json_to(["bbb.bla", 124, {"room": str(bbb_room.id)}])
+        response = await c.receive_json_from()
+        assert response == ["error", 124, {"code": "bbb.unsupported_command"}]
+
+    await database_sync_to_async(call.refresh_from_db)()
+    assert call.server_id == server.id
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_call_url_with_no_bbb_server_available(bbb_room):
+    await database_sync_to_async(BBBServer.objects.all().delete)()
+    calls_before = await database_sync_to_async(BBBCall.objects.count)()
+
+    async with world_communicator(named=True) as c:
+        await c.send_json_to(["bbb.call_url", 123, {"call": str(uuid.uuid4())}])
+
+        response = await c.receive_json_from()
+        assert response == ["error", 123, {"code": "bbb.failed"}]
+        assert await database_sync_to_async(BBBCall.objects.count)() == calls_before
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_call_url_with_no_replacement_bbb_server_available(bbb_room):
+    server = await database_sync_to_async(BBBServer.objects.get)()
+    server.active = False
+    await database_sync_to_async(server.save)(update_fields=["active"])
+
+    async with world_communicator(named=True) as c:
+        user = await database_sync_to_async(User.objects.get)()
+        call = await database_sync_to_async(BBBCall.objects.create)(
+            event=bbb_room.event,
+            server=server,
+        )
+        await database_sync_to_async(call.invited_members.add)(user)
+
+        await c.send_json_to(["bbb.call_url", 123, {"call": str(call.id)}])
+
+        response = await c.receive_json_from()
+        assert response == ["error", 123, {"code": "bbb.failed"}]
+
+        await c.send_json_to(["bbb.bla", 124, {}])
+        response = await c.receive_json_from()
+        assert response == ["error", 124, {"code": "bbb.unsupported_command"}]
+
+    await database_sync_to_async(call.refresh_from_db)()
+    assert call.server_id == server.id
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
 async def test_bbb_xml_error(bbb_room):
     with aioresponses() as m:
         async with world_communicator(named=True) as c:
@@ -187,7 +274,171 @@ async def test_bbb_xml_error(bbb_room):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
+async def test_recordings_empty_result(bbb_room):
+    server = await database_sync_to_async(BBBServer.objects.get)()
+    await database_sync_to_async(BBBCall.objects.create)(
+        room=bbb_room,
+        event=bbb_room.event,
+        server=server,
+    )
+
+    with aioresponses() as m:
+        m.get(
+            re.compile(r"^https://video1.pretix.eu/bigbluebutton.*$"),
+            body="""<response>
+<returncode>SUCCESS</returncode>
+<recordings />
+</response>""",
+        )
+
+        async with world_communicator(named=True) as c:
+            await c.send_json_to(["bbb.recordings", 123, {"room": str(bbb_room.pk)}])
+
+            response = await c.receive_json_from()
+            assert response == ["success", 123, {"results": []}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_recordings_all_servers_unavailable(bbb_room):
+    server = await database_sync_to_async(BBBServer.objects.get)()
+    await database_sync_to_async(BBBCall.objects.create)(
+        room=bbb_room,
+        event=bbb_room.event,
+        server=server,
+    )
+
+    with aioresponses() as m:
+        m.get(
+            re.compile(r"^https://video1.pretix.eu/bigbluebutton.*$"),
+            status=500,
+        )
+
+        async with world_communicator(named=True) as c:
+            await c.send_json_to(["bbb.recordings", 123, {"room": str(bbb_room.pk)}])
+
+            response = await c.receive_json_from()
+            assert response == ["error", 123, {"code": "bbb.failed"}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_recordings_bbb_error_response(bbb_room):
+    server = await database_sync_to_async(BBBServer.objects.get)()
+    await database_sync_to_async(BBBCall.objects.create)(
+        room=bbb_room,
+        event=bbb_room.event,
+        server=server,
+    )
+
+    with aioresponses() as m:
+        m.get(
+            re.compile(r"^https://video1.pretix.eu/bigbluebutton.*$"),
+            body="""<response>
+<returncode>FAILED</returncode>
+<messageKey>checksumError</messageKey>
+</response>""",
+        )
+
+        async with world_communicator(named=True) as c:
+            await c.send_json_to(["bbb.recordings", 123, {"room": str(bbb_room.pk)}])
+
+            response = await c.receive_json_from()
+            assert response == ["error", 123, {"code": "bbb.failed"}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_recordings_missing_container(bbb_room):
+    server = await database_sync_to_async(BBBServer.objects.get)()
+    await database_sync_to_async(BBBCall.objects.create)(
+        room=bbb_room,
+        event=bbb_room.event,
+        server=server,
+    )
+
+    with aioresponses() as m:
+        m.get(
+            re.compile(r"^https://video1.pretix.eu/bigbluebutton.*$"),
+            body="""<response>
+<returncode>SUCCESS</returncode>
+</response>""",
+        )
+
+        async with world_communicator(named=True) as c:
+            await c.send_json_to(["bbb.recordings", 123, {"room": str(bbb_room.pk)}])
+
+            response = await c.receive_json_from()
+            assert response == ["error", 123, {"code": "bbb.failed"}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_recordings_malformed_success_response(bbb_room):
+    server = await database_sync_to_async(BBBServer.objects.get)()
+    await database_sync_to_async(BBBCall.objects.create)(
+        room=bbb_room,
+        event=bbb_room.event,
+        server=server,
+    )
+
+    with aioresponses() as m:
+        m.get(
+            re.compile(r"^https://video1.pretix.eu/bigbluebutton.*$"),
+            body="""<response>
+<returncode>SUCCESS</returncode>
+<recordings><recording /></recordings>
+</response>""",
+        )
+
+        async with world_communicator(named=True) as c:
+            await c.send_json_to(["bbb.recordings", 123, {"room": str(bbb_room.pk)}])
+
+            response = await c.receive_json_from()
+            assert response == ["error", 123, {"code": "bbb.failed"}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_recordings_partial_server_failure(bbb_room):
+    first_server = await database_sync_to_async(BBBServer.objects.get)()
+    await database_sync_to_async(BBBCall.objects.create)(
+        room=bbb_room,
+        event=bbb_room.event,
+        server=first_server,
+    )
+    await database_sync_to_async(BBBServer.objects.create)(
+        url="https://video2.pretix.eu/bigbluebutton/",
+        secret="bogussecret",
+        active=True,
+    )
+
+    with aioresponses() as m:
+        m.get(
+            re.compile(r"^https://video1.pretix.eu/bigbluebutton.*$"),
+            status=500,
+        )
+        m.get(
+            re.compile(r"^https://video2.pretix.eu/bigbluebutton.*$"),
+            body="""<response>
+<returncode>SUCCESS</returncode>
+<recordings />
+</response>""",
+        )
+
+        async with world_communicator(named=True) as c:
+            await c.send_json_to(["bbb.recordings", 123, {"room": str(bbb_room.pk)}])
+
+            response = await c.receive_json_from()
+            assert response == ["success", 123, {"results": []}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
 async def test_successful_url(bbb_room):
+    bbb_room.module_config[0]["config"]["hide_presentation"] = True
+    await database_sync_to_async(bbb_room.save)(update_fields=["module_config"])
+
     with aioresponses() as m:
         async with world_communicator(named=True) as c:
             await c.send_json_to(["bbb.room_url", 123, {"room": str(bbb_room.pk)}])
@@ -218,6 +469,9 @@ This conference was already in existence and may currently be in progress.
             response = await c.receive_json_from()
             assert response[0] == "success"
             assert "/join?" in response[2]["url"]
+            query = parse_qs(urlparse(response[2]["url"]).query)
+            assert query["userdata-bbb_hide_presentation_on_join"] == ["true"]
+            assert "userdata-bbb_auto_swap_layout" not in query
 
             @database_sync_to_async
             def get_call():

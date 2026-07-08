@@ -1,8 +1,8 @@
 import pytest
 from django_scopes import scope, scopes_disabled
 
-from pretalx.person.models.user import User, avatar_path
-from pretalx.submission.models.question import Answer
+from eventyay.base.models.auth import User, avatar_path
+from eventyay.base.models.question import Answer
 
 
 @pytest.mark.parametrize(
@@ -10,6 +10,8 @@ from pretalx.submission.models.question import Answer
     (
         ("one@two.com", "ac5be7f974137dc75bacee19b94fe0f8"),
         ("a_very_long.email@orga.org", "79bd022bbbd718d8e30f730169067b2a"),
+        (None, None),
+        ("   ", None),
     ),
 )
 def test_gravatar_parameter(email, expected):

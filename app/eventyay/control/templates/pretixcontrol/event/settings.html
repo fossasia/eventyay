@@ -27,6 +27,7 @@
                 <legend>{% trans "Basics" %}</legend>
                 {% bootstrap_field form.currency layout="control" %}
                 {% bootstrap_field form.sales_channels layout="control" %}
+                {% include "pretixcontrol/event/fragment_geodata.html" %}
 
                 {% if meta_forms %}
                     <div class="form-group metadata-group">
@@ -156,7 +157,6 @@
                 {% bootstrap_field sform.display_net_prices layout="control" %}
                 {% bootstrap_field sform.show_variations_expanded layout="control" %}
                 {% bootstrap_field sform.hide_sold_out layout="control" %}
-                {% bootstrap_field sform.meta_noindex layout="control" %}
                 {% if sform.frontpage_subevent_ordering %}
                     {% bootstrap_field sform.frontpage_subevent_ordering layout="control" %}
                 {% endif %}

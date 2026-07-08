@@ -9,11 +9,12 @@ from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
     GiftCard,
     InvoiceAddress,
-    Item,
+    Product as Item,
+    ProductCategory as ItemCategory,
     Order,
     OrderFee,
     OrderPayment,
@@ -25,16 +26,17 @@ from pretix.base.models import (
     Quota,
     Team,
     User,
+    Voucher,
 )
-from pretix.base.exporters.orderlist import OrderListExporter
-from pretix.base.payment import PaymentException
-from pretix.control.forms.orders import ExporterForm
-from pretix.base.services.invoices import (
+from eventyay.base.exporters.orderlist import OrderListExporter, OrderPositionListExporter
+from eventyay.base.payment import PaymentException
+from eventyay.control.forms.orders import ExporterForm
+from eventyay.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
 )
-from tests.api.test_orders import MockedCharge
-from tests.base import SoupTest
+from tests.tickets.api.test_orders import MockedCharge
+from tests.tickets.base import SoupTest
 
 
 @pytest.fixture
@@ -45,7 +47,7 @@ def env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer,pretix.plugins.stripe,tests.testdummy',
+        plugins='eventyay.plugins.banktransfer,eventyay.plugins.stripe,tests.tickets.testdummy',
     )
     event.settings.set('ticketoutput_testdummy__enabled', True)
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
@@ -319,6 +321,40 @@ def test_order_export_orders_include_name_parts_from_position(env):
     assert data[headers.index('Name')] == 'Ada Lovelace'
     assert data[headers.index('Given name')] == 'Ada'
     assert data[headers.index('Family name')] == 'Lovelace'
+
+
+@pytest.mark.django_db
+def test_order_position_list_exporter_matches_combined_positions_sheet(env):
+    event, user, order, ticket = env
+
+    combined_exporter = OrderListExporter(event)
+    dedicated_exporter = OrderPositionListExporter(event)
+    form_data = {'paid_only': True}
+
+    combined_rows = [
+        row
+        for row in combined_exporter.iterate_positions(form_data)
+        if not isinstance(row, combined_exporter.ProgressSetTotal)
+    ]
+    dedicated_rows = [
+        row
+        for row in dedicated_exporter.iterate_list(form_data)
+        if not isinstance(row, dedicated_exporter.ProgressSetTotal)
+    ]
+
+    assert combined_rows == dedicated_rows
+
+
+@pytest.mark.django_db
+def test_order_position_list_exporter_csv_render(env):
+    event, user, order, ticket = env
+    exporter = OrderPositionListExporter(event)
+
+    filename, content_type, content = exporter.render({'_format': 'default', 'paid_only': True})
+
+    assert filename == f'{event.slug}_orderpositions.csv'
+    assert content_type.startswith('text/csv')
+    assert order.code in content.decode()
 
 
 @pytest.mark.django_db
@@ -621,7 +657,7 @@ def test_order_bulk_action_mixed_state(client, env):
 
     assert res.status_code < 400
     assert 'pending approval' in res.content.decode()
-    assert o.require_approval
+    assert not o.require_approval
     assert o.status == Order.STATUS_PENDING
     assert second.status == Order.STATUS_PAID
     assert not second.require_approval
@@ -1615,7 +1651,7 @@ class OrderChangeTests(SoupTest):
             name='Dummy',
             slug='dummy',
             date_from=now(),
-            plugins='pretix.plugins.banktransfer',
+            plugins='eventyay.plugins.banktransfer',
         )
         self.order = Order.objects.create(
             code='FOO',
@@ -1921,13 +1957,96 @@ class OrderChangeTests(SoupTest):
         self.op2.refresh_from_db()
         assert self.order.total == self.op1.price + self.op2.price
 
+    def test_reinstate_success(self):
+        """Reinstating a canceled position uncancels it and restores the order total."""
+        self.client.post(
+            '/control/event/{}/{}/orders/{}/{}/reinstate'.format(
+                self.event.organizer.slug, self.event.slug, self.order.code, self.op3.pk
+            ),
+        )
+        with scopes_disabled():
+            self.op3.refresh_from_db()
+            self.order.refresh_from_db()
+        assert not self.op3.canceled
+        assert self.order.total == self.op1.price + self.op2.price + self.op3.price
+
+    def test_reinstate_with_addon(self):
+        """Reinstating a base position also reinstates its canceled add-ons."""
+        with scopes_disabled():
+            addon_cat = ItemCategory.objects.create(event=self.event, name='Add-ons', is_addon=True)
+            addon_item = Item.objects.create(
+                event=self.event, name='Addon', tax_rule=self.tr7, default_price=Decimal('5.00')
+            )
+            addon_item.category = addon_cat
+            addon_item.save()
+            self.quota.items.add(addon_item)
+            self.op3.canceled = False
+            self.op3.save()
+            addon_pos = OrderPosition.objects.create(
+                order=self.order,
+                item=addon_item,
+                variation=None,
+                price=Decimal('5.00'),
+                addon_to=self.op3,
+                canceled=True,
+            )
+            self.op3.canceled = True
+            self.op3.save()
+
+        self.client.post(
+            '/control/event/{}/{}/orders/{}/{}/reinstate'.format(
+                self.event.organizer.slug, self.event.slug, self.order.code, self.op3.pk
+            ),
+        )
+        with scopes_disabled():
+            self.op3.refresh_from_db()
+            addon_pos.refresh_from_db()
+        assert not self.op3.canceled
+        assert not addon_pos.canceled
+
+    def test_reinstate_increments_voucher_redeemed(self):
+        """Reinstating a position that used a voucher increments the voucher's redeemed count."""
+        with scopes_disabled():
+            voucher = Voucher.objects.create(
+                event=self.event, item=self.ticket, redeemed=0, max_usages=5
+            )
+            self.op3.voucher = voucher
+            self.op3.save()
+
+        self.client.post(
+            '/control/event/{}/{}/orders/{}/{}/reinstate'.format(
+                self.event.organizer.slug, self.event.slug, self.order.code, self.op3.pk
+            ),
+        )
+        with scopes_disabled():
+            voucher.refresh_from_db()
+        assert voucher.redeemed == 1
+
+    def test_reinstate_fails_when_quota_exhausted(self):
+        """Reinstate is rejected when the quota has no remaining capacity."""
+        with scopes_disabled():
+            self.quota.size = 0
+            self.quota.save()
+
+        response = self.client.post(
+            '/control/event/{}/{}/orders/{}/{}/reinstate'.format(
+                self.event.organizer.slug, self.event.slug, self.order.code, self.op3.pk
+            ),
+            follow=True,
+        )
+        assert response.status_code == 200
+        with scopes_disabled():
+            self.op3.refresh_from_db()
+        # Should still be canceled — quota error blocked the reinstate
+        assert self.op3.canceled
+
 
 @pytest.mark.django_db
 def test_check_vatid(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='ATU1234567', country=Country('AT'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-success' in response.content.decode()
@@ -1940,7 +2059,7 @@ def test_check_vatid_no_entered(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, country=Country('AT'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-danger' in response.content.decode()
@@ -1953,7 +2072,7 @@ def test_check_vatid_invalid_country(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='ATU1234567', country=Country('FR'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-danger' in response.content.decode()
@@ -1966,7 +2085,7 @@ def test_check_vatid_noneu_country(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='CHU1234567', country=Country('CH'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-danger' in response.content.decode()
@@ -1979,7 +2098,7 @@ def test_check_vatid_no_country(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='ATU1234567')
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-danger' in response.content.decode()
@@ -1990,7 +2109,7 @@ def test_check_vatid_no_country(client, env):
 @pytest.mark.django_db
 def test_check_vatid_no_invoiceaddress(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
         mock_validate.return_value = ('AT', 'AT123456', 'Foo')
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
         assert 'alert-danger' in response.content.decode()
@@ -2001,12 +2120,12 @@ def test_check_vatid_invalid(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='ATU1234567', country=Country('AT'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
 
         def raiser(*args, **kwargs):
-            import vat_moss.errors
+            import vat_moss_lite.errors
 
-            raise vat_moss.errors.InvalidError('Fail')
+            raise vat_moss_lite.errors.InvalidError('Fail')
 
         mock_validate.side_effect = raiser
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
@@ -2020,12 +2139,12 @@ def test_check_vatid_unavailable(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         ia = InvoiceAddress.objects.create(order=env[2], is_business=True, vat_id='ATU1234567', country=Country('AT'))
-    with mock.patch('vat_moss.id.validate') as mock_validate:
+    with mock.patch('vat_moss_lite.id.validate') as mock_validate:
 
         def raiser(*args, **kwargs):
-            import vat_moss.errors
+            import vat_moss_lite.errors
 
-            raise vat_moss.errors.WebServiceUnavailableError('Fail')
+            raise vat_moss_lite.errors.WebServiceUnavailableError('Fail')
 
         mock_validate.side_effect = raiser
         response = client.post('/control/event/dummy/dummy/orders/FOO/checkvatid', {}, follow=True)
