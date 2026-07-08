@@ -14,6 +14,7 @@ from django.utils.translation import override, pgettext_lazy
 from i18nfield.fields import I18nCharField, I18nTextField
 
 from eventyay.common.exceptions import SendMailException
+from eventyay.common.mail import get_reply_to_address
 from eventyay.common.urls import EventUrls
 from eventyay.mail.context import get_available_placeholders, get_mail_context, get_used_placeholders
 from eventyay.mail.placeholders import SimpleFunctionalMailTextPlaceholder
@@ -43,7 +44,11 @@ def _should_warn_missing_placeholders(template_pk, missing) -> bool:
 
 
 def get_prefixed_subject(event, subject):
-    if not (prefix := event.mail_settings['subject_prefix']):
+    prefix = (
+        event.settings.get('mail_prefix')
+        or event.mail_settings.get('subject_prefix', '')
+    )
+    if not prefix:
         return subject
     if not (prefix.startswith('[') and prefix.endswith(']')):
         prefix = f'[{prefix}]'
@@ -234,11 +239,20 @@ class MailTemplate(PretalxModel):
             if len(subject) > 200:
                 subject = subject[:198] + '…'
 
+            sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
+            sender = sender or settings.MAIL_FROM
+
+            resolved_reply_to = (
+                get_reply_to_address(event, template=self, sender_email=sender)
+                if event
+                else self.reply_to
+            )
+
             mail = QueuedMail(
                 event=event,
                 template=self,
                 to=address,
-                reply_to=self.reply_to,
+                reply_to=resolved_reply_to,
                 bcc=self.bcc,
                 subject=subject,
                 text=text,
@@ -349,7 +363,7 @@ class QueuedMail(PretalxModel):
         null=True,
         blank=True,
         verbose_name=_('Reply-To'),
-        help_text=_('By default, the organiser address is used as Reply-To.'),
+        help_text=_('By default, the organizer email is used as Reply-To when the platform sender is used. With a custom sender, replies go to the sender address unless overridden here.'),
     )
     cc = models.CharField(
         max_length=1000,
@@ -368,6 +382,13 @@ class QueuedMail(PretalxModel):
     subject = models.CharField(max_length=200, verbose_name=pgettext_lazy('email subject', 'Subject'))
     text = models.TextField(verbose_name=_('Text'))
     sent = models.DateTimeField(null=True, blank=True, verbose_name=_('Sent at'))
+    scheduled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name=_('Scheduled for'),
+        help_text=_('If set, the email will be sent at this time instead of immediately.'),
+    )
     locale = models.CharField(max_length=32, null=True, blank=True)
     attachments = models.JSONField(default=None, null=True, blank=True)
     submissions = models.ManyToManyField(
@@ -403,8 +424,11 @@ class QueuedMail(PretalxModel):
         event = getattr(self, 'event', None)
         sig = None
         if event:
-            sig = event.mail_settings['signature']
-            if sig.strip().startswith('-- '):
+            sig = (
+                str(event.settings.get('mail_text_signature') or '')
+                or event.mail_settings.get('signature', '')
+            )
+            if sig and sig.strip().startswith('-- '):
                 sig = sig.strip()[3:].strip()
         body_md = render_markdown_abslinks(self.text)
         html_context = {
@@ -420,9 +444,14 @@ class QueuedMail(PretalxModel):
 
     def make_text(self):
         event = getattr(self, 'event', None)
-        if not event or not event.mail_settings['signature']:
+        sig = None
+        if event:
+            sig = (
+                str(event.settings.get('mail_text_signature') or '')
+                or event.mail_settings.get('signature', '')
+            ) or None
+        if not sig:
             return self.text
-        sig = event.mail_settings['signature']
         if not sig.strip().startswith('-- '):
             sig = f'-- \n{sig}'
         return f'{self.text}\n{sig}'
@@ -444,6 +473,9 @@ class QueuedMail(PretalxModel):
         """
         if self.sent:
             raise Exception(_('This mail has been sent already. It cannot be sent again.'))
+
+        if self.scheduled_at and self.scheduled_at > now():
+            raise SendMailException(_('This mail is scheduled for the future and cannot be sent yet.'))
 
         has_event = getattr(self, 'event', None)
 
