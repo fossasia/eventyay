@@ -47,7 +47,16 @@
     <meta property="og:url" content="{% abseventurl organizer "presale:organizer.index" %}"/>
 {% endblock %}
 
-{% block presale_back_navigation %}{% endblock %}
+{% block presale_back_navigation %}
+    {% if not is_html_export %}
+        <a href="{% url 'presale:index' %}" class="event-home-back d-print-none" aria-label="{% trans 'Home' %}">
+            <span class="event-home-back-pill">
+                <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
+                <span class="event-home-back-label" aria-hidden="true">{% trans 'Home' %}</span>
+            </span>
+        </a>
+    {% endif %}
+{% endblock %}
 
 {% block nav_link %}{% eventurl organizer "presale:organizer.index" %}{% endblock %}
 
