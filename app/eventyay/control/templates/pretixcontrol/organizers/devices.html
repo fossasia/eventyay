@@ -19,14 +19,24 @@
                 {% endblocktrans %}
             </p>
 
-            <a href="{% url 'eventyay_common:organizer.devices.add' organizer=request.organizer.slug %}"
+            {% if return_checkinlists_url %}
+                <a href="{{ return_checkinlists_url }}" class="btn btn-default btn-lg">
+                    <i class="fa fa-arrow-left"></i> {% trans "Return to check-in lists" %}
+                </a>
+            {% endif %}
+            <a href="{% url 'eventyay_common:organizer.devices.add' organizer=request.organizer.slug %}{{ device_from_event_query|default:'' }}"
                     class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Connect a device" %}</a>
         </div>
     {% else %}
-        <p class="clearfix">
-            <a href="{% url 'eventyay_common:organizer.devices.add' organizer=request.organizer.slug %}"
+        <p class="clearfix device-page-actions">
+            {% if return_checkinlists_url %}
+                <a href="{{ return_checkinlists_url }}" class="btn btn-default">
+                    <i class="fa fa-arrow-left"></i> {% trans "Return to check-in lists" %}
+                </a>
+            {% endif %}
+            <a href="{% url 'eventyay_common:organizer.devices.add' organizer=request.organizer.slug %}{{ device_from_event_query|default:'' }}"
                     class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Connect a device" %}</a>
-            <a href="{% url 'eventyay_common:organizer.devices.revoke-all' organizer=request.organizer.slug %}"
+            <a href="{% url 'eventyay_common:organizer.devices.revoke-all' organizer=request.organizer.slug %}{{ device_from_event_query|default:'' }}"
                     class="btn btn-danger pull-right">
                 <i class="fa fa-trash"></i> {% trans "Revoke and Remove all devices" %}
             </a>
@@ -78,11 +88,11 @@
                             {% if d.all_events %}
                                 {% trans "All" %}
                             {% else %}
-                                <ul>
+                                <ul class="list-unstyled device-event-links">
                                     {% for e in d.limit_events.all %}
                                         <li>
-                                            <a href="{% url 'control:event.index' organizer=request.organizer.slug event=e.slug %}">
-                                                {{ e }}
+                                            <a href="{% url 'control:event.orders.checkinlists' organizer=request.organizer.slug event=e.slug %}">
+                                                <i class="fa fa-list-alt text-muted"></i> {{ e }}
                                             </a>
                                         </li>
                                     {% endfor %}
@@ -91,20 +101,31 @@
                         </td>
                         <td class="text-right flip">
                             {% if not d.initialized %}
-                                <a href="{% url 'eventyay_common:organizer.devices.connect' organizer=request.organizer.slug device=d.id %}"
+                                <a href="{% url 'eventyay_common:organizer.devices.connect' organizer=request.organizer.slug device=d.id %}{{ device_from_event_query|default:'' }}"
                                         class="btn btn-primary btn-sm"><i class="fa fa-link"></i>
                                     {% trans "Connect" %}</a>
                             {% elif d.api_token %}
-                                <a href="{% url 'eventyay_common:organizer.devices.revoke' organizer=request.organizer.slug device=d.id %}"
+                                <form class="form-inline helper-display-inline device-regenerate-form" method="post"
+                                      action="{% url 'eventyay_common:organizer.devices.regenerate' organizer=request.organizer.slug device=d.id %}"
+                                      data-confirm-title="{% trans "Regenerate setup code" %}"
+                                      data-confirm-label="{% trans "Regenerate" %}"
+                                      data-confirm-class="btn-danger"
+                                      data-confirm="{% blocktrans with device_name=d.name trimmed %}Regenerate the setup code for “{{ device_name }}”? The check-in app will be signed out and must be registered again with the new QR code.{% endblocktrans %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-default btn-sm">
+                                        <i class="fa fa-refresh"></i> {% trans "Regenerate" %}
+                                    </button>
+                                </form>
+                                <a href="{% url 'eventyay_common:organizer.devices.revoke' organizer=request.organizer.slug device=d.id %}{{ device_from_event_query|default:'' }}"
                                         class="btn btn-default btn-sm">
-                                    {% trans "Revoke access" %}</a>
+                                    {% trans "Revoke" %}</a>
                             {% endif %}
-                            <a href="{% url 'eventyay_common:organizer.devices.logs' organizer=request.organizer.slug device=d.id %}"
+                            <a href="{% url 'eventyay_common:organizer.devices.logs' organizer=request.organizer.slug device=d.id %}{{ device_from_event_query|default:'' }}"
                                class="btn btn-default btn-sm">
                                 <span class="fa fa-list-alt"></span>
                                 {% trans "Logs" %}
                             </a>
-                            <a href="{% url 'eventyay_common:organizer.devices.edit' organizer=request.organizer.slug device=d.id %}"
+                            <a href="{% url 'eventyay_common:organizer.devices.edit' organizer=request.organizer.slug device=d.id %}{{ device_from_event_query|default:'' }}"
                                     class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
                         </td>
                     </tr>
