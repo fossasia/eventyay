@@ -1,11 +1,14 @@
 import logging
+import os
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files import File
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Max, Min, Prefetch
 from django.db.models.functions import Coalesce, Greatest
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -23,7 +26,12 @@ from rest_framework.response import Response
 
 from eventyay.base.models.event import Event, EventMetaValue
 from eventyay.base.models.organizer import Organizer, OrganizerBillingModel, Team
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
+from eventyay.base.settings import (
+    DEFAULTS,
+    SETTINGS_AFFECTING_CSS,
+    is_event_series_creation_enabled,
+)
+from eventyay.common.text.path import resolve_media_path
 from eventyay.control.forms.filter import EventFilterForm, OrganizerFilterForm
 from eventyay.control.forms.organizer_forms import (
     OrganizerDeleteForm,
@@ -209,13 +217,9 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
                 else:
                     setting_key = field
 
-            from eventyay.base.settings import DEFAULTS
             if setting_key in DEFAULTS and DEFAULTS[setting_key].get('type') is File:
                 current_value = self.object.settings.get(setting_key, as_type=str)
                 if current_value:
-                    from eventyay.common.text.path import resolve_media_path
-                    from django.core.files.storage import default_storage
-                    import os
                     current_file = resolve_media_path(current_value)
                     if current_file and not str(current_file).startswith(('http://', 'https://')):
                         default_storage.delete(current_file)
@@ -230,9 +234,7 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
                 if self.object.settings.get(orig_ext_key) is not None:
                     del self.object.settings[orig_ext_key]
                 self.request.organizer.log_action('pretix.organizer.settings', user=request.user, data={setting_key: None})
-                from django.http import JsonResponse
                 return JsonResponse({'success': True})
-            from django.http import JsonResponse
             return JsonResponse({'success': False, 'error': 'Invalid field'}, status=400)
 
         form = self.get_form()
