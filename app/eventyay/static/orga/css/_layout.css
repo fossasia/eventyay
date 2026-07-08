@@ -619,8 +619,6 @@ footer {
   [role="button"],
   details {
     align-self: flex-start;
-    margin-top: auto;
-    margin-bottom: 16px;
   }
 
   button,
