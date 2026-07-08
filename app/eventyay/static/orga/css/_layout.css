@@ -1114,8 +1114,16 @@ table .color-square {
 
 .review-toolbar {
   margin-left: auto;
+  margin-right: 16px;
   justify-content: flex-end;
   gap: 0.5rem;
+
+  @media (min-width: 769px) {
+    .dropdown-content {
+      width: max-content;
+      max-width: 500px;
+    }
+  }
 }
 
 .submission-page-actions {
@@ -2229,6 +2237,7 @@ h2 .user-name-display img {
 
   #page-content .review-toolbar {
     margin-left: 0;
+    margin-right: 0;
     width: 100%;
     flex-direction: column;
     align-items: stretch;
