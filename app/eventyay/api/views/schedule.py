@@ -132,7 +132,7 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
         schedule = get_object_or_404(self.event.schedules, version=version)
         if not self.has_perm('view', schedule):
             raise Http404
-        redirect_url = reverse('api:schedule-detail', kwargs={'event': event, 'pk': schedule.pk})
+        redirect_url = reverse('api-v1:schedule-detail', kwargs={'event': event, 'pk': schedule.pk})
         return HttpResponseRedirect(redirect_url)
 
     @extend_schema(
