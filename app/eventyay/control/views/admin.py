@@ -28,7 +28,6 @@ from django_celery_beat.models import PeriodicTask, PeriodicTasks
 from django_context_decorator import context
 from django_scopes import scopes_disabled
 
-from django.utils.timezone import make_aware, is_aware
 from redis.exceptions import RedisError
 
 from eventyay.celery_app import app
