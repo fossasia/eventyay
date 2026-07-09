@@ -226,7 +226,7 @@ export default {
 			// If not available from world state, try to extract from current URL path
 			if (!organizer || organizer === 'default') {
 				const pathParts = window.location.pathname.split('/').filter(Boolean);
-				// URL pattern: /{organizer}/{event}/video/admin/rooms/{roomId}
+				// URL pattern: /{organizer}/{event}/video/event/rooms/{roomId}
 				if (pathParts.length >= 2) {
 					organizer = pathParts[0];
 					event = pathParts[1];
