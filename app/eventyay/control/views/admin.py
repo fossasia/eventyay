@@ -4,6 +4,7 @@ import sys
 from datetime import UTC, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
+from decimal import Decimal
 
 from allauth.account.models import EmailAddress
 from cron_descriptor import Options, get_description
