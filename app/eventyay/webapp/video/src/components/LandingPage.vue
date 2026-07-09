@@ -1,11 +1,20 @@
 <template lang="pug">
 .c-landing-page(v-scrollbar.y="", :style="landingStyle")
-	.hero(:class="{'has-no-image': !hasHeroVisual}")
-		img.hero-logo(v-if="heroImage", :src="heroImage", :alt="eventTitle")
-		.hero-copy(v-if="eventTitle || eventStartLine || eventEndLine")
-			h1.hero-text(v-if="eventTitle") {{ eventTitle }}
-			p.hero-time(v-if="eventStartLine") {{ eventStartLine }}
-			p.hero-time(v-if="eventEndLine") {{ eventEndLine }}
+	header.hero(:class="{'has-no-image': !hasHeroVisual}")
+		a.event-home-back.d-print-none(href="/", aria-label="Home")
+			span.event-home-back-pill
+				i.fa.fa-angle-left.event-home-back-icon(aria-hidden="true")
+				span.event-home-back-label(aria-hidden="true") Home
+		.event-hero
+			.event-hero-overlay
+				.event-brand(:class="{'event-brand--has-logo': heroImage}")
+					.event-logo(v-if="heroImage")
+						a(href="#")
+							img#event-logo(:src="heroImage", :alt="eventTitle")
+					.event-hero-text(v-if="eventTitle || eventStartLine || eventEndLine")
+						a.event-title.event-public-text-link(v-if="eventTitle", href="#") {{ eventTitle }}
+						a.event-date-line.event-public-text-link(v-if="eventStartLine", href="#") {{ eventStartLine }}
+						a.event-date-line.event-public-text-link(v-if="eventEndLine", href="#") {{ eventEndLine }}
 	.content-container(v-if="hasContent")
 		.content
 			rich-text-content(v-if="mainContentIsRichText", :content="mainContent")
@@ -283,12 +292,11 @@ export default {
 .c-landing-page
 	flex: auto
 	background-color: $clr-grey-50
-	.hero
+	header.hero
 		min-height: 150px
 		display: flex
-		align-items: center
-		justify-content: flex-start
-		gap: 18px
+		flex-direction: column
+		justify-content: flex-end
 		padding: 16px 20px
 		background-color: var(--landing-hero-background-color)
 		background-image: var(--landing-hero-background-image)
@@ -296,32 +304,110 @@ export default {
 		background-size: cover
 		background-position: center
 		position: relative
+		&::before
+			content: ''
+			position: absolute
+			inset: 0
+			background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.15) 100%)
+			pointer-events: none
+			z-index: 0
+		&.has-no-image::before
+			display: none
+		> *
+			position: relative
+			z-index: 1
 		&.has-no-image
 			height: auto
 			padding: 22px 16px
 			background-color: var(--clr-primary)
 			color: $clr-primary-text-dark
-		.hero-copy
+		
+		.event-home-back
+			align-self: flex-start
+			margin: 0 0 6px
+			padding-left: 28px
+			box-sizing: border-box
+			display: inline-block
+			text-decoration: none
+			color: #fff
+			&:hover, &:focus-visible
+				color: #fff
+				text-decoration: none
+		.event-home-back-pill
+			display: inline-flex
+			align-items: center
+			justify-content: center
+			gap: 0
+			min-height: 32px
+			padding: 0 11px
+			background: rgba(0, 0, 0, 0.45)
+			border-radius: 8px
+			box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28)
+			transition: gap 0.18s ease, background 0.18s ease
+		.event-home-back:hover .event-home-back-pill, .event-home-back:focus-visible .event-home-back-pill
+			gap: 0.4em
+			background: rgba(0, 0, 0, 0.62)
+		.event-home-back-icon
+			font-size: 22px
+			line-height: 1
+			flex-shrink: 0
+		.event-home-back-label
+			font-size: 14px
+			font-weight: 600
+			line-height: 1
+			max-width: 0
+			opacity: 0
+			overflow: hidden
+			white-space: nowrap
+			transition: max-width 0.22s ease, opacity 0.18s ease
+		.event-home-back:hover .event-home-back-label, .event-home-back:focus-visible .event-home-back-label
+			max-width: 12em
+			opacity: 1
+
+		.event-hero
+			display: flex
+			align-items: center
+			margin: 1rem 0 3.5rem
+			min-height: 0
+		.event-hero-overlay
+			display: inline-flex
+			border-radius: 14px
+			background: transparent
+			position: relative
+		.event-brand
+			display: flex
+			align-items: center
+			gap: 2rem
+			flex-wrap: nowrap
+			text-align: left
+			min-width: 0
+		.event-brand--has-logo
+			padding-left: 1.75rem
+		#event-logo
+			max-height: 140px
+			width: auto
+
+		.event-hero-text
 			display: flex
 			flex-direction: column
-			gap: 6px
 			color: $clr-primary-text-dark
-			text-shadow: 0 1px 2px rgba(0, 0, 0, .28)
-		.hero-text
-			font-size: 34px
+		.event-title
+			font-size: 3rem
 			font-weight: 700
-			line-height: 1.1
+			line-height: 1.2
+			word-break: break-word
+			overflow-wrap: break-word
+			min-width: 0
 			text-align: left
 			margin: 0
-		.hero-time
-			font-size: 16px
+		.event-date-line
+			font-size: 1rem
+			opacity: 0.96
 			line-height: 1.3
 			margin: 0
-		.hero-logo
-			height: auto
-			max-height: 96px
-			max-width: min(28vw, 260px)
-			object-fit: contain
+		.event-public-text-link
+			color: inherit
+			text-decoration: none
 	.content-container
 		display: flex
 		flex-direction: column
@@ -419,16 +505,28 @@ export default {
 				flex-shrink: 0
 
 	+below('m')
-		.hero
-			flex-direction: column
-			align-items: flex-start
-			gap: 10px
+		header.hero
 			padding: 14px 12px
-			.hero-text
-				font-size: 24px
-			.hero-time
-				font-size: 14px
-			.hero-logo
+			.event-hero
+				margin: 0.5rem 0 2rem
+			.event-hero-overlay
+				display: flex
+				width: 100%
+			.event-brand
+				flex-wrap: wrap
+				gap: 1rem
+				align-items: flex-start
+			.event-brand--has-logo
+				padding-left: 12px
+			.event-title
+				font-size: 2rem
+			.event-home-back-icon
+				font-size: 19px
+			.event-home-back-label
+				font-size: 13.5px
+			.event-date-line
+				font-size: 0.9rem
+			#event-logo
 				max-width: min(72vw, 280px)
 				max-height: 76px
 		.content-container
