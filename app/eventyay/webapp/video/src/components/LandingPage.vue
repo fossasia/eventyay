@@ -285,9 +285,9 @@ export default {
 	flex: auto
 	background-color: $clr-grey-50
 	.hero
-		height: 270px
+		height: 245px
 		display: flex
-		align-items: flex-start
+		align-items: center
 		justify-content: center
 		padding: 3rem 0 0 0
 		background-color: var(--landing-hero-background-color)
