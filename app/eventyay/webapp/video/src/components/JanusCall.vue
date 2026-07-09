@@ -1,14 +1,14 @@
 <template lang="pug">
 .c-januscall(:class="[`size-${size}`]")
 	.error(v-if="error") {{ $t('JanusCall:error:text') }}
-	janus-conference(v-if="server", :server="server", :token="token", :iceServers="iceServers", :sessionId="sessionId", :screenShareSessionId="screenShareSessionId", :roomId="roomId", :size="size", :automute="true", @hangup="roomId = null; $router.push('/')")
+	janus-videoroom(v-if="server", :server="server", :token="token", :iceServers="iceServers", :sessionId="sessionId", :screenShareSessionId="screenShareSessionId", :roomId="roomId", :size="size", @hangup="roomId = null; $router.push('/')")
 </template>
 <script>
 import api from 'lib/api'
-import JanusConference from 'components/janus/JanusConference'
+import JanusVideoroom from 'components/janus/JanusVideoroom'
 
 export default {
-	components: {JanusConference},
+	components: {JanusVideoroom},
 	props: {
 		room: {
 			type: Object,

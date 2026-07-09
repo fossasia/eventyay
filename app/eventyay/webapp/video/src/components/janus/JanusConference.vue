@@ -21,46 +21,53 @@
 				.bunt-icon.mdi.mdi-microphone-off
 
 	.users(v-show="connectionState === 'connected'", ref="container", :style="gridStyle", v-resize-observer="onResize")
-		.me.feed(v-show="videoPublishingState !== 'unpublished'")
-			.video-container(:style="{boxShadow: size != 'tiny' ? `0 0 0px 4px ${primaryColor.alpha(!knownMuteState && talkingParticipants.includes(ourAudioId) ? 255 : 0)}` : 'none'}", id="janus_ourVideo")
-				video(v-show="publishingWithVideo && videoPublishingState !== 'unpublished'", ref="ourVideo", autoplay, playsinline, muted="muted")
-			.publishing-state(v-if="videoPublishingState !== 'published'")
-				bunt-progress-circular(v-if="videoPublishingState == 'publishing'", size="huge", :page="true")
-				div.publishing-error(v-else-if="videoPublishingState == 'failed'")
-					p {{ $t('JanusVideoroom:publishing-error:text') }}
-					p {{ publishingError }}
-			.controls
-				.user(@click="showUserCard($event, user)")
-					avatar(:user="user", :size="36")
-					span.display-name {{ user.profile.display_name }}
-				bunt-icon-button(v-if="publishingWithVideo", @click="requestFullscreen('#janus_ourVideo')") fullscreen
-			.mute-indicator(v-if="knownMuteState")
-				.bunt-icon.mdi.mdi-microphone-off
+		.feed(v-for="t in tiles", :key="t.id", :class="{ me: t.isMe, 'screenshare-feed': t.isScreenshare }")
+			.video-container(:class="{ speaking: t.speaking && size !== 'tiny' }", :id="'janus_' + t.id")
+				video(v-if="t.isMe && !t.isScreenshare", v-show="t.hasVideo", ref="ourVideo", autoplay, playsinline, muted)
+				video(v-else-if="t.isMe && t.isScreenshare", ref="ourScreenshareVideo", autoplay, playsinline, muted)
+				video(v-else, v-show="t.hasVideo", :data-rfid="t.rfid", autoplay, playsinline)
+				
+				.novideo-indicator(v-if="!t.hasVideo && !t.isScreenshare")
+					avatar(:user="t.user", :size="size === 'tiny' ? 40 : 100")
 
-		.peer.feed(v-for="(f, idx) in sortedFeeds", :key="f.rfid", :style="{width: layout.width, height: layout.height}")
-			.video-container(:style="{boxShadow: size != 'tiny' ? `0 0 0px 4px ${primaryColor.alpha(f.participant && !f.participant.muted && talkingParticipants.includes(f.rfid) ? 255 : 0)}` : 'none'}", :id="'janus_' + f.rfid")
-				video(v-show="f.rfattached", ref="peerVideo", autoplay, playsinline)
-			.subscribing-state(v-if="!f.rfattached")
-				bunt-progress-circular(size="huge", :page="true")
+				.video-overlay
+					.badge-row
+						span.badge.badge--me(v-if="t.isMe && size !== 'tiny' && !t.isScreenshare") You
+						span.badge.badge--screensharing(v-if="t.isScreenshare && t.isMe") 🖥 Your Screen
+						span.badge.badge--screensharing(v-if="t.isScreenshare && !t.isMe") 🖥 Screen
+						span.badge.badge--screensharing(v-if="!t.isScreenshare && t.isMe && screensharingState === 'published'") 🖥 Sharing
+						
 			.controls
-				.user(v-if="f.venueless_user !== null", @click="showUserCard($event, f.venueless_user)")
-					avatar(:user="f.venueless_user", :size="36")
-					span.display-name {{ f.venueless_user.profile.display_name }}
-				bunt-icon-button(v-if="f.rfattached", @click="requestFullscreen('#janus_' + f.rfid)") fullscreen
-			.mute-indicator(v-if="f.participant && f.participant.muted")
+				.user(v-if="t.user", @click="showUserCard($event, t.user)")
+					avatar(:user="t.user", :size="36")
+					span.display-name {{ t.user.profile.display_name }}
+				bunt-icon-button(v-if="t.hasVideo", @click="requestFullscreen('#janus_' + t.id)") fullscreen
+				bunt-icon-button(v-if="t.isMe && t.isScreenshare", @click="unpublishOwnScreenshareFeed") monitor-off
+			
+			.mute-indicator(v-if="t.muted")
 				.bunt-icon.mdi.mdi-microphone-off
 
 		.slow-banner(v-if="downstreamSlowLinkCount > 5 && (videoRequested || videoOutput)", @click="disableAllVideo") {{ $t('JanusConference:slow:text') }}
 
-	.info-message(v-if="!videoOutput") {{ $t('JanusVideoroom:video-output:off') }}
+	.info-bar
+		.info-message(v-if="!videoOutput") {{ $t('JanusVideoroom:video-output:off') }}
+		.info-message.screensharing-error(v-if="screensharingError")
+			.mdi.mdi-alert
+			span {{ screensharingError }}
 
-	.controlbar.controls(v-show="connectionState == 'connected'", :class="knownMuteState ? 'always' : ''")
-		bunt-icon-button(@click="toggleVideo", :tooltip="videoRequested ? $t('JanusVideoroom:tool-video:off') : $t('JanusVideoroom:tool-video:on')") {{ !videoRequested ? 'video-off' : 'video' }}
-		bunt-icon-button(@click="toggleMute", :tooltip="knownMuteState ? $t('JanusVideoroom:tool-mute:off') : $t('JanusVideoroom:tool-mute:on')") {{ knownMuteState ? 'microphone-off' : 'microphone' }}
-		bunt-icon-button(@click="toggleScreenShare", :disabled="screensharingState === 'publishing' || screensharingState === 'unpublishing'", :tooltip="screensharingState == 'published' ? $t('JanusVideoroom:tool-screenshare:off') : $t('JanusVideoroom:tool-screenshare:on')") {{ screensharingState === 'published' ? 'monitor-off': 'monitor' }}
-		bunt-icon-button(@click="showDevicePrompt = true", :tooltip="$t('JanusVideoroom:tool-settings:tooltip')") cog
-		bunt-icon-button(@click="showFeedbackPrompt = true", :tooltip="$t('JanusVideoroom:tool-bug:tooltip')") message-alert-outline
-		bunt-icon-button.hangup(@click="cleanup(); $emit('hangup')", :tooltip="$t('JanusVideoroom:tool-hangup:tooltip')") phone-hangup
+	.controlbar(v-show="connectionState == 'connected'", :class="{ always: knownMuteState }")
+		.ctrl-btn(:class="{ 'ctrl-btn--active': videoRequested }", :title="videoRequested ? $t('JanusVideoroom:tool-video:off') : $t('JanusVideoroom:tool-video:on')", @click="toggleVideo")
+			.mdi(:class="videoRequested ? 'mdi-video' : 'mdi-video-off'")
+		.ctrl-btn(:class="{ 'ctrl-btn--muted': knownMuteState }", :title="knownMuteState ? $t('JanusVideoroom:tool-mute:off') : $t('JanusVideoroom:tool-mute:on')", @click="toggleMute")
+			.mdi(:class="knownMuteState ? 'mdi-microphone-off' : 'mdi-microphone'")
+		.ctrl-btn(:class="{ 'ctrl-btn--active': screensharingState === 'published', 'ctrl-btn--disabled': screensharingState === 'publishing' || screensharingState === 'unpublishing' }", :title="screensharingState === 'published' ? $t('JanusVideoroom:tool-screenshare:off') : $t('JanusVideoroom:tool-screenshare:on')", @click="toggleScreenShare")
+			.mdi(:class="screensharingState === 'published' ? 'mdi-monitor-off' : 'mdi-monitor'")
+		.ctrl-btn(title="Settings", @click="showDevicePrompt = true")
+			.mdi.mdi-cog
+		.ctrl-btn(title="Report issue", @click="showFeedbackPrompt = true")
+			.mdi.mdi-message-alert-outline
+		.ctrl-btn.ctrl-btn--hangup(:title="$t('JanusVideoroom:tool-hangup:tooltip')", @click="cleanup(); $emit('hangup')")
+			.mdi.mdi-phone-hangup
 
 	chat-user-card(v-if="selectedUser", ref="avatarCard", :user="selectedUser", @close="selectedUser = null")
 	transition(name="prompt")
@@ -124,8 +131,8 @@ const calculateLayout = (containerWidth, containerHeight, videoCount, aspectRati
 	return bestLayout
 }
 
-const MIN_BITRATE = 64 * 1000
-const MAX_BITRATE = 200 * 1000
+const MIN_BITRATE = 150 * 1000
+const MAX_BITRATE = 1500 * 1000
 
 const LOG_ENTRIES = []
 
@@ -209,10 +216,12 @@ export default {
 			// Janus video call state
 			videoPublishers: [],
 			feeds: [],
+			subscribingFeedIds: [],
 			ourId: null,
 			ourPrivateId: null,
 			ourStream: null,
 			ourScreenShareStream: null,
+			showOwnScreenShare: false,
 			publishingWithVideo: false, // we are *trying* to send video
 			videoReceived: false, // janus *has* received our video
 			videoInput: null, // video input currently requested from janus
@@ -249,6 +258,67 @@ export default {
 		sortedFeeds() {
 			return this.feeds.slice().sort((a, b) => a.venueless_user && b.venueless_user ? a.venueless_user.profile.display_name.localeCompare(b.venueless_user.profile.display_name) : 1)
 		},
+		tiles() {
+			const t = []
+			
+			// 1. Our own video/avatar tile
+			t.push({
+				id: 'me',
+				isMe: true,
+				isScreenshare: false,
+				participant: { id: this.ourAudioId },
+				user: this.user,
+				hasVideo: this.publishingWithVideo,
+				speaking: !this.knownMuteState && this.talkingParticipants.includes(this.ourAudioId),
+				muted: this.knownMuteState,
+			})
+
+			// 2. Our own screenshare
+			if (this.showOwnScreenShare) {
+				t.push({
+					id: 'me-screenshare',
+					isMe: true,
+					isScreenshare: true,
+					user: this.user,
+					hasVideo: true,
+				})
+			}
+
+			// 3. Peer tiles (from participants)
+			for (const p of this.sortedParticipants) {
+				const feed = this.feeds.find(f => !f.isScreenshare && this.feedIdEquals(f.rfid, p.id))
+				t.push({
+					id: `peer-${p.id}`,
+					rfid: feed ? feed.rfid : null,
+					isMe: false,
+					isScreenshare: false,
+					participant: p,
+					user: p.venueless_user,
+					feed: feed,
+					hasVideo: !!(feed && feed.rfattached && feed.hasVideo),
+					speaking: !p.muted && this.talkingParticipants.includes(p.id),
+					muted: p.muted,
+				})
+			}
+
+			// 4. Peer screenshares
+			const peerScreenshares = this.feeds.filter(f => f.isScreenshare)
+			for (const f of peerScreenshares) {
+				t.push({
+					id: `screenshare-${f.rfid}`,
+					rfid: f.rfid,
+					isMe: false,
+					isScreenshare: true,
+					user: f.venueless_user,
+					feed: f,
+					hasVideo: f.rfattached,
+					speaking: false,
+					muted: false,
+				})
+			}
+
+			return t
+		},
 		gridStyle() {
 			return {
 				'--video-width': `${this.layout.width}px`,
@@ -262,7 +332,7 @@ export default {
 			return Number(this.sessionId)
 		},
 		janusScreenShareSessionId() {
-			return Number(this.screenShareSessionId || this.sessionId)
+			return Number(this.screenShareSessionId || Number(this.sessionId) + 1000000000)
 		},
 	},
 	watch: {
@@ -317,9 +387,12 @@ export default {
 			}
 			this.screensharingError = null
 			this.feeds = []
+			this.subscribingFeedIds = []
 			this.participants = []
+			this.stopOwnVideoTracks()
 			this.ourStream = null
-			this.ourScreenShareStream = null
+			this.stopOwnScreenshareStream()
+			this.screensharePluginHandle = null
 		},
 		failConnection(error, retry = true) {
 			const retryInterval = this.retryInterval
@@ -336,7 +409,7 @@ export default {
 			this.layout = calculateLayout(
 				this.size === 'tiny' ? bbox.width : bbox.width - 16 * 2,
 				this.size === 'tiny' ? bbox.height : bbox.height - 16 * 2,
-				this.feeds.length + (this.videoPublishingState !== 'unpublished' ? 1 : 0),
+				this.tiles.length,
 				16 / 9,
 				this.size === 'tiny' ? 0 : 8,
 			)
@@ -351,9 +424,7 @@ export default {
 				if (this.videoOutput) {
 					// Enable receiving video
 					for (const f of this.videoPublishers) {
-						if (!this.feeds.find(rf => rf.rfid === f.id)) {
-							this.subscribeRemoteVideo(f.id, f.display, f.audio_codec, f.video_codec)
-						}
+						this.subscribeRemoteVideo(f.id, f.display, f.audio_codec, f.video_codec)
 					}
 				} else {
 					this.disableAllVideo()
@@ -388,9 +459,8 @@ export default {
 		},
 		toggleScreenShare() {
 			if (this.screensharingState === 'published') {
-				this.screensharingState = 'unpublishing'
-				this.screensharePluginHandle.send({message: {request: 'unpublish'}})
-			} else if (this.screensharingState === 'unpublished') {
+				this.unpublishOwnScreenshareFeed()
+			} else if (this.screensharingState === 'unpublished' || this.screensharingState === 'failed') {
 				if (this.screensharePluginHandle !== null) {
 					this.publishOwnScreenshareFeed()
 					return
@@ -410,13 +480,13 @@ export default {
 								id: this.janusScreenShareSessionId,
 								ptype: 'publisher',
 								token: this.token,
-								display: 'new user'
+								display: 'venueless screenshare'
 							}
 							this.screensharePluginHandle.send({message: register})
 						},
 						error: (error) => {
 							log('venueless', 'error', '  -- Error attaching plugin...', error)
-							alert('Screen sharing failed (error: ' + error.message + ')')
+							this.failScreenshare(error)
 						},
 						consentDialog: (on) => {
 							this.waitingForConsent = on
@@ -455,8 +525,7 @@ export default {
 										const unpublished = msg.unpublished
 										log('venueless', 'info', 'Publisher left: ' + unpublished)
 										if (unpublished === 'ok') {
-											this.screensharingState = 'unpublished'
-											this.screensharingError = null
+											this.resetScreenshareState()
 											this.screensharePluginHandle.hangup()
 											return
 										}
@@ -466,7 +535,6 @@ export default {
 											this.screensharingError = 'The room does not exist.'
 										} else {
 											this.screensharingError = msg.error
-											alert('Screen sharing failed (error: ' + msg.error + ')')
 										}
 									}
 								}
@@ -488,35 +556,139 @@ export default {
 								}
 							}
 						},
-						onlocalstream: (stream) => {
-							log('venueless', 'debug', ' ::: Got a local stream :::', stream)
-							this.ourScreenShareStream = stream
-							stream.getVideoTracks()[0].onended = () => {
-								this.toggleScreenShare()
-							}
-							// todo: show local stream instead of remote Stream
-						},
 						slowLink: (uplink) => {
 							log('venueless', 'info', 'slowlink on screenshare')
 						},
 						oncleanup: () => {
 							log('venueless', 'info', ' ::: Got a cleanup notification: we are unpublished now :::')
-							this.ourScreenShareStream = null
-							this.screensharingState = 'unpublished'
+							this.resetScreenshareState()
 						},
 					})
 			}
+		},
+		resetScreenshareState() {
+			this.stopOwnScreenshareStream()
+			this.showScreensharePrompt = false
+			this.screensharingState = 'unpublished'
+			this.screensharingError = null
+		},
+		stopOwnScreenshareStream() {
+			if (!this.ourScreenShareStream) {
+				this.showOwnScreenShare = false
+				return
+			}
+			for (const track of this.ourScreenShareStream.getTracks()) {
+				track.onended = null
+				track.stop()
+			}
+			this.ourScreenShareStream = null
+			this.showOwnScreenShare = false
+		},
+		unpublishOwnScreenshareFeed() {
+			this.screensharingState = 'unpublishing'
+			this.stopOwnScreenshareStream()
+			if (!this.screensharePluginHandle) {
+				this.resetScreenshareState()
+				return
+			}
+			try {
+				this.screensharePluginHandle.send({message: {request: 'unpublish'}})
+			} catch (error) {
+				log('venueless', 'error', 'Could not unpublish screenshare:', error)
+				this.resetScreenshareState()
+			}
+		},
+		failScreenshare(error) {
+			log('venueless', 'error', 'Screen sharing failed:', error)
+			this.stopOwnScreenshareStream()
+			if (error && ['AbortError', 'NotAllowedError'].includes(error.name)) {
+				this.screensharingState = 'unpublished'
+				this.screensharingError = null
+				return
+			}
+			this.screensharingState = 'failed'
+			this.screensharingError = error?.message || error || 'Screen sharing failed.'
+		},
+		async getScreenshareStream() {
+			if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+				throw new Error('Screen sharing is not supported by this browser.')
+			}
+			const stream = await navigator.mediaDevices.getDisplayMedia({
+				video: {
+					frameRate: {ideal: 15, max: 30},
+					width: {max: 1920},
+					height: {max: 1080},
+				},
+				audio: true,
+			})
+			if (!stream.getVideoTracks().length) {
+				throw new Error('No screen video track was selected.')
+			}
+			return stream
 		},
 		toggleVideo() {
 			this.videoRequested = !this.videoRequested
 			this.publishOwnVideo()
 		},
+		normalizeFeedId(id) {
+			return String(id)
+		},
+		feedIdEquals(a, b) {
+			return this.normalizeFeedId(a) === this.normalizeFeedId(b)
+		},
+		isScreenshareFeedId(id, display = null) {
+			const feedId = this.normalizeFeedId(id)
+			return display === 'venueless screenshare' || feedId === this.normalizeFeedId(this.janusScreenShareSessionId) || feedId.includes('_screenshare_')
+		},
+		isOwnPublishedFeed(id) {
+			return this.feedIdEquals(id, this.ourId) || this.feedIdEquals(id, this.janusScreenShareSessionId)
+		},
+		isSubscribedOrSubscribing(id) {
+			return this.feeds.some(rf => this.feedIdEquals(rf.rfid, id)) || this.subscribingFeedIds.some(fid => this.feedIdEquals(fid, id))
+		},
+		markSubscribing(id) {
+			if (!this.subscribingFeedIds.some(fid => this.feedIdEquals(fid, id))) {
+				this.subscribingFeedIds.push(this.normalizeFeedId(id))
+			}
+		},
+		unmarkSubscribing(id) {
+			this.subscribingFeedIds = this.subscribingFeedIds.filter(fid => !this.feedIdEquals(fid, id))
+		},
+		removeRemoteFeed(id) {
+			this.unmarkSubscribing(id)
+			const remoteFeed = this.feeds.find((rf) => this.feedIdEquals(rf.rfid, id))
+			if (remoteFeed != null) {
+				log('venueless', 'debug', 'Feed ' + remoteFeed.rfid + ' (' + remoteFeed.rfdisplay + ') has left the room, detaching')
+				this.feeds = this.feeds.filter((rf) => !this.feedIdEquals(rf.rfid, remoteFeed.rfid))
+				remoteFeed.detach()
+			}
+		},
+		stopOwnVideoTracks() {
+			if (!this.ourStream) {
+				return
+			}
+			for (const track of this.ourStream.getVideoTracks()) {
+				track.onended = null
+				track.stop()
+			}
+			const videoEl = Array.isArray(this.$refs.ourVideo) ? this.$refs.ourVideo[0] : this.$refs.ourVideo
+			if (videoEl) {
+				videoEl.srcObject = null
+			}
+		},
+		stopStreamTracks(stream) {
+			for (const track of stream.getTracks()) {
+				track.onended = null
+				track.stop()
+			}
+		},
 		disableAllVideo() {
 			this.videoRequested = false
 			localStorage.videoOutput = false
+			this.stopOwnVideoTracks()
 
 			for (const h of this.feeds) {
-				if (!h.rfid.includes('_screenshare_')) {
+				if (!h.isScreenshare && !this.isScreenshareFeedId(h.rfid, h.rfdisplay)) {
 					h.hangup()
 				}
 			}
@@ -538,25 +710,28 @@ export default {
 			}
 			this.knownMuteState = this.audioPluginHandle.isAudioMuted()
 		},
-		publishOwnVideo() {
+		async publishOwnVideo() {
 			const media = {
 				audioRecv: false,
 				videoRecv: false,
 				audioSend: false,
 				videoSend: true,
 			}
+			const nextVideoInput = localStorage.videoInput || ''
+			let hadPeerConnection = Boolean(this.videoPluginHandle.webrtcStuff?.pc)
 
 			if (this.videoRequested) {
-				if (localStorage.videoInput) {
-					media.video = {deviceId: localStorage.videoInput, width: 1280, height: 720}
-				} else {
-					media.video = 'hires'
+				if (hadPeerConnection && !this.publishingWithVideo) {
+					this.videoPluginHandle.hangup()
+					this.ourStream = null
+					hadPeerConnection = false
 				}
-				if (localStorage.videoInput !== this.videoInput) {
+				media.video = this.cameraConstraints(nextVideoInput)
+				if (hadPeerConnection && nextVideoInput !== this.videoInput) {
 					media.replaceVideo = true
-					this.videoInput = localStorage.videoInput
 				}
 			} else {
+				this.stopOwnVideoTracks()
 				if (this.publishingWithVideo && this.videoPublishingState !== 'unpublished' && this.videoPublishingState !== 'failed') {
 					this.videoPublishingState = 'unpublishing'
 					const unpublish = {request: 'unpublish'}
@@ -568,6 +743,7 @@ export default {
 			}
 
 			this.publishingWithVideo = this.videoRequested
+			this.videoInput = nextVideoInput
 			if (this.videoRequested) {
 				this.videoPublishingState = 'publishing'
 			}
@@ -579,14 +755,29 @@ export default {
 					simulcast: false,
 					simulcast2: false,
 					success: (jsep) => {
-						const publish = {request: 'configure', audio: true, video: this.publishingWithVideo, bitrate: this.upstreamBitrate}
+						const publish = {request: 'configure', audio: false, video: this.publishingWithVideo, bitrate: this.upstreamBitrate}
 						this.videoPluginHandle.send({message: publish, jsep: jsep})
+						if (!this.publishingWithVideo) {
+							this.stopOwnVideoTracks()
+						}
 					},
 					error: (error) => {
 						this.videoPublishingState = 'failed'
 						this.publishingError = error.message
 					},
 				})
+		},
+		cameraConstraints(videoInput) {
+			if (!videoInput) {
+				return true
+			}
+			const video = {
+				width: {ideal: 1280},
+				height: {ideal: 720},
+				frameRate: {ideal: 30, max: 30},
+			}
+			video.deviceId = {exact: videoInput}
+			return video
 		},
 		publishOwnAudio() {
 			const media = {video: false}
@@ -609,33 +800,78 @@ export default {
 				},
 			})
 		},
-		publishOwnScreenshareFeed() {
-			// TODO: framerate? default of 3 is pretty low
-			// TODO: currently, the "local" screenshare stream isn't handled specially, but also shown as a remote feed. This
-			// should probably be changed, since this causes an echo when a tab is shared with audio
-			const media = {audioRecv: false, videoRecv: false, audioSend: false, videoSend: true, video: 'screen', captureDesktopAudio: true}
-
+		async publishOwnScreenshareFeed() {
 			this.showScreensharePrompt = false
+			this.screensharingError = null
 			this.screensharingState = 'publishing'
+			this.stopOwnScreenshareStream()
+
+			let stream
+			try {
+				stream = await this.getScreenshareStream()
+			} catch (error) {
+				this.failScreenshare(error)
+				return
+			}
+
+			this.ourScreenShareStream = stream
+			this.showOwnScreenShare = true
+			await this.$nextTick()
+			const screenshareVideoEl = Array.isArray(this.$refs.ourScreenshareVideo) ? this.$refs.ourScreenshareVideo[0] : this.$refs.ourScreenshareVideo
+			if (screenshareVideoEl) {
+				Janus.attachMediaStream(screenshareVideoEl, stream)
+				screenshareVideoEl.muted = 'muted'
+			} else {
+				this.$forceUpdate()
+				await this.$nextTick()
+				const screenshareVideoElRetry = Array.isArray(this.$refs.ourScreenshareVideo) ? this.$refs.ourScreenshareVideo[0] : this.$refs.ourScreenshareVideo
+				if (screenshareVideoElRetry) {
+					Janus.attachMediaStream(screenshareVideoElRetry, stream)
+					screenshareVideoElRetry.muted = 'muted'
+				}
+			}
+			this.onResize()
+			stream.getVideoTracks()[0].onended = () => {
+				if (this.screensharingState === 'published' || this.screensharingState === 'publishing') {
+					this.unpublishOwnScreenshareFeed()
+				}
+			}
+
+			const hasAudio = stream.getAudioTracks().length > 0
+			const media = {audioRecv: false, videoRecv: false, audioSend: hasAudio, videoSend: true}
 			this.screensharePluginHandle.createOffer(
 				{
 					media: media,
+					stream: stream,
 					success: (jsep) => {
 						log('venueless', 'debug', 'Got publisher SDP!', jsep)
-						var publish = {request: 'configure', audio: true, video: true}
+						const publish = {request: 'configure', audio: hasAudio, video: true, bitrate: this.upstreamBitrate}
 						this.screensharePluginHandle.send({message: publish, jsep: jsep})
 					},
 					error: (error) => {
-						log('venueless', 'error', 'WebRTC error:', error)
-						alert('Screen sharing failed (error: ' + error.message + ')')
-						this.screensharingState = 'failed'
+						this.failScreenshare(error)
 					},
 				})
 		},
 		subscribeRemoteVideo(id, display, audio, video) {
-			if (!this.videoOutput && !id.includes('_screenshare_')) {
+			const isScreenshare = this.isScreenshareFeedId(id, display)
+			if (this.isOwnPublishedFeed(id) || (!this.videoOutput && !isScreenshare)) {
 				return
 			}
+			const existingFeed = this.feeds.find(rf => this.feedIdEquals(rf.rfid, id))
+			if (existingFeed) {
+				existingFeed.rfdisplay = display
+				existingFeed.videoCodec = video
+				existingFeed.isScreenshare = isScreenshare
+				if (!isScreenshare && video && !existingFeed.hasVideo && this.videoOutput) {
+					this.removeRemoteFeed(id)
+				} else {
+					return
+				}
+			} else if (this.subscribingFeedIds.some(fid => this.feedIdEquals(fid, id))) {
+				return
+			}
+			this.markSubscribing(id)
 			let remoteFeed = null
 			this.janus.attach({
 				plugin: 'janus.plugin.videoroom',
@@ -655,7 +891,7 @@ export default {
 					// In case you don't want to receive audio, video or data, even if the
 					// publisher is sending them, set the 'offer_audio', 'offer_video' or
 					// 'offer_data' properties to false (they're true by default), e.g
-					subscribe.offer_video = this.videoOutput || id.includes('_screenshare_')
+					subscribe.offer_video = this.videoOutput || isScreenshare
 					// For example, if the publisher is VP8 and this is Safari, let's avoid video
 					if (Janus.webRTCAdapter.browserDetails.browser === 'safari' &&
 						(video === 'vp9' || (video === 'vp8' && !Janus.safariVp8))) {
@@ -669,6 +905,7 @@ export default {
 					remoteFeed.send({message: subscribe})
 				},
 				error: (error) => {
+					this.unmarkSubscribing(id)
 					log('venueless', 'error', '  -- Error attaching plugin...', error)
 					alert('Error attaching plugin... ' + error)
 				},
@@ -677,18 +914,25 @@ export default {
 					var event = msg.videoroom
 					log('venueless', 'debug', 'Event: ' + event)
 					if (msg.error) {
+						this.unmarkSubscribing(id)
 						log('venueless', 'error', 'Error when subscribing: ' + msg.error)
 						// todo: show something?
 					} else if (event) {
 						if (event === 'attached') {
 							// Subscriber created and attached
+							const remoteFeedId = msg.id || id
+							this.unmarkSubscribing(remoteFeedId)
 							remoteFeed.rfattached = false
-							remoteFeed.hasVideo = true
-							remoteFeed.rfid = msg.id
-							remoteFeed.participant = this.participants.find(pp => pp.id === remoteFeed.rfid)
+							remoteFeed.hasVideo = isScreenshare
+							remoteFeed.rfid = remoteFeedId
+							remoteFeed.rfdisplay = display
+							remoteFeed.isScreenshare = isScreenshare
+							remoteFeed.participant = this.participants.find(pp => this.feedIdEquals(pp.id, remoteFeed.rfid))
 							remoteFeed.venueless_user = null
-							this.feeds.push(remoteFeed)
-							this.fetchUser(remoteFeed)
+							if (!this.feeds.some(rf => this.feedIdEquals(rf.rfid, remoteFeed.rfid))) {
+								this.feeds.push(remoteFeed)
+								this.fetchUser(remoteFeed)
+							}
 						} else if (event === 'event') {
 							// Check if we got a simulcast-related event from this publisher
 							var substream = msg.substream
@@ -743,19 +987,24 @@ export default {
 				},
 				onremotestream: (stream) => {
 					log('venueless', 'debug', 'Remote feed #' + remoteFeed.rfid + ', stream:', stream)
-					const rfindex = this.feeds.findIndex((rf) => rf.rfid === remoteFeed.rfid)
+					const rfindex = this.feeds.findIndex((rf) => this.feedIdEquals(rf.rfid, remoteFeed.rfid))
+					if (rfindex === -1) {
+						return
+					}
 					const videoTracks = stream.getVideoTracks()
-
 					remoteFeed.rfattached = true
 					remoteFeed.hasVideo = videoTracks && videoTracks.length > 0
-					this.feeds[rfindex] = remoteFeed
+					this.feeds.splice(rfindex, 1, remoteFeed)
 					this.$nextTick(() => {
-						Janus.attachMediaStream(this.$refs.peerVideo[rfindex], stream)
+						const videoEl = this.$el.querySelector(`video[data-rfid="${remoteFeed.rfid}"]`)
+						if (videoEl) {
+							Janus.attachMediaStream(videoEl, stream)
+						}
 					})
 				},
 				oncleanup: () => {
-					const idx = this.feeds.indexOf(remoteFeed)
-					if (idx > -1) this.feeds.splice(idx, 1)
+					this.unmarkSubscribing(id)
+					this.feeds = this.feeds.filter((rf) => !this.feedIdEquals(rf.rfid, id))
 				}
 			})
 		},
@@ -821,7 +1070,7 @@ export default {
 									if (msg.participants) {
 										for (const p of this.participants) {
 											this.fetchUser(p)
-											if (p.talking && !this.talkingParticipants.includes(p.id)) {
+											if (p.talking && !this.talkingParticipants.some(id => this.feedIdEquals(id, p.id))) {
 												this.talkingParticipants.push(p.id)
 											}
 										}
@@ -836,7 +1085,7 @@ export default {
 									if (msg.participants) {
 										for (const p of msg.participants) {
 											this.fetchUser(p)
-											if (!this.participants.find(pp => pp.id === p.id)) {
+											if (!this.participants.find(pp => this.feedIdEquals(pp.id, p.id))) {
 												this.participants.push(p)
 											}
 										}
@@ -845,22 +1094,22 @@ export default {
 							} else if (event === 'destroyed') {
 								this.failConnection('Room destroyed', false)
 							} else if (event === 'talking') {
-								if (msg.id && !this.talkingParticipants.includes(msg.id)) {
+								if (msg.id && !this.talkingParticipants.some(id => this.feedIdEquals(id, msg.id))) {
 									this.talkingParticipants.push(msg.id)
 								}
 							} else if (event === 'stopped-talking') {
-								this.talkingParticipants = this.talkingParticipants.filter(p => p !== msg.id)
+								this.talkingParticipants = this.talkingParticipants.filter(p => !this.feedIdEquals(p, msg.id))
 							} else if (event === 'event') {
 								if (msg.participants) {
 									// Update e.g. muted states
 									for (const p of msg.participants) {
-										const exp = this.participants.find(e => e.id === p.id)
+										const exp = this.participants.find(e => this.feedIdEquals(e.id, p.id))
 										if (exp) {
 											exp.muted = p.muted
-											if (p.talking && !this.talkingParticipants.includes(p.id)) {
+											if (p.talking && !this.talkingParticipants.some(id => this.feedIdEquals(id, p.id))) {
 												this.talkingParticipants.push(p.id)
-											} else if (this.talkingParticipants.includes(p.id)) {
-												this.talkingParticipants = this.talkingParticipants.filter(e => e !== p.id)
+											} else if (this.talkingParticipants.some(id => this.feedIdEquals(id, p.id))) {
+												this.talkingParticipants = this.talkingParticipants.filter(e => !this.feedIdEquals(e, p.id))
 											}
 										} else {
 											this.fetchUser(p)
@@ -869,7 +1118,7 @@ export default {
 									}
 								} else if (msg.leaving) {
 									// One of the publishers has gone away?
-									this.participants = this.participants.filter((rf) => rf.id !== msg.leaving)
+									this.participants = this.participants.filter((rf) => !this.feedIdEquals(rf.id, msg.leaving))
 								} else if (msg.error) {
 									if (msg.error_code === 485) {
 										this.failConnection('Room does not exist', false)
@@ -891,7 +1140,7 @@ export default {
 							if (newUpstreamBitrate !== this.upstreamBitrate) {
 								this.upstreamBitrate = newUpstreamBitrate
 								log('venueless', 'info', 'Received slowLink on outgoing audio, reducing video bitrate to ' + this.upstreamBitrate)
-								const publish = {request: 'configure', audio: true, video: this.publishingWithVideo, bitrate: this.upstreamBitrate}
+								const publish = {request: 'configure', audio: false, video: this.publishingWithVideo, bitrate: this.upstreamBitrate}
 								this.videoPluginHandle.send({message: publish})
 								this.upstreamSlowLinkCount = 0
 							} else {
@@ -1012,20 +1261,16 @@ export default {
 								// Any new feed to attach to?
 								if (msg.publishers) {
 									for (const f of msg.publishers) {
-										this.videoPublishers.push(f)
+										if (!this.videoPublishers.find(rf => this.feedIdEquals(rf.id, f.id))) {
+											this.videoPublishers.push(f)
+										}
 										this.subscribeRemoteVideo(f.id, f.display, f.audio_codec, f.video_codec)
 									}
 								} else if (msg.leaving) {
 									// One of the publishers has gone away?
 									const leaving = msg.leaving
-									this.videoPublishers = this.videoPublishers.filter((rf) => rf.id !== leaving)
-									const remoteFeed = this.feeds.find((rf) => rf.rfid === leaving)
-									if (remoteFeed != null) {
-										log('venueless', 'debug',
-											'Feed ' + remoteFeed.rfid + ' (' + remoteFeed.rfdisplay + ') has left the room, detaching')
-										this.feeds = this.feeds.filter((rf) => rf.rfid !== remoteFeed.rfid)
-										remoteFeed.detach()
-									}
+									this.videoPublishers = this.videoPublishers.filter((rf) => !this.feedIdEquals(rf.id, leaving))
+									this.removeRemoteFeed(leaving)
 								} else if (msg.unpublished) {
 									// One of the publishers has unpublished?
 									const unpublished = msg.unpublished
@@ -1033,16 +1278,12 @@ export default {
 										// That's us
 										this.videoPublishingState = 'unpublished'
 										this.publishingError = null
+										this.stopOwnVideoTracks()
 										this.videoPluginHandle.hangup()
 										return
 									}
-									this.videoPublishers = this.videoPublishers.filter((rf) => rf.id !== unpublished)
-									const remoteFeed = this.feeds.find((rf) => rf.rfid === unpublished)
-									if (remoteFeed != null) {
-										log('venueless', 'debug', 'Feed ' + remoteFeed.rfid + ' (' + remoteFeed.rfdisplay + ') has left the room, detaching')
-										this.feeds = this.feeds.filter((rf) => rf.rfid !== remoteFeed.rfid)
-										remoteFeed.detach()
-									}
+									this.videoPublishers = this.videoPublishers.filter((rf) => !this.feedIdEquals(rf.id, unpublished))
+									this.removeRemoteFeed(unpublished)
 								} else if (msg.error) {
 									if (msg.error_code === 426) {
 										this.videoReceivingState = 'failed'
@@ -1065,6 +1306,7 @@ export default {
 								// todo: log, show error to user?
 								this.videoRequested = false
 								this.publishingWithVideo = false
+								this.stopOwnVideoTracks()
 							}
 						}
 					},
@@ -1075,13 +1317,14 @@ export default {
 							if (newUpstreamBitrate !== this.upstreamBitrate) {
 								this.upstreamBitrate = newUpstreamBitrate
 								log('venueless', 'info', 'Received slowLink on outgoing video, reducing bitrate to ' + this.upstreamBitrate)
-								const publish = {request: 'configure', audio: true, video: this.publishingWithVideo, bitrate: this.upstreamBitrate}
+								const publish = {request: 'configure', audio: false, video: this.publishingWithVideo, bitrate: this.upstreamBitrate}
 								this.videoPluginHandle.send({message: publish})
 								this.upstreamSlowLinkCount = 0
 							} else {
 								if (this.upstreamSlowLinkCount > 5) {
 									log('venueless', 'info', 'Received slowLink on outgoing video, bitrate already at minimum, turning video off')
 									this.videoRequested = false
+									this.stopOwnVideoTracks()
 									this.publishOwnVideo()
 								} else {
 									log('venueless', 'info', 'Received slowLink on outgoing video, bitrate already at minimum')
@@ -1090,6 +1333,9 @@ export default {
 						}
 					},
 					onlocalstream: (stream) => {
+						if (this.ourStream && this.ourStream !== stream) {
+							this.stopStreamTracks(this.ourStream)
+						}
 						this.ourStream = stream
 						if (this.videoPluginHandle.webrtcStuff.pc && this.videoPluginHandle.webrtcStuff.pc.iceConnectionState !== 'completed' &&
 							this.videoPluginHandle.webrtcStuff.pc.iceConnectionState !== 'connected') {
@@ -1108,7 +1354,10 @@ export default {
 							this.videoRequested = false
 							this.publishingWithVideo = false
 						} else {
-							Janus.attachMediaStream(this.$refs.ourVideo, stream)
+							const videoEl = Array.isArray(this.$refs.ourVideo) ? this.$refs.ourVideo[0] : this.$refs.ourVideo
+							if (videoEl) {
+								Janus.attachMediaStream(videoEl, stream)
+							}
 						}
 					},
 					oncleanup: () => {
@@ -1159,211 +1408,288 @@ export default {
 				this.userCache[uid] = user
 			}
 			feed.venueless_user = user
-			const rfindex = this.feeds.findIndex((rf) => rf.rfid === feed.rfid)
-			this.feeds[rfindex] = feed
+			const rfindex = this.feeds.findIndex((rf) => this.feedIdEquals(rf.rfid, feed.rfid))
+			if (rfindex > -1) {
+				this.feeds.splice(rfindex, 1, feed)
+			}
 		},
 	},
 }
 </script>
 <style lang="stylus">
 .c-janusconference
+	background: #202124
+	color: #e8eaed
 	flex: auto 1 1
-	height: 100% // todo: test in safari
+	height: 100%
 	display: flex
 	flex-direction: column
 	position: relative
 
-	.controlbar
-		width: auto
-		margin: auto
-		flex-shrink: 0
-		card()
-		.bunt-icon-button
-			line-height: 42px
-			height: 42px
-			width: 42px
-		.bunt-icon-button .bunt-icon
-			font-size: 26px
-		.hangup
-			color: $clr-danger
-
 	.connection-state
-		padding: 16px
 		display: flex
 		justify-content: center
-		align-content: center
 		align-items: center
-		max-height: 100%
 		flex: auto 1 1
 
 	.participants
-		padding: 5px 15px
+		padding: 6px 14px
+		display: flex
+		flex-wrap: wrap
+		gap: 4px
+		background: #2d2f31
+		border-bottom: 1px solid #3c4043
+		flex-shrink: 0
 
 		.participant
 			position: relative
 			cursor: pointer
-			display: inline-block
-			margin: 5px
-			border: 4px solid transparent
+			display: inline-flex
+			border: 3px solid transparent
 			border-radius: 50%
-
+			transition: border-color 0.15s
 			&.talking
-				border: 4px solid var(--clr-primary)
-
+				border-color: #8ab4f8
 			.mute-indicator
 				position: absolute
-				right: 0px
-				bottom: 0px
-				background: $clr-danger
-				width: 16px
-				height: 16px
+				right: 0
+				bottom: 0
+				background: #ea4335
+				width: 14px
+				height: 14px
 				border-radius: 50%
-				text-align: center
+				display: flex
+				align-items: center
+				justify-content: center
 				.bunt-icon
-					width: 100%
 					color: white
-					line-height: 16px
-					font-size: 12px
+					font-size: 9px
+					line-height: 14px
 
 	.users
-		padding: 16px
+		padding: 12px
 		display: flex
 		justify-content: center
 		align-content: center
 		flex-wrap: wrap
+		gap: 8px
 		height: auto
 		max-height: 100%
 		flex: auto 1 1
 		overflow: hidden
 		position: relative
-
-	.info-message
-		color: var(--clr-text-secondary)
-		text-align: center
-		padding: 10px
-	.slow-banner
-		box-sizing: border-box
-		background: #666
-		color: white
-		cursor: pointer
-		padding: 8px
-		position: absolute
-		left: 0
-		top: 0
-		text-align: center
-		width: 100%
+		background: #202124
 
 	.users .feed
 		width: var(--video-width)
 		height: var(--video-height)
-		padding: 8px
 		position: relative
-
-		.mute-indicator
-			position: absolute
-			right: 16px
-			bottom: 16px
-			background: black
-			opacity: 0.5
-			width: 32px
-			height: 32px
-			max-width: 100%
-			max-height: 100%
-			border-radius: 50%
-			text-align: center
-			.bunt-icon
-				width: 100%
-				color: white
-				line-height: 32px
-				font-size: 20px
-
-		.publishing-state, .subscribing-state
-			position: absolute
-			left: 0
-			top: 0
-			height: 100%
-			width: 100%
-			display: flex
-			justify-content: center
-			align-content: center
-			align-items: center
-			.publishing-error
-				background: rgba(0, 0, 0, 0.8)
-				width: 80%
-				padding: 16px
-				text-align: center
-				color: white
-
-		.controls
-			display: flex
-			align-items: center
-			padding: 0 8px 0 16px
-			min-height: 48px
-			position: absolute
-			top: 20px
-			left: 50%
-			transform: translate(-50%)
-			opacity: 0
-			transition: opacity .5s
-			card()
-
-			.user
-				display: flex
-				cursor: pointer
-				align-items: center
-				height: 100%
-				margin-right: 16px
-				.display-name
-					margin-left: 8px
-					flex: auto
-					ellipsis()
-
-		&:hover .controls
-			transition: opacity .5s
-			opacity: 1
+		border-radius: 12px
+		overflow: hidden
 
 		.video-container
-			background: #000
+			background: #3c4043
 			width: 100%
 			height: 100%
 			position: relative
 			overflow: hidden
-			border-radius: 5px
-
+			border-radius: 12px
+			transition: box-shadow 0.15s ease
+			&.speaking
+				box-shadow: 0 0 0 3px #8ab4f8
 			video
-				max-height: 100%
-				max-width: 100%
-				height: 100%
-				object-fit: contain
 				width: 100%
+				height: 100%
+				object-fit: cover
+
+		.video-overlay
+			position: absolute
+			inset: 0
+			pointer-events: none
+			.badge-row
+				position: absolute
+				bottom: 8px
+				left: 8px
+				display: flex
+				gap: 4px
+
+		.badge
+			background: rgba(0,0,0,0.55)
+			backdrop-filter: blur(4px)
+			color: #e8eaed
+			font-size: 11px
+			font-weight: 600
+			border-radius: 4px
+			padding: 2px 6px
+			&.badge--me
+				background: rgba(26,115,232,0.7)
+			&.badge--screensharing
+				background: rgba(52,168,83,0.75)
+
+		.controls
+			display: flex
+			align-items: center
+			padding: 0 8px 0 12px
+			height: 40px
+			position: absolute
+			bottom: 8px
+			right: 8px
+			background: rgba(0,0,0,0.55)
+			backdrop-filter: blur(4px)
+			border-radius: 20px
+			opacity: 0
+			transition: opacity 0.2s
+			gap: 4px
+			.user
+				display: flex
+				cursor: pointer
+				align-items: center
+				gap: 6px
+				.display-name
+					max-width: 120px
+					white-space: nowrap
+					overflow: hidden
+					text-overflow: ellipsis
+					font-size: 13px
+					color: #e8eaed
+
+		&:hover .controls
+			opacity: 1
+
+		.novideo-indicator
+			position: absolute
+			inset: 0
+			display: flex
+			align-items: center
+			justify-content: center
+			background: #3c4043
+
+		.mute-indicator
+			position: absolute
+			top: 10px
+			right: 10px
+			background: #ea4335
+			width: 32px
+			height: 32px
+			border-radius: 50%
+			display: flex
+			align-items: center
+			justify-content: center
+			.bunt-icon
+				color: white
+				font-size: 18px
+				line-height: 32px
 
 	.users .feed.me
 		.video-container video
 			transform: rotateY(180deg)
+
+	.users .feed.screenshare-feed
+		.video-container video
+			object-fit: contain
+
+	.info-bar
+		display: flex
+		flex-direction: column
+		align-items: center
+		gap: 4px
+		flex-shrink: 0
+
+	.info-message
+		color: #9aa0a6
+		font-size: 13px
+		text-align: center
+		padding: 6px 16px
+		&.screensharing-error
+			color: #f28b82
+			display: flex
+			align-items: center
+			gap: 6px
+
+	.slow-banner
+		box-sizing: border-box
+		background: rgba(234,179,8,0.15)
+		color: #fdd663
+		cursor: pointer
+		padding: 8px 16px
+		position: absolute
+		left: 0
+		top: 0
+		width: 100%
+		text-align: center
+		font-size: 13px
+
+	.controlbar
+		display: flex
+		align-items: center
+		justify-content: center
+		gap: 8px
+		padding: 12px 20px
+		background: #2d2f31
+		border-top: 1px solid #3c4043
+		flex-shrink: 0
+		z-index: 20
+
+	.ctrl-btn
+		display: flex
+		align-items: center
+		justify-content: center
+		width: 52px
+		height: 52px
+		border-radius: 50%
+		background: #3c4043
+		color: #e8eaed
+		cursor: pointer
+		transition: background 0.15s, transform 0.1s
+		border: none
+		outline: none
+		.mdi
+			font-size: 24px
+		&:hover
+			background: #4a4d50
+			transform: scale(1.07)
+		&.ctrl-btn--active
+			background: #8ab4f8
+			color: #202124
+		&.ctrl-btn--muted
+			background: #ea4335
+			color: white
+		&.ctrl-btn--disabled
+			opacity: 0.4
+			cursor: not-allowed
+			pointer-events: none
+		&.ctrl-btn--hangup
+			background: #ea4335
+			color: white
+			width: 64px
+			border-radius: 32px
+			&:hover
+				background: #c5221f
 
 	.size-tiny &
 		.participants
 			display: none
 		.users
 			padding: 0
-			margin: 0
+			gap: 0
 			.feed
-				padding: 0
-				width: var(--video-width)
-				height: var(--video-height)
+				border-radius: 0
 				.video-container
 					border-radius: 0
-		.controlbar, .controls, .mute-indicator, .novideo-indicator
+		.controlbar, .controls, .mute-indicator, .badge-row
 			display: none
 
 	.screenshare-prompt
 		.content
 			display: flex
 			flex-direction: column
+			align-items: center
 			padding: 32px
-			position: relative
+			gap: 16px
 			text-align: center
+			h1
+				color: #e8eaed
+				font-size: 20px
 			.bunt-button
 				themed-button-primary()
-				margin-top: 16px
 </style>
