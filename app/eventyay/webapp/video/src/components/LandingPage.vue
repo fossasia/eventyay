@@ -1,20 +1,12 @@
 <template lang="pug">
 .c-landing-page(v-scrollbar.y="", :style="landingStyle")
-	header.hero(:class="{'has-no-image': !hasHeroVisual}")
-		a.event-home-back.d-print-none(href="/", aria-label="Home")
-			span.event-home-back-pill
-				i.fa.fa-angle-left.event-home-back-icon(aria-hidden="true")
-				span.event-home-back-label(aria-hidden="true") Home
-		.event-hero
-			.event-hero-overlay
-				.event-brand(:class="{'event-brand--has-logo': heroImage}")
-					.event-logo(v-if="heroImage")
-						a(href="#")
-							img#event-logo(:src="heroImage", :alt="eventTitle")
-					.event-hero-text(v-if="eventTitle || eventStartLine || eventEndLine")
-						a.event-title.event-public-text-link(v-if="eventTitle", href="#") {{ eventTitle }}
-						a.event-date-line.event-public-text-link(v-if="eventStartLine", href="#") {{ eventStartLine }}
-						a.event-date-line.event-public-text-link(v-if="eventEndLine", href="#") {{ eventEndLine }}
+	.hero(:class="{'has-no-image': !hasHeroVisual}")
+		.hero-content
+			img.hero-logo(v-if="heroImage", :src="heroImage", :alt="eventTitle")
+			.event-hero-text(v-if="eventTitle || eventStartLine || eventEndLine")
+				a.event-title.event-public-text-link(v-if="eventTitle", href="#") {{ eventTitle }}
+				a.event-date-line.event-public-text-link(v-if="eventStartLine", href="#") {{ eventStartLine }}
+				a.event-date-line.event-public-text-link(v-if="eventEndLine", href="#") {{ eventEndLine }}
 	.content-container(v-if="hasContent")
 		.content
 			rich-text-content(v-if="mainContentIsRichText", :content="mainContent")
@@ -292,12 +284,12 @@ export default {
 .c-landing-page
 	flex: auto
 	background-color: $clr-grey-50
-	header.hero
-		min-height: 150px
+	.hero
+		height: 270px
 		display: flex
-		flex-direction: column
-		justify-content: flex-end
-		padding: 16px 20px
+		align-items: center
+		justify-content: center
+		padding: 0
 		background-color: var(--landing-hero-background-color)
 		background-image: var(--landing-hero-background-image)
 		background-repeat: no-repeat
@@ -318,75 +310,20 @@ export default {
 			z-index: 1
 		&.has-no-image
 			height: auto
-			padding: 22px 16px
+			padding: 22px 0
 			background-color: var(--clr-primary)
 			color: $clr-primary-text-dark
-		
-		.event-home-back
-			align-self: flex-start
-			margin: 0 0 6px
-			padding-left: 28px
-			box-sizing: border-box
-			display: inline-block
-			text-decoration: none
-			color: #fff
-			&:hover, &:focus-visible
-				color: #fff
-				text-decoration: none
-		.event-home-back-pill
-			display: inline-flex
-			align-items: center
-			justify-content: center
-			gap: 0
-			min-height: 32px
-			padding: 0 11px
-			background: rgba(0, 0, 0, 0.45)
-			border-radius: 8px
-			box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28)
-			transition: gap 0.18s ease, background 0.18s ease
-		.event-home-back:hover .event-home-back-pill, .event-home-back:focus-visible .event-home-back-pill
-			gap: 0.4em
-			background: rgba(0, 0, 0, 0.62)
-		.event-home-back-icon
-			font-size: 22px
-			line-height: 1
-			flex-shrink: 0
-		.event-home-back-label
-			font-size: 14px
-			font-weight: 600
-			line-height: 1
-			max-width: 0
-			opacity: 0
-			overflow: hidden
-			white-space: nowrap
-			transition: max-width 0.22s ease, opacity 0.18s ease
-		.event-home-back:hover .event-home-back-label, .event-home-back:focus-visible .event-home-back-label
-			max-width: 12em
-			opacity: 1
-
-		.event-hero
+		.hero-content
+			width: 100%
+			max-width: 1400px
+			margin: 0 auto
+			padding: 0 24px
 			display: flex
-			align-items: center
-			margin: 1rem 0 3.5rem
-			min-height: 0
-		.event-hero-overlay
-			display: inline-flex
-			border-radius: 14px
-			background: transparent
-			position: relative
-		.event-brand
-			display: flex
+			flex-direction: row
 			align-items: center
 			gap: 2rem
-			flex-wrap: nowrap
-			text-align: left
-			min-width: 0
-		.event-brand--has-logo
-			padding-left: 1.75rem
-		#event-logo
-			max-height: 140px
-			width: auto
-
+			position: relative
+			z-index: 1
 		.event-hero-text
 			display: flex
 			flex-direction: column
@@ -408,6 +345,11 @@ export default {
 		.event-public-text-link
 			color: inherit
 			text-decoration: none
+		.hero-logo
+			height: auto
+			max-height: 96px
+			max-width: min(28vw, 260px)
+			object-fit: contain
 	.content-container
 		display: flex
 		flex-direction: column
@@ -505,28 +447,19 @@ export default {
 				flex-shrink: 0
 
 	+below('m')
-		header.hero
-			padding: 14px 12px
-			.event-hero
-				margin: 0.5rem 0 2rem
-			.event-hero-overlay
-				display: flex
-				width: 100%
-			.event-brand
-				flex-wrap: wrap
-				gap: 1rem
+		.hero
+			height: auto
+			padding: 14px 0
+			.hero-content
+				flex-direction: column
 				align-items: flex-start
-			.event-brand--has-logo
-				padding-left: 12px
+				gap: 10px
+				padding: 0 12px
 			.event-title
-				font-size: 2rem
-			.event-home-back-icon
-				font-size: 19px
-			.event-home-back-label
-				font-size: 13.5px
+				font-size: 24px
 			.event-date-line
-				font-size: 0.9rem
-			#event-logo
+				font-size: 14px
+			.hero-logo
 				max-width: min(72vw, 280px)
 				max-height: 76px
 		.content-container
