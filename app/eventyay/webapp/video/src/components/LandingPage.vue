@@ -1,9 +1,10 @@
 <template lang="pug">
 .c-landing-page(v-scrollbar.y="", :style="landingStyle")
 	.hero(:class="{'has-no-image': !hasHeroVisual}")
-		img.hero-logo(v-if="heroImage", :src="heroImage", :alt="eventTitle")
-		.hero-copy(v-if="eventTitle || eventStartLine || eventEndLine")
-			.hero-text(v-if="eventTitle") {{ eventTitle }}
+		.hero-content
+			img.hero-logo(v-if="heroImage", :src="heroImage", :alt="eventTitle")
+			.hero-copy(v-if="eventTitle || eventStartLine || eventEndLine")
+				.hero-text(v-if="eventTitle") {{ eventTitle }}
 			p.hero-time(v-if="eventStartLine") {{ eventStartLine }}
 			p.hero-time(v-if="eventEndLine") {{ eventEndLine }}
 	.content-container(v-if="hasContent")
@@ -286,10 +287,9 @@ export default {
 	.hero
 		height: 270px
 		display: flex
-		align-items: flex-end
-		justify-content: flex-start
-		gap: 18px
-		padding: 16px 20px 3.5rem 20px
+		align-items: flex-start
+		justify-content: center
+		padding: 3rem 0 0 0
 		background-color: var(--landing-hero-background-color)
 		background-image: var(--landing-hero-background-image)
 		background-repeat: no-repeat
@@ -310,9 +310,20 @@ export default {
 			z-index: 1
 		&.has-no-image
 			height: auto
-			padding: 22px 16px
+			padding: 22px 0
 			background-color: var(--clr-primary)
 			color: $clr-primary-text-dark
+		.hero-content
+			width: 100%
+			max-width: 1400px
+			margin: 0 auto
+			padding: 0 24px
+			display: flex
+			flex-direction: row
+			align-items: flex-start
+			gap: 2rem
+			position: relative
+			z-index: 1
 		.hero-copy
 			display: flex
 			flex-direction: column
@@ -434,10 +445,13 @@ export default {
 
 	+below('m')
 		.hero
-			flex-direction: column
-			align-items: flex-start
-			gap: 10px
-			padding: 14px 12px
+			height: auto
+			padding: 14px 0
+			.hero-content
+				flex-direction: column
+				align-items: flex-start
+				gap: 10px
+				padding: 0 12px
 			.hero-text
 				font-size: 24px
 			.hero-time
