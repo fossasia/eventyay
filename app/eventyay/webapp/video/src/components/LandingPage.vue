@@ -320,7 +320,7 @@ export default {
 			padding: 0 24px
 			display: flex
 			flex-direction: row
-			align-items: flex-start
+			align-items: center
 			gap: 2rem
 			position: relative
 			z-index: 1
@@ -344,8 +344,8 @@ export default {
 			margin: 0
 		.hero-logo
 			height: auto
-			max-height: 96px
-			max-width: min(28vw, 260px)
+			max-height: 140px
+			width: auto
 			object-fit: contain
 	.content-container
 		display: flex
@@ -458,7 +458,7 @@ export default {
 				font-size: 14px
 			.hero-logo
 				max-width: min(72vw, 280px)
-				max-height: 76px
+				max-height: 120px
 		.content-container
 			flex-direction: column
 			align-items: center
