@@ -190,7 +190,7 @@ export default {
 					})
 				}
 			}
-			const href = navigation?.site_home_url || this.presaleHomeUrl
+			const href = this.presaleHomeUrl || navigation?.site_home_url
 			if (!href) return null
 			return {
 				href,
@@ -278,12 +278,6 @@ export default {
 		},
 	},
 	async mounted() {
-		if (!document.querySelector('link[href*="font-awesome"]')) {
-			const link = document.createElement('link')
-			link.rel = 'stylesheet'
-			link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'
-			document.head.appendChild(link)
-		}
 		await this.fetchEventMeta()
 	},
 	methods: {
