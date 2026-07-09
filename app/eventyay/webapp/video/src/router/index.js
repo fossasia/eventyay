@@ -239,7 +239,7 @@ const routes = [
 				props: true
 			},
 			{
-				path: 'admin/video-admin',
+				path: 'admin/:admin_path(.*)*',
 				name: 'admin:video-admin',
 				component: () => import('views/admin/config/video-admin')
 			},
