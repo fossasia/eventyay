@@ -17,6 +17,7 @@ from django.utils.encoding import force_str
 from django.utils.html import strip_tags
 from django.utils.translation import activate, get_language, gettext_lazy as _
 from django_context_decorator import context
+from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.base.models import SpeakerProfile, TalkSlot, User
@@ -141,8 +142,6 @@ def get_speaker_profile_by_code(event, speaker_code):
 def load_public_featured_speaker_profiles(user, event):
     if not are_featured_speakers_visible(user, event):
         return []
-    from django_scopes import scope
-
     with scope(event=event):
         return get_public_featured_speaker_profiles(event)
 
@@ -342,8 +341,6 @@ def _ordered_featured_speakers_from_profiles(event, featured_profiles, schedule_
 
 def build_landing_featured_speakers_widget_schedule(event, user, featured_profiles):
     """Build widget schedule payload for the event landing page featured speakers block."""
-    from django_scopes import scope
-
     featured_speaker_user_codes = {profile.user.code for profile in featured_profiles if profile.user_id}
     speakers_list_public = public_speakers_list_available(user, event)
     base_data = build_featured_only_schedule_data_from_profiles(
@@ -591,8 +588,6 @@ def _pending_submission_codes_for_speakers(event, user, speaker_user_codes):
 
 
 def _load_pending_speaker_talks(event, user, schedule, speaker_user_codes, *, featured):
-    from django_scopes import scope
-
     pending_codes = _pending_submission_codes_for_speakers(event, user, speaker_user_codes)
     if not schedule or not pending_codes:
         return {'talks': [], 'tracks': [], 'rooms': [], 'speakers': []}
@@ -617,7 +612,6 @@ def _append_missing_pending_submissions(data, event, user, speaker_user_codes):
     missing_codes = _pending_submission_codes_for_speakers(event, user, speaker_user_codes) - present_codes
     if not missing_codes:
         return
-    from django_scopes import scope
 
     with scope(event=event):
         submissions = (
@@ -872,8 +866,6 @@ def build_speaker_schedule_json(request: HttpRequest, speaker_code: str) -> str:
 
 def build_speakers_list_schedule_json(request: HttpRequest) -> str:
     """Build inline schedule JSON for the public speakers overview."""
-    from django_scopes import scope
-
     event = request.event
     user = request.user
     if not can_list_released_schedule_speakers(user, event):
@@ -1073,21 +1065,28 @@ def clear_featured_speakers_without_active_submissions(event, speakers):
 
 def clear_schedule_caches(event, submission=None, speaker=None):
     """Clear all eagenda schedule caches for the event's schedules."""
-    schedules = event.schedules.all()
-    keys = []
-    settings_part = schedule_widget_featured_cache_key_part(event)
-    for schedule in schedules:
-        for featured in (0, 1):
-            keys.append(f'eagenda:schedule:{schedule.pk}:{featured}')
-            keys.append(f'eagenda:schedule:{schedule.pk}:{featured}:{settings_part}')
-            keys.append(f'eagenda:enriched:{schedule.pk}:{featured}')
-            if submission:
-                keys.append(f'eagenda:talk:{schedule.pk}:{submission.code}:{featured}')
-            if speaker:
-                keys.append(f'eagenda:speaker:{schedule.pk}:{speaker.code}:{featured}')
-            elif submission:
-                for sp in submission.speakers.all():
-                    keys.append(f'eagenda:speaker:{schedule.pk}:{sp.code}:{featured}')
+    with scope(event=event):
+        schedule_pks = list(event.schedules.values_list('pk', flat=True))
+        settings_part = schedule_widget_featured_cache_key_part(event)
+        if speaker:
+            speaker_codes = [speaker.code]
+        elif submission:
+            speaker_codes = list(submission.speakers.values_list('code', flat=True))
+        else:
+            speaker_codes = []
+
+        keys = []
+        for schedule_pk in schedule_pks:
+            for featured in (0, 1):
+                keys.append(f'eagenda:schedule:{schedule_pk}:{featured}')
+                keys.append(f'eagenda:schedule:{schedule_pk}:{featured}:{settings_part}')
+                keys.append(f'eagenda:enriched:{schedule_pk}:{featured}')
+                if submission:
+                    keys.append(f'eagenda:talk:{schedule_pk}:{submission.code}:{featured}')
+                keys.extend(
+                    f'eagenda:speaker:{schedule_pk}:{code}:{featured}'
+                    for code in speaker_codes
+                )
 
     cache.delete_many(keys)
 
