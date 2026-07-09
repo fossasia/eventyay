@@ -36,6 +36,12 @@ class TolerantDict(dict):
         """Don't fail when formatting strings with a dict with missing keys."""
         return key
 
+    def __getitem__(self, key):
+        clean_key = key.replace('\\_', '_')
+        if clean_key in self:
+            return super().__getitem__(clean_key)
+        return self.__missing__(key)
+
 
 DEBUG_DOMAINS = [
     'localhost',
