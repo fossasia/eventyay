@@ -180,39 +180,39 @@ const routes = [
 				props: true
 			},
 			{
-				path: 'admin',
+				path: 'event',
 				name: 'admin',
 				component: () => import('views/admin')
 			},
 			{
-				path: 'admin/users',
+				path: 'event/users',
 				name: 'admin:users',
 				component: () => import('views/admin/users')
 			},
 			{
-				path: 'admin/users/:userId',
+				path: 'event/users/:userId',
 				name: 'admin:user',
 				component: () => import('views/admin/user'),
 				props: true
 			},
 			{
-				path: 'admin/rooms',
+				path: 'event/rooms',
 				name: 'admin:rooms:index',
 				component: () => import('views/admin/rooms/index')
 			},
 			{
-				path: 'admin/rooms/new/:type?',
+				path: 'event/rooms/new/:type?',
 				name: 'admin:rooms:new',
 				component: () => import('views/admin/rooms/new')
 			},
 			{
-				path: 'admin/rooms/:roomId',
+				path: 'event/rooms/:roomId',
 				name: 'admin:rooms:item',
 				component: () => import('views/admin/rooms/item'),
 				props: true
 			},
 			{
-				path: 'admin/announcements',
+				path: 'event/announcements',
 				name: 'admin:announcements',
 				component: () => import('views/admin/announcements'),
 				children: [{
@@ -223,28 +223,28 @@ const routes = [
 				}]
 			},
 			{
-				path: 'admin/kiosks',
+				path: 'event/kiosks',
 				name: 'admin:kiosks:index',
 				component: () => import('views/admin/kiosks/index')
 			},
 			{
-				path: 'admin/kiosks/new',
+				path: 'event/kiosks/new',
 				name: 'admin:kiosks:new',
 				component: () => import('views/admin/kiosks/new')
 			},
 			{
-				path: 'admin/kiosks/:kioskId',
+				path: 'event/kiosks/:kioskId',
 				name: 'admin:kiosks:item',
 				component: () => import('views/admin/kiosks/item'),
 				props: true
 			},
 			{
-				path: 'admin/video-admin',
+				path: 'event/admin/:admin_path(.*)*',
 				name: 'admin:video-admin',
 				component: () => import('views/admin/config/video-admin')
 			},
 			{
-				path: 'admin/config',
+				path: 'event/config',
 				component: () => import('views/admin/config'),
 				children: [{
 					path: '',
