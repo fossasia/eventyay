@@ -1,12 +1,11 @@
 <template lang="pug">
 .c-landing-page(v-scrollbar.y="", :style="landingStyle")
 	.hero(:class="{'has-no-image': !hasHeroVisual}")
-		.hero-content
-			img.hero-logo(v-if="heroImage", :src="heroImage", :alt="eventTitle")
-			.event-hero-text(v-if="eventTitle || eventStartLine || eventEndLine")
-				a.event-title.event-public-text-link(v-if="eventTitle", href="#") {{ eventTitle }}
-				a.event-date-line.event-public-text-link(v-if="eventStartLine", href="#") {{ eventStartLine }}
-				a.event-date-line.event-public-text-link(v-if="eventEndLine", href="#") {{ eventEndLine }}
+		img.hero-logo(v-if="heroImage", :src="heroImage", :alt="eventTitle")
+		.hero-copy(v-if="eventTitle || eventStartLine || eventEndLine")
+			.hero-text(v-if="eventTitle") {{ eventTitle }}
+			p.hero-time(v-if="eventStartLine") {{ eventStartLine }}
+			p.hero-time(v-if="eventEndLine") {{ eventEndLine }}
 	.content-container(v-if="hasContent")
 		.content
 			rich-text-content(v-if="mainContentIsRichText", :content="mainContent")
@@ -287,9 +286,10 @@ export default {
 	.hero
 		height: 270px
 		display: flex
-		align-items: center
-		justify-content: center
-		padding: 0
+		align-items: flex-end
+		justify-content: flex-start
+		gap: 18px
+		padding: 16px 20px 3.5rem 20px
 		background-color: var(--landing-hero-background-color)
 		background-image: var(--landing-hero-background-image)
 		background-repeat: no-repeat
@@ -310,25 +310,15 @@ export default {
 			z-index: 1
 		&.has-no-image
 			height: auto
-			padding: 22px 0
+			padding: 22px 16px
 			background-color: var(--clr-primary)
 			color: $clr-primary-text-dark
-		.hero-content
-			width: 100%
-			max-width: 1400px
-			margin: 0 auto
-			padding: 0 24px
-			display: flex
-			flex-direction: row
-			align-items: center
-			gap: 2rem
-			position: relative
-			z-index: 1
-		.event-hero-text
+		.hero-copy
 			display: flex
 			flex-direction: column
+			gap: 6px
 			color: $clr-primary-text-dark
-		.event-title
+		.hero-text
 			font-size: 3rem
 			font-weight: 700
 			line-height: 1.2
@@ -337,14 +327,10 @@ export default {
 			min-width: 0
 			text-align: left
 			margin: 0
-		.event-date-line
-			font-size: 1rem
-			opacity: 0.96
+		.hero-time
+			font-size: 16px
 			line-height: 1.3
 			margin: 0
-		.event-public-text-link
-			color: inherit
-			text-decoration: none
 		.hero-logo
 			height: auto
 			max-height: 96px
@@ -448,16 +434,13 @@ export default {
 
 	+below('m')
 		.hero
-			height: auto
-			padding: 14px 0
-			.hero-content
-				flex-direction: column
-				align-items: flex-start
-				gap: 10px
-				padding: 0 12px
-			.event-title
+			flex-direction: column
+			align-items: flex-start
+			gap: 10px
+			padding: 14px 12px
+			.hero-text
 				font-size: 24px
-			.event-date-line
+			.hero-time
 				font-size: 14px
 			.hero-logo
 				max-width: min(72vw, 280px)
