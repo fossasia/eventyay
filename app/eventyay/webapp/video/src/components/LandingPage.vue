@@ -9,7 +9,7 @@
 					span.event-home-back-label(aria-hidden="true") {{ homeBackLink.label }}
 			.event-hero
 				.event-hero-overlay
-					.event-brand(:class="{'event-brand--has-logo': !!heroImage}")
+					.event-brand
 						.event-logo(v-if="heroImage")
 							a(:href="presaleHomeUrl")
 								img#event-logo.hero-logo(:src="heroImage", :alt="eventTitle")
@@ -410,12 +410,13 @@ export default {
 		max-width: 1600px
 		margin: 0 auto
 		padding: calc(1.5rem + 24px) 15px 0
+		padding-left: calc(15px + 1.75rem)
 		box-sizing: border-box
 	.event-home-back
 		align-self: flex-start
 		display: inline-block
 		margin: 0 0 6px
-		padding-left: 28px
+		padding-left: 0
 		box-sizing: border-box
 		text-decoration: none
 		color: var(--color-header-text, #fff)
@@ -480,8 +481,6 @@ export default {
 		text-align: left
 		min-width: 0
 		width: 100%
-		&.event-brand--has-logo
-			padding-left: 1.75rem
 	.event-logo a
 		display: block
 		text-decoration: none
@@ -518,6 +517,7 @@ export default {
 	#event-logo
 		height: auto
 		max-height: 140px
+		max-width: 240px
 		width: auto
 		object-fit: contain
 	.content-card
@@ -636,11 +636,11 @@ export default {
 		.landing-top-bg
 			height: 220px
 		.landing-header
-			padding-left: 0
+			padding-left: 12px
 			padding-right: 0
 			padding-top: 24px
 		.event-home-back
-			padding-left: 12px
+			padding-left: 0
 		.event-home-back .event-home-back-icon
 			font-size: 19px
 		.event-home-back .event-home-back-label
@@ -653,8 +653,6 @@ export default {
 			flex-wrap: wrap
 			gap: 1rem
 			align-items: flex-start
-			&.event-brand--has-logo
-				padding-left: 12px
 		.event-hero-text .event-title
 			font-size: 2rem
 		.event-date-line

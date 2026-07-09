@@ -3,8 +3,12 @@
 import re
 
 from eventyay.multidomain.urlreverse import eventreverse, mainreverse
+from eventyay.presale.style import SYSTEM_FONTS, get_fonts, get_font_stylesheet, resolve_font
 
 _VALID_HEX_6 = re.compile(r'^#[0-9a-f]{6}$')
+
+# Match tickets/talk sidebars (pretixcontrol/orga); not driven by primary colour.
+PLATFORM_SIDEBAR_BG = '#f8f8f8'
 
 
 def normalize_video_theme_hex(value, fallback='#2185d0'):
@@ -32,11 +36,32 @@ def normalize_video_theme_hex(value, fallback='#2185d0'):
     return fb
 
 
+def build_video_typography_for_event(event):
+    """Typography tokens shared with presale/agenda (Common Settings primary_font)."""
+    resolved_font, font_family_value = resolve_font(event)
+    typography = {
+        'settings_css_url': str(event.urls.settings_css),
+    }
+    if font_family_value:
+        typography['font_family'] = font_family_value
+        typography['font_family_title'] = font_family_value
+    if resolved_font and resolved_font not in SYSTEM_FONTS:
+        fonts_dict = get_fonts()
+        if resolved_font in fonts_dict:
+            typography['font_stylesheet'] = get_font_stylesheet(
+                resolved_font,
+                fonts=fonts_dict,
+                for_sass=False,
+            )
+    return typography
+
+
 def build_video_theme_for_event(event):
     """
     Theme payload for the video SPA injection and world.config.get.
 
-    Navbar/sidebar colors follow Common Settings (primary + page background).
+    Navbar colours follow Common Settings (primary, header colours, page
+    background). The rooms sidebar uses the platform default light style.
     Remaining keys are taken from event.config['theme'] (identicons, text
     overwrites, stream offline image, custom css flag, etc.).
     """
@@ -61,7 +86,7 @@ def build_video_theme_for_event(event):
     colors = {
         **existing_colors,
         'primary': primary,
-        'sidebar': primary,
+        'sidebar': PLATFORM_SIDEBAR_BG,
         'bbb_background': bbb_bg,
     }
     if header_background:
@@ -80,5 +105,6 @@ def build_video_theme_for_event(event):
         navigation['organizer_name'] = str(organizer.name)
         navigation['organizer_presale_url'] = str(eventreverse(organizer, 'presale:organizer.index'))
     out['navigation'] = navigation
+    out['typography'] = build_video_typography_for_event(event)
 
     return out

@@ -46,9 +46,11 @@ const CLR_SECONDARY_TEXT_FALLBACK = {LIGHT: Color('rgba(0, 0, 0, .74)'), DARK: C
 const CLR_DISABLED_TEXT = {LIGHT: Color('rgba(0, 0, 0, .38)'), DARK: Color('rgba(255, 255, 255, .5)')}
 const CLR_DIVIDERS = {LIGHT: Color('rgba(255, 255, 255, .63)'), DARK: Color('rgba(255, 255, 255, .63)')}
 
+const PLATFORM_SIDEBAR_BG = '#f8f8f8'
+
 const DEFAULT_COLORS = {
 	primary: '#2185d0',
-	sidebar: '#2185d0',
+	sidebar: PLATFORM_SIDEBAR_BG,
 	bbb_background: '#ffffff',
 	danger: '#d32f2f',
 }
@@ -78,6 +80,7 @@ const themeConfig = {
 	logo: Object.assign({}, DEFAULT_LOGO, config.theme?.logo),
 	streamOfflineImage: config.theme?.streamOfflineImage,
 	identicons: Object.assign({}, DEFAULT_IDENTICONS, config.theme?.identicons),
+	typography: config.theme?.typography || null,
 }
 
 const colors = {}
@@ -108,6 +111,16 @@ function updateThemeVariables() {
 		themeVariables['--color-header-text'] = '#ffffff'
 	}
 
+	const typography = themeConfig.typography || config.theme?.typography
+	if (typography?.font_family) {
+		themeVariables['--font-family'] = typography.font_family
+	}
+	if (typography?.font_family_title) {
+		themeVariables['--font-family-title'] = typography.font_family_title
+	} else if (typography?.font_family) {
+		themeVariables['--font-family-title'] = typography.font_family
+	}
+
 	// Match shared (server-rendered) dropdown tokens for consistent UI.
 	themeVariables['--size-border-radius'] = '0.25rem'
 	themeVariables['--shadow-lightest'] = '0 1px 2px rgb(0 0 0 / 0.24)'
@@ -115,8 +128,26 @@ function updateThemeVariables() {
 	themeVariables['--shadow-light'] = '0 0 6px 1px rgb(0 0 0 / 0.1), var(--shadow-lighter)'
 }
 
+function applyTypography(typography = {}) {
+	if (!typography || typeof typography !== 'object') return
+	themeConfig.typography = {...typography}
+
+	if (typeof document === 'undefined' || !document.head) return
+
+	if (typography.font_stylesheet) {
+		let styleEl = document.head.querySelector('style[data-eventyay-event-font]')
+		if (!styleEl) {
+			styleEl = document.createElement('style')
+			styleEl.dataset.eventyayEventFont = '1'
+			document.head.appendChild(styleEl)
+		}
+		styleEl.textContent = typography.font_stylesheet
+	}
+}
+
 function populateColorObjects(colorValues = {}) {
 	const merged = mergeColorConfig(colorValues)
+	merged.sidebar = PLATFORM_SIDEBAR_BG
 
 	for (const key of Object.keys(DEFAULT_COLORS)) {
 		colors[key] = Color(merged[key])
@@ -144,14 +175,24 @@ colors.inputPrimaryBgDarken = colors.primary.darken(0.15)
 // secondary inputs are transparent
 colors.inputSecondaryFg = colors.primary
 colors.inputSecondaryFgAlpha = colors.primary.alpha(0.08)
-// sidebar
-colors.sidebarTextPrimary = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
-colors.sidebarTextSecondary = firstReadable([CLR_SECONDARY_TEXT.LIGHT, CLR_SECONDARY_TEXT_FALLBACK.LIGHT, CLR_SECONDARY_TEXT.DARK, CLR_SECONDARY_TEXT_FALLBACK.DARK], colors.sidebar)
-colors.sidebarTextDisabled = firstReadable([CLR_DISABLED_TEXT.LIGHT, CLR_DISABLED_TEXT.DARK], colors.sidebar)
-colors.sidebarActiveBg = firstReadable(['rgba(0, 0, 0, 0.08)', 'rgba(255, 255, 255, 0.4)'], colors.sidebar)
-colors.sidebarActiveFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
-colors.sidebarHoverBg = firstReadable(['rgba(0, 0, 0, 0.12)', 'rgba(255, 255, 255, 0.3)'], colors.sidebar)
-colors.sidebarHoverFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
+// Rooms sidebar: light platform nav (tickets/talk), not the primary-coloured app bar.
+if (colors.sidebar.luminosity() > 0.5) {
+	colors.sidebarTextPrimary = colors.primary
+	colors.sidebarTextSecondary = Color('rgba(0, 0, 0, 0.54)')
+	colors.sidebarTextDisabled = Color('rgba(0, 0, 0, 0.38)')
+	colors.sidebarActiveBg = Color('#eeeeee')
+	colors.sidebarHoverBg = Color('#eeeeee')
+	colors.sidebarActiveFg = colors.primary.darken(0.15)
+	colors.sidebarHoverFg = colors.primary.darken(0.15)
+} else {
+	colors.sidebarTextPrimary = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
+	colors.sidebarTextSecondary = firstReadable([CLR_SECONDARY_TEXT.LIGHT, CLR_SECONDARY_TEXT_FALLBACK.LIGHT, CLR_SECONDARY_TEXT.DARK, CLR_SECONDARY_TEXT_FALLBACK.DARK], colors.sidebar)
+	colors.sidebarTextDisabled = firstReadable([CLR_DISABLED_TEXT.LIGHT, CLR_DISABLED_TEXT.DARK], colors.sidebar)
+	colors.sidebarActiveBg = firstReadable(['rgba(0, 0, 0, 0.08)', 'rgba(255, 255, 255, 0.4)'], colors.sidebar)
+	colors.sidebarActiveFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
+	colors.sidebarHoverBg = firstReadable(['rgba(0, 0, 0, 0.12)', 'rgba(255, 255, 255, 0.3)'], colors.sidebar)
+	colors.sidebarHoverFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
+}
 
 	// TODO warn if contrast is failing
 
@@ -176,6 +217,7 @@ function injectThemeVariables() {
 }
 
 populateColorObjects(themeConfig.colors)
+applyTypography(themeConfig.typography)
 injectThemeVariables()
 
 export default themeConfig
@@ -193,12 +235,13 @@ export function computeForegroundSidebarColor(newColors) {
 
 export async function getThemeConfig() {
 	// Fast path: if backend provided theme in injected config, just use it and avoid network 404 spam
-	if (config.theme && (config.theme.colors || config.theme.logo)) {
+	if (config.theme && (config.theme.colors || config.theme.logo || config.theme.typography)) {
 		return {
 			colors: config.theme.colors || configColors,
 			logo: Object.assign({}, DEFAULT_LOGO, config.theme.logo),
 			streamOfflineImage: config.theme.streamOfflineImage,
 			identicons: Object.assign({}, DEFAULT_IDENTICONS, config.theme.identicons),
+			typography: config.theme.typography,
 		}
 	}
 	if (config.noThemeEndpoint) {
@@ -207,6 +250,7 @@ export async function getThemeConfig() {
 			logo: Object.assign({}, DEFAULT_LOGO, config.theme?.logo),
 			streamOfflineImage: config.theme?.streamOfflineImage,
 			identicons: Object.assign({}, DEFAULT_IDENTICONS, config.theme?.identicons),
+			typography: config.theme?.typography,
 		}
 	}
 	if (!config.api?.base) {
@@ -215,6 +259,7 @@ export async function getThemeConfig() {
 			logo: Object.assign({}, DEFAULT_LOGO, config.theme?.logo),
 			streamOfflineImage: config.theme?.streamOfflineImage,
 			identicons: Object.assign({}, DEFAULT_IDENTICONS, config.theme?.identicons),
+			typography: config.theme?.typography,
 		}
 	}
 	const themeUrl = config.api.base + 'theme'
@@ -230,6 +275,7 @@ export async function getThemeConfig() {
 				logo: Object.assign({}, DEFAULT_LOGO, data.logo),
 				streamOfflineImage: data.streamOfflineImage,
 				identicons: Object.assign({}, DEFAULT_IDENTICONS, data.identicons),
+				typography: data.typography || config.theme?.typography,
 			}
 		} else {
 			if (response.status !== 404) console.warn('Theme fetch failed', response.status, response.statusText)
@@ -243,11 +289,13 @@ export async function getThemeConfig() {
 		logo: Object.assign({}, DEFAULT_LOGO, config.theme?.logo),
 		streamOfflineImage: config.theme?.streamOfflineImage,
 		identicons: Object.assign({}, DEFAULT_IDENTICONS, config.theme?.identicons),
+		typography: config.theme?.typography,
 	}
 }
 
 export function applyThemeConfig(themeData = {}) {
 	const mergedColors = mergeColorConfig(themeData.colors ?? themeConfig.colors)
+	mergedColors.sidebar = PLATFORM_SIDEBAR_BG
 	themeConfig.colors = mergedColors
 
 	const logoSource = themeData.logo ?? themeConfig.logo ?? {}
@@ -261,6 +309,10 @@ export function applyThemeConfig(themeData = {}) {
 
 	const identiconSource = themeData.identicons ?? themeConfig.identicons ?? {}
 	themeConfig.identicons = {...DEFAULT_IDENTICONS, ...identiconSource}
+
+	if (themeData.typography) {
+		applyTypography(themeData.typography)
+	}
 
 	populateColorObjects(themeConfig.colors)
 	injectThemeVariables()
