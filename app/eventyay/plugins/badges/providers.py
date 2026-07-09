@@ -8,7 +8,7 @@ from eventyay.base.ticketoutput import BaseTicketOutput
 
 class BadgeOutputProvider(BaseTicketOutput):
     identifier = 'badge'
-    verbose_name = _('Badge')
+    verbose_name = _('Badge output')
     download_button_text = _('Download Badge')
     multi_download_enabled = True
 
@@ -32,4 +32,4 @@ class BadgeOutputProvider(BaseTicketOutput):
 
     @property
     def settings_form_fields(self):
-        return {}  # No settings needed for now
+        return super().settings_form_fields
