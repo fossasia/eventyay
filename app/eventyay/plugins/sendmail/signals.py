@@ -23,26 +23,26 @@ def control_nav_import(sender, request=None, **kwargs):
                 pending_mails,
             ) if pending_mails > 0 else _('Message center'),
             'url': reverse(
-                'plugins:sendmail:outbox',
+                'control:event.mail.outbox',
                 kwargs={
                     'event': request.event.slug,
                     'organizer': request.event.organizer.slug,
                 },
             ),
-            'active': (url.namespace == 'plugins:sendmail' and url.url_name == 'outbox'),
+            'active': (url.namespace == 'control:event.mail' and url.url_name == 'outbox'),
             'icon': 'envelope',
             'children': [
                 {
                     'label': _('Outbox'),
                     'url': reverse(
-                        'plugins:sendmail:outbox',
+                        'control:event.mail.outbox',
                         kwargs={
                             'event': request.event.slug,
                             'organizer': request.event.organizer.slug,
                         },
                     ),
                     'active': (
-                        url.namespace == 'plugins:sendmail' and
+                        url.namespace == 'control:event.mail' and
                         url.url_name in {
                             'outbox',
                             'edit_mail',
@@ -54,14 +54,14 @@ def control_nav_import(sender, request=None, **kwargs):
                 {
                     'label': _('Compose'),
                     'url': reverse(
-                        'plugins:sendmail:compose_email_choice',
+                        'control:event.mail.compose',
                         kwargs={
                             'event': request.event.slug,
                             'organizer': request.event.organizer.slug,
                         },
                     ),
                     'active': (
-                        url.namespace == 'plugins:sendmail' and
+                        url.namespace == 'control:event.mail' and
                         url.url_name in {
                             'compose_email_choice',
                             'compose_email_teams',
@@ -72,24 +72,24 @@ def control_nav_import(sender, request=None, **kwargs):
                 {
                     'label': _('Sent'),
                     'url': reverse(
-                        'plugins:sendmail:sent',
+                        'control:event.mail.sent',
                         kwargs={
                             'event': request.event.slug,
                             'organizer': request.event.organizer.slug,
                         },
                     ),
-                    'active': (url.namespace == 'plugins:sendmail' and url.url_name == 'sent'),
+                    'active': (url.namespace == 'control:event.mail' and url.url_name == 'sent'),
                 },
                 {
                     'label': _('Templates'),
                     'url': reverse(
-                        'plugins:sendmail:templates',
+                        'control:event.mail.templates',
                         kwargs={
                             'event': request.event.slug,
                             'organizer': request.event.organizer.slug,
                         },
                     ),
-                    'active': (url.namespace == 'plugins:sendmail' and url.url_name == 'templates'),
+                    'active': (url.namespace == 'control:event.mail' and url.url_name == 'templates'),
                 },
             ],
         },
