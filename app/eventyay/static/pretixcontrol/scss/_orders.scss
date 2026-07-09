@@ -62,9 +62,6 @@
 
 .batch-select-actions-orders {
     margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
 
     .order-bulk-actions-menu {
         > .btn {
@@ -76,7 +73,6 @@
         }
 
         > .dropdown-menu {
-            min-width: 260px;
             padding: 8px 0;
             margin-bottom: 10px;
         }
