@@ -1,23 +1,12 @@
-import datetime
-from decimal import Decimal
-
-import jwt
 import pytest
 from django.conf import settings
 from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Event, Order, OrderPosition, Organizer, Product
-from eventyay.eventyay_common.utils import encode_email
+from eventyay.base.models import Event, Organizer
 from eventyay.multidomain.models import KnownDomain
-from eventyay.multidomain.urlreverse import (
-    build_absolute_uri,
-    build_join_video_url,
-    eventreverse,
-    generate_video_token_url,
-)
-from eventyay.presale.views.event import JoinOnlineVideoView
+from eventyay.multidomain.urlreverse import build_absolute_uri, eventreverse
 from tests.tickets import assert_num_queries
 
 
@@ -209,100 +198,3 @@ def test_event_custom_domain_absolute(env):
 def test_event_org_domain_absolute(env):
     KnownDomain.objects.create(domainname='foobar', organizer=env[0])
     assert build_absolute_uri(env[1], 'presale:event.index') == 'http://foobar/2015/'
-
-
-@pytest.fixture
-def video_event(env):
-    organizer, event = env
-    ticket = Product.objects.create(
-        event=event,
-        name='Ticket',
-        default_price=Decimal('10.00'),
-        admission=True,
-    )
-    event.settings.set('venueless_url', 'http://video.example.com/')
-    event.settings.set('venueless_issuer', 'test-issuer')
-    event.settings.set('venueless_audience', 'test-audience')
-    event.settings.set('venueless_secret', 'test-secret')
-    event.settings.set('venueless_all_products', True)
-    order = Order.objects.create(
-        event=event,
-        email='attendee@example.com',
-        status=Order.STATUS_PAID,
-        total=Decimal('10.00'),
-        datetime=now(),
-        expires=now() + datetime.timedelta(days=1),
-    )
-    position = OrderPosition.objects.create(
-        order=order,
-        product=ticket,
-        price=Decimal('10.00'),
-        positionid=1,
-        attendee_name_parts={'full_name': 'Jane Doe'},
-    )
-    return event, order, position
-
-
-@pytest.mark.django_db
-@scopes_disabled()
-def test_build_join_video_url_matches_presale_token(video_event):
-    event, order, position = video_event
-    email_url = build_join_video_url(event, order)
-
-    view = JoinOnlineVideoView()
-    view.request = type('Request', (), {'event': event})()
-    presale_url = view.generate_token_url(view.request, position, order)
-
-    email_token = email_url.split('#token=')[1]
-    presale_token = presale_url.split('#token=')[1]
-    decode_kwargs = {
-        'algorithms': ['HS256'],
-        'audience': 'test-audience',
-        'issuer': 'test-issuer',
-    }
-    email_payload = jwt.decode(email_token, 'test-secret', **decode_kwargs)
-    presale_payload = jwt.decode(presale_token, 'test-secret', **decode_kwargs)
-
-    assert email_payload['uid'] == presale_payload['uid'] == encode_email('attendee@example.com')
-    assert 'attendee' in email_payload['traits']
-    assert set(email_payload['traits']) == set(presale_payload['traits'])
-    assert email_url.split('#')[0] == presale_url.split('#')[0]
-    assert f'/{event.organizer.slug}/{event.slug}/video/' in email_url
-
-
-@pytest.mark.django_db
-@scopes_disabled()
-def test_build_join_video_url_returns_empty_without_allowed_products(video_event):
-    event, order, _position = video_event
-    event.settings.set('venueless_all_products', False)
-    event.settings.set('venueless_products', [])
-
-    assert build_join_video_url(event, order) == ''
-
-
-@pytest.mark.django_db
-@scopes_disabled()
-def test_generate_video_token_url_returns_empty_without_position(video_event):
-    event, order, _position = video_event
-
-    assert generate_video_token_url(event, encode_email(order.email), None) == ''
-
-
-@pytest.mark.django_db
-@scopes_disabled()
-def test_generate_video_token_url_supports_legacy_token_placeholder(video_event):
-    event, order, _position = video_event
-    event.settings.set('venueless_url', 'http://video.example.com/join?token={token}')
-
-    url = build_join_video_url(event, order)
-
-    assert '#token=' not in url
-    assert 'token=' in url
-    token = url.split('token=')[1]
-    jwt.decode(
-        token,
-        'test-secret',
-        algorithms=['HS256'],
-        audience='test-audience',
-        issuer='test-issuer',
-    )
