@@ -1,62 +1,72 @@
 <template lang="pug">
-.c-landing-page(v-scrollbar.y="", :style="landingStyle")
-	.hero(:class="{'has-no-image': !hasHeroVisual}")
-		.hero-content
-			img.hero-logo(v-if="heroImage", :src="heroImage", :alt="eventTitle")
-			.hero-copy(v-if="eventTitle || eventStartLine || eventEndLine")
-				.hero-text(v-if="eventTitle") {{ eventTitle }}
-			p.hero-time(v-if="eventStartLine") {{ eventStartLine }}
-			p.hero-time(v-if="eventEndLine") {{ eventEndLine }}
-	.content-container(v-if="hasContent")
-		.content
-			rich-text-content(v-if="mainContentIsRichText", :content="mainContent")
-			markdown-content(v-else-if="mainContentIsMarkdown", :content="mainContent")
-			.split-layout
-				.split-left(v-if="(featuredSessions && featuredSessions.length) || (nextSessions && nextSessions.length)")
-					template(v-if="featuredSessions && featuredSessions.length")
-						.header
-							h3 {{ $t('LandingPage:sessions:featured:header') }}
-							bunt-link-button(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:featured:link') }}
-						.sessions
-							session(
-								v-for="session of featuredSessions",
-								:session="session",
-								:now="now",
-								:faved="favs.includes(session.id)",
-								@fav="$store.dispatch('schedule/fav', $event)",
-								@unfav="$store.dispatch('schedule/unfav', $event)"
-							)
-					template(v-if="nextSessions && nextSessions.length")
-						.header
-							h3 {{ $t('LandingPage:sessions:next:header') }}
-							bunt-link-button(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:next:link') }}
-						.sessions
-							session(
-								v-for="session of nextSessions",
-								:session="session",
-								:now="now",
-								:faved="favs.includes(session.id)",
-								@fav="$store.dispatch('schedule/fav', $event)",
-								@unfav="$store.dispatch('schedule/unfav', $event)"
-							)
-				.split-right
-					template(v-if="activeRooms && activeRooms.length")
-						.header
-							h3 {{ $t('LandingPage:rooms:header') }}
-						.active-rooms.active-rooms-list
-							router-link.room-card(v-for="item of activeRooms", :key="item.room.id", :to="{name: 'room', params: {roomId: item.room.id}}")
-								.room-info
-									.room-name {{ item.room.name }}
-									.current-session(v-if="item.session")
-										span.live-badge(v-if="item.isLive") {{ $t('LandingPage:rooms:live') }}
-										span {{ item.session.title }}
-								svg.room-arrow(viewBox="0 0 24 24", stroke="currentColor", stroke-width="2", fill="none")
-									path(d="M5 12h14M12 5l7 7-7 7")
-					.speakers-section(v-if="schedule && schedule.speakers && schedule.speakers.length")
-						.header
-							h3 {{ $t('LandingPage:speakers:header') }}
-							bunt-link-button(:to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:link') }}
-						speakers-list(:hideToolbar="true", :speakers="schedule.speakers")
+.c-landing-page(:style="landingStyle", :class="{'has-header-image': hasHeaderBackground}")
+	.landing-top-bg
+	.landing-scroll(v-scrollbar.y="")
+		header.landing-header
+			a.event-home-back(v-if="homeBackLink", :href="homeBackLink.href", :aria-label="homeBackLink.ariaLabel")
+				span.event-home-back-pill
+					i.fa.fa-angle-left.event-home-back-icon(aria-hidden="true")
+					span.event-home-back-label(aria-hidden="true") {{ homeBackLink.label }}
+			.event-hero
+				.event-hero-overlay
+					.event-brand(:class="{'event-brand--has-logo': !!heroImage}")
+						.event-logo(v-if="heroImage")
+							a(:href="presaleHomeUrl")
+								img#event-logo.hero-logo(:src="heroImage", :alt="eventTitle")
+						.event-hero-text(v-if="eventTitle || eventStartLine || showEventEndLine")
+							a.event-title.event-public-text-link(v-if="eventTitle", :href="presaleHomeUrl") {{ eventTitle }}
+							a.event-date-line.event-public-text-link(v-if="eventStartLine", :href="presaleHomeUrl") {{ eventStartLine }}
+							a.event-date-line.event-public-text-link(v-if="showEventEndLine", :href="presaleHomeUrl") {{ eventEndLine }}
+		.content-card(v-if="hasContent")
+			.content
+				rich-text-content(v-if="mainContentIsRichText", :content="mainContent")
+				markdown-content(v-else-if="mainContentIsMarkdown", :content="mainContent")
+				.split-layout
+					.split-left(v-if="(featuredSessions && featuredSessions.length) || (nextSessions && nextSessions.length)")
+						.landing-section(v-if="featuredSessions && featuredSessions.length")
+							.section-header
+								h3 {{ $t('LandingPage:sessions:featured:header') }}
+								bunt-link-button.section-link(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:featured:link') }}
+							.sessions
+								session(
+									v-for="session of featuredSessions",
+									:session="session",
+									:now="now",
+									:faved="favs.includes(session.id)",
+									@fav="$store.dispatch('schedule/fav', $event)",
+									@unfav="$store.dispatch('schedule/unfav', $event)"
+								)
+						.landing-section(v-if="nextSessions && nextSessions.length")
+							.section-header
+								h3 {{ $t('LandingPage:sessions:next:header') }}
+								bunt-link-button.section-link(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:next:link') }}
+							.sessions
+								session(
+									v-for="session of nextSessions",
+									:session="session",
+									:now="now",
+									:faved="favs.includes(session.id)",
+									@fav="$store.dispatch('schedule/fav', $event)",
+									@unfav="$store.dispatch('schedule/unfav', $event)"
+								)
+					.split-right
+						.landing-section(v-if="activeRooms && activeRooms.length")
+							.section-header
+								h3 {{ $t('LandingPage:rooms:header') }}
+							.active-rooms.active-rooms-list
+								router-link.room-card(v-for="item of activeRooms", :key="item.room.id", :to="{name: 'room', params: {roomId: item.room.id}}")
+									.room-info
+										.room-name {{ item.room.name }}
+										.current-session(v-if="item.session")
+											span.live-badge(v-if="item.isLive") {{ $t('LandingPage:rooms:live') }}
+											span {{ item.session.title }}
+									svg.room-arrow(viewBox="0 0 24 24", stroke="currentColor", stroke-width="2", fill="none")
+										path(d="M5 12h14M12 5l7 7-7 7")
+						.landing-section.speakers-section(v-if="featuredSpeakers.length")
+							.section-header
+								h3 {{ $t('LandingPage:speakers:header') }}
+								bunt-link-button.section-link(:to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:link') }}
+							speakers-list(:hideToolbar="true", :speakers="featuredSpeakers")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
@@ -108,7 +118,7 @@ export default {
 				(this.activeRooms && this.activeRooms.length > 0) ||
 				(this.featuredSessions && this.featuredSessions.length > 0) ||
 				(this.nextSessions && this.nextSessions.length > 0) ||
-				(this.schedule && this.schedule.speakers && this.schedule.speakers.length > 0)
+				this.featuredSpeakers.length > 0
 		},
 		mediaBaseUrl() {
 			const apiBase = config?.api?.base
@@ -123,26 +133,74 @@ export default {
 			return this.resolveMediaUrl(
 				this.landingConfig.header_image
 				|| this.world?.visible_logo_url
-				|| config?.theme?.logo?.url
+				|| config?.visibleLogoUrl
 			)
 		},
 		heroBackgroundImage() {
 			return this.resolveMediaUrl(
 				this.landingConfig.header_background_image
 				|| this.world?.visible_header_image_url
+				|| config?.visibleHeaderImageUrl
 			)
 		},
-		hasHeroVisual() {
-			return !!(this.heroImage || this.heroBackgroundImage)
+		hasHeaderBackground() {
+			return !!this.heroBackgroundImage
+		},
+		eventTimezone() {
+			return this.world?.timezone
+				|| config?.eventTimezone
+				|| this.userTimezone
+				|| moment.tz.guess()
+		},
+		eventDateFrom() {
+			return this.world?.date_from
+				|| this.eventMeta?.date_from
+				|| config?.eventDates?.date_from
+				|| null
+		},
+		eventDateTo() {
+			return this.world?.date_to
+				|| this.eventMeta?.date_to
+				|| config?.eventDates?.date_to
+				|| null
 		},
 		landingStyle() {
+			const themeColors = config?.theme?.colors || {}
+			const headerBackground = themeColors.header_background
+				|| this.landingConfig.header_background_color
+				|| 'var(--color-header-background, var(--clr-primary))'
 			return {
-				'--landing-hero-background-color': this.landingConfig.header_background_color || 'var(--clr-primary)',
+				'--landing-hero-background-color': headerBackground,
 				'--landing-hero-background-image': this.heroBackgroundImage ? `url("${this.heroBackgroundImage}")` : 'none'
+			}
+		},
+		presaleHomeUrl() {
+			return config?.theme?.navigation?.presale_home_url
+				|| config?.eventUrl
+				|| ''
+		},
+		homeBackLink() {
+			const navigation = config?.theme?.navigation
+			if (navigation?.organizer_link_back && navigation.organizer_presale_url) {
+				return {
+					href: navigation.organizer_presale_url,
+					label: navigation.organizer_name || '',
+					ariaLabel: this.$t('LandingPage:home-back:organizer', {
+						name: navigation.organizer_name || ''
+					})
+				}
+			}
+			const href = navigation?.site_home_url || this.presaleHomeUrl
+			if (!href) return null
+			return {
+				href,
+				label: this.$t('LandingPage:home-back:label'),
+				ariaLabel: this.$t('LandingPage:home-back:label')
 			}
 		},
 		eventTitle() {
 			if (this.world?.title) return this.world.title
+			if (config?.eventTitle) return config.eventTitle
 			const name = this.eventMeta?.name
 			if (typeof name === 'string') return name
 			if (name && typeof name === 'object') {
@@ -151,17 +209,17 @@ export default {
 			return ''
 		},
 		eventDateRange() {
+			if (this.eventDateFrom) {
+				const timezone = this.eventTimezone
+				return {
+					start: moment.tz(this.eventDateFrom, timezone),
+					end: moment.tz(this.eventDateTo || this.eventDateFrom, timezone)
+				}
+			}
 			if (this.sessions?.length) {
 				const start = this.sessions[0].start
 				const end = this.sessions.reduce((latest, session) => session.end.isAfter(latest) ? session.end : latest, this.sessions[0].end)
 				return { start, end }
-			}
-			if (this.eventMeta?.date_from) {
-				const timezone = this.world?.timezone || this.userTimezone || moment.tz.guess()
-				return {
-					start: moment.tz(this.eventMeta.date_from, timezone),
-					end: moment.tz(this.eventMeta.date_to || this.eventMeta.date_from, timezone)
-				}
 			}
 			return null
 		},
@@ -169,13 +227,21 @@ export default {
 			if (!this.eventDateRange) return ''
 			return this.formatEventDateTime(this.eventDateRange.start)
 		},
+		showEventEndLine() {
+			if (!this.eventDateRange) return false
+			return !this.eventDateRange.start.isSame(this.eventDateRange.end, 'day')
+		},
 		eventEndLine() {
-			if (!this.eventDateRange) return ''
+			if (!this.showEventEndLine) return ''
 			return this.$t('LandingPage:dateRange:to', { date: this.formatEventDateTime(this.eventDateRange.end) })
 		},
 		featuredSessions() {
 			if (!this.sessions) return
 			return this.sessions.filter(session => session.featured)
+		},
+		featuredSpeakers() {
+			if (!this.schedule?.speakers) return []
+			return this.schedule.speakers.filter(speaker => speaker.is_featured)
 		},
 		nextSessions() {
 			if (!this.sessions) return []
@@ -212,6 +278,12 @@ export default {
 		},
 	},
 	async mounted() {
+		if (!document.querySelector('link[href*="font-awesome"]')) {
+			const link = document.createElement('link')
+			link.rel = 'stylesheet'
+			link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'
+			document.head.appendChild(link)
+		}
 		await this.fetchEventMeta()
 	},
 	methods: {
@@ -249,8 +321,8 @@ export default {
 			return this.toMediaUrl(value)
 		},
 		formatEventDateTime(value) {
-			const timezoneLabel = this.world?.timezone || this.userTimezone || 'UTC'
-			return `${value.clone().tz(timezoneLabel).format('dddd, D MMMM YYYY h:mm A')} (${timezoneLabel})`
+			const timezoneLabel = this.eventTimezone
+			return `${value.clone().tz(timezoneLabel).format('dddd, D MMMM, YYYY h:mm A')} (${timezoneLabel})`
 		},
 		async fetchEventMeta() {
 			if (!config?.api?.base) return
@@ -271,8 +343,26 @@ export default {
 					headers,
 					credentials: 'same-origin'
 				})
-				if (!response.ok) return
-				this.eventMeta = await response.json()
+				if (response.ok) {
+					const data = await response.json()
+					if (data?.date_from) {
+						this.eventMeta = data
+						return
+					}
+				}
+
+				const organizer = this.world?.organizer_slug || config?.organizerSlug
+				const eventSlug = this.world?.slug || config?.eventSlug
+				if (!organizer || !eventSlug) return
+
+				const detailUrl = `/api/v1/organizers/${encodeURIComponent(organizer)}/events/${encodeURIComponent(eventSlug)}/`
+				const detailResponse = await fetch(detailUrl, {
+					method: 'GET',
+					headers,
+					credentials: 'same-origin'
+				})
+				if (!detailResponse.ok) return
+				this.eventMeta = await detailResponse.json()
 			} catch (error) {
 				console.error('Failed to load landing page event metadata:', error)
 			}
@@ -283,98 +373,194 @@ export default {
 <style lang="stylus">
 .c-landing-page
 	flex: auto
+	display: flex
+	flex-direction: column
+	min-height: 0
+	width: 100%
+	position: relative
 	background-color: $clr-grey-50
-	.hero
-		height: 245px
-		display: flex
-		align-items: center
-		justify-content: center
-		padding: 3rem 0 0 0
+	.landing-top-bg
+		position: absolute
+		top: 0
+		left: 0
+		right: 0
+		height: 320px
+		z-index: 0
+		pointer-events: none
 		background-color: var(--landing-hero-background-color)
 		background-image: var(--landing-hero-background-image)
 		background-repeat: no-repeat
 		background-size: cover
 		background-position: center
+	&.has-header-image .landing-top-bg::after
+		content: ''
+		position: absolute
+		inset: 0
+		background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.15) 100%)
+	.landing-scroll
+		flex: auto
+		min-height: 0
 		position: relative
-		&::before
-			content: ''
-			position: absolute
-			inset: 0
-			background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.15) 100%)
-			pointer-events: none
-			z-index: 0
-		&.has-no-image::before
-			display: none
-		> *
-			position: relative
-			z-index: 1
-		&.has-no-image
-			height: auto
-			padding: 22px 0
-			background-color: var(--clr-primary)
-			color: $clr-primary-text-dark
-		.hero-content
-			width: 100%
-			max-width: 1400px
-			margin: 0 auto
-			padding: 0 24px
-			display: flex
-			flex-direction: row
-			align-items: center
-			gap: 2rem
-			position: relative
-			z-index: 1
-		.hero-copy
-			display: flex
-			flex-direction: column
-			gap: 6px
-			color: $clr-primary-text-dark
-		.hero-text
-			font-size: 3rem
-			font-weight: 700
-			line-height: 1.2
-			word-break: break-word
-			overflow-wrap: break-word
-			min-width: 0
-			text-align: left
-			margin: 0
-		.hero-time
-			font-size: 16px
-			line-height: 1.3
-			margin: 0
-		.hero-logo
-			height: auto
-			max-height: 140px
-			width: auto
-			object-fit: contain
-	.content-container
+		z-index: 1
+	.landing-header
 		display: flex
 		flex-direction: column
-		align-items: center
-		gap: 32px
-		padding: 0 24px
+		justify-content: flex-end
 		width: 100%
-		max-width: 1400px
+		max-width: 1600px
 		margin: 0 auto
+		padding: calc(1.5rem + 24px) 15px 0
+		box-sizing: border-box
+	.event-home-back
+		align-self: flex-start
+		display: inline-block
+		margin: 0 0 6px
+		padding-left: 28px
+		box-sizing: border-box
+		text-decoration: none
+		color: var(--color-header-text, #fff)
+		&:hover,
+		&:focus-visible
+			color: var(--color-header-text, #fff)
+			text-decoration: none
+	.event-home-back-pill
+		display: inline-flex
+		align-items: center
+		justify-content: center
+		gap: 0
+		min-height: 32px
+		padding: 0 11px
+		background: rgba(0, 0, 0, 0.45)
+		border-radius: 8px
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28)
+		transition: gap 0.18s ease, background 0.18s ease
+	.event-home-back:hover .event-home-back-pill,
+	.event-home-back:focus-visible .event-home-back-pill
+		gap: 0.4em
+		background: rgba(0, 0, 0, 0.62)
+	.event-home-back:focus-visible
+		outline: none
+	.event-home-back:focus-visible .event-home-back-pill
+		outline: 2px solid rgb(255 255 255 / 0.85)
+		outline-offset: 2px
+	.event-home-back .event-home-back-icon
+		font-size: 22px
+		line-height: 1
+		flex-shrink: 0
+	.event-home-back .event-home-back-label
+		font-size: 14px
+		font-weight: 600
+		line-height: 1
+		max-width: 0
+		opacity: 0
+		overflow: hidden
+		white-space: nowrap
+		transition: max-width 0.22s ease, opacity 0.18s ease
+	.event-home-back:hover .event-home-back-label,
+	.event-home-back:focus-visible .event-home-back-label
+		max-width: 12em
+		opacity: 1
+	.event-hero
+		display: flex
+		align-items: center
+		margin: 1rem 0 3.5rem
+		min-height: 100px
+	.event-hero-overlay
+		display: flex
+		width: 100%
+		padding: 0
+		box-sizing: border-box
+		min-height: 100px
+		align-items: center
+	.event-brand
+		display: flex
+		align-items: center
+		gap: 2rem
+		flex-wrap: nowrap
+		text-align: left
+		min-width: 0
+		width: 100%
+		&.event-brand--has-logo
+			padding-left: 1.75rem
+	.event-logo a
+		display: block
+		text-decoration: none
+	.event-hero-text
+		color: var(--color-header-text, #fff)
+		display: flex
+		flex-direction: column
+		gap: 0
+		min-width: 0
+	.event-hero-text .event-title
+		font-size: 3rem
+		font-weight: 700
+		line-height: 1.2
+		word-break: break-word
+		overflow-wrap: break-word
+		min-width: 0
+		text-align: left
+		margin: 0
+	.event-date-line
+		font-size: 1rem
+		line-height: 1.3
+		opacity: 0.96
+		margin: 0
+		color: var(--color-header-text, #fff)
+	.event-public-text-link
+		color: inherit
+		text-decoration: none
+		display: block
+		&:hover,
+		&:focus-visible
+			color: inherit
+			text-decoration: none
+	.hero-logo,
+	#event-logo
+		height: auto
+		max-height: 140px
+		width: auto
+		object-fit: contain
+	.content-card
+		position: relative
+		z-index: 2
+		width: 100%
+		max-width: 1600px
+		margin: 0 auto
+		background-color: $clr-white
+		box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2)
+		border-radius: 4px 4px 0 0
 		box-sizing: border-box
 	.content
 		display: flex
 		flex-direction: column
 		width: 100%
-		.header
-			padding: 0 8px
+		padding: 24px
+		box-sizing: border-box
 	.rich-text-content, .c-markdown-content
 		max-width: 960px
 		margin: 0 auto
-	.header
+	.landing-section
+		margin-top: 30px
+		&:first-child
+			margin-top: 0
+	.section-header
 		display: flex
 		justify-content: space-between
 		align-items: baseline
-		height: 56px
+		gap: 16px
+		min-height: 56px
+		padding: 0 8px
 		h3
 			margin: 0
-			line-height: 56px
-		.bunt-link-button
+			line-height: 1.3
+			font-size: 24px
+			font-weight: 600
+			text-transform: none
+		.section-link.bunt-link-button
+			flex: none
+			text-transform: none
+			font-weight: 500
+			letter-spacing: normal
 			themed-button-primary()
 
 	.split-layout
@@ -398,7 +584,6 @@ export default {
 		flex-direction: column
 		gap: 12px
 		padding: 0 8px
-		margin-bottom: 24px
 		.room-card
 			display: flex
 			flex-direction: row
@@ -420,6 +605,7 @@ export default {
 				font-size: 18px
 				font-weight: 600
 				margin-bottom: 8px
+				text-transform: none
 			.current-session
 				font-size: 14px
 				color: $clr-secondary-text-light
@@ -432,37 +618,57 @@ export default {
 					background-color: $clr-danger
 					color: $clr-white
 					font-size: 10px
-					font-weight: 700
+					font-weight: 600
 					padding: 2px 6px
 					border-radius: 4px
 					margin-right: 8px
+					text-transform: none
 			.room-arrow
 				width: 20px
 				height: 20px
 				color: $clr-secondary-text-light
 				margin-left: 12px
 				flex-shrink: 0
+	.speakers-section .c-speakers-list
+		overflow: visible !important
 
 	+below('m')
-		.hero
-			height: auto
-			padding: 14px 0
-			.hero-content
-				flex-direction: column
-				align-items: flex-start
-				gap: 10px
-				padding: 0 12px
-			.hero-text
-				font-size: 24px
-			.hero-time
-				font-size: 14px
-			.hero-logo
-				max-width: min(72vw, 280px)
-				max-height: 120px
-		.content-container
-			flex-direction: column
-			align-items: center
-			padding: 0 8px
-			> *
-				max-width: 100%
+		.landing-top-bg
+			height: 220px
+		.landing-header
+			padding-left: 0
+			padding-right: 0
+			padding-top: 24px
+		.event-home-back
+			padding-left: 12px
+		.event-home-back .event-home-back-icon
+			font-size: 19px
+		.event-home-back .event-home-back-label
+			font-size: 13.5px
+		.event-hero
+			margin: 0.5rem 0 2rem
+		.event-hero-overlay
+			align-items: flex-end
+		.event-brand
+			flex-wrap: wrap
+			gap: 1rem
+			align-items: flex-start
+			&.event-brand--has-logo
+				padding-left: 12px
+		.event-hero-text .event-title
+			font-size: 2rem
+		.event-date-line
+			font-size: 0.9rem
+		.hero-logo,
+		#event-logo
+			max-width: min(72vw, 280px)
+			max-height: 120px
+		.content
+			padding: 16px 8px
+		.section-header h3
+			font-size: 20px
+
+	@media (max-width: 576px)
+		.event-hero-text .event-title
+			font-size: 1.6rem
 </style>

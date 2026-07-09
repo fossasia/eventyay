@@ -48,7 +48,6 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { jwtDecode } from 'jwt-decode'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import theme from 'theme'
 import Avatar from 'components/Avatar'
 import config from 'config'
 
@@ -141,21 +140,13 @@ function buildMenuExternalHref(item) {
 	return base + item.externalPath
 }
 
-const defaultBrandLogoUrl = computed(() => {
+const brandLogoUrl = computed(() => {
 	const basePath = config?.basePath ?? ''
 	if (!basePath || basePath === '/') {
 		return '/eventyay-video-logo.png'
 	}
 	const normalized = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
 	return `${normalized}/eventyay-video-logo.png`
-})
-
-const brandLogoUrl = computed(() => {
-	const routeName = router.currentRoute.value?.name
-	if (routeName === 'about') {
-		return defaultBrandLogoUrl.value
-	}
-	return theme.logo?.url || defaultBrandLogoUrl.value
 })
 
 const profileMenuOpen = ref(false)

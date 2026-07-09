@@ -96,6 +96,18 @@ function updateThemeVariables() {
 		themeVariables[`--clr-${kebabCase(key)}`] = value.string()
 	}
 
+	const merged = mergeColorConfig(themeConfig.colors)
+	if (merged.header_background) {
+		themeVariables['--color-header-background'] = merged.header_background
+	} else if (merged.primary) {
+		themeVariables['--color-header-background'] = merged.primary
+	}
+	if (merged.header_text) {
+		themeVariables['--color-header-text'] = merged.header_text
+	} else {
+		themeVariables['--color-header-text'] = '#ffffff'
+	}
+
 	// Match shared (server-rendered) dropdown tokens for consistent UI.
 	themeVariables['--size-border-radius'] = '0.25rem'
 	themeVariables['--shadow-lightest'] = '0 1px 2px rgb(0 0 0 / 0.24)'
