@@ -52,17 +52,6 @@ def get_event_navigation(request: HttpRequest):
                 'active': url.url_name == 'event.settings.tickets',
             },
             {
-                'label': _('E-mail'),
-                'url': reverse(
-                    'control:event.settings.mail',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': url.url_name == 'event.settings.mail',
-            },
-            {
                 'label': _('Tax rules'),
                 'url': reverse(
                     'control:event.settings.tax',
@@ -466,6 +455,12 @@ def get_admin_navigation(request):
             'url': reverse('eventyay_admin:admin.submissions'),
             'active': 'submissions' in url.url_name,
             'icon': 'sticky-note-o',
+        },
+        {
+            'label': _('All Orders'),
+            'url': reverse('eventyay_admin:admin.orders'),
+            'active': 'orders' in url.url_name,
+            'icon': 'shopping-cart',
         },
         {
             'label': _('Task management'),

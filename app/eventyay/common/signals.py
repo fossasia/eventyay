@@ -7,12 +7,19 @@ import django.dispatch
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
+from django.db import transaction
+from django.dispatch import receiver
 from django.dispatch.dispatcher import NO_RECEIVERS
+from django.utils.timezone import now
+from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event
 from eventyay.base.signals import resolve_app_for_module, check_plugin_active
 
 logger = logging.getLogger(__name__)
+
+# Batch size for processing scheduled emails to limit transaction size
+MAIL_SEND_BATCH_SIZE = 100
 
 
 class EventPluginSignal(django.dispatch.Signal):
@@ -234,3 +241,64 @@ make your locale available to the makemessages command. Otherwise, check that yo
 plugin is enabled in the current event context if your locale should be scoped to
 events with your plugin activated.
 """
+
+
+@receiver(periodic_task, dispatch_uid="process_scheduled_emails")
+@scopes_disabled()
+@minimum_interval(minutes_after_success=1, minutes_running_timeout=5)
+def process_scheduled_emails(sender, **kwargs):
+    """
+    Periodic task to process scheduled emails for both Talk and Tickets components.
+    
+    Uses select_for_update(skip_locked=True) to prevent duplicate processing
+    when multiple workers process the same emails concurrently.
+    
+    Processes emails in batches to reduce lock contention and limit
+    transaction size for better performance and reliability.
+    """
+    from eventyay.plugins.sendmail.models import EmailQueue
+    from eventyay.base.models.mail import QueuedMail
+    from eventyay.common.exceptions import SendMailException
+
+    for _ in range(MAIL_SEND_BATCH_SIZE):
+        with transaction.atomic():
+            mail = (
+                QueuedMail.objects
+                .filter(scheduled_at__isnull=False, scheduled_at__lte=now(), sent__isnull=True)
+                .select_for_update(skip_locked=True)
+                .order_by('pk')
+                .first()
+            )
+            if mail is None:
+                break
+            try:
+                mail.send()
+                logger.info("[ScheduledMail] QueuedMail ID %s sent successfully.", mail.pk)
+            except SendMailException:
+                logger.exception("[ScheduledMail] Failed to send QueuedMail ID %s", mail.pk)
+            except Exception:
+                logger.exception("[ScheduledMail] Unexpected error sending QueuedMail ID %s", mail.pk)
+                raise
+
+    for _ in range(MAIL_SEND_BATCH_SIZE):
+        with transaction.atomic():
+            mail = (
+                EmailQueue.objects
+                .filter(scheduled_at__isnull=False, scheduled_at__lte=now(), sent_at__isnull=True)
+                .select_for_update(skip_locked=True)
+                .order_by('pk')
+                .first()
+            )
+            if mail is None:
+                break
+            try:
+                sent = mail.send()
+                if sent:
+                    logger.info("[ScheduledMail] EmailQueue ID %s processed.", mail.pk)
+                else:
+                    logger.info("[ScheduledMail] EmailQueue ID %s: no recipients to send to.", mail.pk)
+            except SendMailException:
+                logger.exception("[ScheduledMail] Failed to send EmailQueue ID %s", mail.pk)
+            except Exception:
+                logger.exception("[ScheduledMail] Unexpected error sending EmailQueue ID %s", mail.pk)
+                raise

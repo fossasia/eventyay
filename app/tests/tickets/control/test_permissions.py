@@ -42,6 +42,12 @@ superuser_urls = [
     'admin/users/1/impersonate',
     'admin/users/1/reset',
     'admin/sudo/sessions/',
+    'admin/organizers/',
+    'admin/events/',
+    'admin/attendees/',
+    'admin/submissions/',
+    'admin/task_management',
+    'admin/global/message/',
 ]
 
 staff_urls = [

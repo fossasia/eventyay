@@ -42,7 +42,7 @@ class Command(BaseCommand):
         print("Default API key secrets:", e.config["JWT_secrets"])
 
         print("Admin url:")
-        iat = datetime.datetime.utcnow()
+        iat = datetime.datetime.now(datetime.timezone.utc)
         exp = iat + datetime.timedelta(days=365)
         payload = {
             "iss": "any",

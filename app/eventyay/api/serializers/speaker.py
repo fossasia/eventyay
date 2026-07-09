@@ -20,6 +20,7 @@ from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.base.models.auth import User
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.question import TalkQuestionTarget
+from eventyay.talk_rules.orga import can_view_speaker_names, is_reviewer_only_for_event
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -48,6 +49,39 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             self.fields.pop('avatar_source', None)
         if is_public_view and not self.event.cfp.is_field_public('avatar_license'):
             self.fields.pop('avatar_license', None)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if (
+            self.event
+            and request
+            and request.user.has_perm('base.orga_list_speakerprofile', self.event)
+        ):
+            from eventyay.talk_rules.orga import (
+                can_view_speaker_emails,
+                can_view_speaker_names,
+                enforces_hide_speaker_emails,
+                enforces_hide_speaker_names,
+            )
+
+            hide_names = enforces_hide_speaker_names(request.user, self.event) or (
+                is_reviewer_only_for_event(request.user, self.event)
+                and not can_view_speaker_names(request.user, self.event)
+            )
+            hide_emails = enforces_hide_speaker_emails(request.user, self.event) or (
+                is_reviewer_only_for_event(request.user, self.event)
+                and not can_view_speaker_emails(request.user, self.event)
+            )
+
+            if hide_names:
+                data.pop('fullname', None)
+                data.pop('email', None)
+                data.pop('biography', None)
+                data.pop('avatar_url', None)
+            elif hide_emails:
+                data.pop('email', None)
+        return data
 
     @staticmethod
     def get_avatar_source(obj):

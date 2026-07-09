@@ -59,6 +59,7 @@
         <script defer src="{% static 'common/js/toastuiLoader.js' %}" data-toastui-css="{% static 'vendored/toastui-editor/toastui-editor.min.css' %}" data-toastui-js="{% static 'vendored/toastui-editor/toastui-editor.min.js' %}" data-toastui-lang="{{ request.LANGUAGE_CODE|slice:':2' }}" data-toastui-t-undo="{% translate 'Undo' %}" data-toastui-t-redo="{% translate 'Redo' %}" data-toastui-t-underline="{% translate 'Underline' %}"></script>
         {% compress js %}
             <script defer src="{% static 'common/js/base.js' %}"></script>
+            <script defer src="{% static 'orga/js/tableFlipLabels.js' %}"></script>
             <script defer src="{% static 'common/js/collapse.js' %}"></script>
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
             <script defer src="{% static 'orga/js/main.js' %}"></script>
@@ -260,9 +261,6 @@
                                     </a>
                                     <a href="{{ request.event.orga_urls.review_settings }}" class="nav-link nav-link-second-level{% if "settings.review" in url_name %} active{% endif %}">
                                         <span>{% translate "Review" %}</span>
-                                    </a>
-                                    <a href="{{ request.event.orga_urls.mail_settings }}" class="nav-link nav-link-second-level{% if "settings.mail" in url_name %} active{% endif %}">
-                                        <span>{% translate "Email" %}</span>
                                     </a>
                                     <a href="{{ request.event.orga_urls.widget_settings }}" class="nav-link nav-link-second-level{% if "settings.widget" in url_name %} active{% endif %}">
                                         <span>{% translate "Widget" %}</span>

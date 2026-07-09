@@ -289,6 +289,13 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         can_view_speakers = self.request.user.has_perm(
             'schedule.list_schedule', self.event
         ) or self.request.user.has_perm('base.orga_list_speakerprofile', self.event)
+        from eventyay.talk_rules.orga import can_view_speaker_names, enforces_hide_speaker_names
+
+        if self.request.user.has_perm('base.orga_list_submission', self.event) and (
+            enforces_hide_speaker_names(self.request.user, self.event)
+            or not can_view_speaker_names(self.request.user, self.event)
+        ):
+            can_view_speakers = False
         if self.request.query_params.get('anon'):
             can_view_speakers = False
         return super().get_serializer(
@@ -643,7 +650,7 @@ class SubmissionFavouriteDeprecatedView(View):
 
     @staticmethod
     def get_user_video_token(user_code, video_settings):
-        iat = dt.datetime.utcnow()
+        iat = dt.datetime.now(dt.timezone.utc)
         exp = iat + dt.timedelta(days=30)
         payload = {
             'iss': video_settings.issuer,

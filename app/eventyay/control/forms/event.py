@@ -72,6 +72,8 @@ REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT = _(
     'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
     'The "Continue as a Guest" option will not be available for attendees in this event.'
 )
+
+
 ORGANIZER_EMAIL_MODEL_DEFAULT = Event._meta.get_field('email').default
 ORGANIZER_EMAIL_PLACEHOLDER = _('name@example.org')
 
@@ -90,11 +92,6 @@ def normalize_organizer_email_initial(email) -> str:
     if cleaned_email in {get_default_organizer_email(), ORGANIZER_EMAIL_MODEL_DEFAULT}:
         return ''
     return cleaned_email
-
-
-def clean_organizer_email(email):
-    cleaned_email = str(email or '').strip()
-    return cleaned_email or get_default_organizer_email()
 
 
 class EventWizardFoundationForm(forms.Form):
@@ -322,8 +319,6 @@ class EventWizardBasicsForm(I18nModelForm):
             raise forms.ValidationError(self.error_messages['duplicate_slug'], code='duplicate_slug')
         return slug.lower()
 
-    def clean_email(self):
-        return clean_organizer_email(self.cleaned_data.get('email', ''))
 
     @staticmethod
     def has_control_rights(user, organizer):
@@ -424,10 +419,6 @@ class EventWizardDisplayForm(forms.Form):
         super().__init__(*args, **kwargs)
         logo = Event._meta.get_field('logo')
         self.fields['logo'] = ImageField(required=False, label=logo.verbose_name, help_text=logo.help_text)
-        apply_organizer_email_placeholder(self.fields['email'])
-
-    def clean_email(self):
-        return clean_organizer_email(self.cleaned_data.get('email', ''))
 
 
 class EventWizardInitialForm(forms.Form):
@@ -668,6 +659,7 @@ class EventSettingsForm(SettingsForm):
         'logo_image',
         'logo_image_large',
         'event_logo_image',
+        'event_preview_image',
         'logo_show_title',
         'og_image',
         'menu_label_tickets',
@@ -1417,127 +1409,6 @@ class MailSettingsForm(SettingsForm):
         required=False,
         widget=I18nTextarea,
     )
-    smtp_use_custom = forms.BooleanField(
-        label=_('Use custom email'),
-        help_text=_('All mail related to your event will be sent over your specified email gateway.'),
-        required=False,
-    )
-    send_grid_api_key = forms.CharField(
-        label=_('Sendgrid token'),
-        required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
-    )
-    test_email = forms.CharField(
-        label=_('Send test email to'),
-        help_text=_('Enter one or more email addresses separated by commas to send a test email.'),
-        validators=[multimail_validate],
-        required=False,
-    )
-
-    smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP'))]
-
-    email_vendor = forms.ChoiceField(
-        label=_('Email vendor'),
-        required=False,
-        widget=forms.RadioSelect,
-        choices=smtp_select,
-    )
-    smtp_host = forms.CharField(
-        label=_('Hostname'),
-        required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'mail.example.org'}),
-    )
-    smtp_port = forms.IntegerField(
-        label=_('Port'),
-        required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'e.g. 587, 465, 25, ...'}),
-    )
-    smtp_username = forms.CharField(
-        label=_('Username'),
-        widget=forms.TextInput(attrs={'placeholder': 'myuser@example.org'}),
-        required=False,
-    )
-    smtp_password = forms.CharField(
-        label=_('Password'),
-        required=False,
-        widget=forms.PasswordInput(
-            attrs={
-                'autocomplete': 'new-password'  # see https://bugs.chromium.org/p/chromium/issues/detail?id=370363#c7
-            }
-        ),
-    )
-    smtp_use_tls = forms.BooleanField(
-        label=_('Use STARTTLS'),
-        help_text=_('Commonly enabled on port 587.'),
-        required=False,
-    )
-    smtp_use_ssl = forms.BooleanField(label=_('Use SSL'), help_text=_('Commonly enabled on port 465.'), required=False)
-    @property
-    def changed_data(self):
-        data = super().changed_data
-        if 'test_email' in data:
-            return [d for d in data if d != 'test_email']
-        return data
-
-    def save(self, *args, **kwargs):
-        # test_email should not be persisted as a setting.
-        # HierarkeyForm.save() iterates over self.fields and expects them in self.cleaned_data.
-        # We temporarily remove it from self.fields to ensure it's not saved.
-        f = self.fields.pop('test_email', None)
-        try:
-            return super().save(*args, **kwargs)
-        finally:
-            if f:
-                self.fields['test_email'] = f
-
-    def clean(self):
-        data = super().clean()
-        if not data.get('smtp_use_custom'):
-            gs = GlobalSettingsObject()
-            default_from = gs.settings.mail_from or settings.MAIL_FROM
-            submitted_mail_from = data.get('mail_from')
-            if submitted_mail_from and submitted_mail_from != default_from:
-                self.add_error('mail_from', _('Custom sender email can only be used when "Use custom email" is enabled.'))
-            data['mail_from'] = default_from
-
-        if not data.get('smtp_use_custom'):
-            # If custom email is disabled, we restore all previous custom settings to avoid wiping them
-            for field in ('email_vendor', 'send_grid_api_key', 'smtp_host', 'smtp_port',
-                          'smtp_username', 'smtp_password', 'smtp_use_tls', 'smtp_use_ssl'):
-                if not data.get(field) and self.initial.get(field):
-                    data[field] = self.initial.get(field)
-
-        elif data.get('email_vendor') == 'smtp':
-            # If SMTP is active, preserve SendGrid settings
-            if not data.get('send_grid_api_key') and self.initial.get('send_grid_api_key'):
-                data['send_grid_api_key'] = self.initial.get('send_grid_api_key')
-
-        elif data.get('email_vendor') == 'sendgrid':
-            # If SendGrid is active, preserve SMTP settings
-            for field in ('smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
-                          'smtp_use_tls', 'smtp_use_ssl'):
-                if not data.get(field) and self.initial.get(field):
-                    data[field] = self.initial.get(field)
-
-        # Standard password restoration logic (even if username/password are currently active)
-        if not data.get('smtp_password') and data.get('smtp_username') and self.initial.get('smtp_password'):
-            data['smtp_password'] = self.initial.get('smtp_password')
-
-        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
-            raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
-
-        # Validate email_vendor is selected when custom email is enabled
-        if data.get('smtp_use_custom') and not data.get('email_vendor'):
-            self.add_error('email_vendor', _('This field is required when "Use custom email" is enabled.'))
-
-        # Validate SendGrid token is provided when SendGrid is selected
-        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
-            if not data.get('send_grid_api_key'):
-                msg = _('This field is required when using SendGrid as email vendor.')
-                raise ValidationError({'send_grid_api_key': msg})
-
-        return data
-
     base_context = {
         'mail_text_order_placed': ['event', 'order', 'payment'],
         'mail_text_order_placed_attendee': ['event', 'order', 'position'],
