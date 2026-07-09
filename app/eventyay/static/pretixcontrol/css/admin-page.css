@@ -73,3 +73,42 @@
 .numwidget-revenue .text {
   margin-top: 5px;
 }
+
+.dashboard-panels .table tr.dashboard-divider td {
+  border-top: 2px solid #e8e8e8;
+  padding-top: 8px;
+}
+
+.event-table th {
+  background: #f7f7f7;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
+.event-table td,
+.event-table th {
+  padding: 6px 10px;
+  vertical-align: middle;
+}
+
+.event-table td:first-child,
+.event-table th:first-child {
+  padding-left: 15px;
+}
+
+.event-table td:last-child,
+.event-table th:last-child {
+  padding-right: 15px;
+}
+
+.dashboard-panels .table a,
+.dashboard-panels .table a:hover,
+.event-table a,
+.event-table a:hover {
+  text-decoration: none;
+}
+
+.dashboard-panels .panel-body .event-table {
+  margin-bottom: 0;
+}

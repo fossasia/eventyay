@@ -2,12 +2,13 @@ import sys
 import json
 from datetime import UTC, timedelta
 from zoneinfo import ZoneInfo
+from decimal import Decimal
 
 from allauth.account.models import EmailAddress
 from cron_descriptor import Options, get_description
 from django.conf import settings
 from django.contrib import messages
-from django.db.models import Prefetch, Q, Sum
+from django.db.models import Count, Exists, OuterRef, Prefetch, Q, Sum
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -36,12 +37,14 @@ from eventyay.control.forms.admin.admin import UpdateSettingsForm
 
 from eventyay.base.models.auth import User
 from eventyay.base.models.checkin import Checkin
-from eventyay.base.models.event import Event
-from eventyay.base.models.orders import Order, OrderPosition
+from eventyay.base.models.event import Event, Event_SettingsStore
+from eventyay.base.models.orders import Order, OrderPosition, OrderRefund
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.settings import GlobalSettings
-from eventyay.base.models.submission import Submission
+from eventyay.base.models.cfp import CfP
+from eventyay.base.models.submission import Submission, SubmissionStates
 from eventyay.base.models.vouchers import InvoiceVoucher
+from eventyay.base.models.product import Product
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm
@@ -62,21 +65,45 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
         n = now()
 
         # User KPIs
-        ctx['users_total'] = User.objects.count()
-        ctx['users_verified'] = EmailAddress.objects.filter(verified=True, primary=True).values('user_id').distinct().count()
-        ctx['users_unverified'] = ctx['users_total'] - ctx['users_verified']
-        ctx['users_new_24h'] = User.objects.filter(date_joined__gte=n - timedelta(hours=24)).count()
-        ctx['users_new_7d'] = User.objects.filter(date_joined__gte=n - timedelta(days=7)).count()
-        ctx['users_new_30d'] = User.objects.filter(date_joined__gte=n - timedelta(days=30)).count()
+        user_stats = User.objects.aggregate(
+            total=Count('id'),
+            new_24h=Count('id', filter=Q(date_joined__gte=n - timedelta(hours=24))),
+            new_7d=Count('id', filter=Q(date_joined__gte=n - timedelta(days=7))),
+            new_30d=Count('id', filter=Q(date_joined__gte=n - timedelta(days=30))),
+            banned=Count('id', filter=Q(moderation_state=User.ModerationState.BANNED)),
+            is_spam=Count('id', filter=Q(is_spam=True)),
+            recently_active=Count('id', filter=Q(last_login__gte=n - timedelta(days=30), last_login__isnull=False)),
+            deleted=Count('id', filter=Q(deleted=True)),
+            staff=Count('id', filter=Q(Q(is_staff=True) | Q(is_administrator=True)))
+        )
+        # EmailAddress verification count
+        users_verified = EmailAddress.objects.filter(verified=True, primary=True).values('user_id').distinct().count()
+
+        ctx['users_total'] = user_stats['total']
+        ctx['users_verified'] = users_verified
+        ctx['users_unverified'] = user_stats['total'] - users_verified
+        ctx['users_new_24h'] = user_stats['new_24h']
+        ctx['users_new_7d'] = user_stats['new_7d']
+        ctx['users_new_30d'] = user_stats['new_30d']
+        ctx['users_banned'] = user_stats['banned']
+        ctx['users_is_spam'] = user_stats['is_spam']
+        ctx['users_staff'] = user_stats['staff']
+        ctx['users_recently_active'] = user_stats['recently_active']
+        ctx['users_deleted'] = user_stats['deleted']
 
         # Organizer KPIs
         ctx['organizers_total'] = Organizer.objects.count()
 
         with scopes_disabled():
             # Event KPIs
-            ctx['events_total'] = Event.objects.count()
-            ctx['events_live'] = Event.objects.filter(live=True).count()
-            ctx['events_draft'] = ctx['events_total'] - ctx['events_live']
+            event_kpis = Event.objects.aggregate(
+                total=Count('id'),
+                live=Count('id', filter=Q(live=True)),
+                series=Count('id', filter=Q(has_subevents=True))
+            )
+            ctx['events_total'] = event_kpis['total']
+            ctx['events_live'] = event_kpis['live']
+            ctx['events_draft'] = event_kpis['total'] - event_kpis['live']
             ctx['events_past'] = (
                 Event.objects.filter(has_subevents=False)
                 .filter(
@@ -85,32 +112,188 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 )
                 .count()
             )
-            ctx['events_series'] = Event.objects.filter(has_subevents=True).count()
+            ctx['events_series'] = event_kpis['series']
+
+            # Event activity
+            ctx['events_running'] = (
+                Event.objects.filter(has_subevents=False, live=True, date_from__lte=n)
+                .filter(Q(date_to__isnull=True) | Q(date_to__gte=n))
+                .count()
+            )
+            ctx['events_upcoming'] = list(
+                Event.objects.filter(has_subevents=False, date_from__gt=n)
+                .select_related('organizer')
+                .order_by('date_from')[:10]
+            )
+            ctx['events_recent'] = list(
+                Event.objects.filter(has_subevents=False)
+                .select_related('organizer')
+                .order_by('-pk')[:10]
+            )
+
+            events_with_payment = Event_SettingsStore.objects.filter(
+                key__startswith='payment_',
+                key__endswith='_enabled',
+                value='True'
+            ).exclude(
+                key__in=[
+                    'payment_free_enabled',
+                    'payment_boxoffice_enabled',
+                    'payment_offsetting_enabled',
+                    'payment_giftcard_enabled'
+                ]
+            ).values_list('object_id', flat=True)
+
+            events_with_paid_products = Product.objects.filter(
+                default_price__gt=0
+            ).values_list('event_id', flat=True)
+
+            events_no_products = Event.objects.filter(products__isnull=True)
+            events_missing_payment = Event.objects.filter(id__in=events_with_paid_products).exclude(id__in=events_with_payment)
+
+            events_pending_setup = (events_no_products | events_missing_payment).distinct().annotate(
+                has_products=Exists(Product.objects.filter(event=OuterRef('pk')))
+            )
+            ctx['events_pending_setup_list'] = list(events_pending_setup.select_related('organizer').order_by('-pk')[:5])
+
+            # CfP stats
+            ctx['events_cfp_open_count'] = CfP.objects.filter(
+                Q(deadline__isnull=True) | Q(deadline__gte=n) | Q(event__submission_types__deadline__gte=n)
+            ).distinct().count()
+
+            ctx['events_cfp_closing_soon'] = list(
+                CfP.objects.filter(deadline__gte=n, deadline__lte=n + timedelta(days=7))
+                .select_related('event', 'event__organizer')
+                .order_by('deadline')[:5]
+            )
 
             # Order KPIs
             ctx['orders_total'] = Order.objects.count()
             ctx['orders_paid'] = Order.objects.filter(status=Order.STATUS_PAID).count()
             ctx['orders_pending'] = Order.objects.filter(status=Order.STATUS_PENDING).count()
-            ctx['orders_revenue'] = list(
-                Order.objects.filter(status=Order.STATUS_PAID)
+
+            paid_order_sums = {
+                r['event__currency']: r['total']
+                for r in Order.objects.filter(status=Order.STATUS_PAID)
                 .values('event__currency')
                 .annotate(total=Sum('total'))
-                .order_by('-total')
+                .order_by()
+            }
+
+            refund_sums = {
+                r['order__event__currency']: r['total']
+                for r in OrderRefund.objects.filter(state=OrderRefund.REFUND_STATE_DONE)
+                .values('order__event__currency')
+                .annotate(total=Sum('amount'))
+                .order_by()
+            }
+
+            # order breakdown counts per currency
+            order_counts_by_currency = {}
+            for status, key in [
+                (Order.STATUS_PAID, 'paid'),
+                (Order.STATUS_PENDING, 'pending'),
+                (Order.STATUS_CANCELED, 'cancelled'),
+            ]:
+                for entry in Order.objects.filter(status=status).values('event__currency').annotate(count=Count('pk', distinct=True)).order_by():
+                    currency = entry['event__currency']
+                    if currency not in order_counts_by_currency:
+                        order_counts_by_currency[currency] = {}
+                    order_counts_by_currency[currency][key] = entry['count']
+
+            for entry in Order.objects.filter(status=Order.STATUS_PAID, total=0).values('event__currency').annotate(count=Count('pk', distinct=True)).order_by():
+                currency = entry['event__currency']
+                if currency not in order_counts_by_currency:
+                    order_counts_by_currency[currency] = {}
+                order_counts_by_currency[currency]['free'] = entry['count']
+
+            all_currencies = sorted(list(
+                set(paid_order_sums.keys()) | set(refund_sums.keys()) | set(order_counts_by_currency.keys())
+            ))
+
+            ctx['orders_net_revenue'] = []
+            for currency in all_currencies:
+                paid_amount = paid_order_sums.get(currency, Decimal('0.00')) or Decimal('0.00')
+                refunded = refund_sums.get(currency, Decimal('0.00')) or Decimal('0.00')
+                gross = paid_amount + refunded
+                net = paid_amount
+                counts = order_counts_by_currency.get(currency, {})
+                ctx['orders_net_revenue'].append({
+                    'currency': currency,
+                    'gross': gross,
+                    'refunded': refunded,
+                    'net': net,
+                    'paid_count': counts.get('paid', 0),
+                    'pending_count': counts.get('pending', 0),
+                    'cancelled_count': counts.get('cancelled', 0),
+                    'free_count': counts.get('free', 0),
+                })
+
+            ctx['orders_revenue'] = sorted(
+                [
+                    {'event__currency': item['currency'], 'total': item['net']}
+                    for item in ctx['orders_net_revenue']
+                ],
+                key=lambda x: x['total'],
+                reverse=True
             )
 
+            # Schedule stats
+            ctx['events_with_schedule_count'] = Event.objects.filter(schedules__published__isnull=False).distinct().count()
+            ctx['events_without_schedule_count'] = Event.objects.exclude(schedules__published__isnull=False).distinct().count()
+
             # Programme KPIs
-            ctx['sessions_total'] = Submission.objects.count()
+            submission_kpis = Submission.objects.aggregate(
+                total=Count('id'),
+                submitted=Count('id', filter=Q(state=SubmissionStates.SUBMITTED)),
+                total_submitted=Count('id', filter=~Q(state__in=[SubmissionStates.DRAFT, SubmissionStates.DELETED])),
+                accepted=Count('id', filter=Q(state=SubmissionStates.ACCEPTED)),
+                rejected=Count('id', filter=Q(state=SubmissionStates.REJECTED)),
+                confirmed=Count('id', filter=Q(state=SubmissionStates.CONFIRMED))
+            )
+            ctx['sessions_total'] = submission_kpis['total']
+            ctx['sessions_submitted'] = submission_kpis['submitted']
+            ctx['sessions_total_submitted'] = submission_kpis['total_submitted']
+            ctx['sessions_accepted'] = submission_kpis['accepted']
+            ctx['sessions_rejected'] = submission_kpis['rejected']
+            ctx['sessions_confirmed'] = submission_kpis['confirmed']
+
+            ctx['sessions_recent_submissions'] = list(
+                Submission.objects.filter(state=SubmissionStates.SUBMITTED)
+                .select_related('event', 'event__organizer')
+                .order_by('-pk')[:5]
+            )
+
             ctx['speakers_total'] = (
                 Submission.speakers.through.objects
                 .values('user_id')
                 .distinct()
                 .count()
             )
+            ctx['speakers_confirmed'] = (
+                Submission.speakers.through.objects
+                .filter(submission__state=SubmissionStates.CONFIRMED)
+                .values('user_id').distinct().count()
+            )
+            ctx['speakers_unconfirmed'] = (
+                Submission.speakers.through.objects
+                .exclude(submission__state__in=[
+                    SubmissionStates.CONFIRMED,
+                    SubmissionStates.REJECTED,
+                    SubmissionStates.CANCELED,
+                    SubmissionStates.WITHDRAWN,
+                    SubmissionStates.DELETED,
+                ])
+                .values('user_id').distinct().count()
+            )
 
             # Attendee / ticket KPIs
             ctx['attendees_total'] = OrderPosition.objects.filter(
                 order__status=Order.STATUS_PAID,
                 addon_to__isnull=True,
+            ).count()
+            ctx['tickets_issued'] = OrderPosition.objects.filter(
+                order__status=Order.STATUS_PAID
             ).count()
 
         return ctx
