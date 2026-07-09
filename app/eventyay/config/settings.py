@@ -1257,6 +1257,7 @@ LOGGING = {
 
 # NOTE: django-allauth changed some settings name. Check https://docs.allauth.org/en/dev/release-notes/recent.html
 ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_PREVENT_ENUMERATION = "strict"
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 # 'mandatory' means allauth's own login view (/accounts/login/) will block unverified users.
