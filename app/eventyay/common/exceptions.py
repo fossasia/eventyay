@@ -3,7 +3,6 @@ from django.utils.functional import cached_property
 from django.utils.log import AdminEmailHandler
 from django.views.debug import ExceptionReporter
 
-
 class SendMailException(Exception):
     pass
 

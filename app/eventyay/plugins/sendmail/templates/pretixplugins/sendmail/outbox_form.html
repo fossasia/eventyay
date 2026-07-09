@@ -20,8 +20,8 @@
 
     {% if read_only %}
         <div class="alert alert-info">
-            {% blocktranslate trimmed with timestamp=form.instance.sent_at %}
-                This email was sent on {{ timestamp }}.
+            {% blocktranslate trimmed with timestamp=form.instance.sent_at timezone=request.event.timezone %}
+                This email was sent on {{ timestamp }} ({{ timezone }}).
             {% endblocktranslate %}
         </div>
 
@@ -121,6 +121,11 @@
 
                 {% bootstrap_field form.subject layout='horizontal' %}
                 {% bootstrap_field form.message layout='horizontal' %}
+
+                <!-- Scheduling -->
+                {% if form.scheduled_at %}
+                    {% bootstrap_field form.scheduled_at layout='horizontal' %}
+                {% endif %}
 
             </fieldset>
 
