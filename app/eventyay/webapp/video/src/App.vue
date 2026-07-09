@@ -152,8 +152,10 @@ export default {
 			return rooms.find(room => String(room.id) === wantedId)
 		},
 		isAdminRoute() {
-			const routeName = this.$route?.name
-			return routeName?.startsWith && routeName.startsWith('admin')
+			const isAdminRouteName = name => typeof name === 'string' && name.startsWith('admin')
+			const route = this.$route
+			return isAdminRouteName(route?.name) ||
+				route?.matched?.some(match => isAdminRouteName(match.name))
 		},
 		// TODO since this is used EVERYWHERE, use provide/inject?
 		modules() {
