@@ -4,7 +4,6 @@ import sys
 from datetime import UTC, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
-from decimal import Decimal
 
 from allauth.account.models import EmailAddress
 from cron_descriptor import Options, get_description
@@ -251,7 +250,6 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 .annotate(total=Sum('amount'))
                 .order_by()
             }
-
             # Order counts per currency
             currency_counts = Order.objects.values('event__currency').annotate(
                 paid=Count('pk', filter=Q(status=Order.STATUS_PAID) & ~Q(total=0), distinct=True),
