@@ -12,9 +12,6 @@ from eventyay.plugins.badges.api import (
 from .views import (
     LayoutCreate,
     LayoutGetDefault,
-    LayoutGetDefault,
-    LayoutGetDefault,
-    LayoutGetDefault,
     LayoutDelete,
     LayoutEditorView,
     LayoutListView,
