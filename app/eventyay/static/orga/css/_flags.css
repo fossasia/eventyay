@@ -1189,7 +1189,6 @@ input[lang="vg"],
 textarea[lang="vg"] {
   background-image: url("/static/vendored/flags/vg.png");
 }
-/* Vietnamese is ISO 639-1 language code 'vi', while Vietnam is ISO 3166-1 country code 'vn'. Therefore, the Vietnamese language intentionally uses the vn.png flag asset. */
 div[lang="vi"],
 input[lang="vi"],
 textarea[lang="vi"] {
