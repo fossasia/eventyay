@@ -74,7 +74,7 @@ header {
       padding: 8px 10px 4px 10px;
       border-bottom: 2px solid transparent;
       &:hover {
-        color: var(--color-header-navigation);
+        color: var(--color-header-navigation-hover);
         text-decoration: none;
         border-bottom: 2px dotted var(--color-primary);
       }
@@ -217,7 +217,7 @@ header {
 }
 
 .presale-sticky-tabs a.header-tab:hover {
-  color: var(--color-header-navigation);
+  color: var(--color-header-navigation-hover);
   text-decoration: none;
   border-bottom: 2px dotted var(--color-primary);
 }

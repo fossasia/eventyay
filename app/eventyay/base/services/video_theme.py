@@ -54,12 +54,19 @@ def build_video_theme_for_event(event):
     else:
         existing_colors = {**existing_colors}
 
+    sidebar_text = event.settings.get('video_menu_text_color')
+    sidebar_hover = event.settings.get('menu_text_scroll_over_color')
+
     out['colors'] = {
         **existing_colors,
         'primary': primary,
         'sidebar': primary,
         'bbb_background': bbb_bg,
     }
+    if sidebar_text:
+        out['colors']['sidebarText'] = normalize_video_theme_hex(sidebar_text)
+    if sidebar_hover:
+        out['colors']['sidebarTextHover'] = normalize_video_theme_hex(sidebar_hover)
 
     logo = out.get('logo')
     if isinstance(logo, dict):

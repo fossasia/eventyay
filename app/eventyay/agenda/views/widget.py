@@ -41,12 +41,14 @@ def color_etag(request, organizer=None, event=None, **kwargs):
     header_background_color = request.event.settings.get('header_background_color')
     header_text_color = request.event.settings.get('header_text_color')
     navigation_text_color = request.event.settings.get('navigation_text_color')
+    menu_text_scroll_over_color = request.event.settings.get('menu_text_scroll_over_color')
     primary_font = request.event.settings.get('primary_font')
     parts = [
         request.event.visible_primary_color or '',
         header_background_color or '',
         header_text_color or '',
         navigation_text_color or '',
+        menu_text_scroll_over_color or '',
         primary_font or '',
     ]
     return '|'.join(parts) if any(parts) else 'none'
@@ -292,6 +294,7 @@ def event_css(request, organizer=None, event=None, **kwargs):
     header_background_color = request.event.settings.get('header_background_color')
     header_text_color = request.event.settings.get('header_text_color')
     navigation_text_color = request.event.settings.get('navigation_text_color')
+    menu_text_scroll_over_color = request.event.settings.get('menu_text_scroll_over_color')
     primary_font = request.event.settings.get('primary_font')
 
     if request.event.visible_primary_color:
@@ -307,6 +310,8 @@ def event_css(request, organizer=None, event=None, **kwargs):
         variables.append(f'--color-header-text: {header_text_color};')
     if navigation_text_color:
         variables.append(f'--color-header-navigation: {navigation_text_color};')
+    if menu_text_scroll_over_color:
+        variables.append(f'--color-header-navigation-hover: {menu_text_scroll_over_color};')
 
     font_css = ''
     if primary_font and request.GET.get('target') != 'orga':
