@@ -305,37 +305,7 @@ class EventMailSettings(EventSettingsPermission, ActionFromUrl, FormView):
 
     def form_valid(self, form):
         form.save()
-
-        if self.request.POST.get('test', '0').strip() == '1':
-            backend = self.request.event.get_mail_backend(force_custom=True)
-            try:
-                backend.test(self.request.event.mail_settings['mail_from'])
-            except Exception as e:
-                messages.warning(
-                    self.request,
-                    _('An error occurred while contacting the SMTP server: %s') % str(e),
-                )
-            else:  # pragma: no cover
-                if form.cleaned_data.get('smtp_use_custom'):
-                    messages.success(
-                        self.request,
-                        _(
-                            'Yay, your changes have been saved and the connection attempt to '
-                            'your SMTP server was successful.'
-                        ),
-                    )
-                else:
-                    messages.success(
-                        self.request,
-                        _(
-                            'We’ve been able to contact the SMTP server you configured. '
-                            'Remember to check the “use custom SMTP server” checkbox, '
-                            'otherwise your SMTP server will not be used.'
-                        ),
-                    )
-        else:
-            messages.success(self.request, phrases.base.saved)
-
+        messages.success(self.request, phrases.base.saved)
         return super().form_valid(form)
 
 

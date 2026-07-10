@@ -1420,6 +1420,23 @@ div.mail-preview {
   margin-right: 300px;
 }
 
+.form-with-placeholder .splitdatetimerow {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+
+.form-with-placeholder .splitdatetimerow input[type="date"] {
+  flex: 0 0 14rem;
+  width: 14rem;
+}
+
+.form-with-placeholder .splitdatetimerow input[type="time"] {
+  flex: 0 0 10rem;
+  width: 10rem;
+}
+
 #placeholder-column {
   width: 270px;
   max-height: calc(100vh - 55px);

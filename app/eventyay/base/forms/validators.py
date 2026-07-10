@@ -32,7 +32,9 @@ class PlaceholderValidator(BaseValidator):
         data_placeholders = list(re.findall(r'({[^}]*})', value, re.X))
         invalid_placeholders = []
         for placeholder in data_placeholders:
-            if placeholder not in self.limit_value:
+            # Clean backslashes that might be added by markdown editors (e.g. {join\_online\_event})
+            clean_placeholder = placeholder.replace('\\_', '_')
+            if clean_placeholder not in self.limit_value:
                 invalid_placeholders.append(placeholder)
         if invalid_placeholders:
             raise ValidationError(
