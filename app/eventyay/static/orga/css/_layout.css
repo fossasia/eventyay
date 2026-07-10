@@ -1825,7 +1825,7 @@ h2 .user-name-display img {
     margin-left: 0;
   }
 
-  #page-content .navigation-button .header-nav {
+  #page-content .navigation-button a.header-nav.btn {
     flex: 1 1 calc(50% - 0.2rem);
     min-width: 0;
     text-align: center;

@@ -42,6 +42,7 @@
   line-height: 1;
 }
 
+.navigation-button,
 #event-nav .navigation .navigation-button,
 .header-nav .navigation .navigation-button {
   margin-left: auto;
@@ -51,6 +52,7 @@
   gap: 8px;
 }
 
+.navigation-button a.header-nav.btn,
 #event-nav .navigation .navigation-button a.header-nav.btn,
 .header-nav .navigation .navigation-button a.header-nav.btn {
   border: 1px solid var(--color-primary-hover, #1a69a4);
@@ -64,6 +66,10 @@
   box-shadow: none;
 }
 
+.navigation-button a.header-nav.btn.active,
+.navigation-button a.header-nav.btn:hover,
+.navigation-button a.header-nav.btn:focus,
+.navigation-button a.header-nav.btn:active,
 #event-nav .navigation .navigation-button a.header-nav.btn.active,
 #event-nav .navigation .navigation-button a.header-nav.btn:hover,
 #event-nav .navigation .navigation-button a.header-nav.btn:focus,
@@ -77,6 +83,13 @@
   border-color: var(--color-primary-hover, #1a69a4);
   color: #fff;
   box-shadow: none;
+}
+
+.navigation-button a.header-nav.btn.active i,
+.navigation-button a.header-nav.btn:hover i,
+.navigation-button a.header-nav.btn:focus i,
+.navigation-button a.header-nav.btn:active i {
+  color: #fff;
 }
 
 @media (min-width: 768px) {
