@@ -527,6 +527,7 @@ urlpatterns = [
                     checkin.CheckinListDelete.as_view(),
                     name='event.orders.checkinlists.delete',
                 ),
+                path('', include('eventyay.plugins.sendmail.urls')),
             ]
         ),
     ),

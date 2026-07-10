@@ -41,7 +41,7 @@
           <div class='btn-group' role='group'>
           </div>
           <div class='btn-group' role='group'>
-            <a href="{% url 'plugins:sendmail:purge_all' organizer=request.event.organizer.slug event=request.event.slug %}" class='btn btn-cancel'>
+            <a href="{% url 'control:event.mail.outbox.purge' organizer=request.event.organizer.slug event=request.event.slug %}" class='btn btn-cancel'>
               {% translate 'Discard all' %}
             </a>
           </div>
@@ -80,7 +80,7 @@
         <tr>
           <td>
             <a class='text-body text-decoration-none'
-               href="{% url 'plugins:sendmail:edit_mail' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
+               href="{% url 'control:event.mail.edit' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
               {{ mail.subject }}
             </a>
           </td>
@@ -117,7 +117,7 @@
           <td>
             <div class='btn-toolbar' role='toolbar'>
               <div class='btn-group' role='group'>
-                <form method='post' action="{% url 'plugins:sendmail:send_single' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
+                <form method='post' action="{% url 'control:event.mail.outbox.send' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
                   {% csrf_token %}
                   <button type='submit' class='btn btn-sm btn-primary' title="{% translate 'Send this email' %}">
                     <i class='fa fa-mail-forward'></i>
@@ -127,14 +127,14 @@
 
               <div class='btn-group' role='group'>
                 <a class='btn btn-sm btn-info' title="{% translate 'Edit this email' %}"
-                   href="{% url 'plugins:sendmail:edit_mail' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
+                   href="{% url 'control:event.mail.edit' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
                   <i class='fa fa-edit'></i>
                 </a>
               </div>
 
               <div class='btn-group' role='group'>
                 <a class='btn btn-sm btn-danger' title="{% translate 'Delete this email' %}"
-                   href="{% url 'plugins:sendmail:delete_single' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
+                   href="{% url 'control:event.mail.outbox.delete' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
                   <i class='fa fa-trash'></i>
                 </a>
               </div>
