@@ -238,3 +238,205 @@ body.loading-minimized #loadingmodal .btn.loadingmodal-minimize:hover {
 body:not(.is-import-task) #loadingmodal .btn.loadingmodal-minimize {
     display: none;
 }
+
+
+#import-loadingmodal, #ajaxerr {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, .7);
+    opacity: 0;
+    z-index: 20;
+    visibility: hidden;
+    padding: 10px;
+}
+
+#import-loadingmodal .big-icon, #ajaxerr .big-icon {
+    margin-top: 50px;
+    font-size: 200px;
+    color: var(--brand-primary, #2185d0);
+}
+
+#import-loadingmodal .modal-card, #ajaxerr .modal-card {
+    margin: 50px auto 0;
+    top: 50px;
+    width: 90%;
+    max-width: 600px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 7px 14px 0 rgba(78, 50, 92, 0.1),0 3px 6px 0 rgba(0,0,0,.07);
+    padding: 20px;
+    min-height: 160px;
+}
+
+#import-loadingmodal .modal-card .modal-card-icon, #ajaxerr .modal-card .modal-card-icon {
+    float: left;
+    width: 150px;
+    text-align: center;
+}
+
+#import-loadingmodal .modal-card .modal-card-icon .big-rotating-icon, #ajaxerr .modal-card .modal-card-icon .big-rotating-icon {
+    font-size: 120px;
+    margin: 0;
+}
+
+#import-loadingmodal .modal-card .modal-card-content, #ajaxerr .modal-card .modal-card-content {
+    margin-left: 160px;
+    text-align: left;
+}
+
+#import-loadingmodal .modal-card .modal-card-content h3, #ajaxerr .modal-card .modal-card-content h3 {
+    margin-top: 0;
+}
+
+@media (max-width: 700px) {
+    #import-loadingmodal .modal-card .modal-card-icon, #ajaxerr .modal-card .modal-card-icon {
+        float: none;
+        width: 100%;
+    }
+    #import-loadingmodal .modal-card .modal-card-content, #ajaxerr .modal-card .modal-card-content {
+        text-align: center;
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 10px;
+    }
+}
+
+.import-loading #import-loadingmodal, .ajaxerr #ajaxerr {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity .5s ease-in-out;
+    -moz-transition: opacity .5s ease-in-out;
+    -webkit-transition: opacity .5s ease-in-out;
+}
+
+/* Explicit styling for progress bars to ensure consistency across panels */
+#import-loadingmodal .progress {
+    margin-top: 15px;
+    height: 20px;
+    background-color: #ececec;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+    overflow: hidden;
+    display: flex;
+}
+
+#import-loadingmodal .progress-bar {
+    height: 100%;
+    background-color: #5cb85c;
+    width: 0%;
+    transition: width .6s ease;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.15);
+}
+
+#import-loadingmodal .progress-bar-success {
+    background-color: #5cb85c;
+}
+
+.import-loading-minimized #import-loadingmodal {
+    background: transparent;
+    width: auto;
+    height: auto;
+    bottom: 20px;
+    right: 20px;
+    top: auto;
+    left: auto;
+    padding: 0;
+}
+
+.import-loading-minimized #import-loadingmodal .modal-card {
+    margin: 0;
+    top: 0;
+    width: 350px;
+    min-height: 0;
+    padding: 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    background: white;
+}
+
+.import-loading-minimized #import-loadingmodal .modal-card-icon,
+.import-loading-minimized #import-loadingmodal .modal-card-content p.text,
+.import-loading-minimized #import-loadingmodal .modal-card-content p.status {
+    display: none;
+}
+
+.import-loading-minimized #import-loadingmodal .modal-card-content {
+    margin-left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.import-loading-minimized #import-loadingmodal .modal-card-content h3 {
+    font-size: 16px;
+    margin: 0;
+    padding: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    font-weight: normal;
+    order: 1;
+}
+
+body #import-loadingmodal .btn.loadingmodal-minimize {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    color: #333;
+    border-radius: 3px;
+    width: auto;
+    height: auto;
+    display: inline-block;
+    padding: 1px 5px;
+}
+
+body #import-loadingmodal .btn.loadingmodal-minimize i {
+    color: #333;
+}
+
+body.import-loading-minimized #import-loadingmodal .modal-card-content .pull-right {
+    float: none;
+    order: 2;
+    margin-left: auto;
+}
+
+body.import-loading-minimized #import-loadingmodal .btn.loadingmodal-minimize {
+    position: relative;
+    top: auto;
+    right: auto;
+    background-color: var(--brand-primary, #2185d0);
+    color: white;
+    border: none;
+    border-radius: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+body.import-loading-minimized #import-loadingmodal .btn.loadingmodal-minimize:hover {
+    background-color: #1a69a4;
+    color: white;
+}
+
+.import-loading-minimized #import-loadingmodal .progress {
+    width: 100%;
+    margin: 0;
+    height: 12px;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: #f5f5f5;
+}
+
+#import-loadingmodal .progress-bar.active,
+#import-loadingmodal .progress-bar-striped.active {
+    -webkit-animation: progress-bar-stripes 3s linear infinite;
+    -o-animation: progress-bar-stripes 3s linear infinite;
+    animation: progress-bar-stripes 3s linear infinite;
+}

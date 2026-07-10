@@ -14,7 +14,18 @@ let pollTimeout = null
 let isLong = false
 let isSubmitting = false
 
-const modal = () => document.getElementById('loadingmodal')
+const modal = () => {
+    let el = document.getElementById('import-loadingmodal')
+    if (!el) {
+        const original = document.getElementById('loadingmodal')
+        if (original) {
+            el = original.cloneNode(true)
+            el.id = 'import-loadingmodal'
+            document.body.appendChild(el)
+        }
+    }
+    return el
+}
 
 const show = (headline) => {
     const el = modal()
@@ -30,8 +41,8 @@ const show = (headline) => {
     }
     const minimizeBtn = el.querySelector('.loadingmodal-minimize')
     if (minimizeBtn) minimizeBtn.style.display = ''
-    document.body.classList.remove('loading-minimized')
-    document.body.classList.add('loading')
+    document.body.classList.remove('import-loading-minimized')
+    document.body.classList.add('import-loading')
     document.body.classList.add('is-import-task')
 }
 
@@ -43,8 +54,8 @@ const hide = () => {
     taskId = null
     checkUrl = null
     isSubmitting = false
-    document.body.classList.remove('loading')
-    document.body.classList.remove('loading-minimized')
+    document.body.classList.remove('import-loading')
+    document.body.classList.remove('import-loading-minimized')
     document.body.classList.remove('is-import-task')
     sessionStorage.removeItem('eventyay_async_task_import')
 }
@@ -78,21 +89,21 @@ const poll = () => {
         })
         .then(data => {
             if (data.ready) {
-                const bar = document.querySelector('#loadingmodal .progress-bar')
+                const bar = document.querySelector('#import-loadingmodal .progress-bar')
                 if (bar) {
                     bar.classList.remove('progress-bar-striped', 'active')
                     bar.classList.add('bg-success', 'progress-bar-success')
                     bar.style.width = '100%'
                 }
-                const btnIcon = document.querySelector('#loadingmodal .loadingmodal-minimize i')
+                const btnIcon = document.querySelector('#import-loadingmodal .loadingmodal-minimize i')
                 if (btnIcon) {
                     btnIcon.className = 'fa fa-check'
                 }
-                const h3 = document.querySelector('#loadingmodal h3')
+                const h3 = document.querySelector('#import-loadingmodal h3')
                 if (h3) {
                     h3.textContent = gettext('Task completed')
                 }
-                const bigIcon = document.querySelector('#loadingmodal .big-rotating-icon')
+                const bigIcon = document.querySelector('#import-loadingmodal .big-rotating-icon')
                 if (bigIcon) {
                     bigIcon.className = 'fa fa-check big-rotating-icon'
                     bigIcon.style.animation = 'none'
@@ -103,6 +114,9 @@ const poll = () => {
 
                 setTimeout(() => {
                     hide()
+                    // if (data.redirect) {
+                    //     location.href = data.redirect
+                    // }
                 }, 2000)
                 return
             }
@@ -145,7 +159,13 @@ const submit = (form) => {
             if (contentType && contentType.includes('text/html')) {
                 const html = await r.text()
                 const newDoc = new DOMParser().parseFromString(html, 'text/html')
-                document.documentElement.replaceWith(newDoc.documentElement)
+                const newWrapper = newDoc.querySelector('#page-wrapper')
+                const oldWrapper = document.querySelector('#page-wrapper')
+                if (newWrapper && oldWrapper) {
+                    oldWrapper.replaceWith(newWrapper)
+                } else {
+                    document.documentElement.replaceWith(newDoc.documentElement)
+                }
                 return null
             }
             if (!r.ok) {
@@ -170,8 +190,8 @@ const submit = (form) => {
                 id: taskId,
                 checkUrl: checkUrl,
                 isLong: isLong,
-                headline: document.querySelector('#loadingmodal h3') ? document.querySelector('#loadingmodal h3').textContent : '',
-                minimized: document.body.classList.contains('loading-minimized'),
+                headline: document.querySelector('#import-loadingmodal h3') ? document.querySelector('#import-loadingmodal h3').textContent : '',
+                minimized: document.body.classList.contains('import-loading-minimized'),
                 path: location.pathname
             }))
 
@@ -217,13 +237,13 @@ const init = () => {
         const btn = e.target.closest('.loadingmodal-minimize')
         if (!btn) return
         e.preventDefault()
-        document.body.classList.toggle('loading-minimized')
+        document.body.classList.toggle('import-loading-minimized')
 
         const storedTask = sessionStorage.getItem('eventyay_async_task_import')
         if (storedTask) {
             try {
                 const task = JSON.parse(storedTask)
-                task.minimized = document.body.classList.contains('loading-minimized')
+                task.minimized = document.body.classList.contains('import-loading-minimized')
                 sessionStorage.setItem('eventyay_async_task_import', JSON.stringify(task))
             } catch (err) {}
         }
@@ -241,7 +261,7 @@ const init = () => {
             // Auto-minimize if we navigated to a different page while task is running
             // to avoid blocking non-import pages (e.g. export tickets)
             if (task.minimized || task.path !== location.pathname) {
-                document.body.classList.add('loading-minimized')
+                document.body.classList.add('import-loading-minimized')
                 if (!task.minimized) {
                     task.minimized = true
                     task.path = location.pathname
