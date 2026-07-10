@@ -477,53 +477,6 @@ aside.sidebar {
   }
 }
 
-/* Event name in main content - max width and wrap */
-#event-nav .navigation,
-.header-nav .navigation {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-}
-
-#event-nav .navigation-title,
-.header-nav .navigation-title {
-  text-align: left;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-#event-nav .navigation-title h1,
-#event-nav .navigation-title h2,
-.header-nav .navigation-title h1,
-.header-nav .navigation-title h2 {
-  font-size: 30px;
-  font-weight: 500;
-  line-height: 1.2;
-  margin-top: 10px;
-  margin-bottom: .5rem;
-  overflow-wrap: break-word;
-}
-
-#event-nav .navigation-title h2 small,
-.header-nav .navigation-title h2 small {
-  white-space: nowrap;
-}
-
-@media (min-width: 768px) {
-  #event-nav .navigation,
-  .header-nav .navigation {
-    flex-wrap: nowrap;
-    align-items: flex-start;
-  }
-
-  #event-nav .navigation .navigation-button,
-  .header-nav .navigation .navigation-button {
-    flex: 0 0 auto;
-    margin-left: auto;
-  }
-}
-
 .speaker-info {
   display: flex;
   flex-direction: row;

@@ -65,7 +65,7 @@
         {% endfor %}
     </div>
 
-    <div class="dashboard-list">
+    <div class="dashboard-list dashboard-list-metrics">
         {% if can_change_settings %}
             <a href="{% url 'eventyay_common:event.live' organizer=request.event.organizer.slug event=request.event.slug %}" class="dashboard-block">
                 <div class="dashboard-live-text">
