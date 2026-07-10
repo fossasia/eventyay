@@ -25,8 +25,13 @@
                     {% blocktrans asvar title_paid_order %}Paid order{% endblocktrans %}
                     {% include "pretixcontrol/event/mail_settings_fragment.html" with pid="order_paid" title=title_paid_order items="mail_text_order_paid,mail_send_order_paid_attendee,mail_text_order_paid_attendee" exclude="mail_send_order_paid_attendee" %}
 
-                    {% blocktrans asvar title_free_order %}Free order{% endblocktrans %}
-                    {% include "pretixcontrol/event/mail_settings_fragment.html" with pid="order_free" title=title_free_order items="mail_text_order_free,mail_send_order_free_attendee,mail_text_order_free_attendee" exclude="mail_send_order_free_attendee" %}
+                    {% if request.event.settings.event_type == 'meetup' %}
+                        {% blocktrans asvar title_meetup_registration %}Meetup registration{% endblocktrans %}
+                        {% include "pretixcontrol/event/mail_settings_fragment.html" with pid="meetup_registration" title=title_meetup_registration items="mail_text_meetup_registration,mail_send_meetup_registration_attendee,mail_text_meetup_registration_attendee" exclude="mail_send_meetup_registration_attendee" %}
+                    {% else %}
+                        {% blocktrans asvar title_free_order %}Free order{% endblocktrans %}
+                        {% include "pretixcontrol/event/mail_settings_fragment.html" with pid="order_free" title=title_free_order items="mail_text_order_free,mail_send_order_free_attendee,mail_text_order_free_attendee" exclude="mail_send_order_free_attendee" %}
+                    {% endif %}
 
                     {% blocktrans asvar title_resend_link %}Resend link{% endblocktrans %}
                     {% include "pretixcontrol/event/mail_settings_fragment.html" with pid="resend_link" title=title_resend_link items="mail_text_resend_link,mail_text_resend_all_links" %}

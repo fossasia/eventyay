@@ -523,6 +523,9 @@ def base_placeholders(sender: Event, **kwargs):
     ph = [
         SimpleFunctionalMailTextPlaceholder('event', ['event'], lambda event: event.name, lambda event: event.name),
         SimpleFunctionalMailTextPlaceholder(
+            'organizer', ['event'], lambda event: event.organizer.name, lambda event: event.organizer.name
+        ),
+        SimpleFunctionalMailTextPlaceholder(
             'event',
             ['event_or_subevent'],
             lambda event_or_subevent: event_or_subevent.name,
