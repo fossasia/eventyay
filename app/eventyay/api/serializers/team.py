@@ -63,6 +63,9 @@ class TeamSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             "can_change_submissions",
             "is_reviewer",
             "force_hide_speaker_names",
+            "can_change_exhibition_proposals",
+            "is_exhibition_reviewer",
+            "hide_exhibition_applicant_emails",
             "force_hide_speaker_emails",
         )
         expandable_fields = {
