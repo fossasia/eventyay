@@ -59,7 +59,7 @@
   color: var(--color-primary, #2185d0);
   font-size: 16px;
   font-weight: normal;
-  border-radius: 0.25rem;
+  border-radius: 0;
   padding: 7px 7px;
   box-shadow: none;
 }

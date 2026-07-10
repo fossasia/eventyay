@@ -1,8 +1,5 @@
 .dashboard-list,
 .dashboard-list-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
   padding-bottom: 20px;
 
   .dashboard-block-wrapper {
@@ -103,20 +100,23 @@
   }
 }
 
+.dashboard-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
 .dashboard-list-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-left: -5px;
   margin-right: -5px;
 
   > .dashboard-block,
   > .dashboard-block-wrapper {
-    /* Match pretixcontrol dashboard widget sizing */
-    flex: 1 0 auto;
-    align-self: stretch;
     margin: 0;
     padding: 15px 5px;
     min-height: 160px;
-    width: 25%;
-    max-width: 100%;
     border: 5px solid var(--color-bg, #fff);
     border-radius: 0;
     box-sizing: border-box;
@@ -126,6 +126,11 @@
   .dashboard-block-wrapper > .dashboard-block {
     border: none;
     min-height: 100px;
+  }
+
+  .dashboard-block h1 {
+    font-size: 40px;
+    padding: 10px 0;
   }
 }
 
@@ -141,16 +146,14 @@
 }
 
 @media (max-width: 991px) {
-  .dashboard-list-metrics > .dashboard-block,
-  .dashboard-list-metrics > .dashboard-block-wrapper {
-    width: 50%;
+  .dashboard-list-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 767px) {
-  .dashboard-list-metrics > .dashboard-block,
-  .dashboard-list-metrics > .dashboard-block-wrapper {
-    width: 100%;
+  .dashboard-list-metrics {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
