@@ -1,7 +1,6 @@
 /* Shared mobile styles for component nav */
 
-#event-nav .navigation .navigation-button .header-nav,
-#main-title .navigation-button .header-nav {
+#event-nav .navigation .navigation-button .header-nav {
   border-radius: 0;
 }
 
@@ -32,8 +31,7 @@
     margin-right: 40px;
   }
 
-  #event-nav .navigation .navigation-button,
-  #main-title .navigation-button {
+  #event-nav .navigation .navigation-button {
     flex: 1 0 100%;
     display: flex;
     flex-wrap: nowrap;
@@ -42,12 +40,7 @@
     margin-top: 10px;
   }
 
-  #main-title .navigation-button {
-    margin-left: 0;
-  }
-
-  #event-nav .navigation .navigation-button .header-nav,
-  #main-title .navigation-button .header-nav {
+  #event-nav .navigation .navigation-button .header-nav {
     flex: 1 1 0;
     min-width: 0;
     white-space: nowrap;
