@@ -8,11 +8,18 @@ from django.utils.translation import gettext_lazy as _
 from eventyay.base.models import (
     BBBServer,
     JanusServer,
+    JitsiServer,
     Room,
     StreamingServer,
     TurnServer,
 )
-from eventyay.base.models.event import Event, FEATURE_FLAGS, EventPlannedUsage as PlannedUsage
+from eventyay.base.models.event import (
+    Event,
+    FEATURE_FLAGS,
+    EventPlannedUsage as PlannedUsage,
+    default_feature_flags,
+)
+from eventyay.base.services.jitsi import normalize_server_url
 
 User = get_user_model()
 SECRET_REDACTED = "*****"
@@ -134,6 +141,18 @@ class EventForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and "id" in self.fields:
             self.fields["id"].disabled = True
+        feature_flags = self.instance.feature_flags if self.instance else {}
+        if isinstance(feature_flags, dict):
+            selected = [
+                feature for feature in FEATURE_FLAGS if feature_flags.get(feature)
+            ]
+        elif isinstance(feature_flags, list):
+            selected = [
+                feature for feature in FEATURE_FLAGS if feature in feature_flags
+            ]
+        else:
+            selected = []
+        self.initial["feature_flags"] = selected
 
     def clean_id(self):
         d = self.cleaned_data["id"]
@@ -141,6 +160,20 @@ class EventForm(forms.ModelForm):
             if Event.objects.filter(id__iexact=d).exists():
                 raise ValidationError("ID is already in use")
         return d
+
+    def clean_feature_flags(self):
+        selected = set(self.cleaned_data["feature_flags"])
+        current = self.instance.feature_flags if self.instance else {}
+        if isinstance(current, dict):
+            flags = dict(current)
+        else:
+            flags = default_feature_flags()
+        for feature in FEATURE_FLAGS:
+            if feature in selected:
+                flags[feature] = True
+            else:
+                flags.pop(feature, None)
+        return flags
 
 
 class UserForm(forms.ModelForm):
@@ -200,6 +233,26 @@ class JanusServerForm(HasSecretsMixin, forms.ModelForm):
             "event_exclusive",
         )
         field_classes = {"room_create_key": SecretKeyField}
+
+
+class JitsiServerForm(HasSecretsMixin, forms.ModelForm):
+    def clean_url(self):
+        normalized = normalize_server_url(self.cleaned_data["url"])
+        if not normalized or normalized["protocol"] not in ("http:", "https:"):
+            raise ValidationError(_("Enter a valid Jitsi server URL."))
+        return normalized["url"]
+
+    class Meta:
+        model = JitsiServer
+        fields = (
+            "url",
+            "active",
+            "app_id",
+            "key_id",
+            "app_secret",
+            "event_exclusive",
+        )
+        field_classes = {"app_secret": SecretKeyField}
 
 
 class TurnServerForm(HasSecretsMixin, forms.ModelForm):

@@ -27,6 +27,13 @@ const ROOM_TYPES = [{
 	startingModule: 'call.zoom',
 	behindFeatureFlag: 'zoom'
 }, {
+	id: 'channel-jitsi',
+	icon: 'webcam',
+	name: 'Video Channel (Jitsi)',
+	description: 'This room type allows you to connect with attendees through a Jitsi meeting.',
+	startingModule: 'call.jitsi',
+	behindFeatureFlag: 'jitsi'
+}, {
 	id: 'channel-text',
 	icon: 'pound',
 	name: 'Text Channel',
@@ -94,6 +101,7 @@ export function inferType(config) {
 	if (modules['call.bigbluebutton']) return findById('channel-bbb')
 	if (modules['call.janus']) return findById('channel-janus')
 	if (modules['call.zoom']) return findById('channel-zoom')
+	if (modules['call.jitsi']) return findById('channel-jitsi')
 
 	// non-media rooms should only have one module
 	if (config.module_config.length === 1) {

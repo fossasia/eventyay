@@ -288,7 +288,7 @@ export default new Vuex.Store({
 				// preserve the last fatal error for the room without attempting to reconnect immediately
 				return
 			}
-			if (room?.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.zoom', 'call.janus'].includes(module.type))) {
+			if (room?.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.zoom', 'call.janus', 'call.jitsi'].includes(module.type))) {
 				try {
 					const { viewers } = await api.call('room.enter', {room: room.id})
 					state.roomViewers = viewers

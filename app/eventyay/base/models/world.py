@@ -47,6 +47,7 @@ def default_roles():
         Permission.ROOM_ROULETTE_JOIN,
         Permission.ROOM_BBB_JOIN,
         Permission.ROOM_JANUSCALL_JOIN,
+        Permission.ROOM_JITSI_JOIN,
         Permission.ROOM_ZOOM_JOIN,
     ]
     room_creator = [Permission.EVENT_ROOMS_CREATE_CHAT]

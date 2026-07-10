@@ -21,6 +21,7 @@ const ADMIN_SECTIONS = [
 	{ label: 'BBB servers', path: 'bbbs/' },
 	{ label: 'Move BBB room', path: 'bbbs/moveroom/' },
 	{ label: 'Janus servers', path: 'janus/' },
+	{ label: 'Jitsi servers', path: 'jitsi/' },
 	{ label: 'TURN servers', path: 'turns/' },
 	{ label: 'Streaming servers', path: 'streamingservers/' },
 	{ label: 'Stream keys', path: 'streamkey/' },

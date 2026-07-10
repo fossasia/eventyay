@@ -575,6 +575,11 @@ def get_admin_navigation(request):
                 'active': is_active('/admin/video/janus'),
             },
             {
+                'label': _('Jitsi servers'),
+                'url': reverse('eventyay_admin:video_admin:jitsiserver.list'),
+                'active': is_active('/admin/video/jitsi'),
+            },
+            {
                 'label': _('TURN servers'),
                 'url': reverse('eventyay_admin:video_admin:turnserver.list'),
                 'active': is_active('/admin/video/turns'),

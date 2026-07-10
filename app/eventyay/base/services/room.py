@@ -6,7 +6,7 @@ from channels.layers import get_channel_layer
 from django.db.transaction import atomic
 from django.dispatch import receiver
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import AuditLog, Channel, User
 from eventyay.base.models.event import Event
@@ -83,7 +83,20 @@ def validate_room_config_patch(room, body):
         data=body,
         partial=True,
     )
+    if "module_config" in body:
+        _sanitize_jitsi_config(body["module_config"])
     return partial_validated_update(serializer, body)
+
+
+def _sanitize_jitsi_config(module_config):
+    if not isinstance(module_config, list):
+        return
+    for module in module_config:
+        if module.get("type") != "call.jitsi":
+            continue
+        config = module.setdefault("config", {})
+        for key in ("domain", "jwt_enabled", "app_id", "key_id", "app_secret"):
+            config.pop(key, None)
 
 
 def uses_schedule_driven_stage(module_config):
@@ -118,7 +131,8 @@ def save_room(event, room, update_fields, old_data, by_user):
         clear_stream_schedules_unless_schedule_driven(room)
         from eventyay.agenda.views.utils import clear_schedule_caches
 
-        clear_schedule_caches(event)
+        with scope(event=event):
+            clear_schedule_caches(event)
     new = RoomConfigSerializer(room).data
 
     AuditLog.objects.create(
