@@ -103,12 +103,12 @@
 
 .presale-sticky-tabs a.header-tab:hover {
     text-decoration: none;
-    border-bottom: 2px dotted var(--color-primary);
+    border-bottom: 2px dotted currentColor;
 }
 
 .presale-sticky-tabs a.header-tab.active,
 .presale-sticky-tabs a.header-tab.underline {
-    border-bottom: 2px solid var(--color-primary);
+    border-bottom: 2px solid currentColor;
 }
 
 .presale-sticky-tabs #header-nav-bar {
