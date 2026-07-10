@@ -8,8 +8,6 @@
 		router-link.logo(:to="{name: 'about'}", :class="{anonymous: isAnonymous}")
 			img(:src="brandLogoUrl", :alt="world.title")
 	.nav-actions
-		router-link.settings(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}", :aria-label="$t('RoomsSidebar:admin-config:label')")
-			bunt-icon-button settings
 		.admin-session-actions(v-if="showAdminModeStart || showAdminModeEnd")
 			button.admin-mode-btn(
 				v-if="showAdminModeStart"
@@ -94,9 +92,6 @@ const router = useRouter()
 const user = computed(() => store.state.user)
 const world = computed(() => store.state.world)
 const token = computed(() => store.state.token)
-const hasPermission = computed(() => (permission) => {
-	return store.getters.hasPermission(permission)
-})
 
 function decodeTokenPayload(rawToken) {
 	if (!rawToken) return null
@@ -450,9 +445,6 @@ onBeforeUnmount(() => {
 			object-fit: contain
 			margin: 0
 			padding: 0
-	.settings
-		.bunt-icon-button
-			icon-button-style(color: var(--color-header-text, #fff), style: clear)
 	.user-section
 		display: flex
 		align-items: center
