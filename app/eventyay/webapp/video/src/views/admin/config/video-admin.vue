@@ -54,21 +54,25 @@ export default {
 		}
 	},
 	created() {
-		this.activePath = this.normalizedPath(this.$route.query.admin_path)
+		this.activePath = this.normalizedPath(this.$route.params.admin_path)
 	},
 	beforeUnmount() {
 		this.removeFrameBeforeUnloadListener()
 	},
 	watch: {
-		'$route.query.admin_path'(path) {
+		'$route.params.admin_path'(path) {
 			this.activePath = this.normalizedPath(path)
 			this.frameReady = false
 		}
 	},
 	methods: {
 		normalizedPath(path) {
+			if (Array.isArray(path)) path = path.join('/')
 			if (!path || typeof path !== 'string') return ''
-			const normalized = path.replace(/^\/+/, '').replace(/^admin\/video\/?/, '')
+			let normalized = path.replace(/^\/+/, '').replace(/^admin\/video\/?/, '')
+			if (normalized && !normalized.endsWith('/')) {
+				normalized += '/'
+			}
 			return ADMIN_PATHS.has(normalized) ? normalized : ''
 		},
 		adminUrl(path) {
@@ -87,7 +91,7 @@ export default {
 			this.frameReady = false
 			this.$router.replace({
 				name: 'admin:video-admin',
-				query: this.activePath ? { admin_path: this.activePath } : {}
+				params: { admin_path: this.activePath ? this.activePath.split('/') : [] }
 			})
 		},
 		prepareFrame() {

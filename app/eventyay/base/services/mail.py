@@ -62,6 +62,10 @@ INVALID_ADDRESS = 'invalid-eventyay-mail-address'
 
 class TolerantDict(dict):
     def __missing__(self, key):
+        if isinstance(key, str) and '\\_' in key:
+            clean_key = key.replace('\\_', '_')
+            if clean_key in self:
+                return super().__getitem__(clean_key)
         return key
 
 
