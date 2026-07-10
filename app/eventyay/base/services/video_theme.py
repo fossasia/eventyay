@@ -2,7 +2,13 @@
 
 import re
 
+from eventyay.multidomain.urlreverse import eventreverse, mainreverse
+from eventyay.presale.style import SYSTEM_FONTS, get_fonts, get_font_stylesheet, resolve_font
+
 _VALID_HEX_6 = re.compile(r'^#[0-9a-f]{6}$')
+
+# Match tickets/talk sidebars (pretixcontrol/orga); not driven by primary colour.
+PLATFORM_SIDEBAR_BG = '#f8f8f8'
 
 
 def normalize_video_theme_hex(value, fallback='#2185d0'):
@@ -30,11 +36,32 @@ def normalize_video_theme_hex(value, fallback='#2185d0'):
     return fb
 
 
+def build_video_typography_for_event(event):
+    """Typography tokens shared with presale/agenda (Common Settings primary_font)."""
+    resolved_font, font_family_value = resolve_font(event)
+    typography = {
+        'settings_css_url': str(event.urls.settings_css),
+    }
+    if font_family_value:
+        typography['font_family'] = font_family_value
+        typography['font_family_title'] = font_family_value
+    if resolved_font and resolved_font not in SYSTEM_FONTS:
+        fonts_dict = get_fonts()
+        if resolved_font in fonts_dict:
+            typography['font_stylesheet'] = get_font_stylesheet(
+                resolved_font,
+                fonts=fonts_dict,
+                for_sass=False,
+            )
+    return typography
+
+
 def build_video_theme_for_event(event):
     """
     Theme payload for the video SPA injection and world.config.get.
 
-    Navbar/sidebar colors follow Common Settings (primary + page background).
+    Navbar colours follow Common Settings (primary, header colours, page
+    background). The rooms sidebar uses the platform default light style.
     Remaining keys are taken from event.config['theme'] (identicons, text
     overwrites, stream offline image, custom css flag, etc.).
     """
@@ -47,6 +74,8 @@ def build_video_theme_for_event(event):
     primary = normalize_video_theme_hex(event.visible_primary_color, '#2185d0')
     page_bg = event.settings.get('theme_color_background') or '#f5f5f5'
     bbb_bg = normalize_video_theme_hex(page_bg, '#ffffff')
+    header_background = event.settings.get('header_background_color')
+    header_text = event.settings.get('header_text_color')
 
     existing_colors = out.get('colors')
     if not isinstance(existing_colors, dict):
@@ -57,25 +86,34 @@ def build_video_theme_for_event(event):
     sidebar_text = event.settings.get('video_menu_text_color')
     sidebar_hover = event.settings.get('video_menu_text_hover_color') or event.settings.get('menu_text_scroll_over_color')
 
-    out['colors'] = {
+    colors = {
         **existing_colors,
         'primary': primary,
-        'sidebar': primary,
+        'sidebar': PLATFORM_SIDEBAR_BG,
         'bbb_background': bbb_bg,
     }
-    if sidebar_text:
-        out['colors']['sidebarText'] = normalize_video_theme_hex(sidebar_text)
-    if sidebar_hover:
-        out['colors']['sidebarTextHover'] = normalize_video_theme_hex(sidebar_hover)
 
-    logo = out.get('logo')
-    if isinstance(logo, dict):
-        logo = {**logo}
-    else:
-        logo = {}
-    visible = event.visible_logo_url
-    if visible:
-        logo['url'] = visible
-    out['logo'] = logo
+    if header_background:
+        colors['header_background'] = normalize_video_theme_hex(header_background, primary)
+    if header_text:
+        colors['header_text'] = normalize_video_theme_hex(header_text, '#ffffff')
+    if sidebar_text:
+        colors['sidebarText'] = normalize_video_theme_hex(sidebar_text)
+    if sidebar_hover:
+        colors['sidebarTextHover'] = normalize_video_theme_hex(sidebar_hover)
+
+    out['colors'] = colors
+
+    navigation = {
+        'presale_home_url': str(event.urls.base),
+        'site_home_url': mainreverse('presale:index'),
+        'organizer_link_back': bool(event.settings.get('organizer_link_back')),
+    }
+    organizer = getattr(event, 'organizer', None)
+    if organizer is not None:
+        navigation['organizer_name'] = str(organizer.name)
+        navigation['organizer_presale_url'] = str(eventreverse(organizer, 'presale:organizer.index'))
+    out['navigation'] = navigation
+    out['typography'] = build_video_typography_for_event(event)
 
     return out

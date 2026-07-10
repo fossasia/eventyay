@@ -245,6 +245,8 @@ export default {
 <style lang="stylus">
 .c-rooms-sidebar
 	background-color: var(--clr-sidebar)
+	border-right: 1px solid #e7e7e7
+	box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2)
 	display: flex
 	flex-direction: column
 	position: fixed
@@ -267,10 +269,10 @@ export default {
 		flex: auto
 		.scroll-content
 			flex: auto
-			color: var(--clr-sidebar-text-primary)
+			color: var(--color-text, $clr-primary-text-light)
 		.scrollbar-rail-y
 			.scrollbar-thumb
-				background-color: var(--clr-sidebar-text-secondary)
+				background-color: rgba(0, 0, 0, 0.2)
 	.global-links
 		flex: none
 		display: flex
@@ -281,7 +283,7 @@ export default {
 			height: 36px
 			line-height: 36px
 			padding: 0 24px
-			color: var(--clr-sidebar-text-secondary)
+			color: var(--clr-sidebar-text-primary)
 			&.router-link-exact-active
 				background-color: var(--clr-sidebar-active-bg)
 				color: var(--clr-sidebar-active-fg)
@@ -317,7 +319,7 @@ export default {
 			height: 36px
 			line-height: 36px
 			padding: 0 18px
-			color: var(--clr-sidebar-text-secondary)
+			color: var(--clr-sidebar-text-primary)
 			display: flex
 			position: relative
 			&.router-link-exact-active, &.active
@@ -328,7 +330,7 @@ export default {
 				color: var(--clr-sidebar-hover-fg)
 			&.router-link-exact-active, &.active
 				.room-icon::before
-					color: var(--clr-sidebar-text-secondary)
+					color: var(--clr-sidebar-active-fg)
 			.room-icon, .icon-viewer
 				width: 22px
 				&::before
@@ -391,7 +393,7 @@ export default {
 				align-self: center
 				padding: 0 8px
 				font-size: 12px
-				color: var(--clr-sidebar-text-primary)
+				color: $clr-white
 		.stage
 			padding-right: 8px
 			&.session
@@ -490,7 +492,7 @@ export default {
 			&:not(:hover) .bunt-icon-button
 				display: none
 		#btn-browse-channels-trailing
-			color: var(--clr-sidebar-text-secondary)
+			color: var(--clr-sidebar-text-primary)
 			background-color: transparent
 			font-size: 12px
 			font-weight: 500
