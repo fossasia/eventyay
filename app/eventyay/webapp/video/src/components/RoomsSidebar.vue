@@ -284,10 +284,10 @@ export default {
 			color: var(--clr-sidebar-text-secondary)
 			&.router-link-exact-active
 				background-color: var(--clr-sidebar-active-bg)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--clr-sidebar-active-fg)
 			&:hover
 				background-color: var(--clr-sidebar-hover-bg)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--clr-sidebar-hover-fg)
 	.group-title
 		flex: none
 		color: var(--clr-sidebar-text-secondary)
@@ -322,10 +322,10 @@ export default {
 			position: relative
 			&.router-link-exact-active, &.active
 				background-color: var(--clr-sidebar-active-bg)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--clr-sidebar-active-fg)
 			&:hover
 				background-color: var(--clr-sidebar-hover-bg)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--clr-sidebar-hover-fg)
 			&.router-link-exact-active, &.active
 				.room-icon::before
 					color: var(--clr-sidebar-text-secondary)
@@ -497,10 +497,11 @@ export default {
 			border-radius: 0
 			&:hover:not(.disabled)
 				background-color: var(--clr-sidebar-hover-bg)
+				color: var(--clr-sidebar-hover-fg)
 	.admin
 		> .router-link-active
 				background-color: var(--clr-sidebar-active-bg)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--clr-sidebar-active-fg)
 	.buffer
 		flex: auto
 	> .profile
@@ -510,7 +511,8 @@ export default {
 		cursor: pointer
 		color: var(--clr-sidebar-text-primary)
 		&:hover
-			background-color: rgba(255, 255, 255, 0.3)
+			background-color: var(--clr-sidebar-hover-bg)
+			color: var(--clr-sidebar-hover-fg)
 		.c-avatar
 			background-color: $clr-white
 			border-radius: 50%

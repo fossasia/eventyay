@@ -55,7 +55,7 @@ def build_video_theme_for_event(event):
         existing_colors = {**existing_colors}
 
     sidebar_text = event.settings.get('video_menu_text_color')
-    sidebar_hover = event.settings.get('menu_text_scroll_over_color')
+    sidebar_hover = event.settings.get('video_menu_text_hover_color') or event.settings.get('menu_text_scroll_over_color')
 
     out['colors'] = {
         **existing_colors,

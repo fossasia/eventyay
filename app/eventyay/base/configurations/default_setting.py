@@ -2031,6 +2031,7 @@ Your {event} team"""
     'navigation_text_color': hex_color_field_config(_('Menu text color')),
     'menu_text_scroll_over_color': hex_color_field_config(_('Menu text scroll over color')),
     'video_menu_text_color': hex_color_field_config(_('Online video menu text color')),
+    'video_menu_text_hover_color': hex_color_field_config(_('Online video menu text scroll over color')),
     'theme_color_success': hex_color_field_config(
         _('Accent color for success'),
         default='#50a167',
@@ -2603,6 +2604,7 @@ CSS_SETTINGS = {
     'navigation_text_color',
     'menu_text_scroll_over_color',
     'video_menu_text_color',
+    'video_menu_text_hover_color',
     'theme_color_success',
     'theme_color_danger',
     'primary_font',

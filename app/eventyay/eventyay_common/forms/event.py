@@ -46,6 +46,7 @@ class EventCommonSettingsForm(SettingsForm):
         'navigation_text_color',
         'menu_text_scroll_over_color',
         'video_menu_text_color',
+        'video_menu_text_hover_color',
         'theme_color_success',
         'theme_color_danger',
         'theme_color_background',

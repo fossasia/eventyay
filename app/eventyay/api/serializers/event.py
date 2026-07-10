@@ -784,6 +784,7 @@ class EventSettingsSerializer(SettingsSerializer):
         'navigation_text_color',
         'menu_text_scroll_over_color',
         'video_menu_text_color',
+        'video_menu_text_hover_color',
         'primary_color',
         'theme_color_success',
         'theme_color_danger',

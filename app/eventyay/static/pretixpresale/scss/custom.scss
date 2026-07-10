@@ -156,6 +156,11 @@
     color: var(--color-primary);
 }
 
+.presale-sticky-tabs .header-row-right details.dropdown summary:hover,
+.presale-sticky-tabs .header-row-right a:not(.header-nav):hover {
+    color: var(--color-header-navigation-hover);
+}
+
 .presale-sticky-tabs .header-row-right .header-nav {
     border-color: var(--color-primary);
     background: transparent;
