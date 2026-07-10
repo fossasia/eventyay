@@ -7,7 +7,7 @@
 </p>
 <p>
     <a class="btn btn-primary btn-lg" target="_blank"
-            href="{% url "plugins:badges:index" organizer=request.organizer.slug event=request.event.slug %}">
+            href="{% url "plugins:badges:getdefault" organizer=request.organizer.slug event=request.event.slug %}">
         <span class="fa fa-paint-brush"></span>
         {% trans "Open Badge Designer" %}
     </a>
