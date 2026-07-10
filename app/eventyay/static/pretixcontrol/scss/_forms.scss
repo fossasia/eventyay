@@ -490,7 +490,7 @@ label .optional {
   height: 150px;
   overflow-y: auto;
 }
-div.scrolling-multiple-choice, div.scrolling-choice {
+div.scrolling-multiple-choice, ul.scrolling-multiple-choice, div.scrolling-choice {
   height: 150px;
   border: 1px solid $input-border;
   border-radius: $input-border-radius;
@@ -503,6 +503,15 @@ div.scrolling-multiple-choice, div.scrolling-choice {
   }
   &.scrolling-multiple-choice-large {
     height: 350px;
+  }
+}
+.device-checkin-lists-widget {
+  > div {
+    margin: 0;
+  }
+  label {
+    font-weight: normal;
+    margin-bottom: 5px;
   }
 }
 table td > .checkbox {
@@ -809,4 +818,48 @@ table td > .checkbox input[type="checkbox"] {
   .form-horizontal .control-label {
     padding-top: 0;
   }
+}
+
+/* Thumbnailed file input widget styles */
+.thumbnailed-file-initial {
+  margin-bottom: 8px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.thumbnailed-file-link {
+  vertical-align: middle;
+}
+.thumbnailed-file-preview-eye {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.thumbnailed-file-delete-wrapper {
+  margin-left: 10px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.thumbnailed-file-checkbox {
+  vertical-align: middle;
+}
+.thumbnailed-file-checkbox-label {
+  font-weight: normal;
+  cursor: pointer;
+  margin-bottom: 0;
+  vertical-align: middle;
+}
+.thumbnailed-file-delete-ajax {
+  display: none;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.thumbnailed-file-input-text {
+  margin-top: 8px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+// Font picker preview label — applies the per-option font family set via
+// the --font-preview CSS custom property injected by FontSelect.create_option.
+.font-preview-label {
+  font-family: var(--font-preview);
 }

@@ -1,17 +1,19 @@
 import sys
 import json
-from datetime import UTC
+from datetime import UTC, timedelta
 from zoneinfo import ZoneInfo
 
+from allauth.account.models import EmailAddress
 from cron_descriptor import Options, get_description
 from django.conf import settings
 from django.contrib import messages
-from django.db.models import Prefetch, Q
+from django.db.models import Prefetch, Q, Sum
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
+from django.utils.timezone import make_aware, is_aware, now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import (
@@ -24,18 +26,18 @@ from django.views.generic import (
 )
 from django_celery_beat.models import PeriodicTask, PeriodicTasks
 from django_context_decorator import context
+from django_scopes import scopes_disabled
 
-from django.utils.timezone import make_aware, is_aware
-from django.utils.functional import cached_property
 from redis.exceptions import RedisError
 
 from eventyay.celery_app import app
 from eventyay.control.forms.filter import AttendeeFilterForm
 from eventyay.control.forms.admin.admin import UpdateSettingsForm
 
+from eventyay.base.models.auth import User
 from eventyay.base.models.checkin import Checkin
 from eventyay.base.models.event import Event
-from eventyay.base.models.orders import OrderPosition
+from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.models.submission import Submission
@@ -43,7 +45,7 @@ from eventyay.base.models.vouchers import InvoiceVoucher
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms.admin.vouchers import InvoiceVoucherForm
-from eventyay.control.forms.filter import OrganizerFilterForm, SubmissionFilterForm, TaskFilterForm
+from eventyay.control.forms.filter import AdminOrderFilterForm, OrganizerFilterForm, SubmissionFilterForm, TaskFilterForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin
 from eventyay.control.views.main import EventList
@@ -55,12 +57,66 @@ logger = logging.getLogger(__name__)
 class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = 'pretixcontrol/admin/dashboard.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
+    def get_context_data(self, **kwargs) -> dict:
+        ctx = super().get_context_data(**kwargs)
+        n = now()
+
+        # User KPIs
+        ctx['users_total'] = User.objects.count()
+        ctx['users_verified'] = EmailAddress.objects.filter(verified=True, primary=True).values('user_id').distinct().count()
+        ctx['users_unverified'] = ctx['users_total'] - ctx['users_verified']
+        ctx['users_new_24h'] = User.objects.filter(date_joined__gte=n - timedelta(hours=24)).count()
+        ctx['users_new_7d'] = User.objects.filter(date_joined__gte=n - timedelta(days=7)).count()
+        ctx['users_new_30d'] = User.objects.filter(date_joined__gte=n - timedelta(days=30)).count()
+
+        # Organizer KPIs
+        ctx['organizers_total'] = Organizer.objects.count()
+
+        with scopes_disabled():
+            # Event KPIs
+            ctx['events_total'] = Event.objects.count()
+            ctx['events_live'] = Event.objects.filter(live=True).count()
+            ctx['events_draft'] = ctx['events_total'] - ctx['events_live']
+            ctx['events_past'] = (
+                Event.objects.filter(has_subevents=False)
+                .filter(
+                    Q(Q(date_to__isnull=True) & Q(date_from__lt=n))
+                    | Q(Q(date_to__isnull=False) & Q(date_to__lt=n))
+                )
+                .count()
+            )
+            ctx['events_series'] = Event.objects.filter(has_subevents=True).count()
+
+            # Order KPIs
+            ctx['orders_total'] = Order.objects.count()
+            ctx['orders_paid'] = Order.objects.filter(status=Order.STATUS_PAID).count()
+            ctx['orders_pending'] = Order.objects.filter(status=Order.STATUS_PENDING).count()
+            ctx['orders_revenue'] = list(
+                Order.objects.filter(status=Order.STATUS_PAID)
+                .values('event__currency')
+                .annotate(total=Sum('total'))
+                .order_by('-total')
+            )
+
+            # Programme KPIs
+            ctx['sessions_total'] = Submission.objects.count()
+            ctx['speakers_total'] = (
+                Submission.speakers.through.objects
+                .values('user_id')
+                .distinct()
+                .count()
+            )
+
+            # Attendee / ticket KPIs
+            ctx['attendees_total'] = OrderPosition.objects.filter(
+                order__status=Order.STATUS_PAID,
+                addon_to__isnull=True,
+            ).count()
+
+        return ctx
 
 
-class OrganizerList(PaginationMixin, ListView):
+class OrganizerList(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
     model = Organizer
     context_object_name = 'organizers'
     template_name = 'pretixcontrol/admin/organizers.html'
@@ -69,10 +125,7 @@ class OrganizerList(PaginationMixin, ListView):
         qs = Organizer.objects.all()
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
-        if self.request.user.has_active_staff_session(self.request.session.session_key):
-            return qs
-        else:
-            return qs.filter(pk__in=self.request.user.teams.values_list('organizer', flat=True))
+        return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -84,7 +137,7 @@ class OrganizerList(PaginationMixin, ListView):
         return OrganizerFilterForm(data=self.request.GET, request=self.request)
 
 
-class AdminEventList(EventList):
+class AdminEventList(AdministratorPermissionRequiredMixin, EventList):
     """Inherit from EventList to add a custom template for the admin event list."""
 
     template_name = 'pretixcontrol/admin/events/index.html'
@@ -152,7 +205,7 @@ class AdminEventStartpageToggle(AdministratorPermissionRequiredMixin, View):
         )
 
 
-class AttendeeListView(ListView):
+class AttendeeListView(AdministratorPermissionRequiredMixin, ListView):
     template_name = 'pretixcontrol/admin/attendees/index.html'
     context_object_name = 'attendees'
     paginate_by = 25
@@ -172,10 +225,6 @@ class AttendeeListView(ListView):
             )
             .filter(order__status='p')
         )
-
-        if not self.request.user.has_active_staff_session(self.request.session.session_key):
-            allowed_organizers = self.request.user.teams.values_list('organizer', flat=True)
-            qs = qs.filter(order__event__organizer_id__in=allowed_organizers)
 
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
@@ -245,7 +294,7 @@ class AttendeeListView(ListView):
         return ctx
 
 
-class SubmissionListView(ListView):
+class SubmissionListView(AdministratorPermissionRequiredMixin, ListView):
     template_name = 'pretixcontrol/admin/submissions/index.html'
     context_object_name = 'submissions'
     paginate_by = 25
@@ -255,7 +304,6 @@ class SubmissionListView(ListView):
         return SubmissionFilterForm(data=self.request.GET)
 
     def get(self, request, *args, **kwargs):
-        from django_scopes import scopes_disabled
         with scopes_disabled():
             return super().get(request, *args, **kwargs)
 
@@ -266,10 +314,6 @@ class SubmissionListView(ListView):
             )
             .prefetch_related('speakers', 'tags')
         )
-
-        if not self.request.user.has_active_staff_session(self.request.session.session_key):
-            allowed_organizers = self.request.user.teams.values_list('organizer', flat=True)
-            qs = qs.filter(event__organizer_id__in=allowed_organizers)
 
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
@@ -317,7 +361,72 @@ class SubmissionListView(ListView):
         return ctx
 
 
-class TaskList(PaginationMixin, ListView):
+class AdminOrderListView(PaginationMixin, AdministratorPermissionRequiredMixin, ListView):
+    template_name = 'pretixcontrol/admin/orders/index.html'
+    context_object_name = 'orders'
+    paginate_by = 25
+
+    @cached_property
+    def filter_form(self):
+        return AdminOrderFilterForm(data=self.request.GET)
+
+    def get(self, request, *args, **kwargs):
+        with scopes_disabled():
+            return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = Order.objects.select_related('event', 'event__organizer')
+
+        if self.filter_form.is_valid():
+            qs = self.filter_form.filter_qs(qs)
+
+        ordering = self.request.GET.get('ordering')
+        ordering_map = {
+            'code': 'code',
+            '-code': '-code',
+            'email': 'email',
+            '-email': '-email',
+            'event': 'event__name',
+            '-event': '-event__name',
+            'organizer': 'event__organizer__name',
+            '-organizer': '-event__organizer__name',
+            'status': 'status',
+            '-status': '-status',
+            'total': 'total',
+            '-total': '-total',
+            'date': 'datetime',
+            '-date': '-datetime',
+        }
+        sort_field = ordering_map.get(ordering, '-datetime')
+        tie_breaker = '-pk' if sort_field.startswith('-') else 'pk'
+        qs = qs.order_by(sort_field, tie_breaker)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['filter_form'] = self.filter_form
+        ctx['orders'] = [
+            {
+                'order_code': o.code,
+                'event': o.event.name,
+                'event_slug': o.event.slug,
+                'organizer': o.event.organizer.name,
+                'organizer_slug': o.event.organizer.slug,
+                'email': o.email or '',
+                'status': o.get_status_display(),
+                'status_code': o.status,
+                'total': o.total,
+                'currency': o.event.currency,
+                'date': o.datetime,
+                'testmode': o.testmode,
+            }
+            for o in ctx['orders']
+        ]
+        return ctx
+
+
+class TaskList(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
     template_name = 'pretixcontrol/admin/task_management/task_management.html'
     context_object_name = 'tasks'
     model = PeriodicTask

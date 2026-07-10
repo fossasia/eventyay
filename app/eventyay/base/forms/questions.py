@@ -7,8 +7,8 @@ from urllib.error import HTTPError
 import dateutil.parser
 import pycountry
 import pytz
-import vat_moss.errors
-import vat_moss.id
+import vat_moss_lite.errors
+import vat_moss_lite.id
 from babel import Locale
 from django import forms
 from django.conf import settings
@@ -1042,14 +1042,14 @@ class BaseInvoiceAddressForm(forms.ModelForm):
             and data.get('vat_id')
         ):
             try:
-                result = vat_moss.id.validate(data.get('vat_id'))
+                result = vat_moss_lite.id.validate(data.get('vat_id'))
                 if result:
                     country_code, normalized_id, company_name = result
                     self.instance.vat_id_validated = True
                     self.instance.vat_id = normalized_id
-            except (vat_moss.errors.InvalidError, ValueError):
+            except (vat_moss_lite.errors.InvalidError, ValueError):
                 raise ValidationError(_('This VAT ID is not valid. Please re-check your input.'))
-            except vat_moss.errors.WebServiceUnavailableError:
+            except vat_moss_lite.errors.WebServiceUnavailableError:
                 logger.exception('VAT ID checking failed for country {}'.format(data.get('country')))
                 self.instance.vat_id_validated = False
                 if self.request and self.vat_warning:
@@ -1062,7 +1062,7 @@ class BaseInvoiceAddressForm(forms.ModelForm):
                             'back via the VAT reimbursement process.'
                         ),
                     )
-            except (vat_moss.errors.WebServiceError, HTTPError):
+            except (vat_moss_lite.errors.WebServiceError, HTTPError):
                 logger.exception('VAT ID checking failed for country {}'.format(data.get('country')))
                 self.instance.vat_id_validated = False
                 if self.request and self.vat_warning:

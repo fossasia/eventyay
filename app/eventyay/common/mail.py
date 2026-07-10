@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.mail.backends.smtp import EmailBackend
 
-from eventyay.base.models import Event
+from eventyay.base.models.event import Event
 from eventyay.celery_app import app
 from eventyay.common.exceptions import SendMailException
 
@@ -34,6 +34,10 @@ class CustomSMTPBackend(EmailBackend):
 class TolerantDict(dict):
     def __missing__(self, key):
         """Don't fail when formatting strings with a dict with missing keys."""
+        if isinstance(key, str) and '\\_' in key:
+            clean_key = key.replace('\\_', '_')
+            if clean_key in self:
+                return super().__getitem__(clean_key)
         return key
 
 
@@ -70,24 +74,29 @@ def mail_send_task(
         to = [addr for addr in to if not any([addr.endswith(domain) for domain in DEBUG_DOMAINS])]
     if not to:
         return
-    reply_to = reply_to.split(',') if isinstance(reply_to, str) else (reply_to or [])
-    reply_to = [addr for addr in reply_to if addr]
-    reply_to = reply_to or []
+    if isinstance(reply_to, str):
+        addrs = [addr.strip() for addr in reply_to.split(',') if addr.strip()]
+        reply_to = addrs if addrs else None
+    elif reply_to is not None:
+        reply_to = [addr for addr in reply_to if addr] or None
 
     if event:
         event = Event.objects.get(pk=event)
         backend = event.get_mail_backend()
 
-        sender = settings.MAIL_FROM
-        if event.mail_settings['smtp_use_custom']:  # pragma: no cover
-            sender = event.mail_settings['mail_from'] or sender
+        sender = event.settings.mail_from or settings.MAIL_FROM
 
-        reply_to = reply_to or event.mail_settings['reply_to']
-        if not reply_to and sender == settings.MAIL_FROM:
-            reply_to = event.email
+        if reply_to is None:
+            reply_to = get_reply_to_address(event, sender_email=sender)
 
         if isinstance(reply_to, str):
             reply_to = [formataddr((str(event.name), reply_to))]
+        reply_to = reply_to or []
+
+        effective_bcc = [addr for addr in (bcc or []) if addr and addr.strip()]
+        if not effective_bcc and event.settings.mail_bcc:
+            effective_bcc = [addr.strip() for addr in event.settings.mail_bcc.split(',') if addr.strip()]
+        bcc = effective_bcc or None
 
         sender = formataddr((str(event.name), sender or settings.MAIL_FROM))
 
@@ -134,3 +143,43 @@ def mail_send_task(
     except Exception as exception:  # pragma: no cover
         logger.exception('Error sending email')
         raise SendMailException(f'Failed to send an email to {to}: {exception}')
+
+
+def get_reply_to_address(
+    event,
+    *,
+    override=None,
+    template=None,
+    sender_email=None
+):
+    """
+    Resolve Reply-To with unified precedence:
+    override
+    → template.reply_to
+    → event.settings.mail_reply_to  (canonical common setting for both Tickets and Talks)
+    → event.email             (organizer email set on the event)
+    → organizer.settings.contact_mail  (fallback to organizer-level contact address)
+    → mail_settings['reply_to']        (legacy Talks field, kept for backwards compat)
+    → None
+    """
+    if override is not None:
+        return override
+
+    if template and hasattr(template, 'reply_to') and template.reply_to:
+        return template.reply_to
+
+    if event.settings.get('mail_reply_to'):
+        return event.settings.mail_reply_to
+
+    use_default_sender = not event.settings.smtp_use_custom
+    if use_default_sender and sender_email == settings.MAIL_FROM:
+        if event.email:
+            return event.email
+        contact_mail = event.organizer.settings.get('contact_mail')
+        if contact_mail:
+            return contact_mail
+
+    if event.mail_settings.get('reply_to'):
+        return event.mail_settings['reply_to']
+
+    return None

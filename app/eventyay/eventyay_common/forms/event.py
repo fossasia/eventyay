@@ -28,6 +28,7 @@ class EventCommonSettingsForm(SettingsForm):
         label=_('Event timezone'),
     )
 
+
     auto_fields = [
         'locales',
         'locale',
@@ -36,6 +37,7 @@ class EventCommonSettingsForm(SettingsForm):
         'logo_image',
         'logo_image_large',
         'event_logo_image',
+        'event_preview_image',
         'logo_show_title',
         'og_image',
         'primary_color',
@@ -62,16 +64,14 @@ class EventCommonSettingsForm(SettingsForm):
         return data
 
     def save(self):
-        for image_field in ('event_logo_image', 'logo_image'):
+        for image_field in ('event_logo_image', 'logo_image', 'event_preview_image'):
             current_value = self.event.settings.get(image_field, as_type=str, default='') or ''
             new_value = self.cleaned_data.get(image_field)
-            if is_http_url(current_value) and (isinstance(new_value, UploadedFile) or not new_value):
-                del self.event.settings[image_field]
             current_file = get_file_url_path(current_value)
-            if isinstance(new_value, str) and current_file and current_value != new_value:
+            if isinstance(new_value, UploadedFile) and current_file:
                 default_storage.delete(current_file)
 
-                base_path, _ = os.path.splitext(current_file)
+                base_path, unused_ext = os.path.splitext(current_file)
                 orig_ext = self.event.settings.get(f'{image_field}_original_ext', as_type=str)
                 if orig_ext:
                     default_storage.delete(f'{base_path}_original.{orig_ext}')
@@ -110,8 +110,9 @@ class EventCommonSettingsForm(SettingsForm):
             uploaded.seek(0)
             return uploaded
 
-        new_filename = self.get_new_filename(uploaded.name or setting_key)
-        base_path, _ = os.path.splitext(new_filename)
+        clean_name, unused_ext = os.path.splitext(uploaded.name or setting_key)
+        new_filename = self.get_new_filename(clean_name)
+        base_path, unused_ext = os.path.splitext(new_filename)
 
         # Persist the optimized file.
         optimized_name = f'{base_path}.{result.optimized_ext}'
@@ -155,6 +156,13 @@ class EventCommonSettingsForm(SettingsForm):
         if 'meta_noindex' in self.fields:
             self.fields['meta_noindex'].label = _('Ask search engines not to index the event pages')
 
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.ClearableFileInput):
+                field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
+                field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
+
+
+
 
 class EventUpdateForm(I18nModelForm):
     def __init__(self, *args, **kwargs):
@@ -179,9 +187,9 @@ class EventUpdateForm(I18nModelForm):
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
 
         # Configure email field with canonical label and help text
-        self.fields['email'].required = True
+        self.fields['email'].required = False
         self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
+        self.fields['email'].help_text = _("Attendees can reach you through a contact form. Messages will be forwarded to this address.")
 
         if 'is_public' in self.fields:
             self.fields['is_public'].label = _('Show in search results and lists')

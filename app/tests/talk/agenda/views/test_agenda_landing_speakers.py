@@ -1,4 +1,6 @@
 import json
+import re
+from urllib.parse import urlparse
 
 import pytest
 from django.urls import reverse
@@ -159,6 +161,83 @@ def test_landing_page_hides_featured_speakers_when_none_are_marked(
     assert 'Featured Speakers' not in response.text
     assert 'pretalx-schedule-data' not in response.text
     assert 'view="featured-speakers"' not in response.text
+
+
+@pytest.mark.django_db
+def test_landing_page_shows_featured_speaker_not_on_published_schedule_with_coming_soon(
+    client, event, slot, speaker, other_speaker, other_accepted_submission
+):
+    """Featured speakers stay on the landing page with coming-soon sessions when not scheduled."""
+    with scope(event=event):
+        event.talks_published = True
+        event.feature_flags['show_schedule'] = True
+        event.feature_flags['show_featured_speakers'] = 'always'
+        event.save(update_fields=['talks_published', 'feature_flags'])
+        profile = other_speaker.event_profile(event)
+        profile.is_featured = True
+        profile.save(update_fields=['is_featured'])
+        event.release_schedule('v1')
+        published_codes = set(event.speakers.values_list('code', flat=True))
+        assert speaker.code in published_codes
+        assert other_speaker.code not in published_codes
+
+    response = client.get(event.urls.base)
+
+    assert response.status_code == 200
+    widget_schedule = response.context['featured_speakers_widget_schedule']
+    assert other_speaker.code in {s['code'] for s in widget_schedule['speakers']}
+    other_talks = [
+        talk
+        for talk in widget_schedule['talks']
+        if other_speaker.code in talk.get('speakers', [])
+    ]
+    assert len(other_talks) == 1
+    assert other_talks[0]['code'] == other_accepted_submission.code
+    assert other_talks[0]['schedule_pending'] is True
+
+
+@pytest.mark.django_db
+def test_landing_page_shows_featured_speakers_as_coming_soon_when_released_schedule_has_no_sessions(
+    client, event, slot, speaker, confirmed_submission
+):
+    """Featured speakers stay on the info page; nav and speakers list hide when the schedule is empty."""
+    with scope(event=event):
+        event.talks_published = True
+        event.feature_flags['show_schedule'] = True
+        event.feature_flags['show_featured_speakers'] = 'always'
+        event.save(update_fields=['talks_published', 'feature_flags'])
+        profile = speaker.event_profile(event)
+        profile.is_featured = True
+        profile.save(update_fields=['is_featured'])
+        event.release_schedule('v1')
+        assert event.speakers.exists()
+
+        for talk in event.wip_schedule.talks.all():
+            talk.delete()
+        event.release_schedule('v2')
+        event.__dict__.pop('speakers', None)
+        event.__dict__.pop('has_schedule_content', None)
+        event.__dict__.pop('current_schedule', None)
+        assert not event.speakers.exists()
+
+    landing = client.get(event.urls.base)
+    assert landing.status_code == 200
+    assert 'view="featured-speakers"' in landing.text
+    widget_schedule = landing.context['featured_speakers_widget_schedule']
+    assert widget_schedule is not None
+    assert {s['code'] for s in widget_schedule['speakers']} == {speaker.code}
+    assert widget_schedule['speakers_list_public'] is False
+    assert len(widget_schedule['talks']) == 1
+    assert widget_schedule['talks'][0]['code'] == confirmed_submission.code
+    assert widget_schedule['talks'][0]['schedule_pending'] is True
+    speakers_nav_pattern = re.compile(
+        rf'<a href="{re.escape(str(event.urls.speakers))}" class="header-tab'
+    )
+    assert speakers_nav_pattern.search(landing.content.decode()) is None
+
+    speakers_list = client.get(event.urls.speakers, follow=True)
+    assert speakers_list.status_code == 200
+    assert speakers_list.request['PATH_INFO'].rstrip('/') == urlparse(str(event.urls.base)).path.rstrip('/')
 
 
 @pytest.mark.django_db

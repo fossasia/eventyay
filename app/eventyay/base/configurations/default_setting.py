@@ -53,9 +53,9 @@ def country_choice_kwargs():
 
 
 def primary_font_kwargs():
-    from eventyay.presale.style import get_fonts
+    from eventyay.presale.style import SYSTEM_FONT_CHOICES, get_fonts
 
-    choices = [('Open Sans', 'Open Sans')]
+    choices = list(SYSTEM_FONT_CHOICES)
     choices += [(a, {'title': a, 'data': v}) for a, v in get_fonts().items()]
     return {
         'choices': choices,
@@ -1576,7 +1576,7 @@ DEFAULT_SETTINGS = {
         'form_class': forms.EmailField,
         'form_kwargs': dict(
             label=_('Contact address'),
-            help_text=_("We'll show this publicly to allow attendees to contact you."),
+            help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
         ),
     },
     'imprint_url': {
@@ -1642,7 +1642,7 @@ DEFAULT_SETTINGS = {
         'serializer_class': serializers.EmailField,
         'form_kwargs': dict(
             label=_('Sender address'),
-            help_text=_('Sender address for outgoing emails'),
+            help_text=_('Sender address for outgoing emails. When using a custom sender, replies go to this address unless a Reply-To is set.'),
         ),
     },
     'mail_reply_to': {
@@ -2084,12 +2084,34 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'Upload a banner image shown at the top of all event pages. Accepted formats: PNG, JPEG, WebP. '
+                'Upload a banner image shown at the top of all event pages. '
                 'The banner is cropped to a 320 px tall strip by default. Keep important content (title, logo, key visual) in the center of the image — the sides are cropped on narrow screens. '
                 'Recommended size: 1920 × 640 px (the center 1920 × 320 px will always be visible). Images will be automatically optimized to max 3000 px wide on save.'
             ),
         ),
         'serializer_class': UploadedFileNoNewURLField,
+        'serializer_kwargs': dict(
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        ),
+    },
+    'event_preview_image': {
+        'default': None,
+        'type': File,
+        'form_class': ExtFileField,
+        'form_kwargs': dict(
+            label=_('Event preview image'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+            help_text=_(
+                'This image is used specifically for the platform start page event cards and other event listings. '
+                'If unset, the platform falls back to displaying the event header image, then the event logo, '
+                'and finally a default calendar placeholder icon. '
+                'It should be optimized for a rectangular card. '
+                'We recommend an aspect ratio of 16:9, and at least 800 x 450 px for best display results.'
+            ),
+        ),
+        'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
@@ -2104,7 +2126,7 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'Upload your event logo. Accepted formats: PNG, JPEG, GIF, SVG, WebP. '
+                'Upload your event logo. '
                 'The logo is displayed at up to 160 px tall (max-height), width proportional. We recommend a minimum of 320 px in height for crisp display on retina screens. '
                 'The logo will be automatically optimized on save (max 1000 px wide), except for SVG and animated images which remain unmodified.'
             ),

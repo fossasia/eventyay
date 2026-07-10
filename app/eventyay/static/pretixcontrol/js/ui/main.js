@@ -250,6 +250,24 @@ var form_handlers = function (el) {
         return parts.host;
     }
 
+    function hexToRgbObj(hex) {
+        if (!hex) return null;
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    function getEffectiveColor(name, defaultHex) {
+        var $field = $("input[name$='" + name + "']");
+        if ($field.length && $field.val() && !$field.is(".no-contrast")) {
+            return hexToRgbObj($field.val());
+        }
+        return hexToRgbObj(defaultHex);
+    }
+
     function updateContrastState($input, rgb) {
         var $host = getColorFieldHost($input),
             $note = $host.find(".contrast-state");
@@ -261,7 +279,24 @@ var form_handlers = function (el) {
             $note = $("<div class='help-block contrast-state'></div>");
             $host.append($note);
         }
-        var c = contrast([255,255,255], [rgb.r, rgb.g, rgb.b]);
+        
+        var name = $input.attr("name") || "";
+        var compareRgb = {r: 255, g: 255, b: 255};
+        var backgroundName = gettext("white background");
+
+        if (name.indexOf("header_background_color") !== -1) {
+            compareRgb = getEffectiveColor("header_text_color", "#ffffff") || {r: 255, g: 255, b: 255};
+            backgroundName = gettext("header text color");
+        } else if (name.indexOf("header_text_color") !== -1) {
+            var primaryFallback = getEffectiveColor("primary_color", "#3b1c4a") || {r: 59, g: 28, b: 74};
+            compareRgb = getEffectiveColor("header_background_color", null) || primaryFallback;
+            backgroundName = gettext("header background color");
+        } else if (name.indexOf("navigation_text_color") !== -1) {
+            compareRgb = {r: 255, g: 255, b: 255};
+            backgroundName = gettext("white background");
+        }
+
+        var c = contrast([compareRgb.r, compareRgb.g, compareRgb.b], [rgb.r, rgb.g, rgb.b]);
         if (c > 7) {
             $note.html("<span class='fa fa-fw fa-check-circle'></span>")
                 .append(gettext('Your color has great contrast and is very easy to read!'));
@@ -272,8 +307,7 @@ var form_handlers = function (el) {
             $note.removeClass("text-success").removeClass("text-warning").removeClass("text-danger");
         } else {
             $note.html("<span class='fa fa-fw fa-warning'></span>")
-                .append(gettext('Your color has bad contrast for text on white background, please choose a darker ' +
-                    'shade.'));
+                .append(gettext('Your color has bad contrast for text on ' + backgroundName + ', please choose a different shade.'));
             $note.addClass("text-danger").removeClass("text-success").removeClass("text-warning");
         }
     }
@@ -306,6 +340,24 @@ var form_handlers = function (el) {
             colorString = pickerColor && pickerColor.toString ? pickerColor.toString() : null;
         updateColorPreview($input, colorString);
         updateContrastState($input, rgb);
+        
+        if (!e.isTriggeredByDependency) {
+            var name = $input.attr("name") || "";
+            if (name.indexOf("header_background_color") !== -1 || name.indexOf("primary_color") !== -1) {
+                var $depTxt = $("input[name$='header_text_color']");
+                if ($depTxt.length && $depTxt.val()) {
+                    var txtRgb = hexToRgbObj($depTxt.val());
+                    if (txtRgb) updateContrastState($depTxt, txtRgb);
+                }
+            }
+            if (name.indexOf("header_text_color") !== -1 || name.indexOf("primary_color") !== -1) {
+                var $depBg = $("input[name$='header_background_color']");
+                if ($depBg.length && $depBg.val()) {
+                    var bgRgb = hexToRgbObj($depBg.val());
+                    if (bgRgb) updateContrastState($depBg, bgRgb);
+                }
+            }
+        }
     });
 
     $colorInputs.on('input', function () {
@@ -467,7 +519,7 @@ var form_handlers = function (el) {
         dependency.on("change", update);
     });
 
-    el.find("div.scrolling-multiple-choice").each(function () {
+    el.find("div.scrolling-multiple-choice, ul.scrolling-multiple-choice").each(function () {
         if ($(this).find(".choice-options-all").length > 0) {
             return;
         }
@@ -658,6 +710,88 @@ var form_handlers = function (el) {
 
     el.find("input[name*=question], select[name*=question]").change(questions_toggle_dependent);
     questions_toggle_dependent();
+
+    if (el.find('input[name="limit_checkin_lists"]').length) {
+        var eventMap = {};
+        var $mapEl = document.getElementById('device-checkin-list-event-map');
+        if ($mapEl) {
+            try {
+                eventMap = JSON.parse($mapEl.textContent);
+            } catch (ignore) {
+                eventMap = {};
+            }
+        }
+
+        var $deviceForm = el.find('input[name="limit_checkin_lists"]').first().closest('form');
+        var $allEvents = $deviceForm.find('#id_all_events');
+        var $eventCheckboxes = $deviceForm.find('input[name="limit_events"]');
+        var $checkinListGroup = $deviceForm.find('input[name="limit_checkin_lists"]').first().closest('.form-group');
+        var $helpBlock = $checkinListGroup.find('.help-block').first();
+        var defaultHelpText = $helpBlock.text();
+
+        var getEventIdForList = function ($checkbox) {
+            var eventId = $checkbox.attr('data-event-id');
+            if (eventId) {
+                return String(eventId);
+            }
+            return eventMap[String($checkbox.val())] || '';
+        };
+
+        var getSelectedEventIds = function () {
+            if ($allEvents.prop('checked')) {
+                return null;
+            }
+            var selected = [];
+            $eventCheckboxes.each(function () {
+                if (this.checked) {
+                    selected.push(String(this.value));
+                }
+            });
+            return selected;
+        };
+
+        var updateDeviceCheckinListVisibility = function () {
+            var selectedEventIds = getSelectedEventIds();
+            var showAll = selectedEventIds === null;
+            var hasEventSelection = showAll || selectedEventIds.length > 0;
+            var visibleCount = 0;
+
+            $deviceForm.find('input[name="limit_checkin_lists"]').each(function () {
+                var $checkbox = $(this);
+                var eventId = getEventIdForList($checkbox);
+                var $item = $checkbox.closest('li');
+                if (!$item.length) {
+                    $item = $checkbox.closest('label').parent('div');
+                }
+                var visible = hasEventSelection && (showAll || (eventId && selectedEventIds.indexOf(eventId) !== -1));
+
+                $item.toggle(visible);
+                if (visible) {
+                    visibleCount += 1;
+                } else if ($checkbox.prop('checked')) {
+                    $checkbox.prop('checked', false);
+                }
+            });
+
+            if (!$helpBlock.length) {
+                return;
+            }
+            if (!hasEventSelection) {
+                $helpBlock.text(gettext('Select one or more events above to see matching check-in lists.'));
+            } else if (visibleCount === 0) {
+                $helpBlock.text(gettext('No check-in lists exist for the selected events yet.'));
+            } else {
+                $helpBlock.text(defaultHelpText);
+            }
+        };
+
+        updateDeviceCheckinListVisibility();
+        $allEvents.on('change', updateDeviceCheckinListVisibility);
+        $eventCheckboxes.on('change', updateDeviceCheckinListVisibility);
+        $deviceForm.find('#id_security_profile').on('change', function () {
+            window.setTimeout(updateDeviceCheckinListVisibility, 150);
+        });
+    }
 };
 
 $(function () {
@@ -779,8 +913,11 @@ $(function () {
     });
 
     // Tables with bulk selection, e.g. subevent list
-    $("input[data-toggle-table]").each(function (ev) {
-        var $toggle = $(this);
+    window.eventyayInitBatchSelection = function (root) {
+        root = root || document;
+        $(root).find("input[data-toggle-table]:not([data-batch-selection-init])").each(function (ev) {
+            $(this).attr("data-batch-selection-init", "1");
+            var $toggle = $(this);
         var $batchSelectActions = $(".batch-select-actions", this.form);
         var $actionButtons = $batchSelectActions.find("[data-batch-action]");
         if (!$actionButtons.length) {
@@ -799,6 +936,7 @@ $(function () {
         var $rows = $table.find("tbody tr");
         var $checkboxes = $rows.find("td:first-child input[type=checkbox]");
         var firstIndex, lastIndex, selectionChecked, onChangeSelectionHappened = false;
+        var suppressRowClick = null;
         var updateSelection = function(a, b, checked) {
             if (a > b) {
                 //[a, b] = [b, a];// ES6 not ready yet for pretix
@@ -839,7 +977,9 @@ $(function () {
         $table.on("pointerdown", function(ev) {
             if (!ev.target.closest("td:first-child")) return;
             var row = ev.target.closest("tr");
-            selectionChecked = !row.querySelector("td:first-child input").checked;
+            if (!row || !row.closest("tbody")) return;
+            suppressRowClick = row;
+            selectionChecked = !row.querySelector("td:first-child input[type=checkbox]").checked;
 
             firstIndex = 0;
             while(row = row.previousSibling) {
@@ -857,24 +997,106 @@ $(function () {
                     $checkboxes.removeAttr("data-inital");
 
                     update();
+                } else if (suppressRowClick) {
+                    var checkbox = suppressRowClick.querySelector("td:first-child input[type=checkbox]");
+                    if (checkbox) {
+                        $(checkbox).prop("checked", selectionChecked).trigger("change");
+                    } else {
+                        update();
+                    }
+                    ev.preventDefault();
+                    $(suppressRowClick).find("td:first-child").one("click", function(e) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                    });
                 }
+                suppressRowClick = null;
                 $rows.off("pointerenter", onChangeSelection);
             });
         });
 
+        var $form = $toggle.closest("form");
         var update = function() {
-            var nrOfChecked = $checkboxes.filter(":checked").length;
-            var allChecked = nrOfChecked == $checkboxes.length;
+             var nrOfChecked = $checkboxes.filter(":checked").length;
+             var allChecked = nrOfChecked == $checkboxes.length;
+             var $checked = $checkboxes.filter(":checked");
+             var eligibilityMode = $batchSelectActions.is("[data-batch-disabled-reason-ineligible]");
+             var nrEligibleChecked = eligibilityMode ? $checked.filter('[data-batch-eligible="true"]').length : nrOfChecked;
+             var nrIneligibleChecked = eligibilityMode ? (nrOfChecked - nrEligibleChecked) : 0;
+             var $actionHint = $batchSelectActions.find("[data-batch-action-hint]");
+            var reasonNone = $batchSelectActions.attr("data-batch-disabled-reason-none");
+            var reasonAllIneligible = $batchSelectActions.attr("data-batch-disabled-reason-ineligible");
+            var reasonPartialSkip = $batchSelectActions.attr("data-batch-partial-skip-notice");
+            var actionsDisabled = false;
+            var disabledReason = "";
 
             if (!nrOfChecked) countLabels.empty();
             else countLabels.text(" ("+nrOfChecked+")");
 
-            if (!allChecked) $selectAll.find("input").prop("checked", false); 
+            if (!allChecked) $selectAll.find("input").prop("checked", false);
 
-            $actionButtons.prop("disabled", !nrOfChecked);
+            if (!nrOfChecked) {
+                // Nothing selected at all — disable
+                actionsDisabled = true;
+                disabledReason = reasonNone || "";
+            } else if (nrEligibleChecked === 0) {
+                // All selected are ineligible — disable
+                actionsDisabled = true;
+                disabledReason = reasonAllIneligible || "";
+            }
+            // else: at least one eligible order — keep enabled (mixed or all eligible)
+
+            $actionButtons.prop("disabled", actionsDisabled);
+            if (actionsDisabled && disabledReason) {
+                $actionButtons.attr("title", disabledReason);
+            } else {
+                $actionButtons.removeAttr("title");
+            }
+            if ($actionHint.length) {
+                if (!nrOfChecked) {
+                    $actionHint.text("").prop("hidden", true);
+                } else if (nrEligibleChecked === 0) {
+                    // All ineligible: show hard error hint
+                    $actionHint.text(reasonAllIneligible || "").prop("hidden", false);
+                } else if (nrIneligibleChecked > 0 && reasonPartialSkip) {
+                    // Mixed: show partial-skip notice
+                    var skipMsg = reasonPartialSkip.replace("{count}", nrIneligibleChecked);
+                    $actionHint.text(skipMsg).prop("hidden", false);
+                } else {
+                    $actionHint.text("").prop("hidden", true);
+                }
+            }
             $toggle.prop("checked", allChecked).prop("indeterminate", nrOfChecked > 0 && !allChecked);
             $selectAll.toggleClass("hidden", nrOfChecked !== $checkboxes.length).prop("hidden", nrOfChecked !== $checkboxes.length);
 
+        }
+
+        if ($batchSelectActions.attr("data-batch-disabled-reason-ineligible") && !$form.data("batch-selection-submit-bound")) {
+            $form.data("batch-selection-submit-bound", true);
+            $form.on("submit", function(ev) {
+                var $batchSelectActions = $(this).find(".batch-select-actions");
+                var $checkboxes = $(this).find("tbody input[type=checkbox]");
+                var reasonNone = $batchSelectActions.attr("data-batch-disabled-reason-none");
+                var $actionHint = $batchSelectActions.find("[data-batch-action-hint]");
+                var nrOfChecked = $checkboxes.filter(":checked").length;
+                var nrEligibleChecked = $checkboxes.filter(":checked").filter('[data-batch-eligible="true"]').length;
+
+                if (!nrOfChecked) {
+                    ev.preventDefault();
+                    if ($actionHint.length) {
+                        $actionHint.text(reasonNone || "").prop("hidden", false);
+                    }
+                    return false;
+                }
+                if (nrEligibleChecked === 0) {
+                    var reasonAllIneligible = $batchSelectActions.attr("data-batch-disabled-reason-ineligible");
+                    ev.preventDefault();
+                    if ($actionHint.length) {
+                        $actionHint.text(reasonAllIneligible || "").prop("hidden", false);
+                    }
+                    return false;
+                }
+            });
         }
 
         $checkboxes.change(update);
@@ -889,7 +1111,10 @@ $(function () {
         })
 
         update();
-    });
+        });
+    };
+
+    window.eventyayInitBatchSelection();
 
     // Items and categories
     $(".internal-name-wrapper").each(function () {
@@ -964,6 +1189,24 @@ $(function () {
         });
         return false;
     });
+
+    // Voucher page specific delete selected toggle
+    var $vouchersDeleteBtn = $('button[name="action"][value="delete"]');
+    var $vouchersForm = $vouchersDeleteBtn.closest('form');
+    var $vouchersCheckboxes = $vouchersForm.find('input[name="voucher"]');
+
+    // Only run this behavior on the voucher list (other pages also use .table-quotas + a delete button).
+    if ($vouchersCheckboxes.length) {
+        var updateVouchersDeleteBtn = function () {
+            $vouchersDeleteBtn.toggleClass('hidden', $vouchersCheckboxes.filter(':checked').length === 0);
+        };
+
+        $vouchersForm.on('change', 'input[name="voucher"], input[data-toggle-table]', function () {
+            setTimeout(updateVouchersDeleteBtn, 50);
+        });
+
+        updateVouchersDeleteBtn();
+    }
 
     $("#ajaxerr").on("click", ".ajaxerr-close", ajaxErrDialog.hide);
     moment.locale($("body").attr("data-datetimelocale"));

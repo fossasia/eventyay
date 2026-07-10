@@ -1,15 +1,21 @@
 import datetime as dt
 import logging
+import os
 import re
+import smtplib
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from enum import StrEnum
 from urllib.parse import urlparse
 
+from python_http_client.exceptions import HTTPError
+
 import jwt
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.core.files import File
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField
@@ -35,8 +41,9 @@ from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
+from eventyay.base.settings import DEFAULTS, SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
 from eventyay.presale.style import regenerate_css
+from eventyay.common.text.path import resolve_media_path
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
 from eventyay.control.forms.filter import EventFilterForm
@@ -51,6 +58,7 @@ from eventyay.eventyay_common.utils import (
     encode_email,
     generate_token,
 )
+from eventyay.orga.forms.email import CentralMailSettingsForm
 from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
 from eventyay.eventyay_common.video.permissions import collect_user_video_traits
 from eventyay.helpers.plugin_enable import is_video_enabled
@@ -478,14 +486,13 @@ class EventCreateView(TemplateView):
             event.has_subevents = foundation_data['has_subevents']
             event.is_video_creation = final_is_video_creation
             event.testmode = False
-            event.private_testmode = True
+            event.private_testmode = False
             basics_form.save()
             if self.clone_from:
                 event.clone_from(self.clone_from, new_secrets=True)
 
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)
-            # New events start unpublished; set_defaults enables private test mode for tickets/talks by default.
             event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
@@ -574,6 +581,15 @@ class EventUpdate(
         )
 
     @cached_property
+    def email_form(self):
+        return CentralMailSettingsForm(
+            obj=self.object,
+            attribute_name='settings',
+            prefix='email',
+            data=self.request.POST if self.request.method == 'POST' else None,
+        )
+
+    @cached_property
     def header_links_formset(self):
         return EventHeaderLinkFormset(
             self.request.POST if self.request.method == 'POST' else None,
@@ -594,6 +610,8 @@ class EventUpdate(
     def get_context_data(self, *args, **kwargs) -> dict:
         context = super().get_context_data(*args, **kwargs)
         context['sform'] = self.sform
+        context['email_form'] = self.email_form
+        context['renderers'] = self.object.get_html_mail_renderers()
         context['header_links_formset'] = self.header_links_formset
         context['footer_links_formset'] = self.footer_links_formset
         context['is_video_enabled'] = is_video_enabled(self.object)
@@ -606,10 +624,53 @@ class EventUpdate(
             context['is_talk_event_created'] = True
         return context
 
+    def _run_email_test(self):
+        """Test the central SMTP/SendGrid configuration and add a flash message."""
+        event = self.object
+        if not event.settings.smtp_use_custom:
+            messages.error(self.request, _('Custom email gateway is not enabled.'))
+            return
+        vendor = event.settings.get('email_vendor', 'smtp')
+        if vendor == 'sendgrid' and not event.settings.get('send_grid_api_key'):
+            messages.error(self.request, _('SendGrid API key is missing. Please configure it and save.'))
+            return
+        if vendor != 'sendgrid' and (not event.settings.get('smtp_host') or not event.settings.get('smtp_port')):
+            messages.error(self.request, _('SMTP host or port is missing. Please configure them and save.'))
+            return
+
+        test_email = self.email_form.cleaned_data.get('test_email')
+        to_addrs = [a.strip() for a in test_email.split(',') if a.strip()] if test_email else None
+        backend = event.get_mail_backend(force_custom=True, timeout=10)
+        try:
+            backend.test(event.settings.mail_from, to_addrs=to_addrs)
+        except UnicodeEncodeError:
+            logger.warning('Central email test failed — non-ASCII characters (event=%s)', event.slug)
+            messages.error(
+                self.request,
+                _('Email test failed because a field (password, username, or recipient) contains a non-ASCII character.'),
+            )
+        except HTTPError as e:
+            logger.exception('Central SendGrid test failed (event=%s)', event.slug)
+            messages.error(
+                self.request,
+                _('SendGrid test failed with HTTP error %(code)s. Check your API key and try again.')
+                % {'code': e.response.status_code if hasattr(e, 'response') and e.response is not None else '?'},
+            )
+        except (smtplib.SMTPException, OSError):
+            logger.exception('Central SMTP test failed (event=%s)', event.slug)
+            messages.warning(
+                self.request,
+                _('Test email could not be delivered. Check the SMTP host, port, and credentials and try again.'),
+            )
+        else:
+            messages.success(self.request, _('Test email sent successfully.'))
+
     @transaction.atomic
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        if any(k.startswith('email-') for k in self.request.POST):
+            self.email_form.save()
         self.header_links_formset.save()
         self.footer_links_formset.save()
         # Keep event model timezone in sync with settings
@@ -627,12 +688,15 @@ class EventUpdate(
             (
                 form.has_changed(),
                 self.sform.has_changed(),
+                self.email_form.has_changed(),
                 self.header_links_formset.has_changed(),
                 self.footer_links_formset.has_changed(),
             )
         )
 
-        if self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
+        if self.request.POST.get('test', '0').strip() == '1':
+            self._run_email_test()
+        elif self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
             transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
             messages.success(
                 self.request,
@@ -695,6 +759,35 @@ class EventUpdate(
         return True
 
     def post(self, request, *args, **kwargs):
+        if request.POST.get('ajax') == 'delete_image':
+            setting_key = request.POST.get('setting_key', '').strip()
+            if not setting_key:
+                field = request.POST.get('field', '').strip()
+                if field.startswith('settings-'):
+                    setting_key = field[len('settings-'):]
+                else:
+                    setting_key = field
+
+            if setting_key in DEFAULTS and DEFAULTS[setting_key].get('type') is File:
+                current_value = request.event.settings.get(setting_key, as_type=str)
+                if current_value:
+                    current_file = resolve_media_path(current_value)
+                    if current_file and not str(current_file).startswith(('http://', 'https://')):
+                        default_storage.delete(current_file)
+                        base_path, unused_ext = os.path.splitext(current_file)
+                        orig_ext = request.event.settings.get(f'{setting_key}_original_ext', as_type=str)
+                        if orig_ext:
+                            default_storage.delete(f'{base_path}_original.{orig_ext}')
+
+                if request.event.settings.get(setting_key) is not None:
+                    del request.event.settings[setting_key]
+                orig_ext_key = f"{setting_key}_original_ext"
+                if request.event.settings.get(orig_ext_key) is not None:
+                    del request.event.settings[orig_ext_key]
+                request.event.log_action('eventyay.event.settings.changed', user=request.user, data={setting_key: None})
+                return JsonResponse({'success': True})
+            return JsonResponse({'success': False, 'error': 'Invalid field'}, status=400)
+
         if self.enable_talk_system(request):
             return redirect(self.get_success_url())
 
@@ -703,11 +796,15 @@ class EventUpdate(
 
         form = self.get_form()
         has_formset_changes = self.header_links_formset.has_changed() or self.footer_links_formset.has_changed()
-        if form.changed_data or self.sform.changed_data or has_formset_changes:
+        is_test_request = request.POST.get('test', '0').strip() == '1'
+        has_email_form_data = any(k.startswith('email-') for k in request.POST)
+        email_form_valid = (not has_email_form_data) or self.email_form.is_valid()
+        if is_test_request or form.changed_data or self.sform.changed_data or self.email_form.has_changed() or has_formset_changes:
             form.instance.sales_channels = ['web']
             if (
                 form.is_valid()
                 and self.sform.is_valid()
+                and email_form_valid
                 and self.header_links_formset.is_valid()
                 and self.footer_links_formset.is_valid()
             ):

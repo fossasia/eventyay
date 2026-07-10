@@ -7,6 +7,7 @@
     {% else %}
         <h1>{% trans "Connect a new device" %}</h1>
     {% endif %}
+    {% include "pretixcontrol/organizers/device_event_nav.html" %}
     <form class="form-horizontal" action="" method="post">
         {% if device %}
             <div class="row">
@@ -22,13 +23,50 @@
         </fieldset>
         <fieldset>
             <legend>{% trans "Advanced settings" %}</legend>
-            {% bootstrap_field form.security_profile layout="control" %}
+            <div class="form-group">
+                <label class="col-md-3 control-label" for="{{ form.security_profile.id_for_label }}">
+                    {{ form.security_profile.label }}
+                </label>
+                <div class="col-md-9">
+                    <p class="help-block">
+                        {% trans "Select the profile that matches the station type in the check-in app:" %}
+                    </p>
+                    <ul class="help-block list-unstyled" style="margin-bottom: 12px;">
+                        {% for profile in device_security_profiles %}
+                            <li style="margin-bottom: 8px;">
+                                <strong>{{ profile.name }}</strong><br>
+                                <span class="text-muted">{{ profile.usage }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {{ form.security_profile }}
+                    {% if form.security_profile.errors %}
+                        <div class="help-block text-danger">
+                            {% for error in form.security_profile.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
             {% bootstrap_field form.gate layout="control" %}
+            <div
+                data-display-dependency="#id_security_profile"
+                data-display-dependency-regex="/^(eventyay_checkin|eventyay_checkin_online_kiosk)/"
+            >
+                {{ form.checkin_list_event_map|json_script:"device-checkin-list-event-map" }}
+                {% bootstrap_field form.limit_checkin_lists layout="control" %}
+            </div>
         </fieldset>
         <div class="form-group submit-group">
             <button type="submit" class="btn btn-primary btn-save">
                 {% trans "Save" %}
             </button>
+            {% if organizer_devices_url %}
+                <a href="{{ organizer_devices_url }}" class="btn btn-default">
+                    {% trans "Cancel" %}
+                </a>
+            {% endif %}
         </div>
 
         {% if device %}

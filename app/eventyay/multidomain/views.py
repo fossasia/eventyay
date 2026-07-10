@@ -145,15 +145,29 @@ class VideoSPAView(View):
                 # Extra values expected by config.js/theme
                 'eventUrl': str(event.urls.base),
                 'eventSlug': event.slug,
+                'organizerSlug': event.organizer.slug if event.organizer else None,
+                'eventDates': {
+                    'date_from': event.date_from.isoformat() if event.date_from else None,
+                    'date_to': event.date_to.isoformat() if event.date_to else None,
+                },
+                'eventTimezone': event.settings.timezone,
+                'eventTitle': str(event.name),
+                'visibleLogoUrl': event.visible_logo_url or '',
+                'visibleHeaderImageUrl': event.visible_header_image_url or '',
                 'basePath': base_path,
                 'defaultLocale': 'en',
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
                 'translationMessages': {
-                    'favs_not_logged_in': str(_(
-                        "You're currently not logged in, so your favourited talks will only be stored locally in your browser."
+                    'favs_anonymous_notice': str(_(
+                        'Your favourites can only be saved locally in this browser. '
+                        'Please sign in or register to sync starred sessions and use more features. '
+                        'Locally saved stars may be lost if you clear your browser data; '
+                        'we are not responsible for data loss in this case.'
                     )),
-                    'favs_not_saved': str(_('Your favourites could only be saved locally in your browser.')),
+                    'favs_not_saved': str(_(
+                        'Could not save favourites in this browser. Please check your browser storage settings.'
+                    )),
                     'no_matching_options': str(_('Sorry, no matching options.')),
                     'view_changelog': str(_('View Changelog')),
                     'go_to_current_version': str(_('Go to current version')),

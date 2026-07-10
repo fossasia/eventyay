@@ -4,6 +4,7 @@
 {% block title %}{% trans "Device logs" %}{% endblock %}
 {% block inside %}
     <h1>{% trans "Device logs" %}</h1>
+    {% include "pretixcontrol/organizers/device_event_nav.html" %}
     <h2>
         <span class="fa fa-mobile fa-fw"></span> {{ device }}
     </h2>

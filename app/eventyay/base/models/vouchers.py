@@ -226,20 +226,7 @@ class Voucher(LoggedModel):
         return self.code
 
     def allow_delete(self):
-        return not OrderPosition.objects.filter(
-            voucher=self,
-        ).exclude(
-            order__status=Order.STATUS_CANCELED
-        ).exists()
-
-    def _clear_canceled_order_positions(self):
-        """Null out the voucher FK on positions that belong to canceled orders
-        or are individually canceled, so the voucher row can be deleted
-        without hitting the PROTECT constraint."""
-        OrderPosition.all.filter(
-            Q(order__status=Order.STATUS_CANCELED) | Q(canceled=True),
-            voucher=self,
-        ).update(voucher=None)
+        return self.redeemed == 0 and not self.orderposition_set.exists()
 
     def clean(self):
         Voucher.clean_product_properties(

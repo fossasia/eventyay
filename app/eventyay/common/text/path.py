@@ -1,9 +1,16 @@
+import logging
 import os
 import unicodedata
 from pathlib import Path
 
 from django.conf import settings
+from django.core.exceptions import SuspiciousFileOperation
+from django.utils._os import safe_join
 from django.utils.crypto import get_random_string
+
+from eventyay.common.urls import get_file_url_path, is_http_url
+
+logger = logging.getLogger(__name__)
 
 
 def path_with_hash(name, base_path=None, max_length=100):
@@ -26,3 +33,65 @@ def path_with_hash(name, base_path=None, max_length=100):
 
 def safe_filename(filename):
     return unicodedata.normalize('NFD', filename).encode('ASCII', 'ignore').decode()
+
+
+def resolve_media_path(obj):
+    """
+    Convert an arbitrary image setting value (string, dict, or file-like) to a
+    storage-relative path suitable for passing to ``default_storage.url()`` or
+    ``get_thumbnail()``.  Returns an absolute HTTP/HTTPS URL unchanged, and
+    returns ``None`` when the value is empty or unsafe.
+
+    Path traversal protection: after resolving the raw value to an absolute
+    filesystem path, ``safe_join`` is used to verify the path is contained
+    within ``MEDIA_ROOT``.  Any path that escapes (e.g. ``../../secret``) is
+    logged and rejected, returning ``None``.
+    """
+    # Step 1: extract a raw string from whatever the setting stores.
+    if not obj:
+        return None
+    if isinstance(obj, dict):
+        path = obj.get('name') or obj.get('path') or obj.get('url')
+    elif hasattr(obj, 'name') and obj.name:
+        path = obj.name
+    elif hasattr(obj, 'url'):
+        path = obj.url
+    else:
+        path = str(obj)
+
+    if not path:
+        return None
+
+    # Step 2: pass through absolute HTTP(S) URLs untouched.
+    if is_http_url(path):
+        return path
+
+    # Step 3: strip a file:// scheme if present.
+    # get_file_url_path() handles both file://pub/... (netloc='pub') and
+    # any other file:// variant consistently via urlsplit.
+    file_path = get_file_url_path(path)
+    if file_path is not None:
+        path = file_path
+
+    # Step 4: strip legacy /media/ prefix before resolving.
+    for prefix in ('/media/', 'media/'):
+        if path.startswith(prefix):
+            path = path[len(prefix):]
+            break
+
+    # Step 5: resolve to an absolute path and verify containment in MEDIA_ROOT
+    #         using Django's safe_join, which raises SuspiciousFileOperation for
+    #         any path that would escape the root (e.g. containing '..' segments).
+    media_root = os.path.abspath(settings.MEDIA_ROOT)
+    try:
+        abs_candidate = safe_join(media_root, path)
+    except SuspiciousFileOperation:
+        logger.warning(
+            'Rejected image path %r: it would escape MEDIA_ROOT (%s)',
+            path,
+            media_root,
+        )
+        return None
+
+    # Step 6: return a storage-relative path (no leading slash).
+    return os.path.relpath(abs_candidate, media_root)

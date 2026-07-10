@@ -1,0 +1,75 @@
+.admin-section {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.admin-section:first-child {
+  margin-top: 0;
+}
+
+.admin-section:last-child {
+  margin-bottom: 0;
+}
+
+.dashboard-panels {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.dashboard-panels:last-child {
+  margin-bottom: 0;
+}
+
+.dashboard-panels .panel {
+  margin-bottom: 16px;
+}
+
+@media (min-width: 992px) {
+  .dashboard-panels .panel {
+    margin-bottom: 0;
+  }
+}
+
+.dashboard-panels .table {
+  margin-bottom: 0;
+}
+
+.dashboard-panels .table td:first-child,
+.dashboard-panels .table th:first-child {
+  padding-left: 15px;
+}
+
+.dashboard-panels .table td:last-child,
+.dashboard-panels .table th:last-child {
+  padding-right: 15px;
+}
+
+.numwidget-revenue {
+  padding: 10px 0;
+  color: #2185d0;
+}
+
+.numwidget-revenue .revenue-line {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.numwidget-revenue .revenue-line .revenue-currency {
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.numwidget-revenue .revenue-overflow {
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.numwidget-revenue .text {
+  margin-top: 5px;
+}
