@@ -13,10 +13,8 @@ from django.db.models import (
     Case,
     Count,
     DateTimeField,
-    Exists,
+    F,
     Min,
-    OuterRef,
-    Prefetch,
     Q,
     Sum,
     When,
@@ -50,7 +48,7 @@ from eventyay.control.forms.admin.admin import UpdateSettingsForm
 from eventyay.base.models.auth import User
 from eventyay.base.models.checkin import Checkin
 from eventyay.base.models.event import Event, Event_SettingsStore
-from eventyay.base.models.orders import Order, OrderPosition, OrderPayment, OrderRefund
+from eventyay.base.models.orders import Order, OrderPosition, OrderRefund
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.models.cfp import CfP
@@ -141,26 +139,48 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 .order_by('-pk')[:10]
             )
 
-            # Fetch most recent events in chunks (up to 500 events) and check them using core model logic
+            # Exclude events with active payment settings at database level to build candidates
+            events_with_payment = Event_SettingsStore.objects.filter(
+                key__startswith='payment_',
+                key__endswith='__enabled',
+                value='True',
+            ).exclude(
+                key__in=[
+                    'payment_free__enabled',
+                    'payment_boxoffice__enabled',
+                    'payment_offsetting__enabled',
+                    'payment_giftcard__enabled',
+                ]
+            ).values_list('object_id', flat=True)
+
+            events_with_paid_products = Product.objects.filter(
+                default_price__gt=0
+            ).values_list('event_id', flat=True)
+
+            events_no_products = Event.objects.filter(products__isnull=True)
+            events_missing_payment = Event.objects.filter(id__in=events_with_paid_products).exclude(
+                id__in=events_with_payment
+            )
+
+            events_pending_setup = (events_no_products | events_missing_payment).distinct()
+
+            # Fetch candidates (up to 20 candidates is sufficient to find 5)
+            candidates = list(
+                events_pending_setup.select_related('organizer')
+                .prefetch_related('products')
+                .order_by('-pk')[:20]
+            )
+
             events_pending_setup_list = []
-            for chunk_start in range(0, 500, 50):
-                chunk = list(
-                    Event.objects.select_related('organizer')
-                    .prefetch_related('products')
-                    .order_by('-pk')[chunk_start:chunk_start + 50]
-                )
-                if not chunk:
-                    break
-                for event in chunk:
-                    has_products = len(event.products.all()) > 0
-                    has_paid_products = any(p.default_price > 0 for p in event.products.all())
-                    if not has_products or (has_paid_products and not event.has_payment_provider):
-                        event.has_products = has_products
-                        events_pending_setup_list.append(event)
-                        if len(events_pending_setup_list) == 5:
-                            break
-                if len(events_pending_setup_list) == 5:
-                    break
+            for event in candidates:
+                has_products = len(event.products.all()) > 0
+                has_paid_products = any(p.default_price > 0 for p in event.products.all())
+                # Double-check using core model logic for 100% safety
+                if not has_products or (has_paid_products and not event.has_payment_provider):
+                    event.has_products = has_products
+                    events_pending_setup_list.append(event)
+                    if len(events_pending_setup_list) == 5:
+                        break
             ctx['events_pending_setup_list'] = events_pending_setup_list
 
             # CfP stats
@@ -181,7 +201,7 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 .select_related('event', 'event__organizer')
                 .annotate(
                     cfp_deadline_soon=Case(
-                        When(deadline__gte=n, deadline__lte=cfp_closing_until, then='deadline'),
+                        When(deadline__gte=n, deadline__lte=cfp_closing_until, then=F('deadline')),
                         output_field=DateTimeField(),
                     ),
                     type_deadline_soon=Min(
@@ -230,9 +250,11 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 (Order.STATUS_PENDING, 'pending'),
                 (Order.STATUS_CANCELED, 'cancelled'),
             ]:
+                qs = Order.objects.filter(status=status)
+                if status == Order.STATUS_PAID:
+                    qs = qs.exclude(total=0)
                 for entry in (
-                    Order.objects.filter(status=status)
-                    .values('event__currency')
+                    qs.values('event__currency')
                     .annotate(count=Count('pk', distinct=True))
                     .order_by()
                 ):

@@ -331,7 +331,7 @@
                                     <tbody>
                                         {% for cfp in events_cfp_closing_soon %}
                                             <tr>
-                                                <td>{{ cfp.event.name }}</td>
+                                                <td><a href="{% url 'eventyay_admin:admin.events' %}?query={{ cfp.event.slug|urlencode }}">{{ cfp.event.name }}</a></td>
                                                 <td>{{ cfp.event.organizer.name }}</td>
                                                 <td class="text-danger">{{ cfp.closing_deadline|date:"d M Y H:i" }}</td>
                                             </tr>
@@ -368,7 +368,7 @@
                                 {% for event in events_upcoming %}
                                     <tr>
                                         <td>
-                                            <a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug }}">
+                                            <a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug|urlencode }}">
                                                 {{ event.name }}
                                             </a>
                                         </td>
@@ -406,7 +406,7 @@
                                 {% for event in events_recent %}
                                     <tr>
                                         <td>
-                                            <a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug }}">
+                                            <a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug|urlencode }}">
                                                 {{ event.name }}
                                             </a>
                                         </td>
@@ -451,7 +451,7 @@
                                     {% for event in events_pending_setup_list %}
                                         <tr>
                                             <td>
-                                                <a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug }}">
+                                                <a href="{% url 'eventyay_admin:admin.events' %}?query={{ event.slug|urlencode }}">
                                                     {{ event.name }}
                                                 </a>
                                             </td>
@@ -493,7 +493,7 @@
                                     {% for submission in sessions_recent_submissions %}
                                         <tr>
                                             <td>
-                                                <a href="{% url 'eventyay_admin:admin.submissions' %}?query={{ submission.code }}">
+                                                <a href="{% url 'eventyay_admin:admin.submissions' %}?query={{ submission.code|urlencode }}">
                                                     {{ submission.title }}
                                                 </a>
                                             </td>
