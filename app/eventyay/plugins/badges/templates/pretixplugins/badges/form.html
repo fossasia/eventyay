@@ -11,4 +11,8 @@
         <span class="fa fa-paint-brush"></span>
         {% trans "Open Badge Designer" %}
     </a>
+    <a class="btn btn-default btn-lg" target="_blank"
+            href="{% url "plugins:badges:index" organizer=request.organizer.slug event=request.event.slug %}">
+        {% trans "Advanced mode (multiple layouts)" %}
+    </a>
 </p>
