@@ -32,6 +32,9 @@ TEST_TEAM_RES = {
     'can_view_vouchers': True,
     'can_change_vouchers': True,
     'can_checkin_orders': False,
+    'can_change_exhibition_proposals': False,
+    'is_exhibition_reviewer': False,
+    'hide_exhibition_applicant_emails': False,
 }
 
 SECOND_TEAM_RES = {
@@ -51,6 +54,9 @@ SECOND_TEAM_RES = {
     'can_view_vouchers': False,
     'can_change_vouchers': False,
     'can_checkin_orders': False,
+    'can_change_exhibition_proposals': False,
+    'is_exhibition_reviewer': False,
+    'hide_exhibition_applicant_emails': False,
 }
 
 
