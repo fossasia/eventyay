@@ -1,7 +1,7 @@
 import datetime
 import logging
 from typing import cast
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import urljoin, urlsplit, urlparse, urlunparse
 
 import jwt
 from django.conf import settings
@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.urls import reverse
 
 from eventyay.base.models import Event, Order, OrderPosition, Organizer
+from eventyay.eventyay_common.utils import encode_email
 
 from .models import KnownDomain
 
@@ -185,22 +186,22 @@ def build_join_video_url(event: Event, order: Order) -> str:
 
 
 def generate_video_token_url_from_order(event: Event, order: Order, position: OrderPosition | None) -> str:
-    # If customer has account, use customer code to generate token
-    if hasattr(order, 'customer') and order.customer:
-        video_url = generate_video_token_url(event, order.customer.identifier, position)
-    else:
-        # else user position Id to generate token
-        video_url = generate_video_token_url(event, None, position)
-    return video_url
+    if not position:
+        position = order.positions.first()
+    uid_token = encode_email(order.email) if order.email else (position.pseudonymization_id if position else None)
+    return generate_video_token_url(event, uid_token, position)
 
 
-def generate_video_token_url(event: Event, customer_code: str, position: OrderPosition | None) -> str:
+def generate_video_token_url(event: Event, uid_token: str | None, position: OrderPosition | None) -> str:
     iat = datetime.datetime.now(tz=datetime.UTC)
     exp = iat + datetime.timedelta(days=30)
-    if not customer_code and not position:
-        logger.error('No customer code or position provided for generating video token URL.')
+    if not uid_token:
+        logger.error('No uid provided for generating video token URL.')
         return ''
-    uid = customer_code if customer_code else position.pseudonymization_id
+    if not position:
+        logger.error('No position provided for generating video token URL.')
+        return ''
+    uid = uid_token
     profile = {'fields': {}}
     if position and position.attendee_name:
         profile['display_name'] = position.attendee_name
@@ -219,6 +220,7 @@ def generate_video_token_url(event: Event, customer_code: str, position: OrderPo
         'profile': profile,
         'traits': list(
             {
+                'attendee',
                 'eventyay-video-event-{}'.format(event.slug),
                 'eventyay-video-subevent-{}'.format(position.subevent_id),
                 'eventyay-video-product-{}'.format(position.product_id),
@@ -235,6 +237,17 @@ def generate_video_token_url(event: Event, customer_code: str, position: OrderPo
         ),
     }
     token = jwt.encode(payload, event.settings.venueless_secret, algorithm='HS256')
-    url = urlsplit(cast(str, event.settings.venueless_url))
-    url = url._replace(fragment=f'token={token}')
-    return url.geturl()
+    baseurl = cast(str, event.settings.venueless_url)
+    if '{token}' in baseurl:
+        return baseurl.format(token=token)
+
+    video_path = reverse(
+        'video.spa',
+        kwargs={
+            'organizer': event.organizer.slug,
+            'event': event.slug,
+        },
+    )
+    parsed = urlparse(baseurl)
+    baseurl = urlunparse((parsed.scheme, parsed.netloc, video_path, '', '', ''))
+    return f'{baseurl}/#token={token}'.replace('//#', '/#')

@@ -1,9 +1,10 @@
 <template lang="pug">
 .c-landing-page(v-scrollbar.y="", :style="landingStyle")
 	.hero(:class="{'has-no-image': !hasHeroVisual}")
-		img.hero-logo(v-if="heroImage", :src="heroImage", :alt="eventTitle")
-		.hero-copy(v-if="eventTitle || eventStartLine || eventEndLine")
-			h1.hero-text(v-if="eventTitle") {{ eventTitle }}
+		.hero-content
+			img.hero-logo(v-if="heroImage", :src="heroImage", :alt="eventTitle")
+			.hero-copy(v-if="eventTitle || eventStartLine || eventEndLine")
+				.hero-text(v-if="eventTitle") {{ eventTitle }}
 			p.hero-time(v-if="eventStartLine") {{ eventStartLine }}
 			p.hero-time(v-if="eventEndLine") {{ eventEndLine }}
 	.content-container(v-if="hasContent")
@@ -284,33 +285,57 @@ export default {
 	flex: auto
 	background-color: $clr-grey-50
 	.hero
-		min-height: 150px
+		height: 245px
 		display: flex
 		align-items: center
-		justify-content: flex-start
-		gap: 18px
-		padding: 16px 20px
+		justify-content: center
+		padding: 3rem 0 0 0
 		background-color: var(--landing-hero-background-color)
 		background-image: var(--landing-hero-background-image)
 		background-repeat: no-repeat
 		background-size: cover
 		background-position: center
 		position: relative
+		&::before
+			content: ''
+			position: absolute
+			inset: 0
+			background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.15) 100%)
+			pointer-events: none
+			z-index: 0
+		&.has-no-image::before
+			display: none
+		> *
+			position: relative
+			z-index: 1
 		&.has-no-image
 			height: auto
-			padding: 22px 16px
+			padding: 22px 0
 			background-color: var(--clr-primary)
 			color: $clr-primary-text-dark
+		.hero-content
+			width: 100%
+			max-width: 1400px
+			margin: 0 auto
+			padding: 0 24px
+			display: flex
+			flex-direction: row
+			align-items: center
+			gap: 2rem
+			position: relative
+			z-index: 1
 		.hero-copy
 			display: flex
 			flex-direction: column
 			gap: 6px
 			color: $clr-primary-text-dark
-			text-shadow: 0 1px 2px rgba(0, 0, 0, .28)
 		.hero-text
-			font-size: 34px
+			font-size: 3rem
 			font-weight: 700
-			line-height: 1.1
+			line-height: 1.2
+			word-break: break-word
+			overflow-wrap: break-word
+			min-width: 0
 			text-align: left
 			margin: 0
 		.hero-time
@@ -319,8 +344,8 @@ export default {
 			margin: 0
 		.hero-logo
 			height: auto
-			max-height: 96px
-			max-width: min(28vw, 260px)
+			max-height: 140px
+			width: auto
 			object-fit: contain
 	.content-container
 		display: flex
@@ -420,17 +445,20 @@ export default {
 
 	+below('m')
 		.hero
-			flex-direction: column
-			align-items: flex-start
-			gap: 10px
-			padding: 14px 12px
+			height: auto
+			padding: 14px 0
+			.hero-content
+				flex-direction: column
+				align-items: flex-start
+				gap: 10px
+				padding: 0 12px
 			.hero-text
 				font-size: 24px
 			.hero-time
 				font-size: 14px
 			.hero-logo
 				max-width: min(72vw, 280px)
-				max-height: 76px
+				max-height: 120px
 		.content-container
 			flex-direction: column
 			align-items: center

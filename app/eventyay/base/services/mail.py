@@ -49,6 +49,7 @@ from eventyay.base.services.tickets import get_tickets_for_order
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
 from eventyay.celery_app import app
+from eventyay.common.mail import get_reply_to_address
 from eventyay.consts import SizeKey
 from eventyay.helpers.http import smtp_reachable
 from eventyay.multidomain.urlreverse import build_absolute_uri
@@ -61,6 +62,10 @@ INVALID_ADDRESS = 'invalid-eventyay-mail-address'
 
 class TolerantDict(dict):
     def __missing__(self, key):
+        if isinstance(key, str) and '\\_' in key:
+            clean_key = key.replace('\\_', '_')
+            if clean_key in self:
+                return super().__getitem__(clean_key)
         return key
 
 
@@ -162,6 +167,7 @@ def mail(
         content_plain = body_plain = render_mail(template, context)
         subject = str(subject).format_map(TolerantDict(context))
         sender = sender or (event.settings.get('mail_from') if event else settings.MAIL_FROM) or settings.MAIL_FROM
+        sender_email_raw = sender
         if event:
             sender_name = str(event.name)
             if len(sender_name) > 75:
@@ -187,16 +193,16 @@ def mail(
                 for bcc_mail in event.settings.mail_bcc.split(','):
                     bcc.append(bcc_mail.strip())
 
-            if not auto_email and event_reply_to and not headers.get('Reply-To'):
-                headers['Reply-To'] = event_reply_to
-            elif event.settings.mail_reply_to and not headers.get('Reply-To'):
-                headers['Reply-To'] = event.settings.mail_reply_to
-            elif (
-                event.settings.mail_from == settings.DEFAULT_FROM_EMAIL
-                and event.settings.contact_mail
-                and not headers.get('Reply-To')
-            ):
-                headers['Reply-To'] = event.settings.contact_mail
+            if not headers.get('Reply-To'):
+                reply_to_override = (event_reply_to if event_reply_to else None) if not auto_email else None
+                reply_to = get_reply_to_address(
+                    event,
+                    override=reply_to_override,
+                    sender_email=sender_email_raw
+                )
+
+                if reply_to:
+                    headers['Reply-To'] = reply_to
 
             prefix = event.settings.get('mail_prefix')
             if prefix and prefix.startswith('[') and prefix.endswith(']'):

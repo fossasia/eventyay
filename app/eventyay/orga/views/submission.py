@@ -79,6 +79,7 @@ from eventyay.talk_rules.submission import (
     get_reviewer_tracks,
     limit_for_reviewers,
 )
+from eventyay.talk_rules.tracks import apply_track_limit, user_has_track_limits
 
 
 class SubmissionViewMixin(PermissionRequired):
@@ -132,6 +133,8 @@ class ReviewerSubmissionFilter:
         )
         if self.is_only_reviewer:
             queryset = limit_for_reviewers(queryset, self.request.event, self.request.user, self.limit_tracks)
+        elif user_has_track_limits(self.request.event, self.request.user):
+            queryset = apply_track_limit(queryset, self.request.event, self.request.user)
         if for_review or 'is_reviewer' in self.request.user.get_permissions_for_event(self.request.event):
             queryset = annotate_assigned(queryset, self.request.event, self.request.user)
         return queryset

@@ -46,6 +46,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/clipboard.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/menu.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/sb-admin-2.js" %}"></script>
+            <script type="module" src="{% static "pretixcontrol/js/ui/confirmDialog.js" %}"></script>
 		    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/main.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/quota.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/subevent.js" %}"></script>
@@ -454,5 +455,17 @@
                 </div>
             </div>
         </div>
+        <dialog id="pretix-confirm-dialog" class="pretix-confirm-dialog"
+                aria-labelledby="pretix-confirm-dialog-title"
+                aria-describedby="pretix-confirm-dialog-message">
+            <div class="pretix-confirm-dialog__content">
+                <h4 class="pretix-confirm-dialog__title" id="pretix-confirm-dialog-title"></h4>
+                <p class="pretix-confirm-dialog__message" id="pretix-confirm-dialog-message"></p>
+                <div class="pretix-confirm-dialog__actions text-right">
+                    <button type="button" class="btn btn-default" id="pretix-confirm-dialog-cancel"></button>
+                    <button type="button" class="btn btn-primary" id="pretix-confirm-dialog-confirm"></button>
+                </div>
+            </div>
+        </dialog>
 	</body>
 </html>
