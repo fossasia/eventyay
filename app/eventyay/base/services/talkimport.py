@@ -627,9 +627,10 @@ def import_speakers(self, event: Event, fileid: str, settings: dict, locale: str
         acting_user = User.objects.get(pk=user_id)
         with language(locale, event.settings.region):
             with scope(event=event):
-                parsed = list(parse_csv(cf.file, django_settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV]) or [])
-                if not parsed:
+                parsed = parse_csv(cf.file, django_settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
+                if parsed is None:
                     raise ImportExecutionError(_('Could not parse the CSV file.'))
+                parsed = list(parsed)
                 
                 total = len(parsed)
 
@@ -1028,9 +1029,10 @@ def import_submissions(self, event: Event, fileid: str, settings: dict, locale: 
         acting_user = User.objects.get(pk=user_id)
         with language(locale, event.settings.region):
             with scope(event=event):
-                parsed = list(parse_csv(cf.file, django_settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV]) or [])
-                if not parsed:
+                parsed = parse_csv(cf.file, django_settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
+                if parsed is None:
                     raise ImportExecutionError(_('Could not parse the CSV file.'))
+                parsed = list(parsed)
                 
                 total = len(parsed)
 

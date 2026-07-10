@@ -144,9 +144,8 @@ const submit = (form) => {
             const contentType = r.headers.get('content-type')
             if (contentType && contentType.includes('text/html')) {
                 const html = await r.text()
-                document.open()
-                document.write(html)
-                document.close()
+                const newDoc = new DOMParser().parseFromString(html, 'text/html')
+                document.documentElement.replaceWith(newDoc.documentElement)
                 return null
             }
             if (!r.ok) {
@@ -172,7 +171,8 @@ const submit = (form) => {
                 checkUrl: checkUrl,
                 isLong: isLong,
                 headline: document.querySelector('#loadingmodal h3') ? document.querySelector('#loadingmodal h3').textContent : '',
-                minimized: document.body.classList.contains('loading-minimized')
+                minimized: document.body.classList.contains('loading-minimized'),
+                path: location.pathname
             }))
 
             if (isLong && data.started) {
@@ -194,7 +194,14 @@ const init = () => {
         if (content && !content.querySelector('.loadingmodal-minimize')) {
             const div = document.createElement('div')
             div.className = 'pull-right'
-            div.innerHTML = `<button type="button" class="btn btn-default btn-xs loadingmodal-minimize" title="${gettext('Minimize')}"><i class="fa fa-window-minimize"></i></button>`
+            const btn = document.createElement('button')
+            btn.type = 'button'
+            btn.className = 'btn btn-default btn-xs loadingmodal-minimize'
+            btn.title = gettext('Minimize')
+            const icon = document.createElement('i')
+            icon.className = 'fa fa-window-minimize'
+            btn.appendChild(icon)
+            div.appendChild(btn)
             content.insertBefore(div, content.firstChild)
         }
     }
@@ -230,8 +237,16 @@ const init = () => {
             isLong = task.isLong
 
             show(task.headline || gettext('We are processing your request …'))
-            if (task.minimized) {
+            
+            // Auto-minimize if we navigated to a different page while task is running
+            // to avoid blocking non-import pages (e.g. export tickets)
+            if (task.minimized || task.path !== location.pathname) {
                 document.body.classList.add('loading-minimized')
+                if (!task.minimized) {
+                    task.minimized = true
+                    task.path = location.pathname
+                    sessionStorage.setItem('eventyay_async_task_import', JSON.stringify(task))
+                }
             }
 
             pollTimeout = setTimeout(poll, 100)

@@ -84,7 +84,10 @@ def import_orders(self, event: Event, fileid: str, settings: dict, locale: str, 
     user = User.objects.get(pk=user)
     with language(locale, event.settings.region):
         cols = get_all_columns(event, settings)
-        parsed = list(parse_csv(cf.file))
+        parsed = parse_csv(cf.file)
+        if parsed is None:
+            raise DataImportError(_('Could not parse the CSV file.'))
+        parsed = list(parsed)
         data = []
         total = len(parsed)
 
