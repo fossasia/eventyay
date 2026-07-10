@@ -1321,6 +1321,25 @@ class MailSettingsForm(SettingsForm):
         widget=I18nTextarea,
     )
 
+    mail_text_meetup_registration = I18nFormField(
+        label=_('Meetup registration text (order contact)'),
+        required=False,
+        widget=I18nTextarea,
+    )
+    mail_send_meetup_registration_attendee = forms.BooleanField(
+        label=_('Send registration email to attendees'),
+        help_text=_(
+            'If the registration contains attendees with email addresses different from the person who registers, '
+            'the following email will be sent out to the attendees.'
+        ),
+        required=False,
+    )
+    mail_text_meetup_registration_attendee = I18nFormField(
+        label=_('Meetup registration text (attendees)'),
+        required=False,
+        widget=I18nTextarea,
+    )
+
     mail_text_order_changed = I18nFormField(
         label=_('Text'),
         required=False,
@@ -1431,6 +1450,8 @@ class MailSettingsForm(SettingsForm):
         'mail_text_order_paid_attendee': ['event', 'order', 'position'],
         'mail_text_order_free': ['event', 'order'],
         'mail_text_order_free_attendee': ['event', 'order', 'position'],
+        'mail_text_meetup_registration': ['event', 'order'],
+        'mail_text_meetup_registration_attendee': ['event', 'order', 'position'],
         'mail_text_order_changed': ['event', 'order'],
         'mail_text_order_canceled': ['event', 'order'],
         'mail_text_order_expire_warning': ['event', 'order'],
