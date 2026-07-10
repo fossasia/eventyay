@@ -227,6 +227,7 @@ export default {
 		},
 		enrichedSessions() {
 			if (this.sessions) return this.sessions
+			if (this.scheduleData?.sessions) return this.scheduleData.sessions
 			if (!this.resolvedSchedule?.talks) return []
 			const tz = this.currentTimezone || moment.tz.guess()
 			return this.resolvedSchedule.talks
@@ -336,6 +337,18 @@ export default {
 		},
 		computedRooms() {
 			if (this.rooms) return this.rooms
+			const orderSource = this.scheduleData?.rooms || this.resolvedSchedule?.rooms
+			if (orderSource?.length) {
+				const roomsInSessions = new Map()
+				for (const session of this.enrichedSessions) {
+					if (!session.room) continue
+					const key = session.room.pretalx_id ?? session.room.id
+					if (!roomsInSessions.has(key)) roomsInSessions.set(key, session.room)
+				}
+				return orderSource
+					.filter(room => roomsInSessions.has(room.pretalx_id ?? room.id))
+					.map(room => roomsInSessions.get(room.pretalx_id ?? room.id))
+			}
 			const seen = new Set()
 			return this.filteredSessions
 				.filter(s => { if (!s.room || seen.has(s.room.id)) return false; seen.add(s.room.id); return true })
