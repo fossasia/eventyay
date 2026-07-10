@@ -289,27 +289,5 @@
 {% endblock %}
 {% block custom_header %}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
-    <style>
-        .orders-filter-container { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 15px; }
-        .orders-filter-form, .orders-post-form, .orders-batch-select-actions { display: contents; }
-        
-        .orders-filter-form-group { flex: 1 1 110px; min-width: 100px; }
-        .provider-group { flex: 1 1 165px; min-width: 165px; }
-        .orders-search-code-group { flex: 0 1 130px; }
-        .orders-bulk-actions-menu { margin: 0; min-width: 130px; flex: 0 0 auto; }
-        
-        .orders-filter-query-text, .orders-filter-form-group .form-group, .orders-filter-form-group .form-control,
-        .orders-bulk-actions-menu .btn, .orders-bulk-action-hint-container, .orders-table-container, .orders-pagination-container, .pagination-container { width: 100%; }
-        
-        .orders-filter-container .orders-filter-actions, .orders-filter-container .orders-filter-actions .filter-actions { display: flex; gap: 8px; align-items: center; margin: 0; }
-        
-        .orders-filter-query-text, .order-bulk-action-hint { margin: 0; }
-        .orders-filter-container .orders-filter-form-group .form-group { margin-bottom: 0; }
-        .orders-bulk-actions-menu .btn { padding: 6px 12px; height: 34px; }
-        .orders-bulk-action-hint-container { text-align: center; margin-top: 10px; }
-        
-        .product-hidden { display: none; }
-        .order-product-list:hover .product-hidden { display: list-item; }
-        .order-product-list:hover .product-ellipsis { display: none; }
-    </style>
+    <link rel="stylesheet" type="text/css" href="{% static "pretixcontrol/css/orders.css" %}" />
 {% endblock %}
