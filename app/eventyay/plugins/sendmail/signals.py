@@ -29,7 +29,7 @@ def control_nav_import(sender, request=None, **kwargs):
                     'organizer': request.event.organizer.slug,
                 },
             ),
-            'active': (url.namespace == 'control:event.mail' and url.url_name == 'outbox'),
+            'active': (url.url_name == 'event.mail.outbox'),
             'icon': 'envelope',
             'children': [
                 {
@@ -42,12 +42,11 @@ def control_nav_import(sender, request=None, **kwargs):
                         },
                     ),
                     'active': (
-                        url.namespace == 'control:event.mail' and
                         url.url_name in {
-                            'outbox',
-                            'edit_mail',
-                            'delete_single',
-                            'purge_all'
+                            'event.mail.outbox',
+                            'event.mail.edit',
+                            'event.mail.outbox.delete',
+                            'event.mail.outbox.purge'
                         }
                     ),
                 },
@@ -61,11 +60,10 @@ def control_nav_import(sender, request=None, **kwargs):
                         },
                     ),
                     'active': (
-                        url.namespace == 'control:event.mail' and
                         url.url_name in {
-                            'compose_email_choice',
-                            'compose_email_teams',
-                            'send'
+                            'event.mail.compose',
+                            'event.mail.compose_teams',
+                            'event.mail.send'
                         }
                     ),
                 },
@@ -78,7 +76,7 @@ def control_nav_import(sender, request=None, **kwargs):
                             'organizer': request.event.organizer.slug,
                         },
                     ),
-                    'active': (url.namespace == 'control:event.mail' and url.url_name == 'sent'),
+                    'active': (url.url_name == 'event.mail.sent'),
                 },
                 {
                     'label': _('Templates'),
@@ -89,7 +87,7 @@ def control_nav_import(sender, request=None, **kwargs):
                             'organizer': request.event.organizer.slug,
                         },
                     ),
-                    'active': (url.namespace == 'control:event.mail' and url.url_name == 'templates'),
+                    'active': (url.url_name == 'event.mail.templates'),
                 },
             ],
         },
