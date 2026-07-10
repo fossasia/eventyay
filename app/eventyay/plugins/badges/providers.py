@@ -33,3 +33,8 @@ class BadgeOutputProvider(BaseTicketOutput):
     @property
     def settings_form_fields(self):
         return super().settings_form_fields
+
+    def settings_content_render(self, request):
+        from django.template.loader import get_template
+        template = get_template('pretixplugins/badges/form.html')
+        return template.render({'request': request})
