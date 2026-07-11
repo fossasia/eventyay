@@ -38,8 +38,23 @@ function ensureWebsiteFontsLoaded() {
   document.head.appendChild(fontsLink)
 }
 
+function ensureEventSettingsCssLoaded() {
+  const url = config.theme?.typography?.settings_css_url
+  if (!url) return
+  if (document.head.querySelector(`link[data-eventyay-settings-css="${url}"]`)) {
+    return
+  }
+
+  const settingsCssLink = document.createElement('link')
+  settingsCssLink.rel = 'stylesheet'
+  settingsCssLink.href = url
+  settingsCssLink.dataset.eventyaySettingsCss = url
+  document.head.appendChild(settingsCssLink)
+}
+
 async function init({ token, inviteToken }) {
   ensureWebsiteFontsLoaded()
+  ensureEventSettingsCssLoaded()
   await loadThemeConfig()
   const app = createApp(RouterView)
   app.use(store)
