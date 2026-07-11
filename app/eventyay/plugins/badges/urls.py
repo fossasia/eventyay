@@ -11,6 +11,7 @@ from eventyay.plugins.badges.api import (
 
 from .views import (
     LayoutCreate,
+    LayoutGetDefault,
     LayoutDelete,
     LayoutEditorView,
     LayoutListView,
@@ -29,6 +30,11 @@ urlpatterns = [
         'control/event/<orgslug:organizer>/<slug:event>/badges/print',
         OrderPrintDo.as_view(),
         name='print',
+    ),
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/badges/getdefault',
+        LayoutGetDefault.as_view(),
+        name='getdefault',
     ),
     path(
         'control/event/<orgslug:organizer>/<slug:event>/badges/add',
