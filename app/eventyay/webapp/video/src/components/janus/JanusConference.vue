@@ -26,7 +26,7 @@
 				video(v-if="t.isMe && !t.isScreenshare", v-show="t.hasVideo", ref="ourVideo", autoplay, playsinline, muted)
 				video(v-else-if="t.isMe && t.isScreenshare", ref="ourScreenshareVideo", autoplay, playsinline, muted)
 				video(v-else, v-show="t.hasVideo", :data-rfid="t.rfid", autoplay, playsinline)
-				
+
 				.novideo-indicator(v-if="!t.hasVideo && !t.isScreenshare")
 					avatar(:user="t.user", :size="size === 'tiny' ? 40 : 100")
 
@@ -36,14 +36,14 @@
 						span.badge.badge--screensharing(v-if="t.isScreenshare && t.isMe") 🖥 Your Screen
 						span.badge.badge--screensharing(v-if="t.isScreenshare && !t.isMe") 🖥 Screen
 						span.badge.badge--screensharing(v-if="!t.isScreenshare && t.isMe && screensharingState === 'published'") 🖥 Sharing
-						
+
 			.controls
 				.user(v-if="t.user", @click="showUserCard($event, t.user)")
 					avatar(:user="t.user", :size="36")
 					span.display-name {{ t.user.profile.display_name }}
 				bunt-icon-button(v-if="t.hasVideo", @click="requestFullscreen('#janus_' + t.id)") fullscreen
 				bunt-icon-button(v-if="t.isMe && t.isScreenshare", @click="unpublishOwnScreenshareFeed") monitor-off
-			
+
 			.mute-indicator(v-if="t.muted")
 				.bunt-icon.mdi.mdi-microphone-off
 
@@ -260,7 +260,7 @@ export default {
 		},
 		tiles() {
 			const t = []
-			
+
 			// 1. Our own video/avatar tile
 			t.push({
 				id: 'me',

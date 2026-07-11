@@ -822,14 +822,30 @@ export default {
 			if (!navigator.mediaDevices?.getDisplayMedia) {
 				throw new Error('Screen sharing is not supported by this browser.')
 			}
-			const stream = await navigator.mediaDevices.getDisplayMedia({
+			const constraints = {
 				video: {
 					frameRate: {ideal: 15, max: 30},
 					width: {max: 1920},
 					height: {max: 1080},
 				},
-				audio: false,
-			})
+				audio: {
+					echoCancellation: true,
+					noiseSuppression: true,
+					autoGainControl: true,
+				},
+			}
+			let stream
+			try {
+				stream = await navigator.mediaDevices.getDisplayMedia(constraints)
+			} catch (error) {
+				if (!['TypeError', 'OverconstrainedError', 'ConstraintNotSatisfiedError'].includes(error?.name)) {
+					throw error
+				}
+				stream = await navigator.mediaDevices.getDisplayMedia({
+					...constraints,
+					audio: false,
+				})
+			}
 			if (!stream.getVideoTracks().length) {
 				throw new Error('No screen video track was selected.')
 			}
