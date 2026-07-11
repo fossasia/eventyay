@@ -275,9 +275,15 @@ header {
   padding-left: 1.75rem;
 }
 
-.event-brand .event-logo {
+.event-brand:not(.event-brand--logo-large) .event-logo {
   flex: 0 0 auto;
   max-width: min(220px, 35vw);
+  min-width: 0;
+}
+
+.event-brand--logo-large .event-logo {
+  flex: 0 0 auto;
+  max-width: min(1170px, 65%);
   min-width: 0;
 }
 
