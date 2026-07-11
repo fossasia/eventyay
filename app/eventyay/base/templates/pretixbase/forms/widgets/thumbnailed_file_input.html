@@ -4,7 +4,11 @@
     {% if widget.value.is_img and widget.event_settings_image_tools %}
         <div class="thumbnailed-file-preview-container">
             <a href="{{ widget.value.url }}" data-lightbox="{{ widget.name }}" aria-label="{% trans 'Preview Image' %}">
-                <img src="{{ widget.value|thumb:"200x100" }}" alt="{% trans 'Preview' %}" class="img-thumbnail thumbnailed-file-preview-image">
+                {% if widget.value.name|lower|slice:"-4:" == ".svg" %}
+                    <img src="{{ widget.value.url }}" alt="{% trans 'Preview' %}" class="img-thumbnail thumbnailed-file-preview-image" style="max-height: 100px;">
+                {% else %}
+                    <img src="{{ widget.value|thumb:"200x100" }}" alt="{% trans 'Preview' %}" class="img-thumbnail thumbnailed-file-preview-image">
+                {% endif %}
             </a>
         </div>
     {% endif %}
@@ -22,7 +26,15 @@
     {% endif %}
 </div>
 {% if widget.value.is_img and not widget.event_settings_image_tools %}
-<br><a href="{{ widget.value.url }}" data-lightbox="{{ widget.name }}"><img src="{{ widget.value|thumb:"200x100" }}" /></a><br>
+<br>
+<a href="{{ widget.value.url }}" data-lightbox="{{ widget.name }}">
+    {% if widget.value.name|lower|slice:"-4:" == ".svg" %}
+        <img src="{{ widget.value.url }}" style="max-height: 100px;" />
+    {% else %}
+        <img src="{{ widget.value|thumb:"200x100" }}" />
+    {% endif %}
+</a>
+<br>
 {% endif %}
 <div class="input-text-container thumbnailed-file-input-text">
     {{ widget.input_text }}:

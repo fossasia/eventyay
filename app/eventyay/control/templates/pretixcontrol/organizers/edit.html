@@ -7,8 +7,8 @@
     <link type="text/css" rel="stylesheet" href="{% url "control:pdf.css" %}">
     <link type="text/css" rel="stylesheet" href="{% static 'eventyay-common/css/settings.css' %}">
     <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
-    <script src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
-    <script src="{% static 'eventyay-common/image_cropper.js' %}"></script>
+    <script defer src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
+    <script defer src="{% static 'eventyay-common/image_cropper.js' %}"></script>
     <script src="{% static 'eventyay-common/js/event-settings-images.js' %}" type="module"></script>
 {% endblock %}
 {% block title %}{% trans "Organizer" %}{% endblock %}

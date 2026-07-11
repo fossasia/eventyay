@@ -88,10 +88,10 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
 
         @property
         def is_img(self):
-            if isinstance(self.file, str):
-                return False
             name = self.name
-            return any(name.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif'))
+            if not name:
+                return False
+            return any(name.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp'))
 
         def __str__(self):
             if isinstance(self.file, str):
@@ -154,7 +154,7 @@ class CachedFileInput(forms.ClearableFileInput):
 
         @property
         def is_img(self):
-            return any(self.file.filename.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif'))
+            return any(self.file.filename.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp'))
 
         def __str__(self):
             return self.file.filename
