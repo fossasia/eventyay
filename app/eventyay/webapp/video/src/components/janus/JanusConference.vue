@@ -619,7 +619,7 @@ export default {
 					width: {max: 1920},
 					height: {max: 1080},
 				},
-				audio: true,
+				audio: false,
 			})
 			if (!stream.getVideoTracks().length) {
 				throw new Error('No screen video track was selected.')
@@ -866,6 +866,9 @@ export default {
 				if (!isScreenshare && video && !existingFeed.hasVideo && this.videoOutput) {
 					this.removeRemoteFeed(id)
 				} else {
+					if (!isScreenshare && !video) {
+						existingFeed.hasVideo = false
+					}
 					return
 				}
 			} else if (this.subscribingFeedIds.some(fid => this.feedIdEquals(fid, id))) {
@@ -993,7 +996,7 @@ export default {
 					}
 					const videoTracks = stream.getVideoTracks()
 					remoteFeed.rfattached = true
-					remoteFeed.hasVideo = videoTracks && videoTracks.length > 0
+					remoteFeed.hasVideo = videoTracks && videoTracks.length > 0 && (remoteFeed.isScreenshare || !!remoteFeed.videoCodec)
 					this.feeds.splice(rfindex, 1, remoteFeed)
 					this.$nextTick(() => {
 						const videoEl = this.$el.querySelector(`video[data-rfid="${remoteFeed.rfid}"]`)

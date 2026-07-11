@@ -801,7 +801,7 @@ export default {
 					width: {max: 1920},
 					height: {max: 1080},
 				},
-				audio: true,
+				audio: false,
 			})
 			if (!stream.getVideoTracks().length) {
 				throw new Error('No screen video track was selected.')
@@ -861,6 +861,9 @@ export default {
 				if (!isScreenShare && videoCodec && !existingFeed.hasVideo && this.videoOutput) {
 					this.removeRemoteFeed(id)
 				} else {
+					if (!isScreenShare && !videoCodec) {
+						existingFeed.hasVideo = false
+					}
 					this.upsertRemoteFeed(existingFeed)
 					return
 				}
@@ -1004,7 +1007,7 @@ export default {
 			const id = this.normalizeFeedId(feed.id)
 			feed.stream = stream
 			feed.attached = true
-			feed.hasVideo = stream.getVideoTracks().length > 0
+			feed.hasVideo = stream.getVideoTracks().length > 0 && (feed.isScreenShare || !!feed.videoCodec)
 			feed.muted = stream.getAudioTracks().every(track => !track.enabled)
 			this.registerAudioMeter(id, stream)
 			this.upsertRemoteFeed(feed)
