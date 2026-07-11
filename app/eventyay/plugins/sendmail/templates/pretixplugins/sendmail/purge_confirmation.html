@@ -19,7 +19,7 @@
             {% csrf_token %}
             <div class="row">
                 <div class="col-xs-6 text-left">
-                    <a href="{% url 'plugins:sendmail:outbox' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-lg">
+                    <a href="{% url 'control:event.mail.outbox' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-lg">
                         {% translate "Back" %}
                     </a>
                 </div>
