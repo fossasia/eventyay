@@ -257,7 +257,6 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 cancelled=Count('pk', filter=Q(status=Order.STATUS_CANCELED), distinct=True),
                 free=Count('pk', filter=Q(status=Order.STATUS_PAID) & Q(total=0), distinct=True)
             ).order_by()
-
             order_counts_by_currency = {
                 entry['event__currency']: {
                     'paid': entry['paid'],
