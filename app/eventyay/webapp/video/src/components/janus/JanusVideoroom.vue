@@ -543,7 +543,30 @@ export default {
 				this.localCameraActive = false
 			}
 
-			this.publisherHandle.createOffer({
+			let explicitStream
+			if (!hadPeerConnection) {
+				try {
+					explicitStream = await navigator.mediaDevices.getUserMedia({
+						audio: media.audio,
+						video: wantsVideo ? media.video : false,
+					})
+				} catch (error) {
+					this.finishLocalPublish()
+					if (wantsVideo) {
+						this.cameraEnabled = false
+						this.publishedWithVideo = false
+						this.localCameraActive = false
+						localStorage.videoRequested = false
+						this.publishLocalMedia()
+						return
+					}
+					this.publishingState = 'failed'
+					this.publishingError = error?.message || 'Could not publish microphone.'
+					return
+				}
+			}
+
+			const offerOptions = {
 				media,
 				simulcast: false,
 				simulcast2: false,
@@ -584,7 +607,11 @@ export default {
 					this.publishingState = 'failed'
 					this.publishingError = error?.message || 'Could not publish microphone.'
 				},
-			})
+			}
+			if (explicitStream) {
+				offerOptions.stream = explicitStream
+			}
+			this.publisherHandle.createOffer(offerOptions)
 		},
 		microphoneConstraints(audioInput) {
 			if (!audioInput) {
@@ -1014,10 +1041,13 @@ export default {
 			this.$nextTick(() => {
 				const video = this.findRemoteVideo(feed.id)
 				if (!video) return
-				Janus.attachMediaStream(video, stream)
+				if (video.srcObject !== stream) {
+					Janus.attachMediaStream(video, stream)
+				}
 				if (localStorage.audioOutput && video.setSinkId) {
 					video.setSinkId(localStorage.audioOutput)
 				}
+				if (!video.paused && video.readyState > 0) return
 				const playPromise = video.play()
 				if (playPromise?.catch) {
 					playPromise.catch(error => {
