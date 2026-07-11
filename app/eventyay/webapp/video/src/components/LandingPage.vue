@@ -485,7 +485,7 @@ export default {
 		gap: 0
 		min-width: 0
 	.event-hero-text .event-title
-		font-size: 3rem
+		font-size: 2.25rem
 		font-weight: 700
 		line-height: 1.2
 		word-break: break-word

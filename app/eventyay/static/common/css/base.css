@@ -56,12 +56,6 @@ legend {
   object-fit: contain;
 }
 
-@media (min-width: 769px) {
-  #main-container.presale-container #event-logo {
-    padding-left: 1rem;
-  }
-}
-
 button,
 [role="button"],
 a.btn,
@@ -1088,6 +1082,9 @@ a.event-public-text-link:visited {
 .event-hero-text a.event-title.event-public-text-link,
 .event-hero-text a.event-date-line.event-public-text-link {
   display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 @media (max-width: 768px) {
