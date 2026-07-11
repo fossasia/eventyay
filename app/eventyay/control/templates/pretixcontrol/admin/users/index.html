@@ -53,6 +53,7 @@
                         <a href="?{% url_replace request 'ordering' '-fullname' %}"><i class="fa fa-caret-down"></i></a>
                         <a href="?{% url_replace request 'ordering' 'fullname' %}"><i class="fa fa-caret-up"></i></a>
                     </th>
+                    <th>{% trans "Video username" %}</th>
                     <th class="text-center">{% trans "Active" %}</th>
                     <th class="text-center">{% trans "Verified" %}</th>
                     <th class="text-center">{% trans "Admin" %}</th>
@@ -72,11 +73,16 @@
                 <tbody>
                 {% trans 'No email' as no_email %}
                 {% for u in users %}
-                    <tr data-user-id="{{ u.pk }}">
+                    <tr data-user-id="{{ u.pk }}"{% if u.event_id %} class="text-muted"{% endif %}>
                         <td><strong>
-                            <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}'>{{ u.email|default:no_email }}</a>
+                            {% if u.event_id %}
+                                {{ u.admin_list_email|default:no_email }}
+                            {% else %}
+                                <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}'>{{ u.admin_list_email|default:no_email }}</a>
+                            {% endif %}
                         </strong></td>
-                        <td>{{ u.fullname|default_if_none:"" }}</td>
+                        <td>{{ u.admin_list_fullname|default_if_none:"" }}</td>
+                        <td>{{ u.video_username|default_if_none:"" }}</td>
 
                         {# Active column #}
                         <td class="text-center">
@@ -99,8 +105,8 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="user_id" value="{{ u.pk }}">
                                 <input type="hidden" name="action" value="toggle_verified">
-                                {% if not u.email %}
-                                    <label class="toggle-switch always-on" title="{% trans 'Users without an email address cannot be verified.' %}">
+                                {% if u.event_id or not u.email %}
+                                    <label class="toggle-switch always-on" title="{% if u.event_id %}{% trans 'Ticket-only video attendees cannot be verified here.' %}{% else %}{% trans 'Users without an email address cannot be verified.' %}{% endif %}">
                                         <input
                                             type="checkbox"
                                             class="js-user-toggle"
@@ -134,8 +140,8 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="user_id" value="{{ u.pk }}">
                                 <input type="hidden" name="action" value="toggle_admin">
-                                {% if u.pk == request.user.pk %}
-                                    <label class="toggle-switch always-on" title="{% trans 'You cannot change your own admin status.' %}">
+                                {% if u.event_id or u.pk == request.user.pk %}
+                                    <label class="toggle-switch always-on" title="{% if u.event_id %}{% trans 'Ticket-only video attendees cannot be made admin here.' %}{% else %}{% trans 'You cannot change your own admin status.' %}{% endif %}">
                                         <input
                                             type="checkbox"
                                             class="js-user-toggle"
@@ -169,8 +175,8 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="user_id" value="{{ u.pk }}">
                                 <input type="hidden" name="action" value="toggle_spam">
-                                {% if u.is_staff or u.is_superuser or u.pk == request.user.pk %}
-                                    <label class="toggle-switch always-on" title="{% if u.pk == request.user.pk %}{% trans 'You cannot mark yourself as spam.' %}{% else %}{% trans 'Administrators cannot be marked as spam.' %}{% endif %}">
+                                {% if u.event_id or u.is_staff or u.is_superuser or u.pk == request.user.pk %}
+                                    <label class="toggle-switch always-on" title="{% if u.event_id %}{% trans 'Ticket-only video attendees cannot be marked as spam here.' %}{% elif u.pk == request.user.pk %}{% trans 'You cannot mark yourself as spam.' %}{% else %}{% trans 'Administrators cannot be marked as spam.' %}{% endif %}">
                                         <input
                                             type="checkbox"
                                             class="js-user-toggle"
@@ -214,7 +220,7 @@
 
                         {# Actions column #}
                         <td class="text-right flip">
-                            {% if u.email and u.auth_backend == "native" %}
+                            {% if not u.event_id and u.email and u.auth_backend == "native" %}
                                 <div class="btn-group">
                                     <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <span class="fa fa-envelope"></span>
@@ -259,9 +265,11 @@
 
                         {# Edit column #}
                         <td class="text-right">
-                            <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}' class="btn btn-default btn-sm" title="{% trans 'Edit user' %}">
-                                <i class="fa fa-edit"></i>
-                            </a>
+                            {% if not u.event_id %}
+                                <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}' class="btn btn-default btn-sm" title="{% trans 'Edit user' %}">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
