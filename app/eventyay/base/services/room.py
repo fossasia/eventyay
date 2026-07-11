@@ -6,7 +6,7 @@ from channels.layers import get_channel_layer
 from django.db.transaction import atomic
 from django.dispatch import receiver
 from django.utils.timezone import now
-from django_scopes import scopes_disabled
+from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import AuditLog, Channel, User
 from eventyay.base.models.event import Event
@@ -118,7 +118,8 @@ def save_room(event, room, update_fields, old_data, by_user):
         clear_stream_schedules_unless_schedule_driven(room)
         from eventyay.agenda.views.utils import clear_schedule_caches
 
-        clear_schedule_caches(event)
+        with scope(event=event):
+            clear_schedule_caches(event)
     new = RoomConfigSerializer(room).data
 
     AuditLog.objects.create(
