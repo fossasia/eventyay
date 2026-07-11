@@ -540,31 +540,14 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         is_meetup_event = self.request.event.settings.get('event_type') == 'meetup'
         context['is_meetup_event'] = is_meetup_event
 
-        context['attendee_already_registered'] = False
-        context['registered_order'] = None
-
-        if is_meetup_event:
-            if self.request.user.is_authenticated:
-                with scope(event=self.request.event):
-                    order = self.request.event.orders.filter(
-                        email=self.request.user.email,
-                        status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
-                    ).first()
-                    if order:
-                        context['attendee_already_registered'] = True
-                        context['registered_order'] = order
-            else:
-                session_rsvp = self.request.session.get(f'meetup_rsvp_{self.request.event.pk}')
-                if session_rsvp:
-                    with scope(event=self.request.event):
-                        order = self.request.event.orders.filter(
-                            code=session_rsvp.get('code'),
-                            secret=session_rsvp.get('secret'),
-                            status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
-                        ).first()
-                        if order:
-                            context['attendee_already_registered'] = True
-                            context['registered_order'] = order
+        if is_meetup_event and self.request.user.is_authenticated:
+            with scope(event=self.request.event):
+                context['attendee_already_registered'] = self.request.event.orders.filter(
+                    email=self.request.user.email,
+                    status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
+                ).exists()
+        else:
+            context['attendee_already_registered'] = False
 
         if is_meetup_event:
             from eventyay.presale.views.meetup import GuestRsvpForm

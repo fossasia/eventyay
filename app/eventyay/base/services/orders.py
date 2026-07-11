@@ -1084,10 +1084,7 @@ def _order_placed_email(
     payment: OrderPayment,
 ):
     email_context = get_email_context(event=event, order=order, payment=payment if pprov else None)
-    if event.settings.get('event_type') == 'meetup':
-        email_subject = _('Your registration: %(code)s') % {'code': order.code}
-    else:
-        email_subject = _('Your order: %(code)s') % {'code': order.code}
+    email_subject = _('Your order: %(code)s') % {'code': order.code}
     try:
         order.send_mail(
             email_subject,
@@ -1095,7 +1092,7 @@ def _order_placed_email(
             email_context,
             log_entry,
             invoices=[invoice] if invoice and event.settings.invoice_email_attachment else [],
-            attach_tickets=event.settings.get('event_type') != 'meetup',
+            attach_tickets=True,
             attach_ical=event.settings.mail_attach_ical,
         )
     except SendMailException:
@@ -1104,10 +1101,7 @@ def _order_placed_email(
 
 def _order_placed_email_attendee(event: Event, order: Order, position: OrderPosition, email_template, log_entry: str):
     email_context = get_email_context(event=event, order=order, position=position)
-    if event.settings.get('event_type') == 'meetup':
-        email_subject = _('Your registration: %(code)s') % {'code': order.code}
-    else:
-        email_subject = _('Your event registration: %(code)s') % {'code': order.code}
+    email_subject = _('Your event registration: %(code)s') % {'code': order.code}
 
     try:
         order.send_mail(
@@ -1116,7 +1110,7 @@ def _order_placed_email_attendee(event: Event, order: Order, position: OrderPosi
             email_context,
             log_entry,
             invoices=[],
-            attach_tickets=event.settings.get('event_type') != 'meetup',
+            attach_tickets=True,
             position=position,
             attach_ical=event.settings.mail_attach_ical,
         )
@@ -1258,12 +1252,6 @@ def _perform_order(
             log_entry = 'eventyay.event.order.email.order_placed_require_approval'
 
             email_attendees = False
-        elif event.settings.get('event_type') == 'meetup':
-            email_template = event.settings.mail_text_meetup_registration
-            log_entry = 'eventyay.event.order.email.meetup_registration'
-
-            email_attendees = event.settings.mail_send_meetup_registration_attendee
-            email_attendees_template = event.settings.mail_text_meetup_registration_attendee
         elif free_order_flow:
             email_template = event.settings.mail_text_order_free
             log_entry = 'eventyay.event.order.email.order_free'

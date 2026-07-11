@@ -72,7 +72,13 @@ class MeetupRsvpView(EventViewMixin, View):
             ).first()
 
         if existing:
-            return redirect(eventreverse(request.event, 'presale:event.index'))
+            return redirect(
+                eventreverse(
+                    request.event,
+                    'presale:event.order',
+                    kwargs={'order': existing.code, 'secret': existing.secret},
+                )
+            )
 
         name = getattr(request.user, 'fullname', None) or getattr(request.user, 'name', None) or request.user.email
         order = self._create_rsvp_order(
@@ -83,7 +89,13 @@ class MeetupRsvpView(EventViewMixin, View):
             attendee_name_parts={'_legacy': str(name)},
             attendee_email=request.user.email,
         )
-        return redirect(eventreverse(request.event, 'presale:event.index'))
+        return redirect(
+            eventreverse(
+                request.event,
+                'presale:event.order',
+                kwargs={'order': order.code, 'secret': order.secret},
+            )
+        )
 
     def _handle_guest_rsvp(self, request, product, quota):
         if request.event.settings.require_registered_account_for_tickets:
@@ -107,12 +119,13 @@ class MeetupRsvpView(EventViewMixin, View):
             attendee_name_parts={'_legacy': cd['attendee_name']},
             attendee_email=cd['attendee_email'],
         )
-        # Store guest registration in session
-        request.session[f'meetup_rsvp_{request.event.pk}'] = {
-            'code': order.code,
-            'secret': order.secret,
-        }
-        return redirect(eventreverse(request.event, 'presale:event.index'))
+        return redirect(
+            eventreverse(
+                request.event,
+                'presale:event.order',
+                kwargs={'order': order.code, 'secret': order.secret},
+            )
+        )
 
     def _create_rsvp_order(self, request, email, locale, product, attendee_name_parts, attendee_email):
         with scope(event=request.event), transaction.atomic():

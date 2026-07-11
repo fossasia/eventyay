@@ -1744,47 +1744,6 @@ Your {event} team"""
         ),
     },
     'mail_send_order_free_attendee': {'type': bool, 'default': 'False'},
-    'mail_text_meetup_registration_attendee': {
-        'type': LazyI18nString,
-        'default': LazyI18nString.from_gettext(
-            gettext_noop(
-                """Hello {attendee_name},
-
-thank you for registering for {event}.
-
-You are successfully registered for the meetup. Here are the details of your registration:
-Event: {event}
-Organizer: {organizer}
-
-You can view the details and status of your ticket/registration here:
-{url}
-
-Best regards,
-Your {event} team"""
-            )
-        ),
-    },
-    'mail_text_meetup_registration': {
-        'type': LazyI18nString,
-        'default': LazyI18nString.from_gettext(
-            gettext_noop(
-                """Hello,
-
-thank you for registering for {event}.
-
-You are successfully registered for the meetup. Here are the details of your registration:
-Event: {event}
-Organizer: {organizer}
-
-You can change your registration details and view the status at:
-{url}
-
-Best regards,
-Your {event} team"""
-            )
-        ),
-    },
-    'mail_send_meetup_registration_attendee': {'type': bool, 'default': 'False'},
     'mail_text_order_placed_require_approval': {
         'type': LazyI18nString,
         'default': LazyI18nString.from_gettext(
