@@ -132,7 +132,7 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         self.is_administrator = kwargs.pop('is_administrator', False)
         super().__init__(*args, **kwargs)
         self.initial['custom_css_text'] = self.instance.custom_css.read().decode() if self.instance.custom_css else ''
-        flags = self.instance.feature_flags or {}
+        flags = self.instance.feature_flags_as_mapping()
         if 'show_featured_speakers' not in flags and 'show_featured' in flags:
             self.fields['show_featured_speakers'].initial = flags['show_featured']
         self._configure_session_popularity_fields(flags)
@@ -154,8 +154,7 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     def _is_session_popularity_enabled(self):
         if self.is_bound:
             return self.data.get('session_popularity_enabled') in ('on', 'true', 'True', '1')
-        flags = self.instance.feature_flags or {}
-        return bool(flags.get('session_popularity_enabled', False))
+        return bool(self.instance.get_feature_flag('session_popularity_enabled'))
 
     @staticmethod
     def _normalize_featured_visibility(value):

@@ -8,10 +8,14 @@
 {% block extra_title %}{% translate "Attendee feedback" %} :: {% endblock extra_title %}
 
 {% block content %}
-    <div id="main-title" class="d-md-flex justify-content-between">
-        <h2>{% translate "Attendee feedback" %}</h2>
-        {% include "orga/event/component_link.html" %}
-    </div>
+    <nav id="event-nav" class="header-nav">
+        <div class="navigation">
+            <div class="navigation-title">
+                <h2>{% translate "Attendee feedback" %}</h2>
+            </div>
+            {% include "orga/event/component_link.html" %}
+        </div>
+    </nav>
 
     {% regroup feedback|dictsort:"talk.title" by talk.title as feedbacks_list %}
 
