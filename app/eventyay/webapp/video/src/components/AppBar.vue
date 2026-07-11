@@ -8,8 +8,6 @@
 		router-link.logo(:to="{name: 'about'}", :class="{anonymous: isAnonymous}")
 			img(:src="brandLogoUrl", :alt="world.title")
 	.nav-actions
-		router-link.settings(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}", :aria-label="$t('RoomsSidebar:admin-config:label')")
-			bunt-icon-button settings
 		.admin-session-actions(v-if="showAdminModeStart || showAdminModeEnd")
 			button.admin-mode-btn(
 				v-if="showAdminModeStart"
@@ -48,7 +46,6 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { jwtDecode } from 'jwt-decode'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import theme from 'theme'
 import Avatar from 'components/Avatar'
 import config from 'config'
 
@@ -95,9 +92,6 @@ const router = useRouter()
 const user = computed(() => store.state.user)
 const world = computed(() => store.state.world)
 const token = computed(() => store.state.token)
-const hasPermission = computed(() => (permission) => {
-	return store.getters.hasPermission(permission)
-})
 
 function decodeTokenPayload(rawToken) {
 	if (!rawToken) return null
@@ -141,21 +135,13 @@ function buildMenuExternalHref(item) {
 	return base + item.externalPath
 }
 
-const defaultBrandLogoUrl = computed(() => {
+const brandLogoUrl = computed(() => {
 	const basePath = config?.basePath ?? ''
 	if (!basePath || basePath === '/') {
 		return '/eventyay-video-logo.png'
 	}
 	const normalized = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
 	return `${normalized}/eventyay-video-logo.png`
-})
-
-const brandLogoUrl = computed(() => {
-	const routeName = router.currentRoute.value?.name
-	if (routeName === 'about') {
-		return defaultBrandLogoUrl.value
-	}
-	return theme.logo?.url || defaultBrandLogoUrl.value
 })
 
 const profileMenuOpen = ref(false)
@@ -355,12 +341,12 @@ onBeforeUnmount(() => {
 	padding: 0 8px
 	font-size: 14px
 	font-weight: 400
-	background-color: var(--clr-sidebar)
+	background-color: var(--color-header-background, var(--clr-primary))
 	white-space: nowrap
 	overflow: visible
 	z-index: 120
 	.bunt-icon-button
-		icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)
+		icon-button-style(color: var(--color-header-text, #fff), style: clear)
 	.nav-actions
 		display: flex
 		align-items: center
@@ -389,7 +375,7 @@ onBeforeUnmount(() => {
 			font: inherit
 			font-weight: 400
 			font-size: 14px
-			color: var(--clr-sidebar-text-primary)
+			color: var(--color-header-text, #fff)
 			cursor: pointer
 			white-space: nowrap
 			border-radius: 0
@@ -400,7 +386,7 @@ onBeforeUnmount(() => {
 				line-height: 1
 			&:hover
 				background-color: rgba(0, 0, 0, 0.08)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--color-header-text, #fff)
 			&:focus-visible
 				outline: 2px solid var(--clr-primary)
 				outline-offset: -2px
@@ -443,7 +429,7 @@ onBeforeUnmount(() => {
 				display: block
 				width: 22px
 				height: 3px
-				background: var(--clr-sidebar-text-primary)
+				background: var(--color-header-text, #fff)
 				border-radius: 2px
 				&:not(:last-child)
 					margin-bottom: 5px
@@ -459,9 +445,6 @@ onBeforeUnmount(() => {
 			object-fit: contain
 			margin: 0
 			padding: 0
-	.settings
-		.bunt-icon-button
-			icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)
 	.user-section
 		display: flex
 		align-items: center
@@ -475,7 +458,7 @@ onBeforeUnmount(() => {
 		gap: 8px
 		padding: 6px 10px
 		border-radius: 4px
-		color: var(--clr-sidebar-text-primary)
+		color: var(--color-header-text, #fff)
 		text-decoration: none
 		position: relative
 		cursor: pointer
@@ -509,7 +492,7 @@ onBeforeUnmount(() => {
 		border: none
 		padding: 8px 12px
 		cursor: pointer
-		color: var(--clr-sidebar-text-primary)
+		color: var(--color-header-text, #fff)
 		display: flex
 		align-items: center
 		justify-content: center

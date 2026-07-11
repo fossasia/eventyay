@@ -207,7 +207,9 @@ def get_event_config_for_user(event, user):
         "title": getattr(event, "title", getattr(event, "name", "")),
         "slug": getattr(event, "slug", str(event.id)),
         "organizer_slug": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
-        "timezone": event.timezone,
+        "timezone": event.settings.timezone,
+        "date_from": event.date_from.isoformat() if event.date_from else None,
+        "date_to": event.date_to.isoformat() if event.date_to else None,
         "visible_logo_url": event.visible_logo_url,
         "visible_header_image_url": event.visible_header_image_url,
         "pretalx": pretalx_public,
@@ -372,6 +374,16 @@ async def create_room(event, data, creator):
         m = [m for m in data.get("modules", []) if m["type"] == "call.bigbluebutton"][0]
         m["config"] = event.config.get("bbb_defaults", {})
         m["config"].pop("secret", None)  # legacy
+    elif types == {"call.janus"}:
+        if not await event.has_permission_async(
+            user=creator, permission=Permission.EVENT_ROOMS_CREATE_BBB
+        ):
+            raise ValidationError(
+                "This user is not allowed to create a room of this type.",
+                code="denied",
+            )
+        m = [m for m in data.get("modules", []) if m["type"] == "call.janus"][0]
+        m["config"] = {}
     elif types == set():
         if not await event.has_permission_async(
             user=creator, permission=Permission.ROOM_UPDATE

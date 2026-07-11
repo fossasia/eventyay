@@ -171,6 +171,15 @@ class AppView(View):
                         "theme": build_video_theme_for_event(event),
                         "video_player": event.config.get("video_player", {}),
                         "mux": event.config.get("mux", {}),
+                        "eventUrl": str(event.urls.base),
+                        "eventDates": {
+                            "date_from": event.date_from.isoformat() if event.date_from else None,
+                            "date_to": event.date_to.isoformat() if event.date_to else None,
+                        },
+                        "eventTimezone": event.settings.timezone,
+                        "eventTitle": str(event.name),
+                        "visibleLogoUrl": event.visible_logo_url or "",
+                        "visibleHeaderImageUrl": event.visible_header_image_url or "",
                     }
                 )
             ),

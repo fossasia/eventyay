@@ -32,6 +32,27 @@ from .exporters import BadgeRenderer, _open_layout_background
 from .models import BadgeLayout
 
 
+class LayoutGetDefault(EventPermissionRequiredMixin, View):
+    permission = 'can_change_event_settings'
+
+    def get(self, request, *args, **kwargs):
+        layout = BadgeLayout.objects.get_or_create(
+            event=request.event,
+            default=True,
+            defaults={'name': _('Default layout')},
+        )[0]
+        return redirect(
+            reverse(
+                'plugins:badges:edit',
+                kwargs={
+                    'organizer': request.event.organizer.slug,
+                    'event': request.event.slug,
+                    'layout': layout.pk,
+                },
+            )
+        )
+
+
 class BadgePluginEnabledMixin:
     def dispatch(self, request, *args, **kwargs):
         if 'eventyay.plugins.badges' not in request.event.get_plugins():

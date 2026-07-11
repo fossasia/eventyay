@@ -23,8 +23,8 @@ class TeamForm(forms.ModelForm):
         ).select_related('event').order_by("-event__date_from", "name")
         self.fields["limit_tracks"].queryset = tracks_qs
 
-        # Build events with tracks for template context (single source of truth)
-        self._events_with_tracks = self._build_events_with_tracks(tracks_qs)
+        events_qs = organizer.events.all().order_by('-date_from', 'name')
+        self._events_with_tracks = self._build_events_with_tracks(events_qs, tracks_qs)
 
         # Cache selected track IDs now (inside scopes_disabled context)
         # so the template can use them without scope issues
@@ -36,15 +36,21 @@ class TeamForm(forms.ModelForm):
             self._selected_track_ids = set()
 
     @staticmethod
-    def _build_events_with_tracks(tracks_qs):
-        """Group tracks by event using a single pass over the already-fetched queryset.
+    def _build_events_with_tracks(events_qs, tracks_qs):
+        """Build per-event track groups for the organiser team permissions UI.
 
-        The queryset uses select_related('event'), so accessing track.event
-        does not trigger additional queries. We build the grouping in Python
-        rather than issuing a separate aggregation query because the queryset
-        is typically small (tens of tracks at most).
+        Includes every organiser event so the UI can show an empty state when
+        an event has no tracks. Tracks are grouped using select_related data
+        from ``tracks_qs`` to avoid N+1 queries.
         """
         events = OrderedDict()
+        for event in events_qs:
+            events[event.pk] = {
+                'id': event.pk,
+                'name': str(event.name),
+                'slug': event.slug,
+                'tracks': [],
+            }
         for track in tracks_qs:
             evt_pk = track.event_id
             if evt_pk not in events:
@@ -72,13 +78,22 @@ class TeamForm(forms.ModelForm):
         if self.is_bound:
             # Form was submitted — get from POST data (uses prefixed field name)
             field_name = self.add_prefix('limit_tracks')
-            values = self.data.getlist(field_name)
+            if hasattr(self.data, 'getlist'):
+                values = self.data.getlist(field_name)
+            else:
+                raw = self.data.get(field_name, [])
+                values = raw if isinstance(raw, (list, tuple)) else [raw]
             try:
-                return {int(v) for v in values}
+                return {int(v) for v in values if v not in (None, '')}
             except (ValueError, TypeError):
                 return set()
         # On GET (page load) — return cached DB values
         return self._selected_track_ids
+
+    @property
+    def has_any_tracks(self):
+        """Whether any organiser event currently has tracks configured."""
+        return any(event_data['tracks'] for event_data in self._events_with_tracks)
 
     class Meta:
         model = Team
@@ -102,6 +117,9 @@ class TeamForm(forms.ModelForm):
             'force_hide_speaker_names',
             'force_hide_speaker_emails',
             'limit_tracks',
+            'can_change_exhibition_proposals',
+            'is_exhibition_reviewer',
+            'hide_exhibition_applicant_emails',
             'can_video_create_stages',
             'can_video_create_channels',
             'can_video_direct_message',
@@ -161,6 +179,8 @@ class TeamForm(forms.ModelForm):
             'can_change_vouchers',
             'can_change_submissions',
             'is_reviewer',
+            'can_change_exhibition_proposals',
+            'is_exhibition_reviewer',
             'can_video_create_stages',
             'can_video_create_channels',
             'can_video_direct_message',
