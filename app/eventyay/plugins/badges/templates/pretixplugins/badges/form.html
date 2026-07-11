@@ -1,0 +1,18 @@
+{% load i18n %}
+<p>
+    {% blocktrans trimmed %}
+        You can customize the badge design with our badge editor. There, you can upload a PDF file used
+        as a background for the badges and then place various texts and QR codes at the positions of your choice.
+    {% endblocktrans %}
+</p>
+<p>
+    <a class="btn btn-primary btn-lg" target="_blank"
+            href="{% url "plugins:badges:getdefault" organizer=request.organizer.slug event=request.event.slug %}">
+        <span class="fa fa-paint-brush"></span>
+        {% trans "Open Badge Designer" %}
+    </a>
+    <a class="btn btn-default btn-lg" target="_blank"
+            href="{% url "plugins:badges:index" organizer=request.organizer.slug event=request.event.slug %}">
+        {% trans "Advanced mode (multiple layouts)" %}
+    </a>
+</p>
