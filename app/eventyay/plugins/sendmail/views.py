@@ -203,7 +203,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
             )
 
         return redirect(
-            'plugins:sendmail:send',
+            'control:event.mail.send',
             event=self.request.event.slug,
             organizer=self.request.event.organizer.slug,
         )
@@ -242,7 +242,7 @@ class MailTemplatesView(EventSettingsViewMixin, EventSettingsFormView):
             )
         messages.success(self.request, _('Your changes have been saved.'))
         return redirect(reverse(
-            'plugins:sendmail:templates',
+            'control:event.mail.templates',
             kwargs={
                 'organizer': self.request.event.organizer.slug,
                 'event': self.request.event.slug,
@@ -321,7 +321,7 @@ class SendEmailQueueView(EventPermissionRequiredMixin, View):
                 _('The mail has been queued for sending.')
             )
 
-        return HttpResponseRedirect(reverse('plugins:sendmail:outbox', kwargs={
+        return HttpResponseRedirect(reverse('control:event.mail.outbox', kwargs={
             'organizer': request.event.organizer.slug,
             'event': request.event.slug,
         }))
@@ -412,7 +412,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
         return response
 
     def get_success_url(self):
-        return reverse('plugins:sendmail:outbox', kwargs={
+        return reverse('control:event.mail.outbox', kwargs={
             'organizer': self.request.event.organizer.slug,
             'event': self.request.event.slug
         })
@@ -448,7 +448,7 @@ class DeleteEmailQueueView(EventPermissionRequiredMixin, TemplateView):
                 _("The mail and its related data have been deleted.")
             )
 
-        return redirect(reverse('plugins:sendmail:outbox', kwargs={
+        return redirect(reverse('control:event.mail.outbox', kwargs={
             'organizer': request.event.organizer.slug,
             'event': request.event.slug
         }))
@@ -486,7 +486,7 @@ class PurgeEmailQueuesView(EventPermissionRequiredMixin, TemplateView):
             ).format(count=count)
         )
 
-        return redirect(reverse('plugins:sendmail:outbox', kwargs={
+        return redirect(reverse('control:event.mail.outbox', kwargs={
             'organizer': request.event.organizer.slug,
             'event': request.event.slug
         }))
@@ -681,7 +681,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                 _('Your email has been sent to the outbox.')
             )
 
-        return redirect(reverse('plugins:sendmail:compose_email_teams', kwargs={
+        return redirect(reverse('control:event.mail.compose_teams', kwargs={
             'organizer': event.organizer.slug,
             'event': event.slug
         }))
