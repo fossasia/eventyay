@@ -59,7 +59,7 @@
         <tr>
             <td>
                 <a class="text-body text-decoration-none"
-                   href="{% url 'plugins:sendmail:edit_mail' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
+                   href="{% url 'control:event.mail.edit' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
                     {{ mail.subject }}
                 </a>
             </td>

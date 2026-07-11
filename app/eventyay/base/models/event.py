@@ -1050,11 +1050,10 @@ class Event(
 
     def _backfill_all_mail_template_locales(self):
         """Backfill all existing mail templates with newly added locales."""
-        from eventyay.base.models import MailTemplate
-        
         with scope(event=self):
             for template in self.mail_templates.all():
-                self._ensure_mail_template_locales(template, template.role)
+                if template.role:
+                    self._ensure_mail_template_locales(template, template.role)
 
     def get_plugins(self):
         """
@@ -2570,13 +2569,22 @@ class Event(
     def event(self):
         return self
 
+    def feature_flags_as_mapping(self):
+        flags = self.feature_flags or {}
+        if isinstance(flags, dict):
+            return flags
+        if isinstance(flags, (list, tuple, set)):
+            return {flag: True for flag in flags if isinstance(flag, str)}
+        return {}
+
     def get_feature_flag(self, feature):
-        if feature in self.feature_flags:
-            return self.feature_flags[feature]
+        flags = self.feature_flags_as_mapping()
+        if feature in flags:
+            return flags[feature]
         return default_feature_flags().get(feature, False)
 
     def session_popularity_show_on_schedule(self):
-        flags = self.feature_flags or {}
+        flags = self.feature_flags_as_mapping()
         if 'session_popularity_show_on_schedule' in flags:
             return bool(flags['session_popularity_show_on_schedule'])
         return bool(
@@ -2588,7 +2596,7 @@ class Event(
         """Feature flags exposed to schedule webapp clients via inline JSON."""
         from eventyay.talk_rules.submission import are_featured_speakers_visible
 
-        popularity_enabled = bool(self.feature_flags.get('session_popularity_enabled', False))
+        popularity_enabled = bool(self.get_feature_flag('session_popularity_enabled'))
         return {
             'session_popularity_enabled': popularity_enabled,
             'session_popularity_show_on_schedule': self.session_popularity_show_on_schedule(),
@@ -2832,6 +2840,9 @@ class Event(
 
     def _ensure_mail_template_locales(self, template, role):
         from eventyay.mail.default_templates import get_default_template
+
+        if role is None:
+            return template
 
         default_subject, default_text = get_default_template(role)
         
