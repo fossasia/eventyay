@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 
-from eventyay.base.models import Event
+from eventyay.base.models import Event, MailTemplate
 
 
 @pytest.fixture
@@ -85,6 +85,18 @@ def test_default_mail_template_backfills_missing_locale_entries(event):
         assert template.text.data['en'] == 'custom text'
         assert 'de' in template.subject.data
         assert 'de' in template.text.data
+
+
+@pytest.mark.django_db
+def test_event_save_with_custom_mail_template_and_locale_change(event):
+    with scope(event=event):
+        MailTemplate.objects.create(
+            event=event,
+            subject='Custom subject',
+            text='Custom text',
+        )
+        event.locale_array = 'en,de,fr'
+        event.save()
 
 
 @pytest.mark.parametrize(

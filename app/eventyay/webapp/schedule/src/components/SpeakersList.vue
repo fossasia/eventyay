@@ -217,7 +217,7 @@ export default {
 			selectedTracks: [],
 			sortBy: 'featured',
 			openDropdown: null,
-			viewMode: 'list',
+			viewMode: 'details',
 			mobileFiltersOpen: false,
 			mobileMoreOpen: false,
 		}
