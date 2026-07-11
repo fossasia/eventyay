@@ -21,7 +21,6 @@ def event(organizer):
         name='Sendmail Test Event',
         slug='sm-test-event',
         date_from=now() + datetime.timedelta(days=7),
-        plugins='eventyay.plugins.sendmail',
         locale='en',
     )
 

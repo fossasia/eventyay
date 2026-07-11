@@ -145,6 +145,15 @@ class VideoSPAView(View):
                 # Extra values expected by config.js/theme
                 'eventUrl': str(event.urls.base),
                 'eventSlug': event.slug,
+                'organizerSlug': event.organizer.slug if event.organizer else None,
+                'eventDates': {
+                    'date_from': event.date_from.isoformat() if event.date_from else None,
+                    'date_to': event.date_to.isoformat() if event.date_to else None,
+                },
+                'eventTimezone': event.settings.timezone,
+                'eventTitle': str(event.name),
+                'visibleLogoUrl': event.visible_logo_url or '',
+                'visibleHeaderImageUrl': event.visible_header_image_url or '',
                 'basePath': base_path,
                 'defaultLocale': 'en',
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
