@@ -590,6 +590,7 @@ class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
         super().__init__(*args, **kwargs)
+        self.fields['name'].required = True
 
     def clean_name(self):
         name = self.cleaned_data['name']
@@ -636,6 +637,7 @@ class TrackForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                         pass
             kwargs['initial'] = initial
         super().__init__(*args, **kwargs)
+        self.fields['name'].required = True
         if self.instance.pk:
             url = f'{event.cfp.urls.new_access_code}?track={self.instance.pk}'
             self.fields['requires_access_code'].help_text += ' ' + _(
