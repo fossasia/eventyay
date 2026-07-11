@@ -24,9 +24,11 @@
 {% block content %}
     {% has_event_perm "base.create_review" request.user request request.event as can_review %}
     {% has_event_perm "base.reviewer_list_speakerprofile" request.user request request.event as can_view_speakers %}
-    <div class="d-md-flex flex-md-row-reverse justify-content-between">
+    <div id="main-title">
+        <div class="navigation-title">
+            <h2>{% translate "Review Proposals" %}</h2>
+        </div>
         {% include "orga/event/component_link.html" %}
-        <h2>{% translate "Review Proposals" %}</h2>
     </div>
     <div class="alert alert-info">
         <div>
