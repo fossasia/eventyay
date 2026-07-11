@@ -15,7 +15,6 @@ FRONTEND_DEV_DIR = PROJECT_ROOT / 'eventyay' / 'webapp'
 
 # Default plugins enabled for new events
 DEFAULT_PLUGINS = (
-    'eventyay.plugins.sendmail',
     'eventyay.plugins.statistics',
     'eventyay.plugins.checkinlists',
 )
