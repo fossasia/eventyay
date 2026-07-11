@@ -1050,11 +1050,10 @@ class Event(
 
     def _backfill_all_mail_template_locales(self):
         """Backfill all existing mail templates with newly added locales."""
-        from eventyay.base.models import MailTemplate
-        
         with scope(event=self):
             for template in self.mail_templates.all():
-                self._ensure_mail_template_locales(template, template.role)
+                if template.role:
+                    self._ensure_mail_template_locales(template, template.role)
 
     def get_plugins(self):
         """
@@ -2841,6 +2840,9 @@ class Event(
 
     def _ensure_mail_template_locales(self, template, role):
         from eventyay.mail.default_templates import get_default_template
+
+        if role is None:
+            return template
 
         default_subject, default_text = get_default_template(role)
         

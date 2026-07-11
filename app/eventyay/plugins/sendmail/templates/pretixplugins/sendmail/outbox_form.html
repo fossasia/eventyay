@@ -73,11 +73,11 @@
 
         <div class="submit-group">
             {% if form.instance.composing_for == "attendees" %}
-                <a class="btn btn-primary btn-lg" href="{% url 'plugins:sendmail:send' organizer=request.event.organizer.slug event=request.event.slug %}?copyToDraft={{ form.instance.id }}">
+                <a class="btn btn-primary btn-lg" href="{% url 'control:event.mail.send' organizer=request.event.organizer.slug event=request.event.slug %}?copyToDraft={{ form.instance.id }}">
                     {% translate "Copy to draft" %}
                 </a>
             {% else %}
-                <a class="btn btn-primary btn-lg" href="{% url 'plugins:sendmail:compose_email_teams' organizer=request.event.organizer.slug event=request.event.slug %}?copyToDraft={{ form.instance.id }}">
+                <a class="btn btn-primary btn-lg" href="{% url 'control:event.mail.compose_teams' organizer=request.event.organizer.slug event=request.event.slug %}?copyToDraft={{ form.instance.id }}">
                     {% translate "Copy to draft" %}
                 </a>
             {% endif %}
@@ -146,7 +146,7 @@
             <!-- Button container -->
             <div class="form-group submit-group row" style="margin-bottom: 15px;">
                 <div class="col-xs-6 text-left">
-                    <a href="{% url 'plugins:sendmail:delete_single' organizer=request.event.organizer.slug event=request.event.slug pk=form.instance.pk %}" class="btn btn-danger btn-lg">
+                    <a href="{% url 'control:event.mail.outbox.delete' organizer=request.event.organizer.slug event=request.event.slug pk=form.instance.pk %}" class="btn btn-danger btn-lg">
                         <i class="fa fa-trash"></i> {% translate "Discard" %}
                     </a>
                 </div>
