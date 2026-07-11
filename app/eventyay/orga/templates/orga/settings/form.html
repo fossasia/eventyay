@@ -22,10 +22,14 @@
 {% block extra_title %}{% translate "Settings" %} :: {% endblock extra_title %}
 
 {% block settings_content %}
-    <div id="main-title" class="d-md-flex justify-content-between">
-        <h2>{% translate "Settings" %}</h2>
-        {% include "orga/event/component_link.html" %}
-    </div>
+    <nav id="event-nav" class="header-nav">
+        <div class="navigation">
+            <div class="navigation-title">
+                <h2>{% translate "General settings" %}</h2>
+            </div>
+            {% include "orga/event/component_link.html" %}
+        </div>
+    </nav>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 

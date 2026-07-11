@@ -66,6 +66,7 @@
 </template>
 <script>
 import Janus from 'lib/janus.js'
+import adapter from 'webrtc-adapter'
 import {mapState} from 'vuex'
 import api from 'lib/api'
 import ChatUserCard from 'components/ChatUserCard'
@@ -77,7 +78,6 @@ import {createPopper} from '@popperjs/core'
 import SoundMeter from 'lib/webrtc/soundmeter'
 import Color from 'color'
 import {colors} from 'theme'
-import { v4 as uuid } from 'uuid'
 
 const calculateLayout = (containerWidth, containerHeight, videoCount, aspectRatio, videoPadding) => {
 	let bestLayout = {
@@ -138,11 +138,15 @@ export default {
 			required: true
 		},
 		sessionId: {
-			type: String,
+			type: [Number, String],
 			required: true
 		},
+		screenShareSessionId: {
+			type: [Number, String],
+			default: null
+		},
 		roomId: {
-			type: String,
+			type: [Number, String],
 			required: true
 		},
 		iceServers: {
@@ -170,6 +174,7 @@ export default {
 			retryInterval: 1000,
 			connectionError: null,
 			connectionRetryTimeout: null,
+			suppressDestroyedState: false,
 			publishingError: null,
 			screensharingError: null,
 
@@ -230,6 +235,15 @@ export default {
 				'--video-height': `${this.layout.height}px`,
 			}
 		},
+		janusRoomId() {
+			return Number(this.roomId)
+		},
+		janusSessionId() {
+			return Number(this.sessionId)
+		},
+		janusScreenShareSessionId() {
+			return Number(this.screenShareSessionId || this.sessionId)
+		},
 	},
 	watch: {
 		feeds() {
@@ -242,6 +256,9 @@ export default {
 		}
 		if (this.connectionRetryTimeout) {
 			window.clearTimeout(this.connectionRetryTimeout)
+		}
+		if (this.slowLinkInterval) {
+			window.clearInterval(this.slowLinkInterval)
 		}
 		if (this.soundMeterInterval) {
 			window.clearInterval(this.soundMeterInterval)
@@ -269,13 +286,17 @@ export default {
 			// penalty on Vue computing reactivity on our log which might get large.
 			return LOG_ENTRIES
 		},
-		cleanup() {
+		cleanup({preserveConnectionFailure = false} = {}) {
+			if (!this.janus) return
+			this.suppressDestroyedState = preserveConnectionFailure
 			this.janus.destroy({cleanupHandles: true})
-			this.connectionState = 'disconnected'
+			if (!preserveConnectionFailure) this.connectionState = 'disconnected'
 			this.publishingState = 'unpublished'
 			this.screensharingState = 'unpublished'
-			this.retryInterval = 1000
-			this.connectionError = null
+			if (!preserveConnectionFailure) {
+				this.retryInterval = 1000
+				this.connectionError = null
+			}
 			this.screensharingError = null
 			this.feeds = []
 			this.ourStream = null
@@ -284,6 +305,16 @@ export default {
 				this.soundMeters[idx].context.close()
 			}
 			this.soundMeters = {}
+		},
+		failConnection(error, retry = true) {
+			const retryInterval = this.retryInterval
+			this.cleanup({preserveConnectionFailure: true})
+			this.connectionState = 'failed'
+			this.connectionError = error?.message || error || 'Unknown Janus connection error'
+			if (retry) {
+				this.connectionRetryTimeout = window.setTimeout(this.onJanusInitialized, retryInterval)
+				this.retryInterval = retryInterval * 2
+			}
 		},
 		onResize() {
 			const bbox = this.$refs.container.getBoundingClientRect()
@@ -347,7 +378,7 @@ export default {
 				this.janus.attach(
 					{
 						plugin: 'janus.plugin.videoroom',
-						opaqueId: this.user.id,
+						opaqueId: String(this.user.id),
 						success: (pluginHandle) => {
 							this.screensharePluginHandle = pluginHandle
 							log('venueless', 'info',
@@ -355,10 +386,10 @@ export default {
 
 							const register = {
 								request: 'join',
-								room: this.roomId,
+								room: this.janusRoomId,
 								ptype: 'publisher',
 								token: this.token,
-								id: this.sessionId + '_' + uuid(),
+								id: this.janusScreenShareSessionId,
 								display: 'venueless user', // we abuse janus' display name field for the venueless user id
 							}
 							this.screensharePluginHandle.send({message: register})
@@ -568,7 +599,7 @@ export default {
 			let remoteFeed = null
 			this.janus.attach({
 				plugin: 'janus.plugin.videoroom',
-				opaqueId: this.user.id,
+				opaqueId: String(this.user.id),
 				success: (pluginHandle) => {
 					remoteFeed = pluginHandle
 					remoteFeed.simulcastStarted = false
@@ -576,9 +607,9 @@ export default {
 					// We wait for the plugin to send us an offer
 					var subscribe = {
 						request: 'join',
-						room: this.roomId,
+						room: this.janusRoomId,
 						ptype: 'subscriber',
-						id: this.sessionId,
+						id: this.janusSessionId,
 						feed: id,
 						private_id: this.ourPrivateId,
 					}
@@ -647,7 +678,7 @@ export default {
 							media: {audioSend: false, videoSend: false},	// We want recvonly audio/video
 							success: (jsep) => {
 								log('venueless', 'debug', 'Got SDP!', jsep)
-								var body = {request: 'start', room: this.roomId}
+								var body = {request: 'start', room: this.janusRoomId}
 								remoteFeed.send({message: body, jsep: jsep})
 							},
 							error: (error) => {
@@ -698,15 +729,15 @@ export default {
 			this.janus.attach(
 				{
 					plugin: 'janus.plugin.videoroom',
-					opaqueId: this.user.id,
+					opaqueId: String(this.user.id),
 					success: (pluginHandle) => {
 						this.mainPluginHandle = pluginHandle
 						log('venueless', 'info', 'Plugin attached! (' + this.mainPluginHandle.getPlugin() + ', id=' + this.mainPluginHandle.getId() + ')')
 
 						const register = {
 							request: 'join',
-							room: this.roomId,
-							id: this.sessionId,
+							room: this.janusRoomId,
+							id: this.janusSessionId,
 							ptype: 'publisher',
 							token: this.token,
 							display: 'venueless user', // we abuse janus' display name field for the venueless user id
@@ -714,11 +745,7 @@ export default {
 						this.mainPluginHandle.send({message: register})
 					},
 					error: (error) => {
-						this.connectionState = 'failed'
-						this.connectionError = error
-						this.cleanup()
-						window.setTimeout(this.onJanusInitialized, this.retryInterval)
-						this.retryInterval = this.retryInterval * 2
+						this.failConnection(error)
 					},
 					consentDialog: (on) => {
 						this.waitingForConsent = on
@@ -726,12 +753,7 @@ export default {
 					iceState: (state) => {
 						log('venueless', 'info', 'ICE state changed to ' + state)
 						if (state === 'failed') {
-							// todo correct?
-							this.connectionState = 'failed'
-							this.connectionError = `ICE connection ${state}`
-							this.cleanup()
-							window.setTimeout(this.onJanusInitialized, this.retryInterval)
-							this.retryInterval = this.retryInterval * 2
+							this.failConnection(`ICE connection ${state}`)
 						}
 					},
 					mediaState: (medium, on) => {
@@ -772,9 +794,7 @@ export default {
 								}
 								this.publishOwnFeed()
 							} else if (event === 'destroyed') {
-								this.connectionState = 'failed'
-								this.connectionError = 'Room destroyed'
-								this.cleanup()
+								this.failConnection('Room destroyed', false)
 							} else if (event === 'event') {
 								// Any new feed to attach to?
 								if (msg.publishers) {
@@ -810,13 +830,9 @@ export default {
 									}
 								} else if (msg.error) {
 									if (msg.error_code === 426) {
-										this.connectionState = 'failed'
-										this.connectionError = 'Room does not exist'
-										this.cleanup()
+										this.failConnection('Room does not exist', false)
 									} else {
-										this.connectionState = 'failed'
-										this.connectionError = `Server error: ${msg.error}`
-										this.cleanup()
+										this.failConnection(`Server error: ${msg.error}`, false)
 									}
 								}
 							}
@@ -921,13 +937,13 @@ export default {
 				iceServers: this.iceServers,
 				success: this.onJanusConnected,
 				error: (error) => {
-					this.connectionState = 'failed'
-					this.connectionError = error.message
-					this.cleanup()
-					window.setTimeout(this.onJanusInitialized, this.retryInterval)
-					this.retryInterval = this.retryInterval * 2
+					this.failConnection(error)
 				},
 				destroyed: () => {
+					if (this.suppressDestroyedState) {
+						this.suppressDestroyedState = false
+						return
+					}
 					this.connectionState = 'disconnected'
 				},
 			})

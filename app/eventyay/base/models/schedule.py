@@ -825,7 +825,7 @@ class Schedule(PretalxModel):
             )
         talks = talks.order_by('start')
 
-        popularity_enabled = bool(self.event.feature_flags.get('session_popularity_enabled', False))
+        popularity_enabled = bool(self.event.get_feature_flag('session_popularity_enabled'))
         show_content_locale = not respect_public_visibility or self.event.cfp.public_content_locale
 
         talk_list = list(talks)
