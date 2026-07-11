@@ -10,7 +10,8 @@ $(function() {
 
     var config = {
         'id_settings-event_logo_image': { ratio: NaN }, // Free form aspect ratio for Logo
-        'id_settings-logo_image': { ratio: 1920 / 640 } // 3:1 aspect ratio for Header Image (recommended 1920x640)
+        'id_settings-logo_image': { ratio: 1920 / 640 }, // 3:1 aspect ratio for Header Image (recommended 1920x640)
+        'id_settings-og_image': { ratio: NaN } // Free form aspect ratio for Social Media Image
     };
 
     function initCropperForInput(inputId) {
@@ -64,6 +65,7 @@ $(function() {
 
     initCropperForInput('id_settings-event_logo_image');
     initCropperForInput('id_settings-logo_image');
+    initCropperForInput('id_settings-og_image');
 
     $modal.on('hidden.bs.modal', function() {
         if (cropper) {
