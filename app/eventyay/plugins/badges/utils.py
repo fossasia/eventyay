@@ -38,6 +38,14 @@ def get_badge_layout_assignment_map(event):
     return assignment_map, default_layout
 
 
+def product_has_badge_layout_assigned(event, product):
+    assignment_map, _ = get_badge_layout_assignment_map(event)
+    product_id = getattr(product, 'pk', product)
+    if product_id not in assignment_map:
+        return False
+    return assignment_map[product_id] is not None
+
+
 def get_badge_layout_for_product(event, product):
     assignment_map, default_layout = get_badge_layout_assignment_map(event)
     product_id = getattr(product, 'pk', product)
@@ -132,6 +140,9 @@ def get_badge_bundle_option_choices(event, position):
     seen_keys = set()
     choices = []
     for bundle_position in get_badge_bundle_positions(position):
+        if not product_has_badge_layout_assigned(event, bundle_position.product_id):
+            continue
+
         layout = get_badge_layout_for_position(event, bundle_position)
         if not layout or not layout.allow_customization:
             continue
