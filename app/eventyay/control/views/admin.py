@@ -15,6 +15,7 @@ from django.db.models import (
     DateTimeField,
     F,
     Min,
+    Prefetch,
     Q,
     Sum,
     When,
@@ -82,7 +83,7 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             banned=Count('id', filter=Q(moderation_state=User.ModerationState.BANNED)),
             is_spam=Count('id', filter=Q(is_spam=True)),
             recently_active=Count('id', filter=Q(last_login__gte=n - timedelta(days=30), last_login__isnull=False)),
-            deleted=Count('id', filter=Q(deleted=True)),
+            deleted=Count('id', filter=Q(Q(deleted=True) | Q(email__endswith='@disabled.eventyay.com'))),
             staff=Count('id', filter=Q(Q(is_staff=True) | Q(is_administrator=True))),
         )
         users_verified = EmailAddress.objects.filter(verified=True, primary=True).values('user_id').distinct().count()
@@ -220,9 +221,14 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             ctx['events_cfp_closing_soon'] = sorted(cfps_closing_soon, key=lambda cfp: cfp.closing_deadline)[:5]
 
             # Order KPIs
-            ctx['orders_total'] = Order.objects.count()
-            ctx['orders_paid'] = Order.objects.filter(status=Order.STATUS_PAID).count()
-            ctx['orders_pending'] = Order.objects.filter(status=Order.STATUS_PENDING).count()
+            order_stats = Order.objects.aggregate(
+                total=Count('id'),
+                paid=Count('id', filter=Q(status=Order.STATUS_PAID)),
+                pending=Count('id', filter=Q(status=Order.STATUS_PENDING))
+            )
+            ctx['orders_total'] = order_stats['total']
+            ctx['orders_paid'] = order_stats['paid']
+            ctx['orders_pending'] = order_stats['pending']
 
             # Gross Revenue from all orders that were ever paid (currently Paid or Canceled/Refunded with done refunds)
             orders_ever_paid = Order.objects.filter(
@@ -244,35 +250,24 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 .annotate(total=Sum('amount'))
                 .order_by()
             }
-            order_counts_by_currency = {}
-            for status, key in [
-                (Order.STATUS_PAID, 'paid'),
-                (Order.STATUS_PENDING, 'pending'),
-                (Order.STATUS_CANCELED, 'cancelled'),
-            ]:
-                qs = Order.objects.filter(status=status)
-                if status == Order.STATUS_PAID:
-                    qs = qs.exclude(total=0)
-                for entry in (
-                    qs.values('event__currency')
-                    .annotate(count=Count('pk', distinct=True))
-                    .order_by()
-                ):
-                    currency = entry['event__currency']
-                    if currency not in order_counts_by_currency:
-                        order_counts_by_currency[currency] = {}
-                    order_counts_by_currency[currency][key] = entry['count']
 
-            for entry in (
-                Order.objects.filter(status=Order.STATUS_PAID, total=0)
-                .values('event__currency')
-                .annotate(count=Count('pk', distinct=True))
-                .order_by()
-            ):
-                currency = entry['event__currency']
-                if currency not in order_counts_by_currency:
-                    order_counts_by_currency[currency] = {}
-                order_counts_by_currency[currency]['free'] = entry['count']
+            # Order counts per currency
+            currency_counts = Order.objects.values('event__currency').annotate(
+                paid=Count('pk', filter=Q(status=Order.STATUS_PAID) & ~Q(total=0), distinct=True),
+                pending=Count('pk', filter=Q(status=Order.STATUS_PENDING), distinct=True),
+                cancelled=Count('pk', filter=Q(status=Order.STATUS_CANCELED), distinct=True),
+                free=Count('pk', filter=Q(status=Order.STATUS_PAID) & Q(total=0), distinct=True)
+            ).order_by()
+
+            order_counts_by_currency = {
+                entry['event__currency']: {
+                    'paid': entry['paid'],
+                    'pending': entry['pending'],
+                    'cancelled': entry['cancelled'],
+                    'free': entry['free']
+                }
+                for entry in currency_counts
+            }
 
             all_currencies = sorted(list(
                 set(paid_order_sums.keys()) | set(refund_sums.keys()) | set(order_counts_by_currency.keys())
@@ -361,13 +356,14 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             )
 
             # Attendee / ticket KPIs
-            ctx['attendees_total'] = OrderPosition.objects.filter(
-                order__status=Order.STATUS_PAID,
-                addon_to__isnull=True,
-            ).count()
-            ctx['tickets_issued'] = OrderPosition.objects.filter(
+            attendee_stats = OrderPosition.objects.filter(
                 order__status=Order.STATUS_PAID
-            ).count()
+            ).aggregate(
+                attendees_total=Count('id', filter=Q(addon_to__isnull=True)),
+                tickets_issued=Count('id')
+            )
+            ctx['attendees_total'] = attendee_stats['attendees_total']
+            ctx['tickets_issued'] = attendee_stats['tickets_issued']
 
         return ctx
 
