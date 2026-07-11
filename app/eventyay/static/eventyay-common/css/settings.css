@@ -96,13 +96,20 @@
 }
 
 /* Event / track selector widget */
+.track-limit-help {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
 .event-track-filter-label {
     font-weight: normal;
     margin-bottom: 5px;
+    display: block;
 }
 
 .event-track-filter {
-    max-width: 400px;
+    max-width: 100%;
+    width: 100%;
 }
 
 .event-track-filter-row {
@@ -121,11 +128,12 @@
     text-align: center;
 }
 
-.event-track-group {
-    display: none;
-}
-
 .event-track-group-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
     font-weight: bold;
     margin-bottom: 8px;
     padding: 5px 0;
@@ -133,9 +141,24 @@
     color: #337ab7;
 }
 
+.event-track-selection-count {
+    font-weight: normal;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.event-track-search-row {
+    margin-bottom: 8px;
+}
+
+.event-track-search {
+    max-width: 100%;
+}
+
 .event-track-list {
-    max-height: 200px;
+    max-height: 240px;
     overflow-y: auto;
+    margin-bottom: 0;
 }
 
 .event-track-item {
@@ -144,14 +167,45 @@
 
 .event-track-item label {
     font-weight: normal;
+    display: block;
+    margin: 0;
+    cursor: pointer;
 }
 
 .event-track-actions {
-    margin-top: 5px;
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.event-track-actions .btn-link {
+    padding: 0;
+}
+
+.event-track-empty,
+.event-track-search-empty {
+    margin: 8px 0 0;
 }
 
 .track-hint {
     padding-top: 7px;
+}
+
+@media (max-width: 767px) {
+    .event-tracks-wrapper {
+        padding: 8px;
+    }
+
+    .event-track-list {
+        max-height: 180px;
+    }
+
+    .event-track-group-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 
 /* Thumbnailed file input widget styles */
