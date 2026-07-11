@@ -781,6 +781,15 @@ h2 .submission-state-dropdown {
   padding: 2px;
 }
 
+h2 .submission-state-dropdown,
+h2 .submission-readonly-badge {
+  margin-left: 1rem;
+}
+
+td .submission-state-dropdown {
+  margin-left: 1rem;
+}
+
 details.submission-state-dropdown {
   display: inline-flex;
   border-radius: 6px;

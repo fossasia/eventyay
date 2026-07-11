@@ -120,9 +120,6 @@
     font-size: 22px;
   }
 
-  /* Drop the status control / read-only badge onto its own line, aligned with
-     the title's left edge. margin-left needs !important here only to override
-     Bootstrap's .ml-3 utility (margin-left: 1rem !important). */
   #event-nav .navigation-title .submission-state-dropdown,
   .header-nav .navigation-title .submission-state-dropdown,
   #event-nav .navigation-title .submission-readonly-badge,
@@ -130,7 +127,7 @@
   #event-nav .navigation-title form.d-inline,
   .header-nav .navigation-title form.d-inline {
     display: inline-flex;
-    margin-left: 0 !important;
+    margin-left: 0;
     margin-top: 0.5rem;
     vertical-align: middle;
   }
