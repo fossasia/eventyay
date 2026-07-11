@@ -62,7 +62,7 @@ from eventyay.core.permissions import (
     traits_match_required,
 )
 from eventyay.core.utils.json import CustomJSONEncoder
-from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
+from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
 from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.http import smtp_reachable
@@ -99,6 +99,7 @@ def default_roles():
     attendee = [
         Permission.EVENT_VIEW,
         Permission.EVENT_EXHIBITION_CONTACT,
+        Permission.EVENT_CHAT_DIRECT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
     participant = viewer + [
@@ -1454,24 +1455,6 @@ class Event(
             augmented.setdefault(role, [f'eventyay-video-event-{slug}-{trait_name.replace("_", "-")}'])
         return augmented
 
-    def _remove_direct_messaging_if_unauthorized(self, result, user_traits):
-        """Remove EVENT_CHAT_DIRECT permission if user doesn't have the direct messaging trait.
-
-        Args:
-            result: Permission result dictionary to modify
-            user_traits: List of user traits
-        """
-        direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
-        if not direct_messaging_def:
-            return
-
-        direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
-        has_direct_messaging_trait = direct_messaging_trait in user_traits
-
-        if not has_direct_messaging_trait:
-            direct_message_value = Permission.EVENT_CHAT_DIRECT.value
-            result[self] = {p for p in result[self] if normalize_permission_value(p) != direct_message_value}
-
     def has_permission_implicit(
         self,
         *,
@@ -1588,10 +1571,10 @@ class Event(
             for role_name in ORGANIZER_ROLES:
                 role_perms = event_roles.get(role_name, SYSTEM_ROLES.get(role_name, []))
                 result[self].update(role_perms)
-        else:
-            # Remove EVENT_CHAT_DIRECT from ALL users unless they have the direct messaging trait.
-            # Only users with can_video_direct_message team permission get the video_direct_messaging trait.
-            self._remove_direct_messaging_if_unauthorized(result, user_traits)
+
+        attendee_traits = event_trait_grants.get('attendee', ['attendee'])
+        if traits_match_required(user_traits, attendee_traits) and (attendee_traits or allow_empty_traits):
+            result[self].add(Permission.EVENT_CHAT_DIRECT)
 
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
