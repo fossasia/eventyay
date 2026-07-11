@@ -40,6 +40,9 @@
             <p class="help-block">
               {% trans 'Enable Ask user for any field that attendees should be able to hide from their badge at checkout. If Ask user is disabled, that field will always appear on the printed badge.' %}
             </p>
+            <div id="badge-editing-setting" class="form-group">
+              {% bootstrap_field form.allow_badge_editing layout='inline' %}
+            </div>
             <div class="table-responsive">
               <table class="table table-condensed table-hover">
                 <thead>
@@ -94,7 +97,12 @@
           $('#badge-customization-fields').show();
           return;
         }
-        $('#badge-customization-fields').toggle($('#id_allow_customization').is(':checked'));
+        const customizationEnabled = $('#id_allow_customization').is(':checked');
+        $('#badge-customization-fields').toggle(customizationEnabled);
+        $('#id_allow_badge_editing').prop('disabled', !customizationEnabled);
+        if (!customizationEnabled) {
+          $('#id_allow_badge_editing').prop('checked', false);
+        }
       }
 
       $('#id_allow_customization').on('change', toggleBadgeCustomizationFields);

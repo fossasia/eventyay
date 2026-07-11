@@ -294,7 +294,9 @@ class PositionDownloadsField(serializers.Field):
                 or not instance.order.event.settings.ticket_download_pending
             ):
                 return []
-        if not instance.generate_ticket:
+
+        has_badges_plugin = 'eventyay.plugins.badges' in instance.order.event.plugins
+        if not instance.generate_ticket and not has_badges_plugin:
             return []
 
         request = self.context['request']
@@ -302,22 +304,30 @@ class PositionDownloadsField(serializers.Field):
         responses = register_ticket_outputs.send(instance.order.event)
         for receiver, response in responses:
             provider = response(instance.order.event)
-            if provider.is_enabled:
-                res.append(
-                    {
-                        'output': provider.identifier,
-                        'url': reverse(
-                            'api-v1:orderposition-download',
-                            kwargs={
-                                'organizer': instance.order.event.organizer.slug,
-                                'event': instance.order.event.slug,
-                                'pk': instance.pk,
-                                'output': provider.identifier,
-                            },
-                            request=request,
-                        ),
-                    }
-                )
+            if not provider.is_enabled:
+                continue
+            if provider.identifier != 'badge' and not instance.generate_ticket:
+                continue
+            if provider.identifier == 'badge':
+                from eventyay.plugins.badges.utils import get_badge_layout_for_position
+
+                if not get_badge_layout_for_position(instance.order.event, instance):
+                    continue
+            res.append(
+                {
+                    'output': provider.identifier,
+                    'url': reverse(
+                        'api-v1:orderposition-download',
+                        kwargs={
+                            'organizer': instance.order.event.organizer.slug,
+                            'event': instance.order.event.slug,
+                            'pk': instance.pk,
+                            'output': provider.identifier,
+                        },
+                        request=request,
+                    ),
+                }
+            )
         return res
 
 
@@ -572,6 +582,37 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
     attendee_name = AttendeeNameField(source='*')
     attendee_name_parts = AttendeeNamePartsField(source='*')
     order__status = serializers.SlugRelatedField(read_only=True, slug_field='status', source='order')
+    badge_customization = serializers.SerializerMethodField(read_only=True)
+
+    def get_badge_customization(self, obj):
+        if 'eventyay.plugins.badges' not in obj.order.event.plugins:
+            return None
+        from eventyay.plugins.badges.utils import (
+            get_badge_bundle_option_choices,
+            get_badge_field_display_values,
+            get_badge_field_overrides,
+            get_badge_hidden_fields,
+            get_badge_layout_for_position,
+        )
+
+        layout = get_badge_layout_for_position(obj.order.event, obj)
+        if not layout or not layout.allow_customization:
+            return None
+        display_values = get_badge_field_display_values(obj.order.event, obj)
+        return {
+            'allow_customization': True,
+            'allow_badge_editing': layout.allow_badge_editing,
+            'fields': [
+                {
+                    'key': key,
+                    'label': label,
+                    'value': display_values.get(key, ''),
+                }
+                for key, label in get_badge_bundle_option_choices(obj.order.event, obj)
+            ],
+            'hidden_fields': get_badge_hidden_fields(obj),
+            'field_overrides': get_badge_field_overrides(obj),
+        }
 
     class Meta:
         model = OrderPosition
@@ -606,6 +647,7 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
             'pdf_data',
             'seat',
             'require_attention',
+            'badge_customization',
             'order__status',
         )
 

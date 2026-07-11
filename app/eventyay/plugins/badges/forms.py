@@ -24,6 +24,13 @@ class BadgeLayoutSettingsForm(forms.Form):
         required=False,
         label=_('Allow badge customization'),
     )
+    allow_badge_editing = forms.BooleanField(
+        required=False,
+        label=_('Allow badge editing'),
+        help_text=_(
+            'When enabled, check-in staff can edit badge text for the selected fields before printing an updated badge.'
+        ),
+    )
     ask_user_fields = forms.MultipleChoiceField(
         required=False,
         label=_('Badge fields'),
@@ -48,11 +55,13 @@ class BadgeLayoutSettingsForm(forms.Form):
         initial_keys = [key for key in self.layout.ask_user_fields_data if key in valid_keys]
 
         self.fields['allow_customization'].initial = self.layout.allow_customization
+        self.fields['allow_badge_editing'].initial = self.layout.allow_badge_editing
         self.fields['ask_user_fields'].choices = choices
         self.fields['ask_user_fields'].initial = initial_keys
 
         if not choices:
             self.fields['allow_customization'].disabled = True
+            self.fields['allow_badge_editing'].disabled = True
             self.fields['allow_customization'].help_text = _(
                 'This layout does not currently contain any dynamic text fields that can be customized.'
             )
@@ -61,11 +70,13 @@ class BadgeLayoutSettingsForm(forms.Form):
         cleaned_data = super().clean()
         if not self.customizable_fields:
             cleaned_data['allow_customization'] = False
+            cleaned_data['allow_badge_editing'] = False
             cleaned_data['ask_user_fields'] = []
             return cleaned_data
 
         if not cleaned_data.get('allow_customization'):
             cleaned_data['ask_user_fields'] = []
+            cleaned_data['allow_badge_editing'] = False
 
         return cleaned_data
 
@@ -79,8 +90,9 @@ class BadgeLayoutSettingsForm(forms.Form):
             BadgeProduct.objects.update_or_create(product=product, defaults={'layout': self.layout})
 
         self.layout.allow_customization = self.cleaned_data['allow_customization']
+        self.layout.allow_badge_editing = self.cleaned_data['allow_badge_editing']
         self.layout.ask_user_fields_data = self.cleaned_data['ask_user_fields']
-        self.layout.save(update_fields=['allow_customization', 'ask_user_fields'])
+        self.layout.save(update_fields=['allow_customization', 'allow_badge_editing', 'ask_user_fields'])
         return self.layout
 
 
