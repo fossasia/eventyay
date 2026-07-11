@@ -662,12 +662,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     and not order.require_approval
                     and payment.provider == 'free'
                 )
-                if request.event.settings.get('event_type') == 'meetup':
-                    email_template = request.event.settings.mail_text_meetup_registration
-                    log_entry = 'eventyay.event.order.email.meetup_registration'
-                    email_attendees = request.event.settings.mail_send_meetup_registration_attendee
-                    email_attendees_template = request.event.settings.mail_text_meetup_registration_attendee
-                elif free_flow:
+                if free_flow:
                     email_template = request.event.settings.mail_text_order_free
                     log_entry = 'eventyay.event.order.email.order_free'
                     email_attendees = request.event.settings.mail_send_order_free_attendee

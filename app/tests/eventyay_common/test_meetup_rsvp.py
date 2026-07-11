@@ -1,7 +1,6 @@
 import datetime
 from decimal import Decimal
 
-from django.core import mail
 from django.test import TestCase
 from django.utils.timezone import now
 from django_scopes import scopes_disabled, scope
@@ -106,19 +105,6 @@ class TestAuthenticatedRsvp(TestCase):
         order = orders.first()
         self.assertEqual(order.status, Order.STATUS_PAID)
         self.assertEqual(response.status_code, 200)
-
-    def test_authenticated_rsvp_sends_meetup_registration_email(self):
-        mail.outbox.clear()
-
-        response = self.client.post(self.rsvp_url, follow=True)
-        self.assertEqual(response.status_code, 200)
-
-        self.assertEqual(len(mail.outbox), 1)
-        sent_email = mail.outbox[0]
-        self.assertIn("Your registration:", sent_email.subject)
-        self.assertIn("thank you for registering", sent_email.body)
-        self.assertIn("successfully registered for the meetup", sent_email.body)
-        self.assertIn("Organizer: Rsvporg", sent_email.body)
 
     def test_second_authenticated_rsvp_does_not_duplicate_order(self):
         self.client.post(self.rsvp_url)

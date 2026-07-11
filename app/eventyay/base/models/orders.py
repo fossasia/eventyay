@@ -1913,20 +1913,12 @@ class OrderPayment(models.Model):
                     trigger_pdf=not send_mail or not self.order.event.settings.invoice_email_attachment,
                 )
 
-        is_meetup = self.order.event.settings.get('event_type') == 'meetup'
         if send_mail and self.order.sales_channel in self.order.event.settings.mail_sales_channel_placed_paid:
-            if is_meetup:
-                self._send_meetup_mail(user)
-                if self.order.event.settings.mail_send_meetup_registration_attendee:
-                    for p in self.order.positions.all():
-                        if p.addon_to_id is None and p.attendee_email and p.attendee_email != self.order.email:
-                            self._send_meetup_mail_attendee(p, user)
-            else:
-                self._send_paid_mail(invoice, user, mail_text)
-                if self.order.event.settings.mail_send_order_paid_attendee:
-                    for p in self.order.positions.all():
-                        if p.addon_to_id is None and p.attendee_email and p.attendee_email != self.order.email:
-                            self._send_paid_mail_attendee(p, user)
+            self._send_paid_mail(invoice, user, mail_text)
+            if self.order.event.settings.mail_send_order_paid_attendee:
+                for p in self.order.positions.all():
+                    if p.addon_to_id is None and p.attendee_email and p.attendee_email != self.order.email:
+                        self._send_paid_mail_attendee(p, user)
 
     def _send_paid_mail_attendee(self, position, user):
         from eventyay.base.services.mail import SendMailException
@@ -1970,49 +1962,6 @@ class OrderPayment(models.Model):
                 )
             except SendMailException:
                 logger.exception('Order paid email could not be sent')
-
-    def _send_meetup_mail_attendee(self, position, user):
-        from eventyay.base.services.mail import SendMailException
-
-        with language(self.order.locale, self.order.event.settings.region):
-            email_template = self.order.event.settings.mail_text_meetup_registration_attendee
-            email_context = get_email_context(event=self.order.event, order=self.order, position=position)
-            email_subject = _('Your registration: %(code)s') % {'code': self.order.code}
-            try:
-                self.order.send_mail(
-                    email_subject,
-                    email_template,
-                    email_context,
-                    'eventyay.event.order.email.meetup_registration',
-                    user,
-                    invoices=[],
-                    position=position,
-                    attach_tickets=False,
-                    attach_ical=self.order.event.settings.mail_attach_ical,
-                )
-            except SendMailException:
-                logger.exception('Meetup registration email could not be sent to attendee')
-
-    def _send_meetup_mail(self, user):
-        from eventyay.base.services.mail import SendMailException
-
-        with language(self.order.locale, self.order.event.settings.region):
-            email_template = self.order.event.settings.mail_text_meetup_registration
-            email_context = get_email_context(event=self.order.event, order=self.order)
-            email_subject = _('Your registration: %(code)s') % {'code': self.order.code}
-            try:
-                self.order.send_mail(
-                    email_subject,
-                    email_template,
-                    email_context,
-                    'eventyay.event.order.email.meetup_registration',
-                    user,
-                    invoices=[],
-                    attach_tickets=False,
-                    attach_ical=self.order.event.settings.mail_attach_ical,
-                )
-            except SendMailException:
-                logger.exception('Meetup registration email could not be sent')
 
     @property
     def refunded_amount(self):
