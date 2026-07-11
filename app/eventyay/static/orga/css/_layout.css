@@ -1886,19 +1886,47 @@ h2 .user-name-display img {
   }
 
   #page-content .submission-page-actions__primary {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: nowrap;
     align-items: stretch;
     width: 100%;
   }
 
+  #page-content .submission-page-actions__primary > .btn {
+    flex: 1 1 0;
+    white-space: normal;
+    gap: 0.3rem;
+    padding: 0.35rem 0.4rem;
+    min-height: 2.5rem;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  #page-content .submission-page-actions__primary > .btn .fa {
+    flex: 0 0 auto;
+  }
+
   #page-content .submission-page-actions__nav {
+    order: -1;
     justify-content: flex-start;
+    margin-bottom: 0.35rem;
   }
 
   #page-content .submission-page-actions .btn-link {
-    width: 100%;
+    flex: 0 0 auto;
+    width: 2.5rem;
+    min-height: 2.5rem;
     text-align: center;
-    padding: 0.5rem;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--size-border-radius, 4px);
   }
 
   #page-content .d-md-flex.justify-content-between {
@@ -2191,6 +2219,24 @@ h2 .user-name-display img {
   #page-content .search-form .choices,
   #page-content .filter-form .choices {
     width: 100%;
+  }
+
+  /* Keep a selected filter chip inside its control: wrap long labels at word
+     boundaries (breaking only as a last resort) instead of running off-screen.
+     Override any inherited break-all so short words stay intact. */
+  #page-content .search-form .choices__list--multiple,
+  #page-content .filter-form .choices__list--multiple {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  #page-content .search-form .choices__list--multiple .choices__item,
+  #page-content .filter-form .choices__list--multiple .choices__item {
+    max-width: 100%;
+    min-width: 0;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
   }
 
   #page-content .search-form button,

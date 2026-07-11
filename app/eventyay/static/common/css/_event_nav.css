@@ -111,4 +111,27 @@
   .header-nav .navigation {
     margin-top: 0;
   }
+
+  /* Tame the oversized desktop heading so the title fits the phone width. */
+  #event-nav .navigation-title h1,
+  #event-nav .navigation-title h2,
+  .header-nav .navigation-title h1,
+  .header-nav .navigation-title h2 {
+    font-size: 22px;
+  }
+
+  /* Drop the status control / read-only badge onto its own line, aligned with
+     the title's left edge. margin-left needs !important here only to override
+     Bootstrap's .ml-3 utility (margin-left: 1rem !important). */
+  #event-nav .navigation-title .submission-state-dropdown,
+  .header-nav .navigation-title .submission-state-dropdown,
+  #event-nav .navigation-title .submission-readonly-badge,
+  .header-nav .navigation-title .submission-readonly-badge,
+  #event-nav .navigation-title form.d-inline,
+  .header-nav .navigation-title form.d-inline {
+    display: inline-flex;
+    margin-left: 0 !important;
+    margin-top: 0.5rem;
+    vertical-align: middle;
+  }
 }
