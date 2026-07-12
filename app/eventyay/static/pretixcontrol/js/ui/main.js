@@ -1068,7 +1068,8 @@ $(function () {
             }
             $toggle.prop("checked", allChecked).prop("indeterminate", nrOfChecked > 0 && !allChecked);
             $selectAll.toggleClass("hidden", nrOfChecked !== $checkboxes.length).prop("hidden", nrOfChecked !== $checkboxes.length);
-
+            
+            $batchSelectActions.toggleClass("hidden", actionsDisabled);
         }
 
         if ($batchSelectActions.attr("data-batch-disabled-reason-ineligible") && !$form.data("batch-selection-submit-bound")) {
