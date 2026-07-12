@@ -385,6 +385,11 @@ def strip_zeroes(value):
     return Decimal(value.rstrip('0'))
 
 
+# Number of default scores created for every category in
+# Event.build_initial_data(); these rows are protected from deletion.
+DEFAULT_SCORE_COUNT = 3
+
+
 class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
     new_scores = forms.CharField(required=False, initial='')
 
@@ -422,6 +427,15 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
             self.fields[f'value_{score_id}'] = score['value_field']
             self.fields[f'label_{score_id}'] = score['label_field']
 
+        # Protect the category's original default scores from deletion. Scores
+        # render ordered by value, so we identify the defaults by creation order
+        # (lowest pk) rather than row position, which would otherwise flag the
+        # wrong rows once a custom score sorts in between the defaults.
+        self.protected_score_ids = {
+            score['score'].id
+            for score in sorted(self.label_fields, key=lambda s: s['score'].pk)[:DEFAULT_SCORE_COUNT]
+        }
+
     def _add_score_fields(self, label_id):
         self.fields[f'value_{label_id}'] = ReviewScore._meta.get_field('value').formfield(
             required=False,
@@ -433,11 +447,15 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
         )
 
     def get_label_fields(self):
+        # The fourth element marks whether the row may be deleted: saved default
+        # scores are protected, everything else (extra saved scores and unsaved
+        # new rows) is deletable.
         for score in self.label_fields:
             score_id = score['score'].id
-            yield (self[f'value_{score_id}'], self[f'label_{score_id}'], score_id)
+            deletable = score_id not in self.protected_score_ids
+            yield (self[f'value_{score_id}'], self[f'label_{score_id}'], score_id, deletable)
         for score_id in self.new_label_ids:
-            yield (self[f'value_{score_id}'], self[f'label_{score_id}'], score_id)
+            yield (self[f'value_{score_id}'], self[f'label_{score_id}'], score_id, True)
 
     def clean(self):
         data = super().clean()

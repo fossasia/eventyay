@@ -162,7 +162,7 @@
                                                     </div>
                                                 {% endif %}
                                             </div>
-                                            {% if 'new' in label_pair.2|stringformat:"s" or forloop.counter > 3 %}
+                                            {% if label_pair.3 %}
                                                 <div role="button" class="delete-score btn btn-danger flip ml-2 align-self-start" data-score="{{ label_pair.2 }}"><i class="fa fa-trash"></i></div>
                                             {% endif %}
                                             {% if forloop.first %}
