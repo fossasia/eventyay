@@ -11,7 +11,6 @@ from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from django_scopes import get_scope, scope
 
-from eventyay.base.models.room import Room
 
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.cfp.signals import footer_link, html_head
@@ -127,11 +126,7 @@ def system_information(request):
             context['is_meetup_event'] = is_meetup
             context['is_meetup'] = is_meetup
 
-            meetup_video_active = False
-            if is_meetup:
-                with scope(event=event):
-                    room = Room.objects.filter(event=event, deleted=False).first()
-                    meetup_video_active = bool(room and room.module_config)
+            meetup_video_active = event.settings.get('meetup_video_active', as_type=bool, default=False)
 
             context['show_online_video_link'] = (
                 meetup_video_active if is_meetup else
