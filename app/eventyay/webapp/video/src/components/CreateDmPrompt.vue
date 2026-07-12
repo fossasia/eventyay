@@ -47,6 +47,9 @@ export default {
 		position: relative
 		box-sizing: border-box
 		min-height: 0
+		.c-user-select
+			flex: 1
+			min-height: 0
 		#btn-close
 			icon-button-style(style: clear)
 			position: absolute
