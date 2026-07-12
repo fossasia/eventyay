@@ -11,6 +11,24 @@ from eventyay.control.signals import (
 )
 
 
+def _vouchers_nav_active(url) -> bool:
+    return 'event.vouchers' in url.url_name or 'event.voucher' in url.url_name
+
+
+def _vouchers_nav_item(request, url) -> dict:
+    return {
+        'label': _('Vouchers'),
+        'url': reverse(
+            'control:event.vouchers',
+            kwargs={
+                'event': request.event.slug,
+                'organizer': request.event.organizer.slug,
+            },
+        ),
+        'active': _vouchers_nav_active(url),
+    }
+
+
 def get_event_navigation(request: HttpRequest):
     url = request.resolver_match
     if not url:
@@ -184,21 +202,7 @@ def get_event_navigation(request: HttpRequest):
         ]
 
         if 'can_view_vouchers' in request.eventpermset:
-            children.extend(
-                [
-                    {
-                        'label': _('Vouchers'),
-                        'url': reverse(
-                            'control:event.vouchers',
-                            kwargs={
-                                'event': request.event.slug,
-                                'organizer': request.event.organizer.slug,
-                            },
-                        ),
-                        'active': 'event.vouchers' in url.url_name,
-                    }
-                ]
-            )
+            children.append(_vouchers_nav_item(request, url))
 
         nav.append(
             {
@@ -213,6 +217,13 @@ def get_event_navigation(request: HttpRequest):
                 'active': False,
                 'icon': 'ticket',
                 'children': children,
+            }
+        )
+    elif 'can_view_vouchers' in request.eventpermset:
+        nav.append(
+            {
+                **_vouchers_nav_item(request, url),
+                'icon': 'ticket',
             }
         )
 
