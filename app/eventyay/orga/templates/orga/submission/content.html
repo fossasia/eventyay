@@ -62,7 +62,7 @@
                 <label class="col-md-3 col-form-label">{% translate "Tags" %}</label>
                 <div class="col-md-9">
                     {% for tag in submission.tags.all %}
-                        <span class="badge" {% if tag.color %}style="background-color: {{ tag.color }}"{% endif %}>{{ tag.tag }}</span>
+                        <span class="badge" {% if tag.color %}style="background-color: {{ tag.color }}; color: {{ tag.contrast_color }};"{% endif %}>{{ tag.tag }}</span>
                     {% endfor %}
                 </div>
             </div>

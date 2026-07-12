@@ -62,3 +62,20 @@ class Tag(PretalxModel):
     @property
     def log_parent(self):
         return self.event
+
+    @property
+    def contrast_color(self) -> str:
+        if not self.color:
+            return 'white'
+        try:
+            color = self.color.lstrip('#')
+            if len(color) == 3:
+                color = ''.join([c * 2 for c in color])
+            r = int(color[0:2], 16)
+            g = int(color[2:4], 16)
+            b = int(color[4:6], 16)
+            brightness = (r * 299 + g * 587 + b * 114) / 1000
+            return 'black' if brightness > 128 else 'white'
+        except Exception:
+            return 'white'
+
