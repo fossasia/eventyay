@@ -25,6 +25,7 @@ from ..helpers.i18n import (
 from ..helpers.plugin_enable import is_video_enabled
 from ..multidomain.urlreverse import get_event_domain
 from .signals import html_head, nav_topbar
+from eventyay.eventyay_common.permissions import get_cached_event_dashboard_access
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -79,6 +80,13 @@ def _default_context(request):
     _js_payment_weekdays_disabled = '[]'
     if getattr(request, 'event', None) and hasattr(request, 'organizer') and request.user.is_authenticated:
         ctx['nav_items'] = get_event_navigation(request)
+
+        access = get_cached_event_dashboard_access(
+            request, request.user, request.organizer, request.event
+        )
+        ctx['has_ticket_access'] = access['has_ticket_access']
+        ctx['has_talk_access'] = access['has_talk_access']
+        ctx['has_video_access'] = access['has_video_access']
 
         if request.event.settings.get('payment_term_weekdays'):
             _js_payment_weekdays_disabled = '[0,6]'
