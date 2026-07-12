@@ -292,7 +292,8 @@ export default {
 			if (!this.showSidebar) return
 			const sidebarEl = document.querySelector('.c-rooms-sidebar')
 			const hamburgerEl = document.querySelector('.c-app-bar .hamburger')
-			if (sidebarEl?.contains(event.target) || hamburgerEl?.contains(event.target)) return
+			const teleportEl = document.querySelector('#bunt-teleport-target')
+			if (sidebarEl?.contains(event.target) || hamburgerEl?.contains(event.target) || teleportEl?.contains(event.target)) return
 			this.showSidebar = false
 		},
 		clearTokenAndReload() {
