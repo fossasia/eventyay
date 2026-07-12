@@ -8,6 +8,7 @@ from .models import BadgeLayout, BadgeProduct
 
 
 BADGE_HIDDEN_FIELDS_KEY = 'badge_hidden_fields'
+BADGE_TICKET_PROVIDER = 'badge'
 
 
 def clear_badge_layout_cache(event):
@@ -68,6 +69,22 @@ def get_badge_hidden_fields(position):
     if isinstance(hidden_fields, str):
         return [hidden_fields]
     return hidden_fields
+
+
+def invalidate_badge_cache_for_position(position):
+    from eventyay.base.models import CachedCombinedTicket, CachedTicket
+
+    CachedTicket.objects.filter(order_position=position, provider=BADGE_TICKET_PROVIDER).delete()
+    order_id = getattr(position, 'order_id', None)
+    if order_id:
+        CachedCombinedTicket.objects.filter(order=order_id, provider=BADGE_TICKET_PROVIDER).delete()
+
+
+def invalidate_badge_cache_for_order(order):
+    from eventyay.base.models import CachedCombinedTicket, CachedTicket
+
+    CachedTicket.objects.filter(order_position__order=order, provider=BADGE_TICKET_PROVIDER).delete()
+    CachedCombinedTicket.objects.filter(order=order, provider=BADGE_TICKET_PROVIDER).delete()
 
 
 def get_badge_bundle_root(position):
