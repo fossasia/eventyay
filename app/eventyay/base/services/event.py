@@ -162,6 +162,7 @@ async def notify_schedule_change(event_id):
 
 
 def get_room_config(room, permissions):
+    str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
     room_config = {
         "id": str(room.id),
         "name": room.name,
@@ -169,7 +170,7 @@ def get_room_config(room, permissions):
         "picture": room.picture.url if room.picture else None,
         "import_id": room.import_id,
         "pretalx_id": room.pretalx_id,
-        "permissions": [p for p in permissions if not p.startswith("event:")],
+        "permissions": [p for p in str_permissions if not p.startswith("event:")],
         "force_join": room.force_join,
         "modules": [],
         "schedule_data": room.schedule_data or None,
@@ -374,6 +375,16 @@ async def create_room(event, data, creator):
         m = [m for m in data.get("modules", []) if m["type"] == "call.bigbluebutton"][0]
         m["config"] = event.config.get("bbb_defaults", {})
         m["config"].pop("secret", None)  # legacy
+    elif types == {"call.janus"}:
+        if not await event.has_permission_async(
+            user=creator, permission=Permission.EVENT_ROOMS_CREATE_BBB
+        ):
+            raise ValidationError(
+                "This user is not allowed to create a room of this type.",
+                code="denied",
+            )
+        m = [m for m in data.get("modules", []) if m["type"] == "call.janus"][0]
+        m["config"] = {}
     elif types == set():
         if not await event.has_permission_async(
             user=creator, permission=Permission.ROOM_UPDATE

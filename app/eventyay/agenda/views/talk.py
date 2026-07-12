@@ -120,7 +120,7 @@ def talk_starrers(request, event, slug, **kwargs):
     code. Other favourites are returned as anonymous placeholders.
     """
 
-    if not request.event.feature_flags.get('session_popularity_enabled', False):
+    if not request.event.get_feature_flag('session_popularity_enabled'):
         response = JsonResponse({'total': 0, 'public_total': 0, 'items': []})
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Headers'] = 'authorization,content-type'
