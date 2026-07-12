@@ -85,6 +85,7 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
             can_change_items=True,
             can_view_orders=True,
             can_change_orders=True,
+            can_manage_bank_transfers=True,
             can_checkin_orders=True,
             can_view_vouchers=True,
             can_change_vouchers=True,
