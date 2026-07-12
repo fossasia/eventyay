@@ -49,7 +49,7 @@ from eventyay.control.forms.admin.admin import UpdateSettingsForm
 from eventyay.base.models.auth import User
 from eventyay.base.models.checkin import Checkin
 from eventyay.base.models.event import Event, Event_SettingsStore
-from eventyay.base.models.orders import Order, OrderPosition, OrderRefund
+from eventyay.base.models.orders import Order, OrderPosition, OrderPayment, OrderRefund
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.models.cfp import CfP
@@ -230,16 +230,12 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             ctx['orders_paid'] = order_stats['paid']
             ctx['orders_pending'] = order_stats['pending']
 
-            # Gross Revenue from all orders that were ever paid (currently Paid or Canceled/Refunded with done refunds)
-            orders_ever_paid = Order.objects.filter(
-                Q(status=Order.STATUS_PAID) | Q(refunds__state=OrderRefund.REFUND_STATE_DONE)
-            ).distinct()
-
-            paid_order_sums = {
-                r['event__currency']: r['total']
-                for r in Order.objects.filter(id__in=orders_ever_paid)
-                .values('event__currency')
-                .annotate(total=Sum('total'))
+            # Gross Revenue from confirmed payments
+            payment_sums = {
+                r['order__event__currency']: r['total']
+                for r in OrderPayment.objects.filter(state=OrderPayment.PAYMENT_STATE_CONFIRMED)
+                .values('order__event__currency')
+                .annotate(total=Sum('amount'))
                 .order_by()
             }
 
@@ -270,12 +266,12 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             }
 
             all_currencies = sorted(list(
-                set(paid_order_sums.keys()) | set(refund_sums.keys()) | set(order_counts_by_currency.keys())
+                set(payment_sums.keys()) | set(refund_sums.keys()) | set(order_counts_by_currency.keys())
             ))
 
             ctx['orders_net_revenue'] = []
             for currency in all_currencies:
-                gross = paid_order_sums.get(currency, Decimal('0.00')) or Decimal('0.00')
+                gross = payment_sums.get(currency, Decimal('0.00')) or Decimal('0.00')
                 refunded = refund_sums.get(currency, Decimal('0.00')) or Decimal('0.00')
                 net = gross - refunded
                 counts = order_counts_by_currency.get(currency, {})
