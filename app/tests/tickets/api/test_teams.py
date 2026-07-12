@@ -28,6 +28,7 @@ TEST_TEAM_RES = {
     'can_change_items': True,
     'can_view_orders': True,
     'can_change_orders': True,
+    'can_manage_bank_transfers': False,
     'can_view_vouchers': True,
     'can_change_vouchers': True,
     'can_checkin_orders': False,
@@ -49,6 +50,7 @@ SECOND_TEAM_RES = {
     'can_change_items': False,
     'can_view_orders': False,
     'can_change_orders': False,
+    'can_manage_bank_transfers': False,
     'can_view_vouchers': False,
     'can_change_vouchers': False,
     'can_checkin_orders': False,
@@ -119,6 +121,25 @@ def test_team_update(token_client, organizer, event, second_team):
     )
     print(resp.data)
     assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_team_update_enforces_permission_implications(token_client, organizer, event, second_team):
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/teams/{}/'.format(organizer.slug, second_team.pk),
+        {
+            'can_change_orders': True,
+            'can_view_orders': False,
+            'can_change_vouchers': True,
+            'can_view_vouchers': False,
+            'can_manage_bank_transfers': True,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    second_team.refresh_from_db()
+    assert second_team.can_view_orders
+    assert second_team.can_view_vouchers
 
 
 @pytest.mark.django_db
