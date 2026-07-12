@@ -239,6 +239,29 @@ class OrdersTest(BaseOrdersTest):
         assert response.status_code == 200
         assert 'Join online event stream' in response.content.decode()
 
+    def test_order_detail_shows_online_stream_intro_and_button_once_for_multiple_positions(self):
+        self.order.status = Order.STATUS_PAID
+        self.order.save(update_fields=['status'])
+        self.event.settings.set('venueless_secret', 'secret')
+        self.event.settings.set('venueless_show_public_link', True)
+        self.event.settings.set('venueless_all_products', True)
+        OrderPosition.objects.create(
+            order=self.order,
+            item=self.ticket,
+            variation=None,
+            price=Decimal('23'),
+            attendee_name_parts={'full_name': 'Anna'},
+        )
+
+        response = self.client.get(
+            '/%s/%s/order/%s/%s/' % (self.orga.slug, self.event.slug, self.order.code, self.order.secret)
+        )
+
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert content.count('You can now join the event using the following button:') == 1
+        assert content.count('Join online event stream') == 2  # panel title + one join button
+
     def test_ticket_detail(self):
         response = self.client.get(
             '/%s/%s/ticket/%s/%s/%s/'
