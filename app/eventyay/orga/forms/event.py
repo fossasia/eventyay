@@ -441,25 +441,23 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
 
     def clean(self):
         data = super().clean()
-        for score_id in self.new_label_ids:
+        # Validate existing and dynamically added score rows with identical rules so
+        # their behaviour stays consistent:
+        #   - a completely empty row (no value and no label) is treated as "remove
+        #     this row" and allowed through (existing rows are deleted in save(),
+        #     new rows are simply skipped);
+        #   - a partially filled row is rejected and asks for the missing field.
+        existing_ids = [score['score'].id for score in self.label_fields]
+        for score_id in [*existing_ids, *self.new_label_ids]:
             value = data.get(f'value_{score_id}')
             label = data.get(f'label_{score_id}')
+            value_empty = value is None or value == ''
 
-            if (value is None or value == '') and not label:
-                self.add_error(f'value_{score_id}', _('Please provide a score and a label, or remove this row.'))
-            elif (value is None or value == '') and label:
+            if value_empty and not label:
+                continue
+            if value_empty and label:
                 self.add_error(f'value_{score_id}', _('Please provide a numeric score.'))
-            elif value is not None and not label:
-                self.add_error(f'label_{score_id}', _('Please provide a label for the score.'))
-
-        for score in self.label_fields:
-            score_id = score['score'].id
-            value = data.get(f'value_{score_id}')
-            label = data.get(f'label_{score_id}')
-
-            if (value is None or value == '') and label:
-                self.add_error(f'value_{score_id}', _('Please provide a numeric score.'))
-            elif value is not None and not label:
+            elif not value_empty and not label:
                 self.add_error(f'label_{score_id}', _('Please provide a label for the score.'))
         return data
 

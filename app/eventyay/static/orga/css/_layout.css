@@ -890,15 +890,13 @@ table .color-square {
   }
 }
 
-/* Score row inline validation: render the message as an overlay bubble so it
-   never grows the row height or expands the surrounding card. */
 .score-score,
 .score-label {
   position: relative;
 }
 
-.score-score:has(.score-error-tooltip) input,
-.score-label:has(.score-error-tooltip) input {
+.score-score.has-error input,
+.score-label.has-error input {
   border-color: var(--color-danger);
   box-shadow: 0 0 0 1px var(--color-danger);
 }

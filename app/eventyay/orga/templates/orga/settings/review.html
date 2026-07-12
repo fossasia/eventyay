@@ -146,7 +146,7 @@
                                             <div class="col-md-3"></div>
                                         {% endif %}
                                         <div class="col-md-9 d-flex align-items-start hide-label mb-1">
-                                            <div class="mr-2 score-score">
+                                            <div class="mr-2 score-score{% if label_pair.0.errors %} has-error{% endif %}">
                                                 {{ label_pair.0 }}
                                                 {% if label_pair.0.errors %}
                                                     <div class="score-error-tooltip" role="alert">
@@ -154,7 +154,7 @@
                                                     </div>
                                                 {% endif %}
                                             </div>
-                                            <div class="score-label">
+                                            <div class="score-label{% if label_pair.1.errors %} has-error{% endif %}">
                                                 {{ label_pair.1 }}
                                                 {% if label_pair.1.errors %}
                                                     <div class="score-error-tooltip" role="alert">
