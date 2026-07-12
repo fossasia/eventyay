@@ -67,15 +67,26 @@ class Tag(PretalxModel):
     def contrast_color(self) -> str:
         if not self.color:
             return 'white'
-        try:
-            color = self.color.lstrip('#')
-            if len(color) == 3:
-                color = ''.join([c * 2 for c in color])
-            r = int(color[0:2], 16)
-            g = int(color[2:4], 16)
-            b = int(color[4:6], 16)
-            brightness = (r * 299 + g * 587 + b * 114) / 1000
-            return 'black' if brightness > 128 else 'white'
-        except Exception:
+
+        color = self.color.lstrip('#')
+        # Only allow 3- or 6-character hex strings
+        if len(color) not in (3, 6):
             return 'white'
+
+        # Ensure all characters are valid hex digits
+        if not all(c in '0123456789abcdefABCDEF' for c in color):
+            return 'white'
+
+        # Normalize 3-digit hex to 6-digit hex
+        if len(color) == 3:
+            color = ''.join(c * 2 for c in color)
+
+        # At this point, color is a valid 6-char hex string; parsing should not fail
+        r = int(color[0:2], 16)
+        g = int(color[2:4], 16)
+        b = int(color[4:6], 16)
+
+        brightness = (r * 299 + g * 587 + b * 114) / 1000
+        return 'black' if brightness > 128 else 'white'
+
 
