@@ -413,14 +413,21 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         'can_manage_bank_transfers': ('can_view_orders',),
     }
 
+    @classmethod
+    def _permission_field_names(cls) -> tuple:
+        cached = cls.__dict__.get('_permission_field_names_cache')
+        if cached is None:
+            cached = tuple(
+                field.name
+                for field in cls._meta.get_fields()
+                if isinstance(field, models.BooleanField)
+                and (field.name.startswith('can_') or field.name.startswith('is_'))
+            )
+            cls._permission_field_names_cache = cached
+        return cached
+
     def _granted_permissions(self) -> set:
-        attribs = dir(self)
-        return {
-            attr
-            for attr in attribs
-            if (attr.startswith('can_') or attr.startswith('is_'))
-            and getattr(self, attr, False) is True
-        }
+        return {name for name in self._permission_field_names() if getattr(self, name) is True}
 
     def permission_set(self) -> set:
         granted = self._granted_permissions()
