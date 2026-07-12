@@ -49,6 +49,7 @@ header {
   flex-direction: column;
   justify-content: flex-end;
   word-break: normal;
+  padding-top: 24px;
 
   #event-logo {
     max-height: 140px;
@@ -259,6 +260,7 @@ header {
   align-items: center;
   margin: 1rem 0 3.5rem;
   min-height: 0;
+  max-width: 100%;
 }
 
 .event-brand {
@@ -268,29 +270,31 @@ header {
   flex-wrap: nowrap;
   text-align: left;
   min-width: 0;
-}
-
-.event-brand--has-logo {
+  max-width: 100%;
+  width: 100%;
   padding-left: 1.75rem;
 }
 
-.event-brand--logo-large {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1rem;
+.event-brand:not(.event-brand--logo-large) .event-logo {
+  flex: 0 0 auto;
+  max-width: min(220px, 35vw);
+  min-width: 0;
 }
 
-.event-brand--logo-large .organizer-logo {
-  width: 100%;
+.event-brand--logo-large .event-logo {
+  flex: 0 0 auto;
+  max-width: min(1170px, 65%);
+  min-width: 0;
+}
+
+.event-brand .event-logo a {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.event-brand #event-logo {
   max-width: 100%;
   height: auto;
-}
-
-@media (min-width: 769px) {
-  /* Presale info / tickets: align logo block with tab content (tighter than agenda & CFP) */
-  #main-container.presale-container .event-brand--has-logo {
-    padding-left: 0.75rem;
-  }
 }
 
 .event-hero-overlay {
@@ -298,6 +302,8 @@ header {
   border-radius: 14px;
   background: transparent;
   position: relative;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Join online video: button on the event hero (all breakpoints). Nav tab duplicate is hidden. */
@@ -380,6 +386,11 @@ header {
   color: var(--color-header-text);
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 header > .event-home-back {
@@ -467,7 +478,7 @@ header > .event-home-back {
   font-size: 3rem;
   line-height: 1.2;
   word-break: break-word;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   min-width: 0;
 }
 
@@ -722,9 +733,6 @@ footer {
     flex-wrap: wrap;
     gap: 1rem;
     align-items: flex-start;
-  }
-
-  .event-brand--has-logo {
     padding-left: 12px;
   }
 
@@ -783,9 +791,6 @@ footer {
 
   .event-brand {
     gap: 0.75rem;
-  }
-
-  .event-brand--has-logo {
     padding-left: 12px;
   }
 
