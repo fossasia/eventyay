@@ -59,6 +59,14 @@
 
 h2.content-header {
   margin-top: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  a,
+  small {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }
 @media (max-width: $screen-xs-max) {
   h2.content-header small {
