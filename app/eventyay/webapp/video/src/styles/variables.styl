@@ -2,3 +2,7 @@
 
 monospace = unquote("'Roboto Mono', 'Bitstream Vera Sans Mono', Consolas, Courier, monospace")
 $font-stack = 'Open Sans', "OpenSans", "Helvetica Neue", Helvetica, Arial, "Microsoft Yahei", "微软雅黑", STXihei, "华文细黑", sans-serif
+
+// Teleported popovers (bunt-select menus, tooltips) must layer above every
+// in-app overlay. The highest app layer is the drag sorting-helper at 9999.
+$z-index-teleport-target = 10000

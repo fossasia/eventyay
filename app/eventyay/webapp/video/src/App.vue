@@ -250,6 +250,7 @@ export default {
 	},
 	mounted() {
 		this.windowHeight = window.innerHeight
+		this.teleportTarget = document.querySelector('#bunt-teleport-target')
 		window.addEventListener('resize', this.onResize)
 		window.addEventListener('focus', this.onFocus, true)
 		window.addEventListener('pointerdown', this.onGlobalPointerDown, true)
@@ -292,8 +293,7 @@ export default {
 			if (!this.showSidebar) return
 			const sidebarEl = document.querySelector('.c-rooms-sidebar')
 			const hamburgerEl = document.querySelector('.c-app-bar .hamburger')
-			const teleportEl = document.querySelector('#bunt-teleport-target')
-			if (sidebarEl?.contains(event.target) || hamburgerEl?.contains(event.target) || teleportEl?.contains(event.target)) return
+			if (sidebarEl?.contains(event.target) || hamburgerEl?.contains(event.target) || this.teleportTarget?.contains(event.target)) return
 			this.showSidebar = false
 		},
 		clearTokenAndReload() {
