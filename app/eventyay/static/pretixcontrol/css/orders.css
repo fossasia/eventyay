@@ -26,6 +26,7 @@
   margin: 0;
   min-width: 130px;
   flex: 0 0 auto;
+  order: -1;
 }
 
 .orders-filter-query-text,
