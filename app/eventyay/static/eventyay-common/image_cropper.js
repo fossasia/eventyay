@@ -77,10 +77,7 @@ $(function() {
         });
     }
 
-    initCropperForInput('id_settings-event_logo_image');
-    initCropperForInput('id_settings-logo_image');
-    initCropperForInput('id_settings-event_preview_image');
-    initCropperForInput('id_settings-og_image');
+    Object.keys(config).forEach(initCropperForInput);
 
     $modal.on('hidden.bs.modal', function() {
         if (cropper) {
