@@ -1566,7 +1566,7 @@ requires-dist = [
     { name = "potypo", specifier = ">=0.0.2" },
     { name = "protobuf", specifier = ">=7.35.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.4" },
-    { name = "publicsuffixlist", specifier = ">=1.0.2.20260625" },
+    { name = "publicsuffixlist", specifier = ">=1.0.2.20260710" },
     { name = "pyasn1", specifier = ">=0.6.1" },
     { name = "pyasn1-modules", specifier = ">=0.4.2" },
     { name = "pycodestyle", specifier = ">=2.12.1" },
@@ -2514,11 +2514,11 @@ wheels = [
 
 [[package]]
 name = "publicsuffixlist"
-version = "1.0.2.20260625"
+version = "1.0.2.20260710"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/bb/1f/43d7618ac3815fbefa5224313e300addaae2bc6daf9b96b0feb19e1fe3b6/publicsuffixlist-1.0.2.20260625.tar.gz", hash = "sha256:4cb45166fcb328a2894dfed949534e698f3a00f27f08a8d083ff7e05e6baf110", size = 108884, upload-time = "2026-06-25T06:54:09.697Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/98/00/7ebd28afd380751bf59215bf91ccf5d6bc558bd434d7c62d8c330c53276c/publicsuffixlist-1.0.2.20260710.tar.gz", hash = "sha256:94227aea83f9d8ac4c7d527f2c86a7d2ac76b639f4f51003d09f7ef1fa0423a4", size = 108939, upload-time = "2026-07-10T06:52:08.897Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/05/bf/f37e81f294b86773c06d3fd269a24d1cc7d6f14bbb3af06de16f681fdd8c/publicsuffixlist-1.0.2.20260625-py2.py3-none-any.whl", hash = "sha256:8123f244bb7f2163f2cc4ce42bad56218e6b65f23efffbab5dcd5b36fcc3ada1", size = 108603, upload-time = "2026-06-25T06:54:08.594Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/b9/4a328a8474de378fe254dc91722931bdc9e25a4539841a4d5b33b8b85510/publicsuffixlist-1.0.2.20260710-py2.py3-none-any.whl", hash = "sha256:d3945ed15a74f192dd92dacf017fc54b9307440fe0953b272d88c3c2ebf27669", size = 108764, upload-time = "2026-07-10T06:52:07.68Z" },
 ]
 
 [[package]]
