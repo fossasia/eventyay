@@ -192,7 +192,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             extra_forms = [
                 form
                 for form in self.phases_formset.extra_forms
-                if form.has_changed and not self.phases_formset._should_delete_form(form)
+                if form.has_changed() and not self.phases_formset._should_delete_form(form)
             ]
             for form in extra_forms:
                 form.instance.event = self.request.event
@@ -245,7 +245,8 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             return False
         weights_changed = False
         for form in self.scores_formset.initial_forms:
-            # Deleting is handled elsewhere, so we skip it here
+            if self.scores_formset._should_delete_form(form):
+                continue
             if form.has_changed():
                 if 'weight' in form.changed_data:
                     weights_changed = True
@@ -255,7 +256,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
         extra_forms = [
             form
             for form in self.scores_formset.extra_forms
-            if form.has_changed and not self.scores_formset._should_delete_form(form)
+            if form.has_changed() and not self.scores_formset._should_delete_form(form)
         ]
         for form in extra_forms:
             form.instance.event = self.request.event

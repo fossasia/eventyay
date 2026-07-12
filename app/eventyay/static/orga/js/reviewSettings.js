@@ -113,9 +113,19 @@ const clearOldNewScores = () => {
     document.querySelectorAll(".score-group").forEach((group) => {
         const scoresList = group.querySelector("input[type=text][id$=new_scores]")
         if (scoresList) {
-            const newScores = Array.from(group.querySelectorAll(".delete-score"))
-                .map((btn) => btn.dataset.score)
-                .filter((id) => id && id.startsWith("new"))
+            // Rebuild the list of unsaved score ids from the score inputs that
+            // are actually present, so it stays correct even when a row is
+            // re-rendered without a delete button (e.g. after a validation
+            // error). Relying on the delete buttons here would drop the row's
+            // id and silently skip its validation on the next submit.
+            const newScores = Array.from(
+                group.querySelectorAll('input[id*="-value_new"]'),
+            )
+                .map((input) => {
+                    const match = input.id.match(/-value_(new\d+)$/)
+                    return match ? match[1] : null
+                })
+                .filter(Boolean)
             scoresList.value = newScores.join(",")
         }
     })
