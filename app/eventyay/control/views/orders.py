@@ -2304,6 +2304,9 @@ class OrderModifyInformation(OrderQuestionsViewMixin, OrderView):
             messages.success(self.request, _(success_message))
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
+        from eventyay.plugins.badges.utils import invalidate_badge_cache_for_order
+
+        invalidate_badge_cache_for_order(self.order)
 
         order_modified.send(sender=self.request.event, order=self.order)
         return redirect(self.get_order_url())
