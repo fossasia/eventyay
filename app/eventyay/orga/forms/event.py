@@ -441,12 +441,6 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
 
     def clean(self):
         data = super().clean()
-        # Validate existing and dynamically added score rows with identical rules so
-        # their behaviour stays consistent:
-        #   - a completely empty row (no value and no label) is treated as "remove
-        #     this row" and allowed through (existing rows are deleted in save(),
-        #     new rows are simply skipped);
-        #   - a partially filled row is rejected and asks for the missing field.
         existing_ids = [score['score'].id for score in self.label_fields]
         for score_id in [*existing_ids, *self.new_label_ids]:
             value = data.get(f'value_{score_id}')
