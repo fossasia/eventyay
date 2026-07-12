@@ -352,6 +352,24 @@ select.required-status-dropdown[data-current="optional"] {
     margin: 0;
 }
 
+/* "+N more" disclosure for fields with a large number of products */
+.order-form-option-table .products-list-more {
+    margin-top: 4px;
+}
+
+.order-form-option-table .products-list-more > summary {
+    cursor: pointer;
+    color: #2185d0;
+    font-size: 0.9em;
+    outline: none;
+}
+
+.order-form-option-table .products-list-extra {
+    margin: 4px 0 0;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
 /* Create buttons container */
 .order-form-create-buttons {
     margin-top: 2em;

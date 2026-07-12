@@ -102,6 +102,25 @@ class CategoriesTest(ItemFormTest):
 
 
 class QuestionsTest(ItemFormTest):
+    def test_order_forms_products_list_is_capped(self):
+        with scopes_disabled():
+            products = [
+                Item.objects.create(event=self.event1, name='Product %d' % i, default_price=0, position=i)
+                for i in range(20)
+            ]
+            question = Question.objects.create(
+                event=self.event1,
+                question=LazyI18nString({'en': 'Custom field'}),
+                type=Question.TYPE_TEXT,
+                position=0,
+            )
+            question.products.set(products)
+
+        doc = self.get_doc('/control/event/%s/%s/orderforms/' % (self.orga1.slug, self.event1.slug))
+        products_cell = doc.select_one('tr[data-dnd-id="%s"] td.text-center ul.products-list' % question.id).parent
+        assert len(products_cell.select('ul.products-list > li')) <= 5
+        assert '+15' in products_cell.get_text()
+
     def test_create(self):
         doc = self.get_doc('/control/event/%s/%s/questions/add' % (self.orga1.slug, self.event1.slug))
         form_data = extract_form_fields(doc.select('.container-fluid form')[0])

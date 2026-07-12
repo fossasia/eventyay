@@ -183,15 +183,7 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <ul class="list-unstyled products-list">
-                                    {% for product in system_field_products.attendee_name_parts %}
-                                        <li>
-                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
-                                        </li>
-                                    {% empty %}
-                                        <li class="text-muted">{% translate "No products" %}</li>
-                                    {% endfor %}
-                                </ul>
+                                {% include "pretixcontrol/items/_orderform_products_cell.html" with products=system_field_products.attendee_name_parts %}
                             </td>
                             <td class="dnd-container text-center text-nowrap">
                                 <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='attendee_name_parts' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Attendee names' %}" title="{% translate 'Settings for Attendee names' %}"><i class="fa fa-cog fa-fw"></i></a>
@@ -248,15 +240,7 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <ul class="list-unstyled products-list">
-                                    {% for product in system_field_products.attendee_email %}
-                                        <li>
-                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
-                                        </li>
-                                    {% empty %}
-                                        <li class="text-muted">{% translate "No products" %}</li>
-                                    {% endfor %}
-                                </ul>
+                                {% include "pretixcontrol/items/_orderform_products_cell.html" with products=system_field_products.attendee_email %}
                             </td>
                             <td class="dnd-container text-center text-nowrap">
                                 <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='attendee_email' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Attendee emails' %}" title="{% translate 'Settings for Attendee emails' %}"><i class="fa fa-cog fa-fw"></i></a>
@@ -294,15 +278,7 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <ul class="list-unstyled products-list">
-                                    {% for product in system_field_products.company %}
-                                        <li>
-                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
-                                        </li>
-                                    {% empty %}
-                                        <li class="text-muted">{% translate "No products" %}</li>
-                                    {% endfor %}
-                                </ul>
+                                {% include "pretixcontrol/items/_orderform_products_cell.html" with products=system_field_products.company %}
                             </td>
                             <td class="dnd-container text-center text-nowrap">
                                 <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='company' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Company' %}" title="{% translate 'Settings for Company' %}"><i class="fa fa-cog fa-fw"></i></a>
@@ -340,15 +316,7 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <ul class="list-unstyled products-list">
-                                    {% for product in system_field_products.job_title %}
-                                        <li>
-                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
-                                        </li>
-                                    {% empty %}
-                                        <li class="text-muted">{% translate "No products" %}</li>
-                                    {% endfor %}
-                                </ul>
+                                {% include "pretixcontrol/items/_orderform_products_cell.html" with products=system_field_products.job_title %}
                             </td>
                             <td class="dnd-container text-center text-nowrap">
                                 <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='job_title' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Job title' %}" title="{% translate 'Settings for Job title' %}"><i class="fa fa-cog fa-fw" aria-hidden="true"></i></a>
@@ -386,15 +354,7 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <ul class="list-unstyled products-list">
-                                    {% for product in system_field_products.street %}
-                                        <li>
-                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
-                                        </li>
-                                    {% empty %}
-                                        <li class="text-muted">{% translate "No products" %}</li>
-                                    {% endfor %}
-                                </ul>
+                                {% include "pretixcontrol/items/_orderform_products_cell.html" with products=system_field_products.street %}
                             </td>
                             <td class="dnd-container text-center text-nowrap">
                                 <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='street' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Postal addresses' %}"><i class="fa fa-cog fa-fw" aria-hidden="true"></i></a>
@@ -446,15 +406,7 @@
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                <ul class="list-unstyled products-list">
-                                    {% for product in q.products.all %}
-                                        <li>
-                                            <a href="{% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
-                                        </li>
-                                    {% empty %}
-                                        <li class="text-muted">{% translate "All products" %}</li>
-                                    {% endfor %}
-                                </ul>
+                                {% include "pretixcontrol/items/_orderform_products_cell.html" with products=q.products.all empty_means_all=1 %}
                             </td>
                             <td class="dnd-container text-center text-nowrap">
                                 {% if q.type == "DES" %}
