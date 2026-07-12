@@ -1528,7 +1528,7 @@ requires-dist = [
     { name = "geoip2", specifier = ">=4.8.1" },
     { name = "gunicorn", specifier = ">=26.0.0" },
     { name = "hyperlink", specifier = ">=21.0.0" },
-    { name = "icalendar", specifier = ">=7.1.3" },
+    { name = "icalendar", specifier = ">=7.2.0" },
     { name = "idna", specifier = ">=3.18" },
     { name = "importlib-metadata", specifier = ">=8.7.1" },
     { name = "incremental", specifier = ">=24.11.0" },
@@ -1813,16 +1813,16 @@ wheels = [
 
 [[package]]
 name = "icalendar"
-version = "7.1.3"
+version = "7.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil" },
     { name = "typing-extensions" },
     { name = "tzdata" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bd/86/16051e4f00db105d76bfd79f87cc5685c55d562d335f97c71bf128914c56/icalendar-7.1.3.tar.gz", hash = "sha256:eb03a0e215f30db689a72c49f18f998aabf17522eb0858a293c393510850727c", size = 472734, upload-time = "2026-06-15T14:06:13.199Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2e/6c/3a20edd47656272f2d4016f6680f5bec6e2eb5ec7a23db97ebd1c15c384b/icalendar-7.2.0.tar.gz", hash = "sha256:32dacc396101825b82f9f1bbdf691c02be613130d5ab7a457e553fcd20959fdd", size = 489932, upload-time = "2026-06-23T06:48:16.492Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a0/57/aa44e7af1244856d92a700dca5089777a334fecd328f82d5faa5c2696e2e/icalendar-7.1.3-py3-none-any.whl", hash = "sha256:690f30aa50a76cbf854db5ad52654705db9c5cd0e1b152222f5d4b7854b60667", size = 475481, upload-time = "2026-06-15T14:06:11.605Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/a5/21a77abb12e68a986d56fdacbfbdda0606a71766662b8d19cd85d49f78dc/icalendar-7.2.0-py3-none-any.whl", hash = "sha256:77922b6be57dfcc2e94f93063d2fd7e948ada9b5bdf7b08bebbc684b1b66c7c4", size = 500620, upload-time = "2026-06-23T06:48:14.861Z" },
 ]
 
 [[package]]
