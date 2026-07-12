@@ -24,6 +24,15 @@ jobs:
         with:
           images: eventyay/eventyay-next
 
+      - name: Swap exhibition plugin branch for environment
+        working-directory: app
+        run: |
+          if [ "${{ github.ref_name }}" = "dev" ] || [ "${{ github.base_ref }}" = "dev" ]; then
+            sed -i 's/eventyay-exhibition.git@[a-zA-Z0-9_-]*/eventyay-exhibition.git@dev/' pyproject.toml
+            pip install uv
+            uv lock
+          fi
+
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:

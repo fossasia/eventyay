@@ -44,6 +44,14 @@ jobs:
       - name: Install uv
         run: pip install uv
 
+      - name: Swap exhibition plugin branch for environment
+        working-directory: app
+        run: |
+          if [ "${{ github.ref_name }}" = "dev" ] || [ "${{ github.base_ref }}" = "dev" ]; then
+            sed -i 's/eventyay-exhibition.git@[a-zA-Z0-9_-]*/eventyay-exhibition.git@dev/' pyproject.toml
+            uv lock
+          fi
+
       - name: Sync dependencies
         run: uv sync --directory app
 
@@ -117,6 +125,14 @@ jobs:
 
       - name: Install uv
         run: pip install uv
+
+      - name: Swap exhibition plugin branch for environment
+        working-directory: app
+        run: |
+          if [ "${{ github.ref_name }}" = "dev" ] || [ "${{ github.base_ref }}" = "dev" ]; then
+            sed -i 's/eventyay-exhibition.git@[a-zA-Z0-9_-]*/eventyay-exhibition.git@dev/' pyproject.toml
+            uv lock
+          fi
 
       - name: Sync dependencies (including test group)
         run: uv sync --directory app --group test
@@ -192,6 +208,14 @@ jobs:
 
       - name: Install uv
         run: pip install uv
+
+      - name: Swap exhibition plugin branch for environment
+        working-directory: app
+        run: |
+          if [ "${{ github.ref_name }}" = "dev" ] || [ "${{ github.base_ref }}" = "dev" ]; then
+            sed -i 's/eventyay-exhibition.git@[a-zA-Z0-9_-]*/eventyay-exhibition.git@dev/' pyproject.toml
+            uv lock
+          fi
 
       - name: Sync dependencies
         run: uv sync --directory app
