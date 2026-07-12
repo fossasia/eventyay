@@ -1,0 +1,240 @@
+{% extends "eventyay_common/organizers/base.html" %}
+{% load i18n %}
+{% load static %}
+{% load compress %}
+
+{% block title %}{{ request.organizer.name }} - {% trans "Analytics" %}{% endblock %}
+
+{% block custom_header %}
+    <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />
+    {% compress js %}
+        <script defer src="{% static "vendored/apexcharts/apexcharts.min.js" %}"></script>
+        <script defer src="{% static "eventyay-common/js/organizer-analytics.js" %}"></script>
+    {% endcompress %}
+{% endblock %}
+
+{% block inner %}
+<div class="analytics-page">
+    <h1>
+        {% blocktrans with name=request.organizer.name %}Organizer: {{ name }}{% endblocktrans %}
+    </h1>
+
+    <div class="analytics-section">
+        <h2>{% trans "Ticket Sales & Revenue" %}</h2>
+
+        {% if has_orders %}
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Orders over time (last 30 days)" %}</h3>
+                        </div>
+                        <div class="panel-body chart-panel-body">
+                            <div
+                                id="orders-over-time-data"
+                                class="d-none"
+                                data-series="{{ orders_over_time_json }}"
+                                data-label-ordered="{% trans "Placed" %}"
+                                data-label-paid="{% trans "Paid" %}"
+                            ></div>
+                            <div id="orders-over-time-chart"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Orders by status" %}</h3>
+                        </div>
+                        <div class="panel-body chart-panel-body">
+                            <div id="orders-by-status-data" class="d-none" data-series="{{ orders_by_status_json }}"></div>
+                            <div id="orders-by-status-chart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Revenue over time (last 30 days, cumulative)" %}</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div
+                                id="revenue-over-time-data"
+                                class="d-none"
+                                data-series="{{ revenue_over_time_json }}"
+                                data-label="{% trans "Cumulative revenue" %}"
+                            ></div>
+                            <div id="revenue-over-time-chart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if top_events %}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Top events by ticket sales" %}</h3>
+                        </div>
+                        <div class="panel-body">
+                            <table class="table table-condensed table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Event" %}</th>
+                                        <th class="text-right">{% trans "Total orders" %}</th>
+                                        <th class="text-right">{% trans "Paid orders" %}</th>
+                                        <th class="text-right">{% trans "Gross revenue" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for event in top_events %}
+                                    <tr>
+                                        <td>{{ event.name }}</td>
+                                        <td class="text-right">{{ event.total_orders }}</td>
+                                        <td class="text-right">{{ event.paid_orders }}</td>
+                                        <td class="text-right">{{ event.gross_revenue }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <div class="empty-state">
+                <i class="fa fa-shopping-cart fa-2x text-muted"></i>
+                <p class="text-muted">{% trans "No ticket data yet." %}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="analytics-section">
+        <h2>{% trans "Proposals & Sessions" %}</h2>
+
+        {% if has_proposals %}
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Proposals by state" %}</h3>
+                        </div>
+                        <div class="panel-body chart-panel-body">
+                            <div id="proposals-by-state-data" class="d-none" data-series="{{ proposals_by_state_json }}"></div>
+                            <div id="proposals-by-state-chart"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Proposals submitted over time (last 60 days)" %}</h3>
+                        </div>
+                        <div class="panel-body chart-panel-body">
+                            <div
+                                id="proposals-over-time-data"
+                                class="d-none"
+                                data-series="{{ proposals_over_time_json }}"
+                                data-label="{% trans "New proposals" %}"
+                            ></div>
+                            <div id="proposals-over-time-chart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if pending_proposal_events %}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Events with pending proposals" %}</h3>
+                        </div>
+                        <div class="panel-body">
+                            <table class="table table-condensed table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Event" %}</th>
+                                        <th class="text-right">{% trans "Pending proposals" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in pending_proposal_events %}
+                                    <tr>
+                                        <td>{{ item.name }}</td>
+                                        <td class="text-right">
+                                            <span class="badge">{{ item.pending }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <div class="empty-state">
+                <i class="fa fa-sticky-note-o fa-2x text-muted"></i>
+                <p class="text-muted">{% trans "No proposal data yet. Events need a CfP to collect proposals." %}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="analytics-section">
+        <h2>{% trans "Check-In Summary" %}</h2>
+
+        {% if show_checkins %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Check-in rate per event" %}</h3>
+                        </div>
+                        <div class="panel-body chart-panel-body">
+                            <div
+                                id="checkin-rate-data"
+                                class="d-none"
+                                data-series="{{ checkin_rate_json }}"
+                                data-label-checked-in="{% trans "Checked in" %}"
+                                data-label-total="{% trans "Total" %}"
+                            ></div>
+                            <div id="checkin-rate-chart"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Check-ins over time (last 30 days)" %}</h3>
+                        </div>
+                        <div class="panel-body chart-panel-body">
+                            <div
+                                id="checkins-over-time-data"
+                                class="d-none"
+                                data-series="{{ checkins_over_time_json }}"
+                                data-label="{% trans "Check-ins" %}"
+                            ></div>
+                            <div id="checkins-over-time-chart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fa fa-check-square-o fa-2x text-muted"></i>
+                <p class="text-muted">{% trans "No check-in lists configured for any event yet." %}</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
