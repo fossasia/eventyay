@@ -49,7 +49,7 @@ from eventyay.control.forms.admin.admin import UpdateSettingsForm
 from eventyay.base.models.auth import User
 from eventyay.base.models.checkin import Checkin
 from eventyay.base.models.event import Event, Event_SettingsStore
-from eventyay.base.models.orders import Order, OrderPosition, OrderRefund
+from eventyay.base.models.orders import Order, OrderPosition, OrderPayment, OrderRefund
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.models.cfp import CfP
