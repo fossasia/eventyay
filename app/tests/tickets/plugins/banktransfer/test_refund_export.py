@@ -24,7 +24,12 @@ def env():
         plugins='eventyay.plugins.banktransfer',
     )
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
-    t = Team.objects.create(organizer=event.organizer, can_view_orders=True, can_change_orders=True)
+    t = Team.objects.create(
+        organizer=event.organizer,
+        can_view_orders=True,
+        can_change_orders=True,
+        can_manage_bank_transfers=True,
+    )
     t.members.add(user)
     t.limit_events.add(event)
     order = Order.objects.create(

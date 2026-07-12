@@ -37,6 +37,7 @@
         </div>
     </div>
     {% endif %}
+    {% if has_talk_access %}
     <div class="panel panel-default widget-container widget-small no-padding {% if not has_video_access %}last-column{% else %}column{% endif %}">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -58,6 +59,7 @@
             {% endif %}
         </div>
     </div>
+    {% endif %}
     {% if has_video_access %}
     <div class="panel panel-default widget-container widget-small no-padding last-column">
         <div class="panel-heading">
