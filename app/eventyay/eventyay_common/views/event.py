@@ -119,34 +119,44 @@ def _provision_meetup_event(event, basics_form, request=None):
     video_url = basics_form.cleaned_data.get('video_url', '') if hasattr(basics_form, 'cleaned_data') else ''
 
     module_config = get_video_module_config(video_type, video_url)
+    event.settings.set('meetup_video_active', bool(module_config))
 
     locale = getattr(event, 'locale', 'en') or 'en'
 
     with scope(event=event):
-        room = Room(
-            event=event,
-            name=LazyI18nString({locale: 'Main Room'}),
-            module_config=module_config,
-            deleted=False,
-        )
-        room.save()
+        room = Room.objects.filter(event=event, deleted=False).first()
+        if not room:
+            room = Room(
+                event=event,
+                name=LazyI18nString({locale: 'Main Room'}),
+                module_config=module_config,
+                deleted=False,
+            )
+            room.save()
+        else:
+            room.module_config = module_config
+            room.save()
 
-        product = Product(
-            event=event,
-            name=LazyI18nString({locale: 'RSVP Ticket'}),
-            default_price=Decimal('0.00'),
-            admission=True,
-            active=True,
-        )
-        product.save()
+        product = event.products.filter(admission=True, active=True).first()
+        if not product:
+            product = Product(
+                event=event,
+                name=LazyI18nString({locale: 'RSVP Ticket'}),
+                default_price=Decimal('0.00'),
+                admission=True,
+                active=True,
+            )
+            product.save()
 
-        quota = Quota(
-            event=event,
-            name='RSVP',
-            size=None,
-        )
-        quota.save()
-        quota.products.add(product)
+        quota = event.quotas.first()
+        if not quota:
+            quota = Quota(
+                event=event,
+                name='RSVP',
+                size=None,
+            )
+            quota.save()
+            quota.products.add(product)
 
     event.log_action(
         'eventyay.event.meetup.created',
@@ -330,6 +340,25 @@ class EventCreateView(TemplateView):
                     'locale': clone_from.settings.get('locale') or clone_from.locale,
                 }
             )
+            if clone_from.settings.get('event_type') == 'meetup':
+                with scope(event=clone_from):
+                    room = Room.objects.filter(event=clone_from, deleted=False).first()
+                    if room and room.module_config:
+                        try:
+                            cfg = room.module_config[0]
+                            cfg_type = cfg.get('type')
+                            cfg_data = cfg.get('config', {})
+                            if cfg_type == 'livestream.youtube':
+                                initial_form['video_type'] = 'youtube'
+                                initial_form['video_url'] = cfg_data.get('ytid', '')
+                            elif cfg_type == 'livestream.native':
+                                initial_form['video_type'] = 'hls'
+                                initial_form['video_url'] = cfg_data.get('hls_url', '')
+                            elif cfg_type == 'livestream.iframe':
+                                initial_form['video_type'] = 'iframe'
+                                initial_form['video_url'] = cfg_data.get('url', '')
+                        except (IndexError, AttributeError, KeyError, TypeError):
+                            pass
         else:
             initial_form['locale'] = 'en'
 
@@ -368,6 +397,7 @@ class EventCreateView(TemplateView):
         return (
             self.request.GET.get('meetup') == '1'
             or self.request.POST.get('is_meetup') == 'on'
+            or (self.clone_from and self.clone_from.settings.get('event_type') == 'meetup')
         )
 
     def dispatch(self, request, *args, **kwargs):
@@ -596,6 +626,7 @@ class EventCreateView(TemplateView):
             basics_form.save()
             if self.clone_from:
                 event.clone_from(self.clone_from, new_secrets=True)
+                event.copy_data_from(self.clone_from)
 
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)

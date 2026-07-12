@@ -3,7 +3,7 @@
 {% load bootstrap3 %}
 {% load static %}
 
-{% block title %}{% if is_meetup %}{% trans "Create a new meetup" %}{% else %}{% trans "Create a new event" %}{% endif %}{% endblock %}
+{% block title %}{% trans "Create a new event" %}{% endblock %}
 
 {% block custom_header %}
     <script defer src="{% static "eventyay-common/js/ui/event-create.js" %}"></script>
@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block content %}
-    <h1>{% if is_meetup %}{% trans "Create a new meetup" %}{% else %}{% trans "Create a new event" %}{% endif %}</h1>
+    <h1>{% trans "Create a new event" %}</h1>
     {% if has_organizer %}
         {{ organizer_slug_options|json_script:"event-create-organizers" }}
         <form action="" method="post" class="form-horizontal">
@@ -66,7 +66,7 @@
             {% endcomment %}
 
             <fieldset>
-                <legend>{% if is_meetup %}{% trans "Meetup setup" %}{% else %}{% trans "Event setup" %}{% endif %}</legend>
+                <legend>{% trans "Event setup" %}</legend>
                 <div class="form-group{% if foundation_form.organizer.errors %} has-error{% endif %}">
                     <label class="col-md-3 control-label" for="{{ foundation_form.organizer.id_for_label }}">
                         {{ foundation_form.organizer.label }}
@@ -77,10 +77,13 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-md-3 control-label">{% if is_meetup %}{% trans "Meetup type" %}{% else %}{% trans "Event type" %}{% endif %}</label>
+                    <label class="col-md-3 control-label">{% trans "Event type" %}</label>
                     <div class="col-md-9">
                         <p class="form-control-static">
-                            {% if foundation_form.has_subevents.value %}
+                            {% if is_meetup %}
+                                <span class="fa fa-users" aria-hidden="true"></span>
+                                <strong>{% trans "Meetup" %}</strong>
+                            {% elif foundation_form.has_subevents.value %}
                                 {% include "eventyay_common/includes/icon_calendar_series.html" %}
                                 <strong>{% trans "Event series or time slot booking" %}</strong>
                             {% else %}
@@ -90,7 +93,7 @@
                         </p>
                         <p class="help-block">
                             {% blocktrans trimmed %}
-                                The meetup type is set from the entry point. To choose a different type, go back and use the appropriate button.
+                                The event type is set from the entry point. To choose a different type, go back and use the appropriate button.
                             {% endblocktrans %}
                         </p>
                         <input type="hidden" name="{{ foundation_form.has_subevents.html_name }}" value="{{ foundation_form.has_subevents.value|yesno:'on,' }}">
@@ -122,21 +125,12 @@
                             <span class="text-danger ml-2"><small>{% trans "Slug not available" %}</small></span>
                         {% endif %}
                         <div class="help-block">
-                            {% if is_meetup %}
-                                {% blocktrans trimmed %}
-                                This is the address your meetup will be available at. Should be short, only contain lowercase letters
-                                and numbers, and must be unique. We recommend some kind of abbreviation with less than 30 characters
-                                that can be easily remembered. You cannot change the slug later on! If you don't provide a slug,
-                                a random one will be generated for you.
-                                {% endblocktrans %}
-                            {% else %}
-                                {% blocktrans trimmed %}
-                                This is the address your event will be available at. Should be short, only contain lowercase letters
-                                and numbers, and must be unique. We recommend some kind of abbreviation with less than 30 characters
-                                that can be easily remembered. You cannot change the slug later on! If you don't provide a slug,
-                                a random one will be generated for you.
-                                {% endblocktrans %}
-                            {% endif %}
+                            {% blocktrans trimmed %}
+                            This is the address your event will be available at. Should be short, only contain lowercase letters
+                            and numbers, and must be unique. We recommend some kind of abbreviation with less than 30 characters
+                            that can be easily remembered. You cannot change the slug later on! If you don't provide a slug,
+                            a random one will be generated for you.
+                            {% endblocktrans %}
                         </div>
                         <div class="slug-length alert alert-warning helper-display-none-soft">
                             {% blocktrans trimmed %}
@@ -212,17 +206,13 @@
 
             <div class="form-group submit-group">
                 <button type="submit" class="btn btn-primary btn-save pull-right flip">
-                    {% if is_meetup %}{% trans "Create meetup" %}{% else %}{% trans "Create event" %}{% endif %}
+                    {% trans "Create event" %}
                 </button>
             </div>
         </form>
     {% else %}
         <div class="alert alert-danger">
-            {% if is_meetup %}
-                {% trans "Every meetup needs to be created as part of an organizer account. Currently, you do not have access to any organizer accounts." %}
-            {% else %}
-                {% trans "Every event needs to be created as part of an organizer account. Currently, you do not have access to any organizer accounts." %}
-            {% endif %}
+            {% trans "Every event needs to be created as part of an organizer account. Currently, you do not have access to any organizer accounts." %}
         </div>
         {% if staff_session %}
             <a href='{% url "eventyay_common:organizers.add" %}' class="btn btn-default">

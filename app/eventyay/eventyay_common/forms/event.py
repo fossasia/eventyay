@@ -116,6 +116,7 @@ class EventCommonSettingsForm(SettingsForm):
             video_type = self.cleaned_data.get('video_type')
             video_url = self.cleaned_data.get('video_url', '')
             module_config = get_video_module_config(video_type, video_url)
+            self.event.settings.set('meetup_video_active', bool(module_config))
 
             # Save to room
             with scope(event=self.event):
