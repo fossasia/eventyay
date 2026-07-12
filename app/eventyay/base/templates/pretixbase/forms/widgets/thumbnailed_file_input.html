@@ -5,7 +5,7 @@
         <div class="thumbnailed-file-preview-container">
             <a href="{{ widget.value.url }}" data-lightbox="{{ widget.name }}" aria-label="{% trans 'Preview Image' %}">
                 {% if widget.value.name|lower|slice:"-4:" == ".svg" %}
-                    <img src="{{ widget.value.url }}" alt="{% trans 'Preview' %}" class="img-thumbnail thumbnailed-file-preview-image" style="max-height: 100px;">
+                    <img src="{{ widget.value.url }}" alt="{% trans 'Preview' %}" class="img-thumbnail thumbnailed-file-preview-image">
                 {% else %}
                     <img src="{{ widget.value|thumb:"200x100" }}" alt="{% trans 'Preview' %}" class="img-thumbnail thumbnailed-file-preview-image">
                 {% endif %}
@@ -29,7 +29,7 @@
 <br>
 <a href="{{ widget.value.url }}" data-lightbox="{{ widget.name }}">
     {% if widget.value.name|lower|slice:"-4:" == ".svg" %}
-        <img src="{{ widget.value.url }}" style="max-height: 100px;" />
+        <img src="{{ widget.value.url }}" class="thumbnailed-file-preview-image" />
     {% else %}
         <img src="{{ widget.value|thumb:"200x100" }}" />
     {% endif %}
@@ -40,7 +40,15 @@
     {{ widget.input_text }}:
 </div>
 {% else %}
-
+    {% if widget.event_settings_image_tools and "organizer_" in widget.name %}
+        <div class="initial-file-container thumbnailed-file-initial thumbnailed-file-initial-hidden">
+            <div class="thumbnailed-file-preview-container">
+                <a href="" data-lightbox="{{ widget.name }}" aria-label="{% trans 'Preview Image' %}">
+                    <img src="" alt="{% trans 'Preview' %}" class="img-thumbnail thumbnailed-file-preview-image">
+                </a>
+            </div>
+        </div>
+    {% endif %}
 {% endif %}
 <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
 

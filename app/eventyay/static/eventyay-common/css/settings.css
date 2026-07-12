@@ -270,3 +270,7 @@
 #cropperImage {
     max-width: 100%;
 }
+
+.thumbnailed-file-initial-hidden {
+    display: none;
+}

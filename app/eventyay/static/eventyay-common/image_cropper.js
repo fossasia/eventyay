@@ -135,6 +135,20 @@ $(function() {
                     if ($existingImg.parent().is('a')) {
                         $existingImg.parent().attr('href', dataUrl);
                     }
+
+                    var $wrapper = $existingImg.closest('.initial-file-container');
+                    $wrapper.find('.thumbnailed-file-checkbox').prop('checked', false);
+                    $wrapper.find('.delete-confirm-msg').hide();
+
+                    var $delBtn = $wrapper.find('.btn-delete-image-ajax');
+                    if ($delBtn.length) {
+                        $delBtn.prop('disabled', false).removeClass('btn-warning').addClass('btn-danger');
+                        $delBtn.find('i').removeClass('fa-spinner fa-spin').addClass('fa-trash');
+                        $delBtn.attr('title', $delBtn.attr('data-original-title') || 'Delete Image');
+                        $delBtn.removeAttr('data-confirming');
+                    }
+
+                    $wrapper.removeClass('thumbnailed-file-initial-hidden').show();
                 } else {
                     var $newImg = $('<img>').attr('src', dataUrl).css(imgStyles);
                     $newImg.insertBefore($input);
