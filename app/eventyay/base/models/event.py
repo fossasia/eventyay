@@ -1463,14 +1463,35 @@ class Event(
         room=None,
         allow_empty_traits=True,
     ):
-        # Ensure trait_grants and roles are not None - use defaults if missing
         event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
+        if allow_empty_traits and not traits:
+            traits = ['attendee']
+
+        admin_mode_active = 'admin' in traits
+        if admin_mode_active:
+            for role_name in ORGANIZER_ROLES:
+                role_permissions = event_roles.get(role_name, SYSTEM_ROLES.get(role_name, []))
+                role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+                if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
+                    return True
+
+        attendee_traits = event_trait_grants.get('attendee', ['attendee'])
+        if traits_match_required(traits, attendee_traits) and (attendee_traits or allow_empty_traits):
+            role_permissions = event_roles.get('attendee', SYSTEM_ROLES.get('attendee', []))
+            role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+            role_permissions_str.append(normalize_permission_value(Permission.EVENT_CHAT_DIRECT))
+            if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
+                return True
+
         for role, required_traits in event_trait_grants.items():
+            if role == 'attendee':
+                continue
             if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
                 role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                if any(normalize_permission_value(p) in role_permissions for p in permissions):
+                role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+                if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
                     return True
 
         if room:
@@ -1478,7 +1499,8 @@ class Event(
             for role, required_traits in room_trait_grants.items():
                 if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
                     role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                    if any(normalize_permission_value(p) in role_permissions for p in permissions):
+                    role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+                    if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
                         return True
 
         # Return False if no permission was granted
@@ -1511,7 +1533,8 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
             role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
-            if any(normalize_permission_value(p) in role_perms for p in permission):
+            role_perms_str = [normalize_permission_value(rp) for rp in role_perms]
+            if any(normalize_permission_value(p) in role_perms_str for p in permission):
                 return True
 
     async def has_permission_async(self, *, user, permission: Permission, room=None):
@@ -1541,7 +1564,8 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
             role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
-            if any(normalize_permission_value(p) in role_perms for p in permission):
+            role_perms_str = [normalize_permission_value(rp) for rp in role_perms]
+            if any(normalize_permission_value(p) in role_perms_str for p in permission):
                 return True
 
     def get_all_permissions(self, user):
@@ -1556,6 +1580,8 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
 
         user_traits = user.traits or []
+        if allow_empty_traits and not user_traits:
+            user_traits = ['attendee']
 
         for role, required_traits in event_trait_grants.items():
             if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
