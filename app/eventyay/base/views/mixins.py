@@ -221,6 +221,13 @@ class BaseQuestionsViewMixin:
                                 del meta_info['question_form_data'][k]
                         else:
                             meta_info['question_form_data'][k] = v
+                        if k == 'badge_hidden_fields' and isinstance(form.pos, OrderPosition):
+                            from eventyay.plugins.badges.utils import (
+                                get_badge_config_position,
+                                invalidate_badge_cache_for_position,
+                            )
+
+                            invalidate_badge_cache_for_position(get_badge_config_position(form.pos))
 
             form.pos.meta_info = json.dumps(meta_info)
             form.pos.save()

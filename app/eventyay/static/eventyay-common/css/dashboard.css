@@ -29,6 +29,29 @@
     }
 }
 
+.dashboard .widget-container,
+.dashboard .widget,
+.dashboard .event,
+.dashboard .name,
+.dashboard .daterange,
+.dashboard .times,
+.dashboard .bottomrow a,
+.dashboard .bottomrow button {
+    min-width: 0;
+}
+
+.dashboard .widget,
+.dashboard .event,
+.dashboard .name,
+.dashboard .daterange,
+.dashboard .times,
+.dashboard .newevent,
+.dashboard .bottomrow a,
+.dashboard .bottomrow button {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
 /* Mobile card layout for dashboard list tables (events, orders, sessions, organizers). */
 @media (max-width: 991px) {
     table.events-table thead {

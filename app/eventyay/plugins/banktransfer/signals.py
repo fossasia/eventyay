@@ -17,7 +17,9 @@ def register_payment_provider(sender, **kwargs):
 @receiver(nav_event, dispatch_uid='payment_banktransfer_nav')
 def control_nav_import(sender, request=None, **kwargs):
     url = resolve(request.path_info)
-    if not request.user.has_event_permission(request.organizer, request.event, 'can_change_orders', request=request):
+    if not request.user.has_event_permission(
+        request.organizer, request.event, 'can_manage_bank_transfers', request=request
+    ):
         return []
     return [
         {
@@ -64,37 +66,6 @@ def control_nav_orga_import(sender, request=None, **kwargs):
     Temporary disabled
     """
     return []
-    # url = resolve(request.path_info)
-    # if not request.user.has_organizer_permission(request.organizer, 'can_change_orders', request=request):
-    #     return []
-    # if not request.organizer.events.filter(plugins__icontains='eventyay.plugins.banktransfer'):
-    #     return []
-    # return [
-    #     {
-    #         'label': _("Bank transfer"),
-    #         'url': reverse('plugins:banktransfer:import', kwargs={
-    #             'organizer': request.organizer.slug,
-    #         }),
-    #         'icon': 'university',
-    #         'children': [
-    #             {
-    #                 'label': _('Import bank data'),
-    #                 'url': reverse('plugins:banktransfer:import', kwargs={
-    #                     'organizer': request.organizer.slug,
-    #                 }),
-    #                 'active': (url.namespace == 'plugins:banktransfer' and url.url_name == 'import'),
-    #                 'icon': 'upload',
-    #             },
-    #             {
-    #                 'label': _('Export refunds'),
-    #                 'url': reverse('plugins:banktransfer:refunds.list', kwargs={
-    #                     'organizer': request.organizer.slug,
-    #                 }),
-    #                 'active': (url.namespace == 'plugins:banktransfer' and url.url_name.startswith("refunds")),
-    #             },
-    #         ]
-    #     }
-    # ]
 
 
 @receiver(html_head, dispatch_uid='banktransfer_html_head')
