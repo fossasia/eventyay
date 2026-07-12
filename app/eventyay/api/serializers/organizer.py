@@ -183,6 +183,10 @@ class TeamSerializer(serializers.ModelSerializer):
         full_data.update(data)
         if full_data.get('limit_events') and full_data.get('all_events'):
             raise ValidationError('Do not set both limit_events and all_events.')
+        for source, implied_permissions in Team.PERMISSION_IMPLICATIONS.items():
+            if full_data.get(source):
+                for implied in implied_permissions:
+                    data[implied] = True
         return data
 
 
