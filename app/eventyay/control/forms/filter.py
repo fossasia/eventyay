@@ -1523,10 +1523,28 @@ class UserFilterForm(FilterForm):
             qs = qs.filter(is_spam=False)
 
         if fdata.get('query'):
-            qs = qs.filter(Q(email__icontains=fdata.get('query')) | Q(fullname__icontains=fdata.get('query')))
+            query = fdata.get('query')
+            qs = qs.filter(
+                Q(email__icontains=query)
+                | Q(profile__contact_email__icontains=query)
+                | Q(fullname__icontains=query)
+                | Q(profile__display_name__icontains=query)
+                | Q(wikimedia_username__icontains=query)
+                | Q(nick__icontains=query)
+            )
 
         if fdata.get('ordering'):
-            qs = qs.order_by(self.get_order_by())
+            ordering = self.get_order_by()
+            if 'admin_list_email' in qs.query.annotations:
+                if ordering == 'email':
+                    ordering = 'admin_list_email'
+                elif ordering == '-email':
+                    ordering = '-admin_list_email'
+                elif ordering == 'fullname':
+                    ordering = 'admin_list_fullname'
+                elif ordering == '-fullname':
+                    ordering = '-admin_list_fullname'
+            qs = qs.order_by(ordering)
 
         return qs
 

@@ -9,20 +9,22 @@
         </h3>
     </div>
     <ul class="list-group">
-        {% for p in positions %}
+        {% if positions %}
             <li class="list-group-item">
-                <p>
-                    {{ p.item.name }}
-                    {% if p.variation %}
-                        – {{ p.variation.value }}
-                    {% endif %}
-                    {% if p.subevent %}
-                        – {{ p.subevent }}
-                    {% endif %}
-                    {% if p.attendee_name %}
-                        – {{ p.attendee_name }}
-                    {% endif %}
-                </p>
+                {% for p in positions %}
+                    <p>
+                        {{ p.item.name }}
+                        {% if p.variation %}
+                            – {{ p.variation.value }}
+                        {% endif %}
+                        {% if p.subevent %}
+                            – {{ p.subevent }}
+                        {% endif %}
+                        {% if p.attendee_name %}
+                            – {{ p.attendee_name }}
+                        {% endif %}
+                    </p>
+                {% endfor %}
                 {% if request.event.settings.venueless_text %}
                     {{ request.event.settings.venueless_text|rich_text }}
                 {% else %}
@@ -32,30 +34,32 @@
                         {% endblocktrans %}
                     </p>
                 {% endif %}
-                <div class="form-inline text-center">
-                    <div class="form-group" style="display: inline-block; margin-right: 10px;">
-                        <form method="post" target="_blank"
-                              action="{% eventurl event 'presale:event.venueless.join' order=order.code position=p.positionid secret=p.web_secret view_schedule=False %}">
-                            {% csrf_token %}
-                            <button class="btn btn-primary btn-lg">
-                                {% trans "Join online event stream" %}
-                            </button>
-                        </form>
-                    </div>
-                    {% if request.event.settings.venueless_talk_schedule_url %}
-                        <div class="form-group" style="display: inline-block;">
+                {% with join_position=positions.0 %}
+                    <div class="form-inline text-center">
+                        <div class="form-group" style="display: inline-block; margin-right: 10px;">
                             <form method="post" target="_blank"
-                                  action="{% eventurl event 'presale:event.venueless.join' order=order.code position=p.positionid secret=p.web_secret view_schedule=True %}">
+                                  action="{% eventurl event 'presale:event.venueless.join' order=order.code position=join_position.positionid secret=join_position.web_secret view_schedule=False %}">
                                 {% csrf_token %}
                                 <button class="btn btn-primary btn-lg">
-                                    {% trans "View schedule" %}
+                                    {% trans "Join online event stream" %}
                                 </button>
                             </form>
                         </div>
-                    {% endif %}
-                </div>
+                        {% if request.event.settings.venueless_talk_schedule_url %}
+                            <div class="form-group" style="display: inline-block;">
+                                <form method="post" target="_blank"
+                                      action="{% eventurl event 'presale:event.venueless.join' order=order.code position=join_position.positionid secret=join_position.web_secret view_schedule=True %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-primary btn-lg">
+                                        {% trans "View schedule" %}
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endwith %}
             </li>
-        {% empty %}
+        {% else %}
             <li class="list-group-item">
                 <p>
                     {% blocktrans trimmed %}
@@ -63,6 +67,6 @@
                     {% endblocktrans %}
                 </p>
             </li>
-        {% endfor %}
+        {% endif %}
     </ul>
 </div>
