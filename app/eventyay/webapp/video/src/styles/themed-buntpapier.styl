@@ -22,11 +22,6 @@ themed-buntpapier()
 	.bunt-checkbox
 		margin-bottom: 8px
 
-	// bunt-select teleports its menu to body with z-index 100, which loses to the
-	// prompt overlay (z-index 1000); lift it so dropdowns inside modals stay usable.
-	.bunt-select-dropdown-menu
-		z-index: 1001
-
 	// Buntpapier hardcodes $font-stack at compile time; platform fonts are runtime CSS vars.
 	.bunt-button, .bunt-link-button, .bunt-input, .bunt-input input, .bunt-input-outline-container textarea, .bunt-tab-header-item, .room-name, .group-title, .vote-count, .ql-container, input:not([type='button']):not([type='submit']):not([type='reset']), textarea
 		font-family: var(--font-family, $font-stack) !important
