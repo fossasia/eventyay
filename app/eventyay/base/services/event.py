@@ -162,6 +162,7 @@ async def notify_schedule_change(event_id):
 
 
 def get_room_config(room, permissions):
+    str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
     room_config = {
         "id": str(room.id),
         "name": room.name,
@@ -169,7 +170,7 @@ def get_room_config(room, permissions):
         "picture": room.picture.url if room.picture else None,
         "import_id": room.import_id,
         "pretalx_id": room.pretalx_id,
-        "permissions": [p for p in permissions if not p.startswith("event:")],
+        "permissions": [p for p in str_permissions if not p.startswith("event:")],
         "force_join": room.force_join,
         "modules": [],
         "schedule_data": room.schedule_data or None,
