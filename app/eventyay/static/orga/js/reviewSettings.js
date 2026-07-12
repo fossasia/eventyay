@@ -41,18 +41,19 @@ const addNewScores = (ev) => {
         <div class="col-md-3"></div>
         <div class="col-md-9 d-flex hide-label mb-1">
             <div class="mr-2 score-score">
-                <input type="number" name="scores-${formID}-value_${newID}" step="0.1" class="form-control" id="id_scores-${formID}-value_${newID}" placeholder="2">
+                <input type="number" name="scores-${formID}-value_${newID}" step="0.1" class="form-control" id="id_scores-${formID}-value_${newID}" placeholder="Score">
             </div>
             <div class="score-label">
-                <input type="text" name="scores-${formID}-label_${newID}" maxlength="20" class="form-control" id="id_scores-${formID}-label_${newID}" placeholder="👍">
+                <input type="text" name="scores-${formID}-label_${newID}" maxlength="20" class="form-control" id="id_scores-${formID}-label_${newID}" placeholder="Label">
             </div>
-            <div role="button" class="delete-score btn btn-danger flip ml-auto" data-score="${newID}"><i class="fa fa-trash"></i></div>
+            <div role="button" class="delete-score btn btn-danger flip ml-2" data-score="${newID}"><i class="fa fa-trash"></i></div>
         </div>
     </div>`
     const newElement = document.createElement("div")
     newElement.innerHTML = newRow
     parentElement.querySelector(".score-input").appendChild(newElement)
     scoresList.value += `,${newID}`
+    addListener()
 }
 
 document
@@ -62,44 +63,62 @@ document
             element.value = element.value.slice(0, element.value.length - 2)
         }
     })
+const bindDeleteScore = (element) => {
+    element.addEventListener("click", (ev) => {
+        const scoreID = ev.currentTarget.dataset.score
+        const row = ev.currentTarget.closest(".row.form-group")
+        const parentElement = ev.currentTarget.closest(".score-group")
+        const scoresList = parentElement.querySelector(
+            "input[type=text][id$=new_scores]",
+        )
+        if (row) {
+            row.remove()
+            updateTotal()
+        }
+        if (scoresList && scoreID) {
+            scoresList.value = scoresList.value
+                .split(",")
+                .filter((v) => v !== scoreID && v !== "")
+                .join(",")
+        }
+    })
+}
+
 const addListener = () => {
     document
         .querySelectorAll(
             "#score-formset input[type=text], #score-formset input[type=number]",
         )
         .forEach((element) => {
+            element.removeEventListener("input", updateTotal)
             element.addEventListener("input", updateTotal)
         })
     document
         .querySelectorAll("#score-formset div.btn.new-score")
         .forEach((element) => {
+            element.removeEventListener("click", addNewScores)
             element.addEventListener("click", addNewScores)
         })
     document
         .querySelectorAll("#score-formset div.btn.delete-score")
         .forEach((element) => {
-            element.addEventListener("click", (ev) => {
-                const scoreID = ev.currentTarget.dataset.score
-                const row = ev.currentTarget.closest(".row.form-group")
-                const parentElement = ev.currentTarget.closest(".score-group")
-                const scoresList = parentElement.querySelector(
-                    "input[type=text][id$=new_scores]",
-                )
-                if (row) row.remove()
-                if (scoresList) {
-                    scoresList.value = scoresList.value
-                        .split(",")
-                        .filter((v) => v !== scoreID)
-                        .join(",")
-                }
-            })
+            element.replaceWith(element.cloneNode(true)) // remove old listeners
         })
+    document
+        .querySelectorAll("#score-formset div.btn.delete-score")
+        .forEach(bindDeleteScore)
 }
 
 const clearOldNewScores = () => {
-    document
-        .querySelectorAll("input[type=text][id$=new_scores]")
-        .forEach((input) => (input.value = ""))
+    document.querySelectorAll(".score-group").forEach((group) => {
+        const scoresList = group.querySelector("input[type=text][id$=new_scores]")
+        if (scoresList) {
+            const newScores = Array.from(group.querySelectorAll(".delete-score"))
+                .map((btn) => btn.dataset.score)
+                .filter((id) => id && id.startsWith("new"))
+            scoresList.value = newScores.join(",")
+        }
+    })
 }
 
 document

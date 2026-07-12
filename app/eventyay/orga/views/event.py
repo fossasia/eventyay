@@ -1,12 +1,9 @@
 from datetime import timedelta
-from pathlib import Path
 
 from csp.decorators import csp_update
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.core.exceptions import ValidationError
-from django.core.files.storage import FileSystemStorage
 from django.db import models, transaction
 from django.forms.models import inlineformset_factory
 from django.shortcuts import get_object_or_404, redirect
@@ -18,22 +15,18 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
-from django_scopes import scope, scopes_disabled
-from formtools.wizard.views import SessionWizardView
 
-
-from eventyay.common.forms import I18nEventFormSet, I18nFormSet
-from eventyay.base.models import LogEntry
+from eventyay.agenda.views.utils import get_schedule_exporters
+from eventyay.base.models import Event, LogEntry, ReviewPhase, ReviewScoreCategory, TeamInvite, User
 from eventyay.base.models.base import CachedFile
+from eventyay.common.forms import I18nEventFormSet, I18nFormSet
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
     ActionFromUrl,
     EventPermissionRequired,
     PermissionRequired,
-    SensibleBackWizardMixin,
 )
-from eventyay.base.models import Event, Team, TeamInvite
 from eventyay.orga.forms import EventForm
 from eventyay.orga.forms.event import (
     MailSettingsForm,
@@ -44,13 +37,12 @@ from eventyay.orga.forms.event import (
     WidgetSettingsForm,
 )
 from eventyay.orga.forms.importers import CSVImportForm
+from eventyay.orga.forms.review import ReviewExportForm
 from eventyay.orga.forms.schedule import ScheduleExportForm
 from eventyay.orga.forms.speaker import SpeakerExportForm
-from eventyay.orga.forms.review import ReviewExportForm
 from eventyay.person.forms import UserForm
-from eventyay.base.models import ReviewPhase, ReviewScoreCategory, User
-from eventyay.agenda.views.utils import get_schedule_exporters
 from eventyay.submission.tasks import recalculate_all_review_scores
+
 from .speaker import SpeakerImportProcessView
 from .submission import SubmissionImportProcessView
 
@@ -157,6 +149,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             messages.error(self.request, e.message)
             return self.get(self.request, *self.args, **self.kwargs)
         if not phases or not scores:
+            messages.error(self.request, phrases.base.error_saving_changes)
             return self.get(self.request, *self.args, **self.kwargs)
         form.save()
         if self.scores_formset.has_changed():
@@ -164,6 +157,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
                 kwargs={'event_id': self.request.event.pk},
                 ignore_result=True,
             )
+        messages.success(self.request, phrases.base.saved)
         return super().form_valid(form)
 
     @context
