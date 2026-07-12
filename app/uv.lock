@@ -1524,7 +1524,7 @@ requires-dist = [
     { name = "eventyay-stripe", git = "https://github.com/fossasia/eventyay-stripe.git?rev=main" },
     { name = "eventyay-teamshifts", git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main" },
     { name = "execnet", specifier = ">=2.1.2" },
-    { name = "exhibition", git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main" },
+    { name = "exhibition", git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev" },
     { name = "fido2", specifier = ">=2.2.0" },
     { name = "fonttools", specifier = ">=4.63.0" },
     { name = "frozenlist", specifier = ">=1.8.0" },
@@ -1683,10 +1683,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#4f0b349ced130c4f9585f71e12f08b5257a7837d" }
-dependencies = [
-    { name = "flake8" },
-]
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev#7922384c661901ee8f57b80aee2fdf6637e1d1b9" }
 
 [[package]]
 name = "faker"
@@ -1723,20 +1720,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/09/34/4837e2f5640baf61d8abd6125ccb6cc60b4b2933088528356ad6e781496f/fido2-2.2.0.tar.gz", hash = "sha256:0d8122e690096ad82afde42ac9d6433a4eeffda64084f36341ea02546b181dd1", size = 294167, upload-time = "2026-04-15T06:42:50.264Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/01/82/f3c5dd87b0977f5547cc132b7969e6f5075a8c2f5881cf4b6df6378505f9/fido2-2.2.0-py3-none-any.whl", hash = "sha256:3587ccf0af7b71b5dd73f17e1dbec9f0fd157292f9163f02e7778f46d0d25fe5", size = 234025, upload-time = "2026-04-15T06:42:51.813Z" },
-]
-
-[[package]]
-name = "flake8"
-version = "7.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "mccabe" },
-    { name = "pycodestyle" },
-    { name = "pyflakes" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/af/fbfe3c4b5a657d79e5c47a2827a362f9e1b763336a52f926126aa6dc7123/flake8-7.3.0.tar.gz", hash = "sha256:fe044858146b9fc69b551a4b490d69cf960fcb78ad1edcb84e7fbb1b4a8e3872", size = 48326, upload-time = "2025-06-20T19:31:35.838Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9f/56/13ab06b4f93ca7cac71078fbe37fcea175d3216f31f85c3168a6bbd0bb9a/flake8-7.3.0-py2.py3-none-any.whl", hash = "sha256:b9696257b9ce8beb888cdbe31cf885c90d31928fe202be0889a7cdafad32f01e", size = 57922, upload-time = "2025-06-20T19:31:34.425Z" },
 ]
 
 [[package]]
@@ -2141,15 +2124,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/bb/89/f07411f340b70374d1b76b710b059cfc9874e22f596df3f20d26ebbece5b/maxminddb-3.1.1-cp312-cp312-win32.whl", hash = "sha256:9d98641b111eecc047b560d927379dd044bb36c0e399ee794e865b75ee8ef27a", size = 35632, upload-time = "2026-03-05T18:13:20.322Z" },
     { url = "https://files.pythonhosted.org/packages/a3/cc/1e42136d8416bbcaa81cdfdb26ec75263f106c0c34bf357ca98eebc394d0/maxminddb-3.1.1-cp312-cp312-win_amd64.whl", hash = "sha256:a1ad6d3790ca4b2936f3e4ea971ef8383480fa069ed8ea4e5e6345f049d0e9f7", size = 37332, upload-time = "2026-03-05T18:13:21.363Z" },
     { url = "https://files.pythonhosted.org/packages/f9/ed/f3a6b030eef252d4eaa811c87ad3a1d44376de581b11be8246fda1fc3716/maxminddb-3.1.1-cp312-cp312-win_arm64.whl", hash = "sha256:c295f90ce99ce434d6a8477bd94ba4869ca04fe617ac99cea7548f0f6a3e4cd8", size = 34231, upload-time = "2026-03-05T18:13:22.647Z" },
-]
-
-[[package]]
-name = "mccabe"
-version = "0.7.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e7/ff/0ffefdcac38932a54d2b5eed4e0ba8a408f215002cd178ad1df0f2806ff8/mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325", size = 9658, upload-time = "2022-01-24T01:14:51.113Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/27/1a/1f68f9ba0c207934b35b86a8ca3aad8395a3d6dd7921c0686e23853ff5a9/mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e", size = 7350, upload-time = "2022-01-24T01:14:49.62Z" },
 ]
 
 [[package]]
@@ -2690,15 +2664,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/38/b0/35926bad6885fb7bc24aa7e1b45e6d86540c6c57ee4abc4fed1ef58d4ec0/pyenchant-3.3.0-py3-none-any.whl", hash = "sha256:3da00b1d01314d85aac733bb997415d7a3e875666dc81735ddcf320aa36b7a70", size = 58363, upload-time = "2025-09-14T16:23:04.297Z" },
     { url = "https://files.pythonhosted.org/packages/d6/7f/1d7b8ad86c2a841d940df7b965fa727e052b95d539e4c563da685c25d0d2/pyenchant-3.3.0-py3-none-win32.whl", hash = "sha256:1d55e075645a6edbb3c590fb42f9e02b4d455e4affe28a2227d5cb6d4868e626", size = 37787278, upload-time = "2025-09-14T16:23:06.629Z" },
     { url = "https://files.pythonhosted.org/packages/ad/ae/5624803b62ecb0a20248f0d28ed3f78c78746a032582a016d4b2890c7899/pyenchant-3.3.0-py3-none-win_amd64.whl", hash = "sha256:04a5bd0e022ebe2e8c6d9e498ec3d650602e264ec5486e9c6a1b7f99c9507c49", size = 37427576, upload-time = "2025-09-14T16:23:09.574Z" },
-]
-
-[[package]]
-name = "pyflakes"
-version = "3.4.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/45/dc/fd034dc20b4b264b3d015808458391acbf9df40b1e54750ef175d39180b1/pyflakes-3.4.0.tar.gz", hash = "sha256:b24f96fafb7d2ab0ec5075b7350b3d2d2218eab42003821c06344973d3ea2f58", size = 64669, upload-time = "2025-06-20T18:45:27.834Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c2/2f/81d580a0fb83baeb066698975cb14a618bdbed7720678566f1b046a95fe8/pyflakes-3.4.0-py2.py3-none-any.whl", hash = "sha256:f742a7dbd0d9cb9ea41e9a24a918996e8170c799fa528688d40dd582c8265f4f", size = 63551, upload-time = "2025-06-20T18:45:26.937Z" },
 ]
 
 [[package]]

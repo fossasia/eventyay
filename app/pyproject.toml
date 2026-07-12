@@ -101,7 +101,7 @@ dependencies = [
     "eventyay-stripe @ git+https://github.com/fossasia/eventyay-stripe.git@main",
     "eventyay-bitpay @ git+https://github.com/fossasia/eventyay-bitpay.git@main",
     "eventyay-socialmedia @ git+https://github.com/fossasia/eventyay-socialmedia.git@main",
-    "exhibition @ git+https://github.com/fossasia/eventyay-exhibition.git@main",
+    "exhibition @ git+https://github.com/fossasia/eventyay-exhibition.git@dev",
     "eventyay-teamshifts @ git+https://github.com/fossasia/eventyay-teamshifts.git@main",
     "execnet>=2.1.2",
     "fido2>=2.2.0",

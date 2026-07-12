@@ -236,3 +236,30 @@ On new server
 ## Start up
 
 `docker compose up -d`
+
+## Plugin Deployment (eventyay-exhibition)
+
+The `eventyay-exhibition` plugin is used in production and follows a branch-based deployment model to ensure that experimental changes do not inadvertently impact live events.
+
+### Branch Strategy
+
+- **Development (`dev.eventyay.com`)**: Uses the `dev` branch of the `eventyay-exhibition` repository. This environment is used for active development, integration, and testing of new plugin features.
+- **Production (`eventyay.com`)**: Uses the `main` branch of the `eventyay-exhibition` repository. This environment only runs reviewed and production-ready code.
+
+### Moving Changes to Production
+
+1. Develop and test changes on the `dev` branch of `eventyay-exhibition`.
+2. Once verified on `dev.eventyay.com`, open a pull request and merge the changes into the `main` branch of `eventyay-exhibition`.
+3. The `eventyay.com` production deployment will naturally pick up the latest stable commit from `main` on its next deployment cycle, as the core eventyay repository explicitly pins the plugin dependency to `@main` in its `main` branch.
+
+### Manual Verification
+
+After a deployment, you can verify which branch or commit is actively running:
+1. Check the deployment CI logs. The `uv lock` step will display the exact Git commit hash of `eventyay-exhibition` that was resolved and installed.
+2. Ensure that functionality unique to the `dev` branch does not inadvertently appear on production (`eventyay.com`).
+
+### Rollback / Recovery Steps
+
+If a buggy plugin version is deployed to production:
+1. **Quick Revert**: Revert the offending merge commit in the `eventyay-exhibition` repository's `main` branch.
+2. **Pin to Hash**: As an alternative emergency measure, manually edit `pyproject.toml` on the eventyay repository to point to a specific stable commit hash (e.g., `exhibition @ git+https://github.com/fossasia/eventyay-exhibition.git@<stable-hash>`), then trigger a redeployment.
