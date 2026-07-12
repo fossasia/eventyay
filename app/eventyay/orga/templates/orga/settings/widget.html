@@ -16,15 +16,19 @@
 {% endblock scripts %}
 
 {% block settings_content %}
-    <div id="main-title" class="d-md-flex justify-content-between">
-    <h2>
-        {% translate "Widget settings" %}
-        <span data-dialog-target="#info-dialog" data-toggle="dialog">
-            <i class="fa fa-question-circle-o text-info"></i>
-        </span>
-    </h2>
-    {% include "orga/event/component_link.html" %}
-    </div>
+    <nav id="event-nav" class="header-nav">
+        <div class="navigation">
+            <div class="navigation-title">
+                <h2>
+                    {% translate "Widget settings" %}
+                    <span data-dialog-target="#info-dialog" data-toggle="dialog">
+                        <i class="fa fa-question-circle-o text-info"></i>
+                    </span>
+                </h2>
+            </div>
+            {% include "orga/event/component_link.html" %}
+        </div>
+    </nav>
     <dialog id="info-dialog">
         <div class="alert alert-info flip ml-auto">
             {% blocktranslate trimmed %}

@@ -7,7 +7,9 @@ from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.core.cache import cache
 from django.core.paginator import InvalidPage, Paginator
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Lower
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -94,19 +96,84 @@ def _unresolved_hash_tokens(token_ids, ticket_by_token):
     ]
 
 
+def video_contact_email_from_profile(profile):
+    return ((profile or {}).get("contact_email") or "").strip()
+
+
+def video_display_name_from_profile(profile):
+    return ((profile or {}).get("display_name") or "").strip()
+
+
+def admin_users_list_q():
+    """Platform accounts plus ticket-only video personas (no duplicate platform email)."""
+    contact_email_ref = KeyTextTransform("contact_email", OuterRef("profile"))
+    platform_email_match = (
+        User.objects.filter(event__isnull=True)
+        .exclude(email="")
+        .annotate(lower_email=Lower("email"))
+        .filter(lower_email=Lower(contact_email_ref))
+    )
+    return Q(event__isnull=True) | (
+        Q(event__isnull=False)
+        & ~Q(profile__contact_email="")
+        & ~Exists(platform_email_match)
+    )
+
+
+def resolve_video_display_names_by_contact_emails(emails):
+    """Map platform contact email to the latest video display name from event personas."""
+    uniq = list(dict.fromkeys((e or "").strip().lower() for e in emails if e))
+    if not uniq:
+        return {}
+    email_conditions = reduce(
+        operator.or_, (Q(profile__contact_email__iexact=e) for e in uniq), Q()
+    )
+    result = {}
+    with scopes_disabled():
+        for row in (
+            User.objects.filter(event__isnull=False)
+            .filter(email_conditions)
+            .order_by("-last_login", "-id")
+            .values("profile")
+        ):
+            profile = row.get("profile") or {}
+            email = video_contact_email_from_profile(profile).lower()
+            if not email or email in result:
+                continue
+            display_name = video_display_name_from_profile(profile)
+            if display_name:
+                result[email] = display_name
+    return result
+
+
+def platform_user_video_display_name(platform_user, video_names_by_email):
+    """Display name for admin user list: video persona, then Wikimedia, then nick."""
+    email = (platform_user.email or "").strip().lower()
+    if email:
+        video_name = (video_names_by_email.get(email) or "").strip()
+        if video_name:
+            return video_name
+    wikimedia = (platform_user.wikimedia_username or "").strip()
+    if wikimedia:
+        return wikimedia
+    return (platform_user.nick or "").strip()
+
+
 def admin_public_fields_from_user_row(user_row, ticket_by_token, account_by_token=None):
     """Admin-only list fields derived from a User values() row and ticket lookup."""
     tid = user_row["token_id"]
     ticket = _ticket_lookup(ticket_by_token, tid)
     account = _ticket_lookup(account_by_token, tid)
+    profile = user_row.get("profile") or {}
     return {
         "moderation_state": user_row["moderation_state"],
         "token_id": tid,
-        "email": (user_row.get("email") or "").strip()
+        "email": video_contact_email_from_profile(profile)
+        or (user_row.get("email") or "").strip()
         or ticket.get("contact_email", "")
         or account.get("email", ""),
         "wikimedia_username": display_wikimedia_username_from_profile(
-            user_row["profile"],
+            profile,
             user_row.get("wikimedia_username") or account.get("wikimedia_username"),
         ),
         "order_code": ticket.get("order_code"),
@@ -172,6 +239,46 @@ def resolve_account_fields_by_token_ids(token_ids):
         if token.upper() in result
     }
     return keyed
+
+
+def resolve_video_jwt_contact_email(event_id, token_id):
+    """
+    Resolve the contact email for an event-scoped user created from a video JWT uid.
+
+    Order ticket links use ``encode_email(order.email)`` or a position pseudonym;
+    logged-in organisers and talk users use ``encode_email(platform_user.email)``.
+    """
+    normalized_token = (token_id or "").strip()
+    if not normalized_token:
+        return None
+
+    ticket_rows = build_admin_ticket_rows_by_token(event_id, [normalized_token])
+    ticket = _ticket_lookup(ticket_rows, normalized_token)
+    email = (ticket.get("contact_email") or "").strip()
+    if email:
+        return email.lower()
+
+    if _is_email_hash_uid_token(normalized_token):
+        accounts = resolve_account_fields_by_token_ids([normalized_token])
+        for key, account in accounts.items():
+            if key.upper() == normalized_token.upper():
+                email = (account.get("email") or "").strip()
+                if email:
+                    return email.lower()
+    return None
+
+
+def apply_video_jwt_contact_to_profile(user, event_id, token_id):
+    """Store resolved contact email on an event-scoped user's profile (not User.email)."""
+    contact_email = resolve_video_jwt_contact_email(event_id, token_id)
+    if not contact_email:
+        return
+    profile = dict(user.profile or {})
+    if profile.get("contact_email") == contact_email:
+        return
+    profile["contact_email"] = contact_email
+    user.profile = profile
+    user.save(update_fields=["profile"])
 
 
 def _latest_paid_ticket_row_for_email(event_id, email):
@@ -537,10 +644,13 @@ def get_user(
         )
 
     if user:
-        if with_token and (user.traits != with_token.get("traits")):
-            traits = with_token["traits"]
-            update_user(event.id, id=user.id, traits=traits)
-            user = get_user_by_id(event.id, user.id)
+        if with_token:
+            if user.traits != with_token.get("traits"):
+                traits = with_token["traits"]
+                update_user(event.id, id=user.id, traits=traits)
+                user = get_user_by_id(event.id, user.id)
+            if token_id:
+                apply_video_jwt_contact_to_profile(user, event.id, token_id)
         return user
 
     traits = with_token.get("traits") if with_token else None
@@ -553,10 +663,15 @@ def get_user(
         return
 
     if token_id:
+        contact_email = resolve_video_jwt_contact_email(event.id, token_id)
+        profile = with_token.get("profile") if with_token else None
+        if contact_email:
+            profile = dict(profile or {})
+            profile["contact_email"] = contact_email
         user = create_user(
             event_id=event.id,
             token_id=token_id,
-            profile=with_token.get("profile") if with_token else None,
+            profile=profile,
             traits=traits,
             pretalx_id=with_token.get("pretalx_id") if with_token else None,
         )
