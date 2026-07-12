@@ -586,7 +586,14 @@ class AnswerOptionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         }
 
 
-class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
+class NameRequiredMixin:
+    """Mixin to ensure the name field is always marked as required in the UI."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].required = True
+
+
+class SubmissionTypeForm(NameRequiredMixin, ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
         super().__init__(*args, **kwargs)
@@ -615,7 +622,7 @@ class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         }
 
 
-class TrackForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
+class TrackForm(NameRequiredMixin, ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
         # Set initial color for new tracks (when creating, not editing)

@@ -829,6 +829,15 @@ table td > .checkbox input[type="checkbox"] {
 .thumbnailed-file-link {
   vertical-align: middle;
 }
+.thumbnailed-file-preview-container {
+  margin-bottom: 10px;
+}
+.thumbnailed-file-preview-image {
+  max-height: 100px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
 .thumbnailed-file-preview-eye {
   margin-left: 8px;
   vertical-align: middle;

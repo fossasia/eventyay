@@ -21,6 +21,20 @@ const stylusOptions = {
   ]
 }
 
+function exportJanusGateway() {
+  return {
+    name: 'export-janus-gateway',
+    transform(code, id) {
+      const cleanId = id.split('?')[0]
+      if (!cleanId.includes('janus-gateway') || !cleanId.endsWith('html/janus.js')) return null
+      return {
+        code: `${code}\nexport default Janus;\n`,
+        map: null
+      }
+    }
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const currentYear = new Date().getFullYear()
   const env = loadEnv(mode, process.cwd(), '')
@@ -49,6 +63,7 @@ export default defineConfig(({ mode }) => {
       ]
     },
     plugins: [
+      exportJanusGateway(),
       vue(),
       ReactivityTransform(),
       // Enable PWA only in production builds (avoid SW claim issues during dev)
@@ -153,6 +168,8 @@ export default defineConfig(({ mode }) => {
         'moment-timezone'
       ],
       exclude: [
+        'janus-gateway',
+        'janus-gateway/html/janus.js',
         'pdfjs-dist'
       ],
       esbuildOptions: {
