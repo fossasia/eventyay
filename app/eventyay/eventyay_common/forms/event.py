@@ -64,7 +64,7 @@ class EventCommonSettingsForm(SettingsForm):
         return data
 
     def save(self):
-        for image_field in ('event_logo_image', 'logo_image', 'event_preview_image'):
+        for image_field in ('event_logo_image', 'logo_image', 'event_preview_image', 'og_image'):
             current_value = self.event.settings.get(image_field, as_type=str, default='') or ''
             new_value = self.cleaned_data.get(image_field)
             current_file = get_file_url_path(current_value)
