@@ -208,6 +208,9 @@
 }
 
 @media (max-width: 768px) {
+    #top-bg {
+        height: 480px;
+    }
 
     /* Keep the sticky tabs in a single flex row */
     .presale-sticky-tabs {

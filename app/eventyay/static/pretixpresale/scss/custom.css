@@ -246,6 +246,10 @@ header .header-row-right {
 }
 
 @media (max-width: 768px) {
+    #top-bg {
+        height: 480px;
+    }
+
     .presale-sticky-tabs {
         flex-direction: row;
         flex-wrap: nowrap;

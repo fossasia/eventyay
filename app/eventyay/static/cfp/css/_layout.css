@@ -596,6 +596,10 @@ footer {
 }
 
 @media (max-width: 768px) {
+  #top-bg {
+    height: 480px;
+  }
+
   #main-container {
     max-width: 100%;
     padding-left: 0;

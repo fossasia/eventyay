@@ -622,7 +622,7 @@ export default {
 
 	+below('m')
 		.landing-top-bg
-			height: 220px
+			height: 480px
 		.landing-header
 			padding-left: 12px
 			padding-right: 0
