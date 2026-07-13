@@ -925,6 +925,12 @@ footer {
   .hidden-xs {
     display: none;
   }
+  .cfs-full {
+    display: none;
+  }
+  .cfs-short {
+    display: inline;
+  }
 }
 
 @media (min-width: 992px) {

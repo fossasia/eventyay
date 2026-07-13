@@ -331,6 +331,14 @@ header .header-row-right {
         order: -1;
     }
 
+    .cfs-full {
+        display: none;
+    }
+
+    .cfs-short {
+        display: inline;
+    }
+
     .login-link {
         display: flex;
         align-items: center;
