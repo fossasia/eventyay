@@ -90,24 +90,33 @@ const poll = () => {
         .then(data => {
             if (data.ready) {
                 const bar = document.querySelector('#import-loadingmodal .progress-bar')
+                const btnIcon = document.querySelector('#import-loadingmodal .loadingmodal-minimize i')
+                const h3 = document.querySelector('#import-loadingmodal h3')
+                const bigIcon = document.querySelector('#import-loadingmodal .big-rotating-icon')
+
                 if (bar) {
                     bar.classList.remove('progress-bar-striped', 'active')
-                    bar.classList.add('bg-success', 'progress-bar-success')
                     bar.style.width = '100%'
                 }
-                const btnIcon = document.querySelector('#import-loadingmodal .loadingmodal-minimize i')
-                if (btnIcon) {
-                    btnIcon.className = 'fa fa-check'
-                }
-                const h3 = document.querySelector('#import-loadingmodal h3')
-                if (h3) {
-                    h3.textContent = gettext('Task completed')
-                }
-                const bigIcon = document.querySelector('#import-loadingmodal .big-rotating-icon')
-                if (bigIcon) {
-                    bigIcon.className = 'fa fa-check big-rotating-icon'
-                    bigIcon.style.animation = 'none'
-                    bigIcon.style.color = '#5cb85c'
+                
+                if (data.success || typeof data.success === 'undefined') {
+                    if (bar) bar.classList.add('bg-success', 'progress-bar-success')
+                    if (btnIcon) btnIcon.className = 'fa fa-check'
+                    if (h3) h3.textContent = gettext('Task completed')
+                    if (bigIcon) {
+                        bigIcon.className = 'fa fa-check big-rotating-icon'
+                        bigIcon.style.animation = 'none'
+                        bigIcon.style.color = '#5cb85c'
+                    }
+                } else {
+                    if (bar) bar.classList.add('bg-danger', 'progress-bar-danger')
+                    if (btnIcon) btnIcon.className = 'fa fa-times'
+                    if (h3) h3.textContent = data.message || gettext('Task failed')
+                    if (bigIcon) {
+                        bigIcon.className = 'fa fa-times big-rotating-icon'
+                        bigIcon.style.animation = 'none'
+                        bigIcon.style.color = '#d9534f'
+                    }
                 }
 
                 sessionStorage.removeItem('eventyay_async_task_import')
@@ -166,6 +175,7 @@ const submit = (form) => {
                 } else {
                     document.documentElement.replaceWith(newDoc.documentElement)
                 }
+                hide()
                 return null
             }
             if (!r.ok) {
