@@ -413,17 +413,19 @@ header > .event-home-back {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4em;
+  gap: 0;
   min-height: 32px;
   padding: 0 11px;
   background: rgba(0, 0, 0, 0.45);
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
-  transition: background 0.18s ease;
+  transition: gap 0.18s ease, background 0.18s ease;
 }
 
 .event-home-back:hover .event-home-back-pill,
-.event-home-back:focus-visible .event-home-back-pill {
+.event-home-back:focus-visible .event-home-back-pill,
+.event-home-back.event-home-back--expanded .event-home-back-pill {
+  gap: 0.4em;
   background: rgba(0, 0, 0, 0.62);
 }
 
@@ -447,14 +449,23 @@ header > .event-home-back {
   font-size: 14px;
   font-weight: 600;
   line-height: 1;
-  max-width: none;
-  opacity: 1;
-  overflow: visible;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
   white-space: nowrap;
+  transition: max-width 0.22s ease, opacity 0.18s ease;
+}
+
+.event-home-back:hover .event-home-back-label,
+.event-home-back:focus-visible .event-home-back-label,
+.event-home-back.event-home-back--expanded .event-home-back-label {
+  max-width: 12em;
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .event-home-back-pill {
+  .event-home-back-pill,
+  .event-home-back-label {
     transition: none;
   }
 }

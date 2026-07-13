@@ -3,7 +3,13 @@
 	.landing-top-bg
 	.landing-scroll(v-scrollbar.y="")
 		header.landing-header
-			a.event-home-back(v-if="homeBackLink", :href="homeBackLink.href", :aria-label="homeBackLink.ariaLabel")
+			a.event-home-back(
+				v-if="homeBackLink",
+				:href="homeBackLink.href",
+				:aria-label="homeBackLink.ariaLabel",
+				:class="{'event-home-back--expanded': homeBackExpanded}",
+				@click.prevent="handleHomeBackClick"
+			)
 				span.event-home-back-pill
 					i.fa.fa-angle-left.event-home-back-icon(aria-hidden="true")
 					span.event-home-back-label(aria-hidden="true") {{ homeBackLink.label }}
@@ -85,7 +91,8 @@ export default {
 	data() {
 		return {
 			moment,
-			eventMeta: null
+			eventMeta: null,
+			homeBackExpanded: false
 		}
 	},
 	computed: {
@@ -279,8 +286,31 @@ export default {
 	},
 	async mounted() {
 		await this.fetchEventMeta()
+		document.addEventListener('click', this.handleHomeBackOutsideClick)
+	},
+	beforeUnmount() {
+		document.removeEventListener('click', this.handleHomeBackOutsideClick)
 	},
 	methods: {
+		handleHomeBackClick() {
+			const href = this.homeBackLink?.href
+			if (!href) return
+
+			const supportsHover = window.matchMedia('(hover: hover)').matches
+			if (supportsHover) {
+				window.location.assign(href)
+				return
+			}
+			if (!this.homeBackExpanded) {
+				this.homeBackExpanded = true
+				return
+			}
+			window.location.assign(href)
+		},
+		handleHomeBackOutsideClick(event) {
+			if (event.target.closest('.event-home-back')) return
+			this.homeBackExpanded = false
+		},
 		toMediaUrl(pathValue) {
 			const cleaned = String(pathValue || '').replace(/^\/+/, '')
 			if (!cleaned) return ''
@@ -378,7 +408,7 @@ export default {
 		top: 0
 		left: 0
 		right: 0
-		height: 320px
+		height: calc(320px - 48px)
 		z-index: 0
 		pointer-events: none
 		background-color: var(--landing-hero-background-color)
@@ -422,15 +452,17 @@ export default {
 		display: inline-flex
 		align-items: center
 		justify-content: center
-		gap: 0.4em
+		gap: 0
 		min-height: 32px
 		padding: 0 11px
 		background: rgba(0, 0, 0, 0.45)
 		border-radius: 8px
 		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28)
-		transition: background 0.18s ease
+		transition: gap 0.18s ease, background 0.18s ease
 	.event-home-back:hover .event-home-back-pill,
-	.event-home-back:focus-visible .event-home-back-pill
+	.event-home-back:focus-visible .event-home-back-pill,
+	.event-home-back.event-home-back--expanded .event-home-back-pill
+		gap: 0.4em
 		background: rgba(0, 0, 0, 0.62)
 	.event-home-back:focus-visible
 		outline: none
@@ -445,10 +477,16 @@ export default {
 		font-size: 14px
 		font-weight: 600
 		line-height: 1
-		max-width: none
-		opacity: 1
-		overflow: visible
+		max-width: 0
+		opacity: 0
+		overflow: hidden
 		white-space: nowrap
+		transition: max-width 0.22s ease, opacity 0.18s ease
+	.event-home-back:hover .event-home-back-label,
+	.event-home-back:focus-visible .event-home-back-label,
+	.event-home-back.event-home-back--expanded .event-home-back-label
+		max-width: 12em
+		opacity: 1
 	.event-hero
 		display: flex
 		align-items: center
@@ -620,9 +658,9 @@ export default {
 	.speakers-section .c-speakers-list
 		overflow: visible !important
 
-	+below('m')
+	+below('s')
 		.landing-top-bg
-			height: 480px
+			height: calc(480px - 48px)
 		.landing-header
 			padding-left: 12px
 			padding-right: 0
