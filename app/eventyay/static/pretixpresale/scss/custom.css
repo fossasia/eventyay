@@ -309,7 +309,8 @@ header .header-row-right {
         max-width: calc(100vw - 16px);
     }
 
-    .mobile-hide-text {
+    .mobile-hide-text,
+    .hidden-xs {
         display: none;
     }
 

@@ -921,7 +921,8 @@ footer {
   .nav-icon-mobile {
     font-size: 1.25rem;
   }
-  .mobile-hide-text {
+  .mobile-hide-text,
+  .hidden-xs {
     display: none;
   }
 }
