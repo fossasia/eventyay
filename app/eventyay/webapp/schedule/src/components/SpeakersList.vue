@@ -939,7 +939,7 @@ export default {
 @media (max-width: 600px)
 	.c-speakers-list
 		.speakers-toolbar
-			padding: 6px 10px 0
+			padding: 10px 10px 0
 			gap: 6px
 			flex-wrap: nowrap
 			.search-box
@@ -961,7 +961,7 @@ export default {
 				border: 1px solid #e5e5e5
 				border-radius: 10px
 				box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12)
-				width: auto
+				width: max-content
 				max-width: 94vw
 				max-height: 70vh
 				overflow-x: auto
@@ -994,11 +994,11 @@ export default {
 			.filter-group, .sort-group, .view-toggle
 				flex: 0 0 auto
 			.dropdown-wrapper
-				width: auto
+				width: max-content
 				max-width: 94vw
 			.dropdown-menu
 				position: static
-				min-width: 160px
+				min-width: max-content
 				max-width: 90vw
 				max-height: none
 				overflow: visible
@@ -1007,10 +1007,6 @@ export default {
 				border-radius: 8px
 				background: #fff
 				padding: 4px 0
-				.dropdown-item
-					white-space: nowrap
-					overflow: hidden
-					text-overflow: ellipsis
 		.backdrop
 			z-index: 110
 

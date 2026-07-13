@@ -222,7 +222,7 @@ export default {
 		},
 		favCountLabel () {
 			const count = normalizePopularityCount(this.session)
-			return String(count)
+			return count > 99 ? '99+' : String(count)
 		},
 		doNotRecordTooltip () {
 			const m = this.translationMessages || {}
@@ -808,7 +808,7 @@ expandClampedSessionText()
 		min-height: 80px
 		.time-box
 			width: 58px
-			padding: 8px 6px 6px 2px
+			padding: 8px 4px 6px 4px
 			.start
 				.date
 					padding: 3px 5px
