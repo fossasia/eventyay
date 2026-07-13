@@ -241,7 +241,7 @@ header .header-row-right {
     }
 
     .header-join-video-floating-mobile {
-        right: 0;
+        right: 15px;
     }
 }
 
