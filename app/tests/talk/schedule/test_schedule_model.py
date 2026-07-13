@@ -44,6 +44,17 @@ def test_freeze(slot):
         assert not new.version
 
 
+@pytest.mark.django_db
+def test_freeze_fails_breaks_only(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        schedule_count = Schedule.objects.count()
+        with pytest.raises(Exception, match='only breaks'):
+            event.wip_schedule.freeze('breaks-only')
+        assert Schedule.objects.count() == schedule_count
+
+
 @pytest.mark.parametrize("version", ["wip", "latest", None, ""])
 @pytest.mark.django_db
 def test_freeze_fail(slot, schedule, version):

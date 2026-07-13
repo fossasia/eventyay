@@ -161,6 +161,8 @@ class Schedule(PretalxModel):
             raise Exception(f'Cannot freeze schedule version: already versioned as "{self.version}".')
         if not name:
             raise Exception('Cannot create schedule version without a version name.')
+        if release_block_message := self.release_block_message():
+            raise Exception(release_block_message)
 
         self.version = name
         self.comment = comment
@@ -675,6 +677,17 @@ class Schedule(PretalxModel):
                         break
         return room_overlap_ids, speaker_overlaps_by_talk
 
+    def release_block_message(self):
+        """Return an error message when this schedule must not be released."""
+
+        if self.talks.filter(submission__isnull=False, start__isnull=False).exists():
+            return None
+        if self.talks.filter(submission__isnull=True).exists():
+            return _('A schedule with only breaks cannot be released. Please schedule at least one session first.')
+        if self.talks.filter(submission__isnull=False).exists():
+            return _('A schedule cannot be released while all sessions are still unscheduled.')
+        return _('A schedule cannot be released without any scheduled sessions.')
+
     @cached_property
     def warnings(self) -> dict:
         """A dictionary of warnings to be acknowledged before a release.
@@ -684,6 +697,7 @@ class Schedule(PretalxModel):
         ``unconfirmed`` is the list of submissions that will not be
         visible due to their unconfirmed status, and ``no_track`` are
         submissions without a track in a conference that uses tracks.
+        ``release_blocked`` contains a message when the schedule cannot be released.
         """
 
         talks = self.talks.filter(submission__isnull=False)
@@ -692,6 +706,7 @@ class Schedule(PretalxModel):
             'unscheduled': talks.filter(start__isnull=True).count(),
             'unconfirmed': talks.exclude(submission__state=SubmissionStates.CONFIRMED).count(),
             'no_track': [],
+            'release_blocked': self.release_block_message(),
         }
         if self.event.get_feature_flag('use_tracks'):
             warnings['no_track'] = talks.filter(submission__track_id__isnull=True)

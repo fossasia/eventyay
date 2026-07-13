@@ -301,3 +301,102 @@ export function buildSessionsBySpeaker (sessions, { lowercaseKeys = true } = {})
 		return acc
 	}, {})
 }
+
+export function getCsrfToken () {
+	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
+	return match ? match[1] : ''
+}
+
+export function buildStarredSharingUrl (eventUrl) {
+	const base = (eventUrl || '').replace(/\/$/, '')
+	return `${base}/schedule/starred-sharing.json`
+}
+
+/** Read sharing preference rendered by the server (agenda pages or video shell). */
+export function readInlineStarredSharingPreference () {
+	const messagesEl = document.querySelector('#pretalx-messages')
+	if (messagesEl?.dataset.loggedIn === 'true') {
+		return messagesEl.dataset.showPublicly === 'true'
+	}
+	if (window.eventyay?.showPublicly !== undefined) {
+		return !!window.eventyay.showPublicly
+	}
+	return null
+}
+
+export function hasInlineStarredSharingPreference () {
+	return document.querySelector('#pretalx-messages') != null
+		|| window.eventyay?.showPublicly !== undefined
+}
+
+export async function loadStarredSharingPreference (eventUrl) {
+	const inline = readInlineStarredSharingPreference()
+	if (hasInlineStarredSharingPreference()) {
+		return inline === true
+	}
+	if (!eventUrl) return false
+	try {
+		const response = await fetch(buildStarredSharingUrl(eventUrl), { credentials: 'same-origin' })
+		if (!response.ok) return false
+		const data = await response.json()
+		return !!data?.show_publicly
+	} catch {
+		return false
+	}
+}
+
+export async function updateStarredSharingPreference (eventUrl, value) {
+	if (!eventUrl) throw new Error('missing event URL')
+	const headers = { 'Content-Type': 'application/json' }
+	const csrf = getCsrfToken()
+	if (csrf) headers['X-CSRFToken'] = csrf
+	const response = await fetch(buildStarredSharingUrl(eventUrl), {
+		method: 'POST',
+		headers,
+		credentials: 'same-origin',
+		body: JSON.stringify({ show_publicly: !!value }),
+	})
+	if (!response.ok) throw new Error('sharing preference update failed')
+	const data = await response.json()
+	return !!data?.show_publicly
+}
+
+/**
+ * Fetch schedule widget JSON. Returns null when no schedule is published,
+ * throws on unexpected network/parse failures.
+ */
+export async function fetchWidgetScheduleData (eventUrl, { version = '', enrichData = false } = {}) {
+	const versionPath = version ? `v/${version}/` : ''
+	const params = new URLSearchParams()
+	if (enrichData) params.set('enrich', '1')
+	const query = params.toString()
+	const suffix = query ? `?${query}` : ''
+	const urls = [
+		`${eventUrl}schedule/${versionPath}widgets/schedule.json${suffix}`,
+		`${eventUrl}schedule/${versionPath}widget/v2.json${suffix}`,
+	]
+	for (const url of urls) {
+		let response
+		try {
+			response = await fetch(url)
+		} catch {
+			continue
+		}
+		if (response.status === 404) {
+			return null
+		}
+		if (!response.ok) {
+			continue
+		}
+		try {
+			const data = await response.json()
+			if (data?.schedule_unavailable) {
+				return null
+			}
+			return data
+		} catch {
+			continue
+		}
+	}
+	throw new Error('schedule widget fetch failed')
+}

@@ -506,7 +506,7 @@ export default {
 		display: flex
 		align-items: center
 		gap: 8px
-		padding: 12px 10px 0
+		padding: 6px 8px 0
 		flex-wrap: wrap
 		min-width: 0
 		width: 100%
@@ -939,7 +939,7 @@ export default {
 @media (max-width: 600px)
 	.c-speakers-list
 		.speakers-toolbar
-			padding: 10px 10px 0
+			padding: 6px 8px 0
 			gap: 6px
 			flex-wrap: nowrap
 			.search-box
@@ -954,7 +954,7 @@ export default {
 			.toolbar-secondary
 				display: none
 				position: absolute
-				top: calc(100% + 8px)
+				top: calc(100% + 4px)
 				z-index: 120
 				padding: 8px
 				background: #fff

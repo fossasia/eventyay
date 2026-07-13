@@ -250,6 +250,26 @@ def test_orga_can_release_schedule(client, orga_user_write_token, event, slot):
 
 
 @pytest.mark.django_db
+def test_orga_cannot_release_breaks_only_schedule(client, orga_user_write_token, event, break_slot):
+    with scope(event=event):
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        initial_schedule_count = event.schedules.count()
+
+    release_data = {'version': 'v_breaks_only', 'comment': 'Should not release'}
+    response = client.post(
+        event.api_urls.schedules + 'release/',
+        data=json.dumps(release_data),
+        content_type='application/json',
+        headers={'Authorization': f'Token {orga_user_write_token.token}'},
+    )
+    assert response.status_code == 400, response.text
+    content = json.loads(response.text)
+    assert 'only breaks' in str(content).lower()
+    with scope(event=event):
+        assert event.schedules.count() == initial_schedule_count
+
+
+@pytest.mark.django_db
 def test_orga_cannot_release_schedule_with_existing_version(
     client, orga_user_write_token, event
 ):

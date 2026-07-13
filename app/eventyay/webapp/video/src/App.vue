@@ -46,12 +46,13 @@
 import { mapState } from 'vuex'
 import { computed, reactive } from 'vue'
 import moment from 'lib/timetravelMoment'
+import config from '../../config'
 import { inferRoomType, inferType } from 'lib/room-types'
+import { loadStarredSharingPreference, updateStarredSharingPreference } from '@schedule/utils'
 import AppBar from 'components/AppBar'
 import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
 import Notifications from 'components/notifications'
-import GreetingPrompt from 'components/profile/GreetingPrompt'
 
 const mediaModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom']
 const stageToolModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.janus']
@@ -69,7 +70,7 @@ export default {
 				days: computed(() => this.$store.getters['schedule/days']),
 				favs: computed(() => this.$store.getters['schedule/favs'] || []),
 				now: computed(() => this.$store.state.now),
-				timezone: localStorage.getItem('userTimezone') || moment.tz.guess(),
+				timezone: computed(() => this.$store.state.userTimezone || moment.tz.guess()),
 				hasAmPm: new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12,
 				errorLoading: computed(() => this.$store.state.schedule?.errorLoading),
 				speakersLookup: computed(() => this.$store.getters['schedule/speakersLookup']),
@@ -116,6 +117,10 @@ export default {
 					await this.$router.push({name: 'schedule:public-stars', params: {userCode: user.code}})
 				}
 			},
+			scheduleUserLoggedIn: computed(() => !!this.$store.state.user),
+			loadStarredSharingPreference: () => this.loadStarredSharingPreference(),
+			updateStarredSharingPreference: (value) => this.updateStarredSharingPreference(value),
+			onSaveTimezone: (timezone) => this.$store.dispatch('updateUserTimezone', timezone),
 			translationMessages: window.eventyay?.translationMessages || {}
 		}
 	},
@@ -123,7 +128,8 @@ export default {
 		return {
 			backgroundRoom: null,
 			showSidebar: false,
-			windowHeight: null
+			windowHeight: null,
+			shareStarredSessions: !!window.eventyay?.showPublicly,
 		}
 	},
 	computed: {
@@ -262,6 +268,30 @@ export default {
 		window.removeEventListener('keydown', this.onKeydown, true)
 	},
 	methods: {
+		async loadStarredSharingPreference() {
+			if (!this.$store.state.user) {
+				this.shareStarredSessions = false
+				return false
+			}
+			const eventUrl = window.eventyay?.eventUrl || ''
+			const enabled = await loadStarredSharingPreference(eventUrl)
+			this.shareStarredSessions = enabled
+			return enabled
+		},
+		async updateStarredSharingPreference(value) {
+			if (!this.$store.state.user) return false
+			const eventUrl = window.eventyay?.eventUrl || ''
+			const previous = this.shareStarredSessions
+			this.shareStarredSessions = !!value
+			try {
+				const enabled = await updateStarredSharingPreference(eventUrl, this.shareStarredSessions)
+				this.shareStarredSessions = enabled
+				return enabled
+			} catch {
+				this.shareStarredSessions = previous
+				throw new Error('sharing preference update failed')
+			}
+		},
 		getSessionRoute(session) {
 			if (session.room?.modules) {
 				return {name: 'room', params: {roomId: session.room.id}}

@@ -70,6 +70,13 @@ class ScheduleReleaseSerializer(PretalxSerializer):
             raise ValidationError(f"A schedule with the version '{value}' already exists for this event.")
         return value
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        wip_schedule = self.context['request'].event.wip_schedule
+        if release_block_message := wip_schedule.release_block_message():
+            raise ValidationError(release_block_message)
+        return attrs
+
 
 @register_serializer(versions=CURRENT_VERSIONS)
 class TalkSlotSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
