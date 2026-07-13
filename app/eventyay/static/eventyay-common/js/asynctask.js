@@ -123,9 +123,6 @@ const poll = () => {
 
                 setTimeout(() => {
                     hide()
-                    // if (data.redirect) {
-                    //     location.href = data.redirect
-                    // }
                 }, 2000)
                 return
             }
