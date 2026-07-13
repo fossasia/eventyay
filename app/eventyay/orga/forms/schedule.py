@@ -45,10 +45,7 @@ class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
         return version
 
     def clean(self):
-        cleaned_data = super().clean()
-        if release_block_message := self.event.wip_schedule.release_block_message():
-            raise forms.ValidationError(release_block_message)
-        return cleaned_data
+        return super().clean()
 
     class Meta:
         model = Schedule

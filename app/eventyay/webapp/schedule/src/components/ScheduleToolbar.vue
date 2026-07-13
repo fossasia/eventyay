@@ -406,7 +406,8 @@ export default {
 			sortOpen: false,
 			densityOpen: false,
 			mobileFiltersOpen: false,
-			mobileMoreOpen: false
+			mobileMoreOpen: false,
+			cachedOtherTimezones: null,
 		}
 	},
 	computed: {
@@ -585,21 +586,7 @@ export default {
 			return pinned
 		},
 		otherTimezones() {
-			const pinnedIds = new Set(this.pinnedTimezones.map(o => o.id))
-			const seen = new Set()
-			const result = []
-			const candidates = this.availableTimezones.length ? this.availableTimezones : []
-			const addTz = (tz) => {
-				if (!tz || pinnedIds.has(tz) || seen.has(tz)) return
-				seen.add(tz)
-				result.push(tz)
-			}
-			for (const tz of candidates) addTz(tz)
-			addTz(this.scheduleTimezone)
-			addTz(this.userTimezone)
-			return result
-				.sort((a, b) => a.localeCompare(b))
-				.map(tz => ({ id: tz, label: tz }))
+			return this.cachedOtherTimezones || []
 		},
 		allTimezoneOptions() {
 			return [...this.pinnedTimezones, ...this.otherTimezones]
@@ -925,6 +912,25 @@ export default {
 		toggleTzDropdown() {
 			this.tzOpen = !this.tzOpen
 			this.tzSearch = ''
+			if (this.tzOpen) this.ensureOtherTimezones()
+		},
+		ensureOtherTimezones() {
+			if (this.cachedOtherTimezones) return
+			const pinnedIds = new Set(this.pinnedTimezones.map(o => o.id))
+			const seen = new Set()
+			const result = []
+			const candidates = this.availableTimezones.length ? this.availableTimezones : []
+			const addTz = (tz) => {
+				if (!tz || pinnedIds.has(tz) || seen.has(tz)) return
+				seen.add(tz)
+				result.push(tz)
+			}
+			for (const tz of candidates) addTz(tz)
+			addTz(this.scheduleTimezone)
+			addTz(this.userTimezone)
+			this.cachedOtherTimezones = result
+				.sort((a, b) => a.localeCompare(b))
+				.map(tz => ({ id: tz, label: tz }))
 		},
 		toggleFilter(item) {
 			item.selected = !item.selected

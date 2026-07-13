@@ -315,6 +315,7 @@ export default {
 			scheduleUnavailable: false,
 			onHomeServer: false,
 			loggedIn: false,
+			_initialized: false,
 			apiUrl: null,
 			translationMessages: {},
 			errorMessages: [],
@@ -630,11 +631,8 @@ export default {
 			}
 		},
 		loggedIn (isLoggedIn) {
-			if (isLoggedIn) {
-				loadStarredSharingPreference(this.eventUrl).then((enabled) => {
-					this.shareStarredSessions = enabled
-				})
-			} else {
+			if (!this._initialized) return
+			if (!isLoggedIn) {
 				this.shareStarredSessions = false
 			}
 			if (!this.schedule || !this.remoteApiUrl) return
@@ -815,6 +813,7 @@ export default {
 				this.currentDay = filteredDays[0].format('YYYY-MM-DD')
 			}
 		}
+		this._initialized = true
 	},
 	async mounted () {
 		// We block until we have either a regular parent or a shadow DOM parent

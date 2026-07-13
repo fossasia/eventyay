@@ -71,11 +71,7 @@ class ScheduleReleaseSerializer(PretalxSerializer):
         return value
 
     def validate(self, attrs):
-        attrs = super().validate(attrs)
-        wip_schedule = self.context['request'].event.wip_schedule
-        if release_block_message := wip_schedule.release_block_message():
-            raise ValidationError(release_block_message)
-        return attrs
+        return super().validate(attrs)
 
 
 @register_serializer(versions=CURRENT_VERSIONS)

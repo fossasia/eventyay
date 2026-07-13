@@ -280,19 +280,22 @@ def test_orga_can_see_schedule_release_view(orga_client, event):
 
 
 @pytest.mark.django_db
-def test_orga_cannot_release_breaks_only_schedule(orga_client, event, break_slot):
+def test_orga_release_breaks_only_schedule_shows_warning(orga_client, event, break_slot):
     with scope(event=event):
         event.wip_schedule.talks.filter(submission__isnull=False).delete()
         assert Schedule.objects.count() == 2
+    response = orga_client.get(event.orga_urls.release_schedule, follow=True)
+    assert response.status_code == 200
+    assert 'only breaks' in response.content.decode().lower()
     response = orga_client.post(
         event.orga_urls.release_schedule,
         follow=True,
         data={'version': 'breaks only'},
     )
     assert response.status_code == 200
-    assert 'only breaks' in response.content.decode()
     with scope(event=event):
-        assert Schedule.objects.count() == 2
+        assert Schedule.objects.count() == 3
+        assert event.schedules.filter(version='breaks only').exists()
 
 
 @pytest.mark.django_db
