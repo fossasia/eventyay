@@ -278,8 +278,14 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         if 'get_duration' in validated_data:
             validated_data['duration'] = validated_data.pop('get_duration')
             duration_changed = validated_data['duration'] != instance.duration
-        slot_count_changed = 'slot_count' in validated_data and validated_data.get('slot_count') != instance.slot_count
-        track_changed = 'track' in validated_data and validated_data.get('track') != instance.track
+        slot_count_changed = (
+            'slot_count' in validated_data
+            and validated_data['slot_count'] != instance.slot_count
+        )
+        track_changed = (
+            'track' in validated_data
+            and validated_data['track'] != instance.track
+        )
 
         submission = super().update(instance, validated_data)
 
