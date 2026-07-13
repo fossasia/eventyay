@@ -329,6 +329,18 @@ export function hasInlineStarredSharingPreference () {
 		|| window.eventyay?.showPublicly !== undefined
 }
 
+/** Keep server-rendered shells in sync after the user toggles sharing in-place. */
+export function syncInlineStarredSharingPreference (value) {
+	const enabled = !!value
+	const messagesEl = document.querySelector('#pretalx-messages')
+	if (messagesEl) {
+		messagesEl.dataset.showPublicly = enabled ? 'true' : 'false'
+	}
+	if (window.eventyay) {
+		window.eventyay.showPublicly = enabled
+	}
+}
+
 export async function loadStarredSharingPreference (eventUrl) {
 	const inline = readInlineStarredSharingPreference()
 	if (hasInlineStarredSharingPreference()) {
@@ -358,7 +370,9 @@ export async function updateStarredSharingPreference (eventUrl, value) {
 	})
 	if (!response.ok) throw new Error('sharing preference update failed')
 	const data = await response.json()
-	return !!data?.show_publicly
+	const enabled = !!data?.show_publicly
+	syncInlineStarredSharingPreference(enabled)
+	return enabled
 }
 
 /**

@@ -473,20 +473,23 @@ def starred_sharing_preference(request, event, **kwargs):
         return JsonResponse({'detail': str(_('Permission denied'))}, status=403)
 
     if request.method == 'GET':
-        return JsonResponse(starred_sharing_payload(request.user, request.event))
+        response = JsonResponse(starred_sharing_payload(request.user, request.event))
+    else:
+        try:
+            data = json.loads(request.body.decode() or '{}')
+        except json.JSONDecodeError:
+            return JsonResponse({'detail': str(_('Invalid JSON'))}, status=400)
 
-    try:
-        data = json.loads(request.body.decode() or '{}')
-    except json.JSONDecodeError:
-        return JsonResponse({'detail': str(_('Invalid JSON'))}, status=400)
+        show_publicly = data.get('show_publicly')
+        if not isinstance(show_publicly, bool):
+            return JsonResponse({'detail': str(_('Expected boolean show_publicly.'))}, status=400)
 
-    show_publicly = data.get('show_publicly')
-    if not isinstance(show_publicly, bool):
-        return JsonResponse({'detail': str(_('Expected boolean show_publicly.'))}, status=400)
+        request.user.show_publicly = show_publicly
+        request.user.save(update_fields=['show_publicly'])
+        response = JsonResponse(starred_sharing_payload(request.user, request.event))
 
-    request.user.show_publicly = show_publicly
-    request.user.save(update_fields=['show_publicly'])
-    return JsonResponse(starred_sharing_payload(request.user, request.event))
+    response['Cache-Control'] = 'no-store'
+    return response
 
 
 def talk_sort_key(talk):
