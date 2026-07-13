@@ -1145,6 +1145,10 @@ a.event-public-text-link:visited {
   .table-flip tbody td:last-child {
     border-bottom: none;
   }
+  .table-flip tbody td[colspan]:not([colspan="1"]) {
+    justify-content: center;
+    text-align: center;
+  }
   .table-flip tbody td::before {
     content: attr(data-label);
     flex: 0 0 auto;
