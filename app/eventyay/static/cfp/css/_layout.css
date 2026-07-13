@@ -637,10 +637,24 @@ footer {
     scrollbar-width: none;
     display: flex;
     align-items: center;
+    position: relative;
   }
 
   .presale-tabs-scroll::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Right-edge scroll hint so users know the tab row scrolls horizontally */
+  .presale-tabs-scroll::after {
+    content: "";
+    position: sticky;
+    right: 0;
+    align-self: stretch;
+    flex: 0 0 24px;
+    margin-left: -24px;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent, var(--color-bg));
+    border-right: 1px solid var(--color-border, rgba(0, 0, 0, 0.15));
   }
 
   .presale-sticky-tabs a.header-tab {
@@ -648,6 +662,10 @@ footer {
     flex-shrink: 0;
     padding: 4px 6px 3px 6px;
     font-size: 0.8rem;
+  }
+
+  .presale-sticky-tabs a.header-tab.active {
+    order: -1;
   }
 
   .presale-sticky-tabs .header-row-right {
@@ -903,14 +921,9 @@ footer {
   .nav-icon-mobile {
     font-size: 1.25rem;
   }
-  .mobile-hide-text {
+  .mobile-hide-text,
+  .hidden-xs {
     display: none;
-  }
-  .cfs-full {
-    display: none;
-  }
-  .cfs-short {
-    display: inline;
   }
 }
 
