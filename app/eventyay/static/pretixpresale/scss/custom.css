@@ -224,6 +224,15 @@ header .header-row-right {
     margin-inline: 0;
 }
 
+#main-card summary.product-row {
+    color: var(--color-text);
+}
+
+#main-card summary.product-row .product-description,
+#main-card summary.product-row .product-description p {
+    color: var(--color-text);
+}
+
 .nav-icon-mobile {
     display: none;
 }

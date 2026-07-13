@@ -183,6 +183,15 @@
     margin-inline: 0;
 }
 
+#main-card summary.product-row {
+    color: var(--color-text);
+
+    .product-description,
+    .product-description p {
+        color: var(--color-text);
+    }
+}
+
 /* Desktop: hide icons that are mobile-only (globe + user in nav dropdowns) */
 .nav-icon-mobile {
     display: none;
