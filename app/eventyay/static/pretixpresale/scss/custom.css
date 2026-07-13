@@ -300,7 +300,8 @@ header .header-row-right {
         max-width: calc(100vw - 16px);
     }
 
-    .mobile-hide-text {
+    .mobile-hide-text,
+    .hidden-xs {
         display: none;
     }
 
@@ -317,6 +318,10 @@ header .header-row-right {
         padding: 2px 4px;
     }
 
+    .presale-sticky-tabs a.header-tab.active {
+        order: -1;
+    }
+
     .cfs-full {
         display: none;
     }
@@ -324,7 +329,6 @@ header .header-row-right {
     .cfs-short {
         display: inline;
     }
-
 
     .login-link {
         display: flex;
