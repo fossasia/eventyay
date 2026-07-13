@@ -2,7 +2,6 @@ import copy
 import datetime as dt
 import hashlib
 import logging
-import os
 import string
 import uuid
 from collections import OrderedDict, defaultdict
@@ -49,8 +48,8 @@ from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
-from eventyay.common.text.path import path_with_hash, resolve_media_path as _resolve_media_path
-from eventyay.common.text.phrases import phrases
+from eventyay.common.text.path import path_with_hash
+from eventyay.common.text.path import resolve_media_path as _resolve_media_path
 from eventyay.common.urls import EventUrls, is_http_url
 from eventyay.consts import TIMEZONE_CHOICES
 from eventyay.core.permissions import (
@@ -1016,7 +1015,7 @@ class Event(
     def save(self, *args, **kwargs):
         was_created = not bool(self.pk)
         locales_changed = False
-        
+
         # Check if locales have changed by comparing locale_array directly
         if not was_created:
             try:
@@ -1028,13 +1027,13 @@ class Event(
                     locales_changed = True
             except self.__class__.DoesNotExist:
                 pass
-        
+
         if self.date_from and not self.date_to:
             self.date_to = self.date_from + timedelta(hours=24)
 
         obj = super().save(*args, **kwargs)
         self.cache.clear()
-        
+
         # Clear cached_property for locales and related properties to ensure fresh calculation
         if 'locales' in self.__dict__:
             del self.__dict__['locales']
@@ -1046,7 +1045,7 @@ class Event(
         elif locales_changed:
             # Backfill all existing mail templates with new locales
             self._backfill_all_mail_template_locales()
-        
+
         return obj
 
     def _backfill_all_mail_template_locales(self):
@@ -2821,9 +2820,10 @@ class Event(
         return self.schedules.order_by('-published').filter(published__isnull=False).first()
 
     def get_mail_template(self, role):
+        from i18nfield.strings import LazyI18nString
+
         from eventyay.base.models import MailTemplate
         from eventyay.mail.default_templates import get_default_template
-        from i18nfield.strings import LazyI18nString
 
         try:
             with scope(event=self):
@@ -2837,10 +2837,10 @@ class Event(
                 if locale:
                     subject_data[locale] = str(default_subject.localize(locale))
                     text_data[locale] = str(default_text.localize(locale))
-            
+
             subject = LazyI18nString(subject_data) if subject_data else default_subject
             text = LazyI18nString(text_data) if text_data else default_text
-            
+
             with scope(event=self):
                 template, __ = MailTemplate.objects.get_or_create(
                     event=self, role=role, defaults={'subject': subject, 'text': text}
@@ -2854,11 +2854,11 @@ class Event(
             return template
 
         default_subject, default_text = get_default_template(role)
-        
+
         # Pre-check: do we have all locales without needing a write?
         locales_to_check = set(locale for locale in self.locales if locale)
         all_locales_present = True
-        
+
         for field_name, default_value in (('subject', default_subject), ('text', default_text)):
             current_value = getattr(template, field_name)
             if not (
@@ -2867,15 +2867,15 @@ class Event(
                 and hasattr(default_value, 'localize')
             ):
                 continue
-            
+
             if locales_to_check - set(current_value.data.keys()):
                 all_locales_present = False
                 break
-        
+
         # Early return if all locales are already present
         if all_locales_present:
             return template
-        
+
         # Only enter transaction if we need to backfill missing locales
         with scope(event=self), transaction.atomic():
             if template.pk:
