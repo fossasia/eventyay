@@ -330,6 +330,7 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
 
             ctx['speakers_total'] = (
                 Submission.speakers.through.objects
+                .exclude(submission__state__in=[SubmissionStates.DRAFT, SubmissionStates.DELETED])
                 .values('user_id')
                 .distinct()
                 .count()
@@ -347,6 +348,7 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                     SubmissionStates.CANCELED,
                     SubmissionStates.WITHDRAWN,
                     SubmissionStates.DELETED,
+                    SubmissionStates.DRAFT,
                 ])
                 .values('user_id').distinct().count()
             )

@@ -221,7 +221,9 @@
                                         <tr>
                                             <td><strong>{{ rev.currency }}</strong></td>
                                             <td class="text-right">{{ rev.gross|floatformat:2 }}</td>
-                                            <td class="text-right text-danger">-{{ rev.refunded|floatformat:2 }}</td>
+                                            <td class="text-right{% if rev.refunded > 0 %} text-danger{% endif %}">
+                                                {% if rev.refunded > 0 %}-{% endif %}{{ rev.refunded|floatformat:2 }}
+                                            </td>
                                             <td class="text-right text-success"><strong>{{ rev.net|floatformat:2 }}</strong></td>
                                             <td class="text-right">{{ rev.paid_count|intcomma }}</td>
                                             <td class="text-right">{{ rev.pending_count|intcomma }}</td>
