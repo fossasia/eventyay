@@ -24,7 +24,7 @@ prompt.c-profile-greeting-prompt(:allowCancel="false")
 			template(v-else)
 				h1 {{ $t('profile/GreetingPrompt:step-display-name~as-first-step:heading') }}
 				p {{ $t('profile/GreetingPrompt:step-display-name~as-first-step:text') }}
-			bunt-input.display-name(name="displayName", :label="$t('profile/GreetingPrompt:displayname:label')", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
+			bunt-input.display-name(name="displayName", :label="$t('profile/GreetingPrompt:displayname:label')", v-model.trim="profile.display_name", :validation="v$.profile.display_name", required)
 		.step-avatar(v-else-if="activeStep === 'avatar'")
 			h1 {{ $t('profile/GreetingPrompt:step-avatar:heading') }}
 			p {{ $t('profile/GreetingPrompt:step-avatar:text') }}
@@ -40,7 +40,7 @@ prompt.c-profile-greeting-prompt(:allowCancel="false")
 		.actions(v-if="activeStep !== 'connectSocial' && !showConnectGravatar")
 			bunt-button#btn-back(v-if="previousStep", @click="activeStep = previousStep") {{ $t('profile/GreetingPrompt:button-back:label') }}
 			bunt-button#btn-continue(v-if="nextStep", :class="{invalid: v$.$invalid && v$.$dirty}", :disabled="blockSave || v$.$invalid && v$.$dirty", :loading="processingStep", :key="activeStep", @click="toNextStep") {{ $t('profile/GreetingPrompt:button-continue:label') }}
-			bunt-button#btn-finish(v-else, :loading="saving", :disabled="blockSave", @click="update") {{ $t('profile/GreetingPrompt:button-finish:label') }}
+			bunt-button#btn-finish(v-else, :class="{invalid: v$.$invalid && v$.$dirty}", :loading="saving", :disabled="blockSave || v$.$invalid && v$.$dirty", @click="update") {{ $t('profile/GreetingPrompt:button-finish:label') }}
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core'
@@ -70,7 +70,7 @@ export default {
 		}
 	},
 	validations() {
-		if (this.activeStep !== 'displayName') return {}
+		if (!this.profile) return {}
 		return {
 			profile: {
 				display_name: {
@@ -130,9 +130,17 @@ export default {
 		if (this.activeStep === 'connectSocial' && this.profile.avatar.url) this.activeStep = this.nextStep
 	},
 	methods: {
+		ensureDisplayName() {
+			if (!this.v$.profile?.display_name?.$invalid) return true
+			this.activeStep = 'displayName'
+			return false
+		},
 		async toNextStep() {
 			this.v$.$touch()
-			if (this.v$.$invalid) return
+			if (this.v$.$invalid) {
+				this.ensureDisplayName()
+				return
+			}
 			if (this.$refs.step?.update) {
 				this.processingStep = true
 				await this.$refs.step.update()
@@ -150,11 +158,21 @@ export default {
 		setGravatar(gravatar) {
 			Object.assign(this.profile, gravatar)
 			this.showConnectGravatar = false
-			this.activeStep = this.nextStep
+			const displayNameIndex = this.steps.indexOf('displayName')
+			if (!this.profile.display_name?.trim()) {
+				this.activeStep = 'displayName'
+			} else if (displayNameIndex >= 0) {
+				this.activeStep = this.steps[displayNameIndex + 1] || 'displayName'
+			} else {
+				this.activeStep = this.nextStep
+			}
 		},
 		async update() {
 			this.v$.$touch()
-			if (this.v$.$invalid) return
+			if (this.v$.$invalid) {
+				this.ensureDisplayName()
+				return
+			}
 			this.saving = true
 			if (this.$refs.step?.update) {
 				await this.$refs.step.update()
