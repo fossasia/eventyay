@@ -46,7 +46,6 @@
 import { mapState } from 'vuex'
 import { computed, reactive } from 'vue'
 import moment from 'lib/timetravelMoment'
-import config from '../../config'
 import { inferRoomType, inferType } from 'lib/room-types'
 import { loadStarredSharingPreference, updateStarredSharingPreference } from '@schedule/utils'
 import AppBar from 'components/AppBar'

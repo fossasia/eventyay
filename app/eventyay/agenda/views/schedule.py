@@ -19,6 +19,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.http import urlencode
 from django.utils.translation import get_language, gettext_lazy as _
+from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
 from django_context_decorator import context
