@@ -52,6 +52,7 @@ import AppBar from 'components/AppBar'
 import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
 import Notifications from 'components/notifications'
+import GreetingPrompt from 'components/profile/GreetingPrompt'
 
 const mediaModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom']
 const stageToolModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.janus']
