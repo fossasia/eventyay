@@ -650,6 +650,10 @@ footer {
     font-size: 0.8rem;
   }
 
+  .presale-sticky-tabs a.header-tab.active {
+    order: -1;
+  }
+
   .presale-sticky-tabs .header-row-right {
     margin-left: 0;
     margin-right: 2px;
@@ -903,7 +907,8 @@ footer {
   .nav-icon-mobile {
     font-size: 1.25rem;
   }
-  .mobile-hide-text {
+  .mobile-hide-text,
+  .hidden-xs {
     display: none;
   }
   .cfs-full {
