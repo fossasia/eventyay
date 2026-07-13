@@ -172,7 +172,7 @@ function drawCheckinRate() {
     const series = parseData(dataEl, 'series')
     if (!series || series.length === 0) return
 
-    const events = series.map((d) => d.event.length > 12 ? d.event.slice(0, 10) + '...' : d.event)
+    const events = series.map((d) => d.event.length > 10 ? d.event.slice(0, 7) + '...' : d.event)
     const totals = series.map((d) => d.total)
     const checkedIn = series.map((d) => d.checked_in)
 
@@ -216,7 +216,14 @@ function drawCheckinRate() {
         colors: [PALETTE[1], PALETTE[0]],
         dataLabels: { enabled: false },
         legend: { position: 'top' },
-        tooltip: { shared: true },
+        tooltip: {
+            shared: true,
+            x: {
+                formatter: (val, { dataPointIndex }) => {
+                    return series[dataPointIndex] ? series[dataPointIndex].event : val
+                }
+            }
+        },
     }
     new ApexCharts(chartEl, options).render()
 }

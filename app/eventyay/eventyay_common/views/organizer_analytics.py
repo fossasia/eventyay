@@ -7,10 +7,8 @@ from django.db.models import (
     Count,
     DateTimeField,
     Exists,
-    Max,
     OuterRef,
     Q,
-    Subquery,
     Sum,
 )
 from django.db.models.functions import TruncDate
@@ -64,22 +62,6 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             )
         return self._cached_event_ids_for_checkins
 
-    def _get_payment_date_subquery(self):
-        return (
-            OrderPayment.objects.filter(
-                order=OuterRef('pk'),
-                state__in=(
-                    OrderPayment.PAYMENT_STATE_CONFIRMED,
-                    OrderPayment.PAYMENT_STATE_REFUNDED,
-                ),
-                payment_date__isnull=False,
-            )
-            .values('order')
-            .annotate(m=Max('payment_date'))
-            .values('m')
-            .order_by()
-        )
-
     def _get_tickets_data(self):
         event_ids = self._event_ids_for_orders()
         if not event_ids:
@@ -95,8 +77,6 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
         since = timezone.now() - datetime.timedelta(days=30)
 
         with scopes_disabled():
-            p_date = self._get_payment_date_subquery()
-
             placed_qs = (
                 Order.objects.filter(event_id__in=event_ids, datetime__gte=since)
                 .annotate(day=TruncDate('datetime', tzinfo=tz))
@@ -106,20 +86,23 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             )
             ordered_by_day = {row['day']: row['cnt'] for row in placed_qs}
 
-            paid_and_rev_qs = (
-                Order.objects.filter(event_id__in=event_ids)
-                .annotate(payment_date=Subquery(p_date, output_field=DateTimeField()))
-                .filter(payment_date__gte=since)
+            payment_day_qs = (
+                OrderPayment.objects.filter(
+                    order__event_id__in=event_ids,
+                    state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+                    payment_date__gte=since,
+                )
                 .annotate(day=TruncDate('payment_date', tzinfo=tz))
                 .values('day')
                 .annotate(
-                    cnt=Count('pk'),
-                    revenue=Sum('total', filter=Q(status=Order.STATUS_PAID))
+                    cnt=Count('order', distinct=True),
+                    revenue=Sum('amount')
                 )
                 .order_by('day')
             )
-            paid_by_day = {row['day']: row['cnt'] for row in paid_and_rev_qs}
-            rev_by_day = {row['day']: float(row['revenue'] or 0) for row in paid_and_rev_qs}
+            payment_data = list(payment_day_qs)
+            paid_by_day = {row['day']: row['cnt'] for row in payment_data}
+            rev_by_day = {row['day']: float(row['revenue'] or 0) for row in payment_data}
 
             status_qs = (
                 Order.objects.filter(event_id__in=event_ids)
@@ -130,14 +113,23 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
 
             top_qs = list(
                 Order.objects.filter(event_id__in=event_ids)
-                .values('event__name', 'event__slug')
+                .values('event', 'event__name', 'event__slug')
                 .annotate(
                     total_orders=Count('pk'),
                     paid_orders=Count('pk', filter=Q(status=Order.STATUS_PAID)),
-                    gross_revenue=Sum('total', filter=Q(status=Order.STATUS_PAID)),
                 )
                 .order_by('-total_orders')[:10]
             )
+
+            rev_qs = (
+                OrderPayment.objects.filter(
+                    order__event_id__in=event_ids,
+                    state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+                )
+                .values('order__event_id')
+                .annotate(total=Sum('amount'))
+            )
+            event_revenue = {row['order__event_id']: row['total'] for row in rev_qs}
 
         orders_over_time = []
         if ordered_by_day or paid_by_day:
@@ -182,7 +174,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                 'slug': row['event__slug'],
                 'total_orders': row['total_orders'],
                 'paid_orders': row['paid_orders'],
-                'gross_revenue': float(row['gross_revenue'] or 0),
+                'gross_revenue': float(event_revenue.get(row['event'], 0) or 0),
             }
             for row in top_qs
         ]
