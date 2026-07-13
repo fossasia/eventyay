@@ -276,7 +276,10 @@ const setActiveTabUI = function(tabId) {
 
     // Update the nav-tabs active state
     document.querySelectorAll('.nav-tabs a').forEach(function(link) {
-        const linkUrl = new URL(link.getAttribute('href'), window.location.href);
+        const href = link.getAttribute('href');
+        if (!href) return;
+        
+        const linkUrl = new URL(href, window.location.href);
         const linkTab = linkUrl.searchParams.get('tab');
         const li = link.closest('li');
         if (li) {
