@@ -197,7 +197,7 @@ export default {
 					})
 				}
 			}
-			const href = this.presaleHomeUrl || navigation?.site_home_url
+			const href = navigation?.site_home_url
 			if (!href) return null
 			return {
 				href,
