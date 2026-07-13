@@ -23,7 +23,7 @@ def _create_test_image(width: int, height: int, mode: str = 'RGB', format: str =
     )
 
 
-@pytest.mark.parametrize('setting_key', ['logo_image', 'event_logo_image', 'event_preview_image'])
+@pytest.mark.parametrize('setting_key', ['logo_image', 'event_logo_image', 'event_preview_image', 'og_image'])
 def test_optimize_uploaded_image_resizes(setting_key):
     max_w = MAX_WIDTH[setting_key]
     orig_w = max_w + 500
