@@ -261,23 +261,10 @@ header .header-row-right {
         scrollbar-width: none;
         display: flex;
         align-items: center;
-        position: relative;
     }
 
     .presale-tabs-scroll::-webkit-scrollbar {
         display: none;
-    }
-
-    .presale-tabs-scroll::after {
-        content: "";
-        position: sticky;
-        right: 0;
-        align-self: stretch;
-        flex: 0 0 24px;
-        margin-left: -24px;
-        pointer-events: none;
-        background: linear-gradient(to right, transparent, var(--color-bg));
-        border-right: 1px solid var(--color-border, rgba(0, 0, 0, 0.15));
     }
 
     .presale-sticky-tabs-inner {
