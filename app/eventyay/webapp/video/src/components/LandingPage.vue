@@ -641,7 +641,8 @@ export default {
 			flex-direction: column
 			display: flex
 		.event-brand
-			flex-wrap: wrap
+			display: flex
+			flex-direction: column
 			gap: 1rem
 			align-items: flex-start
 		.event-hero-text .event-title

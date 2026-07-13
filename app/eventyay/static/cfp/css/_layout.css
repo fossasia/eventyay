@@ -732,7 +732,8 @@ footer {
   }
 
   .event-brand {
-    flex-wrap: wrap;
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
     align-items: flex-start;
     padding-left: 12px;
