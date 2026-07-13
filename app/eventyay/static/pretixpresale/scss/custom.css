@@ -562,11 +562,6 @@ header .header-row-right {
 
 .variation-option > div:first-child {
     position: relative;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: baseline;
-    column-gap: 0.5em;
-    row-gap: 0.25em;
 }
 
 .variation-option > div:first-child::before {
@@ -582,34 +577,25 @@ header .header-row-right {
 .variation-option > div:first-child::after {
     content: '';
     position: absolute;
-    top: 50%;
+    top: 0.75em;
     left: 2px;
     width: 10px;
     height: 1px;
     background: var(--color-grey-light, #d0d0d0);
-    transform: translateY(-50%);
 }
 
 .variation-option h5 {
-    grid-column: 1;
     padding-left: 16px;
     margin: 0;
 }
 
 .variation-option .variation-description {
-    grid-column: 2;
     margin: 0;
-    padding-left: 0;
-    min-width: 0;
+    padding-left: 16px;
 }
 
 .variation-option .variation-description p {
-    display: inline;
     margin: 0;
-}
-
-.variation-option > div:first-child > :not(h5):not(.variation-description) {
-    grid-column: 1 / -1;
 }
 
 .variation-selector-label.is-exclusive-disabled,
