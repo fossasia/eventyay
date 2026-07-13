@@ -682,11 +682,12 @@ class Schedule(PretalxModel):
 
         if self.talks.filter(submission__isnull=False, start__isnull=False).exists():
             return None
-        if self.talks.filter(submission__isnull=True).exists():
+        if (
+            self.talks.filter(submission__isnull=True).exists()
+            and not self.talks.filter(submission__isnull=False).exists()
+        ):
             return _('A schedule with only breaks cannot be released. Please schedule at least one session first.')
-        if self.talks.filter(submission__isnull=False).exists():
-            return _('A schedule cannot be released while all sessions are still unscheduled.')
-        return _('A schedule cannot be released without any scheduled sessions.')
+        return None
 
     @cached_property
     def warnings(self) -> dict:
