@@ -236,5 +236,8 @@
     min-height: 250px;
     height: 250px;
 }
-
-
+.analytics-page h1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

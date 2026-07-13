@@ -16,7 +16,10 @@
 {% block inner %}
 <div class="analytics-page">
     <h1>
-        {% blocktrans with name=request.organizer.name %}Organizer: {{ name }}{% endblocktrans %}
+        <span>{% blocktrans with name=request.organizer.name %}Organizer: {{ name }}{% endblocktrans %}</span>
+        <a href="?refresh=true" class="btn btn-default btn-sm">
+            <span class="fa fa-refresh"></span> {% trans "Refresh" %}
+        </a>
     </h1>
 
     <div class="analytics-section">
