@@ -49,7 +49,7 @@ from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
-from eventyay.common.text.path import path_with_hash
+from eventyay.common.text.path import path_with_hash, resolve_media_path as _resolve_media_path
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls, is_http_url
 from eventyay.consts import TIMEZONE_CHOICES
@@ -62,7 +62,7 @@ from eventyay.core.permissions import (
     traits_match_required,
 )
 from eventyay.core.utils.json import CustomJSONEncoder
-from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
+from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
 from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.http import smtp_reachable
@@ -99,6 +99,7 @@ def default_roles():
     attendee = [
         Permission.EVENT_VIEW,
         Permission.EVENT_EXHIBITION_CONTACT,
+        Permission.EVENT_CHAT_DIRECT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
     participant = viewer + [
@@ -529,6 +530,7 @@ class EventMixin:
 # - We want to avoid the `objects = ScopedManager()` (we may use it later, after the making "enext" stable enough).
 # - We don't want to inherit the LogMixin (already have LoggedModel).
 @settings_hierarkey.add(parent_field='organizer', cache_namespace='event')
+
 class Event(
     EventMixin, LoggedModel, TimestampedModel, FileCleanupMixin, RulesModelMixin, models.Model, metaclass=RulesModelBase
 ):
@@ -693,8 +695,11 @@ class Event(
     )
     email = models.EmailField(
         verbose_name=_('Organizer email address'),
-        help_text=_('Will be used as Reply-To in emails.'),
-        default='org@mail.com',
+        help_text=_("Enter an organizer email address for event-related emails. "
+                    "If set, this address will be used as the Reply-To when the platform sender address is used. "
+                    "If left empty, no Reply-To will be added automatically and replies will go to the sender address (platform default if not customized)."),
+        blank=True,
+        null=True,
     )
     custom_domain = models.URLField(
         verbose_name=_('Custom domain'),
@@ -877,7 +882,7 @@ class Event(
         speakers = '{base}speakers/'
         reviews = '{base}reviews/'
         rooms = '{base}rooms/'
-        questions = '{base}questions/'
+        questions = '{base}talkquestions/'
         question_options = '{base}question-options/'
         answers = '{base}answers/'
         tags = '{base}tags/'
@@ -1046,11 +1051,10 @@ class Event(
 
     def _backfill_all_mail_template_locales(self):
         """Backfill all existing mail templates with newly added locales."""
-        from eventyay.base.models import MailTemplate
-        
         with scope(event=self):
             for template in self.mail_templates.all():
-                self._ensure_mail_template_locales(template, template.role)
+                if template.role:
+                    self._ensure_mail_template_locales(template, template.role)
 
     def get_plugins(self):
         """
@@ -1451,24 +1455,6 @@ class Event(
             augmented.setdefault(role, [f'eventyay-video-event-{slug}-{trait_name.replace("_", "-")}'])
         return augmented
 
-    def _remove_direct_messaging_if_unauthorized(self, result, user_traits):
-        """Remove EVENT_CHAT_DIRECT permission if user doesn't have the direct messaging trait.
-
-        Args:
-            result: Permission result dictionary to modify
-            user_traits: List of user traits
-        """
-        direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
-        if not direct_messaging_def:
-            return
-
-        direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
-        has_direct_messaging_trait = direct_messaging_trait in user_traits
-
-        if not has_direct_messaging_trait:
-            direct_message_value = Permission.EVENT_CHAT_DIRECT.value
-            result[self] = {p for p in result[self] if normalize_permission_value(p) != direct_message_value}
-
     def has_permission_implicit(
         self,
         *,
@@ -1477,14 +1463,35 @@ class Event(
         room=None,
         allow_empty_traits=True,
     ):
-        # Ensure trait_grants and roles are not None - use defaults if missing
         event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
+        if allow_empty_traits and not traits:
+            traits = ['attendee']
+
+        admin_mode_active = 'admin' in traits
+        if admin_mode_active:
+            for role_name in ORGANIZER_ROLES:
+                role_permissions = event_roles.get(role_name, SYSTEM_ROLES.get(role_name, []))
+                role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+                if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
+                    return True
+
+        attendee_traits = event_trait_grants.get('attendee', ['attendee'])
+        if traits_match_required(traits, attendee_traits) and (attendee_traits or allow_empty_traits):
+            role_permissions = event_roles.get('attendee', SYSTEM_ROLES.get('attendee', []))
+            role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+            role_permissions_str.append(normalize_permission_value(Permission.EVENT_CHAT_DIRECT))
+            if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
+                return True
+
         for role, required_traits in event_trait_grants.items():
+            if role == 'attendee':
+                continue
             if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
                 role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                if any(normalize_permission_value(p) in role_permissions for p in permissions):
+                role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+                if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
                     return True
 
         if room:
@@ -1492,7 +1499,8 @@ class Event(
             for role, required_traits in room_trait_grants.items():
                 if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
                     role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                    if any(normalize_permission_value(p) in role_permissions for p in permissions):
+                    role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+                    if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
                         return True
 
         # Return False if no permission was granted
@@ -1525,7 +1533,8 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
             role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
-            if any(normalize_permission_value(p) in role_perms for p in permission):
+            role_perms_str = [normalize_permission_value(rp) for rp in role_perms]
+            if any(normalize_permission_value(p) in role_perms_str for p in permission):
                 return True
 
     async def has_permission_async(self, *, user, permission: Permission, room=None):
@@ -1555,7 +1564,8 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
             role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
-            if any(normalize_permission_value(p) in role_perms for p in permission):
+            role_perms_str = [normalize_permission_value(rp) for rp in role_perms]
+            if any(normalize_permission_value(p) in role_perms_str for p in permission):
                 return True
 
     def get_all_permissions(self, user):
@@ -1570,6 +1580,8 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
 
         user_traits = user.traits or []
+        if allow_empty_traits and not user_traits:
+            user_traits = ['attendee']
 
         for role, required_traits in event_trait_grants.items():
             if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
@@ -1585,10 +1597,10 @@ class Event(
             for role_name in ORGANIZER_ROLES:
                 role_perms = event_roles.get(role_name, SYSTEM_ROLES.get(role_name, []))
                 result[self].update(role_perms)
-        else:
-            # Remove EVENT_CHAT_DIRECT from ALL users unless they have the direct messaging trait.
-            # Only users with can_video_direct_message team permission get the video_direct_messaging trait.
-            self._remove_direct_messaging_if_unauthorized(result, user_traits)
+
+        attendee_traits = event_trait_grants.get('attendee', ['attendee'])
+        if traits_match_required(user_traits, attendee_traits) and (attendee_traits or allow_empty_traits):
+            result[self].add(Permission.EVENT_CHAT_DIRECT)
 
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
@@ -2432,109 +2444,22 @@ class Event(
         The logo_image setting is actually used for HEADER images (see default_setting.py),
         so we must NOT use it here to prevent header images from appearing as logos.
         """
-
-        def _extract_path(obj):
-            if not obj:
-                return None
-            if isinstance(obj, dict):
-                return obj.get('name') or obj.get('path') or obj.get('url')
-            if hasattr(obj, 'name') and obj.name:
-                return obj.name
-            if hasattr(obj, 'url'):
-                return obj.url
-            return str(obj)
-
         # Only check event_logo_image - NOT logo_image (which is for header images)
-        for key in ('event_logo_image',):
-            settings_logo = self.settings.get(key, as_type=str, default=None)
-            path = _extract_path(settings_logo)
-            if not path:
-                continue
-
-            # Keep full URLs
-            if is_http_url(path):
-                return path
-
-            # Strip file:// scheme if present
-            parsed = urlparse(path)
-            if parsed.scheme == 'file':
-                path = f'{parsed.netloc}{parsed.path}'
-
-            # Normalize absolute filesystem paths to be relative to MEDIA_ROOT
-            abs_path = os.path.abspath(path)
-            media_root = os.path.abspath(settings.MEDIA_ROOT)
-            try:
-                rel_to_media = os.path.relpath(abs_path, media_root)
-                if not rel_to_media.startswith('..'):
-                    path = rel_to_media
-            except OSError:
-                logger.exception('Failed to relativize path %s against MEDIA_ROOT %s', abs_path, media_root)
-
-            # Drop leading media prefixes
-            for prefix in ('/media/', 'media/'):
-                if path.startswith(prefix):
-                    path = path[len(prefix) :]
-
-            # Collapse to pub/… if present
-            if '/pub/' in path and not path.startswith('pub/'):
-                path = path[path.index('pub/') :]
-
-            path = path.lstrip('/')
-            if path:
-                return path
-
-        return None
+        raw = self.settings.get('event_logo_image', as_type=str, default=None)
+        return _resolve_media_path(raw)
 
     @cached_property
     def _visible_header_image_path(self):
         """
         Resolve a usable header image path/URL from common settings, falling back to the legacy field.
+
+        The header image is stored under ``logo_image`` for historical reasons; ``header_image`` is
+        the legacy model field.
         """
-
-        def _extract_path(obj):
-            if not obj:
-                return None
-            if isinstance(obj, dict):
-                return obj.get('name') or obj.get('path') or obj.get('url')
-            if hasattr(obj, 'name') and obj.name:
-                return obj.name
-            if hasattr(obj, 'url'):
-                return obj.url
-            return str(obj)
-
-        # header image for the site is stored in common settings under logo_image (historical)
-        # and in the legacy field header_image; prefer the settings value first
+        # Prefer settings key first (historical name), then legacy model field
         for key in ('logo_image', 'header_image'):
-            settings_header = self.settings.get(key, as_type=str, default=None)
-            path = _extract_path(settings_header)
-            if not path:
-                continue
-
-            if is_http_url(path):
-                return path
-
-            parsed = urlparse(path)
-            if parsed.scheme == 'file':
-                path = f'{parsed.netloc}{parsed.path}'
-
-            abs_path = os.path.abspath(path)
-            media_root = os.path.abspath(settings.MEDIA_ROOT)
-            try:
-                rel_to_media = os.path.relpath(abs_path, media_root)
-                if not rel_to_media.startswith('..'):
-                    path = rel_to_media
-            except OSError:
-                logger.exception(
-                    'Failed to relativize header image path %s against MEDIA_ROOT %s', abs_path, media_root
-                )
-
-            for prefix in ('/media/', 'media/'):
-                if path.startswith(prefix):
-                    path = path[len(prefix) :]
-            if '/pub/' in path and not path.startswith('pub/'):
-                path = path[path.index('pub/') :]
-
-            path = path.lstrip('/')
+            raw = self.settings.get(key, as_type=str, default=None)
+            path = _resolve_media_path(raw)
             if path:
                 return path
 
@@ -2542,6 +2467,56 @@ class Event(
             return self.header_image.name
 
         return None
+
+    @cached_property
+    def _visible_preview_image_path(self):
+        """
+        Resolve a usable preview image path/URL from the ``event_preview_image`` setting.
+        Returns a storage-relative path (e.g. ``pub/…``) or an absolute HTTP URL.
+        """
+        raw = self.settings.get('event_preview_image', as_type=str, default=None)
+        return _resolve_media_path(raw)
+
+    @cached_property
+    def visible_preview_image_url(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_preview_image_path:
+            return None
+        with suppress(Exception):
+            if is_http_url(str(self._visible_preview_image_path)):
+                return self._visible_preview_image_path
+            return default_storage.url(self._visible_preview_image_path)
+        return None
+
+    @cached_property
+    def preview_image_url_with_fallback(self):
+        """
+        Return the resolved URL of the preview image, falling back to header image, then logo.
+        If none of these are set, it returns None (which the start page card template handles by
+        rendering a default calendar placeholder icon).
+
+        For local (non-HTTP) paths, a thumbnail is generated at 800×450 with a fill-crop (``^``).
+        ``get_thumbnail`` caches results on disk using a deterministic key derived from the path
+        and geometry, so repeated calls for the same image are cheap (file-existence check only).
+        This method itself is a ``@cached_property``, so it is only invoked once per ``Event``
+        instance per request — no thundering-herd risk within a single request.
+        """
+        path = self._visible_preview_image_path or self._visible_header_image_path or self._visible_logo_path
+        if not path:
+            return None
+
+        if is_http_url(str(path)):
+            return path
+
+        try:
+            return get_thumbnail(path, '800x450^').thumb.url
+        except Exception:
+            logger.exception('Failed to create preview thumbnail for path: %s', path)
+            try:
+                return default_storage.url(path)
+            except Exception:
+                return None
 
     @cached_property
     def visible_logo_url(self):
@@ -2603,13 +2578,22 @@ class Event(
     def event(self):
         return self
 
+    def feature_flags_as_mapping(self):
+        flags = self.feature_flags or {}
+        if isinstance(flags, dict):
+            return flags
+        if isinstance(flags, (list, tuple, set)):
+            return {flag: True for flag in flags if isinstance(flag, str)}
+        return {}
+
     def get_feature_flag(self, feature):
-        if feature in self.feature_flags:
-            return self.feature_flags[feature]
+        flags = self.feature_flags_as_mapping()
+        if feature in flags:
+            return flags[feature]
         return default_feature_flags().get(feature, False)
 
     def session_popularity_show_on_schedule(self):
-        flags = self.feature_flags or {}
+        flags = self.feature_flags_as_mapping()
         if 'session_popularity_show_on_schedule' in flags:
             return bool(flags['session_popularity_show_on_schedule'])
         return bool(
@@ -2621,7 +2605,7 @@ class Event(
         """Feature flags exposed to schedule webapp clients via inline JSON."""
         from eventyay.talk_rules.submission import are_featured_speakers_visible
 
-        popularity_enabled = bool(self.feature_flags.get('session_popularity_enabled', False))
+        popularity_enabled = bool(self.get_feature_flag('session_popularity_enabled'))
         return {
             'session_popularity_enabled': popularity_enabled,
             'session_popularity_show_on_schedule': self.session_popularity_show_on_schedule(),
@@ -2865,6 +2849,9 @@ class Event(
 
     def _ensure_mail_template_locales(self, template, role):
         from eventyay.mail.default_templates import get_default_template
+
+        if role is None:
+            return template
 
         default_subject, default_text = get_default_template(role)
         

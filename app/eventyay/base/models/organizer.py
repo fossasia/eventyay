@@ -347,6 +347,8 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     :type can_view_orders: bool
     :param can_change_orders: If ``True``, the members can change details of orders of the associated events.
     :type can_change_orders: bool
+    :param can_manage_bank_transfers: If ``True``, the members can import bank data and manage bank transfer refunds.
+    :type can_manage_bank_transfers: bool
     :param can_checkin_orders: If ``True``, the members can perform check-in related actions.
     :type can_checkin_orders: bool
     :param can_view_vouchers: If ``True``, the members can inspect details of all vouchers of the associated events.
@@ -383,6 +385,11 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     can_change_items = models.BooleanField(default=False, verbose_name=_('Can change product settings'))
     can_view_orders = models.BooleanField(default=False, verbose_name=_('Can view orders'))
     can_change_orders = models.BooleanField(default=False, verbose_name=_('Can change orders'))
+    can_manage_bank_transfers = models.BooleanField(
+        default=False,
+        verbose_name=_('Can manage bank transfers'),
+        help_text=_('Import bank data and export refunds for bank transfer payments.'),
+    )
     can_checkin_orders = models.BooleanField(
         default=False,
         verbose_name=_('Can perform check-ins'),
@@ -400,15 +407,34 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             'object': str(self.organizer),
         }
 
+    PERMISSION_IMPLICATIONS = {
+        'can_change_orders': ('can_view_orders',),
+        'can_change_vouchers': ('can_view_vouchers',),
+        'can_manage_bank_transfers': ('can_view_orders',),
+    }
+
+    @classmethod
+    def _permission_field_names(cls) -> tuple:
+        cached = cls.__dict__.get('_permission_field_names_cache')
+        if cached is None:
+            cached = tuple(
+                field.name
+                for field in cls._meta.get_fields()
+                if isinstance(field, models.BooleanField)
+                and (field.name.startswith('can_') or field.name.startswith('is_'))
+            )
+            cls._permission_field_names_cache = cached
+        return cached
+
+    def _granted_permissions(self) -> set:
+        return {name for name in self._permission_field_names() if getattr(self, name) is True}
+
     def permission_set(self) -> set:
-        attribs = dir(self)
-        return {
-            attr
-            for attr in attribs
-            if (attr.startswith('can_') or attr.startswith('is_'))
-            and getattr(self, attr, False) is True
-            and self.has_permission(attr)
-        }
+        granted = self._granted_permissions()
+        implied = set()
+        for perm in granted:
+            implied.update(self.PERMISSION_IMPLICATIONS.get(perm, ()))
+        return granted | implied
 
     @property
     def can_change_settings(self):  # Legacy compatiblilty
@@ -416,7 +442,12 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
 
     def has_permission(self, perm_name):
         try:
-            return getattr(self, perm_name)
+            if getattr(self, perm_name):
+                return True
+            for p, implications in self.PERMISSION_IMPLICATIONS.items():
+                if perm_name in implications and getattr(self, p):
+                    return True
+            return False
         except AttributeError:
             raise ValueError('Invalid required permission: %s' % perm_name)
 
@@ -436,7 +467,17 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         rules_permissions = TEAM_PERMISSIONS
 
     # From Talk
-    limit_tracks = models.ManyToManyField(to='Track', verbose_name=_('Limit to tracks'), blank=True)
+    limit_tracks = models.ManyToManyField(
+        to='Track',
+        verbose_name=_('Restrict access to tracks'),
+        blank=True,
+        help_text=_(
+            'Limit this team to the selected tracks. Members only see proposals, sessions, '
+            'reviews, speakers, schedule data, exports, and API results for those tracks. '
+            'Leave empty for access to all tracks in the team’s events. '
+            'Configure tracks per event below.'
+        ),
+    )
     can_change_submissions = models.BooleanField(
         default=False,
         verbose_name=_('Reviewer Manager — can edit and manage submissions'),
@@ -454,13 +495,49 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         ),
     )
     force_hide_speaker_names = models.BooleanField(
-        verbose_name=_('Always hide speaker names'),
+        verbose_name=_('Always hide speaker details'),
         help_text=_(
-            'Normally, anonymisation is configured in the event review settings. '
-            'This setting will <strong>override the event settings</strong> '
-            'and always hide speaker names for this team.'
+            'Normally, speaker anonymisation follows each event’s review settings. '
+            'When enabled, this team <strong>always</strong> hides speaker names and details '
+            'in proposal and review views, exports, and API responses — even if the event '
+            'review phase would otherwise show them. Applies together with any track limits.'
         ),
         default=False,
+    )
+    force_hide_speaker_emails = models.BooleanField(
+        verbose_name=_('Always hide speaker emails only'),
+        help_text=_(
+            'When enabled, this team cannot see speaker email addresses in organiser views, '
+            'exports, or API responses, but can still see other speaker details (unless '
+            '“Always hide speaker details” is also enabled).'
+        ),
+        default=False,
+    )
+
+    can_change_exhibition_proposals = models.BooleanField(
+        default=False,
+        verbose_name=_('Reviewer Manager — can review and manage exhibitor proposals'),
+        help_text=_(
+            'Can review proposals and approve or reject exhibitor and sponsor applications. '
+            'This provides full proposal-management permissions beyond standard reviewing, '
+            'without granting access to the rest of the event setup.'
+        ),
+    )
+    is_exhibition_reviewer = models.BooleanField(
+        default=False,
+        verbose_name=_('Exhibitor Reviewer — can only review exhibitor proposals'),
+        help_text=_(
+            'Can review and provide feedback on exhibitor and sponsor proposals but cannot '
+            'approve, reject, or otherwise manage them.'
+        ),
+    )
+    hide_exhibition_applicant_emails = models.BooleanField(
+        default=False,
+        verbose_name=_('Hide emails of applicants'),
+        help_text=_(
+            'When enabled, Exhibitor Reviewers on this team cannot see the email addresses '
+            'of proposal applicants, but can still review the rest of the proposal.'
+        ),
     )
 
     can_video_create_stages = models.BooleanField(

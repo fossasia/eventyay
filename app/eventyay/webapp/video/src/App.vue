@@ -24,7 +24,7 @@
 			.sidebar-backdrop(v-if="showSidebar", @click="showSidebar = false")
 		.app-content(:class="{'sidebar-open': showSidebar}", role="main", tabindex="-1")
 			// router-view no longer carries role=main; main landmark is the scroll container
-			router-view(:key="!$route.path.startsWith('/admin') ? $route.fullPath : null")
+			router-view(:key="!isAdminRoute ? $route.fullPath : null")
 			//- defining keys like this keeps the playing dom element alive for uninterupted transitions
 			//- Single MediaSource for room streaming (persists across navigation to prevent stream restart)
 			media-source(v-if="streamingRoom && user.profile.greeted && !hasFatalError(streamingRoom)", ref="mediaSource", :room="streamingRoom", :background="isStreamInBackground", :key="streamingRoom.id", :role="isStreamInBackground ? null : 'main'", @close="backgroundRoom = null")
@@ -143,13 +143,19 @@ export default {
 		room() {
 			const routeName = this.$route?.name
 			if (!routeName) return
-			if (routeName.startsWith && routeName.startsWith('admin')) return
+			if (this.isAdminRoute) return
 			const rooms = this.rooms || []
 			if (routeName === 'about') {
 				return rooms.find(room => room && room.modules && room.modules.some(m => m.type === 'page.landing'))
 			}
 			const wantedId = String(this.$route.params.roomId)
 			return rooms.find(room => String(room.id) === wantedId)
+		},
+		isAdminRoute() {
+			const isAdminRouteName = name => typeof name === 'string' && name.startsWith('admin')
+			const route = this.$route
+			return isAdminRouteName(route?.name) ||
+				route?.matched?.some(match => isAdminRouteName(match.name))
 		},
 		// TODO since this is used EVERYWHERE, use provide/inject?
 		modules() {

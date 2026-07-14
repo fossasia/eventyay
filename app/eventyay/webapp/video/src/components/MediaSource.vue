@@ -8,7 +8,7 @@
 				.room-name(v-else-if="call") {{ $t('MediaSource:call:label') }}
 			.global-placeholder
 			bunt-icon-button(@click.prevent.stop="$emit('close')") close
-	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`")
+	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`", @playback-state-changed="onMainPlayerPlaybackChanged")
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
@@ -16,7 +16,7 @@
 	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
 		.offline-message(v-if="iframeOffline") {{ $t('Livestream:offline-message:text') }}
 		.offline-message(v-else) {{ $t('MediaSource:iframe-error:text') }}
-	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
+	iframe#video-player-translation(v-if="languageIframeUrl", ref="translationIframeEl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin", @load="onTranslationIframeLoaded")
 	audio(ref="whepAudioEl", autoplay, style="display: none;")
 </template>
 <script setup>
@@ -70,6 +70,7 @@ let iframeInitInProgress = false;
 
 // WHEP audio client
 const whepAudioEl = ref(null);
+const translationIframeEl = ref(null);
 let whepClient = null;
 
 // Template refs
@@ -78,8 +79,9 @@ const janus = ref(null);
 
 // Mapped state/getters
 const streamingRoom = computed(() => store.state.streamingRoom);
-const youtubeTransUrl = computed(() => store.state.youtubeTransUrl);
+const youtubeTranslation = computed(() => store.state.youtubeTranslation);
 const autoplay = computed(() => store.getters.autoplay);
+const mainPlayerPaused = ref(!autoplay.value);
 
 const module = computed(() => {
 	if (!props.room) return null;
@@ -165,6 +167,7 @@ watch(
 
 watch(module, (value, oldValue) => {
 	if (isEqual(value, oldValue)) return;
+	resetMainPlayerPaused();
 	destroyIframe();
 	if (shouldUseLivestream.value) return;
 	initializeIframe(false);
@@ -172,6 +175,7 @@ watch(module, (value, oldValue) => {
 
 watch(shouldUseLivestream, (shouldUse, oldShouldUse) => {
 	if (shouldUse === oldShouldUse) return;
+	resetMainPlayerPaused();
 	if (shouldUse) {
 		destroyIframe();
 	} else {
@@ -183,6 +187,7 @@ watch(
 	() => props.room?.currentStream,
 	(newStream, oldStream) => {
 		if (!isEqual(newStream, oldStream) && module.value) {
+			resetMainPlayerPaused();
 			if (shouldUseLivestream.value) {
 				return;
 			}
@@ -209,7 +214,9 @@ watch(
 	}
 )
 
-watch(youtubeTransUrl, async (audioSource) => {
+const isPlayingTranslationVideo = ref(false);
+
+watch(youtubeTranslation, async (transConfig) => {
 	if (!props.room) return;
 	const isScheduleDriven = module.value && getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
 	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
@@ -220,6 +227,22 @@ watch(youtubeTransUrl, async (audioSource) => {
 	if (whepClient) {
 		whepClient.disconnect();
 		whepClient = null;
+	}
+
+	const audioSource = transConfig?.url || null;
+	const requestedUseVideo = transConfig?.useVideo || false;
+	const useVideo = requestedUseVideo && !!(audioSource && normalizeYoutubeVideoId(audioSource));
+
+	if (useVideo) {
+		isPlayingTranslationVideo.value = true;
+		languageIframeUrl.value = null; // Clear any audio iframe
+		destroyIframe();
+		await initializeIframe(false);
+		return;
+	} else if (isPlayingTranslationVideo.value) {
+		isPlayingTranslationVideo.value = false;
+		destroyIframe();
+		await initializeIframe(false);
 	}
 
 	// Handle translation: mute main player and connect audio source
@@ -251,6 +274,12 @@ watch(youtubeTransUrl, async (audioSource) => {
 		setTimeout(() => {
 			muteYouTubePlayer();
 		}, 500);
+
+		if (mainPlayerPaused.value) {
+			setTimeout(() => {
+				pauseTranslationAudio();
+			}, 600);
+		}
 	} else {
 		// Remove translation audio iframe
 		languageIframeUrl.value = null;
@@ -262,6 +291,7 @@ watch(youtubeTransUrl, async (audioSource) => {
 });
 
 onMounted(async () => {
+	window.addEventListener('message', onWindowMessage);
 	if (!props.room) return;
 	if (shouldUseLivestream.value) return;
 	await initializeIframe(false);
@@ -269,6 +299,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
 	isUnmounted.value = true;
+	window.removeEventListener('message', onWindowMessage);
 	if (whepClient) {
 		whepClient.disconnect();
 		whepClient = null;
@@ -282,6 +313,7 @@ onBeforeUnmount(() => {
 function muteYouTubePlayer() {
 	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
 	try {
+		subscribeToYouTubePlayerEvents();
 		iframeEl.value.contentWindow.postMessage(
 			'{"event":"command","func":"mute","args":""}',
 			'*'
@@ -297,12 +329,122 @@ function muteYouTubePlayer() {
 function unmuteYouTubePlayer() {
 	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
 	try {
+		subscribeToYouTubePlayerEvents();
 		iframeEl.value.contentWindow.postMessage(
 			'{"event":"command","func":"unMute","args":""}',
 			'*'
 		);
 	} catch (error) {
 		console.warn('Failed to unmute embedded YouTube player', {
+			roomId: props.room?.id,
+			error,
+		});
+	}
+}
+
+function pauseTranslationAudio() {
+	if (whepAudioEl.value && !whepAudioEl.value.paused) {
+		whepAudioEl.value.pause();
+	}
+	pauseYouTubeTranslationIframe();
+}
+
+function resumeTranslationAudio() {
+	if (whepAudioEl.value && whepAudioEl.value.srcObject) {
+		whepAudioEl.value.play().catch(e =>
+			console.warn('Failed to resume WHEP translation audio:', e)
+		);
+	}
+	resumeYouTubeTranslationIframe();
+}
+
+function pauseYouTubeTranslationIframe() {
+	const iframe = translationIframeEl.value;
+	if (!iframe?.contentWindow) return;
+	try {
+		iframe.contentWindow.postMessage(
+			'{"event":"command","func":"pauseVideo","args":""}',
+			'*'
+		);
+	} catch (error) {
+		console.warn('Failed to pause translation iframe:', error);
+	}
+}
+
+function resumeYouTubeTranslationIframe() {
+	const iframe = translationIframeEl.value;
+	if (!iframe?.contentWindow) return;
+	try {
+		iframe.contentWindow.postMessage(
+			'{"event":"command","func":"playVideo","args":""}',
+			'*'
+		);
+	} catch (error) {
+		console.warn('Failed to resume translation iframe:', error);
+	}
+}
+
+function onMainPlayerPlaybackChanged(isPlaying) {
+	mainPlayerPaused.value = !isPlaying;
+	if (!youtubeTranslation.value?.url) return;
+	if (isPlaying) {
+		resumeTranslationAudio();
+	} else {
+		pauseTranslationAudio();
+	}
+}
+
+function resetMainPlayerPaused() {
+	mainPlayerPaused.value = !autoplay.value;
+}
+
+function onTranslationIframeLoaded() {
+	if (mainPlayerPaused.value) {
+		pauseYouTubeTranslationIframe();
+	}
+}
+
+function onWindowMessage(event) {
+	if (!iframeEl.value?.contentWindow || event.source !== iframeEl.value.contentWindow) return;
+
+	let data = event.data;
+	if (typeof data === 'string') {
+		try {
+			data = JSON.parse(data);
+		} catch {
+			return;
+		}
+	}
+	if (!data || typeof data !== 'object') return;
+
+	let playerState = null;
+	if (data.event === 'onStateChange' && typeof data.info === 'number') {
+		playerState = data.info;
+	} else if (data.event === 'infoDelivery' && typeof data.info?.playerState === 'number') {
+		playerState = data.info.playerState;
+	}
+	if (playerState === null) return;
+
+	if (playerState === 1) {
+		onMainPlayerPlaybackChanged(true);
+	} else if (playerState === 2 || playerState === 0) {
+		onMainPlayerPlaybackChanged(false);
+	}
+}
+
+function subscribeToYouTubePlayerEvents() {
+	if (!iframeEl.value?.contentWindow) return;
+	try {
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ event: 'listening', id: iframeEl.value.id }),
+			'*'
+		);
+		iframeEl.value.contentWindow.postMessage(
+			JSON.stringify({ event: 'command', func: 'addEventListener', args: ['onStateChange'] }),
+			'*'
+		);
+	} catch (error) {
+		console.warn('Failed to subscribe to embedded YouTube player events', {
 			roomId: props.room?.id,
 			error,
 		});
@@ -366,7 +508,9 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			case 'livestream.youtube': {
 				isYouTube = true;
 				let ytid;
-				if (streamType === STREAM_TYPE_YOUTUBE && currentStream?.url) {
+				if (youtubeTranslation.value?.useVideo && youtubeTranslation.value?.url && normalizeYoutubeVideoId(youtubeTranslation.value.url)) {
+					ytid = normalizeYoutubeVideoId(youtubeTranslation.value.url);
+				} else if (streamType === STREAM_TYPE_YOUTUBE && currentStream?.url) {
 					ytid = normalizeYoutubeVideoId(currentStream.url);
 				} else if (!isScheduleDriven && module.value.type === 'livestream.youtube' && module.value.config?.ytid) {
 					ytid = normalizeYoutubeVideoId(module.value.config.ytid);
@@ -447,8 +591,9 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		// Wait for iframe to load before sending postMessage commands
 		if (isYouTube) {
 			iframe.onload = () => {
-				// If translation is already selected, mute the main player
-				if (youtubeTransUrl.value) {
+				subscribeToYouTubePlayerEvents();
+				// If translation is already selected, mute the main player (if audio-only)
+				if (youtubeTranslation.value?.url && !youtubeTranslation.value?.useVideo) {
 					setTimeout(() => muteYouTubePlayer(), 1000);
 				}
 			};

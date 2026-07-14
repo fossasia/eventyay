@@ -3,7 +3,7 @@ import logging
 from enum import StrEnum
 from http import HTTPStatus
 from typing import TypeVar
-from urllib.parse import quote, unquote, urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 import jwt
 import vobject
@@ -26,11 +26,11 @@ from eventyay.agenda.signals import register_recording_provider
 from eventyay.agenda.views.utils import (
     WipAgendaPreviewPageMixin,
     build_enriched_schedule_json,
+    build_google_calendar_url,
     build_talk_schedule_json,
     encode_email,
     is_email_like,
 )
-from eventyay.talk_rules.agenda import agenda_schedule_for_user, can_view_wip_schedule, filter_agenda_slots
 from eventyay.base.models import (
     Event,
     Order,
@@ -51,6 +51,7 @@ from eventyay.common.views.mixins import (
     SocialMediaCardMixin,
 )
 from eventyay.submission.forms import FeedbackForm
+from eventyay.talk_rules.agenda import agenda_schedule_for_user, filter_agenda_slots
 
 
 logger = logging.getLogger(__name__)
@@ -119,7 +120,7 @@ def talk_starrers(request, event, slug, **kwargs):
     code. Other favourites are returned as anonymous placeholders.
     """
 
-    if not request.event.feature_flags.get('session_popularity_enabled', False):
+    if not request.event.get_feature_flag('session_popularity_enabled'):
         response = JsonResponse({'total': 0, 'public_total': 0, 'items': []})
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Headers'] = 'authorization,content-type'
@@ -518,25 +519,25 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
             return self._google_calendar_redirect(slot, request)
         if provider == 'webcal':
             webcal_url = ical_url.replace('https://', 'webcal://').replace('http://', 'webcal://')
-            return HttpResponseRedirect(webcal_url)
+            response = HttpResponse(status=302)
+            response['Location'] = webcal_url
+            return response
         raise Http404
 
     def _google_calendar_redirect(self, slot, request):
         sub = slot.submission
         start = slot.start
         end = slot.real_end
+        if not start or not end:
+            raise Http404
+        start_utc = start.astimezone(dt.UTC)
+        end_utc = end.astimezone(dt.UTC)
         fmt = '%Y%m%dT%H%M%SZ'
-        dates = f'{start.strftime(fmt)}/{end.strftime(fmt)}'
+        dates = f'{start_utc.strftime(fmt)}/{end_utc.strftime(fmt)}'
         title = localize_event_text(sub.title)
         location = localize_event_text(slot.room.name) if slot.room else ''
         details = localize_event_text(sub.abstract) if request.event.cfp.public_abstract else ''
-        url = (
-            'https://calendar.google.com/calendar/render?action=TEMPLATE'
-            f'&text={quote(str(title))}'
-            f'&dates={dates}'
-            f'&location={quote(str(location))}'
-            f'&details={quote(str(details))}'
-        )
+        url = build_google_calendar_url(title, dates, location, details)
         return HttpResponseRedirect(url)
 
 

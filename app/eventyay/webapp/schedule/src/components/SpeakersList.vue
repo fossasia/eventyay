@@ -154,7 +154,7 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, compareFeaturedSpeakers, isFeaturedSpeakersSortAvailable } from '../utils'
+import { getLocalizedString, compareFeaturedSpeakers, isFeaturedSpeakersSortAvailable, sessionsForSpeaker } from '../utils'
 import MarkdownContent from './MarkdownContent'
 
 function normalizeLocaleCode (code) {
@@ -217,7 +217,7 @@ export default {
 			selectedTracks: [],
 			sortBy: 'featured',
 			openDropdown: null,
-			viewMode: 'list',
+			viewMode: 'details',
 			mobileFiltersOpen: false,
 			mobileMoreOpen: false,
 		}
@@ -330,7 +330,7 @@ export default {
 			}
 			return (schedule?.speakers || []).map(speaker => ({
 				...speaker,
-				sessions: sessionsBySpeaker[speaker.code] || [],
+				sessions: sessionsForSpeaker(sessionsBySpeaker, speaker.code),
 			}))
 		},
 		viewToggleTitle() {

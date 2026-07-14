@@ -125,6 +125,29 @@ def test_speaker_list_reviewer_nopublic_names_visible(
 
 
 @pytest.mark.django_db
+def test_speaker_list_reviewer_hides_email_when_team_forces_hide(
+    client, review_user_token, review_user, event, speaker, accepted_submission
+):
+    with scope(event=event):
+        reviewer_team = review_user.teams.filter(organizer=event.organizer, is_reviewer=True).first()
+        reviewer_team.force_hide_speaker_emails = True
+        reviewer_team.save(update_fields=["force_hide_speaker_emails"])
+        event.active_review_phase.can_see_speaker_names = True
+        event.active_review_phase.save(update_fields=["can_see_speaker_names"])
+
+    response = client.get(
+        event.api_urls.speakers + f"{speaker.code}/",
+        follow=True,
+        headers={"Authorization": f"Token {review_user_token.token}"},
+    )
+    assert response.status_code == 200, response.text
+    content = json.loads(response.text)
+    assert content["code"] == speaker.code
+    assert content["name"] == speaker.fullname
+    assert "email" not in content
+
+
+@pytest.mark.django_db
 def test_speaker_list_orga_nopublic(
     client,
     orga_user_token,

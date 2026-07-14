@@ -2,9 +2,7 @@ import datetime as dt
 from decimal import Decimal
 
 from django import forms
-from django.conf import settings
 from django.core.files.base import ContentFile
-from django.core.validators import RegexValidator
 from django.forms import inlineformset_factory
 from django.utils.html import format_html
 from django.utils.text import format_lazy
@@ -31,8 +29,6 @@ from eventyay.base.models import Event, EventExtraLink
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.orga.forms.widgets import HeaderSelect
 from eventyay.base.models import ReviewPhase, ReviewScore, ReviewScoreCategory
-
-ENCRYPTED_PASSWORD_PLACEHOLDER = '*' * 24
 
 SCHEDULE_DISPLAY_CHOICES = (
     ('grid', _('Grid')),
@@ -136,7 +132,7 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         self.is_administrator = kwargs.pop('is_administrator', False)
         super().__init__(*args, **kwargs)
         self.initial['custom_css_text'] = self.instance.custom_css.read().decode() if self.instance.custom_css else ''
-        flags = self.instance.feature_flags or {}
+        flags = self.instance.feature_flags_as_mapping()
         if 'show_featured_speakers' not in flags and 'show_featured' in flags:
             self.fields['show_featured_speakers'].initial = flags['show_featured']
         self._configure_session_popularity_fields(flags)
@@ -158,8 +154,7 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     def _is_session_popularity_enabled(self):
         if self.is_bound:
             return self.data.get('session_popularity_enabled') in ('on', 'true', 'True', '1')
-        flags = self.instance.feature_flags or {}
-        return bool(flags.get('session_popularity_enabled', False))
+        return bool(self.instance.get_feature_flag('session_popularity_enabled'))
 
     @staticmethod
     def _normalize_featured_visibility(value):
@@ -238,132 +233,14 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
 
 
 class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMixin, forms.Form):
-    reply_to = forms.EmailField(
-        label=_('Contact address'),
-        help_text=_(
-            'Reply-To address. If this setting is empty and you have no custom sender, your event email address will be used as Reply-To address.'
-        ),
-        required=False,
-    )
-    subject_prefix = forms.CharField(
-        label=_('Mail subject prefix'),
-        help_text=_('The prefix will be prepended to outgoing mail subjects in [brackets].'),
-        required=False,
-    )
-    signature = forms.CharField(
-        label=_('Mail signature'),
-        help_text='',
-        required=False,
-        widget=forms.Textarea,
-    )
-    smtp_use_custom = forms.BooleanField(
-        label=_('Use custom SMTP server'),
-        help_text=_('All mail related to your event will be sent over the SMTP server specified by you.'),
-        required=False,
-    )
-    mail_from = forms.EmailField(
-        label=_('Sender address'),
-        help_text=_('Sender address for outgoing emails.'),
-        required=False,
-    )
-    smtp_host = forms.CharField(label=_('Hostname'), required=False)
-    smtp_port = forms.IntegerField(label=_('Port'), required=False)
-    smtp_username = forms.CharField(label=_('Username'), required=False)
-    smtp_password = forms.CharField(
-        label=_('Password'),
-        required=False,
-        widget=forms.PasswordInput(
-            attrs={'autocomplete': 'new-password'},
-            render_value=True,
-        ),
-        validators=[
-            RegexValidator(
-                r"^[A-Za-z0-9!\"#$%&'()*+,./:;<=>?@\^_`{}|~-]+$",
-                message=format_lazy(
-                    _(
-                        'The password contains unsupported letters. Please only use characters '
-                        'A-Z, a-z, 0-9, and common special characters ({characters}).'
-                    ),
-                    characters=r'!"#$%%&\'()*+,-./:;<=>?@\^_`{}|~',
-                ),
-            )
-        ],
-    )
-    smtp_use_tls = forms.BooleanField(
-        label=_('Use STARTTLS'),
-        help_text=_('Commonly enabled on port 587.'),
-        required=False,
-    )
-    smtp_use_ssl = forms.BooleanField(label=_('Use SSL'), help_text=_('Commonly enabled on port 465.'), required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['signature'].help_text = format_lazy(
-            '{} <span class="markdown-hint">{}</span>',
-            _('The signature will be added to outgoing mails, preceded by “-- ”. '),
-            _('You can use Markdown in this field.'),
-        )
-        if self.fields['smtp_password'].initial:
-            self.fields['smtp_password'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
-
-    def clean(self):
-        data = self.cleaned_data
-        if not data.get('smtp_use_custom'):
-            # We don't need to validate all the rest when we don't use a custom email server
-            return data
-
-        if data.get('smtp_username'):
-            # Leave password unchanged if the username is set and the password field is empty
-            # or contains the encrypted password placeholder.
-            # This makes it impossible to set an empty password as long as a username is set, but
-            # Python's smtplib does not support password-less schemes anyway.
-            password = data.get('smtp_password')
-            if not password or password == ENCRYPTED_PASSWORD_PLACEHOLDER:
-                data['smtp_password'] = self.initial.get('smtp_password')
-
-        if not data.get('mail_from'):
-            self.add_error(
-                'mail_from',
-                ValidationError(_('You have to provide a sender address if you use a custom SMTP server.')),
-            )
-        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
-            self.add_error(
-                'smtp_use_tls',
-                ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.')),
-            )
-        uses_encryption = data.get('smtp_use_tls') or data.get('smtp_use_ssl')
-        localhost_names = [
-            '127.0.0.1',
-            '::1',
-            '[::1]',
-            'localhost',
-            'localhost.localdomain',
-        ]
-        if not uses_encryption and data.get('smtp_host') not in localhost_names:
-            self.add_error(
-                'smtp_host',
-                ValidationError(
-                    _(
-                        'You have to activate either SSL or STARTTLS security if you use a non-local mailserver due to data protection reasons. '
-                        'Your administrator can add an instance-wide bypass. If you use this bypass, please also adjust your Privacy Policy.'
-                    )
-                ),
-            )
+    """
+    Talks-specific email settings. The fields reply_to, subject_prefix, and signature
+    have been moved to the central Email settings tab (CentralMailSettingsForm).
+    This form is kept for backward compatibility but currently has no fields.
+    """
 
     class Meta:
-        json_fields = {
-            'reply_to': 'mail_settings',
-            'subject_prefix': 'mail_settings',
-            'signature': 'mail_settings',
-            'smtp_use_custom': 'mail_settings',
-            'mail_from': 'mail_settings',
-            'smtp_host': 'mail_settings',
-            'smtp_port': 'mail_settings',
-            'smtp_username': 'mail_settings',
-            'smtp_password': 'mail_settings',
-            'smtp_use_tls': 'mail_settings',
-            'smtp_use_ssl': 'mail_settings',
-        }
+        json_fields = {}
 
 
 class ReviewSettingsForm(

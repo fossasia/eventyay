@@ -38,6 +38,8 @@
     margin-bottom: 1%;
 }
 
+
+
 .custom-form {
     padding-left: 1px;
 }
@@ -82,4 +84,175 @@
 .badge-beta .fa {
     margin-right: 3px;
     font-size: 10px;
+}
+
+/* Team permission nesting */
+.team-permission-children {
+    margin-left: 24px;
+    padding-left: 10px;
+    border-left: 2px solid #ddd;
+}
+
+.team-permission-children--disabled {
+    opacity: 0.5;
+}
+
+/* Event / track selector widget */
+.track-limit-help {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.event-track-filter-label {
+    font-weight: normal;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.event-track-filter {
+    max-width: 100%;
+    width: 100%;
+}
+
+.event-track-filter-row {
+    margin-bottom: 10px;
+}
+
+.event-tracks-wrapper {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    background: #fafafa;
+}
+
+.event-tracks-placeholder {
+    padding: 10px;
+    text-align: center;
+}
+
+.event-track-group-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+    color: #337ab7;
+}
+
+.event-track-selection-count {
+    font-weight: normal;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.event-track-search-row {
+    margin-bottom: 8px;
+}
+
+.event-track-search {
+    max-width: 100%;
+}
+
+.event-track-list {
+    max-height: 240px;
+    overflow-y: auto;
+    margin-bottom: 0;
+}
+
+.event-track-item {
+    padding: 3px 0;
+}
+
+.event-track-item label {
+    font-weight: normal;
+    display: block;
+    margin: 0;
+    cursor: pointer;
+}
+
+.event-track-actions {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.event-track-actions .btn-link {
+    padding: 0;
+}
+
+.event-track-empty,
+.event-track-search-empty {
+    margin: 8px 0 0;
+}
+
+.track-hint {
+    padding-top: 7px;
+}
+
+@media (max-width: 767px) {
+    .event-tracks-wrapper {
+        padding: 8px;
+    }
+
+    .event-track-list {
+        max-height: 180px;
+    }
+
+    .event-track-group-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* Thumbnailed file input widget styles */
+.thumbnailed-file-initial {
+    margin-bottom: 8px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.thumbnailed-file-link {
+    vertical-align: middle;
+}
+.thumbnailed-file-preview-container {
+    margin-bottom: 10px;
+}
+.thumbnailed-file-preview-image {
+    max-height: 100px;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.thumbnailed-file-preview-eye {
+    margin-left: 8px;
+    vertical-align: middle;
+}
+.thumbnailed-file-delete-wrapper {
+    margin-left: 10px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.thumbnailed-file-checkbox {
+    vertical-align: middle;
+}
+.thumbnailed-file-checkbox-label {
+    font-weight: normal;
+    cursor: pointer;
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+.thumbnailed-file-delete-ajax {
+    display: none;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+.thumbnailed-file-input-text {
+    margin-top: 8px;
+    margin-bottom: 6px;
+    font-weight: 500;
 }

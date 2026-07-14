@@ -14,37 +14,26 @@
 {% block extra_title %}{% translate "Email settings" %} :: {% endblock extra_title %}
 
 {% block settings_content %}
-    <form method="post">
-        {% csrf_token %}
-        <div id="main-title" class="d-md-flex justify-content-between">
-            <h2>
-            {% translate "Email settings" %}
-            <span data-dialog-target="#info-dialog" data-toggle="dialog">
-                <i class="fa fa-question-circle-o text-info"></i>
-            </span>
-            </h2>
+    <nav id="event-nav" class="header-nav">
+        <div class="navigation">
+            <div class="navigation-title">
+                <h2>{% translate "Talk Email Settings" %}</h2>
+            </div>
             {% include "orga/event/component_link.html" %}
         </div>
-        <dialog id="info-dialog">
-            <div class="alert alert-info">
-                {% blocktranslate trimmed %}
-                    If you don’t configure custom email settings, the global configuration
-                    for this server will be used (ask your administrator for details).<br>
-                    We recommend that you add email settings here explicitly.
-                {% endblocktranslate %}
-            </div>
-        </dialog>
-        {{ form }}
-        <div class="submit-group panel">
-            <span></span>
-            <span>
-                {% if action == "edit" or action == "create" %}
-                    <button type="submit" class="btn btn-lg btn-success" name="test" value="1">
-                        {% translate "Save and test custom SMTP connection" %}
-                    </button>
-                    <button type="submit" class="btn btn-lg btn-info">{{ phrases.base.save }}</button>
-                {% endif %}
-            </span>
-        </div>
-    </form>
+    </nav>
+
+    <div class="alert alert-info" role="alert">
+        <strong>{% translate "Email settings have moved" %}</strong> —
+        {% blocktranslate trimmed %}
+            All shared email settings — sender address, Reply-To, BCC, subject prefix, signature,
+            HTML renderer, and the email gateway (SMTP / SendGrid) — are now configured centrally
+            under <strong>Event Settings › Email</strong> and apply to both the Tickets and Talks
+            components.
+        {% endblocktranslate %}
+        <a href="{% url 'eventyay_common:event.update' organizer=request.event.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-outline-info ml-2">
+            {% translate "Go to Email Settings" %}
+        </a>
+    </div>
 {% endblock settings_content %}
+

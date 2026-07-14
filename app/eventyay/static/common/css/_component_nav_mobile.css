@@ -1,7 +1,7 @@
 /* Shared mobile styles for component nav */
 
-#event-nav .navigation .navigation-button .header-nav,
-#main-title .navigation-button .header-nav {
+.navigation-button a.header-nav.btn,
+#event-nav .navigation .navigation-button a.header-nav.btn {
   border-radius: 0;
 }
 
@@ -33,21 +33,26 @@
   }
 
   #event-nav .navigation .navigation-button,
-  #main-title .navigation-button {
+  .navigation-button {
     flex: 1 0 100%;
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-between;
-    gap: 4px;
+    gap: 0.5rem;
     margin-top: 10px;
   }
 
-  #main-title .navigation-button {
-    margin-left: 0;
+  /* Show the event nav (Home / Tickets / Talks / Videos) above the page
+     title on mobile, matching the shared event header layout. */
+  #event-nav .navigation .navigation-button,
+  .header-nav .navigation .navigation-button {
+    order: -1;
+    margin-top: 0;
+    margin-bottom: 10px;
   }
 
-  #event-nav .navigation .navigation-button .header-nav,
-  #main-title .navigation-button .header-nav {
+  #event-nav .navigation .navigation-button a.header-nav.btn,
+  .navigation-button a.header-nav.btn {
     flex: 1 1 0;
     min-width: 0;
     white-space: nowrap;

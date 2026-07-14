@@ -55,7 +55,7 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
     mail_on_new_submission = forms.BooleanField(
         label=_('Send mail on new proposal'),
         help_text=_(
-            'If this setting is checked, you will receive an email to the organizer address '
+            'If this setting is checked, all event admins will receive an email notification '
             'for every received proposal.'
         ),
         required=False,
@@ -81,8 +81,6 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         kwargs.pop('read_only')  # added in ActionFromUrl view mixin, but not needed here.
         self.instance = obj
         super().__init__(*args, **kwargs)
-        if getattr(obj, 'email', None):
-            self.fields['mail_on_new_submission'].help_text += f' (<a href="mailto:{obj.email}">{obj.email}</a>)'
         self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
         self.initial['cfp_enable_gravatar'] = obj.cfp.enable_gravatar
 
@@ -588,7 +586,14 @@ class AnswerOptionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         }
 
 
-class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
+class NameRequiredMixin:
+    """Mixin to ensure the name field is always marked as required in the UI."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].required = True
+
+
+class SubmissionTypeForm(NameRequiredMixin, ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
         super().__init__(*args, **kwargs)
@@ -617,7 +622,7 @@ class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         }
 
 
-class TrackForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
+class TrackForm(NameRequiredMixin, ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
         # Set initial color for new tracks (when creating, not editing)

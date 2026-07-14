@@ -87,6 +87,13 @@ export default {
 		}
 	},
 	computed: {
+		usesStreamPolling() {
+			return Boolean(
+				this.modules['livestream.native'] ||
+				this.modules['livestream.youtube'] ||
+				this.modules['livestream.iframe']
+			)
+		},
 		unreadTabsClasses() {
 			return Object.entries(this.unreadTabs).filter(([tab, value]) => value).map(([tab]) => `tab-${tab}-unread`)
 		}
@@ -101,7 +108,7 @@ export default {
 		},
 		'room.id'(roomId) {
 			this.$store.dispatch('stopStreamPolling')
-			if (roomId) {
+			if (roomId && this.usesStreamPolling) {
 				this.$store.dispatch('startStreamPolling', roomId)
 			}
 		},
@@ -114,7 +121,7 @@ export default {
 		} else if (this.modules.poll) {
 			this.activeSidebarTab = 'polls'
 		}
-		if (this.room?.id) {
+		if (this.room?.id && this.usesStreamPolling) {
 			await this.$nextTick()
 			this.$store.dispatch('startStreamPolling', this.room.id)
 		}
@@ -128,8 +135,8 @@ export default {
 			if (tab === this.activeSidebarTab) return
 			this.unreadTabs[tab] = true
 		},
-		handleLanguageChange(languageUrl) {
-			this.$store.commit('updateYoutubeTransAudio', languageUrl)
+		handleLanguageChange(translationConfig) {
+			this.$store.commit('updateYoutubeTransAudio', translationConfig)
 		},
 		initializeLanguages() {
 			this.languages = []
@@ -137,7 +144,7 @@ export default {
 				this.languages = this.modules['livestream.youtube'].config.languageUrls
 			}
 			if (!this.languages.find(lang => lang.language === 'Original')) {
-				this.languages.unshift({language: 'Original', youtube_id: null})
+				this.languages.unshift({language: 'Original', youtube_id: null, use_video: false})
 			}
 			// Reset translation only when actually changing rooms, not on component remount
 			const currentRoomId = this.room?.id
