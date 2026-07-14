@@ -16,7 +16,7 @@ from django.db.utils import DatabaseError
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, ngettext
 from django.utils.translation import pgettext_lazy
 from django_scopes import scope
 from i18nfield.fields import I18nTextField
@@ -680,12 +680,67 @@ class Schedule(PretalxModel):
 
         if self.talks.filter(submission__isnull=False, start__isnull=False).exists():
             return None
-        if (
-            self.talks.filter(submission__isnull=True).exists()
-            and not self.talks.filter(submission__isnull=False).exists()
-        ):
-            return _('This schedule contains only breaks and no sessions. Release anyway?')
+        if self.talks.filter(submission__isnull=True, start__isnull=False).exists():
+            return _('This schedule contains only breaks and no sessions.')
         return None
+
+    def release_acknowledgement_messages(self):
+        """Return human-readable release warnings for the orga release page."""
+
+        messages = []
+        if release_warning := self.release_warning_message():
+            messages.append(str(release_warning))
+        talks = self.talks.filter(submission__isnull=False)
+        unconfirmed_count = talks.exclude(submission__state=SubmissionStates.CONFIRMED).count()
+        if unconfirmed_count:
+            messages.append(
+                ngettext(
+                    'One session is unconfirmed and will not appear on the public schedule.',
+                    '%(count)s sessions are unconfirmed and will not appear on the public schedule.',
+                    unconfirmed_count,
+                )
+                % {'count': unconfirmed_count}
+            )
+        unscheduled_count = talks.filter(start__isnull=True).count()
+        if unscheduled_count:
+            messages.append(
+                ngettext(
+                    'One session has not yet been scheduled.',
+                    '%(count)s sessions have not yet been scheduled.',
+                    unscheduled_count,
+                )
+                % {'count': unscheduled_count}
+            )
+        if self.event.get_feature_flag('use_tracks'):
+            no_track_count = talks.filter(submission__track_id__isnull=True).count()
+            if no_track_count:
+                messages.append(
+                    ngettext(
+                        'One session has not yet been assigned a track.',
+                        '%(count)s sessions have not yet been assigned a track.',
+                        no_track_count,
+                    )
+                    % {'count': no_track_count}
+                )
+        talk_warning_count = len(self.get_all_talk_warnings())
+        if talk_warning_count:
+            messages.append(
+                ngettext(
+                    'One session has scheduling conflicts or other issues.',
+                    '%(count)s sessions have scheduling conflicts or other issues.',
+                    talk_warning_count,
+                )
+                % {'count': talk_warning_count}
+            )
+        return messages
+
+    def release_confirm_message(self):
+        """Return the browser confirmation text for risky schedule releases."""
+
+        messages = self.release_acknowledgement_messages()
+        if not messages:
+            return None
+        return '\n\n'.join(messages) + '\n\n' + _('Do you want to release this schedule anyway?')
 
     @cached_property
     def warnings(self) -> dict:
@@ -706,6 +761,8 @@ class Schedule(PretalxModel):
             'unconfirmed': talks.exclude(submission__state=SubmissionStates.CONFIRMED).count(),
             'no_track': [],
             'release_warning': self.release_warning_message(),
+            'acknowledgement_messages': self.release_acknowledgement_messages(),
+            'confirm_message': self.release_confirm_message(),
         }
         if self.event.get_feature_flag('use_tracks'):
             warnings['no_track'] = talks.filter(submission__track_id__isnull=True)

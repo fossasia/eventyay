@@ -286,7 +286,9 @@ def test_orga_release_breaks_only_schedule_shows_warning(orga_client, event, bre
         assert Schedule.objects.count() == 2
     response = orga_client.get(event.orga_urls.release_schedule, follow=True)
     assert response.status_code == 200
-    assert 'only breaks' in response.content.decode().lower()
+    content = response.content.decode().lower()
+    assert 'only breaks' in content
+    assert 'please review before releasing' in content
     response = orga_client.post(
         event.orga_urls.release_schedule,
         follow=True,
@@ -296,6 +298,18 @@ def test_orga_release_breaks_only_schedule_shows_warning(orga_client, event, bre
     with scope(event=event):
         assert Schedule.objects.count() == 3
         assert event.schedules.filter(version='breaks only').exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('accepted_submission')
+def test_orga_release_breaks_only_with_unscheduled_submissions_shows_warning(
+    orga_client, event, break_slot
+):
+    with scope(event=event):
+        assert event.wip_schedule.talks.filter(submission__isnull=False, start__isnull=True).exists()
+    response = orga_client.get(event.orga_urls.release_schedule, follow=True)
+    assert response.status_code == 200
+    assert 'only breaks' in response.content.decode().lower()
 
 
 @pytest.mark.django_db

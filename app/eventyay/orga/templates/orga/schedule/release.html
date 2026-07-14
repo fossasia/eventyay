@@ -16,20 +16,23 @@
                 {{ form.version.as_field_group }}
             </div>
         </h2>
-        {% if warnings.release_warning or warnings.unconfirmed or warnings.unscheduled or warnings.no_track or warnings.talk_warnings %}
-            <div class="alert alert-warning">
-                <span></span><span>
+        {% if warnings.acknowledgement_messages %}
+            <div class="alert alert-warning" role="alert">
+                <h4 class="alert-heading">{% translate "Please review before releasing" %}</h4>
+                <p class="mb-2">
                     {% blocktranslate trimmed %}
-                        There are still warnings about the release of this schedule. Please review them carefully!
+                        The following issues were found. You can still release, but please review them carefully.
                     {% endblocktranslate %}
-                </span>
+                </p>
+                <ul class="mb-0">
+                    {% for message in warnings.acknowledgement_messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
             </div>
         {% endif %}
 
         <ul>
-            {% if warnings.release_warning %}
-                <li><strong>{{ warnings.release_warning }}</strong></li>
-            {% endif %}
             <li>
                 {% if request.event.wip_schedule.previous_schedule.version %}
                     {% blocktranslate with prev=request.event.wip_schedule.previous_schedule.version since=request.event.wip_schedule.previous_schedule.published|timesince trimmed %}
@@ -135,7 +138,7 @@
             </div>
             <div class="d-flex align-items-center justify-content-end" id="notify-speakers-check">
                 {{ form.notify_speakers.as_field_group }}
-                <button type="submit" class="btn btn-success btn-lg"{% if warnings.release_warning or warnings.unconfirmed or warnings.unscheduled or warnings.no_track or warnings.talk_warnings %} onclick="return confirm('{% if warnings.release_warning %}{{ warnings.release_warning|escapejs }}{% else %}{% translate "There are warnings about this schedule release. Release anyway?" %}{% endif %}')"{% endif %}>{% translate "Release" %}</button>
+                <button type="submit" class="btn btn-success btn-lg"{% if warnings.confirm_message %} onclick="return confirm('{{ warnings.confirm_message|escapejs }}')"{% endif %}>{% translate "Release" %}</button>
             </div>
         </div>
     </form>

@@ -54,6 +54,32 @@ def test_freeze_succeeds_for_breaks_only_schedule(break_slot):
         assert Schedule.objects.count() == schedule_count + 1
 
 
+@pytest.mark.django_db
+def test_release_warning_for_scheduled_breaks_only(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        assert event.wip_schedule.release_warning_message() is not None
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('accepted_submission')
+def test_release_warning_for_scheduled_breaks_with_unscheduled_submissions(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        assert event.wip_schedule.talks.filter(submission__isnull=False, start__isnull=True).exists()
+        assert event.wip_schedule.release_warning_message() is not None
+
+
+@pytest.mark.django_db
+def test_release_acknowledgement_messages_include_breaks_only_warning(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        messages = event.wip_schedule.release_acknowledgement_messages()
+        assert any('only breaks' in message.lower() for message in messages)
+
+
 @pytest.mark.parametrize("version", ["wip", "latest", None, ""])
 @pytest.mark.django_db
 def test_freeze_fail(slot, schedule, version):

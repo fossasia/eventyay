@@ -24,7 +24,7 @@ prompt.c-profile-greeting-prompt(:allowCancel="false")
 			template(v-else)
 				h1 {{ $t('profile/GreetingPrompt:step-display-name~as-first-step:heading') }}
 				p {{ $t('profile/GreetingPrompt:step-display-name~as-first-step:text') }}
-			bunt-input.display-name(name="displayName", :label="$t('profile/GreetingPrompt:displayname:label')", v-model.trim="profile.display_name", :validation="v$.profile.display_name", required)
+			bunt-input.display-name(name="displayName", :label="`${$t('profile/GreetingPrompt:displayname:label')} *`", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
 		.step-avatar(v-else-if="activeStep === 'avatar'")
 			h1 {{ $t('profile/GreetingPrompt:step-avatar:heading') }}
 			p {{ $t('profile/GreetingPrompt:step-avatar:text') }}
@@ -130,17 +130,9 @@ export default {
 		if (this.activeStep === 'connectSocial' && this.profile.avatar.url) this.activeStep = this.nextStep
 	},
 	methods: {
-		ensureDisplayName() {
-			if (!this.v$.profile?.display_name?.$invalid) return true
-			this.activeStep = 'displayName'
-			return false
-		},
 		async toNextStep() {
 			this.v$.$touch()
-			if (this.v$.$invalid) {
-				this.ensureDisplayName()
-				return
-			}
+			if (this.v$.$invalid) return
 			if (this.$refs.step?.update) {
 				this.processingStep = true
 				await this.$refs.step.update()
@@ -158,19 +150,12 @@ export default {
 		setGravatar(gravatar) {
 			Object.assign(this.profile, gravatar)
 			this.showConnectGravatar = false
-			const displayNameIndex = this.steps.indexOf('displayName')
-			if (!this.profile.display_name?.trim()) {
-				this.activeStep = 'displayName'
-			} else if (displayNameIndex >= 0) {
-				this.activeStep = this.steps[displayNameIndex + 1] || 'displayName'
-			} else {
-				this.activeStep = this.nextStep
-			}
+			this.activeStep = this.nextStep
 		},
 		async update() {
 			this.v$.$touch()
 			if (this.v$.$invalid) {
-				this.ensureDisplayName()
+				if (this.v$.profile?.display_name?.$invalid) this.activeStep = 'displayName'
 				return
 			}
 			this.saving = true
