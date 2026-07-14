@@ -734,14 +734,6 @@ class Schedule(PretalxModel):
             )
         return messages
 
-    def release_confirm_message(self):
-        """Return the browser confirmation text for risky schedule releases."""
-
-        messages = self.release_acknowledgement_messages()
-        if not messages:
-            return None
-        return '\n\n'.join(messages) + '\n\n' + _('Do you want to release this schedule anyway?')
-
     @cached_property
     def warnings(self) -> dict:
         """A dictionary of warnings to be acknowledged before a release.
@@ -762,7 +754,6 @@ class Schedule(PretalxModel):
             'no_track': [],
             'release_warning': self.release_warning_message(),
             'acknowledgement_messages': self.release_acknowledgement_messages(),
-            'confirm_message': self.release_confirm_message(),
         }
         if self.event.get_feature_flag('use_tracks'):
             warnings['no_track'] = talks.filter(submission__track_id__isnull=True)

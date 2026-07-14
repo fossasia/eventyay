@@ -138,7 +138,7 @@
             </div>
             <div class="d-flex align-items-center justify-content-end" id="notify-speakers-check">
                 {{ form.notify_speakers.as_field_group }}
-                <button type="submit" class="btn btn-success btn-lg"{% if warnings.confirm_message %} onclick="return confirm('{{ warnings.confirm_message|escapejs }}')"{% endif %}>{% translate "Release" %}</button>
+                <button type="submit" class="btn btn-success btn-lg">{% translate "Release" %}</button>
             </div>
         </div>
     </form>
