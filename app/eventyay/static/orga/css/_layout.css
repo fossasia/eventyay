@@ -122,11 +122,25 @@ table.table-sticky thead {
 table .action-column {
   display: flex;
   flex-wrap: nowrap;
+  align-items: center;
   justify-content: flex-end;
+  gap: 4px;
+  white-space: nowrap;
+  vertical-align: middle;
 
-  >* {
-    margin-left: 4px;
+  > * {
+    margin-left: 0;
+    flex: 0 0 auto;
+    align-self: center;
+    height: auto;
   }
+}
+
+#page-content .table.table-flip td.speaker-info-title {
+  max-width: 0;
+  width: 40%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .accordion .card {
@@ -1845,6 +1859,31 @@ h2 .user-name-display img {
   --pretalx-sticky-top-offset: -18px;
 }
 
+.schedule-release-alert {
+  margin-inline: 0;
+}
+
+.schedule-release-alert .schedule-release-alert-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-release-alert .alert-heading {
+  margin-bottom: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.schedule-release-alert .schedule-release-alert-body ul {
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+}
+
 @media (max-width: 640px) {
   .timeline {
     margin-right: 8px;
@@ -2525,12 +2564,17 @@ h2 .user-name-display img {
 
   #page-content table .action-column {
     gap: 0.35rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
     justify-content: flex-end;
+    width: auto;
   }
 
   #page-content table .action-column > * {
     margin-left: 0;
+    flex: 0 0 auto;
+    height: auto;
+    align-self: center;
   }
 
   #page-content .table-flip tbody td.submission_featured {

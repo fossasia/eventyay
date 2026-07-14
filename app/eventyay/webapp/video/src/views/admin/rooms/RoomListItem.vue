@@ -1,7 +1,7 @@
 <template lang="pug">
 router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", :class="{'mystery': !inferredType}", draggable="false")
 	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? 'sorting is disabled while searching' : ''")
-	.name(v-html="$emojify($localize(room.name))")
+	.name(v-html="$emojify(room.name)")
 	.badge-cell
 		.badges-wrapper
 			.room-type-badge.unscheduled-room-badge(v-if="room.is_unscheduled")

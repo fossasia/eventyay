@@ -203,6 +203,23 @@ def _empty_widget_schedule_meta(event, *, speakers_list_public=False):
     }
 
 
+def build_unavailable_widget_schedule_data(event):
+    """Schedule-shaped payload for embeds when no released schedule exists yet."""
+    return {
+        **_empty_widget_schedule_meta(event),
+        'talks': [],
+        'speakers': [],
+        'schedule_unavailable': True,
+    }
+
+
+def starred_sharing_payload(user, event):
+    public_url = None
+    if user.show_publicly and user.code and not user.deleted:
+        public_url = f'{event.urls.base}people/{user.code}/stars/'
+    return {'show_publicly': bool(user.show_publicly), 'public_url': public_url}
+
+
 def serialize_widget_schedule_data(data, *, event=None, user=None):
     if event is not None and isinstance(data, dict):
         from django.contrib.auth.models import AnonymousUser

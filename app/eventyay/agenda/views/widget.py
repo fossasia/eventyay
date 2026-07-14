@@ -26,6 +26,7 @@ from eventyay.talk_rules.agenda import (
     is_widget_visible,
     wip_preview_build_data,
 )
+from eventyay.agenda.views.utils import build_unavailable_widget_schedule_data
 from eventyay.talk_rules.submission import (
     are_featured_speakers_visible,
     schedule_widget_featured_cache_key_part,
@@ -146,7 +147,11 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
 
     schedule = schedule or event.current_schedule
     if not schedule:
-        raise Http404()
+        result = build_unavailable_widget_schedule_data(event)
+        response = JsonResponse(result, encoder=I18nJSONEncoder)
+        response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
 
     enrich = request.GET.get('enrich') in {'1', 'true', 'True'}
     include_qrcodes = request.GET.get('qrcodes') in {'1', 'true', 'True'}
