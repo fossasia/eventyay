@@ -17,18 +17,20 @@
             </div>
         </h2>
         {% if warnings.acknowledgement_messages %}
-            <div class="alert alert-warning" role="alert">
-                <h4 class="alert-heading">{% translate "Please review before releasing" %}</h4>
-                <p class="mb-2">
-                    {% blocktranslate trimmed %}
-                        The following issues were found. You can still release, but please review them carefully.
-                    {% endblocktranslate %}
-                </p>
-                <ul class="mb-0">
-                    {% for message in warnings.acknowledgement_messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
+            <div class="alert alert-warning schedule-release-alert" role="alert">
+                <div class="schedule-release-alert-body">
+                    <h4 class="alert-heading">{% translate "Please review before releasing" %}</h4>
+                    <p class="mb-2">
+                        {% blocktranslate trimmed %}
+                            The following issues were found. You can still release, but please review them carefully.
+                        {% endblocktranslate %}
+                    </p>
+                    <ul class="mb-0">
+                        {% for message in warnings.acknowledgement_messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
         {% endif %}
 

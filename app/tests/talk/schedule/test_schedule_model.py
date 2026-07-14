@@ -55,6 +55,16 @@ def test_freeze_succeeds_for_breaks_only_schedule(break_slot):
 
 
 @pytest.mark.django_db
+def test_has_schedule_content_with_breaks_only_release(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        event.wip_schedule.freeze('breaks-only')
+        event.__dict__.pop('has_schedule_content', None)
+        assert event.has_schedule_content
+
+
+@pytest.mark.django_db
 def test_release_warning_for_scheduled_breaks_only(break_slot):
     with scope(event=break_slot.schedule.event):
         event = break_slot.schedule.event
