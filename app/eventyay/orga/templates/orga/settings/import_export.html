@@ -6,7 +6,14 @@
 {% block extra_title %}{% translate 'Import/Export' %} :: {% endblock extra_title %}
 
 {% block settings_content %}
-  <h2>{% translate 'Import/Export' %}</h2>
+  <nav id="event-nav" class="header-nav">
+    <div class="navigation">
+      <div class="navigation-title">
+        <h2>{% translate 'Import/Export' %}</h2>
+      </div>
+      {% include "orga/event/component_link.html" %}
+    </div>
+  </nav>
 
   {% include 'orga/includes/tablist.html' %}
 
