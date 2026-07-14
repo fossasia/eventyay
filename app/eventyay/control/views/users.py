@@ -13,7 +13,9 @@ from django.contrib.auth import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import DatabaseError, transaction
-from django.db.models import Exists, OuterRef
+from django.db.models import CharField, Exists, OuterRef, Value
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -33,6 +35,11 @@ from eventyay.base.models import User
 from eventyay.base.services.mail import SendMailException
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.filter import UserFilterForm
+from eventyay.base.services.user import (
+    admin_users_list_q,
+    platform_user_video_display_name,
+    resolve_video_display_names_by_contact_emails,
+)
 from eventyay.control.forms.users import UserEditForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.views import CreateView, UpdateView
@@ -72,9 +79,24 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
     }
 
     def get_queryset(self):
-        qs = User.objects.all().annotate(
-            is_email_verified=Exists(
-                EmailAddress.objects.filter(user=OuterRef('pk'), primary=True, verified=True)
+        qs = (
+            User.objects.filter(admin_users_list_q())
+            .annotate(
+                is_email_verified=Exists(
+                    EmailAddress.objects.filter(user=OuterRef('pk'), primary=True, verified=True)
+                ),
+                admin_list_email=Coalesce(
+                    'email',
+                    KeyTextTransform('contact_email', 'profile'),
+                    Value(''),
+                    output_field=CharField(),
+                ),
+                admin_list_fullname=Coalesce(
+                    'fullname',
+                    KeyTextTransform('display_name', 'profile'),
+                    Value(''),
+                    output_field=CharField(),
+                ),
             )
         )
         if self.filter_form.is_valid():
@@ -84,6 +106,18 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        users = ctx[self.context_object_name]
+        emails = [
+            (u.admin_list_email or '').strip().lower()
+            for u in users
+            if u.admin_list_email and not u.event_id
+        ]
+        video_names = resolve_video_display_names_by_contact_emails(emails)
+        for user in users:
+            if user.event_id:
+                user.video_username = ''
+            else:
+                user.video_username = platform_user_video_display_name(user, video_names)
         return ctx
 
     @cached_property
@@ -118,7 +152,7 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
             return redirect(reverse('eventyay_admin:admin.users'))
 
         try:
-            target_user = User.objects.get(pk=user_id)
+            target_user = User.objects.get(pk=user_id, event__isnull=True)
         except User.DoesNotExist:
             msg = str(_('User not found.'))
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -388,7 +422,7 @@ class UserEditView(AdministratorPermissionRequiredMixin, RecentAuthenticationReq
     form_class = UserEditForm
 
     def get_object(self, queryset=None):
-        return get_object_or_404(User, pk=self.kwargs.get('id'))
+        return get_object_or_404(User, pk=self.kwargs.get('id'), event__isnull=True)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

@@ -87,6 +87,13 @@ export default {
 		}
 	},
 	computed: {
+		usesStreamPolling() {
+			return Boolean(
+				this.modules['livestream.native'] ||
+				this.modules['livestream.youtube'] ||
+				this.modules['livestream.iframe']
+			)
+		},
 		unreadTabsClasses() {
 			return Object.entries(this.unreadTabs).filter(([tab, value]) => value).map(([tab]) => `tab-${tab}-unread`)
 		}
@@ -101,7 +108,7 @@ export default {
 		},
 		'room.id'(roomId) {
 			this.$store.dispatch('stopStreamPolling')
-			if (roomId) {
+			if (roomId && this.usesStreamPolling) {
 				this.$store.dispatch('startStreamPolling', roomId)
 			}
 		},
@@ -114,7 +121,7 @@ export default {
 		} else if (this.modules.poll) {
 			this.activeSidebarTab = 'polls'
 		}
-		if (this.room?.id) {
+		if (this.room?.id && this.usesStreamPolling) {
 			await this.$nextTick()
 			this.$store.dispatch('startStreamPolling', this.room.id)
 		}

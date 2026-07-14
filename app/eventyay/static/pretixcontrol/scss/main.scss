@@ -1002,7 +1002,8 @@ h1 .label {
 
 @media (min-width: $screen-sm-min) {
     body[data-event] #page-wrapper > .container-fluid {
-        margin-top: 8px;
+        margin-top: 0;
+        padding-top: 18px;
     }
 }
 
@@ -1055,49 +1056,6 @@ h1 .label {
             gap: 6px;
             margin-inline-start: auto;
         }
-    }
-}
-
-/* Event name in main content - max width and wrap */
-#event-nav .navigation,
-.header-nav .navigation {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-}
-
-#event-nav .navigation-title,
-.header-nav .navigation-title {
-    text-align: left;
-    flex: 1 1 auto;
-    min-width: 0;
-
-    h1,
-    h2 {
-        font-size: 30px;
-        line-height: 1.2;
-        margin-top: 10px;
-        margin-bottom: .5rem;
-        overflow-wrap: break-word;
-    }
-
-    h2 small {
-        white-space: nowrap;
-    }
-}
-
-@media (min-width: $screen-sm-min) {
-    #event-nav .navigation,
-    .header-nav .navigation {
-        flex-wrap: nowrap;
-        align-items: flex-start;
-    }
-
-    #event-nav .navigation .navigation-button,
-    .header-nav .navigation .navigation-button {
-        flex: 0 0 auto;
-        margin-left: auto;
     }
 }
 
