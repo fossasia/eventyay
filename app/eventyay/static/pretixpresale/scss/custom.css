@@ -224,6 +224,15 @@ header .header-row-right {
     margin-inline: 0;
 }
 
+#main-card summary.product-row {
+    color: var(--color-text);
+}
+
+#main-card summary.product-row .product-description,
+#main-card summary.product-row .product-description p {
+    color: var(--color-text);
+}
+
 .nav-icon-mobile {
     display: none;
 }
@@ -241,11 +250,15 @@ header .header-row-right {
     }
 
     .header-join-video-floating-mobile {
-        right: 0;
+        right: 15px;
     }
 }
 
 @media (max-width: 768px) {
+    #top-bg {
+        height: 480px;
+    }
+
     .presale-sticky-tabs {
         flex-direction: row;
         flex-wrap: nowrap;
@@ -554,8 +567,8 @@ header .header-row-right {
 .variation-option > div:first-child::before {
     content: '';
     position: absolute;
-    top: 12px;
-    bottom: 12px;
+    top: 0;
+    bottom: 0;
     left: 2px;
     width: 1px;
     background: var(--color-grey-light, #d0d0d0);
@@ -564,7 +577,7 @@ header .header-row-right {
 .variation-option > div:first-child::after {
     content: '';
     position: absolute;
-    top: 24px;
+    top: 0.75em;
     left: 2px;
     width: 10px;
     height: 1px;
@@ -573,6 +586,16 @@ header .header-row-right {
 
 .variation-option h5 {
     padding-left: 16px;
+    margin: 0;
+}
+
+.variation-option .variation-description {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.variation-option .variation-description p {
+    margin: 0;
 }
 
 .variation-selector-label.is-exclusive-disabled,
