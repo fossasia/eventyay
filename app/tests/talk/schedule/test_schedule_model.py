@@ -90,6 +90,17 @@ def test_release_acknowledgement_messages_include_breaks_only_warning(break_slot
         assert any('only breaks' in message.lower() for message in messages)
 
 
+@pytest.mark.django_db
+@pytest.mark.usefixtures('accepted_submission')
+def test_release_acknowledgement_messages_skip_details_shown_elsewhere(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        messages = event.wip_schedule.release_acknowledgement_messages()
+    joined = ' '.join(messages).lower()
+    assert 'not yet been scheduled' not in joined
+    assert 'not yet been assigned a track' not in joined
+
+
 @pytest.mark.parametrize("version", ["wip", "latest", None, ""])
 @pytest.mark.django_db
 def test_freeze_fail(slot, schedule, version):

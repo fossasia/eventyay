@@ -43,6 +43,8 @@ details.dropdown[open]:not(.details-open) .dropdown-content {
 details.dropdown .dropdown-content {
   position: absolute;
   top: 100%;
+  min-width: 160px;
+  width: max-content;
   max-width: 400px;
   max-height: 50vh;
   overflow-y: auto;
@@ -153,7 +155,7 @@ details.dropdown .dropdown-content {
     top: 0;
     right: 100%;
     left: auto;
-    width: auto;
+    width: max-content;
     margin-top: 0;
     margin-right: 8px;
   }
@@ -174,7 +176,7 @@ details.dropdown .dropdown-content {
   .dropdown-content-e {
     top: 0;
     left: 100%;
-    width: auto;
+    width: max-content;
     margin-top: 0;
     margin-left: 8px;
   }
@@ -259,12 +261,29 @@ details.dropdown .dropdown-content {
 @keyframes dropdown-reveal {
   from {
     opacity: 0;
-    clip-path: inset(0 0 100% 0);
   }
   to {
     opacity: 1;
-    clip-path: inset(0 0 0 0);
   }
+}
+
+/* Public header dropdowns: right-align panels and skip centering transforms */
+.presale-sticky-tabs .header-row-right details.dropdown .dropdown-content {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+.presale-sticky-tabs .header-row-right details.dropdown .dropdown-content::before,
+.presale-sticky-tabs .header-row-right details.dropdown .dropdown-content::after {
+  transform: none;
+}
+
+.presale-sticky-tabs .header-row-right #user-dropdown,
+.presale-sticky-tabs .header-row-right #locale-dropdown {
+  min-width: 160px;
+  width: max-content;
+  max-width: calc(100vw - 16px);
 }
 
 details.dropdown .dropdown-content::before,
@@ -382,7 +401,7 @@ details.dropdown .dropdown-content-w {
   top: 0;
   right: 100%;
   left: auto;
-  width: auto;
+  width: max-content;
   margin-top: 0;
   margin-right: 8px;
 }
@@ -406,7 +425,7 @@ details.dropdown .dropdown-content-w::after {
 details.dropdown .dropdown-content-e {
   top: 0;
   left: 100%;
-  width: auto;
+  width: max-content;
   margin-top: 0;
   margin-left: 8px;
 }
@@ -801,7 +820,7 @@ nav.navbar #language-dropdown .dropdown-content .dropdown-item.active {
 nav.navbar details.dropdown .dropdown-content {
   min-width: 160px;
   max-width: 400px;
-  width: auto;
+  width: max-content;
   padding: 0;
   margin-top: 8px;
 }

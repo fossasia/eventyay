@@ -678,12 +678,6 @@ footer {
     max-width: calc(100vw - 16px);
   }
 
-  .presale-sticky-tabs .header-row-right #user-dropdown {
-    transform: none;
-    min-width: 160px;
-    width: max-content;
-  }
-
   /* Remove the caret arrow — redundant when showing icon-only */
   .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
     display: none;

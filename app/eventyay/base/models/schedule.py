@@ -684,45 +684,15 @@ class Schedule(PretalxModel):
             return _('This schedule contains only breaks and no sessions.')
         return None
 
-    def release_acknowledgement_messages(self):
-        """Return human-readable release warnings for the orga release page."""
+    def release_acknowledgement_messages(self, talk_warnings=None):
+        """Return release warnings for the orga alert that are not shown elsewhere."""
 
         messages = []
         if release_warning := self.release_warning_message():
             messages.append(str(release_warning))
-        talks = self.talks.filter(submission__isnull=False)
-        unconfirmed_count = talks.exclude(submission__state=SubmissionStates.CONFIRMED).count()
-        if unconfirmed_count:
-            messages.append(
-                ngettext(
-                    'One session is unconfirmed and will not appear on the public schedule.',
-                    '%(count)s sessions are unconfirmed and will not appear on the public schedule.',
-                    unconfirmed_count,
-                )
-                % {'count': unconfirmed_count}
-            )
-        unscheduled_count = talks.filter(start__isnull=True).count()
-        if unscheduled_count:
-            messages.append(
-                ngettext(
-                    'One session has not yet been scheduled.',
-                    '%(count)s sessions have not yet been scheduled.',
-                    unscheduled_count,
-                )
-                % {'count': unscheduled_count}
-            )
-        if self.event.get_feature_flag('use_tracks'):
-            no_track_count = talks.filter(submission__track_id__isnull=True).count()
-            if no_track_count:
-                messages.append(
-                    ngettext(
-                        'One session has not yet been assigned a track.',
-                        '%(count)s sessions have not yet been assigned a track.',
-                        no_track_count,
-                    )
-                    % {'count': no_track_count}
-                )
-        talk_warning_count = len(self.get_all_talk_warnings())
+        if talk_warnings is None:
+            talk_warnings = self.get_all_talk_warnings()
+        talk_warning_count = len(talk_warnings)
         if talk_warning_count:
             messages.append(
                 ngettext(
@@ -747,13 +717,14 @@ class Schedule(PretalxModel):
         """
 
         talks = self.talks.filter(submission__isnull=False)
+        talk_warnings = self.get_all_talk_warnings()
         warnings = {
-            'talk_warnings': [{'talk': key, 'warnings': value} for key, value in self.get_all_talk_warnings().items()],
+            'talk_warnings': [{'talk': key, 'warnings': value} for key, value in talk_warnings.items()],
             'unscheduled': talks.filter(start__isnull=True).count(),
             'unconfirmed': talks.exclude(submission__state=SubmissionStates.CONFIRMED).count(),
             'no_track': [],
             'release_warning': self.release_warning_message(),
-            'acknowledgement_messages': self.release_acknowledgement_messages(),
+            'acknowledgement_messages': self.release_acknowledgement_messages(talk_warnings),
         }
         if self.event.get_feature_flag('use_tracks'):
             warnings['no_track'] = talks.filter(submission__track_id__isnull=True)

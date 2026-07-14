@@ -274,12 +274,6 @@
         max-width: calc(100vw - 16px);
     }
 
-    .presale-sticky-tabs .header-row-right #user-dropdown {
-        transform: none;
-        min-width: 160px;
-        width: max-content;
-    }
-
     /* Hide text labels for Language and User dropdowns — icon-only on mobile */
     .mobile-hide-text {
         display: none;
@@ -354,15 +348,6 @@
     #main-card>main>main {
         padding-left: 0;
         padding-right: 0;
-    }
-}
-
-@media (max-width: 480px) {
-    #locale-dropdown.dropdown-content {
-        transform: scale(0.75);
-        transform-origin: top right;
-        right: 0;
-        left: auto;
     }
 }
 

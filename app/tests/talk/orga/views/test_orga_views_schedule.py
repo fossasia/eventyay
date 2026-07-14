@@ -288,7 +288,7 @@ def test_orga_release_breaks_only_schedule_shows_warning(orga_client, event, bre
     assert response.status_code == 200
     content = response.content.decode().lower()
     assert 'only breaks' in content
-    assert 'please review before releasing' in content
+    assert 'review the issues below before releasing' in content
     response = orga_client.post(
         event.orga_urls.release_schedule,
         follow=True,
