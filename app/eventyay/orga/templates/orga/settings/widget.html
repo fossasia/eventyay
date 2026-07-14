@@ -16,19 +16,8 @@
 {% endblock scripts %}
 
 {% block settings_content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h2>
-                    {% translate "Widget settings" %}
-                    <span data-dialog-target="#info-dialog" data-toggle="dialog">
-                        <i class="fa fa-question-circle-o text-info"></i>
-                    </span>
-                </h2>
-            </div>
-            {% include "orga/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Widget settings" as settings_title %}
+    {% include "orga/includes/settings_header.html" with settings_title=settings_title %}
     <dialog id="info-dialog">
         <div class="alert alert-info flip ml-auto">
             {% blocktranslate trimmed %}
