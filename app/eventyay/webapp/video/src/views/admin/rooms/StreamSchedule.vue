@@ -180,6 +180,13 @@ export default {
 		}
 	},
 	methods: {
+		getDefaultCreateTimes() {
+			const start = moment().tz(this.eventTimezone || 'UTC').seconds(0).milliseconds(0);
+			return {
+				start_time: start,
+				end_time: start.clone().add(1, 'minute'),
+			};
+		},
 		serializeFormData() {
 			return {
 				title: this.formData.title || '',
@@ -275,6 +282,12 @@ export default {
 		},
 		openCreateForm() {
 			this.v$.$reset();
+			this.formData = {
+				title: '',
+				url: '',
+				...this.getDefaultCreateTimes(),
+				stream_type: 'youtube',
+			};
 			this.showCreateForm = true;
 		},
 		editSchedule(schedule) {
