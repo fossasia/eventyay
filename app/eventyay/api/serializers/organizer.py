@@ -169,7 +169,6 @@ class TeamSerializer(serializers.ModelSerializer):
             'force_hide_speaker_emails',
             'can_video_create_stages',
             'can_video_create_channels',
-            'can_video_direct_message',
             'can_video_manage_announcements',
             'can_video_view_users',
             'can_video_manage_users',
