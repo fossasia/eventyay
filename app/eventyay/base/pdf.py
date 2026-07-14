@@ -35,6 +35,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph
 
+from eventyay.base.admission_validity import format_issued_admission_validity
 from eventyay.base.i18n import language
 from eventyay.base.invoice import ThumbnailingImageReader
 from eventyay.base.models import Order, OrderPosition, Question
@@ -130,6 +131,16 @@ DEFAULT_VARIABLES = OrderedDict(
                 'editor_sample': _('Ticket category'),
                 'evaluate': lambda orderposition, order, event: (
                     str(orderposition.product.category.name) if orderposition.product.category else ''
+                ),
+            },
+        ),
+        (
+            'ticket_validity',
+            {
+                'label': _('Ticket validity'),
+                'editor_sample': _('May 31st, 2025 – June 1st, 2025'),
+                'evaluate': lambda orderposition, order, event: format_issued_admission_validity(
+                    orderposition, event, fallback_to_event=True
                 ),
             },
         ),
@@ -739,6 +750,10 @@ class Renderer:
         pdfmetrics.registerFont(TTFont('Open Sans I', finders.find('fonts/OpenSans-Italic.ttf')))
         pdfmetrics.registerFont(TTFont('Open Sans B', finders.find('fonts/OpenSans-Bold.ttf')))
         pdfmetrics.registerFont(TTFont('Open Sans B I', finders.find('fonts/OpenSans-BoldItalic.ttf')))
+        try:
+            pdfmetrics.registerFont(TTFont('AND', finders.find('fonts/AND-Regular.ttf')))
+        except Exception:
+            pass
 
         for family, styles in get_fonts().items():
             pdfmetrics.registerFont(TTFont(family, finders.find(styles['regular']['truetype'])))
@@ -870,6 +885,26 @@ class Renderer:
         if o['italic']:
             font += ' I'
 
+        raw_text = self._get_text_content(op, order, o) or ''
+
+        def font_supports_text(font_name, text):
+            try:
+                font_obj = pdfmetrics.getFont(font_name)
+                if hasattr(font_obj, 'face') and hasattr(font_obj.face, 'charToGlyph'):
+                    return all(ord(char) < 32 or ord(char) in font_obj.face.charToGlyph for char in text)
+            except Exception:
+                pass
+            return False
+
+        if not font_supports_text(font, raw_text):
+            if font_supports_text('AND', raw_text):
+                font = 'AND'
+            else:
+                import text_unidecode
+                raw_text = text_unidecode.unidecode(raw_text)
+                if not font_supports_text(font, raw_text):
+                    font = 'AND'
+
         align_map = {'left': TA_LEFT, 'center': TA_CENTER, 'right': TA_RIGHT}
         style = ParagraphStyle(
             name=uuid.uuid4().hex,
@@ -880,9 +915,7 @@ class Renderer:
             textColor=Color(o['color'][0] / 255, o['color'][1] / 255, o['color'][2] / 255),
             alignment=align_map[o['align']],
         )
-        text = conditional_escape(
-            self._get_text_content(op, order, o) or '',
-        ).replace('\n', '<br/>\n')
+        text = conditional_escape(raw_text).replace('\n', '<br/>\n')
 
         # reportlab does not support RTL, ligature-heavy scripts like Arabic. Therefore, we use ArabicReshaper
         # to resolve all ligatures and python-bidi to switch RTL texts.

@@ -51,6 +51,13 @@
                     {% bootstrap_field variation_form.default_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field variation_form.original_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field variation_form.description layout="control" %}
+                    {% if form.admission.value %}
+                        {% bootstrap_field variation_form.admission_validity_mode layout="control" %}
+                        {% bootstrap_field variation_form.admission_valid_from layout="control" %}
+                        {% bootstrap_field variation_form.admission_valid_until layout="control" %}
+                        {% bootstrap_field variation_form.admission_valid_from_offset_minutes layout="control" %}
+                        {% bootstrap_field variation_form.admission_valid_until_offset_minutes layout="control" %}
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
@@ -85,6 +92,13 @@
                     {% bootstrap_field formset.empty_form.default_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field formset.empty_form.original_price addon_after=request.event.currency layout="control" %}
                     {% bootstrap_field formset.empty_form.description layout="control" %}
+                    {% if form.admission.value %}
+                        {% bootstrap_field formset.empty_form.admission_validity_mode layout="control" %}
+                        {% bootstrap_field formset.empty_form.admission_valid_from layout="control" %}
+                        {% bootstrap_field formset.empty_form.admission_valid_until layout="control" %}
+                        {% bootstrap_field formset.empty_form.admission_valid_from_offset_minutes layout="control" %}
+                        {% bootstrap_field formset.empty_form.admission_valid_until_offset_minutes layout="control" %}
+                    {% endif %}
                 </div>
             </div>
         {% endescapescript %}
