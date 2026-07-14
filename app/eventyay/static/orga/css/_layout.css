@@ -2488,8 +2488,59 @@ h2 .user-name-display img {
   }
 
   #page-content .table-flip tbody td.col-state {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.35rem;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  /* td.nowrap forces a min-content width larger than the card at ~320px,
+     so "confirmed" overflows past the card edge. Keep desktop nowrap intact. */
+  #page-content .table-flip tbody td.col-state.nowrap {
+    white-space: normal;
+  }
+
+  /* Extra left margin is for desktop table alignment only; on cards it
+     pushes the state control past the right edge at ~320px. */
+  #page-content .table-flip tbody td .submission-state-dropdown {
+    margin-left: 0;
+    max-width: 100%;
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+
+  #page-content .table-flip tbody td .submission-state-dropdown summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    max-width: 100%;
+    padding: 0.25rem 0.4rem;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  #page-content .table-flip tbody td .submission-state-dropdown summary > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #page-content .table-flip tbody td .submission-state-dropdown summary > i.fa.fa-caret-down {
+    margin-left: 0.25rem;
+    flex: 0 0 auto;
+  }
+
+  #page-content .table-flip tbody td.col-state > .fa {
+    flex: 0 0 auto;
+  }
+
+  #page-content .table-flip tbody td.col-state > .state-fragment {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   #score-formset [data-formset-body] > .list-group,
@@ -2606,8 +2657,8 @@ a.btn-speaker-not-arrived {
 }
 
 .speaker-list-table .speaker-sessions-cell {
-  max-width: 22rem;
-  min-width: 12rem;
+  max-width: 16rem;
+  min-width: 10rem;
 }
 
 .speaker-session-list {
@@ -2641,4 +2692,57 @@ a.btn-speaker-not-arrived {
 button.btn-speaker-arrived,
 button.btn-speaker-not-arrived {
   white-space: nowrap;
+}
+
+/* Contained horizontal scroll so laptop widths can reach action columns
+   without #page-content { overflow-x: hidden } clipping them. */
+.talk-list-table-scroll {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.speaker-action-label--short {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .talk-list-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .speaker-list-table {
+    width: 100%;
+    min-width: 56rem;
+  }
+
+  .speaker-list-table th:first-child,
+  .speaker-list-table td:first-child {
+    max-width: 16rem;
+    min-width: 10rem;
+  }
+
+  .speaker-list-table td:first-child a {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .speaker-list-table td:first-child .user-name-display {
+    display: inline;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1280px) {
+  .speaker-action-label--long {
+    display: none;
+  }
+
+  .speaker-action-label--short {
+    display: inline;
+  }
 }
