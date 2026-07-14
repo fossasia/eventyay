@@ -274,6 +274,12 @@
         max-width: calc(100vw - 16px);
     }
 
+    .presale-sticky-tabs .header-row-right #user-dropdown {
+        transform: none;
+        min-width: 160px;
+        width: max-content;
+    }
+
     /* Hide text labels for Language and User dropdowns — icon-only on mobile */
     .mobile-hide-text {
         display: none;

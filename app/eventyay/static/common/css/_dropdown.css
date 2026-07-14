@@ -62,6 +62,23 @@ details.dropdown .dropdown-content {
   --dropdown-item-accent-contrast: #fff;
 }
 
+#user-dropdown {
+  min-width: 160px;
+  max-width: 400px;
+  width: max-content;
+}
+
+#user-dropdown form {
+  width: 100%;
+  margin: 0;
+}
+
+#user-dropdown .dropdown-item,
+#user-dropdown a.dropdown-item,
+#user-dropdown button.dropdown-item {
+  white-space: nowrap;
+}
+
 @supports (color: color-contrast(white vs black)) {
   details.dropdown .dropdown-content {
     --dropdown-item-accent-contrast: color-contrast(
@@ -500,6 +517,7 @@ details.dropdown .dropdown-content-se::after {
 #locale-dropdown .language-enforce-bar {
   width: 100%;
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
@@ -508,11 +526,12 @@ details.dropdown .dropdown-content-se::after {
 }
 
 #locale-dropdown .language-enforce-label {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   font-size: 13px;
   font-weight: 600;
   color: var(--color-grey-dark, #495057);
+  white-space: nowrap;
 }
 
 #locale-dropdown .language-enforce-form {

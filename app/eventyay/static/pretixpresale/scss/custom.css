@@ -309,6 +309,12 @@ header .header-row-right {
         max-width: calc(100vw - 16px);
     }
 
+    .presale-sticky-tabs .header-row-right #user-dropdown {
+        transform: none;
+        min-width: 160px;
+        width: max-content;
+    }
+
     .mobile-hide-text,
     .hidden-xs {
         display: none;
