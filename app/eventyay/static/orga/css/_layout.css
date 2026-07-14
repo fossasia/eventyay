@@ -122,11 +122,37 @@ table.table-sticky thead {
 table .action-column {
   display: flex;
   flex-wrap: nowrap;
+  align-items: center;
   justify-content: flex-end;
+  gap: 4px;
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
 
-  >* {
-    margin-left: 4px;
+  > * {
+    margin-left: 0;
+    flex: 0 0 auto;
+    align-self: center;
+    height: auto;
   }
+}
+
+#page-content .table.table-flip td.action-column {
+  width: 1%;
+  white-space: nowrap;
+}
+
+#page-content .table.table-flip td.action-column .btn {
+  flex: 0 0 auto;
+  height: auto;
+  align-self: center;
+}
+
+#page-content .table.table-flip td.speaker-info-title {
+  max-width: 0;
+  width: 40%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .accordion .card {
@@ -2525,12 +2551,17 @@ h2 .user-name-display img {
 
   #page-content table .action-column {
     gap: 0.35rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
     justify-content: flex-end;
+    width: auto;
   }
 
   #page-content table .action-column > * {
     margin-left: 0;
+    flex: 0 0 auto;
+    height: auto;
+    align-self: center;
   }
 
   #page-content .table-flip tbody td.submission_featured {
