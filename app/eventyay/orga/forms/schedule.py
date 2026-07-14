@@ -44,9 +44,6 @@ class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
             raise forms.ValidationError(_('This schedule version was used already, please choose a different one.'))
         return version
 
-    def clean(self):
-        return super().clean()
-
     class Meta:
         model = Schedule
         fields = (
