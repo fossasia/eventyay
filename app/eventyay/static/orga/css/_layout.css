@@ -1859,6 +1859,31 @@ h2 .user-name-display img {
   --pretalx-sticky-top-offset: -18px;
 }
 
+.schedule-release-alert {
+  margin-inline: 0;
+}
+
+.schedule-release-alert .schedule-release-alert-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-release-alert .alert-heading {
+  margin-bottom: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.schedule-release-alert .schedule-release-alert-body ul {
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+}
+
 @media (max-width: 640px) {
   .timeline {
     margin-right: 8px;
