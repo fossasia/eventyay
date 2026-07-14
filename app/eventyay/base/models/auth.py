@@ -556,11 +556,17 @@ class User(
         if request and self.has_active_staff_session(request.session.session_key):
             return Event.objects.all()
 
-        kwargs = {permission: True}
+        from .organizer import Team
+        implying_perms = [
+            p for p, implied in Team.PERMISSION_IMPLICATIONS.items() if permission in implied
+        ]
+        q = Q(**{permission: True})
+        for p in implying_perms:
+            q |= Q(**{p: True})
 
         return Event.objects.filter(
-            Q(organizer_id__in=self.teams.filter(all_events=True, **kwargs).values_list('organizer', flat=True))
-            | Q(id__in=self.teams.filter(**kwargs).values_list('limit_events__id', flat=True))
+            Q(organizer_id__in=self.teams.filter(q, all_events=True).values_list('organizer', flat=True))
+            | Q(id__in=self.teams.filter(q).values_list('limit_events__id', flat=True))
         )
 
     @scopes_disabled()
@@ -576,9 +582,15 @@ class User(
         if request and self.has_active_staff_session(request.session.session_key):
             return Organizer.objects.all()
 
-        kwargs = {permission: True}
+        from .organizer import Team
+        implying_perms = [
+            p for p, implied in Team.PERMISSION_IMPLICATIONS.items() if permission in implied
+        ]
+        q = Q(**{permission: True})
+        for p in implying_perms:
+            q |= Q(**{p: True})
 
-        return Organizer.objects.filter(id__in=self.teams.filter(**kwargs).values_list('organizer', flat=True))
+        return Organizer.objects.filter(id__in=self.teams.filter(q).values_list('organizer', flat=True))
 
 
     def has_active_staff_session(self, session_key=None):

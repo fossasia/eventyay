@@ -234,6 +234,10 @@ body.loading .container {
 }
 
 .info-row {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
     & > .fa {
         font-size: 26px;
         color: $brand-primary;
@@ -243,9 +247,29 @@ body.loading .container {
     p {
         min-height: 30px;
         margin-left: 40px;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
     p:first-child {
         margin-top: 0;
+    }
+}
+
+.page-presale-event-index {
+    #main-card,
+    #main-card main,
+    #main-card p,
+    #main-card li,
+    #main-card dd,
+    #main-card .alert,
+    #main-card .panel,
+    #main-card .panel-body,
+    #main-card .subevent-head,
+    #main-card .subevent-head a {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 }
 
