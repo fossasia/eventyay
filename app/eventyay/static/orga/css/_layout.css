@@ -638,6 +638,100 @@ footer {
   }
 }
 
+/* Outbox toolbar: shared control height on laptop/desktop only.
+   Mobile layout stays in the max-width: 768px block below. */
+@media (min-width: 769px) {
+  #page-content .outbox-submit-group {
+    --outbox-control-height: 2.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  #page-content .outbox-submit-group #outbox-search.search-form {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    width: auto;
+  }
+
+  #page-content .outbox-submit-group #outbox-search.search-form > .form-group {
+    display: flex;
+    align-items: center;
+    flex: 1 1 12rem;
+    width: auto;
+    max-width: 18rem;
+    min-width: 10rem;
+    margin: 0;
+    height: var(--outbox-control-height);
+  }
+
+  #page-content .outbox-submit-group #outbox-search.search-form > .form-group .form-control,
+  #page-content .outbox-submit-group #outbox-search.search-form > .form-group input[type="text"],
+  #page-content .outbox-submit-group #outbox-search.search-form > .form-group select {
+    height: var(--outbox-control-height);
+    min-height: var(--outbox-control-height);
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  #page-content .outbox-submit-group #outbox-search.search-form > .form-group .choices {
+    width: 100%;
+    height: var(--outbox-control-height);
+    margin: 0;
+  }
+
+  #page-content .outbox-submit-group #outbox-search.search-form > .form-group .choices__inner {
+    height: var(--outbox-control-height);
+    min-height: var(--outbox-control-height);
+    padding-top: 0;
+    padding-bottom: 0;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  #page-content .outbox-submit-group #outbox-search.search-form > button[type="submit"] {
+    flex: 0 0 auto;
+    align-self: center;
+    height: var(--outbox-control-height);
+    min-height: var(--outbox-control-height);
+    margin: 0;
+    padding: 0 0.75rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  #page-content .outbox-submit-group .outbox-bulk-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    align-self: center;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  #page-content .outbox-submit-group .outbox-bulk-actions .btn {
+    height: var(--outbox-control-height);
+    min-height: var(--outbox-control-height);
+    margin: 0;
+    padding: 0 0.75rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+}
+
 .filter-form {
   display: flex;
   flex-wrap: wrap;
@@ -2247,31 +2341,34 @@ h2 .user-name-display img {
     margin-right: 0;
   }
 
+  #page-content .outbox-submit-group,
   #page-content .submit-group:has(#outbox-search) {
     flex-direction: column;
+    align-items: stretch;
     gap: 0.35rem;
   }
 
-  #page-content .submit-group:has(#outbox-search) > div:first-child {
+  #page-content .outbox-submit-group #outbox-search.search-form,
+  #page-content .submit-group:has(#outbox-search) #outbox-search.search-form {
     width: 100%;
   }
 
+  #page-content .outbox-submit-group #outbox-search.search-form button[type="submit"],
   #page-content .submit-group:has(#outbox-search) .search-form button[type="submit"] {
     margin-bottom: 0;
   }
 
+  #page-content .outbox-submit-group .outbox-bulk-actions,
   #page-content .submit-group:has(#outbox-search) .outbox-bulk-actions {
-    align-items: stretch;
-    width: 100%;
-  }
-
-  #page-content .submit-group:has(#outbox-search) .outbox-bulk-actions > div {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 0.35rem;
     width: 100%;
+    margin-left: 0;
   }
 
+  #page-content .outbox-submit-group .outbox-bulk-actions .btn,
   #page-content .submit-group:has(#outbox-search) .outbox-bulk-actions .btn {
     width: 100%;
     margin: 0;
