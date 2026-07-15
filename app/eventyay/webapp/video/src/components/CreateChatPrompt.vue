@@ -13,11 +13,11 @@ prompt.c-create-chat-prompt(@close="$emit('close')")
 							.ui-radio-title
 								i.mdi(:class="`mdi-${option.icon}`", style="margin-right: 6px; font-size: 16px; line-height: 1;")
 								span {{ option.label }}
-			bunt-input(name="name", :label="$t('CreateChatPrompt:name:label')", :icon="selectedType ? selectedType.icon : null", :placeholder="$t('CreateChatPrompt:name:placeholder')", v-model="name")
+			bunt-input.name-input(:class="{ 'has-error': !!error }", name="name", :label="$t('CreateChatPrompt:name:label')", :icon="selectedType ? selectedType.icon : null", :placeholder="$t('CreateChatPrompt:name:placeholder')", v-model="name", :validation="error ? { $error: true, $errors: [{ $message: error }] } : null")
 			bunt-input-outline-container(:label="$t('CreateChatPrompt:description:label')")
 				template(#default= "{focus, blur}")
 					textarea(v-model="description", @focus="focus", @blur="blur")
-			bunt-button(type="submit", :loading="loading", :error-message="error") {{ $t('CreateChatPrompt:submit:label') }}
+			bunt-button(type="submit", :loading="loading", :disabled="!!error", :error="!!error") {{ $t('CreateChatPrompt:submit:label') }}
 </template>
 <script>
 import {mapGetters} from 'vuex'
@@ -60,6 +60,9 @@ export default {
 		}
 	},
 	watch: {
+		name() {
+			this.error = null
+		},
 		types: {
 			immediate: true,
 			handler(types) {
@@ -115,7 +118,7 @@ export default {
 				this.$emit('close')
 			} catch (error) {
 				this.loading = false
-				this.error = error.message || error
+				this.error = String(error.message || error).replace(/^\[['"]|['"]\]$/g, '')
 			}
 		}
 	}
@@ -153,6 +156,9 @@ export default {
 					font-weight: 500
 					color: $clr-secondary-text-light
 					margin-bottom: 8px
+			.name-input
+				&.has-error
+					margin-bottom: 24px
 			.bunt-input-outline-container
 				textarea
 					background-color: transparent
