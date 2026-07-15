@@ -15,7 +15,7 @@
 				.ui-radio-description {{ option.description }}
 	template(v-if="playbackMode === PLAYBACK_MODE_ALWAYS_ON")
 		h2 Default stream source
-		bunt-select(name="stream-source", v-model="streamSource", :options="STREAM_SOURCE_OPTIONS", option-value="id", option-label="label", label="Stream source")
+		bunt-select(name="stream-source", v-model="streamSource", :options="STREAM_SOURCE_OPTIONS", option-value="id", option-label="label", label="Stream source", dropdown-class="stage-stream-source-dropdown")
 		template(v-if="modules['livestream.native']")
 			bunt-input(name="url", v-model="modules['livestream.native'].config.hls_url", label="HLS URL")
 			upload-url-input(name="streamOfflineImage", v-model="modules['livestream.native'].config.streamOfflineImage", label="Stream offline image")
@@ -318,4 +318,7 @@ export default defineComponent({
 	// no local radio styles needed anymore
 .bunt-switch-container
 	margin-top: 16px
+@supports (-moz-appearance: none)
+	.stage-stream-source-dropdown
+		margin-left: 8px
 </style>
