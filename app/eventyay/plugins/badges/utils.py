@@ -10,11 +10,34 @@ from .models import BadgeLayout, BadgeProduct
 BADGE_HIDDEN_FIELDS_KEY = 'badge_hidden_fields'
 BADGE_TICKET_PROVIDER = 'badge'
 
+_renderer_cache = {}
+
+
+def get_badge_layout_version(event):
+    """
+    Return the current badge layout/rendering cache version for this event.
+
+    This is stored in the shared (cross-process/cross-worker) cache backend, so every
+    Celery worker and web worker will observe a version bump immediately on their next
+    lookup, no matter which process actually saved the layout change.
+    """
+    return event.cache.get('badge_layout_version') or 0
+
 
 def clear_badge_layout_cache(event):
     for attr in ('_badge_layout_assignment_map', '_default_badge_layout', '_cached_renderermap'):
         if hasattr(event, attr):
             delattr(event, attr)
+
+    # Bump the layout version in the cross-process cache so every worker's in-memory
+    # renderer cache is invalidated on its very next use, without needing to reach into
+    # other processes' memory.
+    version = get_badge_layout_version(event)
+    event.cache.set('badge_layout_version', version + 1, 3600 * 24 * 30)
+
+    keys_to_delete = [k for k in _renderer_cache if k[0] == event.pk]
+    for k in keys_to_delete:
+        del _renderer_cache[k]
 
 
 def normalize_badge_content_key(content):
