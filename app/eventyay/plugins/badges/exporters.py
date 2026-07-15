@@ -27,7 +27,7 @@ from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
 from eventyay.base.services.orders import OrderError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
-from eventyay.plugins.badges.models import BadgeProduct
+from eventyay.plugins.badges.models import BadgeLayout, BadgeProduct
 from eventyay.plugins.badges.utils import (
     _renderer_cache,
     get_badge_hidden_fields,
@@ -365,9 +365,17 @@ def render_nup(input_files: list[str], num_pages: int, output_file: BinaryIO, op
 def render_badges(event, positions, opt, apply_output_pagesize=False):
     from itertools import groupby
 
-    from eventyay.plugins.badges.utils import get_badge_layout_assignment_map
+    # Resolve product→layout assignments fresh on every render so explicit "no badge"
+    # assignments (layout=None) and recent assignment changes are always respected.
+    assignment_map = {
+        assignment.product_id: assignment.layout
+        for assignment in BadgeProduct.objects.select_related('layout').filter(product__event=event)
+    }
+    try:
+        default_layout = event.badge_layouts.get(default=True)
+    except BadgeLayout.DoesNotExist:
+        default_layout = None
 
-    assignment_map, default_layout = get_badge_layout_assignment_map(event)
     # Fetched once per render call (not per position) to avoid a cache round-trip per
     # badge, while still guaranteeing that every render reflects the latest saved design.
     version = get_badge_layout_version(event)
