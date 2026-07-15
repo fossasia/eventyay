@@ -76,7 +76,12 @@
                         {% bootstrap_field sform.hover_button_color layout="control" %}
                         {% bootstrap_field sform.theme_round_borders layout="control" %}
                         {% bootstrap_field sform.primary_font layout="control" %}
-
+                    </fieldset>
+                    <fieldset>
+                        <legend>{% trans "Video area" %}</legend>
+                        {% bootstrap_field sform.video_navigation_background_color layout="control" %}
+                        {% bootstrap_field sform.video_sidebar_text_color layout="control" %}
+                        {% bootstrap_field sform.video_sidebar_hover_color layout="control" %}
                     </fieldset>
                     <fieldset>
                         <legend>{% trans "Gift cards" %}</legend>
