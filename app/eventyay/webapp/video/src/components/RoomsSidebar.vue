@@ -20,7 +20,7 @@ transition(name="sidebar")
 							.subtitle
 								.speakers {{ stage.session.speakers ? stage.session.speakers.map(s => s.name).join(', ') : '' }}
 								.room-wrapper
-									.room {{ stage.room.name }}
+									.room {{ $localize(stage.room.name) }}
 									.notifications(v-if="stage.notifications") {{ stage.notifications }}
 					template(v-else)
 						.room-icon(aria-hidden="true")
