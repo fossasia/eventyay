@@ -72,7 +72,7 @@
 							.section-header
 								h3 {{ $t('LandingPage:speakers:header') }}
 								bunt-link-button.section-link(:to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:link') }}
-							speakers-list(:hideToolbar="true", :speakers="featuredSpeakers")
+							speakers-list(:hideToolbar="true", viewMode="list", :speakers="featuredSpeakers")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
