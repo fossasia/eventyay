@@ -41,25 +41,32 @@ const getResultsContainer = function(context) {
     return tableContainer.closest('.tab-pane') || tableContainer;
 };
 
-const getTabContextFromForm = function(form) {
-    if (!form) {
+const getTabContextFromForm = function(formOrElement) {
+    if (!formOrElement) {
         return {
             context: document,
             tabId: null,
         };
     }
 
-    const tabPane = form.closest('.tab-pane');
-    if (!tabPane || !tabPane.id) {
+    if (formOrElement.classList && formOrElement.classList.contains('tab-pane') && formOrElement.id) {
         return {
-            context: document,
-            tabId: null,
+            context: formOrElement,
+            tabId: formOrElement.id,
+        };
+    }
+
+    const tabPane = formOrElement.closest ? formOrElement.closest('.tab-pane') : null;
+    if (tabPane && tabPane.id) {
+        return {
+            context: tabPane,
+            tabId: tabPane.id,
         };
     }
 
     return {
-        context: tabPane,
-        tabId: tabPane.id,
+        context: document,
+        tabId: null,
     };
 };
 
@@ -242,7 +249,7 @@ const handlePaginationClick = function(event) {
     const tabPane = paginationLink.closest('.tab-pane');
     const formInTab = tabPane ? tabPane.querySelector('form') : null;
     const defaultForm = getFilterForms()[0] || null;
-    fetchAndReplace(url, true, formInTab || defaultForm);
+    fetchAndReplace(url, true, formInTab || tabPane || defaultForm);
 };
 
 const handleSortClick = function(event) {
@@ -261,17 +268,78 @@ const handleSortClick = function(event) {
     const tabPane = sortLink.closest('.tab-pane');
     const formInTab = tabPane ? tabPane.querySelector('form') : null;
     const defaultForm = getFilterForms()[0] || null;
-    fetchAndReplace(url, true, formInTab || defaultForm);
+    fetchAndReplace(url, true, formInTab || tabPane || defaultForm);
+};
+
+const setActiveTabUI = function(tabId) {
+    if (!tabId) return;
+
+    // Update the nav-tabs active state
+    document.querySelectorAll('.nav-tabs a').forEach(function(link) {
+        const href = link.getAttribute('href');
+        if (!href) return;
+        
+        const linkUrl = new URL(href, window.location.href);
+        const linkTab = linkUrl.searchParams.get('tab');
+        const li = link.closest('li');
+        if (li) {
+            if (linkTab === tabId) {
+                li.classList.add('active');
+            } else {
+                li.classList.remove('active');
+            }
+        }
+    });
+
+    // Update the tab-panes active state
+    document.querySelectorAll('.tab-pane').forEach(function(pane) {
+        if (pane.id === tabId) {
+            pane.classList.add('active');
+        } else {
+            pane.classList.remove('active');
+        }
+    });
+};
+
+const handleTabClick = function(event) {
+    const tabLink = event.target.closest('.nav-tabs a');
+    if (!tabLink) {
+        return;
+    }
+
+    const url = tabLink.getAttribute('href');
+    if (!url || url.startsWith('#')) {
+        // Local Bootstrap tab, let Bootstrap handle it
+        return;
+    }
+
+    const urlObj = new URL(url, window.location.href);
+    const tabParam = urlObj.searchParams.get('tab');
+    if (!tabParam) {
+        return;
+    }
+
+    event.preventDefault();
+
+    setActiveTabUI(tabParam);
+
+    const activeTab = document.getElementById(tabParam);
+    const targetElement = (activeTab && activeTab.querySelector('form')) || activeTab || null;
+
+    fetchAndReplace(url, true, targetElement);
 };
 
 const handlePopState = function() {
     const url = new URL(window.location.href, window.location.origin);
     const tabParam = url.searchParams.get('tab');
+    if (tabParam) {
+        setActiveTabUI(tabParam);
+    }
     const tabPane = tabParam ? document.getElementById(tabParam) : null;
     const activeTab = tabPane || document.querySelector('.tab-pane.active');
-    const form = activeTab ? activeTab.querySelector('form') : getFilterForms()[0] || null;
+    const targetElement = (activeTab && activeTab.querySelector('form')) || activeTab || getFilterForms()[0] || null;
 
-    fetchAndReplace(window.location.href, false, form);
+    fetchAndReplace(window.location.href, false, targetElement);
 };
 
 const initAjaxFilter = function() {
@@ -283,6 +351,7 @@ const initAjaxFilter = function() {
     document.addEventListener('click', handleClearFilter);
     document.addEventListener('click', handlePaginationClick);
     document.addEventListener('click', handleSortClick);
+    document.addEventListener('click', handleTabClick);
     window.addEventListener('popstate', handlePopState);
 };
 
