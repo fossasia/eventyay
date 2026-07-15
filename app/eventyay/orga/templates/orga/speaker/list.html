@@ -21,7 +21,7 @@
 {% endblock scripts %}
 
 {% block content %}
-    <div class="d-md-flex justify-content-between">
+    <div class="d-md-flex justify-content-between align-items-center mb-2">
         <h2>
             {{ page_obj.paginator.count }}
             {% blocktranslate trimmed count count=page_obj.paginator.count %}
@@ -51,7 +51,7 @@
     {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
     {% has_event_perm "base.update_speakerprofile" request.user request request.event as can_update_speaker %}
     <div data-ajax-results-region>
-    <div class="table-responsive-md">
+    <div class="table-responsive-md talk-list-table-scroll">
         <table class="table table-sm table-flip table-sticky speaker-list-table">
             <thead>
                 <tr>
@@ -74,7 +74,7 @@
                 {% for profile in speakers %}
                     <tr dragsort-id="{{ profile.pk }}">
                         <td>
-                            <a href="{{ profile.orga_urls.base }}">
+                            <a href="{{ profile.orga_urls.base }}" title="{{ profile.user.get_display_name }}">
                                 {% include "orga/includes/user_name.html" with user=profile.user %}
                             </a>
                         </td>
@@ -122,9 +122,11 @@
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-sm {% if profile.has_arrived %}btn-speaker-not-arrived{% else %}btn-speaker-arrived{% endif %}">
                                             {% if profile.has_arrived %}
-                                                {% translate "Mark speaker as not arrived" %}
+                                                <span class="speaker-action-label speaker-action-label--long">{% translate "Mark speaker as not arrived" %}</span>
+                                                <span class="speaker-action-label speaker-action-label--short">{% translate "Not arrived" %}</span>
                                             {% else %}
-                                                {% translate "Mark speaker as arrived" %}
+                                                <span class="speaker-action-label speaker-action-label--long">{% translate "Mark speaker as arrived" %}</span>
+                                                <span class="speaker-action-label speaker-action-label--short">{% translate "Arrived" %}</span>
                                             {% endif %}
                                         </button>
                                     </form>

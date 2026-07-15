@@ -1,0 +1,2 @@
+{% load i18n %}
+<script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-show-publicly="{% if request.user.is_authenticated %}{{ request.user.show_publicly|yesno:'true,false' }}{% else %}false{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
