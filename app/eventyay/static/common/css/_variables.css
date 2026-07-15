@@ -21,6 +21,7 @@
   --color-header-background: var(--color-primary);
   --color-header-text: var(--color-white);
   --color-header-navigation: var(--color-primary);
+  --color-header-navigation-hover: var(--color-header-navigation);
   --color-secondary: var(--color-grey-medium);
 
   --color-success: var(--color-pretalx);

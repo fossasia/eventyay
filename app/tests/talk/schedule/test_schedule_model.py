@@ -44,6 +44,63 @@ def test_freeze(slot):
         assert not new.version
 
 
+@pytest.mark.django_db
+def test_freeze_succeeds_for_breaks_only_schedule(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        schedule_count = Schedule.objects.count()
+        event.wip_schedule.freeze('breaks-only')
+        assert Schedule.objects.count() == schedule_count + 1
+
+
+@pytest.mark.django_db
+def test_has_schedule_content_with_breaks_only_release(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        event.wip_schedule.freeze('breaks-only')
+        event.__dict__.pop('has_schedule_content', None)
+        assert event.has_schedule_content
+
+
+@pytest.mark.django_db
+def test_release_warning_for_scheduled_breaks_only(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        assert event.wip_schedule.release_warning_message() is not None
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('accepted_submission')
+def test_release_warning_for_scheduled_breaks_with_unscheduled_submissions(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        assert event.wip_schedule.talks.filter(submission__isnull=False, start__isnull=True).exists()
+        assert event.wip_schedule.release_warning_message() is not None
+
+
+@pytest.mark.django_db
+def test_release_acknowledgement_messages_include_breaks_only_warning(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        messages = event.wip_schedule.release_acknowledgement_messages()
+        assert any('only breaks' in message.lower() for message in messages)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('accepted_submission')
+def test_release_acknowledgement_messages_skip_details_shown_elsewhere(break_slot):
+    with scope(event=break_slot.schedule.event):
+        event = break_slot.schedule.event
+        messages = event.wip_schedule.release_acknowledgement_messages()
+    joined = ' '.join(messages).lower()
+    assert 'not yet been scheduled' not in joined
+    assert 'not yet been assigned a track' not in joined
+
+
 @pytest.mark.parametrize("version", ["wip", "latest", None, ""])
 @pytest.mark.django_db
 def test_freeze_fail(slot, schedule, version):
