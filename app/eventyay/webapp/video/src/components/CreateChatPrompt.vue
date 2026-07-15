@@ -4,11 +4,16 @@ prompt.c-create-chat-prompt(@close="$emit('close')")
 		h1 {{ $t('CreateChatPrompt:headline:text') }}
 		p {{ $t('CreateChatPrompt:intro:text') }}
 		form(@submit.prevent="create")
-			bunt-select(name="type", :label="$t('CreateChatPrompt:type:label')", v-model="type", :options="types")
-				template(#default="{ option }")
-					.mdi(:class="`mdi-${option.icon}`")
-					.label {{ option.label }}
-			bunt-input(name="name", :label="$t('CreateChatPrompt:name:label')", :icon="selectedType.icon", :placeholder="$t('CreateChatPrompt:name:placeholder')", v-model="name")
+			.channel-type
+				.fieldset-label {{ $t('CreateChatPrompt:type:label') }}
+				.ui-radio-options
+					label.ui-radio-option(v-for="option in types", :key="option.id")
+						input(type="radio", name="type", :value="option.id", v-model="type")
+						.radio-copy
+							.ui-radio-title
+								i.mdi(:class="`mdi-${option.icon}`", style="margin-right: 6px; font-size: 16px; line-height: 1;")
+								span {{ option.label }}
+			bunt-input(name="name", :label="$t('CreateChatPrompt:name:label')", :icon="selectedType ? selectedType.icon : null", :placeholder="$t('CreateChatPrompt:name:placeholder')", v-model="name")
 			bunt-input-outline-container(:label="$t('CreateChatPrompt:description:label')")
 				template(#default= "{focus, blur}")
 					textarea(v-model="description", @focus="focus", @blur="blur")
@@ -135,12 +140,14 @@ export default {
 			.bunt-button
 				themed-button-primary()
 				margin-top: 16px
-			.bunt-select
-				select-style(size: compact)
-				ul li
-					display: flex
-					.mdi
-						margin-right: 8px
+			.channel-type
+				margin-top: 8px
+				margin-bottom: 16px
+				.fieldset-label
+					font-size: 12px
+					font-weight: 500
+					color: $clr-secondary-text-light
+					margin-bottom: 8px
 			.bunt-input-outline-container
 				textarea
 					background-color: transparent
