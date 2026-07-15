@@ -22,8 +22,8 @@
 {% block extra_title %}{% translate "Settings" %} :: {% endblock extra_title %}
 
 {% block settings_content %}
-    {% trans "General settings" as settings_title %}
-    {% include "orga/includes/settings_header.html" with settings_title=settings_title %}
+    {% trans "General settings" as header_title %}
+    {% include "orga/includes/header_nav.html" with header_title=header_title %}
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 

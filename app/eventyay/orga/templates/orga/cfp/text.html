@@ -14,19 +14,8 @@
 {% block extra_title %}{% translate "Call for Proposals" %} :: {% endblock extra_title %}
 
 {% block content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h2>
-                    {% translate "Call for Proposals" %}
-                    <span data-dialog-target="#info-dialog" data-toggle="dialog">
-                        <i class="fa fa-question-circle-o text-info"></i>
-                    </span>
-                </h2>
-            </div>
-            {% include "orga/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Call for Proposals" as header_title %}
+    {% include "orga/includes/header_nav.html" with header_title=header_title header_title_extra='<span data-dialog-target="#info-dialog" data-toggle="dialog"><i class="fa fa-question-circle-o text-info"></i></span>' %}
     <dialog class="info-dialog" id="info-dialog">
         <div class="alert alert-info">
             <span>

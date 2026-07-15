@@ -21,8 +21,8 @@
     <form method="post" class="d-flex flex-column">
         {% csrf_token %}
 
-        {% trans "Review settings" as settings_title %}
-        {% include "orga/includes/settings_header.html" with settings_title=settings_title %}
+        {% trans "Review settings" as header_title %}
+        {% include "orga/includes/header_nav.html" with header_title=header_title %}
 
         {% include "orga/includes/tablist.html" %}
 

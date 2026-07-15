@@ -14,8 +14,8 @@
 {% block extra_title %}{% translate "Email settings" %} :: {% endblock extra_title %}
 
 {% block settings_content %}
-    {% trans "Talk Email Settings" as settings_title %}
-    {% include "orga/includes/settings_header.html" with settings_title=settings_title %}
+    {% trans "Talk Email Settings" as header_title %}
+    {% include "orga/includes/header_nav.html" with header_title=header_title %}
 
     <div class="alert alert-info" role="alert">
         <strong>{% translate "Email settings have moved" %}</strong> —

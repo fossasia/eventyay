@@ -8,14 +8,8 @@
 {% block extra_title %}{% translate "Attendee feedback" %} :: {% endblock extra_title %}
 
 {% block content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h2>{% translate "Attendee feedback" %}</h2>
-            </div>
-            {% include "orga/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Attendee feedback" as header_title %}
+    {% include "orga/includes/header_nav.html" with header_title=header_title %}
 
     {% regroup feedback|dictsort:"talk.title" by talk.title as feedbacks_list %}
 

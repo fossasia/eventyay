@@ -26,14 +26,8 @@
 {% block extra_title %}{% translate "Call for Papers Editor" %} :: {% endblock extra_title %}
 
 {% block content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h2>{% translate "Call for Papers Editor" %}</h2>
-            </div>
-            {% include "orga/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Call for Papers Editor" as header_title %}
+    {% include "orga/includes/header_nav.html" with header_title=header_title %}
     <p>
         {% blocktranslate trimmed %}
             This is the {{ site_name }} Call for Papers editor. This page allows you to change the

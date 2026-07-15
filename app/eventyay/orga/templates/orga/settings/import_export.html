@@ -6,8 +6,8 @@
 {% block extra_title %}{% translate 'Import/Export' %} :: {% endblock extra_title %}
 
 {% block settings_content %}
-  {% trans "Import/Export" as settings_title %}
-  {% include "orga/includes/settings_header.html" with settings_title=settings_title %}
+  {% trans "Import/Export" as header_title %}
+  {% include "orga/includes/header_nav.html" with header_title=header_title %}
 
   {% include 'orga/includes/tablist.html' %}
 

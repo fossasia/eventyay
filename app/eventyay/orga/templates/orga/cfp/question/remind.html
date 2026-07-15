@@ -5,14 +5,8 @@
 {% block extra_title %}{% translate "Send out reminders" %} :: {% endblock extra_title %}
 
 {% block content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h2>{% translate "Send out reminders" %}</h2>
-            </div>
-            {% include "orga/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Send out reminders" as header_title %}
+    {% include "orga/includes/header_nav.html" with header_title=header_title %}
     <div>
         <p>
             {% blocktranslate trimmed %}
