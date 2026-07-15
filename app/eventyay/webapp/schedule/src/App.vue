@@ -1,6 +1,9 @@
 <template lang="pug">
 .pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px', '--schedule-max-width': scheduleMaxWidth + 'px', '--pretalx-sticky-date-offset': '0px'}", :class="isSpeakerView ? ['speaker-view'] : isTalkView ? ['talk-view'] : sessionsMode ? ['sessions-view', 'list-schedule'] : showGrid ? ['grid-schedule'] : ['list-schedule']")
-	template(v-if="scheduleError")
+	template(v-if="scheduleUnavailable")
+		.schedule-unavailable
+			.info-message {{ noScheduleMessage }}
+	template(v-else-if="scheduleError")
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
 	template(v-else-if="isTalkView && schedule && resolvedTalk")
@@ -27,8 +30,9 @@
 			v-model:sortBy="sortBy",
 			:favsCount="favs.length",
 			:onlyFavs="onlyFavs",
+			v-model:shareStarredSessions="shareStarredSessions",
+			:scheduleUserLoggedIn="loggedIn",
 			:hasActiveFilters="onlyFavs || hasActiveFilterSelections || recordingFilter !== 'all'",
-			:inEventTimezone="inEventTimezone",
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="schedule.timezone",
 			:userTimezone="userTimezone",
@@ -46,6 +50,7 @@
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
+			@update:shareStarredSessions="updateShareStarredSessions",
 			@resetFilters="onlyFavs = false; resetAllFilters()",
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
@@ -130,12 +135,7 @@ const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersLis
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending } from '~/utils'
-
-function getCsrfToken () {
-	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
-	return match ? match[1] : ''
-}
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData } from '~/utils'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -310,9 +310,12 @@ export default {
 			allTypes: [],
 			allLanguages: [],
 			onlyFavs: false,
+			shareStarredSessions: false,
 			scheduleError: false,
+			scheduleUnavailable: false,
 			onHomeServer: false,
 			loggedIn: false,
+			_initialized: false,
 			apiUrl: null,
 			translationMessages: {},
 			errorMessages: [],
@@ -550,10 +553,6 @@ export default {
 			}
 			return days
 		},
-		inEventTimezone () {
-			if (!this.schedule?.talks?.length) return false
-			return moment().utcOffset() === moment.tz(this.schedule.timezone).utcOffset()
-		},
 		hasAmPm () {
 			return new Intl.DateTimeFormat(this.locale, {hour: 'numeric'}).resolvedOptions().hour12
 		},
@@ -612,6 +611,10 @@ export default {
 		},
 		effectiveSortBy () {
 			return this.sortOptions.includes(this.sortBy) ? this.sortBy : 'title'
+		},
+		noScheduleMessage () {
+			const m = this.translationMessages || {}
+			return m.no_schedule_available || 'No schedule has been published yet. Please check back later.'
 		}
 	},
 	watch: {
@@ -627,7 +630,11 @@ export default {
 				if (this.sortBy === 'popularity') this.sortBy = 'title'
 			}
 		},
-		loggedIn () {
+		loggedIn (isLoggedIn) {
+			if (!this._initialized) return
+			if (!isLoggedIn) {
+				this.shareStarredSessions = false
+			}
 			if (!this.schedule || !this.remoteApiUrl) return
 			if (!this.apiUrl) {
 				this.apiUrl = this.remoteApiUrl
@@ -679,30 +686,31 @@ export default {
 		// Use inline data if available, otherwise fetch the schedule JSON.
 		const dataEl = document.getElementById('pretalx-schedule-data')
 		if (dataEl && dataEl.textContent.trim()) {
-			try { this.schedule = JSON.parse(dataEl.textContent) } catch (e) { /* ignore parse error, fall through to fetch */ }
+			try {
+				const parsed = JSON.parse(dataEl.textContent)
+				if (parsed && typeof parsed === 'object' && (parsed.timezone || parsed.schedule_unavailable || Array.isArray(parsed.talks))) {
+					this.schedule = parsed
+					if (!Array.isArray(this.schedule.talks)) {
+						this.schedule.talks = []
+					}
+				}
+			} catch (e) { /* ignore parse error, fall through to fetch */ }
 		}
 		if (this.schedule) {
 			this.onHomeServer = true
 		} else {
-			let version = ''
-			if (this.version)
-				version = `v/${this.version}/`
-			const params = new URLSearchParams()
-			if (this.enrichData) params.set('enrich', '1')
-			const query = params.toString()
-			const suffix = query ? `?${query}` : ''
-			const url = `${this.eventUrl}schedule/${version}widgets/schedule.json${suffix}`
-			const legacyUrl = `${this.eventUrl}schedule/${version}widget/v2.json${suffix}`
-			// fetch from url, but fall back to legacyUrl if url fails
 			try {
-				this.schedule = await (await fetch(url)).json()
-			} catch (e) {
-				try {
-					this.schedule = await (await fetch(legacyUrl)).json()
-				} catch (e) {
-					this.scheduleError = true
-					return
-				}
+				this.schedule = await fetchWidgetScheduleData(this.eventUrl, {
+					version: this.version || '',
+					enrichData: this.enrichData,
+				})
+			} catch {
+				this.scheduleError = true
+				return
+			}
+			if (!this.schedule) {
+				this.scheduleUnavailable = true
+				return
 			}
 		}
 		// Read toolbar metadata (version, exporters) injected by Django
@@ -713,8 +721,8 @@ export default {
 
 		// For speaker and talk views, we only need schedule data + favs (no day tabs, filters, etc.)
 		if (this.isSpeakerView || this.isTalkView) {
-			if (!this.schedule) {
-				this.scheduleError = true
+			if (!this.schedule || this.schedule.schedule_unavailable) {
+				this.scheduleUnavailable = true
 				return
 			}
 			this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
@@ -736,8 +744,8 @@ export default {
 			return
 		}
 
-		if (!this.schedule.talks.length) {
-			this.scheduleError = true
+		if (this.schedule.schedule_unavailable || (!this.schedule.talks.length && !this.isFeaturedPage)) {
+			this.scheduleUnavailable = true
 			return
 		}
 		this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
@@ -796,6 +804,7 @@ export default {
 			this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 			if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
 		}
+		this.shareStarredSessions = await loadStarredSharingPreference(this.eventUrl)
 
 		if (fragment && fragment.length === 10) {
 			const initialDay = moment.tz(fragment, this.currentTimezone)
@@ -804,6 +813,7 @@ export default {
 				this.currentDay = filteredDays[0].format('YYYY-MM-DD')
 			}
 		}
+		this._initialized = true
 	},
 	async mounted () {
 		// We block until we have either a regular parent or a shadow DOM parent
@@ -945,7 +955,7 @@ export default {
 			if (this.onHomeServer) {
 				headers.append('Content-Type', 'application/json')
 			}
-			if (method === 'POST' || method === 'DELETE') headers.append('X-CSRFToken', getCsrfToken())
+			if (method === 'POST' || method === 'DELETE' || method === 'PATCH') headers.append('X-CSRFToken', getCsrfToken())
 			const response = await fetch(url, {
 				method,
 				headers,
@@ -956,6 +966,16 @@ export default {
 				throw new Error(`HTTP error! status: ${response.status}`)
 			}
 			return response.json()
+		},
+		async updateShareStarredSessions (value) {
+			const previous = this.shareStarredSessions
+			this.shareStarredSessions = !!value
+			if (!this.loggedIn) return
+			try {
+				this.shareStarredSessions = await updateStarredSharingPreference(this.eventUrl, this.shareStarredSessions)
+			} catch {
+				this.shareStarredSessions = previous
+			}
 		},
 		async loadFavs () {
 			const anonymousStorageKey = this.getFavStorageKey(null)
@@ -1237,6 +1257,14 @@ export default {
 	padding: 32px
 	.error-message
 		margin-top: 16px
+.schedule-unavailable
+	color: var(--pretalx-clr-text, rgb(13, 15, 16))
+	font-size: 18px
+	text-align: center
+	padding: 32px
+	.info-message
+		margin-top: 16px
+		line-height: 1.5
 
 .pretalx-schedule, dialog.pretalx-modal
 	color: rgb(13 15 16)

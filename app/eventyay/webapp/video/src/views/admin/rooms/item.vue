@@ -16,7 +16,7 @@
 			.ui-page-header
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
 				h1 {{ inferredType ? inferredType.name : 'Mystery Room' }} :
-					span.room-name(v-html="$emojify($localize(config.name))")
+					span.room-name(v-html="$emojify(config.name)")
 				.actions
 					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") Edit
 			edit-form(:config="config")
