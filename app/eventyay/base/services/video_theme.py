@@ -86,7 +86,9 @@ def build_video_theme_for_event(event):
     colors = {
         **existing_colors,
         'primary': primary,
-        'sidebar': PLATFORM_SIDEBAR_BG,
+        'sidebar': event.settings.get('video_sidebar_background_color') or PLATFORM_SIDEBAR_BG,
+        'sidebar_text': event.settings.get('video_sidebar_text_color') or '#000000',
+        'sidebar_hover': event.settings.get('video_sidebar_hover_color') or '#2185d0',
         'bbb_background': bbb_bg,
     }
     if header_background:
