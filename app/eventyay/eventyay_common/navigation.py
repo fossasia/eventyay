@@ -257,7 +257,7 @@ def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
                 'eventyay_common:organizer.analytics',
                 kwargs={'organizer': request.organizer.slug},
             ),
-            'active': url.url_name == 'organizer.analytics',
+            'active': 'organizer.analytics' in url.url_name,
             'icon': 'bar-chart',
         }
     )

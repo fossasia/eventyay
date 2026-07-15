@@ -6,10 +6,10 @@
 {% block title %}{{ request.organizer.name }} - {% trans "Analytics" %}{% endblock %}
 
 {% block custom_header %}
-    <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'vendored/apexcharts/apexcharts.css' %}" />
     {% compress js %}
-        <script defer src="{% static "vendored/apexcharts/apexcharts.min.js" %}"></script>
-        <script defer src="{% static "eventyay-common/js/organizer-analytics.js" %}"></script>
+        <script defer src="{% static 'vendored/apexcharts/apexcharts.min.js' %}"></script>
+        <script defer src="{% static 'eventyay-common/js/organizer-analytics.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 

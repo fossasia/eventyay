@@ -220,7 +220,10 @@ function drawCheckinRate() {
             shared: true,
             x: {
                 formatter: (val, { dataPointIndex }) => {
-                    return series[dataPointIndex] ? series[dataPointIndex].event : val
+                    const name = series[dataPointIndex] ? series[dataPointIndex].event : val
+                    const div = document.createElement('div')
+                    div.textContent = name == null ? '' : String(name)
+                    return div.innerHTML
                 }
             }
         },

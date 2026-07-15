@@ -5,7 +5,6 @@ import dateutil.rrule
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import (
     Count,
-    DateTimeField,
     Exists,
     OuterRef,
     Q,
@@ -144,14 +143,9 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                     'paid': paid_by_day.get(d, 0)
                 })
 
-        label_map = {
-            Order.STATUS_PENDING: str(Order.STATUS_CHOICE[0][1]),
-            Order.STATUS_PAID: str(Order.STATUS_CHOICE[1][1]),
-            Order.STATUS_EXPIRED: str(Order.STATUS_CHOICE[2][1]),
-            Order.STATUS_CANCELED: str(Order.STATUS_CHOICE[3][1]),
-        }
+        label_map = dict(Order.STATUS_CHOICE)
         orders_by_status = [
-            {'label': label_map.get(row['status'], row['status']), 'value': row['cnt']}
+            {'label': str(label_map.get(row['status'], row['status'])), 'value': row['cnt']}
             for row in status_rows
             if row['cnt'] > 0
         ]
@@ -367,7 +361,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
         organizer = self.request.organizer
 
         cache = organizer.cache
-        cache_key = f'organizer_analytics_{organizer.pk}_{self.request.user.pk}'
+        cache_key = f'organizer_analytics_{organizer.pk}_{self.request.user.pk}_{self.request.LANGUAGE_CODE}'
         cached = cache.get(cache_key)
 
         if 'refresh' in self.request.GET:
