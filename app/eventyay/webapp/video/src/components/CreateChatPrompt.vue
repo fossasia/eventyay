@@ -103,15 +103,20 @@ export default {
 					type: 'call.bigbluebutton'
 				})
 			}
-			const { room } = await this.$store.dispatch('createRoom', {
-				name: this.name,
-				description: this.description,
-				modules
-			})
-			// TODO error handling
-			this.loading = false
-			this.$router.push({name: 'room', params: {roomId: room}})
-			this.$emit('close')
+			let room
+			try {
+				({ room } = await this.$store.dispatch('createRoom', {
+					name: this.name,
+					description: this.description,
+					modules
+				}))
+				this.loading = false
+				this.$router.push({name: 'room', params: {roomId: room}})
+				this.$emit('close')
+			} catch (error) {
+				this.loading = false
+				this.error = error.message || error
+			}
 		}
 	}
 }
