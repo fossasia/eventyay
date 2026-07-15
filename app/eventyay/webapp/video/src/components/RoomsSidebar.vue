@@ -512,7 +512,7 @@ export default {
 		align-items: center
 		cursor: pointer
 		color: var(--clr-sidebar-text-primary)
-		&:hover
+		&:hover, &:focus-visible
 			background-color: var(--clr-sidebar-hover-bg)
 			color: var(--clr-sidebar-hover-fg)
 		.c-avatar

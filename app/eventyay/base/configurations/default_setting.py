@@ -2029,9 +2029,9 @@ Your {event} team"""
     'header_background_color': hex_color_field_config(_('Header background color')),
     'header_text_color': hex_color_field_config(_('Header text color')),
     'navigation_text_color': hex_color_field_config(_('Menu text color')),
-    'menu_text_scroll_over_color': hex_color_field_config(_('Menu text scroll over color')),
+    'menu_text_scroll_over_color': hex_color_field_config(_('Menu text hover color')),
     'video_menu_text_color': hex_color_field_config(_('Online video menu text color')),
-    'video_menu_text_hover_color': hex_color_field_config(_('Online video menu text scroll over color')),
+    'video_menu_text_hover_color': hex_color_field_config(_('Online video menu text hover color')),
     'theme_color_success': hex_color_field_config(
         _('Accent color for success'),
         default='#50a167',
