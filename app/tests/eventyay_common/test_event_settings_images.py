@@ -10,6 +10,7 @@ from django.urls import reverse
     [
         ({'field': 'settings-event_preview_image'}, 'event_preview_image'),
         ({'field': 'settings-logo_image', 'setting_key': 'logo_image'}, 'logo_image'),
+        ({'field': 'settings-og_image'}, 'og_image'),
     ],
 )
 def test_ajax_delete_image_setting(organizer_client, event, payload, setting_key):

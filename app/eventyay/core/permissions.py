@@ -84,9 +84,6 @@ SYSTEM_ROLES = {
         Permission.EVENT_ROOMS_CREATE_CHAT.value,
         Permission.EVENT_ROOMS_CREATE_BBB.value,
     ],
-    "video_direct_messaging": [
-        Permission.EVENT_CHAT_DIRECT.value,
-    ],
     "video_announcement_manager": [
         Permission.EVENT_ANNOUNCE.value,
     ],
@@ -130,7 +127,6 @@ ORGANIZER_ROLES = frozenset({
     'video_poll_question_manager',
     'video_kiosk_manager',
     'video_config_manager',
-    'video_direct_messaging',
 })
 
 
