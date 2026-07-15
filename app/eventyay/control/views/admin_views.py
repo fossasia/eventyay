@@ -9,7 +9,7 @@ from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.utils.decorators import method_decorator
 from eventyay.base.models.auth import User
 from django.db import transaction
@@ -63,20 +63,12 @@ from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
 
 
-class AdminBase(AdministratorPermissionRequiredMixin):
-    """Simple View mixin for now, but will make it easier to
-    improve permissions in the future."""
+@method_decorator(xframe_options_sameorigin, name='dispatch')
+class SuperuserBase(AdministratorPermissionRequiredMixin, UserPassesTestMixin):
+    raise_exception = True
 
-    @method_decorator(xframe_options_sameorigin)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
-
-
-class SuperuserBase(AdminBase):
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_superuser:
-            raise PermissionDenied()
-        return super().dispatch(request, *args, **kwargs)
+    def test_func(self):
+        return self.request.user.is_superuser
 
 
 class UserList(SuperuserBase, ListView):
@@ -100,6 +92,15 @@ class UserUpdate(SuperuserBase, UpdateView):
             data={"changed_keys": form.changed_data},
         )
         return super().form_valid(form)
+
+
+@method_decorator(xframe_options_sameorigin, name='dispatch')
+class AdminBase(AdministratorPermissionRequiredMixin, UserPassesTestMixin):
+    """Simple View mixin for now, but will make it easier to
+    improve permissions in the future."""
+
+    def test_func(self):
+        return True
 
 
 class SignupView(SuperuserBase, FormView):
