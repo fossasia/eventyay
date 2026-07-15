@@ -351,15 +351,6 @@
     }
 }
 
-@media (max-width: 480px) {
-    #locale-dropdown.dropdown-content {
-        transform: scale(0.75);
-        transform-origin: top right;
-        right: 0;
-        left: auto;
-    }
-}
-
 #schedule-nav {
     margin: 16px 0px;
 

@@ -382,15 +382,6 @@ header .header-row-right {
     }
 }
 
-@media (max-width: 480px) {
-    #locale-dropdown.dropdown-content {
-        transform: scale(0.75);
-        transform-origin: top right;
-        right: 0;
-        left: auto;
-    }
-}
-
 .btn-primary {
     --highlight-color: var(--color-primary);
     --highlight-color-text: var(--color-primary-text-dark);

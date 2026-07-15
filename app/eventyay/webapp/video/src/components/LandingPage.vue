@@ -62,7 +62,7 @@
 							.active-rooms.active-rooms-list
 								router-link.room-card(v-for="item of activeRooms", :key="item.room.id", :to="{name: 'room', params: {roomId: item.room.id}}")
 									.room-info
-										.room-name {{ item.room.name }}
+										.room-name(v-html="$emojify(item.room.name)")
 										.current-session(v-if="item.session")
 											span.live-badge(v-if="item.isLive") {{ $t('LandingPage:rooms:live') }}
 											span {{ item.session.title }}

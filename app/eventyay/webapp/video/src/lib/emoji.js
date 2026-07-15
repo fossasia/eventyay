@@ -4,6 +4,8 @@ import { getEmojiDataFromNative as _getEmojiDataFromNative } from 'emoji-mart'
 import { uncompress } from 'emoji-mart/dist-es/utils/data.js'
 import MarkdownIt from 'markdown-it'
 
+import { localize } from '../i18n.js'
+
 // force uncompress data, because we don't use emoji-mart methods
 if (data.compressed) {
 	uncompress(data)
@@ -18,7 +20,11 @@ export function objectToCssString(object) {
 }
 
 export function startsWithEmoji(string) {
-	return startsWithEmojiRegex.test(string)
+	if (string == null) return false
+	const text = typeof string === 'string' ? string : localize(string)
+	if (!text) return false
+	startsWithEmojiRegex.lastIndex = 0
+	return startsWithEmojiRegex.test(text)
 }
 
 export function nativeToOps(string) {
@@ -118,16 +124,25 @@ export function emojifyString(input) {
 	if (input == null) return ''
 	let text = input
 	if (typeof text !== 'string') {
-		// Attempt to pick a meaningful string if a common shape is used
-		if (typeof input.name === 'string') text = input.name
-		else if (typeof input.title === 'string') text = input.title
-		else if (typeof input.text === 'string') text = input.text
-		else {
-			// Fallback: do not attempt to render arbitrary objects
-			return ''
+		if (typeof input === 'object') {
+			text = localize(input)
+		}
+		if (typeof text !== 'string') {
+			// Attempt to pick a meaningful string if a common shape is used
+			if (typeof input.name === 'string') text = input.name
+			else if (typeof input.title === 'string') text = input.title
+			else if (typeof input.text === 'string') text = input.text
+			else {
+				// Fallback: do not attempt to render arbitrary objects
+				return ''
+			}
 		}
 	}
-	return markdownIt.renderInline(text)
+	if (!text) return ''
+	emojiRegex.lastIndex = 0
+	const rendered = markdownIt.renderInline(text)
+	// Keep native text/emoji visible when twemoji markup cannot be produced.
+	return rendered || text
 }
 
 export const emojiPlugin = {
