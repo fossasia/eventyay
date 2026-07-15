@@ -172,12 +172,14 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 .order_by('-pk')[:20]
             )
 
+            payment_enabled_event_ids = set(events_with_payment)
             events_pending_setup_list = []
             for event in candidates:
-                has_products = len(event.products.all()) > 0
-                has_paid_products = any(p.default_price > 0 for p in event.products.all())
-                # Double-check using core model logic for 100% safety
-                if not has_products or (has_paid_products and not event.has_payment_provider):
+                products = list(event.products.all())
+                has_products = bool(products)
+                has_paid_products = any(p.default_price > 0 for p in products)
+                has_payment_provider = event.pk in payment_enabled_event_ids
+                if not has_products or (has_paid_products and not has_payment_provider):
                     event.has_products = has_products
                     events_pending_setup_list.append(event)
                     if len(events_pending_setup_list) == 5:
@@ -708,10 +710,19 @@ class TaskList(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
         options.locale_code = settings.LANGUAGE_CODE
         options.verbose = True
         schedule = task.crontab
-        cron_expression = (
-            f'{schedule.minute} {schedule.hour} {schedule.day_of_month} {schedule.month_of_year} {schedule.day_of_week}'
-        )
-        task.run_at = get_description(cron_expression, options)
+        if schedule:
+            cron_expression = (
+                f'{schedule.minute} {schedule.hour} {schedule.day_of_month} {schedule.month_of_year} {schedule.day_of_week}'
+            )
+            task.run_at = get_description(cron_expression, options)
+        elif task.interval:
+            task.run_at = f"Every {task.interval.every} {task.interval.period}"
+        elif task.solar:
+            task.run_at = f"Solar: {task.solar.event}"
+        elif task.clocked:
+            task.run_at = f"Clocked: {task.clocked.clocked_time}"
+        else:
+            task.run_at = "-"
 
         return task
 

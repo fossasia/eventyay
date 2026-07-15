@@ -102,11 +102,15 @@
   padding-right: 15px;
 }
 
-.dashboard-panels .table a,
-.dashboard-panels .table a:hover,
-.event-table a,
-.event-table a:hover {
+.event-table a {
   text-decoration: none;
+}
+
+.dashboard-panels .table a:hover,
+.dashboard-panels .table a:focus,
+.event-table a:hover,
+.event-table a:focus {
+  text-decoration: underline;
 }
 
 .dashboard-panels .panel-body .event-table {
