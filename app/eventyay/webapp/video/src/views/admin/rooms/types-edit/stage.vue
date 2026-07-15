@@ -111,17 +111,19 @@ export default defineComponent({
 		}
 	},
 	validations() {
-		return {
-			modules: {
-				'livestream.youtube': {
-					config: {
-						ytid: {
-							youtubeid: youtubeid('not a valid YouTube video ID or URL')
-						}
+		const rules = {
+			modules: {}
+		}
+		if (this.modules && this.modules['livestream.youtube']) {
+			rules.modules['livestream.youtube'] = {
+				config: {
+					ytid: {
+						youtubeid: youtubeid('not a valid YouTube video ID or URL')
 					}
 				}
 			}
 		}
+		return rules
 	},
 	computed: {
 		playbackMode: {
@@ -210,7 +212,7 @@ export default defineComponent({
 		} else if (this.modules['livestream.youtube']) {
 			this.b_streamSource = 'youtube'
 			// languageUrls is set in the created lifecycle hook
-			if (!this.modules['livestream.youtube'].config.languageUrls) {
+			if (this.modules['livestream.youtube'].config && !this.modules['livestream.youtube'].config.languageUrls) {
 				this.modules['livestream.youtube'].config.languageUrls = []
 			}
 		} else if (this.modules['livestream.iframe']) {
