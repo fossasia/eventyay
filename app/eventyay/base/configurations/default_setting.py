@@ -2028,7 +2028,8 @@ Your {event} team"""
     ),
     'header_background_color': hex_color_field_config(_('Header background color')),
     'header_text_color': hex_color_field_config(_('Header text color')),
-    'navigation_text_color': hex_color_field_config(_('Navigation text color')),
+    'navigation_text_color': hex_color_field_config(_('Menu text color')),
+    'menu_text_scroll_over_color': hex_color_field_config(_('Menu text hover color')),
     'theme_color_success': hex_color_field_config(
         _('Accent color for success'),
         default='#50a167',
@@ -2613,6 +2614,7 @@ CSS_SETTINGS = {
     'header_background_color',
     'header_text_color',
     'navigation_text_color',
+    'menu_text_scroll_over_color',
     'theme_color_success',
     'theme_color_danger',
     'primary_font',

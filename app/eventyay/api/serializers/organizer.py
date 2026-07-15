@@ -334,6 +334,7 @@ class OrganizerSettingsSerializer(SettingsSerializer):
         'header_background_color',
         'header_text_color',
         'navigation_text_color',
+        'menu_text_scroll_over_color',
         'primary_color',
         'theme_color_success',
         'theme_color_danger',
