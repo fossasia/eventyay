@@ -59,12 +59,13 @@ from eventyay.control.forms.server_management import (
     EventForm,
 )
 from eventyay.base.models.log import LogEntry
+from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
 
 
 @method_decorator(xframe_options_sameorigin, name='dispatch')
-class SuperuserBase(UserPassesTestMixin):
-    login_url = "/control/auth/login/"
+class SuperuserBase(AdministratorPermissionRequiredMixin, UserPassesTestMixin):
+    raise_exception = True
 
     def test_func(self):
         return self.request.user.is_superuser
@@ -94,22 +95,17 @@ class UserUpdate(SuperuserBase, UpdateView):
 
 
 @method_decorator(xframe_options_sameorigin, name='dispatch')
-class AdminBase(UserPassesTestMixin):
+class AdminBase(AdministratorPermissionRequiredMixin, UserPassesTestMixin):
     """Simple View mixin for now, but will make it easier to
     improve permissions in the future."""
 
-    login_url = "/control/auth/login/"
-
     def test_func(self):
-        return self.request.user.is_staff
+        return True
 
 
-class SignupView(AdminBase, FormView):
+class SignupView(SuperuserBase, FormView):
     template_name = "registration/register.html"
     form_class = SignupForm
-
-    def test_func(self):
-        return self.request.user.is_superuser
 
     def form_valid(self, form):
         form.save()
