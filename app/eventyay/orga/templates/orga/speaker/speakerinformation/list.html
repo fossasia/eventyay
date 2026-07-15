@@ -27,7 +27,7 @@
             <tbody>
                 {% for info in information_list %}
                     <tr>
-                        <td>
+                        <td class="speaker-info-title">
                             {% if has_update_permission %}
                                 <a href="{{ info.orga_urls.edit }}">{{ info.title }}</a>
                             {% else %}
@@ -70,7 +70,7 @@
                                 </a>
                             {% endif %}
                         </td>
-                        <td class="text-right">
+                        <td class="action-column">
                             {% if has_update_permission %}
                                 <a href="{{ info.orga_urls.edit }}" class="btn btn-sm btn-info">
                                     <i class="fa fa-edit"></i>
