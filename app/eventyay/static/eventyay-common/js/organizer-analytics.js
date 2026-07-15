@@ -79,18 +79,26 @@ function drawRevenueOverTime() {
     const series = parseData(dataEl, 'series')
     if (!series || series.length === 0) return
 
+    const currencies = parseData(dataEl, 'currencies') || []
     const label = dataEl.dataset.label || 'Revenue'
+
+    const ykeys = currencies.length > 0 ? currencies : ['y']
+    const labels = currencies.length > 0 ? currencies.map(c => `${label} (${c})`) : [label]
+    const lineColors = currencies.length > 0
+        ? currencies.map((_, i) => PALETTE[(1 + i) % PALETTE.length])
+        : [PALETTE[1]]
 
     new Morris.Area({
         element: 'revenue-over-time-chart',
         data: series,
         xkey: 'x',
-        ykeys: ['y'],
-        labels: [label],
-        lineColors: [PALETTE[1]],
+        ykeys: ykeys,
+        labels: labels,
+        lineColors: lineColors,
         smooth: false,
         resize: true,
-        fillOpacity: 0.3
+        fillOpacity: 0.3,
+        behaveLikeLine: true
     })
 }
 

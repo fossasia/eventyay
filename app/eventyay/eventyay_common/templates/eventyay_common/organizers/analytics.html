@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load static %}
 {% load compress %}
+{% load money %}
 
 {% block title %}{{ request.organizer.name }} - {% trans "Analytics" %}{% endblock %}
 
@@ -68,6 +69,7 @@
                                 id="revenue-over-time-data"
                                 class="d-none"
                                 data-series="{{ revenue_over_time_json }}"
+                                data-currencies="{{ currencies_json }}"
                                 data-label="{% trans "Cumulative revenue" %}"
                             ></div>
                             <div id="revenue-over-time-chart"></div>
@@ -99,7 +101,7 @@
                                         <td>{{ event.name }}</td>
                                         <td class="text-right">{{ event.total_orders }}</td>
                                         <td class="text-right">{{ event.paid_orders }}</td>
-                                        <td class="text-right">{{ event.gross_revenue }}</td>
+                                        <td class="text-right">{{ event.gross_revenue|money:event.currency }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>

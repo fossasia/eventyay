@@ -92,7 +92,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                     payment_date__gte=since,
                 )
                 .annotate(day=TruncDate('payment_date', tzinfo=tz))
-                .values('day')
+                .values('day', 'order__event__currency')
                 .annotate(
                     cnt=Count('order', distinct=True),
                     revenue=Sum('amount')
@@ -100,8 +100,16 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                 .order_by('day')
             )
             payment_data = list(payment_day_qs)
-            paid_by_day = {row['day']: row['cnt'] for row in payment_data}
-            rev_by_day = {row['day']: float(row['revenue'] or 0) for row in payment_data}
+            paid_by_day = {}
+            rev_by_day = {}
+            currencies = set()
+            for row in payment_data:
+                day = row['day']
+                currency = row['order__event__currency']
+                paid_by_day[day] = paid_by_day.get(day, 0) + row['cnt']
+                currencies.add(currency)
+                day_revenue = rev_by_day.setdefault(day, {})
+                day_revenue[currency] = float(row['revenue'] or 0)
 
             status_qs = (
                 Order.objects.filter(event_id__in=event_ids)
@@ -112,7 +120,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
 
             top_qs = list(
                 Order.objects.filter(event_id__in=event_ids)
-                .values('event', 'event__name', 'event__slug')
+                .values('event', 'event__name', 'event__slug', 'event__currency')
                 .annotate(
                     total_orders=Count('pk'),
                     paid_orders=Count('pk', filter=Q(status=Order.STATUS_PAID)),
@@ -151,16 +159,21 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
         ]
 
         revenue_over_time = []
-        cumulative = 0.0
+        sorted_currencies = sorted(currencies)
         if rev_by_day:
+            cumulative = {curr: 0.0 for curr in sorted_currencies}
             for d in dateutil.rrule.rrule(
                 dateutil.rrule.DAILY,
                 dtstart=min(rev_by_day.keys()),
                 until=max(rev_by_day.keys()),
             ):
                 d = d.date()
-                cumulative += rev_by_day.get(d, 0.0)
-                revenue_over_time.append({'x': d.strftime('%Y-%m-%d'), 'y': round(cumulative, 2)})
+                day_data = {'x': d.strftime('%Y-%m-%d')}
+                day_revs = rev_by_day.get(d, {})
+                for curr in sorted_currencies:
+                    cumulative[curr] += day_revs.get(curr, 0.0)
+                    day_data[curr] = round(cumulative[curr], 2)
+                revenue_over_time.append(day_data)
 
         top_events = [
             {
@@ -169,6 +182,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                 'total_orders': row['total_orders'],
                 'paid_orders': row['paid_orders'],
                 'gross_revenue': float(event_revenue.get(row['event'], 0) or 0),
+                'currency': row['event__currency'],
             }
             for row in top_qs
         ]
@@ -177,6 +191,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             'orders_over_time_json': json.dumps(orders_over_time),
             'orders_by_status_json': json.dumps(orders_by_status),
             'revenue_over_time_json': json.dumps(revenue_over_time),
+            'currencies_json': json.dumps(sorted_currencies),
             'top_events': top_events,
             'has_orders': bool(orders_over_time or orders_by_status),
         }
