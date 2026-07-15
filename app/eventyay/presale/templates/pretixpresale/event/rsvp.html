@@ -5,9 +5,7 @@
 
 <section class="meetup-rsvp" aria-label="{% trans 'Event registration' %}">
 
-    {% if request.user.is_authenticated %}
-
-        {% if attendee_already_registered %}
+    {% if attendee_already_registered %}
             <div class="panel panel-success" role="status">
                 <div class="panel-heading">
                     <h3 class="panel-title">
@@ -20,7 +18,7 @@
                 </div>
             </div>
 
-        {% else %}
+    {% elif request.user.is_authenticated %}
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h3 class="panel-title">{% trans "Reserve your spot" %}</h3>
@@ -36,8 +34,6 @@
                     </form>
                 </div>
             </div>
-
-        {% endif %}
 
     {% elif guest_checkout_allowed %}
         <div class="panel panel-default">

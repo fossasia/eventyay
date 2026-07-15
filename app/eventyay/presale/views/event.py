@@ -8,7 +8,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from importlib import import_module
-from urllib.parse import urlparse, urlunparse, urljoin
+from urllib.parse import urlparse, urlunparse
 
 import isoweek
 import jwt
@@ -540,18 +540,22 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         is_meetup_event = self.request.event.settings.get('event_type') == 'meetup'
         context['is_meetup_event'] = is_meetup_event
 
-        if is_meetup_event and self.request.user.is_authenticated:
-            with scope(event=self.request.event):
-                context['attendee_already_registered'] = self.request.event.orders.filter(
-                    email=self.request.user.email,
-                    status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
-                ).exists()
+        if is_meetup_event:
+            from eventyay.presale.views.meetup import GuestRsvpForm, MEETUP_RSVP_SESSION_KEY
+
+            if self.request.user.is_authenticated:
+                with scope(event=self.request.event):
+                    context['attendee_already_registered'] = self.request.event.orders.filter(
+                        email__iexact=self.request.user.email,
+                        status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
+                    ).exists()
+            else:
+                context['attendee_already_registered'] = bool(
+                    self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(self.request.event.pk))
+                )
+            context['rsvp_guest_form'] = getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm()
         else:
             context['attendee_already_registered'] = False
-
-        if is_meetup_event:
-            from eventyay.presale.views.meetup import GuestRsvpForm
-            context['rsvp_guest_form'] = getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm()
 
         # Show voucher option if an event is selected and vouchers exist
         vouchers_exist = self.request.event.cache.get('vouchers_exist')

@@ -82,17 +82,18 @@ def _provision_meetup_event(event, basics_form, request=None):
     event.save(update_fields=['live', 'tickets_published'])
 
     if not event.config or not event.config.get("JWT_secrets"):
-        secret = get_random_string(length=64)
-        event.config = {
-            "JWT_secrets": [
+        cfg = event.config or {}
+        if not cfg.get("JWT_secrets"):
+            secret = get_random_string(length=64)
+            cfg["JWT_secrets"] = [
                 {
                     "issuer": "any",
                     "audience": "eventyay",
                     "secret": secret,
                 }
             ]
-        }
-        event.save(update_fields=['config'])
+            event.config = cfg
+            event.save(update_fields=['config'])
 
     jwt_config = event.config["JWT_secrets"][0]
     secret = jwt_config["secret"]
