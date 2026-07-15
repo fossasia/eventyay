@@ -48,6 +48,9 @@ class EventCommonSettingsForm(SettingsForm):
         'theme_color_danger',
         'theme_color_background',
         'hover_button_color',
+        'video_navigation_background_color',
+        'video_sidebar_text_color',
+        'video_sidebar_hover_color',
         'theme_round_borders',
         'primary_font',
         'frontpage_text',
@@ -64,7 +67,7 @@ class EventCommonSettingsForm(SettingsForm):
         return data
 
     def save(self):
-        for image_field in ('event_logo_image', 'logo_image', 'event_preview_image'):
+        for image_field in ('event_logo_image', 'logo_image', 'event_preview_image', 'og_image'):
             current_value = self.event.settings.get(image_field, as_type=str, default='') or ''
             new_value = self.cleaned_data.get(image_field)
             current_file = get_file_url_path(current_value)

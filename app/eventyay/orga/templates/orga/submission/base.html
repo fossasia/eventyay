@@ -45,7 +45,7 @@
                                     </form>
                                 {% endif %}
                             {% else %}
-                                <span class="ml-3 submission-readonly-badge align-middle">
+                                <span class="submission-readonly-badge align-middle">
                                     {% include "cfp/event/fragment_state.html" with state=submission.state as_badge=True %}
                                 </span>
                             {% endif %}
@@ -56,7 +56,8 @@
             </div>
         </nav>
 
-        <div role="tablist" class="mb-4">
+        <div class="submission-page-tabs mb-4">
+            <div role="tablist" class="submission-page-tabs__nav">
             <a role="tab" href="{{ submission.orga_urls.base }}" {% if "submissions.content" in url_name %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
                 {% translate "Content" %}
             </a>
@@ -95,9 +96,10 @@
                     {% translate "History" %}
                 </a>
             {% endif %}
-            <div class="ml-auto flip d-flex">
+            </div>
+            <div class="submission-page-tabs__actions ml-auto flip d-flex">
                 {% if can_send_mails %}
-                    <a class="btn btn-outline-info mr-2 mb-1" href="{{ request.event.orga_urls.compose_mails_sessions }}?submissions={{ submission.code }}">
+                    <a class="btn btn-outline-info" href="{{ request.event.orga_urls.compose_mails_sessions }}?submissions={{ submission.code }}">
                         <i class="fa fa-envelope"></i>
                         {% translate "Send email to speakers" %}
                     </a>

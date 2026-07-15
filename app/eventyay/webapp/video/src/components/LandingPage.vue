@@ -3,7 +3,13 @@
 	.landing-top-bg
 	.landing-scroll(v-scrollbar.y="")
 		header.landing-header
-			a.event-home-back(v-if="homeBackLink", :href="homeBackLink.href", :aria-label="homeBackLink.ariaLabel")
+			a.event-home-back(
+				v-if="homeBackLink",
+				:href="homeBackLink.href",
+				:aria-label="homeBackLink.ariaLabel",
+				:class="{'event-home-back--expanded': homeBackExpanded}",
+				@click.prevent="handleHomeBackClick"
+			)
 				span.event-home-back-pill
 					i.fa.fa-angle-left.event-home-back-icon(aria-hidden="true")
 					span.event-home-back-label(aria-hidden="true") {{ homeBackLink.label }}
@@ -56,7 +62,7 @@
 							.active-rooms.active-rooms-list
 								router-link.room-card(v-for="item of activeRooms", :key="item.room.id", :to="{name: 'room', params: {roomId: item.room.id}}")
 									.room-info
-										.room-name {{ item.room.name }}
+										.room-name(v-html="$emojify(item.room.name)")
 										.current-session(v-if="item.session")
 											span.live-badge(v-if="item.isLive") {{ $t('LandingPage:rooms:live') }}
 											span {{ item.session.title }}
@@ -85,7 +91,8 @@ export default {
 	data() {
 		return {
 			moment,
-			eventMeta: null
+			eventMeta: null,
+			homeBackExpanded: false
 		}
 	},
 	computed: {
@@ -167,10 +174,13 @@ export default {
 		landingStyle() {
 			const themeColors = config?.theme?.colors || {}
 			const headerBackground = themeColors.header_background
+				|| themeColors.primary
 				|| this.landingConfig.header_background_color
-				|| 'var(--color-header-background, var(--clr-primary))'
+				|| '#2185d0'
+			const headerText = themeColors.header_text || '#ffffff'
 			return {
 				'--landing-hero-background-color': headerBackground,
+				'--landing-hero-text-color': headerText,
 				'--landing-hero-background-image': this.heroBackgroundImage ? `url("${this.heroBackgroundImage}")` : 'none'
 			}
 		},
@@ -190,7 +200,7 @@ export default {
 					})
 				}
 			}
-			const href = this.presaleHomeUrl || navigation?.site_home_url
+			const href = navigation?.site_home_url
 			if (!href) return null
 			return {
 				href,
@@ -279,8 +289,31 @@ export default {
 	},
 	async mounted() {
 		await this.fetchEventMeta()
+		document.addEventListener('click', this.handleHomeBackOutsideClick)
+	},
+	beforeUnmount() {
+		document.removeEventListener('click', this.handleHomeBackOutsideClick)
 	},
 	methods: {
+		handleHomeBackClick() {
+			const href = this.homeBackLink?.href
+			if (!href) return
+
+			const supportsHover = window.matchMedia('(hover: hover)').matches
+			if (supportsHover) {
+				window.location.assign(href)
+				return
+			}
+			if (!this.homeBackExpanded) {
+				this.homeBackExpanded = true
+				return
+			}
+			window.location.assign(href)
+		},
+		handleHomeBackOutsideClick(event) {
+			if (event.target.closest('.event-home-back')) return
+			this.homeBackExpanded = false
+		},
 		toMediaUrl(pathValue) {
 			const cleaned = String(pathValue || '').replace(/^\/+/, '')
 			if (!cleaned) return ''
@@ -378,7 +411,7 @@ export default {
 		top: 0
 		left: 0
 		right: 0
-		height: 320px
+		height: calc(320px - 48px)
 		z-index: 0
 		pointer-events: none
 		background-color: var(--landing-hero-background-color)
@@ -413,10 +446,10 @@ export default {
 		padding-left: 0
 		box-sizing: border-box
 		text-decoration: none
-		color: var(--color-header-text, #fff)
+		color: var(--landing-hero-text-color, var(--color-header-text, #fff))
 		&:hover,
 		&:focus-visible
-			color: var(--color-header-text, #fff)
+			color: var(--landing-hero-text-color, var(--color-header-text, #fff))
 			text-decoration: none
 	.event-home-back-pill
 		display: inline-flex
@@ -430,7 +463,8 @@ export default {
 		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28)
 		transition: gap 0.18s ease, background 0.18s ease
 	.event-home-back:hover .event-home-back-pill,
-	.event-home-back:focus-visible .event-home-back-pill
+	.event-home-back:focus-visible .event-home-back-pill,
+	.event-home-back.event-home-back--expanded .event-home-back-pill
 		gap: 0.4em
 		background: rgba(0, 0, 0, 0.62)
 	.event-home-back:focus-visible
@@ -452,7 +486,8 @@ export default {
 		white-space: nowrap
 		transition: max-width 0.22s ease, opacity 0.18s ease
 	.event-home-back:hover .event-home-back-label,
-	.event-home-back:focus-visible .event-home-back-label
+	.event-home-back:focus-visible .event-home-back-label,
+	.event-home-back.event-home-back--expanded .event-home-back-label
 		max-width: 12em
 		opacity: 1
 	.event-hero
@@ -479,10 +514,10 @@ export default {
 		display: block
 		text-decoration: none
 	.event-hero-text
-		color: var(--color-header-text, #fff)
+		color: var(--landing-hero-text-color, var(--color-header-text, #fff))
 		display: flex
 		flex-direction: column
-		gap: 0
+		gap: 2px
 		min-width: 0
 	.event-hero-text .event-title
 		font-size: 3rem
@@ -498,7 +533,7 @@ export default {
 		line-height: 1.3
 		opacity: 0.96
 		margin: 0
-		color: var(--color-header-text, #fff)
+		color: var(--landing-hero-text-color, var(--color-header-text, #fff))
 	.event-public-text-link
 		color: inherit
 		text-decoration: none
@@ -626,9 +661,9 @@ export default {
 	.speakers-section .c-speakers-list
 		overflow: visible !important
 
-	+below('m')
+	+below('s')
 		.landing-top-bg
-			height: 220px
+			height: calc(480px - 48px)
 		.landing-header
 			padding-left: 12px
 			padding-right: 0
@@ -640,11 +675,15 @@ export default {
 		.event-home-back .event-home-back-label
 			font-size: 13.5px
 		.event-hero
-			margin: 0.5rem 0 2rem
+			margin: 0.25rem 0 1.5rem
 		.event-hero-overlay
-			align-items: flex-end
+			align-items: flex-start
+			min-height: auto
+			flex-direction: column
+			display: flex
 		.event-brand
-			flex-wrap: wrap
+			display: flex
+			flex-direction: column
 			gap: 1rem
 			align-items: flex-start
 		.event-hero-text .event-title

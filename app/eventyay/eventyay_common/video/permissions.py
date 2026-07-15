@@ -19,7 +19,6 @@ class VideoPermissionDefinition:
 VIDEO_PERMISSION_DEFINITIONS: dict[str, VideoPermissionDefinition] = {
     'can_video_create_stages': VideoPermissionDefinition('can_video_create_stages', 'video_stage_manager'),
     'can_video_create_channels': VideoPermissionDefinition('can_video_create_channels', 'video_channel_manager'),
-    'can_video_direct_message': VideoPermissionDefinition('can_video_direct_message', 'video_direct_messaging'),
     'can_video_manage_announcements': VideoPermissionDefinition('can_video_manage_announcements', 'video_announcement_manager'),
     'can_video_view_users': VideoPermissionDefinition('can_video_view_users', 'video_user_viewer'),
     'can_video_manage_users': VideoPermissionDefinition('can_video_manage_users', 'video_user_moderator'),

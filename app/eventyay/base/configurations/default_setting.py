@@ -2049,6 +2049,20 @@ Your {event} team"""
         default='#2185d0',
         widget_class='colorpickerfield no-contrast',
     ),
+    'video_navigation_background_color': hex_color_field_config(
+        _('Video navigation background color'),
+        default='',
+        widget_class='colorpickerfield no-contrast',
+    ),
+    'video_sidebar_text_color': hex_color_field_config(
+        _('Video sidebar text color'),
+        default='#000000',
+    ),
+    'video_sidebar_hover_color': hex_color_field_config(
+        _('Video sidebar scroll-over color'),
+        default='#2185d0',
+        widget_class='colorpickerfield no-contrast',
+    ),
     'theme_round_borders': {
         'default': 'True',
         'type': bool,
@@ -2605,6 +2619,9 @@ CSS_SETTINGS = {
     'theme_color_background',
     'theme_round_borders',
     'hover_button_color',
+    'video_navigation_background_color',
+    'video_sidebar_text_color',
+    'video_sidebar_hover_color',
 }
 
 TITLE_GROUP = OrderedDict(

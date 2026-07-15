@@ -100,15 +100,13 @@ function updateThemeVariables() {
 	}
 
 	const merged = mergeColorConfig(themeConfig.colors)
-	if (merged.header_background) {
-		themeVariables['--color-header-background'] = merged.header_background
-	} else if (merged.primary) {
-		themeVariables['--color-header-background'] = merged.primary
+	themeVariables['--color-header-background'] = merged.header_background || merged.primary
+	themeVariables['--color-header-text'] = merged.header_text || '#ffffff'
+	if (merged.navigation_background) {
+		themeVariables['--clr-navigation-background'] = merged.navigation_background
 	}
-	if (merged.header_text) {
-		themeVariables['--color-header-text'] = merged.header_text
-	} else {
-		themeVariables['--color-header-text'] = '#ffffff'
+	if (merged.navigation_text) {
+		themeVariables['--clr-navigation-text-primary'] = merged.navigation_text
 	}
 
 	const typography = themeConfig.typography || config.theme?.typography
@@ -147,7 +145,9 @@ function applyTypography(typography = {}) {
 
 function populateColorObjects(colorValues = {}) {
 	const merged = mergeColorConfig(colorValues)
-	merged.sidebar = PLATFORM_SIDEBAR_BG
+	if (!merged.sidebar) {
+		merged.sidebar = PLATFORM_SIDEBAR_BG
+	}
 
 	for (const key of Object.keys(DEFAULT_COLORS)) {
 		colors[key] = Color(merged[key])
@@ -175,23 +175,23 @@ colors.inputPrimaryBgDarken = colors.primary.darken(0.15)
 // secondary inputs are transparent
 colors.inputSecondaryFg = colors.primary
 colors.inputSecondaryFgAlpha = colors.primary.alpha(0.08)
-// Rooms sidebar: light platform nav (tickets/talk), not the primary-coloured app bar.
+// Rooms sidebar and top navbar share navigation background colours from Common Settings.
 if (colors.sidebar.luminosity() > 0.5) {
-	colors.sidebarTextPrimary = colors.primary
-	colors.sidebarTextSecondary = Color('rgba(0, 0, 0, 0.54)')
-	colors.sidebarTextDisabled = Color('rgba(0, 0, 0, 0.38)')
+	colors.sidebarTextPrimary = merged.sidebar_text ? Color(merged.sidebar_text) : colors.primary
+	colors.sidebarTextSecondary = merged.sidebar_text ? Color(merged.sidebar_text).alpha(0.7) : Color('rgba(0, 0, 0, 0.54)')
+	colors.sidebarTextDisabled = merged.sidebar_text ? Color(merged.sidebar_text).alpha(0.4) : Color('rgba(0, 0, 0, 0.38)')
 	colors.sidebarActiveBg = Color('#eeeeee')
 	colors.sidebarHoverBg = Color('#eeeeee')
-	colors.sidebarActiveFg = colors.primary.darken(0.15)
-	colors.sidebarHoverFg = colors.primary.darken(0.15)
+	colors.sidebarActiveFg = merged.sidebar_hover ? Color(merged.sidebar_hover) : colors.primary.darken(0.15)
+	colors.sidebarHoverFg = merged.sidebar_hover ? Color(merged.sidebar_hover) : colors.primary.darken(0.15)
 } else {
-	colors.sidebarTextPrimary = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
-	colors.sidebarTextSecondary = firstReadable([CLR_SECONDARY_TEXT.LIGHT, CLR_SECONDARY_TEXT_FALLBACK.LIGHT, CLR_SECONDARY_TEXT.DARK, CLR_SECONDARY_TEXT_FALLBACK.DARK], colors.sidebar)
-	colors.sidebarTextDisabled = firstReadable([CLR_DISABLED_TEXT.LIGHT, CLR_DISABLED_TEXT.DARK], colors.sidebar)
+	colors.sidebarTextPrimary = merged.sidebar_text ? Color(merged.sidebar_text) : firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
+	colors.sidebarTextSecondary = merged.sidebar_text ? Color(merged.sidebar_text).alpha(0.7) : firstReadable([CLR_SECONDARY_TEXT.LIGHT, CLR_SECONDARY_TEXT_FALLBACK.LIGHT, CLR_SECONDARY_TEXT.DARK, CLR_SECONDARY_TEXT_FALLBACK.DARK], colors.sidebar)
+	colors.sidebarTextDisabled = merged.sidebar_text ? Color(merged.sidebar_text).alpha(0.4) : firstReadable([CLR_DISABLED_TEXT.LIGHT, CLR_DISABLED_TEXT.DARK], colors.sidebar)
 	colors.sidebarActiveBg = firstReadable(['rgba(0, 0, 0, 0.08)', 'rgba(255, 255, 255, 0.4)'], colors.sidebar)
-	colors.sidebarActiveFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
+	colors.sidebarActiveFg = merged.sidebar_hover ? Color(merged.sidebar_hover) : firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
 	colors.sidebarHoverBg = firstReadable(['rgba(0, 0, 0, 0.12)', 'rgba(255, 255, 255, 0.3)'], colors.sidebar)
-	colors.sidebarHoverFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
+	colors.sidebarHoverFg = merged.sidebar_hover ? Color(merged.sidebar_hover) : firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
 }
 
 	// TODO warn if contrast is failing
@@ -295,7 +295,9 @@ export async function getThemeConfig() {
 
 export function applyThemeConfig(themeData = {}) {
 	const mergedColors = mergeColorConfig(themeData.colors ?? themeConfig.colors)
-	mergedColors.sidebar = PLATFORM_SIDEBAR_BG
+	if (!mergedColors.sidebar) {
+		mergedColors.sidebar = PLATFORM_SIDEBAR_BG
+	}
 	themeConfig.colors = mergedColors
 
 	const logoSource = themeData.logo ?? themeConfig.logo ?? {}
