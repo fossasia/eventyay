@@ -100,15 +100,13 @@ function updateThemeVariables() {
 	}
 
 	const merged = mergeColorConfig(themeConfig.colors)
-	if (merged.header_background) {
-		themeVariables['--color-header-background'] = merged.header_background
-	} else if (merged.primary) {
-		themeVariables['--color-header-background'] = merged.primary
+	themeVariables['--color-header-background'] = merged.header_background || merged.primary
+	themeVariables['--color-header-text'] = merged.header_text || '#ffffff'
+	if (merged.navigation_background) {
+		themeVariables['--clr-navigation-background'] = merged.navigation_background
 	}
-	if (merged.header_text) {
-		themeVariables['--color-header-text'] = merged.header_text
-	} else {
-		themeVariables['--color-header-text'] = '#ffffff'
+	if (merged.navigation_text) {
+		themeVariables['--clr-navigation-text-primary'] = merged.navigation_text
 	}
 
 	const typography = themeConfig.typography || config.theme?.typography
@@ -177,7 +175,7 @@ colors.inputPrimaryBgDarken = colors.primary.darken(0.15)
 // secondary inputs are transparent
 colors.inputSecondaryFg = colors.primary
 colors.inputSecondaryFgAlpha = colors.primary.alpha(0.08)
-// Rooms sidebar: light platform nav (tickets/talk), not the primary-coloured app bar.
+// Rooms sidebar and top navbar share navigation background colours from Common Settings.
 if (colors.sidebar.luminosity() > 0.5) {
 	colors.sidebarTextPrimary = merged.sidebar_text ? Color(merged.sidebar_text) : colors.primary
 	colors.sidebarTextSecondary = merged.sidebar_text ? Color(merged.sidebar_text).alpha(0.7) : Color('rgba(0, 0, 0, 0.54)')

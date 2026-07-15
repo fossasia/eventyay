@@ -2049,9 +2049,9 @@ Your {event} team"""
         default='#2185d0',
         widget_class='colorpickerfield no-contrast',
     ),
-    'video_sidebar_background_color': hex_color_field_config(
-        _('Video sidebar background color'),
-        default='#f8f8f8',
+    'video_navigation_background_color': hex_color_field_config(
+        _('Video navigation background color'),
+        default='',
         widget_class='colorpickerfield no-contrast',
     ),
     'video_sidebar_text_color': hex_color_field_config(
@@ -2619,7 +2619,7 @@ CSS_SETTINGS = {
     'theme_color_background',
     'theme_round_borders',
     'hover_button_color',
-    'video_sidebar_background_color',
+    'video_navigation_background_color',
     'video_sidebar_text_color',
     'video_sidebar_hover_color',
 }

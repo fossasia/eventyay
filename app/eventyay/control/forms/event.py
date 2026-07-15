@@ -655,7 +655,7 @@ class EventSettingsForm(SettingsForm):
         'theme_color_background',
         'theme_round_borders',
         'hover_button_color',
-        'video_sidebar_background_color',
+        'video_navigation_background_color',
         'video_sidebar_text_color',
         'video_sidebar_hover_color',
         'primary_font',

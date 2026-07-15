@@ -31,7 +31,7 @@ class OrganizerSettingsForm(SettingsForm):
         'theme_color_danger',
         'theme_color_background',
         'hover_button_color',
-        'video_sidebar_background_color',
+        'video_navigation_background_color',
         'video_sidebar_text_color',
         'video_sidebar_hover_color',
         'theme_round_borders',
