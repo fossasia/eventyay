@@ -157,6 +157,7 @@ class CheckInListShow(EventPermissionRequiredMixin, PaginationMixin, ListView):
                     )
                     op.order.touch()
 
+            self.list.touch()
             messages.success(request, _('The selected check-ins have been reverted.'))
         else:
             for op in positions:
