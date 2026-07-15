@@ -484,9 +484,8 @@ export default {
 		align-items: center
 		cursor: pointer
 		color: var(--clr-sidebar-text-primary)
-		&:hover, &:focus-visible
+		&:hover
 			background-color: var(--clr-sidebar-hover-bg)
-			color: var(--clr-sidebar-hover-fg)
 		.c-avatar
 			background-color: $clr-white
 			border-radius: 50%
