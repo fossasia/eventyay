@@ -18,6 +18,9 @@ from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.views import EventViewMixin
 
 
+MEETUP_RSVP_SESSION_KEY = 'meetup_rsvp_registered_{}'
+
+
 class GuestRsvpForm(forms.Form):
     attendee_name = forms.CharField(
         label=_('Your name'),
@@ -67,18 +70,12 @@ class MeetupRsvpView(EventViewMixin, View):
     def _handle_authenticated_rsvp(self, request, product, quota):
         with scope(event=request.event):
             existing = request.event.orders.filter(
-                email=request.user.email,
+                email__iexact=request.user.email,
                 status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
             ).first()
 
         if existing:
-            return redirect(
-                eventreverse(
-                    request.event,
-                    'presale:event.order',
-                    kwargs={'order': existing.code, 'secret': existing.secret},
-                )
-            )
+            return redirect(eventreverse(request.event, 'presale:event.index'))
 
         name = getattr(request.user, 'fullname', None) or getattr(request.user, 'name', None) or request.user.email
         order = self._create_rsvp_order(
@@ -89,13 +86,7 @@ class MeetupRsvpView(EventViewMixin, View):
             attendee_name_parts={'_legacy': str(name)},
             attendee_email=request.user.email,
         )
-        return redirect(
-            eventreverse(
-                request.event,
-                'presale:event.order',
-                kwargs={'order': order.code, 'secret': order.secret},
-            )
-        )
+        return redirect(eventreverse(request.event, 'presale:event.index'))
 
     def _handle_guest_rsvp(self, request, product, quota):
         if request.event.settings.require_registered_account_for_tickets:
@@ -119,13 +110,8 @@ class MeetupRsvpView(EventViewMixin, View):
             attendee_name_parts={'_legacy': cd['attendee_name']},
             attendee_email=cd['attendee_email'],
         )
-        return redirect(
-            eventreverse(
-                request.event,
-                'presale:event.order',
-                kwargs={'order': order.code, 'secret': order.secret},
-            )
-        )
+        request.session[MEETUP_RSVP_SESSION_KEY.format(request.event.pk)] = order.code
+        return redirect(eventreverse(request.event, 'presale:event.index'))
 
     def _create_rsvp_order(self, request, email, locale, product, attendee_name_parts, attendee_email):
         with scope(event=request.event), transaction.atomic():
@@ -163,10 +149,7 @@ class MeetupRsvpView(EventViewMixin, View):
                 provider='free',
                 amount=Decimal('0.00'),
             )
-            try:
-                payment.confirm(send_mail=True, lock=False)
-            except Exception:
-                raise
+            payment.confirm(send_mail=True, lock=False)
 
             order.refresh_from_db()
         return order

@@ -126,12 +126,17 @@ def system_information(request):
             context['is_meetup_event'] = is_meetup
             context['is_meetup'] = is_meetup
 
-            meetup_video_active = event.settings.get('meetup_video_active', as_type=bool, default=False)
-
-            context['show_online_video_link'] = (
-                meetup_video_active if is_meetup else
-                (bool(event.settings.venueless_url) and event.settings.get('venueless_show_public_link', False))
-            )
+            if is_meetup:
+                with scope(event=event):
+                    context['show_online_video_link'] = any(
+                        module.get('type', '').startswith('livestream.')
+                        for room in event.rooms.filter(deleted=False)
+                        for module in room.module_config or []
+                    )
+            else:
+                context['show_online_video_link'] = (
+                    bool(event.settings.venueless_url) and event.settings.get('venueless_show_public_link', False)
+                )
         for __, response in footer_link.send(event, request=request):
             if isinstance(response, list):
                 _footer += response
