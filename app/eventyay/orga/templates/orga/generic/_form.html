@@ -3,9 +3,9 @@
 {% block extra_title %}{{ generic_title }} :: {% endblock extra_title %}
 
 {% block content %}
-    <h2>
-        {% block inline_title %}{{ generic_title }}{% endblock inline_title %}
-    </h2>
+    {% block header_nav %}
+        {% include "orga/includes/header_nav.html" with header_title=generic_title %}
+    {% endblock %}
 
     {% block form %}
         {% include "orga/includes/base_form.html" %}

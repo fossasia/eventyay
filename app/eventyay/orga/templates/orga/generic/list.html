@@ -3,10 +3,11 @@
 {% block extra_title %}{{ generic_title }} :: {% endblock extra_title %}
 
 {% block content %}
+    {% block header_nav %}
+        {% include "orga/includes/header_nav.html" with header_title=generic_title %}
+    {% endblock %}
     <div class="d-flex flex-wrap align-items-center mb-3">
-        <h2 class="d-flex align-items-center mr-auto mb-2 mb-md-0">
-            {% block page_title %}{{ generic_title }}{% endblock page_title %}
-        </h2>
+        {% block inline_page_title %}{% endblock inline_page_title %}
         {% if has_create_permission %}
             <div class="ml-auto mb-2 mb-md-0">
                 <a class="btn btn-success" href="{{ create_url }}">
