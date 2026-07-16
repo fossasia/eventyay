@@ -84,6 +84,10 @@ fabric.Textarea = fabric.util.createClass(fabric.Textbox, {
 
         this.callSuper('initialize', text, options);
         this.set('content', options.content || '');
+        this.autofit_width = options.autofit_width || false;
+        if (typeof options.maxFontPt === 'number' && !isNaN(options.maxFontPt)) {
+            this.maxFontPt = options.maxFontPt;
+        }
     },
 
     toObject: function(propertiesToInclude) {
@@ -145,6 +149,10 @@ var editor = {
             return o.maxFontPt;
         }
         return editor._px2pt(o.fontSize);
+    },
+
+    _parse_autofit_width: function (value) {
+        return value === true || value === 'true' || value === 1 || value === '1';
     },
 
     _compute_autofit_pt: function (o, maxPt, widthMm) {
@@ -327,7 +335,7 @@ var editor = {
                     italic: o.fontStyle === 'italic',
                     width: editor._px2mm(o.width).toFixed(2),
                     downward: o.downward || false,
-                    autofit_width: o.autofit_width || false,
+                    autofit_width: editor._parse_autofit_width(o.autofit_width),
                     content: o.content,
                     text: o.text,
                     rotation: o.angle,
@@ -383,7 +391,7 @@ var editor = {
             o = editor._add_text();
             o.set('fill', 'rgb(' + d.color[0] + ',' + d.color[1] + ',' + d.color[2] + ')');
             o.maxFontPt = parseFloat(d.fontsize);
-            o.autofit_width = d.autofit_width || false;
+            o.autofit_width = editor._parse_autofit_width(d.autofit_width);
             o.set('fontSize', editor._pt2px(d.fontsize));
             o.set('lineHeight', d.lineheight || 1);
             o.set('fontFamily', d.fontfamily);
@@ -719,7 +727,7 @@ var editor = {
             $("#toolbox").find("button[data-action=bold]").toggleClass('active', o.fontWeight === 'bold');
             $("#toolbox").find("button[data-action=italic]").toggleClass('active', o.fontStyle === 'italic');
             $("#toolbox").find("button[data-action=downward]").toggleClass('active', o.downward || false);
-            $("#toolbox").find("button[data-action=autofit_width]").toggleClass('active', o.autofit_width || false);
+            $("#toolbox-autofit-width").prop('checked', editor._parse_autofit_width(o.autofit_width));
             $("#toolbox").find("button[data-action=left]").toggleClass('active', o.textAlign === 'left');
             $("#toolbox").find("button[data-action=center]").toggleClass('active', o.textAlign === 'center');
             $("#toolbox").find("button[data-action=right]").toggleClass('active', o.textAlign === 'right');
@@ -802,7 +810,7 @@ var editor = {
             o.set('fontFamily', $("#toolbox-fontfamily").val());
             o.set('fontWeight', $("#toolbox").find("button[data-action=bold]").is('.active') ? 'bold' : 'normal');
             o.set('fontStyle', $("#toolbox").find("button[data-action=italic]").is('.active') ? 'italic' : 'normal');
-            o.autofit_width = $("#toolbox").find("button[data-action=autofit_width]").is('.active');
+            o.autofit_width = $("#toolbox-autofit-width").prop('checked');
             var align = $("#toolbox-align").find(".active").attr("data-action");
             if (align) {
                 o.set('textAlign', align);
@@ -1340,7 +1348,8 @@ var editor = {
 
         $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text]").bind('change keydown keyup' +
             ' input', editor._update_values_from_toolbox);
-        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio]").bind('change', editor._create_savepoint);
+        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio], #toolbox-autofit-width").bind('change', editor._create_savepoint);
+        $("#toolbox-autofit-width").bind('change', editor._update_values_from_toolbox);
         $("#toolbox label.btn").bind('click change', editor._update_values_from_toolbox);
         $("#toolbox select:not(#toolbox-content)").bind('change', editor._update_values_from_toolbox);
         $("#toolbox select:not(#toolbox-content)").bind('change', editor._create_savepoint);
