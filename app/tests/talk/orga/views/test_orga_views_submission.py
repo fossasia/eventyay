@@ -289,19 +289,50 @@ def test_orga_can_add_speakers(orga_client, submission, other_orga_user, user):
     assert submission.speakers.count() == 1
 
     if user == "EMAIL":
-        user = other_orga_user.email
+        data = {"email": other_orga_user.email}
     else:
-        user = "some_unused@mail.org"
+        data = {"email": "some_unused@mail.org", "name": "New Speaker"}
 
     response = orga_client.post(
         submission.orga_urls.speakers,
-        data={"email": user},
+        data=data,
         follow=True,
     )
     submission.refresh_from_db()
 
     assert submission.speakers.count() == 2
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_orga_requires_name_for_new_speaker(orga_client, submission):
+    response = orga_client.post(
+        submission.orga_urls.speakers,
+        data={"email": "some_unused@mail.org"},
+    )
+
+    assert response.status_code == 200
+    assert response.context["form"].errors["name"]
+    assert submission.speakers.count() == 1
+
+
+@pytest.mark.django_db
+def test_orga_speaker_page_excludes_submission_answers(
+    orga_client, submission, other_submission, answer, speaker_answer
+):
+    with scope(event=submission.event):
+        other_submission.speakers.add(submission.speakers.first())
+
+    response = orga_client.get(submission.orga_urls.speakers)
+
+    assert response.status_code == 200
+    assert response.context["form"].fields["name"].required
+    assert submission.event.organizer.orga_urls.user_search in response.text
+    speaker_context = response.context["speakers"][0]
+    assert speaker_context["other_submissions"] == [other_submission]
+    reviewer_answers = speaker_context["reviewer_answers"]
+    assert speaker_answer in reviewer_answers
+    assert answer not in reviewer_answers
 
 
 @pytest.mark.django_db
@@ -322,7 +353,7 @@ def test_orga_can_readd_speaker(orga_client, submission):
     assert submission.speakers.count() == 1
     response = orga_client.post(
         submission.orga_urls.speakers,
-        data={"speaker": submission.speakers.first().email, "name": "Name"},
+        data={"email": submission.speakers.first().email},
         follow=True,
     )
     submission.refresh_from_db()

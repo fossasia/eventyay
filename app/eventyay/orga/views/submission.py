@@ -30,6 +30,7 @@ from eventyay.base.models import (
     SubmissionComment,
     SubmissionStates,
     Tag,
+    TalkQuestionTarget,
     User,
 )
 from eventyay.base.models.base import CachedFile
@@ -304,6 +305,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 queryset=Answer.objects.filter(
                     question__event=submission.event,
                     question__is_visible_to_reviewers=True,
+                    question__target=TalkQuestionTarget.SPEAKER,
                 )
                 .select_related('question')
                 .order_by('question__position'),
@@ -311,18 +313,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
             ),
             Prefetch(
                 'submissions',
-                queryset=Submission.objects.filter(event=submission.event).prefetch_related(
-                    Prefetch(
-                        'answers',
-                        queryset=Answer.objects.filter(
-                            question__event=submission.event,
-                            question__is_visible_to_reviewers=True,
-                        )
-                        .select_related('question')
-                        .order_by('question__position'),
-                        to_attr='_reviewer_answers',
-                    )
-                ),
+                queryset=Submission.objects.filter(event=submission.event),
                 to_attr='_event_submissions',
             ),
         )
@@ -336,15 +327,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 'avatar_url': speaker.get_avatar_url(event=submission.event),
                 'avatar_source': speaker.avatar_source,
                 'avatar_license': speaker.avatar_license,
-                'reviewer_answers': sorted(
-                    speaker._reviewer_answers
-                    + [
-                        answer
-                        for submission_obj in speaker._event_submissions
-                        for answer in submission_obj._reviewer_answers
-                    ],
-                    key=lambda a: a.question.position,
-                ),
+                'reviewer_answers': speaker._reviewer_answers,
             }
             for speaker in speakers_qs
         ]
