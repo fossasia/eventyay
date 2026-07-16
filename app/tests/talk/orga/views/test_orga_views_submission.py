@@ -289,7 +289,7 @@ def test_orga_can_add_speakers(orga_client, submission, other_orga_user, user):
     assert submission.speakers.count() == 1
 
     if user == "EMAIL":
-        data = {"email": other_orga_user.email}
+        data = {"email": other_orga_user.email, "name": other_orga_user.fullname}
     else:
         data = {"email": "some_unused@mail.org", "name": "New Speaker"}
 
@@ -323,6 +323,7 @@ def test_orga_speaker_page_excludes_submission_answers(
     response = orga_client.get(submission.orga_urls.speakers)
 
     assert response.status_code == 200
+    assert response.context["form"].fields["name"].required
     assert submission.event.organizer.orga_urls.user_search in response.text
     reviewer_answers = response.context["speakers"][0]["reviewer_answers"]
     assert speaker_answer in reviewer_answers
