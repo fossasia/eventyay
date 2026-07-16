@@ -1109,13 +1109,18 @@ export default {
 		closeDevicePrompt() {
 			this.showDevicePrompt = false
 			const outputChanged = this.videoOutput !== (localStorage.videoOutput !== 'false')
+			const nextAudioInput = localStorage.audioInput || ''
+			const nextVideoInput = localStorage.videoInput || ''
+			const devicesChanged = nextAudioInput !== this.audioInput || nextVideoInput !== this.videoInput
 			this.videoOutput = localStorage.videoOutput !== 'false'
 			if (outputChanged) {
 				this.cleanup()
 				this.onJanusInitialized()
 				return
 			}
-			this.publishLocalMedia()
+			if (devicesChanged) {
+				this.publishLocalMedia()
+			}
 			this.updateAudioOutputs()
 		},
 		updateAudioOutputs() {
