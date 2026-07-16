@@ -688,7 +688,7 @@ class TaskList(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
         return TaskFilterForm(data=self.request.GET)
 
     def get_queryset(self):
-        queryset = super().get_queryset().exclude(name='celery.backend_cleanup').select_related('crontab')
+        queryset = (super().get_queryset().exclude(name='celery.backend_cleanup').select_related('crontab', 'interval', 'solar', 'clocked'))
 
         if self.filter_form.is_valid():
             queryset = self.filter_form.filter_qs(queryset)
