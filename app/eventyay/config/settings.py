@@ -336,6 +336,7 @@ _OURS_APPS = (
     'eventyay.orga',
     'eventyay.api',
     'eventyay.base',
+    'eventyay.core',
     'eventyay.cfp',
     'eventyay.control.ControlConfig',
     'eventyay.event',
