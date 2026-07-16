@@ -1,4 +1,7 @@
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.utils.translation import gettext_lazy as _
 
@@ -215,6 +218,31 @@ def get_badge_visible_field_labels(event, position, hidden_fields=None):
         for field in get_badge_customizable_fields(event, layout)
         if field['key'] in ask_user_keys and field['key'] not in hidden_fields
     ]
+
+
+def get_badge_visible_field_values(event, position, hidden_fields=None):
+    layout = get_badge_layout_for_position(event, position)
+    if not layout or not layout.allow_customization:
+        return []
+
+    ask_user_keys = set(layout.ask_user_fields_data)
+    hidden_fields = {
+        str(value) for value in (hidden_fields if hidden_fields is not None else get_badge_hidden_fields(position))
+    }
+    
+    variables = get_variables(event)
+    
+    values = []
+    for field in get_badge_customizable_fields(event, layout):
+        if field['key'] in ask_user_keys and field['key'] not in hidden_fields:
+            if field['key'] in variables:
+                try:
+                    val = variables[field['key']]['evaluate'](position, position.order, event)
+                    if val:
+                        values.append(str(val))
+                except (KeyError, ValueError, AttributeError, TypeError):
+                    logger.exception('Failed to evaluate badge field')
+    return values
 
 
 def _badge_field_fallback_label(content):
