@@ -34,6 +34,7 @@ def default_roles():
     attendee = [
         Permission.EVENT_VIEW,
         Permission.EVENT_EXHIBITION_CONTACT,
+        Permission.EVENT_CHAT_DIRECT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
     participant = viewer + [
@@ -90,7 +91,6 @@ def default_roles():
     scheduleuser = [Permission.EVENT_API]
     video_stage_manager = [Permission.EVENT_ROOMS_CREATE_STAGE]
     video_channel_manager = [Permission.EVENT_ROOMS_CREATE_CHAT, Permission.EVENT_ROOMS_CREATE_BBB]
-    video_direct_messaging = [Permission.EVENT_CHAT_DIRECT]
     video_announcement_manager = [Permission.EVENT_ANNOUNCE]
     video_user_viewer = [Permission.EVENT_USERS_LIST]
     video_user_moderator = [Permission.EVENT_USERS_MANAGE]
@@ -110,7 +110,6 @@ def default_roles():
         "scheduleuser": scheduleuser,
         "video_stage_manager": video_stage_manager,
         "video_channel_manager": video_channel_manager,
-        "video_direct_messaging": video_direct_messaging,
         "video_announcement_manager": video_announcement_manager,
         "video_user_viewer": video_user_viewer,
         "video_user_moderator": video_user_moderator,

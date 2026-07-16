@@ -109,6 +109,7 @@ class TeamForm(forms.ModelForm):
             'can_change_items',
             'can_view_orders',
             'can_change_orders',
+            'can_manage_bank_transfers',
             'can_checkin_orders',
             'can_view_vouchers',
             'can_change_vouchers',
@@ -122,7 +123,6 @@ class TeamForm(forms.ModelForm):
             'hide_exhibition_applicant_emails',
             'can_video_create_stages',
             'can_video_create_channels',
-            'can_video_direct_message',
             'can_video_manage_announcements',
             'can_video_view_users',
             'can_video_manage_users',
@@ -174,6 +174,7 @@ class TeamForm(forms.ModelForm):
             'can_change_items',
             'can_view_orders',
             'can_change_orders',
+            'can_manage_bank_transfers',
             'can_checkin_orders',
             'can_view_vouchers',
             'can_change_vouchers',
@@ -183,7 +184,6 @@ class TeamForm(forms.ModelForm):
             'is_exhibition_reviewer',
             'can_video_create_stages',
             'can_video_create_channels',
-            'can_video_direct_message',
             'can_video_manage_announcements',
             'can_video_view_users',
             'can_video_manage_users',
@@ -197,7 +197,14 @@ class TeamForm(forms.ModelForm):
                 _("Please pick at least one permission for this team!")
             )
             self.add_error(None, error)
-        
+
+        if data.get('can_change_orders'):
+            data['can_view_orders'] = True
+        if data.get('can_change_vouchers'):
+            data['can_view_vouchers'] = True
+        if data.get('can_manage_bank_transfers'):
+            data['can_view_orders'] = True
+
         if self.instance.pk and not data['can_change_teams']:
             if (
                 not self.instance.organizer.teams.exclude(pk=self.instance.pk)

@@ -156,6 +156,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_change_items',
             'can_view_orders',
             'can_change_orders',
+            'can_manage_bank_transfers',
             'can_view_vouchers',
             'can_change_vouchers',
             'can_checkin_orders',
@@ -168,7 +169,6 @@ class TeamSerializer(serializers.ModelSerializer):
             'force_hide_speaker_emails',
             'can_video_create_stages',
             'can_video_create_channels',
-            'can_video_direct_message',
             'can_video_manage_announcements',
             'can_video_view_users',
             'can_video_manage_users',
@@ -182,6 +182,10 @@ class TeamSerializer(serializers.ModelSerializer):
         full_data.update(data)
         if full_data.get('limit_events') and full_data.get('all_events'):
             raise ValidationError('Do not set both limit_events and all_events.')
+        for source, implied_permissions in Team.PERMISSION_IMPLICATIONS.items():
+            if full_data.get(source):
+                for implied in implied_permissions:
+                    data[implied] = True
         return data
 
 
@@ -330,11 +334,15 @@ class OrganizerSettingsSerializer(SettingsSerializer):
         'header_background_color',
         'header_text_color',
         'navigation_text_color',
+        'menu_text_scroll_over_color',
         'primary_color',
         'theme_color_success',
         'theme_color_danger',
         'theme_color_background',
         'hover_button_color',
+        'video_navigation_background_color',
+        'video_sidebar_text_color',
+        'video_sidebar_hover_color',
         'theme_round_borders',
         'primary_font',
         'organizer_logo_image',

@@ -62,7 +62,7 @@ from eventyay.core.permissions import (
     traits_match_required,
 )
 from eventyay.core.utils.json import CustomJSONEncoder
-from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
+from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
 from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.http import smtp_reachable
@@ -99,6 +99,7 @@ def default_roles():
     attendee = [
         Permission.EVENT_VIEW,
         Permission.EVENT_EXHIBITION_CONTACT,
+        Permission.EVENT_CHAT_DIRECT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
     participant = viewer + [
@@ -1454,24 +1455,6 @@ class Event(
             augmented.setdefault(role, [f'eventyay-video-event-{slug}-{trait_name.replace("_", "-")}'])
         return augmented
 
-    def _remove_direct_messaging_if_unauthorized(self, result, user_traits):
-        """Remove EVENT_CHAT_DIRECT permission if user doesn't have the direct messaging trait.
-
-        Args:
-            result: Permission result dictionary to modify
-            user_traits: List of user traits
-        """
-        direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
-        if not direct_messaging_def:
-            return
-
-        direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
-        has_direct_messaging_trait = direct_messaging_trait in user_traits
-
-        if not has_direct_messaging_trait:
-            direct_message_value = Permission.EVENT_CHAT_DIRECT.value
-            result[self] = {p for p in result[self] if normalize_permission_value(p) != direct_message_value}
-
     def has_permission_implicit(
         self,
         *,
@@ -1480,14 +1463,35 @@ class Event(
         room=None,
         allow_empty_traits=True,
     ):
-        # Ensure trait_grants and roles are not None - use defaults if missing
         event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
+        if allow_empty_traits and not traits:
+            traits = ['attendee']
+
+        admin_mode_active = 'admin' in traits
+        if admin_mode_active:
+            for role_name in ORGANIZER_ROLES:
+                role_permissions = event_roles.get(role_name, SYSTEM_ROLES.get(role_name, []))
+                role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+                if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
+                    return True
+
+        attendee_traits = event_trait_grants.get('attendee', ['attendee'])
+        if traits_match_required(traits, attendee_traits) and (attendee_traits or allow_empty_traits):
+            role_permissions = event_roles.get('attendee', SYSTEM_ROLES.get('attendee', []))
+            role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+            role_permissions_str.append(normalize_permission_value(Permission.EVENT_CHAT_DIRECT))
+            if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
+                return True
+
         for role, required_traits in event_trait_grants.items():
+            if role == 'attendee':
+                continue
             if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
                 role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                if any(normalize_permission_value(p) in role_permissions for p in permissions):
+                role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+                if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
                     return True
 
         if room:
@@ -1495,7 +1499,8 @@ class Event(
             for role, required_traits in room_trait_grants.items():
                 if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
                     role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                    if any(normalize_permission_value(p) in role_permissions for p in permissions):
+                    role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
+                    if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
                         return True
 
         # Return False if no permission was granted
@@ -1528,7 +1533,8 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
             role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
-            if any(normalize_permission_value(p) in role_perms for p in permission):
+            role_perms_str = [normalize_permission_value(rp) for rp in role_perms]
+            if any(normalize_permission_value(p) in role_perms_str for p in permission):
                 return True
 
     async def has_permission_async(self, *, user, permission: Permission, room=None):
@@ -1558,7 +1564,8 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
             role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
-            if any(normalize_permission_value(p) in role_perms for p in permission):
+            role_perms_str = [normalize_permission_value(rp) for rp in role_perms]
+            if any(normalize_permission_value(p) in role_perms_str for p in permission):
                 return True
 
     def get_all_permissions(self, user):
@@ -1573,6 +1580,8 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
 
         user_traits = user.traits or []
+        if allow_empty_traits and not user_traits:
+            user_traits = ['attendee']
 
         for role, required_traits in event_trait_grants.items():
             if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
@@ -1588,10 +1597,10 @@ class Event(
             for role_name in ORGANIZER_ROLES:
                 role_perms = event_roles.get(role_name, SYSTEM_ROLES.get(role_name, []))
                 result[self].update(role_perms)
-        else:
-            # Remove EVENT_CHAT_DIRECT from ALL users unless they have the direct messaging trait.
-            # Only users with can_video_direct_message team permission get the video_direct_messaging trait.
-            self._remove_direct_messaging_if_unauthorized(result, user_traits)
+
+        attendee_traits = event_trait_grants.get('attendee', ['attendee'])
+        if traits_match_required(user_traits, attendee_traits) and (attendee_traits or allow_empty_traits):
+            result[self].add(Permission.EVENT_CHAT_DIRECT)
 
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
@@ -2669,14 +2678,17 @@ class Event(
 
     @cached_property
     def has_schedule_content(self):
-        """Returns True if there are actual scheduled talks in the current schedule.
+        """Returns True if the current schedule has visible sessions or scheduled breaks.
 
         This checks whether the current schedule has any visible, scheduled talks
-        (not just an empty published schedule).
+        or breaks (not just an empty published schedule).
         """
         if not self.current_schedule:
             return False
-        return self.current_schedule.scheduled_talks.exists()
+        schedule = self.current_schedule
+        if schedule.scheduled_talks.exists():
+            return True
+        return schedule.breaks.filter(start__isnull=False, is_visible=True).exists()
 
     @cached_property
     def submitters(self):

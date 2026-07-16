@@ -1,4 +1,7 @@
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.utils.translation import gettext_lazy as _
 
@@ -8,12 +11,36 @@ from .models import BadgeLayout, BadgeProduct
 
 
 BADGE_HIDDEN_FIELDS_KEY = 'badge_hidden_fields'
+BADGE_TICKET_PROVIDER = 'badge'
+
+_renderer_cache = {}
+
+
+def get_badge_layout_version(event):
+    """
+    Return the current badge layout/rendering cache version for this event.
+
+    This is stored in the shared (cross-process/cross-worker) cache backend, so every
+    Celery worker and web worker will observe a version bump immediately on their next
+    lookup, no matter which process actually saved the layout change.
+    """
+    return event.cache.get('badge_layout_version') or 0
 
 
 def clear_badge_layout_cache(event):
     for attr in ('_badge_layout_assignment_map', '_default_badge_layout', '_cached_renderermap'):
         if hasattr(event, attr):
             delattr(event, attr)
+
+    # Bump the layout version in the cross-process cache so every worker's in-memory
+    # renderer cache is invalidated on its very next use, without needing to reach into
+    # other processes' memory.
+    version = get_badge_layout_version(event)
+    event.cache.set('badge_layout_version', version + 1, 3600 * 24 * 30)
+
+    keys_to_delete = [k for k in _renderer_cache if k[0] == event.pk]
+    for k in keys_to_delete:
+        del _renderer_cache[k]
 
 
 def normalize_badge_content_key(content):
@@ -38,6 +65,14 @@ def get_badge_layout_assignment_map(event):
     return assignment_map, default_layout
 
 
+def product_has_badge_layout_assigned(event, product):
+    assignment_map, _ = get_badge_layout_assignment_map(event)
+    product_id = getattr(product, 'pk', product)
+    if product_id not in assignment_map:
+        return False
+    return assignment_map[product_id] is not None
+
+
 def get_badge_layout_for_product(event, product):
     assignment_map, default_layout = get_badge_layout_assignment_map(event)
     product_id = getattr(product, 'pk', product)
@@ -60,6 +95,22 @@ def get_badge_hidden_fields(position):
     if isinstance(hidden_fields, str):
         return [hidden_fields]
     return hidden_fields
+
+
+def invalidate_badge_cache_for_position(position):
+    from eventyay.base.models import CachedCombinedTicket, CachedTicket
+
+    CachedTicket.objects.filter(order_position=position, provider=BADGE_TICKET_PROVIDER).delete()
+    order_id = getattr(position, 'order_id', None)
+    if order_id:
+        CachedCombinedTicket.objects.filter(order=order_id, provider=BADGE_TICKET_PROVIDER).delete()
+
+
+def invalidate_badge_cache_for_order(order):
+    from eventyay.base.models import CachedCombinedTicket, CachedTicket
+
+    CachedTicket.objects.filter(order_position__order=order, provider=BADGE_TICKET_PROVIDER).delete()
+    CachedCombinedTicket.objects.filter(order=order, provider=BADGE_TICKET_PROVIDER).delete()
 
 
 def get_badge_bundle_root(position):
@@ -132,6 +183,9 @@ def get_badge_bundle_option_choices(event, position):
     seen_keys = set()
     choices = []
     for bundle_position in get_badge_bundle_positions(position):
+        if not product_has_badge_layout_assigned(event, bundle_position.product_id):
+            continue
+
         layout = get_badge_layout_for_position(event, bundle_position)
         if not layout or not layout.allow_customization:
             continue
@@ -164,6 +218,31 @@ def get_badge_visible_field_labels(event, position, hidden_fields=None):
         for field in get_badge_customizable_fields(event, layout)
         if field['key'] in ask_user_keys and field['key'] not in hidden_fields
     ]
+
+
+def get_badge_visible_field_values(event, position, hidden_fields=None):
+    layout = get_badge_layout_for_position(event, position)
+    if not layout or not layout.allow_customization:
+        return []
+
+    ask_user_keys = set(layout.ask_user_fields_data)
+    hidden_fields = {
+        str(value) for value in (hidden_fields if hidden_fields is not None else get_badge_hidden_fields(position))
+    }
+    
+    variables = get_variables(event)
+    
+    values = []
+    for field in get_badge_customizable_fields(event, layout):
+        if field['key'] in ask_user_keys and field['key'] not in hidden_fields:
+            if field['key'] in variables:
+                try:
+                    val = variables[field['key']]['evaluate'](position, position.order, event)
+                    if val:
+                        values.append(str(val))
+                except (KeyError, ValueError, AttributeError, TypeError):
+                    logger.exception('Failed to evaluate badge field')
+    return values
 
 
 def _badge_field_fallback_label(content):

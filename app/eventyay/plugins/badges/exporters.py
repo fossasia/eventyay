@@ -1,19 +1,17 @@
-import json
 import os
 import tempfile
 from collections import OrderedDict
 from decimal import Decimal
 from io import BytesIO
-from typing import BinaryIO, List, Tuple
-
 from pathlib import Path
+from typing import BinaryIO
 
 from django import forms
 from django.conf import settings
 from django.contrib.staticfiles import finders
 from django.core.files import File
 from django.core.files.storage import default_storage
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Exists, OuterRef
 from django.db.models.functions import Coalesce
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -29,8 +27,13 @@ from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
 from eventyay.base.services.orders import OrderError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
-from eventyay.plugins.badges.models import BadgeProduct, BadgeLayout
-from eventyay.plugins.badges.utils import get_badge_hidden_fields, normalize_badge_content_key
+from eventyay.plugins.badges.models import BadgeLayout, BadgeProduct
+from eventyay.plugins.badges.utils import (
+    _renderer_cache,
+    get_badge_hidden_fields,
+    get_badge_layout_version,
+    normalize_badge_content_key,
+)
 
 from ...helpers.templatetags.jsonfield import JSONExtract
 
@@ -96,16 +99,25 @@ def _open_layout_background(layout):
     return open(finders.find('pretixplugins/badges/badge_default_a6l.pdf'), 'rb')
 
 
-def _renderer(event, layout):
+def _renderer(event, layout, version):
     if layout is None:
         return None
+
+    cache_key = (event.pk, layout.pk)
+    if cache_key in _renderer_cache:
+        cached_version, renderer = _renderer_cache[cache_key]
+        if cached_version == version:
+            return renderer
+
     bgf = _open_layout_background(layout)
-    return BadgeRenderer(
+    renderer = BadgeRenderer(
         event,
         layout.layout_data,
         bgf,
         ask_user_fields=(layout.ask_user_fields_data if layout.allow_customization else []),
     )
+    _renderer_cache[cache_key] = (version, renderer)
+    return renderer
 
 
 OPTIONS = OrderedDict(
@@ -286,18 +298,20 @@ def render_nup_page(nup_pdf: PdfWriter, input_pages, opt: dict):
     return nup_page
 
 
-def merge_pages(file_paths: List[str], output_file: BinaryIO):
+def merge_pages(file_paths: list[str], output_file: BinaryIO):
     merger = PdfWriter()
-    merger.add_metadata({
-        '/Title': 'Badges',
-        '/Creator': 'eventyay',
-    })
+    merger.add_metadata(
+        {
+            '/Title': 'Badges',
+            '/Creator': 'eventyay',
+        }
+    )
     for pdf in file_paths:
         merger.append(pdf)
     merger.write(output_file)
 
 
-def render_nup(input_files: List[str], num_pages: int, output_file: BinaryIO, opt: dict):
+def render_nup(input_files: list[str], num_pages: int, output_file: BinaryIO, opt: dict):
     badges_per_page = opt['cols'] * opt['rows']
     max_nup_pages = 20
     nup_pdf_files = []
@@ -320,10 +334,12 @@ def render_nup(input_files: List[str], num_pages: int, output_file: BinaryIO, op
                 chunk.append(badges_pdf.pages[j - offset])
 
             nup_pdf = PdfWriter()
-            nup_pdf.add_metadata({
-                '/Title': 'Badges',
-                '/Creator': 'eventyay',
-            })
+            nup_pdf.add_metadata(
+                {
+                    '/Title': 'Badges',
+                    '/Creator': 'eventyay',
+                }
+            )
 
             for page_chunk in chunks(chunk, badges_per_page):
                 render_nup_page(nup_pdf, page_chunk, opt)
@@ -347,36 +363,55 @@ def render_nup(input_files: List[str], num_pages: int, output_file: BinaryIO, op
 
 
 def render_badges(event, positions, opt, apply_output_pagesize=False):
-    renderermap = {
-        bi.product_id: _renderer(event, bi.layout)
-        for bi in BadgeProduct.objects.select_related('layout').filter(product__event=event)
+    from itertools import groupby
+
+    # Resolve product→layout assignments fresh on every render so explicit "no badge"
+    # assignments (layout=None) and recent assignment changes are always respected.
+    assignment_map = {
+        assignment.product_id: assignment.layout
+        for assignment in BadgeProduct.objects.select_related('layout').filter(product__event=event)
     }
     try:
-        default_renderer = _renderer(event, event.badge_layouts.get(default=True))
+        default_layout = event.badge_layouts.get(default=True)
     except BadgeLayout.DoesNotExist:
-        default_renderer = None
+        default_layout = None
 
-    op_renderers = [
-        (op, renderermap.get(op.product_id, default_renderer))
-        for op in positions
-        if renderermap.get(op.product_id, default_renderer)
-    ]
+    # Fetched once per render call (not per position) to avoid a cache round-trip per
+    # badge, while still guaranteeing that every render reflects the latest saved design.
+    version = get_badge_layout_version(event)
+
+    op_renderers = []
+    for op in positions:
+        layout = assignment_map.get(op.product_id, default_layout)
+        if layout is not None:
+            renderer = _renderer(event, layout, version)
+            if renderer:
+                op_renderers.append((op, renderer))
+
     if not op_renderers:
         raise OrderError(_('None of the selected products is configured to print badges.'))
 
     badge_pdf = PdfWriter()
-    badge_pdf.add_metadata({
-        '/Title': 'Badges',
-        '/Creator': 'eventyay',
-    })
-    for op, renderer in op_renderers:
+    badge_pdf.add_metadata(
+        {
+            '/Title': 'Badges',
+            '/Creator': 'eventyay',
+        }
+    )
+
+    # Group consecutive badges by renderer to minimize Canvas and PdfReader overhead
+    for renderer, group in groupby(op_renderers, key=lambda x: x[1]):
+        ops = [x[0] for x in group]
         buffer = BytesIO()
         page = canvas.Canvas(buffer, pagesize=pagesizes.A4)
-        with language(op.order.locale, op.order.event.settings.region):
-            renderer.draw_page(page, op.order, op, show_page=False)
-        if apply_output_pagesize and opt['pagesize']:
-            page.setPageSize(opt['pagesize'])
-        page.showPage()
+
+        for op in ops:
+            with language(op.order.locale, op.order.event.settings.region):
+                renderer.draw_page(page, op.order, op, show_page=False)
+            if apply_output_pagesize and opt['pagesize']:
+                page.setPageSize(opt['pagesize'])
+            page.showPage()
+
         page.save()
         for merged_page in renderer.merge_foreground_buffer(buffer):
             badge_pdf.add_page(merged_page)
@@ -482,7 +517,7 @@ class BadgeExporter(BaseExporter):
                         + (
                             [
                                 (
-                                    'name:{}'.format(k),
+                                    f'name:{k}',
                                     _('Attendee name: {part}').format(part=label),
                                 )
                                 for k, label, w in name_scheme['fields']
@@ -496,11 +531,11 @@ class BadgeExporter(BaseExporter):
         )
         return d
 
-    def render(self, form_data: dict) -> Tuple[str, str, str]:
+    def render(self, form_data: dict) -> tuple[str, str, str]:
         qs = (
             OrderPosition.objects.filter(order__event=self.event, product_id__in=form_data['products'])
-            .prefetch_related('answers', 'answers__question')
-            .select_related('order', 'product', 'variation', 'addon_to')
+            .prefetch_related('answers', 'answers__question', 'answers__options')
+            .select_related('order', 'order__invoice_address', 'product', 'variation', 'addon_to', 'subevent', 'seat')
         )
 
         if not form_data.get('include_addons'):

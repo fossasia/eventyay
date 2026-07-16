@@ -62,22 +62,38 @@ export default {
 	},
 	watch: {
 		search() {
+			this.reloadResults()
+		}
+	},
+	created() {
+		this.reloadResults()
+	},
+	methods: {
+		async reloadResults() {
 			this.loading = false
 			this.results = []
 			this.nextPage = 1
-		}
-	},
-	methods: {
+			await this.loadPage()
+		},
 		async loadPage() {
+			if (!this.nextPage || this.loading) return
 			this.loading = true
 			const search = this.search
-			const newPage = (await api.call('user.list.search', {search_term: this.search, page: this.nextPage}))
-			if (search !== this.search) return
+			const page = this.nextPage
+			const newPage = (await api.call('user.list.search', {
+				search_term: this.search,
+				page,
+				include_banned: false,
+			}))
+			if (search !== this.search) {
+				this.loading = false
+				return
+			}
 			this.results.push(...newPage.results.filter(e => !this.exclude.includes(e.id)))
 			if (newPage.isLastPage) {
 				this.nextPage = null
 			} else {
-				this.nextPage++
+				this.nextPage = page + 1
 			}
 			this.loading = false
 		},
@@ -160,6 +176,8 @@ export default {
 	.bunt-button
 		themed-button-primary()
 	.search-results
+		flex: 1
+		min-height: 0
 		.user
 			display: flex
 			align-items: center

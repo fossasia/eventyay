@@ -35,7 +35,7 @@
             {% endblocktranslate %}
             {{ proposal_title }})
         </span>
-        <div class="ml-auto mb-1">
+        <div class="ml-auto mb-1 speaker-header-actions">
             {% if can_mark_speaker and accepted_submissions.exists %}
                 {% include "orga/includes/mark_speakers_arrived.html" with speaker=form.instance %}
             {% endif %}
