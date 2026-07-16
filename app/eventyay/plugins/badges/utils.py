@@ -1,4 +1,7 @@
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.utils.translation import gettext_lazy as _
 
@@ -237,8 +240,8 @@ def get_badge_visible_field_values(event, position, hidden_fields=None):
                     val = variables[field['key']]['evaluate'](position, position.order, event)
                     if val:
                         values.append(str(val))
-                except Exception:
-                    pass
+                except (KeyError, ValueError, AttributeError, TypeError):
+                    logger.exception('Failed to evaluate badge field')
     return values
 
 
