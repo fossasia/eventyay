@@ -168,6 +168,13 @@ var editor = {
         maxPt = typeof maxPt === 'number' && !isNaN(maxPt) ? maxPt : editor._get_text_max_font_pt(o);
         widthMm = typeof widthMm === 'number' && !isNaN(widthMm) ? widthMm : editor._px2mm(o.width);
 
+        var lines = text.split(/\r\n|\r|\n/).filter(function (line) {
+            return line.length > 0;
+        });
+        if (!lines.length) {
+            return maxPt;
+        }
+
         var widthPx = editor._mm2px(widthMm);
         var canvas = document.createElement('canvas');
         var ctx = canvas.getContext('2d');
@@ -177,7 +184,14 @@ var editor = {
 
         for (var pt = maxPt; pt >= editor._AUTOFIT_MIN_PT; pt -= 0.5) {
             ctx.font = fontStyle + fontWeight + editor._pt2px(pt) + 'px ' + fontFamily;
-            if (ctx.measureText(text).width <= widthPx) {
+            var fits = true;
+            for (var i = 0; i < lines.length; i++) {
+                if (ctx.measureText(lines[i]).width > widthPx) {
+                    fits = false;
+                    break;
+                }
+            }
+            if (fits) {
                 return pt;
             }
         }

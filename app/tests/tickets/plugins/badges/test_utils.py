@@ -139,3 +139,15 @@ def test_fit_fontsize_to_width_keeps_short_text_at_max():
     )
 
     assert fitted == 12.0
+
+
+def test_fit_fontsize_to_width_multiline_uses_longest_line():
+    Renderer._register_fonts()
+    fitted = Renderer._fit_fontsize_to_width(
+        'John\nDoe',
+        'Open Sans',
+        max_fontsize=12.0,
+        width_mm=30,
+    )
+
+    assert fitted == 12.0

@@ -922,11 +922,15 @@ class Renderer:
         if not text:
             return float(max_fontsize)
 
+        lines = [line for line in text.splitlines() if line]
+        if not lines:
+            return float(max_fontsize)
+
         width_pt = float(width_mm) * mm
         size = float(max_fontsize)
         min_size = float(min_fontsize)
         while size > min_size:
-            if pdfmetrics.stringWidth(text, font_name, size) <= width_pt:
+            if all(pdfmetrics.stringWidth(line, font_name, size) <= width_pt for line in lines):
                 return size
             size -= 0.5
         return min_size
