@@ -56,12 +56,38 @@ def build_video_typography_for_event(event):
     return typography
 
 
+def get_video_navigation_background_color(event):
+    """Navigation background for the video sidebar and top navbar (legacy key supported)."""
+    return (
+        event.settings.get('video_navigation_background_color')
+        or event.settings.get('video_sidebar_background_color')
+    )
+
+
+def resolve_custom_video_navigation_background(event):
+    """
+    Custom navigation background when explicitly configured.
+
+    Empty and the legacy platform default (#f8f8f8) mean unset so the navbar
+    can fall back to header/primary colours.
+    """
+    raw = get_video_navigation_background_color(event)
+    if not raw or not str(raw).strip():
+        return None
+    normalized = normalize_video_theme_hex(raw, PLATFORM_SIDEBAR_BG)
+    if normalized == PLATFORM_SIDEBAR_BG:
+        return None
+    return normalized
+
+
 def build_video_theme_for_event(event):
     """
     Theme payload for the video SPA injection and world.config.get.
 
-    Navbar colours follow Common Settings (primary, header colours, page
-    background). The rooms sidebar uses the platform default light style.
+    Video navigation colours apply to the rooms sidebar and top navbar when
+    configured. Otherwise the navbar uses header/primary colours and the
+    sidebar uses the platform default light style. Landing-page hero colours
+    always follow Common Settings (primary, header colours).
     Remaining keys are taken from event.config['theme'] (identicons, text
     overwrites, stream offline image, custom css flag, etc.).
     """
@@ -74,6 +100,8 @@ def build_video_theme_for_event(event):
     primary = normalize_video_theme_hex(event.visible_primary_color, '#2185d0')
     page_bg = event.settings.get('theme_color_background') or '#f5f5f5'
     bbb_bg = normalize_video_theme_hex(page_bg, '#ffffff')
+    nav_bg_custom = resolve_custom_video_navigation_background(event)
+    sidebar_bg = nav_bg_custom or PLATFORM_SIDEBAR_BG
     header_background = event.settings.get('header_background_color')
     header_text = event.settings.get('header_text_color')
 
@@ -82,17 +110,26 @@ def build_video_theme_for_event(event):
         existing_colors = {}
     else:
         existing_colors = {**existing_colors}
+    # Landing/about hero must follow Common Settings, not stored theme overrides.
+    existing_colors.pop('header_background', None)
+    existing_colors.pop('header_text', None)
 
     colors = {
         **existing_colors,
         'primary': primary,
-        'sidebar': PLATFORM_SIDEBAR_BG,
+        'sidebar': sidebar_bg,
+        'sidebar_text': event.settings.get('video_sidebar_text_color') or '#000000',
+        'sidebar_hover': event.settings.get('video_sidebar_hover_color') or '#2185d0',
         'bbb_background': bbb_bg,
+        'header_background': normalize_video_theme_hex(header_background or primary, primary),
+        'header_text': normalize_video_theme_hex(header_text or '#ffffff', '#ffffff'),
     }
-    if header_background:
-        colors['header_background'] = normalize_video_theme_hex(header_background, primary)
-    if header_text:
-        colors['header_text'] = normalize_video_theme_hex(header_text, '#ffffff')
+    if nav_bg_custom:
+        colors['navigation_background'] = nav_bg_custom
+        colors['navigation_text'] = normalize_video_theme_hex(
+            event.settings.get('video_sidebar_text_color') or header_text or '#ffffff',
+            '#ffffff',
+        )
     out['colors'] = colors
 
     navigation = {
