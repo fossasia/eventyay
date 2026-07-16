@@ -186,8 +186,14 @@ var editor = {
             ctx.font = fontStyle + fontWeight + editor._pt2px(pt) + 'px ' + fontFamily;
             var fits = true;
             for (var i = 0; i < lines.length; i++) {
-                if (ctx.measureText(lines[i]).width > widthPx) {
-                    fits = false;
+                var parts = lines[i].trim() ? lines[i].trim().split(/\s+/) : [];
+                for (var j = 0; j < parts.length; j++) {
+                    if (ctx.measureText(parts[j]).width > widthPx) {
+                        fits = false;
+                        break;
+                    }
+                }
+                if (!fits) {
                     break;
                 }
             }

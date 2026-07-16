@@ -930,7 +930,15 @@ class Renderer:
         size = float(max_fontsize)
         min_size = float(min_fontsize)
         while size > min_size:
-            if all(pdfmetrics.stringWidth(line, font_name, size) <= width_pt for line in lines):
+            fits = True
+            for line in lines:
+                parts = line.split()
+                if not parts:
+                    continue
+                if max(pdfmetrics.stringWidth(part, font_name, size) for part in parts) > width_pt:
+                    fits = False
+                    break
+            if fits:
                 return size
             size -= 0.5
         return min_size

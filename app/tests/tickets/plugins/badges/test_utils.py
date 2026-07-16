@@ -116,7 +116,20 @@ def test_voucher_layout_none_disables_badge_even_with_default_product(badge_even
     assert position_has_printable_badge(event, position) is False
 
 
-def test_fit_fontsize_to_width_shrinks_long_text():
+def test_fit_fontsize_to_width_shrinks_unbreakable_text():
+    Renderer._register_fonts()
+    fitted = Renderer._fit_fontsize_to_width(
+        'VeryLongAttendeeNameExample',
+        'Open Sans',
+        max_fontsize=12.0,
+        width_mm=30,
+    )
+
+    assert fitted < 12.0
+    assert fitted >= 4.0
+
+
+def test_fit_fontsize_to_width_keeps_wrappable_text_at_max():
     Renderer._register_fonts()
     fitted = Renderer._fit_fontsize_to_width(
         'Very Long Attendee Name Example',
@@ -125,8 +138,7 @@ def test_fit_fontsize_to_width_shrinks_long_text():
         width_mm=30,
     )
 
-    assert fitted < 12.0
-    assert fitted >= 4.0
+    assert fitted == 12.0
 
 
 def test_fit_fontsize_to_width_keeps_short_text_at_max():
