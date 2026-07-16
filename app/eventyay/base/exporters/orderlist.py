@@ -848,7 +848,7 @@ class OrderListExporter(MultiSheetListExporter):
         ]
 
         try:
-            from eventyay.plugins.badges.utils import get_badge_visible_field_labels
+            from eventyay.plugins.badges.utils import get_badge_visible_field_values
             badge_support = True
             headers.append(_('Badge options'))
         except ImportError:
@@ -1013,8 +1013,8 @@ class OrderListExporter(MultiSheetListExporter):
                 )
 
                 if badge_support:
-                    badge_labels = get_badge_visible_field_labels(self.event_object_cache[order.event_id], op)
-                    row.append(', '.join(badge_labels) if badge_labels else '')
+                    badge_values = get_badge_visible_field_values(self.event_object_cache[order.event_id], op)
+                    row.append(', '.join(badge_values) if badge_values else '')
 
                 yield row
 
