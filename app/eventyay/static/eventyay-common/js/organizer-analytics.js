@@ -250,11 +250,20 @@ function drawCheckinRate() {
             shared: true,
             x: {
                 formatter: (val, { dataPointIndex }) => {
-                    const name = series[dataPointIndex] ? series[dataPointIndex].event : val
+                    const entry = series[dataPointIndex]
+                    const name = entry ? entry.event : val
+                    let rateStr = ''
+                    if (entry && entry.total > 0) {
+                        const percent = Math.round((entry.checked_in / entry.total) * 100)
+                        rateStr = ` (Rate: ${percent}%)`
+                    }
                     const div = document.createElement('div')
-                    div.textContent = name == null ? '' : String(name)
+                    div.textContent = (name == null ? '' : String(name)) + rateStr
                     return div.innerHTML
                 }
+            },
+            y: {
+                formatter: (val) => val
             }
         },
     }
