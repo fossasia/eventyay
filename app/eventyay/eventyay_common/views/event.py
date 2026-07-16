@@ -355,7 +355,7 @@ class EventCreateView(TemplateView):
                             elif cfg_type == 'livestream.native':
                                 initial_form['video_type'] = 'hls'
                                 initial_form['video_url'] = cfg_data.get('hls_url', '')
-                            elif cfg_type == 'livestream.iframe':
+                            elif cfg_type in ('livestream.iframe', 'page.iframe'):
                                 initial_form['video_type'] = 'iframe'
                                 initial_form['video_url'] = cfg_data.get('url', '')
                         except (IndexError, AttributeError, KeyError, TypeError):

@@ -210,7 +210,7 @@ class EventCommonSettingsForm(SettingsForm):
                         elif cfg_type == 'livestream.native':
                             self.initial['video_type'] = 'hls'
                             self.initial['video_url'] = cfg_data.get('hls_url', '')
-                        elif cfg_type == 'livestream.iframe':
+                        elif cfg_type in ('livestream.iframe', 'page.iframe'):
                             self.initial['video_type'] = 'iframe'
                             self.initial['video_url'] = cfg_data.get('url', '')
                     except (IndexError, AttributeError, KeyError, TypeError):

@@ -129,7 +129,7 @@ def system_information(request):
             if is_meetup:
                 with scope(event=event):
                     context['show_online_video_link'] = any(
-                        module.get('type', '').startswith('livestream.')
+                        module.get('type', '').startswith('livestream.') or module.get('type') == 'page.iframe'
                         for room in event.rooms.filter(deleted=False)
                         for module in room.module_config or []
                     )

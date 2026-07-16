@@ -1862,7 +1862,7 @@ def get_video_module_config(video_type, video_url):
     VIDEO_MODULE_MAP = {
         'youtube': ('livestream.youtube', {'ytid': video_url}),
         'hls': ('livestream.native', {'hls_url': video_url}),
-        'iframe': ('livestream.iframe', {'url': video_url}),
+        'iframe': ('page.iframe', {'url': video_url}),
     }
     if video_type and video_type in VIDEO_MODULE_MAP:
         mod_type, mod_config = VIDEO_MODULE_MAP[video_type]
