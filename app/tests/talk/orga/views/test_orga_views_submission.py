@@ -424,6 +424,57 @@ def test_orga_can_create_submission(orga_client, event, known_speaker, orga_user
 
 
 @pytest.mark.django_db
+def test_orga_create_submission_preserves_speaker_after_form_error(orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "speaker-email": "foo@bar.com",
+            "speaker-name": "Foo Speaker",
+            "speaker-locale": "en",
+            "state": "submitted",
+            "title": "title",
+        },
+    )
+
+    speaker_form = response.context["new_speaker_form"]
+    assert response.status_code == 200
+    assert speaker_form["email"].value() == "foo@bar.com"
+    assert list(speaker_form.fields["email"].widget.choices) == [
+        ("foo@bar.com", "Foo Speaker (foo@bar.com)")
+    ]
+    with scope(event=event):
+        assert event.submissions.count() == 0
+
+
+@pytest.mark.django_db
+def test_orga_create_submission_does_not_save_before_speaker_validation(orga_client, event):
+    with scope(event=event):
+        type_pk = event.submission_types.first().pk
+
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "speaker-name": "Foo Speaker",
+            "speaker-locale": "en",
+            "state": "submitted",
+            "submission_type": type_pk,
+            "title": "title",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "email" in response.context["new_speaker_form"].errors
+    with scope(event=event):
+        assert event.submissions.count() == 0
+
+
+@pytest.mark.django_db
 def test_orga_can_edit_submission(orga_client, event, accepted_submission):
     event.feature_flags["present_multiple_times"] = True
     event.save()

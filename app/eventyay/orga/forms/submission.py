@@ -323,11 +323,15 @@ class AddSpeakerForm(forms.Form):
     def __init__(self, *args, event=None, form_renderer=None, require_name=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.require_name = require_name
+        email_key = self.add_prefix('email')
+        name_key = self.add_prefix('name')
+        if self.is_bound and (email := self.data.get(email_key)):
+            name = self.data.get(name_key)
+            label = f'{name} ({email})' if name else email
+            self.fields['email'].widget.choices = [(email, label)]
         if require_name:
             self.fields['email'].required = True
             self.fields['name'].required = True
-            email_key = self.add_prefix('email')
-            name_key = self.add_prefix('name')
             if self.is_bound and self.data.get(email_key) and not self.data.get(name_key):
                 existing_user = User.objects.filter(email__iexact=self.data[email_key]).only('fullname').first()
                 if existing_user and existing_user.fullname:
@@ -342,7 +346,7 @@ class AddSpeakerForm(forms.Form):
     def clean(self):
         data = super().clean()
         if data.get('name') and not data.get('email'):
-            raise forms.ValidationError(_('Please provide an email address.'))
+            self.add_error('email', _('Please provide an email address.'))
         return data
 
 
