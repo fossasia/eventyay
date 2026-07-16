@@ -8,7 +8,7 @@ const initUserSearch = () => {
     const usersByEmail = new Map()
     const toChoice = (user) => ({
         value: user.email,
-        label: `${user.name} (${user.email})`,
+        label: user.label,
         customProperties: {
             name: user.name,
         },

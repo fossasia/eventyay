@@ -300,6 +300,10 @@ class SubmissionStateChangeForm(forms.Form):
     )
 
 
+def get_speaker_choice_label(*, name: str | None, email: str) -> str:
+    return f'{name} ({email})' if name else email
+
+
 class AddSpeakerForm(forms.Form):
     email = forms.EmailField(
         label=phrases.cfp.speaker_email,
@@ -325,10 +329,10 @@ class AddSpeakerForm(forms.Form):
         self.require_name = require_name
         email_key = self.add_prefix('email')
         name_key = self.add_prefix('name')
-        if self.is_bound and (email := self.data.get(email_key)):
+        email_widget = self.fields['email'].widget
+        if isinstance(email_widget, forms.Select) and self.is_bound and (email := self.data.get(email_key)):
             name = self.data.get(name_key)
-            label = f'{name} ({email})' if name else email
-            self.fields['email'].widget.choices = [(email, label)]
+            email_widget.choices = [(email, get_speaker_choice_label(name=name, email=email))]
         if require_name:
             self.fields['email'].required = True
             self.fields['name'].required = True

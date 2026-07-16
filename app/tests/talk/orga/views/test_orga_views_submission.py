@@ -440,6 +440,7 @@ def test_orga_create_submission_preserves_speaker_after_form_error(orga_client, 
     )
 
     speaker_form = response.context["new_speaker_form"]
+    assert not speaker_form.errors
     assert response.status_code == 200
     assert speaker_form["email"].value() == "foo@bar.com"
     assert list(speaker_form.fields["email"].widget.choices) == [
@@ -468,8 +469,11 @@ def test_orga_create_submission_does_not_save_before_speaker_validation(orga_cli
         },
     )
 
+    speaker_form = response.context["new_speaker_form"]
     assert response.status_code == 200
-    assert "email" in response.context["new_speaker_form"].errors
+    assert "__all__" not in speaker_form.errors
+    assert "email" in speaker_form.errors
+    assert len(speaker_form.errors["email"]) == 1
     with scope(event=event):
         assert event.submissions.count() == 0
 
