@@ -36,7 +36,7 @@ function drawOrdersOverTime() {
             animations: { enabled: true }
         },
         colors: [PALETTE[0], PALETTE[1]],
-        xaxis: { type: 'datetime', tooltip: { enabled: false } },
+        xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { format: 'dd MMM' } },
         yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
         stroke: { curve: 'straight', width: 2 },
         fill: { type: 'solid', opacity: 0.15 },
@@ -112,7 +112,7 @@ function drawRevenueOverTime() {
             animations: { enabled: true }
         },
         colors: lineColors,
-        xaxis: { type: 'datetime', tooltip: { enabled: false } },
+        xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { format: 'dd MMM' } },
         yaxis: { min: 0 },
         stroke: { curve: 'straight', width: 2 },
         fill: { type: 'solid', opacity: 0.15 },
@@ -182,7 +182,7 @@ function drawProposalsOverTime() {
             toolbar: { show: false },
             animations: { enabled: true },
         },
-        xaxis: { type: 'datetime', tooltip: { enabled: false } },
+        xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { format: 'dd MMM' } },
         yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
         colors: [PALETTE[2]],
         fill: { type: 'gradient' },
@@ -292,7 +292,7 @@ function drawCheckinsOverTime() {
             animations: { enabled: true }
         },
         colors: [PALETTE[3]],
-        xaxis: { type: 'datetime', tooltip: { enabled: false } },
+        xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { format: 'dd MMM' } },
         yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
         stroke: { curve: 'straight', width: 2 },
         fill: { type: 'solid', opacity: 0.15 },
