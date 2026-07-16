@@ -11,7 +11,7 @@ from eventyay.base.models import CachedFile, OrderPosition
 from eventyay.base.services.tickets import generate_orderposition
 
 from .apps import PDFRenderer
-from .models import BadgeProduct, BadgeLayout
+from .models import BadgeLayout, BadgeProduct
 
 
 class BadgeProductAssignmentSerializer(I18nAwareModelSerializer):
@@ -104,7 +104,16 @@ class BadgeDownloadView(APIView):
     def get(self, request, organizer, event, position):
         try:
             op = get_object_or_404(
-                OrderPosition,
+                OrderPosition.objects.select_related(
+                    'order',
+                    'order__event',
+                    'order__invoice_address',
+                    'product',
+                    'variation',
+                    'addon_to',
+                    'subevent',
+                    'seat',
+                ).prefetch_related('answers', 'answers__question', 'answers__options'),
                 order__event__slug=event,
                 order__event__organizer__slug=organizer,
                 pk=position,
@@ -118,6 +127,25 @@ class BadgeDownloadView(APIView):
                 )
 
             # Check if there's already a cached file
+            from eventyay.base.models import CachedTicket
+
+            cached_ticket = CachedTicket.objects.filter(order_position=op, provider='badge').last()
+
+            if cached_ticket and cached_ticket.file:
+                import os
+
+                base64_pdf = base64.b64encode(cached_ticket.file.read()).decode('utf-8')
+                filename = (
+                    os.path.basename(cached_ticket.file.name) if cached_ticket.file.name else f'badge_{position}.pdf'
+                )
+                return Response(
+                    {
+                        'filename': filename,
+                        'type': 'application/pdf',
+                        'base64_pdf': base64_pdf,
+                    }
+                )
+
             cached_file = CachedFile.objects.filter(
                 filename__startswith=f'badge_{position}_', expires__isnull=True
             ).last()

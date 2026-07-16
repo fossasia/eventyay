@@ -105,7 +105,7 @@ DEFAULT_VARIABLES = OrderedDict(
                 'label': _('Product name and variation'),
                 'editor_sample': _('Sample product – sample variation'),
                 'evaluate': lambda orderposition, order, event: (
-                    '{} - {}'.format(orderposition.product.name, orderposition.variation)
+                    f'{orderposition.product.name} - {orderposition.variation}'
                     if orderposition.variation
                     else str(orderposition.product.name)
                 ),
@@ -157,8 +157,9 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Attendee name'),
                 'editor_sample': _('John Doe'),
-                'evaluate': lambda op, order, ev: op.attendee_name
-                or (op.addon_to.attendee_name if op.addon_to else ''),
+                'evaluate': lambda op, order, ev: (
+                    op.attendee_name or (op.addon_to.attendee_name if op.addon_to else '')
+                ),
             },
         ),
         (
@@ -222,8 +223,10 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Attendee country'),
                 'editor_sample': 'Atlantis',
-                'evaluate': lambda op, order, ev: str(getattr(op.country, 'name', ''))
-                or (str(getattr(op.addon_to.country, 'name', '')) if op.addon_to else ''),
+                'evaluate': lambda op, order, ev: (
+                    str(getattr(op.country, 'name', ''))
+                    or (str(getattr(op.addon_to.country, 'name', '')) if op.addon_to else '')
+                ),
             },
         ),
         (
@@ -231,8 +234,9 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Attendee email'),
                 'editor_sample': 'foo@bar.com',
-                'evaluate': lambda op, order, ev: op.attendee_email
-                or (op.addon_to.attendee_email if op.addon_to else ''),
+                'evaluate': lambda op, order, ev: (
+                    op.attendee_email or (op.addon_to.attendee_email if op.addon_to else '')
+                ),
             },
         ),
         (
@@ -272,12 +276,14 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Event begin date and time'),
                 'editor_sample': _('2017-05-31 20:00'),
-                'evaluate': lambda op, order, ev: date_format(
-                    ev.date_from.astimezone(timezone(ev.settings.timezone)),
-                    'SHORT_DATETIME_FORMAT',
-                )
-                if ev.date_from
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    date_format(
+                        ev.date_from.astimezone(timezone(ev.settings.timezone)),
+                        'SHORT_DATETIME_FORMAT',
+                    )
+                    if ev.date_from
+                    else ''
+                ),
             },
         ),
         (
@@ -285,12 +291,14 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Event begin date'),
                 'editor_sample': _('2017-05-31'),
-                'evaluate': lambda op, order, ev: date_format(
-                    ev.date_from.astimezone(timezone(ev.settings.timezone)),
-                    'SHORT_DATE_FORMAT',
-                )
-                if ev.date_from
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    date_format(
+                        ev.date_from.astimezone(timezone(ev.settings.timezone)),
+                        'SHORT_DATE_FORMAT',
+                    )
+                    if ev.date_from
+                    else ''
+                ),
             },
         ),
         (
@@ -306,12 +314,14 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Event end date and time'),
                 'editor_sample': _('2017-05-31 22:00'),
-                'evaluate': lambda op, order, ev: date_format(
-                    ev.date_to.astimezone(timezone(ev.settings.timezone)),
-                    'SHORT_DATETIME_FORMAT',
-                )
-                if ev.date_to
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    date_format(
+                        ev.date_to.astimezone(timezone(ev.settings.timezone)),
+                        'SHORT_DATETIME_FORMAT',
+                    )
+                    if ev.date_to
+                    else ''
+                ),
             },
         ),
         (
@@ -319,12 +329,14 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Event end date'),
                 'editor_sample': _('2017-05-31'),
-                'evaluate': lambda op, order, ev: date_format(
-                    ev.date_to.astimezone(timezone(ev.settings.timezone)),
-                    'SHORT_DATE_FORMAT',
-                )
-                if ev.date_to
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    date_format(
+                        ev.date_to.astimezone(timezone(ev.settings.timezone)),
+                        'SHORT_DATE_FORMAT',
+                    )
+                    if ev.date_to
+                    else ''
+                ),
             },
         ),
         (
@@ -332,11 +344,11 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Event end time'),
                 'editor_sample': _('22:00'),
-                'evaluate': lambda op, order, ev: date_format(
-                    ev.date_to.astimezone(timezone(ev.settings.timezone)), 'TIME_FORMAT'
-                )
-                if ev.date_to
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    date_format(ev.date_to.astimezone(timezone(ev.settings.timezone)), 'TIME_FORMAT')
+                    if ev.date_to
+                    else ''
+                ),
             },
         ),
         (
@@ -344,12 +356,14 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Event admission date and time'),
                 'editor_sample': _('2017-05-31 19:00'),
-                'evaluate': lambda op, order, ev: date_format(
-                    ev.date_admission.astimezone(timezone(ev.settings.timezone)),
-                    'SHORT_DATETIME_FORMAT',
-                )
-                if ev.date_admission
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    date_format(
+                        ev.date_admission.astimezone(timezone(ev.settings.timezone)),
+                        'SHORT_DATETIME_FORMAT',
+                    )
+                    if ev.date_admission
+                    else ''
+                ),
             },
         ),
         (
@@ -357,12 +371,14 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Event admission time'),
                 'editor_sample': _('19:00'),
-                'evaluate': lambda op, order, ev: date_format(
-                    ev.date_admission.astimezone(timezone(ev.settings.timezone)),
-                    'TIME_FORMAT',
-                )
-                if ev.date_admission
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    date_format(
+                        ev.date_admission.astimezone(timezone(ev.settings.timezone)),
+                        'TIME_FORMAT',
+                    )
+                    if ev.date_admission
+                    else ''
+                ),
             },
         ),
         (
@@ -394,9 +410,9 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Invoice address name'),
                 'editor_sample': _('John Doe'),
-                'evaluate': lambda op, order, ev: order.invoice_address.name
-                if getattr(order, 'invoice_address', None)
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    order.invoice_address.name if getattr(order, 'invoice_address', None) else ''
+                ),
             },
         ),
         (
@@ -404,9 +420,9 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Invoice address company'),
                 'editor_sample': _('Sample company'),
-                'evaluate': lambda op, order, ev: order.invoice_address.company
-                if getattr(order, 'invoice_address', None)
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    order.invoice_address.company if getattr(order, 'invoice_address', None) else ''
+                ),
             },
         ),
         (
@@ -414,9 +430,9 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Invoice address street'),
                 'editor_sample': _('Sesame Street 42'),
-                'evaluate': lambda op, order, ev: order.invoice_address.street
-                if getattr(order, 'invoice_address', None)
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    order.invoice_address.street if getattr(order, 'invoice_address', None) else ''
+                ),
             },
         ),
         (
@@ -424,9 +440,9 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Invoice address ZIP code'),
                 'editor_sample': _('12345'),
-                'evaluate': lambda op, order, ev: order.invoice_address.zipcode
-                if getattr(order, 'invoice_address', None)
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    order.invoice_address.zipcode if getattr(order, 'invoice_address', None) else ''
+                ),
             },
         ),
         (
@@ -434,9 +450,9 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Invoice address city'),
                 'editor_sample': _('Sample city'),
-                'evaluate': lambda op, order, ev: order.invoice_address.city
-                if getattr(order, 'invoice_address', None)
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    order.invoice_address.city if getattr(order, 'invoice_address', None) else ''
+                ),
             },
         ),
         (
@@ -444,9 +460,9 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Invoice address state'),
                 'editor_sample': _('Sample State'),
-                'evaluate': lambda op, order, ev: order.invoice_address.state
-                if getattr(order, 'invoice_address', None)
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    order.invoice_address.state if getattr(order, 'invoice_address', None) else ''
+                ),
             },
         ),
         (
@@ -454,9 +470,11 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Invoice address country'),
                 'editor_sample': _('Atlantis'),
-                'evaluate': lambda op, order, ev: str(getattr(order.invoice_address.country, 'name', ''))
-                if getattr(order, 'invoice_address', None)
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    str(getattr(order.invoice_address.country, 'name', ''))
+                    if getattr(order, 'invoice_address', None)
+                    else ''
+                ),
             },
         ),
         (
@@ -466,7 +484,7 @@ DEFAULT_VARIABLES = OrderedDict(
                 'editor_sample': _('Add-on 1\nAdd-on 2'),
                 'evaluate': lambda op, order, ev: '\n'.join(
                     [
-                        '{} - {}'.format(p.product, p.variation) if p.variation else str(p.product)
+                        f'{p.product} - {p.variation}' if p.variation else str(p.product)
                         for p in (
                             op.addons.all()
                             if 'addons' in getattr(op, '_prefetched_objects_cache', {})
@@ -528,11 +546,11 @@ DEFAULT_VARIABLES = OrderedDict(
             {
                 'label': _('Printing time'),
                 'editor_sample': _('19:00'),
-                'evaluate': lambda op, order, ev: date_format(
-                    now().astimezone(timezone(ev.settings.timezone)), 'TIME_FORMAT'
-                )
-                if ev.date_admission
-                else '',
+                'evaluate': lambda op, order, ev: (
+                    date_format(now().astimezone(timezone(ev.settings.timezone)), 'TIME_FORMAT')
+                    if ev.date_admission
+                    else ''
+                ),
             },
         ),
         (
@@ -614,7 +632,7 @@ def images_from_questions(sender, *args, **kwargs):
     for q in sender.questions.all():
         if q.type != Question.TYPE_FILE:
             continue
-        d['question_{}'.format(q.identifier)] = {
+        d[f'question_{q.identifier}'] = {
             'label': _('Question: {question}').format(question=q.question),
             'evaluate': partial(get_answer, question_id=q.pk, etag=False),
             'etag': partial(get_answer, question_id=q.pk, etag=True),
@@ -652,7 +670,7 @@ def variables_from_questions(sender, *args, **kwargs):
     for q in sender.questions.all():
         if q.type == Question.TYPE_FILE:
             continue
-        d['question_{}'.format(q.pk)] = {
+        d[f'question_{q.pk}'] = {
             'label': _('Question: {question}').format(question=q.question),
             'editor_sample': str(q.question),
             'evaluate': partial(get_answer, question_id=q.pk),
@@ -753,14 +771,23 @@ class Renderer:
         content = o.get('content', 'dark')
         if content not in ('dark', 'white'):
             content = 'dark'
-        img = finders.find('pretixpresale/pdf/powered_by_eventyay_{}.png'.format(content))
 
-        ir = ThumbnailingImageReader(img)
-        try:
-            width, height = ir.resize(None, float(o['size']) * mm, 300)
-        except Exception:
-            logger.exception('Can not resize image')
-            pass
+        cache_key = f'poweredby_{content}_{o.get("size")}'
+        if not hasattr(self, '_image_cache'):
+            self._image_cache = {}
+
+        if cache_key in self._image_cache:
+            ir, width, height = self._image_cache[cache_key]
+        else:
+            img = finders.find(f'pretixpresale/pdf/powered_by_eventyay_{content}.png')
+            ir = ThumbnailingImageReader(img)
+            try:
+                width, height = ir.resize(None, float(o['size']) * mm, 300)
+            except Exception:
+                logger.exception('Can not resize image')
+                width, height = float(o['size']) * mm, float(o['size']) * mm
+            self._image_cache[cache_key] = (ir, width, height)
+
         canvas.drawImage(
             ir,
             float(o['left']) * mm,
@@ -834,12 +861,29 @@ class Renderer:
                 image_file = None
 
         if image_file:
-            ir = ThumbnailingImageReader(image_file)
-            try:
-                ir.resize(float(o['width']) * mm, float(o['height']) * mm, 300)
-            except Exception:
-                logger.exception('Can not resize image')
-                pass
+            # Only cache images that expose a stable, unique file name (e.g. Django
+            # FieldFile objects backed by real storage paths, like uploaded attendee
+            # photos or organizer logos). Per-attendee content varies by file identity,
+            # so this still caches correctly across positions that share the same file,
+            # while never risking a stale/incorrect image for content we can't identify.
+            file_name = getattr(image_file, 'name', None)
+            cache_key = f'imagearea_{file_name}_{o.get("width")}_{o.get("height")}' if file_name else None
+
+            if not hasattr(self, '_image_cache'):
+                self._image_cache = {}
+
+            if cache_key and cache_key in self._image_cache:
+                ir = self._image_cache[cache_key]
+            else:
+                ir = ThumbnailingImageReader(image_file)
+                try:
+                    ir.resize(float(o['width']) * mm, float(o['height']) * mm, 300)
+                except Exception:
+                    logger.exception('Can not resize image')
+                    pass
+                if cache_key:
+                    self._image_cache[cache_key] = ir
+
             canvas.drawImage(
                 image=ir,
                 x=float(o['left']) * mm,
@@ -863,6 +907,16 @@ class Renderer:
             )
             canvas.restoreState()
 
+    @classmethod
+    def _get_reshaper(cls):
+        if not hasattr(cls, '_reshaper_instance'):
+            configuration = {
+                'delete_harakat': True,
+                'support_ligatures': False,
+            }
+            cls._reshaper_instance = ArabicReshaper(configuration=configuration)
+        return cls._reshaper_instance
+
     def _draw_textarea(self, canvas: Canvas, op: OrderPosition, order: Order, o: dict):
         font = o['fontfamily']
         if o['bold']:
@@ -870,31 +924,36 @@ class Renderer:
         if o['italic']:
             font += ' I'
 
-        align_map = {'left': TA_LEFT, 'center': TA_CENTER, 'right': TA_RIGHT}
-        style = ParagraphStyle(
-            name=uuid.uuid4().hex,
-            fontName=font,
-            fontSize=float(o['fontsize']),
-            leading=float(o['fontsize']),
-            autoLeading='max',
-            textColor=Color(o['color'][0] / 255, o['color'][1] / 255, o['color'][2] / 255),
-            alignment=align_map[o['align']],
-        )
+        if not hasattr(self, '_style_cache'):
+            self._style_cache = {}
+
+        style_key = (font, o['fontsize'], tuple(o['color']), o['align'])
+        if style_key in self._style_cache:
+            style = self._style_cache[style_key]
+        else:
+            align_map = {'left': TA_LEFT, 'center': TA_CENTER, 'right': TA_RIGHT}
+            style = ParagraphStyle(
+                name=uuid.uuid4().hex,
+                fontName=font,
+                fontSize=float(o['fontsize']),
+                leading=float(o['fontsize']),
+                autoLeading='max',
+                textColor=Color(o['color'][0] / 255, o['color'][1] / 255, o['color'][2] / 255),
+                alignment=align_map[o['align']],
+            )
+            self._style_cache[style_key] = style
+
         text = conditional_escape(
             self._get_text_content(op, order, o) or '',
         ).replace('\n', '<br/>\n')
 
         # reportlab does not support RTL, ligature-heavy scripts like Arabic. Therefore, we use ArabicReshaper
         # to resolve all ligatures and python-bidi to switch RTL texts.
-        configuration = {
-            'delete_harakat': True,
-            'support_ligatures': False,
-        }
-        reshaper = ArabicReshaper(configuration=configuration)
+        reshaper = self._get_reshaper()
         try:
             text = '<br/>'.join(get_display(reshaper.reshape(l)) for l in text.split('<br/>'))
         except Exception:
-            logger.exception('Reshaping/Bidi fixes failed on string {}'.format(repr(text)))
+            logger.exception(f'Reshaping/Bidi fixes failed on string {repr(text)}')
 
         p = Paragraph(text, style=style)
         w, h = p.wrapOn(canvas, float(o['width']) * mm, 1000 * mm)
@@ -1004,10 +1063,11 @@ def correct_page_media_box(page):
             rect = RectangleObject(page[box])
             pt1 = trsf.apply_on(rect.lower_left)
             pt2 = trsf.apply_on(rect.upper_right)
-            page[NameObject(box)] = RectangleObject((
-                min(pt1[0], pt2[0]),
-                min(pt1[1], pt2[1]),
-                max(pt1[0], pt2[0]),
-                max(pt1[1], pt2[1]),
-            ))
-
+            page[NameObject(box)] = RectangleObject(
+                (
+                    min(pt1[0], pt2[0]),
+                    min(pt1[1], pt2[1]),
+                    max(pt1[0], pt2[0]),
+                    max(pt1[1], pt2[1]),
+                )
+            )
