@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 
-from eventyay.base.models import Submission, SubmissionStates, TalkSlot
+from eventyay.base.models import Submission, SubmissionStates, TalkSlot, User
 from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.base.models.room import rooms_for_talk_assignment
@@ -322,8 +322,8 @@ class AddSpeakerForm(forms.Form):
 
     def __init__(self, *args, event=None, form_renderer=None, require_name=False, **kwargs):
         super().__init__(*args, **kwargs)
+        self.require_name = require_name
         if require_name:
-            self.fields['name'].required = True
             self.fields['email'].required = True
         if not event.named_locales or len(event.named_locales) < 2:
             self.fields.pop('locale')
@@ -335,6 +335,12 @@ class AddSpeakerForm(forms.Form):
         data = super().clean()
         if data.get('name') and not data.get('email'):
             raise forms.ValidationError(_('Please provide an email address.'))
+        if self.require_name and data.get('email') and not data.get('name'):
+            existing_user = User.objects.filter(email__iexact=data['email']).only('fullname').first()
+            if existing_user:
+                data['name'] = existing_user.fullname
+            else:
+                self.add_error('name', _('Please provide the speaker name.'))
         return data
 
 
