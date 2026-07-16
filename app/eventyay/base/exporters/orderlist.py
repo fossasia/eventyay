@@ -847,6 +847,13 @@ class OrderListExporter(MultiSheetListExporter):
             _('Payment providers'),
         ]
 
+        try:
+            from eventyay.plugins.badges.utils import get_badge_visible_field_labels
+            badge_support = True
+            headers.append(_('Badge options'))
+        except ImportError:
+            badge_support = False
+
         yield headers
 
         all_ids = list(base_qs.order_by('order__datetime', 'positionid').values_list('pk', flat=True))
@@ -1004,13 +1011,18 @@ class OrderListExporter(MultiSheetListExporter):
                         ]
                     )
                 )
+
+                if badge_support:
+                    badge_labels = get_badge_visible_field_labels(self.event_object_cache[order.event_id], op)
+                    row.append(', '.join(badge_labels) if badge_labels else '')
+
                 yield row
 
     def get_filename(self):
         if self.is_multievent:
-            return '{}_orders'.format(self.events.first().organizer.slug)
+            return f'{self.events.first().organizer.slug}_orders'
         else:
-            return '{}_orders'.format(self.event.slug)
+            return f'{self.event.slug}_orders'
 
 
 class OrderPositionListExporter(OrderListExporter):
@@ -1043,9 +1055,9 @@ class OrderPositionListExporter(OrderListExporter):
 
     def get_filename(self):
         if self.is_multievent:
-            return '{}_orderpositions'.format(self.events.first().organizer.slug)
+            return f'{self.events.first().organizer.slug}_orderpositions'
         else:
-            return '{}_orderpositions'.format(self.event.slug)
+            return f'{self.event.slug}_orderpositions'
 
     def render(self, form_data: dict, output_file=None):
         return super(MultiSheetListExporter, self).render(form_data, output_file=output_file)
@@ -1140,9 +1152,9 @@ class PaymentListExporter(ListExporter):
 
     def get_filename(self):
         if self.is_multievent:
-            return '{}_payments'.format(self.events.first().organizer.slug)
+            return f'{self.events.first().organizer.slug}_payments'
         else:
-            return '{}_payments'.format(self.event.slug)
+            return f'{self.event.slug}_payments'
 
 
 class QuotaListExporter(ListExporter):
@@ -1205,7 +1217,7 @@ class QuotaListExporter(ListExporter):
             yield row
 
     def get_filename(self):
-        return '{}_quotas'.format(self.event.slug)
+        return f'{self.event.slug}_quotas'
 
 
 class GiftcardRedemptionListExporter(ListExporter):
@@ -1256,9 +1268,9 @@ class GiftcardRedemptionListExporter(ListExporter):
 
     def get_filename(self):
         if self.is_multievent:
-            return '{}_giftcardredemptions'.format(self.events.first().organizer.slug)
+            return f'{self.events.first().organizer.slug}_giftcardredemptions'
         else:
-            return '{}_giftcardredemptions'.format(self.event.slug)
+            return f'{self.event.slug}_giftcardredemptions'
 
 
 def generate_GiftCardListExporter(organizer):  # hackhack
@@ -1384,7 +1396,7 @@ def generate_GiftCardListExporter(organizer):  # hackhack
                 yield row
 
         def get_filename(self):
-            return '{}_giftcards'.format(organizer.slug)
+            return f'{organizer.slug}_giftcards'
 
     return GiftcardListExporter
 
