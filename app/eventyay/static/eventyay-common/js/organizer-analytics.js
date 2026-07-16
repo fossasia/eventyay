@@ -23,18 +23,29 @@ function drawOrdersOverTime() {
     const labelOrdered = dataEl.dataset.labelOrdered || 'Placed'
     const labelPaid = dataEl.dataset.labelPaid || 'Paid'
 
-    new Morris.Area({
-        element: 'orders-over-time-chart',
-        data: series,
-        xkey: 'x',
-        ykeys: ['ordered', 'paid'],
-        labels: [labelOrdered, labelPaid],
-        lineColors: [PALETTE[0], PALETTE[1]],
-        smooth: false,
-        resize: true,
-        fillOpacity: 0.3,
-        behaveLikeLine: true
-    })
+    const options = {
+        series: [
+            { name: labelOrdered, data: series.map(d => ({ x: new Date(d.x), y: d.ordered })) },
+            { name: labelPaid, data: series.map(d => ({ x: new Date(d.x), y: d.paid })) }
+        ],
+        chart: {
+            type: 'area',
+            height: 220,
+            redrawOnParentResize: true,
+            toolbar: { show: false },
+            animations: { enabled: true }
+        },
+        colors: [PALETTE[0], PALETTE[1]],
+        xaxis: { type: 'datetime', tooltip: { enabled: false } },
+        yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
+        stroke: { curve: 'straight', width: 2 },
+        fill: { type: 'solid', opacity: 0.15 },
+        markers: { size: 4, hover: { size: 6 } },
+        dataLabels: { enabled: false },
+        legend: { position: 'top' },
+        tooltip: { shared: true, x: { format: 'dd MMM yyyy' } }
+    }
+    new ApexCharts(chartEl, options).render()
 }
 
 function drawOrdersByStatus() {
@@ -52,7 +63,7 @@ function drawOrdersByStatus() {
             type: 'donut',
             height: 220,
             redrawOnParentResize: true,
-            animations: { enabled: false },
+            animations: { enabled: true },
         },
         colors: PALETTE,
         dataLabels: { enabled: false },
@@ -88,18 +99,29 @@ function drawRevenueOverTime() {
         ? currencies.map((_, i) => PALETTE[(1 + i) % PALETTE.length])
         : [PALETTE[1]]
 
-    new Morris.Area({
-        element: 'revenue-over-time-chart',
-        data: series,
-        xkey: 'x',
-        ykeys: ykeys,
-        labels: labels,
-        lineColors: lineColors,
-        smooth: false,
-        resize: true,
-        fillOpacity: 0.3,
-        behaveLikeLine: true
-    })
+    const options = {
+        series: ykeys.map((key, i) => ({
+            name: labels[i],
+            data: series.map(d => ({ x: new Date(d.x), y: d[key] || 0 }))
+        })),
+        chart: {
+            type: 'area',
+            height: 220,
+            redrawOnParentResize: true,
+            toolbar: { show: false },
+            animations: { enabled: true }
+        },
+        colors: lineColors,
+        xaxis: { type: 'datetime', tooltip: { enabled: false } },
+        yaxis: { min: 0 },
+        stroke: { curve: 'straight', width: 2 },
+        fill: { type: 'solid', opacity: 0.15 },
+        markers: { size: 4, hover: { size: 6 } },
+        dataLabels: { enabled: false },
+        legend: { position: 'top' },
+        tooltip: { shared: true, x: { format: 'dd MMM yyyy' } }
+    }
+    new ApexCharts(chartEl, options).render()
 }
 
 function drawProposalsByState() {
@@ -117,7 +139,7 @@ function drawProposalsByState() {
             type: 'donut',
             height: 220,
             redrawOnParentResize: true,
-            animations: { enabled: false },
+            animations: { enabled: true },
         },
         colors: PALETTE,
         dataLabels: { enabled: false },
@@ -158,7 +180,7 @@ function drawProposalsOverTime() {
             height: 220,
             redrawOnParentResize: true,
             toolbar: { show: false },
-            animations: { enabled: false },
+            animations: { enabled: true },
         },
         xaxis: { type: 'datetime', tooltip: { enabled: false } },
         yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
@@ -197,7 +219,7 @@ function drawCheckinRate() {
             height: 220,
             redrawOnParentResize: true,
             toolbar: { show: false },
-            animations: { enabled: false },
+            animations: { enabled: true },
         },
         plotOptions: {
             bar: {
@@ -249,20 +271,36 @@ function drawCheckinsOverTime() {
 
     const label = dataEl.dataset.label || 'Check-ins'
 
-    new Morris.Area({
-        element: 'checkins-over-time-chart',
-        data: series,
-        xkey: 'x',
-        ykeys: ['y'],
-        labels: [label],
-        lineColors: [PALETTE[3]],
-        smooth: false,
-        resize: true,
-        fillOpacity: 0.3
-    })
+    const options = {
+        series: [
+            { name: label, data: series.map(d => ({ x: new Date(d.x), y: d.y })) }
+        ],
+        chart: {
+            type: 'area',
+            height: 220,
+            redrawOnParentResize: true,
+            toolbar: { show: false },
+            animations: { enabled: true }
+        },
+        colors: [PALETTE[3]],
+        xaxis: { type: 'datetime', tooltip: { enabled: false } },
+        yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
+        stroke: { curve: 'straight', width: 2 },
+        fill: { type: 'solid', opacity: 0.15 },
+        markers: { size: 4, hover: { size: 6 } },
+        dataLabels: { enabled: false },
+        legend: { show: false },
+        tooltip: { shared: true, x: { format: 'dd MMM yyyy' } }
+    }
+    new ApexCharts(chartEl, options).render()
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initCharts() {
+    if (typeof ApexCharts === 'undefined') {
+        setTimeout(initCharts, 30)
+        return
+    }
+    // Yield execution to the browser layout engine to fully resolve grid column widths
     setTimeout(() => {
         drawOrdersOverTime()
         drawOrdersByStatus()
@@ -272,4 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
         drawCheckinRate()
         drawCheckinsOverTime()
     }, 50)
-})
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCharts)
+} else {
+    initCharts()
+}
