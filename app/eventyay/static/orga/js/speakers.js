@@ -5,6 +5,25 @@ const initUserSearch = () => {
     if (!select) select = document.querySelector("#id_speaker-email")
     if (!select) return
 
+    const usersByEmail = new Map()
+    const toChoice = (user) => ({
+        value: user.email,
+        label: user.label,
+        customProperties: {
+            name: user.name,
+        },
+    })
+    const fetchUsers = async (search) => {
+        const url = new URL(remoteURL, window.location.origin)
+        url.searchParams.set("search", search)
+        const response = await fetch(url)
+        if (!response.ok) throw new Error(`Speaker search failed with status ${response.status}`)
+        const data = await response.json()
+        const users = data.results.filter((user) => user.email)
+        users.forEach((user) => usersByEmail.set(user.email.toLowerCase(), user))
+        return users
+    }
+
     const choices = new Choices(select, {
         maxItemCount: 1,
         singleModeForMultiSelect: true,
@@ -27,26 +46,17 @@ const initUserSearch = () => {
         maxItemText: "",
     })
     select.addEventListener("search", (ev) => {
-        fetch(`${remoteURL}?search=${ev.detail.value}`)
-            .then((r) => r.json())
-            .then((data) => {
+        fetchUsers(ev.detail.value)
+            .then((users) => {
                 choices.setChoices(
-                    data.results.map(
-                        (item) => ({
-                            value: item.email,
-                            label: `${item.name} <${item.email}>`,
-                            customProperties: {
-                                name: item.name,
-                            },
-                        }),
-                        "id",
-                        "name",
-                        true,
-                    ),
+                    users.map(toChoice),
+                    "value",
+                    "label",
+                    true,
                 )
             })
+            .catch((error) => console.error("Could not load speaker autocomplete results", error))
     })
-    // when an item is selected, optionally set other fields
     select.addEventListener("addItem", (ev) => {
         if (ev.detail.customProperties && ev.detail.customProperties.name) {
             let nameInput = document.querySelector("#id_name")
@@ -58,18 +68,31 @@ const initUserSearch = () => {
     })
     select.parentElement.parentElement
         .querySelector("input")
-        .addEventListener("blur", (ev) => {
-            unfinishedInput = ev.target.value
+        .addEventListener("blur", async (ev) => {
+            const unfinishedInput = ev.target.value.trim()
             if (!unfinishedInput) return
             if (select.value != unfinishedInput) {
-                select.value = unfinishedInput
-                choices.setChoices([
-                    {
-                        value: unfinishedInput,
-                        label: unfinishedInput,
-                        selected: true,
-                    },
-                ])
+                let existingUser = usersByEmail.get(unfinishedInput.toLowerCase())
+                if (!existingUser) {
+                    try {
+                        await fetchUsers(unfinishedInput)
+                        existingUser = usersByEmail.get(unfinishedInput.toLowerCase())
+                    } catch (error) {
+                        console.error("Could not match the entered speaker email", error)
+                    }
+                }
+                if (existingUser) {
+                    choices.setChoices([toChoice(existingUser)])
+                    choices.setChoiceByValue(existingUser.email)
+                } else {
+                    choices.setChoices([
+                        {
+                            value: unfinishedInput,
+                            label: unfinishedInput,
+                            selected: true,
+                        },
+                    ])
+                }
                 ev.target.value = ""
             }
         })
