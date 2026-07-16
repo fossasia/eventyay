@@ -917,6 +917,20 @@ class Renderer:
             cls._reshaper_instance = ArabicReshaper(configuration=configuration)
         return cls._reshaper_instance
 
+    @staticmethod
+    def _fit_fontsize_to_width(text, font_name, max_fontsize, width_mm, min_fontsize=4.0):
+        if not text:
+            return float(max_fontsize)
+
+        width_pt = float(width_mm) * mm
+        size = float(max_fontsize)
+        min_size = float(min_fontsize)
+        while size > min_size:
+            if pdfmetrics.stringWidth(text, font_name, size) <= width_pt:
+                return size
+            size -= 0.5
+        return min_size
+
     def _draw_textarea(self, canvas: Canvas, op: OrderPosition, order: Order, o: dict):
         font = o['fontfamily']
         if o['bold']:
@@ -927,7 +941,12 @@ class Renderer:
         if not hasattr(self, '_style_cache'):
             self._style_cache = {}
 
-        style_key = (font, o['fontsize'], tuple(o['color']), o['align'])
+        text_content = self._get_text_content(op, order, o) or ''
+        fontsize = float(o['fontsize'])
+        if o.get('autofit_width'):
+            fontsize = self._fit_fontsize_to_width(text_content, font, fontsize, o['width'])
+
+        style_key = (font, fontsize, tuple(o['color']), o['align'])
         if style_key in self._style_cache:
             style = self._style_cache[style_key]
         else:
@@ -935,17 +954,15 @@ class Renderer:
             style = ParagraphStyle(
                 name=uuid.uuid4().hex,
                 fontName=font,
-                fontSize=float(o['fontsize']),
-                leading=float(o['fontsize']),
+                fontSize=fontsize,
+                leading=fontsize,
                 autoLeading='max',
                 textColor=Color(o['color'][0] / 255, o['color'][1] / 255, o['color'][2] / 255),
                 alignment=align_map[o['align']],
             )
             self._style_cache[style_key] = style
 
-        text = conditional_escape(
-            self._get_text_content(op, order, o) or '',
-        ).replace('\n', '<br/>\n')
+        text = conditional_escape(text_content).replace('\n', '<br/>\n')
 
         # reportlab does not support RTL, ligature-heavy scripts like Arabic. Therefore, we use ArabicReshaper
         # to resolve all ligatures and python-bidi to switch RTL texts.
@@ -958,7 +975,7 @@ class Renderer:
         p = Paragraph(text, style=style)
         w, h = p.wrapOn(canvas, float(o['width']) * mm, 1000 * mm)
         # p_size = p.wrap(float(o['width']) * mm, 1000 * mm)
-        ad = getAscentDescent(font, float(o['fontsize']))
+        ad = getAscentDescent(font, fontsize)
         canvas.saveState()
         # The ascent/descent offsets here are not really proven to be correct, they're just empirical values to get
         # reportlab render similarly to browser canvas.

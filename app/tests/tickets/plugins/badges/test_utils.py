@@ -3,9 +3,14 @@ import datetime
 import pytest
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Event, Order, OrderPosition, Organizer, Product
-from eventyay.plugins.badges.models import BadgeProduct
-from eventyay.plugins.badges.utils import get_badge_bundle_option_choices
+from eventyay.base.models import Event, Order, OrderPosition, Organizer, Product, Voucher
+from eventyay.base.pdf import Renderer
+from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
+from eventyay.plugins.badges.utils import (
+    get_badge_bundle_option_choices,
+    get_badge_layout_for_position,
+    position_has_printable_badge,
+)
 
 
 @pytest.fixture
@@ -68,3 +73,69 @@ def test_badge_options_hidden_when_product_explicitly_has_no_layout(badge_event)
     BadgeProduct.objects.create(product=product, layout=None)
 
     assert get_badge_bundle_option_choices(event, position) == []
+
+
+@pytest.mark.django_db
+def test_voucher_explicit_assignment_enables_checkout_options(badge_event):
+    event, position, product, layout = badge_event
+    voucher = Voucher.objects.create(event=event, code='VOUCHER3')
+    position.voucher = voucher
+    position.save(update_fields=['voucher'])
+    BadgeVoucher.objects.create(voucher=voucher, layout=layout)
+
+    choices = get_badge_bundle_option_choices(event, position)
+
+    assert len(choices) == 1
+    assert choices[0][0] == 'attendee_name'
+
+
+@pytest.mark.django_db
+def test_voucher_layout_overrides_product_default(badge_event):
+    event, position, product, layout = badge_event
+    voucher_layout = event.badge_layouts.create(name='Voucher layout')
+    voucher = Voucher.objects.create(event=event, code='VOUCHER1')
+    position.voucher = voucher
+    position.save(update_fields=['voucher'])
+
+    BadgeVoucher.objects.create(voucher=voucher, layout=voucher_layout)
+
+    assert get_badge_layout_for_position(event, position) == voucher_layout
+    assert position_has_printable_badge(event, position) is True
+
+
+@pytest.mark.django_db
+def test_voucher_layout_none_disables_badge_even_with_default_product(badge_event):
+    event, position, product, layout = badge_event
+    voucher = Voucher.objects.create(event=event, code='VOUCHER2')
+    position.voucher = voucher
+    position.save(update_fields=['voucher'])
+
+    BadgeVoucher.objects.create(voucher=voucher, layout=None)
+
+    assert get_badge_layout_for_position(event, position) is None
+    assert position_has_printable_badge(event, position) is False
+
+
+def test_fit_fontsize_to_width_shrinks_long_text():
+    Renderer._register_fonts()
+    fitted = Renderer._fit_fontsize_to_width(
+        'Very Long Attendee Name Example',
+        'Open Sans',
+        max_fontsize=12.0,
+        width_mm=30,
+    )
+
+    assert fitted < 12.0
+    assert fitted >= 4.0
+
+
+def test_fit_fontsize_to_width_keeps_short_text_at_max():
+    Renderer._register_fonts()
+    fitted = Renderer._fit_fontsize_to_width(
+        'Ann',
+        'Open Sans',
+        max_fontsize=12.0,
+        width_mm=30,
+    )
+
+    assert fitted == 12.0
