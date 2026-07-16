@@ -72,7 +72,7 @@
 							.section-header
 								h3 {{ $t('LandingPage:speakers:header') }}
 								bunt-link-button.section-link(:to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:link') }}
-							speakers-list(:hideToolbar="true", :speakers="featuredSpeakers")
+							speakers-list(:hideToolbar="true", viewMode="list", :speakers="featuredSpeakers")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
@@ -174,10 +174,13 @@ export default {
 		landingStyle() {
 			const themeColors = config?.theme?.colors || {}
 			const headerBackground = themeColors.header_background
+				|| themeColors.primary
 				|| this.landingConfig.header_background_color
-				|| 'var(--color-header-background, var(--clr-primary))'
+				|| '#2185d0'
+			const headerText = themeColors.header_text || '#ffffff'
 			return {
 				'--landing-hero-background-color': headerBackground,
+				'--landing-hero-text-color': headerText,
 				'--landing-hero-background-image': this.heroBackgroundImage ? `url("${this.heroBackgroundImage}")` : 'none'
 			}
 		},
@@ -443,10 +446,10 @@ export default {
 		padding-left: 0
 		box-sizing: border-box
 		text-decoration: none
-		color: var(--color-header-text, #fff)
+		color: var(--landing-hero-text-color, var(--color-header-text, #fff))
 		&:hover,
 		&:focus-visible
-			color: var(--color-header-text, #fff)
+			color: var(--landing-hero-text-color, var(--color-header-text, #fff))
 			text-decoration: none
 	.event-home-back-pill
 		display: inline-flex
@@ -511,7 +514,7 @@ export default {
 		display: block
 		text-decoration: none
 	.event-hero-text
-		color: var(--color-header-text, #fff)
+		color: var(--landing-hero-text-color, var(--color-header-text, #fff))
 		display: flex
 		flex-direction: column
 		gap: 2px
@@ -530,7 +533,7 @@ export default {
 		line-height: 1.3
 		opacity: 0.96
 		margin: 0
-		color: var(--color-header-text, #fff)
+		color: var(--landing-hero-text-color, var(--color-header-text, #fff))
 	.event-public-text-link
 		color: inherit
 		text-decoration: none

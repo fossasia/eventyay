@@ -28,11 +28,12 @@ const LANGUAGE_COOKIE_NAME = 'eventyay_language'
 const localeLoaders = import.meta.glob('./locales/*.json')
 
 export function localize(string) {
+	if (!string) return ''
 	if (typeof string === 'string') return string
-	for (const lang of i18next.languages) {
+	for (const lang of i18next.languages || []) {
 		if (string[lang]) return string[lang]
 	}
-	return Object.values(string)[0]
+	return Object.values(string)[0] || ''
 }
 
 function getStoredLanguage() {

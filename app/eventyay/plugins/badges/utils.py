@@ -1,4 +1,7 @@
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.utils.translation import gettext_lazy as _
 
@@ -10,11 +13,34 @@ from .models import BadgeLayout, BadgeProduct
 BADGE_HIDDEN_FIELDS_KEY = 'badge_hidden_fields'
 BADGE_TICKET_PROVIDER = 'badge'
 
+_renderer_cache = {}
+
+
+def get_badge_layout_version(event):
+    """
+    Return the current badge layout/rendering cache version for this event.
+
+    This is stored in the shared (cross-process/cross-worker) cache backend, so every
+    Celery worker and web worker will observe a version bump immediately on their next
+    lookup, no matter which process actually saved the layout change.
+    """
+    return event.cache.get('badge_layout_version') or 0
+
 
 def clear_badge_layout_cache(event):
     for attr in ('_badge_layout_assignment_map', '_default_badge_layout', '_cached_renderermap'):
         if hasattr(event, attr):
             delattr(event, attr)
+
+    # Bump the layout version in the cross-process cache so every worker's in-memory
+    # renderer cache is invalidated on its very next use, without needing to reach into
+    # other processes' memory.
+    version = get_badge_layout_version(event)
+    event.cache.set('badge_layout_version', version + 1, 3600 * 24 * 30)
+
+    keys_to_delete = [k for k in _renderer_cache if k[0] == event.pk]
+    for k in keys_to_delete:
+        del _renderer_cache[k]
 
 
 def normalize_badge_content_key(content):
@@ -192,6 +218,31 @@ def get_badge_visible_field_labels(event, position, hidden_fields=None):
         for field in get_badge_customizable_fields(event, layout)
         if field['key'] in ask_user_keys and field['key'] not in hidden_fields
     ]
+
+
+def get_badge_visible_field_values(event, position, hidden_fields=None):
+    layout = get_badge_layout_for_position(event, position)
+    if not layout or not layout.allow_customization:
+        return []
+
+    ask_user_keys = set(layout.ask_user_fields_data)
+    hidden_fields = {
+        str(value) for value in (hidden_fields if hidden_fields is not None else get_badge_hidden_fields(position))
+    }
+    
+    variables = get_variables(event)
+    
+    values = []
+    for field in get_badge_customizable_fields(event, layout):
+        if field['key'] in ask_user_keys and field['key'] not in hidden_fields:
+            if field['key'] in variables:
+                try:
+                    val = variables[field['key']]['evaluate'](position, position.order, event)
+                    if val:
+                        values.append(str(val))
+                except (KeyError, ValueError, AttributeError, TypeError):
+                    logger.exception('Failed to evaluate badge field')
+    return values
 
 
 def _badge_field_fallback_label(content):
