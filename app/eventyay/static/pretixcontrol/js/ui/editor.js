@@ -84,7 +84,7 @@ fabric.Textarea = fabric.util.createClass(fabric.Textbox, {
 
         this.callSuper('initialize', text, options);
         this.set('content', options.content || '');
-        this.autofit_width = options.autofit_width || false;
+        this.autofit_width = editor._parse_autofit_width(options.autofit_width);
         if (typeof options.maxFontPt === 'number' && !isNaN(options.maxFontPt)) {
             this.maxFontPt = options.maxFontPt;
         }
@@ -684,6 +684,7 @@ var editor = {
     _update_toolbox_values: function () {
         var o = editor._get_toolbox_target_object(true);
         if (!o) {
+            $("#toolbox-autofit-width").prop('checked', false);
             return;
         }
         editor._toolbox_update_in_progress = true;
