@@ -337,7 +337,7 @@ class AddSpeakerForm(forms.Form):
             raise forms.ValidationError(_('Please provide an email address.'))
         if self.require_name and data.get('email') and not data.get('name'):
             existing_user = User.objects.filter(email__iexact=data['email']).only('fullname').first()
-            if existing_user:
+            if existing_user and existing_user.fullname:
                 data['name'] = existing_user.fullname
             else:
                 self.add_error('name', _('Please provide the speaker name.'))
