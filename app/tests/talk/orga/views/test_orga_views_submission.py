@@ -289,7 +289,7 @@ def test_orga_can_add_speakers(orga_client, submission, other_orga_user, user):
     assert submission.speakers.count() == 1
 
     if user == "EMAIL":
-        data = {"email": other_orga_user.email, "name": other_orga_user.fullname}
+        data = {"email": other_orga_user.email}
     else:
         data = {"email": "some_unused@mail.org", "name": "New Speaker"}
 
@@ -318,14 +318,19 @@ def test_orga_requires_name_for_new_speaker(orga_client, submission):
 
 @pytest.mark.django_db
 def test_orga_speaker_page_excludes_submission_answers(
-    orga_client, submission, answer, speaker_answer
+    orga_client, submission, other_submission, answer, speaker_answer
 ):
+    with scope(event=submission.event):
+        other_submission.speakers.add(submission.speakers.first())
+
     response = orga_client.get(submission.orga_urls.speakers)
 
     assert response.status_code == 200
     assert response.context["form"].fields["name"].required
     assert submission.event.organizer.orga_urls.user_search in response.text
-    reviewer_answers = response.context["speakers"][0]["reviewer_answers"]
+    speaker_context = response.context["speakers"][0]
+    assert speaker_context["other_submissions"] == [other_submission]
+    reviewer_answers = speaker_context["reviewer_answers"]
     assert speaker_answer in reviewer_answers
     assert answer not in reviewer_answers
 

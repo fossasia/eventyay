@@ -311,11 +311,17 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 .order_by('question__position'),
                 to_attr='_reviewer_answers',
             ),
+            Prefetch(
+                'submissions',
+                queryset=Submission.objects.filter(event=submission.event),
+                to_attr='_event_submissions',
+            ),
         )
         return [
             {
                 'user': speaker,
                 'profile': speaker.event_profile(submission.event),
+                'other_submissions': [s for s in speaker._event_submissions if s.code != submission.code],
                 'email': speaker.email,
                 'avatar': speaker.avatar,
                 'avatar_url': speaker.get_avatar_url(event=submission.event),

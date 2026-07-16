@@ -84,6 +84,19 @@
                     {% endfor %}
                 </div>
             {% endif %}
+            {% if speaker.other_submissions %}
+                <div class="card-text">
+                    <strong>{% translate "Other proposals by this speaker:" %}</strong>
+                    <ul>
+                        {% for submission in speaker.other_submissions %}
+                            <li>
+                                <a href="{{ submission.orga_urls.base }}">{{ submission.title }}</a>
+                                {% include "cfp/event/fragment_state.html" with state=submission.state as_badge=True %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
             {% if can_edit_speakers %}
                 {% if can_mark_speaker and submission.state in 'accepted,confirmed' %}
                     {% include "orga/includes/mark_speakers_arrived.html" with speaker=speaker.profile %}
