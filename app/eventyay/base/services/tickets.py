@@ -21,11 +21,18 @@ from eventyay.base.signals import allow_ticket_download, register_ticket_outputs
 from eventyay.celery_app import app
 from eventyay.helpers.database import rolledback_transaction
 
+
 logger = logging.getLogger(__name__)
 
 
 def generate_orderposition(order_position: int, provider: str):
-    order_position = OrderPosition.objects.select_related('order', 'order__event').get(id=order_position)
+    order_position = (
+        OrderPosition.objects.select_related(
+            'order', 'order__event', 'order__invoice_address', 'product', 'variation', 'addon_to', 'subevent', 'seat'
+        )
+        .prefetch_related('answers', 'answers__question', 'answers__options')
+        .get(id=order_position)
+    )
 
     with language(order_position.order.locale, order_position.order.event.settings.region):
         responses = register_ticket_outputs.send(order_position.order.event)
@@ -48,7 +55,7 @@ def generate_orderposition(order_position: int, provider: str):
 
 
 def generate_order(order: int, provider: str):
-    order = Order.objects.select_related('event').get(id=order)
+    order = Order.objects.select_related('event', 'invoice_address').get(id=order)
 
     with language(order.locale, order.event.settings.region):
         responses = register_ticket_outputs.send(order.event)
@@ -168,12 +175,7 @@ def get_tickets_for_order(order, base_position=None):
                     ct = CachedCombinedTicket.objects.get(pk=retval)
                 tickets.append(
                     (
-                        '{}-{}-{}{}'.format(
-                            order.event.slug.upper(),
-                            order.code,
-                            ct.provider,
-                            ct.extension,
-                        ),
+                        f'{order.event.slug.upper()}-{order.code}-{ct.provider}{ct.extension}',
                         ct,
                     )
                 )
@@ -205,13 +207,7 @@ def get_tickets_for_order(order, base_position=None):
                             ct.extension,
                         )
                     else:
-                        fname = '{}-{}-{}-{}{}'.format(
-                            order.event.slug.upper(),
-                            order.code,
-                            pos.positionid,
-                            ct.provider,
-                            ct.extension,
-                        )
+                        fname = f'{order.event.slug.upper()}-{order.code}-{pos.positionid}-{ct.provider}{ct.extension}'
                     tickets.append((fname, ct))
                 except:
                     logger.exception('Failed to generate ticket.')
