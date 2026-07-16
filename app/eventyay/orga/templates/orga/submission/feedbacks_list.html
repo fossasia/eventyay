@@ -9,7 +9,7 @@
 
 {% block content %}
     {% trans "Attendee feedback" as header_title %}
-    {% include "orga/includes/header_nav.html" with header_title=header_title %}
+    {% include "common/includes/header_nav.html" with header_title=header_title %}
 
     {% regroup feedback|dictsort:"talk.title" by talk.title as feedbacks_list %}
 

@@ -17,7 +17,7 @@
 
 {% block settings_content %}
     {% trans "Widget settings" as header_title %}
-    {% include "orga/includes/header_nav.html" with header_title=header_title header_title_extra='<span data-dialog-target="#info-dialog" data-toggle="dialog"><i class="fa fa-question-circle-o text-info"></i></span>' %}
+    {% include "common/includes/header_nav.html" with header_title=header_title header_title_extra='<span data-dialog-target="#info-dialog" data-toggle="dialog"><i class="fa fa-question-circle-o text-info"></i></span>' %}
     <dialog id="info-dialog">
         <div class="alert alert-info flip ml-auto">
             {% blocktranslate trimmed %}

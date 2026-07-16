@@ -28,7 +28,7 @@
         <fieldset>
             {% if not submission %}
                 {% trans "Create proposal" as header_title %}
-                {% include "orga/includes/header_nav.html" with header_title=header_title %}
+                {% include "common/includes/header_nav.html" with header_title=header_title %}
             {% endif %}
 
             {% if submission.access_code %}

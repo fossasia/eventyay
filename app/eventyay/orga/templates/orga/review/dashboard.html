@@ -25,7 +25,7 @@
     {% has_event_perm "base.create_review" request.user request request.event as can_review %}
     {% has_event_perm "base.reviewer_list_speakerprofile" request.user request request.event as can_view_speakers %}
     {% trans "Review Proposals" as header_title %}
-    {% include "orga/includes/header_nav.html" with header_title=header_title %}
+    {% include "common/includes/header_nav.html" with header_title=header_title %}
     <div class="alert alert-info">
         <div>
             {% if can_review and next_submission %}
