@@ -8,6 +8,7 @@ from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import Event, Order
+from eventyay.base.pdf import remap_question_content_key
 from eventyay.base.signals import (
     event_copy_data,
     layout_text_variables,
@@ -96,6 +97,13 @@ def copy_product(sender, source, target, **kwargs):
 
 @receiver(signal=event_copy_data, dispatch_uid='badges_copy_data')
 def event_copy_data_receiver(sender, other, question_map, product_map, voucher_map=None, **kwargs):
+    from eventyay.base.models import Question
+
+    identifier_map = {
+        old_question.identifier: question_map[old_question.pk]
+        for old_question in Question.objects.filter(event=other).only('pk', 'identifier')
+        if old_question.pk in question_map and old_question.identifier
+    }
     layout_map = {}
     for bl in other.badge_layouts.all():
         oldid = bl.pk
@@ -105,17 +113,15 @@ def event_copy_data_receiver(sender, other, question_map, product_map, voucher_m
 
         layout = json.loads(bl.layout)
         for o in layout:
-            if o['type'] == 'textarea':
-                if o['content'].startswith('question_'):
-                    newq = question_map.get(int(o['content'][9:]))
-                    if newq:
-                        o['content'] = 'question_{}'.format(newq.pk)
+            if o.get('type') in ('text', 'textarea') and o.get('content', '').startswith('question_'):
+                o['content'] = remap_question_content_key(o['content'], question_map, identifier_map)
+        bl.layout = json.dumps(layout)
         ask_user_fields = []
         for field in bl.ask_user_fields_data:
             if field.startswith('question_'):
-                newq = question_map.get(int(field[9:]))
-                if newq:
-                    ask_user_fields.append('question_{}'.format(newq.pk))
+                remapped = remap_question_content_key(field, question_map, identifier_map)
+                if remapped != field:
+                    ask_user_fields.append(remapped)
             else:
                 ask_user_fields.append(field)
         bl.ask_user_fields_data = ask_user_fields

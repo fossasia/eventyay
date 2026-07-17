@@ -670,12 +670,33 @@ def variables_from_questions(sender, *args, **kwargs):
     for q in sender.questions.all():
         if q.type == Question.TYPE_FILE:
             continue
-        d[f'question_{q.pk}'] = {
+        entry = {
             'label': _('Question: {question}').format(question=q.question),
             'editor_sample': str(q.question),
             'evaluate': partial(get_answer, question_id=q.pk),
         }
+        d[f'question_{q.pk}'] = entry
+        identifier_key = f'question_{q.identifier}'
+        if q.identifier and identifier_key != f'question_{q.pk}':
+            d[identifier_key] = entry
     return d
+
+
+def remap_question_content_key(content, question_map, identifier_map=None):
+    if not content or not content.startswith('question_'):
+        return content
+
+    suffix = content[9:]
+    new_question = None
+    try:
+        new_question = question_map.get(int(suffix))
+    except ValueError:
+        pass
+    if not new_question and identifier_map:
+        new_question = identifier_map.get(suffix)
+    if new_question:
+        return f'question_{new_question.pk}'
+    return content
 
 
 def _get_attendee_name_part(key, op, order, ev):
