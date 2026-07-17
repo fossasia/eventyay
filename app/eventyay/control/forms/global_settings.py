@@ -207,10 +207,18 @@ class GlobalSettingsForm(SettingsForm):
                     forms.CharField(
                         label=_('Password'),
                         required=False,
+                        help_text=(
+                            _('A password is already saved. Leave blank to keep it.')
+                            if self.obj.settings.get('smtp_password')
+                            else ''
+                        ),
                         widget=forms.PasswordInput(
                             attrs={
                                 'autocomplete': 'new-password',  # see https://bugs.chromium.org/p/chromium/issues/detail?id=370363#c7
                                 'data-display-dependency': '#id_email_vendor_1',
+                                'placeholder': (
+                                    '********' if self.obj.settings.get('smtp_password') else ''
+                                ),
                             }
                         ),
                     ),
@@ -540,6 +548,10 @@ class GlobalSettingsForm(SettingsForm):
         if data.get('email_vendor') == 'sendgrid':
             if not data.get('send_grid_api_key'):
                 raise forms.ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+
+        # Empty password field means "keep the currently saved password"
+        if not data.get('smtp_password') and self.initial.get('smtp_password'):
+            data['smtp_password'] = self.initial['smtp_password']
 
         return data
 
