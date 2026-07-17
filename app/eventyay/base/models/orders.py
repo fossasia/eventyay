@@ -14,6 +14,7 @@ import dateutil
 import pycountry
 import pytz
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.db.models import (
     Case,
@@ -214,6 +215,13 @@ class Order(LockModel, LoggedModel):
         verbose_name = _('Order')
         verbose_name_plural = _('Orders')
         ordering = ('-datetime',)
+        indexes = [
+            GinIndex(
+                fields=['code'],
+                name='order_code_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+        ]
 
     def __str__(self):
         return self.full_code
@@ -2325,6 +2333,18 @@ class OrderPosition(AbstractPosition):
         verbose_name = _('Order position')
         verbose_name_plural = _('Order positions')
         ordering = ('positionid', 'id')
+        indexes = [
+            GinIndex(
+                fields=['attendee_name_cached'],
+                name='orderpos_name_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+            GinIndex(
+                fields=['attendee_email'],
+                name='orderpos_email_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+        ]
 
     @cached_property
     def sort_key(self):

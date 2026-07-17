@@ -28,7 +28,28 @@
     {% bootstrap_form_errors form %}
 
     <fieldset>
-      {% bootstrap_field form.products layout='control' %}
+      <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active">
+          <a href="#badge-settings-products" aria-controls="badge-settings-products" role="tab" data-toggle="tab">
+            {% trans 'Products' %}
+          </a>
+        </li>
+        <li role="presentation">
+          <a href="#badge-settings-vouchers" aria-controls="badge-settings-vouchers" role="tab" data-toggle="tab">
+            {% trans 'Vouchers' %}
+          </a>
+        </li>
+      </ul>
+
+      <div class="tab-content" style="padding-top: 15px;">
+        <div role="tabpanel" class="tab-pane active" id="badge-settings-products">
+          {% bootstrap_field form.products layout='control' %}
+        </div>
+        <div role="tabpanel" class="tab-pane" id="badge-settings-vouchers">
+          {% bootstrap_field form.vouchers layout='control' %}
+        </div>
+      </div>
+
       {% bootstrap_field form.allow_customization layout='control' %}
 
       <div id="badge-customization-fields" class="form-group">

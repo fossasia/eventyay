@@ -30,6 +30,7 @@ from eventyay.base.models import (
     SubmissionComment,
     SubmissionStates,
     Tag,
+    TalkQuestionTarget,
     User,
 )
 from eventyay.base.models.base import CachedFile
@@ -304,6 +305,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 queryset=Answer.objects.filter(
                     question__event=submission.event,
                     question__is_visible_to_reviewers=True,
+                    question__target=TalkQuestionTarget.SPEAKER,
                 )
                 .select_related('question')
                 .order_by('question__position'),
@@ -311,18 +313,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
             ),
             Prefetch(
                 'submissions',
-                queryset=Submission.objects.filter(event=submission.event).prefetch_related(
-                    Prefetch(
-                        'answers',
-                        queryset=Answer.objects.filter(
-                            question__event=submission.event,
-                            question__is_visible_to_reviewers=True,
-                        )
-                        .select_related('question')
-                        .order_by('question__position'),
-                        to_attr='_reviewer_answers',
-                    )
-                ),
+                queryset=Submission.objects.filter(event=submission.event),
                 to_attr='_event_submissions',
             ),
         )
@@ -336,15 +327,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 'avatar_url': speaker.get_avatar_url(event=submission.event),
                 'avatar_source': speaker.avatar_source,
                 'avatar_license': speaker.avatar_license,
-                'reviewer_answers': sorted(
-                    speaker._reviewer_answers
-                    + [
-                        answer
-                        for submission_obj in speaker._event_submissions
-                        for answer in submission_obj._reviewer_answers
-                    ],
-                    key=lambda a: a.question.position,
-                ),
+                'reviewer_answers': speaker._reviewer_answers,
             }
             for speaker in speakers_qs
         ]
@@ -516,24 +499,20 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @transaction.atomic()
     def form_valid(self, form):
         created = not self.object
-        self.object = form.instance
-        self._questions_form.submission = self.object
+        self._questions_form.submission = form.instance
         if not self._questions_form.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.get(self.request, *self.args, **self.kwargs)
+        if created and not self.new_speaker_form.is_valid():
+            return self.form_invalid(form)
+
+        self.object = form.instance
         form.instance.event = self.request.event
         form.save()
         self._questions_form.save()
 
         if created:
-            if not self.new_speaker_form.is_valid():
-                if self.new_speaker_form.errors:
-                    for field, errors in self.new_speaker_form.errors.items():
-                        for error in errors:
-                            messages.error(self.request, f'{field}: {error}')
-                        break  # Only show errors for the first field
-                return self.form_invalid(form)
-            elif email := self.new_speaker_form.cleaned_data['email']:
+            if email := self.new_speaker_form.cleaned_data['email']:
                 form.instance.add_speaker(
                     email=email,
                     name=self.new_speaker_form.cleaned_data['name'],
