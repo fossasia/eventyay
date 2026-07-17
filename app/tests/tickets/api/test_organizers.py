@@ -3,7 +3,13 @@ from django.core.files.base import ContentFile
 
 from tests.testutils.mock import mocker_context
 
-TEST_ORGANIZER_RES = {'name': 'Dummy', 'slug': 'dummy'}
+
+TEST_ORGANIZER_RES = {
+    'name': 'Dummy',
+    'slug': 'dummy',
+    'follower_count': 0,
+    'is_following': False,
+}
 
 
 @pytest.mark.django_db
@@ -18,6 +24,47 @@ def test_organizer_detail(token_client, organizer):
     resp = token_client.get('/api/v1/organizers/{}/'.format(organizer.slug))
     assert resp.status_code == 200
     assert TEST_ORGANIZER_RES == resp.data
+
+
+@pytest.mark.django_db
+def test_organizer_follow_actions(user_client, organizer):
+    url = f'/api/v1/organizers/{organizer.slug}'
+
+    resp = user_client.post(f'{url}/follow/')
+    assert resp.status_code == 200
+    assert resp.data == {'following': True, 'created': True}
+
+    resp = user_client.get(f'{url}/followers/')
+    assert resp.status_code == 200
+    assert resp.data == {'follower_count': 1, 'is_following': True}
+
+    resp = user_client.post(f'{url}/unfollow/')
+    assert resp.status_code == 200
+    assert resp.data == {'following': False, 'deleted': True}
+
+    resp = user_client.get(f'{url}/followers/')
+    assert resp.status_code == 200
+    assert resp.data == {'follower_count': 0, 'is_following': False}
+
+
+@pytest.mark.django_db
+def test_organizer_follow_disabled(user_client, organizer):
+    organizer.settings.community_follow_enabled = False
+
+    resp = user_client.post(f'/api/v1/organizers/{organizer.slug}/follow/')
+
+    assert resp.status_code == 403
+    assert resp.data == {'detail': 'Following is not enabled for this organizer.'}
+
+
+@pytest.mark.django_db
+def test_organizer_follower_count_hidden(user_client, organizer):
+    organizer.settings.community_show_follower_count = False
+
+    resp = user_client.get(f'/api/v1/organizers/{organizer.slug}/followers/')
+
+    assert resp.status_code == 200
+    assert resp.data == {'follower_count': None, 'is_following': False}
 
 
 @pytest.mark.django_db

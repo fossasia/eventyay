@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.db.models import Q
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -37,7 +38,10 @@ logger = logging.getLogger(__name__)
 
 class OrganizerSerializer(I18nAwareModelSerializer):
     follower_count = serializers.SerializerMethodField(
-        help_text='Number of users following this organizer. Requires community_follow_enabled=True.',
+        help_text=(
+            'Number of users following this organizer, or null when follower counts '
+            'are hidden by the organizer.'
+        ),
     )
     is_following = serializers.SerializerMethodField(
         help_text='Whether the currently authenticated user is following this organizer.',
@@ -47,6 +51,7 @@ class OrganizerSerializer(I18nAwareModelSerializer):
         model = Organizer
         fields = ('name', 'slug', 'follower_count', 'is_following')
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_follower_count(self, obj):
         if not obj.settings.get('community_show_follower_count', as_type=bool, default=True):
             return None
@@ -54,6 +59,7 @@ class OrganizerSerializer(I18nAwareModelSerializer):
             return obj._follower_count
         return OrganizerFollower.objects.filter(organizer=obj).count()
 
+    @extend_schema_field(serializers.BooleanField())
     def get_is_following(self, obj):
         if hasattr(obj, '_is_following'):
             return obj._is_following
@@ -61,6 +67,25 @@ class OrganizerSerializer(I18nAwareModelSerializer):
         if request and request.user and request.user.is_authenticated:
             return OrganizerFollower.objects.filter(organizer=obj, user=request.user).exists()
         return False
+
+
+class OrganizerFollowResponseSerializer(serializers.Serializer):
+    following = serializers.BooleanField(read_only=True)
+    created = serializers.BooleanField(read_only=True)
+
+
+class OrganizerUnfollowResponseSerializer(serializers.Serializer):
+    following = serializers.BooleanField(read_only=True)
+    deleted = serializers.BooleanField(read_only=True)
+
+
+class OrganizerFollowersResponseSerializer(serializers.Serializer):
+    follower_count = serializers.IntegerField(allow_null=True, read_only=True)
+    is_following = serializers.BooleanField(read_only=True)
+
+
+class OrganizerErrorResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField(read_only=True)
 
 
 class SeatingPlanSerializer(I18nAwareModelSerializer):
