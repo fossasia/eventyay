@@ -256,6 +256,7 @@ export default {
 			localAudioStream: null,
 				localVideoStream: null,
 				screenShareStream: null,
+				pendingScreenShareStream: null,
 				remoteFeeds: [],
 				subscribingFeedIds: [],
 				subscriberRetryTimeouts: {},
@@ -1072,7 +1073,7 @@ export default {
 				this.startScreenShare()
 			}
 		},
-		startScreenShare() {
+		async startScreenShare() {
 			log('janus-screen-publisher', 'debug', {
 				action: 'startScreenShare',
 				state: this.screenShareState,
@@ -1081,10 +1082,27 @@ export default {
 			})
 			this.screenShareError = null
 			this.screenShareState = 'publishing'
-			if (this.screenShareHandle) {
-				this.publishScreenShare()
+			let stream
+			try {
+				stream = await this.getDisplayMedia()
+				log('janus-screen-publisher', 'debug', {
+					action: 'getDisplayMedia:success',
+					stream: summarizeStream(stream),
+				})
+			} catch (error) {
+				log('janus-screen-publisher', 'error', {
+					action: 'getDisplayMedia:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
+				this.failScreenShare(error, ['AbortError', 'NotAllowedError'].includes(error?.name))
 				return
 			}
+			if (this.screenShareHandle) {
+				this.publishScreenShare(stream)
+				return
+			}
+			this.pendingScreenShareStream = stream
 			this.janus.attach({
 				plugin: 'janus.plugin.videoroom',
 				opaqueId: `${this.user.id}-screen`,
@@ -1112,6 +1130,7 @@ export default {
 						error: error?.message || error,
 						name: error?.name,
 					})
+					this.stopPendingScreenShareTracks()
 					this.failScreenShare(error)
 				},
 				mediaState: (medium, on) => {
@@ -1151,7 +1170,13 @@ export default {
 				jsepHasAudio: Boolean(jsep?.sdp?.includes('m=audio')),
 			})
 			if (event === 'joined') {
-				this.publishScreenShare()
+				const stream = this.pendingScreenShareStream
+				this.pendingScreenShareStream = null
+				if (stream) {
+					this.publishScreenShare(stream)
+				} else {
+					this.failScreenShare('Screen sharing needs to be started again.')
+				}
 			} else if (event === 'event') {
 				if (msg.unpublished === 'ok') {
 					this.resetScreenShare()
@@ -1170,27 +1195,15 @@ export default {
 				}
 			}
 		},
-		async publishScreenShare() {
+		async publishScreenShare(stream = null) {
 			log('janus-screen-publisher', 'debug', {
 				action: 'publishScreenShare:start',
 				state: this.screenShareState,
 			})
 			this.screenShareState = 'publishing'
 			this.stopScreenShareTracks()
-			let stream
-			try {
-				stream = await this.getDisplayMedia()
-				log('janus-screen-publisher', 'debug', {
-					action: 'getDisplayMedia:success',
-					stream: summarizeStream(stream),
-				})
-			} catch (error) {
-				log('janus-screen-publisher', 'error', {
-					action: 'getDisplayMedia:error',
-					error: error?.message || error,
-					name: error?.name,
-				})
-				this.failScreenShare(error, ['AbortError', 'NotAllowedError'].includes(error?.name))
+			if (!stream) {
+				this.failScreenShare('Screen sharing needs to be started again.')
 				return
 			}
 			this.screenShareStream = stream
@@ -1300,6 +1313,7 @@ export default {
 				hasHandle: Boolean(this.screenShareHandle),
 			})
 			this.screenShareState = 'unpublishing'
+			this.stopPendingScreenShareTracks()
 			this.stopScreenShareTracks()
 			if (!this.screenShareHandle) {
 				this.resetScreenShare()
@@ -1319,11 +1333,24 @@ export default {
 			}
 			this.screenShareStream = null
 		},
+		stopPendingScreenShareTracks() {
+			if (!this.pendingScreenShareStream) return
+			log('janus-screen-publisher', 'debug', {
+				action: 'stopPendingScreenShareTracks',
+				stream: summarizeStream(this.pendingScreenShareStream),
+			})
+			for (const track of this.pendingScreenShareStream.getTracks()) {
+				track.onended = null
+				track.stop()
+			}
+			this.pendingScreenShareStream = null
+		},
 		resetScreenShare() {
 			log('janus-screen-publisher', 'debug', {
 				action: 'resetScreenShare',
 				state: this.screenShareState,
 			})
+			this.stopPendingScreenShareTracks()
 			this.stopScreenShareTracks()
 			this.screenShareState = 'unpublished'
 		},
@@ -1334,6 +1361,7 @@ export default {
 				name: error?.name,
 				silent,
 			})
+			this.stopPendingScreenShareTracks()
 			this.stopScreenShareTracks()
 			this.screenShareState = 'failed'
 			this.screenShareError = silent ? null : (error?.message || error || 'Screen sharing failed.')
@@ -1949,6 +1977,8 @@ export default {
 		isOwnFeed(feedId) {
 			return this.feedIdEquals(feedId, this.ourAudioId) ||
 				this.feedIdEquals(feedId, this.ourVideoId) ||
+				this.feedIdEquals(feedId, this.janusAudioSessionId) ||
+				this.feedIdEquals(feedId, this.janusVideoSessionId) ||
 				this.feedIdEquals(feedId, this.janusScreenShareSessionId)
 		},
 		unmarkSubscribing(feedId) {
@@ -2035,9 +2065,11 @@ export default {
 				localAudioStream: summarizeStream(this.localAudioStream),
 				localVideoStream: summarizeStream(this.localVideoStream),
 				screenShareStream: summarizeStream(this.screenShareStream),
+				pendingScreenShareStream: summarizeStream(this.pendingScreenShareStream),
 				remoteFeedCount: this.remoteFeeds.length,
 			})
 			this.suppressDestroyedState = preserveConnectionFailure
+			this.stopPendingScreenShareTracks()
 			this.stopScreenShareTracks()
 			if (this.localAudioStream) {
 				this.stopStreamTracks(this.localAudioStream)
@@ -2056,6 +2088,7 @@ export default {
 			this.localAudioStream = null
 			this.localVideoStream = null
 			this.screenShareStream = null
+			this.pendingScreenShareStream = null
 			this.audioPublisherHandle = null
 			this.videoPublisherHandle = null
 			this.screenShareHandle = null
