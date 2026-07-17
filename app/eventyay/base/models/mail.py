@@ -239,8 +239,8 @@ class MailTemplate(PretalxModel):
             if len(subject) > 200:
                 subject = subject[:198] + '…'
 
-            sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
-            sender = sender or settings.MAIL_FROM
+            sender = event.settings.get('mail_from') if event else settings.DEFAULT_FROM_EMAIL
+            sender = sender or settings.DEFAULT_FROM_EMAIL
 
             resolved_reply_to = (
                 get_reply_to_address(event, template=self, sender_email=sender)

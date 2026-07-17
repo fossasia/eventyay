@@ -166,7 +166,7 @@ def mail(
         renderer = ClassicMailRenderer(None)
         content_plain = body_plain = render_mail(template, context)
         subject = str(subject).format_map(TolerantDict(context))
-        sender = sender or (event.settings.get('mail_from') if event else settings.MAIL_FROM) or settings.MAIL_FROM
+        sender = sender or (event.settings.get('mail_from') if event else settings.DEFAULT_FROM_EMAIL) or settings.DEFAULT_FROM_EMAIL
         sender_email_raw = sender
         if event:
             sender_name = str(event.name)

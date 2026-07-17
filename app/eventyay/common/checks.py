@@ -85,7 +85,7 @@ def check_system_email(app_configs, **kwargs):
     if app_configs:
         return []
     errors = []
-    fields = ('EMAIL_HOST', 'EMAIL_PORT', 'MAIL_FROM')
+    fields = ('EMAIL_HOST', 'EMAIL_PORT', 'DEFAULT_FROM_EMAIL')
     missing_fields = [field for field in fields if not getattr(settings, field)]
     if missing_fields:
         fields = ', '.join(missing_fields)

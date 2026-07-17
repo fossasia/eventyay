@@ -83,7 +83,7 @@ def apply_organizer_email_placeholder(field):
 
 
 def get_default_organizer_email() -> str:
-    default_email = GlobalSettingsObject().settings.mail_from or settings.MAIL_FROM
+    default_email = GlobalSettingsObject().settings.mail_from or settings.DEFAULT_FROM_EMAIL
     return str(default_email or ORGANIZER_EMAIL_MODEL_DEFAULT).strip()
 
 

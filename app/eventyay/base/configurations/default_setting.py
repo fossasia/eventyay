@@ -1636,7 +1636,7 @@ DEFAULT_SETTINGS = {
     },
     'mail_bcc': {'default': None, 'type': str},
     'mail_from': {
-        'default': settings.MAIL_FROM,
+        'default': settings.DEFAULT_FROM_EMAIL,
         'type': str,
         'form_class': forms.EmailField,
         'serializer_class': serializers.EmailField,

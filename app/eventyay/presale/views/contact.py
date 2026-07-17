@@ -107,7 +107,7 @@ class ContactOrganizerView(EventViewMixin, View):
             backend = request.event.get_mail_backend()
             from_addr = (
                 request.event.settings.get('mail_from')
-                or settings.MAIL_FROM
+                or settings.DEFAULT_FROM_EMAIL
             )
             email = EmailMessage(
                 subject=subject,

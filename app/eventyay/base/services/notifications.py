@@ -130,7 +130,7 @@ def send_notification_mail(notification: Notification, user: User):
             ),
             'body': body_plain,
             'html': body_html,
-            'sender': settings.MAIL_FROM,
+            'sender': settings.DEFAULT_FROM_EMAIL,
             'headers': {},
             'user': user.pk,
         }
@@ -213,7 +213,7 @@ def notify_organizer_followers(event_id: int):
                     'subject': subject,
                     'body': body_plain,
                     'html': body_html,
-                    'sender': settings.MAIL_FROM,
+                    'sender': settings.DEFAULT_FROM_EMAIL,
                     'headers': {},
                     'user': user.pk,
                 }
