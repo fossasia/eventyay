@@ -14,7 +14,7 @@
 			span Connecting...
 
 	.room-surface(v-show="connectionState === 'connected'")
-		.gallery(ref="container", :style="gridStyle", v-resize-observer="onResize")
+		.gallery(ref="container", :class="{ 'has-screen': hasScreenTile }", :style="gridStyle", v-resize-observer="onResize")
 			.video-tile(
 				v-for="tile in tiles",
 				:key="tile.key",
@@ -40,9 +40,15 @@
 						v-else,
 						class="remote-media",
 						:class="{ 'is-hidden': !tile.hasVideo }",
-						:data-feed-id="tile.id",
+						:data-feed-id="tile.videoFeedId || tile.id",
 						autoplay,
 						playsinline
+					)
+					audio(
+						v-if="!tile.local && tile.audioFeedId",
+						class="remote-audio",
+						:data-audio-feed-id="tile.audioFeedId",
+						autoplay
 					)
 					.avatar-wrap(v-if="!tile.hasVideo && !tile.screen")
 						avatar(v-if="tile.user", :user="tile.user", :size="size === 'tiny' ? 40 : 96")
@@ -61,8 +67,6 @@
 							.mdi(:class="tile.screen ? 'mdi-monitor-share' : 'mdi-account'")
 							span {{ tile.label }}
 						.tile-actions
-							button.tile-action(type="button", title="Fullscreen", @click="requestFullscreen('janus_' + tile.key)")
-								.mdi.mdi-fullscreen
 							button.tile-action(type="button", v-if="tile.local && tile.screen", :title="$t('JanusVideoroom:tool-screenshare:off')", @click="stopScreenShare")
 								.mdi.mdi-monitor-off
 
@@ -129,7 +133,8 @@ import SoundMeter from 'lib/webrtc/soundmeter'
 const MIN_BITRATE = 150 * 1000
 const MAX_BITRATE = 1500 * 1000
 const SCREEN_SHARE_DISPLAY = 'venueless screenshare'
-const USER_DISPLAY = 'venueless user'
+const USER_AUDIO_DISPLAY = 'venueless user audio'
+const USER_VIDEO_DISPLAY = 'venueless user video'
 const AUDIO_LEVEL_INTERVAL = 160
 const SPEAKING_THRESHOLD = 0.03
 const LOG_ENTRIES = []
@@ -138,6 +143,21 @@ const log = (source, level, message) => {
 	LOG_ENTRIES.push([source, (new Date()).toISOString(), level, JSON.stringify(message)])
 	console.log(`[${level}][${source}]`, message)
 }
+
+const summarizeTrack = (track) => track ? ({
+	id: track.id,
+	kind: track.kind,
+	enabled: track.enabled,
+	muted: track.muted,
+	readyState: track.readyState,
+	label: track.label,
+}) : null
+
+const summarizeStream = (stream) => stream ? ({
+	id: stream.id,
+	audioTracks: stream.getAudioTracks().map(summarizeTrack),
+	videoTracks: stream.getVideoTracks().map(summarizeTrack),
+}) : null
 
 const calculateLayout = (containerWidth, containerHeight, videoCount, aspectRatio, gap) => {
 	const count = Math.max(videoCount, 1)
@@ -183,6 +203,14 @@ export default {
 			type: [Number, String],
 			required: true
 		},
+		audioSessionId: {
+			type: [Number, String],
+			default: null
+		},
+		videoSessionId: {
+			type: [Number, String],
+			default: null
+		},
 		screenShareSessionId: {
 			type: [Number, String],
 			default: null
@@ -217,19 +245,30 @@ export default {
 			publishingError: null,
 			screenShareError: null,
 			janus: null,
-			publisherHandle: null,
+			audioPublisherHandle: null,
+			videoPublisherHandle: null,
 			screenShareHandle: null,
-			ourId: null,
+			ourAudioId: null,
+			ourVideoId: null,
 			ourPrivateId: null,
-			localStream: null,
-			screenShareStream: null,
-			remoteFeeds: [],
-			subscribingFeedIds: [],
-			cameraEnabled: localStorage.videoRequested !== 'false',
+			audioPublisherJoined: false,
+			videoPublisherJoined: false,
+			localAudioStream: null,
+				localVideoStream: null,
+				screenShareStream: null,
+				remoteFeeds: [],
+				subscribingFeedIds: [],
+				subscriberRetryTimeouts: {},
+				subscriberRetryCounts: {},
+				cleaningUp: false,
+				cameraEnabled: localStorage.videoRequested !== 'false',
 			publishedWithVideo: false,
-			localPublishInProgress: false,
-			localPublishQueued: false,
-			localPublishTimeout: null,
+			audioPublishInProgress: false,
+			audioPublishQueued: false,
+			audioPublishTimeout: null,
+			videoPublishInProgress: false,
+			videoPublishQueued: false,
+			videoPublishTimeout: null,
 			localCameraActive: false,
 			micMuted: this.automute,
 			videoInput: localStorage.videoInput || '',
@@ -263,14 +302,27 @@ export default {
 		janusSessionId() {
 			return Number(this.sessionId)
 		},
+		janusAudioSessionId() {
+			return Number(this.audioSessionId || this.sessionId)
+		},
+		janusVideoSessionId() {
+			return Number(this.videoSessionId || Number(this.sessionId) + 1)
+		},
 		janusScreenShareSessionId() {
 			return Number(this.screenShareSessionId || Number(this.sessionId) + 1000000000)
 		},
 		gridStyle() {
+			const w = this.layout.width > 0 ? `${this.layout.width}px` : 'minmax(0, 1fr)'
+			const h = this.layout.height > 0 ? `${this.layout.height}px` : 'minmax(0, 1fr)'
 			return {
 				'--tile-columns': this.layout.cols,
 				'--tile-rows': this.layout.rows,
+				'--tile-width': w,
+				'--tile-height': h,
 			}
+		},
+		hasScreenTile() {
+			return this.tiles.some(tile => tile.screen)
 		},
 		activeSpeakerId() {
 			let activeId = null
@@ -312,39 +364,26 @@ export default {
 					speaking: false
 				})
 			}
-			const remoteTiles = this.remoteFeeds
-				.slice()
-				.sort((a, b) => {
-					if (a.isScreenShare !== b.isScreenShare) return a.isScreenShare ? -1 : 1
-					return this.feedLabel(a).localeCompare(this.feedLabel(b))
-				})
-				.map(feed => {
-					const id = this.normalizeFeedId(feed.id)
-					const level = this.normalizedAudioLevel(id)
-					return {
-						key: `remote-${id}`,
-						id,
-						local: false,
-						screen: feed.isScreenShare,
-						user: feed.user,
-						label: this.feedLabel(feed),
-						hasVideo: feed.hasVideo,
-						muted: feed.muted,
-						audioLevel: level,
-						speaking: this.activeSpeakerId === id
-					}
-				})
+			const remoteTiles = this.groupedRemoteTiles()
 			return localTiles.concat(remoteTiles)
 		},
 	},
 	watch: {
 		tiles() {
-			this.$nextTick(this.onResize)
+			this.$nextTick(() => {
+				this.onResize()
+			})
 		}
 	},
-	mounted() {
-		LOG_ENTRIES.splice(0, LOG_ENTRIES.length)
-		this.initJanus()
+		mounted() {
+			LOG_ENTRIES.splice(0, LOG_ENTRIES.length)
+			window.__JANUS_DEBUG_LOGS__ = () => LOG_ENTRIES
+				.map(([source, timestamp, level, message]) => `${timestamp} [${level}] [${source}] ${message}`)
+				.join('\n')
+			window.__JANUS_DEBUG_JSON__ = () => JSON.stringify(LOG_ENTRIES, null, 2)
+			window.__JANUS_COPY_DEBUG_LOGS__ = () => copy(window.__JANUS_DEBUG_LOGS__())
+			this.cleaningUp = false
+			this.initJanus()
 		this.slowLinkInterval = window.setInterval(() => {
 			this.downstreamSlowLinkCount = Math.max(this.downstreamSlowLinkCount - 1, 0)
 			this.upstreamSlowLinkCount = Math.max(this.upstreamSlowLinkCount - 1, 0)
@@ -356,14 +395,17 @@ export default {
 		if (this.connectionRetryTimeout) {
 			window.clearTimeout(this.connectionRetryTimeout)
 		}
-		if (this.slowLinkInterval) {
-			window.clearInterval(this.slowLinkInterval)
-		}
+			if (this.slowLinkInterval) {
+				window.clearInterval(this.slowLinkInterval)
+			}
 			if (this.audioLevelInterval) {
 				window.clearInterval(this.audioLevelInterval)
 			}
-			if (this.localPublishTimeout) {
-				window.clearTimeout(this.localPublishTimeout)
+			if (this.audioPublishTimeout) {
+				window.clearTimeout(this.audioPublishTimeout)
+			}
+			if (this.videoPublishTimeout) {
+				window.clearTimeout(this.videoPublishTimeout)
 			}
 	},
 	methods: {
@@ -379,6 +421,7 @@ export default {
 			})
 		},
 		onJanusInitialized() {
+			this.cleaningUp = false
 			this.connectionState = 'connecting'
 			Janus.trace = (t) => log('janus', 'trace', t)
 			Janus.debug = (t) => log('janus', 'debug', t)
@@ -401,74 +444,224 @@ export default {
 			})
 		},
 		onJanusConnected() {
+			this.attachAudioPublisher()
+		},
+		attachAudioPublisher() {
+			log('janus-audio-publisher', 'debug', {
+				action: 'attachAudioPublisher:start',
+				roomId: this.janusRoomId,
+				audioSessionId: this.janusAudioSessionId,
+				userId: this.user?.id,
+			})
 			this.janus.attach({
 				plugin: 'janus.plugin.videoroom',
-				opaqueId: String(this.user.id),
+				opaqueId: `${this.user.id}-audio`,
 				success: (pluginHandle) => {
-					this.publisherHandle = pluginHandle
-					log('venueless', 'info', `Publisher handle attached (${pluginHandle.getId()})`)
-					this.publisherHandle.send({
+					this.audioPublisherHandle = pluginHandle
+					log('janus-audio-publisher', 'debug', {
+						action: 'attachAudioPublisher:success',
+						handleId: pluginHandle.getId(),
+						roomId: this.janusRoomId,
+						audioSessionId: this.janusAudioSessionId,
+					})
+					this.audioPublisherHandle.send({
 						message: {
 							request: 'join',
 							room: this.janusRoomId,
-							id: this.janusSessionId,
+							id: this.janusAudioSessionId,
 							ptype: 'publisher',
 							token: this.token,
-							display: USER_DISPLAY,
+							display: USER_AUDIO_DISPLAY,
+						}
+					})
+				},
+				error: (error) => {
+					log('janus-audio-publisher', 'error', {
+						action: 'attachAudioPublisher:error',
+						error: error?.message || error,
+						name: error?.name,
+					})
+					this.failConnection(error)
+				},
+				iceState: (state) => {
+					log('janus-audio-publisher', 'debug', {
+						action: 'iceState',
+						state,
+					})
+					if (state === 'failed') {
+						this.failConnection(`ICE connection ${state}`)
+					}
+				},
+				mediaState: (medium, on) => {
+					log('janus-audio-publisher', 'debug', {
+						action: 'mediaState',
+						medium,
+						on,
+					})
+					if (on && medium === 'audio') {
+						this.publishingState = 'published'
+						this.publishingError = null
+					}
+				},
+				webrtcState: (on) => {
+					log('janus-audio-publisher', 'debug', {
+						action: 'webrtcState',
+						on,
+					})
+				},
+				onmessage: this.onAudioPublisherMessage,
+				onlocalstream: this.onLocalAudioStream,
+				oncleanup: () => {
+					log('janus-audio-publisher', 'debug', {
+						action: 'oncleanup',
+					})
+				},
+			})
+		},
+		attachVideoPublisher() {
+			if (this.videoPublisherHandle) {
+				if (this.videoPublisherJoined && this.cameraEnabled) {
+					this.publishVideoMedia()
+				}
+				return
+			}
+			this.janus.attach({
+				plugin: 'janus.plugin.videoroom',
+				opaqueId: `${this.user.id}-video`,
+				success: (pluginHandle) => {
+					this.videoPublisherHandle = pluginHandle
+					log('venueless', 'info', `Video publisher handle attached (${pluginHandle.getId()})`)
+					this.videoPublisherHandle.send({
+						message: {
+							request: 'join',
+							room: this.janusRoomId,
+							id: this.janusVideoSessionId,
+							ptype: 'publisher',
+							token: this.token,
+							display: USER_VIDEO_DISPLAY,
 						}
 					})
 				},
 				error: this.failConnection,
 				iceState: (state) => {
-					log('venueless', 'info', `Publisher ICE state: ${state}`)
+					log('venueless', 'info', `Video publisher ICE state: ${state}`)
 					if (state === 'failed') {
 						this.failConnection(`ICE connection ${state}`)
 					}
 				},
 				mediaState: (medium, on) => {
 					log('venueless', 'info', `Janus ${on ? 'started' : 'stopped'} receiving local ${medium}`)
-					if (on && medium === 'audio') {
-						this.publishingState = 'published'
-						this.publishingError = null
-					}
 					if (on && medium === 'video' && this.publishedWithVideo) {
 						this.publishingState = 'published'
 						this.publishingError = null
 					}
 				},
 				webrtcState: (on) => {
-					log('venueless', 'info', `Publisher WebRTC is ${on ? 'up' : 'down'}`)
+					log('venueless', 'info', `Video publisher WebRTC is ${on ? 'up' : 'down'}`)
 				},
-				onmessage: this.onPublisherMessage,
-				onlocalstream: this.onLocalStream,
+				onmessage: this.onVideoPublisherMessage,
+				onlocalstream: this.onLocalVideoStream,
 				slowLink: (uplink) => {
-					if (uplink) this.handlePublisherSlowLink()
+					if (uplink) this.handleVideoSlowLink()
 				},
 				oncleanup: () => {
-					log('venueless', 'info', 'Publisher cleanup received')
-					this.publishingState = 'unpublished'
+					log('venueless', 'info', 'Video publisher cleanup received')
+					this.publishedWithVideo = false
+					this.localCameraActive = false
 				},
 			})
 		},
-		onPublisherMessage(msg, jsep) {
+		onAudioPublisherMessage(msg, jsep) {
 			const event = msg.videoroom
+			log('janus-audio-publisher', 'debug', {
+				action: 'onAudioPublisherMessage',
+				event,
+				msg,
+				hasJsep: Boolean(jsep),
+				jsepHasAudio: Boolean(jsep?.sdp?.includes('m=audio')),
+				audioPublisherJoined: this.audioPublisherJoined,
+				micMuted: this.micMuted,
+			})
 			if (event === 'joined') {
-				this.ourId = msg.id
+				this.ourAudioId = msg.id
 				this.ourPrivateId = msg.private_id
+				this.audioPublisherJoined = true
 				this.connectionState = 'connected'
 				this.connectionError = null
 				this.retryInterval = 1000
-				this.publishLocalMedia()
+				this.publishAudioMedia()
+				this.attachVideoPublisher()
 				this.subscribeToPublishers(msg.publishers || [])
-			} else if (event === 'destroyed') {
+			} else {
+				this.handlePublisherEvent(msg)
+			}
+			if (jsep) {
+				log('janus-audio-publisher', 'debug', {
+					action: 'handleRemoteJsep',
+					jsepType: jsep?.type,
+					jsepHasAudio: Boolean(jsep?.sdp?.includes('m=audio')),
+				})
+				this.audioPublisherHandle.handleRemoteJsep({jsep})
+				this.finishAudioPublish()
+			} else if (event === 'event' && msg.configured === 'ok') {
+				this.finishAudioPublish()
+			}
+		},
+		onVideoPublisherMessage(msg, jsep) {
+			const event = msg.videoroom
+			log('janus-video-publisher', 'debug', {
+				event,
+				msg,
+				hasJsep: Boolean(jsep),
+				publishedWithVideo: this.publishedWithVideo,
+				videoPublisherJoined: this.videoPublisherJoined,
+				cameraEnabled: this.cameraEnabled,
+			})
+			if (event === 'joined') {
+				this.ourVideoId = msg.id
+				this.videoPublisherJoined = true
+				if (this.cameraEnabled) {
+					this.publishVideoMedia()
+				}
+				this.subscribeToPublishers(msg.publishers || [])
+			} else {
+				this.handlePublisherEvent(msg)
+			}
+			if (jsep) {
+				this.videoPublisherHandle.handleRemoteJsep({jsep})
+				this.finishVideoPublish()
+				if (this.publishedWithVideo && !msg.video_codec) {
+					this.cameraEnabled = false
+					this.publishedWithVideo = false
+					this.stopLocalCameraTracks()
+					this.publishingError = 'The server rejected the selected camera stream.'
+				}
+			} else if (event === 'event' && msg.configured === 'ok') {
+				this.finishVideoPublish()
+			}
+		},
+		handlePublisherEvent(msg) {
+			const event = msg.videoroom
+			log('janus-publisher-event', 'debug', {
+				action: 'handlePublisherEvent',
+				event,
+				msg,
+			})
+			if (event === 'destroyed') {
 				this.failConnection('Room destroyed', false)
 			} else if (event === 'event') {
 				if (msg.publishers) this.subscribeToPublishers(msg.publishers)
+				if (msg.joining) {
+					this.subscribeToFeed(
+						msg.joining.id,
+						msg.joining.display,
+						msg.joining.audio_codec,
+						msg.joining.video_codec
+					)
+				}
 				if (msg.leaving) this.removeRemoteFeed(msg.leaving)
 				if (msg.unpublished) {
 					if (msg.unpublished === 'ok') {
-						this.publishingState = 'unpublished'
-						this.stopLocalCameraTracks()
 						return
 					}
 					this.removeRemoteFeed(msg.unpublished)
@@ -481,44 +674,36 @@ export default {
 					}
 				}
 			}
-			if (jsep) {
-				this.publisherHandle.handleRemoteJsep({jsep})
-				this.finishLocalPublish()
-				if (this.publishedWithVideo && !msg.video_codec) {
-					this.cameraEnabled = false
-					this.publishedWithVideo = false
-					this.stopLocalCameraTracks()
-					this.publishingError = 'The server rejected the selected camera stream.'
-				}
-			} else if (event === 'event' && msg.configured === 'ok') {
-				this.finishLocalPublish()
-			}
 		},
-		async publishLocalMedia() {
-			if (!this.publisherHandle) return
-			if (this.localPublishInProgress) {
-				this.localPublishQueued = true
+		async publishAudioMedia() {
+			log('janus-audio-publisher', 'debug', {
+				action: 'publishAudioMedia:start',
+				hasHandle: Boolean(this.audioPublisherHandle),
+				audioPublisherJoined: this.audioPublisherJoined,
+				audioPublishInProgress: this.audioPublishInProgress,
+				audioPublishQueued: this.audioPublishQueued,
+				audioInput: localStorage.audioInput || '',
+				micMuted: this.micMuted,
+			})
+			if (!this.audioPublisherHandle) return
+			if (this.audioPublishInProgress) {
+				log('janus-audio-publisher', 'debug', {
+					action: 'publishAudioMedia:queued',
+				})
+				this.audioPublishQueued = true
 				return
 			}
-			this.localPublishInProgress = true
+			this.audioPublishInProgress = true
 			this.publishingState = 'publishing'
 			this.publishingError = null
 
-			const nextVideoInput = localStorage.videoInput || ''
 			const nextAudioInput = localStorage.audioInput || ''
-			const wantsVideo = this.cameraEnabled
-			let hadPeerConnection = Boolean(this.publisherHandle.webrtcStuff?.pc)
-			const wasPublishingVideo = this.publishedWithVideo
-			if (wantsVideo && hadPeerConnection && !wasPublishingVideo) {
-				this.publisherHandle.hangup()
-				this.localStream = null
-				hadPeerConnection = false
-			}
+			const hadPeerConnection = Boolean(this.audioPublisherHandle.webrtcStuff?.pc)
 			const media = {
 				audioRecv: false,
 				videoRecv: false,
 				audioSend: true,
-				videoSend: wantsVideo,
+				videoSend: false,
 			}
 
 			media.audio = this.microphoneConstraints(nextAudioInput)
@@ -526,42 +711,151 @@ export default {
 				media.replaceAudio = true
 			}
 
-			if (wantsVideo) {
-				media.video = this.cameraConstraints(nextVideoInput)
-				if (hadPeerConnection && !wasPublishingVideo) {
-					media.addVideo = true
-				} else if (hadPeerConnection && wasPublishingVideo && nextVideoInput !== this.videoInput) {
-					media.replaceVideo = true
-				}
-			} else if (hadPeerConnection && wasPublishingVideo) {
-				media.removeVideo = true
-			}
-
 			this.audioInput = nextAudioInput
-			this.videoInput = nextVideoInput
-			if (!wantsVideo) {
-				this.localCameraActive = false
-			}
 
 			let explicitStream
 			if (!hadPeerConnection) {
 				try {
 					explicitStream = await navigator.mediaDevices.getUserMedia({
 						audio: media.audio,
-						video: wantsVideo ? media.video : false,
+						video: false,
+					})
+					log('janus-audio-publisher', 'debug', {
+						action: 'getUserMedia:success',
+						stream: summarizeStream(explicitStream),
 					})
 				} catch (error) {
-					this.finishLocalPublish()
-					if (wantsVideo) {
-						this.cameraEnabled = false
-						this.publishedWithVideo = false
-						this.localCameraActive = false
-						localStorage.videoRequested = false
-						this.publishLocalMedia()
-						return
-					}
+					log('janus-audio-publisher', 'error', {
+						action: 'getUserMedia:error',
+						error: error?.message || error,
+						name: error?.name,
+					})
+					this.finishAudioPublish()
 					this.publishingState = 'failed'
 					this.publishingError = error?.message || 'Could not publish microphone.'
+					return
+				}
+			}
+
+			const offerOptions = {
+				media,
+				success: (jsep) => {
+					log('janus-audio-publisher', 'debug', {
+						action: 'createOffer:success',
+						jsepType: jsep?.type,
+						hasSdpAudio: Boolean(jsep?.sdp?.includes('m=audio')),
+						hasSdpVideo: Boolean(jsep?.sdp?.includes('m=video')),
+					})
+					this.audioPublisherHandle.send({
+						message: {
+							request: 'configure',
+							audio: true,
+							video: false,
+						},
+						jsep,
+						success: () => {
+							log('janus-audio-publisher', 'debug', {
+								action: 'configure:send-success',
+							})
+							this.audioPublishTimeout = window.setTimeout(() => this.finishAudioPublish(), 4000)
+						},
+						error: (error) => {
+							log('janus-audio-publisher', 'error', {
+								action: 'configure:error',
+								error: error?.message || error,
+							})
+							this.finishAudioPublish()
+							this.publishingState = 'failed'
+							this.publishingError = error?.message || error || 'Could not configure microphone.'
+						},
+					})
+				},
+				error: (error) => {
+					log('janus-audio-publisher', 'error', {
+						action: 'createOffer:error',
+						error: error?.message || error,
+						name: error?.name,
+					})
+					this.finishAudioPublish()
+					this.publishingState = 'failed'
+					this.publishingError = error?.message || 'Could not publish microphone.'
+				},
+			}
+			if (explicitStream) {
+				offerOptions.stream = explicitStream
+			}
+			this.audioPublisherHandle.createOffer(offerOptions)
+		},
+		async publishVideoMedia() {
+			log('janus-video-publisher', 'debug', {
+				action: 'publishVideoMedia:start',
+				cameraEnabled: this.cameraEnabled,
+				hasHandle: Boolean(this.videoPublisherHandle),
+				videoPublisherJoined: this.videoPublisherJoined,
+				videoPublishInProgress: this.videoPublishInProgress,
+				videoPublishQueued: this.videoPublishQueued,
+				videoInput: localStorage.videoInput || '',
+			})
+			if (!this.cameraEnabled) {
+				this.unpublishVideoMedia()
+				return
+			}
+			if (!this.videoPublisherHandle) {
+				this.attachVideoPublisher()
+				return
+			}
+			if (!this.videoPublisherJoined) {
+				log('janus-video-publisher', 'warn', {
+					action: 'publishVideoMedia:skip-not-joined',
+					hasHandle: Boolean(this.videoPublisherHandle),
+				})
+				return
+			}
+			if (this.videoPublishInProgress) {
+				this.videoPublishQueued = true
+				return
+			}
+			this.videoPublishInProgress = true
+			this.publishingState = 'publishing'
+			this.publishingError = null
+
+			const nextVideoInput = localStorage.videoInput || ''
+			const hadPeerConnection = Boolean(this.videoPublisherHandle.webrtcStuff?.pc)
+			const media = {
+				audioRecv: false,
+				videoRecv: false,
+				audioSend: false,
+				videoSend: true,
+			}
+			media.video = this.cameraConstraints(nextVideoInput)
+			if (hadPeerConnection && nextVideoInput !== this.videoInput) {
+				media.replaceVideo = true
+			}
+			this.videoInput = nextVideoInput
+
+			let explicitStream
+			if (!hadPeerConnection) {
+				try {
+					explicitStream = await navigator.mediaDevices.getUserMedia({
+						audio: false,
+						video: media.video,
+					})
+					log('janus-video-publisher', 'debug', {
+						action: 'getUserMedia:success',
+						stream: summarizeStream(explicitStream),
+					})
+				} catch (error) {
+					log('janus-video-publisher', 'error', {
+						action: 'getUserMedia:error',
+						error: error?.message || error,
+						name: error?.name,
+					})
+					this.finishVideoPublish()
+					this.cameraEnabled = false
+					this.publishedWithVideo = false
+					this.localCameraActive = false
+					localStorage.videoRequested = false
+					this.publishingError = error?.message || 'Could not publish camera.'
 					return
 				}
 			}
@@ -571,47 +865,62 @@ export default {
 				simulcast: false,
 				simulcast2: false,
 				success: (jsep) => {
-					this.publisherHandle.send({
+					log('janus-video-publisher', 'debug', {
+						action: 'createOffer:success',
+						jsepType: jsep?.type,
+						hasSdpVideo: Boolean(jsep?.sdp?.includes('m=video')),
+					})
+					this.videoPublisherHandle.send({
 						message: {
 							request: 'configure',
-							audio: true,
-							video: wantsVideo,
+							audio: false,
+							video: true,
 							bitrate: this.upstreamBitrate,
 						},
 						jsep,
 						success: () => {
-							this.publishedWithVideo = wantsVideo
-							this.localPublishTimeout = window.setTimeout(() => this.finishLocalPublish(), 4000)
+							log('janus-video-publisher', 'debug', {
+								action: 'configure:send-success',
+								bitrate: this.upstreamBitrate,
+							})
+							this.publishedWithVideo = true
+							this.videoPublishTimeout = window.setTimeout(() => this.finishVideoPublish(), 4000)
 						},
 						error: (error) => {
-							this.finishLocalPublish()
-							this.publishingState = 'failed'
-							this.publishingError = error?.message || error || 'Could not configure local media.'
+							log('janus-video-publisher', 'error', {
+								action: 'configure:error',
+								error: error?.message || error,
+							})
+							this.finishVideoPublish()
+							this.publishingError = error?.message || error || 'Could not configure camera.'
 						},
 					})
-					if (!wantsVideo) {
-						this.stopLocalCameraTracks()
-					}
 				},
 				error: (error) => {
-					log('venueless', 'error', `Could not publish local media: ${error}`)
-					this.finishLocalPublish()
-					if (wantsVideo) {
-						this.cameraEnabled = false
-						this.publishedWithVideo = false
-						this.localCameraActive = false
-						localStorage.videoRequested = false
-						this.publishLocalMedia()
-						return
-					}
-					this.publishingState = 'failed'
-					this.publishingError = error?.message || 'Could not publish microphone.'
+					log('janus-video-publisher', 'error', {
+						action: 'createOffer:error',
+						error: error?.message || error,
+						name: error?.name,
+					})
+					this.finishVideoPublish()
+					this.cameraEnabled = false
+					this.publishedWithVideo = false
+					this.localCameraActive = false
+					localStorage.videoRequested = false
+					this.publishingError = error?.message || 'Could not publish camera.'
 				},
 			}
 			if (explicitStream) {
 				offerOptions.stream = explicitStream
 			}
-			this.publisherHandle.createOffer(offerOptions)
+			this.videoPublisherHandle.createOffer(offerOptions)
+		},
+		unpublishVideoMedia() {
+			this.publishedWithVideo = false
+			this.stopLocalCameraTracks()
+			if (this.videoPublisherHandle?.webrtcStuff?.pc) {
+				this.videoPublisherHandle.send({message: {request: 'unpublish'}})
+			}
 		},
 		microphoneConstraints(audioInput) {
 			if (!audioInput) {
@@ -637,38 +946,80 @@ export default {
 			constraints.deviceId = {exact: videoInput}
 			return constraints
 		},
-		finishLocalPublish() {
-			if (this.localPublishTimeout) {
-				window.clearTimeout(this.localPublishTimeout)
-				this.localPublishTimeout = null
+		finishAudioPublish() {
+			log('janus-audio-publisher', 'debug', {
+				action: 'finishAudioPublish',
+				hadTimeout: Boolean(this.audioPublishTimeout),
+				audioPublishQueued: this.audioPublishQueued,
+			})
+			if (this.audioPublishTimeout) {
+				window.clearTimeout(this.audioPublishTimeout)
+				this.audioPublishTimeout = null
 			}
-			this.localPublishInProgress = false
-			if (this.localPublishQueued) {
-				this.localPublishQueued = false
-				this.$nextTick(this.publishLocalMedia)
+			this.audioPublishInProgress = false
+			if (this.audioPublishQueued) {
+				this.audioPublishQueued = false
+				this.$nextTick(this.publishAudioMedia)
 			}
 		},
-		onLocalStream(stream) {
-			this.localStream = stream
-			this.localCameraActive = this.cameraEnabled && stream.getVideoTracks().some(track => track.readyState === 'live')
+		finishVideoPublish() {
+			if (this.videoPublishTimeout) {
+				window.clearTimeout(this.videoPublishTimeout)
+				this.videoPublishTimeout = null
+			}
+			this.videoPublishInProgress = false
+			if (this.videoPublishQueued) {
+				this.videoPublishQueued = false
+				this.$nextTick(this.publishVideoMedia)
+			}
+		},
+		onLocalAudioStream(stream) {
+			this.localAudioStream = stream
+			log('janus-audio-publisher', 'debug', {
+				action: 'onLocalAudioStream',
+				stream: summarizeStream(stream),
+				automute: this.automute,
+				automuteApplied: this.automuteApplied,
+				micMuted: this.micMuted,
+			})
 			this.registerAudioMeter('local', stream)
 			if (this.automute && !this.automuteApplied) {
 				this.micMuted = true
 				this.automuteApplied = true
 			}
 			this.applyMicState()
+			this.publishingState = 'published'
+			this.publishingError = null
+		},
+		onLocalVideoStream(stream) {
+			this.localVideoStream = stream
+			this.localCameraActive = stream.getVideoTracks().some(track => track.readyState === 'live')
+			log('janus-video-publisher', 'debug', {
+				action: 'onLocalVideoStream',
+				localCameraActive: this.localCameraActive,
+				stream: summarizeStream(stream),
+			})
 			this.attachLocalVideo(stream)
-			if (!this.publishedWithVideo || stream.getVideoTracks().length > 0) {
-				this.publishingState = 'published'
-				this.publishingError = null
-			}
+			this.publishingState = 'published'
+			this.publishingError = null
 		},
 		applyMicState() {
-			if (!this.publisherHandle) return
-			if (this.micMuted && !this.publisherHandle.isAudioMuted()) {
-				this.publisherHandle.muteAudio()
-			} else if (!this.micMuted && this.publisherHandle.isAudioMuted()) {
-				this.publisherHandle.unmuteAudio()
+			if (!this.audioPublisherHandle) {
+				log('janus-audio-publisher', 'debug', {
+					action: 'applyMicState:skip-no-handle',
+					micMuted: this.micMuted,
+				})
+				return
+			}
+			log('janus-audio-publisher', 'debug', {
+				action: 'applyMicState',
+				micMuted: this.micMuted,
+				handleAudioMuted: this.audioPublisherHandle.isAudioMuted(),
+			})
+			if (this.micMuted && !this.audioPublisherHandle.isAudioMuted()) {
+				this.audioPublisherHandle.muteAudio()
+			} else if (!this.micMuted && this.audioPublisherHandle.isAudioMuted()) {
+				this.audioPublisherHandle.unmuteAudio()
 			}
 		},
 		attachLocalVideo(stream) {
@@ -686,14 +1037,31 @@ export default {
 			})
 		},
 		toggleMic() {
-			if (!this.publisherHandle) return
+			if (!this.audioPublisherHandle) {
+				log('janus-audio-publisher', 'debug', {
+					action: 'toggleMic:skip-no-handle',
+				})
+				return
+			}
 			this.micMuted = !this.micMuted
+			log('janus-audio-publisher', 'debug', {
+				action: 'toggleMic',
+				micMuted: this.micMuted,
+			})
 			this.applyMicState()
 		},
 		toggleCamera() {
 			this.cameraEnabled = !this.cameraEnabled
 			localStorage.videoRequested = this.cameraEnabled
-			this.publishLocalMedia()
+			log('janus-video-publisher', 'debug', {
+				action: 'toggleCamera',
+				cameraEnabled: this.cameraEnabled,
+			})
+			if (this.cameraEnabled) {
+				this.publishVideoMedia()
+			} else {
+				this.unpublishVideoMedia()
+			}
 		},
 		toggleScreenShare() {
 			if (this.screenShareState === 'published') {
@@ -705,6 +1073,12 @@ export default {
 			}
 		},
 		startScreenShare() {
+			log('janus-screen-publisher', 'debug', {
+				action: 'startScreenShare',
+				state: this.screenShareState,
+				hasHandle: Boolean(this.screenShareHandle),
+				screenShareSessionId: this.janusScreenShareSessionId,
+			})
 			this.screenShareError = null
 			this.screenShareState = 'publishing'
 			if (this.screenShareHandle) {
@@ -716,6 +1090,11 @@ export default {
 				opaqueId: `${this.user.id}-screen`,
 				success: (pluginHandle) => {
 					this.screenShareHandle = pluginHandle
+					log('janus-screen-publisher', 'debug', {
+						action: 'attach:success',
+						handleId: pluginHandle.getId(),
+						screenShareSessionId: this.janusScreenShareSessionId,
+					})
 					this.screenShareHandle.send({
 						message: {
 							request: 'join',
@@ -727,24 +1106,50 @@ export default {
 						}
 					})
 				},
-				error: this.failScreenShare,
+				error: (error) => {
+					log('janus-screen-publisher', 'error', {
+						action: 'attach:error',
+						error: error?.message || error,
+						name: error?.name,
+					})
+					this.failScreenShare(error)
+				},
 				mediaState: (medium, on) => {
+					log('janus-screen-publisher', 'debug', {
+						action: 'mediaState',
+						medium,
+						on,
+					})
 					if (medium === 'video' && on) {
 						this.screenShareState = 'published'
 						this.screenShareError = null
 					}
 				},
 				webrtcState: (on) => {
-					log('venueless', 'info', `Screen share WebRTC is ${on ? 'up' : 'down'}`)
+					log('janus-screen-publisher', 'debug', {
+						action: 'webrtcState',
+						on,
+					})
 				},
 				onmessage: this.onScreenShareMessage,
 				oncleanup: () => {
+					log('janus-screen-publisher', 'debug', {
+						action: 'oncleanup',
+					})
 					this.resetScreenShare()
 				},
 			})
 		},
 		onScreenShareMessage(msg, jsep) {
 			const event = msg.videoroom
+			log('janus-screen-publisher', 'debug', {
+				action: 'onScreenShareMessage',
+				event,
+				msg,
+				hasJsep: Boolean(jsep),
+				jsepHasVideo: Boolean(jsep?.sdp?.includes('m=video')),
+				jsepHasAudio: Boolean(jsep?.sdp?.includes('m=audio')),
+			})
 			if (event === 'joined') {
 				this.publishScreenShare()
 			} else if (event === 'event') {
@@ -766,12 +1171,25 @@ export default {
 			}
 		},
 		async publishScreenShare() {
+			log('janus-screen-publisher', 'debug', {
+				action: 'publishScreenShare:start',
+				state: this.screenShareState,
+			})
 			this.screenShareState = 'publishing'
 			this.stopScreenShareTracks()
 			let stream
 			try {
 				stream = await this.getDisplayMedia()
+				log('janus-screen-publisher', 'debug', {
+					action: 'getDisplayMedia:success',
+					stream: summarizeStream(stream),
+				})
 			} catch (error) {
+				log('janus-screen-publisher', 'error', {
+					action: 'getDisplayMedia:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
 				this.failScreenShare(error, ['AbortError', 'NotAllowedError'].includes(error?.name))
 				return
 			}
@@ -804,6 +1222,13 @@ export default {
 					videoSend: true,
 				},
 				success: (jsep) => {
+					log('janus-screen-publisher', 'debug', {
+						action: 'createOffer:success',
+						hasAudio,
+						jsepType: jsep?.type,
+						hasSdpVideo: Boolean(jsep?.sdp?.includes('m=video')),
+						hasSdpAudio: Boolean(jsep?.sdp?.includes('m=audio')),
+					})
 					this.screenShareHandle.send({
 						message: {
 							request: 'configure',
@@ -812,10 +1237,24 @@ export default {
 							bitrate: MAX_BITRATE,
 						},
 						jsep,
-						error: this.failScreenShare,
+						error: (error) => {
+							log('janus-screen-publisher', 'error', {
+								action: 'configure:error',
+								error: error?.message || error,
+								name: error?.name,
+							})
+							this.failScreenShare(error)
+						},
 					})
 				},
-				error: this.failScreenShare,
+				error: (error) => {
+					log('janus-screen-publisher', 'error', {
+						action: 'createOffer:error',
+						error: error?.message || error,
+						name: error?.name,
+					})
+					this.failScreenShare(error)
+				},
 			})
 		},
 		async getDisplayMedia() {
@@ -855,6 +1294,11 @@ export default {
 			return Array.isArray(ref) ? ref[0] : ref
 		},
 		stopScreenShare() {
+			log('janus-screen-publisher', 'debug', {
+				action: 'stopScreenShare',
+				state: this.screenShareState,
+				hasHandle: Boolean(this.screenShareHandle),
+			})
 			this.screenShareState = 'unpublishing'
 			this.stopScreenShareTracks()
 			if (!this.screenShareHandle) {
@@ -865,6 +1309,10 @@ export default {
 		},
 		stopScreenShareTracks() {
 			if (!this.screenShareStream) return
+			log('janus-screen-publisher', 'debug', {
+				action: 'stopScreenShareTracks',
+				stream: summarizeStream(this.screenShareStream),
+			})
 			for (const track of this.screenShareStream.getTracks()) {
 				track.onended = null
 				track.stop()
@@ -872,11 +1320,20 @@ export default {
 			this.screenShareStream = null
 		},
 		resetScreenShare() {
+			log('janus-screen-publisher', 'debug', {
+				action: 'resetScreenShare',
+				state: this.screenShareState,
+			})
 			this.stopScreenShareTracks()
 			this.screenShareState = 'unpublished'
 		},
 		failScreenShare(error, silent = false) {
-			log('venueless', 'error', `Screen share failed: ${error}`)
+			log('janus-screen-publisher', 'error', {
+				action: 'failScreenShare',
+				error: error?.message || error,
+				name: error?.name,
+				silent,
+			})
 			this.stopScreenShareTracks()
 			this.screenShareState = 'failed'
 			this.screenShareError = silent ? null : (error?.message || error || 'Screen sharing failed.')
@@ -885,32 +1342,59 @@ export default {
 			}
 		},
 		subscribeToPublishers(publishers) {
+			log('janus-subscriber', 'debug', {
+				action: 'subscribeToPublishers',
+				publishers,
+			})
 			for (const publisher of publishers) {
 				this.subscribeToFeed(publisher.id, publisher.display, publisher.audio_codec, publisher.video_codec)
 			}
 		},
 		subscribeToFeed(feedId, display, audioCodec, videoCodec) {
 			const id = this.normalizeFeedId(feedId)
-			const isScreenShare = this.isScreenShareFeed(feedId, display)
-			if (this.isOwnFeed(feedId) || (!this.videoOutput && !isScreenShare)) {
+			const feedType = this.feedTypeFromPublisher(display, audioCodec, videoCodec)
+			const isScreenShare = feedType === 'screen'
+			log('janus-subscriber', 'debug', {
+				action: 'subscribeToFeed:seen',
+				feedId: id,
+				display,
+				audioCodec,
+				videoCodec,
+				feedType,
+				videoOutput: this.videoOutput,
+				isOwnFeed: this.isOwnFeed(feedId),
+			})
+			if (this.isOwnFeed(feedId) || (!this.videoOutput && feedType === 'video')) {
+				log('janus-subscriber', 'debug', {
+					action: 'subscribeToFeed:skip-own-or-output',
+					feedId: id,
+					feedType,
+				})
 				return
 			}
 			const existingFeed = this.remoteFeeds.find(feed => this.feedIdEquals(feed.id, id))
 			if (existingFeed) {
-				existingFeed.display = display
-				existingFeed.audioCodec = audioCodec
-				existingFeed.videoCodec = videoCodec
-				existingFeed.isScreenShare = isScreenShare
-				if (!isScreenShare && videoCodec && !existingFeed.hasVideo && this.videoOutput) {
+				if (feedType === 'video' && videoCodec && !existingFeed.stream?.getVideoTracks().length) {
+					log('janus-subscriber', 'debug', {
+						action: 'subscribeToFeed:reattach-video-without-track',
+						feedId: id,
+						videoCodec,
+					})
 					this.removeRemoteFeed(id)
 				} else {
-					if (!isScreenShare && !videoCodec) {
-						existingFeed.hasVideo = false
-					}
+					existingFeed.display = display
+					existingFeed.audioCodec = audioCodec
+					existingFeed.videoCodec = videoCodec
+					existingFeed.feedType = feedType
+					existingFeed.isScreenShare = isScreenShare
 					this.upsertRemoteFeed(existingFeed)
 					return
 				}
 			} else if (this.subscribingFeedIds.some(subscribingId => this.feedIdEquals(subscribingId, id))) {
+				log('janus-subscriber', 'debug', {
+					action: 'subscribeToFeed:skip-already-subscribing',
+					feedId: id,
+				})
 				return
 			}
 			this.subscribingFeedIds.push(id)
@@ -927,12 +1411,17 @@ export default {
 						feed: feedId,
 						private_id: this.ourPrivateId,
 						offer_audio: true,
-						offer_video: this.videoOutput || isScreenShare,
+						offer_video: isScreenShare || (feedType === 'video' && this.videoOutput),
 					}
 					if (Janus.webRTCAdapter.browserDetails.browser === 'safari' &&
 						(videoCodec === 'vp9' || (videoCodec === 'vp8' && !Janus.safariVp8))) {
 						subscribe.offer_video = false
 					}
+					log('janus-subscriber', 'debug', {
+						action: 'subscribeToFeed:send-join',
+						feedId: id,
+						subscribe,
+					})
 					remoteHandle.send({message: subscribe})
 				},
 				error: (error) => {
@@ -940,7 +1429,7 @@ export default {
 					log('venueless', 'error', `Could not attach subscriber for ${feedId}: ${error}`)
 				},
 				onmessage: (msg, jsep) => {
-					this.onSubscriberMessage(remoteHandle, feedId, display, isScreenShare, audioCodec, videoCodec, msg, jsep)
+					this.onSubscriberMessage(remoteHandle, feedId, display, feedType, audioCodec, videoCodec, msg, jsep)
 				},
 				onlocalstream: () => {},
 				onremotestream: (stream) => {
@@ -960,25 +1449,47 @@ export default {
 				},
 			})
 		},
-		onSubscriberMessage(handle, feedId, display, isScreenShare, audioCodec, videoCodec, msg, jsep) {
+		onSubscriberMessage(handle, feedId, display, feedType, audioCodec, videoCodec, msg, jsep) {
 			const event = msg.videoroom
+			log('janus-subscriber', 'debug', {
+				action: 'onSubscriberMessage',
+				feedId: this.normalizeFeedId(feedId),
+				display,
+				feedType,
+				audioCodec,
+				videoCodec,
+				event,
+				msg,
+				hasJsep: Boolean(jsep),
+				jsepHasVideo: Boolean(jsep?.sdp?.includes('m=video')),
+			})
 			if (msg.error) {
 				this.unmarkSubscribing(feedId)
-				log('venueless', 'error', `Subscriber ${feedId} error: ${msg.error}`)
+				log('janus-subscriber', 'error', {
+					action: 'onSubscriberMessage:error',
+					feedId: this.normalizeFeedId(feedId),
+					error: msg.error,
+					errorCode: msg.error_code,
+				})
+				if (msg.error_code === 428) {
+					handle?.detach()
+					this.scheduleSubscriberRetry(feedId, display, audioCodec, videoCodec)
+				}
 				return
 			}
 			if (event === 'attached') {
 				const id = this.normalizeFeedId(msg.id || feedId)
 				this.unmarkSubscribing(id)
+				this.clearSubscriberRetry(id)
 				this.upsertRemoteFeed({
 					id,
 					handle,
 					display,
-					isScreenShare,
+					feedType,
+					isScreenShare: feedType === 'screen',
 					audioCodec,
 					videoCodec,
 					attached: false,
-					hasVideo: isScreenShare,
 					muted: false,
 					user: null,
 					stream: null,
@@ -993,21 +1504,74 @@ export default {
 						videoSend: false,
 					},
 					success: (answer) => {
+						log('janus-subscriber', 'debug', {
+							action: 'createAnswer:success',
+							feedId: this.normalizeFeedId(feedId),
+							answerHasVideo: Boolean(answer?.sdp?.includes('m=video')),
+						})
 						handle.send({message: {request: 'start', room: this.janusRoomId}, jsep: answer})
 						this.syncRemoteTracksFromPeerConnection(handle, feedId)
 						window.setTimeout(() => this.syncRemoteTracksFromPeerConnection(handle, feedId), 500)
 					},
 					error: (error) => {
+						log('janus-subscriber', 'error', {
+							action: 'createAnswer:error',
+							feedId: this.normalizeFeedId(feedId),
+							error: error?.message || error,
+							name: error?.name,
+						})
 						this.removeRemoteFeed(feedId)
 						log('venueless', 'error', `Could not answer subscriber ${feedId}: ${error}`)
 					},
 				})
 			}
 		},
+		scheduleSubscriberRetry(feedId, display, audioCodec, videoCodec) {
+			const id = this.normalizeFeedId(feedId)
+			if (this.cleaningUp || this.isOwnFeed(id)) return
+			const retryCount = (this.subscriberRetryCounts[id] || 0) + 1
+			if (retryCount > 4) {
+				log('janus-subscriber', 'warn', {
+					action: 'scheduleSubscriberRetry:give-up',
+					feedId: id,
+				})
+				return
+			}
+			this.subscriberRetryCounts[id] = retryCount
+			if (this.subscriberRetryTimeouts[id]) {
+				window.clearTimeout(this.subscriberRetryTimeouts[id])
+			}
+			const delay = retryCount * 750
+			log('janus-subscriber', 'debug', {
+				action: 'scheduleSubscriberRetry',
+				feedId: id,
+				retryCount,
+				delay,
+			})
+			this.subscriberRetryTimeouts[id] = window.setTimeout(() => {
+				delete this.subscriberRetryTimeouts[id]
+				this.subscribeToFeed(feedId, display, audioCodec, videoCodec)
+			}, delay)
+		},
+		clearSubscriberRetry(feedId) {
+			const id = this.normalizeFeedId(feedId)
+			if (this.subscriberRetryTimeouts[id]) {
+				window.clearTimeout(this.subscriberRetryTimeouts[id])
+				delete this.subscriberRetryTimeouts[id]
+			}
+			delete this.subscriberRetryCounts[id]
+		},
 		onRemoteTrack(feedId, track, on) {
 			if (!track) return
 			const id = this.normalizeFeedId(feedId)
 			const feed = this.remoteFeeds.find(item => this.feedIdEquals(item.id, id))
+			log('janus-subscriber', 'debug', {
+				action: 'onRemoteTrack',
+				feedId: id,
+				on,
+				track: summarizeTrack(track),
+				hasFeed: Boolean(feed),
+			})
 			if (!feed) return
 			if (!feed.stream) {
 				feed.stream = new MediaStream()
@@ -1026,6 +1590,12 @@ export default {
 		onRemoteStream(feedId, stream) {
 			const id = this.normalizeFeedId(feedId)
 			const feed = this.remoteFeeds.find(item => this.feedIdEquals(item.id, id))
+			log('janus-subscriber', 'debug', {
+				action: 'onRemoteStream',
+				feedId: id,
+				stream: summarizeStream(stream),
+				hasFeed: Boolean(feed),
+			})
 			if (!feed) return
 			this.applyRemoteStream(feed, stream)
 		},
@@ -1037,6 +1607,13 @@ export default {
 			const tracks = pc.getReceivers()
 				.map(receiver => receiver.track)
 				.filter(track => track && track.readyState !== 'ended')
+			log('janus-subscriber', 'debug', {
+				action: 'syncRemoteTracksFromPeerConnection',
+				feedId: id,
+				hasFeed: Boolean(feed),
+				hasPeerConnection: Boolean(pc),
+				tracks: tracks.map(summarizeTrack),
+			})
 			if (!tracks.length) return
 			const stream = feed.stream || new MediaStream()
 			for (const track of tracks) {
@@ -1050,44 +1627,154 @@ export default {
 			const id = this.normalizeFeedId(feed.id)
 			feed.stream = stream
 			feed.attached = true
-			feed.hasVideo = stream.getVideoTracks().length > 0 && (feed.isScreenShare || !!feed.videoCodec)
+			feed.hasVideo = stream.getVideoTracks().length > 0 && (feed.isScreenShare || feed.feedType === 'video' || !!feed.videoCodec)
 			feed.muted = stream.getAudioTracks().every(track => !track.enabled)
+			log('janus-subscriber', 'debug', {
+				action: 'applyRemoteStream',
+				feedId: id,
+				feedType: feed.feedType,
+				stream: summarizeStream(stream),
+			})
 			this.registerAudioMeter(id, stream)
 			this.upsertRemoteFeed(feed)
 			this.$nextTick(() => {
-				const video = this.findRemoteVideo(feed.id)
-				if (!video) return
-				if (video.srcObject !== stream) {
-					Janus.attachMediaStream(video, stream)
-				}
-				if (localStorage.audioOutput && video.setSinkId) {
-					video.setSinkId(localStorage.audioOutput)
-				}
-				if (!video.paused && video.readyState > 0) return
-				const playPromise = video.play()
-				if (playPromise?.catch) {
-					playPromise.catch(error => {
-						log('venueless', 'warn', `Remote video playback did not start automatically for ${id}: ${error}`)
-					})
-				}
+				this.attachRemoteFeedMedia(feed)
 			})
 		},
 		findRemoteVideo(feedId) {
 			return Array.from(this.$el.querySelectorAll('video[data-feed-id]'))
 				.find(video => this.feedIdEquals(video.dataset.feedId, feedId))
 		},
+		findRemoteAudio(feedId) {
+			return Array.from(this.$el.querySelectorAll('audio[data-audio-feed-id]'))
+				.find(audio => this.feedIdEquals(audio.dataset.audioFeedId, feedId))
+		},
+		attachRemoteFeedMedia(feed) {
+			if (this.cleaningUp || !this.$el?.isConnected || !feed?.stream) return
+			const id = this.normalizeFeedId(feed.id)
+			const element = feed.feedType === 'audio' ? this.findRemoteAudio(id) : this.findRemoteVideo(id)
+			if (!element?.isConnected) return
+			if (element.srcObject !== feed.stream) {
+				Janus.attachMediaStream(element, feed.stream)
+			}
+			if (localStorage.audioOutput && element.setSinkId) {
+				element.setSinkId(localStorage.audioOutput)
+			}
+			if (!element.paused && element.readyState > 0) return
+			const playPromise = element.play()
+			if (playPromise?.catch) {
+				playPromise.catch(error => {
+					if (this.cleaningUp || !this.$el?.isConnected) return
+					log('janus-subscriber', 'warn', {
+						action: 'attachRemoteFeedMedia:play-error',
+						feedId: id,
+						feedType: feed.feedType,
+						error: error?.message || error,
+						name: error?.name,
+					})
+				})
+			}
+		},
+		syncRemoteFeedMediaElements() {
+			for (const feed of this.remoteFeeds) {
+				this.attachRemoteFeedMedia(feed)
+			}
+		},
+		groupedRemoteTiles() {
+			const participantTiles = new Map()
+			const screenTiles = []
+			for (const feed of this.remoteFeeds) {
+				const id = this.normalizeFeedId(feed.id)
+				if (feed.isScreenShare || feed.feedType === 'screen') {
+					const level = this.normalizedAudioLevel(id)
+					screenTiles.push({
+						key: `remote-screen-${id}`,
+						id,
+						videoFeedId: id,
+						audioFeedId: null,
+						local: false,
+						screen: true,
+						user: feed.user,
+						label: this.feedLabel(feed),
+						hasVideo: feed.hasVideo,
+						muted: feed.muted,
+						audioLevel: level,
+						speaking: this.activeSpeakerId === id
+					})
+					continue
+				}
+				if (!feed.user?.id) continue
+				const userId = this.normalizeFeedId(feed.user.id)
+				const existingTile = participantTiles.get(userId) || {
+					key: `remote-user-${userId}`,
+					id: `user-${userId}`,
+					videoFeedId: null,
+					audioFeedId: null,
+					audioMeterFeedId: null,
+					local: false,
+					screen: false,
+					user: feed.user,
+					label: feed.user?.profile?.display_name || 'Participant',
+					hasVideo: false,
+					muted: true,
+					audioLevel: 0,
+					speaking: false
+				}
+				if (feed.feedType === 'video' || feed.hasVideo || feed.stream?.getVideoTracks().length) {
+					existingTile.videoFeedId = id
+					existingTile.hasVideo = Boolean(feed.hasVideo)
+				}
+				if (feed.feedType === 'audio' || feed.stream?.getAudioTracks().length) {
+					existingTile.audioFeedId = id
+					existingTile.audioMeterFeedId = id
+					existingTile.muted = feed.muted
+				}
+				participantTiles.set(userId, existingTile)
+			}
+			for (const tile of participantTiles.values()) {
+				const meterId = tile.audioMeterFeedId || tile.audioFeedId || tile.videoFeedId
+				tile.id = tile.videoFeedId || tile.audioFeedId || tile.id
+				tile.audioLevel = meterId ? this.normalizedAudioLevel(meterId) : 0
+				tile.speaking = meterId ? this.activeSpeakerId === meterId : false
+			}
+			const sortedParticipantTiles = Array.from(participantTiles.values())
+				.sort((a, b) => a.label.localeCompare(b.label))
+			screenTiles.sort((a, b) => a.label.localeCompare(b.label))
+			return screenTiles.concat(sortedParticipantTiles)
+		},
 		upsertRemoteFeed(feed) {
 			const index = this.remoteFeeds.findIndex(item => this.feedIdEquals(item.id, feed.id))
+			log('janus-subscriber', 'debug', {
+				action: 'upsertRemoteFeed',
+				feedId: this.normalizeFeedId(feed.id),
+				feedType: feed.feedType,
+				isNew: index === -1,
+				hasStream: Boolean(feed.stream),
+				stream: summarizeStream(feed.stream),
+				userId: feed.user?.id,
+			})
 			if (index === -1) {
 				this.remoteFeeds.push(feed)
 			} else {
 				this.remoteFeeds.splice(index, 1, feed)
 			}
+			this.$nextTick(() => {
+				this.syncRemoteFeedMediaElements()
+			})
 		},
 		removeRemoteFeed(feedId, detach = true) {
 			const id = this.normalizeFeedId(feedId)
 			this.unmarkSubscribing(id)
+			this.clearSubscriberRetry(id)
 			const feed = this.remoteFeeds.find(item => this.feedIdEquals(item.id, id))
+			log('janus-subscriber', 'debug', {
+				action: 'removeRemoteFeed',
+				feedId: id,
+				detach,
+				hadFeed: Boolean(feed),
+				feedType: feed?.feedType,
+				stream: summarizeStream(feed?.stream),
+			})
 			if (feed?.handle && detach) {
 				feed.handle.detach()
 			}
@@ -1096,36 +1783,69 @@ export default {
 		},
 		async fetchFeedUser(feedId) {
 			try {
+				log('janus-subscriber', 'debug', {
+					action: 'fetchFeedUser:start',
+					feedId: this.normalizeFeedId(feedId),
+				})
 				const user = await api.call('januscall.identify', {id: feedId})
 				const feed = this.remoteFeeds.find(item => this.feedIdEquals(item.id, feedId))
+				log('janus-subscriber', 'debug', {
+					action: 'fetchFeedUser:success',
+					feedId: this.normalizeFeedId(feedId),
+					userId: user?.id,
+					hasFeed: Boolean(feed),
+				})
 				if (feed) {
 					feed.user = user
 					this.upsertRemoteFeed(feed)
 				}
 			} catch (error) {
-				log('venueless', 'warn', `Could not identify Janus feed ${feedId}: ${error}`)
+				log('janus-subscriber', 'warn', {
+					action: 'fetchFeedUser:error',
+					feedId: this.normalizeFeedId(feedId),
+					error: error?.message || error,
+					name: error?.name,
+				})
 			}
 		},
 		closeDevicePrompt() {
 			this.showDevicePrompt = false
 			const outputChanged = this.videoOutput !== (localStorage.videoOutput !== 'false')
-			const nextAudioInput = localStorage.audioInput || ''
-			const nextVideoInput = localStorage.videoInput || ''
-			const devicesChanged = nextAudioInput !== this.audioInput || nextVideoInput !== this.videoInput
+			const audioChanged = this.audioInput !== (localStorage.audioInput || '')
+			const videoChanged = this.videoInput !== (localStorage.videoInput || '')
+			log('janus-devices', 'debug', {
+				action: 'closeDevicePrompt',
+				outputChanged,
+				audioChanged,
+				videoChanged,
+				currentAudioInput: this.audioInput,
+				nextAudioInput: localStorage.audioInput || '',
+				currentVideoInput: this.videoInput,
+				nextVideoInput: localStorage.videoInput || '',
+				videoOutput: localStorage.videoOutput !== 'false',
+			})
 			this.videoOutput = localStorage.videoOutput !== 'false'
 			if (outputChanged) {
 				this.cleanup()
 				this.onJanusInitialized()
 				return
 			}
-			if (devicesChanged) {
-				this.publishLocalMedia()
+			if (audioChanged) {
+				this.publishAudioMedia()
+			}
+			if (videoChanged && this.cameraEnabled) {
+				this.publishVideoMedia()
 			}
 			this.updateAudioOutputs()
 		},
 		updateAudioOutputs() {
 			for (const video of this.$el.querySelectorAll('video[data-feed-id]')) {
 				if (localStorage.audioOutput && video.setSinkId) {
+					log('janus-devices', 'debug', {
+						action: 'setSinkId',
+						feedId: video.dataset.feedId,
+						audioOutput: localStorage.audioOutput,
+					})
 					video.setSinkId(localStorage.audioOutput)
 				}
 			}
@@ -1134,22 +1854,22 @@ export default {
 			this.videoOutput = false
 			localStorage.videoOutput = false
 			for (const feed of this.remoteFeeds.slice()) {
-				if (!feed.isScreenShare) {
+				if (feed.feedType === 'video') {
 					this.removeRemoteFeed(feed.id)
 				}
 			}
 		},
-		handlePublisherSlowLink() {
+		handleVideoSlowLink() {
 			this.upstreamSlowLinkCount++
 			if (this.upstreamSlowLinkCount <= 2) return
 			const bitrate = Math.max(this.upstreamBitrate / 2, MIN_BITRATE)
 			if (bitrate !== this.upstreamBitrate) {
 				this.upstreamBitrate = bitrate
-				this.publisherHandle.send({
+				this.videoPublisherHandle.send({
 					message: {
 						request: 'configure',
-						audio: true,
-						video: this.publishedWithVideo,
+						audio: false,
+						video: true,
 						bitrate: this.upstreamBitrate,
 					}
 				})
@@ -1157,10 +1877,15 @@ export default {
 			} else if (this.upstreamSlowLinkCount > 5 && this.cameraEnabled) {
 				this.cameraEnabled = false
 				localStorage.videoRequested = false
-				this.publishLocalMedia()
+				this.unpublishVideoMedia()
 			}
 		},
 		registerAudioMeter(id, stream) {
+			log('janus-audio-meter', 'debug', {
+				action: 'registerAudioMeter',
+				id,
+				stream: summarizeStream(stream),
+			})
 			if (!stream.getAudioTracks().length) return
 			this.closeAudioMeter(id)
 			try {
@@ -1169,13 +1894,26 @@ export default {
 				const meter = new SoundMeter(context)
 				meter.connectToSource(stream)
 				this.audioMeters[id] = meter
+				log('janus-audio-meter', 'debug', {
+					action: 'registerAudioMeter:success',
+					id,
+				})
 			} catch (error) {
-				log('venueless', 'warn', `Could not create audio meter for ${id}: ${error}`)
+				log('janus-audio-meter', 'warn', {
+					action: 'registerAudioMeter:error',
+					id,
+					error: error?.message || error,
+					name: error?.name,
+				})
 			}
 		},
 		closeAudioMeter(id) {
 			const meter = this.audioMeters[id]
 			if (!meter) return
+			log('janus-audio-meter', 'debug', {
+				action: 'closeAudioMeter',
+				id,
+			})
 			if (meter.context?.state !== 'closed') {
 				meter.context.close()
 			}
@@ -1200,15 +1938,18 @@ export default {
 			const feed = this.remoteFeeds.find(item => this.feedIdEquals(item.id, id))
 			return Boolean(feed?.muted)
 		},
-		isScreenShareFeed(feedId, display) {
-			return display === SCREEN_SHARE_DISPLAY || this.feedIdEquals(feedId, this.janusScreenShareSessionId)
+		feedTypeFromPublisher(display, audioCodec, videoCodec) {
+			if (display === SCREEN_SHARE_DISPLAY) return 'screen'
+			if (display === USER_AUDIO_DISPLAY) return 'audio'
+			if (display === USER_VIDEO_DISPLAY) return 'video'
+			if (videoCodec) return 'video'
+			if (audioCodec) return 'audio'
+			return 'video'
 		},
 		isOwnFeed(feedId) {
-			return this.feedIdEquals(feedId, this.ourId) || this.feedIdEquals(feedId, this.janusScreenShareSessionId)
-		},
-		isSubscribedOrSubscribing(feedId) {
-			return this.remoteFeeds.some(feed => this.feedIdEquals(feed.id, feedId)) ||
-				this.subscribingFeedIds.some(id => this.feedIdEquals(id, feedId))
+			return this.feedIdEquals(feedId, this.ourAudioId) ||
+				this.feedIdEquals(feedId, this.ourVideoId) ||
+				this.feedIdEquals(feedId, this.janusScreenShareSessionId)
 		},
 		unmarkSubscribing(feedId) {
 			this.subscribingFeedIds = this.subscribingFeedIds.filter(id => !this.feedIdEquals(id, feedId))
@@ -1220,24 +1961,22 @@ export default {
 			return this.normalizeFeedId(a) === this.normalizeFeedId(b)
 		},
 		feedLabel(feed) {
-			if (feed.isScreenShare) {
+			if (feed.feedType === 'screen') {
 				return feed.user?.profile?.display_name ? `${feed.user.profile.display_name}'s screen` : 'Shared screen'
 			}
 			return feed.user?.profile?.display_name || 'Participant'
 		},
 		stopLocalCameraTracks() {
 			this.localCameraActive = false
-			if (!this.localStream) return
-			for (const track of this.localStream.getVideoTracks()) {
+			if (!this.localVideoStream) return
+			for (const track of this.localVideoStream.getVideoTracks()) {
 				track.stop()
 			}
 			const localVideo = this.singleRef(this.$refs.localVideo)
 			if (localVideo) {
 				localVideo.srcObject = null
 			}
-			if (!this.localStream.getAudioTracks().length) {
-				this.localStream = null
-			}
+			this.localVideoStream = null
 		},
 		stopStreamTracks(stream) {
 			for (const track of stream.getTracks()) {
@@ -1247,6 +1986,10 @@ export default {
 		},
 		onResize() {
 			if (!this.$refs.container) return
+			if (this.hasScreenTile) {
+				this.layout = {cols: 2, rows: Math.max(this.tiles.length - 1, 1)}
+				return
+			}
 			const bbox = this.$refs.container.getBoundingClientRect()
 			const padding = this.size === 'tiny' ? 0 : 32
 			const gap = this.size === 'tiny' ? 0 : 12
@@ -1280,26 +2023,61 @@ export default {
 			})
 		},
 		cleanup({preserveConnectionFailure = false} = {}) {
+			this.cleaningUp = true
+			log('janus-lifecycle', 'debug', {
+				action: 'cleanup:start',
+				preserveConnectionFailure,
+				connectionState: this.connectionState,
+				hasJanus: Boolean(this.janus),
+				hasAudioHandle: Boolean(this.audioPublisherHandle),
+				hasVideoHandle: Boolean(this.videoPublisherHandle),
+				hasScreenHandle: Boolean(this.screenShareHandle),
+				localAudioStream: summarizeStream(this.localAudioStream),
+				localVideoStream: summarizeStream(this.localVideoStream),
+				screenShareStream: summarizeStream(this.screenShareStream),
+				remoteFeedCount: this.remoteFeeds.length,
+			})
 			this.suppressDestroyedState = preserveConnectionFailure
 			this.stopScreenShareTracks()
-			if (this.localStream) {
-				this.stopStreamTracks(this.localStream)
+			if (this.localAudioStream) {
+				this.stopStreamTracks(this.localAudioStream)
+			}
+			if (this.localVideoStream) {
+				this.stopStreamTracks(this.localVideoStream)
 			}
 			for (const id of Object.keys(this.audioMeters)) {
 				this.closeAudioMeter(id)
 			}
 			this.remoteFeeds = []
 			this.subscribingFeedIds = []
-			this.localStream = null
+			for (const id of Object.keys(this.subscriberRetryTimeouts)) {
+				this.clearSubscriberRetry(id)
+			}
+			this.localAudioStream = null
+			this.localVideoStream = null
 			this.screenShareStream = null
-			this.publisherHandle = null
+			this.audioPublisherHandle = null
+			this.videoPublisherHandle = null
 			this.screenShareHandle = null
-			this.localPublishInProgress = false
-			this.localPublishQueued = false
+			this.ourAudioId = null
+			this.ourVideoId = null
+			this.ourPrivateId = null
+			this.audioPublisherJoined = false
+			this.videoPublisherJoined = false
+			this.audioPublishInProgress = false
+			this.audioPublishQueued = false
+			this.videoPublishInProgress = false
+			this.videoPublishQueued = false
+			this.localCameraActive = false
+			this.publishedWithVideo = false
 			this.automuteApplied = false
-			if (this.localPublishTimeout) {
-				window.clearTimeout(this.localPublishTimeout)
-				this.localPublishTimeout = null
+			if (this.audioPublishTimeout) {
+				window.clearTimeout(this.audioPublishTimeout)
+				this.audioPublishTimeout = null
+			}
+			if (this.videoPublishTimeout) {
+				window.clearTimeout(this.videoPublishTimeout)
+				this.videoPublishTimeout = null
 			}
 			if (this.janus) {
 				this.janus.destroy({cleanupHandles: true})
@@ -1312,8 +2090,19 @@ export default {
 				this.connectionError = null
 				this.retryInterval = 1000
 			}
+			log('janus-lifecycle', 'debug', {
+				action: 'cleanup:done',
+				connectionState: this.connectionState,
+			})
 		},
 		failConnection(error, retry = true) {
+			log('janus-lifecycle', 'error', {
+				action: 'failConnection',
+				error: error?.message || error,
+				name: error?.name,
+				retry,
+				retryInterval: this.retryInterval,
+			})
 			const retryInterval = this.retryInterval
 			this.cleanup({preserveConnectionFailure: true})
 			this.connectionState = 'failed'
@@ -1324,6 +2113,9 @@ export default {
 			}
 		},
 		leaveRoom() {
+			log('janus-lifecycle', 'debug', {
+				action: 'leaveRoom',
+			})
 			this.cleanup()
 			this.$emit('hangup')
 		},
@@ -1378,17 +2170,31 @@ export default {
 		display: grid
 		flex: auto 1 1
 		gap: 12px
-		grid-template-columns: repeat(var(--tile-columns), minmax(0, 1fr))
-		grid-template-rows: repeat(var(--tile-rows), minmax(0, 1fr))
+		grid-template-columns: repeat(var(--tile-columns, 1), var(--tile-width, minmax(0, 1fr)))
+		grid-template-rows: repeat(var(--tile-rows, 1), var(--tile-height, minmax(0, 1fr)))
 		justify-content: center
 		min-height: 0
 		overflow: hidden
 		padding: 16px
 		position: relative
+		transition: grid-template-columns .2s ease, grid-template-rows .2s ease
+		&.has-screen
+			align-content: stretch
+			align-items: stretch
+			grid-template-columns: minmax(0, 1fr) minmax(240px, 320px)
+			grid-template-rows: repeat(var(--tile-rows), minmax(0, 1fr))
+			.video-tile
+				grid-column: 2
+			.video-tile.is-screen
+				grid-column: 1
+				grid-row: 1 / -1
+				align-self: center
+				aspect-ratio: 16 / 9
 
 	.video-tile
-		background: #252a32
-		border-radius: 8px
+		background: #1e2229
+		border-radius: 10px
+		box-shadow: 0 2px 8px rgba(0,0,0,.35)
 		height: 100%
 		max-height: 100%
 		max-width: 100%
@@ -1396,29 +2202,34 @@ export default {
 		min-width: 0
 		overflow: hidden
 		position: relative
+		transition: box-shadow .16s ease
 		width: 100%
-		&.is-speaking .media-frame
-			box-shadow: 0 0 0 3px #2d8cff
+		&.is-speaking
+			box-shadow: 0 0 0 3px #2d8cff, 0 2px 8px rgba(0,0,0,.35)
+			.media-frame
+				box-shadow: none
 		&.is-screen video
 			object-fit: contain
 		&.is-local:not(.is-screen) video
 			transform: rotateY(180deg)
 
-	.media-frame
-		background: #252a32
-		border-radius: 8px
-		height: 100%
-		overflow: hidden
-		position: relative
-		transition: box-shadow .16s ease
-		width: 100%
-		video
-			background: #111317
+		.media-frame
+			background: #1e2229
+			border-radius: 10px
 			height: 100%
-			object-fit: cover
+			overflow: hidden
+			position: relative
+			transition: box-shadow .16s ease
 			width: 100%
-			&.is-hidden
-				opacity: 0
+			video
+				background: #111317
+				height: 100%
+				object-fit: cover
+				width: 100%
+				&.is-hidden
+					opacity: 0
+			.remote-audio
+				display: none
 
 	.avatar-wrap
 		align-items: center
@@ -1622,13 +2433,21 @@ export default {
 		.info-bar
 			display: none
 
-	+below('m')
-		.gallery
-			gap: 8px
-			padding: 10px
-		.controlbar
-			gap: 8px
-			padding: 10px
+		+below('m')
+			.gallery
+				gap: 8px
+				padding: 10px
+				&.has-screen
+					grid-auto-rows: minmax(120px, auto)
+					grid-template-columns: minmax(0, 1fr)
+					grid-template-rows: auto
+					.video-tile,
+					.video-tile.is-screen
+						grid-column: 1
+						grid-row: auto
+			.controlbar
+				gap: 8px
+				padding: 10px
 		.control-button
 			height: 44px
 			width: 44px
