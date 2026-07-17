@@ -1,0 +1,70 @@
+{% load escapejson %}
+{% load formset_tags %}
+{% load i18n %}
+
+{% if social_media_formset %}
+<div class="form-group row speaker-social-links-section">
+    <label class="col-md-3 col-form-label">{% translate "Social Media" %}</label>
+    <div class="col-md-9">
+        <div id="social-links-formset"
+             class="partner-link-formset formset"
+             data-formset
+             data-formset-prefix="{{ social_media_formset.prefix }}"
+             data-social-link-prefixes='{{ social_link_prefixes|escapejson_dumps }}'>
+            {{ social_media_formset.management_form }}
+            {{ social_media_formset.non_form_errors }}
+            <div data-formset-body>
+                {% for social_form in social_media_formset %}
+                    <div class="row partner-link-row mb-2" data-formset-form data-social-link-row>
+                        <div class="sr-only">{{ social_form.DELETE }}</div>
+                        <div class="col-md-3">
+                            {{ social_form.network.errors }}
+                            {{ social_form.network }}
+                        </div>
+                        <div class="col-md-8">
+                            {{ social_form.path.errors }}
+                            <div class="input-group">
+                                <span class="input-group-text partner-link-prefix" data-social-prefix>https://</span>
+                                {{ social_form.path }}
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-danger btn-sm" data-formset-delete-button title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                                <i class="fa fa-minus" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <script type="form-template" data-formset-empty-form>
+                {% escapescript %}
+                    <div class="row partner-link-row mb-2" data-formset-form data-social-link-row>
+                        <div class="sr-only">{{ social_media_formset.empty_form.DELETE }}</div>
+                        <div class="col-md-3">
+                            {{ social_media_formset.empty_form.network.errors }}
+                            {{ social_media_formset.empty_form.network }}
+                        </div>
+                        <div class="col-md-8">
+                            {{ social_media_formset.empty_form.path.errors }}
+                            <div class="input-group">
+                                <span class="input-group-text partner-link-prefix" data-social-prefix>https://</span>
+                                {{ social_media_formset.empty_form.path }}
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-danger btn-sm" data-formset-delete-button title="{% translate 'Remove' %}" aria-label="{% translate 'Remove' %}">
+                                <i class="fa fa-minus" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endescapescript %}
+            </script>
+            <p class="mt-2 mb-0">
+                <button type="button" class="btn btn-info btn-sm" data-formset-add>
+                    <i class="fa fa-plus" aria-hidden="true"></i> {% translate "Add social media link" %}
+                </button>
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}

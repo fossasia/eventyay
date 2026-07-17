@@ -1014,6 +1014,48 @@
                         </tr>
                         {% endwith %}
 
+                        {# Social Media #}
+                        {% with field=sform.cfp_ask_social_links %}
+                        <tr dragsort-id="social_links">
+                            <th>{% translate "Social Media" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Social Media">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Social Media">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Social Media">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-center">
+                                <label class="toggle-switch" aria-label="{% translate 'Toggle public state for Social Media' %}">
+                                    <input type="checkbox" name="{{ sform.cfp_public_social_links.html_name }}" {% if sform.cfp_public_social_links.value %}checked{% endif %}
+                                        aria-label="{% translate 'Public toggle for Social Media' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td class="text-center">{{ field_counts.social_links }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
                         {% for item in custom_speaker_fields %}
                             <tr dragsort-id="{{ item.question.id }}">
                                 <th>

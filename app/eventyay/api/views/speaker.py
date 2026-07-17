@@ -182,14 +182,14 @@ class SpeakerViewSet(
     def get_queryset(self):
         if self.api_version == LEGACY:  # pragma: no cover
             queryset = self.get_legacy_queryset() or self.queryset
-            return queryset.select_related('user', 'event', 'event__cfp')
+            return queryset.select_related('user', 'event', 'event__cfp').prefetch_related('social_links')
         if not self.event:
             # This is just during api doc creation
             return self.queryset
         queryset = (
             speaker_profiles_for_user(self.event, self.request.user, submissions=self.submissions_for_user)
             .select_related('user', 'event')
-            .prefetch_related('user__submissions', 'user__answers')
+            .prefetch_related('user__submissions', 'user__answers', 'social_links')
             .order_by('pk')
         )
         if fields := self.check_expanded_fields(

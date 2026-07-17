@@ -31,6 +31,7 @@ from eventyay.common.middleware.event import get_login_redirect
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views import is_form_bound
 from eventyay.person.forms import SpeakerProfileForm
+from eventyay.person.social_link_mixin import SpeakerSocialLinksMixin
 from eventyay.schedule.forms import AvailabilitiesFormMixin
 from eventyay.submission.forms import InfoForm, ResourceForm, TalkQuestionsForm
 from eventyay.talk_rules.person import can_view_information
@@ -40,8 +41,14 @@ logger = logging.getLogger(__name__)
 
 
 @method_decorator(gravatar_csp(), name='dispatch')
-class ProfileView(LoggedInEventPageMixin, TemplateView):
+class ProfileView(SpeakerSocialLinksMixin, LoggedInEventPageMixin, TemplateView):
     template_name = 'cfp/event/user_profile.html'
+
+    def get_social_links_profile(self):
+        return self.request.user.event_profile(self.request.event)
+
+    def social_links_should_bind_post(self):
+        return is_form_bound(self.request, 'profile')
 
     @context
     @cached_property
@@ -82,13 +89,24 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
     def profile_question_fields(self):
         return [field for field in self.profile_form if field.name.startswith('question_')]
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_social_links_context())
+        return context
+
     def post(self, request, *args, **kwargs):
-        if self.profile_form.is_bound and self.profile_form.is_valid():
-            self.profile_form.save()
-            profile = self.request.user.profiles.get_or_create(event=self.request.event)[0]
-            profile.log_action('eventyay.user.profile.update', person=request.user)
-            if self.profile_form.has_changed():
-                self.request.event.cache.set('rebuild_schedule_export', True, None)
+        if self.profile_form.is_bound:
+            if self.profile_form.is_valid() and self.social_media_formset_is_valid():
+                self.profile_form.save()
+                profile = self.request.user.profiles.get_or_create(event=self.request.event)[0]
+                self.save_social_media_formset(profile)
+                profile.log_action('eventyay.user.profile.update', person=request.user)
+                if self.profile_form.has_changed() or (
+                    self.social_media_formset and self.social_media_formset.has_changed()
+                ):
+                    self.request.event.cache.set('rebuild_schedule_export', True, None)
+            else:
+                return super().get(request, *args, **kwargs)
         elif self.questions_form.is_bound and self.questions_form.is_valid():
             self.questions_form.save()
             if self.questions_form.has_changed():

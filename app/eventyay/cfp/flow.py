@@ -31,8 +31,17 @@ from eventyay.base.models import (
 from eventyay.cfp.signals import cfp_steps
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.language import language
+from eventyay.common.social_links import get_social_link_value
 from eventyay.common.text.phrases import phrases
-from eventyay.person.forms import SpeakerProfileForm, UserForm
+from eventyay.person.forms import (
+    SpeakerProfileForm,
+    UserForm,
+    build_speaker_social_links_formset,
+    cleaned_social_links_from_formset,
+    formset_has_social_links,
+    social_link_prefixes,
+    social_links_formset_initial,
+)
 from eventyay.submission.constants import AUTO_DRAFT_TITLE
 from eventyay.submission.forms import InfoForm
 
@@ -543,6 +552,18 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
     form_class = SpeakerProfileForm
     template_name = 'cfp/event/submission_profile.html'
     priority = 75
+    social_links_session_key = '_social_links'
+
+    def is_completed(self, request):
+        self.request = request
+        if not self.get_form(from_storage=True).is_valid():
+            return False
+        if not request.event.cfp.request_social_links:
+            return True
+        if request.event.cfp.require_social_links:
+            stored = self.cfp_session.get('data', {}).get(self.social_links_session_key, [])
+            return bool(stored)
+        return True
 
     def get_form_kwargs(self):
         result = super().get_form_kwargs()
@@ -561,6 +582,44 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
     def get_extra_form_kwargs(self):
         return {'add_additional_speaker': True}
 
+    def get_social_links_profile(self):
+        user = self.get_form_kwargs().get('user')
+        if user:
+            return user.event_profile(self.request.event)
+        return None
+
+    def get_social_links_initial(self):
+        stored = self.cfp_session.get('data', {}).get(self.social_links_session_key)
+        if stored is not None:
+            initial = []
+            for link in stored:
+                network = link.get('network', '')
+                path = link.get('path')
+                if not path and network and link.get('url'):
+                    path = get_social_link_value(link.get('url', ''), network)
+                initial.append({'network': network, 'path': path or ''})
+            return initial
+        return social_links_formset_initial(self.get_social_links_profile())
+
+    def get_social_media_formset(self, data=None):
+        if not self.request.event.cfp.request_social_links:
+            return None
+        return build_speaker_social_links_formset(
+            profile=self.get_social_links_profile(),
+            data=data,
+            initial=None if data is not None else self.get_social_links_initial(),
+        )
+
+    def social_media_formset_is_valid(self, formset):
+        if formset is None:
+            return True
+        if not formset.is_valid():
+            return False
+        if self.request.event.cfp.require_social_links and not formset_has_social_links(formset):
+            formset.non_form_errors().append(_('Please add at least one social media link.'))
+            return False
+        return True
+
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
         email = getattr(self.request.user, 'email', None)
@@ -569,7 +628,42 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
             email = data.get('register_email', '')
         if email:
             result['gravatar_parameter'] = User(email=email).gravatar_parameter
+        formset = kwargs.get('social_media_formset')
+        if formset is None:
+            formset = self.get_social_media_formset()
+        result['social_media_formset'] = formset
+        result['social_link_prefixes'] = social_link_prefixes() if formset is not None else {}
+        result['show_social_links'] = formset is not None
         return result
+
+    def post(self, request):
+        self.request = request
+        form = self.get_form()
+        formset = self.get_social_media_formset(data=request.POST)
+        action = request.POST.get('action', 'submit')
+
+        if action == 'back':
+            if form.is_valid() and self.social_media_formset_is_valid(formset):
+                self.set_data(form.cleaned_data)
+                if formset is not None:
+                    self.cfp_session['data'][self.social_links_session_key] = cleaned_social_links_from_formset(formset)
+            if form.files:
+                self.set_files(form.files)
+            prev_url = self.get_prev_url(request)
+            return redirect(prev_url) if prev_url else redirect(request.path)
+
+        if not form.is_valid() or not self.social_media_formset_is_valid(formset):
+            warning_messages = getattr(form, 'warning_messages', None) or []
+            for warning in filter(None, warning_messages):
+                messages.warning(self.request, warning)
+            form.hide_top_errors = True
+            return self.render(form=form, social_media_formset=formset)
+        self.set_data(form.cleaned_data)
+        if formset is not None:
+            self.cfp_session['data'][self.social_links_session_key] = cleaned_social_links_from_formset(formset)
+        self.set_files(form.files)
+        next_url = self.get_next_url(request)
+        return redirect(next_url) if next_url else redirect(request.path)
 
     def done(self, request, draft=False):
         form = self.get_form(from_storage=True)
@@ -585,6 +679,21 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
             except SendMailException as exception:
                 logger.warning('Failed to send co-speaker invite email: %s', exception)
                 messages.warning(request, phrases.cfp.submission_email_fail)
+
+        if request.event.cfp.request_social_links:
+            profile = request.user.event_profile(request.event)
+            stored = self.cfp_session.get('data', {}).get(self.social_links_session_key, [])
+            profile.social_links.all().delete()
+            if stored:
+                from eventyay.base.models import SpeakerSocialLink
+
+                SpeakerSocialLink.objects.bulk_create(
+                    [
+                        SpeakerSocialLink(profile=profile, network=link['network'], url=link['url'])
+                        for link in stored
+                        if link.get('network') and link.get('url')
+                    ]
+                )
 
     @property
     def label(self):
