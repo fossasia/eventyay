@@ -32,12 +32,11 @@ function mountEditor(textarea) {
     role: 'textbox',
     'aria-multiline': 'true',
     'aria-label': textarea.getAttribute('aria-label') || textarea.name || 'Rich text editor',
+    // Always set dir so LTR locales do not inherit page-level RTL.
+    dir: fieldDir || 'ltr',
   }
   if (fieldLang) {
     prosemirrorAttrs.lang = fieldLang
-  }
-  if (fieldDir) {
-    prosemirrorAttrs.dir = fieldDir
   }
 
   const editor = new Editor({

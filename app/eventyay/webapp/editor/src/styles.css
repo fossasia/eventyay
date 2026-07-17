@@ -78,6 +78,14 @@
   font-size: 14px;
   line-height: 1.6;
   color: #212529;
+  /* Explicit writing direction: avoid inheriting page RTL into LTR locale editors. */
+  direction: ltr;
+  text-align: start;
+  unicode-bidi: isolate;
+}
+
+.tiptap-prosemirror[dir='rtl'] {
+  direction: rtl;
 }
 
 /* Match i18n textarea flag spacing (see pretixcontrol/scss/_flags.scss). */
