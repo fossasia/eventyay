@@ -6,7 +6,8 @@
 {% block extra_title %}{% translate 'Import/Export' %} :: {% endblock extra_title %}
 
 {% block settings_content %}
-  <h2>{% translate 'Import/Export' %}</h2>
+  {% trans "Import/Export" as settings_title %}
+  {% include "orga/includes/settings_header.html" with settings_title=settings_title %}
 
   {% include 'orga/includes/tablist.html' %}
 
