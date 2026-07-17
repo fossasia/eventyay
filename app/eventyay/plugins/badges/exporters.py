@@ -38,6 +38,8 @@ from eventyay.plugins.badges.utils import (
 
 from ...helpers.templatetags.jsonfield import JSONExtract
 
+SEARCHABLE_SCROLLING_CHECKBOXES = 'scrolling-multiple-choice scrolling-multiple-choice-searchable'
+
 
 class BadgeRenderer(Renderer):
     def __init__(self, event, layout, bgf, ask_user_fields=None):
@@ -450,7 +452,7 @@ class BadgeExporter(BaseExporter):
                     forms.ModelMultipleChoiceField(
                         queryset=exclude_explicit_no_badge(self.event.products, BadgeProduct, 'product'),
                         label=_('Limit to products'),
-                        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+                        widget=forms.CheckboxSelectMultiple(attrs={'class': SEARCHABLE_SCROLLING_CHECKBOXES}),
                         initial=self.event.products.filter(admission=True),
                     ),
                 ),
@@ -464,7 +466,7 @@ class BadgeExporter(BaseExporter):
                         ),
                         label=_('Limit to vouchers'),
                         required=False,
-                        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+                        widget=forms.CheckboxSelectMultiple(attrs={'class': SEARCHABLE_SCROLLING_CHECKBOXES}),
                     ),
                 ),
                 (
