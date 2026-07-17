@@ -41,6 +41,10 @@ from ...helpers.templatetags.jsonfield import JSONExtract
 SEARCHABLE_SCROLLING_CHECKBOXES = 'scrolling-multiple-choice scrolling-multiple-choice-searchable'
 
 
+def searchable_scrolling_checkbox_widget():
+    return forms.CheckboxSelectMultiple(attrs={'class': SEARCHABLE_SCROLLING_CHECKBOXES})
+
+
 class BadgeRenderer(Renderer):
     def __init__(self, event, layout, bgf, ask_user_fields=None):
         super().__init__(event, layout, bgf)
@@ -452,7 +456,7 @@ class BadgeExporter(BaseExporter):
                     forms.ModelMultipleChoiceField(
                         queryset=exclude_explicit_no_badge(self.event.products, BadgeProduct, 'product'),
                         label=_('Limit to products'),
-                        widget=forms.CheckboxSelectMultiple(attrs={'class': SEARCHABLE_SCROLLING_CHECKBOXES}),
+                        widget=searchable_scrolling_checkbox_widget(),
                         initial=self.event.products.filter(admission=True),
                     ),
                 ),
@@ -466,7 +470,7 @@ class BadgeExporter(BaseExporter):
                         ),
                         label=_('Limit to vouchers'),
                         required=False,
-                        widget=forms.CheckboxSelectMultiple(attrs={'class': SEARCHABLE_SCROLLING_CHECKBOXES}),
+                        widget=searchable_scrolling_checkbox_widget(),
                     ),
                 ),
                 (

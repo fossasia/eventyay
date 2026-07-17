@@ -4,7 +4,7 @@ import pytest
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Organizer, Product, Voucher
-from eventyay.plugins.badges.exporters import SEARCHABLE_SCROLLING_CHECKBOXES, BadgeExporter
+from eventyay.plugins.badges.exporters import SEARCHABLE_SCROLLING_CHECKBOXES, BadgeExporter, searchable_scrolling_checkbox_widget
 
 
 @pytest.fixture
@@ -27,8 +27,10 @@ def badge_export_event():
 def test_badge_export_products_and_vouchers_use_searchable_widget(badge_export_event):
     exporter = BadgeExporter(badge_export_event)
     fields = exporter.export_form_fields
+    expected_widget = searchable_scrolling_checkbox_widget()
 
     for field_name in ('products', 'vouchers'):
         widget = fields[field_name].widget
+        assert widget.__class__ is expected_widget.__class__
+        assert widget.attrs.get('class') == expected_widget.attrs.get('class')
         assert SEARCHABLE_SCROLLING_CHECKBOXES in widget.attrs.get('class', '')
-        assert 'scrolling-multiple-choice' in widget.attrs.get('class', '')

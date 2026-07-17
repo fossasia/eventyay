@@ -71,6 +71,78 @@ $(document).ajaxError(function (event, jqXHR, settings, thrownError) {
     }
 });
 
+var initScrollingMultipleChoiceContainer = function ($container) {
+    if ($container.data("scrollingChoiceInit")) {
+        return;
+    }
+    if ($container.find(".choice-options-all").length > 0) {
+        $container.data("scrollingChoiceInit", true);
+        return;
+    }
+
+    var $search = null;
+    if ($container.hasClass("scrolling-multiple-choice-searchable")) {
+        $search = $("<input>", {
+            type: "search",
+            "class": "form-control scrolling-multiple-choice-search",
+            placeholder: gettext("Search…"),
+            "aria-label": gettext("Search options"),
+        });
+        if ($container.attr("id")) {
+            $search.attr("aria-controls", $container.attr("id"));
+        }
+        $container.before($search);
+    }
+
+    var filterChoices = function () {
+        if (!$search) {
+            return;
+        }
+        var query = $search.val().toLowerCase().trim();
+        $container.children("li, .checkbox").each(function () {
+            var $item = $(this);
+            var text = $item.text().toLowerCase();
+            $item.toggle(!query || text.indexOf(query) !== -1);
+        });
+    };
+
+    if ($search) {
+        $search.on("input", filterChoices);
+    }
+
+    var choiceCheckboxes = function (visibleOnly) {
+        var $boxes = $container.find("input[type=checkbox]");
+        if (!visibleOnly) {
+            return $boxes;
+        }
+        return $boxes.filter(function () {
+            var $row = $(this).closest("li, .checkbox");
+            return !$row.length || $row.is(":visible");
+        });
+    };
+
+    var searchIsActive = function () {
+        return $search && $search.val().trim().length > 0;
+    };
+
+    var $small = $("<small>");
+    var $a_all = $("<a>").addClass("choice-options-all").attr("href", "#").text(gettext("All"));
+    var $a_none = $("<a>").addClass("choice-options-none").attr("href", "#").text(gettext("None"));
+    $container.prepend($small.append($a_all).append(" / ").append($a_none));
+
+    $container.find(".choice-options-none").click(function (e) {
+        choiceCheckboxes(searchIsActive()).prop("checked", false);
+        e.preventDefault();
+        return false;
+    });
+    $container.find(".choice-options-all").click(function (e) {
+        choiceCheckboxes(searchIsActive()).prop("checked", true);
+        e.preventDefault();
+        return false;
+    });
+    $container.data("scrollingChoiceInit", true);
+};
+
 var form_handlers = function (el) {
     el.find(".datetimepicker").each(function () {
         $(this).datetimepicker({
@@ -520,73 +592,7 @@ var form_handlers = function (el) {
     });
 
     el.find("div.scrolling-multiple-choice, ul.scrolling-multiple-choice").each(function () {
-        var $container = $(this);
-        if ($container.data("scrollingChoiceInit")) {
-            return;
-        }
-        if ($container.find(".choice-options-all").length > 0) {
-            $container.data("scrollingChoiceInit", true);
-            return;
-        }
-
-        var $search = null;
-        if ($container.hasClass("scrolling-multiple-choice-searchable")) {
-            $search = $("<input>", {
-                type: "search",
-                "class": "form-control scrolling-multiple-choice-search",
-                placeholder: gettext("Search…"),
-                "aria-label": gettext("Search options"),
-            });
-            $container.before($search);
-        }
-
-        var filterChoices = function () {
-            if (!$search) {
-                return;
-            }
-            var query = $search.val().toLowerCase().trim();
-            $container.children("li, .checkbox").each(function () {
-                var $item = $(this);
-                var text = $item.text().toLowerCase();
-                $item.toggle(!query || text.indexOf(query) !== -1);
-            });
-        };
-
-        if ($search) {
-            $search.on("input", filterChoices);
-        }
-
-        var choiceCheckboxes = function (visibleOnly) {
-            var $boxes = $container.find("input[type=checkbox]");
-            if (!visibleOnly) {
-                return $boxes;
-            }
-            return $boxes.filter(function () {
-                var $row = $(this).closest("li, .checkbox");
-                return !$row.length || $row.is(":visible");
-            });
-        };
-
-        var searchIsActive = function () {
-            return $search && $search.val().trim().length > 0;
-        };
-
-        var $small = $("<small>");
-        var $a_all = $("<a>").addClass("choice-options-all").attr("href", "#").text(gettext("All"));
-        var $a_none = $("<a>").addClass("choice-options-none").attr("href", "#").text(gettext("None"));
-        $container.prepend($small.append($a_all).append(" / ").append($a_none));
-
-        $container.find(".choice-options-none").click(function (e) {
-            choiceCheckboxes(searchIsActive()).prop("checked", false);
-            e.preventDefault();
-            return false;
-        });
-        $container.find(".choice-options-all").click(function (e) {
-            choiceCheckboxes(searchIsActive()).prop("checked", true);
-            e.preventDefault();
-            return false;
-        });
-        $container.data("scrollingChoiceInit", true);
+        initScrollingMultipleChoiceContainer($(this));
     });
 
     el.find('.select2-static').select2({
