@@ -560,6 +560,9 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
             return False
         if not request.event.cfp.request_social_links:
             return True
+        # Drafts may omit required social links; final submit still enforces them.
+        if self.is_draft_save_action():
+            return True
         if request.event.cfp.require_social_links:
             stored = self.cfp_session.get('data', {}).get(self.social_links_session_key, [])
             return bool(stored)
@@ -615,7 +618,11 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
             return True
         if not formset.is_valid():
             return False
-        if self.request.event.cfp.require_social_links and not formset_has_social_links(formset):
+        if (
+            self.request.event.cfp.require_social_links
+            and not self.is_draft_save_action()
+            and not formset_has_social_links(formset)
+        ):
             formset.non_form_errors().append(_('Please add at least one social media link.'))
             return False
         return True

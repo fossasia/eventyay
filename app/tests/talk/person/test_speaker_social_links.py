@@ -15,6 +15,15 @@ def test_build_social_link_url_with_handle_and_full_url():
     assert build_social_link_url('website', 'example.com/me') == 'https://example.com/me'
 
 
+def test_build_social_link_url_rejects_non_http_schemes():
+    from django.core.exceptions import ValidationError
+
+    with pytest.raises(ValidationError):
+        build_social_link_url('website', 'javascript://%0Aalert(1)')
+    with pytest.raises(ValidationError):
+        build_social_link_url('github', 'ftp://files.example.com/user')
+
+
 @pytest.mark.django_db
 def test_speaker_social_links_formset_save(speaker, event):
     with scope(event=event):

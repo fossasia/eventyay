@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.forms import formset_factory
 from django.utils.translation import gettext_lazy as _
 
@@ -56,7 +57,10 @@ class SpeakerSocialLinkForm(forms.Form):
             self.add_error('path', _('Please enter a profile, handle, or URL.'))
             return cleaned_data
 
-        cleaned_data['url'] = build_social_link_url(network, path)
+        try:
+            cleaned_data['url'] = build_social_link_url(network, path)
+        except ValidationError as exc:
+            self.add_error('path', exc)
         return cleaned_data
 
 

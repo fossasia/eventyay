@@ -1,9 +1,10 @@
 from collections import OrderedDict
 from dataclasses import dataclass
 
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.common.urls import normalize_url_scheme
+from eventyay.common.urls import is_http_url, normalize_url_scheme
 
 
 def _badge_svg(letter: str) -> str:
@@ -178,7 +179,10 @@ def build_social_link_url(network: str, value: str) -> str:
         return ''
 
     if '://' in value:
-        return normalize_url_scheme(value)
+        normalized = normalize_url_scheme(value)
+        if not is_http_url(normalized):
+            raise ValidationError(_('Please enter a valid http or https URL.'))
+        return normalized
 
     prefix = get_social_link_spec(network).prefix
     if prefix.endswith('@') and value.startswith('@'):
