@@ -2,9 +2,16 @@ from django import forms
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.models import Product
-from eventyay.plugins.badges.models import BadgeLayout, BadgeProduct
+from eventyay.base.models import Product, Voucher
+from eventyay.plugins.badges.models import BadgeLayout, BadgeProduct, BadgeVoucher
 from eventyay.plugins.badges.utils import get_badge_customizable_fields
+
+
+def _sync_badge_assignments(model, layout, related_name, selected):
+    selected_ids = set(selected.values_list('pk', flat=True))
+    model.objects.filter(layout=layout).exclude(**{f'{related_name}_id__in': selected_ids}).delete()
+    for item in selected:
+        model.objects.update_or_create(**{related_name: item}, defaults={'layout': layout})
 
 
 class BadgeLayoutForm(forms.ModelForm):
@@ -18,6 +25,12 @@ class BadgeLayoutSettingsForm(forms.Form):
         queryset=Product.objects.none(),
         required=False,
         label=_('Products assigned to this layout'),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+    )
+    vouchers = forms.ModelMultipleChoiceField(
+        queryset=Voucher.objects.none(),
+        required=False,
+        label=_('Vouchers assigned to this layout'),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
     )
     allow_customization = forms.BooleanField(
@@ -37,9 +50,14 @@ class BadgeLayoutSettingsForm(forms.Form):
 
         self.fields['products'].queryset = self.event.products.order_by('category__position', 'position')
         self.fields['products'].initial = list(self.layout.product_assignments.values_list('product_id', flat=True))
+        self.fields['vouchers'].queryset = self.event.vouchers.order_by('code')
+        self.fields['vouchers'].initial = list(self.layout.voucher_assignments.values_list('voucher_id', flat=True))
         if self.layout.default:
             self.fields['products'].help_text = _(
                 'Products not explicitly assigned to another layout will also use the default layout.'
+            )
+            self.fields['vouchers'].help_text = _(
+                'Vouchers not explicitly assigned to another layout will fall back to the product or default layout.'
             )
 
         self.customizable_fields = get_badge_customizable_fields(self.event, self.layout)
@@ -71,12 +89,8 @@ class BadgeLayoutSettingsForm(forms.Form):
 
     @transaction.atomic
     def save(self):
-        selected_products = self.cleaned_data['products']
-        selected_ids = set(selected_products.values_list('pk', flat=True))
-
-        BadgeProduct.objects.filter(layout=self.layout).exclude(product_id__in=selected_ids).delete()
-        for product in selected_products:
-            BadgeProduct.objects.update_or_create(product=product, defaults={'layout': self.layout})
+        _sync_badge_assignments(BadgeProduct, self.layout, 'product', self.cleaned_data['products'])
+        _sync_badge_assignments(BadgeVoucher, self.layout, 'voucher', self.cleaned_data['vouchers'])
 
         self.layout.allow_customization = self.cleaned_data['allow_customization']
         self.layout.ask_user_fields_data = self.cleaned_data['ask_user_fields']
