@@ -4,13 +4,13 @@
 		.preview-panel
 			.video-preview-wrap
 				video.preview-video(ref="previewVideo", autoplay, playsinline, muted)
-				.preview-avatar(v-if="!cameraOn || !hasCameraStream")
+				.preview-avatar(v-if="showCameraPlaceholder")
 					.mdi.mdi-account-circle
 					span {{ displayName }}
 				.preview-overlay
-					.cam-off-label(v-if="!cameraOn")
-						.mdi.mdi-video-off
-						span Camera is off
+					.preview-status-label(v-if="showCameraPlaceholder")
+						.mdi(:class="cameraOn ? 'mdi-video-off-outline' : 'mdi-video-off'")
+						span {{ cameraPlaceholderText }}
 			.preview-controls
 				button.preview-btn(type="button", :class="{ off: !micOn }", :aria-pressed="micOn ? 'true' : 'false'", :title="micOn ? 'Mute microphone' : 'Unmute microphone'", @click="toggleMic", :id="'prejoin-mic-btn'")
 					.mdi(:class="micOn ? 'mdi-microphone' : 'mdi-microphone-off'")
@@ -23,8 +23,6 @@
 
 		.join-panel
 			.room-info
-				.room-icon
-					.mdi.mdi-video-conference
 				h2.room-name {{ roomName }}
 				p.room-label Ready to join?
 
@@ -99,6 +97,12 @@ export default {
 		...mapState(['user']),
 		displayName() {
 			return this.user?.profile?.display_name || 'You'
+		},
+		showCameraPlaceholder() {
+			return !this.cameraOn || !this.hasCameraStream
+		},
+		cameraPlaceholderText() {
+			return this.cameraOn ? 'Camera unavailable' : 'Camera is off'
 		},
 	},
 	async mounted() {
@@ -328,7 +332,7 @@ export default {
 		inset: 0
 		pointer-events: none
 
-	.cam-off-label
+	.preview-status-label
 		position: absolute
 		bottom: 16px
 		left: 50%
@@ -419,19 +423,6 @@ export default {
 		flex-direction: column
 		align-items: center
 		gap: 12px
-
-	.room-icon
-		width: 64px
-		height: 64px
-		border-radius: 8px
-		background: #20334b
-		border: 1px solid #31547d
-		display: flex
-		align-items: center
-		justify-content: center
-		.mdi
-			font-size: 32px
-			color: #9cc9ff
 
 	.room-name
 		color: var(--prejoin-text)
