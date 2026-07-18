@@ -111,7 +111,7 @@ class TestAdminPages:
 
 
 @pytest.fixture
-def admin_client(staff_client, staff_user):
+def admin_client(db, staff_client, staff_user):
     """Staff client with an active sudo/staff session for admin views."""
     from eventyay.base.models.auth import StaffSession
 
