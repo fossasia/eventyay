@@ -2,7 +2,6 @@ import datetime
 import json
 
 import dateutil.rrule
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import (
     Count,
     Exists,
@@ -18,7 +17,7 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import (
     Checkin,
     CheckinList,
-    LogEntry,
+    Event,
     Order,
     OrderPayment,
     OrderPosition,
@@ -120,13 +119,17 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
 
             top_qs = list(
                 Order.objects.filter(event_id__in=event_ids)
-                .values('event', 'event__name', 'event__slug', 'event__currency')
+                .values('event')
                 .annotate(
                     total_orders=Count('pk'),
                     paid_orders=Count('pk', filter=Q(status=Order.STATUS_PAID)),
                 )
                 .order_by('-total_orders')[:10]
             )
+            top_event_ids = [row['event'] for row in top_qs]
+            events_by_id = {
+                e.pk: e for e in Event.objects.filter(pk__in=top_event_ids)
+            }
 
             rev_qs = (
                 OrderPayment.objects.filter(
@@ -139,17 +142,15 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             event_revenue = {row['order__event_id']: row['total'] for row in rev_qs}
 
         orders_over_time = []
-        if ordered_by_day or paid_by_day:
-            all_keys = set(ordered_by_day.keys()) | set(paid_by_day.keys())
-            start = min(all_keys)
-            end = max(all_keys)
-            for d in dateutil.rrule.rrule(dateutil.rrule.DAILY, dtstart=start, until=end):
-                d = d.date()
-                orders_over_time.append({
-                    'x': d.strftime('%Y-%m-%d'),
-                    'ordered': ordered_by_day.get(d, 0),
-                    'paid': paid_by_day.get(d, 0)
-                })
+        start_date = timezone.localdate(since, timezone=tz)
+        end_date = timezone.localdate(timezone=tz)
+        for d in dateutil.rrule.rrule(dateutil.rrule.DAILY, dtstart=start_date, until=end_date):
+            d = d.date()
+            orders_over_time.append({
+                'x': d.strftime('%Y-%m-%d'),
+                'ordered': ordered_by_day.get(d, 0),
+                'paid': paid_by_day.get(d, 0)
+            })
 
         label_map = dict(Order.STATUS_CHOICE)
         orders_by_status = [
@@ -160,31 +161,27 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
 
         revenue_over_time = []
         sorted_currencies = sorted(currencies)
-        if rev_by_day:
-            cumulative = {curr: 0.0 for curr in sorted_currencies}
-            for d in dateutil.rrule.rrule(
-                dateutil.rrule.DAILY,
-                dtstart=min(rev_by_day.keys()),
-                until=max(rev_by_day.keys()),
-            ):
-                d = d.date()
-                day_data = {'x': d.strftime('%Y-%m-%d')}
-                day_revs = rev_by_day.get(d, {})
-                for curr in sorted_currencies:
-                    cumulative[curr] += day_revs.get(curr, 0.0)
-                    day_data[curr] = round(cumulative[curr], 2)
-                revenue_over_time.append(day_data)
+        cumulative = {curr: 0.0 for curr in sorted_currencies}
+        for d in dateutil.rrule.rrule(dateutil.rrule.DAILY, dtstart=start_date, until=end_date):
+            d = d.date()
+            day_data = {'x': d.strftime('%Y-%m-%d')}
+            day_revs = rev_by_day.get(d, {})
+            for curr in sorted_currencies:
+                cumulative[curr] += day_revs.get(curr, 0.0)
+                day_data[curr] = round(cumulative[curr], 2)
+            revenue_over_time.append(day_data)
 
         top_events = [
             {
-                'name': str(row['event__name']),
-                'slug': row['event__slug'],
+                'name': str(events_by_id[row['event']].name),
+                'slug': events_by_id[row['event']].slug,
                 'total_orders': row['total_orders'],
                 'paid_orders': row['paid_orders'],
                 'gross_revenue': float(event_revenue.get(row['event'], 0) or 0),
-                'currency': row['event__currency'],
+                'currency': events_by_id[row['event']].currency,
             }
             for row in top_qs
+            if row['event'] in events_by_id
         ]
 
         return {
@@ -193,7 +190,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             'revenue_over_time_json': json.dumps(revenue_over_time),
             'currencies_json': json.dumps(sorted_currencies),
             'top_events': top_events,
-            'has_orders': bool(orders_over_time or orders_by_status),
+            'has_orders': bool(status_rows),
         }
 
     def _get_proposals_data(self):
@@ -224,37 +221,23 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                     'pending_proposal_events': [],
                 }
 
-            content_type = ContentType.objects.get_for_model(Submission)
-            talk_ids = list(
-                Submission.objects.filter(event_id__in=event_ids)
-                .exclude(state=SubmissionStates.DELETED)
-                .values_list('id', flat=True)
-            )
-
-            proposals_over_time = []
-            if talk_ids:
-                timeline_qs = list(
-                    LogEntry.objects.filter(
-                        event_id__in=event_ids,
-                        action_type='eventyay.submission.create',
-                        content_type=content_type,
-                        object_id__in=talk_ids,
-                        datetime__gte=since,
-                    )
-                    .annotate(day=TruncDate('datetime', tzinfo=tz))
-                    .values('day')
-                    .annotate(cnt=Count('pk'))
-                    .order_by('day')
+            timeline_qs = list(
+                Submission.objects.filter(
+                    event_id__in=event_ids,
+                    created__gte=since,
                 )
-                by_day = {row['day']: row['cnt'] for row in timeline_qs}
-                if by_day:
-                    for d in dateutil.rrule.rrule(
-                        dateutil.rrule.DAILY,
-                        dtstart=min(by_day.keys()),
-                        until=max(by_day.keys()),
-                    ):
-                        d = d.date()
-                        proposals_over_time.append({'x': d.strftime('%Y-%m-%d'), 'y': by_day.get(d, 0)})
+                .annotate(day=TruncDate('created', tzinfo=tz))
+                .values('day')
+                .annotate(cnt=Count('pk'))
+                .order_by('day')
+            )
+            by_day = {row['day']: row['cnt'] for row in timeline_qs}
+            proposals_over_time = []
+            start_date = timezone.localdate(since, timezone=tz)
+            end_date = timezone.localdate(timezone=tz)
+            for d in dateutil.rrule.rrule(dateutil.rrule.DAILY, dtstart=start_date, until=end_date):
+                d = d.date()
+                proposals_over_time.append({'x': d.strftime('%Y-%m-%d'), 'y': by_day.get(d, 0)})
 
             pending_qs = list(
                 Submission.objects.filter(
@@ -324,18 +307,24 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                         )
                     )
                 )
-                .values('order__event_id', 'order__event__name')
+                .values('order__event_id')
                 .annotate(
                     total=Count('pk'),
                     checked_in=Count('pk', filter=Q(checkedin=True))
                 )
             )
+            checkin_event_ids = [row['order__event_id'] for row in stats_qs]
+            events_by_id = {
+                e.pk: e for e in Event.objects.filter(pk__in=checkin_event_ids)
+            }
             for row in stats_qs:
-                event_stats[row['order__event_id']] = {
-                    'event': str(row['order__event__name']),
-                    'total': row['total'],
-                    'checked_in': row['checked_in']
-                }
+                event_id = row['order__event_id']
+                if event_id in events_by_id:
+                    event_stats[event_id] = {
+                        'event': str(events_by_id[event_id].name),
+                        'total': row['total'],
+                        'checked_in': row['checked_in']
+                    }
 
             timeline_qs = list(
                 Checkin.objects.filter(
@@ -356,14 +345,11 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
 
         by_day = {row['day']: row['cnt'] for row in timeline_qs}
         checkins_over_time = []
-        if by_day:
-            for d in dateutil.rrule.rrule(
-                dateutil.rrule.DAILY,
-                dtstart=min(by_day.keys()),
-                until=max(by_day.keys()),
-            ):
-                d = d.date()
-                checkins_over_time.append({'x': d.strftime('%Y-%m-%d'), 'y': by_day.get(d, 0)})
+        start_date = timezone.localdate(since, timezone=tz)
+        end_date = timezone.localdate(timezone=tz)
+        for d in dateutil.rrule.rrule(dateutil.rrule.DAILY, dtstart=start_date, until=end_date):
+            d = d.date()
+            checkins_over_time.append({'x': d.strftime('%Y-%m-%d'), 'y': by_day.get(d, 0)})
 
         return {
             'show_checkins': True,
