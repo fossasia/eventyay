@@ -3,8 +3,9 @@ import datetime
 import pytest
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Event, Order, OrderPosition, Organizer, Product, Voucher
-from eventyay.base.pdf import Renderer
+from eventyay.base.models import Event, Order, OrderPosition, Organizer, Product, Question, QuestionAnswer, Voucher
+from eventyay.base.pdf import Renderer, extract_layout_text_placeholders
+from eventyay.plugins.badges.exporters import BadgeRenderer
 from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
 from eventyay.plugins.badges.utils import (
     get_badge_bundle_option_choices,
@@ -163,3 +164,67 @@ def test_fit_fontsize_to_width_multiline_uses_longest_line():
     )
 
     assert fitted == 12.0
+
+
+def test_extract_layout_text_placeholders():
+    assert extract_layout_text_placeholders('{question_1} {question_2}') == ['question_1', 'question_2']
+    assert extract_layout_text_placeholders('Plain text') == []
+
+
+@pytest.mark.django_db
+def test_renderer_other_text_resolves_question_placeholders(badge_event):
+    event, position, product, layout = badge_event
+    q1 = Question.objects.create(event=event, question='First name', type='S')
+    q2 = Question.objects.create(event=event, question='Last name', type='S')
+    QuestionAnswer.objects.create(orderposition=position, question=q1, answer='Jane')
+    QuestionAnswer.objects.create(orderposition=position, question=q2, answer='Doe')
+
+    renderer = BadgeRenderer(event, [], None)
+    result = renderer._get_text_content(
+        position,
+        position.order,
+        {'content': 'other', 'text': '{question:First name} {question:Last name}'},
+    )
+
+    assert result == 'Jane Doe'
+
+
+@pytest.mark.django_db
+def test_badge_renderer_other_text_hides_placeholder_fields(badge_event):
+    event, position, product, layout = badge_event
+    q1 = Question.objects.create(event=event, question='First name', type='S')
+    q2 = Question.objects.create(event=event, question='Last name', type='S')
+    QuestionAnswer.objects.create(orderposition=position, question=q1, answer='Jane')
+    QuestionAnswer.objects.create(orderposition=position, question=q2, answer='Doe')
+    position.meta_info_data = {'question_form_data': {'badge_hidden_fields': [f'question_{q1.pk}']}}
+    position.save(update_fields=['meta_info_data'])
+
+    renderer = BadgeRenderer(
+        event,
+        [],
+        None,
+        ask_user_fields=[f'question_{q1.pk}', f'question_{q2.pk}'],
+    )
+    result = renderer._get_text_content(
+        position,
+        position.order,
+        {'content': 'other', 'text': '{question:First name} {question:Last name}'},
+    )
+
+    assert result == ' Doe'
+
+
+@pytest.mark.django_db
+def test_renderer_other_text_still_supports_question_id_placeholders(badge_event):
+    event, position, product, layout = badge_event
+    q1 = Question.objects.create(event=event, question='First name', type='S')
+    QuestionAnswer.objects.create(orderposition=position, question=q1, answer='Jane')
+
+    renderer = BadgeRenderer(event, [], None)
+    result = renderer._get_text_content(
+        position,
+        position.order,
+        {'content': 'other', 'text': f'{{question_{q1.pk}}}'},
+    )
+
+    assert result == 'Jane'

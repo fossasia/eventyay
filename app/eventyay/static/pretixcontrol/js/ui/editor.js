@@ -357,7 +357,7 @@ var editor = {
                     downward: o.downward || false,
                     autofit_width: editor._parse_autofit_width(o.autofit_width),
                     content: o.content,
-                    text: o.text,
+                    text: o.content === "other" ? (o.placeholder_text || o.text) : o.text,
                     rotation: o.angle,
                     align: o.textAlign,
                 });
@@ -427,7 +427,8 @@ var editor = {
                 o.rotate(0);
             }
             if (o.content === "other") {
-                o.set('text', d.text);
+                o.placeholder_text = d.text;
+                o.set('text', editor._resolve_other_text_sample(d.text));
             } else if (o.content === "other_i18n") {
                 o.text_i18n = d.text_i18n
                 o.set('text', d.text_i18n[Object.keys(d.text_i18n)[0]]);
@@ -511,6 +512,36 @@ var editor = {
         return fallbackLabel;
     },
 
+    _resolve_layout_placeholder_sample: function (key) {
+        key = $.trim(key);
+        if (!key) {
+            return '';
+        }
+        if (key.toLowerCase().indexOf('question:') === 0) {
+            var label = $.trim(key.substr(9)).toLowerCase();
+            var match = $('#toolbox-content option').filter(function () {
+                var optionLabel = $.trim($(this).text() || '').toLowerCase();
+                if (optionLabel.indexOf('question:') !== 0) {
+                    return false;
+                }
+                return $.trim(optionLabel.substr(9)) === label;
+            }).first();
+            return match.attr('data-sample') || '';
+        }
+        key = editor._normalize_text_content(key);
+        return editor._resolve_text_sample(key) || '';
+    },
+
+    _resolve_other_text_sample: function (text) {
+        if (!text || text.indexOf('{') === -1) {
+            return text;
+        }
+        return text.replace(/\{([^{}]+)\}/g, function (match, key) {
+            var sample = editor._resolve_layout_placeholder_sample(key);
+            return sample || match;
+        });
+    },
+
     _set_toolbox_content_value: function (content, fallbackText) {
         content = editor._normalize_text_content(content);
         $('#toolbox-content option.editor-temp-option').remove();
@@ -562,8 +593,10 @@ var editor = {
 
         o.content = $("#toolbox-content").val();
         if (o.content === "other") {
-            o.set('text', $("#toolbox-content-other").val());
+            o.placeholder_text = $("#toolbox-content-other").val();
+            o.set('text', editor._resolve_other_text_sample(o.placeholder_text));
         } else {
+            o.placeholder_text = '';
             o.set('text', editor._resolve_text_sample(o.content) || o.text || '');
         }
     },
@@ -760,7 +793,7 @@ var editor = {
                 editor._set_toolbox_content_value(o.content, o.text);
                 $("#toolbox-content-other").toggle($("#toolbox-content").val() === "other");
                 if (o.content === "other") {
-                    setVal("#toolbox-content-other", o.text);
+                    setVal("#toolbox-content-other", o.placeholder_text || o.text);
                 } else {
                     setVal("#toolbox-content-other", "");
                 }

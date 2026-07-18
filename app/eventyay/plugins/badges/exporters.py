@@ -24,6 +24,7 @@ from eventyay.base.exporters.date import build_date_filter, parse_date_input
 from eventyay.base.i18n import language
 from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
+from eventyay.base.services.export import ExportError
 from eventyay.base.services.orders import OrderError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
@@ -38,11 +39,27 @@ from eventyay.plugins.badges.utils import (
 
 from ...helpers.templatetags.jsonfield import JSONExtract
 
+SEARCHABLE_SCROLLING_CHECKBOXES = 'scrolling-multiple-choice scrolling-multiple-choice-searchable'
+
+
+def searchable_scrolling_checkbox_widget():
+    return forms.CheckboxSelectMultiple(attrs={'class': SEARCHABLE_SCROLLING_CHECKBOXES})
+
 
 class BadgeRenderer(Renderer):
     def __init__(self, event, layout, bgf, ask_user_fields=None):
         super().__init__(event, layout, bgf)
         self.ask_user_fields = {str(value) for value in (ask_user_fields or [])}
+
+    def _get_layout_hidden_fields(self, op: OrderPosition):
+        if not self.ask_user_fields:
+            return set()
+
+        hidden_fields = getattr(op, '_badge_hidden_fields_cache', None)
+        if hidden_fields is None:
+            hidden_fields = {str(value) for value in get_badge_hidden_fields(op)}
+            op._badge_hidden_fields_cache = hidden_fields
+        return {field for field in hidden_fields if field in self.ask_user_fields}
 
     def _get_text_content(self, op: OrderPosition, order: Order, o: dict, inner=False):
         content = normalize_badge_content_key(o.get('content'))
@@ -379,7 +396,7 @@ def render_badges(event, positions, opt, apply_output_pagesize=False):
                 op_renderers.append((op, renderer))
 
     if not op_renderers:
-        raise OrderError(_('None of the selected products is configured to print badges.'))
+        raise ExportError(_('None of the selected products is configured to print badges.'))
 
     badge_pdf = PdfWriter()
     badge_pdf.add_metadata(
@@ -450,7 +467,7 @@ class BadgeExporter(BaseExporter):
                     forms.ModelMultipleChoiceField(
                         queryset=exclude_explicit_no_badge(self.event.products, BadgeProduct, 'product'),
                         label=_('Limit to products'),
-                        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+                        widget=searchable_scrolling_checkbox_widget(),
                         initial=self.event.products.filter(admission=True),
                     ),
                 ),
@@ -464,7 +481,7 @@ class BadgeExporter(BaseExporter):
                         ),
                         label=_('Limit to vouchers'),
                         required=False,
-                        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+                        widget=searchable_scrolling_checkbox_widget(),
                     ),
                 ),
                 (
@@ -579,6 +596,9 @@ class BadgeExporter(BaseExporter):
                 .annotate(resolved_name_part=JSONExtract('resolved_name', part))
                 .order_by('resolved_name_part')
             )
+
+        if not qs.exists():
+            return None
 
         outbuffer = render_pdf(self.event, qs, OPTIONS[form_data.get('rendering', 'one')])
         return 'badges.pdf', 'application/pdf', outbuffer.read()
