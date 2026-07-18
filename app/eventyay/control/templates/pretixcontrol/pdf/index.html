@@ -386,7 +386,9 @@
                             <label>{% trans "Text content" %}</label><br>
                             <select class="input-block-level form-control" id="toolbox-content">
                                 {% for varname, var in variables.items %}
+                                    {% if var.canonical_key|default:varname == varname %}
                                     <option data-sample="{{ var.editor_sample }}" value="{{ varname }}">{{ var.label }}</option>
+                                    {% endif %}
                                 {% endfor %}
                                 {% for p in request.organizer.meta_properties.all %}
                                     <option value="meta:{{ p.name }}">
