@@ -24,6 +24,7 @@ from eventyay.base.exporters.date import build_date_filter, parse_date_input
 from eventyay.base.i18n import language
 from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
+from eventyay.base.services.export import ExportError
 from eventyay.base.services.orders import OrderError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
@@ -395,7 +396,7 @@ def render_badges(event, positions, opt, apply_output_pagesize=False):
                 op_renderers.append((op, renderer))
 
     if not op_renderers:
-        raise OrderError(_('None of the selected products is configured to print badges.'))
+        raise ExportError(_('None of the selected products is configured to print badges.'))
 
     badge_pdf = PdfWriter()
     badge_pdf.add_metadata(
@@ -595,6 +596,9 @@ class BadgeExporter(BaseExporter):
                 .annotate(resolved_name_part=JSONExtract('resolved_name', part))
                 .order_by('resolved_name_part')
             )
+
+        if not qs.exists():
+            return None
 
         outbuffer = render_pdf(self.event, qs, OPTIONS[form_data.get('rendering', 'one')])
         return 'badges.pdf', 'application/pdf', outbuffer.read()
