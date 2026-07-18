@@ -361,6 +361,9 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
             headers.append(TableTextRotate(pgettext('tablehead', 'paid')))
 
         dynamic_cols = [c for c in columns if c not in ['requires_attention', 'status']]
+        if 'timestamp' in dynamic_cols:
+            dynamic_cols.remove('timestamp')
+            dynamic_cols.insert(0, 'timestamp')
         
         weights = {
             'order_code': 0.1,
@@ -565,7 +568,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
                 elif c == 'seat':
                     row.append(Paragraph(str(op.seat) if op.seat else '', rowstyle))
                 elif c == 'address':
-                    addr = [op.street, op.zipcode, op.city, op.country, op.state]
+                    addr = [op.street, op.zipcode, op.city, str(op.country) if op.country else '', op.state]
                     addr = [x for x in addr if x]
                     row.append(Paragraph('<br/>'.join(addr), rowstyle))
                 else:
@@ -760,7 +763,7 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
                 op.street or '',
                 op.zipcode or '',
                 op.city or '',
-                op.country if op.country else '',
+                str(op.country) if op.country else '',
                 op.state or '',
             ]
             
