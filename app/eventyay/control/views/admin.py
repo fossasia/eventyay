@@ -83,8 +83,8 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             banned=Count('id', filter=Q(moderation_state=User.ModerationState.BANNED)),
             is_spam=Count('id', filter=Q(is_spam=True)),
             recently_active=Count('id', filter=Q(last_login__gte=n - timedelta(days=30), last_login__isnull=False)),
-            deleted=Count('id', filter=Q(Q(deleted=True) | Q(email__endswith='@disabled.eventyay.com'))),
-            staff=Count('id', filter=Q(Q(is_staff=True) | Q(is_administrator=True))),
+            deleted=Count('id', filter=Q(deleted=True) | Q(email__endswith='@disabled.eventyay.com')),
+            staff=Count('id', filter=Q(is_staff=True) | Q(is_administrator=True)),
         )
         users_verified = EmailAddress.objects.filter(verified=True, primary=True).values('user_id').distinct().count()
 
@@ -172,7 +172,9 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 .order_by('-pk')[:20]
             )
 
-            payment_enabled_event_ids = set(events_with_payment)
+            payment_enabled_event_ids = set(
+                events_with_payment.filter(object_id__in=[c.pk for c in candidates])
+            )
             events_pending_setup_list = []
             for event in candidates:
                 products = list(event.products.all())
