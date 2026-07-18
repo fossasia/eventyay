@@ -57,6 +57,8 @@ def export(self, event: Event, fileid: str, provider: str, form_data: Dict[str, 
                         'Your data table is too big for a PDF page. Please reduce the amount of data you are exporting.'
                     )
                     raise ExportError(msg) from e
+                except ExportError:
+                    raise
                 except Exception as e:
                     logger.exception(f'Error during export with provider {provider}.')
                     # Provide specific error message based on exception type
@@ -129,6 +131,8 @@ def multiexport(
                         'Your data table is too big for a PDF page. Please reduce the amount of data you are exporting.'
                     )
                     raise ExportError(msg) from e
+                except ExportError:
+                    raise
                 except Exception as e:
                     logger.exception(f'Error during multi-event export with provider {provider}.')
                     error_msg = str(e) if str(e) else type(e).__name__
