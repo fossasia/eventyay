@@ -25,7 +25,7 @@ def badges_create_pdf(event: Event, fileid: int, positions: list[int]) -> int:
     qs = (
         OrderPosition.objects.filter(id__in=positions)
         .select_related(
-            'order', 'order__event', 'order__invoice_address', 'product', 'variation', 'addon_to', 'subevent', 'seat'
+            'order', 'order__event', 'order__invoice_address', 'product', 'variation', 'addon_to', 'subevent', 'seat', 'voucher'
         )
         .prefetch_related('answers', 'answers__question', 'answers__options')
     )
