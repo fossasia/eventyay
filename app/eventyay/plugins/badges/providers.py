@@ -33,7 +33,7 @@ class BadgeOutputProvider(BaseTicketOutput):
             from .exporters import OPTIONS, render_pdf
 
             positions = list(
-                order.positions.select_related('product', 'variation', 'addon_to', 'subevent', 'seat').prefetch_related(
+                order.positions.select_related('product', 'variation', 'addon_to', 'subevent', 'seat', 'voucher').prefetch_related(
                     'answers', 'answers__question', 'answers__options'
                 )
             )

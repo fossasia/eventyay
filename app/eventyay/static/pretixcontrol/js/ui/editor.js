@@ -84,10 +84,14 @@ fabric.Textarea = fabric.util.createClass(fabric.Textbox, {
 
         this.callSuper('initialize', text, options);
         this.set('content', options.content || '');
+        this.autofit_width = editor._parse_autofit_width(options.autofit_width);
+        if (typeof options.maxFontPt === 'number' && !isNaN(options.maxFontPt)) {
+            this.maxFontPt = options.maxFontPt;
+        }
     },
 
     toObject: function(propertiesToInclude) {
-        return this.callSuper('toObject', ['content'].concat(propertiesToInclude));
+        return this.callSuper('toObject', ['content', 'autofit_width', 'maxFontPt'].concat(propertiesToInclude));
     }
 });
 fabric.Textarea.fromObject = function (object, callback, forceAsync) {
@@ -122,6 +126,7 @@ var editor = {
     _fabric_loaded: false,
     _last_active_object: null,
     _PAGE_SIZE_TOLERANCE: 0.05,
+    _AUTOFIT_MIN_PT: 4,
 
     _px2mm: function (v) {
         return v / editor.pdf_scale / 72 * editor.pdf_page.userUnit * 25.4;
@@ -137,6 +142,74 @@ var editor = {
 
     _pt2px: function (v) {
         return v * editor.pdf_scale / editor.pdf_page.userUnit;
+    },
+
+    _get_text_max_font_pt: function (o) {
+        if (typeof o.maxFontPt === 'number' && !isNaN(o.maxFontPt)) {
+            return o.maxFontPt;
+        }
+        return editor._px2pt(o.fontSize);
+    },
+
+    _parse_autofit_width: function (value) {
+        return value === true || value === 'true' || value === 1 || value === '1';
+    },
+
+    _compute_autofit_pt: function (o, maxPt, widthMm) {
+        if (!o.autofit_width) {
+            return maxPt;
+        }
+
+        var text = o.text || '';
+        if (!text) {
+            return maxPt;
+        }
+
+        maxPt = typeof maxPt === 'number' && !isNaN(maxPt) ? maxPt : editor._get_text_max_font_pt(o);
+        widthMm = typeof widthMm === 'number' && !isNaN(widthMm) ? widthMm : editor._px2mm(o.width);
+
+        var lines = text.split(/\r\n|\r|\n/).filter(function (line) {
+            return line.length > 0;
+        });
+        if (!lines.length) {
+            return maxPt;
+        }
+
+        var widthPx = editor._mm2px(widthMm);
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var fontFamily = o.fontFamily || 'Open Sans';
+        var fontWeight = o.fontWeight === 'bold' ? 'bold ' : '';
+        var fontStyle = o.fontStyle === 'italic' ? 'italic ' : '';
+
+        for (var pt = maxPt; pt >= editor._AUTOFIT_MIN_PT; pt -= 0.5) {
+            ctx.font = fontStyle + fontWeight + editor._pt2px(pt) + 'px ' + fontFamily;
+            var fits = true;
+            for (var i = 0; i < lines.length; i++) {
+                var parts = lines[i].trim() ? lines[i].trim().split(/\s+/) : [];
+                for (var j = 0; j < parts.length; j++) {
+                    if (ctx.measureText(parts[j]).width > widthPx) {
+                        fits = false;
+                        break;
+                    }
+                }
+                if (!fits) {
+                    break;
+                }
+            }
+            if (fits) {
+                return pt;
+            }
+        }
+        return editor._AUTOFIT_MIN_PT;
+    },
+
+    _apply_autofit_fontsize: function (o, maxPt, widthMm) {
+        maxPt = typeof maxPt === 'number' && !isNaN(maxPt) ? maxPt : editor._get_text_max_font_pt(o);
+        o.maxFontPt = maxPt;
+        o.set('fontSize', editor._pt2px(
+            o.autofit_width ? editor._compute_autofit_pt(o, maxPt, widthMm) : maxPt
+        ));
     },
 
     _csrf_token: function () {
@@ -274,7 +347,7 @@ var editor = {
                     locale: $("#pdf-info-locale").val(),
                     left: editor._px2mm(left).toFixed(2),
                     bottom: editor._px2mm(bottom).toFixed(2),
-                    fontsize: editor._px2pt(o.fontSize).toFixed(1),
+                    fontsize: editor._get_text_max_font_pt(o).toFixed(1),
                     color: col,
                     //lineheight: o.lineHeight,
                     fontfamily: o.fontFamily,
@@ -282,6 +355,7 @@ var editor = {
                     italic: o.fontStyle === 'italic',
                     width: editor._px2mm(o.width).toFixed(2),
                     downward: o.downward || false,
+                    autofit_width: editor._parse_autofit_width(o.autofit_width),
                     content: o.content,
                     text: o.text,
                     rotation: o.angle,
@@ -336,6 +410,8 @@ var editor = {
         } else if (d.type === "textarea" || d.type === "text") {
             o = editor._add_text();
             o.set('fill', 'rgb(' + d.color[0] + ',' + d.color[1] + ',' + d.color[2] + ')');
+            o.maxFontPt = parseFloat(d.fontsize);
+            o.autofit_width = editor._parse_autofit_width(d.autofit_width);
             o.set('fontSize', editor._pt2px(d.fontsize));
             o.set('lineHeight', d.lineheight || 1);
             o.set('fontFamily', d.fontfamily);
@@ -362,6 +438,7 @@ var editor = {
             }
             var widthVal = parseFloat(d.width);
             o.set('width', editor._mm2px(isNaN(widthVal) ? 50 : widthVal));
+            editor._apply_autofit_fontsize(o, o.maxFontPt, widthVal);
             if (d.locale) {
                 // The data format allows to set the locale per text field but we currently only expose a global field
                 $("#pdf-info-locale").val(d.locale);
@@ -498,6 +575,7 @@ var editor = {
         }
 
         editor._apply_text_content_to_object(o);
+        editor._apply_autofit_fontsize(o);
         o.setCoords();
         editor.fabric.renderAll();
         return true;
@@ -626,6 +704,7 @@ var editor = {
     _update_toolbox_values: function () {
         var o = editor._get_toolbox_target_object(true);
         if (!o) {
+            $("#toolbox-autofit-width").prop('checked', false);
             return;
         }
         editor._toolbox_update_in_progress = true;
@@ -663,12 +742,13 @@ var editor = {
                 $colorInput.colorpicker('setValue', hexColor);
             }
             $colorInput.closest('.colorpicker-preview-group').find('.colorpicker-preview').css('background-color', hexColor);
-            setVal("#toolbox-fontsize", editor._px2pt(o.fontSize).toFixed(1));
+            setVal("#toolbox-fontsize", editor._get_text_max_font_pt(o).toFixed(1));
             //$("#toolbox-lineheight").val(o.lineHeight);
             setVal("#toolbox-fontfamily", o.fontFamily);
             $("#toolbox").find("button[data-action=bold]").toggleClass('active', o.fontWeight === 'bold');
             $("#toolbox").find("button[data-action=italic]").toggleClass('active', o.fontStyle === 'italic');
             $("#toolbox").find("button[data-action=downward]").toggleClass('active', o.downward || false);
+            $("#toolbox-autofit-width").prop('checked', editor._parse_autofit_width(o.autofit_width));
             $("#toolbox").find("button[data-action=left]").toggleClass('active', o.textAlign === 'left');
             $("#toolbox").find("button[data-action=center]").toggleClass('active', o.textAlign === 'center');
             $("#toolbox").find("button[data-action=right]").toggleClass('active', o.textAlign === 'right');
@@ -743,11 +823,15 @@ var editor = {
             }
         } else if (o.type === "textarea" || o.type === "text") {
             o.set('fill', $("#toolbox-col").val());
-            o.set('fontSize', editor._pt2px($("#toolbox-fontsize").val()));
+            var maxFontPt = parseFloat($("#toolbox-fontsize").val());
+            if (!isNaN(maxFontPt)) {
+                o.maxFontPt = maxFontPt;
+            }
             o.set('lineHeight', $("#toolbox-lineheight").val() || 1);
             o.set('fontFamily', $("#toolbox-fontfamily").val());
             o.set('fontWeight', $("#toolbox").find("button[data-action=bold]").is('.active') ? 'bold' : 'normal');
             o.set('fontStyle', $("#toolbox").find("button[data-action=italic]").is('.active') ? 'italic' : 'normal');
+            o.autofit_width = $("#toolbox-autofit-width").prop('checked');
             var align = $("#toolbox-align").find(".active").attr("data-action");
             if (align) {
                 o.set('textAlign', align);
@@ -768,6 +852,7 @@ var editor = {
                 o.dirty = true;
             }
             editor._apply_text_content_to_object(o);
+            editor._apply_autofit_fontsize(o, o.maxFontPt, w);
         }
 
         o.setCoords();
@@ -1284,7 +1369,8 @@ var editor = {
 
         $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text]").bind('change keydown keyup' +
             ' input', editor._update_values_from_toolbox);
-        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio]").bind('change', editor._create_savepoint);
+        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio], #toolbox-autofit-width").bind('change', editor._create_savepoint);
+        $("#toolbox-autofit-width").bind('change', editor._update_values_from_toolbox);
         $("#toolbox label.btn").bind('click change', editor._update_values_from_toolbox);
         $("#toolbox select:not(#toolbox-content)").bind('change', editor._update_values_from_toolbox);
         $("#toolbox select:not(#toolbox-content)").bind('change', editor._create_savepoint);

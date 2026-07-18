@@ -1,10 +1,14 @@
 import json
+import logging
 
+from django.db.models import Exists, OuterRef
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.pdf import get_variables
 
-from .models import BadgeLayout, BadgeProduct
+from .models import BadgeLayout, BadgeProduct, BadgeVoucher
+
+logger = logging.getLogger(__name__)
 
 
 BADGE_HIDDEN_FIELDS_KEY = 'badge_hidden_fields'
@@ -25,7 +29,7 @@ def get_badge_layout_version(event):
 
 
 def clear_badge_layout_cache(event):
-    for attr in ('_badge_layout_assignment_map', '_default_badge_layout', '_cached_renderermap'):
+    for attr in ('_badge_layout_assignment_map', '_badge_voucher_assignment_map', '_default_badge_layout'):
         if hasattr(event, attr):
             delattr(event, attr)
 
@@ -44,42 +48,63 @@ def normalize_badge_content_key(content):
     return 'event_name' if content == 'item' else content
 
 
-def get_badge_layout_assignment_map(event):
+def get_badge_layout_assignment_maps(event):
     if hasattr(event, '_badge_layout_assignment_map'):
-        return event._badge_layout_assignment_map, event._default_badge_layout
+        return (
+            event._badge_layout_assignment_map,
+            event._badge_voucher_assignment_map,
+            event._default_badge_layout,
+        )
 
-    assignment_map = {
+    product_map = {
         assignment.product_id: assignment.layout
         for assignment in BadgeProduct.objects.select_related('layout').filter(product__event=event)
+    }
+    voucher_map = {
+        assignment.voucher_id: assignment.layout
+        for assignment in BadgeVoucher.objects.select_related('layout').filter(voucher__event=event)
     }
     try:
         default_layout = event.badge_layouts.get(default=True)
     except BadgeLayout.DoesNotExist:
         default_layout = None
 
-    event._badge_layout_assignment_map = assignment_map
+    event._badge_layout_assignment_map = product_map
+    event._badge_voucher_assignment_map = voucher_map
     event._default_badge_layout = default_layout
-    return assignment_map, default_layout
-
-
-def product_has_badge_layout_assigned(event, product):
-    assignment_map, _ = get_badge_layout_assignment_map(event)
-    product_id = getattr(product, 'pk', product)
-    if product_id not in assignment_map:
-        return False
-    return assignment_map[product_id] is not None
-
-
-def get_badge_layout_for_product(event, product):
-    assignment_map, default_layout = get_badge_layout_assignment_map(event)
-    product_id = getattr(product, 'pk', product)
-    if product_id in assignment_map:
-        return assignment_map[product_id]
-    return default_layout
+    return product_map, voucher_map, default_layout
 
 
 def get_badge_layout_for_position(event, position):
-    return get_badge_layout_for_product(event, position.product_id)
+    product_map, voucher_map, default_layout = get_badge_layout_assignment_maps(event)
+
+    if position.voucher_id and position.voucher_id in voucher_map:
+        return voucher_map[position.voucher_id]
+
+    if position.product_id in product_map:
+        return product_map[position.product_id]
+    return default_layout
+
+
+def position_has_printable_badge(event, position):
+    return get_badge_layout_for_position(event, position) is not None
+
+
+def position_has_explicit_badge_assignment(event, position):
+    product_map, voucher_map, _default_layout = get_badge_layout_assignment_maps(event)
+    if position.voucher_id and position.voucher_id in voucher_map:
+        return voucher_map[position.voucher_id] is not None
+    if position.product_id in product_map:
+        return product_map[position.product_id] is not None
+    return False
+
+
+def exclude_explicit_no_badge(qs, assignment_model, fk_lookup):
+    return qs.annotate(
+        no_badging=Exists(
+            assignment_model.objects.filter(**{fk_lookup: OuterRef('pk'), 'layout__isnull': True})
+        )
+    ).exclude(no_badging=True)
 
 
 def get_badge_hidden_fields(position):
@@ -180,7 +205,7 @@ def get_badge_bundle_option_choices(event, position):
     seen_keys = set()
     choices = []
     for bundle_position in get_badge_bundle_positions(position):
-        if not product_has_badge_layout_assigned(event, bundle_position.product_id):
+        if not position_has_explicit_badge_assignment(event, bundle_position):
             continue
 
         layout = get_badge_layout_for_position(event, bundle_position)
@@ -215,6 +240,31 @@ def get_badge_visible_field_labels(event, position, hidden_fields=None):
         for field in get_badge_customizable_fields(event, layout)
         if field['key'] in ask_user_keys and field['key'] not in hidden_fields
     ]
+
+
+def get_badge_visible_field_values(event, position, hidden_fields=None):
+    layout = get_badge_layout_for_position(event, position)
+    if not layout or not layout.allow_customization:
+        return []
+
+    ask_user_keys = set(layout.ask_user_fields_data)
+    hidden_fields = {
+        str(value) for value in (hidden_fields if hidden_fields is not None else get_badge_hidden_fields(position))
+    }
+    
+    variables = get_variables(event)
+    
+    values = []
+    for field in get_badge_customizable_fields(event, layout):
+        if field['key'] in ask_user_keys and field['key'] not in hidden_fields:
+            if field['key'] in variables:
+                try:
+                    val = variables[field['key']]['evaluate'](position, position.order, event)
+                    if val:
+                        values.append(str(val))
+                except (KeyError, ValueError, AttributeError, TypeError):
+                    logger.exception('Failed to evaluate badge field')
+    return values
 
 
 def _badge_field_fallback_label(content):
