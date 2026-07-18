@@ -2028,7 +2028,8 @@ Your {event} team"""
     ),
     'header_background_color': hex_color_field_config(_('Header background color')),
     'header_text_color': hex_color_field_config(_('Header text color')),
-    'navigation_text_color': hex_color_field_config(_('Navigation text color')),
+    'navigation_text_color': hex_color_field_config(_('Menu text color')),
+    'menu_text_scroll_over_color': hex_color_field_config(_('Menu text hover color')),
     'theme_color_success': hex_color_field_config(
         _('Accent color for success'),
         default='#50a167',
@@ -2046,6 +2047,20 @@ Your {event} team"""
     ),
     'hover_button_color': hex_color_field_config(
         _('Scroll-over color'),
+        default='#2185d0',
+        widget_class='colorpickerfield no-contrast',
+    ),
+    'video_navigation_background_color': hex_color_field_config(
+        _('Video navigation background color'),
+        default='',
+        widget_class='colorpickerfield no-contrast',
+    ),
+    'video_sidebar_text_color': hex_color_field_config(
+        _('Video sidebar text color'),
+        default='#000000',
+    ),
+    'video_sidebar_hover_color': hex_color_field_config(
+        _('Video sidebar scroll-over color'),
         default='#2185d0',
         widget_class='colorpickerfield no-contrast',
     ),
@@ -2599,12 +2614,16 @@ CSS_SETTINGS = {
     'header_background_color',
     'header_text_color',
     'navigation_text_color',
+    'menu_text_scroll_over_color',
     'theme_color_success',
     'theme_color_danger',
     'primary_font',
     'theme_color_background',
     'theme_round_borders',
     'hover_button_color',
+    'video_navigation_background_color',
+    'video_sidebar_text_color',
+    'video_sidebar_hover_color',
 }
 
 TITLE_GROUP = OrderedDict(
