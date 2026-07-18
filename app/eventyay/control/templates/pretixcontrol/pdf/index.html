@@ -277,6 +277,17 @@
                     </div>
                     <div class="row control-group text">
                         <div class="col-sm-12">
+                            <div class="checkbox">
+                                <label for="toolbox-autofit-width"
+                                       title="{% trans 'Shrink font size for long text so it fits within the text box width' %}">
+                                    <input type="checkbox" id="toolbox-autofit-width">
+                                    {% trans "Adapt content to container width" %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row control-group text">
+                        <div class="col-sm-12">
                             <label>{% trans "Font style" %}</label><br>
                             <div class="btn-group btn-group-justified" role="group">
                                 <div class="btn-group" role="group">
@@ -391,6 +402,11 @@
                             </select>
                             <textarea type="text" value="" class="input-block-level form-control"
                                     id="toolbox-content-other"></textarea>
+                            <p class="help-block">
+                                {% trans "You can use placeholders with curly braces. Use field names from the list above, or refer to questions by label, for example:" %}
+                                <code>{attendee_name}</code>,
+                                <code>{question:First name}</code>
+                            </p>
                         </div>
                     </div>
                 </div>

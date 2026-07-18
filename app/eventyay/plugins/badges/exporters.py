@@ -11,7 +11,6 @@ from django.conf import settings
 from django.contrib.staticfiles import finders
 from django.core.files import File
 from django.core.files.storage import default_storage
-from django.db.models import Exists, OuterRef
 from django.db.models.functions import Coalesce
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -27,21 +26,39 @@ from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
 from eventyay.base.services.orders import OrderError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
-from eventyay.plugins.badges.models import BadgeLayout, BadgeProduct
+from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
 from eventyay.plugins.badges.utils import (
     _renderer_cache,
+    exclude_explicit_no_badge,
     get_badge_hidden_fields,
+    get_badge_layout_for_position,
     get_badge_layout_version,
     normalize_badge_content_key,
 )
 
 from ...helpers.templatetags.jsonfield import JSONExtract
 
+SEARCHABLE_SCROLLING_CHECKBOXES = 'scrolling-multiple-choice scrolling-multiple-choice-searchable'
+
+
+def searchable_scrolling_checkbox_widget():
+    return forms.CheckboxSelectMultiple(attrs={'class': SEARCHABLE_SCROLLING_CHECKBOXES})
+
 
 class BadgeRenderer(Renderer):
     def __init__(self, event, layout, bgf, ask_user_fields=None):
         super().__init__(event, layout, bgf)
         self.ask_user_fields = {str(value) for value in (ask_user_fields or [])}
+
+    def _get_layout_hidden_fields(self, op: OrderPosition):
+        if not self.ask_user_fields:
+            return set()
+
+        hidden_fields = getattr(op, '_badge_hidden_fields_cache', None)
+        if hidden_fields is None:
+            hidden_fields = {str(value) for value in get_badge_hidden_fields(op)}
+            op._badge_hidden_fields_cache = hidden_fields
+        return {field for field in hidden_fields if field in self.ask_user_fields}
 
     def _get_text_content(self, op: OrderPosition, order: Order, o: dict, inner=False):
         content = normalize_badge_content_key(o.get('content'))
@@ -365,24 +382,13 @@ def render_nup(input_files: list[str], num_pages: int, output_file: BinaryIO, op
 def render_badges(event, positions, opt, apply_output_pagesize=False):
     from itertools import groupby
 
-    # Resolve product→layout assignments fresh on every render so explicit "no badge"
-    # assignments (layout=None) and recent assignment changes are always respected.
-    assignment_map = {
-        assignment.product_id: assignment.layout
-        for assignment in BadgeProduct.objects.select_related('layout').filter(product__event=event)
-    }
-    try:
-        default_layout = event.badge_layouts.get(default=True)
-    except BadgeLayout.DoesNotExist:
-        default_layout = None
-
     # Fetched once per render call (not per position) to avoid a cache round-trip per
     # badge, while still guaranteeing that every render reflects the latest saved design.
     version = get_badge_layout_version(event)
 
     op_renderers = []
     for op in positions:
-        layout = assignment_map.get(op.product_id, default_layout)
+        layout = get_badge_layout_for_position(event, op)
         if layout is not None:
             renderer = _renderer(event, layout, version)
             if renderer:
@@ -458,12 +464,23 @@ class BadgeExporter(BaseExporter):
                 (
                     'products',
                     forms.ModelMultipleChoiceField(
-                        queryset=self.event.products.annotate(
-                            no_badging=Exists(BadgeProduct.objects.filter(product=OuterRef('pk'), layout__isnull=True))
-                        ).exclude(no_badging=True),
+                        queryset=exclude_explicit_no_badge(self.event.products, BadgeProduct, 'product'),
                         label=_('Limit to products'),
-                        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+                        widget=searchable_scrolling_checkbox_widget(),
                         initial=self.event.products.filter(admission=True),
+                    ),
+                ),
+                (
+                    'vouchers',
+                    forms.ModelMultipleChoiceField(
+                        queryset=exclude_explicit_no_badge(
+                            self.event.vouchers.order_by('code'),
+                            BadgeVoucher,
+                            'voucher',
+                        ),
+                        label=_('Limit to vouchers'),
+                        required=False,
+                        widget=searchable_scrolling_checkbox_widget(),
                     ),
                 ),
                 (
@@ -535,8 +552,11 @@ class BadgeExporter(BaseExporter):
         qs = (
             OrderPosition.objects.filter(order__event=self.event, product_id__in=form_data['products'])
             .prefetch_related('answers', 'answers__question', 'answers__options')
-            .select_related('order', 'order__invoice_address', 'product', 'variation', 'addon_to', 'subevent', 'seat')
+            .select_related('order', 'order__invoice_address', 'product', 'variation', 'addon_to', 'subevent', 'seat', 'voucher')
         )
+
+        if form_data.get('vouchers'):
+            qs = qs.filter(voucher_id__in=form_data['vouchers'])
 
         if not form_data.get('include_addons'):
             qs = qs.filter(addon_to__isnull=True)

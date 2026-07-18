@@ -3,9 +3,15 @@ import datetime
 import pytest
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Event, Order, OrderPosition, Organizer, Product
-from eventyay.plugins.badges.models import BadgeProduct
-from eventyay.plugins.badges.utils import get_badge_bundle_option_choices
+from eventyay.base.models import Event, Order, OrderPosition, Organizer, Product, Question, QuestionAnswer, Voucher
+from eventyay.base.pdf import Renderer, extract_layout_text_placeholders
+from eventyay.plugins.badges.exporters import BadgeRenderer
+from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
+from eventyay.plugins.badges.utils import (
+    get_badge_bundle_option_choices,
+    get_badge_layout_for_position,
+    position_has_printable_badge,
+)
 
 
 @pytest.fixture
@@ -68,3 +74,157 @@ def test_badge_options_hidden_when_product_explicitly_has_no_layout(badge_event)
     BadgeProduct.objects.create(product=product, layout=None)
 
     assert get_badge_bundle_option_choices(event, position) == []
+
+
+@pytest.mark.django_db
+def test_voucher_explicit_assignment_enables_checkout_options(badge_event):
+    event, position, product, layout = badge_event
+    voucher = Voucher.objects.create(event=event, code='VOUCHER3')
+    position.voucher = voucher
+    position.save(update_fields=['voucher'])
+    BadgeVoucher.objects.create(voucher=voucher, layout=layout)
+
+    choices = get_badge_bundle_option_choices(event, position)
+
+    assert len(choices) == 1
+    assert choices[0][0] == 'attendee_name'
+
+
+@pytest.mark.django_db
+def test_voucher_layout_overrides_product_default(badge_event):
+    event, position, product, layout = badge_event
+    voucher_layout = event.badge_layouts.create(name='Voucher layout')
+    voucher = Voucher.objects.create(event=event, code='VOUCHER1')
+    position.voucher = voucher
+    position.save(update_fields=['voucher'])
+
+    BadgeVoucher.objects.create(voucher=voucher, layout=voucher_layout)
+
+    assert get_badge_layout_for_position(event, position) == voucher_layout
+    assert position_has_printable_badge(event, position) is True
+
+
+@pytest.mark.django_db
+def test_voucher_layout_none_disables_badge_even_with_default_product(badge_event):
+    event, position, product, layout = badge_event
+    voucher = Voucher.objects.create(event=event, code='VOUCHER2')
+    position.voucher = voucher
+    position.save(update_fields=['voucher'])
+
+    BadgeVoucher.objects.create(voucher=voucher, layout=None)
+
+    assert get_badge_layout_for_position(event, position) is None
+    assert position_has_printable_badge(event, position) is False
+
+
+def test_fit_fontsize_to_width_shrinks_unbreakable_text():
+    Renderer._register_fonts()
+    fitted = Renderer._fit_fontsize_to_width(
+        'VeryLongAttendeeNameExample',
+        'Open Sans',
+        max_fontsize=12.0,
+        width_mm=30,
+    )
+
+    assert fitted < 12.0
+    assert fitted >= 4.0
+
+
+def test_fit_fontsize_to_width_keeps_wrappable_text_at_max():
+    Renderer._register_fonts()
+    fitted = Renderer._fit_fontsize_to_width(
+        'Very Long Attendee Name Example',
+        'Open Sans',
+        max_fontsize=12.0,
+        width_mm=30,
+    )
+
+    assert fitted == 12.0
+
+
+def test_fit_fontsize_to_width_keeps_short_text_at_max():
+    Renderer._register_fonts()
+    fitted = Renderer._fit_fontsize_to_width(
+        'Ann',
+        'Open Sans',
+        max_fontsize=12.0,
+        width_mm=30,
+    )
+
+    assert fitted == 12.0
+
+
+def test_fit_fontsize_to_width_multiline_uses_longest_line():
+    Renderer._register_fonts()
+    fitted = Renderer._fit_fontsize_to_width(
+        'John\nDoe',
+        'Open Sans',
+        max_fontsize=12.0,
+        width_mm=30,
+    )
+
+    assert fitted == 12.0
+
+
+def test_extract_layout_text_placeholders():
+    assert extract_layout_text_placeholders('{question_1} {question_2}') == ['question_1', 'question_2']
+    assert extract_layout_text_placeholders('Plain text') == []
+
+
+@pytest.mark.django_db
+def test_renderer_other_text_resolves_question_placeholders(badge_event):
+    event, position, product, layout = badge_event
+    q1 = Question.objects.create(event=event, question='First name', type='S')
+    q2 = Question.objects.create(event=event, question='Last name', type='S')
+    QuestionAnswer.objects.create(orderposition=position, question=q1, answer='Jane')
+    QuestionAnswer.objects.create(orderposition=position, question=q2, answer='Doe')
+
+    renderer = BadgeRenderer(event, [], None)
+    result = renderer._get_text_content(
+        position,
+        position.order,
+        {'content': 'other', 'text': '{question:First name} {question:Last name}'},
+    )
+
+    assert result == 'Jane Doe'
+
+
+@pytest.mark.django_db
+def test_badge_renderer_other_text_hides_placeholder_fields(badge_event):
+    event, position, product, layout = badge_event
+    q1 = Question.objects.create(event=event, question='First name', type='S')
+    q2 = Question.objects.create(event=event, question='Last name', type='S')
+    QuestionAnswer.objects.create(orderposition=position, question=q1, answer='Jane')
+    QuestionAnswer.objects.create(orderposition=position, question=q2, answer='Doe')
+    position.meta_info_data = {'question_form_data': {'badge_hidden_fields': [f'question_{q1.pk}']}}
+    position.save(update_fields=['meta_info_data'])
+
+    renderer = BadgeRenderer(
+        event,
+        [],
+        None,
+        ask_user_fields=[f'question_{q1.pk}', f'question_{q2.pk}'],
+    )
+    result = renderer._get_text_content(
+        position,
+        position.order,
+        {'content': 'other', 'text': '{question:First name} {question:Last name}'},
+    )
+
+    assert result == ' Doe'
+
+
+@pytest.mark.django_db
+def test_renderer_other_text_still_supports_question_id_placeholders(badge_event):
+    event, position, product, layout = badge_event
+    q1 = Question.objects.create(event=event, question='First name', type='S')
+    QuestionAnswer.objects.create(orderposition=position, question=q1, answer='Jane')
+
+    renderer = BadgeRenderer(event, [], None)
+    result = renderer._get_text_content(
+        position,
+        position.order,
+        {'content': 'other', 'text': f'{{question_{q1.pk}}}'},
+    )
+
+    assert result == 'Jane'
