@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
+from django.core.validators import URLValidator, validate_email
 from django.db.models import Q
 from django.forms import CheckboxSelectMultiple, formset_factory
 from django.urls import reverse
@@ -1827,8 +1827,9 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
         label=_('Video stream type'),
         help_text=_('Optional: configure a live video stream for this meetup.'),
     )
-    video_url = forms.URLField(
+    video_url = forms.CharField(
         required=False,
+        max_length=255,
         label=_('Video URL / stream identifier'),
         help_text=_('YouTube video URL, HLS stream URL, or embed URL.'),
     )
@@ -1855,6 +1856,13 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
             self.add_error('video_url', _('A URL is required when a video type is selected.'))
         if video_url and not video_type:
             self.add_error('video_type', _('A video type is required when a URL is provided.'))
+
+        if video_url and video_type in ('hls', 'iframe'):
+            val = URLValidator()
+            try:
+                val(video_url)
+            except ValidationError:
+                self.add_error('video_url', _('Enter a valid URL.'))
         return cleaned_data
 
 
