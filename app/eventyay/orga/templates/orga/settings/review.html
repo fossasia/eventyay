@@ -156,12 +156,14 @@
                                                     </div>
                                                 {% endif %}
                                             </div>
-                                            {% if label_pair.3 %}
-                                                <div role="button" class="delete-score btn btn-danger flip ml-2 align-self-start" data-score="{{ label_pair.2 }}"><i class="fa fa-trash"></i></div>
-                                            {% endif %}
-                                            {% if forloop.first %}
-                                                <div role="button" class="new-score btn btn-info flip ml-2 align-self-start"><i class="fa fa-plus"></i></div>
-                                            {% endif %}
+                                            <div class="ml-auto d-flex">
+                                                {% if label_pair.3 %}
+                                                    <div role="button" class="delete-score btn btn-danger flip align-self-start" data-score="{{ label_pair.2 }}"><i class="fa fa-trash"></i></div>
+                                                {% endif %}
+                                                {% if forloop.last %}
+                                                    <div role="button" class="new-score btn btn-info flip ml-2 align-self-start"><i class="fa fa-plus"></i></div>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     </div>
                                 {% empty %}
@@ -210,7 +212,9 @@
                             <div class="col-md-9 d-flex hide-label">
                             <div class="mr-2 score-score"></div>
                             <div class="score-label"></div>
-                            <div role="button" class="new-score btn btn-info flip ml-auto"><i class="fa fa-plus"></i></div>
+                            <div class="ml-auto d-flex">
+                                <div role="button" class="new-score btn btn-info flip align-self-start"><i class="fa fa-plus"></i></div>
+                            </div>
                             </div>
                             </div>
                             </div>

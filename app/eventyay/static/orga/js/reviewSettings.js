@@ -28,7 +28,7 @@ const updateIndependentScoreWeight = () => {
 }
 
 const addNewScores = (ev) => {
-    const parentElement = event.target.closest(".score-group")
+    const parentElement = ev.target.closest(".score-group")
     const scoresList = parentElement.querySelector(
         "input[type=text][id$=new_scores]",
     )
@@ -36,6 +36,13 @@ const addNewScores = (ev) => {
         .querySelector("input[type=number]")
         .id.split("-")[1]
     const newID = `new` + Math.floor(Math.random() * 1000)
+    
+    // Remove the plus button from the old row
+    const oldPlus = parentElement.querySelector(".new-score");
+    if (oldPlus) {
+        oldPlus.remove();
+    }
+    
     const newRow = `
     <div class="row form-group">
         <div class="col-md-3"></div>
@@ -46,7 +53,10 @@ const addNewScores = (ev) => {
             <div class="score-label">
                 <input type="text" name="scores-${formID}-label_${newID}" maxlength="20" class="form-control" id="id_scores-${formID}-label_${newID}" placeholder="Label">
             </div>
-            <div role="button" class="delete-score btn btn-danger flip ml-2" data-score="${newID}"><i class="fa fa-trash"></i></div>
+            <div class="ml-auto d-flex">
+                <div role="button" class="delete-score btn btn-danger flip align-self-start" data-score="${newID}"><i class="fa fa-trash"></i></div>
+                <div role="button" class="new-score btn btn-info flip ml-2 align-self-start"><i class="fa fa-plus"></i></div>
+            </div>
         </div>
     </div>`
     const newElement = document.createElement("div")
@@ -74,6 +84,31 @@ const bindDeleteScore = (element) => {
         if (row) {
             row.remove()
             updateTotal()
+            
+            // If we deleted the row with the plus button, add it back to the new last row
+            if (parentElement.querySelectorAll(".new-score").length === 0) {
+                const rows = parentElement.querySelectorAll(".score-input .row.form-group");
+                if (rows.length > 0) {
+                    const lastRow = rows[rows.length - 1];
+                    let btnContainer = lastRow.querySelector(".ml-auto.d-flex");
+                    if (!btnContainer) {
+                        btnContainer = document.createElement("div");
+                        btnContainer.className = "ml-auto d-flex";
+                        const oldDelete = lastRow.querySelector(".delete-score");
+                        if (oldDelete) {
+                            oldDelete.classList.remove("ml-2");
+                            oldDelete.classList.add("align-self-start");
+                            oldDelete.parentNode.insertBefore(btnContainer, oldDelete);
+                            btnContainer.appendChild(oldDelete);
+                        } else {
+                            lastRow.querySelector(".col-md-9").appendChild(btnContainer);
+                        }
+                    }
+                    const plusBtnHTML = `<div role="button" class="new-score btn btn-info flip ml-2 align-self-start"><i class="fa fa-plus"></i></div>`;
+                    btnContainer.insertAdjacentHTML('beforeend', plusBtnHTML);
+                    addListener();
+                }
+            }
         }
         if (scoresList && scoreID) {
             scoresList.value = scoresList.value
