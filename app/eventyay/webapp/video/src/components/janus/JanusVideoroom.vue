@@ -1685,9 +1685,10 @@ export default {
 			if (element.srcObject !== feed.stream) {
 				Janus.attachMediaStream(element, feed.stream)
 			}
-			if (localStorage.audioOutput && element.setSinkId) {
-				element.setSinkId(localStorage.audioOutput)
-			}
+			this.setMediaElementAudioOutput(element, {
+				feedId: id,
+				feedType: feed.feedType,
+			})
 			if (!element.paused && element.readyState > 0) return
 			const playPromise = element.play()
 			if (playPromise?.catch) {
@@ -1867,16 +1868,30 @@ export default {
 			this.updateAudioOutputs()
 		},
 		updateAudioOutputs() {
-			for (const video of this.$el.querySelectorAll('video[data-feed-id]')) {
-				if (localStorage.audioOutput && video.setSinkId) {
-					log('janus-devices', 'debug', {
-						action: 'setSinkId',
-						feedId: video.dataset.feedId,
-						audioOutput: localStorage.audioOutput,
-					})
-					video.setSinkId(localStorage.audioOutput)
-				}
+			for (const element of this.$el.querySelectorAll('video[data-feed-id], audio[data-audio-feed-id]')) {
+				this.setMediaElementAudioOutput(element, {
+					feedId: element.dataset.feedId || element.dataset.audioFeedId,
+					feedType: element.tagName.toLowerCase(),
+				})
 			}
+		},
+		setMediaElementAudioOutput(element, context = {}) {
+			if (!element?.setSinkId) return
+			const audioOutput = localStorage.audioOutput || ''
+			log('janus-devices', 'debug', {
+				action: 'setSinkId',
+				...context,
+				audioOutput,
+			})
+			element.setSinkId(audioOutput).catch(error => {
+				log('janus-devices', 'warn', {
+					action: 'setSinkId:error',
+					...context,
+					audioOutput,
+					error: error?.message || error,
+					name: error?.name,
+				})
+			})
 		},
 		disableIncomingVideo() {
 			this.videoOutput = false
