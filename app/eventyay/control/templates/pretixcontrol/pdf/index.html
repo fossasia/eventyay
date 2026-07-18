@@ -402,6 +402,11 @@
                             </select>
                             <textarea type="text" value="" class="input-block-level form-control"
                                     id="toolbox-content-other"></textarea>
+                            <p class="help-block">
+                                {% trans "You can use placeholders with curly braces. Use field names from the list above, or refer to questions by label, for example:" %}
+                                <code>{attendee_name}</code>,
+                                <code>{question:First name}</code>
+                            </p>
                         </div>
                     </div>
                 </div>
