@@ -24,6 +24,9 @@ from eventyay.helpers.database import rolledback_transaction
 
 logger = logging.getLogger(__name__)
 
+# Providers whose PDFs must always be regenerated from current layout data.
+_PROVIDERS_WITHOUT_TICKET_CACHE = frozenset({'badge'})
+
 
 def generate_orderposition(order_position: int, provider: str):
     order_position = (
@@ -167,7 +170,11 @@ def get_tickets_for_order(order, base_position=None):
             try:
                 if len(positions) == 0:
                     continue
-                ct = CachedCombinedTicket.objects.filter(order=order, provider=p.identifier, file__isnull=False).last()
+                ct = None
+                if p.identifier not in _PROVIDERS_WITHOUT_TICKET_CACHE:
+                    ct = CachedCombinedTicket.objects.filter(
+                        order=order, provider=p.identifier, file__isnull=False
+                    ).last()
                 if not ct or not ct.file:
                     retval = generate_order(order.pk, p.identifier)
                     if not retval:
@@ -184,9 +191,11 @@ def get_tickets_for_order(order, base_position=None):
         else:
             for pos in positions:
                 try:
-                    ct = CachedTicket.objects.filter(
-                        order_position=pos, provider=p.identifier, file__isnull=False
-                    ).last()
+                    ct = None
+                    if p.identifier not in _PROVIDERS_WITHOUT_TICKET_CACHE:
+                        ct = CachedTicket.objects.filter(
+                            order_position=pos, provider=p.identifier, file__isnull=False
+                        ).last()
                     if not ct or not ct.file:
                         retval = generate_orderposition(pos.pk, p.identifier)
                         if not retval:
