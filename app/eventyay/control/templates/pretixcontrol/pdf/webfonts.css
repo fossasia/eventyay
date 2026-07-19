@@ -11,6 +11,18 @@
     font-weight: bold;
     src: url('{% static "fonts/NotoNaskhArabic-Bold.ttf" %}') format('truetype');
 }
+@font-face {
+    font-family: 'NotoSansDevanagari';
+    font-style: normal;
+    font-weight: normal;
+    src: url('{% static "fonts/NotoSansDevanagari-Regular.ttf" %}') format('truetype');
+}
+@font-face {
+    font-family: 'NotoSansDevanagari';
+    font-style: normal;
+    font-weight: bold;
+    src: url('{% static "fonts/NotoSansDevanagari-Bold.ttf" %}') format('truetype');
+}
 
 
 {% for family, styles in fonts.items %}
@@ -33,7 +45,7 @@
          {% if "truetype" in formats %}url('{% static formats.truetype %}') format('truetype'){% endif %};
 }
 .preload-font[data-family="{{family}}"][data-style="{{style}}"] {
-    font-family: '{{ family }}', 'NotoNaskhArabic';
+    font-family: '{{ family }}', 'NotoNaskhArabic', 'NotoSansDevanagari';
     {% if style == "italic" or style == "bolditalic" %}
         font-style: italic;
     {% else %}

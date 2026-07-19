@@ -776,8 +776,10 @@ class Renderer:
         try:
             pdfmetrics.registerFont(TTFont('NotoNaskhArabic', finders.find('fonts/NotoNaskhArabic-Regular.ttf')))
             pdfmetrics.registerFont(TTFont('NotoNaskhArabic B', finders.find('fonts/NotoNaskhArabic-Bold.ttf')))
+            pdfmetrics.registerFont(TTFont('NotoSansDevanagari', finders.find('fonts/NotoSansDevanagari-Regular.ttf')))
+            pdfmetrics.registerFont(TTFont('NotoSansDevanagari B', finders.find('fonts/NotoSansDevanagari-Bold.ttf')))
         except (FileNotFoundError, OSError) as exc:
-            logger.warning("Failed to register Noto Naskh Arabic fonts: %s", exc)
+            logger.warning("Failed to register fallback fonts: %s", exc)
 
 
 
@@ -1076,10 +1078,14 @@ class Renderer:
 
         import re
         arabic_pattern = re.compile(r'([\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+)')
+        devanagari_pattern = re.compile(r'([\u0900-\u097F]+)')
+        
         if o.get('bold'):
             text = arabic_pattern.sub(r'<font name="NotoNaskhArabic B">\1</font>', text)
+            text = devanagari_pattern.sub(r'<font name="NotoSansDevanagari B">\1</font>', text)
         else:
             text = arabic_pattern.sub(r'<font name="NotoNaskhArabic">\1</font>', text)
+            text = devanagari_pattern.sub(r'<font name="NotoSansDevanagari">\1</font>', text)
 
 
         p = Paragraph(text, style=style)
