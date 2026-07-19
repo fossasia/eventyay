@@ -773,6 +773,14 @@ class Renderer:
         pdfmetrics.registerFont(TTFont('Open Sans B', finders.find('fonts/OpenSans-Bold.ttf')))
         pdfmetrics.registerFont(TTFont('Open Sans B I', finders.find('fonts/OpenSans-BoldItalic.ttf')))
 
+        try:
+            pdfmetrics.registerFont(TTFont('NotoNaskhArabic', finders.find('fonts/NotoNaskhArabic-Regular.ttf')))
+            pdfmetrics.registerFont(TTFont('NotoNaskhArabic B', finders.find('fonts/NotoNaskhArabic-Bold.ttf')))
+        except Exception:
+            pass
+
+
+
         for family, styles in get_fonts().items():
             pdfmetrics.registerFont(TTFont(family, finders.find(styles['regular']['truetype'])))
             if 'italic' in styles:
@@ -1065,6 +1073,14 @@ class Renderer:
             text = '<br/>'.join(get_display(reshaper.reshape(l)) for l in text.split('<br/>'))
         except Exception:
             logger.exception(f'Reshaping/Bidi fixes failed on string {repr(text)}')
+
+        import re
+        arabic_pattern = re.compile(r'([\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+)')
+        if 'B' in font:
+            text = arabic_pattern.sub(r'<font name="NotoNaskhArabic B">\1</font>', text)
+        else:
+            text = arabic_pattern.sub(r'<font name="NotoNaskhArabic">\1</font>', text)
+
 
         p = Paragraph(text, style=style)
         w, h = p.wrapOn(canvas, float(o['width']) * mm, 1000 * mm)
