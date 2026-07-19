@@ -29,7 +29,12 @@ export default {
 		languages: {
 			immediate: true,
 			handler(newLanguages) {
-				this.languageOptions = newLanguages.map(entry => entry.language) // Directly assigning the list of languages
+				this.languageOptions = newLanguages
+					.filter(entry => this.isUsableLanguageEntry(entry))
+					.map(entry => entry.language)
+				if (!this.languageOptions.includes(this.selectedLanguage)) {
+					this.selectedLanguage = this.languageOptions.includes('Original') ? 'Original' : null
+				}
 			}
 		},
 		selectedLanguage(newLanguage) {
@@ -39,25 +44,28 @@ export default {
 		}
 	},
 	methods: {
+		isUsableLanguageEntry(entry) {
+			if (!entry?.language) return false
+			if (entry.language === 'Original') return true
+			return !!this.normalizeAudioSource(entry.youtube_id)
+		},
+		normalizeAudioSource(audioSource) {
+			if (!audioSource) return null
+			const youtubeId = normalizeYoutubeVideoId(audioSource)
+			if (youtubeId) return youtubeId
+			try {
+				new URL(audioSource)
+				return audioSource
+			} catch (e) {
+				return null
+			}
+		},
 		sendLanguageChange() {
 			const selected = this.languages.find(item => item.language === this.selectedLanguage)
-			const audioSource = selected?.youtube_id || null
+			const audioSource = this.normalizeAudioSource(selected?.youtube_id)
 			const useVideo = selected?.use_video || false
-			
-			let normalizedSource = null
-			if (audioSource) {
-				normalizedSource = normalizeYoutubeVideoId(audioSource)
-				if (!normalizedSource) {
-					try {
-						new URL(audioSource)
-						normalizedSource = audioSource
-					} catch (e) {
-						normalizedSource = null
-					}
-				}
-			}
-			
-			this.$emit('languageChanged', { url: normalizedSource, useVideo })
+
+			this.$emit('languageChanged', { url: audioSource, useVideo })
 		}
 	}
 }

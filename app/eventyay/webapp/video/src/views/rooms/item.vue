@@ -48,6 +48,7 @@ import Questions from 'components/Questions'
 import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
+import { normalizeYoutubeVideoId } from 'lib/validators'
 
 export default {
 	name: 'Room',
@@ -144,7 +145,7 @@ export default {
 		initializeLanguages() {
 			this.languages = []
 			if (this.modules['livestream.youtube'] && this.modules['livestream.youtube'].config.languageUrls) {
-				this.languages = this.modules['livestream.youtube'].config.languageUrls
+				this.languages = this.modules['livestream.youtube'].config.languageUrls.filter(entry => this.isUsableLanguageEntry(entry))
 			}
 			if (!this.languages.find(lang => lang.language === 'Original')) {
 				this.languages.unshift({language: 'Original', youtube_id: null, use_video: false})
@@ -158,6 +159,18 @@ export default {
 				})
 			}
 			this.previousRoomId = currentRoomId
+		},
+		isUsableLanguageEntry(entry) {
+			if (!entry?.language) return false
+			if (entry.language === 'Original') return true
+			if (!entry.youtube_id) return false
+			if (normalizeYoutubeVideoId(entry.youtube_id)) return true
+			try {
+				new URL(entry.youtube_id)
+				return true
+			} catch (e) {
+				return false
+			}
 		}
 	}
 }
