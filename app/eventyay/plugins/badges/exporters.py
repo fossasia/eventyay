@@ -25,16 +25,18 @@ from eventyay.base.i18n import language
 from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
 from eventyay.base.services.export import ExportError
-from eventyay.base.services.orders import OrderError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
 from eventyay.plugins.badges.utils import (
+    BADGE_LAYOUT_PERSISTED_FIELDS,
     _renderer_cache,
     exclude_explicit_no_badge,
     get_badge_hidden_fields,
     get_badge_layout_for_position,
+    get_badge_layout_renderer_token,
     get_badge_layout_version,
     normalize_badge_content_key,
+    reset_badge_layout_assignment_cache,
 )
 
 from ...helpers.templatetags.jsonfield import JSONExtract
@@ -121,11 +123,16 @@ def _renderer(event, layout, version):
     if layout is None:
         return None
 
-    cache_key = (event.pk, layout.pk)
+    token = get_badge_layout_renderer_token(layout)
+    cache_key = (event.pk, layout.pk, version, token)
     if cache_key in _renderer_cache:
-        cached_version, renderer = _renderer_cache[cache_key]
-        if cached_version == version:
-            return renderer
+        return _renderer_cache[cache_key]
+
+    # Drop older entries for this layout so the process-local cache cannot grow
+    # unbounded across repeated edits.
+    stale_keys = [key for key in _renderer_cache if key[0] == event.pk and key[1] == layout.pk]
+    for key in stale_keys:
+        del _renderer_cache[key]
 
     bgf = _open_layout_background(layout)
     renderer = BadgeRenderer(
@@ -134,7 +141,7 @@ def _renderer(event, layout, version):
         bgf,
         ask_user_fields=(layout.ask_user_fields_data if layout.allow_customization else []),
     )
-    _renderer_cache[cache_key] = (version, renderer)
+    _renderer_cache[cache_key] = renderer
     return renderer
 
 
@@ -383,17 +390,27 @@ def render_nup(input_files: list[str], num_pages: int, output_file: BinaryIO, op
 def render_badges(event, positions, opt, apply_output_pagesize=False):
     from itertools import groupby
 
+    # Always resolve assignments from the database for this render call.
+    reset_badge_layout_assignment_cache(event)
+
     # Fetched once per render call (not per position) to avoid a cache round-trip per
     # badge, while still guaranteeing that every render reflects the latest saved design.
     version = get_badge_layout_version(event)
+    refreshed_layouts = set()
 
     op_renderers = []
     for op in positions:
         layout = get_badge_layout_for_position(event, op)
-        if layout is not None:
-            renderer = _renderer(event, layout, version)
-            if renderer:
-                op_renderers.append((op, renderer))
+        if layout is None:
+            continue
+        if layout.pk not in refreshed_layouts:
+            # Assignment maps can retain older ORM instances; reload persisted fields
+            # once per layout so selected/default content always matches the database.
+            layout.refresh_from_db(fields=list(BADGE_LAYOUT_PERSISTED_FIELDS))
+            refreshed_layouts.add(layout.pk)
+        renderer = _renderer(event, layout, version)
+        if renderer:
+            op_renderers.append((op, renderer))
 
     if not op_renderers:
         raise ExportError(_('None of the selected products is configured to print badges.'))
