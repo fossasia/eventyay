@@ -79,7 +79,10 @@ const janus = ref(null);
 
 // Mapped state/getters
 const streamingRoom = computed(() => store.state.streamingRoom);
-const youtubeTranslation = computed(() => store.state.youtubeTranslation);
+const youtubeTranslation = computed(() => {
+	if (!props.room?.id) return null;
+	return store.state.youtubeTranslationsByRoom?.[props.room.id] || null;
+});
 const autoplay = computed(() => store.getters.autoplay);
 const mainPlayerPaused = ref(!autoplay.value);
 

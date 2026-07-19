@@ -8,7 +8,7 @@
 		.stage-tools(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
 			// Added dropdown menu for audio translations near the reactions bar
 			reactions-bar(:expanded="true", @expand="activeStageTool = 'reaction'")
-			AudioTranslationDropdown(v-if="languages.length > 1", :languages="languages", @languageChanged="handleLanguageChange")
+			AudioTranslationDropdown(v-if="languages.length > 1", :key="room.id", :languages="languages", @languageChanged="handleLanguageChange")
 	media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom']")
 	roulette(v-else-if="modules['networking.roulette'] && $features.enabled('roulette')", :module="modules['networking.roulette']", :room="room")
 	landing-page(v-else-if="modules['page.landing']", :module="modules['page.landing']")
@@ -136,7 +136,10 @@ export default {
 			this.unreadTabs[tab] = true
 		},
 		handleLanguageChange(translationConfig) {
-			this.$store.commit('updateYoutubeTransAudio', translationConfig)
+			this.$store.commit('updateYoutubeTransAudio', {
+				roomId: this.room?.id,
+				youtubeTranslation: translationConfig
+			})
 		},
 		initializeLanguages() {
 			this.languages = []
@@ -149,7 +152,10 @@ export default {
 			// Reset translation only when actually changing rooms, not on component remount
 			const currentRoomId = this.room?.id
 			if (this.previousRoomId !== null && this.previousRoomId !== currentRoomId) {
-				this.$store.commit('updateYoutubeTransAudio', null)
+				this.$store.commit('updateYoutubeTransAudio', {
+					roomId: currentRoomId,
+					youtubeTranslation: null
+				})
 			}
 			this.previousRoomId = currentRoomId
 		}
