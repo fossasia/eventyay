@@ -130,7 +130,7 @@ def test_fit_fontsize_to_width_shrinks_unbreakable_text():
     assert fitted >= 4.0
 
 
-def test_fit_fontsize_to_width_shrinks_wrappable_text_to_single_line():
+def test_fit_fontsize_to_width_keeps_wrappable_text_at_max():
     Renderer._register_fonts()
     fitted = Renderer._fit_fontsize_to_width(
         'Very Long Attendee Name Example',
@@ -139,8 +139,7 @@ def test_fit_fontsize_to_width_shrinks_wrappable_text_to_single_line():
         width_mm=30,
     )
 
-    assert fitted < 12.0
-    assert fitted >= 4.0
+    assert fitted == 12.0
 
 
 def test_fit_fontsize_to_width_keeps_short_text_at_max():

@@ -90,22 +90,6 @@ fabric.Textarea = fabric.util.createClass(fabric.Textbox, {
         }
     },
 
-    initDimensions: function () {
-        if (this.__skipDimension) {
-            return;
-        }
-        this.isEditing && this.initDelayedCursor();
-        this.clearContextTop();
-        this._clearCache();
-        this.dynamicMinWidth = 0;
-        this._styleMap = this._generateStyleMap(this._splitText());
-        if (this.textAlign.indexOf('justify') !== -1) {
-            this.enlargeSpaces();
-        }
-        this.height = this.calcTextHeight();
-        this.saveState({propertySet: '_dimensionAffectingProps'});
-    },
-
     toObject: function(propertiesToInclude) {
         return this.callSuper('toObject', ['content', 'autofit_width', 'maxFontPt'].concat(propertiesToInclude));
     }
@@ -202,8 +186,14 @@ var editor = {
             ctx.font = fontStyle + fontWeight + editor._pt2px(pt) + 'px ' + fontFamily;
             var fits = true;
             for (var i = 0; i < lines.length; i++) {
-                if (ctx.measureText(lines[i]).width > widthPx) {
-                    fits = false;
+                var parts = lines[i].trim() ? lines[i].trim().split(/\s+/) : [];
+                for (var j = 0; j < parts.length; j++) {
+                    if (ctx.measureText(parts[j]).width > widthPx) {
+                        fits = false;
+                        break;
+                    }
+                }
+                if (!fits) {
                     break;
                 }
             }
@@ -220,9 +210,6 @@ var editor = {
         o.set('fontSize', editor._pt2px(
             o.autofit_width ? editor._compute_autofit_pt(o, maxPt, widthMm) : maxPt
         ));
-        if (o.initDimensions) {
-            o.initDimensions();
-        }
     },
 
     _csrf_token: function () {

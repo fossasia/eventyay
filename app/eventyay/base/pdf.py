@@ -1017,7 +1017,10 @@ class Renderer:
         while size > min_size:
             fits = True
             for line in lines:
-                if pdfmetrics.stringWidth(line, font_name, size) > width_pt:
+                parts = line.split()
+                if not parts:
+                    continue
+                if max(pdfmetrics.stringWidth(part, font_name, size) for part in parts) > width_pt:
                     fits = False
                     break
             if fits:
