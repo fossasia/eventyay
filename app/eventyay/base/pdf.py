@@ -776,8 +776,8 @@ class Renderer:
         try:
             pdfmetrics.registerFont(TTFont('NotoNaskhArabic', finders.find('fonts/NotoNaskhArabic-Regular.ttf')))
             pdfmetrics.registerFont(TTFont('NotoNaskhArabic B', finders.find('fonts/NotoNaskhArabic-Bold.ttf')))
-        except Exception:
-            pass
+        except (FileNotFoundError, OSError) as exc:
+            logger.warning("Failed to register Noto Naskh Arabic fonts: %s", exc)
 
 
 
@@ -1076,7 +1076,7 @@ class Renderer:
 
         import re
         arabic_pattern = re.compile(r'([\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+)')
-        if 'B' in font:
+        if o.get('bold'):
             text = arabic_pattern.sub(r'<font name="NotoNaskhArabic B">\1</font>', text)
         else:
             text = arabic_pattern.sub(r'<font name="NotoNaskhArabic">\1</font>', text)
