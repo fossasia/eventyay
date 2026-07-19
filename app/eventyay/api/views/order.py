@@ -293,7 +293,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         else:
             if ct.type == 'text/uri-list':
                 resp = HttpResponse(ct.file.file.read(), content_type='text/uri-list')
-                resp['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 return resp
             else:
                 resp = FileResponse(ct.file.file, content_type=ct.type)
@@ -302,7 +301,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                     order.code,
                     ct.extension,
                 )
-                resp['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 return resp
 
     @action(detail=True, methods=['POST'])
@@ -1092,7 +1090,6 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         else:
             if ct.type == 'text/uri-list':
                 resp = HttpResponse(ct.file.file.read(), content_type='text/uri-list')
-                resp['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 return resp
             else:
                 resp = FileResponse(ct.file.file, content_type=ct.type)
@@ -1102,7 +1099,6 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                     pos.positionid,
                     ct.extension,
                 )
-                resp['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                 return resp
 
     def perform_destroy(self, instance):
