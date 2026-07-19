@@ -872,14 +872,14 @@ wheels = [
 
 [[package]]
 name = "django-hierarkey"
-version = "2.0.1"
+version = "2.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/85/1b/8408798a8123533327ddb38a698d0135bd64424f019eaf61b42742b858c6/django_hierarkey-2.0.1.tar.gz", hash = "sha256:1d75efd2697ecc94f3856d84fd1e66fb23b3a656827e587a6d13b7ceb7b725ff", size = 15432, upload-time = "2025-08-23T06:55:47.051Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/51/04/fc3f8056a965a548a7017a457075fb30f3deea8c44b9b7a6581dd124d5db/django_hierarkey-2.0.2.tar.gz", hash = "sha256:234250668260efda61e86c78949bef9a348cfb8be047d0c1198db7ebb6608d8e", size = 16473, upload-time = "2026-07-17T11:59:14.641Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/7d/d930ca5d2ae0724ac71b10337d824bd76dea03e0d3fff7b773f74c0dc475/django_hierarkey-2.0.1-py3-none-any.whl", hash = "sha256:2bb5936c10e12fce9f6baa85b625f3f8ea33525f174659659e9059c74d348c45", size = 14353, upload-time = "2025-08-23T06:55:45.73Z" },
+    { url = "https://files.pythonhosted.org/packages/99/ca/dd94b8089218ec346f3daf2b8abdf566285389b17f165792d36d5b7857a0/django_hierarkey-2.0.2-py3-none-any.whl", hash = "sha256:5ec3d604f36a4165311759f1cb02f9dcc0c77544b6f6f81adf116bcd0fc0d391", size = 14852, upload-time = "2026-07-17T11:59:13.361Z" },
 ]
 
 [[package]]
@@ -1492,7 +1492,7 @@ requires-dist = [
     { name = "django-filter", specifier = ">=25.2" },
     { name = "django-formset-js-improved", specifier = ">=0.5.0.4" },
     { name = "django-formtools", specifier = ">=2.6.1" },
-    { name = "django-hierarkey", specifier = ">=2.0.1" },
+    { name = "django-hierarkey", specifier = ">=2.0.2" },
     { name = "django-hijack", specifier = ">=3.7.8" },
     { name = "django-i18nfield", specifier = ">=1.11.0" },
     { name = "django-jquery-js", specifier = ">=3.1.1" },
