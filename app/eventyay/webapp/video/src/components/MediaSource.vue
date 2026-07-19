@@ -280,6 +280,7 @@ async function applyYoutubeTranslation(transConfig) {
 				}
 			} catch (err) {
 				console.error('Failed to connect to WHEP translation source', err);
+				client.disconnect();
 				if (whepClient === client) whepClient = null;
 			}
 		} else {
