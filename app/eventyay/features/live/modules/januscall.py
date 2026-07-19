@@ -20,7 +20,13 @@ from eventyay.base.services.roulette import is_member_of_roulette_call
 from eventyay.base.services.user import get_public_user
 from eventyay.core.permissions import Permission
 from eventyay.core.utils.redis import aredis
-from eventyay.features.live.decorators import command, require_event_permission, room_action
+from eventyay.features.live.channels import GROUP_ROOM
+from eventyay.features.live.decorators import (
+    command,
+    event,
+    require_event_permission,
+    room_action,
+)
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
 
@@ -28,9 +34,118 @@ from eventyay.features.live.modules.base import BaseModule
 class JanusCallModule(BaseModule):
     prefix = "januscall"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.media_state_rooms = {}
+
     @database_sync_to_async
     def _servers(self):
         return choose_server(self.consumer.event), turn.choose_server(self.consumer.event)
+
+    @staticmethod
+    def _empty_media_state():
+        return {
+            "micOn": False,
+            "cameraOn": False,
+            "sharingScreen": False,
+        }
+
+    @staticmethod
+    def _normalize_media_state(body):
+        return {
+            "micOn": bool(body.get("micOn")),
+            "cameraOn": bool(body.get("cameraOn")),
+            "sharingScreen": bool(body.get("sharingScreen")),
+        }
+
+    @staticmethod
+    def _media_state_key(room_id):
+        return f"januscall:media_state:{room_id}"
+
+    @staticmethod
+    def _media_state_socket_key(room_id, user_id):
+        return f"januscall:media_state:{room_id}:sockets:{user_id}"
+
+    @staticmethod
+    def _decode_media_state(raw_state):
+        try:
+            state = json.loads(raw_state.decode())
+        except (json.JSONDecodeError, AttributeError, UnicodeDecodeError):
+            return JanusCallModule._empty_media_state()
+        return JanusCallModule._normalize_media_state(state)
+
+    @classmethod
+    def _aggregate_media_states(cls, raw_socket_states):
+        state = cls._empty_media_state()
+        for raw_state in raw_socket_states:
+            socket_state = cls._decode_media_state(raw_state)
+            for key in state:
+                state[key] = state[key] or socket_state[key]
+        return state
+
+    @classmethod
+    def _decode_media_states(cls, raw_states):
+        return {
+            key.decode(): cls._decode_media_state(value)
+            for key, value in raw_states.items()
+        }
+
+    async def _set_media_state(self, room_id, state):
+        user_id = str(self.consumer.user.pk)
+        redis_key = self._media_state_key(room_id)
+        socket_key = self._media_state_socket_key(room_id, user_id)
+        async with aredis(redis_key) as redis:
+            await redis.hset(socket_key, self.consumer.socket_id, json.dumps(state))
+            await redis.expire(socket_key, 3600 * 24)
+
+            raw_socket_states = await redis.hvals(socket_key)
+            aggregate_state = self._aggregate_media_states(raw_socket_states)
+            await redis.hset(redis_key, user_id, json.dumps(aggregate_state))
+            await redis.expire(redis_key, 3600 * 24)
+            raw_states = await redis.hgetall(redis_key)
+
+        return aggregate_state, self._decode_media_states(raw_states)
+
+    async def _remove_media_state(self, room_id):
+        if not self.consumer.user:
+            return None
+
+        user_id = str(self.consumer.user.pk)
+        redis_key = self._media_state_key(room_id)
+        socket_key = self._media_state_socket_key(room_id, user_id)
+        async with aredis(redis_key) as redis:
+            await redis.hdel(socket_key, self.consumer.socket_id)
+            raw_socket_states = await redis.hvals(socket_key)
+            if raw_socket_states:
+                aggregate_state = self._aggregate_media_states(raw_socket_states)
+                await redis.hset(redis_key, user_id, json.dumps(aggregate_state))
+                await redis.expire(socket_key, 3600 * 24)
+                await redis.expire(redis_key, 3600 * 24)
+                return aggregate_state
+
+            await redis.delete(socket_key)
+            await redis.hdel(redis_key, user_id)
+            return self._empty_media_state()
+
+    async def cleanup_media_state_for_room(self, room):
+        room_id = str(room.pk)
+        if room_id not in self.media_state_rooms:
+            return
+
+        state = await self._remove_media_state(room_id)
+        self.media_state_rooms.pop(room_id, None)
+        if state is None:
+            return
+
+        await self.consumer.channel_layer.group_send(
+            GROUP_ROOM.format(id=room.pk),
+            {
+                "type": "januscall.media_state",
+                "room": room_id,
+                "user": str(self.consumer.user.pk),
+                "state": state,
+            },
+        )
 
     @command("room_url")
     @room_action(
@@ -42,6 +157,39 @@ class JanusCallModule(BaseModule):
             f"room:{self.room.id}", audiobridge=True
         )
         await self.consumer.send_success(room_data)
+
+    @command("media_state")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def media_state(self, body):
+        state = self._normalize_media_state(body)
+        user_id = str(self.consumer.user.pk)
+        state, states = await self._set_media_state(self.room.pk, state)
+        self.media_state_rooms[str(self.room.pk)] = self.room
+
+        await self.consumer.send_success({"states": states})
+        await self.consumer.channel_layer.group_send(
+            GROUP_ROOM.format(id=self.room.pk),
+            {
+                "type": "januscall.media_state",
+                "room": str(self.room.pk),
+                "user": user_id,
+                "state": state,
+            },
+        )
+
+    @command("media_state.list")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def media_state_list(self, body):
+        redis_key = self._media_state_key(self.room.pk)
+        async with aredis(redis_key) as redis:
+            raw_states = await redis.hgetall(redis_key)
+        await self.consumer.send_success({"states": self._decode_media_states(raw_states)})
 
     @command("channel_url")
     async def channel_url(self, body):
@@ -195,3 +343,16 @@ class JanusCallModule(BaseModule):
                     await self.consumer.send_success(user)
                     return
         await self.consumer.send_error(code="user.not_found")
+
+    @event("media_state")
+    async def push_media_state(self, body):
+        await self.consumer.send_json(
+            [
+                body["type"],
+                {k: v for k, v in body.items() if k != "type"},
+            ]
+        )
+
+    async def dispatch_disconnect(self, close_code):
+        for room in list(self.media_state_rooms.values()):
+            await self.cleanup_media_state_for_room(room)

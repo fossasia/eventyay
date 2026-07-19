@@ -41,6 +41,7 @@
 						class="remote-media",
 						:class="{ 'is-hidden': !tile.hasVideo }",
 						:data-feed-id="tile.videoFeedId || tile.id",
+						:muted="remoteVideoShouldBeMuted(tile)",
 						autoplay,
 						playsinline
 					)
@@ -104,12 +105,44 @@
 				@click="toggleScreenShare"
 			)
 				.mdi(:class="screenShareState === 'published' ? 'mdi-monitor-off' : 'mdi-monitor-share'")
+			button.control-button.participants-button(type="button", :class="{ active: showParticipantsDrawer }", title="Participants", @click="showParticipantsDrawer = !showParticipantsDrawer")
+				.mdi.mdi-account-multiple
+				span.participant-count-badge {{ participantCount }}
 			button.control-button(type="button", title="Settings", @click="showDevicePrompt = true")
 				.mdi.mdi-cog
 			button.control-button(type="button", title="Report issue", @click="showFeedbackPrompt = true")
 				.mdi.mdi-message-alert-outline
 			button.control-button.leave(type="button", :title="$t('JanusVideoroom:tool-hangup:tooltip')", @click="leaveRoom")
 				.mdi.mdi-phone-hangup
+
+	transition(name="participants-backdrop")
+		.participants-backdrop(v-if="showParticipantsDrawer", @click="showParticipantsDrawer = false")
+	transition(name="participants-drawer")
+		.participants-drawer(v-if="showParticipantsDrawer")
+			.participants-header
+				.header-text
+					h2 Participants
+					span {{ participantCount }} in room
+				button.drawer-close(type="button", title="Close participants", @click="showParticipantsDrawer = false")
+					.mdi.mdi-close
+			.participants-list
+				.participant-row(
+					v-for="participant in participantRows",
+					:key="participant.key",
+					:class="{ 'is-local': participant.local, 'is-speaking': participant.speaking }"
+				)
+					avatar(:user="participant.user", :size="40")
+					.participant-main
+						.participant-name
+							span.name {{ participant.label }}
+							span.self-label(v-if="participant.local") You
+						.participant-status(v-if="participant.statuses.length")
+							span.status-item(v-for="status in participant.statuses", :key="status.key")
+								.mdi(:class="status.icon")
+								span {{ status.label }}
+					.participant-media
+						.mdi(:class="participant.cameraOn ? 'mdi-video' : 'mdi-video-off off'", :title="participant.cameraOn ? 'Camera on' : 'Camera off'")
+						.mdi(:class="participant.micOn ? 'mdi-microphone' : 'mdi-microphone-off muted'", :title="participant.micOn ? 'Microphone on' : 'Muted'")
 
 	chat-user-card(v-if="selectedUser", ref="avatarCard", :user="selectedUser", @close="selectedUser = null")
 	transition(name="prompt")
@@ -219,6 +252,10 @@ export default {
 			type: [Number, String],
 			required: true
 		},
+		eventRoomId: {
+			type: [Number, String],
+			default: null
+		},
 		iceServers: {
 			type: Array,
 			required: true
@@ -292,6 +329,9 @@ export default {
 			},
 			showFeedbackPrompt: false,
 			showDevicePrompt: false,
+			showParticipantsDrawer: false,
+			mediaStates: {},
+			apiMessageHandler: null,
 			selectedUser: null,
 		}
 	},
@@ -324,6 +364,60 @@ export default {
 		},
 		hasScreenTile() {
 			return this.tiles.some(tile => tile.screen)
+		},
+		participantRows() {
+			const rows = new Map()
+			const localState = this.currentMediaState()
+			rows.set(`local-${this.user?.id || 'user'}`, {
+				key: `local-${this.user?.id || 'user'}`,
+				local: true,
+				user: this.user,
+				label: this.user?.profile?.display_name || 'You',
+				micOn: localState.micOn,
+				cameraOn: localState.cameraOn,
+				sharingScreen: localState.sharingScreen,
+				speaking: localState.micOn && this.activeSpeakerId === 'local',
+			})
+			for (const feed of this.remoteFeeds) {
+				if (!feed.user?.id) continue
+				const userId = this.normalizeFeedId(feed.user.id)
+				const mediaState = this.mediaStates[userId]
+				const key = `remote-${userId}`
+				const row = rows.get(key) || {
+					key,
+					local: false,
+					user: feed.user,
+					label: feed.user?.profile?.display_name || 'Participant',
+					micOn: Boolean(mediaState?.micOn),
+					cameraOn: Boolean(mediaState?.cameraOn),
+					sharingScreen: Boolean(mediaState?.sharingScreen),
+					speaking: false,
+				}
+				if (!mediaState && (feed.feedType === 'screen' || feed.isScreenShare)) {
+					row.sharingScreen = true
+				}
+				const hasVideoTrack = Boolean(feed.stream?.getVideoTracks().length)
+				if (!mediaState && (feed.feedType === 'video' || feed.hasVideo || hasVideoTrack)) {
+					row.cameraOn = Boolean(feed.hasVideo || hasVideoTrack)
+				}
+				const hasAudioTrack = Boolean(feed.stream?.getAudioTracks().length)
+				if (!mediaState && (feed.feedType === 'audio' || hasAudioTrack)) {
+					row.micOn = hasAudioTrack && !feed.muted
+				}
+				row.speaking = row.micOn && this.activeSpeakerId === this.normalizeFeedId(feed.id)
+				rows.set(key, row)
+			}
+			return Array.from(rows.values()).map(row => ({
+				...row,
+				statuses: this.participantStatuses(row),
+			})).sort((a, b) => {
+				if (a.local) return -1
+				if (b.local) return 1
+				return a.label.localeCompare(b.label)
+			})
+		},
+		participantCount() {
+			return this.participantRows.length
 		},
 		activeSpeakerId() {
 			let activeId = null
@@ -376,15 +470,17 @@ export default {
 			})
 		}
 	},
-		mounted() {
-			LOG_ENTRIES.splice(0, LOG_ENTRIES.length)
-			window.__JANUS_DEBUG_LOGS__ = () => LOG_ENTRIES
-				.map(([source, timestamp, level, message]) => `${timestamp} [${level}] [${source}] ${message}`)
-				.join('\n')
-			window.__JANUS_DEBUG_JSON__ = () => JSON.stringify(LOG_ENTRIES, null, 2)
-			window.__JANUS_COPY_DEBUG_LOGS__ = () => copy(window.__JANUS_DEBUG_LOGS__())
-			this.cleaningUp = false
-			this.initJanus()
+	mounted() {
+		LOG_ENTRIES.splice(0, LOG_ENTRIES.length)
+		window.__JANUS_DEBUG_LOGS__ = () => LOG_ENTRIES
+			.map(([source, timestamp, level, message]) => `${timestamp} [${level}] [${source}] ${message}`)
+			.join('\n')
+		window.__JANUS_DEBUG_JSON__ = () => JSON.stringify(LOG_ENTRIES, null, 2)
+		window.__JANUS_COPY_DEBUG_LOGS__ = () => copy(window.__JANUS_DEBUG_LOGS__())
+		this.apiMessageHandler = this.onApiMessage.bind(this)
+		api.on('message', this.apiMessageHandler)
+		this.cleaningUp = false
+		this.initJanus()
 		this.slowLinkInterval = window.setInterval(() => {
 			this.downstreamSlowLinkCount = Math.max(this.downstreamSlowLinkCount - 1, 0)
 			this.upstreamSlowLinkCount = Math.max(this.upstreamSlowLinkCount - 1, 0)
@@ -392,6 +488,10 @@ export default {
 		this.audioLevelInterval = window.setInterval(this.refreshAudioLevels, AUDIO_LEVEL_INTERVAL)
 	},
 	unmounted() {
+		if (this.apiMessageHandler) {
+			api.off('message', this.apiMessageHandler)
+			this.apiMessageHandler = null
+		}
 		this.cleanup()
 		if (this.connectionRetryTimeout) {
 			window.clearTimeout(this.connectionRetryTimeout)
@@ -412,6 +512,57 @@ export default {
 	methods: {
 		collectTrace() {
 			return LOG_ENTRIES
+		},
+		currentMediaState() {
+			const localHasAudio = Boolean(this.localAudioStream?.getAudioTracks().some(track => track.readyState === 'live'))
+			return {
+				micOn: localHasAudio && !this.micMuted,
+				cameraOn: this.localCameraActive,
+				sharingScreen: Boolean(this.screenShareStream),
+			}
+		},
+		onApiMessage(message) {
+			const [name, payload] = message
+			if (name !== 'januscall.media_state' || this.normalizeFeedId(payload?.room) !== this.normalizeFeedId(this.eventRoomId)) {
+				return
+			}
+			this.mergeMediaStates({
+				[this.normalizeFeedId(payload.user)]: payload.state,
+			})
+		},
+		mergeMediaStates(states) {
+			const normalizedStates = {}
+			for (const [userId, state] of Object.entries(states || {})) {
+				normalizedStates[this.normalizeFeedId(userId)] = {
+					micOn: Boolean(state?.micOn),
+					cameraOn: Boolean(state?.cameraOn),
+					sharingScreen: Boolean(state?.sharingScreen),
+				}
+			}
+			this.mediaStates = {
+				...this.mediaStates,
+				...normalizedStates,
+			}
+		},
+		async sendMediaState() {
+			if (!this.eventRoomId) return
+			const state = this.currentMediaState()
+			this.mergeMediaStates({
+				[this.normalizeFeedId(this.user?.id)]: state,
+			})
+			try {
+				const response = await api.call('januscall.media_state', {
+					room: this.eventRoomId,
+					...state,
+				})
+				this.mergeMediaStates(response?.states)
+			} catch (error) {
+				log('janus-media-state', 'warn', {
+					action: 'sendMediaState:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
+			}
 		},
 		initJanus() {
 			this.connectionState = 'connecting'
@@ -919,6 +1070,7 @@ export default {
 		unpublishVideoMedia() {
 			this.publishedWithVideo = false
 			this.stopLocalCameraTracks()
+			this.sendMediaState()
 			if (this.videoPublisherHandle?.webrtcStuff?.pc) {
 				this.videoPublisherHandle.send({message: {request: 'unpublish'}})
 			}
@@ -991,6 +1143,7 @@ export default {
 			this.applyMicState()
 			this.publishingState = 'published'
 			this.publishingError = null
+			this.sendMediaState()
 		},
 		onLocalVideoStream(stream) {
 			this.localVideoStream = stream
@@ -1003,6 +1156,7 @@ export default {
 			this.attachLocalVideo(stream)
 			this.publishingState = 'published'
 			this.publishingError = null
+			this.sendMediaState()
 		},
 		applyMicState() {
 			if (!this.audioPublisherHandle) {
@@ -1050,6 +1204,7 @@ export default {
 				micMuted: this.micMuted,
 			})
 			this.applyMicState()
+			this.sendMediaState()
 		},
 		toggleCamera() {
 			this.cameraEnabled = !this.cameraEnabled
@@ -1207,6 +1362,7 @@ export default {
 				return
 			}
 			this.screenShareStream = stream
+			this.sendMediaState()
 			stream.getVideoTracks()[0].onended = () => {
 				if (this.screenShareState === 'published' || this.screenShareState === 'publishing') {
 					this.stopScreenShare()
@@ -1332,6 +1488,7 @@ export default {
 				track.stop()
 			}
 			this.screenShareStream = null
+			this.sendMediaState()
 		},
 		stopPendingScreenShareTracks() {
 			if (!this.pendingScreenShareStream) return
@@ -1353,6 +1510,7 @@ export default {
 			this.stopPendingScreenShareTracks()
 			this.stopScreenShareTracks()
 			this.screenShareState = 'unpublished'
+			this.sendMediaState()
 		},
 		failScreenShare(error, silent = false) {
 			log('janus-screen-publisher', 'error', {
@@ -1365,6 +1523,7 @@ export default {
 			this.stopScreenShareTracks()
 			this.screenShareState = 'failed'
 			this.screenShareError = silent ? null : (error?.message || error || 'Screen sharing failed.')
+			this.sendMediaState()
 			if (silent) {
 				this.screenShareState = 'unpublished'
 			}
@@ -1824,6 +1983,15 @@ export default {
 					hasFeed: Boolean(feed),
 				})
 				if (feed) {
+					if (this.feedIdEquals(user?.id, this.user?.id)) {
+						log('janus-subscriber', 'warn', {
+							action: 'fetchFeedUser:skip-own-user-feed',
+							feedId: this.normalizeFeedId(feedId),
+							userId: user?.id,
+						})
+						this.removeRemoteFeed(feedId)
+						return
+					}
 					feed.user = user
 					this.upsertRemoteFeed(feed)
 				}
@@ -1961,6 +2129,25 @@ export default {
 		audioMeterStyle(tile) {
 			return {transform: `scaleX(${tile.audioLevel})`}
 		},
+		remoteVideoShouldBeMuted(tile) {
+			return Boolean(tile.audioFeedId && tile.videoFeedId && !this.feedIdEquals(tile.audioFeedId, tile.videoFeedId))
+		},
+		participantStatuses(participant) {
+			const statuses = []
+			if (participant.speaking) {
+				statuses.push({key: 'speaking', icon: 'mdi-volume-high', label: 'Speaking'})
+			}
+			if (participant.sharingScreen) {
+				statuses.push({key: 'screen', icon: 'mdi-monitor-share', label: 'Sharing screen'})
+			}
+			if (!participant.cameraOn) {
+				statuses.push({key: 'camera-off', icon: 'mdi-video-off', label: 'Camera off'})
+			}
+			if (!participant.micOn) {
+				statuses.push({key: 'mic-muted', icon: 'mdi-microphone-off', label: 'Muted'})
+			}
+			return statuses
+		},
 		isFeedMuted(id) {
 			if (id === 'local') return this.micMuted
 			const feed = this.remoteFeeds.find(item => this.feedIdEquals(item.id, id))
@@ -1985,7 +2172,7 @@ export default {
 			this.subscribingFeedIds = this.subscribingFeedIds.filter(id => !this.feedIdEquals(id, feedId))
 		},
 		normalizeFeedId(id) {
-			return String(id)
+			return String(id).split('_')[0]
 		},
 		feedIdEquals(a, b) {
 			return this.normalizeFeedId(a) === this.normalizeFeedId(b)
@@ -2149,6 +2336,10 @@ export default {
 			log('janus-lifecycle', 'debug', {
 				action: 'leaveRoom',
 			})
+			this.micMuted = true
+			this.localCameraActive = false
+			this.screenShareStream = null
+			this.sendMediaState()
 			this.cleanup()
 			this.$emit('hangup')
 		},
@@ -2452,6 +2643,194 @@ export default {
 			width: 64px
 			&:hover
 				background: #b3261e
+		&.participants-button
+			position: relative
+
+	.participant-count-badge
+		align-items: center
+		background: #f6f7f9
+		border: 2px solid #2c323c
+		border-radius: 99px
+		color: #111317
+		display: flex
+		font-size: 11px
+		font-weight: 700
+		height: 20px
+		justify-content: center
+		line-height: 1
+		min-width: 20px
+		padding: 0 5px
+		position: absolute
+		right: -4px
+		top: -4px
+
+	.participants-backdrop
+		background: rgba(0,0,0,.35)
+		bottom: 0
+		left: 0
+		position: absolute
+		right: 0
+		top: 0
+		z-index: 20
+
+	.participants-backdrop-enter-active,
+	.participants-backdrop-leave-active
+		transition: opacity .18s ease
+	.participants-backdrop-enter-from,
+	.participants-backdrop-leave-to
+		opacity: 0
+
+	.participants-drawer
+		background: #1b1f26
+		border-left: 1px solid #323944
+		box-sizing: border-box
+		box-shadow: -12px 0 30px rgba(0,0,0,.36)
+		bottom: 0
+		color: #f6f7f9
+		display: flex
+		flex-direction: column
+		min-height: 0
+		position: absolute
+		right: 0
+		top: 0
+		width: min(320px, 100%)
+		z-index: 21
+
+	.participants-drawer-enter-active,
+	.participants-drawer-leave-active
+		transition: transform .22s ease, opacity .22s ease
+	.participants-drawer-enter-from,
+	.participants-drawer-leave-to
+		opacity: 0
+		transform: translateX(100%)
+
+	.participants-header
+		align-items: center
+		border-bottom: 1px solid #323944
+		display: flex
+		flex: none
+		justify-content: space-between
+		padding: 18px 18px 14px
+		.header-text
+			display: flex
+			flex-direction: column
+			gap: 3px
+			min-width: 0
+		h2
+			font-size: 18px
+			font-weight: 700
+			line-height: 1.25
+			margin: 0
+		span
+			color: #aeb6c2
+			font-size: 13px
+
+	.drawer-close
+		align-items: center
+		background: #2c323c
+		border: 0
+		border-radius: 50%
+		color: #f6f7f9
+		cursor: pointer
+		display: flex
+		flex: none
+		height: 36px
+		justify-content: center
+		width: 36px
+		.mdi
+			font-size: 22px
+		&:hover
+			background: #3a4350
+
+	.participants-list
+		box-sizing: border-box
+		display: flex
+		flex: auto 1 1
+		flex-direction: column
+		gap: 6px
+		min-height: 0
+		overflow-y: auto
+		padding: 10px
+
+	.participant-row
+		align-items: center
+		background: transparent
+		border: 0
+		border-radius: 8px
+		box-sizing: border-box
+		color: inherit
+		display: flex
+		gap: 12px
+		min-height: 64px
+		min-width: 0
+		padding: 10px
+		text-align: left
+		width: 100%
+		&.is-speaking
+			box-shadow: inset 3px 0 0 #31c48d
+
+	.participant-main
+		display: flex
+		flex: auto 1 1
+		flex-direction: column
+		gap: 5px
+		min-width: 0
+
+	.participant-name
+		align-items: center
+		display: flex
+		gap: 7px
+		min-width: 0
+		.name
+			color: #f6f7f9
+			font-size: 14px
+			font-weight: 650
+			min-width: 0
+			overflow: hidden
+			text-overflow: ellipsis
+			white-space: nowrap
+		.self-label
+			background: #303844
+			border-radius: 99px
+			color: #cbd3de
+			flex: none
+			font-size: 11px
+			font-weight: 700
+			padding: 2px 7px
+
+	.participant-status
+		color: #aeb6c2
+		display: flex
+		flex-wrap: wrap
+		gap: 6px 10px
+		min-width: 0
+
+	.status-item
+		align-items: center
+		display: flex
+		font-size: 12px
+		gap: 4px
+		line-height: 1.2
+		min-width: 0
+		.mdi
+			font-size: 15px
+
+	.participant-media
+		align-items: center
+		color: #cbd3de
+		display: flex
+		flex: none
+		gap: 6px
+		height: 32px
+		justify-content: center
+		min-width: 32px
+		.mdi
+			color: #cbd3de
+			font-size: 21px
+			&.off
+				color: #aeb6c2
+			&.muted
+				color: #ff8f86
 
 	&.size-tiny
 		.gallery
@@ -2462,28 +2841,36 @@ export default {
 			border-radius: 0
 		.tile-top,
 		.tile-bottom,
+		.participants-backdrop,
+		.participants-drawer,
 		.controlbar,
 		.info-bar
 			display: none
 
-		+below('m')
-			.gallery
-				gap: 8px
-				padding: 10px
-				&.has-screen
-					grid-auto-rows: minmax(120px, auto)
-					grid-template-columns: minmax(0, 1fr)
-					grid-template-rows: auto
-					.video-tile,
-					.video-tile.is-screen
-						grid-column: 1
-						grid-row: auto
-			.controlbar
-				gap: 8px
-				padding: 10px
+	+below('m')
+		.gallery
+			gap: 8px
+			padding: 10px
+			&.has-screen
+				grid-auto-rows: minmax(120px, auto)
+				grid-template-columns: minmax(0, 1fr)
+				grid-template-rows: auto
+				.video-tile,
+				.video-tile.is-screen
+					grid-column: 1
+					grid-row: auto
+		.controlbar
+			gap: 8px
+			padding: 10px
 		.control-button
 			height: 44px
 			width: 44px
 			&.leave
 				width: 58px
+		.participants-drawer
+			border-left: 0
+			border-top: 1px solid #323944
+			height: min(70%, 560px)
+			top: auto
+			width: 100%
 </style>

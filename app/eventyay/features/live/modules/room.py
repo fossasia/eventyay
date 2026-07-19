@@ -263,6 +263,10 @@ class RoomModule(BaseModule):
                 scope.set_extra("last_room", str(self.room.pk))
 
     async def _leave_room(self, room):
+        januscall = self.consumer.components.get("januscall")
+        if januscall and hasattr(januscall, "cleanup_media_state_for_room"):
+            await januscall.cleanup_media_state_for_room(room)
+
         group_names = [
             GROUP_ROOM,
             GROUP_ROOM_QUESTION_MODERATE,

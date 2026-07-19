@@ -31,6 +31,7 @@
 		:videoSessionId="videoSessionId",
 		:screenShareSessionId="screenShareSessionId",
 		:roomId="roomId",
+		:eventRoomId="room.id",
 		:size="size",
 		:automute="joinedWithMicMuted",
 		@hangup="onRoomLeft"
