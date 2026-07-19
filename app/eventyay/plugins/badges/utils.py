@@ -14,8 +14,16 @@ logger = logging.getLogger(__name__)
 
 BADGE_HIDDEN_FIELDS_KEY = 'badge_hidden_fields'
 BADGE_TICKET_PROVIDER = 'badge'
+BADGE_LAYOUT_PERSISTED_FIELDS = (
+    'layout',
+    'ask_user_fields',
+    'allow_customization',
+    'background',
+    'default',
+)
 
 _renderer_cache = {}
+_ASSIGNMENT_CACHE_ATTR = '_badge_layout_assignment_cache'
 
 
 def _badge_version_key(event):
@@ -45,10 +53,41 @@ def get_badge_layout_version(event):
     return default_cache.get(_badge_version_key(event)) or 0
 
 
+def get_badge_layout_renderer_token(layout):
+    """Return a content token used as part of the in-process renderer cache key."""
+    if layout is None:
+        return None
+    background = layout.background.name if layout.background else ''
+    return (
+        layout.layout or '',
+        layout.ask_user_fields or '',
+        bool(layout.allow_customization),
+        background,
+    )
+
+
+def reset_badge_layout_assignment_cache(event):
+    """Drop the per-Event assignment snapshot used within a process."""
+    if hasattr(event, _ASSIGNMENT_CACHE_ATTR):
+        delattr(event, _ASSIGNMENT_CACHE_ATTR)
+
+
+def delete_badge_cached_pdfs(event):
+    """Delete persisted badge PDF cache rows for one event."""
+    from eventyay.base.models import CachedCombinedTicket, CachedTicket
+
+    CachedTicket.objects.filter(
+        order_position__order__event=event,
+        provider=BADGE_TICKET_PROVIDER,
+    ).delete()
+    CachedCombinedTicket.objects.filter(
+        order__event=event,
+        provider=BADGE_TICKET_PROVIDER,
+    ).delete()
+
+
 def clear_badge_layout_cache(event):
-    for attr in ('_badge_layout_assignment_map', '_badge_voucher_assignment_map', '_default_badge_layout'):
-        if hasattr(event, attr):
-            delattr(event, attr)
+    reset_badge_layout_assignment_cache(event)
 
     # Bump the layout version in the cross-process cache so every worker's in-memory
     # renderer cache is invalidated on its very next use, without needing to reach into
@@ -60,9 +99,9 @@ def clear_badge_layout_cache(event):
     version = default_cache.get(key) or 0
     default_cache.set(key, version + 1, 3600 * 24 * 30)
 
-    keys_to_delete = [k for k in _renderer_cache if k[0] == event.pk]
-    for k in keys_to_delete:
-        del _renderer_cache[k]
+    stale_keys = [cache_key for cache_key in _renderer_cache if cache_key[0] == event.pk]
+    for cache_key in stale_keys:
+        del _renderer_cache[cache_key]
 
 
 def normalize_badge_content_key(content):
@@ -70,12 +109,16 @@ def normalize_badge_content_key(content):
 
 
 def get_badge_layout_assignment_maps(event):
-    if hasattr(event, '_badge_layout_assignment_map'):
-        return (
-            event._badge_layout_assignment_map,
-            event._badge_voucher_assignment_map,
-            event._default_badge_layout,
-        )
+    """
+    Resolve product/voucher/default layout assignments.
+
+    Cached on the Event instance only for the current layout version, so default
+    switches and assignment edits are picked up as soon as the version bumps.
+    """
+    version = get_badge_layout_version(event)
+    cached = getattr(event, _ASSIGNMENT_CACHE_ATTR, None)
+    if cached is not None and cached[0] == version:
+        return cached[1]
 
     product_map = {
         assignment.product_id: assignment.layout
@@ -90,10 +133,9 @@ def get_badge_layout_assignment_maps(event):
     except BadgeLayout.DoesNotExist:
         default_layout = None
 
-    event._badge_layout_assignment_map = product_map
-    event._badge_voucher_assignment_map = voucher_map
-    event._default_badge_layout = default_layout
-    return product_map, voucher_map, default_layout
+    maps = (product_map, voucher_map, default_layout)
+    setattr(event, _ASSIGNMENT_CACHE_ATTR, (version, maps))
+    return maps
 
 
 def get_badge_layout_for_position(event, position):
