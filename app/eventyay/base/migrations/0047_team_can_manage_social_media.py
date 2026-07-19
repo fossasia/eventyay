@@ -19,32 +19,4 @@ class Migration(migrations.Migration):
                 verbose_name="Can manage social media settings",
             ),
         ),
-        migrations.AlterField(
-            model_name="team",
-            name="force_hide_speaker_emails",
-            field=models.BooleanField(
-                default=False,
-                help_text="When enabled, this team cannot see speaker email addresses in organiser views, exports, or API responses, but can still see other speaker details (unless “Always hide speaker details” is also enabled).",
-                verbose_name="Always hide speaker emails only",
-            ),
-        ),
-        migrations.AlterField(
-            model_name="team",
-            name="force_hide_speaker_names",
-            field=models.BooleanField(
-                default=False,
-                help_text="Normally, speaker anonymisation follows each event’s review settings. When enabled, this team <strong>always</strong> hides speaker names and details in proposal and review views, exports, and API responses — even if the event review phase would otherwise show them. Applies together with any track limits.",
-                verbose_name="Always hide speaker details",
-            ),
-        ),
-        migrations.AlterField(
-            model_name="team",
-            name="limit_tracks",
-            field=models.ManyToManyField(
-                blank=True,
-                help_text="Limit this team to the selected tracks. Members only see proposals, sessions, reviews, speakers, schedule data, exports, and API results for those tracks. Leave empty for access to all tracks in the team’s events. Configure tracks per event below.",
-                to="base.track",
-                verbose_name="Restrict access to tracks",
-            ),
-        ),
     ]
