@@ -26,7 +26,11 @@ from eventyay.control.views.pdf import BaseEditorView, open_stored_pdf_file
 from eventyay.helpers.models import modelcopy
 from eventyay.plugins.badges.forms import BadgeLayoutForm, BadgeLayoutSettingsForm
 from eventyay.plugins.badges.tasks import badges_create_pdf
-from eventyay.plugins.badges.utils import clear_badge_layout_cache
+from eventyay.plugins.badges.utils import (
+    BADGE_TICKET_PROVIDER,
+    clear_badge_layout_cache,
+    delete_badge_cached_pdfs,
+)
 
 from .exporters import BadgeRenderer, _open_layout_background
 from .models import BadgeLayout
@@ -67,8 +71,11 @@ class BadgePluginEnabledMixin:
 def _schedule_badge_cache_invalidation(event):
     event_pk = event.pk
     clear_badge_layout_cache(event)
+    delete_badge_cached_pdfs(event)
     transaction.on_commit(
-        lambda event_pk=event_pk: invalidate_cache.apply_async(kwargs={'event': event_pk, 'provider': 'badge'})
+        lambda event_pk=event_pk: invalidate_cache.apply_async(
+            kwargs={'event': event_pk, 'provider': BADGE_TICKET_PROVIDER}
+        )
     )
 
 
