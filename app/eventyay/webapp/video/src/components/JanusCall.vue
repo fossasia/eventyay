@@ -3,10 +3,38 @@
 	.error(v-if="error") {{ $t('JanusCall:error:text') }}
 	// Pre-join screen
 	janus-prejoin(
-		v-else-if="!joined && !left && !error",
+		v-else-if="!joined && !left && !requestingAdmission && !waitingForAdmission && !denied && !error",
 		:roomName="room.name || 'Meeting Room'",
 		@join="onPrejoinComplete"
 	)
+	.waiting-room(v-else-if="requestingAdmission && !joined && !error")
+		.waiting-room-inner
+			.waiting-room-icon
+				.mdi.mdi-account-arrow-right-outline
+			h2 Requesting access...
+			p {{ room.name || 'Meeting Room' }}
+	.waiting-room(v-else-if="waitingForAdmission && !joined && !error")
+		.waiting-room-inner
+			.waiting-room-icon
+				.mdi.mdi-account-clock-outline
+			h2 Waiting for host to admit you...
+			p {{ room.name || 'Meeting Room' }}
+			button.left-room-button(type="button", @click="cancelWaitingRoom")
+				.mdi.mdi-close
+				span Leave
+	.denied-room(v-else-if="denied && !error")
+		.left-room-inner
+			.left-room-icon
+				.mdi.mdi-account-cancel-outline
+			h2 The host declined your request to join
+			p {{ room.name || 'Meeting Room' }}
+			.left-room-actions
+				button.left-room-button.primary(type="button", @click="returnToPrejoin")
+					.mdi.mdi-refresh
+					span Try again
+				button.left-room-button(type="button", @click="$router.push('/')")
+					.mdi.mdi-arrow-left
+					span Back to event
 	.left-room(v-else-if="left && !error")
 		.left-room-inner
 			.left-room-icon
@@ -77,8 +105,12 @@ export default {
 			// Pre-join state
 			joined: false,
 			left: false,
+			requestingAdmission: false,
+			waitingForAdmission: false,
+			denied: false,
 			leftMessage: 'You left the room',
 			joinedWithMicMuted: true,
+			apiMessageHandler: null,
 		}
 	},
 	computed: {},
@@ -86,30 +118,64 @@ export default {
 		// In tiny/background mode, skip the prejoin screen and join immediately
 		if (this.size === 'tiny' || this.background) {
 			await this.fetchRoomUrl()
-			this.joined = true
-		} else {
+			if (this.server) this.joined = true
+		} else if (!this.module.config?.waiting_room_enabled) {
 			// Pre-fetch the room URL in the background while the user is on
 			// the prejoin screen, so join is instant when they click.
 			this.fetchRoomUrl()
 		}
 	},
+	mounted() {
+		this.apiMessageHandler = this.onApiMessage.bind(this)
+		api.on('message', this.apiMessageHandler)
+	},
+	unmounted() {
+		if (this.apiMessageHandler) {
+			api.off('message', this.apiMessageHandler)
+			this.apiMessageHandler = null
+		}
+	},
 	methods: {
+		onApiMessage(message) {
+			const [name, payload] = message
+			if (name !== 'januscall.admission_result') return
+			if (String(payload?.room) !== String(this.room.id)) return
+			if (payload.status === 'admitted' && payload.session) {
+				this.applyRoomUrl(payload.session)
+				this.waitingForAdmission = false
+				this.denied = false
+				this.left = false
+				this.joined = true
+			} else if (payload.status === 'denied') {
+				this.clearRoomUrl()
+				this.waitingForAdmission = false
+				this.joined = false
+				this.denied = true
+			}
+		},
+		applyRoomUrl({ server, roomId, token, sessionId, audioSessionId, videoSessionId, screenShareSessionId, iceServers, isModerator }) {
+			this.roomId = roomId
+			this.token = token
+			this.iceServers = iceServers
+			this.sessionId = sessionId
+			this.audioSessionId = audioSessionId
+			this.videoSessionId = videoSessionId
+			this.screenShareSessionId = screenShareSessionId
+			this.isModerator = Boolean(isModerator)
+			this.server = server
+		},
 		async fetchRoomUrl() {
 			if (this.roomUrlPromise) return this.roomUrlPromise
 			this.loading = true
 			this.error = null
 			this.roomUrlPromise = api.call('januscall.room_url', { room: this.room.id })
-				.then(({ server, roomId, token, sessionId, audioSessionId, videoSessionId, screenShareSessionId, iceServers, isModerator }) => {
+				.then((response) => {
 					if (!this.$el || this._isDestroyed) return
-					this.roomId = roomId
-					this.token = token
-					this.iceServers = iceServers
-					this.sessionId = sessionId
-					this.audioSessionId = audioSessionId
-					this.videoSessionId = videoSessionId
-					this.screenShareSessionId = screenShareSessionId
-					this.isModerator = Boolean(isModerator)
-					this.server = server
+					if (response.status === 'pending') {
+						this.waitingForAdmission = true
+						return
+					}
+					this.applyRoomUrl(response)
 				})
 				.catch((error) => {
 					this.error = error
@@ -123,15 +189,40 @@ export default {
 		},
 		async onPrejoinComplete({ micMuted }) {
 			this.joinedWithMicMuted = micMuted
+			this.denied = false
+			this.requestingAdmission = true
 			if (!this.server) {
 				await this.fetchRoomUrl()
 			}
+			this.requestingAdmission = false
 			if (this.error) return
+			if (this.waitingForAdmission) return
 			this.joined = true
+		},
+		async cancelWaitingRoom() {
+			try {
+				await api.call('januscall.waiting_room.cancel', { room: this.room.id })
+			} catch (error) {
+				console.log(error)
+			}
+			this.waitingForAdmission = false
+			this.requestingAdmission = false
+			this.left = true
+			this.leftMessage = 'You left the waiting room'
+			this.clearRoomUrl()
+		},
+		returnToPrejoin() {
+			this.denied = false
+			this.left = false
+			this.leftMessage = 'You left the room'
+			this.clearRoomUrl()
 		},
 		onRoomLeft(payload = {}) {
 			this.joined = false
 			this.left = true
+			this.requestingAdmission = false
+			this.waitingForAdmission = false
+			this.denied = false
 			this.leftMessage = payload.message || 'You left the room'
 			this.clearRoomUrl()
 		},
@@ -150,6 +241,8 @@ export default {
 			this.videoSessionId = null
 			this.screenShareSessionId = null
 			this.isModerator = false
+			this.requestingAdmission = false
+			this.waitingForAdmission = false
 		},
 	},
 }
@@ -163,7 +256,9 @@ export default {
 	position: relative
 	overflow: hidden
 
-	.left-room
+	.left-room,
+	.waiting-room,
+	.denied-room
 		flex: auto
 		display: flex
 		align-items: center
@@ -200,6 +295,20 @@ export default {
 		align-items: center
 		justify-content: center
 		color: #ffb3b3
+
+		.mdi
+			font-size: 30px
+
+	.waiting-room-icon
+		width: 64px
+		height: 64px
+		border-radius: 50%
+		background: #22282f
+		border: 1px solid #343d47
+		display: flex
+		align-items: center
+		justify-content: center
+		color: #a8d7ff
 
 		.mdi
 			font-size: 30px

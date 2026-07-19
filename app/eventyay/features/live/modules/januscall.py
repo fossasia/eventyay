@@ -1,13 +1,14 @@
 import hashlib
 import json
 import secrets
+import time
 
 from channels.db import database_sync_to_async
 from django.conf import settings
 from redis.asyncio.lock import Lock
 from sentry_sdk import capture_exception
 
-from eventyay.base.models import JanusServer
+from eventyay.base.models import JanusServer, User
 from eventyay.base.services import turn
 from eventyay.base.services.janus import (
     JanusError,
@@ -22,7 +23,7 @@ from eventyay.base.services.roulette import is_member_of_roulette_call
 from eventyay.base.services.user import get_public_user
 from eventyay.core.permissions import Permission
 from eventyay.core.utils.redis import aredis
-from eventyay.features.live.channels import GROUP_ROOM
+from eventyay.features.live.channels import GROUP_ROOM, GROUP_USER
 from eventyay.features.live.decorators import (
     command,
     event,
@@ -35,10 +36,12 @@ from eventyay.features.live.modules.base import BaseModule
 
 class JanusCallModule(BaseModule):
     prefix = "januscall"
+    WAITING_ROOM_TTL = 3600
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.media_state_rooms = {}
+        self.waiting_admission_rooms = {}
 
     @database_sync_to_async
     def _servers(self):
@@ -79,6 +82,14 @@ class JanusCallModule(BaseModule):
     @staticmethod
     def _room_feeds_key(room_id):
         return f"januscall:room:{room_id}:feeds"
+
+    @staticmethod
+    def _waiting_room_key(room_id):
+        return f"januscall:waiting:{room_id}"
+
+    @staticmethod
+    def _is_waiting_room_enabled(module_config):
+        return bool(module_config.get("waiting_room_enabled", False))
 
     @staticmethod
     def _decode_media_state(raw_state):
@@ -167,11 +178,123 @@ class JanusCallModule(BaseModule):
         module_required="call.janus",
     )
     async def room_url(self, body):
+        if (
+            self._is_waiting_room_enabled(self.module_config)
+            and not await self._can_moderate_room()
+        ):
+            pending_user = await self._add_pending_admission()
+            await self.consumer.send_success(
+                {
+                    "status": "pending",
+                    "room": str(self.room.pk),
+                    "user": pending_user,
+                    "fallback": "Users remain in the waiting room until a host admits or denies them.",
+                }
+            )
+            return
+
         room_data = await self._get_or_create_janus_room(
             f"room:{self.room.id}", audiobridge=True
         )
         room_data["isModerator"] = await self._can_moderate_room()
+        room_data["status"] = "ready"
         await self.consumer.send_success(room_data)
+
+    @command("waiting_room.list")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def waiting_room_list(self, body):
+        if not await self._can_moderate_room():
+            raise ConsumerException("protocol.denied", "Permission denied.")
+
+        await self.consumer.send_success(
+            {
+                "room": str(self.room.pk),
+                "users": await self._pending_admissions(),
+            }
+        )
+
+    @command("waiting_room.cancel")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def waiting_room_cancel(self, body):
+        await self._remove_pending_admission(self.consumer.user.pk, status="cancelled")
+        self.waiting_admission_rooms.pop(str(self.room.pk), None)
+        await self.consumer.send_success({"room": str(self.room.pk)})
+
+    @command("waiting_room.admit")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def waiting_room_admit(self, body):
+        if not await self._can_moderate_room():
+            raise ConsumerException("protocol.denied", "Permission denied.")
+
+        target_user = await self._get_waiting_user(body.get("user"))
+        room_data = await self._get_or_create_janus_room(
+            f"room:{self.room.id}",
+            audiobridge=True,
+            user=target_user,
+        )
+        room_data["isModerator"] = await self.consumer.event.has_permission_async(
+            user=target_user,
+            permission=[
+                Permission.ROOM_JANUSCALL_MODERATE,
+                Permission.ROOM_BBB_MODERATE,
+                Permission.ROOM_UPDATE,
+                Permission.EVENT_UPDATE,
+            ],
+            room=self.room,
+        )
+        room_data["status"] = "ready"
+
+        await self._remove_pending_admission(target_user.pk, status="admitted")
+        await self.consumer.channel_layer.group_send(
+            GROUP_USER.format(id=target_user.pk),
+            {
+                "type": "januscall.admission_result",
+                "room": str(self.room.pk),
+                "status": "admitted",
+                "session": room_data,
+            },
+        )
+        await self.consumer.send_success(
+            {
+                "room": str(self.room.pk),
+                "user": str(target_user.pk),
+            }
+        )
+
+    @command("waiting_room.deny")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def waiting_room_deny(self, body):
+        if not await self._can_moderate_room():
+            raise ConsumerException("protocol.denied", "Permission denied.")
+
+        target_user = await self._get_waiting_user(body.get("user"))
+        await self._remove_pending_admission(target_user.pk, status="denied")
+        await self.consumer.channel_layer.group_send(
+            GROUP_USER.format(id=target_user.pk),
+            {
+                "type": "januscall.admission_result",
+                "room": str(self.room.pk),
+                "status": "denied",
+            },
+        )
+        await self.consumer.send_success(
+            {
+                "room": str(self.room.pk),
+                "user": str(target_user.pk),
+            }
+        )
 
     @command("media_state")
     @room_action(
@@ -274,13 +397,104 @@ class JanusCallModule(BaseModule):
         room_data = await self._get_or_create_janus_room(f"roulette:{call_id}")
         await self.consumer.send_success(room_data)
 
-    async def _get_or_create_janus_room(self, redis_key, audiobridge=False):
-        if not self.consumer.user.profile.get("display_name"):
+    async def _add_pending_admission(self):
+        pending_user = {
+            "id": str(self.consumer.user.pk),
+            "display_name": self.consumer.user.profile.get("display_name") or "",
+            "joined_at": int(time.time()),
+        }
+        async with aredis(self._waiting_room_key(self.room.pk)) as redis:
+            await redis.hset(
+                self._waiting_room_key(self.room.pk),
+                pending_user["id"],
+                json.dumps(pending_user),
+            )
+            await redis.expire(
+                self._waiting_room_key(self.room.pk), self.WAITING_ROOM_TTL
+            )
+
+        await self.consumer.channel_layer.group_send(
+            GROUP_ROOM.format(id=self.room.pk),
+            {
+                "type": "januscall.waiting_room_updated",
+                "room": str(self.room.pk),
+                "action": "pending",
+                "user": pending_user,
+            },
+        )
+        self.waiting_admission_rooms[str(self.room.pk)] = self.room
+        return pending_user
+
+    async def _pending_admissions(self):
+        async with aredis(self._waiting_room_key(self.room.pk)) as redis:
+            raw_users = await redis.hvals(self._waiting_room_key(self.room.pk))
+
+        users = []
+        for raw_user in raw_users:
+            try:
+                users.append(json.loads(raw_user.decode()))
+            except (json.JSONDecodeError, AttributeError, UnicodeDecodeError):
+                continue
+        return sorted(users, key=lambda user: user.get("joined_at", 0))
+
+    async def _remove_pending_admission(self, user_id, *, status):
+        user_id = str(user_id)
+        async with aredis(self._waiting_room_key(self.room.pk)) as redis:
+            await redis.hdel(self._waiting_room_key(self.room.pk), user_id)
+            await redis.expire(
+                self._waiting_room_key(self.room.pk), self.WAITING_ROOM_TTL
+            )
+
+        await self.consumer.channel_layer.group_send(
+            GROUP_ROOM.format(id=self.room.pk),
+            {
+                "type": "januscall.waiting_room_updated",
+                "room": str(self.room.pk),
+                "action": status,
+                "user": {"id": user_id},
+            },
+        )
+
+    async def _get_waiting_user(self, user_id):
+        user_id = str(user_id or "")
+        if not user_id:
+            raise ConsumerException(
+                "janus.waiting_room.not_found", "User is not waiting."
+            )
+
+        async with aredis(self._waiting_room_key(self.room.pk)) as redis:
+            raw_user = await redis.hget(self._waiting_room_key(self.room.pk), user_id)
+        if not raw_user:
+            raise ConsumerException(
+                "janus.waiting_room.not_found", "User is not waiting."
+            )
+
+        try:
+            user_pk = int(user_id)
+        except (TypeError, ValueError):
+            raise ConsumerException(
+                "janus.waiting_room.not_found", "User is not waiting."
+            )
+
+        try:
+            return await database_sync_to_async(User.objects.get)(
+                event=self.consumer.event,
+                pk=user_pk,
+            )
+        except User.DoesNotExist:
+            await self._remove_pending_admission(user_id, status="removed")
+            raise ConsumerException(
+                "janus.waiting_room.not_found", "User is not waiting."
+            )
+
+    async def _get_or_create_janus_room(self, redis_key, audiobridge=False, user=None):
+        user = user or self.consumer.user
+        if not user.profile.get("display_name"):
             raise ConsumerException("janus.join.missing_profile")
 
         cache_key = f"januscall:{redis_key}"
         user_secret_token = hashlib.sha256(
-            f"januscall:usersecret:{settings.SECRET_KEY}:{self.consumer.user.pk}".encode()
+            f"januscall:usersecret:{settings.SECRET_KEY}:{user.pk}".encode()
         ).hexdigest()
         async with aredis() as redis:
             async with Lock(
@@ -336,17 +550,17 @@ class JanusCallModule(BaseModule):
             await redis.setex(
                 f"januscall:user:{audio_user_id}",
                 3600 * 24,
-                str(self.consumer.user.pk),
+                str(user.pk),
             )
             await redis.setex(
                 f"januscall:user:{video_user_id}",
                 3600 * 24,
-                str(self.consumer.user.pk),
+                str(user.pk),
             )
             await redis.setex(
                 f"januscall:user:{screenshare_user_id}",
                 3600 * 24,
-                str(self.consumer.user.pk),
+                str(user.pk),
             )
             await self._register_feed_ids(
                 redis,
@@ -356,6 +570,7 @@ class JanusCallModule(BaseModule):
                     video_user_id,
                     screenshare_user_id,
                 ],
+                user=user,
             )
 
         iceServers = turn_server.get_ice_servers() if turn_server else []
@@ -370,8 +585,9 @@ class JanusCallModule(BaseModule):
             "iceServers": iceServers,
         }
 
-    async def _register_feed_ids(self, redis, room_id, feed_ids):
-        user_id = str(self.consumer.user.pk)
+    async def _register_feed_ids(self, redis, room_id, feed_ids, user=None):
+        user = user or self.consumer.user
+        user_id = str(user.pk)
         user_feeds_key = self._room_user_feeds_key(room_id, user_id)
         for feed_id in feed_ids:
             normalized_feed_id = str(feed_id).split("_")[0]
@@ -589,6 +805,33 @@ class JanusCallModule(BaseModule):
             ]
         )
 
+    @event("waiting_room_updated")
+    async def push_waiting_room_updated(self, body):
+        await self.consumer.send_json(
+            [
+                body["type"],
+                {k: v for k, v in body.items() if k != "type"},
+            ]
+        )
+
+    @event("admission_result")
+    async def push_admission_result(self, body):
+        self.waiting_admission_rooms.pop(str(body.get("room")), None)
+        await self.consumer.send_json(
+            [
+                body["type"],
+                {k: v for k, v in body.items() if k != "type"},
+            ]
+        )
+
     async def dispatch_disconnect(self, close_code):
+        for room in list(self.waiting_admission_rooms.values()):
+            self.room = room
+            await self._remove_pending_admission(
+                self.consumer.user.pk, status="cancelled"
+            )
+            self.waiting_admission_rooms.pop(str(room.pk), None)
+            del self.room
+
         for room in list(self.media_state_rooms.values()):
             await self.cleanup_media_state_for_room(room)

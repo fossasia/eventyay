@@ -111,6 +111,7 @@
 			button.control-button.participants-button(type="button", :class="{ active: showParticipantsDrawer }", title="Participants", @click="showParticipantsDrawer = !showParticipantsDrawer")
 				.mdi.mdi-account-multiple
 				span.participant-count-badge {{ participantCount }}
+				span.waiting-count-badge(v-if="pendingAdmissionCount") {{ pendingAdmissionCount }}
 			button.control-button(type="button", title="Settings", @click="showDevicePrompt = true")
 				.mdi.mdi-cog
 			button.control-button(type="button", title="Report issue", @click="showFeedbackPrompt = true")
@@ -132,6 +133,22 @@
 						span End
 					button.drawer-close(type="button", title="Close participants", @click="showParticipantsDrawer = false")
 						.mdi.mdi-close
+			.waiting-room-section(v-if="canModerateParticipants && pendingAdmissionCount")
+				.waiting-room-heading
+					span Waiting room
+					span {{ pendingAdmissionCount }}
+				.waiting-room-list
+					.waiting-room-row(v-for="pendingUser in pendingAdmissions", :key="pendingUser.id")
+						.waiting-room-user
+							.mdi.mdi-account-clock-outline
+							span {{ pendingUser.display_name || 'Participant' }}
+						.waiting-room-actions
+							button.waiting-room-action.admit(type="button", :disabled="isAdmissionActionPending(pendingUser)", @click="admitPendingUser(pendingUser)")
+								.mdi.mdi-check
+								span Admit
+							button.waiting-room-action.deny(type="button", :disabled="isAdmissionActionPending(pendingUser)", @click="denyPendingUser(pendingUser)")
+								.mdi.mdi-close
+								span Deny
 			.participants-list
 				.participant-row(
 					v-for="participant in participantRows",
@@ -362,6 +379,8 @@ export default {
 			selectedUser: null,
 			openParticipantMenu: null,
 			pendingModeratorActions: {},
+			pendingAdmissionActions: {},
+			pendingAdmissions: [],
 			endingMeeting: false,
 			screenShareBlockedByHost: false,
 			moderationNotice: null,
@@ -476,6 +495,9 @@ export default {
 		participantCount() {
 			return this.participantRows.length
 		},
+		pendingAdmissionCount() {
+			return this.pendingAdmissions.length
+		},
 		activeSpeakerId() {
 			let activeId = null
 			let activeLevel = SPEAKING_THRESHOLD
@@ -539,6 +561,7 @@ export default {
 		this.cleaningUp = false
 		this.initJanus()
 		this.loadMediaStates()
+		this.loadPendingAdmissions()
 		this.slowLinkInterval = window.setInterval(() => {
 			this.downstreamSlowLinkCount = Math.max(this.downstreamSlowLinkCount - 1, 0)
 			this.upstreamSlowLinkCount = Math.max(this.upstreamSlowLinkCount - 1, 0)
@@ -593,6 +616,8 @@ export default {
 				})
 			} else if (name === 'januscall.moderation_action') {
 				this.handleModeratorAction(payload)
+			} else if (name === 'januscall.waiting_room_updated') {
+				this.handleWaitingRoomUpdate(payload)
 			}
 		},
 		mergeMediaStates(states) {
@@ -623,6 +648,74 @@ export default {
 					name: error?.name,
 				})
 			}
+		},
+		async loadPendingAdmissions() {
+			if (!this.canModerateParticipants || !this.eventRoomId) return
+			try {
+				const response = await api.call('januscall.waiting_room.list', {
+					room: this.eventRoomId,
+				})
+				this.pendingAdmissions = response?.users || []
+			} catch (error) {
+				log('janus-waiting-room', 'warn', {
+					action: 'loadPendingAdmissions:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
+			}
+		},
+		handleWaitingRoomUpdate(payload) {
+			if (!this.canModerateParticipants) return
+			const user = payload.user || {}
+			if (!user.id) return
+			if (payload.action === 'pending') {
+				const existingIndex = this.pendingAdmissions.findIndex(pendingUser => String(pendingUser.id) === String(user.id))
+				if (existingIndex >= 0) {
+					this.pendingAdmissions.splice(existingIndex, 1, user)
+				} else {
+					this.pendingAdmissions.push(user)
+				}
+				this.pendingAdmissions.sort((a, b) => (a.joined_at || 0) - (b.joined_at || 0))
+			} else {
+				this.pendingAdmissions = this.pendingAdmissions.filter(pendingUser => String(pendingUser.id) !== String(user.id))
+				const actions = {...this.pendingAdmissionActions}
+				delete actions[user.id]
+				this.pendingAdmissionActions = actions
+			}
+		},
+		isAdmissionActionPending(pendingUser) {
+			return Boolean(this.pendingAdmissionActions[pendingUser.id])
+		},
+		async updatePendingAdmission(pendingUser, action) {
+			this.pendingAdmissionActions = {
+				...this.pendingAdmissionActions,
+				[pendingUser.id]: true,
+			}
+			try {
+				await api.call(`januscall.waiting_room.${action}`, {
+					room: this.eventRoomId,
+					user: pendingUser.id,
+				})
+			} catch (error) {
+				const denied = error?.error === 'protocol.denied' || error?.code === 'protocol.denied'
+				this.showModerationNotice(denied ? 'Permission denied.' : 'Could not update waiting room.')
+				log('janus-waiting-room', 'warn', {
+					action,
+					user: pendingUser.id,
+					error: error?.message || error,
+					name: error?.name,
+				})
+			} finally {
+				const actions = {...this.pendingAdmissionActions}
+				delete actions[pendingUser.id]
+				this.pendingAdmissionActions = actions
+			}
+		},
+		admitPendingUser(pendingUser) {
+			this.updatePendingAdmission(pendingUser, 'admit')
+		},
+		denyPendingUser(pendingUser) {
+			this.updatePendingAdmission(pendingUser, 'deny')
 		},
 		showModerationNotice(message) {
 			this.moderationNotice = message
@@ -2887,6 +2980,24 @@ export default {
 		right: -4px
 		top: -4px
 
+	.waiting-count-badge
+		align-items: center
+		background: #ffb020
+		border: 2px solid #2c323c
+		border-radius: 99px
+		color: #111317
+		display: flex
+		font-size: 11px
+		font-weight: 800
+		height: 20px
+		justify-content: center
+		line-height: 1
+		min-width: 20px
+		padding: 0 5px
+		position: absolute
+		right: -4px
+		top: 18px
+
 	.participants-backdrop
 		background: rgba(0,0,0,.35)
 		bottom: 0
@@ -2994,6 +3105,95 @@ export default {
 			font-size: 22px
 		&:hover
 			background: #3a4350
+
+	.waiting-room-section
+		border-bottom: 1px solid #323944
+		display: flex
+		flex: none
+		flex-direction: column
+		gap: 8px
+		padding: 12px 10px
+
+	.waiting-room-heading
+		align-items: center
+		color: #f6f7f9
+		display: flex
+		font-size: 13px
+		font-weight: 700
+		justify-content: space-between
+		padding: 0 8px
+		span:last-child
+			background: #ffb020
+			border-radius: 99px
+			color: #111317
+			font-size: 11px
+			min-width: 20px
+			padding: 3px 7px
+			text-align: center
+
+	.waiting-room-list
+		display: flex
+		flex-direction: column
+		gap: 6px
+
+	.waiting-room-row
+		align-items: center
+		background: #242a33
+		border: 1px solid #343d47
+		border-radius: 8px
+		display: flex
+		gap: 10px
+		min-width: 0
+		padding: 9px
+
+	.waiting-room-user
+		align-items: center
+		color: #f6f7f9
+		display: flex
+		flex: auto 1 1
+		font-size: 13px
+		font-weight: 650
+		gap: 8px
+		min-width: 0
+		.mdi
+			color: #ffcf76
+			flex: none
+			font-size: 20px
+		span
+			overflow: hidden
+			text-overflow: ellipsis
+			white-space: nowrap
+
+	.waiting-room-actions
+		display: flex
+		flex: none
+		gap: 6px
+
+	.waiting-room-action
+		align-items: center
+		border: 0
+		border-radius: 6px
+		color: #fff
+		cursor: pointer
+		display: flex
+		font-size: 12px
+		font-weight: 700
+		gap: 4px
+		height: 30px
+		padding: 0 8px
+		.mdi
+			font-size: 16px
+		&.admit
+			background: #16794c
+		&.deny
+			background: #6b2a2d
+		&:hover,
+		&:focus-visible
+			filter: brightness(1.12)
+			outline: none
+		&:disabled
+			cursor: default
+			opacity: .6
 
 	.participants-list
 		box-sizing: border-box
