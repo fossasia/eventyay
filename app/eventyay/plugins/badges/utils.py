@@ -1,6 +1,7 @@
 import json
 import logging
 
+from django.core.cache import cache as default_cache
 from django.db.models import Exists, OuterRef
 from django.utils.translation import gettext_lazy as _
 
@@ -17,6 +18,22 @@ BADGE_TICKET_PROVIDER = 'badge'
 _renderer_cache = {}
 
 
+def _badge_version_key(event):
+    """Return a cache key outside the NamespacedCache namespace.
+
+    ``event.cache`` is a ``NamespacedCache`` whose ``clear()`` rotates a
+    namespace prefix — making every previously stored key unreachable.
+    Because dozens of unrelated model saves (products, settings, …) call
+    ``event.cache.clear()``, storing the badge layout version *inside*
+    that namespace caused it to silently reset to 0.
+
+    By using Django's default cache directly with a simple key, we avoid
+    the namespace entirely while still sharing state across all processes
+    via the same Redis backend.
+    """
+    return f'badge_layout_version:{event.pk}'
+
+
 def get_badge_layout_version(event):
     """
     Return the current badge layout/rendering cache version for this event.
@@ -25,7 +42,7 @@ def get_badge_layout_version(event):
     Celery worker and web worker will observe a version bump immediately on their next
     lookup, no matter which process actually saved the layout change.
     """
-    return event.cache.get('badge_layout_version') or 0
+    return default_cache.get(_badge_version_key(event)) or 0
 
 
 def clear_badge_layout_cache(event):
@@ -36,8 +53,12 @@ def clear_badge_layout_cache(event):
     # Bump the layout version in the cross-process cache so every worker's in-memory
     # renderer cache is invalidated on its very next use, without needing to reach into
     # other processes' memory.
-    version = get_badge_layout_version(event)
-    event.cache.set('badge_layout_version', version + 1, 3600 * 24 * 30)
+    #
+    # We use Django's default cache directly (not event.cache) so the version survives
+    # event.cache.clear() calls triggered by unrelated model saves.
+    key = _badge_version_key(event)
+    version = default_cache.get(key) or 0
+    default_cache.set(key, version + 1, 3600 * 24 * 30)
 
     keys_to_delete = [k for k in _renderer_cache if k[0] == event.pk]
     for k in keys_to_delete:
