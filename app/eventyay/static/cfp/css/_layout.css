@@ -74,14 +74,14 @@ header {
       color: var(--color-header-navigation);
       padding: 8px 10px 4px 10px;
       border-bottom: 2px solid transparent;
-      &:hover {
-        color: var(--color-header-navigation);
+      &:hover, &:focus-visible {
+        color: var(--color-header-navigation-hover);
         text-decoration: none;
-        border-bottom: 2px dotted var(--color-primary);
+        border-bottom: 2px dotted currentColor;
       }
       &.active {
         color: var(--color-header-navigation);
-        border-bottom: 2px solid var(--color-primary);
+        border-bottom: 2px solid currentColor;
       }
     }
   }
@@ -217,16 +217,17 @@ header {
   border-bottom: 2px solid transparent;
 }
 
-.presale-sticky-tabs a.header-tab:hover {
-  color: var(--color-header-navigation);
+.presale-sticky-tabs a.header-tab:hover,
+.presale-sticky-tabs a.header-tab:focus-visible {
+  color: var(--color-header-navigation-hover);
   text-decoration: none;
-  border-bottom: 2px dotted var(--color-primary);
+  border-bottom: 2px dotted currentColor;
 }
 
 .presale-sticky-tabs a.header-tab.active,
 .presale-sticky-tabs a.header-tab.underline {
   color: var(--color-header-navigation);
-  border-bottom: 2px solid var(--color-primary);
+  border-bottom: 2px solid currentColor;
 }
 
 .presale-sticky-tabs .header-row-right {
@@ -313,8 +314,8 @@ header {
 
 .header-join-video-floating-mobile {
   position: absolute;
-  bottom: -27.5px;
-  right: 7.5px;
+  bottom: -17px;
+  right: 15px;
   z-index: 1050;
 }
 
@@ -323,17 +324,17 @@ header {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 2px 6px;
-  height: 28px;
+  padding: 6px 12px;
+  height: 34px;
   min-width: 0;
-  border-radius: 6px;
+  border-radius: 4px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
   background-color: var(--color-primary);
   color: white;
-  border: none;
-  font-size: 0.82rem;
-  font-weight: 500;
-  line-height: 1;
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.42857143;
 }
 
 @media (max-width: 319px) {
@@ -360,10 +361,9 @@ header {
 
 .header-join-video-floating-mobile .btn-join-video-icon-only:hover,
 .header-join-video-floating-mobile .btn-join-video-icon-only:focus {
-  transform: scale(1.02);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
   color: white !important;
-  background-color: var(--color-primary);
+  background-color: var(--color-primary-hover, var(--color-primary));
+  border-color: var(--color-primary-hover, var(--color-primary));
   filter: none;
 }
 
@@ -378,7 +378,7 @@ header {
 
   body.page-agenda .header-join-video-floating-mobile,
   body.page-cfp .header-join-video-floating-mobile {
-    right: 0;
+    right: 15px;
   }
 }
 
@@ -391,6 +391,7 @@ header {
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
+  gap: 2px;
 }
 
 header > .event-home-back {
@@ -423,7 +424,8 @@ header > .event-home-back {
 }
 
 .event-home-back:hover .event-home-back-pill,
-.event-home-back:focus-visible .event-home-back-pill {
+.event-home-back:focus-visible .event-home-back-pill,
+.event-home-back.event-home-back--expanded .event-home-back-pill {
   gap: 0.4em;
   background: rgba(0, 0, 0, 0.62);
 }
@@ -456,7 +458,8 @@ header > .event-home-back {
 }
 
 .event-home-back:hover .event-home-back-label,
-.event-home-back:focus-visible .event-home-back-label {
+.event-home-back:focus-visible .event-home-back-label,
+.event-home-back.event-home-back--expanded .event-home-back-label {
   max-width: 12em;
   opacity: 1;
 }
@@ -605,6 +608,10 @@ footer {
 }
 
 @media (max-width: 768px) {
+  #top-bg {
+    height: 480px;
+  }
+
   #main-container {
     max-width: 100%;
     padding-left: 0;
@@ -725,16 +732,28 @@ footer {
   }
 
   .event-hero {
-    margin: 0.5rem 0 2rem;
+    margin: 0.25rem 0 1.5rem;
   }
 
   .event-hero-overlay {
+    position: relative;
     display: flex;
+    flex-direction: column;
     width: 100%;
+    min-height: auto;
+    align-items: flex-start;
+  }
+
+  .header-join-video-floating-mobile {
+    position: static;
+    margin-top: 14px;
+    padding-right: 12px;
+    align-self: flex-end;
   }
 
   .event-brand {
-    flex-wrap: wrap;
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
     align-items: flex-start;
     padding-left: 12px;
@@ -758,14 +777,6 @@ footer {
 
   .event-date-line {
     font-size: 0.9rem;
-  }
-
-  .event-hero-overlay {
-    position: relative;
-    display: flex;
-    width: 100%;
-    min-height: 100px;
-    align-items: flex-end;
   }
 
   /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */

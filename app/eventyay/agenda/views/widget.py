@@ -26,6 +26,7 @@ from eventyay.talk_rules.agenda import (
     is_widget_visible,
     wip_preview_build_data,
 )
+from eventyay.agenda.views.utils import build_unavailable_widget_schedule_data
 from eventyay.talk_rules.submission import (
     are_featured_speakers_visible,
     schedule_widget_featured_cache_key_part,
@@ -41,12 +42,14 @@ def color_etag(request, organizer=None, event=None, **kwargs):
     header_background_color = request.event.settings.get('header_background_color')
     header_text_color = request.event.settings.get('header_text_color')
     navigation_text_color = request.event.settings.get('navigation_text_color')
+    menu_text_scroll_over_color = request.event.settings.get('menu_text_scroll_over_color')
     primary_font = request.event.settings.get('primary_font')
     parts = [
         request.event.visible_primary_color or '',
         header_background_color or '',
         header_text_color or '',
         navigation_text_color or '',
+        menu_text_scroll_over_color or '',
         primary_font or '',
     ]
     return '|'.join(parts) if any(parts) else 'none'
@@ -146,7 +149,11 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
 
     schedule = schedule or event.current_schedule
     if not schedule:
-        raise Http404()
+        result = build_unavailable_widget_schedule_data(event)
+        response = JsonResponse(result, encoder=I18nJSONEncoder)
+        response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
 
     enrich = request.GET.get('enrich') in {'1', 'true', 'True'}
     include_qrcodes = request.GET.get('qrcodes') in {'1', 'true', 'True'}
@@ -292,6 +299,7 @@ def event_css(request, organizer=None, event=None, **kwargs):
     header_background_color = request.event.settings.get('header_background_color')
     header_text_color = request.event.settings.get('header_text_color')
     navigation_text_color = request.event.settings.get('navigation_text_color')
+    menu_text_scroll_over_color = request.event.settings.get('menu_text_scroll_over_color')
     primary_font = request.event.settings.get('primary_font')
 
     if request.event.visible_primary_color:
@@ -307,6 +315,8 @@ def event_css(request, organizer=None, event=None, **kwargs):
         variables.append(f'--color-header-text: {header_text_color};')
     if navigation_text_color:
         variables.append(f'--color-header-navigation: {navigation_text_color};')
+    if menu_text_scroll_over_color:
+        variables.append(f'--color-header-navigation-hover: {menu_text_scroll_over_color};')
 
     font_css = ''
     if primary_font and request.GET.get('target') != 'orga':

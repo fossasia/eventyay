@@ -12,8 +12,9 @@
 			v-model:recordingFilter="recordingFilter",
 			:favsCount="resolvedFavs.length",
 			:onlyFavs="onlyFavs",
+			v-model:shareStarredSessions="shareStarredSessions",
+			:scheduleUserLoggedIn="scheduleUserLoggedIn",
 			:hasActiveFilters="onlyFavs || activeFilterCount > 0 || recordingFilter !== 'all'",
-			:inEventTimezone="inEventTimezone",
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="resolvedSchedule.timezone",
 			:userTimezone="userTimezone",
@@ -34,6 +35,7 @@
 			@selectDay="changeDay($event)",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
+			@update:shareStarredSessions="updateShareStarredSessions",
 			@resetFilters="resetAllFilters",
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
@@ -116,7 +118,11 @@ export default {
 		scheduleFav: { default: null },
 		scheduleUnfav: { default: null },
 		scheduleExporters: { default: () => [] },
-		scheduleMetaData: { default: () => ({}) }
+		scheduleMetaData: { default: () => ({}) },
+		scheduleUserLoggedIn: { default: false },
+		loadStarredSharingPreference: { default: null },
+		updateStarredSharingPreference: { default: null },
+		onSaveTimezone: { default: null },
 	},
 	props: {
 		schedule: Object,
@@ -148,6 +154,7 @@ export default {
 		return {
 			currentDay: null,
 			onlyFavs: false,
+			shareStarredSessions: false,
 			scrollParentWidth: Infinity,
 			currentTimezone: null,
 			userTimezone: null,
@@ -383,15 +390,6 @@ export default {
 			}
 			return groups
 		},
-		inEventTimezone() {
-			if (!this.resolvedSchedule?.talks?.length) return false
-			const firstTalk = this.resolvedSchedule.talks[0]
-			const eventTz = this.resolvedSchedule.timezone
-			if (!firstTalk || !eventTz || !firstTalk.start) return false
-			const reference = firstTalk.start
-			const userTz = this.currentTimezone || moment.tz.guess()
-			return moment.tz(reference, userTz).utcOffset() === moment.tz(reference, eventTz).utcOffset()
-		},
 		showGrid() {
 			return !this.linearOnly && this.scrollParentWidth > 710
 		},
@@ -459,6 +457,11 @@ export default {
 		this._resizeObserver.observe(this.$el)
 		if (this.computedDays?.length) {
 			this.currentDay = this.computedDays[0].format('YYYY-MM-DD')
+		}
+		if (this.loadStarredSharingPreference) {
+			this.loadStarredSharingPreference().then((enabled) => {
+				this.shareStarredSessions = !!enabled
+			})
 		}
 	},
 	beforeUnmount() {
@@ -570,6 +573,17 @@ export default {
 			this.onlyFavs = !this.onlyFavs
 			if (this.onlyFavs) this.resetFilters()
 		},
+		async updateShareStarredSessions(value) {
+			const previous = this.shareStarredSessions
+			this.shareStarredSessions = !!value
+			if (!this.updateStarredSharingPreference) return
+			try {
+				const enabled = await this.updateStarredSharingPreference(this.shareStarredSessions)
+				this.shareStarredSessions = !!enabled
+			} catch {
+				this.shareStarredSessions = previous
+			}
+		},
 		resetAllFilters() {
 			this.onlyFavs = false
 			this.resetFilters()
@@ -585,6 +599,9 @@ export default {
 		},
 		saveTimezone() {
 			localStorage.setItem('userTimezone', this.currentTimezone)
+			if (this.onSaveTimezone) {
+				this.onSaveTimezone(this.currentTimezone)
+			}
 		},
 		onFav(id) {
 			if (this.scheduleFav) this.scheduleFav(id)

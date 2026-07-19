@@ -1195,7 +1195,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#7f709ae9bf60b9c458bebb59b8e962f7ecadf289" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#96b77d6e43e5d3884c126c91a09744cfa02668fb" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1680,7 +1680,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#9ce1f920f906573f59ec845c2abd13184f78fe5a" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#978dd2fe940f3f5916220fdeec2bee1c0091c51d" }
 
 [[package]]
 name = "faker"

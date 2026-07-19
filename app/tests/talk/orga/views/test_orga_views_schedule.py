@@ -280,6 +280,39 @@ def test_orga_can_see_schedule_release_view(orga_client, event):
 
 
 @pytest.mark.django_db
+def test_orga_release_breaks_only_schedule_shows_warning(orga_client, event, break_slot):
+    with scope(event=event):
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        assert Schedule.objects.count() == 2
+    response = orga_client.get(event.orga_urls.release_schedule, follow=True)
+    assert response.status_code == 200
+    content = response.content.decode().lower()
+    assert 'only breaks' in content
+    assert 'review the issues below before releasing' in content
+    response = orga_client.post(
+        event.orga_urls.release_schedule,
+        follow=True,
+        data={'version': 'breaks only'},
+    )
+    assert response.status_code == 200
+    with scope(event=event):
+        assert Schedule.objects.count() == 3
+        assert event.schedules.filter(version='breaks only').exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('accepted_submission')
+def test_orga_release_breaks_only_with_unscheduled_submissions_shows_warning(
+    orga_client, event, break_slot
+):
+    with scope(event=event):
+        assert event.wip_schedule.talks.filter(submission__isnull=False, start__isnull=True).exists()
+    response = orga_client.get(event.orga_urls.release_schedule, follow=True)
+    assert response.status_code == 200
+    assert 'only breaks' in response.content.decode().lower()
+
+
+@pytest.mark.django_db
 def test_orga_cannot_reset_to_wrong_version(orga_client, event):
     with scope(event=event):
         assert Schedule.objects.count() == 1

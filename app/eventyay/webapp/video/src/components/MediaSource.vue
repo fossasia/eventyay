@@ -4,7 +4,7 @@
 		router-link.background-room(v-if="background", :to="room ? {name: 'room', params: {roomId: room.id}}: {name: 'channel', params: {channelId: call.channel}}")
 			.description
 				.hint {{ $t('MediaSource:room:hint') }}
-				.room-name(v-if="room") {{ room.name }}
+				.room-name(v-if="room", v-html="$emojify(room.name)")
 				.room-name(v-else-if="call") {{ $t('MediaSource:call:label') }}
 			.global-placeholder
 			bunt-icon-button(@click.prevent.stop="$emit('close')") close
