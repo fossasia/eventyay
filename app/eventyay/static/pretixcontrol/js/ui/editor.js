@@ -1238,7 +1238,6 @@ var editor = {
         editor.$cva.on("keydown", editor._on_keydown);
         $("#editor-save").on("click", editor._save);
         $("#editor-preview").on("click", editor._preview);
-        $("#preview-modal").appendTo("body");
         $("#preview-modal").on("hidden.bs.modal", editor._revoke_preview_blob);
         window.onbeforeunload = function () {
             if (editor.dirty) {
