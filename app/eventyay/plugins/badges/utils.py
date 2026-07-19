@@ -28,6 +28,8 @@ def get_badge_layout_version(event):
     return event.cache.get('badge_layout_version') or 0
 
 
+import time
+
 def clear_badge_layout_cache(event):
     for attr in ('_badge_layout_assignment_map', '_badge_voucher_assignment_map', '_default_badge_layout'):
         if hasattr(event, attr):
@@ -36,8 +38,7 @@ def clear_badge_layout_cache(event):
     # Bump the layout version in the cross-process cache so every worker's in-memory
     # renderer cache is invalidated on its very next use, without needing to reach into
     # other processes' memory.
-    version = get_badge_layout_version(event)
-    event.cache.set('badge_layout_version', version + 1, 3600 * 24 * 30)
+    event.cache.set('badge_layout_version', int(time.time()), 3600 * 24 * 30)
 
     keys_to_delete = [k for k in _renderer_cache if k[0] == event.pk]
     for k in keys_to_delete:
