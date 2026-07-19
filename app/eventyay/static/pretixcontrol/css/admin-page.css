@@ -116,3 +116,13 @@
 .dashboard-panels .panel-body .event-table {
   margin-bottom: 0;
 }
+
+.config-status-ok {
+  color: #3c763d;
+  font-weight: 600;
+}
+
+.config-status-warn {
+  color: #8a6d3b;
+  font-weight: 600;
+}

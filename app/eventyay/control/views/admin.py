@@ -39,6 +39,8 @@ from django.views.generic import (
 from django_celery_beat.models import PeriodicTask, PeriodicTasks
 from django_context_decorator import context
 from django_scopes import scopes_disabled
+from django.core.cache import cache
+from django.apps import apps
 
 from redis.exceptions import RedisError
 
@@ -46,10 +48,12 @@ from eventyay.celery_app import app
 from eventyay.control.forms.filter import AttendeeFilterForm
 from eventyay.control.forms.admin.admin import UpdateSettingsForm
 
+from eventyay.api.models import WebHookCall
 from eventyay.base.models.auth import User
 from eventyay.base.models.checkin import Checkin
 from eventyay.base.models.event import Event, Event_SettingsStore
 from eventyay.base.models.orders import Order, OrderPosition, OrderPayment, OrderRefund
+from eventyay.base.models.mail import QueuedMail
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.models.cfp import CfP
@@ -73,6 +77,7 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs) -> dict:
         ctx = super().get_context_data(**kwargs)
         n = now()
+        email_stats = None
 
         # User KPIs
         user_stats = User.objects.aggregate(
@@ -366,6 +371,245 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             )
             ctx['attendees_total'] = attendee_stats['attendees_total']
             ctx['tickets_issued'] = attendee_stats['tickets_issued']
+
+            # Orders Detail
+            try:
+                ctx['orders_recent_10'] = list(
+                    Order.objects.order_by('-datetime')
+                    .select_related('event', 'event__organizer')[:10]
+                )
+
+                # Cache the heavy Top aggregates to prevent production database performance hits
+                def _get_orders_top5():
+                    top5_event = list(
+                        Order.objects.filter(status=Order.STATUS_PAID)
+                        .values('event__name', 'event__slug')
+                        .annotate(count=Count('pk'))
+                        .order_by('-count')[:5]
+                    )
+                    top5_provider = list(
+                        OrderPayment.objects.filter(state=OrderPayment.PAYMENT_STATE_CONFIRMED)
+                        .values('provider')
+                        .annotate(count=Count('order_id', distinct=True))
+                        .order_by('-count')[:5]
+                    )
+                    return {'event': top5_event, 'provider': top5_provider}
+
+                top5_stats = cache.get_or_set('admin_dashboard_orders_top5', _get_orders_top5, 300)
+                ctx['orders_top5_by_event'] = top5_stats['event']
+                ctx['orders_top5_by_provider'] = top5_stats['provider']
+                ctx['orders_detail_unavailable'] = False
+            except Exception:
+                logger.exception('AdminDashboard: failed to load orders detail section')
+                ctx['orders_detail_unavailable'] = True
+
+            # Email Status
+            try:
+                email_stats = cache.get_or_set(
+                    'admin_dashboard_email_stats',
+                    lambda: QueuedMail.objects.aggregate(
+                        sent_24h=Count('id', filter=Q(sent__isnull=False, sent__gte=n - timedelta(hours=24))),
+                        sent_7d=Count('id', filter=Q(sent__isnull=False, sent__gte=n - timedelta(days=7))),
+                        unsent=Count('id', filter=Q(sent__isnull=True)),
+                    ),
+                    300
+                )
+                ctx['email_sent_today'] = email_stats['sent_24h']
+                ctx['email_sent_week'] = email_stats['sent_7d']
+                ctx['email_unsent_count'] = email_stats['unsent']
+                ctx['email_smtp_warning'] = (
+                    not getattr(settings, 'EMAIL_HOST', None)
+                    or getattr(settings, 'EMAIL_BACKEND', '') == 'django.core.mail.backends.dummy.EmailBackend'
+                )
+                ctx['email_status_unavailable'] = False
+            except Exception:
+                logger.exception('AdminDashboard: failed to load email status section')
+                ctx['email_status_unavailable'] = True
+
+            # Platform Health
+            try:
+                webhook_stats = cache.get_or_set(
+                    'admin_dashboard_webhook_stats',
+                    lambda: WebHookCall.objects.aggregate(
+                        failures_24h=Count('id', filter=Q(success=False, datetime__gte=n - timedelta(hours=24))),
+                        failures_7d=Count('id', filter=Q(success=False, datetime__gte=n - timedelta(days=7))),
+                    ),
+                    300
+                )
+
+                celery_enabled = getattr(settings, 'HAS_CELERY', False)
+                celery_depth = None
+                celery_depth_unavailable = False
+                if celery_enabled:
+                    try:
+                        def _get_depth():
+                            inspector = app.control.inspect(timeout=1)
+                            active = inspector.active() or {}
+                            return sum(len(v) for v in active.values())
+                        celery_depth = cache.get_or_set('admin_dashboard_celery_depth', _get_depth, 300)
+                    except Exception:
+                        logger.exception('AdminDashboard: failed to get Celery queue depth')
+                        celery_depth_unavailable = True
+
+                periodic_tasks = list(
+                    PeriodicTask.objects.filter(enabled=True)
+                    .order_by('name')[:20]
+                )
+                local_timezone = ZoneInfo(settings.TIME_ZONE)
+                for task in periodic_tasks:
+                    if task.last_run_at is None:
+                        task.formatted_last_run_at = '-'
+                    else:
+                        task.formatted_last_run_at = date_format(
+                            task.last_run_at.astimezone(local_timezone), format='M. d, Y, g:i a'
+                        )
+                    task.display_name = task.name.replace('_', ' ').capitalize()
+
+                try:
+                    p_email_stats = email_stats or cache.get_or_set(
+                        'admin_dashboard_email_stats',
+                        lambda: QueuedMail.objects.aggregate(
+                            sent_24h=Count('id', filter=Q(sent__isnull=False, sent__gte=n - timedelta(hours=24))),
+                            sent_7d=Count('id', filter=Q(sent__isnull=False, sent__gte=n - timedelta(days=7))),
+                            unsent=Count('id', filter=Q(sent__isnull=True)),
+                        ),
+                        300
+                    )
+                except Exception:
+                    p_email_stats = {'sent_24h': 0, 'sent_7d': 0, 'unsent': 0}
+
+                ctx['webhook_failures_24h'] = webhook_stats['failures_24h']
+                ctx['webhook_failures_7d'] = webhook_stats['failures_7d']
+                ctx['celery_depth'] = celery_depth
+                ctx['celery_depth_unavailable'] = celery_depth_unavailable
+                ctx['celery_enabled'] = celery_enabled
+                ctx['periodic_tasks'] = periodic_tasks
+                ctx['email_backlog'] = p_email_stats['unsent']
+                ctx['email_sent_24h'] = p_email_stats['sent_24h']
+                ctx['platform_health_unavailable'] = False
+            except Exception:
+                logger.exception('AdminDashboard: failed to load platform health section')
+                ctx['platform_health_unavailable'] = True
+
+            # SSO and Authentication
+            try:
+                if apps.is_installed('allauth.socialaccount'):
+                    ctx['sso_section_enabled'] = True
+
+                    def _get_sso():
+                        from allauth.socialaccount.models import SocialAccount
+                        from allauth.socialaccount.providers import registry
+                        db_counts = {
+                            item['provider']: item['count']
+                            for item in SocialAccount.objects.values('provider').annotate(count=Count('id'))
+                        }
+
+                        providers_list = []
+                        registered_ids = set()
+                        default_providers = {
+                            'google': 'Google',
+                            'github': 'GitHub',
+                            'mediawiki': 'MediaWiki',
+                        }
+                        for p_id, p_name in default_providers.items():
+                            registered_ids.add(p_id)
+                            providers_list.append({
+                                'provider': p_id,
+                                'name': p_name,
+                                'count': db_counts.get(p_id, 0)
+                            })
+
+                        try:
+                            for provider in registry.get_list():
+                                p_id = provider.id
+                                p_name = provider.name
+                                if p_id not in registered_ids:
+                                    registered_ids.add(p_id)
+                                    providers_list.append({
+                                        'provider': p_id,
+                                        'name': p_name,
+                                        'count': db_counts.get(p_id, 0)
+                                    })
+                        except Exception:
+                            pass
+
+                        for p_id, count in db_counts.items():
+                            if p_id not in registered_ids:
+                                providers_list.append({
+                                    'provider': p_id,
+                                    'name': p_id.capitalize(),
+                                    'count': count
+                                })
+                        providers_list.sort(key=lambda x: (-x['count'], x['name']))
+
+                        multi_conn = (
+                            SocialAccount.objects.values('user_id')
+                            .annotate(cnt=Count('id'))
+                            .filter(cnt__gte=2)
+                            .count()
+                        )
+                        recent_sso_logins = (
+                            User.objects.filter(
+                                last_login__gte=n - timedelta(days=7),
+                                last_login__isnull=False,
+                                socialaccount__isnull=False,
+                            ).distinct().count()
+                        )
+                        return {
+                            'providers': providers_list,
+                            'multi_conn': multi_conn,
+                            'recent_logins': recent_sso_logins
+                        }
+
+                    sso_stats = cache.get_or_set('admin_dashboard_sso_stats', _get_sso, 300)
+                    ctx['sso_providers'] = sso_stats['providers']
+                    ctx['sso_multi_conn_users'] = sso_stats['multi_conn']
+                    ctx['sso_recent_logins'] = sso_stats['recent_logins']
+                    ctx['sso_no_providers'] = not sso_stats['providers']
+                    ctx['sso_unavailable'] = False
+                else:
+                    ctx['sso_section_enabled'] = False
+            except Exception:
+                logger.exception('AdminDashboard: failed to load SSO section')
+                ctx['sso_section_enabled'] = True
+                ctx['sso_unavailable'] = True
+
+            # Configuration Status
+            try:
+                smtp_ok = not (
+                    not getattr(settings, 'EMAIL_HOST', None)
+                    or getattr(settings, 'EMAIL_BACKEND', '') == 'django.core.mail.backends.dummy.EmailBackend'
+                )
+
+                sso_ok = None
+                if apps.is_installed('allauth.socialaccount'):
+                    from allauth.socialaccount.models import SocialAccount
+                    try:
+                        sso_ok = SocialAccount.objects.exists()
+                    except Exception:
+                        logger.warning("SocialAccount table not available for SSO config status check.")
+                        sso_ok = False
+
+                celery_ok = None
+                if getattr(settings, 'HAS_CELERY', False):
+                    try:
+                        # Cache the Celery ping call to prevent non-DB latency bottlenecks on the dashboard request
+                        celery_ok = cache.get_or_set(
+                            'admin_dashboard_celery_ping',
+                            lambda: bool(app.control.ping(timeout=1)),
+                            300
+                        )
+                    except Exception:
+                        logger.exception('AdminDashboard: Celery ping failed')
+                        celery_ok = False
+
+                ctx['config_smtp_ok'] = smtp_ok
+                ctx['config_sso_ok'] = sso_ok
+                ctx['config_celery_ok'] = celery_ok
+                ctx['config_status_unavailable'] = False
+            except Exception:
+                logger.exception('AdminDashboard: failed to load config status section')
+                ctx['config_status_unavailable'] = True
 
         return ctx
 
