@@ -1,6 +1,7 @@
 {% load i18n %}
 {% load rules %}
 {% load event_tags %}
+{% load eventsignal %}
 {% load staff_session %}
 
 {% with nav_context=nav_context|default:"agenda" %}
@@ -121,6 +122,7 @@
                             </a>
                         {% endif %}
                     {% endif %}
+                    {% eventsignal current_event "eventyay.common.signals.user_menu_items" request=request %}
                 {% endif %}
                 <hr>
                 <a href="{% url 'eventyay_common:account.general' %}" class="dropdown-item" role="menuitem" tabindex="-1">

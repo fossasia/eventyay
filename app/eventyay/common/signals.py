@@ -175,6 +175,9 @@ idempotent, meaning it should not make a difference if this is sent out more oft
 than expected.
 """
 
+user_menu_items = EventPluginSignal()
+"""Collects extra ``<a class="dropdown-item">`` entries for the user account menu."""
+
 register_data_exporters = EventPluginSignal()
 
 register_my_data_exporters = EventPluginSignal()
