@@ -3,7 +3,7 @@ prompt.c-av-device-prompt(@close="$emit('close')")
 	.content
 		h2 {{ $t('AVDevicePrompt:headline:label') }}
 		bunt-select(v-if="videoInputs.length > 0", v-model="videoInput", @input="refreshVideo", :options="videoInputs", option-label="label", option-value="value", icon="camera", name="videoInput")
-		.video-wrapper
+		.video-wrapper(v-if="videoPreview")
 			video(ref="video", playsinline, autoplay, muted="muted")
 		bunt-select(v-if="audioInputs.length > 0", v-model="audioInput", :options="audioInputs", option-label="label", option-value="value", icon="microphone", name="audioInput")
 		bunt-select(v-if="audioOutputs.length > 0", v-model="audioOutput", :options="audioOutputs", option-label="label", option-value="value", icon="volume-high", name="audioOutput")
@@ -17,6 +17,12 @@ import Prompt from 'components/Prompt'
 export default {
 	components: {Prompt},
 	emits: ['close'],
+	props: {
+		videoPreview: {
+			type: Boolean,
+			default: true,
+		},
+	},
 	data() {
 		return {
 			videoInput: localStorage.videoInput || '',
@@ -40,7 +46,9 @@ export default {
 			try {
 				const deviceInfos = await navigator.mediaDevices.enumerateDevices()
 				this.updateDevices(deviceInfos)
-				await this.refreshVideo()
+				if (this.videoPreview) {
+					await this.refreshVideo()
+				}
 			} catch (error) {
 				console.warn('Could not load video device settings.', error)
 				alert('Could not access camera or microphone, is another program on your machine using it right now?')
@@ -106,6 +114,7 @@ export default {
 			}
 		},
 		async refreshVideo() {
+			if (!this.videoPreview) return
 			this.stopPreviewStream()
 			const constraints = {
 				audio: false,
@@ -114,6 +123,7 @@ export default {
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia(constraints)
 				this.stream = stream
+				if (!this.$refs.video) return
 				this.$refs.video.srcObject = stream
 				this.$refs.video.muted = 'muted'
 				const deviceInfos = await navigator.mediaDevices.enumerateDevices()

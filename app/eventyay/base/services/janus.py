@@ -11,6 +11,7 @@ from websockets.exceptions import WebSocketException
 
 from eventyay.base.models import JanusServer
 
+
 logger = logging.getLogger(__name__)
 
 JANUS_CONNECT_TIMEOUT = 10
@@ -197,6 +198,87 @@ async def videoroom_add_token_if_exists(server, room_data, token, audiobridge=Fa
                 )
 
         return exists
+
+
+def videoroom_secret(server, room_data):
+    return hashlib.sha256(
+        f"{server.room_create_key}:secret:{room_data['seed']}".encode()
+    ).hexdigest()
+
+
+async def videoroom_moderate(server, room_data, feed_id, **moderation):
+    async with _janus_websocket(server) as websocket:
+        resp = await _janus_request(
+            websocket,
+            {
+                "janus": "create",
+            },
+        )
+        session_id = resp["data"]["id"]
+
+        resp = await _janus_request(
+            websocket,
+            {
+                "janus": "attach",
+                "plugin": "janus.plugin.videoroom",
+                "session_id": session_id,
+            },
+        )
+        handle_id = resp["data"]["id"]
+
+        await _janus_request(
+            websocket,
+            {
+                "janus": "message",
+                "body": {
+                    "request": "moderate",
+                    "secret": videoroom_secret(server, room_data),
+                    "room": room_data["roomId"],
+                    "id": int(feed_id),
+                    **moderation,
+                },
+                "session_id": session_id,
+                "handle_id": handle_id,
+            },
+            expect_plugin_data=True,
+        )
+
+
+async def videoroom_kick(server, room_data, feed_id):
+    async with _janus_websocket(server) as websocket:
+        resp = await _janus_request(
+            websocket,
+            {
+                "janus": "create",
+            },
+        )
+        session_id = resp["data"]["id"]
+
+        resp = await _janus_request(
+            websocket,
+            {
+                "janus": "attach",
+                "plugin": "janus.plugin.videoroom",
+                "session_id": session_id,
+            },
+        )
+        handle_id = resp["data"]["id"]
+
+        await _janus_request(
+            websocket,
+            {
+                "janus": "message",
+                "body": {
+                    "request": "kick",
+                    "secret": videoroom_secret(server, room_data),
+                    "room": room_data["roomId"],
+                    "id": int(feed_id),
+                },
+                "session_id": session_id,
+                "handle_id": handle_id,
+            },
+            expect_plugin_data=True,
+        )
 
 
 async def create_videoroom(

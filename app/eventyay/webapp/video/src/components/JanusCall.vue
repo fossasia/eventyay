@@ -11,7 +11,7 @@
 		.left-room-inner
 			.left-room-icon
 				.mdi.mdi-phone-hangup
-			h2 You left the room
+			h2 {{ leftMessage }}
 			p {{ room.name || 'Meeting Room' }}
 			.left-room-actions
 				button.left-room-button.primary(type="button", @click="rejoinRoom")
@@ -32,6 +32,7 @@
 		:screenShareSessionId="screenShareSessionId",
 		:roomId="roomId",
 		:eventRoomId="room.id",
+		:is-moderator="isModerator",
 		:size="size",
 		:automute="joinedWithMicMuted",
 		@hangup="onRoomLeft"
@@ -69,12 +70,14 @@ export default {
 			audioSessionId: null,
 			videoSessionId: null,
 			screenShareSessionId: null,
+			isModerator: false,
 			loading: false,
 			error: null,
 			roomUrlPromise: null,
 			// Pre-join state
 			joined: false,
 			left: false,
+			leftMessage: 'You left the room',
 			joinedWithMicMuted: true,
 		}
 	},
@@ -96,7 +99,7 @@ export default {
 			this.loading = true
 			this.error = null
 			this.roomUrlPromise = api.call('januscall.room_url', { room: this.room.id })
-				.then(({ server, roomId, token, sessionId, audioSessionId, videoSessionId, screenShareSessionId, iceServers }) => {
+				.then(({ server, roomId, token, sessionId, audioSessionId, videoSessionId, screenShareSessionId, iceServers, isModerator }) => {
 					if (!this.$el || this._isDestroyed) return
 					this.roomId = roomId
 					this.token = token
@@ -105,6 +108,7 @@ export default {
 					this.audioSessionId = audioSessionId
 					this.videoSessionId = videoSessionId
 					this.screenShareSessionId = screenShareSessionId
+					this.isModerator = Boolean(isModerator)
 					this.server = server
 				})
 				.catch((error) => {
@@ -125,13 +129,15 @@ export default {
 			if (this.error) return
 			this.joined = true
 		},
-		onRoomLeft() {
+		onRoomLeft(payload = {}) {
 			this.joined = false
 			this.left = true
+			this.leftMessage = payload.message || 'You left the room'
 			this.clearRoomUrl()
 		},
 		rejoinRoom() {
 			this.left = false
+			this.leftMessage = 'You left the room'
 			this.fetchRoomUrl()
 		},
 		clearRoomUrl() {
@@ -143,6 +149,7 @@ export default {
 			this.audioSessionId = null
 			this.videoSessionId = null
 			this.screenShareSessionId = null
+			this.isModerator = false
 		},
 	},
 }

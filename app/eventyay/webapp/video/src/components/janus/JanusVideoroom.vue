@@ -14,6 +14,9 @@
 			span Connecting...
 
 	.room-surface(v-show="connectionState === 'connected'")
+		.moderation-notice(v-if="moderationNotice")
+			.mdi.mdi-information-outline
+			span {{ moderationNotice }}
 		.gallery(ref="container", :class="{ 'has-screen': hasScreenTile }", :style="gridStyle", v-resize-observer="onResize")
 			.video-tile(
 				v-for="tile in tiles",
@@ -100,8 +103,8 @@
 			button.control-button(
 				type="button",
 				:class="{ active: screenShareState === 'published', loading: screenShareState === 'publishing' || screenShareState === 'unpublishing' }",
-				:disabled="screenShareState === 'publishing' || screenShareState === 'unpublishing'",
-				:title="screenShareState === 'published' ? $t('JanusVideoroom:tool-screenshare:off') : $t('JanusVideoroom:tool-screenshare:on')",
+				:disabled="screenShareBlockedByHost || screenShareState === 'publishing' || screenShareState === 'unpublishing'",
+				:title="screenShareBlockedByHost ? 'Screen sharing was disabled by the host' : (screenShareState === 'published' ? $t('JanusVideoroom:tool-screenshare:off') : $t('JanusVideoroom:tool-screenshare:on'))",
 				@click="toggleScreenShare"
 			)
 				.mdi(:class="screenShareState === 'published' ? 'mdi-monitor-off' : 'mdi-monitor-share'")
@@ -123,8 +126,12 @@
 				.header-text
 					h2 Participants
 					span {{ participantCount }} in room
-				button.drawer-close(type="button", title="Close participants", @click="showParticipantsDrawer = false")
-					.mdi.mdi-close
+				.participants-header-actions
+					button.end-meeting-button(v-if="canModerateParticipants", type="button", title="End meeting for all", :disabled="endingMeeting", @click="sendEndMeeting")
+						.mdi.mdi-phone-hangup
+						span End
+					button.drawer-close(type="button", title="Close participants", @click="showParticipantsDrawer = false")
+						.mdi.mdi-close
 			.participants-list
 				.participant-row(
 					v-for="participant in participantRows",
@@ -143,18 +150,34 @@
 					.participant-media
 						.mdi(:class="participant.cameraOn ? 'mdi-video' : 'mdi-video-off off'", :title="participant.cameraOn ? 'Camera on' : 'Camera off'")
 						.mdi(:class="participant.micOn ? 'mdi-microphone' : 'mdi-microphone-off muted'", :title="participant.micOn ? 'Microphone on' : 'Muted'")
+					.participant-actions(v-if="canModerateParticipants && !participant.local")
+						button.participant-action-button(type="button", title="Participant actions", :aria-expanded="openParticipantMenu === participant.key ? 'true' : 'false'", @click.stop="toggleParticipantMenu(participant.key)")
+							.mdi.mdi-dots-vertical
+						.participant-action-menu(v-if="openParticipantMenu === participant.key")
+							button(type="button", :disabled="!participant.audioFeedId || !participant.micOn || isModeratorActionPending(participant, 'mute_participant')", @click="sendModeratorAction(participant, 'mute_participant')")
+								.mdi.mdi-microphone-off
+								span Mute
+							button(type="button", :disabled="!participant.videoFeedId || !participant.cameraOn || isModeratorActionPending(participant, 'stop_participant_video')", @click="sendModeratorAction(participant, 'stop_participant_video')")
+								.mdi.mdi-video-off
+								span Stop Video
+							button(type="button", :disabled="!participant.screenShareFeedId || isModeratorActionPending(participant, 'disable_screenshare')", @click="sendModeratorAction(participant, 'disable_screenshare')")
+								.mdi.mdi-monitor-off
+								span Disable screenshare
+							button.danger(type="button", :disabled="isModeratorActionPending(participant, 'remove_participant')", @click="sendModeratorAction(participant, 'remove_participant')")
+								.mdi.mdi-account-remove
+								span Remove
 
 	chat-user-card(v-if="selectedUser", ref="avatarCard", :user="selectedUser", @close="selectedUser = null")
 	transition(name="prompt")
 		template
-			a-v-device-prompt(v-if="showDevicePrompt", @close="closeDevicePrompt")
+			a-v-device-prompt(v-if="showDevicePrompt", :video-preview="cameraEnabled", @close="closeDevicePrompt")
 			feedback-prompt(v-if="showFeedbackPrompt", module="janus", :collectTrace="collectTrace", @close="showFeedbackPrompt = false")
 </template>
 
 <script>
 import Janus from 'lib/janus.js'
 import adapter from 'webrtc-adapter'
-import {mapState} from 'vuex'
+import {mapGetters, mapState} from 'vuex'
 import api from 'lib/api'
 import ChatUserCard from 'components/ChatUserCard'
 import Avatar from 'components/Avatar'
@@ -256,6 +279,10 @@ export default {
 			type: [Number, String],
 			default: null
 		},
+		isModerator: {
+			type: Boolean,
+			default: false
+		},
 		iceServers: {
 			type: Array,
 			required: true
@@ -333,10 +360,24 @@ export default {
 			mediaStates: {},
 			apiMessageHandler: null,
 			selectedUser: null,
+			openParticipantMenu: null,
+			pendingModeratorActions: {},
+			endingMeeting: false,
+			screenShareBlockedByHost: false,
+			moderationNotice: null,
+			moderationNoticeTimeout: null,
 		}
 	},
 	computed: {
+		...mapGetters(['hasPermission']),
 		...mapState(['user']),
+		canModerateParticipants() {
+			return this.isModerator ||
+				this.hasPermission('room:januscall.moderate') ||
+				this.hasPermission('room:bbb.moderate') ||
+				this.hasPermission('room:update') ||
+				this.hasPermission('world:update')
+		},
 		janusRoomId() {
 			return Number(this.roomId)
 		},
@@ -377,11 +418,15 @@ export default {
 				cameraOn: localState.cameraOn,
 				sharingScreen: localState.sharingScreen,
 				speaking: localState.micOn && this.activeSpeakerId === 'local',
+				audioFeedId: this.normalizeFeedId(this.ourAudioId || this.janusAudioSessionId),
+				videoFeedId: this.normalizeFeedId(this.ourVideoId || this.janusVideoSessionId),
+				screenShareFeedId: this.normalizeFeedId(this.janusScreenShareSessionId),
 			})
 			for (const feed of this.remoteFeeds) {
 				if (!feed.user?.id) continue
 				const userId = this.normalizeFeedId(feed.user.id)
 				const mediaState = this.mediaStates[userId]
+				const hasMediaState = Boolean(mediaState)
 				const key = `remote-${userId}`
 				const row = rows.get(key) || {
 					key,
@@ -392,17 +437,29 @@ export default {
 					cameraOn: Boolean(mediaState?.cameraOn),
 					sharingScreen: Boolean(mediaState?.sharingScreen),
 					speaking: false,
+					audioFeedId: null,
+					videoFeedId: null,
+					screenShareFeedId: null,
 				}
-				if (!mediaState && (feed.feedType === 'screen' || feed.isScreenShare)) {
+				if (!hasMediaState && (feed.feedType === 'screen' || feed.isScreenShare)) {
 					row.sharingScreen = true
 				}
+				if (feed.feedType === 'screen' || feed.isScreenShare) {
+					row.screenShareFeedId = this.normalizeFeedId(feed.id)
+				}
 				const hasVideoTrack = Boolean(feed.stream?.getVideoTracks().length)
-				if (!mediaState && (feed.feedType === 'video' || feed.hasVideo || hasVideoTrack)) {
+				if (!hasMediaState && (feed.feedType === 'video' || feed.hasVideo || hasVideoTrack)) {
 					row.cameraOn = Boolean(feed.hasVideo || hasVideoTrack)
 				}
+				if (feed.feedType === 'video' || feed.hasVideo || hasVideoTrack) {
+					row.videoFeedId = this.normalizeFeedId(feed.id)
+				}
 				const hasAudioTrack = Boolean(feed.stream?.getAudioTracks().length)
-				if (!mediaState && (feed.feedType === 'audio' || hasAudioTrack)) {
+				if (!hasMediaState && (feed.feedType === 'audio' || hasAudioTrack)) {
 					row.micOn = hasAudioTrack && !feed.muted
+				}
+				if (feed.feedType === 'audio' || hasAudioTrack) {
+					row.audioFeedId = this.normalizeFeedId(feed.id)
 				}
 				row.speaking = row.micOn && this.activeSpeakerId === this.normalizeFeedId(feed.id)
 				rows.set(key, row)
@@ -481,6 +538,7 @@ export default {
 		api.on('message', this.apiMessageHandler)
 		this.cleaningUp = false
 		this.initJanus()
+		this.loadMediaStates()
 		this.slowLinkInterval = window.setInterval(() => {
 			this.downstreamSlowLinkCount = Math.max(this.downstreamSlowLinkCount - 1, 0)
 			this.upstreamSlowLinkCount = Math.max(this.upstreamSlowLinkCount - 1, 0)
@@ -508,13 +566,16 @@ export default {
 			if (this.videoPublishTimeout) {
 				window.clearTimeout(this.videoPublishTimeout)
 			}
+			if (this.moderationNoticeTimeout) {
+				window.clearTimeout(this.moderationNoticeTimeout)
+			}
 	},
 	methods: {
 		collectTrace() {
 			return LOG_ENTRIES
 		},
 		currentMediaState() {
-			const localHasAudio = Boolean(this.localAudioStream?.getAudioTracks().some(track => track.readyState === 'live'))
+			const localHasAudio = Boolean(this.localAudioStream?.getAudioTracks().some(track => track.readyState === 'live' && track.enabled))
 			return {
 				micOn: localHasAudio && !this.micMuted,
 				cameraOn: this.localCameraActive,
@@ -523,12 +584,16 @@ export default {
 		},
 		onApiMessage(message) {
 			const [name, payload] = message
-			if (name !== 'januscall.media_state' || this.normalizeFeedId(payload?.room) !== this.normalizeFeedId(this.eventRoomId)) {
+			if (this.normalizeFeedId(payload?.room) !== this.normalizeFeedId(this.eventRoomId)) {
 				return
 			}
-			this.mergeMediaStates({
-				[this.normalizeFeedId(payload.user)]: payload.state,
-			})
+			if (name === 'januscall.media_state') {
+				this.mergeMediaStates({
+					[this.normalizeFeedId(payload.user)]: payload.state,
+				})
+			} else if (name === 'januscall.moderation_action') {
+				this.handleModeratorAction(payload)
+			}
 		},
 		mergeMediaStates(states) {
 			const normalizedStates = {}
@@ -542,6 +607,133 @@ export default {
 			this.mediaStates = {
 				...this.mediaStates,
 				...normalizedStates,
+			}
+		},
+		async loadMediaStates() {
+			if (!this.eventRoomId) return
+			try {
+				const response = await api.call('januscall.media_state.list', {
+					room: this.eventRoomId,
+				})
+				this.mergeMediaStates(response?.states)
+			} catch (error) {
+				log('janus-media-state', 'warn', {
+					action: 'loadMediaStates:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
+			}
+		},
+		showModerationNotice(message) {
+			this.moderationNotice = message
+			if (this.moderationNoticeTimeout) {
+				window.clearTimeout(this.moderationNoticeTimeout)
+			}
+			this.moderationNoticeTimeout = window.setTimeout(() => {
+				this.moderationNotice = null
+				this.moderationNoticeTimeout = null
+			}, 5000)
+		},
+		handleModeratorAction(payload) {
+			if (payload.action === 'end_meeting') {
+				this.micMuted = true
+				this.localCameraActive = false
+				this.sendMediaState()
+				this.cleanup()
+				this.$emit('hangup', {message: 'The meeting was ended by the host.'})
+				return
+			}
+			if (this.normalizeFeedId(payload?.target_user) !== this.normalizeFeedId(this.user?.id)) {
+				return
+			}
+			if (payload.action === 'mute_participant') {
+				this.micMuted = true
+				this.applyMicState()
+				this.sendMediaState()
+				this.showModerationNotice('You were muted by the host.')
+			} else if (payload.action === 'stop_participant_video') {
+				this.cameraEnabled = false
+				localStorage.videoRequested = false
+				this.unpublishVideoMedia()
+				this.showModerationNotice('Your camera was turned off by the host.')
+			} else if (payload.action === 'remove_participant') {
+				this.micMuted = true
+				this.localCameraActive = false
+				this.sendMediaState()
+				this.cleanup()
+				this.$emit('hangup', {message: 'You were removed by the host.'})
+			} else if (payload.action === 'disable_screenshare') {
+				this.screenShareBlockedByHost = true
+				if (this.screenShareState === 'published' || this.screenShareState === 'publishing') {
+					this.stopScreenShare()
+				} else {
+					this.stopPendingScreenShareTracks()
+				}
+				this.showModerationNotice('Screen sharing was disabled by the host.')
+			}
+		},
+		toggleParticipantMenu(key) {
+			this.openParticipantMenu = this.openParticipantMenu === key ? null : key
+		},
+		moderatorActionKey(participant, action) {
+			return `${participant.key}:${action}`
+		},
+		isModeratorActionPending(participant, action) {
+			return Boolean(this.pendingModeratorActions[this.moderatorActionKey(participant, action)])
+		},
+		targetFeedIdForAction(participant, action) {
+			if (action === 'mute_participant') return participant.audioFeedId
+			if (action === 'stop_participant_video') return participant.videoFeedId
+			if (action === 'disable_screenshare') return participant.screenShareFeedId
+			return participant.audioFeedId || participant.videoFeedId || participant.screenShareFeedId
+		},
+		async sendModeratorAction(participant, action) {
+			const targetFeedId = this.targetFeedIdForAction(participant, action)
+			if (!targetFeedId) return
+			const key = this.moderatorActionKey(participant, action)
+			this.pendingModeratorActions = {
+				...this.pendingModeratorActions,
+				[key]: true,
+			}
+			this.openParticipantMenu = null
+			try {
+				await api.call(`januscall.${action}`, {
+					room: this.eventRoomId,
+					target_feed_id: targetFeedId,
+				})
+			} catch (error) {
+				const denied = error?.error === 'protocol.denied' || error?.code === 'protocol.denied'
+				this.showModerationNotice(denied ? 'Permission denied.' : 'Could not apply moderator action.')
+				log('janus-moderation', 'warn', {
+					action: 'sendModeratorAction:error',
+					command: action,
+					targetFeedId,
+					error: error?.message || error,
+					name: error?.name,
+				})
+			} finally {
+				const nextPending = {...this.pendingModeratorActions}
+				delete nextPending[key]
+				this.pendingModeratorActions = nextPending
+			}
+		},
+		async sendEndMeeting() {
+			if (this.endingMeeting) return
+			this.endingMeeting = true
+			this.openParticipantMenu = null
+			try {
+				await api.call('januscall.end_meeting', {
+					room: this.eventRoomId,
+				})
+			} catch (error) {
+				const denied = error?.error === 'protocol.denied' || error?.code === 'protocol.denied'
+				this.showModerationNotice(denied ? 'Permission denied.' : 'Could not end the meeting.')
+				log('janus-moderation', 'warn', {
+					action: 'sendEndMeeting:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
+				this.endingMeeting = false
 			}
 		},
 		async sendMediaState() {
@@ -1159,6 +1351,11 @@ export default {
 			this.sendMediaState()
 		},
 		applyMicState() {
+			if (this.localAudioStream) {
+				for (const track of this.localAudioStream.getAudioTracks()) {
+					track.enabled = !this.micMuted
+				}
+			}
 			if (!this.audioPublisherHandle) {
 				log('janus-audio-publisher', 'debug', {
 					action: 'applyMicState:skip-no-handle',
@@ -1220,6 +1417,10 @@ export default {
 			}
 		},
 		toggleScreenShare() {
+			if (this.screenShareBlockedByHost) {
+				this.showModerationNotice('Screen sharing was disabled by the host.')
+				return
+			}
 			if (this.screenShareState === 'published') {
 				this.stopScreenShare()
 				return
@@ -1892,6 +2093,7 @@ export default {
 				}
 				if (!feed.user?.id) continue
 				const userId = this.normalizeFeedId(feed.user.id)
+				const mediaState = this.mediaStates[userId]
 				const existingTile = participantTiles.get(userId) || {
 					key: `remote-user-${userId}`,
 					id: `user-${userId}`,
@@ -1902,19 +2104,19 @@ export default {
 					screen: false,
 					user: feed.user,
 					label: feed.user?.profile?.display_name || 'Participant',
-					hasVideo: false,
-					muted: true,
+					hasVideo: Boolean(mediaState?.cameraOn),
+					muted: mediaState ? !mediaState.micOn : true,
 					audioLevel: 0,
 					speaking: false
 				}
 				if (feed.feedType === 'video' || feed.hasVideo || feed.stream?.getVideoTracks().length) {
 					existingTile.videoFeedId = id
-					existingTile.hasVideo = Boolean(feed.hasVideo)
+					existingTile.hasVideo = mediaState ? Boolean(mediaState.cameraOn) : Boolean(feed.hasVideo)
 				}
 				if (feed.feedType === 'audio' || feed.stream?.getAudioTracks().length) {
 					existingTile.audioFeedId = id
 					existingTile.audioMeterFeedId = id
-					existingTile.muted = feed.muted
+					existingTile.muted = mediaState ? !mediaState.micOn : feed.muted
 				}
 				participantTiles.set(userId, existingTile)
 			}
@@ -2387,6 +2589,27 @@ export default {
 		flex: auto 1 1
 		flex-direction: column
 		min-height: 0
+		position: relative
+
+	.moderation-notice
+		align-items: center
+		align-self: center
+		background: rgba(47, 128, 237, .95)
+		border-radius: 6px
+		box-shadow: 0 8px 24px rgba(0,0,0,.32)
+		color: #fff
+		display: flex
+		font-size: 14px
+		font-weight: 650
+		gap: 8px
+		margin-top: 12px
+		max-width: calc(100% - 24px)
+		padding: 10px 14px
+		position: absolute
+		top: 0
+		z-index: 18
+		.mdi
+			font-size: 19px
 
 	.gallery
 		align-content: center
@@ -2725,6 +2948,36 @@ export default {
 			color: #aeb6c2
 			font-size: 13px
 
+	.participants-header-actions
+		align-items: center
+		display: flex
+		flex: none
+		gap: 8px
+
+	.end-meeting-button
+		align-items: center
+		background: #5a2426
+		border: 1px solid #7c3034
+		border-radius: 6px
+		color: #fff
+		cursor: pointer
+		display: flex
+		flex: none
+		font-size: 13px
+		font-weight: 600
+		gap: 5px
+		height: 34px
+		padding: 0 10px
+		.mdi
+			font-size: 18px
+		&:hover,
+		&:focus-visible
+			background: #733034
+			outline: none
+		&:disabled
+			cursor: default
+			opacity: .65
+
 	.drawer-close
 		align-items: center
 		background: #2c323c
@@ -2764,6 +3017,7 @@ export default {
 		min-height: 64px
 		min-width: 0
 		padding: 10px
+		position: relative
 		text-align: left
 		width: 100%
 		&.is-speaking
@@ -2831,6 +3085,69 @@ export default {
 				color: #aeb6c2
 			&.muted
 				color: #ff8f86
+
+	.participant-actions
+		flex: none
+		position: relative
+
+	.participant-action-button
+		align-items: center
+		background: transparent
+		border: 0
+		border-radius: 6px
+		color: #cbd3de
+		cursor: pointer
+		display: flex
+		height: 32px
+		justify-content: center
+		width: 32px
+		.mdi
+			font-size: 21px
+		&:hover,
+		&:focus-visible
+			background: #2c323c
+			color: #fff
+			outline: none
+
+	.participant-action-menu
+		background: #242a33
+		border: 1px solid #3a4350
+		border-radius: 8px
+		box-shadow: 0 10px 28px rgba(0,0,0,.38)
+		display: flex
+		flex-direction: column
+		min-width: 190px
+		padding: 6px
+		position: absolute
+		right: 0
+		top: 36px
+		z-index: 24
+		button
+			align-items: center
+			background: transparent
+			border: 0
+			border-radius: 6px
+			color: #f6f7f9
+			cursor: pointer
+			display: flex
+			font-size: 13px
+			gap: 8px
+			height: 34px
+			padding: 0 10px
+			text-align: left
+			.mdi
+				font-size: 18px
+			&:hover,
+			&:focus-visible
+				background: #313945
+				outline: none
+			&:disabled
+				color: #798392
+				cursor: default
+				&:hover
+					background: transparent
+			&.danger
+				color: #ffaaa4
 
 	&.size-tiny
 		.gallery
