@@ -2,13 +2,13 @@
 div.c-audio-translation
 		bunt-select(
 		name="audio-translation",
-		v-model="selectedLanguage",
+		v-model="internalSelectedLanguage",
 		:options="languageOptions",
 		label="Audio Translation"
 )
 </template>
 <script>
-import { normalizeYoutubeVideoId } from 'lib/validators'
+import { normalizeAudioTranslationSource } from 'lib/validators'
 
 export default {
 	name: 'AudioTranslationDropdown',
@@ -17,52 +17,54 @@ export default {
 		languages: {
 			type: Array,
 			required: true
+		},
+		selectedLanguage: {
+			type: String,
+			default: 'Original'
 		}
 	},
 	data() {
 		return {
-			selectedLanguage: null, // Selected language for audio translation
-			languageOptions: [] // Options for the dropdown
+			internalSelectedLanguage: null,
+			languageOptions: [],
+			isSyncingSelection: false
 		}
 	},
 	watch: {
 		languages: {
 			immediate: true,
 			handler(newLanguages) {
-				this.languageOptions = newLanguages
-					.filter(entry => this.isUsableLanguageEntry(entry))
-					.map(entry => entry.language)
-				if (!this.languageOptions.includes(this.selectedLanguage)) {
-					this.selectedLanguage = this.languageOptions.includes('Original') ? 'Original' : null
-				}
+				this.languageOptions = newLanguages.map(entry => entry.language)
+				this.syncSelectedLanguage()
 			}
 		},
-		selectedLanguage(newLanguage) {
+		selectedLanguage: {
+			immediate: true,
+			handler() {
+				this.syncSelectedLanguage()
+			}
+		},
+		internalSelectedLanguage(newLanguage) {
+			if (this.isSyncingSelection) return
 			if (newLanguage) {
 				this.sendLanguageChange()
 			}
 		}
 	},
 	methods: {
-		isUsableLanguageEntry(entry) {
-			if (!entry?.language) return false
-			if (entry.language === 'Original') return true
-			return !!this.normalizeAudioSource(entry.youtube_id)
-		},
-		normalizeAudioSource(audioSource) {
-			if (!audioSource) return null
-			const youtubeId = normalizeYoutubeVideoId(audioSource)
-			if (youtubeId) return youtubeId
-			try {
-				new URL(audioSource)
-				return audioSource
-			} catch (e) {
-				return null
-			}
+		syncSelectedLanguage() {
+			const fallback = this.languageOptions.includes('Original') ? 'Original' : null
+			const nextLanguage = this.languageOptions.includes(this.selectedLanguage) ? this.selectedLanguage : fallback
+			if (this.internalSelectedLanguage === nextLanguage) return
+			this.isSyncingSelection = true
+			this.internalSelectedLanguage = nextLanguage
+			this.$nextTick(() => {
+				this.isSyncingSelection = false
+			})
 		},
 		sendLanguageChange() {
-			const selected = this.languages.find(item => item.language === this.selectedLanguage)
-			const audioSource = this.normalizeAudioSource(selected?.youtube_id)
+			const selected = this.languages.find(item => item.language === this.internalSelectedLanguage)
+			const audioSource = normalizeAudioTranslationSource(selected?.youtube_id)
 			const useVideo = selected?.use_video || false
 
 			this.$emit('languageChanged', { url: audioSource, useVideo })
