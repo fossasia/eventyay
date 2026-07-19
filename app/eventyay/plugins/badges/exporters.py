@@ -24,25 +24,44 @@ from eventyay.base.exporters.date import build_date_filter, parse_date_input
 from eventyay.base.i18n import language
 from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
-from eventyay.base.services.orders import OrderError
+from eventyay.base.services.export import ExportError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
 from eventyay.plugins.badges.utils import (
+    BADGE_LAYOUT_PERSISTED_FIELDS,
     _renderer_cache,
     exclude_explicit_no_badge,
     get_badge_hidden_fields,
     get_badge_layout_for_position,
+    get_badge_layout_renderer_token,
     get_badge_layout_version,
     normalize_badge_content_key,
+    reset_badge_layout_assignment_cache,
 )
 
 from ...helpers.templatetags.jsonfield import JSONExtract
+
+SEARCHABLE_SCROLLING_CHECKBOXES = 'scrolling-multiple-choice scrolling-multiple-choice-searchable'
+
+
+def searchable_scrolling_checkbox_widget():
+    return forms.CheckboxSelectMultiple(attrs={'class': SEARCHABLE_SCROLLING_CHECKBOXES})
 
 
 class BadgeRenderer(Renderer):
     def __init__(self, event, layout, bgf, ask_user_fields=None):
         super().__init__(event, layout, bgf)
         self.ask_user_fields = {str(value) for value in (ask_user_fields or [])}
+
+    def _get_layout_hidden_fields(self, op: OrderPosition):
+        if not self.ask_user_fields:
+            return set()
+
+        hidden_fields = getattr(op, '_badge_hidden_fields_cache', None)
+        if hidden_fields is None:
+            hidden_fields = {str(value) for value in get_badge_hidden_fields(op)}
+            op._badge_hidden_fields_cache = hidden_fields
+        return {field for field in hidden_fields if field in self.ask_user_fields}
 
     def _get_text_content(self, op: OrderPosition, order: Order, o: dict, inner=False):
         content = normalize_badge_content_key(o.get('content'))
@@ -104,11 +123,16 @@ def _renderer(event, layout, version):
     if layout is None:
         return None
 
-    cache_key = (event.pk, layout.pk)
+    token = get_badge_layout_renderer_token(layout)
+    cache_key = (event.pk, layout.pk, version, token)
     if cache_key in _renderer_cache:
-        cached_version, renderer = _renderer_cache[cache_key]
-        if cached_version == version:
-            return renderer
+        return _renderer_cache[cache_key]
+
+    # Drop older entries for this layout so the process-local cache cannot grow
+    # unbounded across repeated edits.
+    stale_keys = [key for key in _renderer_cache if key[0] == event.pk and key[1] == layout.pk]
+    for key in stale_keys:
+        del _renderer_cache[key]
 
     bgf = _open_layout_background(layout)
     renderer = BadgeRenderer(
@@ -117,7 +141,7 @@ def _renderer(event, layout, version):
         bgf,
         ask_user_fields=(layout.ask_user_fields_data if layout.allow_customization else []),
     )
-    _renderer_cache[cache_key] = (version, renderer)
+    _renderer_cache[cache_key] = renderer
     return renderer
 
 
@@ -366,20 +390,30 @@ def render_nup(input_files: list[str], num_pages: int, output_file: BinaryIO, op
 def render_badges(event, positions, opt, apply_output_pagesize=False):
     from itertools import groupby
 
+    # Always resolve assignments from the database for this render call.
+    reset_badge_layout_assignment_cache(event)
+
     # Fetched once per render call (not per position) to avoid a cache round-trip per
     # badge, while still guaranteeing that every render reflects the latest saved design.
     version = get_badge_layout_version(event)
+    refreshed_layouts = set()
 
     op_renderers = []
     for op in positions:
         layout = get_badge_layout_for_position(event, op)
-        if layout is not None:
-            renderer = _renderer(event, layout, version)
-            if renderer:
-                op_renderers.append((op, renderer))
+        if layout is None:
+            continue
+        if layout.pk not in refreshed_layouts:
+            # Assignment maps can retain older ORM instances; reload persisted fields
+            # once per layout so selected/default content always matches the database.
+            layout.refresh_from_db(fields=list(BADGE_LAYOUT_PERSISTED_FIELDS))
+            refreshed_layouts.add(layout.pk)
+        renderer = _renderer(event, layout, version)
+        if renderer:
+            op_renderers.append((op, renderer))
 
     if not op_renderers:
-        raise OrderError(_('None of the selected products is configured to print badges.'))
+        raise ExportError(_('None of the selected products is configured to print badges.'))
 
     badge_pdf = PdfWriter()
     badge_pdf.add_metadata(
@@ -450,7 +484,7 @@ class BadgeExporter(BaseExporter):
                     forms.ModelMultipleChoiceField(
                         queryset=exclude_explicit_no_badge(self.event.products, BadgeProduct, 'product'),
                         label=_('Limit to products'),
-                        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+                        widget=searchable_scrolling_checkbox_widget(),
                         initial=self.event.products.filter(admission=True),
                     ),
                 ),
@@ -464,7 +498,7 @@ class BadgeExporter(BaseExporter):
                         ),
                         label=_('Limit to vouchers'),
                         required=False,
-                        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+                        widget=searchable_scrolling_checkbox_widget(),
                     ),
                 ),
                 (
@@ -579,6 +613,9 @@ class BadgeExporter(BaseExporter):
                 .annotate(resolved_name_part=JSONExtract('resolved_name', part))
                 .order_by('resolved_name_part')
             )
+
+        if not qs.exists():
+            return None
 
         outbuffer = render_pdf(self.event, qs, OPTIONS[form_data.get('rendering', 'one')])
         return 'badges.pdf', 'application/pdf', outbuffer.read()
