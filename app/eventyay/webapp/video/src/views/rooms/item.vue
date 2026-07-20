@@ -113,6 +113,10 @@ export default {
 			handler: 'initializeLanguages',
 			immediate: true
 		},
+		'room.currentStream': {
+			handler: 'initializeLanguages',
+			immediate: true
+		},
 		'room.id'(roomId) {
 			this.$store.dispatch('stopStreamPolling')
 			if (roomId && this.usesStreamPolling) {
@@ -149,8 +153,22 @@ export default {
 		},
 		initializeLanguages() {
 			this.languages = []
-			if (this.modules['livestream.youtube'] && this.modules['livestream.youtube'].config.languageUrls) {
-				this.languages = this.modules['livestream.youtube'].config.languageUrls.filter(entry => isUsableAudioTranslationEntry(entry))
+			let languageUrls = null
+			const ytModule = this.modules['livestream.youtube']
+			
+			if (ytModule) {
+				const isScheduleDriven = ytModule.config?.playback_mode === 'schedule_driven'
+				if (isScheduleDriven) {
+					if (this.room?.currentStream?.stream_type === 'youtube' && this.room.currentStream.config?.languageUrls) {
+						languageUrls = this.room.currentStream.config.languageUrls
+					}
+				} else if (ytModule.config?.languageUrls) {
+					languageUrls = ytModule.config.languageUrls
+				}
+			}
+
+			if (languageUrls) {
+				this.languages = languageUrls.filter(entry => isUsableAudioTranslationEntry(entry))
 			}
 			if (!this.languages.find(lang => lang.language === 'Original')) {
 				this.languages.unshift({language: 'Original', youtube_id: null, use_video: false})
