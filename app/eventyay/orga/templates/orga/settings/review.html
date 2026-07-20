@@ -123,6 +123,7 @@
                                 {{ form.DELETE }}
                             </div>
                             <div class="score-row flip score-input{% if action == 'view' %} disabled{% endif %}">
+                                {% include "common/forms/errors.html" %}
                                 {{ form.is_independent.as_field_group }}
                                 {{ form.weight.as_field_group }}
                                 {{ form.required.as_field_group }}
@@ -139,31 +140,16 @@
                                         {% else %}
                                             <div class="col-md-3"></div>
                                         {% endif %}
-                                        <div class="col-md-9 d-flex align-items-start hide-label mb-1">
-                                            <div class="mr-2 score-score{% if label_pair.0.errors %} has-error{% endif %}">
+                                        <div class="col-md-9 d-flex hide-label">
+                                            <div class="mr-2 score-score">
                                                 {{ label_pair.0 }}
-                                                {% if label_pair.0.errors %}
-                                                    <div class="score-error-tooltip" role="alert">
-                                                        {% for error in label_pair.0.errors %}{{ error }} {% endfor %}
-                                                    </div>
-                                                {% endif %}
                                             </div>
-                                            <div class="score-label{% if label_pair.1.errors %} has-error{% endif %}">
+                                            <div class="score-label">
                                                 {{ label_pair.1 }}
-                                                {% if label_pair.1.errors %}
-                                                    <div class="score-error-tooltip" role="alert">
-                                                        {% for error in label_pair.1.errors %}{{ error }} {% endfor %}
-                                                    </div>
-                                                {% endif %}
                                             </div>
-                                            <div class="ml-auto d-flex">
-                                                {% if label_pair.3 %}
-                                                    <div role="button" class="delete-score btn btn-danger flip align-self-start" data-score="{{ label_pair.2 }}"><i class="fa fa-trash"></i></div>
-                                                {% endif %}
-                                                {% if forloop.last %}
-                                                    <div role="button" class="new-score btn btn-info flip ml-2 align-self-start"><i class="fa fa-plus"></i></div>
-                                                {% endif %}
-                                            </div>
+                                            {% if forloop.first %}
+                                                <div role="button" class="new-score btn btn-info flip ml-auto align-self-start"><i class="fa fa-plus"></i></div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 {% empty %}
@@ -212,9 +198,7 @@
                             <div class="col-md-9 d-flex hide-label">
                             <div class="mr-2 score-score"></div>
                             <div class="score-label"></div>
-                            <div class="ml-auto d-flex">
-                                <div role="button" class="new-score btn btn-info flip align-self-start"><i class="fa fa-plus"></i></div>
-                            </div>
+                            <div role="button" class="new-score btn btn-info flip ml-auto"><i class="fa fa-plus"></i></div>
                             </div>
                             </div>
                             </div>

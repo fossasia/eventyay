@@ -1079,43 +1079,6 @@ table .color-square {
   }
 }
 
-.score-score,
-.score-label {
-  position: relative;
-}
-
-.score-score.has-error input,
-.score-label.has-error input {
-  border-color: var(--color-danger);
-  box-shadow: 0 0 0 1px var(--color-danger);
-}
-
-.score-error-tooltip {
-  position: absolute;
-  top: calc(100% + 7px);
-  left: 0;
-  z-index: 30;
-  width: max-content;
-  max-width: 240px;
-  padding: 0.35rem 0.55rem;
-  border-radius: var(--size-border-radius, 4px);
-  background: var(--color-danger);
-  color: #fff;
-  font-size: 0.8125rem;
-  line-height: 1.35;
-  box-shadow: var(--shadow-light, 0 2px 8px rgba(0, 0, 0, 0.25));
-  pointer-events: none;
-}
-
-.score-error-tooltip::before {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 14px;
-  border: 6px solid transparent;
-  border-bottom-color: var(--color-danger);
-}
-
 #stats {
   display: flex;
   flex-wrap: wrap;
