@@ -21,7 +21,7 @@ from eventyay.base.models.base import CachedFile
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.services.mail import TolerantDict
-from eventyay.base.templatetags.rich_text import compile_email_body
+from eventyay.base.templatetags.rich_text import markdown_compile_email
 from eventyay.common.mail import get_reply_to_address
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
@@ -141,7 +141,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
                     subject = nh3.clean(form.cleaned_data['subject'].localize(l), tags=set())
                     preview_subject = subject.format_map(context_dict)
                     message = form.cleaned_data['message'].localize(l)
-                    preview_text = compile_email_body(message.format_map(context_dict))
+                    preview_text = markdown_compile_email(message.format_map(context_dict))
 
                     self.output[l] = {
                         'subject': _('Subject: {subject}').format(subject=preview_subject),
@@ -402,7 +402,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
 
                     self.output[l] = {
                         'subject': _('Subject: {subject}').format(subject=subject_preview),
-                        'html': compile_email_body(message_preview),
+                        'html': markdown_compile_email(message_preview),
                     }
 
             return self.get(self.request, *self.args, **self.kwargs)
@@ -588,7 +588,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
                 if self.request.POST.get('action') == 'preview':
                     self.output[l] = {
                         'subject': _('Subject: {subject}').format(subject=subject_preview),
-                        'html': compile_email_body(message_preview),
+                        'html': markdown_compile_email(message_preview),
                     }
 
         if self.request.POST.get('action') == 'preview':

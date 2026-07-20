@@ -215,11 +215,6 @@ urlpatterns = [
                     event.MailSettingsRendererPreview.as_view(),
                     name='event.settings.mail.preview.layout',
                 ),
-                url(
-                    r'^editor/email-preview$',
-                    event.EditorEmailPreview.as_view(),
-                    name='event.editor.email.preview',
-                ),
                 url(r'^settings/cancel', event.CancelSettings.as_view(), name='event.settings.cancel'),
                 url(r'^settings/invoice$', event.InvoiceSettings.as_view(), name='event.settings.invoice'),
                 url(
