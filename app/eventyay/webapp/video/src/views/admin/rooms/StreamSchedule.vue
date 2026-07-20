@@ -20,7 +20,7 @@
 			p Click "Add Stream Schedule" to create one.
 	bunt-button.add-btn(@click="openCreateForm") + Add Stream Schedule
 	transition(name="prompt")
-		prompt.c-stream-schedule-prompt(v-if="showCreateForm || editingSchedule", @close="closeForm")
+		prompt.c-stream-schedule-prompt(v-if="showCreateForm || editingSchedule", @close="closeForm", :scrollable="false")
 			.content
 				h1 {{ editingSchedule ? 'Edit' : 'Create' }} Stream Schedule
 				form.stream-schedule-form(@submit.prevent="saveSchedule")
@@ -598,7 +598,7 @@ export default {
 		flex-direction: column
 		padding: 32px
 		position: relative
-		overflow-y: auto
+		overflow-y: auto !important
 		h1
 			margin: 0 0 24px 0
 			font-size: 20px
