@@ -521,9 +521,20 @@ def base_placeholders(sender: Event, **kwargs):
         # TODO: Make the label translatable.
         return f'<a href="{url}" class="button">Join online event</a>'
     ph = [
+        # `{event}` is the historical tickets placeholder; `{event_name}` is the
+        # talk/Tiptap alias so both resolve to the event title in order emails.
         SimpleFunctionalMailTextPlaceholder('event', ['event'], lambda event: event.name, lambda event: event.name),
         SimpleFunctionalMailTextPlaceholder(
+            'event_name', ['event'], lambda event: event.name, lambda event: event.name
+        ),
+        SimpleFunctionalMailTextPlaceholder(
             'event',
+            ['event_or_subevent'],
+            lambda event_or_subevent: event_or_subevent.name,
+            lambda event_or_subevent: event_or_subevent.name,
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_name',
             ['event_or_subevent'],
             lambda event_or_subevent: event_or_subevent.name,
             lambda event_or_subevent: event_or_subevent.name,
