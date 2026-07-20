@@ -598,6 +598,7 @@ export default {
 		flex-direction: column
 		padding: 32px
 		position: relative
+		overflow-y: auto
 		h1
 			margin: 0 0 24px 0
 			font-size: 20px
