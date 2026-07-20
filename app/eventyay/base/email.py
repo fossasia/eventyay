@@ -1,4 +1,6 @@
+import base64
 import inspect
+import io
 import logging
 import os
 import secrets
@@ -12,6 +14,8 @@ from pathlib import Path
 from smtplib import SMTPResponseException
 from zoneinfo import ZoneInfo
 
+import qrcode
+
 from css_inline import inline as inline_css
 from django.conf import settings
 from django.core.mail.backends.filebased import EmailBackend as _FileBasedEmailBackend
@@ -20,6 +24,7 @@ from django.core.mail.message import EmailMessage
 from django.db.models import Count
 from django.dispatch import receiver
 from django.template.loader import get_template
+from django.utils.html import escape
 from django.utils.timezone import now as djnow
 from django.utils.translation import gettext_lazy as _
 from sendgrid import SendGridAPIClient
@@ -510,6 +515,69 @@ def generate_sample_video_url():
     return f'{settings.SITE_URL}/#token={sample_token}'
 
 
+def render_qr_code_img(payload: str, *, alt: str, size: int = 160) -> str:
+    """Return an HTML ``<img>`` tag with a PNG QR code as a data URI."""
+    image = qrcode.make(payload)
+    buffer = io.BytesIO()
+    image.save(buffer, format='PNG')
+    data_uri = f'data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode("ascii")}'
+    return (
+        f'<img src="{data_uri}" alt="{escape(alt)}" '
+        f'width="{int(size)}" height="{int(size)}">'
+    )
+
+
+def render_ticket_qr_html(position) -> str:
+    return render_qr_code_img(position.ticket_qrcode_content, alt=str(_('Ticket QR code')))
+
+
+def render_order_qr_html(order) -> str:
+    """
+    Render check-in QR codes for all printable tickets on an order.
+
+    Used in order-scoped emails where there is no single position context.
+    """
+    parts = []
+    for position in order.positions.select_related('product', 'variation').order_by('positionid'):
+        if not position.generate_ticket:
+            continue
+        label = position.attendee_name or str(position.product.name)
+        parts.append(f'<p><strong>{escape(label)}</strong></p>{render_ticket_qr_html(position)}')
+    return ''.join(parts)
+
+
+def get_combined_ticket_output_identifier(event: Event) -> str:
+    """Return an enabled combined ticket-output identifier for download links."""
+    from eventyay.base.signals import register_ticket_outputs
+
+    enabled_ids = []
+    for _receiver, response in register_ticket_outputs.send(event):
+        provider = response(event)
+        if not getattr(provider, 'is_enabled', False):
+            continue
+        if provider.identifier == 'pdf':
+            return 'pdf'
+        enabled_ids.append(provider.identifier)
+    return enabled_ids[0] if enabled_ids else 'pdf'
+
+
+def render_download_tickets_pdf_button(event: Event, order) -> str:
+    from eventyay.multidomain.urlreverse import build_absolute_uri
+
+    output = get_combined_ticket_output_identifier(event)
+    url = build_absolute_uri(
+        event,
+        'presale:event.order.download.combined',
+        kwargs={
+            'order': order.code,
+            'secret': order.secret,
+            'output': output,
+        },
+    )
+    label = escape(str(_('Download tickets (PDF)')))
+    return f'<a href="{url}" class="button">{label}</a>'
+
+
 @receiver(register_mail_placeholders, dispatch_uid='pretixbase_register_mail_placeholders')
 def base_placeholders(sender: Event, **kwargs):
     from eventyay.multidomain.urlreverse import (
@@ -520,10 +588,31 @@ def base_placeholders(sender: Event, **kwargs):
         url = build_join_video_url(event, order)
         # TODO: Make the label translatable.
         return f'<a href="{url}" class="button">Join online event</a>'
+
+    sample_ticket_qr = render_qr_code_img(
+        '{"event":"DEMO","ticket":"sample-secret","lead":"ABCDEF"}',
+        alt=str(_('Ticket QR code')),
+    )
+    sample_download_pdf = (
+        f'<a href="{build_absolute_uri(sender, "presale:event.index")}" class="button">'
+        f'{escape(str(_("Download tickets (PDF)")))}</a>'
+    )
+
     ph = [
+        # `{event}` is the historical tickets placeholder; `{event_name}` is the
+        # talk/Tiptap alias so both resolve to the event title in order emails.
         SimpleFunctionalMailTextPlaceholder('event', ['event'], lambda event: event.name, lambda event: event.name),
         SimpleFunctionalMailTextPlaceholder(
+            'event_name', ['event'], lambda event: event.name, lambda event: event.name
+        ),
+        SimpleFunctionalMailTextPlaceholder(
             'event',
+            ['event_or_subevent'],
+            lambda event_or_subevent: event_or_subevent.name,
+            lambda event_or_subevent: event_or_subevent.name,
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'event_name',
             ['event_or_subevent'],
             lambda event_or_subevent: event_or_subevent.name,
             lambda event_or_subevent: event_or_subevent.name,
@@ -821,6 +910,32 @@ def base_placeholders(sender: Event, **kwargs):
             ['position_or_address'],
             get_best_name,
             _('John Doe'),
+        ),
+        # Order-level fallback first; position-level wins when both are present so
+        # buyer/order emails still resolve {ticket_qr} without a position context.
+        SimpleFunctionalMailTextPlaceholder(
+            'ticket_qr',
+            ['order'],
+            lambda order: render_order_qr_html(order),
+            sample_ticket_qr,
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'ticket_qr',
+            ['position'],
+            lambda position: render_ticket_qr_html(position),
+            sample_ticket_qr,
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'order_qr',
+            ['order'],
+            lambda order: render_order_qr_html(order),
+            sample_ticket_qr,
+        ),
+        SimpleFunctionalMailTextPlaceholder(
+            'download_tickets_pdf',
+            ['order', 'event'],
+            lambda order, event: render_download_tickets_pdf_button(event, order),
+            sample_download_pdf,
         ),
     ]
     if (

@@ -129,19 +129,18 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
             self.output = {}
             for l in self.request.event.settings.locales:
                 with language(l, self.request.event.settings.region):
-                    context_dict = TolerantDict()
-                    for k, v in get_available_placeholders(
-                        self.request.event, ['event', 'order', 'position_or_address']
-                    ).items():
-                        context_dict[k] = '<span class="placeholder" title="{}">{}</span>'.format(
-                            _('This value will be replaced based on dynamic parameters.'),
-                            v.render_sample(self.request.event),
-                        )
+                    from eventyay.base.templatetags.rich_text import expand_email_preview_placeholders
 
                     subject = nh3.clean(form.cleaned_data['subject'].localize(l), tags=set())
-                    preview_subject = subject.format_map(context_dict)
                     message = form.cleaned_data['message'].localize(l)
-                    preview_text = compile_email_body(message.format_map(context_dict))
+                    preview_subject = expand_email_preview_placeholders(
+                        subject, self.request.event, locale=l
+                    )
+                    # Strip HTML sample wrappers from subject preview.
+                    preview_subject = nh3.clean(preview_subject, tags=set())
+                    preview_text = compile_email_body(
+                        expand_email_preview_placeholders(message, self.request.event, locale=l)
+                    )
 
                     self.output[l] = {
                         'subject': _('Subject: {subject}').format(subject=preview_subject),
@@ -374,28 +373,25 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
             subject = form.cleaned_data['subject']
             message = form.cleaned_data['message']
 
-            if form.instance.composing_for == ComposingFor.TEAMS:
-                base_placeholders = ['event', 'team']
-            else:
-                base_placeholders = ['event', 'order', 'position_or_address']
+            from eventyay.base.templatetags.rich_text import expand_email_preview_placeholders
 
             for l in event.settings.locales:
                 with language(l, event.settings.region):
-                    context_dict = {
-                        k: f"""<span class="placeholder" title="{
-                            _('This value will be replaced based on dynamic parameters.')
-                            }">{v.render_sample(self.request.event)}</span>"""
-                        for k, v in get_available_placeholders(event, base_placeholders).items()
-                    }
-
                     try:
-                        subject_preview = subject.localize(l).format_map(context_dict)
+                        subject_preview = nh3.clean(
+                            expand_email_preview_placeholders(
+                                subject.localize(l), event, locale=l
+                            ),
+                            tags=set(),
+                        )
                     except KeyError as e:
                         form.add_error('subject', _('Invalid placeholder(s): {}').format(str(e)))
                         return self.form_invalid(form)
 
                     try:
-                        message_preview = message.localize(l).format_map(context_dict)
+                        message_preview = expand_email_preview_placeholders(
+                            message.localize(l), event, locale=l
+                        )
                     except KeyError as e:
                         form.add_error('message', _('Invalid placeholder(s): {}').format(str(e)))
                         return self.form_invalid(form)

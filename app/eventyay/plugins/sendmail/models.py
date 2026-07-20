@@ -144,19 +144,31 @@ class EmailQueue(models.Model):
 
     def _build_email_context(self, order, position, position_or_address, recipient):
         try:
-            if self.composing_for == ComposingFor.ATTENDEES:
-                return get_email_context(
-                    event=self.event,
-                    order=order,
-                    position=position,
-                    position_or_address=position_or_address,
-                )
-            else:
+            if self.composing_for != ComposingFor.ATTENDEES:
                 return get_email_context(event=self.event)
-        except Exception as e:
-            logger.exception("Error while generating email context")
-            recipient.error = f"Context error: {str(e)}"
-            recipient.save(update_fields=["error"])
+
+            # Only pass keys that are present. ``position=None`` still counts as
+            # provided to get_email_context and would break position placeholders.
+            if order is not None and position is None:
+                position = (
+                    order.positions.select_related('product', 'order__event')
+                    .order_by('positionid')
+                    .first()
+                )
+                position_or_address = position_or_address or position
+
+            kwargs = {'event': self.event}
+            if order is not None:
+                kwargs['order'] = order
+            if position is not None:
+                kwargs['position'] = position
+            if position_or_address is not None:
+                kwargs['position_or_address'] = position_or_address
+            return get_email_context(**kwargs)
+        except (AttributeError, KeyError, TypeError, ValueError) as e:
+            logger.exception('Error while generating email context')
+            recipient.error = f'Context error: {e}'
+            recipient.save(update_fields=['error'])
             return None
 
     def _finalize_send_status(self):
@@ -275,15 +287,18 @@ class EmailQueue(models.Model):
             ):
                 email = order.email.strip().lower()
                 recipients[email]["orders"].add(order.pk)
-                product_ids = order.positions.values_list('product__pk', flat=True)
-                recipients[email]["products"].update(pid for pid in product_ids)
+                for pos in order.positions.all():
+                    recipients[email]["positions"].add(pos.pk)
+                    recipients[email]["products"].add(pos.product_id)
 
-            # Explicit inclusion of orders
+            # Explicit inclusion of orders (include positions so QR/attendee
+            # placeholders can resolve for buyer/order contact emails).
             if recipients_mode in ("both", "orders") and order.email:
                 email = order.email.strip().lower()
                 recipients[email]["orders"].add(order.pk)
-                product_ids = order.positions.values_list('product__pk', flat=True)
-                recipients[email]["products"].update(pid for pid in product_ids)
+                for pos in order.positions.all():
+                    recipients[email]["positions"].add(pos.pk)
+                    recipients[email]["products"].add(pos.product_id)
 
         # Clear and insert fresh records
         self.recipients.all().delete()
