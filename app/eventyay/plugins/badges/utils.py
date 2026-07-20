@@ -289,9 +289,8 @@ def get_badge_bundle_option_choices(event, position):
     return choices
 
 
-def get_badge_visible_field_labels(event, position, hidden_fields=None, layout=None):
-    if layout is None:
-        layout = get_badge_layout_for_position(event, position)
+def get_badge_visible_field_labels(event, position, hidden_fields=None):
+    layout = get_badge_layout_for_position(event, position)
     if not layout or not layout.allow_customization:
         return []
 
@@ -304,51 +303,6 @@ def get_badge_visible_field_labels(event, position, hidden_fields=None, layout=N
         for field in get_badge_customizable_fields(event, layout)
         if field['key'] in ask_user_keys and field['key'] not in hidden_fields
     ]
-
-
-def format_badge_option_labels(labels):
-    """Format selected badge field labels for order/export display."""
-    labels = [str(label) for label in labels]
-    if not labels:
-        return str(_('No optional badge fields selected'))
-    return ', '.join(labels)
-
-
-def get_badge_options_display(event, position):
-    """
-    Return a human-readable badge-options summary for order views.
-
-    Unlike checkout form injection, this includes products that only use the
-    event default layout so organizers can confirm what will be printed.
-    """
-    layout = get_badge_layout_for_position(event, position)
-    if not layout or not layout.allow_customization or not layout.ask_user_fields_data:
-        return None
-    return format_badge_option_labels(get_badge_visible_field_labels(event, position, layout=layout))
-
-
-def append_badge_options_additional_field(event, position, additional_fields, present_keys=None):
-    """
-    Append a Badge options row for order/cart display when applicable.
-
-    Matches checkout form injection: only the bundle root position shows options,
-    and the row is skipped when that form field was already injected.
-    Returns True if a field was appended.
-    """
-    if get_badge_config_position(position) != position:
-        return False
-    if present_keys is not None and BADGE_HIDDEN_FIELDS_KEY in present_keys:
-        return False
-    display = get_badge_options_display(event, position)
-    if display is None:
-        return False
-    additional_fields.append(
-        {
-            'answer': display,
-            'question': _('Badge options'),
-        }
-    )
-    return True
 
 
 def get_badge_visible_field_values(event, position, hidden_fields=None):
