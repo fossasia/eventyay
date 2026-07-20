@@ -155,7 +155,11 @@
             {% csrf_token %}
             {% if entries|length == 0 %}
                 <p class="orders-section-empty">
-                    {% trans "Nobody is on the waiting list yet." %}
+                    {% if filtered or request.GET.subevent %}
+                        {% trans "No waiting list entries match the current filters." %}
+                    {% else %}
+                        {% trans "Nobody is on the waiting list yet." %}
+                    {% endif %}
                 </p>
             {% else %}
             <div class="table-responsive">

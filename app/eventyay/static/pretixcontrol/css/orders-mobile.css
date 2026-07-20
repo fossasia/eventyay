@@ -185,7 +185,37 @@
   }
 
   #page-wrapper .orders-table.table-flip tfoot {
+    display: block;
+    margin-top: 0.75rem;
+  }
+
+  #page-wrapper .orders-table.table-flip tfoot tr {
+    display: block;
+    margin: 0;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--color-border, #ced4da);
+    border-radius: var(--size-border-radius, 4px);
+    background-color: var(--color-grey-ultralight, #f8f8f8);
+    box-shadow: var(--shadow-light);
+  }
+
+  #page-wrapper .orders-table.table-flip tfoot th {
+    display: block;
+    width: 100%;
+    padding: 0.15rem 0;
+    border: none;
+    font-weight: 600;
+    text-align: left;
+    float: none;
+  }
+
+  #page-wrapper .orders-table.table-flip tfoot th:empty {
     display: none;
+  }
+
+  #page-wrapper .orders-table.table-flip tfoot th.text-right {
+    text-align: left;
+    font-weight: 400;
   }
 
   #page-wrapper .orders-table-container.table-responsive,
