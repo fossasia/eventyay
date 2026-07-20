@@ -250,6 +250,18 @@ def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
         }
     )
 
+    nav.append(
+        {
+            'label': _('Analytics'),
+            'url': reverse(
+                'eventyay_common:organizer.analytics',
+                kwargs={'organizer': request.organizer.slug},
+            ),
+            'active': 'organizer.analytics' in url.url_name,
+            'icon': 'bar-chart',
+        }
+    )
+
     merge_in(
         nav,
         sorted(
