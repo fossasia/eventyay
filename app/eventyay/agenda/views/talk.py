@@ -695,26 +695,27 @@ def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
         allowed_statuses.append(Order.STATUS_PENDING)
     with scope(organizer=event.organizer):
         with scope(event=event):
-            orders = Order.objects.filter(
-                event=event,
-                email__iexact=user.email,
-                status__in=allowed_statuses
-            )
-            if not orders.exists():
-                return TicketCheckResult.NO_TICKET
-
             if event.settings.venueless_all_products:
-                return TicketCheckResult.HAS_TICKET
-            
-            list_allow_ticket_type = event.settings.venueless_products
-            if not list_allow_ticket_type:
-                return TicketCheckResult.NO_TICKET
-            
-            has_ticket = OrderPosition.objects.filter(
-                order__in=orders,
-                product_id__in=list_allow_ticket_type,
-                canceled=False,
-            ).exists()
+                has_ticket = OrderPosition.objects.filter(
+                    order__event=event,
+                    order__email__iexact=user.email,
+                    order__status__in=allowed_statuses,
+                    product__admission=True,
+                    canceled=False,
+                    addon_to__isnull=True,
+                ).exists()
+            else:
+                allowed_products = event.settings.venueless_products or []
+                if not allowed_products:
+                    return TicketCheckResult.NO_TICKET
+                has_ticket = OrderPosition.objects.filter(
+                    order__event=event,
+                    order__email__iexact=user.email,
+                    order__status__in=allowed_statuses,
+                    product_id__in=allowed_products,
+                    canceled=False,
+                    addon_to__isnull=True,
+                ).exists()
 
     if has_ticket:
         return TicketCheckResult.HAS_TICKET

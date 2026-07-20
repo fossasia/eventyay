@@ -19,8 +19,11 @@ from eventyay.multidomain.urlreverse import (
     get_event_domain,
     get_organizer_domain,
 )
-from eventyay.presale.signals import process_request, process_response
-
+from eventyay.presale.signals import (
+    process_request,
+    process_response,
+    question_form_fields,
+)
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 logger = logging.getLogger(__name__)
 
@@ -236,8 +239,6 @@ def build_position_additional_fields(event, position):
     Used by both organizer order detail and buyer cart/order views so badge
     options stay consistent without duplicating signal wiring.
     """
-    from eventyay.presale.signals import question_form_fields
-
     additional_fields = []
     seen_field_keys = set()
     data = position.meta_info_data
