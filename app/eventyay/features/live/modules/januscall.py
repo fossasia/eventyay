@@ -88,6 +88,10 @@ class JanusCallModule(BaseModule):
         return f"januscall:waiting:{room_id}"
 
     @staticmethod
+    def _spotlight_key(room_id):
+        return f"januscall:spotlight:{room_id}"
+
+    @staticmethod
     def _is_waiting_room_enabled(module_config):
         return bool(module_config.get("waiting_room_enabled", False))
 
@@ -380,6 +384,84 @@ class JanusCallModule(BaseModule):
     )
     async def end_meeting(self, body):
         await self._end_meeting_for_all()
+
+    @command("spotlight")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def spotlight(self, body):
+        if not await self._can_moderate_room():
+            raise ConsumerException("protocol.denied", "Permission denied.")
+
+        target_user = body.get("target_user")
+        target_user = await self._validate_spotlight_user(target_user)
+        async with aredis(self._spotlight_key(self.room.pk)) as redis:
+            if target_user:
+                await redis.setex(
+                    self._spotlight_key(self.room.pk), 3600 * 24, target_user
+                )
+            else:
+                await redis.delete(self._spotlight_key(self.room.pk))
+
+        payload = {
+            "type": "januscall.spotlight",
+            "room": str(self.room.pk),
+            "target_user": target_user,
+            "moderator": str(self.consumer.user.pk),
+        }
+        await self.consumer.send_success(
+            {
+                "room": str(self.room.pk),
+                "target_user": target_user,
+            }
+        )
+        await self.consumer.channel_layer.group_send(
+            GROUP_ROOM.format(id=self.room.pk),
+            payload,
+        )
+
+    @command("spotlight.state")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def spotlight_state(self, body):
+        async with aredis(self._spotlight_key(self.room.pk)) as redis:
+            target_user = await redis.get(self._spotlight_key(self.room.pk))
+        await self.consumer.send_success(
+            {
+                "room": str(self.room.pk),
+                "target_user": target_user.decode() if target_user else None,
+            }
+        )
+
+    async def _validate_spotlight_user(self, target_user):
+        if not target_user:
+            return None
+
+        target_user = str(target_user)
+        try:
+            target_user_pk = int(target_user)
+        except (TypeError, ValueError):
+            raise ConsumerException("janus.target_not_found", "Participant not found.")
+
+        try:
+            await database_sync_to_async(User.objects.get)(
+                event=self.consumer.event,
+                pk=target_user_pk,
+            )
+        except User.DoesNotExist:
+            raise ConsumerException("janus.target_not_found", "Participant not found.")
+
+        async with aredis(self._room_user_feeds_key(self.room.pk, target_user)) as redis:
+            feed_ids = await redis.smembers(
+                self._room_user_feeds_key(self.room.pk, target_user)
+            )
+        if not feed_ids:
+            raise ConsumerException("janus.target_not_found", "Participant not found.")
+
+        return target_user
 
     @command("channel_url")
     async def channel_url(self, body):
@@ -807,6 +889,15 @@ class JanusCallModule(BaseModule):
 
     @event("waiting_room_updated")
     async def push_waiting_room_updated(self, body):
+        await self.consumer.send_json(
+            [
+                body["type"],
+                {k: v for k, v in body.items() if k != "type"},
+            ]
+        )
+
+    @event("spotlight")
+    async def push_spotlight(self, body):
         await self.consumer.send_json(
             [
                 body["type"],

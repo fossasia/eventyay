@@ -13,15 +13,20 @@
 			bunt-progress-circular(size="huge", :page="true")
 			span Connecting...
 
-	.room-surface(v-show="connectionState === 'connected'")
+	.room-surface(v-show="connectionState === 'connected'", :class="{ 'is-speaker-view': effectiveViewMode === 'speaker' }")
 		.moderation-notice(v-if="moderationNotice")
 			.mdi.mdi-information-outline
 			span {{ moderationNotice }}
-		.gallery(ref="container", :class="{ 'has-screen': hasScreenTile }", :style="gridStyle", v-resize-observer="onResize")
+		.spotlight-notice(v-if="spotlightUserId")
+			.mdi.mdi-star
+			span Host spotlighted {{ spotlightLabel }}
+			button(v-if="canModerateParticipants", type="button", title="Clear spotlight", :disabled="spotlightPending", @click="clearSpotlight")
+				.mdi.mdi-close
+		.gallery(ref="container", :class="galleryClasses", :style="gridStyle", v-resize-observer="onResize")
 			.video-tile(
-				v-for="tile in tiles",
+				v-for="tile in displayTiles",
 				:key="tile.key",
-				:class="{ 'is-local': tile.local && !tile.screen, 'is-screen': tile.screen, 'is-speaking': tile.speaking }"
+				:class="{ 'is-local': tile.local && !tile.screen, 'is-screen': tile.screen, 'is-speaking': tile.speaking, 'is-pinned': pinnedTileKey === tile.key, 'is-spotlighted': spotlightTile && spotlightTile.key === tile.key }"
 			)
 				.media-frame(:id="`janus_${tile.key}`")
 					video(
@@ -32,13 +37,9 @@
 						playsinline,
 						muted
 					)
-					video(
-						v-else-if="tile.local && tile.screen",
-						ref="localScreenVideo",
-						autoplay,
-						playsinline,
-						muted
-					)
+					.local-screen-placeholder(v-else-if="tile.local && tile.screen")
+						.mdi.mdi-monitor-share
+						span You are sharing your screen
 					video(
 						v-else,
 						class="remote-media",
@@ -61,6 +62,10 @@
 					.tile-top
 						.audio-meter(:class="{ active: tile.audioLevel > 0.01 }")
 							.audio-meter-fill(:style="audioMeterStyle(tile)")
+						.tile-state-pill(v-if="spotlightTile && spotlightTile.key === tile.key")
+							.mdi.mdi-star
+						.tile-state-pill(v-else-if="pinnedTileKey === tile.key")
+							.mdi.mdi-pin
 						.mute-pill(v-if="tile.muted")
 							.mdi.mdi-microphone-off
 					.tile-bottom
@@ -71,6 +76,14 @@
 							.mdi(:class="tile.screen ? 'mdi-monitor-share' : 'mdi-account'")
 							span {{ tile.label }}
 						.tile-actions
+							button.tile-action(type="button", :title="pinnedTileKey === tile.key ? 'Unpin' : 'Pin'", @click="togglePin(tile)")
+								.mdi(:class="pinnedTileKey === tile.key ? 'mdi-pin-off' : 'mdi-pin'")
+							button.tile-action(type="button", v-if="canModerateParticipants && tile.user", :title="spotlightTile && spotlightTile.key === tile.key ? 'Clear spotlight' : 'Spotlight for everyone'", :disabled="spotlightPending", @click="toggleSpotlight(tile)")
+								.mdi(:class="spotlightTile && spotlightTile.key === tile.key ? 'mdi-star-off' : 'mdi-star'")
+							button.tile-action(type="button", v-if="!(tile.local && tile.screen)", title="Picture in picture", :disabled="!tile.hasVideo", @click="togglePictureInPicture($event)")
+								.mdi.mdi-picture-in-picture-bottom-right
+							button.tile-action(type="button", title="Fullscreen", @click="toggleFullscreen($event)")
+								.mdi.mdi-fullscreen
 							button.tile-action(type="button", v-if="tile.local && tile.screen", :title="$t('JanusVideoroom:tool-screenshare:off')", @click="stopScreenShare")
 								.mdi.mdi-monitor-off
 
@@ -383,6 +396,10 @@ export default {
 			pendingAdmissions: [],
 			endingMeeting: false,
 			screenShareBlockedByHost: false,
+			pinnedTileKey: null,
+			spotlightUserId: null,
+			spotlightModeratorId: null,
+			spotlightPending: false,
 			moderationNotice: null,
 			moderationNoticeTimeout: null,
 		}
@@ -413,6 +430,14 @@ export default {
 			return Number(this.screenShareSessionId || Number(this.sessionId) + 1000000000)
 		},
 		gridStyle() {
+			if (this.effectiveViewMode === 'speaker') {
+				return {
+					'--tile-columns': 1,
+					'--tile-rows': 1,
+					'--tile-width': 'minmax(0, 1fr)',
+					'--tile-height': 'minmax(0, 1fr)',
+				}
+			}
 			const w = this.layout.width > 0 ? `${this.layout.width}px` : 'minmax(0, 1fr)'
 			const h = this.layout.height > 0 ? `${this.layout.height}px` : 'minmax(0, 1fr)'
 			return {
@@ -422,8 +447,43 @@ export default {
 				'--tile-height': h,
 			}
 		},
+		galleryClasses() {
+			return {
+				'has-screen': this.effectiveViewMode === 'gallery' && this.hasScreenTile,
+				'is-speaker-layout': this.effectiveViewMode === 'speaker',
+			}
+		},
 		hasScreenTile() {
 			return this.tiles.some(tile => tile.screen)
+		},
+		effectiveViewMode() {
+			return this.spotlightUserId || this.pinnedTileKey ? 'speaker' : 'gallery'
+		},
+		spotlightTile() {
+			if (!this.spotlightUserId) return null
+			return this.tileForUser(this.spotlightUserId)
+		},
+		spotlightLabel() {
+			return this.spotlightTile?.label || 'a participant'
+		},
+		focusTile() {
+			if (this.spotlightTile) return this.spotlightTile
+			const pinnedTile = this.tiles.find(tile => tile.key === this.pinnedTileKey)
+			if (pinnedTile) return pinnedTile
+			const screenTile = this.tiles.find(tile => tile.screen)
+			if (screenTile) return screenTile
+			const speakingTile = this.tiles.find(tile => tile.speaking)
+			if (speakingTile) return speakingTile
+			return this.tiles[0] || null
+		},
+		displayTiles() {
+			if (this.effectiveViewMode !== 'speaker' || !this.focusTile) {
+				return this.tiles
+			}
+			return [
+				this.focusTile,
+				...this.tiles.filter(tile => tile.key !== this.focusTile.key),
+			]
 		},
 		participantRows() {
 			const rows = new Map()
@@ -544,6 +604,9 @@ export default {
 	},
 	watch: {
 		tiles() {
+			if (this.pinnedTileKey && !this.tiles.some(tile => tile.key === this.pinnedTileKey)) {
+				this.pinnedTileKey = null
+			}
 			this.$nextTick(() => {
 				this.onResize()
 			})
@@ -561,6 +624,7 @@ export default {
 		this.cleaningUp = false
 		this.initJanus()
 		this.loadMediaStates()
+		this.loadSpotlight()
 		this.loadPendingAdmissions()
 		this.slowLinkInterval = window.setInterval(() => {
 			this.downstreamSlowLinkCount = Math.max(this.downstreamSlowLinkCount - 1, 0)
@@ -618,6 +682,8 @@ export default {
 				this.handleModeratorAction(payload)
 			} else if (name === 'januscall.waiting_room_updated') {
 				this.handleWaitingRoomUpdate(payload)
+			} else if (name === 'januscall.spotlight') {
+				this.handleSpotlight(payload)
 			}
 		},
 		mergeMediaStates(states) {
@@ -644,6 +710,21 @@ export default {
 			} catch (error) {
 				log('janus-media-state', 'warn', {
 					action: 'loadMediaStates:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
+			}
+		},
+		async loadSpotlight() {
+			if (!this.eventRoomId) return
+			try {
+				const response = await api.call('januscall.spotlight.state', {
+					room: this.eventRoomId,
+				})
+				this.handleSpotlight(response || {})
+			} catch (error) {
+				log('janus-spotlight', 'warn', {
+					action: 'loadSpotlight:error',
 					error: error?.message || error,
 					name: error?.name,
 				})
@@ -726,6 +807,90 @@ export default {
 				this.moderationNotice = null
 				this.moderationNoticeTimeout = null
 			}, 5000)
+		},
+		handleSpotlight(payload) {
+			this.spotlightUserId = payload.target_user ? this.normalizeFeedId(payload.target_user) : null
+			this.spotlightModeratorId = payload.moderator ? this.normalizeFeedId(payload.moderator) : null
+		},
+		tileForUser(userId) {
+			const normalizedUserId = this.normalizeFeedId(userId)
+			const userTiles = this.tiles.filter(tile => this.normalizeFeedId(tile.user?.id) === normalizedUserId)
+			return userTiles.find(tile => tile.screen) || userTiles[0] || null
+		},
+		togglePin(tile) {
+			if (this.spotlightUserId) return
+			this.pinnedTileKey = this.pinnedTileKey === tile.key ? null : tile.key
+			this.$nextTick(this.onResize)
+		},
+		async toggleSpotlight(tile) {
+			if (!this.canModerateParticipants || !tile.user?.id || this.spotlightPending) return
+			const targetUser = this.spotlightTile && this.spotlightTile.key === tile.key ? null : tile.user.id
+			await this.sendSpotlight(targetUser)
+		},
+		clearSpotlight() {
+			this.sendSpotlight(null)
+		},
+		async sendSpotlight(targetUser) {
+			if (!this.eventRoomId || this.spotlightPending) return
+			this.spotlightPending = true
+			try {
+				await api.call('januscall.spotlight', {
+					room: this.eventRoomId,
+					target_user: targetUser,
+				})
+			} catch (error) {
+				const denied = error?.error === 'protocol.denied' || error?.code === 'protocol.denied'
+				this.showModerationNotice(denied ? 'Permission denied.' : 'Could not update spotlight.')
+				log('janus-spotlight', 'warn', {
+					action: 'sendSpotlight:error',
+					targetUser,
+					error: error?.message || error,
+					name: error?.name,
+				})
+			} finally {
+				this.spotlightPending = false
+			}
+		},
+		tileElementFromEvent(event) {
+			return event?.currentTarget?.closest?.('.video-tile')
+		},
+		async toggleFullscreen(event) {
+			const tileElement = this.tileElementFromEvent(event)
+			if (!tileElement) return
+			try {
+				if (document.fullscreenElement === tileElement) {
+					await document.exitFullscreen()
+				} else {
+					await tileElement.requestFullscreen()
+				}
+			} catch (error) {
+				this.showModerationNotice('Fullscreen is not available.')
+				log('janus-tile-controls', 'warn', {
+					action: 'toggleFullscreen:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
+			}
+		},
+		async togglePictureInPicture(event) {
+			if (!document.pictureInPictureEnabled) return
+			const tileElement = this.tileElementFromEvent(event)
+			const video = tileElement?.querySelector?.('video:not(.is-hidden)')
+			if (!video) return
+			try {
+				if (document.pictureInPictureElement === video) {
+					await document.exitPictureInPicture()
+				} else {
+					await video.requestPictureInPicture()
+				}
+			} catch (error) {
+				this.showModerationNotice('Picture in picture is not available for this video.')
+				log('janus-tile-controls', 'warn', {
+					action: 'togglePictureInPicture:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
+			}
 		},
 		handleModeratorAction(payload) {
 			if (payload.action === 'end_meeting') {
@@ -2498,6 +2663,10 @@ export default {
 		},
 		onResize() {
 			if (!this.$refs.container) return
+			if (this.effectiveViewMode === 'speaker') {
+				this.layout = {cols: 1, rows: 1, width: 0, height: 0}
+				return
+			}
 			if (this.hasScreenTile) {
 				this.layout = {cols: 2, rows: Math.max(this.tiles.length - 1, 1)}
 				return
@@ -2704,6 +2873,44 @@ export default {
 		.mdi
 			font-size: 19px
 
+	.spotlight-notice
+		align-items: center
+		align-self: center
+		background: rgba(25, 118, 210, .95)
+		border-radius: 0 0 8px 8px
+		box-shadow: 0 8px 24px rgba(0,0,0,.32)
+		color: #fff
+		display: flex
+		font-size: 14px
+		font-weight: 650
+		gap: 8px
+		left: 50%
+		max-width: calc(100% - 32px)
+		padding: 10px 14px
+		position: absolute
+		top: 0
+		transform: translateX(-50%)
+		z-index: 19
+		span
+			overflow: hidden
+			text-overflow: ellipsis
+			white-space: nowrap
+		button
+			align-items: center
+			background: rgba(255,255,255,.16)
+			border: 0
+			border-radius: 50%
+			color: #fff
+			cursor: pointer
+			display: flex
+			height: 26px
+			justify-content: center
+			width: 26px
+			&:hover,
+			&:focus-visible
+				background: rgba(255,255,255,.26)
+				outline: none
+
 	.gallery
 		align-content: center
 		align-items: center
@@ -2730,6 +2937,25 @@ export default {
 				grid-row: 1 / -1
 				align-self: center
 				aspect-ratio: 16 / 9
+		&.is-speaker-layout
+			display: flex
+			flex-wrap: wrap
+			align-content: stretch
+			align-items: stretch
+			justify-content: center
+			overflow-x: hidden
+			overflow-y: auto
+			.video-tile
+				flex: 0 0 176px
+				aspect-ratio: 16 / 9
+				height: 112px
+				width: 176px
+			.video-tile:first-child
+				aspect-ratio: auto
+				flex: 1 0 100%
+				height: calc(100% - 144px)
+				min-height: 240px
+				width: 100%
 
 	.video-tile
 		background: #1e2229
@@ -2748,6 +2974,10 @@ export default {
 			box-shadow: 0 0 0 3px #2d8cff, 0 2px 8px rgba(0,0,0,.35)
 			.media-frame
 				box-shadow: none
+		&.is-pinned
+			box-shadow: 0 0 0 3px #f6c343, 0 2px 8px rgba(0,0,0,.35)
+		&.is-spotlighted
+			box-shadow: 0 0 0 3px #55a4ff, 0 2px 8px rgba(0,0,0,.35)
 		&.is-screen video
 			object-fit: contain
 		&.is-local:not(.is-screen) video
@@ -2770,6 +3000,24 @@ export default {
 					opacity: 0
 			.remote-audio
 				display: none
+
+	.local-screen-placeholder
+		align-items: center
+		background: #111317
+		color: #d7dde6
+		display: flex
+		flex-direction: column
+		font-size: 15px
+		font-weight: 650
+		gap: 10px
+		height: 100%
+		justify-content: center
+		padding: 16px
+		text-align: center
+		width: 100%
+		.mdi
+			color: #55a4ff
+			font-size: 52px
 
 	.avatar-wrap
 		align-items: center
@@ -2830,6 +3078,18 @@ export default {
 			color: white
 			font-size: 17px
 
+	.tile-state-pill
+		align-items: center
+		background: rgba(0,0,0,.56)
+		border-radius: 99px
+		display: flex
+		height: 28px
+		justify-content: center
+		width: 28px
+		.mdi
+			color: #fff
+			font-size: 17px
+
 	.tile-bottom
 		align-items: center
 		bottom: 10px
@@ -2884,6 +3144,11 @@ export default {
 			font-size: 20px
 		&:hover
 			background: rgba(255,255,255,.18)
+		&:disabled
+			cursor: default
+			opacity: .5
+			&:hover
+				background: rgba(0,0,0,.56)
 
 	.info-bar
 		align-items: center
@@ -2949,6 +3214,9 @@ export default {
 		&.muted,
 		&.disabled
 			background: #d93025
+		&.disabled
+			cursor: default
+			opacity: .7
 		&.active
 			background: #1976d2
 		&.loading
@@ -3353,11 +3621,18 @@ export default {
 		.gallery
 			gap: 0
 			padding: 0
+			&.is-speaker-layout
+				.video-tile:not(:first-child)
+					display: none
+				.video-tile:first-child
+					height: 100%
+					min-height: 0
 		.video-tile,
 		.media-frame
 			border-radius: 0
 		.tile-top,
 		.tile-bottom,
+		.spotlight-notice,
 		.participants-backdrop,
 		.participants-drawer,
 		.controlbar,
@@ -3376,7 +3651,17 @@ export default {
 				.video-tile.is-screen
 					grid-column: 1
 					grid-row: auto
+			&.is-speaker-layout
+				overflow-y: auto
+				.video-tile:not(:first-child)
+					flex-basis: 138px
+					height: 88px
+					width: 138px
+				.video-tile:first-child
+					height: calc(100% - 112px)
+					min-height: 180px
 		.controlbar
+			flex-wrap: wrap
 			gap: 8px
 			padding: 10px
 		.control-button
