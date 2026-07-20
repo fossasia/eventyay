@@ -282,6 +282,7 @@ export default {
 			slowLinkInterval: null,
 			audioMeters: {},
 			audioLevels: {},
+			audioMeterContext: null,
 			audioLevelInterval: null,
 			layout: {
 				area: 0,
@@ -1932,9 +1933,7 @@ export default {
 			if (!stream.getAudioTracks().length) return
 			this.closeAudioMeter(id)
 			try {
-				window.AudioContext = window.AudioContext || window.webkitAudioContext
-				const context = new AudioContext()
-				const meter = new SoundMeter(context)
+				const meter = new SoundMeter(this.getAudioMeterContext())
 				meter.connectToSource(stream)
 				this.audioMeters[id] = meter
 				log('janus-audio-meter', 'debug', {
@@ -1950,6 +1949,14 @@ export default {
 				})
 			}
 		},
+		getAudioMeterContext() {
+			if (this.audioMeterContext && this.audioMeterContext.state !== 'closed') {
+				return this.audioMeterContext
+			}
+			const AudioContextConstructor = window.AudioContext || window.webkitAudioContext
+			this.audioMeterContext = new AudioContextConstructor()
+			return this.audioMeterContext
+		},
 		closeAudioMeter(id) {
 			const meter = this.audioMeters[id]
 			if (!meter) return
@@ -1957,11 +1964,18 @@ export default {
 				action: 'closeAudioMeter',
 				id,
 			})
-			if (meter.context?.state !== 'closed') {
-				meter.context.close()
-			}
+			meter.stop()
 			delete this.audioMeters[id]
 			delete this.audioLevels[id]
+			if (!Object.keys(this.audioMeters).length) {
+				this.closeAudioMeterContext()
+			}
+		},
+		closeAudioMeterContext() {
+			if (this.audioMeterContext && this.audioMeterContext.state !== 'closed') {
+				this.audioMeterContext.close()
+			}
+			this.audioMeterContext = null
 		},
 		refreshAudioLevels() {
 			const levels = {}
@@ -2023,6 +2037,16 @@ export default {
 			}
 			this.localVideoStream = null
 		},
+		clearLocalMediaElements() {
+			const localVideo = this.singleRef(this.$refs.localVideo)
+			if (localVideo) {
+				localVideo.srcObject = null
+			}
+			const localScreenVideo = this.singleRef(this.$refs.localScreenVideo)
+			if (localScreenVideo) {
+				localScreenVideo.srcObject = null
+			}
+		},
 		stopStreamTracks(stream) {
 			for (const track of stream.getTracks()) {
 				track.onended = null
@@ -2045,12 +2069,6 @@ export default {
 				16 / 9,
 				gap,
 			)
-		},
-		requestFullscreen(id) {
-			const element = document.getElementById(id)
-			if (element?.requestFullscreen) {
-				element.requestFullscreen()
-			}
 		},
 		async showUserCard(event, user) {
 			this.selectedUser = user
@@ -2092,9 +2110,11 @@ export default {
 			if (this.localVideoStream) {
 				this.stopStreamTracks(this.localVideoStream)
 			}
+			this.clearLocalMediaElements()
 			for (const id of Object.keys(this.audioMeters)) {
 				this.closeAudioMeter(id)
 			}
+			this.closeAudioMeterContext()
 			this.remoteFeeds = []
 			this.subscribingFeedIds = []
 			for (const id of Object.keys(this.subscriberRetryTimeouts)) {
@@ -2481,21 +2501,21 @@ export default {
 		.info-bar
 			display: none
 
-		+below('m')
-			.gallery
-				gap: 8px
-				padding: 10px
-				&.has-screen
-					grid-auto-rows: minmax(120px, auto)
-					grid-template-columns: minmax(0, 1fr)
-					grid-template-rows: auto
-					.video-tile,
-					.video-tile.is-screen
-						grid-column: 1
-						grid-row: auto
-			.controlbar
-				gap: 8px
-				padding: 10px
+	+below('m')
+		.gallery
+			gap: 8px
+			padding: 10px
+			&.has-screen
+				grid-auto-rows: minmax(120px, auto)
+				grid-template-columns: minmax(0, 1fr)
+				grid-template-rows: auto
+				.video-tile,
+				.video-tile.is-screen
+					grid-column: 1
+					grid-row: auto
+		.controlbar
+			gap: 8px
+			padding: 10px
 		.control-button
 			height: 44px
 			width: 44px

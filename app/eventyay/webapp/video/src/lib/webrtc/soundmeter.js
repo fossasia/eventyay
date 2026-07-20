@@ -59,8 +59,14 @@ SoundMeter.prototype.connectToSource = function(stream, callback) {
 
 SoundMeter.prototype.stop = function() {
 	console.log('SoundMeter stopping')
-	this.mic.disconnect()
-	this.script.disconnect()
+	if (this.mic) {
+		this.mic.disconnect()
+		this.mic = null
+	}
+	if (this.script) {
+		this.script.onaudioprocess = null
+		this.script.disconnect()
+	}
 }
 
 export default SoundMeter
