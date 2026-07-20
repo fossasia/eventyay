@@ -1,6 +1,6 @@
 $(function () {
     // Shared join handler for schedule (agenda) and ticket (presale) pages.
-    $('.join-video-link').off('click').on('click', function (e) {
+    $(document).off('click', '.join-video-link, .join-room-btn').on('click', '.join-video-link, .join-room-btn', function (e) {
         e.preventDefault();
         var url = $(this).attr('href');
 
