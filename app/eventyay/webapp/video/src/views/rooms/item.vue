@@ -154,15 +154,22 @@ export default {
 		initializeLanguages() {
 			this.languages = []
 			let languageUrls = null
-			const ytModule = this.modules['livestream.youtube']
-			
-			if (ytModule) {
-				const isScheduleDriven = ytModule.config?.playback_mode === 'schedule_driven'
-				if (isScheduleDriven) {
-					if (this.room?.currentStream?.stream_type === 'youtube' && this.room.currentStream.config?.languageUrls) {
-						languageUrls = this.room.currentStream.config.languageUrls
-					}
-				} else if (ytModule.config?.languageUrls) {
+
+			let isScheduleDriven = false
+			for (const type of ['livestream.native', 'livestream.youtube', 'livestream.iframe']) {
+				if (this.modules[type]?.config?.playback_mode === 'schedule_driven') {
+					isScheduleDriven = true
+					break
+				}
+			}
+
+			if (isScheduleDriven) {
+				if (this.room?.currentStream?.stream_type === 'youtube' && this.room.currentStream.config?.languageUrls) {
+					languageUrls = this.room.currentStream.config.languageUrls
+				}
+			} else {
+				const ytModule = this.modules['livestream.youtube']
+				if (ytModule?.config?.languageUrls) {
 					languageUrls = ytModule.config.languageUrls
 				}
 			}
