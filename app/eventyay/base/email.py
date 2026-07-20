@@ -550,18 +550,15 @@ def get_combined_ticket_output_identifier(event: Event) -> str:
     """Return an enabled combined ticket-output identifier for download links."""
     from eventyay.base.signals import register_ticket_outputs
 
-    enabled = []
+    enabled_ids = []
     for _receiver, response in register_ticket_outputs.send(event):
         provider = response(event)
-        if getattr(provider, 'is_enabled', False):
-            enabled.append(provider)
-    for preferred in ('pdf',):
-        for provider in enabled:
-            if provider.identifier == preferred:
-                return preferred
-    if enabled:
-        return enabled[0].identifier
-    return 'pdf'
+        if not getattr(provider, 'is_enabled', False):
+            continue
+        if provider.identifier == 'pdf':
+            return 'pdf'
+        enabled_ids.append(provider.identifier)
+    return enabled_ids[0] if enabled_ids else 'pdf'
 
 
 def render_download_tickets_pdf_button(event: Event, order) -> str:

@@ -144,24 +144,27 @@ class EmailQueue(models.Model):
 
     def _build_email_context(self, order, position, position_or_address, recipient):
         try:
-            if self.composing_for == ComposingFor.ATTENDEES:
-                if order is not None and position is None:
-                    position = (
-                        order.positions.select_related('product', 'order__event')
-                        .order_by('positionid')
-                        .first()
-                    )
-                    if position is not None and position_or_address is None:
-                        position_or_address = position
-                kwargs = {'event': self.event}
-                if order is not None:
-                    kwargs['order'] = order
-                if position is not None:
-                    kwargs['position'] = position
-                if position_or_address is not None:
-                    kwargs['position_or_address'] = position_or_address
-                return get_email_context(**kwargs)
-            return get_email_context(event=self.event)
+            if self.composing_for != ComposingFor.ATTENDEES:
+                return get_email_context(event=self.event)
+
+            # Only pass keys that are present. ``position=None`` still counts as
+            # provided to get_email_context and would break position placeholders.
+            if order is not None and position is None:
+                position = (
+                    order.positions.select_related('product', 'order__event')
+                    .order_by('positionid')
+                    .first()
+                )
+                position_or_address = position_or_address or position
+
+            kwargs = {'event': self.event}
+            if order is not None:
+                kwargs['order'] = order
+            if position is not None:
+                kwargs['position'] = position
+            if position_or_address is not None:
+                kwargs['position_or_address'] = position_or_address
+            return get_email_context(**kwargs)
         except (AttributeError, KeyError, TypeError, ValueError) as e:
             logger.exception('Error while generating email context')
             recipient.error = f'Context error: {e}'
