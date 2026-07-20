@@ -45,7 +45,6 @@ from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
-from eventyay.common.views.helpers import login_redirect_with_next, redirect_or_json_redirect
 from eventyay.common.views.mixins import (
     EventPermissionRequired,
     PermissionRequired,
@@ -614,8 +613,7 @@ class OnlineVideoJoin(EventPermissionRequired, View):
 
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            # After login, return here so the user continues into the live event.
-            return login_redirect_with_next(request)
+            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.NOT_ALLOWED)
 
         event = request.event
         logger.info('Checking video settings for event %s', event)
@@ -668,7 +666,10 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         token = jwt.encode(payload, event.settings.venueless_secret, algorithm='HS256')
         redirect_url = urljoin(event.settings.venueless_url, f'#token={token}')
         logger.info('Redirect URL to Video: %s', redirect_url)
-        return redirect_or_json_redirect(request, redirect_url)
+        return JsonResponse(
+            {'redirect_url': redirect_url},
+            status=HTTPStatus.OK,
+        )
 
 
 _T = TypeVar('_T', str, None)

@@ -31,7 +31,7 @@ from eventyay.base.services.system_questions import (
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.organizer_exports import build_organizer_calendar_exporters
-from eventyay.presale.utils import build_position_additional_fields
+from eventyay.presale.signals import question_form_fields
 
 
 def cached_invoice_address(request):
@@ -117,7 +117,20 @@ class CartMixin:
         pos_additional_fields = defaultdict(list)
         for cp in lcp:
             cp.product.event = self.request.event  # will save some SQL queries
-            pos_additional_fields[cp.pk] = build_position_additional_fields(self.request.event, cp)
+            responses = question_form_fields.send(sender=self.request.event, position=cp)
+            data = cp.meta_info_data
+            for r, response in sorted(responses, key=lambda r: str(r[0])):
+                if response:
+                    for key, value in response.items():
+                        answer = data.get('question_form_data', {}).get(key)
+                        if hasattr(value, 'get_display_value'):
+                            answer = value.get_display_value(answer)
+                        pos_additional_fields[cp.pk].append(
+                            {
+                                'answer': answer,
+                                'question': value.label,
+                            }
+                        )
 
         base_states = get_system_question_base_states(self.request.event)
         product_overrides = get_system_question_product_overrides(self.request.event)

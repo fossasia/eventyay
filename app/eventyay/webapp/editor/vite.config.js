@@ -11,7 +11,7 @@ export default defineConfig({
       ? resolve(process.env.OUT_DIR, 'editor')
       : resolve(__dirname, '../../static/editor'),
     emptyOutDir: true,
-    sourcemap: false,
+    sourcemap: true,
     target: 'es2020',
     minify: 'esbuild',
     lib: {
