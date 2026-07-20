@@ -5,6 +5,15 @@ import pytest
 from eventyay.common.sanitizers import sanitize_email_html, sanitize_rich_text
 
 
+@pytest.mark.parametrize('sanitize', [sanitize_rich_text, sanitize_email_html])
+@pytest.mark.parametrize(
+    'href',
+    ['mailto:a@example.com', 'tel:+123456789'],
+)
+def test_mailto_and_tel_schemes_kept(sanitize, href):
+    assert f'href="{href}"' in sanitize(f'<a href="{href}">x</a>')
+
+
 class TestSanitizeRichText:
     def test_passthrough_safe_tags(self):
         html = '<p>Hello <strong>world</strong></p>'
