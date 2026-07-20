@@ -304,6 +304,116 @@ function drawCheckinsOverTime() {
     new ApexCharts(chartEl, options).render()
 }
 
+function drawAttendanceOverTime() {
+    if (typeof ApexCharts === 'undefined') return
+
+    const dataEl = document.getElementById('attendance-over-time-data')
+    const chartEl = document.getElementById('attendance-over-time-chart')
+    if (!dataEl || !chartEl) return
+
+    const series = parseData(dataEl, 'series')
+    if (!Array.isArray(series) || series.length === 0) return
+
+    const labelOrders = dataEl.dataset.labelOrders || 'Orders'
+    const labelRegistrations = dataEl.dataset.labelRegistrations || 'Registrations'
+
+    const options = {
+        series: [
+            { name: labelOrders, data: series.map(d => ({ x: new Date(d.x), y: d.orders || 0 })) },
+            { name: labelRegistrations, data: series.map(d => ({ x: new Date(d.x), y: d.registrations || 0 })) }
+        ],
+        chart: {
+            type: 'area',
+            height: 220,
+            redrawOnParentResize: true,
+            toolbar: { show: false },
+            animations: { enabled: true }
+        },
+        colors: [PALETTE[0], PALETTE[1]],
+        xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { format: 'dd MMM' } },
+        yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
+        stroke: { curve: 'straight', width: 2 },
+        fill: { type: 'solid', opacity: 0.15 },
+        markers: { size: 4, hover: { size: 6 } },
+        dataLabels: { enabled: false },
+        legend: { position: 'top' },
+        tooltip: { shared: true, x: { format: 'dd MMM yyyy' } }
+    }
+    new ApexCharts(chartEl, options).render()
+}
+
+function drawFollowerWeekly() {
+    if (typeof ApexCharts === 'undefined') return
+
+    const dataEl = document.getElementById('followers-weekly-data')
+    const chartEl = document.getElementById('followers-weekly-chart')
+    if (!dataEl || !chartEl) return
+
+    const series = parseData(dataEl, 'series')
+    if (!Array.isArray(series) || series.length === 0) return
+
+    const label = dataEl.dataset.label || 'New followers'
+
+    const options = {
+        series: [
+            { name: label, data: series.map(d => ({ x: new Date(d.x), y: d.y || 0 })) }
+        ],
+        chart: {
+            type: 'area',
+            height: 220,
+            redrawOnParentResize: true,
+            toolbar: { show: false },
+            animations: { enabled: true }
+        },
+        colors: [PALETTE[4]],
+        xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { format: 'dd MMM' } },
+        yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
+        stroke: { curve: 'straight', width: 2 },
+        fill: { type: 'solid', opacity: 0.15 },
+        markers: { size: 4, hover: { size: 6 } },
+        dataLabels: { enabled: false },
+        legend: { show: false },
+        tooltip: { shared: true, x: { format: 'dd MMM yyyy' } }
+    }
+    new ApexCharts(chartEl, options).render()
+}
+
+function drawFollowerMonthly() {
+    if (typeof ApexCharts === 'undefined') return
+
+    const dataEl = document.getElementById('followers-monthly-data')
+    const chartEl = document.getElementById('followers-monthly-chart')
+    if (!dataEl || !chartEl) return
+
+    const series = parseData(dataEl, 'series')
+    if (!Array.isArray(series) || series.length === 0) return
+
+    const label = dataEl.dataset.label || 'New followers'
+
+    const options = {
+        series: [
+            { name: label, data: series.map(d => ({ x: new Date(d.x), y: d.y || 0 })) }
+        ],
+        chart: {
+            type: 'area',
+            height: 220,
+            redrawOnParentResize: true,
+            toolbar: { show: false },
+            animations: { enabled: true }
+        },
+        colors: [PALETTE[5]],
+        xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { format: 'dd MMM' } },
+        yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
+        stroke: { curve: 'straight', width: 2 },
+        fill: { type: 'solid', opacity: 0.15 },
+        markers: { size: 4, hover: { size: 6 } },
+        dataLabels: { enabled: false },
+        legend: { show: false },
+        tooltip: { shared: true, x: { format: 'dd MMM yyyy' } }
+    }
+    new ApexCharts(chartEl, options).render()
+}
+
 function initCharts() {
     if (typeof ApexCharts === 'undefined') {
         setTimeout(initCharts, 30)
@@ -318,6 +428,9 @@ function initCharts() {
         drawProposalsOverTime()
         drawCheckinRate()
         drawCheckinsOverTime()
+        drawAttendanceOverTime()
+        drawFollowerWeekly()
+        drawFollowerMonthly()
     }, 50)
 }
 

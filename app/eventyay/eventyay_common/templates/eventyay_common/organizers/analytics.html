@@ -241,5 +241,126 @@
         {% endif %}
     </div>
 
+    <div class="analytics-section">
+        <h2>{% trans "Attendance Trends" %}</h2>
+
+        <form method="get" class="form-inline">
+            <div class="form-group">
+                <label for="attendance-event">{% trans "Event" %}</label>
+                <select id="attendance-event" name="attendance_event" class="form-control">
+                    <option value=""{% if not attendance_selected_event_id %} selected{% endif %}>{% trans "All events" %}</option>
+                    {% for event in attendance_events %}
+                    <option value="{{ event.id }}"{% if attendance_selected_event_id == event.id %} selected{% endif %}>{{ event.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-default">{% trans "Apply" %}</button>
+        </form>
+
+        {% if has_attendance %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{% trans "Daily attendance activity (last 30 days)" %}</h3>
+                </div>
+                <div class="panel-body chart-panel-body">
+                    <div
+                        id="attendance-over-time-data"
+                        class="d-none"
+                        data-series="{{ attendance_over_time_json }}"
+                        data-label-orders="{% trans "Orders" %}"
+                        data-label-registrations="{% trans "Registrations" %}"
+                    ></div>
+                    <div id="attendance-over-time-chart"></div>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fa fa-line-chart fa-2x text-muted"></i>
+                <p class="text-muted">{% trans "No attendance data for the selected event and period." %}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="analytics-section">
+        <h2>{% trans "Email Engagement" %}</h2>
+
+        {% if has_email_engagement %}
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table class="table table-condensed table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Event" %}</th>
+                                <th class="text-right">{% trans "Sent" %}</th>
+                                <th class="text-right">{% trans "Queued" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in email_engagement_rows %}
+                            <tr>
+                                <td>{{ row.event_name }}</td>
+                                <td class="text-right">{{ row.sent }}</td>
+                                <td class="text-right">{{ row.queued }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fa fa-envelope-o fa-2x text-muted"></i>
+                <p class="text-muted">{% trans "No email delivery data yet." %}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="analytics-section">
+        <h2>{% trans "Follower Growth" %}</h2>
+        <p>{% blocktrans with total=follower_total %}Total followers: {{ total }}{% endblocktrans %}</p>
+
+        {% if has_followers %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Weekly follower growth" %}</h3>
+                        </div>
+                        <div class="panel-body chart-panel-body">
+                            <div
+                                id="followers-weekly-data"
+                                class="d-none"
+                                data-series="{{ followers_weekly_json }}"
+                                data-label="{% trans "New followers" %}"
+                            ></div>
+                            <div id="followers-weekly-chart"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% trans "Monthly follower growth" %}</h3>
+                        </div>
+                        <div class="panel-body chart-panel-body">
+                            <div
+                                id="followers-monthly-data"
+                                class="d-none"
+                                data-series="{{ followers_monthly_json }}"
+                                data-label="{% trans "New followers" %}"
+                            ></div>
+                            <div id="followers-monthly-chart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fa fa-users fa-2x text-muted"></i>
+                <p class="text-muted">{% trans "No followers yet." %}</p>
+            </div>
+        {% endif %}
+    </div>
+
 </div>
 {% endblock %}
