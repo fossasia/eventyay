@@ -29,6 +29,9 @@ from eventyay.plugins.badges.utils import (
     get_badge_bundle_option_choices,
     get_badge_layout_for_position,
     get_badge_layout_version,
+    append_badge_options_additional_field,
+    format_badge_option_labels,
+    get_badge_options_display,
     position_has_printable_badge,
 )
 
@@ -74,6 +77,57 @@ def test_badge_options_hidden_without_product_layout_assignment(badge_event):
     event, position, product, layout = badge_event
 
     assert get_badge_bundle_option_choices(event, position) == []
+
+
+@pytest.mark.django_db
+def test_badge_options_display_uses_default_layout_on_order_page(badge_event):
+    """Order detail should still show badge options when only the default layout applies."""
+    event, position, product, layout = badge_event
+
+    assert get_badge_bundle_option_choices(event, position) == []
+    display = get_badge_options_display(event, position)
+    # Default layout includes attendee_name as an ask-user field.
+    assert display
+    assert 'name' in display.lower()
+
+
+@pytest.mark.django_db
+def test_badge_options_display_hidden_when_product_has_no_badge(badge_event):
+    event, position, product, layout = badge_event
+    BadgeProduct.objects.create(product=product, layout=None)
+
+    assert get_badge_options_display(event, position) is None
+
+
+def test_format_badge_option_labels_empty():
+    assert 'No optional badge fields selected' in format_badge_option_labels([])
+
+
+def test_format_badge_option_labels_joins():
+    assert format_badge_option_labels(['Name', 'Company']) == 'Name, Company'
+
+
+@pytest.mark.django_db
+def test_append_badge_options_skips_when_form_field_present(badge_event):
+    event, position, product, layout = badge_event
+    fields = []
+    assert (
+        append_badge_options_additional_field(
+            event, position, fields, present_keys={'badge_hidden_fields'}
+        )
+        is False
+    )
+    assert fields == []
+
+
+@pytest.mark.django_db
+def test_append_badge_options_adds_for_default_layout(badge_event):
+    event, position, product, layout = badge_event
+    fields = []
+    assert append_badge_options_additional_field(event, position, fields) is True
+    assert len(fields) == 1
+    assert fields[0]['question']
+    assert fields[0]['answer']
 
 
 @pytest.mark.django_db
