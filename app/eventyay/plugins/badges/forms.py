@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import Product, Voucher
 from eventyay.plugins.badges.models import BadgeLayout, BadgeProduct, BadgeVoucher
-from eventyay.plugins.badges.utils import get_badge_customizable_fields
+from eventyay.plugins.badges.utils import format_badge_option_labels, get_badge_customizable_fields
 
 
 def _sync_badge_assignments(model, layout, related_name, selected):
@@ -115,10 +115,8 @@ class BadgeOptionsField(forms.MultipleChoiceField):
 
     def get_display_value(self, hidden_values):
         visible_values = set(self.get_meta_initial(hidden_values))
-        visible_labels = [str(label) for value, label in self.choices if str(value) in visible_values]
-        if not visible_labels:
-            return str(_('No optional badge fields selected'))
-        return ', '.join(visible_labels)
+        visible_labels = [label for value, label in self.choices if str(value) in visible_values]
+        return format_badge_option_labels(visible_labels)
 
     def clean(self, value):
         selected_values = set(super().clean(value))
