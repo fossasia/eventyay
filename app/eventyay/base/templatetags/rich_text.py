@@ -179,6 +179,12 @@ _PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
 )
 
 
+def _is_placeholder_html_sample(sample: str) -> bool:
+    """Return True when a placeholder sample is trusted HTML (button, QR image)."""
+    stripped = sample.lstrip().lower()
+    return stripped.startswith(('<a ', '<a>', '<img ', '<img>', '<p>', '<p '))
+
+
 def expand_email_preview_placeholders(html_body: str, event, *, locale: str | None = None) -> str:
     """Replace ``{placeholder}`` tokens with sample values for editor preview.
 
@@ -197,15 +203,19 @@ def expand_email_preview_placeholders(html_body: str, event, *, locale: str | No
 
     with language(resolved_locale, event.settings.region):
         context_dict = TolerantDict()
+        title = html.escape(str(gettext('This value will be replaced based on dynamic parameters.')))
         for key, placeholder in get_available_placeholders(
             event, list(_PREVIEW_PLACEHOLDER_CONTEXT)
         ).items():
-            context_dict[key] = (
-                '<span class="placeholder" title="{}">{}</span>'.format(
-                    html.escape(str(gettext('This value will be replaced based on dynamic parameters.'))),
-                    html.escape(str(placeholder.render_sample(event))),
+            sample = str(placeholder.render_sample(event))
+            # HTML placeholders (QR images, CTA buttons) must not be escaped or
+            # they appear as literal markup in the preview.
+            if _is_placeholder_html_sample(sample):
+                context_dict[key] = sample
+            else:
+                context_dict[key] = (
+                    f'<span class="placeholder" title="{title}">{html.escape(sample)}</span>'
                 )
-            )
         return html_body.format_map(context_dict)
 
 

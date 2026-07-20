@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 
+from eventyay.base.email import get_available_placeholders, get_email_context
 from eventyay.base.models import Event, Organizer
 from eventyay.base.templatetags.rich_text import (
     compile_email_body,
@@ -31,6 +32,36 @@ def test_expand_email_preview_placeholders_replaces_sample_values(event):
     assert '{event_slug}' not in result
     assert event.slug in result
     assert 'class="placeholder"' in result
+
+
+@pytest.mark.django_db
+def test_expand_email_preview_placeholders_keeps_html_samples(event):
+    html = '<p>{download_tickets_pdf}</p>'
+    result = expand_email_preview_placeholders(html, event)
+    assert '{download_tickets_pdf}' not in result
+    assert '<a ' in result
+    assert 'class="button"' in result
+
+
+@pytest.mark.django_db
+def test_event_name_alias_registered_and_renders(event):
+    placeholders = get_available_placeholders(event, ['event'])
+    assert 'event' in placeholders
+    assert 'event_name' in placeholders
+    assert str(placeholders['event_name'].render_sample(event)) == str(event.name)
+
+    ctx = get_email_context(event=event)
+    assert str(ctx['event_name']) == str(event.name)
+    assert str(ctx['event']) == str(event.name)
+
+
+@pytest.mark.django_db
+def test_expand_email_preview_placeholders_resolves_event_name_alias(event):
+    html = '<p>Welcome to {event_name}</p>'
+    result = expand_email_preview_placeholders(html, event)
+    assert '{event_name}' not in result
+    assert 'event_name' not in result  # TolerantDict leftover
+    assert str(event.name) in result
 
 
 def test_compile_email_body_preserves_html():
