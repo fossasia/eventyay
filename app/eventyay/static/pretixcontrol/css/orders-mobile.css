@@ -355,16 +355,4 @@
   #page-wrapper .orders-table .orders-select-all-text {
     display: none;
   }
-
-  #page-wrapper .orders-filter-container .form-group label {
-    position: static;
-    width: auto;
-    height: auto;
-    padding: 0;
-    margin: 0;
-    overflow: visible;
-    clip: auto;
-    white-space: normal;
-    border: 0;
-  }
 }
