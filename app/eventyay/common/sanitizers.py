@@ -9,6 +9,8 @@ Two sanitizer profiles are provided:
   clients do not display unwanted attributes).
 """
 
+from collections.abc import Callable, Mapping
+
 import nh3
 
 _RICH_TEXT_TAGS: frozenset[str] = frozenset({
@@ -25,23 +27,57 @@ _EMAIL_ATTRIBUTES: dict[str, set[str]] = {
     'span': {'data-variable', 'class'},
 }
 
-_SAFE_URL_SCHEMES: frozenset[str] = frozenset({'http', 'https'})
+# Align with bleach ALLOWED_PROTOCOLS in base.templatetags.rich_text.
+_SAFE_URL_SCHEMES: frozenset[str] = frozenset({'http', 'https', 'mailto', 'tel'})
 
 
-def sanitize_rich_text(html: str) -> str:
-    """Sanitize HTML from the simple rich text editor profile.
+def _attribute_filter(allowed: Mapping[str, set[str]]) -> Callable[[str, str, str], str | None]:
+    """Strict attribute allowlist.
 
-    Strips all tags and attributes not in the allowed set, rejects any
-    link ``href`` that is not an ``http://`` or ``https://`` URL, and
-    adds ``rel="noopener noreferrer"`` to all anchor elements.
+    nh3 still keeps some global attributes (e.g. ``title``) when they are
+    omitted from ``attributes=``; this filter removes them.
     """
+
+    def filter_attr(tag: str, attr: str, value: str) -> str | None:
+        if attr in allowed.get(tag, ()):
+            return value
+        return None
+
+    return filter_attr
+
+
+# ``rel`` is included so nh3 ``link_rel`` injection is not stripped by the filter.
+_RICH_TEXT_ATTR_FILTER = _attribute_filter({'a': {'href', 'rel'}})
+_EMAIL_ATTR_FILTER = _attribute_filter(_EMAIL_ATTRIBUTES)
+
+
+def _clean(
+    html: str,
+    *,
+    tags: frozenset[str],
+    attributes: Mapping[str, set[str]],
+    attribute_filter: Callable[[str, str, str], str | None],
+    link_rel: str | None,
+) -> str:
     if not html:
         return html
     return nh3.clean(
         html,
+        tags=tags,
+        attributes=attributes,
+        attribute_filter=attribute_filter,
+        url_schemes=_SAFE_URL_SCHEMES,
+        link_rel=link_rel,
+    )
+
+
+def sanitize_rich_text(html: str) -> str:
+    """Sanitize HTML from the simple rich text editor profile."""
+    return _clean(
+        html,
         tags=_RICH_TEXT_TAGS,
         attributes=_LINK_ATTRIBUTES,
-        url_schemes=_SAFE_URL_SCHEMES,
+        attribute_filter=_RICH_TEXT_ATTR_FILTER,
         link_rel='noopener noreferrer',
     )
 
@@ -49,17 +85,13 @@ def sanitize_rich_text(html: str) -> str:
 def sanitize_email_html(html: str) -> str:
     """Sanitize HTML from the email body editor profile.
 
-    Identical to ``sanitize_rich_text`` except that ``rel`` attributes are
-    not injected, since many email clients display them as visible text or
-    strip the anchor entirely when unexpected attributes are present.
-    ``span`` is additionally allowed for placeholder chip rendering.
+    Like ``sanitize_rich_text``, but does not inject ``rel`` (email clients are
+    picky) and allows ``span`` for placeholder chips.
     """
-    if not html:
-        return html
-    return nh3.clean(
+    return _clean(
         html,
         tags=_EMAIL_TAGS,
         attributes=_EMAIL_ATTRIBUTES,
-        url_schemes=_SAFE_URL_SCHEMES,
+        attribute_filter=_EMAIL_ATTR_FILTER,
         link_rel=None,
     )
