@@ -103,7 +103,7 @@ export default {
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
-				config: { languageUrls: [] },
+				config: {},
 			},
 		};
 	},
@@ -206,7 +206,10 @@ export default {
 					? this.formData.end_time.toISOString()
 					: null,
 				stream_type: this.formData.stream_type,
-				config: this.formData.config,
+				config: {
+					...this.formData.config,
+					languageUrls: this.formData.config.languageUrls || [],
+				},
 			};
 		},
 		loadSavedDraft() {
@@ -223,7 +226,10 @@ export default {
 					start_time: draft.start_time ? this.parseApiDateTime(draft.start_time).tz(tz) : null,
 					end_time: draft.end_time ? this.parseApiDateTime(draft.end_time).tz(tz) : null,
 					stream_type: draft.stream_type || 'youtube',
-					config: draft.config || { languageUrls: [] },
+					config: {
+						...(draft.config || {}),
+						languageUrls: draft.config?.languageUrls || [],
+					},
 				};
 			} catch (error) {
 				return null;
@@ -299,7 +305,7 @@ export default {
 			this.editingSchedule = schedule;
 			const tz = this.eventTimezone || 'UTC';
 			let config = schedule.config ? JSON.parse(JSON.stringify(schedule.config)) : {};
-			if (!config.languageUrls) config.languageUrls = [];
+			config.languageUrls = config.languageUrls || [];
 			this.formData = {
 				title: schedule.title || '',
 				url: schedule.url,
@@ -505,15 +511,8 @@ export default {
 		},
 		normalizeLanguageYoutubeId(entry) {
 			if (!entry?.youtube_id) return;
-			try {
-				new URL(entry.youtube_id);
-				const id = normalizeYoutubeVideoId(entry.youtube_id);
-				if (id) entry.youtube_id = id;
-				return;
-			} catch (e) {
-				const id = normalizeYoutubeVideoId(entry.youtube_id);
-				if (id) entry.youtube_id = id;
-			}
+			const id = normalizeYoutubeVideoId(entry.youtube_id);
+			if (id) entry.youtube_id = id;
 		},
 		formatDateTime(datetime) {
 			if (!datetime) return '';
