@@ -37,7 +37,7 @@ from eventyay.base.signals import (
     register_html_mail_renderers,
     register_mail_placeholders,
 )
-from eventyay.base.templatetags.rich_text import markdown_compile_email
+from eventyay.base.templatetags.rich_text import compile_email_body, markdown_compile_email
 from eventyay.helpers.i18n import is_rtl
 
 
@@ -289,7 +289,7 @@ class TemplateBasedMailRenderer(BaseHTMLMailRenderer):
         raise NotImplementedError()
 
     def render(self, plain_body: str, plain_signature: str, subject: str, order, position) -> str:
-        body_md = markdown_compile_email(plain_body)
+        body_md = compile_email_body(plain_body)
         htmlctx = {
             'site': settings.INSTANCE_NAME,
             'site_url': settings.SITE_URL,
