@@ -83,3 +83,38 @@ def test_render_download_tickets_pdf_button(monkeypatch):
     assert 'Download tickets (PDF)' in html
     assert 'class="button"' in sanitize_email_html(html)
 
+
+def test_tiptap_chips_resolve_with_order_only_context():
+    """Buyer/order emails have order but no position; chips must still expand."""
+    from i18nfield.strings import LazyI18nString
+
+    from eventyay.base.services.mail import TolerantDict, render_mail
+
+    order = SimpleNamespace()
+    qs = MagicMock()
+    ticket_pos = SimpleNamespace(
+        generate_ticket=True,
+        attendee_name='Ada',
+        product=SimpleNamespace(name='General'),
+        ticket_qrcode_content='{"ticket":"one"}',
+        positionid=1,
+    )
+    qs.select_related.return_value.order_by.return_value = [ticket_pos]
+    order.positions = qs
+
+    tip = (
+        '<p><span data-variable="ticket_qr" class="tiptap-placeholder-chip">{ticket_qr}</span></p>'
+        '<p><span data-variable="order_qr" class="tiptap-placeholder-chip">{order_qr}</span></p>'
+    )
+    ctx = {
+        'ticket_qr': render_order_qr_html(order),
+        'order_qr': render_order_qr_html(order),
+    }
+    body = render_mail(LazyI18nString(tip), ctx)
+    assert '{ticket_qr}' not in body
+    assert '{order_qr}' not in body
+    assert '>ticket_qr<' not in body
+    assert '>order_qr<' not in body
+    assert 'data:image/png;base64,' in body
+    assert body == tip.format_map(TolerantDict({k: str(v) for k, v in ctx.items()}))
+

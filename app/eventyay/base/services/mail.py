@@ -165,7 +165,7 @@ def mail(
                 context.update({'invoice_name': '', 'invoice_company': ''})
         renderer = ClassicMailRenderer(None)
         content_plain = body_plain = render_mail(template, context)
-        subject = str(subject).format_map(TolerantDict(context))
+        subject = str(subject).format_map(TolerantDict(_stringify_mail_context(context)))
         sender = sender or (event.settings.get('mail_from') if event else settings.MAIL_FROM) or settings.MAIL_FROM
         sender_email_raw = sender
         if event:
@@ -596,11 +596,18 @@ def mail_send(*args, **kwargs):
     mail_send_task.apply_async(args=args, kwargs=kwargs)
 
 
+def _stringify_mail_context(context: dict[str, Any] | None) -> dict[str, str]:
+    """Coerce placeholder values to strings for ``str.format_map``."""
+    if not context:
+        return {}
+    return {key: '' if value is None else str(value) for key, value in context.items()}
+
+
 def render_mail(template, context):
     if isinstance(template, LazyI18nString):
         body = str(template)
         if context:
-            body = body.format_map(TolerantDict(context))
+            body = body.format_map(TolerantDict(_stringify_mail_context(context)))
     else:
         tpl = get_template(template)
         body = tpl.render(context)

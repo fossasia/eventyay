@@ -914,6 +914,14 @@ def base_placeholders(sender: Event, **kwargs):
             get_best_name,
             _('John Doe'),
         ),
+        # Order-level fallback first; position-level wins when both are present so
+        # buyer/order emails still resolve {ticket_qr} without a position context.
+        SimpleFunctionalMailTextPlaceholder(
+            'ticket_qr',
+            ['order'],
+            lambda order: render_order_qr_html(order),
+            sample_ticket_qr,
+        ),
         SimpleFunctionalMailTextPlaceholder(
             'ticket_qr',
             ['position'],
