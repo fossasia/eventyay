@@ -1,6 +1,11 @@
 {% extends "pretixcontrol/event/base.html" %}
 {% load i18n %}
+{% load static %}
 {% block title %}{% trans "Products" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+{% endblock %}
 {% block content %}
 	{% block inside %}
 	{% endblock %}

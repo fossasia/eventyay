@@ -2,6 +2,10 @@
 {% load i18n %}
 {% load static %}
 {% block title %}{% trans "Import attendees" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
+{% endblock %}
 {% block content %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
@@ -12,7 +16,7 @@
         </div>
     </nav>
 
-    <div class="panel panel-default">
+    <div class="panel panel-default orders-import-panel">
         <div class="panel-heading">
             <h3 class="panel-title">{% trans "Upload a new file" %}</h3>
         </div>

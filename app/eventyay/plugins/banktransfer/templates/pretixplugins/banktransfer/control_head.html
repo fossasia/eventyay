@@ -1,6 +1,8 @@
 {% load static %}
 {% load compress %}
 
+<link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
 {% compress css %}
     <link type="text/css" rel="stylesheet" href="{% static "pretixplugins/banktransfer/ui.css" %}">
 {% endcompress %}

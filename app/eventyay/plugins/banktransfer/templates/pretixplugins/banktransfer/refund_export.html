@@ -3,6 +3,11 @@
 {% load money %}
 {% load static %}
 {% block title %}{% trans "Export bank transfer refunds" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
+{% endblock %}
 {% block content %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
@@ -56,7 +61,7 @@
     {% endif %}
     <h2>{% trans "Exported files" %}</h2>
     <div class="table-responsive">
-        <table class="table table-hover">
+        <table class="table table-hover table-flip tickets-table refunds-export-table">
             <thead>
             <tr>
                 <th>{% trans "Export date" %}</th>
@@ -68,17 +73,17 @@
             <tbody>
             {% for export in exports %}
                 <tr>
-                    <td>
+                    <td class="list-name-cell">
                         {{ export.datetime|date:"SHORT_DATETIME_FORMAT" }}
                         {% if export.testmode %}
                             <span class="label label-warning">{% trans "TEST MODE" %}</span>
                         {% endif %}
                     </td>
-                    <td>{{ export.cnt }}</td>
-                    <td>
+                    <td class="list-meta">{{ export.cnt }}</td>
+                    <td class="list-meta">
                         {{ export.sum|default_if_none:0|money:export.currency }}
                     </td>
-                    <td class="text-right">
+                    <td class="text-right list-actions">
                         {% if not export.downloaded %}
                             <span class="label label-warning">{% trans "not downloaded" %}</span>
                         {% endif %}
@@ -109,7 +114,7 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="3">
+                    <td colspan="4" class="orders-section-empty">
                         {% trans "No exports have been created yet." %}
                     </td>
                 </tr>

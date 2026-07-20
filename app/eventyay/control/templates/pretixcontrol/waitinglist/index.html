@@ -3,7 +3,14 @@
 {% load eventurl %}
 {% load money %}
 {% load urlreplace %}
+{% load static %}
 {% block title %}{% trans "Waiting list" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
+{% endblock %}
 {% block content %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
@@ -18,7 +25,7 @@
             {% trans "The waiting list is disabled, so if the event is sold out, people cannot add themselves to this list. If you want to enable it, go to the event settings." %}
         </div>
     {% endif %}
-    <div class="row">
+    <div class="row waiting-list-panels">
         {% if 'can_change_orders' in request.eventpermset %}
             <form method="post" class="col-md-6"
                     action="{% url "control:event.orders.waitinglist.auto" event=request.event.slug organizer=request.organizer.slug %}"
@@ -87,9 +94,9 @@
         </div>
     </div>
 
-    <div class="row filter-form">
-        <form class="" action="" method="get">
-            <div class="col-md-3 col-sm-6 col-xs-6">
+    <div class="orders-filter-container waiting-list-filter">
+        <form class="orders-filter-form" action="" method="get">
+            <div class="orders-filter-form-group">
                 <select name="status" class="form-control">
                     <option value=""
                             {% if request.GET.status == "a" or not request.GET.status %}selected="selected"{% endif %}>{% trans "All entries" %}</option>
@@ -109,7 +116,7 @@
                         {% trans "Voucher expired" %}</option>
                 </select>
             </div>
-            <div class="col-md-3 col-sm-6 col-xs-6">
+            <div class="orders-filter-form-group">
                 <select name="product" class="form-control">
                     <option value="">{% trans "All products" %}</option>
                     {% for product in products %}
@@ -121,7 +128,7 @@
                 </select>
             </div>
             {% if request.event.has_subevents %}
-                <div class="col-md-3 col-sm-6 col-xs-6">
+                <div class="orders-filter-form-group">
                     <select name="subevent" class="form-control">
                         <option value="">{% trans "All dates" context "subevent" %}</option>
                         {% for se in request.event.subevents.all %}
@@ -133,21 +140,26 @@
                     </select>
                 </div>
             {% endif %}
-            <div class="col-md-3 col-sm-6 col-xs-12">
+            <div class="orders-filter-actions">
                 <div class="filter-actions">
                     {% include 'eventyay_common/filter_actions.html' %}
-                    <a href="?{% url_replace request "download" "yes" %}"
-                            class="btn btn-default"><i class="fa fa-download"></i>
-                        {% trans "Download list" %}</a>
                 </div>
+                <a href="?{% url_replace request "download" "yes" %}"
+                        class="btn btn-default"><i class="fa fa-download"></i>
+                    {% trans "Download list" %}</a>
             </div>
         </form>
     </div>
     <div data-ajax-results-region>
         <form method="post" action="?next={{ request.get_full_path|urlencode }}">
             {% csrf_token %}
+            {% if entries|length == 0 %}
+                <p class="orders-section-empty">
+                    {% trans "Nobody is on the waiting list yet." %}
+                </p>
+            {% else %}
             <div class="table-responsive">
-                <table class="table table-condensed table-hover">
+                <table class="table table-condensed table-hover table-flip tickets-table waiting-list-table">
                     <thead>
                     <tr>
                         {% if request.event.settings.waiting_list_names_asked %}
@@ -173,7 +185,9 @@
                             {% if request.event.settings.waiting_list_names_asked %}
                             <td>{{ e.name|default:"" }}</td>
                             {% endif %}
-                            <td>{{ e.email }}</td>
+                            <td class="list-name-cell">
+                                <strong>{{ e.email }}</strong>
+                            </td>
                             {% if request.event.settings.waiting_list_phones_asked %}
                             <td>{{ e.phone|default:"" }}</td>
                             {% endif %}
@@ -195,7 +209,7 @@
                                     </span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="list-meta">
                                 {% if e.voucher %}
                                     {% if e.voucher.redeemed >= e.voucher.max_usages %}
                                         <span class="label label-success">{% trans "Voucher redeemed" %}</span>
@@ -225,7 +239,7 @@
                                     </button>
                                 {% endif %}
                             </td>
-                            <td class="text-right flip">
+                            <td class="list-actions text-right flip">
                                 {% if not e.voucher %}
                                     <button name="move_top" value="{{ e.pk }}" class="btn btn-default btn-sm"
                                             data-toggle="tooltip" title="{% trans "Move to the top of the list" %}">
@@ -251,6 +265,7 @@
                     </tbody>
                 </table>
             </div>
+            {% endif %}
         </form>
         {% include "pretixcontrol/pagination.html" %}
     </div>

@@ -243,11 +243,11 @@
                 </div>
             </fieldset>
         </div>
-        <div class="form-group submit-group">
+        <div class="form-group submit-group event-settings-submit">
             <button type="submit" class="btn btn-primary btn-save">
                 {% trans "Save" %}
             </button>
-            <div class="pull-left">
+            <div class="pull-left event-settings-danger-actions">
                 <a href="{% url "control:event.dangerzone" organizer=request.organizer.slug event=request.event.slug %}"
                    class="btn btn-danger btn-lg">
                     <span class="fa fa-trash"></span>

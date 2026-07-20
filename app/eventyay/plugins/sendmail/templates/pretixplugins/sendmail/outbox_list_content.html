@@ -19,39 +19,31 @@
     </div>
   </nav>
 
-  <div class='submit-group'>
-    <div class='row'>
-      <div class='col-md-12'>
-        <form method='get' class='form-inline pull-left'>
-          <div class='form-group'>
-            <input type='text' name='q' class='form-control'
-                   placeholder="{% translate 'Search' %}" value='{{ query }}'>
-          </div>
-          {% if current_ordering %}
-            <input type='hidden' name='ordering' value='{{ current_ordering }}'>
-          {% endif %}
-          <div class='form-group'>
-            <button type='submit' class='btn btn-primary'>
-              {% translate 'Search' %}
-            </button>
-          </div>
-        </form>
-
-        <div class='btn-toolbar pull-right' role='toolbar'>
-          <div class='btn-group' role='group'>
-          </div>
-          <div class='btn-group' role='group'>
-            <a href="{% url 'control:event.mail.outbox.purge' organizer=request.event.organizer.slug event=request.event.slug %}" class='btn btn-cancel'>
-              {% translate 'Discard all' %}
-            </a>
-          </div>
-        </div>
+  <div class='tickets-outbox-toolbar'>
+    <form method='get' class='tickets-outbox-search'>
+      <div class='form-group'>
+        <input type='text' name='q' class='form-control'
+               placeholder="{% translate 'Search' %}" value='{{ query }}'>
       </div>
+      {% if current_ordering %}
+        <input type='hidden' name='ordering' value='{{ current_ordering }}'>
+      {% endif %}
+      <div class='form-group'>
+        <button type='submit' class='btn btn-primary'>
+          {% translate 'Search' %}
+        </button>
+      </div>
+    </form>
+
+    <div class='tickets-outbox-actions'>
+      <a href="{% url 'control:event.mail.outbox.purge' organizer=request.event.organizer.slug event=request.event.slug %}" class='btn btn-cancel'>
+        {% translate 'Discard all' %}
+      </a>
     </div>
-    <div class='clearfix'></div>
   </div>
 
-  <table class='table mt-4'>
+  <div class="table-responsive">
+  <table class='table mt-4 table-flip tickets-table outbox-table'>
     <thead>
       <tr>
         {% for field, label in headers %}
@@ -78,11 +70,13 @@
     <tbody>
       {% for mail in mails %}
         <tr>
-          <td>
-            <a class='text-body text-decoration-none'
-               href="{% url 'control:event.mail.edit' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
-              {{ mail.subject }}
-            </a>
+          <td class='list-name-cell'>
+            <strong>
+              <a class='text-body text-decoration-none'
+                 href="{% url 'control:event.mail.edit' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
+                {{ mail.subject }}
+              </a>
+            </strong>
           </td>
           <td>
             {% with mail.recipient_emails_display|split:',' as first_three %}
@@ -104,8 +98,8 @@
               </div>
             {% endif %}
           </td>
-          <td>{{ mail.recipient_emails_display|split:','|length }}</td>
-          <td>
+          <td class="list-meta">{{ mail.recipient_emails_display|split:','|length }}</td>
+          <td class="list-meta">
             {% if mail.scheduled_at %}
               <span class='label label-info'>
                 {% translate 'Scheduled for' %} {{ mail.scheduled_at|timezone:request.event.timezone|date:"Y-m-d H:i" }}
@@ -114,7 +108,7 @@
               <span class='label label-default'>{% translate 'Immediate' %}</span>
             {% endif %}
           </td>
-          <td>
+          <td class="list-actions">
             <div class='btn-toolbar' role='toolbar'>
               <div class='btn-group' role='group'>
                 <form method='post' action="{% url 'control:event.mail.outbox.send' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
@@ -143,7 +137,7 @@
         </tr>
 
         {% if mail.recipient_errors_preview %}
-          <tr>
+          <tr class="outbox-error-row">
             <td colspan='5'>
               <div class='alert alert-warning mb-0'>
                 <strong>{% translate 'Some emails failed to send:' %}</strong>
@@ -162,11 +156,12 @@
 
       {% empty %}
         <tr>
-          <td colspan='5'>{% translate 'No queued mails.' %}</td>
+          <td colspan='5' class="orders-section-empty">{% translate 'No queued mails.' %}</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
+  </div>
 
   {% include 'pretixcontrol/pagination.html' with page=mails %}
 </div>

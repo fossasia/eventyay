@@ -27,12 +27,12 @@
                     class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Create a new category" %}</a>
         </div>
     {% else %}
-        <p>
+        <p class="list-toolbar">
             <a href="{% url "control:event.products.categories.add" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Create a new category" %}
             </a>
         </p>
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover table-flip tickets-table">
                 <thead>
                 <tr>
                     <th>{% trans "Product categories" %}</th>
@@ -43,14 +43,14 @@
                 <tbody>
                 {% for c in categories %}
                     <tr>
-                        <td>
+                        <td class="list-name-cell">
                             <strong><a href="{% url "control:event.products.categories.edit" organizer=request.event.organizer.slug event=request.event.slug category=c.id %}">{{ c.internal_name|default:c.name }}</a></strong>
                         </td>
-                        <td>
+                        <td class="list-reorder" data-label="{% trans 'Order' %}">
                             <a href="{% url "control:event.products.categories.up" organizer=request.event.organizer.slug event=request.event.slug category=c.id %}" class="btn btn-default btn-sm {% if forloop.counter0 == 0 and is_paginated and not page_obj.has_previous %}disabled{% endif %}"><i class="fa fa-arrow-up"></i></a>
                             <a href="{% url "control:event.products.categories.down" organizer=request.event.organizer.slug event=request.event.slug category=c.id %}" class="btn btn-default btn-sm {% if forloop.revcounter0 == 0 and is_paginated and not page_obj.has_next %}disabled{% endif %}"><i class="fa fa-arrow-down"></i></a>
                         </td>
-                        <td class="text-right flip">
+                        <td class="list-actions text-right flip" data-label="{% trans 'Actions' %}">
                             <a href="{% url "control:event.products.categories.edit" organizer=request.event.organizer.slug event=request.event.slug category=c.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
                             <a href="{% url "control:event.products.categories.add" organizer=request.event.organizer.slug event=request.event.slug %}?copy_from={{ c.id }}"
                                class="btn btn-sm btn-default" title="{% trans "Clone" %}" data-toggle="tooltip">

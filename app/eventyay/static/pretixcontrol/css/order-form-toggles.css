@@ -363,31 +363,222 @@ select.required-status-dropdown[data-current="optional"] {
     margin-top: 3em;
 }
 
-/* Overflow handling for Mobile view */
+/* Mobile card layout — aligned with Talks CFP forms (cfp.css) */
 @media (max-width: 768px) {
-    .order-form-table-scroll {
+    #page-content:has(.order-forms-page) {
+        overflow-x: clip;
+        overflow-y: visible;
+    }
+
+    .order-forms-page {
+        min-width: 0;
         max-width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
     }
 
-    .order-form-option-table {
+    .order-forms-page fieldset {
+        border: none;
+        padding: 0;
+        margin: 0 0 1.25rem;
+    }
+
+    .order-forms-page fieldset legend {
+        position: sticky;
+        top: var(--navbar-height, 50px);
+        z-index: 102;
+        display: block;
         width: 100%;
-        min-width: 540px;
+        float: none;
+        background-color: var(--color-bg, #fff);
+        padding: 0.65rem 0;
+        margin-bottom: 0.75rem;
+        font-size: 1.05rem;
+        font-weight: bold;
+        border-bottom: none;
     }
 
-    .order-form-option-table tbody th {
-        min-width: 280px;
+    .order-forms-page .order-form-table-scroll {
+        overflow: visible;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
     }
 
-    .order-form-create-buttons {
+    .order-forms-page .order-form-option-table {
+        display: block;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .order-forms-page .order-form-option-table thead {
+        display: none;
+    }
+
+    .order-forms-page .order-form-option-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .order-forms-page .order-form-option-table tbody tr {
+        display: block;
+        margin: 0;
+        padding: 0;
+        border: 1px solid var(--color-border, #ced4da);
+        border-radius: var(--size-border-radius, 4px);
+        background-color: var(--color-bg, #fff);
+        overflow: visible;
+        box-shadow: var(--shadow-light);
+    }
+
+    .order-forms-page .order-form-option-table tbody tr:hover {
+        background-color: var(--color-bg, #fff);
+    }
+
+    .order-forms-page .order-form-option-table tbody th,
+    .order-forms-page .order-form-option-table tbody td {
+        border-top: none;
+    }
+
+    .order-forms-page .order-form-option-table tbody th {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        padding: 0.75rem 0.9rem;
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--color-grey-light, #dae0e4);
+        text-align: left;
+        font-size: 1.05rem;
+        line-height: 1.35;
+        white-space: normal;
+        word-break: break-word;
+        background-color: var(--color-grey-ultralight, #f8f8f8);
+        font-weight: 600;
+    }
+
+    .order-forms-page .order-form-option-table tbody td {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding: 0.65rem 0.9rem;
+        border: none;
+        border-bottom: 1px solid var(--color-grey-light, #dae0e4);
+        white-space: normal;
+        text-align: right;
+        font-size: 0.9375rem;
+    }
+
+    .order-forms-page .order-form-option-table tbody td:last-child {
+        border-bottom: none;
+    }
+
+    .order-forms-page .order-form-option-table tbody td:empty {
+        display: none;
+    }
+
+    .order-forms-page .order-form-option-table tbody td::before {
+        content: attr(data-label);
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 50%;
+        text-align: left;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-grey-medium, #6c757d);
+        margin-right: auto;
+    }
+
+    .order-forms-page .order-form-option-table tbody td:not([data-label])::before,
+    .order-forms-page .order-form-option-table tbody td[data-label=""]::before {
+        content: none;
+    }
+
+    .order-forms-page .order-form-option-table tbody td .toggle-switch,
+    .order-forms-page .order-form-option-table tbody td .required-status-wrapper {
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+    .order-forms-page .order-form-option-table .required-status-wrapper::after {
+        display: none;
+    }
+
+    .order-forms-page .order-form-option-table .required-status-dropdown {
+        width: 7.5rem;
+        max-width: 46vw;
+        padding-right: 8px;
+    }
+
+    .order-forms-page .order-form-option-table .dnd-container {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.35rem;
+    }
+
+    .order-forms-page .order-form-option-table .products-list {
+        text-align: right;
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 55%;
+    }
+
+    .order-forms-page .order-form-option-table .products-list li {
+        font-size: 0.9375rem;
+    }
+
+    .order-forms-page .order-form-option-table .checkbox-inline {
+        margin: 0;
+        text-align: right;
+        font-size: 0.9375rem;
+    }
+
+    .order-forms-page .info-toggle-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .order-forms-page .info-toggle {
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .order-forms-page .inline-info-box {
+        min-width: 0;
+        max-width: calc(100vw - 2rem);
+        left: 0;
+        right: 0;
+    }
+
+    .order-forms-page .order-form-create-buttons {
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: 0.5em;
+        gap: 0.5rem;
+        margin-top: 1.25rem;
+        text-align: stretch;
     }
 
-    .order-form-create-buttons .btn {
+    .order-forms-page .order-form-create-buttons .btn {
+        width: 100%;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .order-forms-page .attendee-data-explanation {
+        margin-top: 1.5rem;
+    }
+
+    .order-forms-page .submit-group {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .order-forms-page .submit-group .btn {
         width: 100%;
     }
 }

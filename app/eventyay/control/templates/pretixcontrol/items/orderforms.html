@@ -8,9 +8,7 @@
 
 {% block custom_header %}
     {{ block.super }}
-    {% compress css %}
-        <link rel="stylesheet" href="{% static 'pretixcontrol/css/order-form-toggles.css' %}">
-    {% endcompress %}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/order-form-toggles.css' %}">
     {% compress js %}
         <script defer src="{% static 'pretixcontrol/js/orderFormToggles.js' %}"></script>
     {% endcompress %}
@@ -25,14 +23,14 @@
         </div>
     </nav>
     
-    <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
+    <form action="" method="post" class="form-horizontal order-forms-page" enctype="multipart/form-data">
         {% csrf_token %}
         {% bootstrap_form_errors sform %}
         
         <fieldset>
             <legend>{% translate "Customer data (once per order)" %}</legend>
             <div class="table-responsive-sm order-form-table-scroll">
-                <table class="table table-sm order-form-option-table">
+                <table class="table table-sm table-flip order-form-option-table">
                     <colgroup>
                         <col class="field-col" style="width: auto;">
                         <col style="width: 180px;">
@@ -135,7 +133,7 @@
         <fieldset>
             <legend>{% translate "Attendee data (once per admission ticket)" %}</legend>
             <div class="table-responsive-sm order-form-table-scroll">
-                <table class="table table-sm order-form-option-table">
+                <table class="table table-sm table-flip order-form-option-table">
                     <colgroup>
                         <col class="field-col" style="width: auto;">
                         <col style="width: 150px;">

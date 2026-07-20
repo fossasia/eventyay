@@ -11,7 +11,7 @@
             {% endblocktrans %}
         </div>
     {% else %}
-        <div class="panel panel-default">
+        <div class="panel panel-default orders-import-panel tickets-import-panel">
             <div class="panel-heading">
                 <h3 class="panel-title">{% trans "Upload a new file" %}</h3>
             </div>
@@ -29,16 +29,21 @@
                         {% trans "An import is currently being processed, please try again in a few minutes." %}
                     </div>
                 {% else %}
-                    <form action="" method="post" enctype="multipart/form-data" class="form-inline">
+                    <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
                         {% csrf_token %}
                         <div class="form-group">
-                            <label for="file">{% trans "Import file" %}: </label> <input id="file" type="file"
-                                                                                         name="file"/>
+                            <label class="control-label" for="file">{% trans "Import file" %}</label>
+                            <div class="col-md-5">
+                                <input id="file" type="file" class="form-control" name="file"/>
+                            </div>
                         </div>
-                        <div class="clearfix"></div>
-                        <button class="btn btn-primary pull-right flip" type="submit">
-                            <span class="icon icon-upload"></span> {% trans "Start upload" %}
-                        </button>
+                        <div class="form-group submit-group">
+                            <div class="col-md-2">
+                                <button class="btn btn-primary" type="submit">
+                                    <span class="icon icon-upload"></span> {% trans "Start upload" %}
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 {% endif %}
             </div>
