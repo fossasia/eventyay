@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import operator
@@ -20,6 +21,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseNotAllowed,
     JsonResponse,
+    FileResponse,
 )
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -715,8 +717,12 @@ class InvoicePreview(EventPermissionRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         fname, ftype, fcontent = build_preview_invoice_pdf(request.event)
-        resp = HttpResponse(fcontent, content_type=ftype)
-        resp['Content-Disposition'] = f'attachment; filename="{fname}"'
+        if isinstance(fcontent, bytes):
+            resp = FileResponse(io.BytesIO(fcontent), content_type=ftype)
+        else:
+            resp = HttpResponse(fcontent, content_type=ftype)
+        resp['Content-Disposition'] = f'inline; filename="{fname}"'
+        resp.xframe_options_exempt = True
         return resp
 
 
@@ -943,9 +949,13 @@ class TicketSettingsPreview(EventPermissionRequiredMixin, View):
             return redirect(self.get_error_url())
 
         fname, mimet, data = tickets.preview(self.request.event.pk, self.output.identifier)
-        resp = HttpResponse(data, content_type=mimet)
+        if isinstance(data, bytes):
+            resp = FileResponse(io.BytesIO(data), content_type=mimet)
+        else:
+            resp = HttpResponse(data, content_type=mimet)
         ftype = fname.split('.')[-1]
-        resp['Content-Disposition'] = f'attachment; filename="ticket-preview.{ftype}"'
+        resp['Content-Disposition'] = f'inline; filename="ticket-preview.{ftype}"'
+        resp.xframe_options_exempt = True
         return resp
 
     def get_error_url(self) -> str:

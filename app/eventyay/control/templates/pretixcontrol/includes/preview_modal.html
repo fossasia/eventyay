@@ -1,0 +1,18 @@
+{% load i18n %}
+<div class="modal fade" id="preview-modal" tabindex="-1" role="dialog" aria-labelledby="preview-modal-title">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-label="{% trans 'Close preview' %}"
+                        title="{% trans 'Close preview' %}">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="preview-modal-title">{% trans "Preview" %}</h4>
+            </div>
+            <div class="modal-body">
+                <iframe id="preview-iframe" name="preview-iframe" class="pdf-preview-iframe" title="{% trans 'Preview' %}"></iframe>
+            </div>
+        </div>
+    </div>
+</div>

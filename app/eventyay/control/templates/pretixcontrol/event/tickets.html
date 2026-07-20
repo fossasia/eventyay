@@ -38,7 +38,7 @@
                         <div class="panel-heading">
                             <a href="{% url "control:event.settings.tickets.preview" event=request.event.slug organizer=request.organizer.slug output=provider.identifier %}"
                                     class="btn btn-default btn-sm pull-right flip {% if not provider.evaluated_preview_allowed %}disabled{% endif %}"
-                                    target="_blank">
+                                    target="preview-iframe" onclick="$('#preview-modal').modal('show');">
                                 {% trans "Preview" %}
                             </a>
                             <h3 class="panel-title">
@@ -86,4 +86,5 @@
             </button>
         </div>
     </form>
+    {% include "pretixcontrol/includes/preview_modal.html" %}
 {% endblock %}
