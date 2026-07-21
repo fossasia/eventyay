@@ -17,24 +17,3 @@
   border: 0;
   background: #fff;
 }
-
-@media print {
-  .navbar,
-  #sidebar-wrapper,
-  .badge-workflow-toolbar,
-  .badge-workflow-print-help,
-  h1 {
-    display: none !important;
-  }
-
-  #page-wrapper,
-  .badge-workflow-preview-frame,
-  .badge-workflow-iframe {
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    width: 100% !important;
-    min-height: 100vh !important;
-    height: 100vh !important;
-  }
-}
