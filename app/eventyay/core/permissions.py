@@ -92,6 +92,7 @@ SYSTEM_ROLES = {
     ],
     "video_user_moderator": [
         Permission.EVENT_USERS_MANAGE.value,
+        Permission.ROOM_CHAT_MODERATE.value,
     ],
     "video_room_manager": [
         Permission.ROOM_UPDATE.value,
