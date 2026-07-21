@@ -49,6 +49,7 @@ import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
 import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
+import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 
 export default {
 	name: 'Room',
@@ -113,6 +114,9 @@ export default {
 			handler: 'initializeLanguages',
 			immediate: true
 		},
+		'room.currentStream': {
+			handler: 'initializeLanguages'
+		},
 		'room.id'(roomId) {
 			this.$store.dispatch('stopStreamPolling')
 			if (roomId && this.usesStreamPolling) {
@@ -149,8 +153,24 @@ export default {
 		},
 		initializeLanguages() {
 			this.languages = []
-			if (this.modules['livestream.youtube'] && this.modules['livestream.youtube'].config.languageUrls) {
-				this.languages = this.modules['livestream.youtube'].config.languageUrls.filter(entry => isUsableAudioTranslationEntry(entry))
+			let languageUrls = null
+
+			const stageModule = this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
+			const isScheduleDriven = getStagePlaybackMode(stageModule) === PLAYBACK_MODE_SCHEDULE_DRIVEN
+
+			if (isScheduleDriven) {
+				if (this.room?.currentStream?.stream_type === 'youtube' && this.room.currentStream.config?.languageUrls) {
+					languageUrls = this.room.currentStream.config.languageUrls
+				}
+			} else {
+				const ytModule = this.modules['livestream.youtube']
+				if (ytModule?.config?.languageUrls) {
+					languageUrls = ytModule.config.languageUrls
+				}
+			}
+
+			if (languageUrls) {
+				this.languages = languageUrls.filter(entry => isUsableAudioTranslationEntry(entry))
 			}
 			if (!this.languages.find(lang => lang.language === 'Original')) {
 				this.languages.unshift({language: 'Original', youtube_id: null, use_video: false})
