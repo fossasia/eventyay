@@ -203,6 +203,7 @@ export default {
 	flex: auto
 	display: flex
 	min-height: 0
+	min-width: 0
 	.stage
 		display: flex
 		flex-direction: column
