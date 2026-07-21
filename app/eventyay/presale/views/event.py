@@ -28,7 +28,7 @@ from django.db.models import (
     Value,
 )
 from django.db.models.expressions import OrderBy
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -47,8 +47,6 @@ from eventyay.agenda.views.utils import (
     load_public_featured_speaker_profiles,
     serialize_widget_schedule_data,
 )
-from eventyay.talk_rules.agenda import public_speakers_list_available
-
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import (
     Order,
@@ -66,6 +64,7 @@ from eventyay.base.models.product import (
 )
 from eventyay.base.services.geo import resolve_venue_map_coordinates
 from eventyay.base.services.quotas import QuotaAvailability
+from eventyay.common.views.helpers import login_redirect_with_next, redirect_or_json_redirect
 from eventyay.helpers.compat import date_fromisocalendar
 from eventyay.helpers.formats.en.formats import WEEK_FORMAT
 from eventyay.multidomain.urlreverse import eventreverse
@@ -78,6 +77,7 @@ from eventyay.presale.views.organizer import (
     filter_qs_by_attr,
     weeks_for_template,
 )
+from eventyay.talk_rules.agenda import public_speakers_list_available
 
 from ...eventyay_common.utils import encode_email
 from . import (
@@ -906,6 +906,9 @@ class EventAuth(View):
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class JoinOnlineVideoView(EventViewMixin, View):
     def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return login_redirect_with_next(request)
+
         # First check if video is configured
         if (
             not self.request.event.settings.venueless_url
@@ -923,52 +926,58 @@ class JoinOnlineVideoView(EventViewMixin, View):
             return HttpResponse(status=403, content='user_not_allowed')
 
         redirect_url = self.generate_token_url(request, order_position, order)
-
-        # Check if this is an AJAX request (from JavaScript button)
-        # If not (e.g., direct URL access), do a server-side redirect instead of returning JSON
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
-            # AJAX request - return JSON for JavaScript to handle
-            return JsonResponse({'redirect_url': redirect_url}, status=200)
-        else:
-            # Direct browser access - do a server-side redirect
-            logger.info('Redirecting to %s...', redirect_url)
-            return redirect(redirect_url)
+        logger.info('Redirecting to %s...', redirect_url)
+        return redirect_or_json_redirect(request, redirect_url)
 
     def validate_access(self, request, *args, **kwargs):
-        if not hasattr(self.request, 'user'):
-            # Customer not logged in yet
-            return False, None, None
         if not self.request.user.is_authenticated:
-            # Customer not logged in yet
             return False, None, None
+        
+        allowed_statuses = [Order.STATUS_PAID]
+        if self.request.event.settings.venueless_allow_pending:
+            allowed_statuses.append(Order.STATUS_PENDING)
+
         # Get all PAID orders of customer which belong to this event
         # CRITICAL FIX: Only paid orders should grant video access
+        # Also include orders where the user is an attendee
         order_list = (
             Order.objects.filter(
                 Q(event=self.request.event)
-                & Q(email__iexact=self.request.user.email)
-                & Q(status=Order.STATUS_PAID)  # Only paid orders
+                & (
+                    Q(email__iexact=self.request.user.email)
+                    | Q(all_positions__attendee_email__iexact=self.request.user.email)
+                )
+                & Q(status__in=allowed_statuses)  # Check allowed statuses (PAID, and optionally PENDING)
             )
             .select_related('event')
             .order_by('-datetime')
+            .distinct()
         )
         # Check qs is empty
         if not order_list:
             # no paid order found
             return False, None, None
-        # Check if Event allow all ticket type to join
-        if self.request.event.settings.venueless_all_products:
-            return True, None, order_list[0]
+        
         list_allow_ticket_type = self.request.event.settings.venueless_products
-        if not list_allow_ticket_type:
+        all_products_allowed = self.request.event.settings.venueless_all_products
+        
+        if not list_allow_ticket_type and not all_products_allowed:
             # no ticket allow to join
             return False, None, None
-        # check if ticket type is in list_allow_ticket_type
+            
         for order in order_list:
             order_positions = list(order.positions.all())
             for order_position in order_positions:
-                if order_position.product_id in list_allow_ticket_type:
+                # If specific products are allowed, verify this position is one of them
+                if not all_products_allowed and order_position.product_id not in list_allow_ticket_type:
+                    continue
+                    
+                # We should prefer a position where the attendee email matches the user,
+                # or if the user is the orderer, any valid position
+                if (order_position.attendee_email and order_position.attendee_email.lower() == self.request.user.email.lower()) or \
+                   (order.email and order.email.lower() == self.request.user.email.lower()):
                     return True, order_position, order
+        
         return False, None, None
 
     def generate_token_url(self, request, order_position, order):
