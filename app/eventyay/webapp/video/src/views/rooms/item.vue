@@ -49,6 +49,7 @@ import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
 import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
+import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 
 export default {
 	name: 'Room',
@@ -114,8 +115,7 @@ export default {
 			immediate: true
 		},
 		'room.currentStream': {
-			handler: 'initializeLanguages',
-			immediate: true
+			handler: 'initializeLanguages'
 		},
 		'room.id'(roomId) {
 			this.$store.dispatch('stopStreamPolling')
@@ -155,13 +155,8 @@ export default {
 			this.languages = []
 			let languageUrls = null
 
-			let isScheduleDriven = false
-			for (const type of ['livestream.native', 'livestream.youtube', 'livestream.iframe']) {
-				if (this.modules[type]?.config?.playback_mode === 'schedule_driven') {
-					isScheduleDriven = true
-					break
-				}
-			}
+			const stageModule = this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
+			const isScheduleDriven = getStagePlaybackMode(stageModule) === PLAYBACK_MODE_SCHEDULE_DRIVEN
 
 			if (isScheduleDriven) {
 				if (this.room?.currentStream?.stream_type === 'youtube' && this.room.currentStream.config?.languageUrls) {
