@@ -4,7 +4,10 @@
 
 {% if social_media_formset %}
 <div class="form-group row speaker-social-links-section">
-    <label class="col-md-3 col-form-label">{% translate "Social Media" %}</label>
+    <label class="col-md-3 col-form-label">
+        <span>{% translate "Social Media" %}<span class="d-inline text-danger">{% if request.event.cfp.require_social_links %} *{% endif %}</span></span>
+        {% if not request.event.cfp.require_social_links %}<span class="optional">{% translate "Optional" %}</span>{% endif %}
+    </label>
     <div class="col-md-9">
         <div id="social-links-formset"
              class="partner-link-formset formset"
