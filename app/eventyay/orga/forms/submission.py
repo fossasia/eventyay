@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 
-from eventyay.base.models import Submission, SubmissionStates, TalkSlot
+from eventyay.base.models import Submission, SubmissionStates, TalkSlot, User
 from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.base.models.room import rooms_for_talk_assignment
@@ -300,6 +300,10 @@ class SubmissionStateChangeForm(forms.Form):
     )
 
 
+def get_speaker_choice_label(*, name: str | None, email: str) -> str:
+    return f'{name} ({email})' if name else email
+
+
 class AddSpeakerForm(forms.Form):
     email = forms.EmailField(
         label=phrases.cfp.speaker_email,
@@ -322,9 +326,21 @@ class AddSpeakerForm(forms.Form):
 
     def __init__(self, *args, event=None, form_renderer=None, require_name=False, **kwargs):
         super().__init__(*args, **kwargs)
+        self.require_name = require_name
+        email_key = self.add_prefix('email')
+        name_key = self.add_prefix('name')
+        email_widget = self.fields['email'].widget
+        if isinstance(email_widget, forms.Select) and self.is_bound and (email := self.data.get(email_key)):
+            name = self.data.get(name_key)
+            email_widget.choices = [(email, get_speaker_choice_label(name=name, email=email))]
         if require_name:
-            self.fields['name'].required = True
             self.fields['email'].required = True
+            self.fields['name'].required = True
+            if self.is_bound and self.data.get(email_key) and not self.data.get(name_key):
+                existing_user = User.objects.filter(email__iexact=self.data[email_key]).only('fullname').first()
+                if existing_user and existing_user.fullname:
+                    self.data = self.data.copy()
+                    self.data[name_key] = existing_user.fullname
         if not event.named_locales or len(event.named_locales) < 2:
             self.fields.pop('locale')
         else:
@@ -334,7 +350,7 @@ class AddSpeakerForm(forms.Form):
     def clean(self):
         data = super().clean()
         if data.get('name') and not data.get('email'):
-            raise forms.ValidationError(_('Please provide an email address.'))
+            self.add_error('email', _('Please provide an email address.'))
         return data
 
 

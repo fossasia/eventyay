@@ -1,19 +1,45 @@
 import json
 import logging
 
-logger = logging.getLogger(__name__)
-
+from django.core.cache import cache as default_cache
+from django.db.models import Exists, OuterRef
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.pdf import get_variables
 
-from .models import BadgeLayout, BadgeProduct
+from .models import BadgeLayout, BadgeProduct, BadgeVoucher
+
+logger = logging.getLogger(__name__)
 
 
 BADGE_HIDDEN_FIELDS_KEY = 'badge_hidden_fields'
 BADGE_TICKET_PROVIDER = 'badge'
+BADGE_LAYOUT_PERSISTED_FIELDS = (
+    'layout',
+    'ask_user_fields',
+    'allow_customization',
+    'background',
+    'default',
+)
 
 _renderer_cache = {}
+_ASSIGNMENT_CACHE_ATTR = '_badge_layout_assignment_cache'
+
+
+def _badge_version_key(event):
+    """Return a cache key outside the NamespacedCache namespace.
+
+    ``event.cache`` is a ``NamespacedCache`` whose ``clear()`` rotates a
+    namespace prefix — making every previously stored key unreachable.
+    Because dozens of unrelated model saves (products, settings, …) call
+    ``event.cache.clear()``, storing the badge layout version *inside*
+    that namespace caused it to silently reset to 0.
+
+    By using Django's default cache directly with a simple key, we avoid
+    the namespace entirely while still sharing state across all processes
+    via the same Redis backend.
+    """
+    return f'badge_layout_version:{event.pk}'
 
 
 def get_badge_layout_version(event):
@@ -24,65 +50,124 @@ def get_badge_layout_version(event):
     Celery worker and web worker will observe a version bump immediately on their next
     lookup, no matter which process actually saved the layout change.
     """
-    return event.cache.get('badge_layout_version') or 0
+    return default_cache.get(_badge_version_key(event)) or 0
+
+
+def get_badge_layout_renderer_token(layout):
+    """Return a content token used as part of the in-process renderer cache key."""
+    if layout is None:
+        return None
+    background = layout.background.name if layout.background else ''
+    return (
+        layout.layout or '',
+        layout.ask_user_fields or '',
+        bool(layout.allow_customization),
+        background,
+    )
+
+
+def reset_badge_layout_assignment_cache(event):
+    """Drop the per-Event assignment snapshot used within a process."""
+    if hasattr(event, _ASSIGNMENT_CACHE_ATTR):
+        delattr(event, _ASSIGNMENT_CACHE_ATTR)
+
+
+def delete_badge_cached_pdfs(event):
+    """Delete persisted badge PDF cache rows for one event."""
+    from eventyay.base.models import CachedCombinedTicket, CachedTicket
+
+    CachedTicket.objects.filter(
+        order_position__order__event=event,
+        provider=BADGE_TICKET_PROVIDER,
+    ).delete()
+    CachedCombinedTicket.objects.filter(
+        order__event=event,
+        provider=BADGE_TICKET_PROVIDER,
+    ).delete()
 
 
 def clear_badge_layout_cache(event):
-    for attr in ('_badge_layout_assignment_map', '_default_badge_layout', '_cached_renderermap'):
-        if hasattr(event, attr):
-            delattr(event, attr)
+    reset_badge_layout_assignment_cache(event)
 
     # Bump the layout version in the cross-process cache so every worker's in-memory
     # renderer cache is invalidated on its very next use, without needing to reach into
     # other processes' memory.
-    version = get_badge_layout_version(event)
-    event.cache.set('badge_layout_version', version + 1, 3600 * 24 * 30)
+    #
+    # We use Django's default cache directly (not event.cache) so the version survives
+    # event.cache.clear() calls triggered by unrelated model saves.
+    key = _badge_version_key(event)
+    version = default_cache.get(key) or 0
+    default_cache.set(key, version + 1, 3600 * 24 * 30)
 
-    keys_to_delete = [k for k in _renderer_cache if k[0] == event.pk]
-    for k in keys_to_delete:
-        del _renderer_cache[k]
+    stale_keys = [cache_key for cache_key in _renderer_cache if cache_key[0] == event.pk]
+    for cache_key in stale_keys:
+        del _renderer_cache[cache_key]
 
 
 def normalize_badge_content_key(content):
     return 'event_name' if content == 'item' else content
 
 
-def get_badge_layout_assignment_map(event):
-    if hasattr(event, '_badge_layout_assignment_map'):
-        return event._badge_layout_assignment_map, event._default_badge_layout
+def get_badge_layout_assignment_maps(event):
+    """
+    Resolve product/voucher/default layout assignments.
 
-    assignment_map = {
+    Cached on the Event instance only for the current layout version, so default
+    switches and assignment edits are picked up as soon as the version bumps.
+    """
+    version = get_badge_layout_version(event)
+    cached = getattr(event, _ASSIGNMENT_CACHE_ATTR, None)
+    if cached is not None and cached[0] == version:
+        return cached[1]
+
+    product_map = {
         assignment.product_id: assignment.layout
         for assignment in BadgeProduct.objects.select_related('layout').filter(product__event=event)
+    }
+    voucher_map = {
+        assignment.voucher_id: assignment.layout
+        for assignment in BadgeVoucher.objects.select_related('layout').filter(voucher__event=event)
     }
     try:
         default_layout = event.badge_layouts.get(default=True)
     except BadgeLayout.DoesNotExist:
         default_layout = None
 
-    event._badge_layout_assignment_map = assignment_map
-    event._default_badge_layout = default_layout
-    return assignment_map, default_layout
-
-
-def product_has_badge_layout_assigned(event, product):
-    assignment_map, _ = get_badge_layout_assignment_map(event)
-    product_id = getattr(product, 'pk', product)
-    if product_id not in assignment_map:
-        return False
-    return assignment_map[product_id] is not None
-
-
-def get_badge_layout_for_product(event, product):
-    assignment_map, default_layout = get_badge_layout_assignment_map(event)
-    product_id = getattr(product, 'pk', product)
-    if product_id in assignment_map:
-        return assignment_map[product_id]
-    return default_layout
+    maps = (product_map, voucher_map, default_layout)
+    setattr(event, _ASSIGNMENT_CACHE_ATTR, (version, maps))
+    return maps
 
 
 def get_badge_layout_for_position(event, position):
-    return get_badge_layout_for_product(event, position.product_id)
+    product_map, voucher_map, default_layout = get_badge_layout_assignment_maps(event)
+
+    if position.voucher_id and position.voucher_id in voucher_map:
+        return voucher_map[position.voucher_id]
+
+    if position.product_id in product_map:
+        return product_map[position.product_id]
+    return default_layout
+
+
+def position_has_printable_badge(event, position):
+    return get_badge_layout_for_position(event, position) is not None
+
+
+def position_has_explicit_badge_assignment(event, position):
+    product_map, voucher_map, _default_layout = get_badge_layout_assignment_maps(event)
+    if position.voucher_id and position.voucher_id in voucher_map:
+        return voucher_map[position.voucher_id] is not None
+    if position.product_id in product_map:
+        return product_map[position.product_id] is not None
+    return False
+
+
+def exclude_explicit_no_badge(qs, assignment_model, fk_lookup):
+    return qs.annotate(
+        no_badging=Exists(
+            assignment_model.objects.filter(**{fk_lookup: OuterRef('pk'), 'layout__isnull': True})
+        )
+    ).exclude(no_badging=True)
 
 
 def get_badge_hidden_fields(position):
@@ -183,7 +268,7 @@ def get_badge_bundle_option_choices(event, position):
     seen_keys = set()
     choices = []
     for bundle_position in get_badge_bundle_positions(position):
-        if not product_has_badge_layout_assigned(event, bundle_position.product_id):
+        if not position_has_explicit_badge_assignment(event, bundle_position):
             continue
 
         layout = get_badge_layout_for_position(event, bundle_position)
@@ -204,8 +289,9 @@ def get_badge_bundle_option_choices(event, position):
     return choices
 
 
-def get_badge_visible_field_labels(event, position, hidden_fields=None):
-    layout = get_badge_layout_for_position(event, position)
+def get_badge_visible_field_labels(event, position, hidden_fields=None, layout=None):
+    if layout is None:
+        layout = get_badge_layout_for_position(event, position)
     if not layout or not layout.allow_customization:
         return []
 
@@ -218,6 +304,51 @@ def get_badge_visible_field_labels(event, position, hidden_fields=None):
         for field in get_badge_customizable_fields(event, layout)
         if field['key'] in ask_user_keys and field['key'] not in hidden_fields
     ]
+
+
+def format_badge_option_labels(labels):
+    """Format selected badge field labels for order/export display."""
+    labels = [str(label) for label in labels]
+    if not labels:
+        return str(_('No optional badge fields selected'))
+    return ', '.join(labels)
+
+
+def get_badge_options_display(event, position):
+    """
+    Return a human-readable badge-options summary for order views.
+
+    Unlike checkout form injection, this includes products that only use the
+    event default layout so organizers can confirm what will be printed.
+    """
+    layout = get_badge_layout_for_position(event, position)
+    if not layout or not layout.allow_customization or not layout.ask_user_fields_data:
+        return None
+    return format_badge_option_labels(get_badge_visible_field_labels(event, position, layout=layout))
+
+
+def append_badge_options_additional_field(event, position, additional_fields, present_keys=None):
+    """
+    Append a Badge options row for order/cart display when applicable.
+
+    Matches checkout form injection: only the bundle root position shows options,
+    and the row is skipped when that form field was already injected.
+    Returns True if a field was appended.
+    """
+    if get_badge_config_position(position) != position:
+        return False
+    if present_keys is not None and BADGE_HIDDEN_FIELDS_KEY in present_keys:
+        return False
+    display = get_badge_options_display(event, position)
+    if display is None:
+        return False
+    additional_fields.append(
+        {
+            'answer': display,
+            'question': _('Badge options'),
+        }
+    )
+    return True
 
 
 def get_badge_visible_field_values(event, position, hidden_fields=None):
