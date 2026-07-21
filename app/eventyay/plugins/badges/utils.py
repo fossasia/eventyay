@@ -5,7 +5,7 @@ from django.core.cache import cache as default_cache
 from django.db.models import Exists, OuterRef
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.pdf import get_variables
+from eventyay.base.pdf import extract_layout_text_placeholders, get_variables
 
 from .models import BadgeLayout, BadgeProduct, BadgeVoucher
 
@@ -202,6 +202,62 @@ def get_badge_bundle_positions(position):
     return [root, *list(root.addons.all())]
 
 
+def _badge_layout_object_texts(obj):
+    """Collect raw text values from a layout object, including i18n/other mixes."""
+    texts = []
+    text = obj.get('text')
+    if text:
+        texts.append(str(text))
+    placeholder_text = obj.get('placeholder_text')
+    if placeholder_text:
+        texts.append(str(placeholder_text))
+    text_i18n = obj.get('text_i18n')
+    if isinstance(text_i18n, dict):
+        texts.extend(str(value) for value in text_i18n.values() if value)
+    return texts
+
+
+def _resolve_badge_placeholder_key(placeholder, variables):
+    """
+    Resolve a free-text placeholder (e.g. ``question:Username``) to a canonical
+    badge field key such as ``question_<id>``.
+    """
+    key = (placeholder or '').strip()
+    if not key:
+        return None
+    if key.lower().startswith('question:'):
+        label = key.split(':', 1)[1].strip().lower()
+        if not label:
+            return None
+        for var_key, var in variables.items():
+            question_label = var.get('question_label')
+            if question_label and str(question_label).strip().lower() == label:
+                return var.get('canonical_key') or var_key
+        return None
+
+    key = normalize_badge_content_key(key)
+    variable = variables.get(key)
+    if not variable:
+        return None
+    return variable.get('canonical_key') or key
+
+
+def _append_badge_customizable_field(fields, seen_keys, variables, key, sample=''):
+    if not key or key in seen_keys or key in ('other', 'other_i18n'):
+        return
+
+    variable = variables.get(key, {})
+    label = variable.get('label') or _badge_field_fallback_label(key)
+    fields.append(
+        {
+            'key': key,
+            'label': str(label),
+            'sample': str(variable.get('editor_sample') or variable.get('question_label') or sample or ''),
+        }
+    )
+    seen_keys.add(key)
+
+
 def get_badge_customizable_fields(event, layout):
     if not layout:
         return []
@@ -230,19 +286,25 @@ def get_badge_customizable_fields(event, layout):
             continue
 
         content = normalize_badge_content_key(obj.get('content'))
-        if not content or content in ('other', 'other_i18n') or content in seen_keys:
+        if not content:
             continue
 
-        variable = variables.get(content, {})
-        label = variable.get('label') or _badge_field_fallback_label(content)
-        fields.append(
-            {
-                'key': content,
-                'label': str(label),
-                'sample': str(variable.get('editor_sample') or obj.get('text') or ''),
-            }
+        # Free-text "other" blocks can mix several placeholders; expose each one
+        # as its own Ask-user / badge-option field (especially custom questions).
+        if content in ('other', 'other_i18n'):
+            for text in _badge_layout_object_texts(obj):
+                for placeholder in extract_layout_text_placeholders(text):
+                    key = _resolve_badge_placeholder_key(placeholder, variables)
+                    _append_badge_customizable_field(fields, seen_keys, variables, key)
+            continue
+
+        _append_badge_customizable_field(
+            fields,
+            seen_keys,
+            variables,
+            content,
+            sample=obj.get('text') or '',
         )
-        seen_keys.add(content)
 
     if isinstance(layout, BadgeLayout):
         layout._badge_customizable_fields_cache = fields
