@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.http import Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.templatetags.static import static
 from django.urls import reverse
@@ -14,11 +14,11 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView
+from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, TemplateView
 from reportlab.lib import pagesizes
 from reportlab.pdfgen import canvas
 
-from eventyay.base.models import CachedFile, OrderPosition, Question, QuestionAnswer
+from eventyay.base.models import CachedFile, CachedTicket, OrderPosition, Question, QuestionAnswer
 from eventyay.base.services.tickets import invalidate_cache
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.permissions import EventPermissionRequiredMixin
@@ -30,10 +30,12 @@ from eventyay.plugins.badges.utils import (
     BADGE_TICKET_PROVIDER,
     clear_badge_layout_cache,
     delete_badge_cached_pdfs,
+    position_has_printable_badge,
 )
 
 from .exporters import BadgeRenderer, _open_layout_background
 from .models import BadgeLayout
+from .providers import BadgeOutputProvider
 
 
 class LayoutGetDefault(EventPermissionRequiredMixin, View):
@@ -405,7 +407,14 @@ class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncA
         return None
 
     def get_success_url(self, value):
-        return reverse('cachedfile.download', kwargs={'id': str(value)})
+        return reverse(
+            'plugins:badges:print-view',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+                'file': str(value),
+            },
+        )
 
     def get_error_url(self):
         return reverse(
@@ -443,3 +452,133 @@ class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncA
             str(cf.id),
             positions,
         )
+
+
+class BadgePrintView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, TemplateView):
+    """Show a generated badge PDF and open the browser print dialog."""
+
+    permission = 'can_view_orders'
+    template_name = 'pretixplugins/badges/print.html'
+
+    @cached_property
+    def cached_file(self):
+        try:
+            cf = get_object_or_404(CachedFile, id=self.kwargs['file'], web_download=True)
+        except ValueError as exc:
+            raise Http404() from exc
+        if cf.session_key and cf.session_key != self.request.session.session_key:
+            raise Http404()
+        if not cf.file:
+            raise Http404()
+        return cf
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('format') == 'pdf':
+            return self.pdf_response()
+        return super().get(request, *args, **kwargs)
+
+    def pdf_response(self):
+        cf = self.cached_file
+        resp = FileResponse(cf.file.file, content_type=cf.type or 'application/pdf')
+        resp['Content-Disposition'] = 'inline; filename="{}"'.format(cf.filename)
+        # Allow embedding in the same-origin print iframe (global default is DENY).
+        resp['X-Frame-Options'] = 'SAMEORIGIN'
+        return resp
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        pdf_url = reverse(
+            'plugins:badges:print-view',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+                'file': str(self.cached_file.id),
+            },
+        )
+        ctx['pdf_url'] = pdf_url + '?format=pdf'
+        ctx['order_url'] = reverse(
+            'control:event.orders',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+            },
+        )
+        return ctx
+
+
+class BadgeDownloadPreviewView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, TemplateView):
+    """Let organizers review a badge PDF before downloading it."""
+
+    permission = 'can_view_orders'
+    template_name = 'pretixplugins/badges/download_preview.html'
+
+    @cached_property
+    def order(self):
+        return get_object_or_404(self.request.event.orders, code=self.kwargs['code'].upper())
+
+    @cached_property
+    def position(self):
+        return get_object_or_404(self.order.positions, pk=self.kwargs['position'])
+
+    def dispatch(self, request, *args, **kwargs):
+        if not position_has_printable_badge(request.event, self.position):
+            raise Http404(_('This position does not have a printable badge.'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('format') == 'pdf':
+            return self.pdf_response(attachment=False)
+        if request.GET.get('download'):
+            return self.pdf_response(attachment=True)
+        return super().get(request, *args, **kwargs)
+
+    def pdf_response(self, *, attachment: bool):
+        cached = (
+            CachedTicket.objects.filter(
+                order_position=self.position,
+                provider=BADGE_TICKET_PROVIDER,
+                file__isnull=False,
+            )
+            .order_by('-created')
+            .first()
+        )
+        if cached and cached.file:
+            resp = FileResponse(cached.file.file, content_type=cached.type or 'application/pdf')
+            filename = '{}-{}-{}{}'.format(
+                self.request.event.slug.upper(),
+                self.order.code,
+                self.position.positionid,
+                cached.extension or '.pdf',
+            )
+        else:
+            provider = BadgeOutputProvider(self.request.event)
+            filename, mimetype, content = provider.generate(self.position)
+            resp = HttpResponse(content, content_type=mimetype)
+        disposition = 'attachment' if attachment else 'inline'
+        resp['Content-Disposition'] = f'{disposition}; filename="{filename}"'
+        # Allow embedding in the same-origin preview iframe (global default is DENY).
+        if not attachment:
+            resp['X-Frame-Options'] = 'SAMEORIGIN'
+        return resp
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        preview_kwargs = {
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug,
+            'code': self.order.code,
+            'position': self.position.pk,
+        }
+        ctx['order'] = self.order
+        ctx['position'] = self.position
+        ctx['pdf_url'] = reverse('plugins:badges:download-preview', kwargs=preview_kwargs) + '?format=pdf'
+        ctx['download_url'] = reverse('plugins:badges:download-preview', kwargs=preview_kwargs) + '?download=1'
+        ctx['order_url'] = reverse(
+            'control:event.order',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+                'code': self.order.code,
+            },
+        )
+        return ctx

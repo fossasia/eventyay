@@ -1,0 +1,27 @@
+{% extends 'pretixcontrol/event/base.html' %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "Badge preview" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixplugins/badges/badge-workflow.css' %}">
+{% endblock %}
+{% block content %}
+    <h1>{% trans "Badge preview" %}</h1>
+    <p class="help-block">
+        {% blocktrans trimmed with code=order.code position=position.positionid %}
+            Review the badge for order {{ code }} (position {{ position }}) before downloading the PDF.
+        {% endblocktrans %}
+    </p>
+    <div class="badge-workflow-toolbar">
+        <a href="{{ download_url }}" class="btn btn-primary">
+            <span class="fa fa-download"></span> {% trans "Download Badge" %}
+        </a>
+        <a href="{{ order_url }}" class="btn btn-default">
+            <span class="fa fa-arrow-left"></span> {% trans "Back to order" %}
+        </a>
+    </div>
+    <div class="badge-workflow-preview-frame">
+        <iframe src="{{ pdf_url }}" title="{% trans 'Badge preview' %}" class="badge-workflow-iframe"></iframe>
+    </div>
+{% endblock %}

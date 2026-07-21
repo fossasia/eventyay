@@ -585,6 +585,8 @@ class OrderDownload(AsyncAction, OrderView):
     permission = 'can_view_orders'
 
     def get_success_url(self, value):
+        if self.should_preview_badge():
+            return self.get_badge_preview_url()
         return self.get_self_url()
 
     def get_error_url(self):
@@ -592,6 +594,26 @@ class OrderDownload(AsyncAction, OrderView):
 
     def get_self_url(self):
         return reverse('control:event.order.download.ticket', kwargs=self.kwargs)
+
+    def get_badge_preview_url(self):
+        return reverse(
+            'plugins:badges:download-preview',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+                'code': self.order.code,
+                'position': self.order_position.pk,
+            },
+        )
+
+    def should_preview_badge(self):
+        return (
+            bool(self.output)
+            and self.output.identifier == 'badge'
+            and 'download' not in self.request.GET
+            and 'download' not in self.request.POST
+            and 'position' in self.kwargs
+        )
 
     @cached_property
     def output(self):
@@ -637,6 +659,14 @@ class OrderDownload(AsyncAction, OrderView):
         return ''
 
     def success(self, value):
+        # Non-AJAX success would stream the PDF; send badge downloads to preview first.
+        # AJAX already uses get_success_url(), which points at the preview page.
+        if (
+            self.should_preview_badge()
+            and 'ajax' not in self.request.POST
+            and 'ajax' not in self.request.GET
+        ):
+            return redirect(self.get_badge_preview_url())
         if 'ajax' in self.request.POST or 'ajax' in self.request.GET:
             return JsonResponse(
                 {

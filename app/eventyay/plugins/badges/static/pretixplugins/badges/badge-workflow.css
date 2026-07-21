@@ -1,0 +1,40 @@
+.badge-workflow-toolbar {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.badge-workflow-preview-frame {
+  border: 1px solid #ddd;
+  background: #f5f5f5;
+  min-height: 70vh;
+}
+
+.badge-workflow-iframe {
+  width: 100%;
+  min-height: 70vh;
+  border: 0;
+  background: #fff;
+}
+
+@media print {
+  .navbar,
+  #sidebar-wrapper,
+  .badge-workflow-toolbar,
+  .badge-workflow-print-help,
+  h1 {
+    display: none !important;
+  }
+
+  #page-wrapper,
+  .badge-workflow-preview-frame,
+  .badge-workflow-iframe {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    height: 100vh !important;
+  }
+}

@@ -1,0 +1,31 @@
+{% extends 'pretixcontrol/event/base.html' %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "Print badge" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixplugins/badges/badge-workflow.css' %}">
+{% endblock %}
+{% block content %}
+    <h1>{% trans "Print badge" %}</h1>
+    <p class="help-block badge-workflow-print-help">
+        {% trans "Your browser print dialog should open automatically. If it does not, use the Print button below." %}
+    </p>
+    <div class="badge-workflow-toolbar">
+        <button type="button" class="btn btn-primary" data-badge-print-trigger>
+            <span class="fa fa-print"></span> {% trans "Print" %}
+        </button>
+        <a href="{{ order_url }}" class="btn btn-default">
+            <span class="fa fa-arrow-left"></span> {% trans "Back to orders" %}
+        </a>
+    </div>
+    <div class="badge-workflow-preview-frame">
+        <iframe
+            src="{{ pdf_url }}"
+            title="{% trans 'Badge print preview' %}"
+            class="badge-workflow-iframe"
+            data-badge-print-frame
+        ></iframe>
+    </div>
+    <script type="module" src="{% static 'pretixplugins/badges/badge-print.js' %}"></script>
+{% endblock %}
