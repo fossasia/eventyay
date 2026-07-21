@@ -1,7 +1,6 @@
 {% load i18n %}
 {% load eventurl %}
 {% load bootstrap3 %}
-{% load login_url %}
 
 <section class="meetup-rsvp" aria-label="{% trans 'Event registration' %}">
 
@@ -65,7 +64,7 @@
             </div>
             <div class="panel-body">
                 <p>{% trans "Please log in to register for this event." %}</p>
-                <a href="{% build_login_url %}?next={{ request.path }}" class="btn btn-primary">
+                <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}" class="btn btn-primary">
                     <span class="fa fa-sign-in" aria-hidden="true"></span>
                     {% trans "Log in" %}
                 </a>
