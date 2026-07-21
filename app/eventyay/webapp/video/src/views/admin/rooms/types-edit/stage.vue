@@ -267,15 +267,8 @@ export default defineComponent({
 		},
 		normalizeLanguageYoutubeId(entry) {
 			if (!entry?.youtube_id) return
-			try {
-				new URL(entry.youtube_id)
-				const id = normalizeYoutubeVideoId(entry.youtube_id)
-				if (id) entry.youtube_id = id
-				return
-			} catch (e) {
-				const id = normalizeYoutubeVideoId(entry.youtube_id)
-				if (id) entry.youtube_id = id
-			}
+			const id = normalizeYoutubeVideoId(entry.youtube_id)
+			if (id) entry.youtube_id = id
 		},
 		setYoutubeConfigProp(prop, value) {
 			if (!this.modules['livestream.youtube']) return
