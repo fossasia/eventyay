@@ -933,6 +933,10 @@ class JoinOnlineVideoView(EventViewMixin, View):
         if not self.request.user.is_authenticated:
             return False, None, None
         
+        allowed_statuses = [Order.STATUS_PAID]
+        if self.request.event.settings.venueless_allow_pending:
+            allowed_statuses.append(Order.STATUS_PENDING)
+
         # Get all PAID orders of customer which belong to this event
         # CRITICAL FIX: Only paid orders should grant video access
         # Also include orders where the user is an attendee
@@ -943,7 +947,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
                     Q(email__iexact=self.request.user.email)
                     | Q(all_positions__attendee_email__iexact=self.request.user.email)
                 )
-                & Q(status=Order.STATUS_PAID)  # Only paid orders
+                & Q(status__in=allowed_statuses)  # Check allowed statuses (PAID, and optionally PENDING)
             )
             .select_related('event')
             .order_by('-datetime')
