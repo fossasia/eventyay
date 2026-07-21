@@ -27,6 +27,7 @@ from eventyay.plugins.badges.utils import (
     clear_badge_layout_cache,
     delete_badge_cached_pdfs,
     get_badge_bundle_option_choices,
+    get_badge_customizable_fields,
     get_badge_layout_for_position,
     get_badge_layout_version,
     append_badge_options_additional_field,
@@ -312,7 +313,7 @@ def test_badge_renderer_other_text_hides_placeholder_fields(badge_event):
     QuestionAnswer.objects.create(orderposition=position, question=q1, answer='Jane')
     QuestionAnswer.objects.create(orderposition=position, question=q2, answer='Doe')
     position.meta_info_data = {'question_form_data': {'badge_hidden_fields': [f'question_{q1.pk}']}}
-    position.save(update_fields=['meta_info_data'])
+    position.save(update_fields=['meta_info'])
 
     renderer = BadgeRenderer(
         event,
@@ -327,6 +328,60 @@ def test_badge_renderer_other_text_hides_placeholder_fields(badge_event):
     )
 
     assert result == ' Doe'
+
+
+@pytest.mark.django_db
+def test_customizable_fields_include_questions_mixed_in_other_text(badge_event):
+    """Questions embedded in free-text "other" blocks must appear as Ask-user options."""
+    event, position, product, layout = badge_event
+    q1 = Question.objects.create(event=event, question='First name', type='S')
+    q2 = Question.objects.create(event=event, question='Last name', type='S')
+    layout.layout = json.dumps(
+        [
+            {
+                'type': 'textarea',
+                'left': '0',
+                'bottom': '80',
+                'fontsize': '12.0',
+                'content': 'other',
+                'text': '{question:First name} {question:Last name} / {attendee_company}',
+            }
+        ]
+    )
+    layout.allow_customization = True
+    layout.ask_user_fields_data = [f'question_{q1.pk}', f'question_{q2.pk}', 'attendee_company']
+    layout.save(update_fields=['layout', 'allow_customization', 'ask_user_fields'])
+    clear_badge_layout_cache(event)
+
+    keys = [field['key'] for field in get_badge_customizable_fields(event, layout)]
+    assert keys == [f'question_{q1.pk}', f'question_{q2.pk}', 'attendee_company']
+
+    choices = get_badge_bundle_option_choices(event, position)
+    assert [key for key, _label in choices] == [f'question_{q1.pk}', f'question_{q2.pk}', 'attendee_company']
+    assert dict(choices)[f'question_{q1.pk}'] == 'First name'
+
+
+@pytest.mark.django_db
+def test_customizable_fields_include_question_id_placeholders_in_other_text(badge_event):
+    event, position, product, layout = badge_event
+    q1 = Question.objects.create(event=event, question='Handle', type='S')
+    layout.layout = json.dumps(
+        [
+            {
+                'type': 'textarea',
+                'content': 'other',
+                'text': f'Hello {{question_{q1.pk}}}',
+            }
+        ]
+    )
+    layout.allow_customization = True
+    layout.ask_user_fields_data = [f'question_{q1.pk}']
+    layout.save(update_fields=['layout', 'allow_customization', 'ask_user_fields'])
+    clear_badge_layout_cache(event)
+
+    keys = [field['key'] for field in get_badge_customizable_fields(event, layout)]
+    assert keys == [f'question_{q1.pk}']
+    assert get_badge_bundle_option_choices(event, position) == [(f'question_{q1.pk}', 'Handle')]
 
 
 @pytest.mark.django_db
