@@ -22,14 +22,12 @@
     {% endif %}
 </div>
 {% if widget.value.is_img and not widget.event_settings_image_tools %}
-<br><a href="{{ widget.value.url }}" data-lightbox="{{ widget.name }}"><img src="{{ widget.value|thumb:"200x100" }}" /></a><br>
+<br><a href="{{ widget.value.url }}" data-lightbox="{{ widget.name }}"><img src="{{ widget.value|thumb:"200x100" }}" alt="{% trans 'Preview' %}"></a><br>
 {% endif %}
 <div class="input-text-container thumbnailed-file-input-text">
     {{ widget.input_text }}:
 </div>
 {% else %}
-
 {% endif %}
 <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
-
 {% if widget.cachedfile %}<input type="hidden" name="{{ widget.hidden_name }}" value="{{ widget.cachedfile.id }}">{% endif %}
