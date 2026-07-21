@@ -92,6 +92,9 @@ SYSTEM_ROLES = {
     ],
     "video_user_moderator": [
         Permission.EVENT_USERS_MANAGE.value,
+        # Organizers with user-moderation rights can delete chat messages without
+        # entering staff admin mode (admin trait).
+        Permission.ROOM_CHAT_MODERATE.value,
     ],
     "video_room_manager": [
         Permission.ROOM_UPDATE.value,
