@@ -29,9 +29,9 @@
 <br>
 <a href="{{ widget.value.url }}" data-lightbox="{{ widget.name }}">
     {% if widget.value.name|lower|slice:"-4:" == ".svg" %}
-        <img src="{{ widget.value.url }}" class="thumbnailed-file-preview-image" />
+        <img src="{{ widget.value.url }}" alt="{% trans 'Preview' %}" class="thumbnailed-file-preview-image" />
     {% else %}
-        <img src="{{ widget.value|thumb:"200x100" }}" />
+        <img src="{{ widget.value|thumb:"200x100" }}" alt="{% trans 'Preview' %}" />
     {% endif %}
 </a>
 <br>
@@ -51,5 +51,4 @@
     {% endif %}
 {% endif %}
 <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
-
 {% if widget.cachedfile %}<input type="hidden" name="{{ widget.hidden_name }}" value="{{ widget.cachedfile.id }}">{% endif %}
