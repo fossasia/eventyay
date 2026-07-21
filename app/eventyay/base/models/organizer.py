@@ -569,8 +569,7 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         default=False,
         verbose_name=_('Video: Can message, ban, and silence users'),
         help_text=_(
-            'Allows moderating users (ban, silence, reactivate) and deleting chat messages '
-            'in Eventyay Video without requiring staff admin mode.'
+            'Allows moderating users (ban, silence, reactivate) and deleting chat messages.'
         ),
     )
     can_video_manage_rooms = models.BooleanField(
