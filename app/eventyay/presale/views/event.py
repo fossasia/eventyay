@@ -932,34 +932,48 @@ class JoinOnlineVideoView(EventViewMixin, View):
     def validate_access(self, request, *args, **kwargs):
         if not self.request.user.is_authenticated:
             return False, None, None
+        
         # Get all PAID orders of customer which belong to this event
         # CRITICAL FIX: Only paid orders should grant video access
+        # Also include orders where the user is an attendee
         order_list = (
             Order.objects.filter(
                 Q(event=self.request.event)
-                & Q(email__iexact=self.request.user.email)
+                & (
+                    Q(email__iexact=self.request.user.email)
+                    | Q(all_positions__attendee_email__iexact=self.request.user.email)
+                )
                 & Q(status=Order.STATUS_PAID)  # Only paid orders
             )
             .select_related('event')
             .order_by('-datetime')
+            .distinct()
         )
         # Check qs is empty
         if not order_list:
             # no paid order found
             return False, None, None
-        # Check if Event allow all ticket type to join
-        if self.request.event.settings.venueless_all_products:
-            return True, None, order_list[0]
+        
         list_allow_ticket_type = self.request.event.settings.venueless_products
-        if not list_allow_ticket_type:
+        all_products_allowed = self.request.event.settings.venueless_all_products
+        
+        if not list_allow_ticket_type and not all_products_allowed:
             # no ticket allow to join
             return False, None, None
-        # check if ticket type is in list_allow_ticket_type
+            
         for order in order_list:
             order_positions = list(order.positions.all())
             for order_position in order_positions:
-                if order_position.product_id in list_allow_ticket_type:
+                # If specific products are allowed, verify this position is one of them
+                if not all_products_allowed and order_position.product_id not in list_allow_ticket_type:
+                    continue
+                    
+                # We should prefer a position where the attendee email matches the user,
+                # or if the user is the orderer, any valid position
+                if (order_position.attendee_email and order_position.attendee_email.lower() == self.request.user.email.lower()) or \
+                   (order.email and order.email.lower() == self.request.user.email.lower()):
                     return True, order_position, order
+        
         return False, None, None
 
     def generate_token_url(self, request, order_position, order):
