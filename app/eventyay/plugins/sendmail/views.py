@@ -43,8 +43,8 @@ class BulkReplyToMixin:
 
     def _get_reply_to_for_bulk_email(self):
         event = self.request.event
-        sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
-        sender = sender or settings.MAIL_FROM
+        sender = event.settings.get('mail_from') if event else settings.DEFAULT_FROM_EMAIL
+        sender = sender or settings.DEFAULT_FROM_EMAIL
         return get_reply_to_address(event, sender_email=sender)
 
 
