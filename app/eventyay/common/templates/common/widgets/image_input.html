@@ -1,7 +1,7 @@
 {% if widget.value and widget.value.url %}
     <div class="form-image-preview">
         <a href="{{ widget.value.url }}" data-lightbox>
-            <img loading="lazy" src="{{ widget.value.url }}">
+            <img loading="lazy" src="{{ widget.value.url }}" alt="{{ widget.alt_text }}">
         </a>
     </div>
     <br>

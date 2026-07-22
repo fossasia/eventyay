@@ -98,6 +98,11 @@ class ClearableBasenameFileInput(ClearableFileInput):
 class ImageInput(ClearableBasenameFileInput):
     template_name = 'common/widgets/image_input.html'
 
+    def get_context(self, name, value, attrs):
+        ctx = super().get_context(name, value, attrs)
+        ctx['widget']['alt_text'] = (self.attrs or {}).get('alt') or _('Image preview')
+        return ctx
+
 
 class MarkdownWidget(Textarea):
     template_name = 'common/widgets/markdown.html'
