@@ -21,6 +21,7 @@ def make_event(
     header_background_color='',
     header_text_color='',
     navigation_text_color='',
+    menu_text_scroll_over_color='',
 ):
     return SimpleNamespace(
         visible_primary_color=primary_color,
@@ -29,6 +30,7 @@ def make_event(
                 'header_background_color': header_background_color,
                 'header_text_color': header_text_color,
                 'navigation_text_color': navigation_text_color,
+                'menu_text_scroll_over_color': menu_text_scroll_over_color,
             }
         ),
     )
@@ -127,6 +129,7 @@ def test_event_css_exposes_separate_header_and_navigation_colors(rf):
         header_background_color='#ffee00',
         header_text_color='#111111',
         navigation_text_color='#222222',
+        menu_text_scroll_over_color='#333333',
     )
 
     response = event_css(request)
@@ -136,6 +139,7 @@ def test_event_css_exposes_separate_header_and_navigation_colors(rf):
     assert '--color-header-background: #ffee00;' in response.text
     assert '--color-header-text: #111111;' in response.text
     assert '--color-header-navigation: #222222;' in response.text
+    assert '--color-header-navigation-hover: #333333;' in response.text
 
 
 def test_event_css_reads_each_header_setting_once(rf):
@@ -144,6 +148,7 @@ def test_event_css_reads_each_header_setting_once(rf):
         header_background_color='#ffee00',
         header_text_color='#111111',
         navigation_text_color='#222222',
+        menu_text_scroll_over_color='#333333',
     )
 
     response = event_css(request)
@@ -153,6 +158,8 @@ def test_event_css_reads_each_header_setting_once(rf):
         'header_background_color': 1,
         'header_text_color': 1,
         'navigation_text_color': 1,
+        'menu_text_scroll_over_color': 1,
+        'primary_font': 1,
     }
 
 

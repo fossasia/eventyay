@@ -14,6 +14,7 @@ import dateutil
 import pycountry
 import pytz
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models, transaction
 from django.db.models import (
     Case,
@@ -214,6 +215,13 @@ class Order(LockModel, LoggedModel):
         verbose_name = _('Order')
         verbose_name_plural = _('Orders')
         ordering = ('-datetime',)
+        indexes = [
+            GinIndex(
+                fields=['code'],
+                name='order_code_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+        ]
 
     def __str__(self):
         return self.full_code
@@ -916,6 +924,18 @@ class Order(LockModel, LoggedModel):
         for cp in positions:
             if product_has_system_questions(self.event, cp.product) or cp.product.questions.all():
                 return True
+
+        if 'eventyay.plugins.badges' in self.event.get_plugins():
+            from eventyay.plugins.badges.utils import (
+                get_badge_bundle_option_choices,
+                get_badge_config_position,
+            )
+
+            for cp in positions:
+                if get_badge_config_position(cp) != cp:
+                    continue
+                if get_badge_bundle_option_choices(self.event, cp):
+                    return True
 
         return False  # nothing there to modify
 
@@ -2325,6 +2345,18 @@ class OrderPosition(AbstractPosition):
         verbose_name = _('Order position')
         verbose_name_plural = _('Order positions')
         ordering = ('positionid', 'id')
+        indexes = [
+            GinIndex(
+                fields=['attendee_name_cached'],
+                name='orderpos_name_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+            GinIndex(
+                fields=['attendee_email'],
+                name='orderpos_email_trgm',
+                opclasses=['gin_trgm_ops'],
+            ),
+        ]
 
     @cached_property
     def sort_key(self):

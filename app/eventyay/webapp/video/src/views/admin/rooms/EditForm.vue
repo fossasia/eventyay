@@ -13,8 +13,8 @@
 			stream-schedule(ref="streamSchedule", v-if="showStreamSchedule", :room-id="config.id ? String(config.id) : null", :room-name="localizedName", :open-create-on-mount="openStreamScheduleCreateOnMount", @opened-create-on-mount="clearOpenStreamScheduleCreateQuery", @create-requires-room="createRoomForStreamSchedule")
 			sidebar-addons(v-if="inferredType && inferredType.id === 'stage'", :config="config", :modules="modules", :creating="creating")
 	.ui-form-actions
-		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ creating ? 'create' : 'save' }}
-		.errors {{ validationErrors.join(', ') }}
+		bunt-button.btn-save(@click="save", :loading="saving", :error="!!error") {{ creating ? 'create' : 'save' }}
+		.errors {{ error || validationErrors.join(', ') }}
 </template>
 <script>
 import { markRaw } from 'vue'

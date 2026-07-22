@@ -22,11 +22,12 @@ setup_collapsible_details = function (el) {
             return true;
         }
         var $details = $(this).closest("details");
+        // Header/menu dropdowns use native <details> + common/js/dropdown.js.
+        if ($details.hasClass("dropdown")) {
+            return true;
+        }
         var isOpen = $details.prop("open");
         var $detailsNotSummary = $details.children(':not(summary)');
-
-        var dropdownDuration = 150;
-        var duration = $details.hasClass('dropdown') ? dropdownDuration : undefined;
 
         if ($detailsNotSummary.is(':animated')) {
             e.preventDefault();
@@ -34,7 +35,7 @@ setup_collapsible_details = function (el) {
         }
         if (isOpen) {
             $details.removeClass("details-open");
-            $detailsNotSummary.stop().show().slideUp(duration || 500, function () {
+            $detailsNotSummary.stop().show().slideUp(500, function () {
                 $details.prop("open", false);
                 updateVariationToggles($details);
             });
@@ -42,7 +43,7 @@ setup_collapsible_details = function (el) {
             $detailsNotSummary.stop().hide();
             $details.prop("open", true);
             $details.addClass("details-open");
-            $detailsNotSummary.slideDown(duration);
+            $detailsNotSummary.slideDown();
             updateVariationToggles($details);
         }
         e.preventDefault();
@@ -60,6 +61,15 @@ setup_collapsible_details = function (el) {
         var $details = $(this),
             $detailsSummary = $('summary', $details).first(),
             $detailsNotSummary = $details.children(':not(summary)');
+        $detailsSummary.attr({
+            'role': 'button',
+            'aria-controls': $details.attr('id')
+        }).prop('tabIndex', 0).bind('selectstart dragstart mousedown', function () {
+            return false;
+        });
+        if ($details.hasClass("dropdown")) {
+            return;
+        }
         $details.prop('open', typeof $details.attr('open') == 'string');
         if (!$details.prop('open')) {
             if ($details.find(".has-error, .alert-danger").length) {
@@ -71,12 +81,6 @@ setup_collapsible_details = function (el) {
         } else {
             $details.addClass("details-open");
         }
-        $detailsSummary.attr({
-            'role': 'button',
-            'aria-controls': $details.attr('id')
-        }).prop('tabIndex', 0).bind('selectstart dragstart mousedown', function () {
-            return false;
-        });
         updateVariationToggles($details);
     });
 };

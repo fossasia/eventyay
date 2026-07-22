@@ -15,6 +15,9 @@ function applyTableFlipLabels(root = document) {
         table.querySelectorAll("tbody tr").forEach((row) => {
             const headerOffset = row.querySelector("th") ? 1 : 0
             row.querySelectorAll("td").forEach((cell, index) => {
+                if (cell.hasAttribute("colspan") && parseInt(cell.getAttribute("colspan"), 10) > 1) {
+                    return
+                }
                 const label = headers[index + headerOffset] || ""
                 if (label) {
                     cell.dataset.label = label

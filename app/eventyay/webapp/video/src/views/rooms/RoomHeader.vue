@@ -152,9 +152,6 @@ export default {
 				font-size: 24px
 				line-height: 56px
 				font-weight: 600
-				display: flex
-				flex-direction: column
-				ellipsis()
 				// TODO decopypaste
 				.emoji
 					display: inline-block

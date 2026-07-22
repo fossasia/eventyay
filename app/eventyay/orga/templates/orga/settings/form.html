@@ -22,14 +22,8 @@
 {% block extra_title %}{% translate "Settings" %} :: {% endblock extra_title %}
 
 {% block settings_content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h2>{% translate "General settings" %}</h2>
-            </div>
-            {% include "orga/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "General settings" as settings_title %}
+    {% include "orga/includes/settings_header.html" with settings_title=settings_title %}
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 

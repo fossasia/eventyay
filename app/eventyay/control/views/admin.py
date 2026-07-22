@@ -436,7 +436,7 @@ class TaskList(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
         return TaskFilterForm(data=self.request.GET)
 
     def get_queryset(self):
-        queryset = super().get_queryset().exclude(name='celery.backend_cleanup').select_related('crontab')
+        queryset = (super().get_queryset().exclude(name='celery.backend_cleanup').select_related('crontab', 'interval', 'solar', 'clocked'))
 
         if self.filter_form.is_valid():
             queryset = self.filter_form.filter_qs(queryset)
@@ -457,11 +457,11 @@ class TaskList(AdministratorPermissionRequiredMixin, PaginationMixin, ListView):
         options = Options()
         options.locale_code = settings.LANGUAGE_CODE
         options.verbose = True
-        schedule = task.crontab
-        cron_expression = (
-            f'{schedule.minute} {schedule.hour} {schedule.day_of_month} {schedule.month_of_year} {schedule.day_of_week}'
-        )
-        task.run_at = get_description(cron_expression, options)
+        if task.crontab:
+            cron_expression = (f'{task.crontab.minute} {task.crontab.hour} {task.crontab.day_of_month} 'f'{task.crontab.month_of_year} {task.crontab.day_of_week}')
+            task.run_at = get_description(cron_expression, options)
+        else:
+            task.run_at = str(task.interval or task.solar or task.clocked or '-')
 
         return task
 

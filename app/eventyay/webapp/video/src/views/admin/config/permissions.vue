@@ -19,7 +19,7 @@
 				.searchbox
 					bunt-input.search(name="search", placeholder="Search rooms", icon="search", v-model="search")
 				.room-traits(v-for="room of filteredRooms")
-					h4(v-html="$emojify($localize(room.name))")
+					h4(v-html="$emojify(room.name)")
 					trait-grants(:trait-grants="room.trait_grants", :config="config", @click.stop="", @changed="roomChanged(room)")
 		bunt-tab(id="roles", header="Roles", v-scrollbar.y="")
 			.permission-config

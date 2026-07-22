@@ -552,5 +552,6 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         obj = self.get_object()
         obj.deleted = True
         obj.save(update_fields=['deleted'])
+        request.event.wip_schedule.talks.filter(room=obj, submission__isnull=True).delete()
         messages.success(request, _('The selected room has been deleted.'))
         return redirect(self.get_success_url())

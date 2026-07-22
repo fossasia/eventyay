@@ -91,6 +91,18 @@
 						:style="onlyFavs ? {fill: '#FFA000', stroke: '#FFA000'} : {fill: 'none', stroke: '#B0B0B0'}"
 						points="14.43,10 12,2 9.57,10 2,10 8.18,14.41 5.83,22 12,17.31 18.18,22 15.83,14.41 22,10"
 					)
+			button.toolbar-btn.icon-only.share-starred-toggle.tooltip-align-left(
+				v-if="onlyFavs && popularityFeatureEnabled && scheduleUserLoggedIn",
+				:class="{active: shareStarredSessions}",
+				:aria-label="t.show_talk_starrers_tooltip",
+				:aria-pressed="shareStarredSessions ? 'true' : 'false'",
+				@click="toggleShareStarredSessions")
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
+					circle(cx="18", cy="5", r="3")
+					circle(cx="6", cy="12", r="3")
+					circle(cx="18", cy="19", r="3")
+					line(x1="8.59", y1="13.51", x2="15.42", y2="17.49")
+					line(x1="15.41", y1="6.51", x2="8.59", y2="10.49")
 			button.toolbar-btn.icon-only.clear-filters-btn(v-if="hasActiveFilters", :aria-label="t.reset_all_filters", @click="$emit('resetFilters')")
 				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
 					line(x1="4" y1="4" x2="20" y2="4")
@@ -194,7 +206,7 @@
 					line(x1="4" y1="12" x2="20" y2="12")
 					line(x1="4" y1="17" x2="20" y2="17")
 			.toolbar-right-quick
-				.timezone-area(v-if="!inEventTimezone")
+				.timezone-area
 					.timezone-compact(ref="timezoneDropdown")
 						button.toolbar-btn.tz-btn(@click="toggleTzDropdown", :title="timezoneModel")
 							svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
@@ -224,7 +236,6 @@
 									@click="selectTimezone(option.id); tzOpen = false"
 								)
 									span {{ option.label }}
-				.timezone-label(v-else) {{ scheduleTimezone }}
 				.exporter-area(v-if="resolvedExporters.length || exportsDisabled")
 					.exporter-dropdown(ref="exportDropdown")
 						button.toolbar-btn.icon-only.tooltip-align-right(
@@ -355,8 +366,9 @@ export default {
 		searchQuery: { type: String, default: '' },
 		favsCount: { type: Number, default: 0 },
 		onlyFavs: { type: Boolean, default: false },
+		shareStarredSessions: { type: Boolean, default: false },
+		scheduleUserLoggedIn: { type: Boolean, default: false },
 		hasActiveFilters: { type: Boolean, default: false },
-		inEventTimezone: { type: Boolean, default: true },
 		currentTimezone: String,
 		scheduleTimezone: String,
 		userTimezone: String,
@@ -377,7 +389,7 @@ export default {
 		isFeaturedPage: { type: Boolean, default: false },
 		isListView: { type: Boolean, default: false }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
 		return {
 			exportOpen: false,
@@ -394,7 +406,8 @@ export default {
 			sortOpen: false,
 			densityOpen: false,
 			mobileFiltersOpen: false,
-			mobileMoreOpen: false
+			mobileMoreOpen: false,
+			cachedOtherTimezones: null,
 		}
 	},
 	computed: {
@@ -419,6 +432,9 @@ export default {
 				sort_by_title_desc: m.sort_by_title_desc || 'Z–A',
 				sort_by_popularity: m.sort_by_popularity || 'Most popular',
 					starred: m.starred || 'Starred',
+				show_talk_starrers: m.show_talk_starrers || 'Share starred sessions',
+				show_talk_starrers_tooltip: m.show_talk_starrers_tooltip || 'Make your starred sessions visible to others. You can open someone else\'s starred list only if they have enabled sharing.',
+				no_schedule_available: m.no_schedule_available || 'No schedule has been published yet. Please check back later.',
 				print: m.print || 'Print',
 				fullscreen: m.fullscreen || 'Fullscreen',
 				exit_fullscreen: m.exit_fullscreen || 'Exit Fullscreen',
@@ -570,21 +586,7 @@ export default {
 			return pinned
 		},
 		otherTimezones() {
-			const pinnedIds = new Set(this.pinnedTimezones.map(o => o.id))
-			const seen = new Set()
-			const result = []
-			const candidates = this.availableTimezones.length ? this.availableTimezones : []
-			const addTz = (tz) => {
-				if (!tz || pinnedIds.has(tz) || seen.has(tz)) return
-				seen.add(tz)
-				result.push(tz)
-			}
-			for (const tz of candidates) addTz(tz)
-			addTz(this.scheduleTimezone)
-			addTz(this.userTimezone)
-			return result
-				.sort((a, b) => a.localeCompare(b))
-				.map(tz => ({ id: tz, label: tz }))
+			return this.cachedOtherTimezones || []
 		},
 		allTimezoneOptions() {
 			return [...this.pinnedTimezones, ...this.otherTimezones]
@@ -690,6 +692,9 @@ export default {
 		this._versionBannerResizeObserver?.disconnect?.()
 	},
 	methods: {
+		toggleShareStarredSessions() {
+			this.$emit('update:shareStarredSessions', !this.shareStarredSessions)
+		},
 		scheduleToolbarLayoutUpdate() {
 			if (this._toolbarLayoutRaf) return
 			this._toolbarLayoutRaf = requestAnimationFrame(() => {
@@ -907,6 +912,25 @@ export default {
 		toggleTzDropdown() {
 			this.tzOpen = !this.tzOpen
 			this.tzSearch = ''
+			if (this.tzOpen) this.ensureOtherTimezones()
+		},
+		ensureOtherTimezones() {
+			if (this.cachedOtherTimezones) return
+			const pinnedIds = new Set(this.pinnedTimezones.map(o => o.id))
+			const seen = new Set()
+			const result = []
+			const candidates = this.availableTimezones.length ? this.availableTimezones : []
+			const addTz = (tz) => {
+				if (!tz || pinnedIds.has(tz) || seen.has(tz)) return
+				seen.add(tz)
+				result.push(tz)
+			}
+			for (const tz of candidates) addTz(tz)
+			addTz(this.scheduleTimezone)
+			addTz(this.userTimezone)
+			this.cachedOtherTimezones = result
+				.sort((a, b) => a.localeCompare(b))
+				.map(tz => ({ id: tz, label: tz }))
 		},
 		toggleFilter(item) {
 			item.selected = !item.selected
@@ -1679,6 +1703,32 @@ export default {
 			left: 0
 			transform: translateY(-2px)
 		&.fav-toggle.icon-only[aria-label]:hover::after, &.fav-toggle.icon-only[aria-label]:focus-visible::after
+			transform: translateY(0)
+		&.starrers-visibility-toggle,
+		&.share-starred-toggle
+			position: relative
+			&.active
+				color: var(--pretalx-clr-primary, #3aa57c)
+			&.active::before
+				content: ''
+				position: absolute
+				right: 2px
+				top: 2px
+				width: 5px
+				height: 5px
+				aspect-ratio: 1 / 1
+				border-radius: 50%
+				background: var(--pretalx-clr-primary, #3aa57c)
+				border: 1px solid #fff
+				z-index: 2
+		&.starrers-visibility-toggle.icon-only[aria-label]::after,
+		&.share-starred-toggle.icon-only[aria-label]::after
+			left: 0
+			transform: translateY(-2px)
+		&.starrers-visibility-toggle.icon-only[aria-label]:hover::after,
+		&.starrers-visibility-toggle.icon-only[aria-label]:focus-visible::after,
+		&.share-starred-toggle.icon-only[aria-label]:hover::after,
+		&.share-starred-toggle.icon-only[aria-label]:focus-visible::after
 			transform: translateY(0)
 		&.mobile-toggle-btn
 			border: 1px solid #d8d8d8

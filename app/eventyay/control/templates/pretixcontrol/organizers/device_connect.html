@@ -101,5 +101,5 @@
     {% if not device.initialized %}
         <span id="device_connect_poll" hidden></span>
     {% endif %}
-    <script type="text/javascript" src="{% static 'pretixcontrol/js/ui/devices.js' %}?v=4"></script>
+    <script type="module" src="{% static 'pretixcontrol/js/ui/devices.js' %}?v=4"></script>
 {% endblock %}

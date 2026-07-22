@@ -221,8 +221,7 @@ export default {
 			return this.showFavCount && normalizePopularityCount(this.session) > 0
 		},
 		favCountLabel () {
-			const count = normalizePopularityCount(this.session)
-			return count > 99 ? '99+' : String(count)
+			return String(normalizePopularityCount(this.session))
 		},
 		doNotRecordTooltip () {
 			const m = this.translationMessages || {}
@@ -760,6 +759,7 @@ expandClampedSessionText()
 		font-weight: 700
 		line-height: 1
 		letter-spacing: 0.02em
+		font-variant-numeric: tabular-nums
 		white-space: nowrap
 		color: var(--track-color)
 		background-color: unquote('color-mix(in srgb, var(--track-color) 16%, transparent)')
@@ -807,11 +807,16 @@ expandClampedSessionText()
 		margin-right: 8px
 		min-height: 80px
 		.time-box
-			width: 58px
-			padding: 8px 4px 6px 4px
+			width: 54px
+			padding: 8px 6px 6px 2px
 			.start
+				align-items: flex-start
+				text-align: left
+				width: 100%
+				box-sizing: border-box
 				.date
-					padding: 3px 5px
+					align-self: stretch
+					padding: 3px 4px
 					margin-bottom: 4px
 					border-radius: 5px
 					.weekday
@@ -820,10 +825,15 @@ expandClampedSessionText()
 						font-size: 10px
 				.time
 					font-size: 13px
+					width: 100%
+					text-align: left
 				.ampm
 					font-size: 9px
+					align-self: flex-start
 				.duration
 					font-size: 10px
+					width: 100%
+					text-align: left
 		.info
 			padding: 6px
 			padding-right: 6px
@@ -836,14 +846,15 @@ expandClampedSessionText()
 			.bottom-info
 				font-size: 12px
 		&.has-fav-count .info.has-icons
-			padding-right: 62px
+			padding-right: 68px
 		.fav-count
 			top: 8px
 			right: 34px
 			height: 16px
 			min-width: 18px
-			padding: 0 5px
-			font-size: 9px
+			padding: 0 4px
+			font-size: 8px
+			letter-spacing: -0.03em
 
 .density-compact .c-linear-schedule-session,
 .density-compact .break

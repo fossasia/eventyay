@@ -12,6 +12,7 @@ from django.http import (
     HttpResponse,
     HttpResponsePermanentRedirect,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.urls import resolve, reverse
 from django.utils import timezone
@@ -19,6 +20,7 @@ from django.utils.functional import cached_property
 from django.utils.http import urlencode
 from django.utils.translation import get_language, gettext_lazy as _
 from django.views.decorators.cache import cache_page
+from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
 from django_context_decorator import context
 
@@ -32,6 +34,7 @@ from eventyay.agenda.views.utils import (
     is_public_schedule_empty,
     load_starred_ics_token,
     redirect_to_presale_with_warning,
+    starred_sharing_payload,
 )
 from eventyay.common.signals import register_my_data_exporters
 from eventyay.common.urls import get_base_url
@@ -429,6 +432,10 @@ def schedule_messages(request, **kwargs):
         'downloads': _('Downloads'),
         'starred_by': _('Starred by'),
         'starred': _('Starred'),
+        'show_talk_starrers': _('Share starred sessions'),
+        'show_talk_starrers_tooltip': _(
+            'Make your starred sessions visible to others. You can open someone else\'s starred list only if they have enabled sharing.'
+        ),
         'export': _('Export'),
         'exports': _('Exports'),
         'no_file_provided': _('No file provided'),
@@ -448,12 +455,41 @@ def schedule_messages(request, **kwargs):
         'schedule_pending_secondary': _('Coming soon'),
         'schedule_speakers_overflow_hint': _('+%(count)s more'),
         'schedule_speakers_overflow_label': _('+%(count)s more speakers'),
+        'no_schedule_available': _('No schedule has been published yet. Please check back later.'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(
         f'const PRETALX_MESSAGES = {json.dumps(strings)};',
         content_type='application/javascript',
     )
+
+
+@require_http_methods(['GET', 'POST'])
+def starred_sharing_preference(request, event, **kwargs):
+    """Read or update whether the logged-in user shares starred sessions publicly."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'detail': str(_('Authentication required'))}, status=403)
+    if not request.user.has_perm('base.list_schedule', request.event):
+        return JsonResponse({'detail': str(_('Permission denied'))}, status=403)
+
+    if request.method == 'GET':
+        response = JsonResponse(starred_sharing_payload(request.user, request.event))
+    else:
+        try:
+            data = json.loads(request.body.decode() or '{}')
+        except json.JSONDecodeError:
+            return JsonResponse({'detail': str(_('Invalid JSON'))}, status=400)
+
+        show_publicly = data.get('show_publicly')
+        if not isinstance(show_publicly, bool):
+            return JsonResponse({'detail': str(_('Expected boolean show_publicly.'))}, status=400)
+
+        request.user.show_publicly = show_publicly
+        request.user.save(update_fields=['show_publicly'])
+        response = JsonResponse(starred_sharing_payload(request.user, request.event))
+
+    response['Cache-Control'] = 'no-store'
+    return response
 
 
 def talk_sort_key(talk):

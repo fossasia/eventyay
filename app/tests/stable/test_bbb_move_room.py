@@ -4,11 +4,12 @@ import pytest
 from django.urls import reverse
 
 from eventyay.base.models import BBBCall, BBBServer, Room
+from eventyay.base.models.auth import StaffSession
 
 
 @pytest.mark.django_db
 def test_move_bbb_room_ends_meeting_on_source_server(
-    event, staff_client, mocker
+    event, staff_client, staff_user, mocker
 ):
     source_server = BBBServer.objects.create(
         url="https://source.example.com/bigbluebutton/",
@@ -27,6 +28,10 @@ def test_move_bbb_room_ends_meeting_on_source_server(
     response = Mock()
     request = mocker.patch(
         "eventyay.control.views.admin_views.requests.get", return_value=response
+    )
+    StaffSession.objects.create(
+        user=staff_user,
+        session_key=staff_client.session.session_key,
     )
 
     result = staff_client.post(

@@ -263,7 +263,22 @@ def resolve_font(object, fonts_dict=None):
 
 
 def get_fonts():
-    f = {}
+    f = {
+        'Droid Sans Fallback': {
+            'regular': {
+                'truetype': 'fonts/DroidSansFallbackFull.ttf',
+            },
+            'bold': {
+                'truetype': 'fonts/DroidSansFallbackFull.ttf',
+            },
+            'italic': {
+                'truetype': 'fonts/DroidSansFallbackFull.ttf',
+            },
+            'bolditalic': {
+                'truetype': 'fonts/DroidSansFallbackFull.ttf',
+            }
+        }
+    }
     for recv, value in register_fonts.send(0):
         f.update(value)
     return f

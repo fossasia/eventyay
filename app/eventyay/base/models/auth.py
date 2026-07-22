@@ -222,7 +222,7 @@ class User(
     type = models.CharField(
         max_length=8, default=UserType.PERSON, choices=UserType.choices
     )
-    show_publicly = models.BooleanField(default=True)
+    show_publicly = models.BooleanField(default=False)
     profile = JSONField(default=dict)
     client_state = JSONField(default=dict)
     traits = JSONField(blank=True, default=list)

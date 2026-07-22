@@ -37,17 +37,13 @@
 					@fav="$emit('fav', session.id)",
 					@unfav="$emit('unfav', session.id)"
 				)
-				.break(v-else, :style="getSessionStyle(session)")
-					.time-box
-						.start(v-if="hasAmPm", class="has-ampm")
-							.time {{ session.start.clone().tz(timezone).format('h:mm') }}
-							.ampm {{ session.start.clone().tz(timezone).format('A') }}
-						.start(v-else)
-							.time {{ session.start.clone().tz(timezone).format('HH:mm') }}
-						.duration {{ getPrettyDuration(session.start, session.end) }}
-						.buffer
-					.info
-						.title {{ getLocalizedString(session.title) }}
+				grid-break(
+					v-else,
+					:session="session",
+					:timezone="timezone",
+					:hasAmPm="hasAmPm",
+					:style="getSessionStyle(session)"
+				)
 	.print-grids
 		template(v-for="(chunk, chunkIdx) of printRoomChunks", :key="chunkIdx")
 			.print-chunk
@@ -76,17 +72,13 @@
 							@fav="$emit('fav', session.id)",
 							@unfav="$emit('unfav', session.id)"
 						)
-						.break(v-else, :style="getChunkSessionStyle(session, chunk)")
-							.time-box
-								.start(v-if="hasAmPm", class="has-ampm")
-									.time {{ session.start.clone().tz(timezone).format('h:mm') }}
-									.ampm {{ session.start.clone().tz(timezone).format('A') }}
-								.start(v-else)
-									.time {{ session.start.clone().tz(timezone).format('HH:mm') }}
-								.duration {{ getPrettyDuration(session.start, session.end) }}
-								.buffer
-							.info
-								.title {{ getLocalizedString(session.title) }}
+						grid-break(
+							v-else,
+							:session="session",
+							:timezone="timezone",
+							:hasAmPm="hasAmPm",
+							:style="getChunkSessionStyle(session, chunk)"
+						)
 </template>
 <script>
 // TODO
@@ -94,14 +86,15 @@
 // - optionally only show venueless rooms
 import moment from 'moment-timezone'
 import Session from './Session'
-import { getLocalizedString, getPrettyDuration } from '../utils'
+import GridBreak from './GridBreak'
+import { getLocalizedString } from '../utils'
 
 const getSliceName = function (date) {
 	return `slice-${date.format('MM-DD-HH-mm')}`
 }
 
 export default {
-	components: { Session },
+	components: { Session, GridBreak },
 	props: {
 		sessions: Array,
 		rooms: Array,
@@ -139,7 +132,6 @@ export default {
 	data () {
 		return {
 			getLocalizedString,
-			getPrettyDuration,
 			scrollContentWidth: 0,
 			scrollThumbWidth: 100,
 			scrollThumbLeft: 0,
@@ -734,27 +726,10 @@ export default {
 			grid-template-columns: 78px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 			position: relative
 			min-width: max(min-content, calc(78px + (var(--total-rooms) * var(--room-col-min)) + 60px))
-			.c-linear-schedule-session, .break
+			.c-linear-schedule-session, .c-grid-schedule-break
 				margin: 6px
 				min-width: 0
 				box-sizing: border-box
-		.break
-			.time-box
-				background-color: $clr-grey-500
-				.start
-					color: $clr-primary-text-dark
-				.duration
-					color: $clr-secondary-text-dark
-			.info
-				background-color: $clr-grey-200
-				border: none
-				justify-content: center
-				align-items: center
-				.title
-					font-size: 16px
-					font-weight: 500
-					color: $clr-secondary-text-light
-					align: center
 	.timeslice
 		color: $clr-secondary-text-light
 		padding: 8px 10px 0 16px
@@ -833,7 +808,7 @@ export default {
 		font-size: 14px
 		padding: 4px 2px
 	.grid-viewport .grid
-		.c-linear-schedule-session, .break
+		.c-linear-schedule-session, .c-grid-schedule-break
 			margin: 4px 3px
 			min-height: 48px
 			font-size: 12px
@@ -850,7 +825,7 @@ export default {
 		font-size: 20px
 		padding: 12px 6px
 	.grid-viewport .grid
-		.c-linear-schedule-session, .break
+		.c-linear-schedule-session, .c-grid-schedule-break
 			margin: 12px 9px
 			min-height: 120px
 			font-size: 15px
@@ -895,7 +870,7 @@ export default {
 					display: grid
 					grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
 					position: relative
-					.break
+					.c-grid-schedule-break
 						.time-box
 							-webkit-print-color-adjust: exact
 							print-color-adjust: exact

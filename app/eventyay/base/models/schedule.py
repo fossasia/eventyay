@@ -16,7 +16,7 @@ from django.db.utils import DatabaseError
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, ngettext
 from django.utils.translation import pgettext_lazy
 from django_scopes import scope
 from i18nfield.fields import I18nTextField
@@ -675,6 +675,35 @@ class Schedule(PretalxModel):
                         break
         return room_overlap_ids, speaker_overlaps_by_talk
 
+    def release_warning_message(self):
+        """Return a warning message for risky releases that need organiser confirmation."""
+
+        if self.talks.filter(submission__isnull=False, start__isnull=False).exists():
+            return None
+        if self.talks.filter(submission__isnull=True, start__isnull=False).exists():
+            return _('This schedule contains only breaks and no sessions.')
+        return None
+
+    def release_acknowledgement_messages(self, talk_warnings=None):
+        """Return release warnings for the orga alert that are not shown elsewhere."""
+
+        messages = []
+        if release_warning := self.release_warning_message():
+            messages.append(str(release_warning))
+        if talk_warnings is None:
+            talk_warnings = self.get_all_talk_warnings()
+        talk_warning_count = len(talk_warnings)
+        if talk_warning_count:
+            messages.append(
+                ngettext(
+                    'One session has scheduling conflicts or other issues.',
+                    '%(count)s sessions have scheduling conflicts or other issues.',
+                    talk_warning_count,
+                )
+                % {'count': talk_warning_count}
+            )
+        return messages
+
     @cached_property
     def warnings(self) -> dict:
         """A dictionary of warnings to be acknowledged before a release.
@@ -684,14 +713,18 @@ class Schedule(PretalxModel):
         ``unconfirmed`` is the list of submissions that will not be
         visible due to their unconfirmed status, and ``no_track`` are
         submissions without a track in a conference that uses tracks.
+        ``release_warning`` prompts confirmation for risky releases.
         """
 
         talks = self.talks.filter(submission__isnull=False)
+        talk_warnings = self.get_all_talk_warnings()
         warnings = {
-            'talk_warnings': [{'talk': key, 'warnings': value} for key, value in self.get_all_talk_warnings().items()],
+            'talk_warnings': [{'talk': key, 'warnings': value} for key, value in talk_warnings.items()],
             'unscheduled': talks.filter(start__isnull=True).count(),
             'unconfirmed': talks.exclude(submission__state=SubmissionStates.CONFIRMED).count(),
             'no_track': [],
+            'release_warning': self.release_warning_message(),
+            'acknowledgement_messages': self.release_acknowledgement_messages(talk_warnings),
         }
         if self.event.get_feature_flag('use_tracks'):
             warnings['no_track'] = talks.filter(submission__track_id__isnull=True)

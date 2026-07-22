@@ -111,4 +111,24 @@
   .header-nav .navigation {
     margin-top: 0;
   }
+
+  /* Tame the oversized desktop heading so the title fits the phone width. */
+  #event-nav .navigation-title h1,
+  #event-nav .navigation-title h2,
+  .header-nav .navigation-title h1,
+  .header-nav .navigation-title h2 {
+    font-size: 22px;
+  }
+
+  #event-nav .navigation-title .submission-state-dropdown,
+  .header-nav .navigation-title .submission-state-dropdown,
+  #event-nav .navigation-title .submission-readonly-badge,
+  .header-nav .navigation-title .submission-readonly-badge,
+  #event-nav .navigation-title form.d-inline,
+  .header-nav .navigation-title form.d-inline {
+    display: inline-flex;
+    margin-left: 0;
+    margin-top: 0.5rem;
+    vertical-align: middle;
+  }
 }

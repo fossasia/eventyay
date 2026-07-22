@@ -115,7 +115,7 @@
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Don't record this session." %}</label>
                 <div class="col-md-9">
-                    <i class="fa fa-check text-success"></i> {% translate "Yes" %}
+                    <span class="value-pill value-pill--positive"><i class="fa fa-check text-success"></i> {% translate "Yes" %}</span>
                 </div>
             </div>
         {% endif %}
@@ -124,7 +124,7 @@
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Show this session in public list of featured sessions." %}</label>
                 <div class="col-md-9">
-                    <i class="fa fa-check text-success"></i> {% translate "Yes" %}
+                    <span class="value-pill value-pill--positive"><i class="fa fa-check text-success"></i> {% translate "Yes" %}</span>
                 </div>
             </div>
         {% endif %}
@@ -188,9 +188,9 @@
                                 {% if field.field.answer %}
                                     {% if field.field.question.variant == 'boolean' %}
                                         {% if field.field.answer.boolean_answer %}
-                                            <i class="fa fa-check text-success"></i> {% translate "Yes" %}
+                                            <span class="value-pill value-pill--positive"><i class="fa fa-check text-success"></i> {% translate "Yes" %}</span>
                                         {% else %}
-                                            <i class="fa fa-times text-danger"></i> {% translate "No" %}
+                                            <span class="value-pill value-pill--negative"><i class="fa fa-times text-danger"></i> {% translate "No" %}</span>
                                         {% endif %}
                                     {% elif field.field.answer.answer_file %}
                                         <a href="{{ field.field.answer.answer_file.url }}" target="_blank">
