@@ -34,5 +34,3 @@ npminstall:
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/webcheckin
 	npm ci --prefix=eventyay/webapp/video
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/video
-	npm ci --prefix=eventyay/webapp/editor
-	OUT_DIR=$(shell pwd)/eventyay/static/ npm run build --prefix=eventyay/webapp/editor

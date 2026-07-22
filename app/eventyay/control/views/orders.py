@@ -126,7 +126,7 @@ from eventyay.base.signals import (
     register_ticket_outputs,
 )
 from eventyay.base.templatetags.money import money_filter
-from eventyay.base.templatetags.rich_text import compile_email_body
+from eventyay.base.templatetags.rich_text import markdown_compile_email
 from eventyay.base.views.mixins import OrderQuestionsViewMixin
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.forms.filter import (
@@ -159,7 +159,7 @@ from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.signals import order_search_forms
 from eventyay.control.views import PaginationMixin
 from eventyay.helpers.safedownload import check_token
-from eventyay.presale.signals import question_form_fields
+from eventyay.presale.utils import build_position_additional_fields
 
 logger = logging.getLogger(__name__)
 
@@ -550,21 +550,7 @@ class OrderDetail(OrderView):
             return enabled_system_fields_by_product_id[product.pk]
 
         for p in cartpos:
-            responses = question_form_fields.send(sender=self.request.event, position=p)
-            p.additional_fields = []
-            data = p.meta_info_data
-            for r, response in sorted(responses, key=lambda r: str(r[0])):
-                if response:
-                    for key, value in response.items():
-                        answer = data.get('question_form_data', {}).get(key)
-                        if hasattr(value, 'get_display_value'):
-                            answer = value.get_display_value(answer)
-                        p.additional_fields.append(
-                            {
-                                'answer': answer,
-                                'question': value.label,
-                            }
-                        )
+            p.additional_fields = build_position_additional_fields(self.request.event, p)
 
             enabled_system_fields = get_enabled_system_fields_for_product(p.product)
             p.has_questions = (
@@ -2460,7 +2446,7 @@ class OrderSendMail(EventPermissionRequiredMixin, OrderViewMixin, FormView):
         if self.request.POST.get('action') == 'preview':
             self.preview_output = {
                 'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': compile_email_body(email_content),
+                'html': markdown_compile_email(email_content),
             }
             return self.get(self.request, *self.args, **self.kwargs)
         else:
@@ -2531,7 +2517,7 @@ class OrderPositionSendMail(OrderSendMail):
         if self.request.POST.get('action') == 'preview':
             self.preview_output = {
                 'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': compile_email_body(email_content),
+                'html': markdown_compile_email(email_content),
             }
             return self.get(self.request, *self.args, **self.kwargs)
         else:

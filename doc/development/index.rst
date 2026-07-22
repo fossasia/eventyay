@@ -8,7 +8,6 @@ Developer documentation
    concepts
    setup
    frontend
-   editors
    contribution/index
    implementation/index
    translation/index
