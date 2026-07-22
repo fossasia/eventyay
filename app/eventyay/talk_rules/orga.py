@@ -4,6 +4,8 @@ import rules
 @rules.predicate
 def can_view_speaker_names(user, obj):
     """ONLY in use with users who don't have change permissions."""
+    if not user.is_authenticated:
+        return False
     event = obj.event
     reviewer_teams = obj.event.teams.filter(members__in=[user], is_reviewer=True)
     if reviewer_teams and all(team.force_hide_speaker_names for team in reviewer_teams):
@@ -14,6 +16,8 @@ def can_view_speaker_names(user, obj):
 @rules.predicate
 def is_reviewer_only_for_event(user, obj):
     """True for reviewer team members who do not have submission write access."""
+    if not user.is_authenticated:
+        return False
     event = getattr(obj, 'event', obj)
     in_reviewer_team = event.teams.filter(members__in=[user], is_reviewer=True).exists()
     return bool(
@@ -26,6 +30,8 @@ def is_reviewer_only_for_event(user, obj):
 @rules.predicate
 def can_view_speaker_emails(user, obj):
     """ONLY in use with users who don't have change permissions."""
+    if not user.is_authenticated:
+        return False
     event = obj.event
     reviewer_teams = obj.event.teams.filter(members__in=[user], is_reviewer=True)
     if reviewer_teams and any(team.force_hide_speaker_emails for team in reviewer_teams):
@@ -35,6 +41,8 @@ def can_view_speaker_emails(user, obj):
 
 @rules.predicate
 def enforces_hide_speaker_emails(user, obj):
+    if not user.is_authenticated:
+        return False
     event = getattr(obj, 'event', obj)
     user_teams = event.teams.filter(members__in=[user])
     return bool(user_teams and any(team.force_hide_speaker_emails for team in user_teams))
@@ -42,6 +50,8 @@ def enforces_hide_speaker_emails(user, obj):
 
 @rules.predicate
 def enforces_hide_speaker_names(user, obj):
+    if not user.is_authenticated:
+        return False
     event = getattr(obj, 'event', obj)
     user_teams = event.teams.filter(members__in=[user])
     return bool(user_teams and any(team.force_hide_speaker_names for team in user_teams))

@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
 from eventyay.api.serializers.order import CompatibleJSONField
-from eventyay.base.models import CachedFile, OrderPosition
+from eventyay.base.models import OrderPosition
 from eventyay.base.services.tickets import generate_orderposition
 
 from .apps import PDFRenderer
@@ -126,50 +126,13 @@ class BadgeDownloadView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Check if there's already a cached file
-            from eventyay.base.models import CachedTicket
-
-            cached_ticket = CachedTicket.objects.filter(order_position=op, provider='badge').last()
-
-            if cached_ticket and cached_ticket.file:
-                import os
-
-                base64_pdf = base64.b64encode(cached_ticket.file.read()).decode('utf-8')
-                filename = (
-                    os.path.basename(cached_ticket.file.name) if cached_ticket.file.name else f'badge_{position}.pdf'
-                )
-                return Response(
-                    {
-                        'filename': filename,
-                        'type': 'application/pdf',
-                        'base64_pdf': base64_pdf,
-                    }
-                )
-
-            cached_file = CachedFile.objects.filter(
-                filename__startswith=f'badge_{position}_', expires__isnull=True
-            ).last()
-
-            if cached_file and cached_file.file:
-                base64_pdf = base64.b64encode(cached_file.file.read()).decode('utf-8')
-                return Response(
-                    {
-                        'filename': cached_file.filename,
-                        'type': 'application/pdf',
-                        'base64_pdf': base64_pdf,
-                    }
-                )
-
-            # If no cached file exists, generate one
+            # Always regenerate so downloads never return a stale layout PDF.
             from .providers import BadgeOutputProvider
 
             provider = BadgeOutputProvider(op.order.event)
 
             try:
-                # Try to generate immediately
                 filename, mimetype, pdf_content = provider.generate(op)
-
-                # Cache the generated file
                 base64_pdf = base64.b64encode(pdf_content).decode('utf-8')
 
                 return Response(

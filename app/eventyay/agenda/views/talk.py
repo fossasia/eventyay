@@ -45,6 +45,7 @@ from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
+from eventyay.common.views.helpers import login_redirect_with_next, redirect_or_json_redirect
 from eventyay.common.views.mixins import (
     EventPermissionRequired,
     PermissionRequired,
@@ -613,7 +614,8 @@ class OnlineVideoJoin(EventPermissionRequired, View):
 
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.NOT_ALLOWED)
+            # After login, return here so the user continues into the live event.
+            return login_redirect_with_next(request)
 
         event = request.event
         logger.info('Checking video settings for event %s', event)
@@ -666,10 +668,7 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         token = jwt.encode(payload, event.settings.venueless_secret, algorithm='HS256')
         redirect_url = urljoin(event.settings.venueless_url, f'#token={token}')
         logger.info('Redirect URL to Video: %s', redirect_url)
-        return JsonResponse(
-            {'redirect_url': redirect_url},
-            status=HTTPStatus.OK,
-        )
+        return redirect_or_json_redirect(request, redirect_url)
 
 
 _T = TypeVar('_T', str, None)
@@ -696,14 +695,28 @@ def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
         allowed_statuses.append(Order.STATUS_PENDING)
     with scope(organizer=event.organizer):
         with scope(event=event):
-            has_ticket = OrderPosition.objects.filter(
-                order__event=event,
-                order__email__iexact=user.email,
-                order__status__in=allowed_statuses,
-                product__admission=True,
-                canceled=False,
-                addon_to__isnull=True,
-            ).exists()
+            if event.settings.venueless_all_products:
+                has_ticket = OrderPosition.objects.filter(
+                    order__event=event,
+                    order__email__iexact=user.email,
+                    order__status__in=allowed_statuses,
+                    product__admission=True,
+                    canceled=False,
+                    addon_to__isnull=True,
+                ).exists()
+            else:
+                allowed_products = event.settings.venueless_products or []
+                if not allowed_products:
+                    return TicketCheckResult.NO_TICKET
+                has_ticket = OrderPosition.objects.filter(
+                    order__event=event,
+                    order__email__iexact=user.email,
+                    order__status__in=allowed_statuses,
+                    product_id__in=allowed_products,
+                    canceled=False,
+                    addon_to__isnull=True,
+                ).exists()
+
     if has_ticket:
         return TicketCheckResult.HAS_TICKET
     return TicketCheckResult.NO_TICKET

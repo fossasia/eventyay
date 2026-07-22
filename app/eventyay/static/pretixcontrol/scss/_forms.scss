@@ -490,6 +490,10 @@ label .optional {
   height: 150px;
   overflow-y: auto;
 }
+.scrolling-multiple-choice-search {
+  margin-bottom: 8px;
+}
+
 div.scrolling-multiple-choice, ul.scrolling-multiple-choice, div.scrolling-choice {
   height: 150px;
   border: 1px solid $input-border;

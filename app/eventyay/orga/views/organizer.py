@@ -27,6 +27,7 @@ from eventyay.common.views.mixins import (
 from eventyay.event.forms import OrganizerForm
 from eventyay.base.models import Event, User
 from eventyay.base.models.organizer import Organizer
+from eventyay.orga.forms.submission import get_speaker_choice_label
 from eventyay.person.forms import UserSpeakerFilterForm
 
 logger = logging.getLogger(__name__)
@@ -180,7 +181,14 @@ def speaker_search(request, *args, **kwargs):
     return JsonResponse(
         {
             "count": len(users),
-            "results": [{"email": user.email, "name": user.fullname} for user in users],
+            "results": [
+                {
+                    "email": user.email,
+                    "name": user.fullname,
+                    "label": get_speaker_choice_label(name=user.fullname, email=user.email),
+                }
+                for user in users
+            ],
         }
     )
 
