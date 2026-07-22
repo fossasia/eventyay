@@ -189,10 +189,12 @@
     {% bootstrap_field form.can_video_manage_configuration layout="control" %}
 </fieldset>
 
+{% if form.can_manage_social_media %}
 <fieldset>
     <legend>{% translate "Social Media permissions" %}</legend>
     {% bootstrap_field form.can_manage_social_media layout="control" %}
 </fieldset>
+{% endif %}
 
 
 <script type="module" src="{% static 'common/js/eventTrackSelector.js' %}"></script>

@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 from django import forms
+from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scopes_disabled
@@ -34,6 +35,10 @@ class TeamForm(forms.ModelForm):
             )
         else:
             self._selected_track_ids = set()
+
+        if not apps.is_installed("socialmedia"):
+            if "can_manage_social_media" in self.fields:
+                del self.fields["can_manage_social_media"]
 
     @staticmethod
     def _build_events_with_tracks(events_qs, tracks_qs):
