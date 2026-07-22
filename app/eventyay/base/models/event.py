@@ -62,7 +62,10 @@ from eventyay.core.permissions import (
     traits_match_required,
 )
 from eventyay.core.utils.json import CustomJSONEncoder
-from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
+from eventyay.eventyay_common.video.permissions import (
+    VIDEO_TRAIT_ROLE_MAP,
+    resolve_attendee_trait_grant,
+)
 from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.http import smtp_reachable
@@ -1405,7 +1408,7 @@ class Event(
     def decode_token(self, token, allow_raise=False):
         exc = None
         tried_any = False
-        for jwt_config in self.config.get('JWT_secrets', []):
+        for jwt_config in (self.config or {}).get('JWT_secrets', []):
             tried_any = True
             secret = jwt_config['secret']
             audience = jwt_config['audience']
@@ -1442,8 +1445,10 @@ class Event(
                         raise
                 except jwt.exceptions.InvalidTokenError as e:
                     exc = e
-        if exc and allow_raise:
-            raise exc
+        if allow_raise:
+            if exc:
+                raise exc
+            raise jwt.exceptions.InvalidTokenError('No JWT secrets configured')
 
     def _get_trait_grants_with_defaults(self):
         base_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
@@ -1451,6 +1456,9 @@ class Event(
         if not slug:
             return base_trait_grants
         augmented = dict(base_trait_grants)
+        augmented['attendee'] = resolve_attendee_trait_grant(
+            self, augmented.get('attendee', ['attendee'])
+        )
         for role, trait_name in VIDEO_TRAIT_ROLE_MAP.items():
             augmented.setdefault(role, [f'eventyay-video-event-{slug}-{trait_name.replace("_", "-")}'])
         return augmented
