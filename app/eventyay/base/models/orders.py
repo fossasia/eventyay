@@ -925,6 +925,18 @@ class Order(LockModel, LoggedModel):
             if product_has_system_questions(self.event, cp.product) or cp.product.questions.all():
                 return True
 
+        if 'eventyay.plugins.badges' in self.event.get_plugins():
+            from eventyay.plugins.badges.utils import (
+                get_badge_bundle_option_choices,
+                get_badge_config_position,
+            )
+
+            for cp in positions:
+                if get_badge_config_position(cp) != cp:
+                    continue
+                if get_badge_bundle_option_choices(self.event, cp):
+                    return True
+
         return False  # nothing there to modify
 
     def is_modification_allowed_by(self, email: str) -> bool:
