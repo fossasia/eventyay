@@ -466,7 +466,7 @@ class BadgePrintView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Temp
             cf = get_object_or_404(CachedFile, id=self.kwargs['file'], web_download=True)
         except ValueError as exc:
             raise Http404() from exc
-        if cf.session_key and cf.session_key != self.request.session.session_key:
+        if not cf.session_key or cf.session_key != self.request.session.session_key:
             raise Http404()
         if not cf.file:
             raise Http404()
