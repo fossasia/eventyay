@@ -43,7 +43,7 @@ export default new Vuex.Store({
 				.map((d) => normalizeIframeConsentDomain(d))
 				.filter(Boolean)
 		),
-		youtubeTranslation: null
+		youtubeTranslationsByRoom: {}
 	},
 	getters: {
 		hasPermission(state) {
@@ -113,8 +113,12 @@ export default new Vuex.Store({
 		updateNow(state) {
 			state.now = moment()
 		},
-		updateYoutubeTransAudio(state, youtubeTranslation) {
-			state.youtubeTranslation = youtubeTranslation
+		updateYoutubeTransAudio(state, {roomId, youtubeTranslation}) {
+			if (!roomId) return
+			state.youtubeTranslationsByRoom = {
+				...state.youtubeTranslationsByRoom,
+				[roomId]: youtubeTranslation
+			}
 		},
 		setStreamPollInterval(state, streamPollInterval) {
 			state.streamPollInterval = streamPollInterval

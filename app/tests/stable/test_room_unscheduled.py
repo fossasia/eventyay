@@ -18,6 +18,31 @@ def test_video_poll_question_manager_grants_read_and_moderate_permissions():
     assert Permission.ROOM_POLL_MANAGE.value in perms
 
 
+def test_video_user_moderator_grants_chat_moderate_without_admin_role():
+    """Organizers with manage-users video permission can delete chat messages
+    without needing the staff admin trait/session."""
+    perms = set(SYSTEM_ROLES['video_user_moderator'])
+    assert Permission.EVENT_USERS_MANAGE.value in perms
+    assert Permission.ROOM_CHAT_MODERATE.value in perms
+    # Must remain a scoped organizer role — not the full admin role set
+    assert Permission.EVENT_UPDATE.value not in perms
+    assert Permission.ROOM_UPDATE.value not in perms
+
+
+@pytest.mark.django_db
+def test_event_grants_chat_moderate_via_organizer_video_trait(event):
+    """Organizer JWT traits (without admin) must unlock room:chat.moderate."""
+    trait = f'eventyay-video-event-{event.slug}-video-user-moderator'
+    assert event.has_permission_implicit(
+        traits=['attendee', trait],
+        permissions=[Permission.ROOM_CHAT_MODERATE],
+    )
+    assert not event.has_permission_implicit(
+        traits=['attendee'],
+        permissions=[Permission.ROOM_CHAT_MODERATE],
+    )
+
+
 @pytest.mark.django_db
 def test_room_has_linked_submissions(event):
     with scope(event=event):
