@@ -11,38 +11,73 @@
             {% endblocktrans %}
         </div>
     {% else %}
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">{% trans "Upload a new file" %}</h3>
+        <style>
+            .eventyay-file-pick-wrapper {
+              display: flex;
+              align-items: center;
+              position: relative;
+              background-color: #fff;
+              border: 1px solid #ccc;
+              border-radius: 4px;
+              overflow: hidden;
+              cursor: pointer;
+            }
+            .eventyay-file-pick-wrapper:focus-within {
+              border-color: #80bdff;
+              outline: 0;
+              box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            }
+            .eventyay-file-pick-wrapper label {
+              background-color: #e9ecef;
+              border-right: 1px solid #ccc;
+              padding: 6px 12px;
+              font-size: 14px;
+              font-weight: 400;
+              color: #333;
+              cursor: pointer;
+              white-space: nowrap;
+              margin-bottom: 0;
+            }
+            .eventyay-file-pick-wrapper label:hover {
+              background-color: #dde0e3;
+            }
+            .eventyay-file-pick-wrapper input[type="file"],
+            .eventyay-file-pick-wrapper input[type="file"]:disabled {
+              position: absolute;
+              width: 1px;
+              height: 1px;
+              opacity: 0;
+              overflow: hidden;
+              pointer-events: none;
+            }
+            .eventyay-file-name {
+              font-size: 14px;
+              color: #6c757d;
+              padding: 6px 12px;
+              margin-left: 8px;
+            }
+        </style>
+        <form action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p>{% blocktrans trimmed %}
+                This page allows you to upload bank statement files to process incoming payments.
+            {% endblocktrans %}</p>
+            <p>{% blocktrans trimmed %}
+                Currently, this feature supports <code>.csv</code> files and files in the MT940 format.
+            {% endblocktrans %}</p>
+            <div style="display: flex; align-items: center; margin-top: 20px; margin-bottom: 10px;">
+                <label style="font-weight: bold; margin-bottom: 0; margin-right: 15px;" for="file">{% trans "Import file" %} *</label>
+                <div style="width: 50%;">
+                    <input id="file" type="file" name="file" required/>
+                </div>
             </div>
-            <div class="panel-body">
-                <p>{% blocktrans trimmed %}
-                    This page allows you to upload bank statement files to process incoming payments.
-                {% endblocktrans %}</p>
-                <p>{% blocktrans trimmed %}
-                    Currently, this feature supports <code>.csv</code> files and files in the MT940 format.
-                {% endblocktrans %}</p>
-                {% if job_running %}
-                    <div class="alert alert-info" data-job-waiting
-                         data-job-waiting-url="{% url "plugins:banktransfer:import.job" event=request.event.slug organizer=request.event.organizer.slug job=job_running.pk %}?ajax=1">
-                        <span class="fa fa-cog fa-spin"></span>
-                        {% trans "An import is currently being processed, please try again in a few minutes." %}
-                    </div>
-                {% else %}
-                    <form action="" method="post" enctype="multipart/form-data" class="form-inline">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label for="file">{% trans "Import file" %}: </label> <input id="file" type="file"
-                                                                                         name="file"/>
-                        </div>
-                        <div class="clearfix"></div>
-                        <button class="btn btn-primary pull-right flip" type="submit">
-                            <span class="icon icon-upload"></span> {% trans "Start upload" %}
-                        </button>
-                    </form>
-                {% endif %}
+            
+            <div style="background-color: #fff; border: 1px solid #e3e3e3; border-radius: 4px; padding: 15px; text-align: right;">
+                <button class="btn btn-primary btn-lg" style="width: auto; display: inline-block;" type="submit">
+                    <i class="fa fa-upload"></i> {% trans "Upload and continue" %}
+                </button>
             </div>
-        </div>
+        </form>
     {% endif %}
     {% if transactions_unhandled|length > 0 or filter_form.is_valid %}
         <div class="panel panel-default">
