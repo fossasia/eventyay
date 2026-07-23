@@ -263,6 +263,12 @@ class RoomModule(BaseModule):
                 scope.set_extra("last_room", str(self.room.pk))
 
     async def _leave_room(self, room):
+        januscall = self.consumer.components.get("januscall")
+        if januscall and hasattr(januscall, "cleanup_media_state_for_room"):
+            await januscall.cleanup_media_state_for_room(room)
+        if januscall and hasattr(januscall, "cleanup_raise_hand_for_room"):
+            await januscall.cleanup_raise_hand_for_room(room)
+
         group_names = [
             GROUP_ROOM,
             GROUP_ROOM_QUESTION_MODERATE,
@@ -337,6 +343,21 @@ class RoomModule(BaseModule):
             raise ConsumerException(
                 code="room.unknown_reaction", message="Unknown reaction"
             )
+
+        if body.get("context") == "januscall":
+            await self.consumer.send_success({})
+            await self.consumer.channel_layer.group_send(
+                GROUP_ROOM.format(id=self.room.pk),
+                {
+                    "type": "room.reaction",
+                    "reaction": reaction,
+                    "room": str(body["room"]),
+                    "context": "januscall",
+                    "user": str(self.consumer.user.id),
+                    "display_name": self.consumer.user.profile.get("display_name") or "",
+                },
+            )
+            return
 
         redis_key = f"reactions:{self.consumer.event.id}:{body['room']}"
         redis_debounce_key = f"reactions:{self.consumer.event.id}:{body['room']}:{reaction}:{self.consumer.user.id}"
