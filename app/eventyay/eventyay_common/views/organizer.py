@@ -92,6 +92,7 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
             is_reviewer=True,
             can_change_exhibition_proposals=True,
             is_exhibition_reviewer=True,
+            can_manage_social_media=True,
             can_video_create_stages=True,
             can_video_create_channels=True,
             can_video_manage_announcements=True,

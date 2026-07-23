@@ -539,6 +539,15 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             'of proposal applicants, but can still review the rest of the proposal.'
         ),
     )
+    can_manage_social_media = models.BooleanField(
+        default=False,
+        verbose_name=_('Can manage social media settings'),
+        help_text=_(
+            'Allows members of this team to connect social media accounts, '
+            'manage draft posts, and automate social media publications.'
+        ),
+    )
+
 
     can_video_create_stages = models.BooleanField(
         default=False,
