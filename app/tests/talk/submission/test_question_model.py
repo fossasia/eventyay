@@ -127,6 +127,8 @@ def test_question_base_properties(submission, question):
         ("file", "answer", ""),
         ("choices", "answer", ""),
         ("select", "answer", ""),
+        ("url", "https://example.com", "https://example.com"),
+        ("video", "https://youtu.be/abc", "https://youtu.be/abc"),
         ("country", "DE", get_country_name("DE") or "DE"),
         ("lol", "lol", None),
     ),

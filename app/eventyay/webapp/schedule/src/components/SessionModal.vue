@@ -17,6 +17,16 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 					export-dropdown.session-export-area(v-if="talkExportOptions.length || exportsDisabled", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl", :disabled="exportsDisabled")
 				.text-content
 					.recording-embed(v-if="modalContent.contentObject.recording_iframe", v-html="modalContent.contentObject.recording_iframe")
+					.field-section.video-embed-section(v-for="answer in videoAnswers", :key="answer.id || answer.question_id || videoEmbedSrc(answer)")
+						h4.field-heading {{ getLocalizedString(answer.question.question) }}
+						.video-embed
+							iframe(
+								:src="videoEmbedSrc(answer)",
+								title="Session video",
+								allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+								allowfullscreen,
+								loading="lazy",
+								referrerpolicy="strict-origin-when-cross-origin")
 					.field-section(v-if="modalContent.contentObject.abstract")
 						h4.field-heading Abstract
 						.field-content(v-html="renderRichText(modalContent.contentObject.abstract)")
@@ -33,7 +43,17 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 						template(v-if="publicScheduleAnswers.length > 0")
 							.field-section(v-for="answer in publicScheduleAnswers", :key="answer.question_id")
 								h4.field-heading {{ answer.question }}
-								.field-content(v-html="renderRichText(answer.answer)")
+								.video-embed(v-if="answer.variant === 'video' && videoEmbedSrc(answer)")
+									iframe(
+										:src="videoEmbedSrc(answer)",
+										title="Session video",
+										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+										allowfullscreen,
+										loading="lazy",
+										referrerpolicy="strict-origin-when-cross-origin")
+								.field-content(v-else-if="answer.variant === 'video' || answer.variant === 'url'")
+									a(:href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
+								.field-content(v-else, v-html="renderRichText(answer.answer)")
 						template(v-if="shortAnswers.length > 0 || iconAnswers.length > 0")
 							hr
 							.answers
@@ -43,7 +63,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 											img(v-if="answer.question.icon && remoteApiUrl", :src="`${remoteApiUrl}questions/${answer.question.id}/icon/`", :alt="getLocalizedString(answer.question.question)", width="16", height="16")
 											span(v-else) {{ getLocalizedString(answer.question.question) }}
 								.inline-answer(v-for="answer in shortAnswers", :key="answer.id")
-									template(v-if="answer.question.variant === 'url' && answer.answer")
+									template(v-if="(answer.question.variant === 'url' || answer.question.variant === 'video') && answer.answer")
 										strong.question
 											a(:href="answer.answer", target="_blank", rel="noopener noreferrer") {{ getLocalizedString(answer.question.question) }}
 									template(v-else)
@@ -129,7 +149,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 </template>
 
 <script>
-import { getLocalizedString, getSessionTime, getIconByFileEnding, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl } from '../utils'
+import { getLocalizedString, getSessionTime, getIconByFileEnding, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer, buildQrcodesUrl, getVideoEmbedUrl } from '../utils'
 import { renderEventyayRichText } from '../utils/eventyayRichText'
 import FavButton from './FavButton.vue'
 import Session from './Session.vue'
@@ -229,12 +249,22 @@ export default {
 			const merged = { ...computeSpeakerExporters(base), ...(obj.exporters || {}) }
 			return buildExportMenuItems(merged)
 		},
+		videoAnswers () {
+			const apiContent = this.modalContent?.contentObject?.apiContent
+			if (!apiContent || !apiContent.answers || !apiContent.answers.length) return []
+			return apiContent.answers.filter((answer) =>
+				answer.question?.variant === 'video' && this.videoEmbedSrc(answer)
+			)
+		},
 		shortAnswers () {
 			const apiContent = this.modalContent.contentObject.apiContent
 			if (!apiContent || !apiContent.answers || !apiContent.answers.length) return []
 			return apiContent.answers.filter((answer) => {
-				// Exclude text/string answers (those go to textAnswers) and URL answers with icons (iconAnswers)
-				return answer.question.variant !== 'text' && answer.question.variant !== 'string' && !(answer.question.variant === 'url' && answer.question.icon)
+				if (answer.question.variant === 'text' || answer.question.variant === 'string') return false
+				if (answer.question.variant === 'url' && answer.question.icon) return false
+				// Embeddable video-link answers are shown as players above
+				if (answer.question.variant === 'video' && this.videoEmbedSrc(answer)) return false
+				return true
 			})
 		},
 		iconAnswers () {
@@ -259,6 +289,11 @@ export default {
 		}
 	},
 	methods: {
+		videoEmbedSrc (answer) {
+			if (!answer) return ''
+			if (answer.embed_url) return answer.embed_url
+			return getVideoEmbedUrl(answer.answer)
+		},
 		renderRichText (text) {
 			return renderEventyayRichText(text || '')
 		},
@@ -375,13 +410,15 @@ export default {
 
 	.text-content
 			margin-bottom: 8px
-			.recording-embed
+			.recording-embed,
+			.video-embed
 				margin-bottom: 16px
 				iframe
 					width: 100%
 					aspect-ratio: 16 / 9
 					border: none
 					border-radius: 4px
+					display: block
 			.field-section
 				margin-bottom: 12px
 				.field-heading

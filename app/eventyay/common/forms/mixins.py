@@ -336,6 +336,21 @@ class QuestionFieldsMixin:
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
             return field
+        if question.variant == TalkQuestionVariant.VIDEO:
+            video_help = original_help_text or _(
+                'Paste a YouTube or Vimeo URL. '
+                'When this field is public, the video is embedded on the session page.'
+            )
+            field = forms.URLField(
+                label=label_text,
+                required=question.required,
+                disabled=read_only,
+                help_text=video_help,
+                initial=initial,
+            )
+            field.original_help_text = original_help_text
+            field.widget.attrs['placeholder'] = 'https://www.youtube.com/watch?v=…'
+            return field
         if question.variant == TalkQuestionVariant.TEXT:
             field = forms.CharField(
                 label=label_text,

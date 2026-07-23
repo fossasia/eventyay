@@ -37,6 +37,7 @@ class TalkQuestionVariant(Choices):
     STRING = 'string'
     TEXT = 'text'
     URL = 'url'
+    VIDEO = 'video'
     DATE = 'date'
     DATETIME = 'datetime'
     BOOLEAN = 'boolean'
@@ -51,6 +52,7 @@ class TalkQuestionVariant(Choices):
         (STRING, _('Text (one-line)')),
         (TEXT, _('Multi-line text')),
         (URL, _('URL')),
+        (VIDEO, _('Video link')),
         (DATE, _('Date')),
         (DATETIME, _('Date and time')),
         (BOOLEAN, _('Confirmation')),
@@ -107,7 +109,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
     TalkQuestions can have many types, which offers a flexible framework to give organisers
     the opportunity to get all the information they need.
 
-    :param variant: Can be any of 'number', 'string', 'text', 'url',
+    :param variant: Can be any of 'number', 'string', 'text', 'url', 'video',
         'date', 'datetime', 'boolean', 'file', 'choices', 'multiple_choice',
         'select', or 'country'. Defined in the ``TalkQuestionVariant`` class.
     :param target: Can be any of 'submission', 'speaker', or 'reviewer'.
@@ -463,7 +465,7 @@ class Answer(PretalxModel):
 
     @property
     def answer_string(self):
-        if self.question.variant in ('number', 'string', 'text', 'url'):
+        if self.question.variant in ('number', 'string', 'text', 'url', 'video'):
             return self.answer or ''
         if self.question.variant == 'boolean':
             if self.boolean_answer is True:
