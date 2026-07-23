@@ -38,6 +38,7 @@ from eventyay.base.models import (
     Submission,
     SubmissionFavourite,
     SubmissionStates,
+    TalkQuestionVariant,
     TalkSlot,
     User,
 )
@@ -45,6 +46,7 @@ from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
+from eventyay.common.video_embed import get_video_embed_info
 from eventyay.common.views.helpers import login_redirect_with_next, redirect_or_json_redirect
 from eventyay.common.views.mixins import (
     EventPermissionRequired,
@@ -221,8 +223,25 @@ class TalkView(TalkMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
-        csp_update = {'frame-src': self.recording.get('csp_header')}
-        response._csp_update = csp_update
+        frame_src = []
+        recording_csp = self.recording.get('csp_header')
+        if recording_csp:
+            frame_src.append(recording_csp)
+        for answer in self.answers:
+            if answer.question.variant != TalkQuestionVariant.VIDEO:
+                continue
+            embed = get_video_embed_info(answer.answer)
+            if embed:
+                frame_src.extend(embed['csp_origins'])
+        # Deduplicate while preserving order
+        seen = set()
+        unique_frame_src = []
+        for origin in frame_src:
+            if origin not in seen:
+                seen.add(origin)
+                unique_frame_src.append(origin)
+        if unique_frame_src:
+            response._csp_update = {'frame-src': unique_frame_src}
         return response
 
     def _build_speakers_context(self, speakers_qs):

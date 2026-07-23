@@ -1,4 +1,7 @@
 import moment from 'moment-timezone'
+import { getVideoEmbedUrl } from './videoEmbed.js'
+
+export { getVideoEmbedUrl }
 
 export function getLocalizedString (string) {
 	if (!string) return ''

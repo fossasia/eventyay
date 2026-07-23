@@ -368,6 +368,23 @@ class SecurityMiddleware(MiddlewareMixin):
         if settings.CSP_ADDITIONAL_HEADER:
             _merge_csp(h, _parse_csp(settings.CSP_ADDITIONAL_HEADER))
 
+        csp_update = getattr(resp, '_csp_update', None)
+        if csp_update:
+            normalized = {}
+            for key, value in csp_update.items():
+                if value is None or value is False:
+                    continue
+                if isinstance(value, str):
+                    parts = [part for part in value.split() if part]
+                elif isinstance(value, (list, tuple, set)):
+                    parts = [str(part) for part in value if part]
+                else:
+                    parts = [str(value)]
+                if parts:
+                    normalized[key] = parts
+            if normalized:
+                _merge_csp(h, normalized)
+
         staticdomain = "'self'"
         dynamicdomain = "'self'"
         mediadomain = "'self'"
