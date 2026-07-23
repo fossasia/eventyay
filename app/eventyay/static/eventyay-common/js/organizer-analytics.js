@@ -342,17 +342,18 @@ function drawAttendanceOverTime() {
     new ApexCharts(chartEl, options).render()
 }
 
-function drawFollowerWeekly() {
+function drawFollowerChart(dataElId, chartElId, paletteIndex) {
     if (typeof ApexCharts === 'undefined') return
 
-    const dataEl = document.getElementById('followers-weekly-data')
-    const chartEl = document.getElementById('followers-weekly-chart')
+    const dataEl = document.getElementById(dataElId)
+    const chartEl = document.getElementById(chartElId)
     if (!dataEl || !chartEl) return
 
     const series = parseData(dataEl, 'series')
     if (!Array.isArray(series) || series.length === 0) return
 
     const label = dataEl.dataset.label || 'New followers'
+    const color = PALETTE[paletteIndex] ?? PALETTE[0]
 
     const options = {
         series: [
@@ -365,7 +366,7 @@ function drawFollowerWeekly() {
             toolbar: { show: false },
             animations: { enabled: true }
         },
-        colors: [PALETTE[4]],
+        colors: [color],
         xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { format: 'dd MMM' } },
         yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
         stroke: { curve: 'straight', width: 2 },
@@ -378,40 +379,12 @@ function drawFollowerWeekly() {
     new ApexCharts(chartEl, options).render()
 }
 
+function drawFollowerWeekly() {
+    drawFollowerChart('followers-weekly-data', 'followers-weekly-chart', 4)
+}
+
 function drawFollowerMonthly() {
-    if (typeof ApexCharts === 'undefined') return
-
-    const dataEl = document.getElementById('followers-monthly-data')
-    const chartEl = document.getElementById('followers-monthly-chart')
-    if (!dataEl || !chartEl) return
-
-    const series = parseData(dataEl, 'series')
-    if (!Array.isArray(series) || series.length === 0) return
-
-    const label = dataEl.dataset.label || 'New followers'
-
-    const options = {
-        series: [
-            { name: label, data: series.map(d => ({ x: new Date(d.x), y: d.y || 0 })) }
-        ],
-        chart: {
-            type: 'area',
-            height: 220,
-            redrawOnParentResize: true,
-            toolbar: { show: false },
-            animations: { enabled: true }
-        },
-        colors: [PALETTE[5]],
-        xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { format: 'dd MMM' } },
-        yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
-        stroke: { curve: 'straight', width: 2 },
-        fill: { type: 'solid', opacity: 0.15 },
-        markers: { size: 4, hover: { size: 6 } },
-        dataLabels: { enabled: false },
-        legend: { show: false },
-        tooltip: { shared: true, x: { format: 'dd MMM yyyy' } }
-    }
-    new ApexCharts(chartEl, options).render()
+    drawFollowerChart('followers-monthly-data', 'followers-monthly-chart', 5)
 }
 
 function initCharts() {

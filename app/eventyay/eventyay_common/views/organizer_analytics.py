@@ -155,7 +155,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
     def _event_ids_for_email_engagement(self):
         if not hasattr(self, '_cached_event_ids_for_email_engagement'):
             self._cached_event_ids_for_email_engagement = list(
-                self.request.user.get_events_with_permission('can_change_event_settings', request=self.request)
+                self.request.user.get_events_with_permission('can_view_orders', request=self.request)
                 .filter(organizer=self.request.organizer)
                 .values_list('pk', flat=True)
             )
@@ -198,7 +198,6 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
         current_timezone = timezone.get_current_timezone()
         with scopes_disabled():
             followers = OrganizerFollower.objects.filter(organizer=self.request.organizer)
-            follower_total = followers.aggregate(total=Count('pk'))['total'] or 0
             weekly_rows = list(
                 followers.annotate(period=TruncWeek('created', tzinfo=current_timezone))
                 .values('period')
@@ -211,6 +210,8 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                 .annotate(count=Count('pk'))
                 .order_by('period')
             )
+
+        follower_total = sum(row['count'] for row in weekly_rows)
 
         followers_weekly = [
             {'x': self._to_iso_date(row['period']), 'y': row['count']}
@@ -233,17 +234,20 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             return []
 
         with scopes_disabled():
-            events = list(Event.objects.filter(pk__in=event_ids))
+            rows = Event.objects.filter(pk__in=event_ids).values('pk', 'name')
 
         return sorted(
-            ({'id': event.pk, 'name': str(event.name)} for event in events),
+            ({'id': row['pk'], 'name': str(row['name'])} for row in rows),
             key=lambda event: event['name'],
         )
 
     def _get_attendance_data(self):
         event_ids = self._event_ids_for_orders()
         if not event_ids:
-            return {'attendance_daily_by_event': {}}
+            return {
+                'attendance_daily_by_event': {},
+                'attendance_events': [],
+            }
 
         current_timezone = timezone.get_current_timezone()
         now = timezone.now()
@@ -301,7 +305,10 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             if bucket is not None:
                 bucket['registrations'] = row['count']
 
-        return {'attendance_daily_by_event': daily_by_event}
+        return {
+            'attendance_daily_by_event': daily_by_event,
+            'attendance_events': self._get_attendance_event_options(),
+        }
 
     def _event_ids_for_proposals(self):
         if not hasattr(self, '_cached_event_ids_for_proposals'):
@@ -645,7 +652,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             attendance_daily_by_event = {}
         attendance_presentation = self._project_attendance(
             attendance_daily_by_event=attendance_daily_by_event,
-            attendance_events=self._get_attendance_event_options(),
+            attendance_events=data.get('attendance_events') or [],
             date_labels=self._attendance_date_labels(
                 timezone.now(),
                 timezone.get_current_timezone(),
