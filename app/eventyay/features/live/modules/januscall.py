@@ -41,6 +41,7 @@ class JanusCallModule(BaseModule):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.media_state_rooms = {}
+        self.raise_hand_rooms = {}
         self.waiting_admission_rooms = {}
 
     @database_sync_to_async
@@ -90,6 +91,10 @@ class JanusCallModule(BaseModule):
     @staticmethod
     def _spotlight_key(room_id):
         return f"januscall:spotlight:{room_id}"
+
+    @staticmethod
+    def _raise_hands_key(room_id):
+        return f"januscall:raise_hands:{room_id}"
 
     @staticmethod
     def _is_waiting_room_enabled(module_config):
@@ -176,12 +181,36 @@ class JanusCallModule(BaseModule):
             },
         )
 
+    async def cleanup_raise_hand_for_room(self, room):
+        room_id = str(room.pk)
+        if room_id not in self.raise_hand_rooms or not self.consumer.user:
+            return
+
+        state = await self._set_raise_hand(room.pk, self.consumer.user, False)
+        self.raise_hand_rooms.pop(room_id, None)
+        await self.consumer.channel_layer.group_send(
+            GROUP_ROOM.format(id=room.pk),
+            {
+                "type": "januscall.raise_hand",
+                "room": room_id,
+                "user": str(self.consumer.user.pk),
+                "state": state,
+            },
+        )
+
+    async def _subscribe_room_events(self):
+        await self.consumer.channel_layer.group_add(
+            GROUP_ROOM.format(id=self.room.pk),
+            self.consumer.channel_name,
+        )
+
     @command("room_url")
     @room_action(
         permission_required=Permission.ROOM_JANUSCALL_JOIN,
         module_required="call.janus",
     )
     async def room_url(self, body):
+        await self._subscribe_room_events()
         if (
             self._is_waiting_room_enabled(self.module_config)
             and not await self._can_moderate_room()
@@ -306,6 +335,7 @@ class JanusCallModule(BaseModule):
         module_required="call.janus",
     )
     async def media_state(self, body):
+        await self._subscribe_room_events()
         state = self._normalize_media_state(body)
         user_id = str(self.consumer.user.pk)
         state, states = await self._set_media_state(self.room.pk, state)
@@ -328,10 +358,97 @@ class JanusCallModule(BaseModule):
         module_required="call.janus",
     )
     async def media_state_list(self, body):
+        await self._subscribe_room_events()
         redis_key = self._media_state_key(self.room.pk)
         async with aredis(redis_key) as redis:
             raw_states = await redis.hgetall(redis_key)
         await self.consumer.send_success({"states": self._decode_media_states(raw_states)})
+
+    @command("raise_hand")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def raise_hand(self, body):
+        await self._subscribe_room_events()
+        requested_state = body.get("raised")
+        was_raised = await self._is_hand_raised(self.room.pk, self.consumer.user.pk)
+        if requested_state is None:
+            requested_state = not was_raised
+        state = await self._set_raise_hand(
+            self.room.pk, self.consumer.user, bool(requested_state)
+        )
+        if state["raised"]:
+            self.raise_hand_rooms[str(self.room.pk)] = self.room
+        else:
+            self.raise_hand_rooms.pop(str(self.room.pk), None)
+
+        payload = {
+            "type": "januscall.raise_hand",
+            "room": str(self.room.pk),
+            "user": str(self.consumer.user.pk),
+            "state": state,
+        }
+        await self.consumer.send_success({"room": str(self.room.pk), "state": state})
+        await self.consumer.channel_layer.group_send(
+            GROUP_ROOM.format(id=self.room.pk),
+            payload,
+        )
+        if state["raised"] and not was_raised:
+            await self.consumer.channel_layer.group_send(
+                GROUP_ROOM.format(id=self.room.pk),
+                {
+                    "type": "januscall.raise_hand_notification",
+                    "room": str(self.room.pk),
+                    "user": str(self.consumer.user.pk),
+                    "display_name": state.get("display_name") or "",
+                    "raised_at": state.get("raised_at"),
+                },
+            )
+
+    @command("lower_hand")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def lower_hand(self, body):
+        await self._subscribe_room_events()
+        target_user = await self._get_raise_hand_target(body.get("user"))
+        if (
+            target_user.pk != self.consumer.user.pk
+            and not await self._can_moderate_room()
+        ):
+            raise ConsumerException("protocol.denied", "Permission denied.")
+
+        state = await self._set_raise_hand(self.room.pk, target_user, False)
+        payload = {
+            "type": "januscall.raise_hand",
+            "room": str(self.room.pk),
+            "user": str(target_user.pk),
+            "state": state,
+            "moderator": str(self.consumer.user.pk),
+        }
+        await self.consumer.send_success(
+            {"room": str(self.room.pk), "user": str(target_user.pk), "state": state}
+        )
+        await self.consumer.channel_layer.group_send(
+            GROUP_ROOM.format(id=self.room.pk),
+            payload,
+        )
+
+    @command("raise_hand.list")
+    @room_action(
+        permission_required=Permission.ROOM_JANUSCALL_JOIN,
+        module_required="call.janus",
+    )
+    async def raise_hand_list(self, body):
+        await self._subscribe_room_events()
+        await self.consumer.send_success(
+            {
+                "room": str(self.room.pk),
+                "hands": await self._raised_hands(self.room.pk),
+            }
+        )
 
     @command("mute_participant")
     @room_action(
@@ -391,6 +508,7 @@ class JanusCallModule(BaseModule):
         module_required="call.janus",
     )
     async def spotlight(self, body):
+        await self._subscribe_room_events()
         if not await self._can_moderate_room():
             raise ConsumerException("protocol.denied", "Permission denied.")
 
@@ -427,6 +545,7 @@ class JanusCallModule(BaseModule):
         module_required="call.janus",
     )
     async def spotlight_state(self, body):
+        await self._subscribe_room_events()
         async with aredis(self._spotlight_key(self.room.pk)) as redis:
             target_user = await redis.get(self._spotlight_key(self.room.pk))
         await self.consumer.send_success(
@@ -518,6 +637,83 @@ class JanusCallModule(BaseModule):
             except (json.JSONDecodeError, AttributeError, UnicodeDecodeError):
                 continue
         return sorted(users, key=lambda user: user.get("joined_at", 0))
+
+    async def _is_hand_raised(self, room_id, user_id):
+        async with aredis(self._raise_hands_key(room_id)) as redis:
+            return bool(
+                await redis.hexists(self._raise_hands_key(room_id), str(user_id))
+            )
+
+    async def _set_raise_hand(self, room_id, user, raised):
+        user_id = str(user.pk)
+        redis_key = self._raise_hands_key(room_id)
+        async with aredis(redis_key) as redis:
+            if raised:
+                existing = await redis.hget(redis_key, user_id)
+                if existing:
+                    try:
+                        state = json.loads(existing.decode())
+                    except (json.JSONDecodeError, AttributeError, UnicodeDecodeError):
+                        state = None
+                else:
+                    state = None
+                if not state:
+                    state = {
+                        "raised": True,
+                        "raised_at": int(time.time()),
+                        "display_name": user.profile.get("display_name") or "",
+                    }
+                else:
+                    state["raised"] = True
+                    state["display_name"] = user.profile.get("display_name") or ""
+                await redis.hset(redis_key, user_id, json.dumps(state))
+                await redis.expire(redis_key, 3600 * 24)
+                return state
+
+            await redis.hdel(redis_key, user_id)
+            await redis.expire(redis_key, 3600 * 24)
+            return {
+                "raised": False,
+                "raised_at": None,
+                "display_name": user.profile.get("display_name") or "",
+            }
+
+    async def _raised_hands(self, room_id):
+        async with aredis(self._raise_hands_key(room_id)) as redis:
+            raw_hands = await redis.hgetall(self._raise_hands_key(room_id))
+
+        hands = []
+        for raw_user_id, raw_state in raw_hands.items():
+            try:
+                state = json.loads(raw_state.decode())
+            except (json.JSONDecodeError, AttributeError, UnicodeDecodeError):
+                continue
+            if not state.get("raised"):
+                continue
+            hands.append(
+                {
+                    "user": raw_user_id.decode(),
+                    "raised": True,
+                    "raised_at": state.get("raised_at"),
+                    "display_name": state.get("display_name") or "",
+                }
+            )
+        return sorted(hands, key=lambda hand: hand.get("raised_at") or 0)
+
+    async def _get_raise_hand_target(self, user_id):
+        user_id = str(user_id or self.consumer.user.pk)
+        try:
+            user_pk = int(user_id)
+        except (TypeError, ValueError):
+            raise ConsumerException("janus.target_not_found", "Participant not found.")
+
+        try:
+            return await database_sync_to_async(User.objects.get)(
+                event=self.consumer.event,
+                pk=user_pk,
+            )
+        except User.DoesNotExist:
+            raise ConsumerException("janus.target_not_found", "Participant not found.")
 
     async def _remove_pending_admission(self, user_id, *, status):
         user_id = str(user_id)
@@ -905,6 +1101,24 @@ class JanusCallModule(BaseModule):
             ]
         )
 
+    @event("raise_hand")
+    async def push_raise_hand(self, body):
+        await self.consumer.send_json(
+            [
+                body["type"],
+                {k: v for k, v in body.items() if k != "type"},
+            ]
+        )
+
+    @event("raise_hand_notification")
+    async def push_raise_hand_notification(self, body):
+        await self.consumer.send_json(
+            [
+                body["type"],
+                {k: v for k, v in body.items() if k != "type"},
+            ]
+        )
+
     @event("admission_result")
     async def push_admission_result(self, body):
         self.waiting_admission_rooms.pop(str(body.get("room")), None)
@@ -926,3 +1140,6 @@ class JanusCallModule(BaseModule):
 
         for room in list(self.media_state_rooms.values()):
             await self.cleanup_media_state_for_room(room)
+
+        for room in list(self.raise_hand_rooms.values()):
+            await self.cleanup_raise_hand_for_room(room)

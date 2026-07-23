@@ -62,7 +62,9 @@
 					.tile-top
 						.audio-meter(:class="{ active: tile.audioLevel > 0.01 }")
 							.audio-meter-fill(:style="audioMeterStyle(tile)")
-						.tile-state-pill(v-if="spotlightTile && spotlightTile.key === tile.key")
+						.tile-state-pill.hand-pill(v-if="isTileHandRaised(tile)", title="Hand raised")
+							.mdi.mdi-hand-back-right
+						.tile-state-pill(v-else-if="spotlightTile && spotlightTile.key === tile.key")
 							.mdi.mdi-star
 						.tile-state-pill(v-else-if="pinnedTileKey === tile.key")
 							.mdi.mdi-pin
@@ -88,6 +90,11 @@
 								.mdi.mdi-monitor-off
 
 			.slow-banner(v-if="downstreamSlowLinkCount > 5 && videoOutput", @click="disableIncomingVideo") {{ $t('JanusVideoroom:slow:text') }}
+
+		.room-reactions(v-if="roomReactions.length")
+			.room-reaction(v-for="reaction in roomReactions", :key="reaction.id")
+				img.room-reaction-emoji(:src="reaction.url", :alt="reaction.emoji")
+				span.room-reaction-name {{ reaction.name }}
 
 		.info-bar
 			.info-message(v-if="!videoOutput") {{ $t('JanusVideoroom:video-output:off') }}
@@ -125,6 +132,20 @@
 				.mdi.mdi-account-multiple
 				span.participant-count-badge {{ participantCount }}
 				span.waiting-count-badge(v-if="pendingAdmissionCount") {{ pendingAdmissionCount }}
+			.reaction-control
+				button.control-button(type="button", :class="{ active: reactionPickerOpen }", title="Reactions", @click="reactionPickerOpen = !reactionPickerOpen")
+					.mdi.mdi-emoticon-outline
+				.reaction-picker(v-if="reactionPickerOpen")
+					button.reaction-choice(v-for="reaction in availableReactions", :key="reaction.emoji", type="button", :title="reaction.emoji", @click="sendReaction(reaction.emoji)")
+						img.reaction-choice-emoji(:src="reaction.url", :alt="reaction.emoji")
+			button.control-button(
+				type="button",
+				:class="{ active: localHandRaised, loading: raiseHandPending }",
+				:disabled="raiseHandPending",
+				:title="localHandRaised ? 'Lower hand' : 'Raise hand'",
+				@click="toggleRaiseHand"
+			)
+				.mdi(:class="localHandRaised ? 'mdi-hand-back-right' : 'mdi-hand-back-right-outline'")
 			button.control-button(type="button", title="Settings", @click="showDevicePrompt = true")
 				.mdi.mdi-cog
 			button.control-button(type="button", title="Report issue", @click="showFeedbackPrompt = true")
@@ -193,9 +214,24 @@
 							button(type="button", :disabled="!participant.screenShareFeedId || isModeratorActionPending(participant, 'disable_screenshare')", @click="sendModeratorAction(participant, 'disable_screenshare')")
 								.mdi.mdi-monitor-off
 								span Disable screenshare
+							button(type="button", v-if="participant.handRaised", :disabled="isRaiseHandActionPending(participant)", @click="lowerParticipantHand(participant)")
+								.mdi.mdi-hand-back-right-off
+								span Lower hand
 							button.danger(type="button", :disabled="isModeratorActionPending(participant, 'remove_participant')", @click="sendModeratorAction(participant, 'remove_participant')")
 								.mdi.mdi-account-remove
 								span Remove
+			.raised-hands-section(v-if="raisedHandQueue.length")
+				.raised-hands-heading
+					span Raised hands
+					span {{ raisedHandQueue.length }}
+				.raised-hands-list
+					.raised-hand-row(v-for="hand in raisedHandQueue", :key="hand.user")
+						.raised-hand-user
+							.mdi.mdi-hand-back-right
+							span {{ hand.label }}
+						button.raised-hand-action(v-if="canModerateParticipants && !hand.local", type="button", :disabled="isRaiseHandUserPending(hand.user)", @click="lowerHandByUser(hand.user)")
+							.mdi.mdi-hand-back-right-off
+							span Lower
 
 	chat-user-card(v-if="selectedUser", ref="avatarCard", :user="selectedUser", @close="selectedUser = null")
 	transition(name="prompt")
@@ -215,6 +251,7 @@ import AVDevicePrompt from 'components/AVDevicePrompt'
 import FeedbackPrompt from 'components/FeedbackPrompt'
 import {createPopper} from '@popperjs/core'
 import SoundMeter from 'lib/webrtc/soundmeter'
+import { nativeToUrl as nativeEmojiToUrl } from 'lib/emoji'
 
 const MIN_BITRATE = 150 * 1000
 const MAX_BITRATE = 1500 * 1000
@@ -224,6 +261,7 @@ const USER_VIDEO_DISPLAY = 'venueless user video'
 const AUDIO_LEVEL_INTERVAL = 160
 const SPEAKING_THRESHOLD = 0.03
 const LOG_ENTRIES = []
+const JANUS_REACTIONS = ['👍', '👏', '🤣', '❤️']
 
 const log = (source, level, message) => {
 	LOG_ENTRIES.push([source, (new Date()).toISOString(), level, JSON.stringify(message)])
@@ -402,6 +440,12 @@ export default {
 			spotlightPending: false,
 			moderationNotice: null,
 			moderationNoticeTimeout: null,
+			raisedHands: {},
+			raiseHandPending: false,
+			pendingRaiseHandActions: {},
+			reactionPickerOpen: false,
+			roomReactions: [],
+			reactionSequence: 0,
 		}
 	},
 	computed: {
@@ -466,6 +510,32 @@ export default {
 		spotlightLabel() {
 			return this.spotlightTile?.label || 'a participant'
 		},
+		availableReactions() {
+			return JANUS_REACTIONS.map(emoji => ({
+				emoji,
+				url: nativeEmojiToUrl(emoji),
+			}))
+		},
+		localUserId() {
+			return this.normalizeFeedId(this.user?.id)
+		},
+		localHandRaised() {
+			return Boolean(this.raisedHands[this.localUserId]?.raised)
+		},
+		raisedHandQueue() {
+			return Object.entries(this.raisedHands)
+				.filter(([, hand]) => hand?.raised)
+				.map(([userId, hand]) => {
+					const participant = this.participantRows.find(row => this.normalizeFeedId(row.user?.id) === userId)
+					return {
+						user: userId,
+						local: userId === this.localUserId,
+						label: participant?.label || hand.display_name || 'Participant',
+						raised_at: hand.raised_at || 0,
+					}
+				})
+				.sort((a, b) => a.raised_at - b.raised_at)
+		},
 		focusTile() {
 			if (this.spotlightTile) return this.spotlightTile
 			const pinnedTile = this.tiles.find(tile => tile.key === this.pinnedTileKey)
@@ -500,6 +570,8 @@ export default {
 				audioFeedId: this.normalizeFeedId(this.ourAudioId || this.janusAudioSessionId),
 				videoFeedId: this.normalizeFeedId(this.ourVideoId || this.janusVideoSessionId),
 				screenShareFeedId: this.normalizeFeedId(this.janusScreenShareSessionId),
+				handRaised: this.localHandRaised,
+				raisedAt: this.raisedHands[this.localUserId]?.raised_at || null,
 			})
 			for (const feed of this.remoteFeeds) {
 				if (!feed.user?.id) continue
@@ -519,7 +591,11 @@ export default {
 					audioFeedId: null,
 					videoFeedId: null,
 					screenShareFeedId: null,
+					handRaised: Boolean(this.raisedHands[userId]?.raised),
+					raisedAt: this.raisedHands[userId]?.raised_at || null,
 				}
+				row.handRaised = Boolean(this.raisedHands[userId]?.raised)
+				row.raisedAt = this.raisedHands[userId]?.raised_at || null
 				if (!hasMediaState && (feed.feedType === 'screen' || feed.isScreenShare)) {
 					row.sharingScreen = true
 				}
@@ -582,7 +658,8 @@ export default {
 				hasVideo: this.localCameraActive,
 				muted: this.micMuted,
 				audioLevel: localAudioLevel,
-				speaking: this.activeSpeakerId === 'local'
+				speaking: this.activeSpeakerId === 'local',
+				handRaised: this.localHandRaised,
 			}]
 			if (this.screenShareStream) {
 				localTiles.push({
@@ -595,7 +672,8 @@ export default {
 					hasVideo: true,
 					muted: true,
 					audioLevel: 0,
-					speaking: false
+					speaking: false,
+					handRaised: this.localHandRaised,
 				})
 			}
 			const remoteTiles = this.groupedRemoteTiles()
@@ -625,6 +703,7 @@ export default {
 		this.initJanus()
 		this.loadMediaStates()
 		this.loadSpotlight()
+		this.loadRaisedHands()
 		this.loadPendingAdmissions()
 		this.slowLinkInterval = window.setInterval(() => {
 			this.downstreamSlowLinkCount = Math.max(this.downstreamSlowLinkCount - 1, 0)
@@ -684,6 +763,12 @@ export default {
 				this.handleWaitingRoomUpdate(payload)
 			} else if (name === 'januscall.spotlight') {
 				this.handleSpotlight(payload)
+			} else if (name === 'januscall.raise_hand') {
+				this.handleRaiseHand(payload)
+			} else if (name === 'januscall.raise_hand_notification') {
+				this.handleRaiseHandNotification(payload)
+			} else if (name === 'room.reaction' && payload?.context === 'januscall') {
+				this.handleRoomReaction(payload)
 			}
 		},
 		mergeMediaStates(states) {
@@ -725,6 +810,29 @@ export default {
 			} catch (error) {
 				log('janus-spotlight', 'warn', {
 					action: 'loadSpotlight:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
+			}
+		},
+		async loadRaisedHands() {
+			if (!this.eventRoomId) return
+			try {
+				const response = await api.call('januscall.raise_hand.list', {
+					room: this.eventRoomId,
+				})
+				const hands = {}
+				for (const hand of response?.hands || []) {
+					hands[this.normalizeFeedId(hand.user)] = {
+						raised: true,
+						raised_at: hand.raised_at || 0,
+						display_name: hand.display_name || '',
+					}
+				}
+				this.raisedHands = hands
+			} catch (error) {
+				log('janus-raise-hand', 'warn', {
+					action: 'loadRaisedHands:error',
 					error: error?.message || error,
 					name: error?.name,
 				})
@@ -812,10 +920,159 @@ export default {
 			this.spotlightUserId = payload.target_user ? this.normalizeFeedId(payload.target_user) : null
 			this.spotlightModeratorId = payload.moderator ? this.normalizeFeedId(payload.moderator) : null
 		},
-		tileForUser(userId) {
+		handleRaiseHand(payload) {
+			const userId = this.normalizeFeedId(payload.user)
+			if (!userId) return
+			const state = payload.state || {}
+			if (state.raised) {
+				this.raisedHands = {
+					...this.raisedHands,
+					[userId]: {
+						raised: true,
+						raised_at: state.raised_at || Math.floor(Date.now() / 1000),
+						display_name: state.display_name || '',
+					},
+				}
+			} else {
+				const nextHands = {...this.raisedHands}
+				delete nextHands[userId]
+				this.raisedHands = nextHands
+			}
+		},
+		handleRaiseHandNotification(payload) {
+			const userId = this.normalizeFeedId(payload.user)
+			if (!userId || userId === this.localUserId) return
+			const participant = this.participantRows.find(row => this.normalizeFeedId(row.user?.id) === userId)
+			const displayName = participant?.label || payload.display_name || 'Participant'
+			this.showModerationNotice(`${displayName} raised their hand.`)
+			this.$store.dispatch('notifications/createDesktopNotification', {
+				title: 'Hand raised',
+				body: `${displayName} raised their hand.`,
+				tag: `januscall-hand-${this.eventRoomId}-${userId}`,
+				user: participant?.user,
+			})
+		},
+		async toggleRaiseHand() {
+			if (this.raiseHandPending || !this.eventRoomId) return
+			this.raiseHandPending = true
+			try {
+				const response = await api.call('januscall.raise_hand', {
+					room: this.eventRoomId,
+					raised: !this.localHandRaised,
+				})
+				if (response?.state) {
+					this.handleRaiseHand({
+						user: this.localUserId,
+						state: response.state,
+					})
+				}
+			} catch (error) {
+				this.showModerationNotice('Could not update hand status.')
+				log('janus-raise-hand', 'warn', {
+					action: 'toggleRaiseHand:error',
+					error: error?.message || error,
+					name: error?.name,
+				})
+			} finally {
+				this.raiseHandPending = false
+			}
+		},
+		raiseHandActionKey(userId) {
+			return `lower-hand:${this.normalizeFeedId(userId)}`
+		},
+		isRaiseHandUserPending(userId) {
+			return Boolean(this.pendingRaiseHandActions[this.raiseHandActionKey(userId)])
+		},
+		isRaiseHandActionPending(participant) {
+			return this.isRaiseHandUserPending(participant.user?.id)
+		},
+		lowerParticipantHand(participant) {
+			if (!participant.user?.id) return
+			this.lowerHandByUser(participant.user.id)
+		},
+		async lowerHandByUser(userId) {
+			if (!this.canModerateParticipants || !this.eventRoomId) return
+			const normalizedUserId = this.normalizeFeedId(userId)
+			const key = this.raiseHandActionKey(normalizedUserId)
+			this.pendingRaiseHandActions = {
+				...this.pendingRaiseHandActions,
+				[key]: true,
+			}
+			this.openParticipantMenu = null
+			try {
+				await api.call('januscall.lower_hand', {
+					room: this.eventRoomId,
+					user: normalizedUserId,
+				})
+			} catch (error) {
+				const denied = error?.error === 'protocol.denied' || error?.code === 'protocol.denied'
+				this.showModerationNotice(denied ? 'Permission denied.' : 'Could not lower hand.')
+				log('janus-raise-hand', 'warn', {
+					action: 'lowerHandByUser:error',
+					userId: normalizedUserId,
+					error: error?.message || error,
+					name: error?.name,
+				})
+			} finally {
+				const nextPending = {...this.pendingRaiseHandActions}
+				delete nextPending[key]
+				this.pendingRaiseHandActions = nextPending
+			}
+		},
+		isTileHandRaised(tile) {
+			if (tile.handRaised) return true
+			const userId = this.normalizeFeedId(tile.user?.id)
+			return Boolean(this.raisedHands[userId]?.raised)
+		},
+		async sendReaction(reaction) {
+			if (!this.eventRoomId) return
+			this.reactionPickerOpen = false
+			try {
+				await api.call('room.react', {
+					room: this.eventRoomId,
+					reaction,
+					context: 'januscall',
+				})
+			} catch (error) {
+				this.showModerationNotice('Could not send reaction.')
+				log('janus-reaction', 'warn', {
+					action: 'sendReaction:error',
+					reaction,
+					error: error?.message || error,
+					name: error?.name,
+				})
+			}
+		},
+		handleRoomReaction(payload) {
+			if (payload.user && payload.reaction) {
+				this.showRoomReaction(payload)
+			}
+		},
+		reactionSenderName(payload) {
+			const userId = this.normalizeFeedId(payload.user)
+			const participant = this.participantRows.find(row => this.normalizeFeedId(row.user?.id) === userId)
+			if (participant?.local) return 'You'
+			return participant?.label || payload.display_name || 'Participant'
+		},
+		showRoomReaction(payload) {
+			const reaction = {
+				id: ++this.reactionSequence,
+				emoji: payload.reaction,
+				url: nativeEmojiToUrl(payload.reaction),
+				name: this.reactionSenderName(payload),
+			}
+			this.roomReactions = [...this.roomReactions, reaction].slice(-6)
+			window.setTimeout(() => {
+				this.roomReactions = this.roomReactions.filter(item => item.id !== reaction.id)
+			}, 3200)
+		},
+		tileForUser(userId, {preferScreen = true} = {}) {
 			const normalizedUserId = this.normalizeFeedId(userId)
 			const userTiles = this.tiles.filter(tile => this.normalizeFeedId(tile.user?.id) === normalizedUserId)
-			return userTiles.find(tile => tile.screen) || userTiles[0] || null
+			const preferredTile = preferScreen
+				? userTiles.find(tile => tile.screen)
+				: userTiles.find(tile => !tile.screen)
+			return preferredTile || userTiles[0] || null
 		},
 		togglePin(tile) {
 			if (this.spotlightUserId) return
@@ -1460,6 +1717,11 @@ export default {
 					this.publishingError = error?.message || 'Could not publish camera.'
 					return
 				}
+				if (!this.cameraEnabled) {
+					this.stopStreamTracks(explicitStream)
+					this.finishVideoPublish()
+					return
+				}
 			}
 
 			const offerOptions = {
@@ -1467,6 +1729,13 @@ export default {
 				simulcast: false,
 				simulcast2: false,
 				success: (jsep) => {
+					if (!this.cameraEnabled) {
+						this.finishVideoPublish()
+						if (this.videoPublisherHandle?.webrtcStuff?.pc) {
+							this.videoPublisherHandle.send({message: {request: 'unpublish'}})
+						}
+						return
+					}
 					log('janus-video-publisher', 'debug', {
 						action: 'createOffer:success',
 						jsepType: jsep?.type,
@@ -1481,13 +1750,18 @@ export default {
 						},
 						jsep,
 						success: () => {
-							log('janus-video-publisher', 'debug', {
-								action: 'configure:send-success',
-								bitrate: this.upstreamBitrate,
-							})
-							this.publishedWithVideo = true
-							this.videoPublishTimeout = window.setTimeout(() => this.finishVideoPublish(), 4000)
-						},
+								log('janus-video-publisher', 'debug', {
+									action: 'configure:send-success',
+									bitrate: this.upstreamBitrate,
+								})
+								if (!this.cameraEnabled) {
+									this.finishVideoPublish()
+									this.unpublishVideoMedia()
+									return
+								}
+								this.publishedWithVideo = true
+								this.videoPublishTimeout = window.setTimeout(() => this.finishVideoPublish(), 4000)
+							},
 						error: (error) => {
 							log('janus-video-publisher', 'error', {
 								action: 'configure:error',
@@ -1596,6 +1870,13 @@ export default {
 			this.sendMediaState()
 		},
 		onLocalVideoStream(stream) {
+			if (!this.cameraEnabled) {
+				this.stopStreamTracks(stream)
+				this.localCameraActive = false
+				this.localVideoStream = null
+				this.sendMediaState()
+				return
+			}
 			this.localVideoStream = stream
 			this.localCameraActive = stream.getVideoTracks().some(track => track.readyState === 'live')
 			log('janus-video-publisher', 'debug', {
@@ -2345,7 +2626,8 @@ export default {
 						hasVideo: feed.hasVideo,
 						muted: feed.muted,
 						audioLevel: level,
-						speaking: this.activeSpeakerId === id
+						speaking: this.activeSpeakerId === id,
+						handRaised: Boolean(this.raisedHands[this.normalizeFeedId(feed.user?.id)]?.raised),
 					})
 					continue
 				}
@@ -2365,7 +2647,8 @@ export default {
 					hasVideo: Boolean(mediaState?.cameraOn),
 					muted: mediaState ? !mediaState.micOn : true,
 					audioLevel: 0,
-					speaking: false
+					speaking: false,
+					handRaised: Boolean(this.raisedHands[userId]?.raised),
 				}
 				if (feed.feedType === 'video' || feed.hasVideo || feed.stream?.getVideoTracks().length) {
 					existingTile.videoFeedId = id
@@ -2599,6 +2882,9 @@ export default {
 			}
 			if (participant.sharingScreen) {
 				statuses.push({key: 'screen', icon: 'mdi-monitor-share', label: 'Sharing screen'})
+			}
+			if (participant.handRaised) {
+				statuses.push({key: 'hand', icon: 'mdi-hand-back-right', label: 'Hand raised'})
 			}
 			if (!participant.cameraOn) {
 				statuses.push({key: 'camera-off', icon: 'mdi-video-off', label: 'Camera off'})
@@ -3041,6 +3327,48 @@ export default {
 		right: 0
 		top: 0
 
+	.room-reactions
+		align-items: center
+		bottom: 94px
+		display: flex
+		flex-direction: column-reverse
+		gap: 10px
+		left: 50%
+		pointer-events: none
+		position: absolute
+		transform: translateX(-50%)
+		max-width: 360px
+		width: calc(100% - 32px)
+		z-index: 16
+
+	.room-reaction
+		align-items: center
+		animation: janus-reaction-float 3.2s ease-out forwards
+		background: rgba(17,19,23,.82)
+		border: 1px solid rgba(255,255,255,.16)
+		border-radius: 999px
+		box-shadow: 0 10px 28px rgba(0,0,0,.34)
+		display: flex
+		gap: 8px
+		max-width: 100%
+		padding: 7px 12px 7px 8px
+
+	.room-reaction-emoji
+		display: block
+		flex: none
+		height: 30px
+		object-fit: contain
+		width: 30px
+
+	.room-reaction-name
+		color: #fff
+		font-size: 13px
+		font-weight: 700
+		min-width: 0
+		overflow: hidden
+		text-overflow: ellipsis
+		white-space: nowrap
+
 	.tile-top
 		align-items: center
 		display: flex
@@ -3089,6 +3417,10 @@ export default {
 		.mdi
 			color: #fff
 			font-size: 17px
+		&.hand-pill
+			background: #ffb020
+			.mdi
+				color: #111317
 
 	.tile-bottom
 		align-items: center
@@ -3192,6 +3524,47 @@ export default {
 		gap: 10px
 		justify-content: center
 		padding: 12px 18px
+
+	.reaction-control
+		position: relative
+
+	.reaction-picker
+		align-items: center
+		background: #242a33
+		border: 1px solid #3a4350
+		border-radius: 999px
+		box-shadow: 0 10px 28px rgba(0,0,0,.38)
+		display: flex
+		gap: 4px
+		left: 50%
+		padding: 6px
+		position: absolute
+		bottom: calc(100% + 10px)
+		transform: translateX(-50%)
+		z-index: 25
+
+	.reaction-choice
+		align-items: center
+		background: transparent
+		border: 0
+		border-radius: 50%
+		cursor: pointer
+		display: flex
+		font-size: 24px
+		height: 40px
+		justify-content: center
+		line-height: 1
+		width: 40px
+		&:hover,
+		&:focus-visible
+			background: #313945
+			outline: none
+
+	.reaction-choice-emoji
+		display: block
+		height: 24px
+		object-fit: contain
+		width: 24px
 
 	.control-button
 		align-items: center
@@ -3463,6 +3836,90 @@ export default {
 			cursor: default
 			opacity: .6
 
+	.raised-hands-section
+		border-top: 1px solid #323944
+		display: flex
+		flex: none
+		flex-direction: column
+		gap: 8px
+		padding: 12px 10px
+
+	.raised-hands-heading
+		align-items: center
+		color: #f6f7f9
+		display: flex
+		font-size: 13px
+		font-weight: 700
+		justify-content: space-between
+		padding: 0 8px
+		span:last-child
+			background: #ffb020
+			border-radius: 99px
+			color: #111317
+			font-size: 11px
+			min-width: 20px
+			padding: 3px 7px
+			text-align: center
+
+	.raised-hands-list
+		display: flex
+		flex-direction: column
+		gap: 6px
+		max-height: 164px
+		overflow-y: auto
+
+	.raised-hand-row
+		align-items: center
+		background: #242a33
+		border: 1px solid #343d47
+		border-radius: 8px
+		display: flex
+		gap: 10px
+		min-width: 0
+		padding: 9px
+
+	.raised-hand-user
+		align-items: center
+		color: #f6f7f9
+		display: flex
+		flex: auto 1 1
+		font-size: 13px
+		font-weight: 650
+		gap: 8px
+		min-width: 0
+		.mdi
+			color: #ffcf76
+			flex: none
+			font-size: 20px
+		span
+			overflow: hidden
+			text-overflow: ellipsis
+			white-space: nowrap
+
+	.raised-hand-action
+		align-items: center
+		background: #303844
+		border: 0
+		border-radius: 6px
+		color: #fff
+		cursor: pointer
+		display: flex
+		flex: none
+		font-size: 12px
+		font-weight: 700
+		gap: 4px
+		height: 30px
+		padding: 0 8px
+		.mdi
+			font-size: 16px
+		&:hover,
+		&:focus-visible
+			background: #3a4350
+			outline: none
+		&:disabled
+			cursor: default
+			opacity: .6
+
 	.participants-list
 		box-sizing: border-box
 		display: flex
@@ -3633,6 +4090,7 @@ export default {
 		.tile-top,
 		.tile-bottom,
 		.spotlight-notice,
+		.room-reactions,
 		.participants-backdrop,
 		.participants-drawer,
 		.controlbar,
@@ -3675,4 +4133,17 @@ export default {
 			height: min(70%, 560px)
 			top: auto
 			width: 100%
+
+@keyframes janus-reaction-float
+	0%
+		opacity: 0
+		transform: translateY(14px) scale(.92)
+	10%
+		opacity: 1
+		transform: translateY(0) scale(1)
+	80%
+		opacity: 1
+	100%
+		opacity: 0
+		transform: translateY(-72px) scale(1.02)
 </style>
