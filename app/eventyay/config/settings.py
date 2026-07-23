@@ -1367,7 +1367,7 @@ TALK_BASE_PATH = ''
 LOGIN_REDIRECT_URL = '/common/account/general'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
-
+FILE_UPLOAD_MAX_SIZE_OTHER = 10 * 1024 * 1024  # 10MB default for other file uploads
 BYTES_IN_MB = 1024 * 1024
 
 # Config for max size limits
@@ -1434,6 +1434,7 @@ EVENTYAY_ENVIRONMENT = os.getenv('EVENTYAY_ENVIRONMENT', 'unknown')
 
 # Sentry configuration
 SENTRY_DSN = conf.sentry_dsn
+SENTRY_ENABLED = bool(SENTRY_DSN)
 if SENTRY_DSN:
     import sentry_sdk
     from sentry_sdk.integrations.celery import CeleryIntegration
@@ -1528,6 +1529,12 @@ DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
 PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
 
 CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
+
+# Default values for settings used across the codebase
+CACHE_TICKETS_HOURS = 24 * 7  # Cache tickets for 1 week by default
+FETCH_ECB_RATES = True  # Fetch ECB exchange rates for foreign currency invoices
+VIDEO_SERVER_HOSTNAME = os.getenv('VIDEO_SERVER_HOSTNAME', '')  # Hostname of the video server
+HAS_GEOIP = False  # Set to True if GeoIP2 database is available
 
 if IS_DEVELOPMENT:
     # Support for Android emulators and port forwarding
