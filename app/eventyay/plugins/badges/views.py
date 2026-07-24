@@ -448,6 +448,3 @@ class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncA
             str(cf.id),
             positions,
         )
-
-
-
