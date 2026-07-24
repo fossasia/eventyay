@@ -5,6 +5,7 @@ import urllib
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db import transaction
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
@@ -97,10 +98,11 @@ class ProfileView(SpeakerSocialLinksMixin, LoggedInEventPageMixin, TemplateView)
     def post(self, request, *args, **kwargs):
         if self.profile_form.is_bound:
             if self.profile_form.is_valid() and self.social_media_formset_is_valid():
-                self.profile_form.save()
-                profile = self.request.user.profiles.get_or_create(event=self.request.event)[0]
-                self.save_social_media_formset(profile)
-                profile.log_action('eventyay.user.profile.update', person=request.user)
+                with transaction.atomic():
+                    self.profile_form.save()
+                    profile = self.request.user.profiles.get_or_create(event=self.request.event)[0]
+                    self.save_social_media_formset(profile)
+                    profile.log_action('eventyay.user.profile.update', person=request.user)
                 if self.profile_form.has_changed() or (
                     self.social_media_formset and self.social_media_formset.has_changed()
                 ):
