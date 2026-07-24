@@ -1,19 +1,5 @@
 // Shared join handler for ticket (presale) pages.
 document.addEventListener('click', async (e) => {
-    const closeButton = e.target.closest(
-        '#join-online-close-button, #join-online-close-button-missing-config'
-    );
-    if (closeButton) {
-        e.preventDefault();
-        const modalId = closeButton.id === 'join-online-close-button'
-            ? 'join-video-popupmodal'
-            : 'join-video-popupmodal-missing-config';
-        const modal = document.getElementById(modalId);
-        if (modal) modal.setAttribute('hidden', 'true');
-        document.body.classList.remove('has-join-popup');
-        return;
-    }
-
     const link = e.target.closest('.join-video-link');
     if (!link) return;
     
@@ -56,3 +42,21 @@ document.addEventListener('click', async (e) => {
         console.error('Error joining video room:', error);
     }
 });
+
+const closeBtn = document.getElementById('join-online-close-button');
+if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+        const modal = document.getElementById('join-video-popupmodal');
+        if (modal) modal.setAttribute('hidden', 'true');
+        document.body.classList.remove('has-join-popup');
+    });
+}
+
+const closeBtnMissingConfig = document.getElementById('join-online-close-button-missing-config');
+if (closeBtnMissingConfig) {
+    closeBtnMissingConfig.addEventListener('click', () => {
+        const modal = document.getElementById('join-video-popupmodal-missing-config');
+        if (modal) modal.setAttribute('hidden', 'true');
+        document.body.classList.remove('has-join-popup');
+    });
+}
