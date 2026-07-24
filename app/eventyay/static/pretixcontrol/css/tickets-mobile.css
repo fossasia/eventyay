@@ -1,0 +1,683 @@
+/* Mobile-only tickets list layouts — loaded directly to avoid SCSS compress cache */
+
+@media (max-width: 767px) {
+  #page-wrapper .list-toolbar .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  #page-wrapper .list-toolbar .btn:last-child {
+    margin-bottom: 0;
+  }
+
+  #page-wrapper .list-toolbar.vouchers-toolbar,
+  #page-wrapper .list-toolbar.tickets-toolbar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+  }
+
+  #page-wrapper .list-toolbar.vouchers-toolbar .btn,
+  #page-wrapper .list-toolbar.tickets-toolbar .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    margin-bottom: 0;
+    white-space: normal;
+    font-size: 0.75rem;
+    line-height: 1.25;
+    padding: 0.45rem 0.35rem;
+    text-align: center;
+  }
+
+  #page-wrapper .tickets-table.table-flip {
+    display: block;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+  }
+
+  #page-wrapper .tickets-table.table-flip thead {
+    display: none;
+  }
+
+  #page-wrapper .vouchers-table.table-flip thead {
+    display: block;
+  }
+
+  #page-wrapper .vouchers-table.table-flip thead tr {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--color-border, #ced4da);
+    border-radius: var(--size-border-radius, 4px);
+    background-color: var(--color-grey-ultralight, #f8f8f8);
+    box-shadow: var(--shadow-light);
+  }
+
+  #page-wrapper .vouchers-table.table-flip thead th {
+    display: none;
+    border: none;
+    padding: 0;
+    font-weight: 600;
+  }
+
+  #page-wrapper .vouchers-table.table-flip thead th:first-child {
+    display: block;
+    width: 100%;
+  }
+
+  #page-wrapper .vouchers-table.table-flip .vouchers-select-all-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    height: auto;
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  #page-wrapper .vouchers-table.table-flip .vouchers-select-all-text {
+    line-height: 1.35;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody tr {
+    display: block;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border, #ced4da);
+    border-radius: var(--size-border-radius, 4px);
+    background-color: var(--color-bg, #fff);
+    box-shadow: var(--shadow-light);
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody tr:hover,
+  #page-wrapper .tickets-table.table-flip.table-hover > tbody > tr:hover {
+    background-color: var(--color-bg, #fff);
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    padding: 0.75rem 0.9rem;
+    border: none;
+    border-bottom: 1px solid var(--color-grey-light, #dae0e4);
+    text-align: right;
+    justify-content: space-between;
+    gap: 0.75rem;
+    background-color: var(--color-bg, #fff);
+    font-size: 0.9375rem;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td:last-child {
+    border-bottom: none;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td::before {
+    content: attr(data-label);
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 50%;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-grey-medium, #6c757d);
+    margin-right: auto;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td:not([data-label])::before,
+  #page-wrapper .tickets-table.table-flip tbody td[data-label=""]::before {
+    content: none;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td:empty {
+    display: none;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.dnd-container:empty {
+    display: none;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-name-cell {
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    text-align: left;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    padding: 0.9rem;
+    background-color: var(--color-grey-ultralight, #f8f8f8);
+    border-bottom: 1px solid var(--color-border, #ced4da);
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-name-cell::before {
+    content: none;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-name-cell strong {
+    font-size: 1.125rem;
+    line-height: 1.35;
+    width: 100%;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-name-cell small {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-indicators {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-indicators::before {
+    flex: 0 1 auto;
+    max-width: 50%;
+    margin-right: auto;
+    margin-bottom: 0;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-indicators > * {
+    flex: 0 0 auto;
+    margin-left: auto;
+    font-size: 1.125rem;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-meta {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-meta > .category-pill,
+  #page-wrapper .tickets-table.table-flip tbody td.list-meta > .label {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-stack {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-stack::before {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-bottom: 0.35rem;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-stack > ul,
+  #page-wrapper .tickets-table.table-flip tbody td.list-stack > small {
+    flex: 1 1 100%;
+    margin: 0 0 0 auto;
+    padding: 0;
+    list-style: none;
+    text-align: right;
+    font-size: 0.875rem;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-stack > ul li {
+    margin-bottom: 0.25rem;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-stack > ul li:last-child {
+    margin-bottom: 0;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-reorder,
+  #page-wrapper .tickets-table.table-flip tbody td.list-actions {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-reorder .btn,
+  #page-wrapper .tickets-table.table-flip tbody td.list-actions .btn {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-actions {
+    gap: 0.35rem;
+    background-color: var(--color-grey-ultralight, #f8f8f8);
+    border-top: 1px solid var(--color-border, #ced4da);
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  #page-wrapper .table-responsive:has(.tickets-table) {
+    overflow: visible;
+    border: none;
+    margin-bottom: 0.5rem;
+  }
+
+  #page-wrapper .category-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.4;
+    background: var(--color-primary-lighter, #d4ebf9);
+    color: var(--color-primary-text, #1a69a4);
+    white-space: nowrap;
+  }
+
+  #page-wrapper .tickets-table.table-flip .label {
+    display: inline-block;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.2rem 0.65rem;
+    line-height: 1.4;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-meta > small {
+    flex: 1 1 100%;
+    text-align: right;
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody tr {
+    position: relative;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-select {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.9rem;
+    z-index: 1;
+    width: auto;
+    padding: 0;
+    border: none;
+    background: transparent;
+    justify-content: flex-end;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-select::before {
+    content: none;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-select:empty {
+    display: none;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody tr:has(.list-select) .list-name-cell {
+    padding-right: 2.5rem;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td:has(.progress) {
+    flex-wrap: wrap;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td:has(.progress) .progress {
+    flex: 1 1 100%;
+    margin: 0.35rem 0 0;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td:has(.progress) .numbers {
+    flex: 1 1 100%;
+    text-align: right;
+    margin-top: 0.25rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-meta .quotabox {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-actions .btn-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-actions .btn-group {
+    display: contents;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.list-actions form {
+    display: contents;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody tr:has(.orders-section-empty) {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.orders-section-empty {
+    display: block;
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody td.orders-section-empty::before {
+    content: none;
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody tr.outbox-error-row {
+    margin-top: -1.25rem;
+    border-top: none;
+    border-radius: 0 0 var(--size-border-radius, 4px) var(--size-border-radius, 4px);
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody tr.outbox-error-row td {
+    display: block;
+    padding: 0 0.9rem 0.75rem;
+    border: none;
+    background-color: var(--color-bg, #fff);
+  }
+
+  #page-wrapper .tickets-table.table-flip tbody tr.outbox-error-row td::before {
+    content: none;
+  }
+
+  #page-wrapper .checkin-lists-intro p {
+    font-size: 0.875rem;
+    line-height: 1.45;
+    margin-bottom: 0.65rem;
+  }
+
+  #page-wrapper .checkin-lists-intro p:not(:first-child) {
+    display: none;
+  }
+
+  #page-wrapper .tickets-outbox-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: stretch;
+    margin-bottom: 0.75rem;
+  }
+
+  #page-wrapper .tickets-outbox-search {
+    flex: 1 1 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  #page-wrapper .tickets-outbox-search .form-group {
+    margin-bottom: 0;
+    min-width: 0;
+  }
+
+  #page-wrapper .tickets-outbox-search .form-group:first-child {
+    flex: 1 1 auto;
+  }
+
+  #page-wrapper .tickets-outbox-search .form-group .form-control {
+    width: 100%;
+    min-width: 0;
+  }
+
+  #page-wrapper .tickets-outbox-search .form-group .btn {
+    white-space: nowrap;
+  }
+
+  #page-wrapper .tickets-outbox-actions {
+    flex: 1 1 100%;
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  #page-wrapper .tickets-outbox-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: normal;
+    text-align: center;
+  }
+
+  #page-wrapper .outbox-table.mt-4 {
+    margin-top: 0;
+  }
+
+  #page-wrapper .tickets-import-panel.orders-import-panel .form-horizontal .col-md-5,
+  #page-wrapper .tickets-import-panel.orders-import-panel .form-horizontal .col-md-2 {
+    float: none;
+    width: 100%;
+    padding: 0;
+  }
+
+  #page-wrapper .tickets-import-panel.orders-import-panel .form-horizontal .control-label {
+    float: none;
+    width: 100%;
+    text-align: left;
+    padding: 0 0 0.35rem;
+  }
+
+  #page-wrapper .tickets-import-panel.orders-import-panel .form-horizontal .form-group {
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+
+  #page-wrapper .tickets-import-panel.orders-import-panel input[type="file"] {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #page-wrapper .tickets-import-panel.orders-import-panel .submit-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #page-wrapper .tickets-import-panel.orders-import-panel .submit-group .btn {
+    width: 100%;
+  }
+
+  #page-wrapper .compose-mails-list .list-group-item h3 {
+    font-size: 1.0625rem;
+    margin: 0 0 0.35rem;
+  }
+
+  #page-wrapper .compose-mails-list .list-group-item p {
+    font-size: 0.875rem;
+    margin-bottom: 0;
+  }
+
+  #page-wrapper .vouchers-filter-go {
+    flex: 1 1 100%;
+  }
+
+  #page-wrapper .vouchers-filter-search {
+    flex: 1 1 100%;
+  }
+
+  #page-wrapper .vouchers-filter-field {
+    flex: 1 1 calc(50% - 0.25rem);
+  }
+
+  #page-wrapper .vouchers-filter-actions {
+    flex: 1 1 100%;
+  }
+
+  #page-wrapper .vouchers-filter-container .filter-actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    width: 100%;
+  }
+
+  #page-wrapper .vouchers-filter-container .filter-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  #page-wrapper .vouchers-filter-container .form-group label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  #page-wrapper .orders-section-empty {
+    padding: 1.25rem 0.9rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+    border: 1px solid var(--color-border, #ced4da);
+    border-radius: var(--size-border-radius, 4px);
+    background-color: var(--color-grey-ultralight, #f8f8f8);
+    font-size: 0.9375rem;
+  }
+
+  #page-wrapper .payment-providers-table tbody td.list-actions {
+    justify-content: stretch;
+  }
+
+  #page-wrapper .payment-providers-table tbody td.list-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+#page-wrapper .vouchers-filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+#page-wrapper .vouchers-filter-form {
+  display: contents;
+}
+
+#page-wrapper .vouchers-filter-go,
+#page-wrapper .vouchers-filter-search,
+#page-wrapper .vouchers-filter-field,
+#page-wrapper .vouchers-filter-actions {
+  min-width: 0;
+}
+
+#page-wrapper .vouchers-filter-go .input-group {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+}
+
+#page-wrapper .vouchers-filter-go .input-group .form-control {
+  flex: 1 1 auto;
+  display: block;
+  float: none;
+  width: auto;
+  min-width: 0;
+}
+
+#page-wrapper .vouchers-filter-go .input-group-btn {
+  flex: 0 0 auto;
+  display: flex;
+  float: none;
+  width: auto;
+  vertical-align: middle;
+}
+
+#page-wrapper .vouchers-filter-go .input-group-btn .btn {
+  white-space: nowrap;
+}
+
+#page-wrapper .vouchers-filter-actions {
+  display: flex;
+  align-items: stretch;
+}
+
+#page-wrapper .vouchers-filter-container .filter-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+#page-wrapper .vouchers-filter-container .filter-actions .btn {
+  margin: 0;
+}
+
+#page-wrapper .vouchers-filter-container .form-group {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+#page-wrapper .vouchers-filter-container .form-control,
+#page-wrapper .vouchers-filter-container select.form-control {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  #page-wrapper .vouchers-filter-go {
+    flex: 0 1 220px;
+  }
+
+  #page-wrapper .vouchers-filter-search {
+    flex: 1 1 180px;
+  }
+
+  #page-wrapper .vouchers-filter-field {
+    flex: 1 1 130px;
+  }
+
+  #page-wrapper .vouchers-filter-field-wide {
+    flex: 1 1 180px;
+  }
+
+  #page-wrapper .vouchers-filter-actions {
+    flex: 0 0 auto;
+  }
+
+  #page-wrapper .vouchers-filter-container .filter-actions {
+    width: auto;
+  }
+
+  #page-wrapper .vouchers-filter-container .filter-actions .btn {
+    flex: 0 0 auto;
+  }
+
+  #page-wrapper .vouchers-filter-container .form-group label {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    border: 0;
+  }
+
+  #page-wrapper .vouchers-table .vouchers-select-all-text {
+    display: none;
+  }
+}

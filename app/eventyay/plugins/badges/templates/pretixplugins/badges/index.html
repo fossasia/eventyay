@@ -1,7 +1,12 @@
 {% extends "pretixcontrol/event/base.html" %}
 {% load i18n %}
 {% load money %}
+{% load static %}
 {% block title %}{% trans "Badges" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+{% endblock %}
 {% block content %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
@@ -26,7 +31,7 @@
             {% endif %}
         </div>
     {% else %}
-        <p>
+        <p class="list-toolbar tickets-toolbar">
             {% if "can_change_event_settings" in request.eventpermset %}
                 <a href="{% url "plugins:badges:add" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Create a new badge layout" %}
                 </a>
@@ -35,7 +40,7 @@
             </a>
         </p>
         <div class="table-responsive">
-            <table class="table table-hover table-quotas">
+            <table class="table table-hover table-quotas table-flip tickets-table badges-table">
                 <thead>
                 <tr>
                     <th>{% trans "Name" %}</th>
@@ -46,7 +51,7 @@
                 <tbody>
                 {% for l in layouts %}
                     <tr>
-                        <td>
+                        <td class="list-name-cell">
                             {% if "can_change_event_settings" in request.eventpermset %}
                                 <strong><a href="{% url "plugins:badges:edit" organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}">
                                     {{ l.name }}
@@ -55,7 +60,7 @@
                                 <strong>{{ l.name }}</strong>
                             {% endif %}
                         </td>
-                        <td>
+                        <td class="list-meta">
                             {% if l.default %}
                                 <span class="text-success">
                                     <span class="fa fa-check"></span>
@@ -72,7 +77,7 @@
                                 </form>
                             {% endif %}
                         </td>
-                        <td class="text-right flip">
+                        <td class="text-right flip list-actions">
                             {% if "can_change_event_settings" in request.eventpermset %}
                                 <a href="{% url 'plugins:badges:settings' organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}" class="btn btn-default btn-sm" title="{% trans "Settings" %}" data-toggle="tooltip"><i class="fa fa-cog"></i></a>
                                 <a href="{% url 'plugins:badges:edit' organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>

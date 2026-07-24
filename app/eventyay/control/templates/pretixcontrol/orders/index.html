@@ -79,7 +79,7 @@
                             {% bootstrap_field filter_form.provider layout='inline' %}
                         </div>
                     {% endif %}
-                    <div class="orders-filter-form-group">
+                    <div class="orders-filter-form-group orders-filter-search">
                         {% bootstrap_field filter_form.query layout='inline' %}
                     </div>
                     <div class="orders-filter-actions">
@@ -142,12 +142,15 @@
                 </div>
             {% endif %}
             <div class="table-responsive orders-table-container">
-                <table class="table table-condensed table-hover table-orders">
+                <table class="table table-condensed table-hover table-orders table-flip tickets-table orders-table">
                     <thead>
                     <tr>
                         <th>
                             {% if "can_change_orders" in request.eventpermset %}
-                                <label aria-label="{% trans "select all rows for batch-operation" %}" class="batch-select-label"><input type="checkbox" data-toggle-table/></label>
+                                <label aria-label="{% trans "Select all orders" %}" class="batch-select-label orders-select-all-label">
+                                    <input type="checkbox" data-toggle-table/>
+                                    <span class="orders-select-all-text">{% trans "Select all" %}</span>
+                                </label>
                             {% endif %}
                         </th>
                         <th>{% trans "Order code" %}
@@ -173,12 +176,12 @@
                     <tbody>
                     {% for o in orders %}
                         <tr>
-                            <td>
+                            <td class="list-select">
                                 {% if "can_change_orders" in request.eventpermset %}
                                     <label aria-label="{% trans "select row for batch-operation" %}" class="batch-select-label"><input type="checkbox" name="order" class="batch-select-checkbox" value="{{ o.code }}"{% if o.bulk_approval_eligible %} data-batch-eligible="true"{% endif %}/></label>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="list-name-cell">
                                 <strong>
                                     <a
                                             href="{% url "control:event.order" event=request.event.slug organizer=request.event.organizer.slug code=o.code %}">
@@ -199,7 +202,7 @@
                                       data-toggle="tooltip" title="{% trans o.sales_channel_obj.verbose_name %}"></span>
                                 {{ o.datetime|date:"SHORT_DATETIME_FORMAT" }}
                             </td>
-                            <td>
+                            <td class="list-stack">
                                 <ul class="list-unstyled order-product-list">
                                 {% for pos in o.active_positions %}
                                     {% if forloop.counter <= 2 %}
@@ -215,7 +218,7 @@
                                 {% endfor %}
                                 </ul>
                             </td>
-                            <td class="text-right flip">
+                            <td class="list-meta text-right flip">
                                 {% if o.has_cancellation_request %}
                                     <span class="label label-warning">{% trans "CANCELLATION REQUESTED" %}</span>
                                 {% endif %}
@@ -245,7 +248,7 @@
                                 {% endif %}
                             </td>
                             <td class="text-right flip">{{ o.pcnt|default_if_none:"0" }}</td>
-                            <td class="text-right flip">{% include "pretixcontrol/orders/fragment_order_status.html" with order=o %}</td>
+                            <td class="list-meta text-right flip">{% include "pretixcontrol/orders/fragment_order_status.html" with order=o %}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
@@ -288,6 +291,9 @@
     {% endif %}
 {% endblock %}
 {% block custom_header %}
+    {{ block.super }}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
     <link rel="stylesheet" type="text/css" href="{% static "pretixcontrol/css/orders.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
 {% endblock %}

@@ -4,6 +4,13 @@
 {% load order_overview %}
 {% load static %}
 {% block title %}{% trans "Order overview" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
+{% endblock %}
 {% block content %}
     {% url "control:event.orders" organizer=request.event.organizer.slug event=request.event.slug as listurl %}
     <nav id="event-nav" class="header-nav">
@@ -21,28 +28,28 @@
             {% include "pretixcontrol/event/component_link.html" %}
         </div>
     </nav>
-    <div class="row filter-form">
-        <form class="" action="" method="get">
+    <div class="orders-filter-container">
+        <form class="orders-filter-form" action="" method="get">
             {% if request.event.has_subevents %}
-                <div class="col-lg-2 col-sm-3 col-xs-6">
+                <div class="orders-filter-form-group">
                     {% bootstrap_field filter_form.subevent layout='inline' %}
                 </div>
-                <div class="col-lg-2 col-sm-3 col-xs-6">
+                <div class="orders-filter-form-group">
                     {% bootstrap_field filter_form.date_axis layout='inline' %}
                 </div>
             {% else %}
-                <div class="col-lg-4 col-sm-6 col-xs-6">
+                <div class="orders-filter-form-group orders-filter-search">
                     {% bootstrap_field filter_form.date_axis layout='inline' %}
                 </div>
             {% endif %}
-            <div class="col-lg-2 col-sm-6 col-xs-6">
+            <div class="orders-filter-form-group">
                 {% bootstrap_field filter_form.date_from layout='inline' %}
             </div>
-            <div class="col-lg-2 col-sm-6 col-xs-6">
+            <div class="orders-filter-form-group">
                 {% bootstrap_field filter_form.date_until layout='inline' %}
             </div>
             {{ filter_form.browser_timezone }}
-            <div class="col-lg-2 col-sm-6 col-xs-6">
+            <div class="orders-filter-actions">
                 {% include "eventyay_common/filter_actions.html" %}
             </div>
         </form>
@@ -179,7 +186,4 @@
             ¹ {% trans "If you click links in this column, you will only find orders that are canceled completely, while the numbers also include single canceled positions within valid orders." %}
         </p>
     </div>
-{% endblock %}
-{% block custom_header %}
-    <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
 {% endblock %}
