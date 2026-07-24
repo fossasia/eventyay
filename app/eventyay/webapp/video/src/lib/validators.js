@@ -83,6 +83,24 @@ export function normalizeYoutubeVideoId(input) {
 	return null
 }
 
+export function normalizeAudioTranslationSource(audioSource) {
+	if (!audioSource) return null
+	const youtubeId = normalizeYoutubeVideoId(audioSource)
+	if (youtubeId) return youtubeId
+	try {
+		new URL(audioSource)
+		return audioSource
+	} catch (e) {
+		return null
+	}
+}
+
+export function isUsableAudioTranslationEntry(entry) {
+	if (!entry?.language) return false
+	if (entry.language === 'Original') return true
+	return !!normalizeAudioTranslationSource(entry.youtube_id)
+}
+
 export function youtubeid(message) {
 	return helpers.withMessage(message, (value) => {
 		// Keep required-ness separate: empty is valid here.

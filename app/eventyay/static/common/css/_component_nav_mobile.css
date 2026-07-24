@@ -47,7 +47,6 @@
   #event-nav .navigation .navigation-button,
   .header-nav .navigation .navigation-button {
     order: -1;
-    margin-top: 0;
     margin-bottom: 10px;
   }
 

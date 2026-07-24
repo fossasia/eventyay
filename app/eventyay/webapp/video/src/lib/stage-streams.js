@@ -22,6 +22,11 @@ export const PLAYBACK_MODE_OPTIONS = [
 ]
 
 const PLAYBACK_MODES = new Set([PLAYBACK_MODE_ALWAYS_ON, PLAYBACK_MODE_SCHEDULE_DRIVEN])
+const STAGE_MODULE_TYPES = new Set([
+	'livestream.native',
+	'livestream.youtube',
+	'livestream.iframe',
+])
 
 export const STREAM_SOURCE_OPTIONS = [
 	{ id: STREAM_TYPE_HLS, label: 'HLS', module: 'livestream.native' },
@@ -38,6 +43,7 @@ export function getStreamSourceOptions() {
 
 export function getStagePlaybackMode(module) {
 	if (!module) return PLAYBACK_MODE_ALWAYS_ON
+	if (!STAGE_MODULE_TYPES.has(module.type)) return PLAYBACK_MODE_ALWAYS_ON
 
 	const config = module.config || {}
 	if (PLAYBACK_MODES.has(config.playback_mode)) return config.playback_mode

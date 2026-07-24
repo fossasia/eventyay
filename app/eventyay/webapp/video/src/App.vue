@@ -91,11 +91,13 @@ export default {
 					await this.$router.push(this.getSessionRoute(session))
 				}
 			},
-			generateSpeakerLinkUrl: ({speaker}) => {
+			generateSpeakerLinkUrl: ({speaker} = {}) => {
+				if (!speaker?.code) return ''
 				return this.$router.resolve({name: 'schedule:speaker', params: {speakerId: speaker.code}}).href
 			},
 			onSpeakerLinkClick: async (event, speaker) => {
 				event.preventDefault()
+				if (!speaker?.code) return
 				await this.$router.push({name: 'schedule:speaker', params: {speakerId: speaker.code}})
 			},
 			showJoinRoom: true,
@@ -419,6 +421,10 @@ export default {
 		position: relative
 		padding-top: 48px
 		z-index: 1
+		&:has(> .c-schedule-view), &:has(> .c-speaker-detail), &:has(> .c-speakers-list), &:has(> .c-talk-detail), &:has(> .c-public-stars)
+			padding-top: 50px !important
+			padding-left: 10px !important
+			padding-right: 10px !important
 	.sidebar-backdrop
 		position: fixed
 		top: 0

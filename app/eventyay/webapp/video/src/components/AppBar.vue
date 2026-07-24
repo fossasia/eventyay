@@ -330,6 +330,8 @@ onBeforeUnmount(() => {
 </script>
 <style lang="stylus">
 .c-app-bar
+	--app-bar-background: var(--clr-navigation-background, var(--color-header-background, var(--clr-primary)))
+	--app-bar-text: var(--clr-navigation-text-primary, var(--color-header-text, #fff))
 	position: fixed
 	top: 0
 	left: 0
@@ -341,12 +343,12 @@ onBeforeUnmount(() => {
 	padding: 0 8px
 	font-size: 14px
 	font-weight: 400
-	background-color: var(--color-header-background, var(--clr-primary))
+	background-color: var(--app-bar-background)
 	white-space: nowrap
 	overflow: visible
 	z-index: 120
 	.bunt-icon-button
-		icon-button-style(color: var(--color-header-text, #fff), style: clear)
+		icon-button-style(color: var(--app-bar-text), style: clear)
 	.nav-actions
 		display: flex
 		align-items: center
@@ -375,7 +377,7 @@ onBeforeUnmount(() => {
 			font: inherit
 			font-weight: 400
 			font-size: 14px
-			color: var(--color-header-text, #fff)
+			color: var(--app-bar-text)
 			cursor: pointer
 			white-space: nowrap
 			border-radius: 0
@@ -386,7 +388,7 @@ onBeforeUnmount(() => {
 				line-height: 1
 			&:hover
 				background-color: rgba(0, 0, 0, 0.08)
-				color: var(--color-header-text, #fff)
+				color: var(--app-bar-text)
 			&:focus-visible
 				outline: 2px solid var(--clr-primary)
 				outline-offset: -2px
@@ -429,7 +431,7 @@ onBeforeUnmount(() => {
 				display: block
 				width: 22px
 				height: 3px
-				background: var(--color-header-text, #fff)
+				background: var(--app-bar-text)
 				border-radius: 2px
 				&:not(:last-child)
 					margin-bottom: 5px
@@ -458,7 +460,7 @@ onBeforeUnmount(() => {
 		gap: 8px
 		padding: 6px 10px
 		border-radius: 4px
-		color: var(--color-header-text, #fff)
+		color: var(--app-bar-text)
 		text-decoration: none
 		position: relative
 		cursor: pointer
@@ -492,7 +494,7 @@ onBeforeUnmount(() => {
 		border: none
 		padding: 8px 12px
 		cursor: pointer
-		color: var(--color-header-text, #fff)
+		color: var(--app-bar-text)
 		display: flex
 		align-items: center
 		justify-content: center

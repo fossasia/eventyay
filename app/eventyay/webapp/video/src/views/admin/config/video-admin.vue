@@ -1,12 +1,8 @@
 <template lang="pug">
 .c-video-admin
-	.ui-page-header
+	.ui-page-header(v-if="isAdminMode")
 		h1 Video Admin
-	scrollbars(y, v-if="!isAdminMode")
-		.denied
-			h2 Access denied
-			p This area is only available in Video admin mode.
-	.video-admin-layout(v-else)
+	.video-admin-layout(v-if="isAdminMode")
 		aside.video-admin-sidebar(aria-label="Video admin settings")
 			a(v-for="item in navItems", :key="item.path", :href="item.href", :class="{active: activePath === item.path}", @click.prevent="open(item.path)") {{ item.label }}
 		.video-admin-frame-wrap(:class="{loading: !frameReady}")
@@ -46,15 +42,16 @@ export default {
 		navItems() {
 			return ADMIN_SECTIONS.map(item => ({
 				...item,
-				href: this.adminUrl(item.path)
+				href: this.embeddedAdminUrl(item.path)
 			}))
 		},
 		frameSrc() {
-			return this.adminUrl(this.activePath)
+			return this.embeddedAdminUrl(this.activePath)
 		}
 	},
 	created() {
 		this.activePath = this.normalizedPath(this.$route.params.admin_path)
+		this.redirectToBackendIfNeeded()
 	},
 	beforeUnmount() {
 		this.removeFrameBeforeUnloadListener()
@@ -63,9 +60,15 @@ export default {
 		'$route.params.admin_path'(path) {
 			this.activePath = this.normalizedPath(path)
 			this.frameReady = false
+			this.redirectToBackendIfNeeded()
 		}
 	},
 	methods: {
+		redirectToBackendIfNeeded() {
+			if (!this.isAdminMode) {
+				window.location.replace(this.adminUrl(this.activePath))
+			}
+		},
 		normalizedPath(path) {
 			if (Array.isArray(path)) path = path.join('/')
 			if (!path || typeof path !== 'string') return ''
@@ -76,7 +79,10 @@ export default {
 			return ADMIN_PATHS.has(normalized) ? normalized : ''
 		},
 		adminUrl(path) {
-			const url = new URL(`${ADMIN_BASE}${this.normalizedPath(path)}`, window.location.origin)
+			return `${ADMIN_BASE}${this.normalizedPath(path)}`
+		},
+		embeddedAdminUrl(path) {
+			const url = new URL(this.adminUrl(path), window.location.origin)
 			url.searchParams.set('embedded', '1')
 			return `${url.pathname}${url.search}`
 		},
@@ -84,7 +90,7 @@ export default {
 			const nextPath = this.normalizedPath(path)
 			if (nextPath === this.activePath) {
 				this.frameReady = false
-				this.$refs.frame.src = this.adminUrl(nextPath)
+				this.$refs.frame.src = this.embeddedAdminUrl(nextPath)
 				return
 			}
 			this.activePath = nextPath
@@ -98,6 +104,10 @@ export default {
 			const frame = this.$refs.frame
 			const doc = frame?.contentDocument
 			if (!doc || !doc.location.pathname.startsWith(ADMIN_BASE)) {
+				this.frameReady = true
+				return
+			}
+			if (doc.querySelector('link[href*="common/css/error.css"]')) {
 				this.frameReady = true
 				return
 			}

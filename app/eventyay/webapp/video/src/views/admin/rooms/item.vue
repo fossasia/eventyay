@@ -8,7 +8,7 @@
 		template(v-if="!inferredType")
 			.ui-page-header
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
-				h1 Mystery Room
+				h1(v-html="$emojify(config.name)")
 			.mystery-room
 				p Room not instantiated.
 				bunt-button(@click="showRoomEditPrompt = true") Initiate room

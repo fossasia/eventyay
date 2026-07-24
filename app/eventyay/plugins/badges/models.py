@@ -103,3 +103,25 @@ class BadgeProduct(models.Model):
 
     class Meta:
         ordering = ('id',)
+
+
+class BadgeVoucher(models.Model):
+    # If no BadgeVoucher exists => fall back to product/default layout
+    # If BadgeVoucher exists with layout=None => don't print
+    voucher = models.OneToOneField(
+        'base.Voucher',
+        null=True,
+        blank=True,
+        related_name='badge_assignment',
+        on_delete=models.CASCADE,
+    )
+    layout = models.ForeignKey(
+        'BadgeLayout',
+        on_delete=models.CASCADE,
+        related_name='voucher_assignments',
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ('id',)
