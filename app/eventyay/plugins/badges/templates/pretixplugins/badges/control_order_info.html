@@ -8,21 +8,23 @@
         </h3>
     </div>
     <div class="panel-body">
-        <form action="{% url 'plugins:badges:print' event=event.slug organizer=event.organizer.slug %}?code={{ order.code }}&action=print"
-                method="post" data-asynctask data-asynctask-long class="form-inline helper-display-inline">
-            {% csrf_token %}
-            <button class="btn btn-primary" type="submit">
-                <span class="fa fa-print"></span>
-                    {% trans "Print Badges" %}
-            </button>
-        </form>
-        <form action="{% url 'plugins:badges:print' event=event.slug organizer=event.organizer.slug %}?code={{ order.code }}&action=download"
-                method="post" data-asynctask data-asynctask-download data-asynctask-long class="form-inline helper-display-inline">
-            {% csrf_token %}
-            <button class="btn btn-default" type="submit">
-                <span class="fa fa-download"></span>
-                    {% trans "Download Badges" %}
-            </button>
-        </form>
+        <div style="display: flex; gap: 10px;">
+            <form action="{% url 'plugins:badges:print' event=event.slug organizer=event.organizer.slug %}?code={{ order.code }}&action=print"
+                    method="post" data-asynctask data-asynctask-long class="form-inline helper-display-inline">
+                {% csrf_token %}
+                <button class="btn btn-primary" type="submit">
+                    <span class="fa fa-print"></span>
+                        {% trans "Print Badges" %}
+                </button>
+            </form>
+            <form action="{% url 'plugins:badges:print' event=event.slug organizer=event.organizer.slug %}?code={{ order.code }}&action=download"
+                    method="post" data-asynctask data-asynctask-download data-asynctask-long class="form-inline helper-display-inline">
+                {% csrf_token %}
+                <button class="btn btn-default" type="submit">
+                    <span class="fa fa-download"></span>
+                        {% trans "Download Badges" %}
+                </button>
+            </form>
+        </div>
     </div>
 </div>
