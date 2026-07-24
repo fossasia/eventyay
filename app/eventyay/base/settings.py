@@ -53,6 +53,7 @@ settings_hierarkey.add_default('venueless_talk_schedule_url', '', str)
 settings_hierarkey.add_default('venueless_show_public_link', False, bool)
 settings_hierarkey.add_default('talk_schedule_public', None, bool)
 settings_hierarkey.add_default('create_for', 'all', str)
+settings_hierarkey.add_default('event_type', '', str)
 
 # Etherpad collaborative notes integration
 settings_hierarkey.add_default('etherpad_enabled', False, bool)
@@ -116,6 +117,37 @@ def is_event_series_creation_enabled(request=None) -> bool:
     if request is not None:
         setattr(request, _cache_attr, result)
     return result
+
+
+MEETUP_CREATION_ENABLED = 'meetup_creation_enabled'
+
+
+def is_meetup_creation_enabled(request=None) -> bool:
+    _cache_attr = '_meetup_creation_enabled'
+    if request is not None and hasattr(request, _cache_attr):
+        return getattr(request, _cache_attr)
+    gs = GlobalSettingsObject()
+    result = gs.settings.get(MEETUP_CREATION_ENABLED, as_type=bool, default=False)
+    if request is not None:
+        setattr(request, _cache_attr, result)
+    return result
+
+
+def user_can_create_meetups(request) -> bool:
+    """Return True if the requesting user may create meetup events.
+
+    Combines the global feature flag with per-user permission:
+    staff sessions bypass the team filter; regular users need a team
+    that carries both ``can_create_events`` and ``can_create_meetups``.
+    """
+    if not is_meetup_creation_enabled(request):
+        return False
+    user = request.user
+    return user.has_active_staff_session(request.session.session_key) or user.teams.filter(
+        can_create_events=True, can_create_meetups=True
+    ).exists()
+
+
 
 
 class SettingsSandbox:

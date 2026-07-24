@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
+from django.core.validators import URLValidator, validate_email
 from django.db.models import Q
 from django.forms import CheckboxSelectMultiple, formset_factory
 from django.urls import reverse
@@ -119,15 +119,30 @@ class EventWizardFoundationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
         self.session = kwargs.pop('session')
+        is_meetup = kwargs.pop('is_meetup', False)
         super().__init__(*args, **kwargs)
         localized_language_choices = get_language_choices_native_with_ui_name()
         self.fields['locales'].choices = localized_language_choices
         qs = Organizer.objects.all()
         if not self.user.has_active_staff_session(self.session.session_key):
-            qs = qs.filter(id__in=self.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
+            if is_meetup:
+                qs = qs.filter(
+                    id__in=self.user.teams.filter(
+                        can_create_events=True,
+                        can_create_meetups=True
+                    ).values_list('organizer', flat=True)
+                )
+            else:
+                qs = qs.filter(id__in=self.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
         # Make organizer required only if more than one exists
         organizer_count = qs.count()
         is_required = organizer_count > 1
+
+        select2_url = reverse('control:organizers.select2')
+        if is_meetup:
+            select2_url += '?can_create_meetups=1'
+        else:
+            select2_url += '?can_create=1'
 
         self.fields['organizer'] = forms.ModelChoiceField(
             label=_('Organizer'),
@@ -135,7 +150,7 @@ class EventWizardFoundationForm(forms.Form):
             widget=Select2(
                 attrs={
                     'data-model-select2': 'generic',
-                    'data-select2-url': reverse('control:organizers.select2') + '?can_create=1',
+                    'data-select2-url': select2_url,
                     'data-placeholder': _('Organizer'),
                 }
             ),
@@ -333,6 +348,14 @@ class EventWizardBasicsForm(I18nModelForm):
             ).exists()
             or user.is_staff
         )
+
+
+VIDEO_TYPE_CHOICES = [
+    ('', _('No video stream')),
+    ('youtube', _('YouTube')),
+    ('hls', _('HLS stream')),
+    ('iframe', _('Embed URL / iframe')),
+]
 
 
 class EventChoiceMixin:
@@ -1810,3 +1833,67 @@ ConfirmTextFormset = formset_factory(
     can_delete=True,
     extra=0,
 )
+
+
+class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
+    video_type = forms.ChoiceField(
+        choices=VIDEO_TYPE_CHOICES,
+        required=False,
+        label=_('Video stream type'),
+        help_text=_('Optional: configure a live video stream for this meetup.'),
+    )
+    video_url = forms.CharField(
+        required=False,
+        max_length=255,
+        label=_('Video URL / stream identifier'),
+        help_text=_('YouTube video URL, HLS stream URL, or embed URL.'),
+    )
+    registration_limit = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label=_('Registration limit'),
+        help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        currency_field = self.fields.get('currency')
+        if currency_field is not None:
+            currency_field.required = False
+            if not self.initial.get('currency'):
+                self.initial['currency'] = getattr(settings, 'DEFAULT_CURRENCY', 'USD')
+
+    def clean_currency(self):
+        value = self.cleaned_data.get('currency', '')
+        if not value:
+            return getattr(settings, 'DEFAULT_CURRENCY', 'USD')
+        return value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        video_type = cleaned_data.get('video_type')
+        video_url = cleaned_data.get('video_url')
+        if video_type and not video_url:
+            self.add_error('video_url', _('A URL is required when a video type is selected.'))
+        if video_url and not video_type:
+            self.add_error('video_type', _('A video type is required when a URL is provided.'))
+
+        if video_url and video_type in ('hls', 'iframe'):
+            val = URLValidator()
+            try:
+                val(video_url)
+            except ValidationError:
+                self.add_error('video_url', _('Enter a valid URL.'))
+        return cleaned_data
+
+
+def get_video_module_config(video_type, video_url):
+    VIDEO_MODULE_MAP = {
+        'youtube': ('livestream.youtube', {'ytid': video_url}),
+        'hls': ('livestream.native', {'hls_url': video_url}),
+        'iframe': ('page.iframe', {'url': video_url}),
+    }
+    if video_type and video_type in VIDEO_MODULE_MAP:
+        mod_type, mod_config = VIDEO_MODULE_MAP[video_type]
+        return [{'type': mod_type, 'config': mod_config}]
+    return []

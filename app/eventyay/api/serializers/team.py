@@ -57,6 +57,7 @@ class TeamSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             "limit_events",
             "limit_tracks",
             "can_create_events",
+            "can_create_meetups",
             "can_change_teams",
             "can_change_organiser_settings",
             "can_change_event_settings",

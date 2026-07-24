@@ -325,6 +325,7 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
         }
         if self.copy_from:
             form.instance.clone_from(self.copy_from, new_secrets=True)
+            form.instance.copy_data_from(self.copy_from)
 
         self.object = form.save()
 
@@ -339,6 +340,8 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
             # Point to SPA at /video/<event_id>
             base_site = settings.SITE_URL.rstrip('/')
             self.object.settings.venueless_url = f"{base_site}/video/{self.object.pk}"
+            if self.copy_from and self.copy_from.settings.get('event_type') == 'meetup':
+                self.object.settings.set('meetup_video_active', True)
         except Exception:
             pass
 

@@ -148,7 +148,14 @@ class VersionedModel(models.Model):
 
     def _cache_post_update(self):
         cache = caches["process"]
-        cache.set(self._cachekey, self, timeout=600)
+        try:
+            cache.set(self._cachekey, self, timeout=600)
+        except (TypeError, AttributeError):
+            logger.debug(
+                "VersionedModel._cache_post_update: skipping unpicklable %s pk=%s",
+                self.__class__.__name__,
+                self.pk,
+            )
         self.__refresh_time = time.time()
 
     def _set_cache_deleted_sync(self):

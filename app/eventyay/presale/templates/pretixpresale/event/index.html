@@ -304,6 +304,9 @@
                 {% endif %}
             </div>
         {% endif %}
+        {% if is_meetup_event %}
+            {% include "pretixpresale/event/rsvp.html" %}
+        {% else %}
         {% if can_view_tickets %}
             {% if request.event.live or is_organiser %}
                 {% if ev.presale_is_running or event.settings.show_products_outside_presale_period %}
@@ -344,8 +347,9 @@
                 {% endif %}
             {% endif %}
         {% endif %}
+        {% endif %}
     {% endif %}
-    {% if show_vouchers %}
+    {% if show_vouchers and not is_meetup_event %}
         {% if can_view_tickets %}
         {% if request.event.live or is_organiser %}
         <aside class="front-page" aria-labelledby="redeem-a-voucher">
@@ -392,6 +396,7 @@
     {% if guest_checkout_allowed %}
         {% if not cart_namespace %}
             {% eventsignal event "eventyay.presale.signals.front_page_bottom" subevent=subevent request=request %}
+            {% if not is_meetup_event %}
             <aside class="front-page" aria-labelledby="if-you-already-ordered-a-ticket">
                 <h3 id="if-you-already-ordered-a-ticket">{% trans "If you already ordered a ticket" %}</h3>
                 <div class="row">
@@ -413,6 +418,7 @@
                     <div class="clearfix"></div>
                 </div>
             </aside>
+            {% endif %}
         {% else %}
             {% eventsignal event "eventyay.presale.signals.front_page_bottom_widget" subevent=subevent request=request %}
         {% endif %}
