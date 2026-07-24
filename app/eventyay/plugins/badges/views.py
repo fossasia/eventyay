@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.templatetags.static import static
 from django.urls import reverse
@@ -407,16 +407,10 @@ class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncA
         return None
 
     def get_success_url(self, value):
-        if self.request.GET.get('action') == 'download':
-            return reverse('cachedfile.download', kwargs={'id': str(value)})
-        return reverse(
-            'plugins:badges:print-view',
-            kwargs={
-                'organizer': self.request.event.organizer.slug,
-                'event': self.request.event.slug,
-                'file': str(value),
-            },
-        )
+        url = reverse('cachedfile.download', kwargs={'id': str(value)})
+        if self.request.GET.get('action') != 'download':
+            url += '?inline=1'
+        return url
 
     def get_error_url(self):
         return reverse(
@@ -456,25 +450,4 @@ class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncA
         )
 
 
-class BadgePrintView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, View):
-    """Return a generated badge PDF inline."""
 
-    permission = 'can_view_orders'
-
-    @cached_property
-    def cached_file(self):
-        try:
-            cf = get_object_or_404(CachedFile, id=self.kwargs['file'], web_download=True)
-        except ValueError as exc:
-            raise Http404() from exc
-        if not cf.session_key or cf.session_key != self.request.session.session_key:
-            raise Http404()
-        if not cf.file:
-            raise Http404()
-        return cf
-
-    def get(self, request, *args, **kwargs):
-        cf = self.cached_file
-        resp = FileResponse(cf.file.file, content_type=cf.type or 'application/pdf')
-        resp['Content-Disposition'] = 'inline; filename="{}"'.format(cf.filename)
-        return resp
