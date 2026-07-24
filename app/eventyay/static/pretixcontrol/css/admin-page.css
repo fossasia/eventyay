@@ -73,3 +73,56 @@
 .numwidget-revenue .text {
   margin-top: 5px;
 }
+
+.dashboard-panels .table tr.dashboard-divider td {
+  border-top: 2px solid #e8e8e8;
+  padding-top: 8px;
+}
+
+.event-table th {
+  background: #f7f7f7;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
+.event-table td,
+.event-table th {
+  padding: 6px 10px;
+  vertical-align: middle;
+}
+
+.event-table td:first-child,
+.event-table th:first-child {
+  padding-left: 15px;
+}
+
+.event-table td:last-child,
+.event-table th:last-child {
+  padding-right: 15px;
+}
+
+.event-table a {
+  text-decoration: none;
+}
+
+.dashboard-panels .table a:hover,
+.dashboard-panels .table a:focus,
+.event-table a:hover,
+.event-table a:focus {
+  text-decoration: underline;
+}
+
+.dashboard-panels .panel-body .event-table {
+  margin-bottom: 0;
+}
+
+.config-status-ok {
+  color: #3c763d;
+  font-weight: 600;
+}
+
+.config-status-warn {
+  color: #8a6d3b;
+  font-weight: 600;
+}
