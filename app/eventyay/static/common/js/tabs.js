@@ -36,6 +36,9 @@ const getTabFromHash = () => {
  */
 const getTabWithErrors = () => {
   for (const tab of document.querySelectorAll(TAB_SELECTOR)) {
+    const tablist = tab.closest('[role="tablist"]')
+    if (!tablist || tablist.dataset.tabErrorSync !== 'true') continue
+
     const panel = getPanelForTab(tab)
     if (panel && panel.querySelector(ERROR_SELECTOR)) {
       return tab
@@ -67,6 +70,9 @@ const setupInvalidHandlers = () => {
   }
 
   document.querySelectorAll(TAB_SELECTOR).forEach((tab) => {
+    const tablist = tab.closest('[role="tablist"]')
+    if (!tablist || tablist.dataset.tabErrorSync !== 'true') return
+
     const panel = getPanelForTab(tab)
     if (!panel) return
     panel.querySelectorAll('input, select, textarea').forEach((control) => {
