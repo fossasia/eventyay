@@ -30,7 +30,7 @@ BUILTIN_SESSION_FIELDS = (
 )
 BUILTIN_SPEAKER_FIELDS = (
     'fullname', 'biography', 'avatar', 'avatar_source',
-    'avatar_license', 'availabilities', 'additional_speaker',
+    'avatar_license', 'availabilities', 'additional_speaker', 'social_links',
 )
 BUILTIN_FIELD_KEYS = {
     'session': BUILTIN_SESSION_FIELDS,
@@ -116,6 +116,7 @@ def default_fields():
         'slot_count': {'visibility': 'optional', 'public': False},
         'content_locale': {'visibility': 'required', 'public': True},
         'additional_speaker': {'visibility': 'optional', 'public': False},
+        'social_links': {'visibility': 'do_not_ask', 'public': True},
         'fullname': {'visibility': 'required', 'public': True},
     }
 

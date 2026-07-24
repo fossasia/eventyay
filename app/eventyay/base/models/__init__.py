@@ -87,7 +87,7 @@ from .product import (
     SubEventProductVariation,
     productpicture_upload_to,
 )
-from .profile import SpeakerProfile
+from .profile import SpeakerProfile, SpeakerSocialLink
 from .question import (
     Answer,
     AnswerOption,
@@ -229,6 +229,7 @@ __all__ = [
     'SeatCategoryMapping',
     'SeatingPlan',
     'SpeakerProfile',
+    'SpeakerSocialLink',
     'StreamingServer',
     'SubEvent',
     'SubEventProduct',

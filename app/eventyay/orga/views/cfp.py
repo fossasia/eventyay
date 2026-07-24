@@ -260,12 +260,16 @@ class CfPForms(EventPermissionRequired, TemplateView):
         availabilities_count = (
             Availability.objects.filter(event=event, person__isnull=False).values('person').distinct().count()
         )
+        social_links_count = (
+            SpeakerProfile.objects.filter(event=event, social_links__isnull=False).distinct().count()
+        )
 
         context['field_counts'] = {
             **submission_counts,
             **speaker_counts,
             'additional_speaker': additional_speaker_count,
             'availabilities': availabilities_count,
+            'social_links': social_links_count,
         }
 
         return context

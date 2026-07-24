@@ -3,10 +3,20 @@
 {% load i18n %}
 {% load orga_edit_link %}
 {% load event_tags %}
+{% load static %}
 
 {% block orga_edit_link %}
     {% orga_edit_link request.event.cfp.urls.text "information" %}
 {% endblock orga_edit_link %}
+
+{% block cfp_submission_header %}
+    {% if social_media_formset %}
+        <script defer src="{% static 'js/jquery.js' %}"></script>
+        <script defer src="{% static 'js/jquery.formset.js' %}"></script>
+        <script defer src="{% static 'cfp/js/animateFormset.js' %}"></script>
+        <script type="module" src="{% static 'common/js/speaker_social_links.js' %}"></script>
+    {% endif %}
+{% endblock cfp_submission_header %}
 
 {% block inner %}
 
@@ -22,5 +32,6 @@
             {{ field.as_field_group }}
         {% endif %}
     {% endfor %}
+    {% include "common/speaker_social_links_formset.html" %}
 
 {% endblock inner %}

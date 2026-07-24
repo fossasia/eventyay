@@ -32,6 +32,7 @@
             {% include "common/availabilities.html" %}
             {{ profile_form.availabilities.as_field_group }}
         {% endif %}
+        {% include "common/speaker_social_links_formset.html" %}
         {% if profile_question_fields %}
             <h2>{% translate "We have some questions" %}</h2>
             {% for field in profile_question_fields %}
@@ -55,5 +56,9 @@
 
 {% block body_bottom %}
 {% load static %}
+<script defer src="{% static 'js/jquery.js' %}"></script>
+<script defer src="{% static 'js/jquery.formset.js' %}"></script>
+<script defer src="{% static 'cfp/js/animateFormset.js' %}"></script>
 <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
+<script type="module" src="{% static 'common/js/speaker_social_links.js' %}"></script>
 {% endblock %}
