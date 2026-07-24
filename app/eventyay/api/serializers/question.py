@@ -329,7 +329,7 @@ class AnswerCreateSerializer(AnswerSerializer):
         request = self.context.get("request")
         if not request or not getattr(request, "event", None):
             return
-        event_questions = questions_for_user(self.request, request.event, request.user)
+        event_questions = questions_for_user(request, request.event, request.user)
         self.fields["question"].queryset = event_questions
         self.fields["submission"].queryset = request.event.submissions.all()
         self.fields["person"].queryset = User.objects.filter(

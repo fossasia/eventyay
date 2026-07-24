@@ -239,4 +239,5 @@ class AnswerViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         options = serializer.validated_data.get("options")
         if options is not None:
             answer.options.set(options)
+        serializer.instance = answer
         return answer
