@@ -6,7 +6,7 @@
 {% block title %}{% trans "Import attendees" %}{% endblock %}
 {% block content %}
     <h1>{% trans "Import attendees" %}</h1>
-    <form action="" method="post" class="form-horizontal" data-asynctask data-asynctask-long>
+    <form action="" method="post" class="form-horizontal" data-import-task data-import-task-long>
         {% csrf_token %}
         <div class="panel panel-default">
             <div class="panel-heading">
