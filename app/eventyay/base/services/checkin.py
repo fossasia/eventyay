@@ -105,13 +105,13 @@ class LazyRuleVars:
 
     @cached_property
     def entries_today(self):
-        tz = self._clist.event.timezone
+        tz = self._clist.event.tz
         midnight = now().astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
         return self._position.checkins.filter(type=Checkin.TYPE_ENTRY, list=self._clist, datetime__gte=midnight).count()
 
     @cached_property
     def entries_days(self):
-        tz = self._clist.event.timezone
+        tz = self._clist.event.tz
         with override(tz):
             return (
                 self._position.checkins.filter(list=self._clist, type=Checkin.TYPE_ENTRY)
@@ -226,7 +226,7 @@ class SQLLogic:
                     output_field=IntegerField(),
                 )
             elif values[0] == 'entries_today':
-                midnight = now().astimezone(self.list.event.timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+                midnight = now().astimezone(self.list.event.tz).replace(hour=0, minute=0, second=0, microsecond=0)
                 return Coalesce(
                     Subquery(
                         Checkin.objects.filter(
@@ -244,7 +244,7 @@ class SQLLogic:
                     output_field=IntegerField(),
                 )
             elif values[0] == 'entries_days':
-                tz = self.list.event.timezone
+                tz = self.list.event.tz
                 return Coalesce(
                     Subquery(
                         Checkin.objects.filter(
@@ -307,10 +307,43 @@ class SQLLogic:
 
 
 class CheckInError(Exception):
-    def __init__(self, msg, code):
+    def __init__(self, msg, code, cross_gate=False):
         self.msg = msg
         self.code = code
+        self.cross_gate = cross_gate
         super().__init__(msg)
+
+
+def resolve_checkin_api_error(error):
+    """
+    Map a CheckInError to API response parts used by redeem endpoints.
+    """
+    mapping = {
+        'already_redeemed': ('error', 'already_redeemed', 400),
+        'checkout_required': ('error', 'checkout_required', 400),
+        'product': ('error', 'product', 400),
+        'subevent': ('error', 'subevent', 400),
+        'unpaid': ('error', 'unpaid', 400),
+        'canceled': ('error', 'canceled', 400),
+        'rules': ('error', 'rules', 400),
+    }
+    return mapping.get(error.code, ('error', error.code, 400))
+
+
+def checkin_error_response_data(error):
+    """
+    Optional extra fields for CheckInError API responses.
+    """
+    data = {}
+    if error.code == 'checkout_required' and error.cross_gate:
+        data['cross_gate'] = True
+    return data
+
+
+def checkin_reason_explanation(error, position, event):
+    if error.code in ('rules', 'checkout_required', 'product', 'subevent', 'unpaid', 'canceled'):
+        return str(error)
+    return None
 
 
 class RequiredQuestionsError(Exception):
@@ -374,6 +407,69 @@ def _save_answers(op, answers, given_answers):
             del prefetched_objects_cache['answers']
 
 
+def _active_entry_checkin(op, clist):
+    last_ci = (
+        op.checkins.order_by('-datetime')
+        .filter(list=clist)
+        .select_related('gate')
+        .only('type', 'gate_id', 'gate__name')
+        .first()
+    )
+    if last_ci and last_ci.type == Checkin.TYPE_ENTRY:
+        return last_ci
+    return None
+
+
+def _is_cross_gate_checkin(active, device_gate):
+    if not device_gate or not active.gate_id:
+        return False
+    return active.gate_id != device_gate.pk
+
+
+def _raise_checkin_denied(op, clist, checkin_type, device_gate=None):
+    if checkin_type == Checkin.TYPE_ENTRY:
+        active = _active_entry_checkin(op, clist)
+        if active:
+            gate_label = active.gate.name if active.gate_id else _('this check-in list')
+            raise CheckInError(
+                _('You are already checked in at {gate}. Please check out to proceed.').format(gate=gate_label),
+                'checkout_required',
+                cross_gate=_is_cross_gate_checkin(active, device_gate),
+            )
+    raise CheckInError(
+        _('This ticket has already been redeemed.'),
+        'already_redeemed',
+    )
+
+
+def _entry_limit_violated(op, clist, dt, gate):
+    if not clist.limit_one_checkin_per_day and not clist.limit_one_checkin_per_gate:
+        return False
+
+    last_ci = op.checkins.order_by('-datetime').filter(list=clist).only('type').first()
+    # After an exit scan, allow_entry_after_exit may permit re-entry; skip limit check here
+    # so entry limits apply only while the attendee is considered inside the venue.
+    if last_ci and last_ci.type == Checkin.TYPE_EXIT:
+        return False
+
+    tz = clist.event.tz
+    midnight = dt.astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
+    entries = op.checkins.filter(list=clist, type=Checkin.TYPE_ENTRY)
+
+    if clist.limit_one_checkin_per_day and clist.limit_one_checkin_per_gate:
+        scoped = entries.filter(datetime__gte=midnight)
+        if gate:
+            return scoped.filter(gate=gate).exists()
+        return scoped.filter(gate__isnull=True).exists()
+
+    if clist.limit_one_checkin_per_day:
+        return entries.filter(datetime__gte=midnight).exists()
+
+    if gate:
+        return entries.filter(gate=gate).exists()
+    return entries.filter(gate__isnull=True).exists()
+
+
 def perform_checkin(
     op: OrderPosition,
     clist: CheckinList,
@@ -404,9 +500,18 @@ def perform_checkin(
     """
     dt = datetime or now()
 
-    if op.canceled or op.order.status not in (Order.STATUS_PAID, Order.STATUS_PENDING):
+    if op.canceled:
         raise CheckInError(
-            _('This order position has been canceled.'),
+            _('This ticket has been canceled and cannot be used for check-in.'),
+            'canceled' if canceled_supported else 'unpaid',
+        )
+    if op.order.status not in (Order.STATUS_PAID, Order.STATUS_PENDING):
+        if op.order.status == Order.STATUS_CANCELED:
+            msg = _('This order was canceled. Check-in is not allowed.')
+        else:
+            msg = _('This order cannot be checked in.')
+        raise CheckInError(
+            msg,
             'canceled' if canceled_supported else 'unpaid',
         )
 
@@ -423,17 +528,23 @@ def perform_checkin(
 
     with transaction.atomic():
         # Lock order positions
-        op = OrderPosition.all.select_for_update().get(pk=op.pk)
+        op = OrderPosition.all.select_for_update().select_related('product').get(pk=op.pk)
+
+        if type == Checkin.TYPE_ENTRY and not force and not op.product.admission:
+            raise CheckInError(
+                _('This product does not grant admission.'),
+                'product',
+            )
 
         if not clist.all_products and op.product_id not in [i.pk for i in clist.limit_products.all()]:
             raise CheckInError(
-                _('This order position has an invalid product for this check-in list.'),
+                _('This ticket type is not accepted at this check-in list.'),
                 'product',
             )
         elif clist.subevent_id and op.subevent_id != clist.subevent_id:
             raise CheckInError(
                 _('This order position has an invalid date for this check-in list.'),
-                'product',
+                'subevent',
             )
         elif (
             op.order.status != Order.STATUS_PAID
@@ -465,6 +576,13 @@ def perform_checkin(
             or last_ci is None
             or (clist.allow_entry_after_exit and last_ci.type == Checkin.TYPE_EXIT)
         )
+        if (
+            type == Checkin.TYPE_ENTRY
+            and entry_allowed
+            and not force
+            and _entry_limit_violated(op, clist, dt, device.gate if device else None)
+        ):
+            entry_allowed = False
 
         if nonce and (
             (last_ci and last_ci.nonce == nonce)
@@ -499,10 +617,7 @@ def perform_checkin(
             )
             checkin_created.send(op.order.event, checkin=ci)
         else:
-            raise CheckInError(
-                _('This ticket has already been redeemed.'),
-                'already_redeemed',
-            )
+            _raise_checkin_denied(op, clist, type, device.gate if device else None)
 
 
 @receiver(order_placed, dispatch_uid='autocheckin_order_placed')
