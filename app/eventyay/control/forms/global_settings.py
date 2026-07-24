@@ -7,7 +7,7 @@ from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
-from eventyay.base.forms import SecretKeySettingsField, SettingsForm
+from eventyay.base.forms import SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 
@@ -204,10 +204,10 @@ class GlobalSettingsForm(SettingsForm):
                 ),
                 (
                     'smtp_password',
-                    forms.CharField(
+                    SecretKeySettingsField(
                         label=_('Password'),
                         required=False,
-                        widget=forms.PasswordInput(
+                        widget=SecretKeySettingsWidget(
                             attrs={
                                 'autocomplete': 'new-password',  # see https://bugs.chromium.org/p/chromium/issues/detail?id=370363#c7
                                 'data-display-dependency': '#id_email_vendor_1',
@@ -540,6 +540,8 @@ class GlobalSettingsForm(SettingsForm):
         if data.get('email_vendor') == 'sendgrid':
             if not data.get('send_grid_api_key'):
                 raise forms.ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+
+
 
         return data
 

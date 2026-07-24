@@ -193,7 +193,8 @@
                                     <input type="email"
                                            name="test_email"
                                            id="admin-test-email-input"
-                                           class="form-control"
+                                           class="form-control ays-ignore"
+                                           data-ays-ignore="true"
                                            placeholder="{% trans 'Recipient email address(es)' %}"
                                            form="admin-test-email-form"
                                            multiple
@@ -211,6 +212,12 @@
                                 <span class="help-block">
                                     {% trans "Sends a test email to the entered recipient address or comma-separated recipient addresses to verify the email settings are working." %}
                                 </span>
+                                <div id="admin-test-email-feedback"
+                                     class="{% if test_email_feedback %}alert alert-{% if test_email_feedback.level == 'success' %}success{% else %}danger{% endif %}{% else %}hidden{% endif %}"
+                                     role="status"
+                                     aria-live="polite">
+                                    {% if test_email_feedback %}{{ test_email_feedback.message }}{% endif %}
+                                </div>
                             </div>
                         </div>
                     {% else %}
