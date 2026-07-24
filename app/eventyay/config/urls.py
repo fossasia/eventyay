@@ -4,6 +4,11 @@ import logging
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path, re_path
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerSplitView,
+)
 
 import eventyay.control.urls
 import eventyay.eventyay_common.urls
@@ -55,6 +60,21 @@ base_patterns = [
     path('metrics/', metrics.serve_metrics, name='metrics'),
     path('csp_report/', csp.csp_report, name='csp.report'),
     path('js_helpers/states/', js_helpers.states, name='js_helpers.states'),
+    path(
+        'api/v1/schema/',
+        SpectacularAPIView.as_view(api_version='api-v1'),
+        name='api-schema',
+    ),
+    path(
+        'api/v1/docs/',
+        SpectacularSwaggerSplitView.as_view(url_name='api-schema'),
+        name='api-swagger-ui',
+    ),
+    path(
+        'api/v1/redoc/',
+        SpectacularRedocView.as_view(url_name='api-schema'),
+        name='api-redoc',
+    ),
     path('api/v1/', include(('eventyay.api.urls', 'eventyayapi'), namespace='api-v1')),
     # Billing Stripe webhook also under the legacy /tickets/ API prefix some
     # environments document in the Stripe Dashboard.

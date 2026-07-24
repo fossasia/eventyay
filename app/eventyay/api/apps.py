@@ -6,7 +6,7 @@ class EventyayApiConfig(AppConfig):
     label = 'api'
 
     def ready(self):
-        from . import signals, webhooks  # noqa
+        from . import schema, signals, webhooks  # noqa
 
 
 default_app_config = 'eventyay.api.EventyayApiConfig'

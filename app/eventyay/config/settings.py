@@ -311,6 +311,7 @@ _LIBRARY_APPS = (
     'oauth2_provider',
     'statici18n',
     'rest_framework',
+    'drf_spectacular',
     # Provide styling for forms used by DRF API docs.
     'crispy_forms',
     'allauth',
@@ -1336,6 +1337,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'eventyay.api.auth.permission.EventPermission',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
     'PAGE_SIZE': 50,
@@ -1347,6 +1349,22 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'UNICODE_JSON': False,
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'eventyay API',
+    'DESCRIPTION': 'API for managing eventyay organizers and events.',
+    'VERSION': 'v1',
+    'DEFAULT_GENERATOR_CLASS': 'eventyay.api.schema.EventyaySchemaGenerator',
+    'SCHEMA_PATH_PREFIX': r'/api/v1',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'PREPROCESSING_HOOKS': [
+        'eventyay.api.documentation.exclude_unmigrated_plugin_endpoints',
+    ],
+    'POSTPROCESSING_HOOKS': [
+        'drf_spectacular.hooks.postprocess_schema_enums',
+        'eventyay.api.documentation.postprocess_schema',
+    ],
 }
 
 STATIC_URL = '/static/'

@@ -16,10 +16,17 @@ class TestAPIEndpoints:
 
     def test_api_docs_accessible(self, client):
         """Test that API documentation is accessible."""
-        # Try common API documentation paths
-        response = client.get('/api/v1/schema/')
-        # May or may not be configured
-        assert response.status_code in [200, 404]
+        schema_response = client.get('/api/v1/schema/', HTTP_ACCEPT='application/json')
+        swagger_response = client.get('/api/v1/docs/')
+        swagger_script_response = client.get('/api/v1/docs/?script=')
+        redoc_response = client.get('/api/v1/redoc/')
+
+        assert schema_response.status_code == 200
+        assert schema_response.json()['openapi'] == '3.0.3'
+        assert swagger_response.status_code == 200
+        assert swagger_script_response.status_code == 200
+        assert swagger_script_response['Content-Type'].startswith('application/javascript')
+        assert redoc_response.status_code == 200
 
     def test_api_organizers_requires_auth(self, client):
         """Test that organizers API requires authentication."""

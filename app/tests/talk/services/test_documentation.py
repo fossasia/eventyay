@@ -7,6 +7,7 @@ import pytest
 from django.conf import settings
 from django.dispatch import Signal
 
+
 here = Path(__file__).parent
 doc_dir = here / "../../../doc"
 base_dir = here / "../../pretalx"
@@ -41,8 +42,7 @@ def test_documentation_includes_signals(app):
 @pytest.mark.parametrize("app", settings.LOCAL_APPS)
 def test_documentation_includes_management_commands(app):
     # devserver is not relevant for administrators, and spectacular is a
-    # third-party command for API doc generation that we only have as a
-    # local command in order to wrap it in scopes_disabled()
+    # third-party command for OpenAPI schema generation.
     excluded_commands = ("__init__.py", "devserver.py", "spectacular.py")
     with suppress(ImportError):
         importlib.import_module(app + ".management.commands")
