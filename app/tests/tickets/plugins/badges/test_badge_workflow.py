@@ -76,46 +76,28 @@ def test_order_page_shows_download_and_print_badge(client, env):
     )
     assert response.status_code == 200
     content = response.content.decode()
-    assert 'Download Badge' in content
-    assert 'Print Badge' in content
+    assert 'Download Badges' in content
+    assert 'Print Badges' in content
+    assert 'Print Badge' in content  # Position level
     assert f'position={position.pk}' in content
     assert 'badges/print' in content
-    print_forms = [part for part in content.split('<form') if 'badges/print' in part]
+    assert 'action=print' in content
+    assert 'action=download' in content
+
+    # Check that print forms do not have data-asynctask-download
+    print_forms = [part for part in content.split('<form') if 'badges/print' in part and 'action=print' in part]
     assert print_forms
     assert all('data-asynctask-download' not in form for form in print_forms)
 
-
-@override_settings(DEBUG=True)
-@pytest.mark.django_db
-def test_download_preview_page_and_pdf(client, env):
-    event, user, order, position, _layout = env
-    client.login(email='dummy@dummy.dummy', password='dummy')
-    url = (
-        f'/control/event/{event.organizer.slug}/{event.slug}/orders/{order.code}/'
-        f'position/{position.pk}/badges/preview/'
-    )
-    response = client.get(url)
-    assert response.status_code == 200
-    content = response.content.decode()
-    assert 'Badge preview' in content
-    assert 'Download Badge' in content
-    assert '?format=pdf' in content
-
-    pdf_response = client.get(url + '?format=pdf')
-    assert pdf_response.status_code == 200
-    assert pdf_response['Content-Type'].startswith('application/pdf')
-    assert 'inline' in pdf_response['Content-Disposition']
-    assert pdf_response.get('X-Frame-Options') == 'SAMEORIGIN'
-
-    download_response = client.get(url + '?download=1')
-    assert download_response.status_code == 200
-    assert download_response['Content-Type'].startswith('application/pdf')
-    assert 'attachment' in download_response['Content-Disposition']
+    # Check that download forms DO have data-asynctask-download
+    download_forms = [part for part in content.split('<form') if 'badges/print' in part and 'action=download' in part]
+    assert download_forms
+    assert all('data-asynctask-download' in form for form in download_forms)
 
 
 @override_settings(DEBUG=True)
 @pytest.mark.django_db
-def test_print_view_opens_print_page(client, env):
+def test_print_view_returns_inline_pdf(client, env):
     event, user, _order, _position, _layout = env
     client.login(email='dummy@dummy.dummy', password='dummy')
     session_key = client.session.session_key
@@ -130,47 +112,10 @@ def test_print_view_opens_print_page(client, env):
         )
         cf.file.save('badge.pdf', ContentFile(b'%PDF-1.4 badge'))
 
+    # The print view should return the PDF directly, inline
     response = client.get(
         f'/control/event/{event.organizer.slug}/{event.slug}/badges/print/{cf.id}/',
     )
     assert response.status_code == 200
-    content = response.content.decode()
-    assert 'Print badge' in content
-    assert 'data-badge-print-frame' in content
-    assert 'format=pdf' in content
-    assert 'badge-print.js' in content
-
-    pdf_response = client.get(
-        f'/control/event/{event.organizer.slug}/{event.slug}/badges/print/{cf.id}/?format=pdf',
-    )
-    assert pdf_response.status_code == 200
-    assert pdf_response['Content-Type'].startswith('application/pdf')
-    assert 'inline' in pdf_response['Content-Disposition']
-    assert pdf_response.get('X-Frame-Options') == 'SAMEORIGIN'
-
-
-@override_settings(DEBUG=True)
-@pytest.mark.django_db
-def test_order_download_badge_redirects_to_preview(client, env):
-    event, user, order, position, _layout = env
-    client.login(email='dummy@dummy.dummy', password='dummy')
-    provider = BadgeOutputProvider(event)
-    filename, mimetype, content = provider.generate(position)
-    with scopes_disabled():
-        ct = CachedTicket.objects.create(
-            order_position=position,
-            provider='badge',
-            type=mimetype,
-            extension='.pdf',
-        )
-        ct.file.save(filename, ContentFile(content))
-
-    response = client.post(
-        f'/control/event/{event.organizer.slug}/{event.slug}/orders/{order.code}/'
-        f'download/{position.pk}/badge/',
-        {'ajax': '1'},
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert data['success'] is True
-    assert f'/orders/{order.code}/position/{position.pk}/badges/preview/' in data['redirect']
+    assert response['Content-Type'].startswith('application/pdf')
+    assert 'inline' in response['Content-Disposition']
