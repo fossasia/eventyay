@@ -12,6 +12,8 @@ $(function() {
         'id_settings-event_logo_image': { ratio: NaN }, // Free form aspect ratio for Logo
         'id_settings-logo_image': { ratio: 1920 / 640 }, // 3:1 aspect ratio for Header Image (recommended 1920x640)
         'id_settings-event_preview_image': { ratio: 16 / 9 }, // 16:9 aspect ratio for Event Preview Image (recommended 16:9)
+        'id_settings-organizer_logo_image': { ratio: NaN }, // Free form aspect ratio for Organizer Logo
+        'id_settings-organizer_header_image': { ratio: 1920 / 640 }, // Aspect ratio for Organizer Header Image (recommended 1920x640)
         'id_settings-og_image': { ratio: 1200 / 630 } // 1200:630 aspect ratio for Social Media Image (recommended 1200x630)
     };
 
@@ -130,6 +132,20 @@ $(function() {
                     if ($existingImg.parent().is('a')) {
                         $existingImg.parent().attr('href', dataUrl);
                     }
+
+                    var $wrapper = $existingImg.closest('.initial-file-container');
+                    $wrapper.find('.thumbnailed-file-checkbox').prop('checked', false);
+                    $wrapper.find('.delete-confirm-msg').hide();
+
+                    var $delBtn = $wrapper.find('.btn-delete-image-ajax');
+                    if ($delBtn.length) {
+                        $delBtn.prop('disabled', false).removeClass('btn-warning').addClass('btn-danger');
+                        $delBtn.find('i').removeClass('fa-spinner fa-spin').addClass('fa-trash');
+                        $delBtn.attr('title', $delBtn.attr('data-original-title') || 'Delete Image');
+                        $delBtn.removeAttr('data-confirming');
+                    }
+
+                    $wrapper.removeClass('thumbnailed-file-initial-hidden').show();
                 } else {
                     var $newImg = $('<img>').attr('src', dataUrl).css(imgStyles);
                     $newImg.insertBefore($input);

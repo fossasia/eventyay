@@ -521,16 +521,15 @@ body.organizer-presale-page .header-follow-floating .btn-follow {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 2px 6px;
-  height: 28px;
+  padding: 6px 12px;
+  height: 34px;
   min-width: 0;
-  border-radius: 6px;
+  border-radius: 4px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
-  font-size: 0.82rem;
-  font-weight: 500;
-  line-height: 1;
-  border: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.42857143;
+  border: 1px solid transparent;
 }
 
 body.organizer-presale-page .header-follow-floating .btn-follow.btn-primary {
@@ -543,8 +542,6 @@ body.organizer-presale-page .header-follow-floating .btn-follow.btn-danger {
 
 body.organizer-presale-page .header-follow-floating .btn-follow:hover,
 body.organizer-presale-page .header-follow-floating .btn-follow:focus {
-  transform: scale(1.02);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
   color: white;
 }
 

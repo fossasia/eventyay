@@ -1,11 +1,14 @@
 import logging
+import os
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files import File
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Max, Min, Prefetch
 from django.db.models.functions import Coalesce, Greatest
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -23,7 +26,12 @@ from rest_framework.response import Response
 
 from eventyay.base.models.event import Event, EventMetaValue
 from eventyay.base.models.organizer import Organizer, OrganizerBillingModel, Team
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
+from eventyay.base.settings import (
+    DEFAULTS,
+    SETTINGS_AFFECTING_CSS,
+    is_event_series_creation_enabled,
+)
+from eventyay.common.text.path import resolve_media_path
 from eventyay.control.forms.filter import EventFilterForm, OrganizerFilterForm
 from eventyay.control.forms.organizer_forms import (
     OrganizerDeleteForm,
@@ -202,6 +210,35 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+        if request.POST.get('ajax') == 'delete_image':
+            setting_key = request.POST.get('setting_key', '').strip()
+            if not setting_key:
+                field = request.POST.get('field', '').strip()
+                if field.startswith('settings-'):
+                    setting_key = field[len('settings-'):]
+                else:
+                    setting_key = field
+
+            if setting_key in DEFAULTS and DEFAULTS[setting_key].get('type') is File:
+                current_value = self.object.settings.get(setting_key, as_type=str)
+                if current_value:
+                    current_file = resolve_media_path(current_value)
+                    if current_file and not str(current_file).startswith(('http://', 'https://')):
+                        default_storage.delete(current_file)
+                        base_path, unused_ext = os.path.splitext(current_file)
+                        orig_ext = self.object.settings.get(f'{setting_key}_original_ext', as_type=str)
+                        if orig_ext:
+                            default_storage.delete(f'{base_path}_original.{orig_ext}')
+
+                if self.object.settings.get(setting_key) is not None:
+                    del self.object.settings[setting_key]
+                orig_ext_key = f"{setting_key}_original_ext"
+                if self.object.settings.get(orig_ext_key) is not None:
+                    del self.object.settings[orig_ext_key]
+                self.request.organizer.log_action('pretix.organizer.settings', user=request.user, data={setting_key: None})
+                return JsonResponse({'success': True})
+            return JsonResponse({'success': False, 'error': 'Invalid field'}, status=400)
+
         form = self.get_form()
         if form.is_valid() and self.sform.is_valid():
             return self.form_valid(form)
