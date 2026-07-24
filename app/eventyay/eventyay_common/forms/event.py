@@ -142,6 +142,12 @@ class EventCommonSettingsForm(SettingsForm):
                     )
                     room.save()
 
+                reg_limit = self.cleaned_data.get('registration_limit')
+                quota = self.event.quotas.first()
+                if quota and quota.size != reg_limit:
+                    quota.size = reg_limit
+                    quota.save(update_fields=['size'])
+
         return super().save()
 
     def _save_optimized(self, uploaded: UploadedFile, setting_key: str, crop_box: tuple[int, int, int, int] | None = None) -> str | UploadedFile:
@@ -205,6 +211,13 @@ class EventCommonSettingsForm(SettingsForm):
                 help_text=_('YouTube video URL, HLS stream URL, or embed URL.'),
             )
 
+            self.fields['registration_limit'] = forms.IntegerField(
+                required=False,
+                min_value=1,
+                label=_('Registration limit'),
+                help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
+            )
+
             # Retrieve existing video settings from the event's room module_config
             with scope(event=self.event):
                 room = Room.objects.filter(event=self.event, deleted=False).first()
@@ -224,6 +237,9 @@ class EventCommonSettingsForm(SettingsForm):
                             self.initial['video_url'] = cfg_data.get('url', '')
                     except (IndexError, AttributeError, KeyError, TypeError):
                         pass
+                quota = self.event.quotas.first()
+                if quota and quota.size is not None:
+                    self.initial['registration_limit'] = quota.size
         localized_language_choices = get_language_choices_native_with_ui_name()
         for fname in ('locales', 'content_locales'):
             if fname in self.fields:

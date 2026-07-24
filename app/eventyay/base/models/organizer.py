@@ -367,6 +367,11 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         default=False,
         verbose_name=_('Can create events'),
     )
+    can_create_meetups = models.BooleanField(
+        default=False,
+        verbose_name=_('Can create meetup events'),
+        help_text=_('Allows members to create meetup events for this organizer.'),
+    )
     can_change_teams = models.BooleanField(
         default=False,
         verbose_name=_('Can change teams and permissions'),

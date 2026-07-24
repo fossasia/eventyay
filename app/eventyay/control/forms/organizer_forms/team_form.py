@@ -8,6 +8,7 @@ from django_scopes.forms import SafeModelMultipleChoiceField
 
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.track import Track
+from eventyay.base.settings import is_meetup_creation_enabled
 from eventyay.control.forms.event import SafeEventMultipleChoiceField
 
 
@@ -34,6 +35,12 @@ class TeamForm(forms.ModelForm):
             )
         else:
             self._selected_track_ids = set()
+
+        if not is_meetup_creation_enabled():
+            if 'can_create_meetups' in self.fields:
+                self.fields['can_create_meetups'].disabled = True
+                self.fields['can_create_meetups'].widget.attrs['data-globally-disabled'] = 'true'
+                self.fields['can_create_meetups'].help_text = _('Meetup creation is currently disabled globally by the administrator.')
 
     @staticmethod
     def _build_events_with_tracks(events_qs, tracks_qs):
@@ -102,6 +109,7 @@ class TeamForm(forms.ModelForm):
             'all_events',
             'limit_events',
             'can_create_events',
+            'can_create_meetups',
             'can_change_teams',
             'can_change_organizer_settings',
             'can_manage_gift_cards',
@@ -165,8 +173,14 @@ class TeamForm(forms.ModelForm):
             )
             self.add_error("limit_events", error)
 
+        can_create_events = data.get('can_create_events')
+        can_create_meetups = data.get('can_create_meetups')
+        if can_create_meetups and not can_create_events:
+            self.add_error('can_create_meetups', _('Creating meetups requires the "Can create events" permission to be enabled.'))
+
         permissions = (
             'can_create_events',
+            'can_create_meetups',
             'can_change_teams',
             'can_change_organizer_settings',
             'can_manage_gift_cards',

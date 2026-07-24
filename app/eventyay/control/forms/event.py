@@ -119,15 +119,30 @@ class EventWizardFoundationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
         self.session = kwargs.pop('session')
+        is_meetup = kwargs.pop('is_meetup', False)
         super().__init__(*args, **kwargs)
         localized_language_choices = get_language_choices_native_with_ui_name()
         self.fields['locales'].choices = localized_language_choices
         qs = Organizer.objects.all()
         if not self.user.has_active_staff_session(self.session.session_key):
-            qs = qs.filter(id__in=self.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
+            if is_meetup:
+                qs = qs.filter(
+                    id__in=self.user.teams.filter(
+                        can_create_events=True,
+                        can_create_meetups=True
+                    ).values_list('organizer', flat=True)
+                )
+            else:
+                qs = qs.filter(id__in=self.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
         # Make organizer required only if more than one exists
         organizer_count = qs.count()
         is_required = organizer_count > 1
+
+        select2_url = reverse('control:organizers.select2')
+        if is_meetup:
+            select2_url += '?can_create_meetups=1'
+        else:
+            select2_url += '?can_create=1'
 
         self.fields['organizer'] = forms.ModelChoiceField(
             label=_('Organizer'),
@@ -135,7 +150,7 @@ class EventWizardFoundationForm(forms.Form):
             widget=Select2(
                 attrs={
                     'data-model-select2': 'generic',
-                    'data-select2-url': reverse('control:organizers.select2') + '?can_create=1',
+                    'data-select2-url': select2_url,
                     'data-placeholder': _('Organizer'),
                 }
             ),
@@ -1832,6 +1847,12 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
         max_length=255,
         label=_('Video URL / stream identifier'),
         help_text=_('YouTube video URL, HLS stream URL, or embed URL.'),
+    )
+    registration_limit = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label=_('Registration limit'),
+        help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
     )
 
     def __init__(self, *args, **kwargs):

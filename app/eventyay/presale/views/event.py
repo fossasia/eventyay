@@ -554,8 +554,17 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                     self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(self.request.event.pk))
                 )
             context['rsvp_guest_form'] = getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm()
+
+            rsvp_registration_closed = False
+            with scope(event=self.request.event):
+                quota = self.request.event.quotas.first()
+                if quota and quota.size is not None:
+                    avail, _ = quota.availability()
+                    rsvp_registration_closed = avail == Quota.AVAILABILITY_GONE
+            context['rsvp_registration_closed'] = rsvp_registration_closed
         else:
             context['attendee_already_registered'] = False
+            context['rsvp_registration_closed'] = False
 
         # Show voucher option if an event is selected and vouchers exist
         vouchers_exist = self.request.event.cache.get('vouchers_exist')

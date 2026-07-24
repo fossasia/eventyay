@@ -149,6 +149,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'limit_events',
             'limit_tracks',
             'can_create_events',
+            'can_create_meetups',
             'can_change_teams',
             'can_change_organizer_settings',
             'can_manage_gift_cards',

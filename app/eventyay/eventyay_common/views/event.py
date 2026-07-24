@@ -158,6 +158,10 @@ def _provision_meetup_event(event, basics_form, request=None):
             )
             quota.save()
             quota.products.add(product)
+        registration_limit = basics_form.cleaned_data.get('registration_limit') if hasattr(basics_form, 'cleaned_data') else None
+        if quota.size != registration_limit:
+            quota.size = registration_limit
+            quota.save(update_fields=['size'])
 
     event.log_action(
         'eventyay.event.meetup.created',
@@ -276,9 +280,18 @@ class EventCreateView(TemplateView):
     def get_create_organizer_queryset(self):
         queryset = Organizer.objects.all()
         if not self.request.user.has_active_staff_session(self.request.session.session_key):
-            queryset = queryset.filter(
-                id__in=self.request.user.teams.filter(can_create_events=True).values_list('organizer', flat=True)
-            )
+            if self.is_meetup_request:
+                # Must have BOTH can_create_events and can_create_meetups
+                queryset = queryset.filter(
+                    id__in=self.request.user.teams.filter(
+                        can_create_events=True,
+                        can_create_meetups=True
+                    ).values_list('organizer', flat=True)
+                )
+            else:
+                queryset = queryset.filter(
+                    id__in=self.request.user.teams.filter(can_create_events=True).values_list('organizer', flat=True)
+                )
         return queryset
 
     def get_fallback_organizer(self):
@@ -405,8 +418,13 @@ class EventCreateView(TemplateView):
         is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
         if is_series and not is_event_series_creation_enabled(request):
             raise PermissionDenied(_('Event series creation is currently disabled.'))
-        if self.is_meetup_request and not is_meetup_creation_enabled(request):
-            raise PermissionDenied(_('Meetup creation is currently disabled.'))
+        if self.is_meetup_request:
+            if not is_meetup_creation_enabled(request):
+                raise PermissionDenied(_('Meetup creation is currently disabled.'))
+            if not request.user.has_active_staff_session(request.session.session_key):
+                has_meetup_perm = request.user.teams.filter(can_create_events=True, can_create_meetups=True).exists()
+                if not has_meetup_perm:
+                    raise PermissionDenied(_('You do not have permission to create meetup events.'))
         return super().dispatch(request, *args, **kwargs)
 
     def get_foundation_form(self):
@@ -416,6 +434,7 @@ class EventCreateView(TemplateView):
             prefix='foundation',
             user=self.request.user,
             session=self.request.session,
+            is_meetup=self.is_meetup_request,
         )
 
     def get_basics_form(self, foundation_data=None, bind=True):
@@ -631,6 +650,10 @@ class EventCreateView(TemplateView):
 
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)
+                for team in self.request.user.teams.filter(organizer=event.organizer):
+                    if not team.all_events:
+                        if (self.is_meetup_request and team.can_create_events and team.can_create_meetups) or (not self.is_meetup_request and team.can_create_events):
+                            team.limit_events.add(event)
             event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
