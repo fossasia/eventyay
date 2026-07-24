@@ -248,21 +248,26 @@ class CfP(PretalxModel):
     def is_open(self) -> bool:
         """``True`` if ``max_deadline`` is not over yet, or if no deadline is
         set."""
-        if self.deadline is None:
-            return True
         return self.max_deadline >= now() if self.max_deadline else True
 
     @cached_property
     def max_deadline(self) -> dt.datetime:
         """Returns the latest date any submission is possible.
 
-        This includes the deadlines set on any submission type for this
-        event.
+        A submission type without its own deadline falls back to the
+        global CfP deadline, just like ``Submission.cfp_open`` does. If
+        any submission type (or the CfP itself, if there are no
+        submission types) ends up without a deadline, submissions never
+        stop being possible for that type, so there is no overall
+        deadline and ``None`` is returned.
         """
-        deadlines = list(self.event.submission_types.filter(deadline__isnull=False).values_list('deadline', flat=True))
-        if self.deadline:
-            deadlines.append(self.deadline)
-        return max(deadlines) if deadlines else None
+        effective_deadlines = [
+            submission_type.deadline or self.deadline
+            for submission_type in self.event.submission_types.all()
+        ] or [self.deadline]
+        if any(deadline is None for deadline in effective_deadlines):
+            return None
+        return max(effective_deadlines)
 
     @property
     def enable_gravatar(self) -> bool:
