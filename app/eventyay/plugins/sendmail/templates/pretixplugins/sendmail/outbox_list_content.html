@@ -19,8 +19,8 @@
     </div>
   </nav>
 
-  <div class='tickets-outbox-toolbar'>
-    <form method='get' class='tickets-outbox-search'>
+  <div class='tickets-outbox-toolbar submit-group clearfix'>
+    <form method='get' class='tickets-outbox-search form-inline pull-left'>
       <div class='form-group'>
         <input type='text' name='q' class='form-control'
                placeholder="{% translate 'Search' %}" value='{{ query }}'>
@@ -35,7 +35,7 @@
       </div>
     </form>
 
-    <div class='tickets-outbox-actions'>
+    <div class='tickets-outbox-actions pull-right'>
       <a href="{% url 'control:event.mail.outbox.purge' organizer=request.event.organizer.slug event=request.event.slug %}" class='btn btn-cancel'>
         {% translate 'Discard all' %}
       </a>
