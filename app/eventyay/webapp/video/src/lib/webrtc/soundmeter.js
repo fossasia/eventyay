@@ -44,8 +44,11 @@ SoundMeter.prototype.connectToSource = function(stream, callback) {
 	try {
 		this.mic = this.context.createMediaStreamSource(stream)
 		this.mic.connect(this.script)
-		// necessary to make sample run, but should not be.
-		this.script.connect(this.context.destination)
+		// Keep the processor alive without routing the measured stream to speakers.
+		this.silentOutput = this.context.createGain()
+		this.silentOutput.gain.value = 0
+		this.script.connect(this.silentOutput)
+		this.silentOutput.connect(this.context.destination)
 		if (typeof callback !== 'undefined') {
 			callback(null)
 		}
@@ -61,6 +64,9 @@ SoundMeter.prototype.stop = function() {
 	console.log('SoundMeter stopping')
 	this.mic.disconnect()
 	this.script.disconnect()
+	if (this.silentOutput) {
+		this.silentOutput.disconnect()
+	}
 }
 
 export default SoundMeter
