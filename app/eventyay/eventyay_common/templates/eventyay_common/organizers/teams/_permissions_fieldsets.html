@@ -10,6 +10,9 @@
 <fieldset>
     <legend>{% translate "Organizer permissions" %}</legend>
     {% bootstrap_field form.can_create_events layout="control" %}
+    <div class="team-permission-children" data-parent="{{ form.can_create_events.auto_id }}">
+        {% bootstrap_field form.can_create_meetups layout="control" %}
+    </div>
     {% bootstrap_field form.can_manage_gift_cards layout="control" %}
     {% bootstrap_field form.can_change_teams layout="control" %}
     {% bootstrap_field form.can_change_organizer_settings layout="control" %}

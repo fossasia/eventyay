@@ -29,9 +29,14 @@ document.addEventListener('DOMContentLoaded', function () {
         function syncFromParent() {
             const enabled = parent.checked;
             children.forEach(function (child) {
-                child.disabled = !enabled;
-                if (!enabled) {
+                if (child.getAttribute('data-globally-disabled') === 'true') {
+                    child.disabled = true;
                     child.checked = false;
+                } else {
+                    child.disabled = !enabled;
+                    if (!enabled) {
+                        child.checked = false;
+                    }
                 }
             });
             container.classList.toggle('team-permission-children--disabled', !enabled);

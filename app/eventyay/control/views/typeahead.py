@@ -571,7 +571,9 @@ def organizer_select2(request):
     if term:
         qs = qs.filter(Q(name__icontains=term) | Q(slug__icontains=term))
     if not request.user.has_active_staff_session(request.session.session_key):
-        if 'can_create' in request.GET:
+        if 'can_create_meetups' in request.GET:
+            qs = qs.filter(pk__in=request.user.teams.filter(can_create_events=True, can_create_meetups=True).values_list('organizer', flat=True))
+        elif 'can_create' in request.GET:
             qs = qs.filter(pk__in=request.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
         else:
             qs = qs.filter(pk__in=request.user.teams.values_list('organizer', flat=True))

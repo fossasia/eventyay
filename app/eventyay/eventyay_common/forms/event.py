@@ -122,6 +122,12 @@ class EventCommonSettingsForm(SettingsForm):
                 self.cleaned_data.get('video_url', ''),
             )
 
+                reg_limit = self.cleaned_data.get('registration_limit')
+                quota = self.event.quotas.first()
+                if quota and quota.size != reg_limit:
+                    quota.size = reg_limit
+                    quota.save(update_fields=['size'])
+
         return super().save()
 
     def _save_optimized(self, uploaded: UploadedFile, setting_key: str, crop_box: tuple[int, int, int, int] | None = None) -> str | UploadedFile:
@@ -175,6 +181,16 @@ class EventCommonSettingsForm(SettingsForm):
             self.fields.update(build_video_form_fields())
             self.initial.update(get_video_config_initial(self.event))
 
+            self.fields['registration_limit'] = forms.IntegerField(
+                required=False,
+                min_value=1,
+                label=_('Registration limit'),
+                help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
+            )
+            with scope(event=self.event):
+                quota = self.event.quotas.first()
+                if quota and quota.size is not None:
+                    self.initial['registration_limit'] = quota.size
         localized_language_choices = get_language_choices_native_with_ui_name()
         for fname in ('locales', 'content_locales'):
             if fname in self.fields:

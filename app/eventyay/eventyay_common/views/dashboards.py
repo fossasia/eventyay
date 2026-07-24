@@ -44,7 +44,7 @@ from eventyay.base.models import (
     SubEvent,
     Voucher,
 )
-from eventyay.base.settings import is_event_series_creation_enabled, is_meetup_creation_enabled
+from eventyay.base.settings import is_event_series_creation_enabled, user_can_create_meetups
 from eventyay.base.timeline import timeline_for_event
 from eventyay.control.forms.event import CommentForm
 from eventyay.control.signals import (
@@ -657,7 +657,7 @@ def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
         'widgets': rearrange(widgets),
         'can_create_event': request.user.teams.filter(can_create_events=True).exists(),
         'event_series_creation_enabled': is_event_series_creation_enabled(request),
-        'meetup_creation_enabled': is_meetup_creation_enabled(request),
+        'meetup_creation_enabled': user_can_create_meetups(request),
         'upcoming': widgets_for_event_qs(
             request,
             annotated_event_query(request, lazy=True)

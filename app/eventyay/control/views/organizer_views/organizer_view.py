@@ -31,6 +31,7 @@ from eventyay.base.settings import (
     SETTINGS_AFFECTING_CSS,
     is_event_series_creation_enabled,
     is_meetup_creation_enabled,
+    user_can_create_meetups,
 )
 from eventyay.common.text.path import resolve_media_path
 from eventyay.control.forms.filter import EventFilterForm, OrganizerFilterForm, advanced_filters_open_from_get
@@ -355,7 +356,7 @@ class OrganizerDashboard(OrganizerDetailViewMixin, OrganizerAnalyticsView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
-        ctx['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
+        ctx['meetup_creation_enabled'] = user_can_create_meetups(self.request)
         ctx['has_any_analytics'] = any([
             ctx.get('has_orders'),
             ctx.get('has_proposals'),
@@ -419,7 +420,7 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
         ctx['advanced_filters_open'] = advanced_filters_open_from_get(self.filter_form)
         ctx['meta_fields'] = [self.filter_form['meta_{}'.format(p.name)] for p in self.organizer.meta_properties.all()]
         ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
-        ctx['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
+        ctx['meetup_creation_enabled'] = user_can_create_meetups(self.request)
         return ctx
 
 

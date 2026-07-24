@@ -713,17 +713,25 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     def get_meetup_context(self):
         event = self.request.event
         if not is_meetup_event(event):
-            return {'is_meetup_event': False, 'attendee_already_registered': False}
+            return {'is_meetup_event': False, 'attendee_already_registered': False, 'rsvp_registration_closed': False}
 
         if self.request.user.is_authenticated:
             already_registered = has_rsvp_order(event, self.request.user.email)
         else:
             already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
 
+        rsvp_registration_closed = False
+        with scope(event=event):
+            quota = event.quotas.first()
+            if quota and quota.size is not None:
+                avail, _ = quota.availability()
+                rsvp_registration_closed = avail == Quota.AVAILABILITY_GONE
+
         return {
             'is_meetup_event': True,
             'attendee_already_registered': already_registered,
             'rsvp_guest_form': getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm(),
+            'rsvp_registration_closed': rsvp_registration_closed,
         }
 
     def get_context_data(self, **kwargs):
