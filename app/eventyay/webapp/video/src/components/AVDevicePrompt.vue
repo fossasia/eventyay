@@ -29,16 +29,24 @@ export default {
 			stream: null,
 		}
 	},
-	computed: {},
 	mounted() {
-		navigator.mediaDevices.enumerateDevices().then(this.gotDevices).catch((e) => {
-			console.warn(e)
-			alert('Could not access camera or microphone, is another program on your machine using it right now?')
-			// todo
-		})
+		this.loadDevices()
+	},
+	unmounted() {
+		this.stopPreviewStream()
 	},
 	methods: {
-		gotDevices(deviceInfos) {
+		async loadDevices() {
+			try {
+				const deviceInfos = await navigator.mediaDevices.enumerateDevices()
+				this.updateDevices(deviceInfos)
+				await this.refreshVideo()
+			} catch (error) {
+				console.warn('Could not load video device settings.', error)
+				alert('Could not access camera or microphone, is another program on your machine using it right now?')
+			}
+		},
+		updateDevices(deviceInfos) {
 			this.videoInputs = [
 				{
 					value: '',
@@ -77,35 +85,49 @@ export default {
 					console.log('Some other kind of source/device: ', deviceInfo)
 				}
 			}
-			this.refreshVideo()
-		},
-		refreshVideo() {
-			console.log('refresh')
-			if (this.stream) {
-				this.stream.getTracks().forEach(track => {
-					track.stop()
-				})
+			if (!this.audioInputs.some(option => option.value === this.audioInput)) {
+				this.audioInput = ''
 			}
+			if (!this.audioOutputs.some(option => option.value === this.audioOutput)) {
+				this.audioOutput = ''
+			}
+			if (!this.videoInputs.some(option => option.value === this.videoInput)) {
+				this.videoInput = ''
+			}
+		},
+		stopPreviewStream() {
+			if (!this.stream) return
+			this.stream.getTracks().forEach(track => {
+				track.stop()
+			})
+			this.stream = null
+			if (this.$refs.video) {
+				this.$refs.video.srcObject = null
+			}
+		},
+		async refreshVideo() {
+			this.stopPreviewStream()
 			const constraints = {
-				audio: {},
+				audio: false,
 				video: {deviceId: this.videoInput ? {exact: this.videoInput} : undefined},
 			}
-			navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+			try {
+				const stream = await navigator.mediaDevices.getUserMedia(constraints)
 				this.stream = stream
 				this.$refs.video.srcObject = stream
 				this.$refs.video.muted = 'muted'
-				// Refresh button list in case labels have become available
-				return navigator.mediaDevices.enumerateDevices()
-			}).catch(() => {
-				// todo
-				// possibly "overconstrained" (camera doesn't exist)
-			})
+				const deviceInfos = await navigator.mediaDevices.enumerateDevices()
+				this.updateDevices(deviceInfos)
+			} catch (error) {
+				console.warn('Could not refresh local camera preview.', error)
+			}
 		},
 		save() {
 			localStorage.videoInput = this.videoInput || ''
 			localStorage.audioInput = this.audioInput || ''
 			localStorage.audioOutput = this.audioOutput || ''
 			localStorage.videoOutput = this.videoOutput
+			this.stopPreviewStream()
 			this.$emit('close')
 		},
 	},
