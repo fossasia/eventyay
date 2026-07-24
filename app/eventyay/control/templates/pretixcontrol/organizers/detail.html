@@ -17,6 +17,12 @@
                 {% trans "Create Event Series" %}
             </a>
             {% endif %}
+            {% if meetup_creation_enabled %}
+            <a href="{% url "eventyay_common:events.add" %}?organizer={{ request.organizer.slug }}&amp;meetup=1" class="btn btn-default">
+                <span class="fa fa-users"></span>
+                {% trans "Create Meetup" %}
+            </a>
+            {% endif %}
         </p>
     {% endif %}
     {% if events|length == 0 and not filter_form.filtered %}

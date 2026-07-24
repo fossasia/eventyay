@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
+from django.core.validators import URLValidator, validate_email
 from django.db.models import Q
 from django.forms import CheckboxSelectMultiple, formset_factory
 from django.urls import reverse
@@ -333,6 +333,14 @@ class EventWizardBasicsForm(I18nModelForm):
             ).exists()
             or user.is_staff
         )
+
+
+VIDEO_TYPE_CHOICES = [
+    ('', _('No video stream')),
+    ('youtube', _('YouTube')),
+    ('hls', _('HLS stream')),
+    ('iframe', _('Embed URL / iframe')),
+]
 
 
 class EventChoiceMixin:
@@ -1810,3 +1818,61 @@ ConfirmTextFormset = formset_factory(
     can_delete=True,
     extra=0,
 )
+
+
+class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
+    video_type = forms.ChoiceField(
+        choices=VIDEO_TYPE_CHOICES,
+        required=False,
+        label=_('Video stream type'),
+        help_text=_('Optional: configure a live video stream for this meetup.'),
+    )
+    video_url = forms.CharField(
+        required=False,
+        max_length=255,
+        label=_('Video URL / stream identifier'),
+        help_text=_('YouTube video URL, HLS stream URL, or embed URL.'),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        currency_field = self.fields.get('currency')
+        if currency_field is not None:
+            currency_field.required = False
+            if not self.initial.get('currency'):
+                self.initial['currency'] = getattr(settings, 'DEFAULT_CURRENCY', 'USD')
+
+    def clean_currency(self):
+        value = self.cleaned_data.get('currency', '')
+        if not value:
+            return getattr(settings, 'DEFAULT_CURRENCY', 'USD')
+        return value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        video_type = cleaned_data.get('video_type')
+        video_url = cleaned_data.get('video_url')
+        if video_type and not video_url:
+            self.add_error('video_url', _('A URL is required when a video type is selected.'))
+        if video_url and not video_type:
+            self.add_error('video_type', _('A video type is required when a URL is provided.'))
+
+        if video_url and video_type in ('hls', 'iframe'):
+            val = URLValidator()
+            try:
+                val(video_url)
+            except ValidationError:
+                self.add_error('video_url', _('Enter a valid URL.'))
+        return cleaned_data
+
+
+def get_video_module_config(video_type, video_url):
+    VIDEO_MODULE_MAP = {
+        'youtube': ('livestream.youtube', {'ytid': video_url}),
+        'hls': ('livestream.native', {'hls_url': video_url}),
+        'iframe': ('page.iframe', {'url': video_url}),
+    }
+    if video_type and video_type in VIDEO_MODULE_MAP:
+        mod_type, mod_config = VIDEO_MODULE_MAP[video_type]
+        return [{'type': mod_type, 'config': mod_config}]
+    return []
