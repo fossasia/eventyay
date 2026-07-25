@@ -8,7 +8,7 @@
 		.stage-tools(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
 			// Added dropdown menu for audio translations near the reactions bar
 			reactions-bar(:expanded="true", @expand="activeStageTool = 'reaction'")
-			AudioTranslationDropdown(v-if="languages.length > 1", :languages="languages", @languageChanged="handleLanguageChange")
+			AudioTranslationDropdown(v-if="languages.length > 1", :key="room.id", :languages="languages", :selected-language="selectedAudioTranslationLanguage", @languageChanged="handleLanguageChange")
 	media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom']")
 	roulette(v-else-if="modules['networking.roulette'] && $features.enabled('roulette')", :module="modules['networking.roulette']", :room="room")
 	landing-page(v-else-if="modules['page.landing']", :module="modules['page.landing']")
@@ -48,6 +48,8 @@ import Questions from 'components/Questions'
 import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
+import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
+import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 
 export default {
 	name: 'Room',
@@ -82,11 +84,17 @@ export default {
 				polls: false
 			},
 			activeStageTool: null, // reaction, qa
-			languages: [], // Languages for the dropdown menu
-			previousRoomId: null // Track previous room to detect actual room changes
+			languages: [] // Languages for the dropdown menu
 		}
 	},
 	computed: {
+		currentYoutubeTranslation() {
+			if (!this.room?.id) return null
+			return this.$store.state.youtubeTranslationsByRoom?.[this.room.id] || null
+		},
+		selectedAudioTranslationLanguage() {
+			return this.getLanguageForTranslation(this.currentYoutubeTranslation) || 'Original'
+		},
 		usesStreamPolling() {
 			return Boolean(
 				this.modules['livestream.native'] ||
@@ -105,6 +113,9 @@ export default {
 		room: {
 			handler: 'initializeLanguages',
 			immediate: true
+		},
+		'room.currentStream': {
+			handler: 'initializeLanguages'
 		},
 		'room.id'(roomId) {
 			this.$store.dispatch('stopStreamPolling')
@@ -128,7 +139,6 @@ export default {
 	},
 	beforeUnmount() {
 		this.$store.dispatch('stopStreamPolling')
-		this.previousRoomId = null
 	},
 	methods: {
 		changedTabContent(tab) {
@@ -136,22 +146,54 @@ export default {
 			this.unreadTabs[tab] = true
 		},
 		handleLanguageChange(translationConfig) {
-			this.$store.commit('updateYoutubeTransAudio', translationConfig)
+			this.$store.commit('updateYoutubeTransAudio', {
+				roomId: this.room?.id,
+				youtubeTranslation: translationConfig
+			})
 		},
 		initializeLanguages() {
 			this.languages = []
-			if (this.modules['livestream.youtube'] && this.modules['livestream.youtube'].config.languageUrls) {
-				this.languages = this.modules['livestream.youtube'].config.languageUrls
+			let languageUrls = null
+
+			const stageModule = this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
+			const isScheduleDriven = getStagePlaybackMode(stageModule) === PLAYBACK_MODE_SCHEDULE_DRIVEN
+
+			if (isScheduleDriven) {
+				if (this.room?.currentStream?.stream_type === 'youtube' && this.room.currentStream.config?.languageUrls) {
+					languageUrls = this.room.currentStream.config.languageUrls
+				}
+			} else {
+				const ytModule = this.modules['livestream.youtube']
+				if (ytModule?.config?.languageUrls) {
+					languageUrls = ytModule.config.languageUrls
+				}
+			}
+
+			if (languageUrls) {
+				this.languages = languageUrls.filter(entry => isUsableAudioTranslationEntry(entry))
 			}
 			if (!this.languages.find(lang => lang.language === 'Original')) {
 				this.languages.unshift({language: 'Original', youtube_id: null, use_video: false})
 			}
-			// Reset translation only when actually changing rooms, not on component remount
-			const currentRoomId = this.room?.id
-			if (this.previousRoomId !== null && this.previousRoomId !== currentRoomId) {
-				this.$store.commit('updateYoutubeTransAudio', null)
+			this.clearStaleTranslation()
+		},
+		getLanguageForTranslation(translationConfig) {
+			if (!translationConfig?.url) return 'Original'
+			const matchingLanguage = this.languages.find(entry => (
+				entry.language !== 'Original' &&
+				normalizeAudioTranslationSource(entry.youtube_id) === translationConfig.url &&
+				!!entry.use_video === !!translationConfig.useVideo
+			))
+			return matchingLanguage?.language || null
+		},
+		clearStaleTranslation() {
+			if (!this.room?.id || !this.currentYoutubeTranslation) return
+			if (this.languages.length <= 1 || !this.getLanguageForTranslation(this.currentYoutubeTranslation)) {
+				this.$store.commit('updateYoutubeTransAudio', {
+					roomId: this.room.id,
+					youtubeTranslation: null
+				})
 			}
-			this.previousRoomId = currentRoomId
 		}
 	}
 }
@@ -161,6 +203,7 @@ export default {
 	flex: auto
 	display: flex
 	min-height: 0
+	min-width: 0
 	.stage
 		display: flex
 		flex-direction: column

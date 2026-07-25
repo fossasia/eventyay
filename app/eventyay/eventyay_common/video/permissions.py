@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
+
+if TYPE_CHECKING:
+    from eventyay.base.models import Event
 
 
 @dataclass(frozen=True)
@@ -14,6 +17,28 @@ class VideoPermissionDefinition:
     def trait_value(self, event_slug: str) -> str:
         normalized_trait = self.trait_name.replace('_', '-')
         return f'eventyay-video-event-{event_slug}-{normalized_trait}'
+
+
+def video_attendee_trait(event_slug: str) -> str:
+    """Event-scoped trait embedded in ticket/organizer JWTs for basic video access."""
+    return f'eventyay-video-event-{event_slug}'
+
+
+def resolve_attendee_trait_grant(event: Event, attendee_grant):
+    """
+    Require a JWT/ticket trait for attendee access unless the public video link is on.
+
+    Anonymous client_id users get empty traits rewritten to ['attendee']; locking the
+    default open grant blocks that path while preserving custom grants.
+    """
+    settings_obj = getattr(event, 'settings', None)
+    if settings_obj is not None and settings_obj.get('venueless_show_public_link', False):
+        return attendee_grant
+    if attendee_grant in (None, ['attendee'], 'attendee'):
+        slug = getattr(event, 'slug', None) or getattr(event, 'id', None)
+        if slug:
+            return [video_attendee_trait(slug)]
+    return attendee_grant
 
 
 VIDEO_PERMISSION_DEFINITIONS: dict[str, VideoPermissionDefinition] = {
@@ -65,4 +90,3 @@ def collect_user_video_traits(event_slug: str, team_permission_set: Iterable[str
         if definition := VIDEO_PERMISSION_BY_FIELD.get(perm_name):
             traits.append(definition.trait_value(event_slug))
     return traits
-
