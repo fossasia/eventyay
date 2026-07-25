@@ -45,6 +45,7 @@ export default {
 			}
 		},
 		currentDay: String,
+		forceScrollDay: { type: Number, default: 0 },
 		now: Object,
 		scrollParent: Element,
 		onHomeServer: Boolean,
@@ -78,7 +79,8 @@ export default {
 	data () {
 		return {
 			getLocalizedString,
-			scrolledDay: null
+			scrolledDay: null,
+			_scrollDayUpdate: false
 		}
 	},
 	computed: {
@@ -177,6 +179,9 @@ export default {
 		}
 	},
 	watch: {
+		forceScrollDay () {
+			this.scrollToDay(this.currentDay, { force: true })
+		},
 		async sortObserverKey () {
 			await this.$nextTick()
 			if (this.observer) {
@@ -197,7 +202,13 @@ export default {
 				this.observer.observe(el[0])
 			}
 		},
-		currentDay: 'changeDay'
+		currentDay (day) {
+			if (this._scrollDayUpdate) {
+				this._scrollDayUpdate = false
+				return
+			}
+			this.scrollToDay(day)
+		}
 	},
 	async mounted () {
 		await this.$nextTick()
@@ -296,19 +307,21 @@ export default {
 			const rect = this.$parent.$el.getBoundingClientRect()
 			return rect.top + window.scrollY
 		},
-		changeDay (day) {
-			if (!this.showDayHeaders) return
-			if (this.scrolledDay?.format('YYYY-MM-DD') === day) return
-			const dayBucket = this.bucketFirstByDay[day]
+		scrollToDay (day, { force = false } = {}) {
+			if (!this.showDayHeaders || !day) return
+			const dayStr = day.format ? day.format('YYYY-MM-DD') : day
+			if (!force && this.scrolledDay?.format('YYYY-MM-DD') === dayStr) return
+			const dayBucket = this.bucketFirstByDay[dayStr]
 			if (!dayBucket) return
 			const el = this.$refs[this.getBucketName(dayBucket.date)]?.[0]
 			if (!el) return
-			const scrollTop = el.offsetTop + this.getOffsetTop() - 8
 			if (this.scrollParent) {
-				this.scrollParent.scrollTop = scrollTop
+				const top = el.getBoundingClientRect().top - this.scrollParent.getBoundingClientRect().top + this.scrollParent.scrollTop - 8
+				this.scrollParent.scrollTop = top
 			} else {
-				window.scroll({top: scrollTop})
+				window.scroll({ top: el.offsetTop + this.getOffsetTop() - 8 })
 			}
+			this.scrolledDay = moment.tz(dayStr, 'YYYY-MM-DD', this.timezone).startOf('day')
 		},
 		onIntersect (results) {
 			if (!this.showDayHeaders) return
@@ -316,9 +329,11 @@ export default {
 			const day = moment(intersection.target.dataset.date).tz(this.timezone).startOf('day')
 			if (intersection.isIntersecting) {
 				this.scrolledDay = day
+				this._scrollDayUpdate = true
 				this.$emit('changeDay', this.scrolledDay)
 			} else if (intersection.rootBounds && (intersection.boundingClientRect.y - intersection.rootBounds.y) > 0) {
 				this.scrolledDay = day.clone().subtract(1, 'day')
+				this._scrollDayUpdate = true
 				this.$emit('changeDay', this.scrolledDay)
 			}
 		}

@@ -72,7 +72,8 @@ class AuthModule(BaseModule):
         kwargs = {
             "event": self.consumer.event,
         }
-        if not body or "token" not in body:
+        body = body or {}
+        if "token" not in body or not body.get("token"):
             client_id = body.get("client_id")
             if not client_id:
                 async with statsd() as s:
@@ -86,9 +87,10 @@ class AuthModule(BaseModule):
                 kwargs["invite_token"] = body.get("invite_token")
         else:
             try:
-                token = self.consumer.event.decode_token(
-                    body["token"], allow_raise=True
-                )
+                # decode_token may read event.settings (DB-backed) when JWT_secrets are unset
+                token = await database_sync_to_async(
+                    self.consumer.event.decode_token
+                )(body["token"], allow_raise=True)
             except jwt.exceptions.ExpiredSignatureError:
                 async with statsd() as s:
                     s.increment(
