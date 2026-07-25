@@ -11,7 +11,15 @@
     {% compress css %}
         <link rel="stylesheet" href="{% static "orga/css/dashboard.css" %}">
     {% endcompress %}
+    <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />
 {% endblock stylesheets %}
+
+{% block scripts %}
+    {% compress js %}
+        <script defer src="{% static "vendored/apexcharts/apexcharts.min.js" %}"></script>
+        <script defer src="{% static "orga/js/stats.js" %}"></script>
+    {% endcompress %}
+{% endblock scripts %}
 
 {% block content %}
     {% has_event_perm "base.orga_list_speakerprofile" request.user request request.event as can_view_speakers %}
@@ -111,8 +119,10 @@
         {% endfor %}
     </div>
 
+    {% include "orga/submission/includes/statistics.html" %}
+
     {% if history and can_change_settings %}
-        <div class="dashboard-history">
+        <div class="dashboard-history mt-4">
             <div class="d-flex">
                 <h2>{% translate "History" %}</h2>
                 {% if can_change_settings %}

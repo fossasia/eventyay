@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db.models import Count as DbCount, Prefetch, Q
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -770,13 +770,16 @@ class SubmissionFeed(PermissionRequired, Feed):
         return item.created
 
 
-class SubmissionStats(EventPermissionRequired, TemplateView):
-    template_name = 'orga/submission/stats.html'
-    permission_required = 'base.orga_list_submission'
-
+class SubmissionStatsMixin:
     @context
+    @cached_property
     def show_submission_types(self):
         return self.request.event.submission_types.all().count() > 1
+
+    @context
+    @cached_property
+    def show_tracks(self):
+        return bool(self.request.event.get_feature_flag('use_tracks'))
 
     @context
     def id_mapping(self):
@@ -789,12 +792,9 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
         }
         if self.show_tracks:
             data['track'] = {str(track): track.id for track in self.request.event.tracks.all()}
+        locales_dict = dict(self.request.event.named_content_locales)
+        data['language'] = {locales_dict.get(code, code): code for code in self.request.event.content_locales}
         return json.dumps(data)
-
-    @context
-    @cached_property
-    def show_tracks(self):
-        return self.request.event.get_feature_flag('use_tracks') and self.request.event.tracks.all().count() > 1
 
     @context
     def timeline_annotations(self):
@@ -816,22 +816,32 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
 
     @cached_property
     def raw_submission_timeline_data(self):
-        talk_ids = list(
-            map(
-                str, self.request.event.submissions.exclude(state=SubmissionStates.DELETED).values_list('id', flat=True)
-            )
+        submissions = list(
+            self.request.event.submissions
+            .exclude(state=SubmissionStates.DELETED)
+            .values_list('id', 'created')
         )
-        data = Counter(
-            log.timestamp.astimezone(self.request.event.tz).date()
-            for log in LogEntry.objects.filter(
-                event=self.request.event,
-                action_type='eventyay.submission.create',
-                content_type=ContentType.objects.get_for_model(Submission),
-                object_id__in=talk_ids,
-            )
-        )
+        talk_ids = [str(sub_id) for sub_id, _ in submissions]
+        logs = LogEntry.objects.filter(
+            event=self.request.event,
+            action_type__in=['eventyay.submission.create', 'pretalx.submission.create', 'pretalx.submission.make_submitted'],
+            content_type=ContentType.objects.get_for_model(Submission),
+            object_id__in=talk_ids,
+        ).order_by('datetime').values_list('object_id', 'datetime')
+        log_dates = {}
+        for object_id, dt_value in logs:
+            log_dates.setdefault(str(object_id), dt_value.astimezone(self.request.event.tz).date())
+
+        data = Counter()
+        for sub_id, created in submissions:
+            created_date = log_dates.get(str(sub_id))
+            if not created_date and created:
+                created_date = created.astimezone(self.request.event.tz).date()
+            if created_date:
+                data[created_date] += 1
+
         dates = data.keys()
-        if len(dates) > 1:
+        if dates:
             date_range = rrule.rrule(
                 rrule.DAILY,
                 count=(max(dates) - min(dates)).days + 1,
@@ -841,6 +851,7 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
                 ({'x': date.date().isoformat(), 'y': data.get(date.date(), 0)} for date in date_range),
                 key=lambda x: x['x'],
             )
+        return []
 
     @context
     def submission_timeline_data(self):
@@ -849,23 +860,17 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
         return ''
 
     @context
-    def total_submission_timeline_data(self):
-        if self.raw_submission_timeline_data:
-            result = [{'x': 0, 'y': 0}]
-            for point in self.raw_submission_timeline_data:
-                result.append({'x': point['x'], 'y': result[-1]['y'] + point['y']})
-            return json.dumps(result[1:])
-        return ''
-
-    @context
     @cached_property
     def submission_state_data(self):
-        counter = Counter(
-            submission.get_state_display()
-            for submission in Submission.all_objects.exclude(state=SubmissionStates.DRAFT).filter(
-                event=self.request.event
-            )
+        rows = (
+            Submission.all_objects
+            .exclude(state=SubmissionStates.DRAFT)
+            .filter(event=self.request.event)
+            .values('state')
+            .annotate(count=DbCount('id'))
         )
+        state_labels = dict(SubmissionStates.get_choices())
+        counter = {str(state_labels.get(row['state'], row['state'])): row['count'] for row in rows}
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -902,36 +907,63 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
         return ''
 
     @context
+    def submission_language_data(self):
+        locales_dict = dict(self.request.event.named_content_locales)
+        counter = Counter(
+            str(locales_dict.get(locale, locale))
+            for locale in Submission.objects.filter(event=self.request.event).values_list('content_locale', flat=True)
+        )
+        return json.dumps(
+            sorted(
+                [{'label': label, 'value': value} for label, value in counter.items()],
+                key=itemgetter('label'),
+            )
+        )
+
+    @context
     def talk_timeline_data(self):
-        talk_ids = list(
-            map(
-                str,
-                self.request.event.submissions.filter(state__in=SubmissionStates.accepted_states).values_list(
-                    'id', flat=True
-                ),
-            )
+        talks = list(
+            self.request.event.submissions
+            .filter(state__in=SubmissionStates.accepted_states)
+            .values_list('id', 'created')
         )
-        data = Counter(
-            log.timestamp.astimezone(self.request.event.tz).date().isoformat()
-            for log in LogEntry.objects.filter(
-                event=self.request.event,
-                action_type='eventyay.submission.create',
-                content_type=ContentType.objects.get_for_model(Submission),
-                object_id__in=talk_ids,
-            )
-        )
-        if len(data.keys()) > 1:
-            return json.dumps(
-                [{'x': point['x'], 'y': data.get(point['x'][:10], 0)} for point in self.raw_submission_timeline_data]
-            )
+        talk_ids = [str(talk_id) for talk_id, _ in talks]
+        logs = LogEntry.objects.filter(
+            event=self.request.event,
+            action_type__in=['eventyay.submission.create', 'pretalx.submission.create', 'pretalx.submission.make_submitted'],
+            content_type=ContentType.objects.get_for_model(Submission),
+            object_id__in=talk_ids,
+        ).order_by('datetime').values_list('object_id', 'datetime')
+        log_dates = {}
+        for object_id, dt_value in logs:
+            log_dates.setdefault(str(object_id), dt_value.astimezone(self.request.event.tz).date().isoformat())
+
+        data = Counter()
+        for talk_id, created in talks:
+            created_date = log_dates.get(str(talk_id))
+            if not created_date and created:
+                created_date = created.astimezone(self.request.event.tz).date().isoformat()
+            if created_date:
+                data[created_date] += 1
+
+        if data:
+            if self.raw_submission_timeline_data:
+                return json.dumps(
+                    [{'x': point['x'], 'y': data.get(point['x'][:10], 0)} for point in self.raw_submission_timeline_data]
+                )
+            return json.dumps([{'x': date, 'y': count} for date, count in sorted(data.items())])
         return ''
 
     @context
     def talk_state_data(self):
-        counter = Counter(
-            submission.get_state_display()
-            for submission in self.request.event.submissions.filter(state__in=SubmissionStates.accepted_states)
+        rows = (
+            self.request.event.submissions
+            .filter(state__in=SubmissionStates.accepted_states)
+            .values('state')
+            .annotate(count=DbCount('id'))
         )
+        state_labels = dict(SubmissionStates.get_choices())
+        counter = {str(state_labels.get(row['state'], row['state'])): row['count'] for row in rows}
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -970,6 +1002,22 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
                 )
             )
         return ''
+
+    @context
+    def talk_language_data(self):
+        locales_dict = dict(self.request.event.named_content_locales)
+        counter = Counter(
+            str(locales_dict.get(locale, locale))
+            for locale in self.request.event.submissions.filter(
+                state__in=SubmissionStates.accepted_states
+            ).values_list('content_locale', flat=True)
+        )
+        return json.dumps(
+            sorted(
+                [{'label': label, 'value': value} for label, value in counter.items()],
+                key=itemgetter('label'),
+            )
+        )
 
 
 class AllFeedbacksList(EventPermissionRequired, PaginationMixin, ListView):

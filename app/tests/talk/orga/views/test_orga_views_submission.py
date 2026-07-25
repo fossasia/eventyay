@@ -815,7 +815,7 @@ def test_reviewer_cannot_see_anonymisation_interface(review_client, submission):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("use_tracks", (True, False))
-def test_submission_statistics(use_tracks, slot, other_slot, orga_client):
+def test_talk_dashboard_statistics(use_tracks, slot, other_slot, orga_client):
     with scope(event=slot.event):
         slot.event.feature_flags["use_tracks"] = use_tracks
         slot.event.save()
@@ -826,8 +826,11 @@ def test_submission_statistics(use_tracks, slot, other_slot, orga_client):
         ActivityLog.objects.filter(pk=logs[0].pk).update(
             timestamp=logs[0].timestamp - dt.timedelta(days=2)
         )
-    response = orga_client.get(slot.event.orga_urls.stats)
+    response = orga_client.get(slot.event.orga_urls.base)
     assert response.status_code == 200
+    content = response.content.decode()
+    assert "Proposal Statistics" in content
+    assert "Session Statistics" in content
 
 
 @pytest.mark.django_db
