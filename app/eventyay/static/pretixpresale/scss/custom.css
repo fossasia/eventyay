@@ -335,10 +335,6 @@ header .header-row-right {
         padding: 2px 4px;
     }
 
-    .presale-sticky-tabs a.header-tab.active {
-        order: -1;
-    }
-
     .cfs-full {
         display: none;
     }
