@@ -137,6 +137,7 @@ def test_organizer_analytics_view_context(organizer_client, organizer, event, us
     assert 'email_engagement_rows' in ctx
     assert len(ctx['email_engagement_rows']) == 1
     assert ctx['email_engagement_rows'][0]['queued'] == 1
+    assert "{" not in ctx['email_engagement_rows'][0]['event_name']
     assert ctx['has_email_engagement'] is True
 
     assert 'attendance_events' in ctx
@@ -150,6 +151,7 @@ def test_organizer_analytics_view_context(organizer_client, organizer, event, us
     assert 'revenue_over_time_json' in ctx
     assert len(ctx['top_events']) == 1
     assert ctx['top_events'][0]['name'] == str(event.name)
+    assert "{" not in ctx['top_events'][0]['name']
 
     assert ctx['has_proposals'] is True
     assert 'proposals_by_state_json' in ctx

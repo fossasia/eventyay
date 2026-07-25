@@ -172,23 +172,28 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
         with scopes_disabled():
             rows = list(
                 QueuedMail.objects.filter(event_id__in=event_ids)
-                .values('event_id', 'event__name')
+                .values('event_id')
                 .annotate(
                     sent_count=Count('pk', filter=Q(sent__isnull=False)),
                     queued_count=Count('pk', filter=Q(sent__isnull=True)),
                 )
-                .order_by('event__name', 'event_id')
             )
+            mail_event_ids = [row['event_id'] for row in rows]
+            events_by_id = {
+                e.pk: e for e in Event.objects.filter(pk__in=mail_event_ids).only('pk', 'name')
+            }
 
         email_engagement_rows = [
             {
                 'event_id': row['event_id'],
-                'event_name': str(row['event__name']),
+                'event_name': str(events_by_id[row['event_id']].name),
                 'sent': row['sent_count'],
                 'queued': row['queued_count'],
             }
             for row in rows
+            if row['event_id'] in events_by_id
         ]
+        email_engagement_rows.sort(key=lambda r: (r['event_name'], r['event_id']))
         return {
             'email_engagement_rows': email_engagement_rows,
             'has_email_engagement': bool(email_engagement_rows),
@@ -234,10 +239,10 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             return []
 
         with scopes_disabled():
-            rows = Event.objects.filter(pk__in=event_ids).values('pk', 'name')
+            events = list(Event.objects.filter(pk__in=event_ids).only('pk', 'name'))
 
         return sorted(
-            ({'id': row['pk'], 'name': str(row['name'])} for row in rows),
+            ({'id': event.pk, 'name': str(event.name)} for event in events),
             key=lambda event: event['name'],
         )
 
@@ -396,7 +401,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             )
             top_event_ids = [row['event'] for row in top_qs]
             events_by_id = {
-                e.pk: e for e in Event.objects.filter(pk__in=top_event_ids)
+                e.pk: e for e in Event.objects.filter(pk__in=top_event_ids).only('pk', 'name', 'slug', 'currency')
             }
 
             rev_qs = (
@@ -512,10 +517,14 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                     event_id__in=event_ids,
                     state=SubmissionStates.SUBMITTED,
                 )
-                .values('event__name', 'event__slug')
+                .values('event_id')
                 .annotate(pending=Count('pk'))
                 .order_by('-pending')
             )
+            pending_event_ids = [row['event_id'] for row in pending_qs]
+            events_by_id = {
+                e.pk: e for e in Event.objects.filter(pk__in=pending_event_ids).only('pk', 'name', 'slug')
+            }
 
         label_map = dict(SubmissionStates.get_choices())
         proposals_by_state = [
@@ -526,11 +535,12 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
 
         pending_proposal_events = [
             {
-                'name': str(row['event__name']),
-                'slug': row['event__slug'],
+                'name': str(events_by_id[row['event_id']].name),
+                'slug': events_by_id[row['event_id']].slug,
                 'pending': row['pending'],
             }
             for row in pending_qs
+            if row['event_id'] in events_by_id
         ]
 
         return {
@@ -583,7 +593,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             )
             checkin_event_ids = [row['order__event_id'] for row in stats_qs]
             events_by_id = {
-                e.pk: e for e in Event.objects.filter(pk__in=checkin_event_ids)
+                e.pk: e for e in Event.objects.filter(pk__in=checkin_event_ids).only('pk', 'name')
             }
             for row in stats_qs:
                 event_id = row['order__event_id']
