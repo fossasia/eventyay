@@ -239,6 +239,7 @@ urlpatterns = [
         name='billing-testing',
     ),
     path('webhook/stripe', stripe_webhook_view, name='stripe-webhook'),
+    path('webhook/stripe/', stripe_webhook_view, name='stripe-webhook-slash'),
     path(
         '<orgslug:organizer>/<slug:event>/schedule-public',
         event.talk_schedule_public,
