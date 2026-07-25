@@ -2,13 +2,13 @@
 div.c-audio-translation
 		bunt-select(
 		name="audio-translation",
-		v-model="selectedLanguage",
+		v-model="internalSelectedLanguage",
 		:options="languageOptions",
 		label="Audio Translation"
 )
 </template>
 <script>
-import { normalizeYoutubeVideoId } from 'lib/validators'
+import { normalizeAudioTranslationSource } from 'lib/validators'
 
 export default {
 	name: 'AudioTranslationDropdown',
@@ -17,47 +17,57 @@ export default {
 		languages: {
 			type: Array,
 			required: true
+		},
+		selectedLanguage: {
+			type: String,
+			default: 'Original'
 		}
 	},
 	data() {
 		return {
-			selectedLanguage: null, // Selected language for audio translation
-			languageOptions: [] // Options for the dropdown
+			internalSelectedLanguage: null,
+			languageOptions: [],
+			isSyncingSelection: false
 		}
 	},
 	watch: {
 		languages: {
 			immediate: true,
 			handler(newLanguages) {
-				this.languageOptions = newLanguages.map(entry => entry.language) // Directly assigning the list of languages
+				this.languageOptions = newLanguages.map(entry => entry.language)
+				this.syncSelectedLanguage()
 			}
 		},
-		selectedLanguage(newLanguage) {
+		selectedLanguage: {
+			immediate: true,
+			handler() {
+				this.syncSelectedLanguage()
+			}
+		},
+		internalSelectedLanguage(newLanguage) {
+			if (this.isSyncingSelection) return
 			if (newLanguage) {
 				this.sendLanguageChange()
 			}
 		}
 	},
 	methods: {
+		syncSelectedLanguage() {
+			const fallback = this.languageOptions.includes('Original') ? 'Original' : null
+			const nextLanguage = this.languageOptions.includes(this.selectedLanguage) ? this.selectedLanguage : fallback
+			if (this.internalSelectedLanguage === nextLanguage) return
+			this.isSyncingSelection = true
+			this.internalSelectedLanguage = nextLanguage
+			this.$nextTick(() => {
+				this.isSyncingSelection = false
+			})
+		},
 		sendLanguageChange() {
-			const selected = this.languages.find(item => item.language === this.selectedLanguage)
-			const audioSource = selected?.youtube_id || null
+			const selected = this.languages.find(item => item.language === this.internalSelectedLanguage)
+			const audioSource = normalizeAudioTranslationSource(selected?.youtube_id)
 			const useVideo = selected?.use_video || false
-			
-			let normalizedSource = null
-			if (audioSource) {
-				normalizedSource = normalizeYoutubeVideoId(audioSource)
-				if (!normalizedSource) {
-					try {
-						new URL(audioSource)
-						normalizedSource = audioSource
-					} catch (e) {
-						normalizedSource = null
-					}
-				}
-			}
-			
-			this.$emit('languageChanged', { url: normalizedSource, useVideo })
+
+			this.$emit('languageChanged', { url: audioSource, useVideo })
 		}
 	}
 }

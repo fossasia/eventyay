@@ -21,7 +21,6 @@ def get_stripe_webhook_secret_key() -> str:
     if not stripe_webhook_secret_key:
         logger.error('Stripe webhook secret key not found')
         raise ValidationError('Stripe webhook secret key not found.')
-    logger.info('Get successful Stripe webhook secret key')
     return stripe_webhook_secret_key
 
 
