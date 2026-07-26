@@ -481,34 +481,33 @@ class EventOrderFilterForm(OrderFilterForm):
         return qs
 
 
-def advanced_filters_open_from_get(get_params) -> bool:
+def advanced_filters_open_from_get(filter_form) -> bool:
     """Return True when the advanced filter panel should start expanded."""
-    if get_params.get('filters') == '1':
+    if filter_form.data.get('filters') == '1':
         return True
+    
+    if not filter_form.is_valid():
+        return False
+        
     advanced_keys = (
         'status',
         'product',
         'provider',
         'subevent',
-        'created_from_0',
-        'created_from_1',
-        'created_to_0',
-        'created_to_1',
-        'code',
+        'created_from',
+        'created_to',
     )
-    return any(get_params.get(key) for key in advanced_keys)
+    return any(bool(filter_form.cleaned_data.get(key)) for key in advanced_keys)
 
 
-def advanced_filter_count(get_params) -> int:
+def advanced_filter_count(filter_form) -> int:
     """Count active advanced filters for the Filters button badge."""
+    if not filter_form.is_valid():
+        return 0
     count = 0
-    for key in ('status', 'product', 'provider', 'subevent'):
-        if get_params.get(key):
+    for key in ('status', 'product', 'provider', 'subevent', 'created_from', 'created_to'):
+        if filter_form.cleaned_data.get(key):
             count += 1
-    if get_params.get('created_from_0') or get_params.get('created_from_1'):
-        count += 1
-    if get_params.get('created_to_0') or get_params.get('created_to_1'):
-        count += 1
     return count
 
 

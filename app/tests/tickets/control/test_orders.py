@@ -203,14 +203,28 @@ def test_orders_advanced_filter_helpers():
         advanced_filter_count,
         advanced_filters_open_from_get,
     )
+    class MockForm:
+        def __init__(self, query_string):
+            from django.http import QueryDict
+            self.data = QueryDict(query_string)
+            self.cleaned_data = {
+                k: v for k, v in self.data.items()
+            }
+            if 'created_from_0' in self.cleaned_data:
+                self.cleaned_data['created_from'] = True
+            if 'created_to_0' in self.cleaned_data:
+                self.cleaned_data['created_to'] = True
+            
+        def is_valid(self):
+            return True
 
-    assert advanced_filters_open_from_get(QueryDict('query=peter')) is False
-    assert advanced_filters_open_from_get(QueryDict('filters=1')) is True
-    assert advanced_filters_open_from_get(QueryDict('status=n')) is True
-    assert advanced_filters_open_from_get(QueryDict('provider=banktransfer')) is True
-    assert advanced_filter_count(QueryDict('query=peter')) == 0
-    assert advanced_filter_count(QueryDict('status=n&product=1&provider=banktransfer')) == 3
-    assert advanced_filter_count(QueryDict('created_from_0=2024-01-01&created_to_0=2024-02-01')) == 2
+    assert advanced_filters_open_from_get(MockForm('query=peter')) is False
+    assert advanced_filters_open_from_get(MockForm('filters=1')) is True
+    assert advanced_filters_open_from_get(MockForm('status=n')) is True
+    assert advanced_filters_open_from_get(MockForm('provider=banktransfer')) is True
+    assert advanced_filter_count(MockForm('query=peter')) == 0
+    assert advanced_filter_count(MockForm('status=n&product=1&provider=banktransfer')) == 3
+    assert advanced_filter_count(MockForm('created_from_0=2024-01-01&created_to_0=2024-02-01')) == 2
 
 
 @pytest.mark.django_db

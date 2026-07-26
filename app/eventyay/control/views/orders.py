@@ -217,8 +217,8 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
-        ctx['advanced_filters_open'] = advanced_filters_open_from_get(self.request.GET)
-        ctx['advanced_filter_count'] = advanced_filter_count(self.request.GET)
+        ctx['advanced_filters_open'] = advanced_filters_open_from_get(self.filter_form)
+        ctx['advanced_filter_count'] = advanced_filter_count(self.filter_form)
 
         ctx['filter_strings'] = []
         for f in self.get_forms():
