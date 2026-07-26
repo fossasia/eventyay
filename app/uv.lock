@@ -1611,7 +1611,7 @@ requires-dist = [
     { name = "stripe", specifier = ">=11.3.0" },
     { name = "text-unidecode", specifier = ">=1.3" },
     { name = "textile", specifier = ">=4.0.4" },
-    { name = "tlds", specifier = ">=2026041800" },
+    { name = "tlds", specifier = ">=2026072401" },
     { name = "tqdm", specifier = ">=4.69.0" },
     { name = "twisted", specifier = ">=26.4.0" },
     { name = "txaio", specifier = ">=25.12.2" },
@@ -3559,11 +3559,11 @@ wheels = [
 
 [[package]]
 name = "tlds"
-version = "2026041800"
+version = "2026072401"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ae/c6/ddda7147c0bce6b8ff274e8e250558a255023d7427d371eb30cf5b09afd3/tlds-2026041800.tar.gz", hash = "sha256:f54095fd1767ccbdc3fb3baff8d0bf8c684dc97fb0753fcdc641142c74181190", size = 7881, upload-time = "2026-04-20T06:27:57.786Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/84/b85436040a7215d24aa4ccde38fdb5a9512b07da074073d6dce07d008e13/tlds-2026072401.tar.gz", hash = "sha256:765141e79f0bf85a9edc8d93300106e46d07b105cfe3e916e9abe238c71b34ee", size = 7881, upload-time = "2026-07-26T07:11:22.713Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/65/cf/e280d2413edb33bc43964ec800757a3917dc5ab3395d056eb6180bff56ff/tlds-2026041800-py2.py3-none-any.whl", hash = "sha256:d47ad192e7d59b139cf7b647e17df84f302ef24ba47426900f5e06723d84f78e", size = 8070, upload-time = "2026-04-20T06:27:55.932Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/84/50e99110176b9296e02e4eb6c82c8db46b6f9cfd4bec40b4ee70663e5da4/tlds-2026072401-py2.py3-none-any.whl", hash = "sha256:7e0b2008d4bb66523587bb2ec5db91c12a88e6c5c0b525ee40ac837faf5e35a0", size = 8070, upload-time = "2026-07-26T07:11:20.821Z" },
 ]
 
 [[package]]
