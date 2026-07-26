@@ -1063,10 +1063,11 @@ class SubmissionFilterForm(forms.Form):
     def filter_qs(self, qs):
         fdata = self.cleaned_data
 
-        # Search by title or speaker
+        # Search by title, speaker, or code
         if fdata.get('query'):
             qs = qs.filter(
-                Q(title__icontains=fdata['query'])
+                Q(code__icontains=fdata['query'])
+                | Q(title__icontains=fdata['query'])
                 | Q(speakers__fullname__icontains=fdata['query'])
                 | Q(speakers__email__icontains=fdata['query'])
             ).distinct()

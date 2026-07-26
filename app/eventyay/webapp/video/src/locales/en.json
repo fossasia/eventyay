@@ -169,7 +169,7 @@
 	"LandingPage:speakers:header": "Featured speakers",
 	"LandingPage:speakers:link": "All speakers",
 	"LandingPage:speakers:more": "and {{additional_speakers}} more",
-	"LandingPage:dateRange:to": "To {{date}}",
+	"LandingPage:dateRange:to": "To {{- date}}",
 	"LandingPage:home-back:label": "Home",
 	"LandingPage:home-back:organizer": "Back to {{name}}",
 	"Livestream:automuted-unmute:text": "Tap to unmute",

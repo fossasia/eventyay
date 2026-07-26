@@ -22,8 +22,8 @@ The user which will run the deployment
 DEPLOYMENT_NAME
 ```
 
-some string that can work as directory name, without and whitespace,
-and preferrably within the ASCII characterset.
+some string that can work as directory name, without any whitespace,
+and preferably within the ASCII character set.
 
 ```
 DATA_DIR
