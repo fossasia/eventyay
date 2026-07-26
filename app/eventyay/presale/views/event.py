@@ -14,7 +14,6 @@ import isoweek
 import jwt
 import pytz
 from django.conf import settings
-from django.utils.crypto import get_random_string
 from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
@@ -49,6 +48,7 @@ from eventyay.agenda.views.utils import (
     serialize_widget_schedule_data,
 )
 from eventyay.base.channels import get_all_sales_channels
+from eventyay.base.meetup import ensure_video_credentials, is_meetup_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import (
     Order,
@@ -72,6 +72,11 @@ from eventyay.helpers.formats.en.formats import WEEK_FORMAT
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.ical import get_ical
 from eventyay.presale.signals import product_description
+from eventyay.presale.views.meetup import (
+    MEETUP_RSVP_SESSION_KEY,
+    GuestRsvpForm,
+    has_rsvp_order,
+)
 from eventyay.presale.views.organizer import (
     EventListMixin,
     add_subevents_for_days,
@@ -705,28 +710,26 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             else:
                 return super().get(request, *args, **kwargs)
 
+    def get_meetup_context(self):
+        event = self.request.event
+        if not is_meetup_event(event):
+            return {'is_meetup_event': False, 'attendee_already_registered': False}
+
+        if self.request.user.is_authenticated:
+            already_registered = has_rsvp_order(event, self.request.user.email)
+        else:
+            already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
+
+        return {
+            'is_meetup_event': True,
+            'attendee_already_registered': already_registered,
+            'rsvp_guest_form': getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm(),
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        is_meetup_event = self.request.event.settings.get('event_type') == 'meetup'
-        context['is_meetup_event'] = is_meetup_event
-
-        if is_meetup_event:
-            from eventyay.presale.views.meetup import GuestRsvpForm, MEETUP_RSVP_SESSION_KEY
-
-            if self.request.user.is_authenticated:
-                with scope(event=self.request.event):
-                    context['attendee_already_registered'] = self.request.event.orders.filter(
-                        email__iexact=self.request.user.email,
-                        status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
-                    ).exists()
-            else:
-                context['attendee_already_registered'] = bool(
-                    self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(self.request.event.pk))
-                )
-            context['rsvp_guest_form'] = getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm()
-        else:
-            context['attendee_already_registered'] = False
+        context.update(self.get_meetup_context())
 
         # Show voucher option only if redeemable products exist for active vouchers
         vouchers_exist = event_has_redeemable_voucher_products(
@@ -1104,53 +1107,8 @@ class JoinOnlineVideoView(EventViewMixin, View):
         if not is_allowed:
             return HttpResponse(status=403, content='user_not_allowed')
 
-        if event.settings.get('event_type') == 'meetup':
-            if (
-                not event.settings.venueless_url
-                or not event.settings.venueless_issuer
-                or not event.settings.venueless_audience
-                or not event.settings.venueless_secret
-            ):
-                from django.db import transaction
-                with transaction.atomic():
-                    event_locked = Event.objects.select_for_update().get(pk=event.pk)
-                    if (
-                        not event_locked.settings.venueless_url
-                        or not event_locked.settings.venueless_issuer
-                        or not event_locked.settings.venueless_audience
-                        or not event_locked.settings.venueless_secret
-                    ):
-                        if not event_locked.config or not event_locked.config.get("JWT_secrets"):
-                            cfg = event_locked.config or {}
-                            if not cfg.get("JWT_secrets"):
-                                secret = get_random_string(length=64)
-                                cfg["JWT_secrets"] = [
-                                    {
-                                        "issuer": "any",
-                                        "audience": "eventyay",
-                                        "secret": secret,
-                                    }
-                                ]
-                                event_locked.config = cfg
-                                event_locked.save(update_fields=['config'])
-
-                        jwt_config = event_locked.config["JWT_secrets"][0]
-                        secret = jwt_config["secret"]
-                        audience = jwt_config["audience"]
-                        issuer = jwt_config["issuer"]
-
-                        event_locked.settings.set('venueless_secret', secret)
-                        event_locked.settings.set('venueless_issuer', issuer)
-                        event_locked.settings.set('venueless_audience', audience)
-                        event_locked.settings.set('venueless_all_products', True)
-                        event_locked.settings.set('venueless_show_public_link', True)
-
-                        scheme = 'https' if request.is_secure() else 'http'
-                        base_host = request.get_host()
-                        video_url_setting = f"{scheme}://{base_host}{event_locked.urls.video_base}"
-                        event_locked.settings.set('venueless_url', video_url_setting)
-                        event_locked.settings.flush()
-                        event.settings.flush()
+        if is_meetup_event(event):
+            ensure_video_credentials(event, request=request)
 
         if (
             not self.request.event.settings.venueless_url
@@ -1193,7 +1151,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
             # no paid order found
             return False, None, None
 
-        if self.request.event.settings.get('event_type') == 'meetup':
+        if is_meetup_event(self.request.event):
             return True, None, order_list[0]
         list_allow_ticket_type = self.request.event.settings.venueless_products
         all_products_allowed = self.request.event.settings.venueless_all_products
