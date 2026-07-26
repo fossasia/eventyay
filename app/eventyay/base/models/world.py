@@ -93,7 +93,10 @@ def default_roles():
     video_channel_manager = [Permission.EVENT_ROOMS_CREATE_CHAT, Permission.EVENT_ROOMS_CREATE_BBB]
     video_announcement_manager = [Permission.EVENT_ANNOUNCE]
     video_user_viewer = [Permission.EVENT_USERS_LIST]
-    video_user_moderator = [Permission.EVENT_USERS_MANAGE]
+    video_user_moderator = [
+        Permission.EVENT_USERS_MANAGE,
+        Permission.ROOM_CHAT_MODERATE,
+    ]
     video_room_manager = [Permission.ROOM_UPDATE, Permission.ROOM_DELETE]
     video_kiosk_manager = [Permission.EVENT_KIOSKS_MANAGE]
     video_config_manager = [Permission.EVENT_UPDATE, Permission.EVENT_GRAPHS]
