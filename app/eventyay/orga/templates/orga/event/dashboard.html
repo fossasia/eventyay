@@ -11,14 +11,20 @@
     {% compress css %}
         <link rel="stylesheet" href="{% static "orga/css/dashboard.css" %}">
     {% endcompress %}
-    <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />
+    {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
+    {% if can_view_submission_stats %}
+        <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />
+    {% endif %}
 {% endblock stylesheets %}
 
 {% block scripts %}
-    {% compress js %}
-        <script defer src="{% static "vendored/apexcharts/apexcharts.min.js" %}"></script>
-        <script defer src="{% static "orga/js/stats.js" %}"></script>
-    {% endcompress %}
+    {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
+    {% if can_view_submission_stats %}
+        {% compress js %}
+            <script defer src="{% static "vendored/apexcharts/apexcharts.min.js" %}"></script>
+            <script defer src="{% static "orga/js/stats.js" %}"></script>
+        {% endcompress %}
+    {% endif %}
 {% endblock scripts %}
 
 {% block content %}
@@ -119,7 +125,10 @@
         {% endfor %}
     </div>
 
-    {% include "orga/submission/includes/statistics.html" %}
+    {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
+    {% if can_view_submission_stats %}
+        {% include "orga/submission/includes/statistics.html" %}
+    {% endif %}
 
     {% if history and can_change_settings %}
         <div class="dashboard-history mt-4">

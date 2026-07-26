@@ -773,16 +773,27 @@ class SubmissionFeed(PermissionRequired, Feed):
 class SubmissionStatsMixin:
     @context
     @cached_property
+    def can_view_submission_stats(self):
+        return self.request.user.has_perm('base.orga_list_submission', self.request.event)
+
+    @context
+    @cached_property
     def show_submission_types(self):
+        if not self.can_view_submission_stats:
+            return False
         return self.request.event.submission_types.all().count() > 1
 
     @context
     @cached_property
     def show_tracks(self):
+        if not self.can_view_submission_stats:
+            return False
         return bool(self.request.event.get_feature_flag('use_tracks'))
 
     @context
     def id_mapping(self):
+        if not self.can_view_submission_stats:
+            return '{}'
         data = {
             'type': {
                 str(submission_type): submission_type.id
@@ -798,6 +809,8 @@ class SubmissionStatsMixin:
 
     @context
     def timeline_annotations(self):
+        if not self.can_view_submission_stats:
+            return json.dumps({'deadlines': []})
         deadlines = [
             (
                 submission_type.deadline.astimezone(self.request.event.tz).strftime('%Y-%m-%d'),
@@ -816,6 +829,8 @@ class SubmissionStatsMixin:
 
     @cached_property
     def raw_submission_timeline_data(self):
+        if not self.can_view_submission_stats:
+            return []
         submissions = list(
             self.request.event.submissions
             .exclude(state=SubmissionStates.DELETED)
@@ -862,6 +877,8 @@ class SubmissionStatsMixin:
     @context
     @cached_property
     def submission_state_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         rows = (
             Submission.all_objects
             .exclude(state=SubmissionStates.DRAFT)
@@ -880,6 +897,8 @@ class SubmissionStatsMixin:
 
     @context
     def submission_type_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         counter = Counter(
             str(submission.submission_type)
             for submission in Submission.objects.filter(event=self.request.event).select_related('submission_type')
@@ -893,6 +912,8 @@ class SubmissionStatsMixin:
 
     @context
     def submission_track_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         if self.request.event.get_feature_flag('use_tracks'):
             counter = Counter(
                 str(submission.track)
@@ -908,6 +929,8 @@ class SubmissionStatsMixin:
 
     @context
     def submission_language_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         locales_dict = dict(self.request.event.named_content_locales)
         counter = Counter(
             str(locales_dict.get(locale, locale))
@@ -922,6 +945,8 @@ class SubmissionStatsMixin:
 
     @context
     def talk_timeline_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         talks = list(
             self.request.event.submissions
             .filter(state__in=SubmissionStates.accepted_states)
@@ -956,6 +981,8 @@ class SubmissionStatsMixin:
 
     @context
     def talk_state_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         rows = (
             self.request.event.submissions
             .filter(state__in=SubmissionStates.accepted_states)
@@ -973,6 +1000,8 @@ class SubmissionStatsMixin:
 
     @context
     def talk_type_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         counter = Counter(
             str(submission.submission_type)
             for submission in self.request.event.submissions.filter(
@@ -988,6 +1017,8 @@ class SubmissionStatsMixin:
 
     @context
     def talk_track_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         if self.request.event.get_feature_flag('use_tracks'):
             counter = Counter(
                 str(submission.track)
@@ -1005,6 +1036,8 @@ class SubmissionStatsMixin:
 
     @context
     def talk_language_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         locales_dict = dict(self.request.event.named_content_locales)
         counter = Counter(
             str(locales_dict.get(locale, locale))
