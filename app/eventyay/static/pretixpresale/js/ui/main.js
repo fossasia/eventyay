@@ -508,6 +508,9 @@ $(function () {
     });
 
     $(".table-calendar td.has-events").click(function () {
+        if (window.innerWidth > 767) {
+            return;
+        }
         var $tr = $(this).closest(".table-calendar").find(".selected-day");
         $tr.find("td").html($(this).find(".events").html());
         $tr.find("td").prepend($("<h3>").text($(this).attr("data-date")));
