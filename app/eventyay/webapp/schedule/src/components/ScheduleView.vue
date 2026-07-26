@@ -60,6 +60,7 @@
 				@unfav="onUnfav")
 			linear-schedule(v-else,
 				:sessions="filteredSessions",
+				:forceScrollDay="forceScrollDay",
 				:rooms="computedRooms",
 				:currentDay="currentDay",
 				:now="resolvedNow",
@@ -71,7 +72,7 @@
 				:showFavCount="showFavCountOnSchedule",
 				:sortBy="effectiveSortBy",
 				:includeRoomSortKey="sortIncludeRoom",
-				:includeDateSortKey="sortIncludeDate",
+				:includeDateSortKey="sortIncludeDate || linearScheduleGroupByDay",
 				:includePopularitySortKey="sortIncludePopularity",
 				:showBreaks="!linearOnly && !sessionsMode",
 				:density="'default'",
@@ -174,6 +175,7 @@ export default {
 				}
 			})(),
 			sortIncludePopularity: false,
+			forceScrollDay: 0,
 			filterState: {
 				tracks: [],
 				rooms: [],
@@ -393,6 +395,9 @@ export default {
 		showGrid() {
 			return !this.linearOnly && this.scrollParentWidth > 710
 		},
+		linearScheduleGroupByDay() {
+			return !this.showGrid && this.computedDays.length > 1
+		},
 		popularityFeatureEnabled() {
 			const flags = this.resolvedSchedule?.feature_flags || {}
 			return isPopularityFeatureEnabled(flags)
@@ -559,8 +564,10 @@ export default {
 		},
 		changeDay(day) {
 			const dayStr = day.format ? day.format('YYYY-MM-DD') : day
-			if (dayStr === this.currentDay) return
 			this.currentDay = dayStr
+			if (this.linearScheduleGroupByDay) {
+				this.forceScrollDay++
+			}
 		},
 		setCurrentDay(day) {
 			this.changeDay(day)

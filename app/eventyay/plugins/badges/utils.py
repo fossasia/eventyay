@@ -153,15 +153,6 @@ def position_has_printable_badge(event, position):
     return get_badge_layout_for_position(event, position) is not None
 
 
-def position_has_explicit_badge_assignment(event, position):
-    product_map, voucher_map, _default_layout = get_badge_layout_assignment_maps(event)
-    if position.voucher_id and position.voucher_id in voucher_map:
-        return voucher_map[position.voucher_id] is not None
-    if position.product_id in product_map:
-        return product_map[position.product_id] is not None
-    return False
-
-
 def exclude_explicit_no_badge(qs, assignment_model, fk_lookup):
     return qs.annotate(
         no_badging=Exists(
@@ -264,13 +255,14 @@ def get_badge_bundle_option_choices(event, position):
 
     The bundle is defined as a base position plus all attached add-ons.
     Choices are deduplicated by key while preserving discovery order.
+
+    Includes products that only use the event default layout when that layout
+    allows customization with ask-user fields. Explicit no-badge assignments
+    (layout=None) are skipped because no layout resolves for them.
     """
     seen_keys = set()
     choices = []
     for bundle_position in get_badge_bundle_positions(position):
-        if not position_has_explicit_badge_assignment(event, bundle_position):
-            continue
-
         layout = get_badge_layout_for_position(event, bundle_position)
         if not layout or not layout.allow_customization:
             continue
@@ -289,8 +281,9 @@ def get_badge_bundle_option_choices(event, position):
     return choices
 
 
-def get_badge_visible_field_labels(event, position, hidden_fields=None):
-    layout = get_badge_layout_for_position(event, position)
+def get_badge_visible_field_labels(event, position, hidden_fields=None, layout=None):
+    if layout is None:
+        layout = get_badge_layout_for_position(event, position)
     if not layout or not layout.allow_customization:
         return []
 
@@ -303,6 +296,51 @@ def get_badge_visible_field_labels(event, position, hidden_fields=None):
         for field in get_badge_customizable_fields(event, layout)
         if field['key'] in ask_user_keys and field['key'] not in hidden_fields
     ]
+
+
+def format_badge_option_labels(labels):
+    """Format selected badge field labels for order/export display."""
+    labels = [str(label) for label in labels]
+    if not labels:
+        return str(_('No optional badge fields selected'))
+    return ', '.join(labels)
+
+
+def get_badge_options_display(event, position):
+    """
+    Return a human-readable badge-options summary for order views.
+
+    Uses the same layout resolution as checkout/modify form injection, including
+    the event default layout when no product/voucher assignment exists.
+    """
+    layout = get_badge_layout_for_position(event, position)
+    if not layout or not layout.allow_customization or not layout.ask_user_fields_data:
+        return None
+    return format_badge_option_labels(get_badge_visible_field_labels(event, position, layout=layout))
+
+
+def append_badge_options_additional_field(event, position, additional_fields, present_keys=None):
+    """
+    Append a Badge options row for order/cart display when applicable.
+
+    Matches checkout form injection: only the bundle root position shows options,
+    and the row is skipped when that form field was already injected.
+    Returns True if a field was appended.
+    """
+    if get_badge_config_position(position) != position:
+        return False
+    if present_keys is not None and BADGE_HIDDEN_FIELDS_KEY in present_keys:
+        return False
+    display = get_badge_options_display(event, position)
+    if display is None:
+        return False
+    additional_fields.append(
+        {
+            'answer': display,
+            'question': _('Badge options'),
+        }
+    )
+    return True
 
 
 def get_badge_visible_field_values(event, position, hidden_fields=None):

@@ -403,9 +403,11 @@ export default {
 	display: flex
 	flex-direction: column
 	min-height: 0
+	min-width: 0
 	width: 100%
 	position: relative
 	background-color: $clr-grey-50
+	overflow-x: hidden
 	.landing-top-bg
 		position: absolute
 		top: 0
@@ -427,8 +429,10 @@ export default {
 	.landing-scroll
 		flex: auto
 		min-height: 0
+		min-width: 0
 		position: relative
 		z-index: 1
+		overflow-x: hidden
 	.landing-header
 		display: flex
 		flex-direction: column
@@ -559,10 +563,13 @@ export default {
 		box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2)
 		border-radius: 4px 4px 0 0
 		box-sizing: border-box
+		min-width: 0
+		overflow-x: hidden
 	.content
 		display: flex
 		flex-direction: column
 		width: 100%
+		min-width: 0
 		padding: 24px
 		box-sizing: border-box
 	.rich-text-content, .c-markdown-content
@@ -592,21 +599,26 @@ export default {
 			letter-spacing: normal
 			themed-button-primary()
 
+	.sessions
+		min-width: 0
+		> *
+			width: 100%
+			max-width: 100%
+			min-width: 0
+			margin-right: 0
+			box-sizing: border-box
 	.split-layout
 		display: grid
-		grid-template-columns: 1fr
+		grid-template-columns: minmax(0, 1fr)
 		gap: 32px
 		margin-top: 24px
 		@media (min-width: 900px)
-			grid-template-columns: 1fr 1fr
-		.split-left
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)
+		.split-left, .split-right
 			display: flex
 			flex-direction: column
 			gap: 24px
-		.split-right
-			display: flex
-			flex-direction: column
-			gap: 24px
+			min-width: 0
 
 	.active-rooms-list
 		display: flex
@@ -658,8 +670,6 @@ export default {
 				color: $clr-secondary-text-light
 				margin-left: 12px
 				flex-shrink: 0
-	.speakers-section .c-speakers-list
-		overflow: visible !important
 
 	+below('s')
 		.landing-top-bg
