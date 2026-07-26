@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 import pytest
 from channels.db import database_sync_to_async
 from django.test import override_settings
-
 from tests.utils import LoggingCommunicator, get_token
 from venueless.core.models import User
 from venueless.routing import application
@@ -281,6 +280,36 @@ async def test_config_patch(world, stream_room):
         assert response[0] == "success"
         await database_sync_to_async(stream_room.refresh_from_db)()
         assert stream_room.name == "Foo"
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_config_patch_rejects_webhook_secret_without_url(world, stream_room):
+    original_module_config = stream_room.module_config
+    async with world_communicator(token=get_token(world, ["admin"])) as c1:
+        await c1.send_json_to(
+            [
+                "room.config.patch",
+                123,
+                {
+                    "room": str(stream_room.pk),
+                    "module_config": [
+                        {
+                            "type": "chat.native",
+                            "config": {
+                                "volatile": True,
+                                "webhook_hmac_secret": "shared-secret-key",
+                            },
+                        },
+                    ],
+                },
+            ]
+        )
+        response = await c1.receive_json_from()
+        assert response[0] == "error"
+        assert response[2]["code"] == "webhook.missing_url"
+        await database_sync_to_async(stream_room.refresh_from_db)()
+        assert stream_room.module_config == original_module_config
 
 
 @pytest.mark.asyncio

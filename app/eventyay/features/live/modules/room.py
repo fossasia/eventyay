@@ -107,6 +107,11 @@ class RoomModule(BaseModule):
             cfg = m.get("config", {})
             url = cfg.get("webhook_url")
             secret = cfg.get("webhook_hmac_secret")
+            if secret and not url:
+                raise ConsumerException(
+                    "webhook.missing_url",
+                    "webhook_url is required when webhook_hmac_secret is set.",
+                )
             if not url:
                 continue
             # Always validate secret when URL is set (not just on URL change)
