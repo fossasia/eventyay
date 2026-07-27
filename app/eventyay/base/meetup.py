@@ -246,7 +246,7 @@ def ensure_rsvp_product(event):
         if quota is None:
             quota = Quota(event=event, name=DEFAULT_QUOTA_NAME, size=None)
             quota.save()
-            quota.products.add(product)
+        quota.products.add(product)
         return product, quota
 
 

@@ -12,6 +12,7 @@ from django.views import View
 from django_scopes import scope
 
 from eventyay.base.meetup import get_rsvp_product_and_quota, is_meetup_event
+from eventyay.base.models import Quota
 from eventyay.base.models.orders import Order, OrderPayment, OrderPosition
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.views import EventViewMixin
@@ -76,7 +77,9 @@ class MeetupRsvpView(EventViewMixin, View):
             or getattr(request.user, 'name', None)
             or email
         )
-        self._create_rsvp_order(request, product, email=email, name=str(name))
+        order = self._create_rsvp_order(request, product, email=email, name=str(name))
+        if order is None:
+            messages.error(request, _('Sorry, this event is already full.'))
         return self._redirect_to_index(request)
 
     def _register_guest(self, request, product):
@@ -94,6 +97,10 @@ class MeetupRsvpView(EventViewMixin, View):
             email=form.cleaned_data['attendee_email'],
             name=form.cleaned_data['attendee_name'],
         )
+        if order is None:
+            messages.error(request, _('Sorry, this event is already full.'))
+            return self._redirect_to_index(request)
+
         request.session[MEETUP_RSVP_SESSION_KEY.format(request.event.pk)] = order.code
         return self._redirect_to_index(request)
 
@@ -107,6 +114,14 @@ class MeetupRsvpView(EventViewMixin, View):
         return view.get(request, *self.args, **self.kwargs)
 
     def _create_rsvp_order(self, request, product, email, name):
+        # Check quota availability before creating the order
+        with scope(event=request.event):
+            quota = product.quotas.first()
+            if quota is not None:
+                avail, _ = quota.availability()
+                if avail != Quota.AVAILABILITY_OK:
+                    return None
+
         with scope(event=request.event), transaction.atomic():
             order = Order(
                 status=Order.STATUS_PENDING,
