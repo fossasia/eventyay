@@ -1,5 +1,7 @@
 import features from 'features'
 
+export const VIDEO_CHANNEL_MODULE_TYPES = ['call.bigbluebutton', 'call.janus', 'call.zoom', 'networking.roulette']
+
 const ROOM_TYPES = [{
 	id: 'stage',
 	icon: 'theater',
@@ -94,6 +96,7 @@ export function inferType(config) {
 	if (modules['call.bigbluebutton']) return findById('channel-bbb')
 	if (modules['call.janus']) return findById('channel-janus')
 	if (modules['call.zoom']) return findById('channel-zoom')
+	if (modules['networking.roulette']) return findById('channel-roulette')
 
 	// non-media rooms should only have one module
 	if (config.module_config.length === 1) {
