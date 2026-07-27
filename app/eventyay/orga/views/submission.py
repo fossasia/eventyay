@@ -836,12 +836,10 @@ class SubmissionStatsMixin:
             .exclude(state=SubmissionStates.DELETED)
             .values_list('id', 'created')
         )
-        talk_ids = [str(sub_id) for sub_id, _ in submissions]
         logs = LogEntry.objects.filter(
             event=self.request.event,
             action_type__in=['eventyay.submission.create', 'pretalx.submission.create', 'pretalx.submission.make_submitted'],
             content_type=ContentType.objects.get_for_model(Submission),
-            object_id__in=talk_ids,
         ).order_by('datetime').values_list('object_id', 'datetime')
         log_dates = {}
         for object_id, dt_value in logs:
@@ -899,10 +897,20 @@ class SubmissionStatsMixin:
     def submission_type_data(self):
         if not self.can_view_submission_stats:
             return ''
-        counter = Counter(
-            str(submission.submission_type)
-            for submission in Submission.objects.filter(event=self.request.event).select_related('submission_type')
+        rows = (
+            Submission.objects
+            .filter(event=self.request.event)
+            .values('submission_type_id')
+            .annotate(count=DbCount('id'))
         )
+        types_dict = {
+            st.id: str(st)
+            for st in self.request.event.submission_types.all()
+        }
+        counter = {
+            types_dict[row['submission_type_id']]: row['count']
+            for row in rows if row['submission_type_id'] in types_dict
+        }
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -915,10 +923,20 @@ class SubmissionStatsMixin:
         if not self.can_view_submission_stats:
             return ''
         if self.request.event.get_feature_flag('use_tracks'):
-            counter = Counter(
-                str(submission.track)
-                for submission in Submission.objects.filter(event=self.request.event).select_related('track')
+            rows = (
+                Submission.objects
+                .filter(event=self.request.event, track__isnull=False)
+                .values('track_id')
+                .annotate(count=DbCount('id'))
             )
+            tracks_dict = {
+                tr.id: str(tr.name)
+                for tr in self.request.event.tracks.all()
+            }
+            counter = {
+                tracks_dict[row['track_id']]: row['count']
+                for row in rows if row['track_id'] in tracks_dict
+            }
             return json.dumps(
                 sorted(
                     [{'label': label, 'value': value} for label, value in counter.items()],
@@ -932,10 +950,16 @@ class SubmissionStatsMixin:
         if not self.can_view_submission_stats:
             return ''
         locales_dict = dict(self.request.event.named_content_locales)
-        counter = Counter(
-            str(locales_dict.get(locale, locale))
-            for locale in Submission.objects.filter(event=self.request.event).values_list('content_locale', flat=True)
+        rows = (
+            Submission.objects
+            .filter(event=self.request.event)
+            .values('content_locale')
+            .annotate(count=DbCount('id'))
         )
+        counter = {
+            str(locales_dict.get(row['content_locale'], row['content_locale'])): row['count']
+            for row in rows if row['content_locale']
+        }
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -952,12 +976,10 @@ class SubmissionStatsMixin:
             .filter(state__in=SubmissionStates.accepted_states)
             .values_list('id', 'created')
         )
-        talk_ids = [str(talk_id) for talk_id, _ in talks]
         logs = LogEntry.objects.filter(
             event=self.request.event,
             action_type__in=['eventyay.submission.create', 'pretalx.submission.create', 'pretalx.submission.make_submitted'],
             content_type=ContentType.objects.get_for_model(Submission),
-            object_id__in=talk_ids,
         ).order_by('datetime').values_list('object_id', 'datetime')
         log_dates = {}
         for object_id, dt_value in logs:
@@ -1002,12 +1024,20 @@ class SubmissionStatsMixin:
     def talk_type_data(self):
         if not self.can_view_submission_stats:
             return ''
-        counter = Counter(
-            str(submission.submission_type)
-            for submission in self.request.event.submissions.filter(
-                state__in=SubmissionStates.accepted_states
-            ).select_related('submission_type')
+        rows = (
+            self.request.event.submissions
+            .filter(state__in=SubmissionStates.accepted_states)
+            .values('submission_type_id')
+            .annotate(count=DbCount('id'))
         )
+        types_dict = {
+            st.id: str(st)
+            for st in self.request.event.submission_types.all()
+        }
+        counter = {
+            types_dict[row['submission_type_id']]: row['count']
+            for row in rows if row['submission_type_id'] in types_dict
+        }
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -1020,12 +1050,20 @@ class SubmissionStatsMixin:
         if not self.can_view_submission_stats:
             return ''
         if self.request.event.get_feature_flag('use_tracks'):
-            counter = Counter(
-                str(submission.track)
-                for submission in self.request.event.submissions.filter(
-                    state__in=SubmissionStates.accepted_states
-                ).select_related('track')
+            rows = (
+                self.request.event.submissions
+                .filter(state__in=SubmissionStates.accepted_states, track__isnull=False)
+                .values('track_id')
+                .annotate(count=DbCount('id'))
             )
+            tracks_dict = {
+                tr.id: str(tr.name)
+                for tr in self.request.event.tracks.all()
+            }
+            counter = {
+                tracks_dict[row['track_id']]: row['count']
+                for row in rows if row['track_id'] in tracks_dict
+            }
             return json.dumps(
                 sorted(
                     [{'label': label, 'value': value} for label, value in counter.items()],
@@ -1039,12 +1077,16 @@ class SubmissionStatsMixin:
         if not self.can_view_submission_stats:
             return ''
         locales_dict = dict(self.request.event.named_content_locales)
-        counter = Counter(
-            str(locales_dict.get(locale, locale))
-            for locale in self.request.event.submissions.filter(
-                state__in=SubmissionStates.accepted_states
-            ).values_list('content_locale', flat=True)
+        rows = (
+            self.request.event.submissions
+            .filter(state__in=SubmissionStates.accepted_states)
+            .values('content_locale')
+            .annotate(count=DbCount('id'))
         )
+        counter = {
+            str(locales_dict.get(row['content_locale'], row['content_locale'])): row['count']
+            for row in rows if row['content_locale']
+        }
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
