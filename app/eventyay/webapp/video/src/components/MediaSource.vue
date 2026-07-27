@@ -563,7 +563,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				iframeUrl = getYoutubeUrl(
 					ytid,
 					autoplay.value,
-					mute,
+					mute || !!config.startMuted,
 					config.hideControls,
 					config.noRelated,
 					config.showInfo,
