@@ -159,7 +159,7 @@ export default {
 						room,
 						notifications: notifications > 99 ? '99+' : notifications
 					})
-				} else if (room.modules.some(module => VIDEO_CHANNEL_MODULE_TYPES.includes(module.type))) {
+				} else if (room.modules.some(module => VIDEO_CHANNEL_MODULE_TYPES.has(module.type))) {
 					rooms.videoChat.push(room)
 				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe'].includes(module.type))) {
 					let session

@@ -1,25 +1,26 @@
 import features from 'features'
 
-export const VIDEO_CHANNEL_MODULE_TYPES = ['call.bigbluebutton', 'call.janus', 'call.zoom', 'networking.roulette']
-
 const ROOM_TYPES = [{
 	id: 'stage',
 	icon: 'theater',
 	name: 'Stage',
 	description: 'A stage allows you to present a live stream to your audience, optionally combined with chat and Q&A features.',
-	startingModule: 'livestream.native'
+	startingModule: 'livestream.native',
+	inferModules: ['livestream.native', 'livestream.youtube', 'livestream.iframe']
 }, {
 	id: 'channel-bbb',
 	icon: 'webcam',
 	name: 'Video Channel',
 	description: 'A video channel allows you to connect with attendees in real time and host workshops or panels. The video channels are powered by BigBlueButton and support 25-80 people, depending on usage.',
-	startingModule: 'call.bigbluebutton'
+	startingModule: 'call.bigbluebutton',
+	videoChannel: true
 }, {
 	id: 'channel-janus',
 	icon: 'webcam',
 	name: 'Video Channel (beta)',
 	description: 'A video channel allows you to connect with attendees in real time and host workshops or panels. The video channels are powered by Janus.',
 	startingModule: 'call.janus',
+	videoChannel: true,
 	behindFeatureFlag: 'janus'
 }, {
 	id: 'channel-zoom',
@@ -27,6 +28,7 @@ const ROOM_TYPES = [{
 	name: 'Video Channel (Zoom)',
 	description: 'This room type allows you to embed a zoom meeting or webinar directly into venueless.',
 	startingModule: 'call.zoom',
+	videoChannel: true,
 	behindFeatureFlag: 'zoom'
 }, {
 	id: 'channel-text',
@@ -53,6 +55,7 @@ const ROOM_TYPES = [{
 	name: 'Random video calls',
 	description: 'Connect your attendees for short video calls in random combinations.',
 	startingModule: 'networking.roulette',
+	videoChannel: true,
 	behindFeatureFlag: 'roulette'
 }, {
 	id: 'page-static',
@@ -81,6 +84,8 @@ const ROOM_TYPES = [{
 	startingModule: 'page.userlist'
 }]
 
+export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))
+
 export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
 
 export function inferType(config) {
@@ -88,15 +93,11 @@ export function inferType(config) {
 		acc[module.type] = module
 		return acc
 	}, {})
-	const findById = id => ROOM_TYPES.find(type => type.id === id)
 	const findByModule = module => ROOM_TYPES.find(type => type.startingModule === module)
 
 	// infer media rooms by primary content
-	if (modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.iframe']) return findById('stage')
-	if (modules['call.bigbluebutton']) return findById('channel-bbb')
-	if (modules['call.janus']) return findById('channel-janus')
-	if (modules['call.zoom']) return findById('channel-zoom')
-	if (modules['networking.roulette']) return findById('channel-roulette')
+	const mediaRoomType = ROOM_TYPES.find(type => (type.inferModules || (type.videoChannel ? [type.startingModule] : [])).some(module => modules[module]))
+	if (mediaRoomType) return mediaRoomType
 
 	// non-media rooms should only have one module
 	if (config.module_config.length === 1) {
