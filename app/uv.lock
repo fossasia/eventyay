@@ -1681,7 +1681,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#5b4561ce28d38533bf49cf9abf81a0b61e9fc40b" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#3af83ae8341658cff61b160670d849632b0c0aab" }
 
 [[package]]
 name = "faker"
