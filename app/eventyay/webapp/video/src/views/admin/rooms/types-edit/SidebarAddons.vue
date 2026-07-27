@@ -6,8 +6,36 @@
 		.webhook-config
 			h4 Chat Webhook (optional)
 			p.hint Send chat messages to an external endpoint in real-time
-			bunt-input(name="webhook-url", v-model="modules['chat.native'].config.webhook_url", label="Webhook URL", placeholder="https://example.com/webhook")
-			bunt-input(name="webhook-secret", v-model="modules['chat.native'].config.webhook_hmac_secret", label="HMAC Secret", placeholder="shared-secret-key", type="password")
+			bunt-input-outline-container(label="Webhook URL")
+				template(#default="{focus, blur}")
+					input(
+						name="chat-webhook-endpoint-url"
+						v-model="modules['chat.native'].config.webhook_url"
+						aria-label="Webhook URL"
+						placeholder="https://example.com/webhook"
+						type="url"
+						autocomplete="off"
+						data-1p-ignore
+						data-bwignore
+						data-lpignore="true"
+						@focus="focus"
+						@blur="blur"
+					)
+			bunt-input-outline-container(label="HMAC Secret")
+				template(#default="{focus, blur}")
+					input(
+						name="chat-webhook-hmac-shared-key"
+						v-model="modules['chat.native'].config.webhook_hmac_secret"
+						aria-label="HMAC Secret"
+						placeholder="shared-secret-key"
+						type="password"
+						autocomplete="new-password"
+						data-1p-ignore
+						data-bwignore
+						data-lpignore="true"
+						@focus="focus"
+						@blur="blur"
+					)
 			p.hint-small(v-if="modules['chat.native'].config.webhook_url") Every chat message and reaction will be POSTed to this URL with an HMAC-SHA256 signature
 	bunt-switch(name="enable-qa", v-model="hasQuestions", label="Enable Q&A")
 	template(v-if="hasQuestions")
@@ -92,6 +120,17 @@ export default {
 			font-size: 11px
 			color: #888
 			font-style: italic
-		.bunt-input
+		.bunt-input-outline-container
+			height: 56px
 			margin-bottom: 8px
+			input
+				box-sizing: border-box
+				height: 37px
+				width: 100%
+				border: 0
+				outline: 0
+				padding: 8px 8px 8px 12px
+				font-size: 16px
+				font-weight: 400
+				background: transparent
 </style>
