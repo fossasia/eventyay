@@ -107,6 +107,9 @@ class RoomModule(BaseModule):
             cfg = m.get("config", {})
             url = cfg.get("webhook_url")
             secret = cfg.get("webhook_hmac_secret")
+            if secret and not url:
+                cfg.pop("webhook_hmac_secret", None)
+                secret = None
             if not url:
                 continue
             # Always validate secret when URL is set (not just on URL change)
