@@ -1,23 +1,24 @@
 import datetime
 import pytest
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
-from django.test import override_settings
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import (
     Checkin,
     CheckinList,
     Event,
-    Product,
     Order,
     OrderPayment,
     OrderPosition,
     OrganizerFollower,
+    Product,
     QueuedMail,
     Submission,
     SubmissionStates,
     SubmissionType,
+    Team,
 )
 from eventyay.eventyay_common.views.organizer_analytics import OrganizerAnalyticsView
 
@@ -166,8 +167,6 @@ def test_organizer_analytics_view_context(organizer_client, organizer, event, us
 @pytest.mark.django_db
 @override_settings(EVENTYAY_OBLIGATORY_2FA=False, SITE_URL="https://testserver")
 def test_organizer_analytics_scoped_permissions(organizer, user, client):
-    from eventyay.base.models import Team
-
     with scopes_disabled():
         event_allowed = Event.objects.create(
             organizer=organizer,
@@ -201,3 +200,69 @@ def test_organizer_analytics_scoped_permissions(organizer, user, client):
     event_ids = [e['id'] for e in attendance_events]
     assert event_allowed.pk in event_ids
     assert event_denied.pk not in event_ids
+
+
+@pytest.mark.django_db
+@override_settings(EVENTYAY_OBLIGATORY_2FA=False, SITE_URL="https://testserver")
+def test_organizer_analytics_empty_state_and_attendance_filter(organizer_client, organizer, event):
+    url = reverse('eventyay_common:organizer.analytics', kwargs={'organizer': organizer.slug})
+
+    response = organizer_client.get(url)
+    assert response.status_code == 200
+    ctx = response.context
+    assert ctx['has_followers'] is False
+    assert ctx['has_email_engagement'] is False
+
+    url_filtered = f"{url}?attendance_event={event.pk}"
+    response_filtered = organizer_client.get(url_filtered)
+    assert response_filtered.status_code == 200
+    assert response_filtered.context['attendance_selected_event_id'] == event.pk
+
+
+@pytest.mark.django_db
+@override_settings(EVENTYAY_OBLIGATORY_2FA=False, SITE_URL="https://testserver")
+def test_email_engagement_requires_cfp_permission(organizer, user, client):
+    with scopes_disabled():
+        event = Event.objects.create(
+            organizer=organizer,
+            name="Test Event",
+            slug="test-email-perm",
+            date_from=timezone.now(),
+        )
+
+        orders_team = Team.objects.create(
+            organizer=organizer,
+            name="Orders Only",
+            all_events=True,
+            can_view_orders=True,
+            can_change_submissions=False,
+        )
+        orders_team.members.add(user)
+
+        QueuedMail.objects.create(
+            event=event,
+            to="speaker@example.com",
+            subject="Your proposal was accepted",
+            text="Congratulations!",
+        )
+
+    client.force_login(user)
+    url = reverse('eventyay_common:organizer.analytics', kwargs={'organizer': organizer.slug})
+    response = client.get(url)
+    assert response.status_code == 200
+    ctx = response.context
+
+    assert ctx['has_email_engagement'] is False
+    assert ctx['email_engagement_rows'] == []
+
+    with scopes_disabled():
+        orders_team.can_change_submissions = True
+        orders_team.save()
+
+    response = client.get(url + '?refresh=1')
+    assert response.status_code == 200
+    ctx = response.context
+
+    assert ctx['has_email_engagement'] is True
+    assert len(ctx['email_engagement_rows']) == 1
+    assert ctx['email_engagement_rows'][0]['queued'] == 1

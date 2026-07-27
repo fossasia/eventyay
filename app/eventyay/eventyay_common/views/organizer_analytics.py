@@ -1,6 +1,7 @@
 import datetime
 import json
 from collections.abc import Mapping, Sequence
+from typing import Any
 
 import dateutil.rrule
 from django.db.models import (
@@ -67,54 +68,30 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
 
     @staticmethod
     def _project_attendance(
-        attendance_daily_by_event: Mapping[object, object],
-        attendance_events: Sequence[Mapping[str, object]],
+        attendance_daily_by_event: Mapping[int, Mapping[str, Mapping[str, int]]],
+        attendance_events: Sequence[Mapping[str, Any]],
         date_labels: Sequence[str],
         requested_event: str | None,
-    ) -> dict[str, object]:
-        """Return a safe, zero-filled presentation payload for Attendance Trends."""
-        buckets_by_event_id: dict[int, Mapping[object, object]] = {}
-        for event_id, bucket in attendance_daily_by_event.items():
-            if isinstance(event_id, bool) or not isinstance(bucket, Mapping):
-                continue
-            try:
-                normalized_event_id = int(event_id)
-            except (TypeError, ValueError):
-                continue
-            if normalized_event_id > 0:
-                buckets_by_event_id[normalized_event_id] = bucket
+    ) -> dict[str, Any]:
+        """Return a clean presentation payload for Attendance Trends."""
+        selector_events = [
+            {'id': event['id'], 'name': str(event['name'])}
+            for event in attendance_events
+            if event.get('id') in attendance_daily_by_event
+        ]
+        permitted_event_ids = {e['id'] for e in selector_events}
 
-        permitted_event_ids: set[int] = set()
-        selector_events = []
-        for event in attendance_events:
-            event_id = event.get('id')
-            event_name = event.get('name')
-            if isinstance(event_id, bool):
-                continue
-            try:
-                normalized_event_id = int(event_id)
-            except (TypeError, ValueError):
-                continue
-            if (
-                normalized_event_id <= 0
-                or normalized_event_id not in buckets_by_event_id
-                or not isinstance(event_name, str)
-            ):
-                continue
-            permitted_event_ids.add(normalized_event_id)
-            selector_events.append({'id': normalized_event_id, 'name': event_name})
-
-        if requested_event in (None, ''):
+        if not requested_event:
             selected_event_id: int | str = ''
             selected_event_ids = permitted_event_ids
         else:
             try:
-                normalized_event_id = int(requested_event)
+                req_id = int(requested_event)
             except (TypeError, ValueError):
-                normalized_event_id = None
-            if normalized_event_id in permitted_event_ids:
-                selected_event_id = normalized_event_id
-                selected_event_ids = {normalized_event_id}
+                req_id = None
+            if req_id in permitted_event_ids:
+                selected_event_id = req_id
+                selected_event_ids = {req_id}
             else:
                 selected_event_id = ''
                 selected_event_ids = set()
@@ -124,16 +101,9 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             orders = 0
             registrations = 0
             for event_id in selected_event_ids:
-                bucket = buckets_by_event_id[event_id]
-                counts = bucket.get(day)
-                if not isinstance(counts, Mapping):
-                    continue
-                order_count = counts.get('orders', 0)
-                registration_count = counts.get('registrations', 0)
-                if isinstance(order_count, int) and not isinstance(order_count, bool):
-                    orders += order_count
-                if isinstance(registration_count, int) and not isinstance(registration_count, bool):
-                    registrations += registration_count
+                bucket = attendance_daily_by_event.get(event_id, {}).get(day, {})
+                orders += bucket.get('orders', 0)
+                registrations += bucket.get('registrations', 0)
             series.append({'x': day, 'orders': orders, 'registrations': registrations})
 
         return {
@@ -153,13 +123,8 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
         return self._cached_event_ids_for_orders
 
     def _event_ids_for_email_engagement(self):
-        if not hasattr(self, '_cached_event_ids_for_email_engagement'):
-            self._cached_event_ids_for_email_engagement = list(
-                self.request.user.get_events_with_permission('can_view_orders', request=self.request)
-                .filter(organizer=self.request.organizer)
-                .values_list('pk', flat=True)
-            )
-        return self._cached_event_ids_for_email_engagement
+        # QueuedMail belongs to CFP proposals and shares the can_change_submissions scope.
+        return self._event_ids_for_proposals()
 
     def _get_email_engagement_data(self):
         event_ids = self._event_ids_for_email_engagement()
@@ -218,14 +183,38 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
 
         follower_total = sum(row['count'] for row in weekly_rows)
 
-        followers_weekly = [
-            {'x': self._to_iso_date(row['period']), 'y': row['count']}
+        weekly_by_date = {
+            self._to_date(row['period']): row['count']
             for row in weekly_rows
-        ]
-        followers_monthly = [
-            {'x': self._to_iso_date(row['period']), 'y': row['count']}
+            if row['period']
+        }
+        followers_weekly = []
+        if weekly_by_date:
+            min_week = min(weekly_by_date.keys())
+            max_week = max(weekly_by_date.keys())
+            for d in dateutil.rrule.rrule(dateutil.rrule.WEEKLY, dtstart=min_week, until=max_week):
+                dt_key = d.date()
+                followers_weekly.append({
+                    'x': dt_key.isoformat(),
+                    'y': weekly_by_date.get(dt_key, 0)
+                })
+
+        monthly_by_date = {
+            self._to_date(row['period']): row['count']
             for row in monthly_rows
-        ]
+            if row['period']
+        }
+        followers_monthly = []
+        if monthly_by_date:
+            min_month = min(monthly_by_date.keys())
+            max_month = max(monthly_by_date.keys())
+            for d in dateutil.rrule.rrule(dateutil.rrule.MONTHLY, dtstart=min_month, until=max_month):
+                dt_key = d.date()
+                followers_monthly.append({
+                    'x': dt_key.isoformat(),
+                    'y': monthly_by_date.get(dt_key, 0)
+                })
+
         return {
             'follower_total': follower_total,
             'followers_weekly_json': json.dumps(followers_weekly),
@@ -279,6 +268,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             orders_by_day = list(
                 Order.objects.filter(
                     event_id__in=event_ids,
+                    status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
                     datetime__gte=start,
                     datetime__lt=end,
                 )
@@ -288,8 +278,9 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                 .order_by('event_id', 'day')
             )
             registrations_by_day = list(
-                OrderPosition.all.filter(
+                OrderPosition.objects.filter(
                     order__event_id__in=event_ids,
+                    order__status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
                     order__datetime__gte=start,
                     order__datetime__lt=end,
                 )
@@ -572,7 +563,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
                 }
 
             event_stats = {}
-            stats_qs = (
+            stats_qs = list(
                 OrderPosition.objects.filter(
                     order__event_id__in=event_ids,
                     order__status=Order.STATUS_PAID,
@@ -658,8 +649,6 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             cache.set(cache_key, data, 600)
 
         attendance_daily_by_event = data.get('attendance_daily_by_event', {})
-        if not isinstance(attendance_daily_by_event, Mapping):
-            attendance_daily_by_event = {}
         attendance_presentation = self._project_attendance(
             attendance_daily_by_event=attendance_daily_by_event,
             attendance_events=data.get('attendance_events') or [],
