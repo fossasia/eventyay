@@ -65,6 +65,7 @@ export default {
 	state: {
 		schedule: null,
 		scheduleMeta: null,
+		scheduleLoaded: false,
 		errorLoading: null,
 		now: moment(),
 		currentLanguage: localStorage.getItem('userLanguage') || 'en',
@@ -226,6 +227,7 @@ export default {
 	actions: {
 		async fetch ({ state, dispatch }) {
 			try {
+				state.scheduleLoaded = false
 				state.errorLoading = null
 				if (window.eventyay?.schedule) {
 					state.schedule = window.eventyay.schedule
@@ -235,6 +237,8 @@ export default {
 				}
 			} catch (error) {
 				state.errorLoading = error
+			} finally {
+				state.scheduleLoaded = true
 			}
 			// Load favourites from server / localStorage after schedule data is ready
 			dispatch('loadFavs')
