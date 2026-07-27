@@ -42,6 +42,7 @@ from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
 from eventyay.base.settings import DEFAULTS, SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
+from eventyay.eventyay_common.video.permissions import video_attendee_trait
 from eventyay.presale.style import regenerate_css
 from eventyay.common.text.path import resolve_media_path
 from eventyay.base.services.quotas import QuotaAvailability
@@ -1247,7 +1248,7 @@ class VideoAccessAuthenticator(View):
         - Users get specific video permission traits based on their team permissions
         - Only staff users (superuser, is_staff, or active staff session) get 'admin' trait
         """
-        traits = ['attendee']
+        traits = ['attendee', video_attendee_trait(self.request.event.slug)]
         traits.extend(video_traits)
         # Only add 'admin' trait for staff users - this grants full admin access
         # Regular organizers should NOT get 'admin' trait, only specific video permission traits
