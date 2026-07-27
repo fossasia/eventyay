@@ -35,7 +35,7 @@
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^26.1.1",
     "@typescript-eslint/eslint-plugin": "^8.64.0",
-    "@typescript-eslint/parser": "^8.63.0",
+    "@typescript-eslint/parser": "^8.65.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/tsconfig": "^0.9.1",
@@ -52,8 +52,8 @@
     "typescript": "^6.0.3",
     "vite": "^6.3.5",
     "vite-bundle-visualizer": "^1.2.1",
-    "vite-plugin-checker": "^0.14.4",
-    "vue-tsc": "^3.3.7"
+    "vite-plugin-checker": "^0.14.5",
+    "vue-tsc": "^3.3.8"
   },
   "bugs": {
     "url": "https://github.com/pretalx/schedule-editor/issues"
