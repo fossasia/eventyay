@@ -19,8 +19,11 @@ from eventyay.multidomain.urlreverse import (
     get_event_domain,
     get_organizer_domain,
 )
-from eventyay.presale.signals import process_request, process_response
-
+from eventyay.presale.signals import (
+    process_request,
+    process_response,
+    question_form_fields,
+)
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 logger = logging.getLogger(__name__)
 
@@ -227,3 +230,42 @@ def event_view(function=None, require_live=True):
         return fn
 
     return function or noop
+
+
+def build_position_additional_fields(event, position):
+    """
+    Collect plugin question fields (and badge options display) for one position.
+
+    Used by both organizer order detail and buyer cart/order views so badge
+    options stay consistent without duplicating signal wiring.
+    """
+    additional_fields = []
+    seen_field_keys = set()
+    data = position.meta_info_data
+    for _receiver, response in sorted(
+        question_form_fields.send(sender=event, position=position),
+        key=lambda item: str(item[0]),
+    ):
+        if not response:
+            continue
+        for key, value in response.items():
+            answer = data.get('question_form_data', {}).get(key)
+            if hasattr(value, 'get_display_value'):
+                answer = value.get_display_value(answer)
+            additional_fields.append(
+                {
+                    'answer': answer,
+                    'question': value.label,
+                }
+            )
+            seen_field_keys.add(key)
+
+    try:
+        from eventyay.plugins.badges.utils import append_badge_options_additional_field
+    except ImportError:
+        pass
+    else:
+        append_badge_options_additional_field(
+            event, position, additional_fields, present_keys=seen_field_keys
+        )
+    return additional_fields
