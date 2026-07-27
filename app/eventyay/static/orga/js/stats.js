@@ -192,6 +192,7 @@ const drawPieChart = (data, scope, type) => {
         ],
         plotOptions: {
             pie: {
+                customScale: 0.85,
                 donut: {
                     labels: {
                         show: true,

@@ -9,6 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
 from django.db.models import Count as DbCount, Prefetch, Q
+from django.db.models.functions import TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -831,40 +832,33 @@ class SubmissionStatsMixin:
     def raw_submission_timeline_data(self):
         if not self.can_view_submission_stats:
             return []
-        submissions = list(
+        rows = (
             self.request.event.submissions
             .exclude(state=SubmissionStates.DELETED)
-            .values_list('id', 'created')
+            .filter(created__isnull=False)
+            .annotate(date=TruncDate('created', tzinfo=self.request.event.tz))
+            .values('date')
+            .annotate(count=DbCount('id'))
+            .order_by('date')
         )
-        logs = LogEntry.objects.filter(
-            event=self.request.event,
-            action_type__in=['eventyay.submission.create', 'pretalx.submission.create', 'pretalx.submission.make_submitted'],
-            content_type=ContentType.objects.get_for_model(Submission),
-        ).order_by('datetime').values_list('object_id', 'datetime')
-        log_dates = {}
-        for object_id, dt_value in logs:
-            log_dates.setdefault(str(object_id), dt_value.astimezone(self.request.event.tz).date())
+        if not rows:
+            return []
 
-        data = Counter()
-        for sub_id, created in submissions:
-            created_date = log_dates.get(str(sub_id))
-            if not created_date and created:
-                created_date = created.astimezone(self.request.event.tz).date()
-            if created_date:
-                data[created_date] += 1
+        dates = {row['date']: row['count'] for row in rows if row['date']}
+        if not dates:
+            return []
 
-        dates = data.keys()
-        if dates:
-            date_range = rrule.rrule(
-                rrule.DAILY,
-                count=(max(dates) - min(dates)).days + 1,
-                dtstart=min(dates),
-            )
-            return sorted(
-                ({'x': date.date().isoformat(), 'y': data.get(date.date(), 0)} for date in date_range),
-                key=lambda x: x['x'],
-            )
-        return []
+        min_date = min(dates.keys())
+        max_date = max(dates.keys())
+        date_range = rrule.rrule(
+            rrule.DAILY,
+            count=(max_date - min_date).days + 1,
+            dtstart=min_date,
+        )
+        return [
+            {'x': date.date().isoformat(), 'y': dates.get(date.date(), 0)}
+            for date in date_range
+        ]
 
     @context
     def submission_timeline_data(self):
@@ -971,28 +965,18 @@ class SubmissionStatsMixin:
     def talk_timeline_data(self):
         if not self.can_view_submission_stats:
             return ''
-        talks = list(
+        rows = (
             self.request.event.submissions
-            .filter(state__in=SubmissionStates.accepted_states)
-            .values_list('id', 'created')
+            .filter(state__in=SubmissionStates.accepted_states, created__isnull=False)
+            .annotate(date=TruncDate('created', tzinfo=self.request.event.tz))
+            .values('date')
+            .annotate(count=DbCount('id'))
+            .order_by('date')
         )
-        logs = LogEntry.objects.filter(
-            event=self.request.event,
-            action_type__in=['eventyay.submission.create', 'pretalx.submission.create', 'pretalx.submission.make_submitted'],
-            content_type=ContentType.objects.get_for_model(Submission),
-        ).order_by('datetime').values_list('object_id', 'datetime')
-        log_dates = {}
-        for object_id, dt_value in logs:
-            log_dates.setdefault(str(object_id), dt_value.astimezone(self.request.event.tz).date().isoformat())
+        if not rows:
+            return ''
 
-        data = Counter()
-        for talk_id, created in talks:
-            created_date = log_dates.get(str(talk_id))
-            if not created_date and created:
-                created_date = created.astimezone(self.request.event.tz).date().isoformat()
-            if created_date:
-                data[created_date] += 1
-
+        data = {row['date'].isoformat(): row['count'] for row in rows if row['date']}
         if data:
             if self.raw_submission_timeline_data:
                 return json.dumps(
