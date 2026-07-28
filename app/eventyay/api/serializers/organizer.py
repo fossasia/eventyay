@@ -166,6 +166,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_change_exhibition_proposals',
             'is_exhibition_reviewer',
             'hide_exhibition_applicant_emails',
+            'can_manage_social_media',
             'force_hide_speaker_emails',
             'can_video_create_stages',
             'can_video_create_channels',
