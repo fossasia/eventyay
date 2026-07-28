@@ -24,7 +24,7 @@ class Command(BaseCommand):
             cost = 0
 
             parser = etree.XMLParser(resolve_entities=False, no_network=True)
-            root = etree.fromstring(r.text.encode(), parser=parser)
+            root = etree.fromstring(r.content, parser=parser)
             if root.xpath("returncode")[0].text != "SUCCESS":
                 raise ValueError("Meetings could not be fetched: " + r.text)
 
