@@ -38,7 +38,7 @@ class InlinePool:
 
 
 def response_with(text):
-    response = Mock(text=text)
+    response = Mock(text=text, content=text.encode())
     response.raise_for_status.return_value = None
     return response
 
@@ -86,6 +86,46 @@ def test_bbb_update_cost_calculates_meeting_cost(mocker):
 
     server.refresh_from_db()
     assert server.cost == 58
+
+
+XXE_PAYLOAD = """<?xml version="1.0"?>
+<!DOCTYPE response [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<response>
+  <returncode>SUCCESS</returncode>
+  <meetings>
+    <meeting>
+      <participantCount>&xxe;</participantCount>
+      <voiceParticipantCount>0</voiceParticipantCount>
+      <videoCount>0</videoCount>
+    </meeting>
+  </meetings>
+</response>
+"""
+
+
+@pytest.mark.django_db
+def test_bbb_update_cost_rejects_xxe_entity_expansion(mocker):
+    server = BBBServer.objects.create(
+        url="https://xxe.example.com/bigbluebutton/",
+        secret="secret",
+        cost=42,
+    )
+    mocker.patch(
+        "eventyay.base.management.commands.bbb_update_cost.pool.ThreadPool",
+        InlinePool,
+    )
+    mocker.patch(
+        "eventyay.base.management.commands.bbb_update_cost.requests.get",
+        return_value=response_with(XXE_PAYLOAD),
+    )
+
+    call_command("bbb_update_cost")
+
+    server.refresh_from_db()
+    # Entity expansion fails safely; cost must remain unchanged.
+    assert server.cost == 42
 
 
 @pytest.mark.django_db
