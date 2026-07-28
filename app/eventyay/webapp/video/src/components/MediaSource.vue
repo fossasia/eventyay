@@ -560,10 +560,12 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 					break;
 				}
 				const config = module.value.config || {};
+				const shouldStartMuted = mute || !!config.startMuted;
+				const shouldAutoplay = autoplay.value && !config.hideControls && shouldStartMuted;
 				iframeUrl = getYoutubeUrl(
 					ytid,
-					autoplay.value,
-					mute || !!config.startMuted,
+					shouldAutoplay,
+					shouldStartMuted,
 					config.hideControls,
 					config.noRelated,
 					config.showInfo,

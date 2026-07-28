@@ -89,6 +89,7 @@ function getDefaultStreamConfig(streamSource, playbackMode = PLAYBACK_MODE_ALWAY
 	} else if (streamSource === 'youtube') {
 		config.ytid = ''
 		config.languageUrls = []
+		config.startMuted = true
 	} else if (streamSource === 'iframe') {
 		config.url = ''
 	}

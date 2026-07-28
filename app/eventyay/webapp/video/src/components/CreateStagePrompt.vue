@@ -55,7 +55,7 @@ export default {
 			streamSource: 'hls',
 			url: '',
 			youtubeId: '',
-			startMuted: false,
+			startMuted: true,
 			description: '',
 			loading: false,
 			error: null,
