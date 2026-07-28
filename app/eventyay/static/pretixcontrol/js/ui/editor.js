@@ -1015,9 +1015,9 @@ var editor = {
 
     _add_text: function () {
         var text = new fabric.Textarea(editor._get_text_sample('event_name'), {
-            left: 100,
+            left: 0,
             top: 100,
-            width: editor._mm2px(50),
+            width: editor.pdf_viewport.width,
             lockRotation: false,
             centeredRotation: true,
             fontFamily: 'Open Sans',
