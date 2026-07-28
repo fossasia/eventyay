@@ -32,7 +32,7 @@
                 class="header-nav btn btn-outline-success">
                 <i class="fa fa-ticket"></i> {% trans "Tickets" %}
             </a>
-            {% if is_talk_event_created %}
+            {% if is_talk_event_created and not is_meetup_event %}
             <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}'
                 class="header-nav btn btn-outline-success">
                 <i class="fa fa-group"></i> {% trans "Talks" %}
