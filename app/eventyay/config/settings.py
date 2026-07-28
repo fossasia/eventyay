@@ -1538,8 +1538,6 @@ CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
 VIDEO_SERVER_HOSTNAME = conf.video_server_hostname
 CACHE_TICKETS_MAX_AGE = conf.cache_tickets_max_age
 FETCH_ECB_RATES = conf.fetch_ecb_rates
-# GeoIP is only enabled if a database path was actually configured and exists,
-# rather than silently disabling this feature for everyone by default.
 GEOIP_PATH = conf.geoip_path
 HAS_GEOIP = bool(GEOIP_PATH) and Path(GEOIP_PATH).exists()
 
