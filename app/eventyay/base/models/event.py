@@ -1474,8 +1474,8 @@ class Event(
         event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
-        if allow_empty_traits and not traits:
-            traits = ['attendee']
+        if traits is None:
+            traits = []
 
         admin_mode_active = 'admin' in traits
         if admin_mode_active:
@@ -1588,8 +1588,6 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
 
         user_traits = user.traits or []
-        if allow_empty_traits and not user_traits:
-            user_traits = ['attendee']
 
         for role, required_traits in event_trait_grants.items():
             if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
