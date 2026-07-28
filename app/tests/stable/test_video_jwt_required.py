@@ -24,10 +24,11 @@ def test_attendee_jwt_trait_grants_access(event):
 
 
 @pytest.mark.django_db
-def test_public_video_link_allows_anonymous_access(event):
+def test_public_video_link_requires_jwt(event):
     event.settings.set('venueless_show_public_link', True)
-    result = login(event=event, client_id='public-anonymous-client')
-    assert result.user.client_id == 'public-anonymous-client'
+    with pytest.raises(AuthError) as exc:
+        login(event=event, client_id='public-anonymous-client')
+    assert exc.value.code == 'auth.missing_token'
 
 
 @pytest.mark.django_db
