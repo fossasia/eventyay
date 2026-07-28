@@ -1275,13 +1275,14 @@ export default {
 			if (!navigator.mediaDevices?.getDisplayMedia) {
 				throw new Error('Screen sharing is not supported by this browser.')
 			}
+			const isSafari = Janus.webRTCAdapter?.browserDetails?.browser === 'safari'
 			const constraints = {
 				video: {
 					frameRate: {ideal: 15, max: 30},
 					width: {max: 1920},
 					height: {max: 1080},
 				},
-				audio: {
+				audio: isSafari ? false : {
 					echoCancellation: true,
 					noiseSuppression: true,
 					autoGainControl: true,
@@ -1291,7 +1292,7 @@ export default {
 			try {
 				stream = await navigator.mediaDevices.getDisplayMedia(constraints)
 			} catch (error) {
-				if (!['TypeError', 'OverconstrainedError', 'ConstraintNotSatisfiedError'].includes(error?.name)) {
+				if (isSafari || !['TypeError', 'OverconstrainedError', 'ConstraintNotSatisfiedError'].includes(error?.name)) {
 					throw error
 				}
 				stream = await navigator.mediaDevices.getDisplayMedia({
@@ -2004,6 +2005,8 @@ export default {
 			return 'video'
 		},
 		isOwnFeed(feedId) {
+			// Janus can report our separate publishers before it echoes the assigned ids.
+			// Keep the configured local session ids in this check to avoid self-subscribing.
 			return this.feedIdEquals(feedId, this.ourAudioId) ||
 				this.feedIdEquals(feedId, this.ourVideoId) ||
 				this.feedIdEquals(feedId, this.janusAudioSessionId) ||
