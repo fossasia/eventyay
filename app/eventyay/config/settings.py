@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import sys
+from datetime import timedelta
 from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
@@ -144,6 +145,10 @@ class BaseSettings(_BaseSettings):
     zoom_key: str = ''
     zoom_secret: str = ''
     control_secret: str = ''
+    video_server_hostname: str = ''
+    cache_tickets_max_age: timedelta = timedelta(days=7)
+    fetch_ecb_rates: bool = True
+    geoip_path: str | None = None
 
     statsd_host: str = ''
     statsd_port: int = 8125
@@ -1530,11 +1535,13 @@ PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
 
 CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
 
-# Default values for settings used across the codebase
-CACHE_TICKETS_HOURS = 24 * 7  # Cache tickets for 1 week by default
-FETCH_ECB_RATES = True  # Fetch ECB exchange rates for foreign currency invoices
-VIDEO_SERVER_HOSTNAME = os.getenv('VIDEO_SERVER_HOSTNAME', '')  # Hostname of the video server
-HAS_GEOIP = False  # Set to True if GeoIP2 database is available
+VIDEO_SERVER_HOSTNAME = conf.video_server_hostname
+CACHE_TICKETS_MAX_AGE = conf.cache_tickets_max_age
+FETCH_ECB_RATES = conf.fetch_ecb_rates
+# GeoIP is only enabled if a database path was actually configured and exists,
+# rather than silently disabling this feature for everyone by default.
+GEOIP_PATH = conf.geoip_path
+HAS_GEOIP = bool(GEOIP_PATH) and Path(GEOIP_PATH).exists()
 
 if IS_DEVELOPMENT:
     # Support for Android emulators and port forwarding
