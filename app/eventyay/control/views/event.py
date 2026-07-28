@@ -34,10 +34,9 @@ from django.views.generic import DeleteView, FormView, ListView
 from django.views.generic.base import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from i18nfield.strings import LazyI18nString
-from i18nfield.utils import I18nJSONEncoder
-
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
+from eventyay.base.meetup import is_meetup_event
 from eventyay.common.sanitizers import sanitize_email_html
 from eventyay.base.models import (
     Event,
@@ -760,6 +759,9 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             'mail_text_order_free',
             'mail_send_order_free_attendee',
             'mail_text_order_free_attendee',
+            'mail_text_meetup_registration',
+            'mail_send_meetup_registration_attendee',
+            'mail_text_meetup_registration_attendee',
             'mail_text_resend_link',
             'mail_text_resend_all_links',
             'mail_text_order_changed',
@@ -845,6 +847,14 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         preview_product = request.POST.get('product', '')
         if preview_product not in MailSettingsForm.base_context:
+            return HttpResponseBadRequest(_('invalid product'))
+
+        # Meetup-only templates must not be previewed on non-meetup events.
+        meetup_only = {
+            'mail_text_meetup_registration',
+            'mail_text_meetup_registration_attendee',
+        }
+        if preview_product in meetup_only and not is_meetup_event(request.event):
             return HttpResponseBadRequest(_('invalid product'))
 
         regex = r'^' + re.escape(preview_product) + r'_(?P<idx>[\d+])$'

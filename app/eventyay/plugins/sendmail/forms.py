@@ -13,6 +13,7 @@ from eventyay.base.forms import PlaceholderValidator, SettingsForm
 from eventyay.common.forms.fields import I18nEmailBodyFormField
 from eventyay.common.forms.widgets import I18nEmailEditorWidget
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
+from eventyay.base.meetup import is_meetup_event
 from eventyay.control.forms import SplitDateTimeField
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
@@ -293,6 +294,22 @@ class MailContentSettingsForm(SettingsForm):
         widget=I18nTextarea,
     )
 
+    mail_text_meetup_registration = I18nFormField(
+        label=_('Text sent to registration contact address'),
+        required=False,
+        widget=I18nTextarea,
+    )
+    mail_send_meetup_registration_attendee = forms.BooleanField(
+        label=_('Send an email to attendees'),
+        help_text=MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP,
+        required=False,
+    )
+    mail_text_meetup_registration_attendee = I18nFormField(
+        label=_('Text sent to attendees'),
+        required=False,
+        widget=I18nTextarea,
+    )
+
     mail_text_resend_link = I18nFormField(
         label=_('Text (sent by admin)'),
         required=False,
@@ -417,6 +434,8 @@ class MailContentSettingsForm(SettingsForm):
         'mail_text_order_paid_attendee': ['event', 'order', 'position'],
         'mail_text_order_free': ['event', 'order'],
         'mail_text_order_free_attendee': ['event', 'order', 'position'],
+        'mail_text_meetup_registration': ['event'],
+        'mail_text_meetup_registration_attendee': ['event'],
         'mail_text_order_changed': ['event', 'order'],
         'mail_text_order_canceled': ['event', 'order'],
         'mail_text_order_expire_warning': ['event', 'order'],
@@ -440,6 +459,14 @@ class MailContentSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs.get('obj')
         super().__init__(*args, **kwargs)
+        self.base_context = dict(self.base_context)
+
+        if not is_meetup_event(self.event):
+            for field in ('mail_text_meetup_registration', 'mail_send_meetup_registration_attendee',
+                          'mail_text_meetup_registration_attendee'):
+                self.fields.pop(field, None)
+                self.base_context.pop(field, None)
+
         for k, v in self.base_context.items():
             if k in self.fields:
                 self._set_field_placeholders(k, v)
