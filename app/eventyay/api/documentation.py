@@ -211,4 +211,16 @@ def postprocess_schema(result, generator, request, public):
             },
         },
     ]
+
+    def format_tag_name(name):
+        return name.replace('-', ' ').title()
+
+    for tag in result.get('tags', []):
+        tag['name'] = format_tag_name(tag['name'])
+
+    for path, path_methods in result.get('paths', {}).items():
+        for method, operation in path_methods.items():
+            if isinstance(operation, dict) and 'tags' in operation:
+                operation['tags'] = [format_tag_name(t) for t in operation['tags']]
+
     return result
