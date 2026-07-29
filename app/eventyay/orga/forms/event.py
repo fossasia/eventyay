@@ -90,19 +90,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         help_text=_('Shows favourite counts on session cards in the schedule.'),
         required=False,
     )
-    export_html_on_release = forms.BooleanField(
-        label=_('Generate HTML export on schedule release'),
-        help_text=_('The static HTML export will be provided as a .zip archive on the schedule export page.'),
-        required=False,
-    )
-    html_export_url = forms.URLField(
-        label=_('HTML Export URL'),
-        help_text=_(
-            'If you publish your schedule via the HTML export, you will want the correct absolute URL to be set in various places. '
-            'Please only set this value once you have published your schedule. Should end with a slash.'
-        ),
-        required=False,
-    )
     header_pattern = forms.ChoiceField(
         label=phrases.orga.event_header_pattern_label,
         help_text=phrases.orga.event_header_pattern_help_text,
@@ -221,12 +208,34 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             'use_feedback': 'feature_flags',
             'session_popularity_enabled': 'feature_flags',
             'session_popularity_show_on_schedule': 'feature_flags',
-            'export_html_on_release': 'feature_flags',
-            'html_export_url': 'display_settings',
             'header_pattern': 'display_settings',
             'etherpad_enabled': 'feature_flags',
             'etherpad_auto_generate': 'feature_flags',
             'etherpad_public': 'display_settings',
+        }
+
+
+class ScheduleHtmlExportForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, forms.Form):
+    """Settings for the schedule HTML export feature, shown as a tab in Import/Export."""
+
+    export_html_on_release = forms.BooleanField(
+        label=_('Generate HTML export on schedule release'),
+        help_text=_('The static HTML export will be provided as a .zip archive on the schedule export page.'),
+        required=False,
+    )
+    html_export_url = forms.URLField(
+        label=_('HTML Export URL'),
+        help_text=_(
+            'If you publish your schedule via the HTML export, you will want the correct absolute URL to be set in various places. '
+            'Please only set this value once you have published your schedule. Should end with a slash.'
+        ),
+        required=False,
+    )
+
+    class Meta:
+        json_fields = {
+            'export_html_on_release': 'feature_flags',
+            'html_export_url': 'display_settings',
         }
 
 
