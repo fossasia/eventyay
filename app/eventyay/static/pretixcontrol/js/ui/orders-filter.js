@@ -15,10 +15,7 @@ function setExpanded(root, expanded) {
     panel.hidden = !expanded;
     panel.classList.toggle('is-collapsed', !expanded);
 
-    if (goForm) {
-        goForm.hidden = !expanded;
-        goForm.classList.toggle('is-collapsed', !expanded);
-    }
+
 }
 
 function initOrdersFilter(root = document) {

@@ -49,6 +49,17 @@
             </p>
         {% else %}
             <div class="orders-search" data-orders-search>
+                <form class="orders-go-form"
+                      action="{% url 'control:event.orders.go' event=request.event.slug organizer=request.event.organizer.slug %}"
+                      method="get"
+                      data-orders-go-form>
+                    <div class="input-group orders-search-code-group">
+                        <input id="orders-go-code" type="text" name="code" class="form-control" placeholder="{% trans 'Order code' %}">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="submit">{% trans "Go!" %}</button>
+                        </span>
+                    </div>
+                </form>
                 <form class="filter-form orders-search-form" action="" method="get">
                     <div class="orders-search-bar">
                         <div class="orders-search-query">
@@ -95,10 +106,10 @@
                                     {% bootstrap_field filter_form.subevent %}
                                 </div>
                             {% endif %}
-                            <div class="orders-advanced-field orders-advanced-field-wide">
+                            <div class="orders-advanced-field">
                                 {% bootstrap_field filter_form.created_from %}
                             </div>
-                            <div class="orders-advanced-field orders-advanced-field-wide">
+                            <div class="orders-advanced-field">
                                 {% bootstrap_field filter_form.created_to %}
                             </div>
                             {{ filter_form.browser_timezone }}
@@ -114,19 +125,7 @@
                         </div>
                     </div>
                 </form>
-                <form class="orders-go-form{% if not advanced_filters_open %} is-collapsed{% endif %}"
-                      action="{% url 'control:event.orders.go' event=request.event.slug organizer=request.event.organizer.slug %}"
-                      method="get"
-                      data-orders-go-form
-                      {% if not advanced_filters_open %}hidden{% endif %}>
-                    <label class="control-label" for="orders-go-code">{% trans "Open by order code" %}</label>
-                    <div class="input-group orders-search-code-group">
-                        <input id="orders-go-code" type="text" name="code" class="form-control" placeholder="{% trans 'Order code' %}">
-                        <span class="input-group-btn">
-                            <button class="btn btn-default" type="submit">{% trans "Go!" %}</button>
-                        </span>
-                    </div>
-                </form>
+
             </div>
         {% endif %}
         {% if filter_form.is_valid and filter_form.cleaned_data.question %}
