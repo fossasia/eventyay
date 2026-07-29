@@ -153,15 +153,6 @@ def position_has_printable_badge(event, position):
     return get_badge_layout_for_position(event, position) is not None
 
 
-def position_has_explicit_badge_assignment(event, position):
-    product_map, voucher_map, _default_layout = get_badge_layout_assignment_maps(event)
-    if position.voucher_id and position.voucher_id in voucher_map:
-        return voucher_map[position.voucher_id] is not None
-    if position.product_id in product_map:
-        return product_map[position.product_id] is not None
-    return False
-
-
 def exclude_explicit_no_badge(qs, assignment_model, fk_lookup):
     return qs.annotate(
         no_badging=Exists(
@@ -264,13 +255,14 @@ def get_badge_bundle_option_choices(event, position):
 
     The bundle is defined as a base position plus all attached add-ons.
     Choices are deduplicated by key while preserving discovery order.
+
+    Includes products that only use the event default layout when that layout
+    allows customization with ask-user fields. Explicit no-badge assignments
+    (layout=None) are skipped because no layout resolves for them.
     """
     seen_keys = set()
     choices = []
     for bundle_position in get_badge_bundle_positions(position):
-        if not position_has_explicit_badge_assignment(event, bundle_position):
-            continue
-
         layout = get_badge_layout_for_position(event, bundle_position)
         if not layout or not layout.allow_customization:
             continue
@@ -318,8 +310,8 @@ def get_badge_options_display(event, position):
     """
     Return a human-readable badge-options summary for order views.
 
-    Unlike checkout form injection, this includes products that only use the
-    event default layout so organizers can confirm what will be printed.
+    Uses the same layout resolution as checkout/modify form injection, including
+    the event default layout when no product/voucher assignment exists.
     """
     layout = get_badge_layout_for_position(event, position)
     if not layout or not layout.allow_customization or not layout.ask_user_fields_data:
