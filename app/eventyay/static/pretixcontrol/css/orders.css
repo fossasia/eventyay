@@ -7,21 +7,27 @@
 
 .orders-search {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 12px;
   width: 100%;
 }
 
+.orders-go-form {
+  flex: 0 0 auto;
+}
+
 .orders-search-form {
-  width: 100%;
+  display: contents;
 }
 
 .orders-search-bar {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: stretch;
-  width: 100%;
 }
 
 .orders-search-query {
@@ -56,6 +62,7 @@
 }
 
 .orders-advanced-filters {
+  flex: 0 0 100%;
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 12px;
@@ -68,10 +75,16 @@
 }
 
 .orders-advanced-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   gap: 12px 16px;
   align-items: end;
+}
+
+.orders-advanced-field {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .orders-advanced-field .form-group {
@@ -83,8 +96,19 @@
   width: 100%;
 }
 
-.orders-advanced-field-wide {
-  grid-column: span 2;
+/* Force date and time inputs to sit on the same row */
+.orders-advanced-field .splitdatetimerow {
+  display: block;
+}
+
+.orders-advanced-field .splitdatetimerow > .splitdatetimepart {
+  display: inline-block;
+  width: calc(50% - 4px);
+  vertical-align: top;
+}
+
+.orders-advanced-field .splitdatetimerow > .splitdatetimepart:first-of-type {
+  margin-right: 4px;
 }
 
 .orders-advanced-footer {
@@ -102,8 +126,7 @@
 }
 
 .orders-go-form .control-label {
-  display: block;
-  margin-bottom: 4px;
+  display: none;
 }
 
 .orders-search-code-group {
@@ -166,11 +189,11 @@
     flex: 1 1 auto;
   }
 
-  .orders-advanced-field-wide {
-    grid-column: span 1;
+  .orders-search {
+    flex-direction: column;
   }
-
-  .orders-go-form {
-    max-width: none;
+  
+  .orders-advanced-grid {
+    flex-wrap: wrap;
   }
 }
