@@ -342,7 +342,7 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
             self.object.settings.venueless_url = f"{base_site}/video/{self.object.pk}"
             if self.copy_from and self.copy_from.settings.get('event_type') == 'meetup':
                 self.object.settings.set('meetup_video_active', True)
-        except Exception:
+        except (KeyError, IndexError, TypeError, AttributeError):
             pass
 
         for f in self.formset.extra_forms:
@@ -363,7 +363,7 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
                 self.object.settings.venueless_audience = audience
                 base_site = settings.SITE_URL.rstrip('/')
                 self.object.settings.venueless_url = f"{base_site}/video/{self.object.pk}"
-            except Exception:
+            except (KeyError, IndexError, TypeError, AttributeError):
                 pass
 
         LogEntry.objects.create(
