@@ -31,6 +31,12 @@ transition(name="sidebar")
 								i.mdi.mdi-account-group.icon-viewer
 								.name(v-html="stage.room.users")
 						.notifications(v-if="stage.notifications") {{ stage.notifications }}
+			.group-title#networking-title(v-if="roomsByType.networking.length")
+				span {{ networkingTitle }}
+			.networking(role="group", aria-describedby="networking-title")
+				router-link.networking-room(v-for="room of roomsByType.networking", :to="homeRoom && room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: room.id}}", :class="{active: room.id === $route.params.roomId}")
+					.room-icon(aria-hidden="true")
+					.name(v-html="$emojify(room.name)")
 			.group-title#chats-title(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')")
 				span {{ $t('RoomsSidebar:channels-headline:text') }}
 				.buffer
@@ -84,7 +90,7 @@ transition(name="sidebar")
 <script>
 import { mapState, mapGetters } from 'vuex'
 import theme from 'theme'
-import { VIDEO_CHANNEL_MODULE_TYPES, inferRoomType, inferType } from 'lib/room-types'
+import ROOM_TYPES, { NETWORKING_MODULE_TYPES, VIDEO_CHANNEL_MODULE_TYPES, inferRoomType, inferType } from 'lib/room-types'
 import Avatar from 'components/Avatar'
 import ChannelBrowser from 'components/ChannelBrowser'
 import CreateStagePrompt from 'components/CreateStagePrompt'
@@ -130,6 +136,9 @@ export default {
 				}]
 			}
 		},
+		networkingTitle() {
+			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')?.name || 'Networking'
+		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {
 			if (this.pointerMovementX === 0) return
@@ -141,6 +150,7 @@ export default {
 			const rooms = {
 				page: [],
 				stage: [],
+				networking: [],
 				textChat: [],
 				videoChat: []
 			}
@@ -159,6 +169,8 @@ export default {
 						room,
 						notifications: notifications > 99 ? '99+' : notifications
 					})
+				} else if (room.modules.some(module => NETWORKING_MODULE_TYPES.has(module.type))) {
+					rooms.networking.push(room)
 				} else if (room.modules.some(module => VIDEO_CHANNEL_MODULE_TYPES.has(module.type))) {
 					rooms.videoChat.push(room)
 				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe'].includes(module.type))) {
@@ -306,7 +318,7 @@ export default {
 		vertical-align: text-bottom
 		&.needs-space
 			margin-right: 4px
-	.stages, .chats, .direct-messages, .admin
+	.stages, .networking, .chats, .direct-messages, .admin
 		flex: none
 		display: flex
 		flex-direction: column
@@ -447,7 +459,10 @@ export default {
 		.video-chat
 			.room-icon::before
 				content: '\F05A0'
-		.direct-message, .text-chat, .video-chat
+		.networking-room
+			.room-icon::before
+				content: '\F11D9'
+		.direct-message, .networking-room, .text-chat, .video-chat
 			padding-right: 8px
 			display: flex
 			align-items: flex-start

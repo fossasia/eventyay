@@ -55,7 +55,8 @@ const ROOM_TYPES = [{
 	name: 'Random video calls',
 	description: 'Connect your attendees for short video calls in random combinations.',
 	startingModule: 'networking.roulette',
-	videoChannel: true,
+	inferModules: ['networking.roulette'],
+	sidebarGroup: 'networking',
 	behindFeatureFlag: 'roulette'
 }, {
 	id: 'page-static',
@@ -85,6 +86,7 @@ const ROOM_TYPES = [{
 }]
 
 export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))
+export const NETWORKING_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.sidebarGroup === 'networking').map(type => type.startingModule))
 
 export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
 
