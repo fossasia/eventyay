@@ -197,6 +197,10 @@
     margin-bottom: 32px;
 }
 
+.analytics-section .form-inline {
+    margin-bottom: 16px;
+}
+
 .analytics-section h2 {
     font-size: 18px;
     font-weight: 600;

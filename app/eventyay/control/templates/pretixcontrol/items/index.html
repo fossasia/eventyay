@@ -29,12 +29,12 @@
                     class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Create a new product" %}</a>
         </div>
     {% else %}
-        <p>
+        <p class="list-toolbar">
             <a href="{% url "control:event.products.add" organizer=request.event.organizer.slug event=request.event.slug %}"
                     class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Create a new product" %}</a>
         </p>
         <div class="table-responsive">
-            <table class="table table-condensed table-hover">
+            <table class="table table-condensed table-hover table-flip tickets-table">
                 <thead>
                 <tr>
                     <th>{% trans "Product name" %}</th>
@@ -52,25 +52,23 @@
                 {% for c in cat_list %}
                     {% for i in c.list %}
                         <tr>
-                            <td><strong>
+                            <td class="list-name-cell">
+                                <strong>
                                 {% if not i.active %}<strike>{% endif %}
-                                <a href="
-                        {% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=i.id %}">{{ i }}</a>
+                                <a href="{% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=i.id %}">{{ i }}</a>
                                 {% if not i.active %}</strike>{% endif %}
                                 </strong>
-                                <br>
                                 <small class="text-muted">
                                     #{{ i.pk }}
                                     {% for k, c in sales_channels.products %}
                                         {% if k in i.sales_channels %}
                                             <span class="fa fa-fw fa-{{ c.icon }} text-muted"
                                                   data-toggle="tooltip" title="{% trans c.verbose_name %}"></span>
-                                        {% else %}
                                         {% endif %}
                                     {% endfor %}
                                 </small>
                             </td>
-                            <td>
+                            <td class="list-indicators" data-label="{% trans 'Availability' %}">
                                 {% if i.available_from or i.available_until %}
                                     {% if not i.is_available_by_time %}
                                         <span class="label label-danger" data-toggle="tooltip"
@@ -84,19 +82,19 @@
                                     {% endif %}
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="list-indicators" data-label="{% trans 'Type' %}">
                                 {% if i.admission %}
                                     <span class="fa fa-user fa-fw text-muted" data-toggle="tooltip" title="{% trans "Admission ticket" %}"></span>
                                 {% elif i.issue_giftcard %}
                                     <span class="fa fa-gift fa-fw text-muted" data-toggle="tooltip" title="{% trans "Gift card" %}"></span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="list-indicators" data-label="{% trans 'Variations' %}">
                                 {% if i.var_count %}
                                     <span class="fa fa-th-large fa-fw text-muted" data-toggle="tooltip" title="{% trans "Product with variations" %}"></span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="list-indicators" data-label="{% trans 'Restrictions' %}">
                                 {% if i.category.is_addon %}
                                     <span class="fa fa-puzzle-piece fa-fw text-muted" data-toggle="tooltip"
                                             title="{% trans "Only available as an add-on product" %}"></span>
@@ -111,12 +109,14 @@
                                             title="{% trans "Can only be bought using a voucher" %}"></span>
                                 {% endif %}
                             </td>
-                            <td>{% if i.category %}{{ i.category.name }}{% endif %}</td>
-                            <td>
+                            <td class="list-meta" data-label="{% trans 'Category' %}">
+                                {% if i.category %}<span class="category-pill">{{ i.category.name }}</span>{% endif %}
+                            </td>
+                            <td class="list-reorder" data-label="{% trans 'Order' %}">
                                 <a href="{% url 'control:event.products.up' organizer=request.event.organizer.slug event=request.event.slug product=i.id %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-default btn-sm {% if not i.can_move_up %}disabled{% endif %}"><i class="fa fa-arrow-up"></i></a>
                                 <a href="{% url 'control:event.products.down' organizer=request.event.organizer.slug event=request.event.slug product=i.id %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-default btn-sm {% if not i.can_move_down %}disabled{% endif %}"><i class="fa fa-arrow-down"></i></a>
                             </td>
-                            <td class="text-right flip">
+                            <td class="list-actions text-right flip" data-label="{% trans 'Actions' %}">
                                 <a href="{% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=i.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
                                 <a href="{% url "control:event.products.add" organizer=request.event.organizer.slug event=request.event.slug %}?copy_from={{ i.id }}" class="btn btn-default btn-sm" title="{% trans "Clone" %}" data-toggle="tooltip"><i class="fa fa-copy"></i></a>
                                 <a href="{% url "control:event.products.delete" organizer=request.event.organizer.slug event=request.event.slug product=i.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>
