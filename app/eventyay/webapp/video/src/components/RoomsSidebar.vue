@@ -142,10 +142,13 @@ export default {
 			}
 		},
 		networkingTitle() {
-			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')?.name || 'Networking'
+			return this.networkingRoomType?.name || 'Networking'
+		},
+		networkingRoomType() {
+			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')
 		},
 		canCreateNetworkingRoom() {
-			return isRoomTypeAvailable('channel-roulette', this.hasPermission)
+			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission)
 		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {
