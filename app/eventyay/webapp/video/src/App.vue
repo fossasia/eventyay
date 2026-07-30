@@ -72,6 +72,7 @@ export default {
 				now: computed(() => this.$store.state.now),
 				timezone: computed(() => this.$store.state.userTimezone || moment.tz.guess()),
 				hasAmPm: new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12,
+				scheduleLoaded: computed(() => this.$store.state.schedule?.scheduleLoaded),
 				errorLoading: computed(() => this.$store.state.schedule?.errorLoading),
 				speakersLookup: computed(() => this.$store.getters['schedule/speakersLookup']),
 				sessionsBySpeaker: computed(() => this.$store.getters['schedule/sessionsBySpeaker']),
