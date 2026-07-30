@@ -208,14 +208,6 @@
         </fieldset>
         <fieldset id="email-settings-tab">
             <legend>{% trans "Email" %}</legend>
-            <div class="alert alert-info">
-                {% blocktrans trimmed %}
-                    All outgoing event emails — both <strong>Tickets</strong> and <strong>Talks</strong> —
-                    share the settings on this page. Component-specific email templates can still be
-                    customised on each component's own email settings page.
-                {% endblocktrans %}
-            </div>
-
             <h4 class="settings-sub-heading">{% trans "General" %}</h4>
             {% bootstrap_field email_form.mail_from layout="control" %}
             {% bootstrap_field email_form.mail_from_name layout="control" %}
