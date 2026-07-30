@@ -1,6 +1,11 @@
 {% extends "pretixcontrol/event/settings_base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% load static %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+{% endblock %}
 {% block inside %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
@@ -15,53 +20,63 @@
         <div class="tabbed-form">
             <fieldset>
                 <legend>{% trans "Payment providers" %}</legend>
-                <table class="table table-payment-providers">
-                    <tbody>
-                    {% for provider in providers %}
+                <div class="table-responsive">
+                    <table class="table table-payment-providers table-flip tickets-table payment-providers-table">
+                        <thead>
                         <tr>
-                            <td>
-                                <strong>{{ provider.verbose_name }}</strong>
-                            </td>
-                            <td>
-                                {% if provider.show_enabled %}
-                                    <span class="text-success">
-                                    <span class="fa fa-check"></span>
-                                    {% trans "Enabled" %}
-                                </span>
-                                {% else %}
-                                    <span class="text-danger">
-                                    <span class="fa fa-times"></span>
-                                    {% trans "Disabled" %}
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td class="iconcol">
-                                {% for channel in provider.sales_channels %}
-                                    <span class="fa fa-{{ channel.icon }} text-muted"
-                                          data-toggle="tooltip" title="{% trans channel.verbose_name %}"></span>
-                                {% endfor %}
-                            </td>
-                            <td class="text-right flip">
-                                <a href="{% url 'control:event.settings.payment.provider' event=request.event.slug organizer=request.organizer.slug provider=provider.identifier %}"
-                                        class="btn btn-default">
-                                    <span class="fa fa-cog"></span>
-                                    {% trans "Settings" %}
-                                </a>
-                            </td>
+                            <th>{% trans "Provider" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th class="iconcol"></th>
+                            <th></th>
                         </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="3">
-                                {% url "eventyay_common:event.plugins" event=request.event.slug organizer=request.organizer.slug as plugin_settings_url %}
-                                {% blocktrans trimmed with plugin_settings_href='href="'|add:plugin_settings_url|add:'"'|safe %}
-                                    There are no payment providers available. Please go to the
-                                    <a {{ plugin_settings_href }}>plugin settings</a> and activate one or more payment plugins.
-                                {% endblocktrans %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                        {% for provider in providers %}
+                            <tr>
+                                <td class="list-name-cell">
+                                    <strong>{{ provider.verbose_name }}</strong>
+                                </td>
+                                <td class="list-meta">
+                                    {% if provider.show_enabled %}
+                                        <span class="text-success">
+                                        <span class="fa fa-check"></span>
+                                        {% trans "Enabled" %}
+                                    </span>
+                                    {% else %}
+                                        <span class="text-danger">
+                                        <span class="fa fa-times"></span>
+                                        {% trans "Disabled" %}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="list-indicators">
+                                    {% for channel in provider.sales_channels %}
+                                        <span class="fa fa-{{ channel.icon }} text-muted"
+                                              data-toggle="tooltip" title="{% trans channel.verbose_name %}"></span>
+                                    {% endfor %}
+                                </td>
+                                <td class="text-right flip list-actions">
+                                    <a href="{% url 'control:event.settings.payment.provider' event=request.event.slug organizer=request.organizer.slug provider=provider.identifier %}"
+                                            class="btn btn-default">
+                                        <span class="fa fa-cog"></span>
+                                        {% trans "Settings" %}
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="orders-section-empty">
+                                    {% url "eventyay_common:event.plugins" event=request.event.slug organizer=request.organizer.slug as plugin_settings_url %}
+                                    {% blocktrans trimmed with plugin_settings_href='href="'|add:plugin_settings_url|add:'"'|safe %}
+                                        There are no payment providers available. Please go to the
+                                        <a {{ plugin_settings_href }}>plugin settings</a> and activate one or more payment plugins.
+                                    {% endblocktrans %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </fieldset>
             <fieldset>
                 <legend>{% trans "Deadlines" %}</legend>
