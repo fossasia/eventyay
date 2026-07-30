@@ -31,6 +31,13 @@ transition(name="sidebar")
 								i.mdi.mdi-account-group.icon-viewer
 								.name(v-html="stage.room.users")
 						.notifications(v-if="stage.notifications") {{ stage.notifications }}
+			.group-title#networking-title(v-if="roomsByType.networking.length || canCreateNetworkingRoom")
+				span {{ networkingTitle }}
+				bunt-icon-button(v-if="canCreateNetworkingRoom", tooltip="Create random video calls", :tooltip-fixed="true", @click="showNetworkingCreationPrompt = true") plus
+			.networking(role="group", aria-describedby="networking-title")
+				router-link.networking-room(v-for="room of roomsByType.networking", :to="homeRoom && room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: room.id}}", :class="{active: room.id === $route.params.roomId}")
+					.room-icon(aria-hidden="true")
+					.name(v-html="$emojify(room.name)")
 			.group-title#chats-title(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')")
 				span {{ $t('RoomsSidebar:channels-headline:text') }}
 				.buffer
@@ -78,21 +85,24 @@ transition(name="sidebar")
 		transition(name="prompt")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")
+			create-networking-prompt(v-else-if="showNetworkingCreationPrompt", @close="showNetworkingCreationPrompt = false")
 			create-chat-prompt(v-else-if="showChatCreationPrompt", @close="showChatCreationPrompt = false")
 			create-dm-prompt(v-else-if="showDMCreationPrompt && hasPermission('world:chat.direct')", @close="showDMCreationPrompt = false")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
 import theme from 'theme'
-import { inferRoomType, inferType } from 'lib/room-types'
+import ROOM_TYPES, { NETWORKING_MODULE_TYPES, VIDEO_CHANNEL_MODULE_TYPES, inferRoomType, inferType } from 'lib/room-types'
+import { isRoomTypeAvailable } from 'lib/room-type-permissions'
 import Avatar from 'components/Avatar'
 import ChannelBrowser from 'components/ChannelBrowser'
 import CreateStagePrompt from 'components/CreateStagePrompt'
+import CreateNetworkingPrompt from 'components/CreateNetworkingPrompt'
 import CreateChatPrompt from 'components/CreateChatPrompt'
 import CreateDmPrompt from 'components/CreateDmPrompt'
 
 export default {
-	components: { Avatar, ChannelBrowser, CreateStagePrompt, CreateChatPrompt, CreateDmPrompt },
+	components: { Avatar, ChannelBrowser, CreateStagePrompt, CreateNetworkingPrompt, CreateChatPrompt, CreateDmPrompt },
 	props: {
 		show: Boolean
 	},
@@ -105,6 +115,7 @@ export default {
 			snapBack: false,
 			showChannelBrowser: false,
 			showStageCreationPrompt: false,
+			showNetworkingCreationPrompt: false,
 			showChatCreationPrompt: false,
 			showDMCreationPrompt: false
 		}
@@ -130,6 +141,15 @@ export default {
 				}]
 			}
 		},
+		networkingTitle() {
+			return this.networkingRoomType?.name || 'Networking'
+		},
+		networkingRoomType() {
+			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')
+		},
+		canCreateNetworkingRoom() {
+			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission)
+		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {
 			if (this.pointerMovementX === 0) return
@@ -141,6 +161,7 @@ export default {
 			const rooms = {
 				page: [],
 				stage: [],
+				networking: [],
 				textChat: [],
 				videoChat: []
 			}
@@ -159,7 +180,9 @@ export default {
 						room,
 						notifications: notifications > 99 ? '99+' : notifications
 					})
-				} else if (room.modules.some(module => ['call.bigbluebutton', 'call.janus', 'call.zoom'].includes(module.type))) {
+				} else if (room.modules.some(module => NETWORKING_MODULE_TYPES.has(module.type))) {
+					rooms.networking.push(room)
+				} else if (room.modules.some(module => VIDEO_CHANNEL_MODULE_TYPES.has(module.type))) {
 					rooms.videoChat.push(room)
 				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe'].includes(module.type))) {
 					let session
@@ -306,7 +329,7 @@ export default {
 		vertical-align: text-bottom
 		&.needs-space
 			margin-right: 4px
-	.stages, .chats, .direct-messages, .admin
+	.stages, .networking, .chats, .direct-messages, .admin
 		flex: none
 		display: flex
 		flex-direction: column
@@ -447,7 +470,10 @@ export default {
 		.video-chat
 			.room-icon::before
 				content: '\F05A0'
-		.direct-message, .text-chat, .video-chat
+		.networking-room
+			.room-icon::before
+				content: '\F11D9'
+		.direct-message, .networking-room, .text-chat, .video-chat
 			padding-right: 8px
 			display: flex
 			align-items: flex-start
