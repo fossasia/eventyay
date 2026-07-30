@@ -149,21 +149,24 @@ class EventSerializer(I18nAwareModelSerializer):
         request = self.context.get('request')
         if request and not hasattr(request, 'event'):
             self.fields.pop('valid_keys', None)
-        # startpage_visible and startpage_featured are admin-only fields.
-        if request is not None:
-            user = getattr(request, 'user', None)
-            is_admin = False
-            if user and user.is_authenticated:
-                is_admin = getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False)
-                session = getattr(request, 'session', None)
-                session_key = getattr(session, 'session_key', None) if session else None
-                if is_admin and isinstance(session_key, str) and session_key and hasattr(user, 'has_active_staff_session'):
-                    if not user.has_active_staff_session(session_key):
-                        is_admin = False
-            if not is_admin:
-                for field_name in ('startpage_visible', 'startpage_featured'):
-                    if field_name in self.fields:
-                        self.fields[field_name].read_only = True
+        # Make startpage visibility fields read-only for non-admin callers
+        if not self._has_startpage_admin_permission(request):
+            for field_name in ('startpage_visible', 'startpage_featured'):
+                if field_name in self.fields:
+                    self.fields[field_name].read_only = True
+
+    @staticmethod
+    def _has_startpage_admin_permission(request):
+        if not request or isinstance(getattr(request, 'auth', None), (Device, TeamAPIToken)):
+            return False
+
+        user = getattr(request, 'user', None)
+        if not (user and getattr(user, 'is_authenticated', False) and (getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False))):
+            return False
+
+        session_key = getattr(getattr(request, 'session', None), 'session_key', None)
+        session_key = session_key if isinstance(session_key, str) and session_key else None
+        return bool(hasattr(user, 'has_active_staff_session') and user.has_active_staff_session(session_key))
 
     def validate(self, data):
         data = super().validate(data)
