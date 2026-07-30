@@ -203,7 +203,6 @@ class EventWizardBasicsForm(I18nModelForm):
         fields = [
             'name',
             'slug',
-            'currency',
             'date_from',
             'date_to',
             'presale_start',
@@ -1641,6 +1640,11 @@ class EventDeleteForm(forms.Form):
 
 
 class QuickSetupForm(I18nForm):
+    currency = forms.ChoiceField(
+        label=_('Event currency'),
+        choices=Event.CURRENCY_CHOICES,
+        required=True,
+    )
     show_quota_left = forms.BooleanField(
         label=_('Show number of tickets left'),
         help_text=_('Publicly show how many tickets of a certain type are still available.'),
