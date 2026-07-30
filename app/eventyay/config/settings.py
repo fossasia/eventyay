@@ -415,8 +415,6 @@ CORS_URLS_REGEX = (
     r")$"
 )
 
-# The check-in app sends a custom "Exhibitor" header for lead-scanning requests,
-# which isn't in corsheaders' default allow-list.
 CORS_ALLOW_HEADERS = [*default_headers, "exhibitor"]
 
 # TODO: This list is only for display. It should not be here.
