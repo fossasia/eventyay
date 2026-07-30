@@ -105,7 +105,11 @@
                         </label>
                     </div>
                     {% if sform.contact_form_enabled.errors %}
-                        {% bootstrap_field_errors sform.contact_form_enabled %}
+                        <div class="help-block">
+                            {% for error in sform.contact_form_enabled.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
                     {% endif %}
                 </div>
             </div>
