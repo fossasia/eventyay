@@ -4,10 +4,10 @@ Organizers
 Resource description
 --------------------
 
-An organizers is an entity running any number of events. In eventyay, every event belongs to one
+An organizer is an entity running any number of events. In eventyay, every event belongs to one
 organizer and various settings, such as teams and permissions, are managed on organizer level.
 
-The organizer resource contains the following public fields:
+The organizer resource contains the following fields:
 
 .. rst-class:: rest-resource-table
 
@@ -17,6 +17,9 @@ Field                                 Type                       Description
 name                                  string                     The organizer's full name, i.e. the name of an
                                                                  organization or company.
 slug                                  string                     A short form of the name, used e.g. in URLs.
+follower_count                        integer or null            The number of followers, or ``null`` if the organizer
+                                                                 hides its follower count.
+is_following                          boolean                    Whether the authenticated user follows the organizer.
 ===================================== ========================== =======================================================
 
 
@@ -50,7 +53,9 @@ Endpoints
         "results": [
           {
             "name": "Big Events LLC",
-            "slug": "Big Events",
+            "slug": "bigevents",
+            "follower_count": 12,
+            "is_following": false
           }
         ]
       }
@@ -60,6 +65,7 @@ Endpoints
                            ``name``. Default: ``slug``.
    :statuscode 200: no error
    :statuscode 401: Authentication failure
+   :statuscode 403: Authentication failure or insufficient organizer access
 
 .. http:get:: /api/v1/organizers/(organizer)/
 
@@ -83,13 +89,80 @@ Endpoints
 
       {
         "name": "Big Events LLC",
-        "slug": "Big Events",
+        "slug": "bigevents",
+        "follower_count": 12,
+        "is_following": false
       }
 
    :param organizer: The ``slug`` field of the organizer to fetch
    :statuscode 200: no error
    :statuscode 401: Authentication failure
    :statuscode 403: The requested organizer does not exist **or** you have no permission to view it.
+
+.. http:post:: /api/v1/organizers/(organizer)/follow/
+
+   Follows an organizer for the authenticated user. The user must have access to the organizer,
+   and the organizer must have following enabled.
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+      {
+        "following": true,
+        "created": true
+      }
+
+   :param organizer: The ``slug`` field of the organizer to follow
+   :statuscode 200: The organizer is now followed. ``created`` is false if it was already followed.
+   :statuscode 401: Authentication failure
+   :statuscode 403: The user has no access, is inactive, or following is disabled for this organizer.
+
+.. http:post:: /api/v1/organizers/(organizer)/unfollow/
+
+   Stops following an organizer for the authenticated user. The user must have access to the organizer.
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+      {
+        "following": false,
+        "deleted": true
+      }
+
+   :param organizer: The ``slug`` field of the organizer to unfollow
+   :statuscode 200: The organizer is not followed. ``deleted`` is false if no following relationship existed.
+   :statuscode 401: Authentication failure
+   :statuscode 403: The user has no access to the organizer.
+
+.. http:get:: /api/v1/organizers/(organizer)/followers/
+
+   Returns the organizer's visible follower count and whether the authenticated user follows it.
+   API credentials without an associated user receive ``false`` for ``is_following``.
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+      {
+        "follower_count": 12,
+        "is_following": true
+      }
+
+   :param organizer: The ``slug`` field of the organizer
+   :statuscode 200: no error
+   :statuscode 401: Authentication failure
+   :statuscode 403: The credential has no access to the organizer.
 
 Organizer settings
 ------------------

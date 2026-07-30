@@ -8,7 +8,8 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db.models import Count as DbCount, Prefetch, Q
+from django.db.models.functions import TruncDate
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -770,16 +771,30 @@ class SubmissionFeed(PermissionRequired, Feed):
         return item.created
 
 
-class SubmissionStats(EventPermissionRequired, TemplateView):
-    template_name = 'orga/submission/stats.html'
-    permission_required = 'base.orga_list_submission'
+class SubmissionStatsMixin:
+    @context
+    @cached_property
+    def can_view_submission_stats(self):
+        return self.request.user.has_perm('base.orga_list_submission', self.request.event)
 
     @context
+    @cached_property
     def show_submission_types(self):
+        if not self.can_view_submission_stats:
+            return False
         return self.request.event.submission_types.all().count() > 1
 
     @context
+    @cached_property
+    def show_tracks(self):
+        if not self.can_view_submission_stats:
+            return False
+        return bool(self.request.event.get_feature_flag('use_tracks'))
+
+    @context
     def id_mapping(self):
+        if not self.can_view_submission_stats:
+            return '{}'
         data = {
             'type': {
                 str(submission_type): submission_type.id
@@ -789,15 +804,14 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
         }
         if self.show_tracks:
             data['track'] = {str(track): track.id for track in self.request.event.tracks.all()}
+        locales_dict = dict(self.request.event.named_content_locales)
+        data['language'] = {locales_dict.get(code, code): code for code in self.request.event.content_locales}
         return json.dumps(data)
 
     @context
-    @cached_property
-    def show_tracks(self):
-        return self.request.event.get_feature_flag('use_tracks') and self.request.event.tracks.all().count() > 1
-
-    @context
     def timeline_annotations(self):
+        if not self.can_view_submission_stats:
+            return json.dumps({'deadlines': []})
         deadlines = [
             (
                 submission_type.deadline.astimezone(self.request.event.tz).strftime('%Y-%m-%d'),
@@ -816,31 +830,35 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
 
     @cached_property
     def raw_submission_timeline_data(self):
-        talk_ids = list(
-            map(
-                str, self.request.event.submissions.exclude(state=SubmissionStates.DELETED).values_list('id', flat=True)
-            )
+        if not self.can_view_submission_stats:
+            return []
+        rows = (
+            self.request.event.submissions
+            .exclude(state=SubmissionStates.DELETED)
+            .filter(created__isnull=False)
+            .annotate(date=TruncDate('created', tzinfo=self.request.event.tz))
+            .values('date')
+            .annotate(count=DbCount('id'))
+            .order_by('date')
         )
-        data = Counter(
-            log.timestamp.astimezone(self.request.event.tz).date()
-            for log in LogEntry.objects.filter(
-                event=self.request.event,
-                action_type='eventyay.submission.create',
-                content_type=ContentType.objects.get_for_model(Submission),
-                object_id__in=talk_ids,
-            )
+        if not rows:
+            return []
+
+        dates = {row['date']: row['count'] for row in rows if row['date']}
+        if not dates:
+            return []
+
+        min_date = min(dates.keys())
+        max_date = max(dates.keys())
+        date_range = rrule.rrule(
+            rrule.DAILY,
+            count=(max_date - min_date).days + 1,
+            dtstart=min_date,
         )
-        dates = data.keys()
-        if len(dates) > 1:
-            date_range = rrule.rrule(
-                rrule.DAILY,
-                count=(max(dates) - min(dates)).days + 1,
-                dtstart=min(dates),
-            )
-            return sorted(
-                ({'x': date.date().isoformat(), 'y': data.get(date.date(), 0)} for date in date_range),
-                key=lambda x: x['x'],
-            )
+        return [
+            {'x': date.date().isoformat(), 'y': dates.get(date.date(), 0)}
+            for date in date_range
+        ]
 
     @context
     def submission_timeline_data(self):
@@ -849,23 +867,19 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
         return ''
 
     @context
-    def total_submission_timeline_data(self):
-        if self.raw_submission_timeline_data:
-            result = [{'x': 0, 'y': 0}]
-            for point in self.raw_submission_timeline_data:
-                result.append({'x': point['x'], 'y': result[-1]['y'] + point['y']})
-            return json.dumps(result[1:])
-        return ''
-
-    @context
     @cached_property
     def submission_state_data(self):
-        counter = Counter(
-            submission.get_state_display()
-            for submission in Submission.all_objects.exclude(state=SubmissionStates.DRAFT).filter(
-                event=self.request.event
-            )
+        if not self.can_view_submission_stats:
+            return ''
+        rows = (
+            Submission.all_objects
+            .exclude(state=SubmissionStates.DRAFT)
+            .filter(event=self.request.event)
+            .values('state')
+            .annotate(count=DbCount('id'))
         )
+        state_labels = dict(SubmissionStates.get_choices())
+        counter = {str(state_labels.get(row['state'], row['state'])): row['count'] for row in rows}
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -875,10 +889,22 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
 
     @context
     def submission_type_data(self):
-        counter = Counter(
-            str(submission.submission_type)
-            for submission in Submission.objects.filter(event=self.request.event).select_related('submission_type')
+        if not self.can_view_submission_stats:
+            return ''
+        rows = (
+            Submission.objects
+            .filter(event=self.request.event)
+            .values('submission_type_id')
+            .annotate(count=DbCount('id'))
         )
+        types_dict = {
+            st.id: str(st)
+            for st in self.request.event.submission_types.all()
+        }
+        counter = {
+            types_dict[row['submission_type_id']]: row['count']
+            for row in rows if row['submission_type_id'] in types_dict
+        }
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -888,11 +914,23 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
 
     @context
     def submission_track_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         if self.request.event.get_feature_flag('use_tracks'):
-            counter = Counter(
-                str(submission.track)
-                for submission in Submission.objects.filter(event=self.request.event).select_related('track')
+            rows = (
+                Submission.objects
+                .filter(event=self.request.event, track__isnull=False)
+                .values('track_id')
+                .annotate(count=DbCount('id'))
             )
+            tracks_dict = {
+                tr.id: str(tr.name)
+                for tr in self.request.event.tracks.all()
+            }
+            counter = {
+                tracks_dict[row['track_id']]: row['count']
+                for row in rows if row['track_id'] in tracks_dict
+            }
             return json.dumps(
                 sorted(
                     [{'label': label, 'value': value} for label, value in counter.items()],
@@ -902,36 +940,63 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
         return ''
 
     @context
+    def submission_language_data(self):
+        if not self.can_view_submission_stats:
+            return ''
+        locales_dict = dict(self.request.event.named_content_locales)
+        rows = (
+            Submission.objects
+            .filter(event=self.request.event)
+            .values('content_locale')
+            .annotate(count=DbCount('id'))
+        )
+        counter = {
+            str(locales_dict.get(row['content_locale'], row['content_locale'])): row['count']
+            for row in rows if row['content_locale']
+        }
+        return json.dumps(
+            sorted(
+                [{'label': label, 'value': value} for label, value in counter.items()],
+                key=itemgetter('label'),
+            )
+        )
+
+    @context
     def talk_timeline_data(self):
-        talk_ids = list(
-            map(
-                str,
-                self.request.event.submissions.filter(state__in=SubmissionStates.accepted_states).values_list(
-                    'id', flat=True
-                ),
-            )
+        if not self.can_view_submission_stats:
+            return ''
+        rows = (
+            self.request.event.submissions
+            .filter(state__in=SubmissionStates.accepted_states, created__isnull=False)
+            .annotate(date=TruncDate('created', tzinfo=self.request.event.tz))
+            .values('date')
+            .annotate(count=DbCount('id'))
+            .order_by('date')
         )
-        data = Counter(
-            log.timestamp.astimezone(self.request.event.tz).date().isoformat()
-            for log in LogEntry.objects.filter(
-                event=self.request.event,
-                action_type='eventyay.submission.create',
-                content_type=ContentType.objects.get_for_model(Submission),
-                object_id__in=talk_ids,
-            )
-        )
-        if len(data.keys()) > 1:
-            return json.dumps(
-                [{'x': point['x'], 'y': data.get(point['x'][:10], 0)} for point in self.raw_submission_timeline_data]
-            )
+        if not rows:
+            return ''
+
+        data = {row['date'].isoformat(): row['count'] for row in rows if row['date']}
+        if data:
+            if self.raw_submission_timeline_data:
+                return json.dumps(
+                    [{'x': point['x'], 'y': data.get(point['x'][:10], 0)} for point in self.raw_submission_timeline_data]
+                )
+            return json.dumps([{'x': date, 'y': count} for date, count in sorted(data.items())])
         return ''
 
     @context
     def talk_state_data(self):
-        counter = Counter(
-            submission.get_state_display()
-            for submission in self.request.event.submissions.filter(state__in=SubmissionStates.accepted_states)
+        if not self.can_view_submission_stats:
+            return ''
+        rows = (
+            self.request.event.submissions
+            .filter(state__in=SubmissionStates.accepted_states)
+            .values('state')
+            .annotate(count=DbCount('id'))
         )
+        state_labels = dict(SubmissionStates.get_choices())
+        counter = {str(state_labels.get(row['state'], row['state'])): row['count'] for row in rows}
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -941,12 +1006,22 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
 
     @context
     def talk_type_data(self):
-        counter = Counter(
-            str(submission.submission_type)
-            for submission in self.request.event.submissions.filter(
-                state__in=SubmissionStates.accepted_states
-            ).select_related('submission_type')
+        if not self.can_view_submission_stats:
+            return ''
+        rows = (
+            self.request.event.submissions
+            .filter(state__in=SubmissionStates.accepted_states)
+            .values('submission_type_id')
+            .annotate(count=DbCount('id'))
         )
+        types_dict = {
+            st.id: str(st)
+            for st in self.request.event.submission_types.all()
+        }
+        counter = {
+            types_dict[row['submission_type_id']]: row['count']
+            for row in rows if row['submission_type_id'] in types_dict
+        }
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -956,13 +1031,23 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
 
     @context
     def talk_track_data(self):
+        if not self.can_view_submission_stats:
+            return ''
         if self.request.event.get_feature_flag('use_tracks'):
-            counter = Counter(
-                str(submission.track)
-                for submission in self.request.event.submissions.filter(
-                    state__in=SubmissionStates.accepted_states
-                ).select_related('track')
+            rows = (
+                self.request.event.submissions
+                .filter(state__in=SubmissionStates.accepted_states, track__isnull=False)
+                .values('track_id')
+                .annotate(count=DbCount('id'))
             )
+            tracks_dict = {
+                tr.id: str(tr.name)
+                for tr in self.request.event.tracks.all()
+            }
+            counter = {
+                tracks_dict[row['track_id']]: row['count']
+                for row in rows if row['track_id'] in tracks_dict
+            }
             return json.dumps(
                 sorted(
                     [{'label': label, 'value': value} for label, value in counter.items()],
@@ -970,6 +1055,28 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
                 )
             )
         return ''
+
+    @context
+    def talk_language_data(self):
+        if not self.can_view_submission_stats:
+            return ''
+        locales_dict = dict(self.request.event.named_content_locales)
+        rows = (
+            self.request.event.submissions
+            .filter(state__in=SubmissionStates.accepted_states)
+            .values('content_locale')
+            .annotate(count=DbCount('id'))
+        )
+        counter = {
+            str(locales_dict.get(row['content_locale'], row['content_locale'])): row['count']
+            for row in rows if row['content_locale']
+        }
+        return json.dumps(
+            sorted(
+                [{'label': label, 'value': value} for label, value in counter.items()],
+                key=itemgetter('label'),
+            )
+        )
 
 
 class AllFeedbacksList(EventPermissionRequired, PaginationMixin, ListView):

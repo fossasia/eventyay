@@ -44,6 +44,7 @@ from eventyay.common.text.phrases import phrases
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.event.stages import get_stages
+from eventyay.orga.views.submission import SubmissionStatsMixin
 from eventyay.talk_rules.submission import get_missing_reviews
 
 
@@ -150,7 +151,7 @@ class DashboardOrganizerListView(PermissionRequired, TemplateView):
         return [org for org in orgs if self.filter_organizer(org, query)]
 
 
-class EventDashboardView(EventPermissionRequired, TemplateView):
+class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, TemplateView):
     template_name = 'orga/event/dashboard.html'
     permission_required = 'base.orga_access_event'
 
