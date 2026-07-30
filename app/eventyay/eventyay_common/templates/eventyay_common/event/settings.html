@@ -91,13 +91,27 @@
                         {% endblocktranslate %}
                     </div>
                     {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
-                    <div class="contact-form-settings">
-                        {% bootstrap_field sform.contact_form_enabled layout="control" label_class="" field_class="" %}
-                        <div id="contact-form-email-fields">
-                            {% bootstrap_field sform.contact_mail layout="control" label_class="" field_class="" %}
-                        </div>
-                    </div>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label" for="{{ sform.contact_form_enabled.id_for_label }}">
+                    {% translate "Contact form" %}
+                </label>
+                <div class="col-md-9">
+                    <div class="checkbox">
+                        <label>
+                            {{ sform.contact_form_enabled }}
+                        </label>
+                    </div>
+                    {% if sform.contact_form_enabled.errors %}
+                        {% bootstrap_field_errors sform.contact_form_enabled %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="contact-form-email-fields">
+                {% bootstrap_field sform.contact_mail layout="control" %}
             </div>
             {% comment %}
             <div class="setting-part">
