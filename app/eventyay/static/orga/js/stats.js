@@ -1,15 +1,19 @@
 const globalData = document.getElementById("global-data")
-const dataMapping = JSON.parse(globalData.dataset.mapping)
-let searchUrl = globalData.dataset.url
+const dataMapping = globalData && globalData.dataset.mapping ? JSON.parse(globalData.dataset.mapping) : {}
+let searchUrl = globalData && globalData.dataset.url ? globalData.dataset.url : ""
 
-const drawTimeline = () => {
-    const dataElements = [
-        document.getElementById("submission-timeline-data"),
-        document.getElementById("talk-timeline-data"),
-        document.getElementById("total-submission-timeline-data"),
-    ].filter((element) => element.dataset.timeline)
-    const element = document.getElementById("timeline")
-    const deadlines = JSON.parse(globalData.dataset.annotations).deadlines.map(
+const drawTimeline = (targetId, elementIds) => {
+    const targetElement = document.getElementById(targetId)
+    if (!targetElement) return null
+
+    const dataElements = elementIds
+        .map((id) => document.getElementById(id))
+        .filter((element) => element && element.dataset.timeline)
+
+    if (!dataElements.length) return null
+
+    const annotations = globalData && globalData.dataset.annotations ? globalData.dataset.annotations : '{"deadlines":[]}'
+    const deadlines = JSON.parse(annotations).deadlines.map(
         (element) => {
             return {
                 x: new Date(element[0]).getTime(),
@@ -40,6 +44,19 @@ const drawTimeline = () => {
         xaxis: {
             type: "datetime",
             tooltip: { enabled: false },
+            labels: {
+                datetimeUTC: false,
+                format: "dd MMM",
+                datetimeFormatter: {
+                    year: "yyyy",
+                    month: "MMM yyyy",
+                    day: "dd MMM",
+                    hour: "HH:mm",
+                },
+                style: {
+                    fontWeight: 400,
+                },
+            },
         },
         annotations: {
             xaxis: deadlines,
@@ -50,6 +67,7 @@ const drawTimeline = () => {
             type: "area",
             toolbar: {
                 tools: {
+                    download: false,
                     selection: false,
                     zoom: false,
                     zoomin: false,
@@ -59,9 +77,9 @@ const drawTimeline = () => {
                 },
             },
         },
-        colors: ["#2185d0", "#4697c9", "#cccccc"],
+        colors: ["#008FFB", "#00E396"],
         fill: {
-            type: ["gradient", "gradient", "gradient"],
+            type: ["gradient", "gradient"],
         },
         dataLabels: {
             enabled: false,
@@ -89,20 +107,24 @@ const drawTimeline = () => {
         tooltip: {
             enabled: true,
             shared: true,
-            x: { show: true },
+            x: {
+                show: true,
+                format: "dd MMM yyyy",
+            },
             marker: { show: true },
             onDatasetHover: { highlightDataSeries: true },
         },
     }
-    const chart = new ApexCharts(element, options)
+    const chart = new ApexCharts(targetElement, options)
     chart.render()
     return chart
 }
 
 const getPieData = (id) => {
     const element = document.getElementById(id)
-    if (!element.dataset.states) return
+    if (!element || !element.dataset.states) return null
     const data = JSON.parse(element.dataset.states)
+    if (!data || !data.length) return null
     return {
         series: data.map((e) => e.value),
         labels: data.map((e) => e.label),
@@ -112,24 +134,31 @@ const getPieData = (id) => {
 const drawPieChart = (data, scope, type) => {
     const id = scope + "-" + type
     const element = document.getElementById(id)
+    if (!element || !data || !data.series || !data.series.length) return null
+
     const typeMapping = {
         track: "track",
         type: "submission_type",
         state: "state",
+        language: "content_locale",
     }
     const options = {
         series: data.series,
         labels: data.labels,
         chart: {
-            width: element.clientWidth - 50,
+            height: 320,
+            width: "100%",
             redrawOnParentResize: true,
             type: "donut",
             events: {
                 dataPointSelection: (event, chartContext, config) => {
+                    if (!dataMapping[type]) return
                     const label = config.w.config.labels[config.dataPointIndex]
                     const searchValue = dataMapping[type][label]
-                    searchUrl += "&" + typeMapping[type] + "=" + searchValue
-                    window.location.href = searchUrl
+                    if (searchValue) {
+                        searchUrl += "&" + typeMapping[type] + "=" + searchValue
+                        window.location.href = searchUrl
+                    }
                 },
                 dataPointMouseEnter: () => {
                     element.style.cursor = "pointer"
@@ -144,7 +173,7 @@ const drawPieChart = (data, scope, type) => {
         },
         legend: {
             formatter: function (val, opts) {
-                if (val.length > 15) val = val.slice(0, 15) + "…"
+                if (val.length > 20) val = val.slice(0, 20) + "…"
                 return val + " - " + opts.w.globals.series[opts.seriesIndex]
             },
         },
@@ -163,6 +192,7 @@ const drawPieChart = (data, scope, type) => {
         ],
         plotOptions: {
             pie: {
+                customScale: 0.85,
                 donut: {
                     labels: {
                         show: true,
@@ -190,45 +220,34 @@ const drawPieChart = (data, scope, type) => {
 }
 
 let chartTypes = ["state"]
-if (dataMapping.type && Object.keys(dataMapping.type).length > 1)
-    chartTypes.push("type")
+if (dataMapping.type) chartTypes.push("type")
 if (dataMapping.track) chartTypes.push("track")
-let submissionChartData = chartTypes.reduce((result, item, index, array) => {
-    const data = getPieData("submission-" + item + "-data")
-    if (data) result[item] = data
-    return result
-}, {})
-let talkChartData = chartTypes.reduce((result, item, index, array) => {
-    result[item] = getPieData("talk-" + item + "-data")
-    return result
-}, {})
-/* generate timeline data. delay to draw the correct size immediately */
-setTimeout(drawTimeline, 10)
+if (dataMapping.language) chartTypes.push("language")
 
-let charts = []
-for (const [key, data] of Object.entries(submissionChartData)) {
-    charts.push(drawPieChart(data, "submission", key))
+const renderAllCharts = () => {
+    // Timelines
+    if (document.getElementById("proposal-timeline")) {
+        drawTimeline("proposal-timeline", ["submission-timeline-data"])
+    } else if (document.getElementById("timeline")) {
+        drawTimeline("timeline", ["submission-timeline-data"])
+    }
+
+    if (document.getElementById("talk-timeline")) {
+        drawTimeline("talk-timeline", ["talk-timeline-data"])
+    }
+
+    // Pie charts
+    chartTypes.forEach((item) => {
+        const subData = getPieData("submission-" + item + "-data")
+        if (subData) {
+            drawPieChart(subData, "submission", item)
+        }
+        const talkData = getPieData("talk-" + item + "-data")
+        if (talkData) {
+            drawPieChart(talkData, "talk", item)
+        }
+    })
 }
 
-const toggleButton = document.querySelector("#toggle-button")
-toggleButton.addEventListener("change", (event) => {
-    charts.forEach((chart) => chart.destroy())
-    charts = []
-    if (!event.target.checked) {
-        /* switch to submissions */
-        for (const [key, data] of Object.entries(submissionChartData)) {
-            document
-                .querySelector("#submission-" + key)
-                .classList.remove("d-none")
-            document.querySelector("#talk-" + key).classList.add("d-none")
-            charts.push(drawPieChart(data, "submission", key))
-        }
-    } else {
-        /* switch to talks */
-        for (const [key, data] of Object.entries(talkChartData)) {
-            document.querySelector("#submission-" + key).classList.add("d-none")
-            document.querySelector("#talk-" + key).classList.remove("d-none")
-            charts.push(drawPieChart(data, "talk", key))
-        }
-    }
-})
+/* generate statistics charts. delay to draw the correct size immediately */
+setTimeout(renderAllCharts, 10)

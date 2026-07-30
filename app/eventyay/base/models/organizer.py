@@ -539,6 +539,15 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             'of proposal applicants, but can still review the rest of the proposal.'
         ),
     )
+    can_manage_social_media = models.BooleanField(
+        default=False,
+        verbose_name=_('Can manage social media settings'),
+        help_text=_(
+            'Allows members of this team to connect social media accounts, '
+            'manage draft posts, and automate social media publications.'
+        ),
+    )
+
 
     can_video_create_stages = models.BooleanField(
         default=False,
@@ -568,7 +577,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     can_video_manage_users = models.BooleanField(
         default=False,
         verbose_name=_('Video: Can message, ban, and silence users'),
-        help_text=_('Allows moderating users (ban, silence, reactivate) in Eventyay Video.'),
+        help_text=_(
+            'Allows moderating users (ban, silence, reactivate) and deleting chat messages.'
+        ),
     )
     can_video_manage_rooms = models.BooleanField(
         default=False,

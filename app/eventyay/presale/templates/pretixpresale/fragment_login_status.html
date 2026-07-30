@@ -1,6 +1,5 @@
 {% load i18n %}
 {% load eventurl %}
-{% load login_url %}
 {% load event_tags %}
 
 {{ 'popover-profile'|json_script:"popover_toggle" }}
@@ -14,7 +13,7 @@
             </a>
         </div>
     {% else %}
-        <a href="{% build_login_url %}">
+        <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.get_full_path|urlencode }}">
             {% translate "Log in" %}
         </a>
 
