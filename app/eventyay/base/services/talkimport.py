@@ -615,8 +615,8 @@ def _upsert_session_speaker(event, speaker_ref: str, speaker_name: str):
     return user
 
 
-@app.task(base=ProfiledEventTask, throws=(ImportExecutionError,))
-def import_speakers(event: Event, fileid: str, settings: dict, locale: str, user_id) -> ImportResult:
+@app.task(base=ProfiledEventTask, bind=True, throws=(ImportExecutionError,))
+def import_speakers(self, event: Event, fileid: str, settings: dict, locale: str, user_id) -> ImportResult:
     try:
         cf = CachedFile.objects.get(id=fileid)
     except CachedFile.DoesNotExist:
@@ -630,6 +630,9 @@ def import_speakers(event: Event, fileid: str, settings: dict, locale: str, user
                 parsed = parse_csv(cf.file, django_settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
                 if parsed is None:
                     raise ImportExecutionError(_('Could not parse the CSV file.'))
+                parsed = list(parsed)
+                
+                total = len(parsed)
 
                 created = 0
                 updated = 0
@@ -637,6 +640,8 @@ def import_speakers(event: Event, fileid: str, settings: dict, locale: str, user
                 errors = []
 
                 for row_num, record in enumerate(parsed, start=2):
+                    if total > 0 and (row_num - 2) % max(1, total // 10) == 0:
+                        self.update_state(state='PROGRESS', meta={'value': round((row_num - 2) / total * 100)})
                     try:
                         was_created = _import_speaker_row(event, settings, record, acting_user)
                         if was_created:
@@ -1017,8 +1022,8 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
     return profile_created
 
 
-@app.task(base=ProfiledEventTask, throws=(ImportExecutionError,))
-def import_submissions(event: Event, fileid: str, settings: dict, locale: str, user_id) -> ImportResult:
+@app.task(base=ProfiledEventTask, bind=True, throws=(ImportExecutionError,))
+def import_submissions(self, event: Event, fileid: str, settings: dict, locale: str, user_id) -> ImportResult:
     cf = CachedFile.objects.get(id=fileid)
     try:
         acting_user = User.objects.get(pk=user_id)
@@ -1027,6 +1032,9 @@ def import_submissions(event: Event, fileid: str, settings: dict, locale: str, u
                 parsed = parse_csv(cf.file, django_settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
                 if parsed is None:
                     raise ImportExecutionError(_('Could not parse the CSV file.'))
+                parsed = list(parsed)
+                
+                total = len(parsed)
 
                 # Pre-fetch per-event lookups once to avoid N+1 queries inside the row loop
                 submission_types = list(SubmissionType.objects.filter(event=event))
@@ -1073,6 +1081,8 @@ def import_submissions(event: Event, fileid: str, settings: dict, locale: str, u
                 speaker_cache = {}
 
                 for row_num, record in enumerate(parsed, start=2):
+                    if total > 0 and (row_num - 2) % max(1, total // 10) == 0:
+                        self.update_state(state='PROGRESS', meta={'value': round((row_num - 2) / total * 100)})
                     try:
                         was_created = _import_submission_row(
                             event, settings, record, acting_user, speaker_cache, caches
