@@ -6,6 +6,7 @@
 {% block title %}{% trans "Create a new event" %}{% endblock %}
 
 {% block custom_header %}
+    <link rel="stylesheet" href="{% static 'eventyay-common/css/event-create.css' %}">
     <script defer src="{% static "eventyay-common/js/ui/event-create.js" %}"></script>
 {% endblock %}
 
@@ -132,10 +133,32 @@
                         </div>
                     </div>
                 </div>
-                {% bootstrap_field basics_form.date_from layout="control" %}
-                {% if basics_form.date_to %}
-                    {% bootstrap_field basics_form.date_to layout="control" %}
-                {% endif %}
+                <div class="form-group{% if basics_form.date_from.errors or basics_form.date_to.errors or basics_form.timezone.errors %} has-error{% endif %}">
+                    <div class="col-md-9 col-md-offset-3">
+                        <div class="event-schedule-row">
+                            <div class="event-schedule-col">
+                                <label class="event-schedule-label" for="{{ basics_form.date_from.id_for_label }}">
+                                    {% trans "Starts" %}
+                                </label>
+                                {% bootstrap_field basics_form.date_from layout="inline" show_label=False form_group_class="" %}
+                            </div>
+                            {% if basics_form.date_to %}
+                                <div class="event-schedule-col">
+                                    <label class="event-schedule-label" for="{{ basics_form.date_to.id_for_label }}">
+                                        {% trans "Ends" %}
+                                    </label>
+                                    {% bootstrap_field basics_form.date_to layout="inline" show_label=False form_group_class="" %}
+                                </div>
+                            {% endif %}
+                            <div class="event-schedule-col event-schedule-col-timezone">
+                                <label class="event-schedule-label" for="{{ basics_form.timezone.id_for_label }}">
+                                    {% trans "Timezone" %}
+                                </label>
+                                {% bootstrap_field basics_form.timezone layout="inline" show_label=False form_group_class="" %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {% bootstrap_field basics_form.currency layout="control" %}
             </fieldset>
 
@@ -173,11 +196,6 @@
                         </div>
                     </div>
                 {% endwith %}
-            </fieldset>
-
-            <fieldset>
-                <legend>{% trans "Display settings" %}</legend>
-                {% bootstrap_field basics_form.timezone layout="control" %}
             </fieldset>
 
             <div class="form-group submit-group">

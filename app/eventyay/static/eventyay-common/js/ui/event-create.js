@@ -141,12 +141,20 @@
             });
     }
 
-    function updateRandomSlug(randomSlugButton) {
-        var slug = document.getElementById("id_basics-slug");
-        if (!slug || slug.dataset.userEdited === "true" || !randomSlugButton.dataset.rngUrl) {
+    function getSlugInput() {
+        return document.getElementById("id_basics-slug") || document.querySelector('[name="basics-slug"]');
+    }
+
+    function updateRandomSlug(randomSlugButton, force) {
+        var slug = getSlugInput();
+        if (!slug || !randomSlugButton.dataset.rngUrl || randomSlugButton.dataset.generating === "true") {
+            return;
+        }
+        if (!force && slug.dataset.userEdited === "true") {
             return;
         }
 
+        randomSlugButton.dataset.generating = "true";
         slug.value = "Generating...";
         fetch(randomSlugButton.dataset.rngUrl)
             .then(function (response) {
@@ -157,10 +165,14 @@
             })
             .then(function (data) {
                 slug.value = data.slug;
+                delete slug.dataset.userEdited;
             })
             .catch(function (error) {
                 console.error("Failed to generate random event slug.", error);
                 slug.value = "";
+            })
+            .finally(function () {
+                delete randomSlugButton.dataset.generating;
             });
     }
 
@@ -211,10 +223,16 @@
             }
             updateOrganizerSlugUrl(options, false);
         }
-        var slug = document.getElementById("id_basics-slug");
+        var slug = getSlugInput();
         if (slug) {
             slug.addEventListener("input", function () {
                 slug.dataset.userEdited = "true";
+            });
+        }
+        var randomSlugButton = document.getElementById("event-slug-random-generate");
+        if (randomSlugButton) {
+            randomSlugButton.addEventListener("click", function () {
+                updateRandomSlug(randomSlugButton, true);
             });
         }
         updateDefaultLanguageChoices();

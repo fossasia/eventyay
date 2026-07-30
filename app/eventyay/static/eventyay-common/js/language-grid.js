@@ -35,7 +35,6 @@ export function initLanguageGrid(widget) {
   const searchInput = widget.querySelector('[data-language-grid-search]');
   const grid = widget.querySelector('[data-language-grid-grid]');
   const badgesContainer = widget.querySelector('[data-language-grid-badges]');
-  const countLabel = widget.querySelector('[data-language-grid-count]');
   const noResults = widget.querySelector('[data-language-grid-no-results]');
   const deselectAllBtn = widget.querySelector('[data-language-grid-deselect-all]');
 
@@ -45,18 +44,9 @@ export function initLanguageGrid(widget) {
   widget.classList.add('is-ready');
   panel.hidden = true;
 
-  const emptyText = countLabel?.dataset.emptyText || countLabel?.textContent.trim() || '';
-  const selectedSingularText = countLabel?.dataset.selectedSingularText || '';
-  const selectedPluralText = countLabel?.dataset.selectedPluralText || selectedSingularText;
-  const overflowText = countLabel?.dataset.overflowText || '';
+  const overflowText = widget.querySelector('[data-language-grid-count]')?.dataset.overflowText || '';
   const cells = Array.from(grid.querySelectorAll('[data-language-grid-cell]'));
   const checkboxes = cells.map((cell) => cell.querySelector('input[type="checkbox"]'));
-
-  function setCountLabel(text) {
-    if (countLabel) {
-      countLabel.textContent = text;
-    }
-  }
 
   function syncBadges() {
     if (!badgesContainer) return;
@@ -77,12 +67,6 @@ export function initLanguageGrid(widget) {
       );
     }
 
-    if (selected.length === 0) {
-      setCountLabel(emptyText);
-    } else {
-      const selectedText = selected.length === 1 ? selectedSingularText : selectedPluralText;
-      setCountLabel(`${selected.length}${selectedText ? ` ${selectedText}` : ''}`);
-    }
   }
 
   summary.addEventListener('click', (event) => {
