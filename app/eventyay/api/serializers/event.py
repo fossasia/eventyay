@@ -146,8 +146,23 @@ class EventSerializer(I18nAwareModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not hasattr(self.context['request'], 'event'):
-            self.fields.pop('valid_keys')
+        request = self.context.get('request')
+        if request and not hasattr(request, 'event'):
+            self.fields.pop('valid_keys', None)
+        # startpage_visible and startpage_featured are admin-only fields.
+        if request is not None:
+            user = getattr(request, 'user', None)
+            is_admin = False
+            if user and user.is_authenticated:
+                is_admin = getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False)
+                if is_admin and hasattr(request, 'session') and hasattr(user, 'has_active_staff_session'):
+                    session_key = getattr(request.session, 'session_key', None)
+                    if session_key and not user.has_active_staff_session(session_key):
+                        is_admin = False
+            if not is_admin:
+                for field_name in ('startpage_visible', 'startpage_featured'):
+                    if field_name in self.fields:
+                        self.fields[field_name].read_only = True
 
     def validate(self, data):
         data = super().validate(data)
