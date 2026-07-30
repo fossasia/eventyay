@@ -141,7 +141,7 @@ def test_api_serializer_read_only_for_organiser_and_editable_for_admin(event, us
     # Regular organiser request context
     user.is_staff = False
     user.is_superuser = False
-    org_req = MagicMock(user=user, event=event)
+    org_req = MagicMock(user=user, event=event, session=None)
     org_serializer = EventSerializer(event, context={'request': org_req})
 
     assert org_serializer.fields['startpage_visible'].read_only is True
@@ -149,7 +149,7 @@ def test_api_serializer_read_only_for_organiser_and_editable_for_admin(event, us
 
     # Admin request context
     user.is_staff = True
-    admin_req = MagicMock(user=user, event=event)
+    admin_req = MagicMock(user=user, event=event, session=None)
     admin_serializer = EventSerializer(event, context={'request': admin_req})
 
     assert admin_serializer.fields['startpage_visible'].read_only is False
