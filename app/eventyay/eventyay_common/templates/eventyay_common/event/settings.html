@@ -10,6 +10,7 @@
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
 <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
 <script defer src="{% static 'eventyay-common/js/smtp-toggle.js' %}"></script>
+<script defer src="{% static 'eventyay-common/js/contact-form-toggle.js' %}"></script>
 <script type="module" src="{% static 'pretixcontrol/js/ui/secret-toggle.js' %}"></script>
 {{ sform.media }}
 {% endblock %}
@@ -60,7 +61,6 @@
             {% bootstrap_field form.date_to layout="control" %}
             {% bootstrap_field form.date_admission layout="control" %}
             {% include "pretixcontrol/event/fragment_geodata.html" %}
-            {% bootstrap_field form.email layout="control" %}
             {% bootstrap_field sform.imprint_url layout="control" %}
             <div class="form-group">
                 <label class="col-md-3 control-label">
@@ -91,6 +91,12 @@
                         {% endblocktranslate %}
                     </div>
                     {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
+                    <div class="contact-form-settings">
+                        {% bootstrap_field sform.contact_form_enabled layout="control" label_class="" field_class="" %}
+                        <div id="contact-form-email-fields">
+                            {% bootstrap_field sform.contact_mail layout="control" label_class="" field_class="" %}
+                        </div>
+                    </div>
                 </div>
             </div>
             {% comment %}

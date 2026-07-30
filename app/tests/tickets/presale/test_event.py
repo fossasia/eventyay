@@ -1630,6 +1630,18 @@ class ContactOrganizerTest(EventTestMixin, TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertFalse(resp.json()['success'])
 
+    def test_contact_form_hidden_when_disabled(self):
+        self.event.settings.set('contact_form_enabled', False)
+        self.event.settings.contact_mail = 'contact@example.com'
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        self.assertNotIn('Contact event organizer', doc.text)
+
+    def test_contact_form_shown_when_enabled(self):
+        self.event.settings.set('contact_form_enabled', True)
+        self.event.settings.contact_mail = 'contact@example.com'
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        self.assertIn('Contact event organizer', doc.text)
+
     def test_authenticated_user_without_email(self):
         self.user.email = ''
         self.user.save()
