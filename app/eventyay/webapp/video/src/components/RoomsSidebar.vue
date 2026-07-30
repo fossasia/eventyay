@@ -31,8 +31,9 @@ transition(name="sidebar")
 								i.mdi.mdi-account-group.icon-viewer
 								.name(v-html="stage.room.users")
 						.notifications(v-if="stage.notifications") {{ stage.notifications }}
-			.group-title#networking-title(v-if="roomsByType.networking.length")
+			.group-title#networking-title(v-if="roomsByType.networking.length || canCreateNetworkingRoom")
 				span {{ networkingTitle }}
+				bunt-icon-button(v-if="canCreateNetworkingRoom", tooltip="Create random video calls", :tooltip-fixed="true", @click="showNetworkingCreationPrompt = true") plus
 			.networking(role="group", aria-describedby="networking-title")
 				router-link.networking-room(v-for="room of roomsByType.networking", :to="homeRoom && room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: room.id}}", :class="{active: room.id === $route.params.roomId}")
 					.room-icon(aria-hidden="true")
@@ -84,6 +85,7 @@ transition(name="sidebar")
 		transition(name="prompt")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")
+			create-networking-prompt(v-else-if="showNetworkingCreationPrompt", @close="showNetworkingCreationPrompt = false")
 			create-chat-prompt(v-else-if="showChatCreationPrompt", @close="showChatCreationPrompt = false")
 			create-dm-prompt(v-else-if="showDMCreationPrompt && hasPermission('world:chat.direct')", @close="showDMCreationPrompt = false")
 </template>
@@ -91,14 +93,16 @@ transition(name="sidebar")
 import { mapState, mapGetters } from 'vuex'
 import theme from 'theme'
 import ROOM_TYPES, { NETWORKING_MODULE_TYPES, VIDEO_CHANNEL_MODULE_TYPES, inferRoomType, inferType } from 'lib/room-types'
+import { isRoomTypeAvailable } from 'lib/room-type-permissions'
 import Avatar from 'components/Avatar'
 import ChannelBrowser from 'components/ChannelBrowser'
 import CreateStagePrompt from 'components/CreateStagePrompt'
+import CreateNetworkingPrompt from 'components/CreateNetworkingPrompt'
 import CreateChatPrompt from 'components/CreateChatPrompt'
 import CreateDmPrompt from 'components/CreateDmPrompt'
 
 export default {
-	components: { Avatar, ChannelBrowser, CreateStagePrompt, CreateChatPrompt, CreateDmPrompt },
+	components: { Avatar, ChannelBrowser, CreateStagePrompt, CreateNetworkingPrompt, CreateChatPrompt, CreateDmPrompt },
 	props: {
 		show: Boolean
 	},
@@ -111,6 +115,7 @@ export default {
 			snapBack: false,
 			showChannelBrowser: false,
 			showStageCreationPrompt: false,
+			showNetworkingCreationPrompt: false,
 			showChatCreationPrompt: false,
 			showDMCreationPrompt: false
 		}
@@ -138,6 +143,9 @@ export default {
 		},
 		networkingTitle() {
 			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')?.name || 'Networking'
+		},
+		canCreateNetworkingRoom() {
+			return isRoomTypeAvailable('channel-roulette', this.hasPermission)
 		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {
