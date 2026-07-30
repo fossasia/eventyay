@@ -279,7 +279,7 @@
                         <div class="col-sm-12">
                             <div class="checkbox">
                                 <label for="toolbox-autofit-width"
-                                       title="{% trans 'Shrink font size for long text so it fits within the text box width' %}">
+                                       title="{% trans 'Shrink font size so each line fits within the text box width without expanding the box' %}">
                                     <input type="checkbox" id="toolbox-autofit-width">
                                     {% trans "Adapt content to container width" %}
                                 </label>
@@ -386,7 +386,9 @@
                             <label>{% trans "Text content" %}</label><br>
                             <select class="input-block-level form-control" id="toolbox-content">
                                 {% for varname, var in variables.items %}
+                                    {% if var.canonical_key|default:varname == varname %}
                                     <option data-sample="{{ var.editor_sample }}" value="{{ varname }}">{{ var.label }}</option>
+                                    {% endif %}
                                 {% endfor %}
                                 {% for p in request.organizer.meta_properties.all %}
                                     <option value="meta:{{ p.name }}">
@@ -402,6 +404,11 @@
                             </select>
                             <textarea type="text" value="" class="input-block-level form-control"
                                     id="toolbox-content-other"></textarea>
+                            <p class="help-block">
+                                {% trans "You can use placeholders with curly braces. Use field names from the list above, or refer to questions by label, for example:" %}
+                                <code>{attendee_name}</code>,
+                                <code>{question:First name}</code>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -472,7 +479,7 @@
 
     <script type="text/javascript" src="{% static "pdfjs/pdf.js" %}"></script>
     <script type="text/javascript" src="{% static "fabric/fabric.min.js" %}"></script>
-    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/editor.js" %}"></script>
+    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/editor.js" %}?v=autofit4"></script>
     <img src="{% static 'pretixpresale/pdf/powered_by_eventyay_dark.png' %}" id="poweredby-dark" class="sr-only">
     <img src="{% static 'pretixpresale/pdf/powered_by_eventyay_white.png' %}" id="poweredby-white" class="sr-only">
     {% for family, styles in fonts.items %}

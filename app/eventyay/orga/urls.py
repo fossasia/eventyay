@@ -218,11 +218,6 @@ urlpatterns = [
                     name='submissions.apply_pending.bulk',
                 ),
                 path(
-                    'submissions/statistics/',
-                    submission.SubmissionStats.as_view(),
-                    name='submissions.statistics',
-                ),
-                path(
                     'submissions/feedback/',
                     submission.AllFeedbacksList.as_view(),
                     name='submissions.feedback',

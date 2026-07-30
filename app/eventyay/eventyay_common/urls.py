@@ -11,6 +11,7 @@ from eventyay.eventyay_common.views import (
     organizer,
     team,
 )
+from eventyay.eventyay_common.views.organizer_analytics import OrganizerAnalyticsView
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
 from eventyay.eventyay_common.views.orders import MyOrdersView
 from eventyay.eventyay_common.views.sessions import MySessionsView
@@ -119,6 +120,7 @@ urlpatterns = [
     ),
     path('organizer/<str:organizer>/export', organizer_control.ExportView.as_view(), name='organizer.export'),
     path('organizer/<str:organizer>/export/do', organizer_control.ExportDoView.as_view(), name='organizer.export.do'),
+    path('organizer/<str:organizer>/analytics', OrganizerAnalyticsView.as_view(), name='organizer.analytics'),
     path('organizer/<str:organizer>/team/add', team.TeamCreateView.as_view(), name='organizer.team.add'),
     path('organizer/<str:organizer>/team/<str:team>', team.TeamMemberView.as_view(), name='organizer.team'),
     path('organizer/<str:organizer>/team/<str:team>/edit', team.TeamUpdateView.as_view(), name='organizer.team.edit'),
