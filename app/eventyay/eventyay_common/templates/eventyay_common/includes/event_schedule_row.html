@@ -1,0 +1,27 @@
+{% load i18n bootstrap3 %}
+<div class="form-group{% if date_from_form.errors or date_to_form.errors or timezone_form.errors %} has-error{% endif %}">
+    <div class="col-md-9 col-md-offset-3">
+        <div class="event-schedule-row">
+            <div class="event-schedule-col">
+                <label class="event-schedule-label" for="{{ date_from_form.id_for_label }}">
+                    {% trans "Starts" %}
+                </label>
+                {% bootstrap_field date_from_form layout="inline" show_label=False form_group_class="" %}
+            </div>
+            {% if date_to_form %}
+                <div class="event-schedule-col">
+                    <label class="event-schedule-label" for="{{ date_to_form.id_for_label }}">
+                        {% trans "Ends" %}
+                    </label>
+                    {% bootstrap_field date_to_form layout="inline" show_label=False form_group_class="" %}
+                </div>
+            {% endif %}
+            <div class="event-schedule-col event-schedule-col-timezone">
+                <label class="event-schedule-label" for="{{ timezone_form.id_for_label }}">
+                    {% trans "Timezone" %}
+                </label>
+                {% bootstrap_field timezone_form layout="inline" show_label=False form_group_class="" %}
+            </div>
+        </div>
+    </div>
+</div>

@@ -44,7 +44,8 @@ export function initLanguageGrid(widget) {
   widget.classList.add('is-ready');
   panel.hidden = true;
 
-  const overflowText = widget.querySelector('[data-language-grid-count]')?.dataset.overflowText || '';
+  const countLabel = widget.querySelector('[data-language-grid-count]');
+  const emptyText = countLabel?.dataset.emptyText || countLabel?.textContent.trim() || '';
   const cells = Array.from(grid.querySelectorAll('[data-language-grid-cell]'));
   const checkboxes = cells.map((cell) => cell.querySelector('input[type="checkbox"]'));
 
@@ -54,19 +55,19 @@ export function initLanguageGrid(widget) {
     badgesContainer.innerHTML = '';
     const selected = getSelectedLanguages(cells, checkboxes);
 
-    selected.slice(0, MAX_VISIBLE_BADGES).forEach((language) => {
+    selected.forEach((language) => {
       renderBadge(badgesContainer, 'language-grid-badge', language.name);
     });
 
-    if (selected.length > MAX_VISIBLE_BADGES) {
-      const hiddenCount = selected.length - MAX_VISIBLE_BADGES;
-      renderBadge(
-        badgesContainer,
-        'language-grid-badge-overflow',
-        `+${hiddenCount}${overflowText ? ` ${overflowText}` : ''}`,
-      );
+    if (countLabel) {
+      if (selected.length === 0) {
+        countLabel.textContent = emptyText;
+        countLabel.style.display = '';
+      } else {
+        countLabel.textContent = '';
+        countLabel.style.display = 'none';
+      }
     }
-
   }
 
   summary.addEventListener('click', (event) => {

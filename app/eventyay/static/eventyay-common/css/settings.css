@@ -276,3 +276,70 @@
 .thumbnailed-file-initial-hidden {
     display: none;
 }
+
+/* Event schedule row (creation + settings) */
+.event-schedule-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    align-items: flex-start;
+}
+
+.event-schedule-col {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.event-schedule-label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.event-schedule-col .splitdatetimerow {
+    flex-wrap: nowrap;
+}
+
+.event-schedule-col-timezone select {
+    width: 100%;
+    max-width: 100%;
+}
+
+@media (max-width: 767px) {
+    .event-schedule-col {
+        flex: 1 1 100%;
+    }
+
+    .event-schedule-col .splitdatetimerow {
+        flex-wrap: wrap;
+    }
+}
+
+/* Footer links contact form subsection */
+.settings-footer-contact {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.settings-footer-contact-toggle {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.settings-footer-contact-fields {
+    margin-top: 12px;
+    max-width: 520px;
+}
+
+.settings-footer-contact-fields .control-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    text-align: left;
+}
+
+.settings-footer-contact-fields .help-block {
+    margin-top: 6px;
+    margin-bottom: 0;
+}

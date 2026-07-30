@@ -1572,7 +1572,7 @@ class EventLocaleTest(EventTestMixin, SoupTest):
         self.assertIn('14:00', response.rendered_content)
 
 
-class ContactOrganizerTest(EventTestMixin, TestCase):
+class ContactOrganizerTest(EventTestMixin, SoupTest):
     @property
     def url(self):
         return '/%s/%s/contact/' % (self.orga.slug, self.event.slug)
@@ -1581,6 +1581,7 @@ class ContactOrganizerTest(EventTestMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.event.settings.contact_mail = 'contact@example.com'
+        self.event.settings.set('contact_form_enabled', True)
 
     def test_get_not_allowed(self):
         resp = self.client.get(self.url)
@@ -1616,6 +1617,8 @@ class ContactOrganizerTest(EventTestMixin, TestCase):
         self.assertEqual(mail.outbox[0].reply_to, ['dummy@dummy.dummy'])
 
     def test_falls_back_to_event_email(self):
+        self.event.email = 'orga@example.com'
+        self.event.save()
         self.event.settings.contact_mail = ''
         mail.outbox = []
         resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': 'Fallback test'})
