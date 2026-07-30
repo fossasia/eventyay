@@ -62,14 +62,16 @@
                 </form>
                 <form class="filter-form orders-search-form" action="" method="get">
                     <div class="orders-search-bar">
-                        <div class="orders-search-query">
-                            {% bootstrap_field filter_form.query show_label=False %}
+                        <div class="input-group orders-search-query-group">
+                            <input id="id_query" type="text" name="query" class="form-control" placeholder="{% trans 'Search orders…' %}" value="{{ filter_form.query.value|default_if_none:'' }}" autofocus="autofocus" aria-label="{% trans 'Search orders' %}">
+                            <span class="input-group-btn">
+                                <button class="btn btn-primary" type="submit">
+                                    <span class="fa fa-search" aria-hidden="true"></span>
+                                    {% trans "Search" %}
+                                </button>
+                            </span>
                         </div>
                         <div class="orders-search-actions">
-                            <button class="btn btn-primary" type="submit">
-                                <span class="fa fa-search" aria-hidden="true"></span>
-                                {% trans "Search" %}
-                            </button>
                             <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
                                 <span class="fa fa-eraser" aria-hidden="true"></span>
                                 <span class="sr-only">{% trans "Clear filters" %}</span>
@@ -123,6 +125,7 @@
                                 {% trans "More filters…" %}
                             </a>
                         </div>
+
                     </div>
                 </form>
 
@@ -179,25 +182,34 @@
                 </div>
             {% endif %}
             <div class="table-responsive orders-table-container">
-                <table class="table table-condensed table-hover table-orders">
+                <table class="table table-condensed table-hover table-orders table-flip tickets-table orders-table">
                     <thead>
                     <tr>
                         <th>
                             {% if "can_change_orders" in request.eventpermset %}
-                                <label aria-label="{% trans "select all rows for batch-operation" %}" class="batch-select-label"><input type="checkbox" data-toggle-table/></label>
+                                <label aria-label="{% trans "Select all orders" %}" class="batch-select-label orders-select-all-label">
+                                    <input type="checkbox" data-toggle-table/>
+                                    <span class="orders-select-all-text">{% trans "Select all" %}</span>
+                                </label>
                             {% endif %}
                         </th>
                         <th>{% trans "Order code" %}
                             <a href="?{% url_replace request 'ordering' '-code' %}"><i class="fa fa-caret-down"></i></a>
                             <a href="?{% url_replace request 'ordering' 'code' %}"><i class="fa fa-caret-up"></i></a></th>
                         <th>{% trans "User" %}
+                            <a href="?{% url_replace request 'ordering' '-name' %}"><i class="fa fa-caret-down"></i></a>
+                            <a href="?{% url_replace request 'ordering' 'name' %}"><i class="fa fa-caret-up"></i></a></th>
+                        <th>{% trans "Email" %}
                             <a href="?{% url_replace request 'ordering' '-email' %}"><i class="fa fa-caret-down"></i></a>
                             <a href="?{% url_replace request 'ordering' 'email' %}"><i class="fa fa-caret-up"></i></a></th>
                         <th>{% trans "Order date" %} <span class="text-muted" id="tz-indicator"></span>
                             <a href="?{% url_replace request 'ordering' '-datetime' %}"><i class="fa fa-caret-down"></i></a>
                             <a href="?{% url_replace request 'ordering' 'datetime' %}"><i class="fa fa-caret-up"></i></a>
                         </th>
-                        <th>{% trans "Products" %}</th>
+                        <th>{% trans "Products" %}
+                            <a href="?{% url_replace request 'ordering' '-products' %}"><i class="fa fa-caret-down"></i></a>
+                            <a href="?{% url_replace request 'ordering' 'products' %}"><i class="fa fa-caret-up"></i></a>
+                        </th>
                         <th class="text-right flip">{% trans "Order paid / total" %}
                             <a href="?{% url_replace request 'ordering' '-total' %}"><i class="fa fa-caret-down"></i></a>
                             <a href="?{% url_replace request 'ordering' 'total' %}"><i class="fa fa-caret-up"></i></a></th>
@@ -210,12 +222,12 @@
                     <tbody>
                     {% for o in orders %}
                         <tr>
-                            <td>
+                            <td class="list-select">
                                 {% if "can_change_orders" in request.eventpermset %}
                                     <label aria-label="{% trans "select row for batch-operation" %}" class="batch-select-label"><input type="checkbox" name="order" class="batch-select-checkbox" value="{{ o.code }}"{% if o.bulk_approval_eligible %} data-batch-eligible="true"{% endif %}/></label>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="list-name-cell">
                                 <strong>
                                     <a
                                             href="{% url "control:event.order" event=request.event.slug organizer=request.event.organizer.slug code=o.code %}">
@@ -225,18 +237,22 @@
                                     <span class="label label-warning">{% trans "TEST MODE" %}</span>
                                 {% endif %}
                             </td>
-                            <td>
-                                {{ o.email|default_if_none:"" }}
+                            <td class="orders-user-cell">
                                 {% if o.invoice_address.name %}
-                                    <br>{{ o.invoice_address.name }}
+                                    {{ o.invoice_address.name }}
+                                {% else %}
+                                    {{ o.active_positions.0.attendee_name|default:"" }}
                                 {% endif %}
+                            </td>
+                            <td class="orders-email-cell">
+                                {{ o.email|default_if_none:"" }}
                             </td>
                             <td class="order-datetime" data-datetime="{{ o.datetime.isoformat }}">
                                 <span class="fa fa-{{ o.sales_channel_obj.icon }} text-muted"
                                       data-toggle="tooltip" title="{% trans o.sales_channel_obj.verbose_name %}"></span>
                                 {{ o.datetime|date:"SHORT_DATETIME_FORMAT" }}
                             </td>
-                            <td>
+                            <td class="list-stack">
                                 <ul class="list-unstyled order-product-list">
                                 {% for pos in o.active_positions %}
                                     {% if forloop.counter <= 2 %}
@@ -252,7 +268,7 @@
                                 {% endfor %}
                                 </ul>
                             </td>
-                            <td class="text-right flip">
+                            <td class="list-meta text-right flip">
                                 {% if o.has_cancellation_request %}
                                     <span class="label label-warning">{% trans "CANCELLATION REQUESTED" %}</span>
                                 {% endif %}
@@ -282,7 +298,7 @@
                                 {% endif %}
                             </td>
                             <td class="text-right flip">{{ o.pcnt|default_if_none:"0" }}</td>
-                            <td class="text-right flip">{% include "pretixcontrol/orders/fragment_order_status.html" with order=o %}</td>
+                            <td class="list-meta text-right flip">{% include "pretixcontrol/orders/fragment_order_status.html" with order=o %}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
@@ -291,6 +307,7 @@
                         <tr>
                             <th></th>
                             <th>{% trans "Sum over all pages" %}</th>
+                            <th></th>
                             <th></th>
                             <th>
                                 {% blocktrans trimmed count s=sums.c %}
@@ -325,7 +342,10 @@
     {% endif %}
 {% endblock %}
 {% block custom_header %}
+    {{ block.super }}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
     <script type="module" src="{% static 'pretixcontrol/js/ui/orders-filter.js' %}"></script>
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
 {% endblock %}

@@ -347,9 +347,11 @@ class EventOrderFilterForm(OrderFilterForm):
     orders = {
         'code': 'code',
         'email': 'email',
+        'name': 'display_name',
         'total': 'total',
         'datetime': 'datetime',
         'status': 'status',
+        'products': 'first_product_name',
     }
 
     product = forms.ChoiceField(
@@ -423,6 +425,32 @@ class EventOrderFilterForm(OrderFilterForm):
 
     def filter_qs(self, qs):
         fdata = self.cleaned_data
+        from django.db.models import Subquery, Case, When, F, Value
+        from django.db.models.functions import Coalesce
+
+        first_product_name_subquery = OrderPosition.objects.filter(
+            order=OuterRef('pk'),
+            canceled=False
+        ).order_by('positionid').values('product__name')[:1]
+
+        first_attendee_name_subquery = OrderPosition.objects.filter(
+            order=OuterRef('pk'),
+            canceled=False
+        ).order_by('positionid').values('attendee_name_cached')[:1]
+
+        qs = qs.annotate(
+            first_product_name=Subquery(first_product_name_subquery),
+            first_attendee_name=Subquery(first_attendee_name_subquery)
+        ).annotate(
+            display_name=Case(
+                When(
+                    invoice_address__name_cached__isnull=False,
+                    invoice_address__name_cached__gt='',
+                    then=F('invoice_address__name_cached')
+                ),
+                default=Coalesce('first_attendee_name', Value(''))
+            )
+        )
         qs = super().filter_qs(qs)
 
         product = fdata.get('product')

@@ -192,7 +192,24 @@ def test_order_list(client, env):
     assert 'hidden' not in BeautifulSoup(content, 'html.parser').select_one('#orders-advanced-filters').attrs
 
     response = client.get('/control/event/dummy/dummy/orders/')
+    content = response.content.decode()
     assert response.content.decode().count('name="query"') == 1
+    assert 'User' in content
+    assert 'Email' in content
+    assert 'ordering=name' in content
+    assert 'ordering=-name' in content
+    assert 'ordering=products' in content
+    assert 'ordering=-products' in content
+
+    # Verify that name and products sorting queries work successfully
+    response = client.get('/control/event/dummy/dummy/orders/?ordering=name')
+    assert response.status_code == 200
+    response = client.get('/control/event/dummy/dummy/orders/?ordering=-name')
+    assert response.status_code == 200
+    response = client.get('/control/event/dummy/dummy/orders/?ordering=products')
+    assert response.status_code == 200
+    response = client.get('/control/event/dummy/dummy/orders/?ordering=-products')
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db

@@ -3,7 +3,12 @@
 {% load bootstrap3 %}
 {% load urlreplace %}
 {% load money %}
+{% load static %}
 {% block title %}{% trans "Vouchers" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+{% endblock %}
 {% block content %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
@@ -33,45 +38,45 @@
                     reserve some quota for your very special guests.
                 {% endblocktrans %}
             </p>
-            <div class="row filter-form">
-                <div class="col-lg-2 col-sm-6 col-xs-6">
-                    <form action="{% url "control:event.vouchers.go" event=request.event.slug organizer=request.event.organizer.slug %}">
+            <div class="vouchers-filter-container">
+                <form class="vouchers-filter-form" action="{% url "control:event.vouchers.go" event=request.event.slug organizer=request.event.organizer.slug %}">
+                    <div class="vouchers-filter-go">
                         <div class="input-group">
                             <input type="text" name="code" class="form-control" placeholder="{% trans "Voucher code" %}" autofocus>
                             <span class="input-group-btn">
                                 <button class="btn btn-primary" type="submit">{% trans "Go!" %}</button>
                             </span>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
                 {% if filter_form %}
-                <form class="" action="" method="get">
+                <form class="vouchers-filter-form" action="" method="get">
                     <input type="hidden" name="tab" value="vouchers">
-                    <div class="col-lg-2 col-sm-3 col-xs-6">
+                    <div class="vouchers-filter-search">
                         {% bootstrap_field filter_form.search layout='inline' %}
                     </div>
-                    <div class="col-lg-1 col-sm-3 col-xs-6">
+                    <div class="vouchers-filter-field">
                         {% bootstrap_field filter_form.tag layout='inline' %}
                     </div>
                     {% if request.event.has_subevents %}
-                        <div class="col-lg-1 col-sm-3 col-xs-6">
+                        <div class="vouchers-filter-field">
                             {% bootstrap_field filter_form.status layout='inline' %}
                         </div>
-                        <div class="col-lg-2 col-sm-3 col-xs-6">
+                        <div class="vouchers-filter-field vouchers-filter-field-wide">
                             {% bootstrap_field filter_form.subevent layout='inline' %}
                         </div>
                     {% else %}
-                        <div class="col-lg-2 col-sm-6 col-xs-6">
+                        <div class="vouchers-filter-field">
                             {% bootstrap_field filter_form.status layout='inline' %}
                         </div>
                     {% endif %}
-                    <div class="col-lg-2 col-sm-6 col-xs-6">
+                    <div class="vouchers-filter-field vouchers-filter-field-wide">
                         {% bootstrap_field filter_form.productvar layout='inline' %}
                     </div>
-                    <div class="col-lg-1 col-sm-6 col-xs-6">
+                    <div class="vouchers-filter-field">
                         {% bootstrap_field filter_form.qm layout='inline' %}
                     </div>
-                    <div class="col-lg-1 col-sm-6 col-xs-6">
+                    <div class="vouchers-filter-actions">
                         {% include "eventyay_common/filter_actions.html" with clear_url='?tab=vouchers' %}
                     </div>
                 </form>
@@ -96,7 +101,7 @@
                                 class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Create multiple new vouchers" %}</a>
                     </div>
                 {% else %}
-                    <p>
+                    <p class="list-toolbar vouchers-toolbar">
                         <a href="{% url "control:event.vouchers.add" organizer=request.event.organizer.slug event=request.event.slug %}"
                                 class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Create a new voucher" %}</a>
                         <a href="{% url "control:event.vouchers.bulk" organizer=request.event.organizer.slug event=request.event.slug %}"
@@ -109,12 +114,15 @@
                     <form action="{% url "control:event.vouchers.bulkaction"  organizer=request.event.organizer.slug event=request.event.slug %}" method="post">
                         {% csrf_token %}
                         <div class="table-responsive">
-                            <table class="table table-hover table-quotas">
+                            <table class="table table-hover table-flip tickets-table vouchers-table">
                             <thead>
                             <tr>
                                 <th>
                                     {% if "can_change_vouchers" in request.eventpermset %}
-                                        <input type="checkbox" data-toggle-table />
+                                        <label aria-label="{% trans "Select all vouchers" %}" class="batch-select-label vouchers-select-all-label">
+                                            <input type="checkbox" data-toggle-table />
+                                            <span class="vouchers-select-all-text">{% trans "Select all" %}</span>
+                                        </label>
                                     {% endif %}
                                 </th>
                                 <th>
@@ -155,28 +163,27 @@
                             <tbody>
                             {% for v in vouchers %}
                                 <tr>
-                                    <td>
+                                    <td class="list-select">
                                         {% if "can_change_vouchers" in request.eventpermset %}
                                             <input type="checkbox" name="voucher" class="" value="{{ v.pk }}"/>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td class="list-name-cell">
                                         {% if not v.is_active %}<del>{% endif %}
                                         <strong><a href="{% url "control:event.voucher" organizer=request.event.organizer.slug event=request.event.slug voucher=v.id %}">{{ v.code }}</a></strong>
                                         {% if not v.is_active %}</del>{% endif %}
                                     </td>
-                                    <td>
-                                        {{ v.redeemed }} / {{ v.max_usages }}
+                                    <td class="list-meta">
+                                        <span class="category-pill">{{ v.redeemed }} / {{ v.max_usages }}</span>
                                         {% if v.budget|default_if_none:"NONE" != "NONE" %}
-                                            <br>
                                             <small class="text-muted">
                                                 {{ v.budget_used_orders|money:request.event.currency }} / {{ v.budget|money:request.event.currency }}
                                             </small>
                                         {% endif %}
                                     </td>
                                     <td>{{ v.valid_until|date }}</td>
-                                    <td>
-                                        {{ v.tag }}
+                                    <td class="list-meta">
+                                        {% if v.tag %}<span class="category-pill">{{ v.tag }}</span>{% endif %}
                                     </td>
                                     <td>
                                         {% if v.item %}
@@ -189,7 +196,7 @@
                                                 Any product in quota "{{ quota }}"
                                             {% endblocktrans %}
                                         {% endif %}
-                                        {% if v.seat %}<br><small class="text-muted">{{ v.seat }}</small>{% endif %}
+                                        {% if v.seat %}<small class="text-muted">{{ v.seat }}</small>{% endif %}
                                     </td>
                                     {% if request.event.has_subevents %}
                                         <td>
@@ -199,7 +206,7 @@
                                             {% endif %}
                                         </td>
                                     {% endif %}
-                                    <td class="text-right flip">
+                                    <td class="list-actions text-right flip">
                                         <a href="{% url "control:event.vouchers.bulk" organizer=request.event.organizer.slug event=request.event.slug %}?copy_from={{ v.id }}"
                                            class="btn btn-sm btn-default" title="{% trans "Use as a template for new vouchers" %}" data-toggle="tooltip">
                                             <span class="fa fa-copy"></span>
@@ -228,13 +235,13 @@
                 {% endblocktrans %}
             </p>
             {% if request.event.has_subevents %}
-                <div class="row filter-form">
-                    <form class="" action="" method="get">
-                            <input type="hidden" name="tab" value="tags">
-                            <div class="col-lg-2 col-sm-3 col-xs-6">
-                                {% bootstrap_field tags_filter_form.subevent layout='inline' %}
-                            </div>
-                        <div class="col-lg-2 col-sm-6 col-xs-6">
+                <div class="vouchers-filter-container">
+                    <form class="vouchers-filter-form" action="" method="get">
+                        <input type="hidden" name="tab" value="tags">
+                        <div class="vouchers-filter-field vouchers-filter-field-wide">
+                            {% bootstrap_field tags_filter_form.subevent layout='inline' %}
+                        </div>
+                        <div class="vouchers-filter-actions">
                             {% include "eventyay_common/filter_actions.html" with clear_url='?tab=tags' %}
                         </div>
                     </form>
@@ -251,7 +258,7 @@
                     </div>
                 {% else %}
                     <div class="table-responsive">
-                        <table class="table table-hover table-condensed">
+                        <table class="table table-hover table-condensed table-flip tickets-table">
                         <thead>
                         <tr>
                             <th>{% trans "Tag" %}</th>
@@ -261,7 +268,7 @@
                         <tbody>
                         {% for t in tags %}
                             <tr>
-                                <td>
+                                <td class="list-name-cell">
                                     <strong>
                                     {% if t.tag %}
                                         <a href="{% url "control:event.vouchers" organizer=request.event.organizer.slug event=request.event.slug %}?tag={{ '"'|add:t.tag|add:'"'|urlencode }}">

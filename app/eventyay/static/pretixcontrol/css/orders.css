@@ -30,17 +30,12 @@
   align-items: stretch;
 }
 
-.orders-search-query {
-  flex: 1 1 220px;
+.orders-search-query-group {
+  flex: 1 1 300px;
   min-width: 0;
 }
 
-.orders-search-query .form-group {
-  margin-bottom: 0;
-}
-
-.orders-search-query .form-control {
-  width: 100%;
+.orders-search-query-group .form-control {
   height: 38px;
 }
 
@@ -196,4 +191,18 @@
   .orders-advanced-grid {
     flex-wrap: wrap;
   }
+}
+
+.orders-user-cell {
+  word-break: break-word;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 180px;
+}
+
+.orders-email-cell {
+  word-break: break-all;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 220px;
 }
