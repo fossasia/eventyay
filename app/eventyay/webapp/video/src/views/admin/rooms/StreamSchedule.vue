@@ -20,7 +20,7 @@
 			p Click "Add Stream Schedule" to create one.
 	bunt-button.add-btn(@click="openCreateForm") + Add Stream Schedule
 	transition(name="prompt")
-		prompt.c-stream-schedule-prompt(v-if="showCreateForm || editingSchedule", @close="closeForm")
+		prompt.c-stream-schedule-prompt(v-if="showCreateForm || editingSchedule", @close="closeForm", :scrollable="false")
 			.content
 				h1 {{ editingSchedule ? 'Edit' : 'Create' }} Stream Schedule
 				form.stream-schedule-form(@submit.prevent="saveSchedule")
@@ -38,6 +38,14 @@
 						i All times in {{ eventTimezone }}
 					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", option-value="id", option-label="label", :validation="v$.formData.stream_type")
 					.field-hint(v-if="formData.stream_type === 'iframe'") {{ IFRAME_PROVIDER_HELP_TEXT }}
+					.language-urls(v-if="formData.stream_type === 'youtube'")
+						h4 Languages and Audio Source
+						.language-url-entry(v-for="(entry, index) in formData.config.languageUrls" :key="index")
+							bunt-select(name="language", v-model="entry.language", :options="ISO_LANGUAGE_OPTIONS", label="Language")
+							bunt-input(name="youtube_id" v-model="entry.youtube_id" label="Audio Source (YouTube ID or WHEP URL)" @blur="normalizeLanguageYoutubeId(entry)")
+							bunt-switch(name="use_video" v-model="entry.use_video" label="Use video from this interpretation channel" hint="If enabled, attendees will see both the audio and video from this interpretation channel. If disabled, attendees will hear the interpretation audio while continuing to see the original main video.")
+							bunt-icon-button(@click="deleteLanguageUrl(index)") delete-outline
+						bunt-button(@click="addLanguageUrl") + Add Language and Audio Source
 					.form-error(v-if="saveError")
 						| {{ saveError }}
 					.form-actions
@@ -52,6 +60,7 @@ import api from 'lib/api';
 import Prompt from 'components/Prompt';
 import moment from 'lib/timetravelMoment';
 import { IFRAME_PROVIDER_HELP_TEXT } from 'lib/stage-streams';
+import ISO6391 from 'iso-639-1';
 
 export default {
 	name: 'StreamSchedule',
@@ -87,12 +96,14 @@ export default {
 				{ id: 'iframe', label: 'Iframe' },
 			],
 			IFRAME_PROVIDER_HELP_TEXT,
+			ISO_LANGUAGE_OPTIONS: [],
 			formData: {
 				title: '',
 				url: '',
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
+				config: {},
 			},
 		};
 	},
@@ -161,6 +172,10 @@ export default {
 		return rules;
 	},
 	async created() {
+		this.ISO_LANGUAGE_OPTIONS = ISO6391.getAllCodes().map(code => ({
+			id: ISO6391.getName(code),
+			label: ISO6391.getName(code),
+		}));
 		if (!this.roomId) {
 			this.streamSchedules = [];
 			this.loading = false;
@@ -191,6 +206,10 @@ export default {
 					? this.formData.end_time.toISOString()
 					: null,
 				stream_type: this.formData.stream_type,
+				config: {
+					...this.formData.config,
+					languageUrls: this.formData.config.languageUrls || [],
+				},
 			};
 		},
 		loadSavedDraft() {
@@ -207,6 +226,10 @@ export default {
 					start_time: draft.start_time ? this.parseApiDateTime(draft.start_time).tz(tz) : null,
 					end_time: draft.end_time ? this.parseApiDateTime(draft.end_time).tz(tz) : null,
 					stream_type: draft.stream_type || 'youtube',
+					config: {
+						...(draft.config || {}),
+						languageUrls: draft.config?.languageUrls || [],
+					},
 				};
 			} catch (error) {
 				return null;
@@ -281,12 +304,15 @@ export default {
 			this.v$.$reset();
 			this.editingSchedule = schedule;
 			const tz = this.eventTimezone || 'UTC';
+			let config = schedule.config ? JSON.parse(JSON.stringify(schedule.config)) : {};
+			config.languageUrls = config.languageUrls || [];
 			this.formData = {
 				title: schedule.title || '',
 				url: schedule.url,
 				start_time: schedule.start_time ? this.parseApiDateTime(schedule.start_time).tz(tz) : null,
 				end_time: schedule.end_time ? this.parseApiDateTime(schedule.end_time).tz(tz) : null,
 				stream_type: schedule.stream_type,
+				config: config,
 			};
 		},
 		closeForm() {
@@ -298,6 +324,7 @@ export default {
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
+				config: { languageUrls: [] },
 			};
 			this.saveError = null;
 			this.v$.$reset();
@@ -472,6 +499,21 @@ export default {
 				this.error = error.message || 'Failed to delete stream schedule';
 			}
 		},
+		addLanguageUrl() {
+			if (!this.formData.config.languageUrls) {
+				this.formData.config.languageUrls = [];
+			}
+			this.formData.config.languageUrls.push({ language: '', youtube_id: '', use_video: false });
+		},
+		deleteLanguageUrl(index) {
+			if (!this.formData.config.languageUrls) return;
+			this.formData.config.languageUrls.splice(index, 1);
+		},
+		normalizeLanguageYoutubeId(entry) {
+			if (!entry?.youtube_id) return;
+			const id = normalizeYoutubeVideoId(entry.youtube_id);
+			if (id) entry.youtube_id = id;
+		},
 		formatDateTime(datetime) {
 			if (!datetime) return '';
 			const tz = this.eventTimezone || 'UTC';
@@ -556,6 +598,7 @@ export default {
 		flex-direction: column
 		padding: 32px
 		position: relative
+		overflow-y: auto !important
 		h1
 			margin: 0 0 24px 0
 			font-size: 20px

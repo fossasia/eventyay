@@ -1,7 +1,12 @@
 {% extends "pretixcontrol/event/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% load static %}
 {% block title %}{{ request.event.name }}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/settings-mobile.css' %}" />
+{% endblock %}
 {% block content %}
     {% if "congratulations" in request.GET %}
         <div class="thank-you">

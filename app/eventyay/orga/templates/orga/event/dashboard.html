@@ -11,7 +11,21 @@
     {% compress css %}
         <link rel="stylesheet" href="{% static "orga/css/dashboard.css" %}">
     {% endcompress %}
+    {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
+    {% if can_view_submission_stats %}
+        <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />
+    {% endif %}
 {% endblock stylesheets %}
+
+{% block scripts %}
+    {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
+    {% if can_view_submission_stats %}
+        {% compress js %}
+            <script defer src="{% static "vendored/apexcharts/apexcharts.min.js" %}"></script>
+            <script defer src="{% static "orga/js/stats.js" %}"></script>
+        {% endcompress %}
+    {% endif %}
+{% endblock scripts %}
 
 {% block content %}
     {% has_event_perm "base.orga_list_speakerprofile" request.user request request.event as can_view_speakers %}
@@ -111,8 +125,13 @@
         {% endfor %}
     </div>
 
+    {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
+    {% if can_view_submission_stats %}
+        {% include "orga/submission/includes/statistics.html" %}
+    {% endif %}
+
     {% if history and can_change_settings %}
-        <div class="dashboard-history">
+        <div class="dashboard-history mt-4">
             <div class="d-flex">
                 <h2>{% translate "History" %}</h2>
                 {% if can_change_settings %}

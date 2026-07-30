@@ -152,6 +152,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'slot_count',
             'content_locale',
             'fullname',
+            'social_links',
         ]
         self.public_fields = [
             'title',
@@ -165,6 +166,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'fullname',
             'biography',
             'avatar',
+            'social_links',
         ]
         for attribute in self.length_fields:
             field_name = f'cfp_{attribute}_min_length'

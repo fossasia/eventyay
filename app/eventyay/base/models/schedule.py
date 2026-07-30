@@ -24,6 +24,7 @@ from qrcode.image.svg import SvgPathFillImage
 
 from eventyay.agenda.export_resources import enriched_resource_entry
 from eventyay.agenda.signals import register_recording_provider
+from eventyay.common.social_links import serialize_social_link
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
@@ -1063,8 +1064,11 @@ class Schedule(PretalxModel):
             for profile in SpeakerProfile.objects.filter(
                 event=self.event,
                 user__in=speakers,
-            ).select_related('user')
+            ).select_related('user').prefetch_related('social_links')
         }
+        show_social_links = getattr(self.event.cfp, 'request_social_links', False) and (
+            not respect_public_visibility or self.event.cfp.is_field_public('social_links')
+        )
         for user in speakers:
             # Avoid calling event_profile() here: it can hit the DB (and even create/save
             # a profile). For schedule JSON, missing profiles should simply result in
@@ -1084,6 +1088,8 @@ class Schedule(PretalxModel):
                 'is_featured': bool(getattr(profile, 'is_featured', False)),
                 'featured_position': getattr(profile, 'position', None),
             }
+            if show_social_links and profile:
+                speaker_data['social_links'] = [serialize_social_link(link) for link in profile.social_links.all()]
             if not include_featured_speaker_metadata:
                 speaker_data['is_featured'] = False
                 speaker_data['featured_position'] = None

@@ -3,6 +3,8 @@
 
 {% block custom_header %}
     {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
     <script type='module' src='{% static "pretixplugins/sendmail/outbox.js" %}'></script>
 {% endblock %}
 

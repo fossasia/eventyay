@@ -74,40 +74,41 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     url = request.resolver_match
     if not url:
         return []
+    
+    nav = []
     has_settings_perm = request.user.has_event_permission(
         event.organizer,
         event,
         'can_change_event_settings',
         request=request,
     )
-    if not has_settings_perm:
-        return []
-    nav = [
-        {
-            'label': _('Settings'),
-            'url': reverse(
-                'eventyay_common:event.update',
-                kwargs={
-                    'event': event.slug,
-                    'organizer': event.organizer.slug,
-                },
-            ),
-            'active': (url.url_name == 'event.update'),
-            'icon': 'wrench',
-        },
-        {
-            'label': _('Plugins'),
-            'url': reverse(
-                'eventyay_common:event.plugins',
-                kwargs={
-                    'event': event.slug,
-                    'organizer': event.organizer.slug,
-                },
-            ),
-            'active': (url.url_name == 'event.plugins'),
-            'icon': 'plug',
-        },
-    ]
+    if has_settings_perm:
+        nav = [
+            {
+                'label': _('Settings'),
+                'url': reverse(
+                    'eventyay_common:event.update',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': (url.url_name == 'event.update'),
+                'icon': 'wrench',
+            },
+            {
+                'label': _('Plugins'),
+                'url': reverse(
+                    'eventyay_common:event.plugins',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': (url.url_name == 'event.plugins'),
+                'icon': 'plug',
+            },
+        ]
 
     plugin_responses = nav_event_common.send(event, request=request)
     plugin_nav_items = []
@@ -247,6 +248,18 @@ def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
             ),
             'active': 'organizer.export' in url.url_name,
             'icon': 'download',
+        }
+    )
+
+    nav.append(
+        {
+            'label': _('Analytics'),
+            'url': reverse(
+                'eventyay_common:organizer.analytics',
+                kwargs={'organizer': request.organizer.slug},
+            ),
+            'active': 'organizer.analytics' in url.url_name,
+            'icon': 'bar-chart',
         }
     )
 

@@ -424,6 +424,61 @@ def test_orga_can_create_submission(orga_client, event, known_speaker, orga_user
 
 
 @pytest.mark.django_db
+def test_orga_create_submission_preserves_speaker_after_form_error(orga_client, event):
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "speaker-email": "foo@bar.com",
+            "speaker-name": "Foo Speaker",
+            "speaker-locale": "en",
+            "state": "submitted",
+            "title": "title",
+        },
+    )
+
+    speaker_form = response.context["new_speaker_form"]
+    assert not speaker_form.errors
+    assert response.status_code == 200
+    assert speaker_form["email"].value() == "foo@bar.com"
+    assert list(speaker_form.fields["email"].widget.choices) == [
+        ("foo@bar.com", "Foo Speaker (foo@bar.com)")
+    ]
+    with scope(event=event):
+        assert event.submissions.count() == 0
+
+
+@pytest.mark.django_db
+def test_orga_create_submission_does_not_save_before_speaker_validation(orga_client, event):
+    with scope(event=event):
+        type_pk = event.submission_types.first().pk
+
+    response = orga_client.post(
+        event.orga_urls.new_submission,
+        data={
+            "abstract": "abstract",
+            "content_locale": "en",
+            "description": "description",
+            "speaker-name": "Foo Speaker",
+            "speaker-locale": "en",
+            "state": "submitted",
+            "submission_type": type_pk,
+            "title": "title",
+        },
+    )
+
+    speaker_form = response.context["new_speaker_form"]
+    assert response.status_code == 200
+    assert "__all__" not in speaker_form.errors
+    assert "email" in speaker_form.errors
+    assert len(speaker_form.errors["email"]) == 1
+    with scope(event=event):
+        assert event.submissions.count() == 0
+
+
+@pytest.mark.django_db
 def test_orga_can_edit_submission(orga_client, event, accepted_submission):
     event.feature_flags["present_multiple_times"] = True
     event.save()
@@ -760,7 +815,7 @@ def test_reviewer_cannot_see_anonymisation_interface(review_client, submission):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("use_tracks", (True, False))
-def test_submission_statistics(use_tracks, slot, other_slot, orga_client):
+def test_talk_dashboard_statistics(use_tracks, slot, other_slot, orga_client):
     with scope(event=slot.event):
         slot.event.feature_flags["use_tracks"] = use_tracks
         slot.event.save()
@@ -771,8 +826,11 @@ def test_submission_statistics(use_tracks, slot, other_slot, orga_client):
         ActivityLog.objects.filter(pk=logs[0].pk).update(
             timestamp=logs[0].timestamp - dt.timedelta(days=2)
         )
-    response = orga_client.get(slot.event.orga_urls.stats)
+    response = orga_client.get(slot.event.orga_urls.base)
     assert response.status_code == 200
+    content = response.content.decode()
+    assert "Proposal Statistics" in content
+    assert "Session Statistics" in content
 
 
 @pytest.mark.django_db
