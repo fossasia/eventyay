@@ -85,7 +85,7 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     if has_settings_perm:
         nav = [
             {
-                'label': _('Settings'),
+                'label': _('Event settings'),
                 'url': reverse(
                     'eventyay_common:event.update',
                     kwargs={
