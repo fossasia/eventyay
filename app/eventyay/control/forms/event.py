@@ -1686,6 +1686,14 @@ class QuickSetupForm(I18nForm):
         ),
         required=False,
     )
+    payment_paypal__enabled = forms.BooleanField(
+        label=_('Payment via PayPal'),
+        help_text=_(
+            'PayPal is a widely used online payment service. To accept payments via PayPal, '
+            'the platform must have PayPal configured in global settings.'
+        ),
+        required=False,
+    )
     payment_banktransfer__enabled = forms.BooleanField(
         label=_('Payment by bank transfer'),
         help_text=_(
@@ -1713,8 +1721,10 @@ class QuickSetupForm(I18nForm):
         kwargs['locales'] = self.locales
         super().__init__(*args, **kwargs)
         plugins_active = self.obj.get_plugins()
-        if ('eventyay_stripe' not in plugins_active) or (not self.obj.settings.payment_stripe_client_id):
+        if 'eventyay_stripe' not in plugins_active:
             del self.fields['payment_stripe__enabled']
+        if 'eventyay_paypal' not in plugins_active:
+            del self.fields['payment_paypal__enabled']
         if 'eventyay.plugins.banktransfer' not in plugins_active:
             del self.fields['payment_banktransfer__enabled']
         self.fields['payment_banktransfer_bank_details'].required = False

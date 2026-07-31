@@ -1616,6 +1616,15 @@ class QuickSetupView(FormView):
                 )
                 plugins_active.append('eventyay.plugins.stripe')
 
+        if form.cleaned_data.get('payment_paypal__enabled', None):
+            if 'eventyay.plugins.paypal' not in plugins_active:
+                self.request.event.log_action(
+                    'eventyay.event.plugins.enabled',
+                    user=self.request.user,
+                    data={'plugin': 'eventyay.plugins.paypal'},
+                )
+                plugins_active.append('eventyay.plugins.paypal')
+
         if form.cleaned_data['currency'] != self.request.event.currency:
             self.request.event.currency = form.cleaned_data['currency']
             self.request.event.save(update_fields=['currency'])
