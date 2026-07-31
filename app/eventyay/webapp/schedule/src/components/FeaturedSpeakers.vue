@@ -19,8 +19,10 @@
 							h4 {{ speaker.name || t.speaker_fallback }}
 							markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography")
 				.featured-speaker-details
+					speaker-social-links(:links="speaker.social_links", alignment="flex-start")
 					template(v-if="speaker.sessions && speaker.sessions.length")
-						hr.featured-speaker-divider
+						hr.featured-speaker-divider(v-if="speaker.social_links && speaker.social_links.length")
+						hr.featured-speaker-divider(v-else)
 						.featured-speaker-sessions
 							h4 {{ t.sessions }}
 							.featured-speaker-session(
@@ -46,10 +48,11 @@
 import { getLocalizedString, compareFeaturedSpeakers, talksToScheduleSessions, buildSessionsBySpeaker, sessionsForSpeaker, sortSessionsByStart, isTalkSchedulePending } from '../utils'
 import moment from 'moment-timezone'
 import MarkdownContent from './MarkdownContent'
+import SpeakerSocialLinks from './SpeakerSocialLinks.vue'
 
 export default {
 	name: 'FeaturedSpeakers',
-	components: { MarkdownContent },
+	components: { MarkdownContent, SpeakerSocialLinks },
 	inject: {
 		scheduleData: { default: null },
 		eventUrl: { default: '' },

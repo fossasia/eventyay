@@ -12,6 +12,12 @@
         <script defer src="{% static "vendored/purify.min.js" %}"></script>
     {% endif %}
     <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
+    {% if social_media_formset %}
+        <script defer src="{% static "js/jquery.js" %}"></script>
+        <script defer src="{% static "js/jquery.formset.js" %}"></script>
+        <script defer src="{% static "cfp/js/animateFormset.js" %}"></script>
+        <script type="module" src="{% static 'common/js/speaker_social_links.js' %}"></script>
+    {% endif %}
 {% endblock scripts %}
 
 {% block extra_title %}{{ form.instance.user.get_display_name }} :: {% endblock extra_title %}
@@ -87,6 +93,8 @@
 
             {{ form.availabilities.as_field_group }}
         {% endif %}
+
+        {% include "common/speaker_social_links_formset.html" %}
 
         {{ questions_form }}
 
