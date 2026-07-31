@@ -35,7 +35,6 @@ export function initLanguageGrid(widget) {
   const searchInput = widget.querySelector('[data-language-grid-search]');
   const grid = widget.querySelector('[data-language-grid-grid]');
   const badgesContainer = widget.querySelector('[data-language-grid-badges]');
-  const countLabel = widget.querySelector('[data-language-grid-count]');
   const noResults = widget.querySelector('[data-language-grid-no-results]');
   const deselectAllBtn = widget.querySelector('[data-language-grid-deselect-all]');
 
@@ -45,18 +44,10 @@ export function initLanguageGrid(widget) {
   widget.classList.add('is-ready');
   panel.hidden = true;
 
+  const countLabel = widget.querySelector('[data-language-grid-count]');
   const emptyText = countLabel?.dataset.emptyText || countLabel?.textContent.trim() || '';
-  const selectedSingularText = countLabel?.dataset.selectedSingularText || '';
-  const selectedPluralText = countLabel?.dataset.selectedPluralText || selectedSingularText;
-  const overflowText = countLabel?.dataset.overflowText || '';
   const cells = Array.from(grid.querySelectorAll('[data-language-grid-cell]'));
   const checkboxes = cells.map((cell) => cell.querySelector('input[type="checkbox"]'));
-
-  function setCountLabel(text) {
-    if (countLabel) {
-      countLabel.textContent = text;
-    }
-  }
 
   function syncBadges() {
     if (!badgesContainer) return;
@@ -64,24 +55,18 @@ export function initLanguageGrid(widget) {
     badgesContainer.innerHTML = '';
     const selected = getSelectedLanguages(cells, checkboxes);
 
-    selected.slice(0, MAX_VISIBLE_BADGES).forEach((language) => {
+    selected.forEach((language) => {
       renderBadge(badgesContainer, 'language-grid-badge', language.name);
     });
 
-    if (selected.length > MAX_VISIBLE_BADGES) {
-      const hiddenCount = selected.length - MAX_VISIBLE_BADGES;
-      renderBadge(
-        badgesContainer,
-        'language-grid-badge-overflow',
-        `+${hiddenCount}${overflowText ? ` ${overflowText}` : ''}`,
-      );
-    }
-
-    if (selected.length === 0) {
-      setCountLabel(emptyText);
-    } else {
-      const selectedText = selected.length === 1 ? selectedSingularText : selectedPluralText;
-      setCountLabel(`${selected.length}${selectedText ? ` ${selectedText}` : ''}`);
+    if (countLabel) {
+      if (selected.length === 0) {
+        countLabel.textContent = emptyText;
+        countLabel.style.display = '';
+      } else {
+        countLabel.textContent = '';
+        countLabel.style.display = 'none';
+      }
     }
   }
 

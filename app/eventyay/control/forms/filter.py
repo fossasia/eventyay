@@ -146,8 +146,12 @@ class FilterForm(forms.Form):
 
 class OrderFilterForm(FilterForm):
     query = forms.CharField(
-        label=_('Search for…'),
-        widget=forms.TextInput(attrs={'placeholder': _('Search for…'), 'autofocus': 'autofocus'}),
+        label=_('Search orders…'),
+        widget=forms.TextInput(attrs={
+            'placeholder': _('Search orders…'),
+            'autofocus': 'autofocus',
+            'aria-label': _('Search orders'),
+        }),
         required=False,
     )
     provider = forms.ChoiceField(
@@ -343,9 +347,11 @@ class EventOrderFilterForm(OrderFilterForm):
     orders = {
         'code': 'code',
         'email': 'email',
+        'name': 'display_name',
         'total': 'total',
         'datetime': 'datetime',
         'status': 'status',
+        'products': 'first_product_name',
     }
 
     product = forms.ChoiceField(
@@ -357,6 +363,22 @@ class EventOrderFilterForm(OrderFilterForm):
         queryset=SubEvent.objects.none(),
         required=False,
         empty_label=pgettext_lazy('subevent', 'All dates'),
+    )
+    created_from = forms.SplitDateTimeField(
+        widget=SplitDateTimePickerWidget(attrs={}),
+        label=_('Order placed at or after'),
+        required=False,
+    )
+    created_to = forms.SplitDateTimeField(
+        widget=SplitDateTimePickerWidget(attrs={}),
+        label=_('Order placed before'),
+        required=False,
+    )
+    browser_timezone = forms.CharField(
+        widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
+        required=False,
+        initial='UTC',
+        label=_('Timezone'),
     )
     question = forms.ModelChoiceField(
         queryset=Question.objects.none(),
@@ -403,6 +425,32 @@ class EventOrderFilterForm(OrderFilterForm):
 
     def filter_qs(self, qs):
         fdata = self.cleaned_data
+        from django.db.models import Subquery, Case, When, F, Value
+        from django.db.models.functions import Coalesce
+
+        first_product_name_subquery = OrderPosition.objects.filter(
+            order=OuterRef('pk'),
+            canceled=False
+        ).order_by('positionid').values('product__name')[:1]
+
+        first_attendee_name_subquery = OrderPosition.objects.filter(
+            order=OuterRef('pk'),
+            canceled=False
+        ).order_by('positionid').values('attendee_name_cached')[:1]
+
+        qs = qs.annotate(
+            first_product_name=Subquery(first_product_name_subquery),
+            first_attendee_name=Subquery(first_attendee_name_subquery)
+        ).annotate(
+            display_name=Case(
+                When(
+                    invoice_address__name_cached__isnull=False,
+                    invoice_address__name_cached__gt='',
+                    then=F('invoice_address__name_cached')
+                ),
+                default=Coalesce('first_attendee_name', Value(''))
+            )
+        )
         qs = super().filter_qs(qs)
 
         product = fdata.get('product')
@@ -447,7 +495,48 @@ class EventOrderFilterForm(OrderFilterForm):
                 )
                 qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=True)
 
+        if fdata.get('created_from') or fdata.get('created_to'):
+            browser_tz = get_browser_timezone(fdata.get('browser_timezone'))
+
+            def attach_timezone(dt_value):
+                return attach_timezone_to_naive_clock_time(dt_value, browser_tz)
+
+            if fdata.get('created_from'):
+                qs = qs.filter(datetime__gte=attach_timezone(fdata['created_from']))
+            if fdata.get('created_to'):
+                qs = qs.filter(datetime__lt=attach_timezone(fdata['created_to']))
+
         return qs
+
+
+def advanced_filters_open_from_get(filter_form) -> bool:
+    """Return True when the advanced filter panel should start expanded."""
+    if filter_form.data.get('filters') == '1':
+        return True
+    
+    if not filter_form.is_valid():
+        return False
+        
+    advanced_keys = (
+        'status',
+        'product',
+        'provider',
+        'subevent',
+        'created_from',
+        'created_to',
+    )
+    return any(bool(filter_form.cleaned_data.get(key)) for key in advanced_keys)
+
+
+def advanced_filter_count(filter_form) -> int:
+    """Count active advanced filters for the Filters button badge."""
+    if not filter_form.is_valid():
+        return 0
+    count = 0
+    for key in ('status', 'product', 'provider', 'subevent', 'created_from', 'created_to'):
+        if filter_form.cleaned_data.get(key):
+            count += 1
+    return count
 
 
 class FilterNullBooleanSelect(forms.NullBooleanSelect):
@@ -470,22 +559,6 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
         widget=SplitDateTimePickerWidget(attrs={}),
         label=pgettext_lazy('subevent', 'All dates starting before'),
         required=False,
-    )
-    created_from = forms.SplitDateTimeField(
-        widget=SplitDateTimePickerWidget(attrs={}),
-        label=_('Order placed at or after'),
-        required=False,
-    )
-    created_to = forms.SplitDateTimeField(
-        widget=SplitDateTimePickerWidget(attrs={}),
-        label=_('Order placed before'),
-        required=False,
-    )
-    browser_timezone = forms.CharField(
-        widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
-        required=False,
-        initial='UTC',
-        label=_('Timezone'),
     )
     email = forms.CharField(required=False, label=_('E-mail address'))
     comment = forms.CharField(required=False, label=_('Comment'))
@@ -606,16 +679,6 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
             ).distinct()
         if fdata.get('email'):
             qs = qs.filter(email__icontains=fdata.get('email'))
-        if fdata.get('created_from') or fdata.get('created_to'):
-            browser_tz = get_browser_timezone(fdata.get('browser_timezone'))
-
-            def attach_timezone(dt_value):
-                return attach_timezone_to_naive_clock_time(dt_value, browser_tz)
-
-            if fdata.get('created_from'):
-                qs = qs.filter(datetime__gte=attach_timezone(fdata['created_from']))
-            if fdata.get('created_to'):
-                qs = qs.filter(datetime__lt=attach_timezone(fdata['created_to']))
         if fdata.get('comment'):
             qs = qs.filter(comment__icontains=fdata.get('comment'))
         if fdata.get('sales_channel'):

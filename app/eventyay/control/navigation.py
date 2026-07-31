@@ -123,7 +123,7 @@ def get_event_navigation(request: HttpRequest):
         )
         nav.append(
             {
-                'label': _('Settings'),
+                'label': _('Ticket settings'),
                 'url': reverse(
                     'control:event.settings',
                     kwargs={

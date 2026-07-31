@@ -10,6 +10,7 @@
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
 <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
 <script defer src="{% static 'eventyay-common/js/smtp-toggle.js' %}"></script>
+<script defer src="{% static 'eventyay-common/js/contact-form-toggle.js' %}"></script>
 <script type="module" src="{% static 'pretixcontrol/js/ui/secret-toggle.js' %}"></script>
 {{ sform.media }}
 {% endblock %}
@@ -56,11 +57,9 @@
             {% if form.domain %} {# Conditionally show if domain field is added to form #}
             {% bootstrap_field form.domain layout="control" %}
             {% endif %}
-            {% bootstrap_field form.date_from layout="control" %}
-            {% bootstrap_field form.date_to layout="control" %}
+            {% include "eventyay_common/includes/event_schedule_row.html" with date_from_form=form.date_from date_to_form=form.date_to timezone_form=sform.timezone %}
             {% bootstrap_field form.date_admission layout="control" %}
             {% include "pretixcontrol/event/fragment_geodata.html" %}
-            {% bootstrap_field form.email layout="control" %}
             {% bootstrap_field sform.imprint_url layout="control" %}
             <div class="form-group">
                 <label class="col-md-3 control-label">
@@ -91,6 +90,45 @@
                         {% endblocktranslate %}
                     </div>
                     {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
+
+                    <div class="settings-footer-contact">
+                        <div class="checkbox settings-footer-contact-toggle">
+                            <label>
+                                {{ sform.contact_form_enabled }}
+                                <strong>{% translate "Contact form" %}</strong>
+                            </label>
+                        </div>
+                        {% if sform.contact_form_enabled.errors %}
+                            <div class="help-block">
+                                {% for error in sform.contact_form_enabled.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div id="contact-form-email-fields"
+                             class="settings-footer-contact-fields{% if sform.contact_mail.errors %} has-error{% endif %}">
+                            <label class="control-label" for="{{ sform.contact_mail.id_for_label }}">
+                                {% translate "Organizer email address" %}
+                            </label>
+                            <input type="email"
+                                   name="{{ sform.contact_mail.html_name }}"
+                                   value="{{ sform.contact_mail.value|default:'' }}"
+                                   class="form-control"
+                                   id="{{ sform.contact_mail.id_for_label }}"
+                                   {% if sform.contact_mail.field.disabled %}disabled{% endif %}>
+                            {% if sform.contact_mail.help_text %}
+                                <p class="help-block text-muted">{{ sform.contact_mail.help_text }}</p>
+                            {% endif %}
+                            {% if sform.contact_mail.errors %}
+                                <div class="help-block text-danger">
+                                    {% for error in sform.contact_mail.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
             {% comment %}
@@ -164,7 +202,6 @@
             <legend>{% trans "Localization" %}</legend>
             {% bootstrap_field sform.locales layout="control" %}
             {% bootstrap_field sform.locale layout="control" %}
-            {% bootstrap_field sform.timezone layout="control" %}
             {% bootstrap_field sform.region layout="control" %}
         </fieldset>
         <fieldset>

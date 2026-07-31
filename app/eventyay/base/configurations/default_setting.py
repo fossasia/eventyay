@@ -1569,14 +1569,28 @@ DEFAULT_SETTINGS = {
             label=_('Do not allow cancellations after'),
         ),
     },
+    'contact_form_enabled': {
+        'default': False,
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Contact form'),
+            required=False,
+        ),
+    },
     'contact_mail': {
         'default': None,
         'type': str,
         'serializer_class': serializers.EmailField,
         'form_class': forms.EmailField,
         'form_kwargs': dict(
-            label=_('Contact address'),
-            help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
+            label=_('Organizer email address'),
+            help_text=_(
+                'You need to provide an email address so attendees can reach you through a contact form. '
+                'Messages will be sent to this address. Your email address remains hidden from attendees.'
+            ),
+            required=False,
         ),
     },
     'imprint_url': {

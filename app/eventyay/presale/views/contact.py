@@ -87,11 +87,13 @@ class ContactOrganizerView(EventViewMixin, View):
                 status=429,
             )
 
-        contact_email = (
-            request.event.settings.contact_mail
-            or getattr(request.event, 'email', None)
-            or ''
-        )
+        contact_email = request.event.contact_form_recipient_email()
+
+        if not request.event.show_contact_form():
+            return JsonResponse(
+                {'success': False, 'error': _('No contact email configured for this event.')},
+                status=400,
+            )
 
         if not contact_email:
             return JsonResponse(
