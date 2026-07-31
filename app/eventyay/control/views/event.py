@@ -716,7 +716,8 @@ class InvoicePreview(EventPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         fname, ftype, fcontent = build_preview_invoice_pdf(request.event)
         resp = HttpResponse(fcontent, content_type=ftype)
-        resp['Content-Disposition'] = f'attachment; filename="{fname}"'
+        resp['Content-Disposition'] = f'inline; filename="{fname}"'
+        resp.xframe_options_exempt = True
         return resp
 
 
