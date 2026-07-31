@@ -2004,6 +2004,21 @@ class Event(
             return True
         return user.has_event_permission(self.organizer, self, request=request)
 
+    def contact_form_recipient_email(self):
+        return self.settings.contact_mail or self.email or ''
+
+    def show_contact_form(self):
+        if not self.contact_form_recipient_email():
+            return False
+        if not self.settings._objects.filter(key='contact_form_enabled').exists():
+            return True
+        raw = self.settings.get('contact_form_enabled', as_type=str)
+        if raw in ('False', 'false', '0'):
+            return False
+        if raw in ('True', 'true', '1'):
+            return True
+        return True
+
     def user_can_view_talks(self, user=None, request=None):
         private_talks = self.private_testmode_talks_enabled
         if not self.talks_published and not private_talks:

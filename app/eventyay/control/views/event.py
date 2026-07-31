@@ -1524,6 +1524,7 @@ class QuickSetupView(FormView):
 
     def get_initial(self):
         return {
+            'currency': self.request.event.currency,
             'waiting_list_enabled': True,
             'ticket_download': True,
             'require_registered_account_for_tickets': True,
@@ -1615,14 +1616,25 @@ class QuickSetupView(FormView):
                 )
                 plugins_active.append('eventyay.plugins.stripe')
 
+        if form.cleaned_data['currency'] != self.request.event.currency:
+            self.request.event.currency = form.cleaned_data['currency']
+            self.request.event.save(update_fields=['currency'])
+            self.request.event.log_action(
+                'eventyay.event.changed',
+                user=self.request.user,
+                data={'currency': form.cleaned_data['currency']},
+            )
+
         self.request.event.settings.show_quota_left = form.cleaned_data['show_quota_left']
         self.request.event.settings.waiting_list_enabled = form.cleaned_data['waiting_list_enabled']
         self.request.event.settings.attendee_names_required = form.cleaned_data['attendee_names_required']
-        self.request.event.log_action(
-            'eventyay.event.settings',
-            user=self.request.user,
-            data={k: self.request.event.settings.get(k) for k in form.changed_data},
-        )
+        settings_changed_data = [k for k in form.changed_data if k != 'currency']
+        if settings_changed_data:
+            self.request.event.log_action(
+                'eventyay.event.settings',
+                user=self.request.user,
+                data={k: self.request.event.settings.get(k) for k in settings_changed_data},
+            )
         self.request.event.settings.require_registered_account_for_tickets = form.cleaned_data[
             'require_registered_account_for_tickets'
         ]

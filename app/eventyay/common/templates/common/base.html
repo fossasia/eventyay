@@ -230,10 +230,10 @@
                 {% endif %}
                 {% include "common/powered_by.html" %}
                 {% if request.event %}
-                    {% if request.event.settings.contact_mail or request.event.email %}
-                        ·
-                        <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
-                    {% endif %}
+                {% if request.event.show_contact_form %}
+                    ·
+                    <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
+                {% endif %}
                 {% endif %}
                 {% if request.event.display_settings.imprint_url %}
                     ·
@@ -247,7 +247,7 @@
         </div>
         {% include "common/includes/modals.html" %}
         {% if request.event %}
-            {% if request.event.settings.contact_mail or request.event.email %}
+            {% if request.event.show_contact_form %}
                 {% eventurl request.event "presale:event.contact" as contact_url %}
                 {% include "common/includes/contact_organizer_modal.html" with contact_url=contact_url %}
             {% endif %}
