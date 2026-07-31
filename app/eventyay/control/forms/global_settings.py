@@ -7,7 +7,7 @@ from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
-from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SettingsForm
+from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 
@@ -189,8 +189,7 @@ class GlobalSettingsForm(SettingsForm):
                     SecretKeySettingsField(
                         required=False,
                         label=_('Gmail OAuth client secret'),
-                        widget=forms.PasswordInput(attrs={
-                            'autocomplete': 'new-password',
+                        widget=SecretKeySettingsWidget(attrs={
                             'data-display-dependency': '#id_email_vendor_2',
                         }),
                     ),

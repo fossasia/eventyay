@@ -4,7 +4,7 @@ from django.core.validators import validate_email
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea
 
-from eventyay.base.forms import SecretKeySettingsField, SettingsForm
+from eventyay.base.forms import SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 
 
 def multimail_validate(val):
@@ -110,8 +110,7 @@ class CentralMailSettingsForm(SettingsForm):
     smtp_password = SecretKeySettingsField(
         label=_('SMTP password'),
         required=False,
-        widget=forms.PasswordInput(attrs={
-            'autocomplete': 'new-password',
+        widget=SecretKeySettingsWidget(attrs={
             'data-display-dependency': '#id_email-email_vendor_1',
         }),
     )
