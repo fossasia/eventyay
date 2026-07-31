@@ -143,7 +143,6 @@ STARTPAGE_FIELDS = ('startpage_visible', 'startpage_featured')
 
 
 def _fake_request(event, *, user=None, auth=None, session_key='test-session-key'):
-    """Build a minimal request stub for serializer permission checks."""
     return SimpleNamespace(
         user=user if user is not None else AnonymousUser(),
         auth=auth,
@@ -152,26 +151,31 @@ def _fake_request(event, *, user=None, auth=None, session_key='test-session-key'
     )
 
 
-def _startpage_fields_read_only(event, request):
+def _startpage_fields(event, request):
     with scopes_disabled():
         serializer = EventSerializer(event, context={'request': request})
-        return {name: serializer.fields[name].read_only for name in STARTPAGE_FIELDS}
+        return {name: serializer.fields[name].read_only for name in STARTPAGE_FIELDS if name in serializer.fields}
 
 
 @pytest.mark.django_db
-def test_api_startpage_fields_read_only_for_organiser(event, user):
-    """A normal organiser user cannot write the start page fields via the API."""
+def test_api_startpage_fields_hidden_for_organiser(event, user):
+    """A normal organiser user can neither read nor write the start page fields."""
     user.is_staff = False
     user.is_superuser = False
     user.save(update_fields=['is_staff', 'is_superuser'])
 
-    read_only = _startpage_fields_read_only(event, _fake_request(event, user=user))
-    assert read_only == {'startpage_visible': True, 'startpage_featured': True}
+    request = _fake_request(event, user=user)
+    assert _startpage_fields(event, request) == {}
+
+    with scopes_disabled():
+        data = EventSerializer(event, context={'request': request}).data
+    assert 'startpage_visible' not in data
+    assert 'startpage_featured' not in data
 
 
 @pytest.mark.django_db
-def test_api_startpage_fields_read_only_for_team_api_token(event, organizer):
-    """Organiser team API tokens cannot write the start page fields."""
+def test_api_startpage_fields_hidden_for_team_api_token(event, organizer):
+    """Organiser team API tokens have no access to the start page fields."""
     with scopes_disabled():
         team = Team.objects.create(
             organizer=organizer,
@@ -181,38 +185,37 @@ def test_api_startpage_fields_read_only_for_team_api_token(event, organizer):
             can_change_organizer_settings=True,
         )
         token = team.tokens.create(name='test-token')
-        read_only = _startpage_fields_read_only(event, _fake_request(event, auth=token, session_key=None))
-    assert read_only == {'startpage_visible': True, 'startpage_featured': True}
+        fields = _startpage_fields(event, _fake_request(event, auth=token, session_key=None))
+    assert fields == {}
 
 
 @pytest.mark.django_db
-def test_api_startpage_fields_read_only_for_device(event, organizer):
-    """Device tokens cannot write the start page fields."""
+def test_api_startpage_fields_hidden_for_device(event, organizer):
+    """Device tokens have no access to the start page fields."""
     with scopes_disabled():
         device = Device.objects.create(organizer=organizer, name='test-device', all_events=True)
-        read_only = _startpage_fields_read_only(event, _fake_request(event, auth=device, session_key=None))
-    assert read_only == {'startpage_visible': True, 'startpage_featured': True}
+        fields = _startpage_fields(event, _fake_request(event, auth=device, session_key=None))
+    assert fields == {}
 
 
 @pytest.mark.django_db
-def test_api_startpage_fields_read_only_for_staff_without_active_session(event, user):
+def test_api_startpage_fields_hidden_for_staff_without_active_session(event, user):
     """Staff status alone is not enough - an active staff session is required."""
     user.is_staff = True
     user.save(update_fields=['is_staff'])
 
-    read_only = _startpage_fields_read_only(event, _fake_request(event, user=user))
-    assert read_only == {'startpage_visible': True, 'startpage_featured': True}
-
-    read_only = _startpage_fields_read_only(event, _fake_request(event, user=user, session_key=None))
-    assert read_only == {'startpage_visible': True, 'startpage_featured': True}
+    assert _startpage_fields(event, _fake_request(event, user=user)) == {}
+    assert _startpage_fields(event, _fake_request(event, user=user, session_key=None)) == {}
 
 
 @pytest.mark.django_db
 def test_api_startpage_fields_writable_for_admin_with_active_session(event, user):
-    """An admin with an active staff session may write the start page fields."""
+    """An admin with an active staff session sees the fields and may write them."""
     user.is_staff = True
     user.save(update_fields=['is_staff'])
     StaffSession.objects.create(user=user, session_key='test-session-key', date_end=None, comment='')
 
-    read_only = _startpage_fields_read_only(event, _fake_request(event, user=user))
-    assert read_only == {'startpage_visible': False, 'startpage_featured': False}
+    assert _startpage_fields(event, _fake_request(event, user=user)) == {
+        'startpage_visible': False,
+        'startpage_featured': False,
+    }

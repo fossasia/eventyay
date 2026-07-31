@@ -149,11 +149,10 @@ class EventSerializer(I18nAwareModelSerializer):
         request = self.context.get('request')
         if request and not hasattr(request, 'event'):
             self.fields.pop('valid_keys', None)
-        # Make startpage visibility fields read-only for non-admin callers
+        # Hide startpage fields for non-admin callers
         if not self._has_startpage_admin_permission(request):
             for field_name in ('startpage_visible', 'startpage_featured'):
-                if field_name in self.fields:
-                    self.fields[field_name].read_only = True
+                self.fields.pop(field_name, None)
 
     @staticmethod
     def _has_startpage_admin_permission(request):
