@@ -224,7 +224,6 @@ class EventCreateView(TemplateView):
             initial_form.update(
                 {
                     'name': clone_from.name,
-                    'currency': clone_from.currency,
                     'date_from': clone_from.date_from,
                     'date_to': clone_from.date_to,
                     'presale_start': clone_from.presale_start,
