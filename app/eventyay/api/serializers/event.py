@@ -684,6 +684,7 @@ class EventSettingsSerializer(SettingsSerializer):
         'waiting_list_phones_explanation_text',
         'max_products_per_order',
         'reservation_time',
+        'contact_form_enabled',
         'contact_mail',
         'show_variations_expanded',
         'hide_sold_out',
