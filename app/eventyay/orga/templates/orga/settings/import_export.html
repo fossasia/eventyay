@@ -11,7 +11,7 @@
 
   {% include 'orga/includes/tablist.html' %}
 
-  <section role='tabpanel' id='tabpanel-import' aria-labelledby='tab-import' tabindex='0' {% if active_tab == 'export' %}aria-hidden='true'{% else %}aria-hidden='false'{% endif %}>
+  <section role='tabpanel' id='tabpanel-import' aria-labelledby='tab-import' tabindex='0' {% if active_tab == 'export' or active_tab == 'schedule_html_export' %}aria-hidden='true'{% else %}aria-hidden='false'{% endif %}>
     <p>
       {% blocktranslate trimmed %}
         Upload a CSV file and choose whether the file contains speakers or schedule.
@@ -550,4 +550,41 @@
   </section>
 
   <script defer src="{% static 'orga/js/import_export_settings.js' %}"></script>
+
+  <section role='tabpanel' id='tabpanel-schedule_html_export' aria-labelledby='tab-schedule_html_export' tabindex='0' {% if active_tab == 'schedule_html_export' %}aria-hidden='false'{% else %}aria-hidden='true'{% endif %}>
+    <p>
+      {% blocktranslate trimmed %}
+        Configure settings for publishing your schedule as a static HTML export.
+        The export produces a .zip archive that you can upload to any file-serving web server.
+      {% endblocktranslate %}
+    </p>
+
+    <form method='post' action='{{ request.path }}#tab-schedule_html_export'>
+      {% csrf_token %}
+      <input type='hidden' name='action' value='save_schedule_html_export'>
+
+      {% if schedule_html_export_form.non_field_errors %}
+        <div class='alert alert-danger'>
+          {{ schedule_html_export_form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <fieldset>
+        <legend>{% translate "HTML Export Settings" %}</legend>
+        {{ schedule_html_export_form.export_html_on_release.as_field_group }}
+        {{ schedule_html_export_form.html_export_url.as_field_group }}
+      </fieldset>
+
+      <div class='submit-group panel'>
+        <span></span>
+        <span>
+          <button type='submit' class='btn btn-success btn-lg'>
+            <i class='fa fa-save'></i>
+            {% translate 'Save' %}
+          </button>
+        </span>
+      </div>
+    </form>
+  </section>
+
 {% endblock settings_content %}
