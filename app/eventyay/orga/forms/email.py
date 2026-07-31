@@ -79,35 +79,57 @@ class CentralMailSettingsForm(SettingsForm):
     send_grid_api_key = SecretKeySettingsField(
         label=_('SendGrid API key'),
         required=False,
+        widget=forms.TextInput(attrs={
+            'data-display-dependency': '#id_email-email_vendor_0',
+        }),
     )
     smtp_host = forms.CharField(
         label=_('SMTP hostname'),
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'mail.example.org'}),
+        widget=forms.TextInput(attrs={
+            'placeholder': 'mail.example.org',
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     smtp_port = forms.IntegerField(
         label=_('SMTP port'),
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'e.g. 587, 465, 25 …'}),
+        widget=forms.TextInput(attrs={
+            'placeholder': 'e.g. 587, 465, 25 …',
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     smtp_username = forms.CharField(
         label=_('SMTP username'),
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'myuser@example.org'}),
+        widget=forms.TextInput(attrs={
+            'placeholder': 'myuser@example.org',
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     smtp_password = SecretKeySettingsField(
         label=_('SMTP password'),
         required=False,
+        widget=forms.PasswordInput(attrs={
+            'autocomplete': 'new-password',
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     smtp_use_tls = forms.BooleanField(
         label=_('Use STARTTLS'),
         help_text=_('Commonly enabled on port 587.'),
         required=False,
+        widget=forms.CheckboxInput(attrs={
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     smtp_use_ssl = forms.BooleanField(
         label=_('Use SSL'),
         help_text=_('Commonly enabled on port 465.'),
         required=False,
+        widget=forms.CheckboxInput(attrs={
+            'data-display-dependency': '#id_email-email_vendor_1',
+        }),
     )
     test_email = forms.CharField(
         label=_('Send test email to'),

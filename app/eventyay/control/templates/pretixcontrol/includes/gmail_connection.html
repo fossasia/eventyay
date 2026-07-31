@@ -53,7 +53,11 @@
                     <span class="label label-default">{% trans "Not connected" %}</span>
                 </p>
                 <p class="help-block">
-                    {% trans "Save your OAuth client ID and secret, then connect a Google account with send permission." %}
+                    {% if gmail_event_level %}
+                        {% trans "Configure the OAuth client ID and secret in global settings, then connect a Google account with send permission." %}
+                    {% else %}
+                        {% trans "Save your OAuth client ID and secret, then connect a Google account with send permission." %}
+                    {% endif %}
                 </p>
                 <a href="{{ gmail_connect_url }}" class="btn btn-primary btn-sm">
                     {% trans "Connect Gmail account" %}
@@ -100,7 +104,11 @@
                         <span class="label label-default">{% trans "Not connected" %}</span>
                     </p>
                     <p class="help-block">
-                        {% trans "Save your OAuth client ID and secret, then connect a Google account with send permission." %}
+                        {% if gmail_event_level %}
+                            {% trans "Configure the OAuth client ID and secret in global settings, then connect a Google account with send permission." %}
+                        {% else %}
+                            {% trans "Save your OAuth client ID and secret, then connect a Google account with send permission." %}
+                        {% endif %}
                     </p>
                     <a href="{{ gmail_connect_url }}" class="btn btn-primary">
                         {% trans "Connect Gmail account" %}

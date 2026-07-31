@@ -10,6 +10,7 @@
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
 <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
 <script defer src="{% static 'eventyay-common/js/smtp-toggle.js' %}"></script>
+<script type="text/javascript" src="{% static 'eventyay-common/js/move-event-email-elements.js' %}"></script>
 <script type="module" src="{% static 'pretixcontrol/js/ui/secret-toggle.js' %}"></script>
 {{ sform.media }}
 {% endblock %}
@@ -220,20 +221,14 @@
             {% bootstrap_field email_form.smtp_use_custom layout="control" %}
             <div id="smtp-custom-fields">
                 {% bootstrap_field email_form.email_vendor layout="control" %}
-                <div id="sendgrid-fields">
-                    {% bootstrap_field email_form.send_grid_api_key layout="control" %}
-                </div>
-                <div id="gmail-fields">
-                    {% include "pretixcontrol/includes/gmail_connection.html" %}
-                </div>
-                <div id="smtp-server-fields">
-                    {% bootstrap_field email_form.smtp_host layout="control" %}
-                    {% bootstrap_field email_form.smtp_port layout="control" %}
-                    {% bootstrap_field email_form.smtp_username layout="control" %}
-                    {% bootstrap_field email_form.smtp_password layout="control" %}
-                    {% bootstrap_field email_form.smtp_use_tls layout="control" %}
-                    {% bootstrap_field email_form.smtp_use_ssl layout="control" %}
-                </div>
+                {% bootstrap_field email_form.send_grid_api_key layout="control" %}
+                {% include "pretixcontrol/includes/gmail_connection.html" with gmail_panel_nested=True gmail_event_level=True %}
+                {% bootstrap_field email_form.smtp_host layout="control" %}
+                {% bootstrap_field email_form.smtp_port layout="control" %}
+                {% bootstrap_field email_form.smtp_username layout="control" %}
+                {% bootstrap_field email_form.smtp_password layout="control" %}
+                {% bootstrap_field email_form.smtp_use_tls layout="control" %}
+                {% bootstrap_field email_form.smtp_use_ssl layout="control" %}
                 {% bootstrap_field email_form.test_email layout="control" %}
                 <div class="form-group">
                     <div class="col-md-9 col-md-offset-3">
