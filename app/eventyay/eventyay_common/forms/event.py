@@ -34,6 +34,8 @@ class EventCommonSettingsForm(SettingsForm):
         'locale',
         'region',
         'imprint_url',
+        'contact_form_enabled',
+        'contact_mail',
         'logo_image',
         'logo_image_large',
         'event_logo_image',
@@ -62,6 +64,11 @@ class EventCommonSettingsForm(SettingsForm):
 
     def clean(self):
         data = super().clean()
+        if data.get('contact_form_enabled') and not data.get('contact_mail'):
+            self.add_error(
+                'contact_mail',
+                _('Please provide an email address for the contact form.'),
+            )
         settings_dict = self.get_initial_settings()
         settings_dict.update(data)
         validate_event_settings(self.event, settings_dict)
@@ -165,6 +172,16 @@ class EventCommonSettingsForm(SettingsForm):
                 field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
                 field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
 
+        if not self.is_bound and self.event:
+            contact_email = self.event.settings.contact_mail or self.event.email or ''
+            if contact_email:
+                if 'contact_form_enabled' in self.fields:
+                    raw = self.event.settings.get('contact_form_enabled')
+                    if raw in (None, '', False, 'False', 'false'):
+                        self.fields['contact_form_enabled'].initial = True
+                if 'contact_mail' in self.fields and not self.event.settings.contact_mail and self.event.email:
+                    self.fields['contact_mail'].initial = self.event.email
+
 
 
 
@@ -191,11 +208,6 @@ class EventUpdateForm(I18nModelForm):
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
         self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
-
-        # Configure email field with canonical label and help text
-        self.fields['email'].required = False
-        self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("Attendees can reach you through a contact form. Messages will be forwarded to this address.")
 
         if 'is_public' in self.fields:
             self.fields['is_public'].label = _('Show in search results and lists')
@@ -271,7 +283,6 @@ class EventUpdateForm(I18nModelForm):
             'location',
             'geo_lat',
             'geo_lon',
-            'email',
         ]
         field_classes = {
             'date_from': SplitDateTimeField,
