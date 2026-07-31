@@ -1621,7 +1621,10 @@ class ContactOrganizerTest(EventTestMixin, SoupTest):
         self.event.save()
         self.event.settings.contact_mail = ''
         mail.outbox = []
+        print("contact_form_recipient_email:", self.event.contact_form_recipient_email())
+        print("show_contact_form:", self.event.show_contact_form())
         resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': 'Fallback test'})
+        print("resp body:", resp.json())
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(mail.outbox[0].to, ['orga@example.com'])
 
@@ -1641,6 +1644,12 @@ class ContactOrganizerTest(EventTestMixin, SoupTest):
 
     def test_contact_form_shown_when_enabled(self):
         self.event.settings.set('contact_form_enabled', True)
+        self.event.settings.contact_mail = 'contact@example.com'
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        self.assertIn('Contact event organizer', doc.text)
+
+    def test_contact_form_legacy_behavior_shown_when_no_setting(self):
+        del self.event.settings.contact_form_enabled
         self.event.settings.contact_mail = 'contact@example.com'
         doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
         self.assertIn('Contact event organizer', doc.text)

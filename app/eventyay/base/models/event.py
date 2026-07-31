@@ -2010,10 +2010,12 @@ class Event(
     def show_contact_form(self):
         if not self.contact_form_recipient_email():
             return False
-        raw = self.settings.get('contact_form_enabled')
-        if raw in (False, 'False', 'false', 0, '0'):
+        if not self.settings._objects.filter(key='contact_form_enabled').exists():
+            return True
+        raw = self.settings.get('contact_form_enabled', as_type=str)
+        if raw in ('False', 'false', '0'):
             return False
-        if raw in (True, 'True', 'true', 1, '1'):
+        if raw in ('True', 'true', '1'):
             return True
         return True
 
