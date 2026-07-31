@@ -1393,8 +1393,6 @@ BYTES_IN_MB = 1024 * 1024
 # Config for max size limits
 MAX_SIZE_CONFIG = {key: BYTES_IN_MB * cast(int, getattr(conf, key)) for key in SizeKey}
 
-# Use the configured upload_size_other value so operator-tuned limits
-# are respected in the check-in required-answer upload flow.
 FILE_UPLOAD_MAX_SIZE_OTHER = MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
@@ -1559,9 +1557,6 @@ FETCH_ECB_RATES = conf.fetch_ecb_rates
 from datetime import timedelta as _timedelta
 CACHE_TICKETS_MAX_AGE = _timedelta(hours=conf.cache_tickets_hours)
 
-# GeoIP2: expose GEOIP_PATH as a Django setting so GeoIP2() picks it up
-# automatically. HAS_GEOIP guards the call site; it is True only when a
-# database file is actually present.
 _GEOIP_PATH = Path(os.getenv('DJANGO_GEOIP_PATH', str(DATA_DIR / 'geoip')))
 GEOIP_PATH = _GEOIP_PATH
 HAS_GEOIP = GEOIP_PATH.is_dir() and any(GEOIP_PATH.glob('*.mmdb'))
