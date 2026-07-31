@@ -269,7 +269,7 @@ class BaseReportlabInvoiceRenderer(BaseInvoiceRenderer):
 
 class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
     identifier = 'classic'
-    verbose_name = pgettext('invoice', 'Classic renderer (pretix 1.0)')
+    verbose_name = pgettext('invoice', 'Classic')
 
     def canvas_class(self, *args, **kwargs):
         kwargs['font_regular'] = self.font_regular
@@ -836,7 +836,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
 
 class Modern1Renderer(ClassicInvoiceRenderer):
     identifier = 'modern1'
-    verbose_name = gettext_lazy('Modern Invoice Renderer')
+    verbose_name = gettext_lazy('Modern')
     bottom_margin = 16.9 * mm
     top_margin = 16.9 * mm
     right_margin = 20 * mm

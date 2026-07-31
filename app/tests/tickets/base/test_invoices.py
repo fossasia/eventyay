@@ -9,6 +9,7 @@ from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scope, scopes_disabled
 
+from eventyay.base.invoice import ClassicInvoiceRenderer, Modern1Renderer
 from eventyay.base.models import (
     Event,
     Invoice,
@@ -30,6 +31,11 @@ from eventyay.base.services.invoices import (
 )
 from eventyay.base.services.orders import OrderChangeManager
 from eventyay.base.settings import GlobalSettingsObject
+
+
+def test_invoice_renderer_names():
+    assert str(ClassicInvoiceRenderer.verbose_name) == 'Classic'
+    assert str(Modern1Renderer.verbose_name) == 'Modern'
 
 
 @pytest.fixture
