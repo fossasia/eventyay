@@ -214,7 +214,7 @@ def compile_email_body(source: str) -> str:
 
     Plain-text and legacy Markdown bodies are compiled with
     ``markdown_compile_email``.  Content that is already HTML (for example from
-    the Tiptap email editor) is returned unchanged.
+    the Tiptap email editor) is sanitized and returned.
     """
     if not source:
         return source
