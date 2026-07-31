@@ -640,6 +640,15 @@ wheels = [
 ]
 
 [[package]]
+name = "decorator"
+version = "5.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/8b/32f9823da46cde7df2087faa08cd98d01b908f8dcab982cdba9c84e85355/decorator-5.3.1.tar.gz", hash = "sha256:4cbcdd55a6efadb9dbea26b858f4fb3264567b52d69ca0d25b721b553f60ea82", size = 58084, upload-time = "2026-05-18T06:03:28.057Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl", hash = "sha256:f47fe6fdbd2edd623ecfe36875d37aba411624e2670dd395dddae1358689bb3c", size = 10365, upload-time = "2026-05-18T06:03:26.517Z" },
+]
+
+[[package]]
 name = "defusedcsv"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1184,6 +1193,9 @@ source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#a6d9c
 name = "eventyay-socialmedia"
 version = "1.0.0"
 source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#485983f00c3d8c97360d82c88013a5337a48cdbe" }
+dependencies = [
+    { name = "mastodon-py" },
+]
 
 [[package]]
 name = "eventyay-stripe"
@@ -1564,7 +1576,7 @@ requires-dist = [
     { name = "potypo", specifier = ">=0.0.2" },
     { name = "protobuf", specifier = ">=7.35.1" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.4" },
-    { name = "publicsuffixlist", specifier = ">=1.0.2.20260710" },
+    { name = "publicsuffixlist", specifier = ">=1.0.2.20260726" },
     { name = "pyasn1", specifier = ">=0.6.4" },
     { name = "pyasn1-modules", specifier = ">=0.4.2" },
     { name = "pycodestyle", specifier = ">=2.12.1" },
@@ -2081,6 +2093,20 @@ wheels = [
 ]
 
 [[package]]
+name = "mastodon-py"
+version = "2.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "decorator" },
+    { name = "python-dateutil" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ba/87/0c676d38a315bf659beb9e22952085825e59e87fece35ad44e0ccd26d799/mastodon_py-2.2.1.tar.gz", hash = "sha256:b52c85850272b4ff7a666b87c62432c5059f25c29fb485ffa1f608938744d8a4", size = 11737599, upload-time = "2026-04-12T12:41:06.838Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e6/03/09b2f7a490ff60ee4f8e1a9ea4d34578bc7a288365ce5b3f4f606a9f4e47/mastodon_py-2.2.1-py3-none-any.whl", hash = "sha256:eb2a815ccc0c4b62417c531e07c02414e000c419abd319326843eb6370b772b3", size = 129905, upload-time = "2026-04-12T12:41:05.057Z" },
+]
+
+[[package]]
 name = "matplotlib"
 version = "3.11.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2512,11 +2538,11 @@ wheels = [
 
 [[package]]
 name = "publicsuffixlist"
-version = "1.0.2.20260710"
+version = "1.0.2.20260726"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/98/00/7ebd28afd380751bf59215bf91ccf5d6bc558bd434d7c62d8c330c53276c/publicsuffixlist-1.0.2.20260710.tar.gz", hash = "sha256:94227aea83f9d8ac4c7d527f2c86a7d2ac76b639f4f51003d09f7ef1fa0423a4", size = 108939, upload-time = "2026-07-10T06:52:08.897Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b1/2c/ba07f8c6fde9954c050797a9de4b93b209f94ba93001bb236c1b2c4129da/publicsuffixlist-1.0.2.20260726.tar.gz", hash = "sha256:6abd9eace2fa7a8734fdae9c8b32403a8c6b22c5872dad59367f19bc83d990ea", size = 108798, upload-time = "2026-07-26T06:12:11.811Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b4/b9/4a328a8474de378fe254dc91722931bdc9e25a4539841a4d5b33b8b85510/publicsuffixlist-1.0.2.20260710-py2.py3-none-any.whl", hash = "sha256:d3945ed15a74f192dd92dacf017fc54b9307440fe0953b272d88c3c2ebf27669", size = 108764, upload-time = "2026-07-10T06:52:07.68Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/79/6fd01b04cbbff0f64c24000820bf41be34feb4a4b06ce02b28d1d3f5fd8a/publicsuffixlist-1.0.2.20260726-py2.py3-none-any.whl", hash = "sha256:52b88aae7fbd991a491f73e2ef9c31901748cfb08959cf3a2a304e86383344a5", size = 108678, upload-time = "2026-07-26T06:12:10.202Z" },
 ]
 
 [[package]]
