@@ -84,29 +84,7 @@ body {
     min-width: 244px;
 }
 
-body #preview-modal.modal {
-    z-index: 1200;
-}
 
-body.modal-open .modal-backdrop {
-    z-index: 1190;
-}
-
-#preview-modal .modal-dialog {
-    width: 90%;
-    max-width: 900px;
-    margin-top: 72px;
-}
-
-#preview-modal .modal-body {
-    padding-top: 24px;
-}
-
-#preview-modal .pdf-preview-iframe {
-    width: 100%;
-    min-height: 70vh;
-    border: none;
-}
 
 #toolbox input.show-spinner {
     -moz-appearance: number-input;
