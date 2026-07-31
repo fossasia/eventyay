@@ -14,6 +14,7 @@
 			.speaker-content-area
 				.speaker-title
 					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
+				speaker-social-links(:links="socialLinks", alignment="flex-start")
 		.field-section.biography-section(v-if="resolvedSpeaker.biography")
 			h2.field-heading {{ t.biography }}
 			.field-content
@@ -55,10 +56,11 @@ import MarkdownContent from './MarkdownContent.vue'
 import Session from './Session.vue'
 import DetailBackNav from './DetailBackNav.vue'
 import DetailTopActions from './DetailTopActions.vue'
+import SpeakerSocialLinks from './SpeakerSocialLinks.vue'
 
 export default {
 	name: 'SpeakerDetail',
-	components: { MarkdownContent, Session, DetailBackNav, DetailTopActions },
+	components: { MarkdownContent, Session, DetailBackNav, DetailTopActions, SpeakerSocialLinks },
 	inject: {
 		eventUrl: { default: null },
 		remoteApiUrl: { default: '' },
@@ -209,6 +211,10 @@ export default {
 			if (!Array.isArray(answers)) return []
 			return answers.filter(a => a.question && a.question.is_public !== false &&
 				a.question.variant !== 'text' && a.question.variant !== 'string')
+		},
+		socialLinks() {
+			const links = this.effectiveSpeakerApiContent?.social_links
+			return Array.isArray(links) ? links.filter(link => link && link.url) : []
 		},
 		speakerBaseUrl() {
 			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code

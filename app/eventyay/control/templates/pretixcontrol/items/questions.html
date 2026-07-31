@@ -18,14 +18,14 @@
         {% endblocktrans %}
     </p>
     {% csrf_token %}
-    <p>
+    <p class="list-toolbar">
         <a href="{% url "control:event.products.questions.add" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-primary"><i class="fa fa-plus"></i> {% trans "Create a new custom field" %}
         </a>
         <a href="{% url "control:event.products.descriptions.add" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-primary"><i class="fa fa-plus"></i> {% trans "Create a text field" %}
         </a>
     </p>
     <div class="table-responsive">
-        <table class="table table-hover table-quotas">
+        <table class="table table-hover table-quotas table-flip tickets-table">
             <thead>
             <tr>
                 <th>{% trans "Custom Field" %}</th>
@@ -41,7 +41,7 @@
             <tbody data-dnd-url="{% url "control:event.products.questions.reorder" organizer=request.event.organizer.slug event=request.event.slug %}">
             {% for q in questions %}
                 <tr data-dnd-id="{{ q.id }}">
-                    <td>
+                    <td class="list-name-cell">
                         <strong>
                             {% if q.pk %}
                                 {% if q.type == "DES" %}
@@ -57,30 +57,30 @@
                         </strong><br>
                         <small class="text-muted">{{ q.identifier }}</small>
                     </td>
-                    <td>
+                    <td data-label="{% trans 'Type' %}">
                         {% if q.pk %}
                             {{ q.get_type_display }}
                         {% else %}
                             {% trans "System custom field" %}
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="list-indicators" data-label="{% trans 'Required' %}">
                         {% if q.required %}
                             <span class="fa fa-exclamation-circle text-muted" data-toggle="tooltip" title="{% trans "Required custom field" %}"></span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="list-indicators" data-label="{% trans 'Check-in' %}">
                         {% if q.pk and q.ask_during_checkin %}
                             <span class="fa fa-check-square text-muted" data-toggle="tooltip" title="{% trans "Ask during check-in" %}"></span>
                         {% endif %}
 
                     </td>
-                    <td>
+                    <td class="list-indicators" data-label="{% trans 'Visibility' %}">
                         {% if q.pk and q.hidden %}
                             <span class="fa fa-eye-slash text-muted" data-toggle="tooltip" title="{% trans "Hidden custom field" %}"></span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="list-stack" data-label="{% trans 'Products' %}">
                         {% if q.pk %}
                             <ul>
                                 {% for product in q.products.all %}
@@ -95,10 +95,10 @@
                     </td>
                     <td class="dnd-container">
                     </td>
-                    <td class="text-right flip">
+                    <td class="list-actions text-right flip" data-label="{% trans 'Actions' %}">
                         {% if q.pk %}
                             {% if q.type == "DES" %}
-                            
+
                                 <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
                                 <a href="{% url "control:event.products.descriptions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>
                             {% else %}
