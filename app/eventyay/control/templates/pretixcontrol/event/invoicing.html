@@ -63,7 +63,7 @@
             </fieldset>
         </div>
         <div class="form-group submit-group">
-            <button type="submit" class="btn btn-default btn-lg" name="preview" value="preview" formtarget="_blank">
+            <button type="submit" class="btn btn-default btn-lg" name="preview" value="preview" formtarget="preview-iframe" data-toggle="modal" data-target="#preview-modal">
                 {% trans "Save and show preview" %}
             </button>
             <button type="submit" class="btn btn-primary btn-save">
@@ -71,4 +71,5 @@
             </button>
         </div>
     </form>
+    {% include "pretixcontrol/includes/preview_modal.html" %}
 {% endblock %}
