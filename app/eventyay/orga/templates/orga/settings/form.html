@@ -22,7 +22,7 @@
 {% block extra_title %}{% translate "Settings" %} :: {% endblock extra_title %}
 
 {% block settings_content %}
-    {% trans "General settings" as settings_title %}
+    {% trans "Talk settings" as settings_title %}
     {% include "orga/includes/settings_header.html" with settings_title=settings_title %}
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
@@ -60,8 +60,6 @@
                     {{ form.session_popularity_show_on_schedule.as_field_group }}
                 </div>
                 {{ form.use_feedback.as_field_group }}
-                {{ form.export_html_on_release.as_field_group }}
-                {{ form.html_export_url.as_field_group }}
             </fieldset>
 
             {% if form.etherpad_enabled %}

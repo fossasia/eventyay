@@ -5,6 +5,7 @@ from unittest import mock
 import pytest
 from bs4 import BeautifulSoup
 from django.core import mail
+from django.test import override_settings
 from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
@@ -80,14 +81,14 @@ def env():
     event.settings.set('locales', ['en', 'de'])
     OrderPosition.objects.create(
         order=o,
-        item=ticket,
+        product=ticket,
         variation=None,
         price=Decimal('14'),
         attendee_name_parts={'full_name': 'Peter', '_scheme': 'full'},
     )
     OrderPosition.objects.create(
         order=o,
-        item=ticket,
+        product=ticket,
         variation=None,
         price=Decimal('14'),
         canceled=True,
@@ -97,6 +98,7 @@ def env():
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=True)
 def test_order_list(client, env):
     with scopes_disabled():
         otherticket = Item.objects.create(
@@ -108,7 +110,13 @@ def test_order_list(client, env):
         )
     client.login(email='dummy@dummy.dummy', password='dummy')
     response = client.get('/control/event/dummy/dummy/orders/')
-    assert 'FOO' in response.content.decode()
+    content = response.content.decode()
+    assert 'FOO' in content
+    assert 'data-orders-search' in content
+    assert 'id="orders-advanced-filters"' in content
+    assert 'btn-clear-filter' in content
+    assert 'Search orders' in content
+
     response = client.get('/control/event/dummy/dummy/orders/?query=peter')
     assert 'FOO' in response.content.decode()
     response = client.get('/control/event/dummy/dummy/orders/?query=hans')
@@ -118,12 +126,15 @@ def test_order_list(client, env):
     response = client.get('/control/event/dummy/dummy/orders/?status=p')
     assert 'FOO' not in response.content.decode()
     response = client.get('/control/event/dummy/dummy/orders/?status=n')
-    assert 'FOO' in response.content.decode()
+    content = response.content.decode()
+    assert 'FOO' in content
+    assert 'aria-expanded="true"' in content
+    assert 'orders-filters-badge' in content
     response = client.get('/control/event/dummy/dummy/orders/?status=ne')
     assert 'FOO' in response.content.decode()
-    response = client.get('/control/event/dummy/dummy/orders/?item=%s' % otherticket.id)
+    response = client.get('/control/event/dummy/dummy/orders/?product=%s' % otherticket.id)
     assert 'FOO' not in response.content.decode()
-    response = client.get('/control/event/dummy/dummy/orders/?item=%s' % env[3].id)
+    response = client.get('/control/event/dummy/dummy/orders/?product=%s' % env[3].id)
     assert 'FOO' in response.content.decode()
     response = client.get('/control/event/dummy/dummy/orders/?provider=free')
     assert 'FOO' not in response.content.decode()
@@ -146,7 +157,7 @@ def test_order_list(client, env):
 
     with scopes_disabled():
         q = Question.objects.create(event=env[0], question='Q', type='N', required=True)
-        q.items.add(env[3])
+        q.products.add(env[3])
         op = env[2].positions.first()
         qa = QuestionAnswer.objects.create(question=q, orderposition=op, answer='12')
     response = client.get('/control/event/dummy/dummy/orders/?question=%d&answer=12' % q.pk)
@@ -173,6 +184,64 @@ def test_order_list(client, env):
     response = client.get('/control/event/dummy/dummy/orders/?status=testmode')
     assert 'FOO' in response.content.decode()
     assert 'TEST MODE' in response.content.decode()
+
+    response = client.get('/control/event/dummy/dummy/orders/?filters=1')
+    content = response.content.decode()
+    assert 'aria-expanded="true"' in content
+    assert 'id="orders-advanced-filters"' in content
+    assert 'hidden' not in BeautifulSoup(content, 'html.parser').select_one('#orders-advanced-filters').attrs
+
+    response = client.get('/control/event/dummy/dummy/orders/')
+    content = response.content.decode()
+    assert response.content.decode().count('name="query"') == 1
+    assert 'User' in content
+    assert 'Email' in content
+    assert 'ordering=name' in content
+    assert 'ordering=-name' in content
+    assert 'ordering=products' in content
+    assert 'ordering=-products' in content
+
+    # Verify that name and products sorting queries work successfully
+    response = client.get('/control/event/dummy/dummy/orders/?ordering=name')
+    assert response.status_code == 200
+    response = client.get('/control/event/dummy/dummy/orders/?ordering=-name')
+    assert response.status_code == 200
+    response = client.get('/control/event/dummy/dummy/orders/?ordering=products')
+    assert response.status_code == 200
+    response = client.get('/control/event/dummy/dummy/orders/?ordering=-products')
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_orders_advanced_filter_helpers():
+    from django.http import QueryDict
+
+    from eventyay.control.forms.filter import (
+        advanced_filter_count,
+        advanced_filters_open_from_get,
+    )
+    class MockForm:
+        def __init__(self, query_string):
+            from django.http import QueryDict
+            self.data = QueryDict(query_string)
+            self.cleaned_data = {
+                k: v for k, v in self.data.items()
+            }
+            if 'created_from_0' in self.cleaned_data:
+                self.cleaned_data['created_from'] = True
+            if 'created_to_0' in self.cleaned_data:
+                self.cleaned_data['created_to'] = True
+            
+        def is_valid(self):
+            return True
+
+    assert advanced_filters_open_from_get(MockForm('query=peter')) is False
+    assert advanced_filters_open_from_get(MockForm('filters=1')) is True
+    assert advanced_filters_open_from_get(MockForm('status=n')) is True
+    assert advanced_filters_open_from_get(MockForm('provider=banktransfer')) is True
+    assert advanced_filter_count(MockForm('query=peter')) == 0
+    assert advanced_filter_count(MockForm('status=n&product=1&provider=banktransfer')) == 3
+    assert advanced_filter_count(MockForm('created_from_0=2024-01-01&created_to_0=2024-02-01')) == 2
 
 
 @pytest.mark.django_db

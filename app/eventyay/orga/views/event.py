@@ -33,6 +33,7 @@ from eventyay.orga.forms.event import (
     ReviewPhaseForm,
     ReviewScoreCategoryForm,
     ReviewSettingsForm,
+    ScheduleHtmlExportForm,
     WidgetGenerationForm,
     WidgetSettingsForm,
 )
@@ -451,6 +452,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         result['tablist'] = {
             'import': _('Import'),
             'export': _('Export'),
+            'schedule_html_export': _('Schedule HTML export'),
         }
         result['active_tab'] = kwargs.get('active_tab')
         result['import_choices'] = self.import_choices
@@ -470,6 +472,9 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             event=self.request.event,
             user=self.request.user,
             prefix='review',
+        )
+        result['schedule_html_export_form'] = kwargs.get('schedule_html_export_form') or ScheduleHtmlExportForm(
+            obj=self.request.event,
         )
         all_exporters = get_schedule_exporters(self.request)
         result['speaker_exporters'] = [e for e in all_exporters if e.group == 'speaker']
@@ -493,6 +498,8 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             return self.handle_import()
         if action == 'export':
             return self.handle_export()
+        if action == 'save_schedule_html_export':
+            return self.handle_save_schedule_html_export()
         messages.error(request, _('Unknown action. Please try again.'))
         return redirect(request.path)
 
@@ -582,3 +589,18 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             messages.warning(self.request, _('No data to be exported'))
             return redirect(f'{self.request.path}?export_target={target.value}#tab-export')
         return result
+
+    def handle_save_schedule_html_export(self):
+        form = ScheduleHtmlExportForm(self.request.POST, obj=self.request.event)
+        if form.is_valid():
+            form.save()
+            self.request.event.log_action(
+                'eventyay.event.update', person=self.request.user, orga=True
+            )
+            messages.success(self.request, phrases.base.saved)
+            return redirect(f'{self.request.path}#tab-schedule_html_export')
+        context = self.get_context_data(
+            schedule_html_export_form=form,
+            active_tab='schedule_html_export',
+        )
+        return self.render_to_response(context, status=400)

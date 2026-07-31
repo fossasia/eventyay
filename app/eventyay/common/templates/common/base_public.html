@@ -260,7 +260,7 @@
                 {% endif %}
                 {% include "common/powered_by.html" %}
                 {% if current_event %}
-                    {% if current_event.settings.contact_mail or current_event.email %}
+                    {% if current_event.show_contact_form %}
                         ·
                         <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
                     {% endif %}
@@ -283,7 +283,7 @@
         </div>
         {% include "common/includes/modals.html" %}
         {% if current_event %}
-            {% if current_event.settings.contact_mail or current_event.email %}
+            {% if current_event.show_contact_form %}
                 {% eventurl current_event "presale:event.contact" as contact_url %}
                 {% include "common/includes/contact_organizer_modal.html" with contact_url=contact_url %}
             {% endif %}
