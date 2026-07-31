@@ -144,6 +144,9 @@ class BaseSettings(_BaseSettings):
     zoom_key: str = ''
     zoom_secret: str = ''
     control_secret: str = ''
+    fetch_ecb_rates: bool = True
+    # Number of hours to keep cached tickets before cleanup.
+    cache_tickets_hours: int = 24 * 7
 
     statsd_host: str = ''
     statsd_port: int = 8125
@@ -1385,6 +1388,8 @@ TALK_BASE_PATH = ''
 LOGIN_REDIRECT_URL = '/common/account/general'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
+# Alias used in checkin API for non-primary file upload size checks.
+FILE_UPLOAD_MAX_SIZE_OTHER = FILE_UPLOAD_DEFAULT_LIMIT
 
 BYTES_IN_MB = 1024 * 1024
 
@@ -1452,7 +1457,8 @@ EVENTYAY_ENVIRONMENT = os.getenv('EVENTYAY_ENVIRONMENT', 'unknown')
 
 # Sentry configuration
 SENTRY_DSN = conf.sentry_dsn
-if SENTRY_DSN:
+SENTRY_ENABLED = bool(SENTRY_DSN)
+if SENTRY_ENABLED:
     import sentry_sdk
     from sentry_sdk.integrations.celery import CeleryIntegration
     from sentry_sdk.integrations.django import DjangoIntegration
@@ -1546,6 +1552,18 @@ DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
 PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
 
 CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
+
+# ECB exchange rate fetching for foreign-currency invoice display.
+FETCH_ECB_RATES = conf.fetch_ecb_rates
+
+# Tickets are cached for this duration; used by the periodic cleanup task.
+from datetime import timedelta as _timedelta  # noqa: E402
+CACHE_TICKETS_MAX_AGE = _timedelta(hours=conf.cache_tickets_hours)
+
+# GeoIP2 support: True only when a GeoIP database file is present at GEOIP_PATH.
+# Django's GeoIP2 looks in GEOIP_PATH (defaults to empty string).
+_GEOIP_PATH = Path(os.getenv('DJANGO_GEOIP_PATH', str(DATA_DIR / 'geoip')))
+HAS_GEOIP = _GEOIP_PATH.is_dir() and any(_GEOIP_PATH.glob('*.mmdb'))
 
 if IS_DEVELOPMENT:
     # Support for Android emulators and port forwarding
