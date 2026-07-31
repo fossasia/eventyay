@@ -879,7 +879,9 @@ class SubmissionStatsMixin:
             .annotate(count=DbCount('id'))
         )
         state_labels = dict(SubmissionStates.get_choices())
-        counter = {str(state_labels.get(row['state'], row['state'])): row['count'] for row in rows}
+        counter = {str(state_labels.get(row['state'], row['state'])): row['count'] for row in rows if row['count']}
+        if not counter:
+            return ''
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -903,8 +905,10 @@ class SubmissionStatsMixin:
         }
         counter = {
             types_dict[row['submission_type_id']]: row['count']
-            for row in rows if row['submission_type_id'] in types_dict
+            for row in rows if row['submission_type_id'] in types_dict and row['count']
         }
+        if not counter:
+            return ''
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -929,8 +933,10 @@ class SubmissionStatsMixin:
             }
             counter = {
                 tracks_dict[row['track_id']]: row['count']
-                for row in rows if row['track_id'] in tracks_dict
+                for row in rows if row['track_id'] in tracks_dict and row['count']
             }
+            if not counter:
+                return ''
             return json.dumps(
                 sorted(
                     [{'label': label, 'value': value} for label, value in counter.items()],
@@ -952,8 +958,10 @@ class SubmissionStatsMixin:
         )
         counter = {
             str(locales_dict.get(row['content_locale'], row['content_locale'])): row['count']
-            for row in rows if row['content_locale']
+            for row in rows if row['content_locale'] and row['count']
         }
+        if not counter:
+            return ''
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -996,7 +1004,9 @@ class SubmissionStatsMixin:
             .annotate(count=DbCount('id'))
         )
         state_labels = dict(SubmissionStates.get_choices())
-        counter = {str(state_labels.get(row['state'], row['state'])): row['count'] for row in rows}
+        counter = {str(state_labels.get(row['state'], row['state'])): row['count'] for row in rows if row['count']}
+        if not counter:
+            return ''
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -1020,8 +1030,10 @@ class SubmissionStatsMixin:
         }
         counter = {
             types_dict[row['submission_type_id']]: row['count']
-            for row in rows if row['submission_type_id'] in types_dict
+            for row in rows if row['submission_type_id'] in types_dict and row['count']
         }
+        if not counter:
+            return ''
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
@@ -1046,8 +1058,10 @@ class SubmissionStatsMixin:
             }
             counter = {
                 tracks_dict[row['track_id']]: row['count']
-                for row in rows if row['track_id'] in tracks_dict
+                for row in rows if row['track_id'] in tracks_dict and row['count']
             }
+            if not counter:
+                return ''
             return json.dumps(
                 sorted(
                     [{'label': label, 'value': value} for label, value in counter.items()],
@@ -1069,8 +1083,10 @@ class SubmissionStatsMixin:
         )
         counter = {
             str(locales_dict.get(row['content_locale'], row['content_locale'])): row['count']
-            for row in rows if row['content_locale']
+            for row in rows if row['content_locale'] and row['count']
         }
+        if not counter:
+            return ''
         return json.dumps(
             sorted(
                 [{'label': label, 'value': value} for label, value in counter.items()],
