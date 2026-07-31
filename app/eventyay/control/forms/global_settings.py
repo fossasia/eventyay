@@ -44,7 +44,7 @@ class GlobalSettingsForm(SettingsForm):
         self._setting_default()
         super().__init__(*args, obj=self.obj, **kwargs)
 
-        smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP'))]
+        smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP')), ('gmail_api', _('Gmail / Google Workspace API'))]
 
         self.fields = OrderedDict(
             list(self.fields.items())
@@ -160,12 +160,38 @@ class GlobalSettingsForm(SettingsForm):
                 ),
                 (
                     'send_grid_api_key',
-                    forms.CharField(
+                    SecretKeySettingsField(
                         required=False,
                         label=_('Sendgrid token'),
                         widget=forms.TextInput(attrs={
                             'placeholder': 'SG.xxxxxxxx',
                             'data-display-dependency': '#id_email_vendor_0',
+                        }),
+                    ),
+                ),
+                (
+                    'gmail_client_id',
+                    forms.CharField(
+                        required=False,
+                        label=_('Gmail OAuth client ID'),
+                        help_text=_(
+                            'Create an OAuth client in Google Cloud Console. The connect flow requests '
+                            'Gmail send and user email scopes. Use the OAuth redirect URI shown below '
+                            'as an authorized redirect URI.'
+                        ),
+                        widget=forms.TextInput(attrs={
+                            'data-display-dependency': '#id_email_vendor_2',
+                        }),
+                    ),
+                ),
+                (
+                    'gmail_client_secret',
+                    SecretKeySettingsField(
+                        required=False,
+                        label=_('Gmail OAuth client secret'),
+                        widget=forms.PasswordInput(attrs={
+                            'autocomplete': 'new-password',
+                            'data-display-dependency': '#id_email_vendor_2',
                         }),
                     ),
                 ),
@@ -475,6 +501,7 @@ class GlobalSettingsForm(SettingsForm):
             ]),
             ('email', _('Email'), [
                 'mail_from', 'email_vendor', 'send_grid_api_key',
+                'gmail_client_id', 'gmail_client_secret',
                 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
                 'smtp_use_tls', 'smtp_use_ssl',
             ]),
@@ -540,6 +567,11 @@ class GlobalSettingsForm(SettingsForm):
         if data.get('email_vendor') == 'sendgrid':
             if not data.get('send_grid_api_key'):
                 raise forms.ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+        if data.get('email_vendor') == 'gmail_api':
+            if not data.get('gmail_client_id'):
+                raise forms.ValidationError({'gmail_client_id': _('This field is required when using Gmail as email vendor.')})
+            if not data.get('gmail_client_secret'):
+                raise forms.ValidationError({'gmail_client_secret': _('This field is required when using Gmail as email vendor.')})
 
         return data
 

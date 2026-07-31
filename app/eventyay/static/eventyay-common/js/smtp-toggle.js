@@ -4,6 +4,7 @@ function initSmtpToggle() {
   const vendorRadios = document.querySelectorAll('input[name="email-email_vendor"]');
   const smtpFields = document.getElementById('smtp-server-fields');
   const sendgridFields = document.getElementById('sendgrid-fields');
+  const gmailFields = document.getElementById('gmail-fields');
 
   if (!useCustom || !customFields) {
     return;
@@ -17,15 +18,22 @@ function initSmtpToggle() {
   }
 
   function toggleVendor() {
-    if (!smtpFields || !sendgridFields) {
-      return;
-    }
     const selected = document.querySelector('input[name="email-email_vendor"]:checked');
-    const isSendgrid = selected && selected.value === 'sendgrid';
-    smtpFields.style.display = isSendgrid ? 'none' : '';
-    sendgridFields.style.display = isSendgrid ? '' : 'none';
-    setDisabled(smtpFields, isSendgrid);
-    setDisabled(sendgridFields, !isSendgrid);
+    const vendor = selected ? selected.value : 'smtp';
+    const isSendgrid = vendor === 'sendgrid';
+    const isGmail = vendor === 'gmail_api';
+
+    if (smtpFields) {
+      smtpFields.style.display = isSendgrid || isGmail ? 'none' : '';
+      setDisabled(smtpFields, isSendgrid || isGmail);
+    }
+    if (sendgridFields) {
+      sendgridFields.style.display = isSendgrid ? '' : 'none';
+      setDisabled(sendgridFields, !isSendgrid);
+    }
+    if (gmailFields) {
+      gmailFields.style.display = isGmail ? '' : 'none';
+    }
   }
 
   function toggleCustom() {

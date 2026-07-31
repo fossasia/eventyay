@@ -38,6 +38,7 @@ from .exhibitor import (
 )
 from .feedback import Feedback
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
+from eventyay.base.gmail.models import GmailOAuthCredential
 from .invoices import Invoice, InvoiceLine, invoice_filename
 from .janus import JanusServer
 from .log import ActivityLog, LogEntry

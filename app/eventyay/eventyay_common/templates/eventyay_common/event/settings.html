@@ -223,6 +223,9 @@
                 <div id="sendgrid-fields">
                     {% bootstrap_field email_form.send_grid_api_key layout="control" %}
                 </div>
+                <div id="gmail-fields">
+                    {% include "pretixcontrol/includes/gmail_connection.html" %}
+                </div>
                 <div id="smtp-server-fields">
                     {% bootstrap_field email_form.smtp_host layout="control" %}
                     {% bootstrap_field email_form.smtp_port layout="control" %}

@@ -41,6 +41,19 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     template_name = 'pretixcontrol/global_settings.html'
     form_class = GlobalSettingsForm
 
+    def get_context_data(self, **kwargs):
+        from eventyay.base.gmail.models import GmailOAuthCredential
+
+        context = super().get_context_data(**kwargs)
+        context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()
+        context['gmail_credential'] = GmailOAuthCredential.get_active_global_safe()
+        context['gmail_callback_url'] = self.request.build_absolute_uri(
+            reverse('eventyay_admin:admin.global.gmail.callback')
+        )
+        context['gmail_connect_url'] = reverse('eventyay_admin:admin.global.gmail.connect')
+        context['gmail_disconnect_url'] = reverse('eventyay_admin:admin.global.gmail.disconnect')
+        return context
+
     def form_valid(self, form):
         form.save()
         messages.success(self.request, _('Your changes have been saved.'))
@@ -234,6 +247,18 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                     messages.error(request, _('SendGrid API key is missing. Please configure it and save.'))
                     return redirect(reverse('eventyay_admin:admin.global.settings'))
                 backend = SendGridEmail(api_key=gs.settings.send_grid_api_key)
+                backend.test(from_addr=mail_from, to_addrs=recipients)
+            elif gs.settings.email_vendor == 'gmail_api':
+                from eventyay.base.gmail.resolver import get_gmail_mail_backend
+
+                backend = get_gmail_mail_backend(timeout=10)
+                if not backend:
+                    messages.error(
+                        request,
+                        _('Gmail is selected but no account is connected. Connect Gmail in the settings first.'),
+                    )
+                    return redirect(reverse('eventyay_admin:admin.global.settings'))
+                backend.test(from_addr=mail_from, to_addrs=recipients)
             elif gs.settings.email_vendor == 'smtp':
                 if not gs.settings.smtp_host or not gs.settings.smtp_port:
                     messages.error(request, _('SMTP host or port is missing. Please configure them and save.'))
@@ -248,17 +273,24 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                     fail_silently=False,
                     timeout=10,
                 )
+                email = EmailMessage(
+                    subject=_('Eventyay system - test email'),
+                    body=_('This is a test email from your Eventyay system email configuration.'),
+                    from_email=mail_from,
+                    to=recipients,
+                    connection=backend,
+                )
+                email.send(fail_silently=False)
             else:
                 backend = get_mail_backend(timeout=10)
-
-            email = EmailMessage(
-                subject=_('Eventyay system - test email'),
-                body=_('This is a test email from your Eventyay system email configuration.'),
-                from_email=mail_from,
-                to=recipients,
-                connection=backend,
-            )
-            email.send(fail_silently=False)
+                email = EmailMessage(
+                    subject=_('Eventyay system - test email'),
+                    body=_('This is a test email from your Eventyay system email configuration.'),
+                    from_email=mail_from,
+                    to=recipients,
+                    connection=backend,
+                )
+                email.send(fail_silently=False)
         except UnicodeEncodeError:
             # The stored SMTP password, username, or recipient address contains a non-ASCII character
             # (e.g. a no-break space copied from a Gmail App Password display).
@@ -281,14 +313,35 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                 request,
                 _('SendGrid test email failed to connect or send. HTTP Error: %(err)s') % {'err': e},
             )
-        except (smtplib.SMTPException, OSError) as e:
-            logger.exception(
-                'Admin SMTP test failed (from=%s)', mail_from
+        except ImportError as e:
+            logger.exception('Admin Gmail test failed because dependencies are missing (from=%s)', mail_from)
+            messages.error(request, str(e))
+        except Exception as e:
+            from eventyay.base.gmail.errors import (
+                GmailDailyLimitError,
+                GmailPermanentError,
+                GmailRateLimitError,
+                GmailTemporaryError,
             )
-            messages.warning(
-                request,
-                _('Test email failed to connect or send: %(err)s') % {'err': e},
-            )
+
+            if isinstance(e, (GmailRateLimitError, GmailTemporaryError)):
+                messages.warning(
+                    request,
+                    _('Gmail test email is temporarily delayed because of rate limits: %(err)s') % {'err': e},
+                )
+            elif isinstance(e, (GmailDailyLimitError, GmailPermanentError)):
+                messages.error(
+                    request,
+                    _('Gmail test email could not be sent: %(err)s') % {'err': e},
+                )
+            elif isinstance(e, (smtplib.SMTPException, OSError)):
+                logger.exception('Admin SMTP test failed (from=%s)', mail_from)
+                messages.warning(
+                    request,
+                    _('Test email failed to connect or send: %(err)s') % {'err': e},
+                )
+            else:
+                raise
         else:
             recipients_str = ', '.join(recipients)
             logger.info('Admin test email sent to %d recipient(s)', len(recipients))

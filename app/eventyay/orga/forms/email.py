@@ -18,6 +18,7 @@ def multimail_validate(val):
 SMTP_VENDOR_CHOICES = (
     ('smtp', _('SMTP server')),
     ('sendgrid', _('SendGrid')),
+    ('gmail_api', _('Gmail / Google Workspace API')),
 )
 
 
@@ -180,6 +181,12 @@ class CentralMailSettingsForm(SettingsForm):
                     'send_grid_api_key',
                     ValidationError(_('An API key is required when using SendGrid.')),
                 )
+        elif vendor == 'gmail_api':
+            for field in ('smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
+                          'smtp_use_tls', 'smtp_use_ssl', 'send_grid_api_key'):
+                stored = self.initial.get(field)
+                if stored is not None:
+                    data[field] = stored
         else:
             stored_api_key = self.initial.get('send_grid_api_key')
             if stored_api_key is not None:
