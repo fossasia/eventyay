@@ -7,7 +7,7 @@ from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
-from eventyay.base.forms import SecretKeySettingsField, SettingsForm
+from eventyay.base.forms import SECRET_REDACTED, SecretKeySettingsField, SettingsForm
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 
@@ -552,6 +552,17 @@ class GlobalSettingsForm(SettingsForm):
             ]),
         ]
 
+        self._configure_gmail_field_requirements()
+
+    def _configure_gmail_field_requirements(self):
+        vendor = self.data.get('email_vendor') if self.is_bound else self.obj.settings.get('email_vendor')
+        if vendor != 'gmail_api':
+            return
+        if 'gmail_client_id' in self.fields:
+            self.fields['gmail_client_id'].required = True
+        if 'gmail_client_secret' in self.fields:
+            self.fields['gmail_client_secret'].required = True
+
     def clean_etherpad_pad_name_pattern(self):
         pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
         if pattern and '{submission}' not in pattern and '{token}' not in pattern:
@@ -568,9 +579,15 @@ class GlobalSettingsForm(SettingsForm):
             if not data.get('send_grid_api_key'):
                 raise forms.ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
         if data.get('email_vendor') == 'gmail_api':
-            if not data.get('gmail_client_id'):
+            if not (data.get('gmail_client_id') or '').strip():
                 raise forms.ValidationError({'gmail_client_id': _('This field is required when using Gmail as email vendor.')})
-            if not data.get('gmail_client_secret'):
+            secret = data.get('gmail_client_secret')
+            has_secret = (
+                secret == SECRET_REDACTED
+                or bool((secret or '').strip())
+                or self.obj.settings.get('gmail_client_secret')
+            )
+            if not has_secret:
                 raise forms.ValidationError({'gmail_client_secret': _('This field is required when using Gmail as email vendor.')})
 
         return data

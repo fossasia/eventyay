@@ -42,12 +42,9 @@
                         {% endblocktrans %}
                     {% endif %}
                 </p>
-                <form action="{{ gmail_disconnect_url }}" method="post" class="form-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger btn-sm">
-                        {% trans "Disconnect Gmail" %}
-                    </button>
-                </form>
+                <button type="submit" class="btn btn-danger btn-sm" form="{{ gmail_disconnect_form_id }}">
+                    {% trans "Disconnect Gmail" %}
+                </button>
             {% else %}
                 <p class="help-block">
                     <span class="label label-default">{% trans "Not connected" %}</span>
@@ -93,12 +90,9 @@
                             {% endblocktrans %}
                         {% endif %}
                     </p>
-                    <form action="{{ gmail_disconnect_url }}" method="post" class="form-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">
-                            {% trans "Disconnect Gmail" %}
-                        </button>
-                    </form>
+                    <button type="submit" class="btn btn-danger" form="{{ gmail_disconnect_form_id }}">
+                        {% trans "Disconnect Gmail" %}
+                    </button>
                 {% else %}
                     <p class="form-control-static">
                         <span class="label label-default">{% trans "Not connected" %}</span>
