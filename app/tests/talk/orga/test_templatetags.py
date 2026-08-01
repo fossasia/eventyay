@@ -51,3 +51,24 @@ def test_template_tag_review_score_numeric(review):
 )
 def test_templatetag_orga_edit_link(url, target, result):
     assert orga_edit_link(url, target) == result
+
+
+def test_get_top_menu_item_icon_class():
+    from eventyay.orga.templatetags.context_icons import get_top_menu_item_icon_class
+
+    class DummyRequest:
+        pass
+
+    req = DummyRequest()
+
+    # Default / Global -> fa-dashboard
+    assert get_top_menu_item_icon_class({'request': req}) == 'fa-dashboard'
+
+    # Organizer only -> fa-group
+    req.organizer = 'org'
+    assert get_top_menu_item_icon_class({'request': req}) == 'fa-group'
+
+    # Event (with or without organizer) -> fa-dashboard
+    req.event = 'event'
+    assert get_top_menu_item_icon_class({'request': req}) == 'fa-dashboard'
+
