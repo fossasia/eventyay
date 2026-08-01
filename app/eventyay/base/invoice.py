@@ -339,8 +339,8 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
     logo_anchor = 'n'
 
     def _draw_logo(self, canvas):
-        if self.invoice.event.settings.invoice_logo_image:
-            logo_file = self.invoice.event.settings.get('invoice_logo_image', binary_file=True)
+        if self.invoice.event.settings.event_logo_image:
+            logo_file = self.invoice.event.settings.get('event_logo_image', binary_file=True)
             ir = ThumbnailingImageReader(logo_file)
             try:
                 ir.resize(self.logo_width, self.logo_height, 300)
