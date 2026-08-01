@@ -272,6 +272,8 @@ details.dropdown .dropdown-content {
   right: 0;
   left: auto;
   transform: none;
+  --dropdown-item-accent: var(--color-header-navigation);
+  --dropdown-item-accent-hover: var(--color-header-navigation-hover);
 }
 
 .presale-sticky-tabs .header-row-right details.dropdown .dropdown-content::before,
