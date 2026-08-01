@@ -5,7 +5,6 @@
 function setExpanded(root, expanded) {
     const toggle = root.querySelector('[data-advanced-filter-toggle]');
     const panel = root.querySelector('[data-advanced-filter-advanced]');
-    const goForm = root.querySelector('[data-advanced-filter-go-form]');
 
     if (!toggle || !panel) {
         return;

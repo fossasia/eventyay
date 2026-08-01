@@ -53,7 +53,7 @@
                     <input type="hidden" name="tab" value="vouchers">
                     <div class="advanced-filter-search-bar">
                         <div class="input-group advanced-filter-search-query-group">
-                            <input id="id_search" type="text" name="search" class="form-control" placeholder="{% trans 'Search voucher…' %}" value="{{ filter_form.search.value|default_if_none:'' }}">
+                            <input id="id_search" type="text" name="search" class="form-control" placeholder="{% trans 'Search voucher…' %}" aria-label="{% trans 'Search voucher…' %}" value="{{ filter_form.search.value|default_if_none:'' }}">
                             <span class="input-group-btn">
                                 <button class="btn btn-primary" type="submit">
                                     <span class="fa fa-search" aria-hidden="true"></span>

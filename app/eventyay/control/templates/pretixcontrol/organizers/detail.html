@@ -10,7 +10,7 @@
 
 {% block inner %}
     <h1>
-        {% trans "Organizer:" %} {{ request.organizer.name }}
+        {% blocktrans with name=request.organizer.name %}Organizer: {{ name }}{% endblocktrans %}
     </h1>
     {% if "can_create_events" in request.orgapermset %}
         <p>

@@ -43,7 +43,7 @@
         <form class="filter-form advanced-filter-search-form" action="" method="get">
             <div class="advanced-filter-search-bar">
                 <div class="input-group advanced-filter-search-query-group">
-                    <input type="text" name="user" class="form-control" placeholder="{% trans 'Search attendee…' %}" value="{{ filter_form.user.value|default_if_none:'' }}">
+                    <input id="id_user" type="text" name="user" class="form-control" placeholder="{% trans 'Search attendee…' %}" aria-label="{% trans 'Search attendee…' %}" value="{{ filter_form.user.value|default_if_none:'' }}" autofocus="autofocus">
                     <span class="input-group-btn">
                         <button class="btn btn-primary" type="submit">
                             <span class="fa fa-search" aria-hidden="true"></span>
