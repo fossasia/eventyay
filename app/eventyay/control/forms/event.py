@@ -578,7 +578,6 @@ class EventSettingsForm(SettingsForm):
     )
 
     auto_fields = [
-        'checkout_email_helptext',
         'presale_has_ended_text',
         'voucher_explanation_text',
         'checkout_success_text',
@@ -621,7 +620,6 @@ class EventSettingsForm(SettingsForm):
         'attendee_data_explanation_text',
         'order_phone_asked',
         'order_phone_required',
-        'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
         'order_email_asked',
@@ -751,7 +749,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
     """
 
     auto_fields = [
-        'checkout_email_helptext',
         'presale_has_ended_text',
         'voucher_explanation_text',
         'checkout_success_text',
@@ -779,7 +776,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'event_list_type',
         'event_list_available_only',
         'event_info_text',
-        'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
         'allow_modifications',
@@ -821,6 +817,8 @@ class OrderFormSettingsForm(EventSettingsForm):
         'require_registered_account_for_tickets',
         'include_wikimedia_username',
         'checkout_show_copy_answers_button',
+        'checkout_email_helptext',
+        'checkout_phone_helptext',
     ]
 
     def __init__(self, *args, **kwargs):
