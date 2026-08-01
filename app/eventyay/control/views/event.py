@@ -973,6 +973,8 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
         responses = register_ticket_outputs.send(self.request.event)
         for receiver, response in responses:
             provider = response(self.request.event)
+            if provider.identifier == 'badge':
+                continue
             if provider.is_enabled:
                 context['any_enabled'] = True
                 break
@@ -1050,6 +1052,8 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
         responses = register_ticket_outputs.send(self.request.event)
         for receiver, response in responses:
             provider = response(self.request.event)
+            if provider.identifier == 'badge':
+                continue
             provider.form = ProviderForm(
                 obj=self.request.event,
                 settingspref=f'ticketoutput_{provider.identifier}_',

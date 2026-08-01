@@ -1,0 +1,54 @@
+name: PR Process Reminder
+
+# pull_request_target is required so fork PRs get a write-capable GITHUB_TOKEN.
+# Do not checkout the PR head ref or run untrusted code from the fork.
+on:
+  pull_request_target:
+    types: [opened, ready_for_review, synchronize, reopened, edited, review_requested]
+    branches: [dev, main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to post or refresh the checklist on
+        required: true
+        type: number
+
+jobs:
+  post-reminder:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.state == 'open' &&
+       (github.event.pull_request.base.ref == 'dev' || github.event.pull_request.base.ref == 'main'))
+    concurrency:
+      group: pr-process-reminder-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            if (context.eventName === 'workflow_dispatch') {
+              const prNumber = Number(context.payload.inputs.pr_number);
+              const { data } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+              });
+              context.payload.pull_request = {
+                number: prNumber,
+                state: data.state,
+                base: { ref: data.base.ref },
+              };
+            }
+
+            const { runPrProcessReminder } = await import(
+              `${process.env.GITHUB_WORKSPACE}/.github/scripts/pr-process-reminder-lib.mjs`
+            );
+            await runPrProcessReminder({ github, context, core });
