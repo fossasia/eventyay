@@ -469,3 +469,46 @@ def test_answer_validation_speaker_question(
     )
     assert response.status_code == 400
     assert "submission" in response.data
+
+@pytest.mark.django_db
+def test_team_token_can_answer_nonpublic_question_and_upsert(client, event, review_question, submission, speaker):
+    from django_scopes import scope
+    from eventyay.base.models import TeamAPIToken
+    with scope(event=event):
+        team = event.organiser.teams.filter(can_change_submissions=True).first()
+        token = TeamAPIToken.objects.create(team=team, name="SubToken")
+        
+        # Test creation
+        response = client.post(
+            event.api_urls.answers,
+            follow=True,
+            data={
+                "question": review_question.id,
+                "submission": submission.code,
+                "answer": "My team token answer",
+            },
+            content_type="application/json",
+            headers={"Authorization": f"Token {token.token}"},
+        )
+        assert response.status_code == 201, response.text
+        content = response.json()
+        assert content["answer"] == "My team token answer"
+        assert content["id"] is not None
+        answer_id = content["id"]
+
+        # Test upsert (duplicate answer)
+        response = client.post(
+            event.api_urls.answers,
+            follow=True,
+            data={
+                "question": review_question.id,
+                "submission": submission.code,
+                "answer": "Upserted team token answer",
+            },
+            content_type="application/json",
+            headers={"Authorization": f"Token {token.token}"},
+        )
+        assert response.status_code == 201, response.text
+        content = response.json()
+        assert content["id"] == answer_id
+        assert content["answer"] == "Upserted team token answer"
