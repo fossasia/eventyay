@@ -1842,6 +1842,104 @@ h2 .user-name-display img {
   cursor: pointer;
 }
 
+.submission-video-dialog {
+  border: none;
+  border-radius: 8px;
+  padding: 0;
+  width: 480px;
+  max-width: 90vw;
+  background: #fff;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.submission-video-dialog[open] {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}
+
+.submission-video-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.submission-video-dialog form {
+  margin: 0;
+  padding: 24px;
+}
+
+.submission-video-dialog h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.submission-video-dialog #submission-video-session-title {
+  margin: 0 0 16px;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.submission-video-dialog #submission-video-session-title:empty {
+  display: none;
+}
+
+.submission-video-dialog .form-group-inline {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.submission-video-dialog .form-group-inline .form-control {
+  width: 100%;
+}
+
+.submission-video-url-list {
+  margin-bottom: 8px;
+}
+
+.submission-video-url-controls {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.submission-video-url-controls .form-control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.submission-video-url-controls .submission-video-remove {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.submission-video-dialog #submission-video-add {
+  margin-bottom: 12px;
+}
+
+.submission-video-dialog #submission-video-error {
+  margin: 0 0 12px;
+}
+
+.submission-video-dialog-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.submission-video-dialog-actions .btn {
+  margin: 0 0 0 8px;
+}
+
+.submission-video-dialog-actions .btn:first-child {
+  margin-left: 0;
+  margin-right: auto;
+}
+
 .comments-list {
   margin-bottom: 2rem;
 }

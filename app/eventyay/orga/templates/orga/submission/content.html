@@ -156,6 +156,21 @@
             </div>
         {% endif %}
 
+        {% if session_videos_enabled and session_video_urls %}
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">{% translate "Session videos" %}</label>
+                <div class="col-md-9 session-video-urls">
+                    <ul class="list-unstyled mb-0">
+                        {% for url in session_video_urls %}
+                            <li class="mb-1">
+                                <a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
         {% if submission.active_resources %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Resources" %}</label>
