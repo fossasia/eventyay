@@ -1079,6 +1079,43 @@ table .color-square {
   }
 }
 
+.score-score,
+.score-label {
+  position: relative;
+}
+
+.score-score.has-error input,
+.score-label.has-error input {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 1px var(--color-danger);
+}
+
+.score-error-tooltip {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  z-index: 30;
+  width: max-content;
+  max-width: 240px;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--size-border-radius, 4px);
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  box-shadow: var(--shadow-light, 0 2px 8px rgba(0, 0, 0, 0.25));
+  pointer-events: none;
+}
+
+.score-error-tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 14px;
+  border: 6px solid transparent;
+  border-bottom-color: var(--color-danger);
+}
+
 #stats {
   display: flex;
   flex-wrap: wrap;
@@ -1803,6 +1840,104 @@ h2 .user-name-display img {
 
 [data-dialog-target] {
   cursor: pointer;
+}
+
+.submission-video-dialog {
+  border: none;
+  border-radius: 8px;
+  padding: 0;
+  width: 480px;
+  max-width: 90vw;
+  background: #fff;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.submission-video-dialog[open] {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}
+
+.submission-video-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.submission-video-dialog form {
+  margin: 0;
+  padding: 24px;
+}
+
+.submission-video-dialog h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.submission-video-dialog #submission-video-session-title {
+  margin: 0 0 16px;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.submission-video-dialog #submission-video-session-title:empty {
+  display: none;
+}
+
+.submission-video-dialog .form-group-inline {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.submission-video-dialog .form-group-inline .form-control {
+  width: 100%;
+}
+
+.submission-video-url-list {
+  margin-bottom: 8px;
+}
+
+.submission-video-url-controls {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.submission-video-url-controls .form-control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.submission-video-url-controls .submission-video-remove {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.submission-video-dialog #submission-video-add {
+  margin-bottom: 12px;
+}
+
+.submission-video-dialog #submission-video-error {
+  margin: 0 0 12px;
+}
+
+.submission-video-dialog-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.submission-video-dialog-actions .btn {
+  margin: 0 0 0 8px;
+}
+
+.submission-video-dialog-actions .btn:first-child {
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .comments-list {

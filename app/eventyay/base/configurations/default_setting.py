@@ -2,6 +2,7 @@ import json
 from collections import OrderedDict
 from datetime import datetime
 from decimal import Decimal
+from types import SimpleNamespace
 
 from django import forms
 from django.conf import settings
@@ -56,7 +57,8 @@ def primary_font_kwargs():
     from eventyay.presale.style import SYSTEM_FONT_CHOICES, get_fonts
 
     choices = list(SYSTEM_FONT_CHOICES)
-    choices += [(a, {'title': a, 'data': v}) for a, v in get_fonts().items()]
+    # Label must not be a plain dict/Mapping: Django mistakes it for an optgroup
+    choices += [(a, SimpleNamespace(title=a, data=v)) for a, v in get_fonts().items()]
     return {
         'choices': choices,
     }
@@ -1569,14 +1571,28 @@ DEFAULT_SETTINGS = {
             label=_('Do not allow cancellations after'),
         ),
     },
+    'contact_form_enabled': {
+        'default': False,
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Contact form'),
+            required=False,
+        ),
+    },
     'contact_mail': {
         'default': None,
         'type': str,
         'serializer_class': serializers.EmailField,
         'form_class': forms.EmailField,
         'form_kwargs': dict(
-            label=_('Contact address'),
-            help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
+            label=_('Organizer email address'),
+            help_text=_(
+                'You need to provide an email address so attendees can reach you through a contact form. '
+                'Messages will be sent to this address. Your email address remains hidden from attendees.'
+            ),
+            required=False,
         ),
     },
     'imprint_url': {
@@ -2177,22 +2193,43 @@ Your {event} team"""
         'type': File,
         'form_class': ExtFileField,
         'form_kwargs': dict(
-            label=_('Header image'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            label=_('Logo'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'This image appears at the top of all organizer pages, replacing the default color or pattern. '
-                'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
-                'We recommend an image 1140 px wide and 120 px in height (can be increased with the setting below).'
+                'Upload your organizer logo. The logo is displayed at up to 160 px tall (max-height), width proportional. '
+                'We recommend a minimum of 320 px in height for crisp display on retina screens. '
+                'The logo will be automatically optimized on save (max 1000 px wide), except for SVG and animated images which remain unmodified.'
             ),
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },
-    'organizer_logo_image_large': {
+
+    'organizer_header_image': {
+        'default': None,
+        'type': File,
+        'form_class': ExtFileField,
+        'form_kwargs': dict(
+            label=_('Header image'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+            help_text=_(
+                'This image appears at the top of all organizer pages, replacing the default color or pattern. '
+                'We recommend an image 1920 px wide and 640 px in height (the center 1920 × 320 px will always be visible). '
+                'Images will be automatically optimized to max 3000 px wide on save.'
+            ),
+        ),
+        'serializer_class': UploadedFileField,
+        'serializer_kwargs': dict(
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        ),
+    },
+    'organizer_header_image_large': {
         'default': 'False',
         'type': bool,
         'form_class': forms.BooleanField,

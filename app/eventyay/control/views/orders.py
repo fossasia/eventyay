@@ -134,6 +134,8 @@ from eventyay.control.forms.filter import (
     EventOrderFilterForm,
     OverviewFilterForm,
     RefundFilterForm,
+    advanced_filter_count,
+    advanced_filters_open_from_get,
 )
 from eventyay.control.forms.orders import (
     CancelForm,
@@ -159,7 +161,7 @@ from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.signals import order_search_forms
 from eventyay.control.views import PaginationMixin
 from eventyay.helpers.safedownload import check_token
-from eventyay.presale.signals import question_form_fields
+from eventyay.presale.utils import build_position_additional_fields
 
 logger = logging.getLogger(__name__)
 
@@ -215,6 +217,8 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        ctx['advanced_filters_open'] = advanced_filters_open_from_get(self.filter_form)
+        ctx['advanced_filter_count'] = advanced_filter_count(self.filter_form)
 
         ctx['filter_strings'] = []
         for f in self.get_forms():
@@ -550,21 +554,7 @@ class OrderDetail(OrderView):
             return enabled_system_fields_by_product_id[product.pk]
 
         for p in cartpos:
-            responses = question_form_fields.send(sender=self.request.event, position=p)
-            p.additional_fields = []
-            data = p.meta_info_data
-            for r, response in sorted(responses, key=lambda r: str(r[0])):
-                if response:
-                    for key, value in response.items():
-                        answer = data.get('question_form_data', {}).get(key)
-                        if hasattr(value, 'get_display_value'):
-                            answer = value.get_display_value(answer)
-                        p.additional_fields.append(
-                            {
-                                'answer': answer,
-                                'question': value.label,
-                            }
-                        )
+            p.additional_fields = build_position_additional_fields(self.request.event, p)
 
             enabled_system_fields = get_enabled_system_fields_for_product(p.product)
             p.has_questions = (

@@ -20,9 +20,6 @@
     <meta property="og:title" content="{{ ev.name|event_localize }}" />
     <meta property="og:description" content="{{ ev.get_date_range_display }}" />
     <meta property="og:url" content="{{ request.build_absolute_uri }}" />
-    {% compress js %}
-        <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
-    {% endcompress %}
 
     <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
     {% if ev.location or venue_map_location %}
@@ -309,7 +306,7 @@
                 {% if ev.presale_is_running or event.settings.show_products_outside_presale_period %}
                 <form method="post" data-asynctask
                         data-asynctask-headline="{% trans "We're now trying to reserve this for you!" %}"
-                        data-asynctask-text="{% blocktrans with time=event.settings.reservation_time %}Once the items are in your cart, you will have {{ time }} minutes to complete your purchase.{% endblocktrans %}"
+                        data-asynctask-text="{% blocktrans with time=global_settings.reservation_time %}Once the items are in your cart, you will have {{ time }} minutes to complete your purchase.{% endblocktrans %}"
                         class="{% if event.seating_plan_id %}has-seating{% endif %}"
                         action="{% eventurl request.event "presale:event.cart.add" cart_namespace=cart_namespace %}?next={{ cart_redirect|urlencode }}&next_error={{ request.path|urlencode }}">
                     {% csrf_token %}

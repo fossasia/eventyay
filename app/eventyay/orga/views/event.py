@@ -1,12 +1,9 @@
 from datetime import timedelta
-from pathlib import Path
 
 from csp.decorators import csp_update
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.core.exceptions import ValidationError
-from django.core.files.storage import FileSystemStorage
 from django.db import models, transaction
 from django.forms.models import inlineformset_factory
 from django.shortcuts import get_object_or_404, redirect
@@ -18,39 +15,35 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
-from django_scopes import scope, scopes_disabled
-from formtools.wizard.views import SessionWizardView
 
-
-from eventyay.common.forms import I18nEventFormSet, I18nFormSet
-from eventyay.base.models import LogEntry
+from eventyay.agenda.views.utils import get_schedule_exporters
+from eventyay.base.models import Event, LogEntry, ReviewPhase, ReviewScoreCategory, TeamInvite, User
 from eventyay.base.models.base import CachedFile
+from eventyay.common.forms import I18nEventFormSet, I18nFormSet
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
     ActionFromUrl,
     EventPermissionRequired,
     PermissionRequired,
-    SensibleBackWizardMixin,
 )
-from eventyay.base.models import Event, Team, TeamInvite
 from eventyay.orga.forms import EventForm
 from eventyay.orga.forms.event import (
     MailSettingsForm,
     ReviewPhaseForm,
     ReviewScoreCategoryForm,
     ReviewSettingsForm,
+    ScheduleHtmlExportForm,
     WidgetGenerationForm,
     WidgetSettingsForm,
 )
 from eventyay.orga.forms.importers import CSVImportForm
+from eventyay.orga.forms.review import ReviewExportForm
 from eventyay.orga.forms.schedule import ScheduleExportForm
 from eventyay.orga.forms.speaker import SpeakerExportForm
-from eventyay.orga.forms.review import ReviewExportForm
 from eventyay.person.forms import UserForm
-from eventyay.base.models import ReviewPhase, ReviewScoreCategory, User
-from eventyay.agenda.views.utils import get_schedule_exporters
 from eventyay.submission.tasks import recalculate_all_review_scores
+
 from .speaker import SpeakerImportProcessView
 from .submission import SubmissionImportProcessView
 
@@ -157,6 +150,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             messages.error(self.request, e.message)
             return self.get(self.request, *self.args, **self.kwargs)
         if not phases or not scores:
+            messages.error(self.request, phrases.base.error_saving_changes)
             return self.get(self.request, *self.args, **self.kwargs)
         form.save()
         if self.scores_formset.has_changed():
@@ -164,6 +158,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
                 kwargs={'event_id': self.request.event.pk},
                 ignore_result=True,
             )
+        messages.success(self.request, phrases.base.saved)
         return super().form_valid(form)
 
     @context
@@ -198,7 +193,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             extra_forms = [
                 form
                 for form in self.phases_formset.extra_forms
-                if form.has_changed and not self.phases_formset._should_delete_form(form)
+                if form.has_changed() and not self.phases_formset._should_delete_form(form)
             ]
             for form in extra_forms:
                 form.instance.event = self.request.event
@@ -251,7 +246,8 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
             return False
         weights_changed = False
         for form in self.scores_formset.initial_forms:
-            # Deleting is handled elsewhere, so we skip it here
+            if self.scores_formset._should_delete_form(form):
+                continue
             if form.has_changed():
                 if 'weight' in form.changed_data:
                     weights_changed = True
@@ -261,7 +257,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
         extra_forms = [
             form
             for form in self.scores_formset.extra_forms
-            if form.has_changed and not self.scores_formset._should_delete_form(form)
+            if form.has_changed() and not self.scores_formset._should_delete_form(form)
         ]
         for form in extra_forms:
             form.instance.event = self.request.event
@@ -456,6 +452,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         result['tablist'] = {
             'import': _('Import'),
             'export': _('Export'),
+            'schedule_html_export': _('Schedule HTML export'),
         }
         result['active_tab'] = kwargs.get('active_tab')
         result['import_choices'] = self.import_choices
@@ -475,6 +472,9 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             event=self.request.event,
             user=self.request.user,
             prefix='review',
+        )
+        result['schedule_html_export_form'] = kwargs.get('schedule_html_export_form') or ScheduleHtmlExportForm(
+            obj=self.request.event,
         )
         all_exporters = get_schedule_exporters(self.request)
         result['speaker_exporters'] = [e for e in all_exporters if e.group == 'speaker']
@@ -498,6 +498,8 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             return self.handle_import()
         if action == 'export':
             return self.handle_export()
+        if action == 'save_schedule_html_export':
+            return self.handle_save_schedule_html_export()
         messages.error(request, _('Unknown action. Please try again.'))
         return redirect(request.path)
 
@@ -587,3 +589,18 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             messages.warning(self.request, _('No data to be exported'))
             return redirect(f'{self.request.path}?export_target={target.value}#tab-export')
         return result
+
+    def handle_save_schedule_html_export(self):
+        form = ScheduleHtmlExportForm(self.request.POST, obj=self.request.event)
+        if form.is_valid():
+            form.save()
+            self.request.event.log_action(
+                'eventyay.event.update', person=self.request.user, orga=True
+            )
+            messages.success(self.request, phrases.base.saved)
+            return redirect(f'{self.request.path}#tab-schedule_html_export')
+        context = self.get_context_data(
+            schedule_html_export_form=form,
+            active_tab='schedule_html_export',
+        )
+        return self.render_to_response(context, status=400)

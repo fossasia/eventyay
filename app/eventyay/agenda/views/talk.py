@@ -38,6 +38,7 @@ from eventyay.base.models import (
     Submission,
     SubmissionFavourite,
     SubmissionStates,
+    TalkQuestionVariant,
     TalkSlot,
     User,
 )
@@ -45,6 +46,8 @@ from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
+from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
+from eventyay.common.views.helpers import login_redirect_with_next, redirect_or_json_redirect
 from eventyay.common.views.mixins import (
     EventPermissionRequired,
     PermissionRequired,
@@ -220,8 +223,27 @@ class TalkView(TalkMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
-        csp_update = {'frame-src': self.recording.get('csp_header')}
-        response._csp_update = csp_update
+        frame_src = []
+        recording_csp = self.recording.get('csp_header')
+        if recording_csp:
+            # Providers may return whitespace-separated CSP sources.
+            frame_src.extend(part for part in str(recording_csp).split() if part)
+        for answer in self.answers:
+            if answer.question.variant != TalkQuestionVariant.VIDEO:
+                continue
+            for url in parse_video_urls(answer.answer):
+                embed = get_video_embed_info(url)
+                if embed:
+                    frame_src.extend(embed['csp_origins'])
+        # Deduplicate while preserving order
+        seen = set()
+        unique_frame_src = []
+        for origin in frame_src:
+            if origin not in seen:
+                seen.add(origin)
+                unique_frame_src.append(origin)
+        if unique_frame_src:
+            response._csp_update = {'frame-src': unique_frame_src}
         return response
 
     def _build_speakers_context(self, speakers_qs):
@@ -613,7 +635,8 @@ class OnlineVideoJoin(EventPermissionRequired, View):
 
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.NOT_ALLOWED)
+            # After login, return here so the user continues into the live event.
+            return login_redirect_with_next(request)
 
         event = request.event
         logger.info('Checking video settings for event %s', event)
@@ -666,10 +689,7 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         token = jwt.encode(payload, event.settings.venueless_secret, algorithm='HS256')
         redirect_url = urljoin(event.settings.venueless_url, f'#token={token}')
         logger.info('Redirect URL to Video: %s', redirect_url)
-        return JsonResponse(
-            {'redirect_url': redirect_url},
-            status=HTTPStatus.OK,
-        )
+        return redirect_or_json_redirect(request, redirect_url)
 
 
 _T = TypeVar('_T', str, None)
@@ -696,14 +716,28 @@ def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
         allowed_statuses.append(Order.STATUS_PENDING)
     with scope(organizer=event.organizer):
         with scope(event=event):
-            has_ticket = OrderPosition.objects.filter(
-                order__event=event,
-                order__email__iexact=user.email,
-                order__status__in=allowed_statuses,
-                product__admission=True,
-                canceled=False,
-                addon_to__isnull=True,
-            ).exists()
+            if event.settings.venueless_all_products:
+                has_ticket = OrderPosition.objects.filter(
+                    order__event=event,
+                    order__email__iexact=user.email,
+                    order__status__in=allowed_statuses,
+                    product__admission=True,
+                    canceled=False,
+                    addon_to__isnull=True,
+                ).exists()
+            else:
+                allowed_products = event.settings.venueless_products or []
+                if not allowed_products:
+                    return TicketCheckResult.NO_TICKET
+                has_ticket = OrderPosition.objects.filter(
+                    order__event=event,
+                    order__email__iexact=user.email,
+                    order__status__in=allowed_statuses,
+                    product_id__in=allowed_products,
+                    canceled=False,
+                    addon_to__isnull=True,
+                ).exists()
+
     if has_ticket:
         return TicketCheckResult.HAS_TICKET
     return TicketCheckResult.NO_TICKET

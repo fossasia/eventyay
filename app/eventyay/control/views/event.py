@@ -51,7 +51,6 @@ from eventyay.base.templatetags.rich_text import markdown_compile_email
 from eventyay.control.forms.event import (
     CancelSettingsForm,
     CommentForm,
-    ConfirmTextFormset,
     EventDeleteForm,
     EventMetaValueForm,
     GeneralEventSettingsForm,
@@ -186,7 +185,6 @@ class EventUpdate(
         context['sform'] = self.sform
         context['meta_forms'] = self.meta_forms
         context['product_meta_property_formset'] = self.product_meta_property_formset
-        context['confirm_texts_formset'] = self.confirm_texts_formset
         return context
 
     @transaction.atomic
@@ -199,13 +197,10 @@ class EventUpdate(
         )
         self.save_meta()
         self.save_product_meta_property_formset(self.object)
-        self.save_confirm_texts_formset(self.object)
         change_css = False
 
-        if self.sform.has_changed() or self.confirm_texts_formset.has_changed():
+        if self.sform.has_changed():
             data = {k: self.request.event.settings.get(k) for k in self.sform.changed_data}
-            if self.confirm_texts_formset.has_changed():
-                data.update(confirm_texts=self.confirm_texts_formset.cleaned_data)
             self.request.event.log_action('eventyay.event.settings', user=self.request.user, data=data)
             if any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
                 change_css = True
@@ -255,14 +250,12 @@ class EventUpdate(
         sform_valid = self.sform.is_valid()
         meta_forms_valid = all([f.is_valid() for f in self.meta_forms])
         product_meta_property_formset_valid = self.product_meta_property_formset.is_valid()
-        confirm_texts_formset_valid = self.confirm_texts_formset.is_valid()
 
         if (
             form_valid
             and sform_valid
             and meta_forms_valid
             and product_meta_property_formset_valid
-            and confirm_texts_formset_valid
         ):
             # Timezone processing for presale_start and presale_end (fields in this form)
             # is now handled within form.clean()
@@ -278,8 +271,6 @@ class EventUpdate(
                 error_messages.append('Meta data form validation failed.')
             if not product_meta_property_formset_valid:
                 error_messages.append('Product meta property form validation failed.')
-            if not confirm_texts_formset_valid:
-                error_messages.append('Confirmation texts form validation failed.')
 
             if error_messages:
                 for msg in error_messages:
@@ -329,29 +320,6 @@ class EventUpdate(
                 continue
             form.instance.event = obj
             form.save()
-
-    @cached_property
-    def confirm_texts_formset(self):
-        initial = [
-            {'text': text, 'ORDER': order}
-            for order, text in enumerate(self.object.settings.get('confirm_texts', as_type=LazyI18nStringList))
-        ]
-        return ConfirmTextFormset(
-            self.request.POST if self.request.method == 'POST' else None,
-            event=self.object,
-            prefix='confirm-texts',
-            initial=initial,
-        )
-
-    def save_confirm_texts_formset(self, obj):
-        obj.settings.confirm_texts = LazyI18nStringList(
-            form_data['text'].data
-            for form_data in sorted(
-                self.confirm_texts_formset.cleaned_data,
-                key=operator.itemgetter('ORDER'),
-            )
-            if not form_data.get('DELETE', False)
-        )
 
 
 class EventPlugins(
@@ -716,7 +684,8 @@ class InvoicePreview(EventPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         fname, ftype, fcontent = build_preview_invoice_pdf(request.event)
         resp = HttpResponse(fcontent, content_type=ftype)
-        resp['Content-Disposition'] = f'attachment; filename="{fname}"'
+        resp['Content-Disposition'] = f'inline; filename="{fname}"'
+        resp.xframe_options_exempt = True
         return resp
 
 
@@ -972,6 +941,8 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
         responses = register_ticket_outputs.send(self.request.event)
         for receiver, response in responses:
             provider = response(self.request.event)
+            if provider.identifier == 'badge':
+                continue
             if provider.is_enabled:
                 context['any_enabled'] = True
                 break
@@ -1049,6 +1020,8 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
         responses = register_ticket_outputs.send(self.request.event)
         for receiver, response in responses:
             provider = response(self.request.event)
+            if provider.identifier == 'badge':
+                continue
             provider.form = ProviderForm(
                 obj=self.request.event,
                 settingspref=f'ticketoutput_{provider.identifier}_',
@@ -1523,6 +1496,7 @@ class QuickSetupView(FormView):
 
     def get_initial(self):
         return {
+            'currency': self.request.event.currency,
             'waiting_list_enabled': True,
             'ticket_download': True,
             'require_registered_account_for_tickets': True,
@@ -1614,14 +1588,25 @@ class QuickSetupView(FormView):
                 )
                 plugins_active.append('eventyay.plugins.stripe')
 
+        if form.cleaned_data['currency'] != self.request.event.currency:
+            self.request.event.currency = form.cleaned_data['currency']
+            self.request.event.save(update_fields=['currency'])
+            self.request.event.log_action(
+                'eventyay.event.changed',
+                user=self.request.user,
+                data={'currency': form.cleaned_data['currency']},
+            )
+
         self.request.event.settings.show_quota_left = form.cleaned_data['show_quota_left']
         self.request.event.settings.waiting_list_enabled = form.cleaned_data['waiting_list_enabled']
         self.request.event.settings.attendee_names_required = form.cleaned_data['attendee_names_required']
-        self.request.event.log_action(
-            'eventyay.event.settings',
-            user=self.request.user,
-            data={k: self.request.event.settings.get(k) for k in form.changed_data},
-        )
+        settings_changed_data = [k for k in form.changed_data if k != 'currency']
+        if settings_changed_data:
+            self.request.event.log_action(
+                'eventyay.event.settings',
+                user=self.request.user,
+                data={k: self.request.event.settings.get(k) for k in settings_changed_data},
+            )
         self.request.event.settings.require_registered_account_for_tickets = form.cleaned_data[
             'require_registered_account_for_tickets'
         ]

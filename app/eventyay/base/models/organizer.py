@@ -440,6 +440,24 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     def can_change_settings(self):  # Legacy compatiblilty
         return self.can_change_event_settings
 
+    @property
+    def can_change_organiser_settings(self):
+        """British spelling alias used by Talk code and tests."""
+        return self.can_change_organizer_settings
+
+    @can_change_organiser_settings.setter
+    def can_change_organiser_settings(self, value):
+        self.can_change_organizer_settings = value
+
+    @property
+    def organiser(self):
+        """British spelling alias used by Talk code and tests."""
+        return self.organizer
+
+    @organiser.setter
+    def organiser(self, value):
+        self.organizer = value
+
     def has_permission(self, perm_name):
         try:
             if getattr(self, perm_name):
@@ -539,6 +557,15 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             'of proposal applicants, but can still review the rest of the proposal.'
         ),
     )
+    can_manage_social_media = models.BooleanField(
+        default=False,
+        verbose_name=_('Can manage social media settings'),
+        help_text=_(
+            'Allows members of this team to connect social media accounts, '
+            'manage draft posts, and automate social media publications.'
+        ),
+    )
+
 
     can_video_create_stages = models.BooleanField(
         default=False,
@@ -568,7 +595,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     can_video_manage_users = models.BooleanField(
         default=False,
         verbose_name=_('Video: Can message, ban, and silence users'),
-        help_text=_('Allows moderating users (ban, silence, reactivate) in Eventyay Video.'),
+        help_text=_(
+            'Allows moderating users (ban, silence, reactivate) and deleting chat messages.'
+        ),
     )
     can_video_manage_rooms = models.BooleanField(
         default=False,
