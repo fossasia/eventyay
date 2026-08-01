@@ -1129,7 +1129,6 @@ class InvoiceSettingsForm(SettingsForm):
         'invoice_additional_text',
         'invoice_footer_text',
         'invoice_eu_currencies',
-        'invoice_logo_image',
     ]
 
     invoice_generate_sales_channels = forms.MultipleChoiceField(
