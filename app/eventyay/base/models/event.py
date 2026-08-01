@@ -1989,6 +1989,15 @@ class Event(
         )
 
     @property
+    def organiser(self):
+        """British spelling alias used throughout Talk code and tests."""
+        return self.organizer
+
+    @organiser.setter
+    def organiser(self, value):
+        self.organizer = value
+
+    @property
     def has_component_testmode(self):
         return bool(self.testmode or self.talks_testmode)
 

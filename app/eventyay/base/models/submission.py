@@ -366,6 +366,7 @@ class Submission(GenerateCode, PretalxModel):
         reviews = '{base}reviews/'
         feedback = '{base}feedback/'
         toggle_featured = '{base}toggle_featured'
+        video_link = '{base}video'
         apply_pending = '{base}apply_pending'
         anonymise = '{base}anonymise/'
         comments = '{base}comments/'
@@ -420,6 +421,7 @@ class Submission(GenerateCode, PretalxModel):
             self.answers.filter(
                 Q(question__submission_types__in=[self.submission_type]) | Q(question__submission_types__isnull=True),
                 question__is_public=True,
+                question__active=True,
                 question__event=self.event,
                 question__target=TalkQuestionTarget.SUBMISSION,
             )

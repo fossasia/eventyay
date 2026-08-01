@@ -7,10 +7,11 @@ from django.utils.functional import cached_property
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.mixins import QuestionFieldsMixin
 from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
+from eventyay.common.session_video import exclude_session_video_from_cfp_questions
 
 
 class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
-    def __init__(self, *args, skip_limited_questions=False, **kwargs):
+    def __init__(self, *args, skip_limited_questions=False, include_session_video=False, **kwargs):
         self.event = kwargs.pop('event', None)
         self.submission = kwargs.pop('submission', None)
         self.speaker = kwargs.pop('speaker', None)
@@ -36,6 +37,9 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
             self.queryset = self.queryset.filter(target=self.target_type)
         else:
             self.queryset = self.queryset.exclude(target=TalkQuestionTarget.REVIEWER).order_by('-target', 'position')
+        if not include_session_video:
+            # Organiser-managed session videos are edited on orga pages / list dialog only.
+            self.queryset = exclude_session_video_from_cfp_questions(self.queryset)
         if skip_limited_questions:
             self.queryset = self.queryset.filter(
                 tracks__isnull=True,
