@@ -10,24 +10,17 @@
 <h1>{% translate "All Orders" %}</h1>
 <p>{% translate "This is a list of all orders across all events." %}</p>
 
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <h3 class="panel-title">{% translate "Filter" %}</h3>
+<form method="get" class="row filter-form">
+    <div class="col-md-5 col-sm-6 col-xs-12 form-group">
+        {% bootstrap_field filter_form.query layout='inline' %}
     </div>
-    <div class="panel-body">
-        <form method="get" class="row filter-form">
-            <div class="col-md-5 col-sm-6 col-xs-12 form-group">
-                {% bootstrap_field filter_form.query layout='inline' %}
-            </div>
-            <div class="col-md-3 col-sm-6 col-xs-12 form-group">
-                {% bootstrap_field filter_form.status layout='inline' %}
-            </div>
-            <div class="col-md-4 col-sm-6 col-xs-12 form-group">
-                {% include "eventyay_common/filter_actions.html" %}
-            </div>
-        </form>
+    <div class="col-md-3 col-sm-6 col-xs-12 form-group">
+        {% bootstrap_field filter_form.status layout='inline' %}
     </div>
-</div>
+    <div class="col-md-4 col-sm-6 col-xs-12 form-group">
+        {% include "eventyay_common/filter_actions.html" %}
+    </div>
+</form>
 
 <div data-ajax-results-region>
     {% if orders %}

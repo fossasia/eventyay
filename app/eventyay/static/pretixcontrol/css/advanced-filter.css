@@ -1,0 +1,207 @@
+.advanced-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.advanced-filter-search {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+.advanced-filter-search .form-control,
+.advanced-filter-search .btn {
+  height: 38px;
+}
+
+.advanced-filter-go-form {
+  flex: 0 0 auto;
+}
+
+.advanced-filter-search-form {
+  display: contents;
+}
+
+.advanced-filter-search-bar {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.advanced-filter-search-query-group {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+
+.advanced-filter-search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+
+.advanced-filter-badge {
+  margin-left: 4px;
+  vertical-align: baseline;
+}
+
+.advanced-filter-advanced {
+  flex: 0 0 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.advanced-filter-advanced.is-collapsed,
+.advanced-filter-go-form.is-collapsed {
+  display: none;
+}
+
+.advanced-filter-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 12px 16px;
+  align-items: end;
+}
+
+.advanced-filter-field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.advanced-filter-field .form-group {
+  margin-bottom: 0;
+}
+
+.advanced-filter-field .form-control,
+.advanced-filter-field select {
+  width: 100%;
+}
+
+/* Force date and time inputs to sit on the same row */
+.advanced-filter-field .splitdatetimerow {
+  display: block;
+}
+
+.advanced-filter-field .splitdatetimerow > .splitdatetimepart {
+  display: inline-block;
+  width: calc(50% - 4px);
+  vertical-align: top;
+}
+
+.advanced-filter-field .splitdatetimerow > .splitdatetimepart:first-of-type {
+  margin-right: 4px;
+}
+
+.advanced-filter-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.advanced-filter-go-form {
+  max-width: 320px;
+}
+
+.advanced-filter-go-form .control-label {
+  display: none;
+}
+
+.advanced-filter-search-code-group {
+  width: 100%;
+}
+
+.advanced-filter-post-form,
+.advanced-filter-batch-select-actions {
+  display: contents;
+}
+
+.advanced-filter-bulk-actions-menu {
+  margin: 0 0 10px;
+  min-width: 130px;
+  flex: 0 0 auto;
+}
+
+.advanced-filter-query-text,
+.advanced-filter-bulk-actions-menu .btn,
+.advanced-filter-bulk-action-hint-container,
+.advanced-filter-table-container,
+.advanced-filter-pagination-container,
+.pagination-container {
+  width: 100%;
+}
+
+.advanced-filter-query-text,
+.order-bulk-action-hint {
+  margin: 0;
+}
+
+.advanced-filter-bulk-actions-menu .btn {
+  padding: 6px 12px;
+  height: 34px;
+}
+
+.advanced-filter-bulk-action-hint-container {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.product-hidden {
+  display: none;
+}
+
+.order-product-list:hover .product-hidden {
+  display: list-item;
+}
+
+.order-product-list:hover .product-ellipsis {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .advanced-filter-search-actions {
+    width: 100%;
+  }
+
+  .advanced-filter-search-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .advanced-filter-search {
+    flex-direction: column;
+  }
+  
+  .advanced-filter-grid {
+    flex-wrap: wrap;
+  }
+}
+
+.orders-user-cell {
+  word-break: break-word;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 180px;
+}
+
+.orders-email-cell {
+  word-break: break-all;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 220px;
+}

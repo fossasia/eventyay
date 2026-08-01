@@ -7,7 +7,7 @@
 {% block title %}{% trans "Waiting list" %}{% endblock %}
 {% block custom_header %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/advanced-filter.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
 {% endblock %}
@@ -94,7 +94,7 @@
         </div>
     </div>
 
-    <div class="orders-filter-container waiting-list-filter">
+    <div class="advanced-filter-container waiting-list-filter">
         <form class="orders-filter-form" action="" method="get">
             <div class="orders-filter-form-group">
                 <select name="status" class="form-control">

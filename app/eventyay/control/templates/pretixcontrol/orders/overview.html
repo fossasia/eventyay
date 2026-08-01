@@ -7,7 +7,7 @@
 {% block custom_header %}
     {{ block.super }}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
-    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/advanced-filter.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
 {% endblock %}
@@ -28,7 +28,7 @@
             {% include "pretixcontrol/event/component_link.html" %}
         </div>
     </nav>
-    <div class="orders-filter-container">
+    <div class="advanced-filter-container">
         <form class="orders-filter-form" action="" method="get">
             {% if request.event.has_subevents %}
                 <div class="orders-filter-form-group">
