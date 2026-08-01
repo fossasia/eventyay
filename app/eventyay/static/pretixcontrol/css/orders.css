@@ -13,6 +13,11 @@
   width: 100%;
 }
 
+.orders-search .form-control,
+.orders-search .btn {
+  height: 38px;
+}
+
 .orders-go-form {
   flex: 0 0 auto;
 }
@@ -35,9 +40,6 @@
   min-width: 0;
 }
 
-.orders-search-query-group .form-control {
-  height: 38px;
-}
 
 .orders-search-actions {
   display: flex;
@@ -47,9 +49,6 @@
   flex: 0 0 auto;
 }
 
-.orders-search-actions .btn {
-  height: 38px;
-}
 
 .orders-filters-badge {
   margin-left: 4px;
