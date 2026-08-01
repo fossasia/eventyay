@@ -41,6 +41,12 @@
   min-width: 0;
 }
 
+.advanced-filter-search-query-group.input-group .form-group {
+  display: table-cell;
+  margin-bottom: 0;
+  vertical-align: middle;
+}
+
 
 .advanced-filter-search-actions {
   display: flex;

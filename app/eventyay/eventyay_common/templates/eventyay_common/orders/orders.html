@@ -17,17 +17,17 @@
     <div class="advanced-filter-search" data-advanced-filter-search>
         <form class="filter-form advanced-filter-search-form" action="" method="get">
             <div class="advanced-filter-search-bar">
-                <div class="advanced-filter-search-query-group" style="flex: 1 1 300px; min-width: 0;">
+                <div class="input-group advanced-filter-search-query-group">
                     {% bootstrap_field filter_form.event layout='inline' %}
-                </div>
-                <div class="advanced-filter-search-actions">
-                    <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
-                        <span class="fa fa-eraser" aria-hidden="true"></span>
-                        <span class="sr-only">{% trans "Clear filters" %}</span>
-                    </a>
-                    <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}">
-                        <span class="fa fa-filter" aria-hidden="true"></span>
-                    </button>
+                    <span class="input-group-btn">
+                        <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                            <span class="fa fa-eraser" aria-hidden="true"></span>
+                            <span class="sr-only">{% trans "Clear filters" %}</span>
+                        </a>
+                        <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}">
+                            <span class="fa fa-filter" aria-hidden="true"></span>
+                        </button>
+                    </span>
                 </div>
             </div>
         </form>
