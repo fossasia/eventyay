@@ -127,10 +127,12 @@ body.organizer-presale-page h2.content-header {
   padding: 0.625rem 0.875rem;
   font-size: 1rem;
   text-decoration: none;
+  color: var(--color-text, #333);
 }
 
 .organizer-export-dropdown .dropdown-item:hover {
   background: var(--color-grey-ultralight, #f5f5f5);
+  color: var(--color-text, #333);
 }
 
 /* Event list table */
