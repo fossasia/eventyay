@@ -57,7 +57,7 @@ def primary_font_kwargs():
     from eventyay.presale.style import SYSTEM_FONT_CHOICES, get_fonts
 
     choices = list(SYSTEM_FONT_CHOICES)
-    # Label must not be a plain dict/Mapping: Django mistakes that for an optgroup
+    # Label must not be a plain dict/Mapping: Django mistakes it for an optgroup
     choices += [(a, SimpleNamespace(title=a, data=v)) for a, v in get_fonts().items()]
     return {
         'choices': choices,
