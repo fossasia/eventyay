@@ -1208,7 +1208,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#488b219869411bf6754c6d8809d063d6eef6e5f1" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#5c2e78bddff3ce473375556e8c7ed143b1e2c5b7" }
 
 [[package]]
 name = "eventyay-unified"
