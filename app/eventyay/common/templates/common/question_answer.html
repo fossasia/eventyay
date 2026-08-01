@@ -10,6 +10,12 @@
     {% endif %}
 {% elif answer.question.variant == "boolean" %}
     {{ answer.boolean_answer|yesno }}
+{% elif answer.question.variant == "video" or answer.question.variant == "url" %}
+    {% if answer.answer %}
+        <a href="{{ answer.answer }}" target="_blank" rel="noopener noreferrer">{{ answer.answer }}</a>
+    {% else %}
+        {% translate "No response" %}
+    {% endif %}
 {% elif answer %}
     {{ answer.answer|rich_text }}
 {% else %}

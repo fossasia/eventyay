@@ -127,25 +127,31 @@ function initFormPageToggles() {
         const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
         const toggleInput = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
 
-        if (!requiredDropdown || !toggleInput) return;
+        // Some built-in fields (e.g. Session videos) only have an Active toggle.
+        if (!toggleInput) return;
 
         if (value === 'do_not_ask') {
             toggleInput.checked = false;
-            requiredDropdown.disabled = true;
-            requiredDropdown.style.opacity = '0.5';
+            if (requiredDropdown) {
+                // Keep permanently disabled dropdowns (organiser-only fields) as-is.
+                if (!requiredDropdown.hasAttribute('aria-readonly')) {
+                    requiredDropdown.disabled = true;
+                }
+                requiredDropdown.style.opacity = '0.5';
+            }
         } else {
             toggleInput.checked = true;
-            requiredDropdown.disabled = false;
-            requiredDropdown.style.opacity = '1';
-
-            // Update dropdown value and data-current attribute for color
-            requiredDropdown.value = value;
-            requiredDropdown.dataset.current = value;
-            
-            // Update wrapper data-current for Font Awesome icon color
-            const wrapper = requiredDropdown.closest('.required-status-wrapper');
-            if (wrapper) {
-                wrapper.dataset.current = value;
+            if (requiredDropdown) {
+                if (!requiredDropdown.hasAttribute('aria-readonly')) {
+                    requiredDropdown.disabled = false;
+                }
+                requiredDropdown.style.opacity = '1';
+                requiredDropdown.value = value;
+                requiredDropdown.dataset.current = value;
+                const wrapper = requiredDropdown.closest('.required-status-wrapper');
+                if (wrapper) {
+                    wrapper.dataset.current = value;
+                }
             }
         }
     }
@@ -181,10 +187,13 @@ function initFormPageToggles() {
             const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
             const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
             const hiddenInput = document.getElementById(fieldId);
+            if (!hiddenInput) return;
 
             if (this.checked) {
                 // Activate - restore previous state or default to 'optional'
-                let state = hiddenInput.dataset.previousState || requiredDropdown.value;
+                let state = hiddenInput.dataset.previousState
+                    || requiredDropdown?.value
+                    || hiddenInput.dataset.defaultState;
                 if (!REQUIRED_STATES_ARRAY.includes(state)) {
                     state = REQUIRED_STATES.OPTIONAL;
                 }
