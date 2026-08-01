@@ -596,8 +596,6 @@ class EventSettingsForm(SettingsForm):
         'waiting_list_phones_asked',
         'waiting_list_phones_required',
         'waiting_list_phones_explanation_text',
-        'max_products_per_order',
-        'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
         'redirect_to_checkout_directly',
@@ -767,8 +765,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'waiting_list_phones_asked',
         'waiting_list_phones_required',
         'waiting_list_phones_explanation_text',
-        'max_products_per_order',
-        'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
         'redirect_to_checkout_directly',
@@ -1773,25 +1769,3 @@ class ProductMetaPropertyForm(forms.ModelForm):
         widgets = {'default': forms.TextInput()}
 
 
-class ConfirmTextForm(I18nForm):
-    text = I18nFormField(
-        widget=I18nTextarea,
-        widget_kwargs={'attrs': {'rows': '2'}},
-    )
-
-
-class BaseConfirmTextFormSet(I18nFormSetMixin, forms.BaseFormSet):
-    def __init__(self, *args, **kwargs):
-        event = kwargs.pop('event', None)
-        if event:
-            kwargs['locales'] = event.settings.get('locales')
-        super().__init__(*args, **kwargs)
-
-
-ConfirmTextFormset = formset_factory(
-    ConfirmTextForm,
-    formset=BaseConfirmTextFormSet,
-    can_order=True,
-    can_delete=True,
-    extra=0,
-)

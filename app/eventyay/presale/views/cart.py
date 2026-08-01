@@ -39,6 +39,7 @@ from eventyay.base.services.cart import (
     error_messages,
     remove_cart_position,
 )
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.views import (
@@ -645,7 +646,7 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
                 )
                 v_avail = self.voucher.max_usages - self.voucher.redeemed - redeemed_in_carts.count()
                 if v_avail < 1 and not err:
-                    err = error_messages['voucher_redeemed_cart'] % self.request.event.settings.reservation_time
+                    err = error_messages['voucher_redeemed_cart'] % (GlobalSettingsObject().settings.get('reservation_time', default=30) or 30)
             except Voucher.DoesNotExist:
                 if self.request.event.organizer.accepted_gift_cards.filter(
                     secret__iexact=request.GET.get('voucher')

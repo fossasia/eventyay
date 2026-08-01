@@ -48,6 +48,7 @@ from eventyay.agenda.views.utils import (
     serialize_widget_schedule_data,
 )
 from eventyay.base.channels import get_all_sales_channels
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import (
     Order,
     ProductVariation,
@@ -276,7 +277,7 @@ def get_grouped_products(
         if get_all_sales_channels()[channel].unlimited_products_per_order:
             max_per_order = sys.maxsize
         else:
-            max_per_order = product.max_per_order or int(event.settings.max_products_per_order)
+            max_per_order = product.max_per_order or (int(GlobalSettingsObject().settings.get('max_products_per_order', default=0) or 0) or sys.maxsize)
         product.effective_max_per_order = None if max_per_order == sys.maxsize else max_per_order
 
         if product.hidden_if_available:
