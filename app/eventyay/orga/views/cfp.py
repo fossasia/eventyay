@@ -71,6 +71,7 @@ from eventyay.base.models import (
     SpeakerProfile,
     Availability,
 )
+from eventyay.common.session_video import exclude_session_video_from_cfp_questions
 from eventyay.talk_rules.submission import questions_for_user
 
 
@@ -150,7 +151,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context = super().get_context_data(**kwargs)
         context['generic_title'] = _('Forms')
         context['has_create_permission'] = True
-        context['question_list'] = (
+        context['question_list'] = exclude_session_video_from_cfp_questions(
             questions_for_user(self.request, self.request.event, self.request.user)
             .filter(is_imported=False)
             .annotate(answer_count=Count('answers'))
@@ -201,10 +202,12 @@ class CfPForms(EventPermissionRequired, TemplateView):
         sform = self.sform
 
         def get_field_data(targets, config_key):
-            questions = TalkQuestion.all_objects.filter(
-                event=self.request.event,
-                target__in=targets,
-                is_imported=False,
+            questions = exclude_session_video_from_cfp_questions(
+                TalkQuestion.all_objects.filter(
+                    event=self.request.event,
+                    target__in=targets,
+                    is_imported=False,
+                )
             ).annotate(answer_count=Count('answers'))
 
             question_map = {str(q.id): q for q in questions if f'question_{q.pk}' in sform.fields}
@@ -385,7 +388,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
         return kwargs
 
     def get_queryset(self):
-        return (
+        return exclude_session_video_from_cfp_questions(
             questions_for_user(self.request, self.request.event, self.request.user)
             .annotate(answer_count=Count('answers'))
             .order_by('position')

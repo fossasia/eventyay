@@ -47,6 +47,11 @@
                         </div>
                     </div>
                 {% endif %}
+                {% bootstrap_field sform.redirect_to_checkout_directly layout="control" %}
+                {% bootstrap_field form.presale_start layout="control" %}
+                {% bootstrap_field sform.presale_start_show_date layout="control" %}
+                {% bootstrap_field form.presale_end layout="control" %}
+                {% bootstrap_field sform.show_products_outside_presale_period layout="control" %}
             </fieldset>
             <fieldset>
                 <legend>{% trans "Order Modification" %}</legend>
@@ -132,20 +137,9 @@
                 </div>
 
                 {% bootstrap_field sform.checkout_success_text layout="control" %}
-                {% bootstrap_field sform.checkout_email_helptext layout="control" %}
-                {% bootstrap_field sform.checkout_phone_helptext layout="control" %}
                 {% bootstrap_field sform.banner_text layout="control" %}
                 {% bootstrap_field sform.banner_text_bottom layout="control" %}
                 {% bootstrap_field sform.event_info_text layout="control" %}
-            </fieldset>
-
-
-            <fieldset>
-                <legend>{% trans "Timeline" %}</legend>
-                {% bootstrap_field form.presale_start layout="control" %}
-                {% bootstrap_field sform.presale_start_show_date layout="control" %}
-                {% bootstrap_field form.presale_end layout="control" %}
-                {% bootstrap_field sform.show_products_outside_presale_period layout="control" %}
             </fieldset>
             <fieldset>
                 <legend>{% trans "Display" %}</legend>
@@ -170,7 +164,6 @@
                 <legend>{% trans "Cart" %}</legend>
                 {% bootstrap_field sform.reservation_time layout="control" %}
                 {% bootstrap_field sform.max_products_per_order layout="control" %}
-                {% bootstrap_field sform.redirect_to_checkout_directly layout="control" %}
             </fieldset>
             <fieldset>
                 <legend>{% trans "Waiting list" %}</legend>

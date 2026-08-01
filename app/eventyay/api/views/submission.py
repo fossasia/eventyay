@@ -318,7 +318,12 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     @cached_property
     def is_orga(self):
-        return self.event and self.request.user.has_perm('base.orga_list_submission', self.event)
+        if not self.event:
+            return False
+        if self.request.user.has_perm('base.orga_list_submission', self.event):
+            return True
+        eventpermset = getattr(self.request, 'eventpermset', set())
+        return 'can_change_submissions' in eventpermset
 
     def get_serializer(self, *args, **kwargs):
         if self.api_version == LEGACY:  # pragma: no cover
