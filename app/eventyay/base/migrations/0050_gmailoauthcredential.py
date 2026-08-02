@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0048_speakersociallink'),
+        ('base', '0049_alter_talkquestion_variant_add_video'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
