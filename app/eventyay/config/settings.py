@@ -1454,12 +1454,15 @@ EVENTYAY_ENVIRONMENT = os.getenv('EVENTYAY_ENVIRONMENT', 'unknown')
 SENTRY_DSN = conf.sentry_dsn
 if SENTRY_DSN:
     import sentry_sdk
+    from django.core.exceptions import PermissionDenied
+    from django.http import Http404
     from sentry_sdk.integrations.celery import CeleryIntegration
     from sentry_sdk.integrations.django import DjangoIntegration
 
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[CeleryIntegration(), DjangoIntegration()],
+        ignore_errors=[Http404, PermissionDenied],
         send_default_pii=False,
         debug=DEBUG,
         release=EVENTYAY_COMMIT if EVENTYAY_COMMIT != 'unknown' else None,

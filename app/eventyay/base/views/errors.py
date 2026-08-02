@@ -46,23 +46,10 @@ def csrf_failure(request, reason=''):
 
 @requires_csrf_token
 def page_not_found(request, exception):
-    exception_repr = exception.__class__.__name__
-    # Try to get an "interesting" exception message, if any (and not the ugly
-    # Resolver404 dictionary)
-    try:
-        message = exception.args[0]
-    except (AttributeError, IndexError):
-        pass
-    else:
-        if isinstance(message, (str, Promise)):
-            exception_repr = str(message)
-    context = {
-        'request_path': request.path,
-        'exception': exception_repr,
-    }
-    template = get_template('404.html')
-    body = template.render(context, request)
-    r = HttpResponseNotFound(body)
+    r = HttpResponseNotFound(
+        b'<html><body><h1>404 Not Found</h1></body></html>',
+        content_type='text/html',
+    )
     r.xframe_options_exempt = True
     return r
 

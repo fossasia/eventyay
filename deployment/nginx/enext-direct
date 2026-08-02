@@ -42,6 +42,16 @@ server {
 		set $cors_reject_preflight 0;
 	}
 
+	# Reject common automated scanner targets before reaching the application.
+	location ~* ^/(wp-admin|wp-login|phpmyadmin|xmlrpc\.php|\.env|\.git|\.well-known/security\.txt|admin\.php|shell\.php|config\.php) {
+		return 444;
+	}
+
+	# Reject paths with obvious attack signatures
+	location ~* \.(php|asp|aspx|jsp|cgi)$ {
+		return 444;
+	}
+
 	# WebSocket connections - route to daphne
 	location /ws/ {
 		proxy_pass http://127.0.0.1:8001;
@@ -72,6 +82,9 @@ server {
 
 	# Regular HTTP requests - route to gunicorn
 	location / {
+		limit_req zone=scanner_limit burst=20 nodelay;
+		limit_req_status 429;
+
 		add_header Referrer-Policy same-origin always;
 
 		if ($cors_reject_preflight = 1) {
