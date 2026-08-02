@@ -1,8 +1,10 @@
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
-from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import exceptions, pagination, viewsets
+from django.http import HttpResponse
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
+from rest_framework import exceptions, pagination, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
@@ -10,6 +12,9 @@ from eventyay.api.documentation import build_search_docs
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
 from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
+from eventyay.base.exporters.room_broadcast import (
+    VideoRoomBroadcastConfigurationExporter,
+)
 from eventyay.base.models.room import Room
 
 
@@ -63,6 +68,44 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             raise exceptions.ValidationError(
                 "You cannot delete a room that has been used in the schedule."
             )
+
+    @extend_schema(
+        summary="Export Video Room Broadcast Configuration",
+        parameters=[
+            OpenApiParameter(
+                "_format",
+                str,
+                OpenApiParameter.QUERY,
+                enum=["xlsx", "default", "csv-excel", "semicolon"],
+            )
+        ],
+        responses={200: bytes},
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="export-broadcast-configuration",
+    )
+    def export_broadcast_configuration(self, request, **kwargs):
+        if not (
+            "can_change_event_settings" in request.eventpermset
+            or "can_video_manage_rooms" in request.eventpermset
+        ):
+            raise PermissionDenied()
+
+        export_format = request.query_params.get("_format", "xlsx")
+        if export_format not in {"xlsx", "default", "csv-excel", "semicolon"}:
+            return Response(
+                {"_format": ["Invalid export format."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        filename, content_type, content = VideoRoomBroadcastConfigurationExporter(
+            self.event
+        ).render({"_format": export_format})
+        response = HttpResponse(content, content_type=content_type)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
     @extend_schema(
         summary="Get Current Stream",
