@@ -16,7 +16,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils import feedgenerator
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
 from urllib.parse import urlencode
@@ -47,6 +47,14 @@ from eventyay.base.services.talkimport import import_submissions
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.common.exceptions import SubmissionError
 from eventyay.common.forms.fields import SizeFileInput
+from eventyay.common.session_video import (
+    get_submission_video_url,
+    prefetch_submission_video_urls,
+    session_videos_enabled as event_session_videos_enabled,
+    set_submission_video_urls,
+    video_urls_from_prefetched_submission,
+)
+from eventyay.common.video_embed import parse_video_urls
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
@@ -422,6 +430,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
             'target': 'submission',
             'submission': submission,
             'event': self.request.event,
+            'include_session_video': False,
             'for_reviewers': (
                 not self.request.user.has_perm('base.orga_update_submission', self.request.event)
                 and self.request.user.has_perm('base.list_review', self.request.event)
@@ -436,6 +445,41 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @context
     def questions_form(self):
         return self._questions_form
+
+    @context
+    @cached_property
+    def session_videos_enabled(self):
+        return event_session_videos_enabled(self.request.event)
+
+    @context
+    @cached_property
+    def session_video_urls(self):
+        if not event_session_videos_enabled(self.request.event):
+            return []
+        submission = self.get_object()
+        if not submission:
+            return []
+        stored = get_submission_video_url(submission)
+        return [line for line in stored.splitlines() if line.strip()] if stored else []
+
+    @context
+    @cached_property
+    def session_video_urls_text(self):
+        return '\n'.join(self.session_video_urls)
+
+    def _save_session_video_urls(self, submission):
+        if not event_session_videos_enabled(self.request.event):
+            return True
+        if not self.request.user.has_perm('base.orga_update_submission', self.request.event):
+            return True
+        raw = self.request.POST.get('session_video_urls', '')
+        urls = [line.strip() for line in raw.splitlines() if line.strip()]
+        try:
+            set_submission_video_urls(submission, urls)
+        except ValueError as exc:
+            messages.error(self.request, str(exc))
+            return False
+        return True
 
     def save_formset(self, obj):
         if not self._formset.is_valid():
@@ -511,6 +555,8 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         form.instance.event = self.request.event
         form.save()
         self._questions_form.save()
+        if not self._save_session_video_urls(form.instance):
+            return self.get(self.request, *self.args, **self.kwargs)
 
         if created:
             if email := self.new_speaker_form.cleaned_data['email']:
@@ -629,6 +675,29 @@ class SubmissionList(EventPermissionRequired, BaseSubmissionList):
                 return len(self.limit_tracks) > 1
             return self.request.event.tracks.all().count() > 1
 
+    @context
+    def session_videos_enabled(self):
+        return event_session_videos_enabled(self.request.event)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if event_session_videos_enabled(self.request.event):
+            return prefetch_submission_video_urls(qs, self.request.event)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        submissions = ctx.get('submissions') or ctx.get('object_list') or []
+        enabled = event_session_videos_enabled(self.request.event)
+        for submission in submissions:
+            if enabled:
+                urls = video_urls_from_prefetched_submission(submission)
+            else:
+                urls = []
+            submission.session_video_urls = urls
+            submission.session_video_urls_json = json.dumps(urls)
+        return ctx
+
 
 class FeedbackList(SubmissionViewMixin, PaginationMixin, ListView):
     template_name = 'orga/submission/feedback_list.html'
@@ -665,6 +734,54 @@ class ToggleFeatured(SubmissionViewMixin, View):
         from eventyay.agenda.views.utils import clear_schedule_caches
         clear_schedule_caches(self.request.event, submission=self.object)
         return HttpResponse()
+
+
+class SubmissionVideoLink(SubmissionViewMixin, View):
+    """Create/update/clear canonical session video links from the overview table."""
+
+    permission_required = 'base.orga_update_submission'
+
+    def get_permission_object(self):
+        return self.object or self.request.event
+
+    def post(self, request, *args, **kwargs):
+        if not event_session_videos_enabled(self.request.event):
+            return JsonResponse(
+                {'ok': False, 'error': gettext('Session videos are disabled for this event.')},
+                status=403,
+            )
+        try:
+            payload = json.loads(request.body.decode() or '{}')
+        except json.JSONDecodeError:
+            payload = request.POST
+        if not hasattr(payload, 'get'):
+            payload = {}
+        if 'urls' in payload:
+            raw_urls = payload.get('urls') or []
+            if isinstance(raw_urls, str):
+                urls = parse_video_urls(raw_urls)
+            elif isinstance(raw_urls, list):
+                urls = [str(item).strip() for item in raw_urls if str(item).strip()]
+            else:
+                urls = []
+        else:
+            urls = parse_video_urls(payload.get('url', '') or '')
+        try:
+            stored = set_submission_video_urls(self.object, urls)
+        except ValueError as exc:
+            return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
+
+        from eventyay.agenda.views.utils import clear_schedule_caches
+
+        clear_schedule_caches(self.request.event, submission=self.object)
+        return JsonResponse(
+            {
+                'ok': True,
+                'urls': stored,
+                'url': '\n'.join(stored),
+                'has_video': bool(stored),
+            }
+        )
 
 
 class ApplyPending(SubmissionViewMixin, View):

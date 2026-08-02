@@ -60,7 +60,6 @@
             {% include "eventyay_common/includes/event_schedule_row.html" with date_from_form=form.date_from date_to_form=form.date_to timezone_form=sform.timezone %}
             {% bootstrap_field form.date_admission layout="control" %}
             {% include "pretixcontrol/event/fragment_geodata.html" %}
-            {% bootstrap_field sform.imprint_url layout="control" %}
             <div class="form-group">
                 <label class="col-md-3 control-label">
                     {% translate "Header links" %}

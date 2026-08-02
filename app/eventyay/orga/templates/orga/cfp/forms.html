@@ -602,6 +602,34 @@
                         </tr>
                         {% endwith %}
 
+                        {# Session videos — organiser-only; not asked on the speaker CfP #}
+                        {% with field=sform.cfp_ask_session_videos %}
+                        <tr dragsort-id="session_videos">
+                            <th>{% translate "Session videos" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="{% translate 'Toggle active state for Session videos' %}">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="{% translate 'Active toggle for Session videos' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true"
+                                    data-default-state="optional">
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
                         {# Do not record #}
                         {% with field=sform.cfp_ask_do_not_record %}
                         <tr dragsort-id="do_not_record">

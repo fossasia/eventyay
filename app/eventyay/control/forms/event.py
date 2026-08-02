@@ -578,7 +578,6 @@ class EventSettingsForm(SettingsForm):
     )
 
     auto_fields = [
-        'checkout_email_helptext',
         'presale_has_ended_text',
         'voucher_explanation_text',
         'checkout_success_text',
@@ -597,8 +596,6 @@ class EventSettingsForm(SettingsForm):
         'waiting_list_phones_asked',
         'waiting_list_phones_required',
         'waiting_list_phones_explanation_text',
-        'max_products_per_order',
-        'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
         'redirect_to_checkout_directly',
@@ -621,7 +618,6 @@ class EventSettingsForm(SettingsForm):
         'attendee_data_explanation_text',
         'order_phone_asked',
         'order_phone_required',
-        'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
         'order_email_asked',
@@ -751,7 +747,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
     """
 
     auto_fields = [
-        'checkout_email_helptext',
         'presale_has_ended_text',
         'voucher_explanation_text',
         'checkout_success_text',
@@ -770,8 +765,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'waiting_list_phones_asked',
         'waiting_list_phones_required',
         'waiting_list_phones_explanation_text',
-        'max_products_per_order',
-        'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
         'redirect_to_checkout_directly',
@@ -779,7 +772,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'event_list_type',
         'event_list_available_only',
         'event_info_text',
-        'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
         'allow_modifications',
@@ -821,6 +813,8 @@ class OrderFormSettingsForm(EventSettingsForm):
         'require_registered_account_for_tickets',
         'include_wikimedia_username',
         'checkout_show_copy_answers_button',
+        'checkout_email_helptext',
+        'checkout_phone_helptext',
     ]
 
     def __init__(self, *args, **kwargs):
@@ -1131,7 +1125,6 @@ class InvoiceSettingsForm(SettingsForm):
         'invoice_additional_text',
         'invoice_footer_text',
         'invoice_eu_currencies',
-        'invoice_logo_image',
     ]
 
     invoice_generate_sales_channels = forms.MultipleChoiceField(
@@ -1776,25 +1769,3 @@ class ProductMetaPropertyForm(forms.ModelForm):
         widgets = {'default': forms.TextInput()}
 
 
-class ConfirmTextForm(I18nForm):
-    text = I18nFormField(
-        widget=I18nTextarea,
-        widget_kwargs={'attrs': {'rows': '2'}},
-    )
-
-
-class BaseConfirmTextFormSet(I18nFormSetMixin, forms.BaseFormSet):
-    def __init__(self, *args, **kwargs):
-        event = kwargs.pop('event', None)
-        if event:
-            kwargs['locales'] = event.settings.get('locales')
-        super().__init__(*args, **kwargs)
-
-
-ConfirmTextFormset = formset_factory(
-    ConfirmTextForm,
-    formset=BaseConfirmTextFormSet,
-    can_order=True,
-    can_delete=True,
-    extra=0,
-)

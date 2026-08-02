@@ -231,7 +231,20 @@ export default {
 			return this.rooms.some(room => room.modules.length === 1 && room.modules[0].type === 'poster.native')
 		},
 	},
+	watch: {
+		show(show) {
+			if (show) return
+			this.closePrompts()
+		}
+	},
 	methods: {
+		closePrompts() {
+			this.showChannelBrowser = false
+			this.showStageCreationPrompt = false
+			this.showNetworkingCreationPrompt = false
+			this.showChatCreationPrompt = false
+			this.showDMCreationPrompt = false
+		},
 		getDMChannelName(channel) {
 			return channel.users.map(user => user.deleted ? this.$t('User:label:deleted') : user.profile.display_name).join(', ')
 		},

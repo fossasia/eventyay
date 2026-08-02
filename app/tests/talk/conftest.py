@@ -58,24 +58,24 @@ def organiser(instance_identifier):
         o = Organiser.objects.create(name="Super Organiser", slug="superorganiser")
         Team.objects.create(
             name="Organisers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
         )
         Team.objects.create(
             name="Organisers and reviewers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
             is_reviewer=True,
         )
-        Team.objects.create(name="Reviewers", organiser=o, is_reviewer=True)
+        Team.objects.create(name="Reviewers", organizer=o, is_reviewer=True)
     return o
 
 
@@ -90,24 +90,24 @@ def other_organiser(instance_identifier):
         o = Organiser.objects.create(name="Different Organiser", slug="diffo")
         Team.objects.create(
             name="Organisers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
         )
         Team.objects.create(
             name="Organisers and reviewers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
             is_reviewer=True,
         )
-        Team.objects.create(name="Reviewers", organiser=o, is_reviewer=True)
+        Team.objects.create(name="Reviewers", organizer=o, is_reviewer=True)
     return o
 
 
@@ -122,7 +122,7 @@ def event(organiser):
             email="orga@orga.org",
             date_from=today,
             date_to=today + dt.timedelta(days=3),
-            organiser=organiser,
+            organizer=organiser,
         )
         # exporting takes quite some time, so this speeds up our tests
         event.feature_flags["export_html_on_release"] = False
@@ -142,7 +142,7 @@ def other_event(other_organiser):
             email="orga2@orga.org",
             date_from=dt.date.today() + dt.timedelta(days=1),
             date_to=dt.date.today() + dt.timedelta(days=1),
-            organiser=other_organiser,
+            organizer=other_organiser,
         )
         event.feature_flags["export_html_on_release"] = False
         event.save()
@@ -163,7 +163,7 @@ def multilingual_event(organiser):
             date_from=today,
             date_to=today + dt.timedelta(days=3),
             locale_array="en,de",
-            organiser=organiser,
+            organizer=organiser,
         )
         event.feature_flags["export_html_on_release"] = False
         event.save()
@@ -607,10 +607,10 @@ def orga_user(event):
         user = User.objects.create_user(
             password="orgapassw0rd",
             email="orgauser@orga.org",
-            name="Orga User",
+            fullname="Orga User",
         )
         team = event.organiser.teams.filter(
-            can_change_organiser_settings=True, is_reviewer=False
+            can_change_organizer_settings=True, is_reviewer=False
         ).first()
         team.members.add(user)
         team.save()
@@ -659,7 +659,7 @@ def other_orga_user(event):
             password="orgapassw0rd", email="evilorgauser@orga.org"
         )
         team = event.organiser.teams.filter(
-            can_change_organiser_settings=True, is_reviewer=False
+            can_change_organizer_settings=True, is_reviewer=False
         ).first()
         team.members.add(user)
         team.save()
@@ -672,13 +672,13 @@ def review_user(organiser, event):
         user = User.objects.create_user(
             password="reviewpassw0rd",
             email="reviewuser@orga.org",
-            name="Review User",
+            fullname="Review User",
         )
         if not event.organiser:
             event.organiser = organiser
             event.save()
         team, _ = event.organiser.teams.get_or_create(
-            can_change_organiser_settings=False, is_reviewer=True
+            can_change_organizer_settings=False, is_reviewer=True
         )
         team.members.add(user)
         team.save()
@@ -692,7 +692,7 @@ def other_review_user(event):
             password="reviewpassw0rd", email="evilreviewuser@orga.org"
         )
         team = event.organiser.teams.filter(
-            can_change_organiser_settings=False, is_reviewer=True
+            can_change_organizer_settings=False, is_reviewer=True
         ).first()
         team.members.add(user)
         team.save()
@@ -706,7 +706,7 @@ def orga_reviewer_user(event):
             password="orgapassw0rd", email="multiuser@orga.org"
         )
         team = event.organiser.teams.filter(
-            can_change_organiser_settings=True, is_reviewer=True
+            can_change_organizer_settings=True, is_reviewer=True
         ).first()
         team.members.add(user)
         team.save()
@@ -904,7 +904,7 @@ def deleted_submission(event, submission_data, other_speaker):
 def invitation(event):
     with scope(event=event):
         team = event.organiser.teams.filter(
-            can_change_organiser_settings=True, is_reviewer=False
+            can_change_organizer_settings=True, is_reviewer=False
         ).first()
         return TeamInvite.objects.create(
             team=team, token="testtoken", email="some@example.com"
