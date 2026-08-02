@@ -66,79 +66,7 @@
                 <legend>{% trans "Texts" %}</legend>
                 {% bootstrap_field sform.presale_has_ended_text layout="control" %}
                 {% bootstrap_field sform.voucher_explanation_text layout="control" %}
-                <div class="form-group">
-                    <label class="col-md-3 control-label">
-                        {% trans "Confirmation text" %}<br>
-                        <span class="optional">{% trans "Optional" %}</span>
-                    </label>
-                    <div class="col-md-9">
-                        <div class="help-block">
-                            {% blocktrans trimmed %}
-                                These texts need to be confirmed by the user before a purchase is possible. You could
-                                for example link your terms of service here. If you use the Pages feature to publish
-                                your terms of service, you don't need this setting since you can configure it there.
-                            {% endblocktrans %}
-                        </div>
-                        <div class="formset" data-formset data-formset-prefix="{{ confirm_texts_formset.prefix }}">
-                            {{ confirm_texts_formset.management_form }}
-                            {% bootstrap_formset_errors confirm_texts_formset %}
-                            <div data-formset-body>
-                                {% for form in confirm_texts_formset %}
-                                    <div class="row formset-row" data-formset-form>
-                                        <div class="sr-only">
-                                            {{ form.id }}
-                                            {% bootstrap_field form.DELETE form_group_class="" layout="inline" %}
-                                            {% bootstrap_field form.ORDER form_group_class="" layout="inline" %}
-                                        </div>
-                                        <div class="col-md-10">
-                                            {% bootstrap_form_errors form %}
-                                            {% bootstrap_field form.text layout='inline' form_group_class="" %}
-                                        </div>
-                                        <div class="col-md-2 text-right flip text-nowrap">
-                                            <button type="button" class="btn" data-formset-move-up-button>
-                                                <i class="fa fa-arrow-up"></i></button>
-                                            <button type="button" class="btn" data-formset-move-down-button>
-                                                <i class="fa fa-arrow-down"></i></button>
-                                            <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
-                                                <i class="fa fa-trash"></i></button>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                            <script type="form-template" data-formset-empty-form>
-                                {% escapescript %}
-                                    <div class="row formset-row" data-formset-form>
-                                        <div class="sr-only">
-                                            {{ confirm_texts_formset.empty_form.id }}
-                                            {% bootstrap_field confirm_texts_formset.empty_form.DELETE form_group_class="" layout="inline" %}
-                                            {% bootstrap_field confirm_texts_formset.empty_form.ORDER form_group_class="" layout="inline" %}
-                                        </div>
-                                        <div class="col-md-10">
-                                            {% bootstrap_field confirm_texts_formset.empty_form.text layout='inline' form_group_class="" %}
-                                        </div>
-                                        <div class="col-md-2 text-right flip text-nowrap">
-
-                                            <button type="button" class="btn" data-formset-move-up-button>
-                                                <i class="fa fa-arrow-up"></i></button>
-                                            <button type="button" class="btn" data-formset-move-down-button>
-                                                <i class="fa fa-arrow-down"></i></button>
-                                            <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
-                                                <i class="fa fa-trash"></i></button>
-                                        </div>
-                                    </div>
-                                {% endescapescript %}
-                            </script>
-                            <p>
-                                <button type="button" class="btn btn-default" data-formset-add>
-                                    <i class="fa fa-plus"></i> {% trans "Add confirmation text" %}</button>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
                 {% bootstrap_field sform.checkout_success_text layout="control" %}
-                {% bootstrap_field sform.checkout_email_helptext layout="control" %}
-                {% bootstrap_field sform.checkout_phone_helptext layout="control" %}
                 {% bootstrap_field sform.banner_text layout="control" %}
                 {% bootstrap_field sform.banner_text_bottom layout="control" %}
                 {% bootstrap_field sform.event_info_text layout="control" %}
@@ -164,7 +92,6 @@
             </fieldset>
             <fieldset>
                 <legend>{% trans "Cart" %}</legend>
-                {% bootstrap_field sform.reservation_time layout="control" %}
                 {% bootstrap_field sform.max_products_per_order layout="control" %}
             </fieldset>
             <fieldset>

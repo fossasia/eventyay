@@ -28,6 +28,7 @@ from eventyay.common.social_links import serialize_social_link
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
+from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
 from eventyay.talk_rules.agenda import (
@@ -47,6 +48,7 @@ from .availability import Availability
 from .mail import MailTemplateRoles
 from .mixins import PretalxModel
 from .profile import SpeakerProfile
+from .question import TalkQuestionVariant
 from .slot import TalkSlot
 from .stream_schedule import StreamSchedule
 from .submission import Submission, SubmissionFavourite, SubmissionStates
@@ -989,16 +991,35 @@ class Schedule(PretalxModel):
                         for resource in talk.submission.resources.all()
                         if resource.url and (show_slides or resource.kind != 'slides')
                     ]
-                    talk_data['answers'] = [
-                        {
+                    talk_data['answers'] = []
+                    for answer in talk.submission.answers.all():
+                        if not answer.question or not answer.question.is_public:
+                            continue
+                        if answer.question.variant == TalkQuestionVariant.VIDEO:
+                            video_urls = parse_video_urls(answer.answer)
+                            if not video_urls and answer.answer_string:
+                                video_urls = [str(answer.answer_string)]
+                            for url in video_urls:
+                                answer_entry = {
+                                    'question': str(answer.question.question),
+                                    'answer': url,
+                                    'question_id': answer.question_id,
+                                    'options': [],
+                                    'variant': answer.question.variant,
+                                }
+                                embed = get_video_embed_info(url)
+                                if embed:
+                                    answer_entry['embed_url'] = embed['embed_url']
+                                talk_data['answers'].append(answer_entry)
+                            continue
+                        answer_entry = {
                             'question': str(answer.question.question),
                             'answer': str(answer.answer_string),
                             'question_id': answer.question_id,
                             'options': [str(opt.answer) for opt in answer.options.all()],
+                            'variant': answer.question.variant,
                         }
-                        for answer in talk.submission.answers.all()
-                        if answer.question and answer.question.is_public
-                    ]
+                        talk_data['answers'].append(answer_entry)
                     # Per-talk export URLs
                     code = talk.submission.code
                     ics_url = f'{base_url}talk/{code}.ics'
