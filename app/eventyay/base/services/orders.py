@@ -77,6 +77,7 @@ from eventyay.base.services.mail import SendMailException
 from eventyay.base.services.pricing import get_price
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.base.services.tasks import ProfiledEventTask, ProfiledTask
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import (
     allow_ticket_download,
     order_approved,
@@ -897,7 +898,7 @@ def _check_positions(
                     break
 
         if quota_ok:
-            cp.expires = now_dt + timedelta(minutes=event.settings.get('reservation_time', as_type=int))
+            cp.expires = now_dt + timedelta(minutes=int(GlobalSettingsObject().settings.get('reservation_time', default=30) or 30))
             cp.save()
         else:
             # Sorry, can't let you keep that!

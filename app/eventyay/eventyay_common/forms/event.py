@@ -33,7 +33,6 @@ class EventCommonSettingsForm(SettingsForm):
         'locales',
         'locale',
         'region',
-        'imprint_url',
         'contact_form_enabled',
         'contact_mail',
         'logo_image',
