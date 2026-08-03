@@ -1212,6 +1212,9 @@ $(function () {
                 $("<pre>").text(JSON.stringify(data.data, null, 2)).appendTo($a.parent());
             }
             $a.remove();
+        }).fail(function () {
+            $a.find(".fa").removeClass("fa-cog fa-spin").addClass("fa-eye");
+            alert(gettext('Could not load log details.'));
         });
         return false;
     });

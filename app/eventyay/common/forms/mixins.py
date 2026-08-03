@@ -244,6 +244,8 @@ class QuestionFieldsMixin:
                 initial_object=initial_object,
                 readonly=readonly,
             )
+            if field is None:
+                continue
             field.question = question
             field.answer = initial_object
 

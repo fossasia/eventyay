@@ -191,7 +191,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     class Meta:
         model = Event
         fields = [
-            'email',
             'custom_css',
         ]
         json_fields = {

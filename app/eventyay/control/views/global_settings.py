@@ -328,7 +328,10 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
 class LogDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         le = get_object_or_404(LogEntry, pk=request.GET.get('pk'))
-        return JsonResponse({'data': le.parsed_data})
+        data = le.parsed_data
+        if data is None:
+            data = {}
+        return JsonResponse({'data': data})
 
 
 class PaymentDetailView(AdministratorPermissionRequiredMixin, View):
