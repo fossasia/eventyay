@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import sys
+from datetime import timedelta
 from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
@@ -145,7 +146,7 @@ class BaseSettings(_BaseSettings):
     zoom_secret: str = ''
     control_secret: str = ''
     fetch_ecb_rates: bool = True
-    cache_tickets_hours: int = 24 * 7
+    cache_tickets_max_age: timedelta = timedelta(days=7)
 
     statsd_host: str = ''
     statsd_port: int = 8125
@@ -1554,8 +1555,7 @@ CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
 
 FETCH_ECB_RATES = conf.fetch_ecb_rates
 
-from datetime import timedelta as _timedelta
-CACHE_TICKETS_MAX_AGE = _timedelta(hours=conf.cache_tickets_hours)
+CACHE_TICKETS_MAX_AGE = conf.cache_tickets_max_age
 
 _GEOIP_PATH = Path(os.getenv('DJANGO_GEOIP_PATH', str(DATA_DIR / 'geoip')))
 GEOIP_PATH = _GEOIP_PATH
