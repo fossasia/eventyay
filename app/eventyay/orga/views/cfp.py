@@ -275,6 +275,42 @@ class CfPForms(EventPermissionRequired, TemplateView):
             'social_links': social_links_count,
         }
 
+        question_texts = {
+            'title': str(_('Proposal title')),
+            'submission_type': str(_('Session type')),
+            'track': str(_('Track')),
+            'content_locale': str(_('Language')),
+            'abstract': str(_('Abstract')),
+            'description': str(_('Description')),
+            'notes': str(_('Notes')),
+            'slot_count': str(_('Slot Count')),
+            'do_not_record': str(_('Don’t record this session.')),
+            'image': str(_('Session image')),
+            'slides': str(_('Slides')),
+            'duration': str(_('Duration')),
+            'biography': str(_('Biography')),
+            'availabilities': str(_('Availability')),
+            'additional_speaker': str(_('Additional Speaker')),
+            'fullname': str(_('Full name')),
+            'avatar': str(_('Profile picture')),
+            'avatar_source': str(_('Profile Picture Source')),
+            'avatar_license': str(_('Profile Picture License')),
+        }
+
+        try:
+            if event.cfp_flow:
+                config = event.cfp_flow.config
+                if isinstance(config, dict) and 'steps' in config:
+                    for step_data in config['steps'].values():
+                        if isinstance(step_data, dict) and 'fields' in step_data:
+                            for field_key, field_data in step_data['fields'].items():
+                                if isinstance(field_data, dict) and 'label' in field_data:
+                                    question_texts[field_key] = str(field_data['label'])
+        except Exception as e:
+            logger.warning('Failed to parse cfp_flow config for event %s: %s', event.id, e)
+
+        context['question_texts'] = question_texts
+
         return context
 
     @transaction.atomic
