@@ -211,9 +211,6 @@ class EventUpdateForm(I18nModelForm):
         if 'is_public' in self.fields:
             self.fields['is_public'].label = _('Show in search results and lists')
             self.fields['is_public'].help_text = _('If selected, this event will show up publicly on the list of events for your organizer account and in platform search results.')
-        if 'startpage_visible' in self.fields:
-            self.fields['startpage_visible'].label = _('Visible on start page')
-            self.fields['startpage_visible'].help_text = _('If selected, this event will be visible on the main page of the installation.')
 
         if self.domain_field_enabled:
             self.fields['domain'] = forms.CharField(
@@ -258,12 +255,6 @@ class EventUpdateForm(I18nModelForm):
             instance.cache.clear()
         return instance
 
-    def clean_startpage_visible(self):
-        val = self.cleaned_data.get('startpage_visible')
-        if not val:
-            self.instance.startpage_featured = False
-        return val
-
     def clean_slug(self):
         if self.change_slug:
             return self.cleaned_data['slug']
@@ -278,7 +269,6 @@ class EventUpdateForm(I18nModelForm):
             'date_to',
             'date_admission',
             'is_public',
-            'startpage_visible',
             'location',
             'geo_lat',
             'geo_lon',
