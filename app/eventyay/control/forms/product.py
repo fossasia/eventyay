@@ -1,3 +1,4 @@
+import os
 from decimal import Decimal
 from urllib.parse import urlencode
 
@@ -677,17 +678,22 @@ class ProductUpdateForm(I18nModelForm):
                     crop_y = int(float(crop_fields['y']))
                     crop_w = int(float(crop_fields['w']))
                     crop_h = int(float(crop_fields['h']))
-                    if crop_w > 0 and crop_h > 0:
+                    _MAX_CROP_DIM = 10000
+                    if (
+                        crop_x >= 0 and crop_y >= 0
+                        and 0 < crop_w <= _MAX_CROP_DIM and 0 < crop_h <= _MAX_CROP_DIM
+                    ):
                         crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
                 except (ValueError, TypeError):
                     crop_box = None
             try:
                 opt = optimize_uploaded_image(new_picture, 'picture', crop_box)
-                orig_name = os.path.splitext(new_picture.name)[0]
+                orig_name = os.path.splitext(new_picture.name or 'upload')[0]
                 opt.optimized.name = f'{orig_name}.{opt.optimized_ext}'
-                self.cleaned_data['picture'] = opt.optimized
-            except Exception:
-                pass
+                self.instance.picture = opt.optimized
+            except (ValueError, OSError):
+                if hasattr(new_picture, 'seek'):
+                    new_picture.seek(0)
         inst = super().save(*args, **kwargs)
         # Persist meta flag limit_one_per_user via ProductMetaProperty/Value
         pmp, _ = inst.event.product_meta_properties.get_or_create(name='limit_one_per_user', defaults={'default': ''})
