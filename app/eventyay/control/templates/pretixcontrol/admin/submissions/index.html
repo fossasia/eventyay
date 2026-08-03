@@ -33,47 +33,32 @@
                         </button>
                     </span>
                 </div>
+
+                <div class="advanced-filter-field" style="flex: 0 0 200px; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.event_query layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 0 0 200px; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.submission_type layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 0 0 200px; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.track layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 0 0 200px; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.tags layout='inline' %}
+                </div>
+                <div class="advanced-filter-field" style="flex: 0 0 200px; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.proposal_state layout='inline' %}
+                </div>
+
                 <div class="advanced-filter-search-actions">
+                    <button class="btn btn-primary" type="submit">
+                        <span class="fa fa-filter" aria-hidden="true"></span>
+                        {% trans "Filter" %}
+                    </button>
                     <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
                         <span class="fa fa-eraser" aria-hidden="true"></span>
                         <span class="sr-only">{% trans "Clear filters" %}</span>
                     </a>
-                    <button type="button"
-                            class="btn btn-default advanced-filter-toggle"
-                            data-advanced-filter-toggle
-                            aria-controls="advanced-filter-advanced"
-                            aria-expanded="{% if filter_form.is_filtered_by_advanced %}true{% else %}false{% endif %}">
-                        <span class="fa fa-sliders" aria-hidden="true"></span>
-                        {% trans "Filters" %}
-                    </button>
-                </div>
-            </div>
-            <div id="advanced-filter-advanced"
-                 class="advanced-filter-advanced{% if not filter_form.is_filtered_by_advanced %} is-collapsed{% endif %}"
-                 data-advanced-filter-advanced
-                 {% if not filter_form.is_filtered_by_advanced %}hidden{% endif %}>
-                <div class="advanced-filter-grid">
-                    <div class="advanced-filter-field">
-                        {% bootstrap_field filter_form.event_query %}
-                    </div>
-                    <div class="advanced-filter-field">
-                        {% bootstrap_field filter_form.submission_type %}
-                    </div>
-                    <div class="advanced-filter-field">
-                        {% bootstrap_field filter_form.track %}
-                    </div>
-                    <div class="advanced-filter-field">
-                        {% bootstrap_field filter_form.tags %}
-                    </div>
-                    <div class="advanced-filter-field">
-                        {% bootstrap_field filter_form.proposal_state %}
-                    </div>
-                </div>
-                <div class="advanced-filter-footer">
-                    <button class="btn btn-primary" type="submit">
-                        <span class="fa fa-filter" aria-hidden="true"></span>
-                        {% trans "Apply filters" %}
-                    </button>
                 </div>
             </div>
         </form>
@@ -122,6 +107,18 @@
                             </a>
                         </th>
                         <th>
+                            {% translate "Track" %}
+                            <a href="?{% url_replace request 'ordering' 'track' %}">
+                                <i class="fa fa-caret-up"></i>
+                            </a>
+                            <a href="?{% url_replace request 'ordering' '-track' %}">
+                                <i class="fa fa-caret-down"></i>
+                            </a>
+                        </th>
+                        <th>
+                            {% translate "Tags" %}
+                        </th>
+                        <th>
                             {% translate "Proposal State" %}
                             <a href="?{% url_replace request 'ordering' 'state' %}">
                                 <i class="fa fa-caret-up"></i>
@@ -137,7 +134,7 @@
                 <tbody>
                     {% for submission in submissions %}
                         <tr>
-                            <td>
+                            <td style="max-width: 300px; white-space: normal; word-wrap: break-word;">
                                 <strong>
                                     <a href="{% url 'orga:submissions.content' organizer=submission.organizer_slug event=submission.event_slug code=submission.code %}">
                                         {{ submission.title }}
@@ -159,6 +156,12 @@
                                 </a>
                             </td>
                             <td>{{ submission.session_type }}</td>
+                            <td>
+                                {{ submission.track }}
+                            </td>
+                            <td>
+                                {{ submission.tags }}
+                            </td>
                             <td>
                                 <span class="label 
                                     {% if submission.proposal_state == 'accepted' %}
