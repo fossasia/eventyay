@@ -29,12 +29,12 @@ from eventyay.base.models import (
     SubmissionStates,
 )
 from eventyay.control.permissions import OrganizerPermissionRequiredMixin
-from eventyay.control.views.organizer import OrganizerDetailViewMixin
+from eventyay.control.views.organizer_views.organizer_detail_view_mixin import OrganizerDetailViewMixin
 
 
 class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, TemplateView):
 
-    template_name = 'eventyay_common/organizers/analytics.html'
+    template_name = 'eventyay_common/organizers/dashboard.html'
     permission = None
 
     @staticmethod
@@ -166,6 +166,7 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
 
     def _get_follower_growth_data(self):
         current_timezone = timezone.get_current_timezone()
+        now = timezone.now()
         with scopes_disabled():
             followers = OrganizerFollower.objects.filter(organizer=self.request.organizer)
             weekly_rows = list(
@@ -183,37 +184,45 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
 
         follower_total = sum(row['count'] for row in weekly_rows)
 
+        today_local = timezone.localdate(now, timezone=current_timezone)
+        current_week_start = today_local - datetime.timedelta(days=today_local.weekday())
+        current_month_start = today_local.replace(day=1)
+
         weekly_by_date = {
             self._to_date(row['period']): row['count']
             for row in weekly_rows
             if row['period']
         }
+        min_week = min(weekly_by_date.keys()) if weekly_by_date else current_week_start
+        start_week = min(min_week, current_week_start - datetime.timedelta(weeks=11))
+
         followers_weekly = []
-        if weekly_by_date:
-            min_week = min(weekly_by_date.keys())
-            max_week = max(weekly_by_date.keys())
-            for d in dateutil.rrule.rrule(dateutil.rrule.WEEKLY, dtstart=min_week, until=max_week):
-                dt_key = d.date()
-                followers_weekly.append({
-                    'x': dt_key.isoformat(),
-                    'y': weekly_by_date.get(dt_key, 0)
-                })
+        for d in dateutil.rrule.rrule(dateutil.rrule.WEEKLY, dtstart=start_week, until=current_week_start):
+            dt_key = d.date()
+            followers_weekly.append({
+                'x': dt_key.isoformat(),
+                'y': weekly_by_date.get(dt_key, 0)
+            })
 
         monthly_by_date = {
             self._to_date(row['period']): row['count']
             for row in monthly_rows
             if row['period']
         }
+        min_month = min(monthly_by_date.keys()) if monthly_by_date else current_month_start
+        if current_month_start.month <= 11:
+            default_start_month = datetime.date(current_month_start.year - 1, current_month_start.month + 1, 1)
+        else:
+            default_start_month = datetime.date(current_month_start.year, 1, 1)
+        start_month = min(min_month, default_start_month)
+
         followers_monthly = []
-        if monthly_by_date:
-            min_month = min(monthly_by_date.keys())
-            max_month = max(monthly_by_date.keys())
-            for d in dateutil.rrule.rrule(dateutil.rrule.MONTHLY, dtstart=min_month, until=max_month):
-                dt_key = d.date()
-                followers_monthly.append({
-                    'x': dt_key.isoformat(),
-                    'y': monthly_by_date.get(dt_key, 0)
-                })
+        for d in dateutil.rrule.rrule(dateutil.rrule.MONTHLY, dtstart=start_month, until=current_month_start):
+            dt_key = d.date()
+            followers_monthly.append({
+                'x': dt_key.isoformat(),
+                'y': monthly_by_date.get(dt_key, 0)
+            })
 
         return {
             'follower_total': follower_total,
@@ -620,8 +629,10 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             d = d.date()
             checkins_over_time.append({'x': d.strftime('%Y-%m-%d'), 'y': by_day.get(d, 0)})
 
+        has_checkins = bool(timeline_qs) or any(stats.get('checked_in', 0) > 0 for stats in event_stats.values())
+
         return {
-            'show_checkins': True,
+            'show_checkins': has_checkins,
             'checkin_rate_json': json.dumps(checkin_rate),
             'checkins_over_time_json': json.dumps(checkins_over_time),
         }
