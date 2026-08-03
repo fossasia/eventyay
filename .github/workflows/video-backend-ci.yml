@@ -37,7 +37,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gettext
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -111,7 +111,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gettext
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -186,7 +186,7 @@ jobs:
           # postgresql-client provides pg_isready on ubuntu-latest (often already present, but keep it explicit).
           sudo apt-get install -y gettext redis-tools curl postgresql-client
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 

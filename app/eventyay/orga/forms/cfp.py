@@ -15,11 +15,17 @@ from eventyay.base.models import (
     SubmissionType,
     SubmitterAccessCode,
     TalkQuestion,
+    TalkQuestionTarget,
     TalkQuestionVariant,
     Track,
 )
 from eventyay.base.models.cfp import CfP, default_fields
 from eventyay.base.models.question import TalkQuestionRequired
+from eventyay.common.session_video import (
+    ensure_session_video_question,
+    exclude_session_video_from_cfp_questions,
+    get_session_video_question,
+)
 from eventyay.common.forms.fields import ColorField
 from eventyay.common.forms.mixins import I18nHelpText, JsonSubfieldMixin, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer
@@ -147,6 +153,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'do_not_record',
             'image',
             'slides',
+            'session_videos',
             'track',
             'duration',
             'slot_count',
@@ -222,7 +229,9 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
         # Add fields for custom questions
         # We use all_objects because we want to include reviewer questions and inactive questions
         # (so they can be re-activated)
-        for question in TalkQuestion.all_objects.filter(event=obj, is_imported=False):
+        for question in exclude_session_video_from_cfp_questions(
+            TalkQuestion.all_objects.filter(event=obj, is_imported=False)
+        ):
             field_name = f'question_{question.pk}'
             initial = 'do_not_ask'
             if question.active:
@@ -255,6 +264,36 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             required=False,
             initial=obj.settings.get('content_locales') or [],
         )
+
+        self.fields['cfp_ask_session_videos'].choices = [
+            ('do_not_ask', _('Do not ask')),
+            ('optional', _('Ask, but do not require input')),
+        ]
+        self._init_session_videos_from_question()
+
+    def _init_session_videos_from_question(self):
+        question = get_session_video_question(self.instance, create=False)
+        if not question:
+            return
+        self.fields['cfp_ask_session_videos'].initial = (
+            'optional' if question.active else 'do_not_ask'
+        )
+
+    def _save_session_videos_question(self):
+        visibility = self.cleaned_data.get('cfp_ask_session_videos', 'do_not_ask')
+
+        if visibility == 'do_not_ask':
+            question = get_session_video_question(self.instance, create=False)
+            if question:
+                question.active = False
+                question.is_public = False
+                question.save(update_fields=['active', 'is_public'])
+            return
+
+        question = ensure_session_video_question(self.instance)
+        question.active = True
+        question.is_public = True
+        question.save(update_fields=['active', 'is_public'])
 
     def clean(self):
         cleaned_data = super().clean()
@@ -305,8 +344,12 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             else:
                 self.instance.cfp.fields[key]['public'] = bool(self.cleaned_data.get(f'cfp_public_{key}'))
 
+        self._save_session_videos_question()
+
         # Save custom questions
-        for question in TalkQuestion.all_objects.filter(event=self.instance, is_imported=False):
+        for question in exclude_session_video_from_cfp_questions(
+            TalkQuestion.all_objects.filter(event=self.instance, is_imported=False)
+        ):
             field_name = f'question_{question.pk}'
             if field_name in self.cleaned_data:
                 value = self.cleaned_data[field_name]
@@ -378,6 +421,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         instance = kwargs.get('instance')
         super().__init__(*args, **kwargs)
+        self.event = event
         self.fields['question'].required = True
         self.fields['question'].label = _('Custom question')
         if not (instance and instance.pk):
@@ -395,6 +439,24 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             self.fields['submission_types'].queryset = event.submission_types.all()
         if instance and instance.pk and instance.answers.count() and not instance.is_public:
             self.fields['is_public'].disabled = True
+
+        # Session video is a single auto-managed field; organisers cannot create more.
+        is_existing_session_video = bool(
+            instance
+            and instance.pk
+            and instance.variant == TalkQuestionVariant.VIDEO
+            and instance.target == TalkQuestionTarget.SUBMISSION
+        )
+        if is_existing_session_video:
+            self.fields['variant'].disabled = True
+            if 'target' in self.fields:
+                self.fields['target'].disabled = True
+        else:
+            self.fields['variant'].choices = [
+                choice
+                for choice in self.fields['variant'].choices
+                if choice[0] != TalkQuestionVariant.VIDEO
+            ]
         
         self.fields['dependency_question'].queryset = TalkQuestion.all_objects.filter(
             event=event,
@@ -419,6 +481,16 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             )
         
         self.fields['dependency_values'].required = False
+
+    def clean_variant(self):
+        variant = self.cleaned_data.get('variant')
+        if variant != TalkQuestionVariant.VIDEO:
+            return variant
+        if self.instance and self.instance.pk and self.instance.variant == TalkQuestionVariant.VIDEO:
+            return variant
+        raise forms.ValidationError(
+            _('The session video field is created automatically. Only one video link field is allowed.')
+        )
 
     def clean_options(self):
         # read uploaded file, return list of strings or list of i18n strings
