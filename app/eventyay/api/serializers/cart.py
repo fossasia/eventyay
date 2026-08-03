@@ -13,6 +13,7 @@ from eventyay.api.serializers.order import (
     AnswerSerializer,
     InlineSeatSerializer,
 )
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import Quota, Seat
 from eventyay.base.models.orders import CartPosition
 
@@ -78,7 +79,7 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
 
         if not validated_data.get('expires'):
             validated_data['expires'] = now() + timedelta(
-                minutes=self.context['event'].settings.get('reservation_time', as_type=int)
+                minutes=int(GlobalSettingsObject().settings.get('reservation_time', default=30) or 30)
             )
 
         with self.context['event'].lock():
