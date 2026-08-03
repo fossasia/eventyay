@@ -311,6 +311,7 @@ _LIBRARY_APPS = (
     'oauth2_provider',
     'statici18n',
     'rest_framework',
+    'drf_spectacular',
     # Provide styling for forms used by DRF API docs.
     'crispy_forms',
     'allauth',
@@ -1177,9 +1178,7 @@ EMAIL_HOST_PASSWORD = conf.email_host_password
 EMAIL_USE_TLS = conf.email_use_tls
 # Ref: https://docs.djangoproject.com/en/5.2/ref/settings/#email-use-ssl
 EMAIL_USE_SSL = not conf.email_use_tls
-# TODO: `MAIL_FROM` is not a Django setting and seems to be duplicated with `DEFAULT_FROM_EMAIL`.
-# Also, DEFAULT_FROM_EMAIL and SERVER_EMAIL are for different purposes. They should not be the same.
-MAIL_FROM = SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
+SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
 
 # TODO: Remove (why we need to use different values from default?)
 SESSION_COOKIE_NAME = 'eventyay_session'
@@ -1336,6 +1335,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'eventyay.api.auth.permission.EventPermission',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
     'PAGE_SIZE': 50,
@@ -1347,6 +1347,22 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'UNICODE_JSON': False,
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'eventyay API',
+    'DESCRIPTION': 'API for managing eventyay organizers and events.',
+    'VERSION': 'v1',
+    'DEFAULT_GENERATOR_CLASS': 'eventyay.api.schema.EventyaySchemaGenerator',
+    'SCHEMA_PATH_PREFIX': r'/api/v1',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'PREPROCESSING_HOOKS': [
+        'eventyay.api.documentation.exclude_unmigrated_plugin_endpoints',
+    ],
+    'POSTPROCESSING_HOOKS': [
+        'drf_spectacular.hooks.postprocess_schema_enums',
+        'eventyay.api.documentation.postprocess_schema',
+    ],
 }
 
 STATIC_URL = '/static/'

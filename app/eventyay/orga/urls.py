@@ -312,6 +312,11 @@ urlpatterns = [
                                 name='submissions.toggle_featured',
                             ),
                             path(
+                                'video',
+                                submission.SubmissionVideoLink.as_view(),
+                                name='submissions.video',
+                            ),
+                            path(
                                 'apply_pending',
                                 submission.ApplyPending.as_view(),
                                 name='submissions.apply_pending',

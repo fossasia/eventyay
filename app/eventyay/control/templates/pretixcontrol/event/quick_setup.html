@@ -7,18 +7,17 @@
     {% if request.method == "GET" %}
         <div class="quick-setup-step">
             <div class="quick-icon">
-                <span class="fa fa-fw fa-check-circle text-success"></span>
+                <span class="fa fa-fw fa-magic text-muted"></span>
             </div>
             <div class="quick-content">
 
-                <h2>{% trans "Congratulations!" %}</h2>
+                <h2>{% trans "Ticketing Quickstart" %}</h2>
                 <p>
-                    <strong>{% trans "You just created an event!" %}</strong>
+                    {% trans "Create your first ticket products here." %}
                 </p>
                 <p>
                     {% blocktrans trimmed %}
-                        You can scroll down and create your first ticket products quickly, or you can use the navigation
-                        on the left to modify the settings of your event in much more detail.
+                        You can configure more ticket, product, payment, tax, order form, and check-in options from the menu on the left.
                     {% endblocktrans %}
                 </p>
                 <div class="clearfix"></div>
@@ -28,6 +27,21 @@
 
     <form action="" method="post" class="form-horizontal">
         {% csrf_token %}
+        <fieldset class="quick-setup-step">
+            <div class="quick-icon">
+                <span class="fa fa-fw fa-money text-muted"></span>
+            </div>
+            <div class="quick-content">
+                <legend>{% trans "Event currency" %}</legend>
+                <p class="bigger">
+                    {% blocktrans trimmed %}
+                        Choose the currency used for ticket prices, orders, invoices, and payment configuration.
+                    {% endblocktrans %}
+                </p>
+                {% bootstrap_field form.currency layout="control" label_class="sr-only" field_class="col-md-12" %}
+                <p>&nbsp;</p>
+            </div>
+        </fieldset>
         <fieldset class="quick-setup-step">
             <div class="quick-icon">
                 <span class="fa fa-fw fa-ticket text-muted"></span>
@@ -49,6 +63,7 @@
                         </div>
                     </div>
                     <div data-formset-body id="ticket-type-formset">
+                        {% with currency_code=form.currency.value|default:request.event.currency %}
                         {% for iform in formset %}
                             <div class="row question-option-row" data-formset-form>
                                 <div class="sr-only">
@@ -60,7 +75,7 @@
                                     {% bootstrap_field iform.name layout='inline' form_group_class="" %}
                                 </div>
                                 <div class="col-md-3">
-                                    {% bootstrap_field iform.default_price addon_after=request.event.currency layout='inline' form_group_class="" %}
+                                    {% bootstrap_field iform.default_price addon_after=currency_code layout='inline' form_group_class="" %}
                                 </div>
                                 <div class="col-md-2">
                                     {% bootstrap_field iform.quota layout='inline' form_group_class="" %}
@@ -71,9 +86,11 @@
                                 </div>
                             </div>
                         {% endfor %}
+                        {% endwith %}
                     </div>
                     <script type="form-template" data-formset-empty-form>
                         {% escapescript %}
+                            {% with currency_code=form.currency.value|default:request.event.currency %}
                             <div class="row question-option-row" data-formset-form>
                                 <div class="sr-only">
                                     {{ formset.empty_form.id }}
@@ -83,7 +100,7 @@
                                     {% bootstrap_field formset.empty_form.name layout='inline' form_group_class="" %}
                                 </div>
                                 <div class="col-md-3">
-                                    {% bootstrap_field formset.empty_form.default_price addon_after=request.event.currency layout='inline' form_group_class="" %}
+                                    {% bootstrap_field formset.empty_form.default_price addon_after=currency_code layout='inline' form_group_class="" %}
                                 </div>
                                 <div class="col-md-2">
                                     {% bootstrap_field formset.empty_form.quota layout='inline' form_group_class="" %}
@@ -93,6 +110,7 @@
                                         <i class="fa fa-trash"></i></button>
                                 </div>
                             </div>
+                            {% endwith %}
                         {% endescapescript %}
                     </script>
                     <div class="row question-option-row helper-width-100">

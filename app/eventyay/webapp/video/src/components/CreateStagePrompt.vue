@@ -21,7 +21,9 @@ prompt.c-create-stage-prompt(@close="$emit('close')")
 							.radio-copy
 								.ui-radio-title {{ option.label }}
 				bunt-input(v-if="streamSource === 'hls'", name="url", :label="$t('CreateStagePrompt:url:label')", icon="link", placeholder="https://example.com/stream.m3u8", v-model="url", :validation="v$.url")
-				bunt-input(v-else-if="streamSource === 'youtube'", name="youtubeId", label="YouTube Video ID or URL", icon="youtube", placeholder="https://www.youtube.com/watch?v=...", v-model="youtubeId", :validation="v$.youtubeId", @blur="normalizeYoutubeId")
+				template(v-else-if="streamSource === 'youtube'")
+					bunt-input(name="youtubeId", label="YouTube Video ID or URL", icon="youtube", placeholder="https://www.youtube.com/watch?v=...", v-model="youtubeId", :validation="v$.youtubeId", @blur="normalizeYoutubeId")
+					bunt-checkbox(name="start-muted", v-model="startMuted", label="Start muted")
 				template(v-else-if="streamSource === 'iframe'")
 					bunt-input(name="url", label="Iframe player URL", icon="link", placeholder="https://example.com/player", v-model="url", :validation="v$.url")
 					.field-hint {{ IFRAME_PROVIDER_HELP_TEXT }}
@@ -53,6 +55,7 @@ export default {
 			streamSource: 'hls',
 			url: '',
 			youtubeId: '',
+			startMuted: true,
 			description: '',
 			loading: false,
 			error: null,
@@ -99,6 +102,7 @@ export default {
 			}
 			if (this.streamSource === 'youtube') {
 				config.ytid = normalizeYoutubeVideoId(this.youtubeId) || this.youtubeId
+				if (this.startMuted) config.startMuted = true
 				return { type: 'livestream.youtube', config }
 			}
 			if (this.streamSource === 'iframe') {

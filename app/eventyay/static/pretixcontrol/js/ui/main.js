@@ -1212,6 +1212,9 @@ $(function () {
                 $("<pre>").text(JSON.stringify(data.data, null, 2)).appendTo($a.parent());
             }
             $a.remove();
+        }).fail(function () {
+            $a.find(".fa").removeClass("fa-cog fa-spin").addClass("fa-eye");
+            alert(gettext('Could not load log details.'));
         });
         return false;
     });
@@ -1269,7 +1272,12 @@ $(function () {
 });
 
 $(function () {
-   $('form[method=post]').filter(function () {
+    $('form[method=post]').filter(function () {
        return $(this).find("button:not([type=button]), input[type=submit]").length > 0;
-   }).areYouSure( {'message': gettext('You have unsaved changes!')});
+    }).areYouSure( {'message': gettext('You have unsaved changes!')});
+
+    // Move preview modal to body to avoid z-index and nesting issues
+    if ($("#preview-modal").length) {
+        $("#preview-modal").appendTo("body");
+    }
 });
