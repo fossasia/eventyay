@@ -38,7 +38,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gettext
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
