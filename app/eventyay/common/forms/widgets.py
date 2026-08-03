@@ -102,7 +102,9 @@ class ImageInput(ClearableBasenameFileInput):
 
     def get_context(self, name, value, attrs):
         ctx = super().get_context(name, value, attrs)
-        ctx['widget']['alt_text'] = (self.attrs or {}).get('alt') or _('Image preview')
+        widget_attrs = ctx['widget'].get('attrs') or {}
+        alt = widget_attrs.pop('alt', None) or (self.attrs or {}).get('alt') or _('Image preview')
+        ctx['widget']['alt_text'] = alt
         return ctx
 
 
