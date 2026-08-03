@@ -1,6 +1,9 @@
 from datetime import datetime
+from functools import reduce
+from operator import or_
 
 from django.db.models import Q
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.exporter import ListExporter
@@ -49,7 +52,7 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
     def get_filename(self):
         return f"{self.event.slug}-video-room-broadcast-configuration"
 
-    @property
+    @cached_property
     def headers(self):
         return [
             "row_type",
@@ -94,14 +97,16 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
                 yield from self._stream_schedule_rows(room_data, stream_schedule)
 
     def _rooms(self):
+        module_filter = reduce(
+            or_,
+            (
+                Q(module_config__contains=[{"type": module_type}])
+                for module_type in BROADCAST_MODULE_TYPES
+            ),
+        )
         return (
             self.event.rooms.filter(deleted=False)
-            .filter(
-                Q(module_config__contains=[{"type": "livestream.native"}])
-                | Q(module_config__contains=[{"type": "livestream.youtube"}])
-                | Q(module_config__contains=[{"type": "livestream.iframe"}])
-                | Q(stream_schedules__isnull=False)
-            )
+            .filter(module_filter | Q(stream_schedules__isnull=False))
             .prefetch_related("stream_schedules")
             .distinct()
             .order_by("position", "id")
