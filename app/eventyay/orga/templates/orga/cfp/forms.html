@@ -136,7 +136,10 @@
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' organizer=request.event.organizer.slug event=request.event.slug %}">
                         <tr dragsort-id="title">
-                            <th>{% translate "Title" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Title" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.title }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Title is always active' %}">
                                     <input type="checkbox" checked disabled aria-label="{% translate 'Title always active' %}">
@@ -170,7 +173,10 @@
 
                         {# Session Type #}
                         <tr dragsort-id="submission_type">
-                            <th>{% translate "Session type" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Session type" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.submission_type }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Session type is always active' %}">
                                     <input type="checkbox" checked disabled aria-label="{% translate 'Session type always active' %}">
@@ -205,7 +211,10 @@
                         {# Abstract #}
                         {% with field=sform.cfp_ask_abstract %}
                         <tr dragsort-id="abstract">
-                            <th>{% translate "Abstract" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Abstract" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.abstract }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Abstract">
@@ -248,7 +257,10 @@
                         {# Description #}
                         {% with field=sform.cfp_ask_description %}
                         <tr dragsort-id="description">
-                            <th>{% translate "Description" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Description" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.description }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Description">
@@ -291,7 +303,10 @@
                         {# Notes #}
                         {% with field=sform.cfp_ask_notes %}
                         <tr dragsort-id="notes">
-                            <th>{% translate "Notes" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Notes" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.notes }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Notes">
@@ -328,7 +343,10 @@
                         {# Track #}
                         {% with field=sform.cfp_ask_track %}
                         <tr dragsort-id="track">
-                            <th>{% translate "Track" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Track" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.track }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Track">
@@ -370,7 +388,10 @@
                         {# Duration #}
                         {% with field=sform.cfp_ask_duration %}
                         <tr dragsort-id="duration">
-                            <th>{% translate "Duration" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Duration" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.duration }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Duration">
@@ -412,7 +433,10 @@
                         {# Slot Count #}
                         {% with field=sform.cfp_ask_slot_count %}
                         <tr dragsort-id="slot_count">
-                            <th>{% translate "Slot Count" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Slot Count" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.slot_count }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="{% translate 'Toggle active state for Slot Count' %}">
@@ -451,7 +475,7 @@
                         {% if field %}
                         <tr dragsort-id="content_locale">
                             <th>
-                                <span class="content-locale-label">
+                                <span class="content-locale-label font-weight-bold">
                                     {% translate "Content Locale" %}
                                     <span class="cfp-inline-help-wrapper">
                                         <button type="button" class="btn btn-link btn-xs p-0 cfp-inline-help-toggle"
@@ -464,6 +488,7 @@
                                         </span>
                                     </span>
                                 </span>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.content_locale }}</div>
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -512,7 +537,10 @@
                         {# Image #}
                         {% with field=sform.cfp_ask_image %}
                         <tr dragsort-id="image">
-                            <th>{% translate "Session image" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Session image" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.image }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Session image">
@@ -555,7 +583,10 @@
                         {# Slides #}
                         {% with field=sform.cfp_ask_slides %}
                         <tr dragsort-id="slides">
-                            <th>{% translate "Slides" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Slides" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.slides }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="{% translate 'Toggle active state for Slides' %}">
@@ -626,7 +657,10 @@
                         {# Do not record #}
                         {% with field=sform.cfp_ask_do_not_record %}
                         <tr dragsort-id="do_not_record">
-                            <th>{% translate "Recording opt-out" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Recording opt-out" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.do_not_record }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Recording opt-out">
@@ -761,7 +795,10 @@
                         {# Full Name #}
                         {% with field=sform.cfp_ask_fullname %}
                         <tr dragsort-id="fullname">
-                            <th>{% translate "Full Name" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Full Name" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.fullname }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Full Name is always active' %}">
                                     <input type="checkbox" checked disabled aria-label="{% translate 'Full Name always active' %}">
@@ -800,7 +837,10 @@
                         {# Biography #}
                         {% with field=sform.cfp_ask_biography %}
                         <tr dragsort-id="biography">
-                            <th>{% translate "Biography" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Biography" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.biography }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Biography">
@@ -844,7 +884,10 @@
                         {# Avatar #}
                         {% with field=sform.cfp_ask_avatar %}
                         <tr dragsort-id="avatar">
-                            <th>{% translate "Profile picture" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Profile picture" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.avatar }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Profile picture">
@@ -891,7 +934,10 @@
                         {# Avatar Source #}
                         {% with field=sform.cfp_ask_avatar_source %}
                         <tr dragsort-id="avatar_source">
-                            <th>{% translate "Profile picture source" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Profile picture source" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.avatar_source }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Profile picture source">
@@ -928,7 +974,10 @@
                         {# Avatar License #}
                         {% with field=sform.cfp_ask_avatar_license %}
                         <tr dragsort-id="avatar_license">
-                            <th>{% translate "Profile picture license" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Profile picture license" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.avatar_license }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Profile picture license">
@@ -965,7 +1014,10 @@
                         {# Availability #}
                         {% with field=sform.cfp_ask_availabilities %}
                         <tr dragsort-id="availabilities">
-                            <th>{% translate "Availability" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Availability" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.availabilities }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Availability">
@@ -1002,7 +1054,10 @@
                         {# Additional Speaker #}
                         {% with field=sform.cfp_ask_additional_speaker %}
                         <tr dragsort-id="additional_speaker">
-                            <th>{% translate "Additional speakers" %}</th>
+                            <th>
+                                <div class="font-weight-bold">{% translate "Additional speakers" %}</div>
+                                <div class="small text-muted font-weight-normal mt-1">{{ question_texts.additional_speaker }}</div>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Additional speakers">
