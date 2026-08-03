@@ -50,6 +50,11 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
         messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
         return super().form_invalid(form)
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
+        return ctx
+
     def get_success_url(self):
         return reverse('eventyay_admin:admin.global.settings')
 
@@ -167,77 +172,98 @@ class MessageView(AdministratorPermissionRequiredMixin, TemplateView):
 
 class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
     """
-    Tests the current system-level email configuration.
+    Tests the current system-level email configuration without saving settings.
     """
+
+    EMAIL_TAB_HASH = '#tab3'
+
+    def _respond(self, request, level, message):
+        """Redirect back to the email tab with inline feedback. Does not save settings."""
+        request.session['admin_test_email_feedback'] = {
+            'level': level,
+            'message': str(message),
+        }
+        return redirect(reverse('eventyay_admin:admin.global.settings') + self.EMAIL_TAB_HASH)
 
     def post(self, request, *args, **kwargs):
         recipients_raw = request.POST.get('test_email', '').strip()
         recipients = [r.strip() for r in recipients_raw.split(',') if r.strip()]
 
         if not recipients:
-            messages.error(request, _('Please enter at least one valid recipient email address.'))
-            return redirect(reverse('eventyay_admin:admin.global.settings'))
+            return self._respond(
+                request,
+                'error',
+                _('Please enter at least one valid recipient email address.'),
+            )
 
         for recipient in recipients:
             try:
                 validate_email(recipient)
             except ValidationError:
-                messages.error(
+                return self._respond(
                     request,
-                    _('Please enter a valid recipient email address ("%(email)s" is invalid).') % {'email': recipient}
+                    'error',
+                    _('Please enter a valid recipient email address ("%(email)s" is invalid).')
+                    % {'email': recipient},
                 )
-                return redirect(reverse('eventyay_admin:admin.global.settings'))
 
-        # ── 1. Resolve the sender address ────────────────────────────────────
         gs = GlobalSettingsObject()
         raw_from = gs.settings.get('mail_from') or getattr(settings, 'DEFAULT_FROM_EMAIL', '')
         mail_from = str(raw_from).strip() if raw_from else ''
 
         if not mail_from:
-            messages.error(
+            return self._respond(
                 request,
+                'error',
                 _(
                     'No sender address is configured. '
                     'Please set the "Sender address" field in the Email tab and save first.'
                 ),
             )
-            return redirect(reverse('eventyay_admin:admin.global.settings'))
 
         try:
             validate_email(mail_from)
         except ValidationError:
-            messages.error(
+            return self._respond(
                 request,
+                'error',
                 _(
                     'The sender address "%(addr)s" is not a valid email address. '
                     'Please correct the "Sender address" field and save again.'
-                ) % {'addr': mail_from},
+                )
+                % {'addr': mail_from},
             )
-            return redirect(reverse('eventyay_admin:admin.global.settings'))
 
         try:
             mail_from.encode('ascii')
         except UnicodeEncodeError:
-            messages.error(
+            return self._respond(
                 request,
+                'error',
                 _(
                     'The sender address "%(addr)s" contains non-ASCII characters '
                     'which are not allowed in SMTP. '
                     'Please correct the "Sender address" field and save again.'
-                ) % {'addr': mail_from},
+                )
+                % {'addr': mail_from},
             )
-            return redirect(reverse('eventyay_admin:admin.global.settings'))
 
         try:
             if gs.settings.email_vendor == 'sendgrid':
                 if not gs.settings.send_grid_api_key:
-                    messages.error(request, _('SendGrid API key is missing. Please configure it and save.'))
-                    return redirect(reverse('eventyay_admin:admin.global.settings'))
+                    return self._respond(
+                        request,
+                        'error',
+                        _('SendGrid API key is missing. Please configure it and save.'),
+                    )
                 backend = SendGridEmail(api_key=gs.settings.send_grid_api_key)
             elif gs.settings.email_vendor == 'smtp':
                 if not gs.settings.smtp_host or not gs.settings.smtp_port:
-                    messages.error(request, _('SMTP host or port is missing. Please configure them and save.'))
-                    return redirect(reverse('eventyay_admin:admin.global.settings'))
+                    return self._respond(
+                        request,
+                        'error',
+                        _('SMTP host or port is missing. Please configure them and save.'),
+                    )
                 backend = CustomSMTPBackend(
                     host=gs.settings.smtp_host,
                     port=gs.settings.smtp_port,
@@ -260,14 +286,14 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
             )
             email.send(fail_silently=False)
         except UnicodeEncodeError:
-            # The stored SMTP password, username, or recipient address contains a non-ASCII character
-            # (e.g. a no-break space copied from a Gmail App Password display).
+            # Stored credentials or recipient may contain non-ASCII (e.g. NBSP from clipboard).
             logger.warning(
                 'Admin SMTP test failed — credentials or recipient contain non-ASCII characters (from=%s)',
                 mail_from,
             )
-            messages.error(
+            return self._respond(
                 request,
+                'error',
                 _(
                     'SMTP authentication or email sending failed because the password, '
                     'username, or recipient address contains an invisible non-ASCII '
@@ -277,27 +303,27 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
             )
         except HTTPError as e:
             logger.exception('Admin SendGrid test failed (from=%s)', mail_from)
-            messages.error(
+            return self._respond(
                 request,
+                'error',
                 _('SendGrid test email failed to connect or send. HTTP Error: %(err)s') % {'err': e},
             )
         except (smtplib.SMTPException, OSError) as e:
-            logger.exception(
-                'Admin SMTP test failed (from=%s)', mail_from
-            )
-            messages.warning(
+            logger.exception('Admin SMTP test failed (from=%s)', mail_from)
+            return self._respond(
                 request,
+                'error',
                 _('Test email failed to connect or send: %(err)s') % {'err': e},
             )
-        else:
-            recipients_str = ', '.join(recipients)
-            logger.info('Admin test email sent to %d recipient(s)', len(recipients))
-            messages.success(
-                request,
-                _('Test email sent to %(email)s — check inbox.') % {'email': recipients_str},
-            )
 
-        return redirect(reverse('eventyay_admin:admin.global.settings'))
+        recipients_str = ', '.join(recipients)
+        logger.info('Admin test email sent to %d recipient(s)', len(recipients))
+        return self._respond(
+            request,
+            'success',
+            _('Test email sent to %(email)s — check inbox.') % {'email': recipients_str},
+        )
+
 
 class LogDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
