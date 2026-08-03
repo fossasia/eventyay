@@ -56,13 +56,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         label='',
         help_text=_('You can type in your CSS instead of uploading it, too.'),
     )
-    imprint_url = forms.URLField(
-        label=_('Imprint URL'),
-        help_text=_(
-            'This should point e.g. to a part of your website that has your contact details and legal information.'
-        ),
-        required=False,
-    )
     show_featured = forms.ChoiceField(
         label=_('Show featured sessions'),
         choices=SHOW_FEATURED_VISIBILITY_CHOICES,
@@ -202,7 +195,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             'custom_css',
         ]
         json_fields = {
-            'imprint_url': 'display_settings',
             'show_featured': 'feature_flags',
             'show_featured_speakers': 'feature_flags',
             'use_feedback': 'feature_flags',
