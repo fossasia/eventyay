@@ -14,6 +14,7 @@
 			.info
 				span.info-main {{ sessionTimeLabel }}
 				span.session-language(v-if="!isSchedulePending && sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
+			.recording-embed(v-if="resolvedTalk.recording_iframe", v-html="resolvedTalk.recording_iframe")
 			.field-section.abstract-section(v-if="resolvedTalk.abstract")
 				h2.field-heading Abstract
 				.field-content
@@ -22,6 +23,25 @@
 				h2.field-heading Description
 				.field-content
 					markdown-content(:markdown="resolvedTalk.description")
+			.field-section.video-embed-section(v-for="(answer, index) in videoAnswers", :key="'api-video-' + index + '-' + (answer.embed_url || answer.answer)")
+				.video-embed
+					iframe(
+						:src="videoEmbedSrc(answer)",
+						title="Session video",
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+						allowfullscreen,
+						loading="lazy",
+						referrerpolicy="strict-origin-when-cross-origin")
+			.field-section.video-embed-section(v-for="(answer, index) in publicVideoScheduleAnswers", :key="'sched-video-' + answer.question_id + '-' + index + '-' + (answer.embed_url || answer.answer)")
+				.video-embed(v-if="videoEmbedSrc(answer)")
+					iframe(
+						:src="videoEmbedSrc(answer)",
+						title="Session video",
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+						allowfullscreen,
+						loading="lazy",
+						referrerpolicy="strict-origin-when-cross-origin")
+				a.answer-link(v-else-if="answer.answer", :href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
 			.field-section(v-for="answer in longAnswers", :key="answer.id")
 				h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
 				.field-content
@@ -29,14 +49,16 @@
 			.field-section(v-for="answer in inlineAnswers", :key="answer.id")
 				h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
 				.field-content
-					a.answer-link(v-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && answer.answer_file && answer.answer_file.url", :href="answer.answer_file.url", target="_blank", rel="noopener noreferrer") {{ answer.answer || answer.answer_file.url }}
-					a.answer-link(v-else-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && answer.answer", :href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
+					a.answer-link(v-if="(answer.question.variant === 'url' || answer.question.variant === 'file' || answer.question.variant === 'video') && answer.answer_file && answer.answer_file.url", :href="answer.answer_file.url", target="_blank", rel="noopener noreferrer") {{ answer.answer || answer.answer_file.url }}
+					a.answer-link(v-else-if="(answer.question.variant === 'url' || answer.question.variant === 'file' || answer.question.variant === 'video') && answer.answer", :href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
 					span(v-else-if="answer.question.variant === 'boolean'") {{ parseBooleanAnswer(answer.answer) ? t.yes : t.no }}
 					span(v-else-if="answer.answer") {{ answer.answer }}
-			.public-answers(v-if="publicScheduleAnswers.length > 0")
-				.field-section(v-for="answer in publicScheduleAnswers", :key="answer.question_id")
+			.public-answers(v-if="publicOtherScheduleAnswers.length > 0")
+				.field-section(v-for="answer in publicOtherScheduleAnswers", :key="answer.question_id")
 					h2.field-heading {{ answer.question }}
-					.field-content
+					.field-content(v-if="answer.variant === 'url'")
+						a.answer-link(:href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
+					.field-content(v-else)
 						markdown-content(:markdown="answer.answer")
 			.video-stream(v-if="resolvedTalk.stream_url && computedJoinRoomLink && isLive")
 				a.view-video-btn(:href="computedJoinRoomLink")
@@ -110,7 +132,7 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems, parseBooleanAnswer, resolveAbsoluteUrl, buildQrcodesUrl } from '../utils'
+import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems, parseBooleanAnswer, resolveAbsoluteUrl, buildQrcodesUrl, getVideoEmbedUrl } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
 import DetailBackNav from './DetailBackNav.vue'
 import DetailTopActions from './DetailTopActions.vue'
@@ -310,11 +332,24 @@ export default {
 			return answers.filter(a => a.question && a.question.is_public !== false &&
 				(a.question.variant === 'text' || a.question.variant === 'string'))
 		},
+		videoAnswers() {
+			const answers = this.effectiveApiContent?.answers
+			if (!Array.isArray(answers)) return []
+			return this.expandVideoAnswers(
+				answers.filter(a => a.question && a.question.is_public !== false &&
+					a.question.variant === 'video')
+			)
+		},
 		inlineAnswers() {
 			const answers = this.effectiveApiContent?.answers
 			if (!Array.isArray(answers)) return []
-			return answers.filter(a => a.question && a.question.is_public !== false &&
-				a.question.variant !== 'text' && a.question.variant !== 'string')
+			return answers.filter(a => {
+				if (!a.question || a.question.is_public === false) return false
+				if (a.question.variant === 'text' || a.question.variant === 'string') return false
+				// Embeddable video-link answers are shown as players above
+				if (a.question.variant === 'video' && this.expandVideoAnswers([a]).length) return false
+				return true
+			})
 		},
 		publicScheduleAnswers() {
 			if (this.effectiveApiContent?.answers?.length) return []
@@ -323,6 +358,12 @@ export default {
 
 			const downloadsLabel = (this.t.downloads || '').trim().toLowerCase()
 			return answers.filter((answer) => (answer.question || '').trim().toLowerCase() !== downloadsLabel)
+		},
+		publicVideoScheduleAnswers() {
+			return this.publicScheduleAnswers.filter((answer) => answer.variant === 'video')
+		},
+		publicOtherScheduleAnswers() {
+			return this.publicScheduleAnswers.filter((answer) => answer.variant !== 'video')
 		},
 		displayResources() {
 			const resources = this.effectiveApiContent?.resources ?? this.resolvedTalk?.resources ?? []
@@ -367,6 +408,29 @@ export default {
 		}
 	},
 	methods: {
+		expandVideoAnswers(answers) {
+			const result = []
+			for (const answer of answers || []) {
+				const raw = answer?.answer || ''
+				const lines = String(raw).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+				if (lines.length <= 1) {
+					if (this.videoEmbedSrc(answer)) result.push(answer)
+					continue
+				}
+				for (const line of lines) {
+					const embedUrl = getVideoEmbedUrl(line)
+					if (embedUrl) {
+						result.push({ ...answer, answer: line, embed_url: embedUrl })
+					}
+				}
+			}
+			return result
+		},
+		videoEmbedSrc(answer) {
+			if (!answer) return ''
+			if (answer.embed_url) return answer.embed_url
+			return getVideoEmbedUrl(answer.answer)
+		},
 		starrerTitle(user) {
 			if (!user || !user.url) return this.t.anonymous_attendee
 			return user.name || this.t.anonymous_attendee
@@ -527,6 +591,15 @@ export default {
 			word-break: break-all
 			&:hover
 				text-decoration: underline
+		.recording-embed,
+		.video-embed
+			margin: 16px 0 0 0
+			iframe
+				width: 100%
+				aspect-ratio: 16 / 9
+				border: none
+				border-radius: 4px
+				display: block
 		.video-stream
 			margin-top: 16px
 			.view-video-btn

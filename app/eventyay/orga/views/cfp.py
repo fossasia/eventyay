@@ -71,6 +71,7 @@ from eventyay.base.models import (
     SpeakerProfile,
     Availability,
 )
+from eventyay.common.session_video import exclude_session_video_from_cfp_questions
 from eventyay.talk_rules.submission import questions_for_user
 
 
@@ -150,7 +151,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context = super().get_context_data(**kwargs)
         context['generic_title'] = _('Forms')
         context['has_create_permission'] = True
-        context['question_list'] = (
+        context['question_list'] = exclude_session_video_from_cfp_questions(
             questions_for_user(self.request, self.request.event, self.request.user)
             .filter(is_imported=False)
             .annotate(answer_count=Count('answers'))
@@ -201,10 +202,12 @@ class CfPForms(EventPermissionRequired, TemplateView):
         sform = self.sform
 
         def get_field_data(targets, config_key):
-            questions = TalkQuestion.all_objects.filter(
-                event=self.request.event,
-                target__in=targets,
-                is_imported=False,
+            questions = exclude_session_video_from_cfp_questions(
+                TalkQuestion.all_objects.filter(
+                    event=self.request.event,
+                    target__in=targets,
+                    is_imported=False,
+                )
             ).annotate(answer_count=Count('answers'))
 
             question_map = {str(q.id): q for q in questions if f'question_{q.pk}' in sform.fields}
@@ -260,13 +263,53 @@ class CfPForms(EventPermissionRequired, TemplateView):
         availabilities_count = (
             Availability.objects.filter(event=event, person__isnull=False).values('person').distinct().count()
         )
+        social_links_count = (
+            SpeakerProfile.objects.filter(event=event, social_links__isnull=False).distinct().count()
+        )
 
         context['field_counts'] = {
             **submission_counts,
             **speaker_counts,
             'additional_speaker': additional_speaker_count,
             'availabilities': availabilities_count,
+            'social_links': social_links_count,
         }
+
+        question_texts = {
+            'title': str(_('Proposal title')),
+            'submission_type': str(_('Session type')),
+            'track': str(_('Track')),
+            'content_locale': str(_('Language')),
+            'abstract': str(_('Abstract')),
+            'description': str(_('Description')),
+            'notes': str(_('Notes')),
+            'slot_count': str(_('Slot Count')),
+            'do_not_record': str(_('Don’t record this session.')),
+            'image': str(_('Session image')),
+            'slides': str(_('Slides')),
+            'duration': str(_('Duration')),
+            'biography': str(_('Biography')),
+            'availabilities': str(_('Availability')),
+            'additional_speaker': str(_('Additional Speaker')),
+            'fullname': str(_('Full name')),
+            'avatar': str(_('Profile picture')),
+            'avatar_source': str(_('Profile Picture Source')),
+            'avatar_license': str(_('Profile Picture License')),
+        }
+
+        try:
+            if event.cfp_flow:
+                config = event.cfp_flow.config
+                if isinstance(config, dict) and 'steps' in config:
+                    for step_data in config['steps'].values():
+                        if isinstance(step_data, dict) and 'fields' in step_data:
+                            for field_key, field_data in step_data['fields'].items():
+                                if isinstance(field_data, dict) and 'label' in field_data:
+                                    question_texts[field_key] = str(field_data['label'])
+        except Exception as e:
+            logger.warning('Failed to parse cfp_flow config for event %s: %s', event.id, e)
+
+        context['question_texts'] = question_texts
 
         return context
 
@@ -381,7 +424,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
         return kwargs
 
     def get_queryset(self):
-        return (
+        return exclude_session_video_from_cfp_questions(
             questions_for_user(self.request, self.request.event, self.request.user)
             .annotate(answer_count=Count('answers'))
             .order_by('position')

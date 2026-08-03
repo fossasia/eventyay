@@ -1,37 +1,144 @@
 .orders-filter-container {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.orders-search {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+.orders-search .form-control,
+.orders-search .btn {
+  height: 38px;
+}
+
+.orders-go-form {
+  flex: 0 0 auto;
+}
+
+.orders-search-form {
+  display: contents;
+}
+
+.orders-search-bar {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.orders-search-query-group {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+
+.orders-search-actions {
+  display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  margin-bottom: 15px;
+  flex: 0 0 auto;
 }
-.orders-filter-form,
+
+
+.orders-filters-badge {
+  margin-left: 4px;
+  vertical-align: baseline;
+}
+
+.orders-advanced-filters {
+  flex: 0 0 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.orders-advanced-filters.is-collapsed,
+.orders-go-form.is-collapsed {
+  display: none;
+}
+
+.orders-advanced-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 12px 16px;
+  align-items: end;
+}
+
+.orders-advanced-field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.orders-advanced-field .form-group {
+  margin-bottom: 0;
+}
+
+.orders-advanced-field .form-control,
+.orders-advanced-field select {
+  width: 100%;
+}
+
+/* Force date and time inputs to sit on the same row */
+.orders-advanced-field .splitdatetimerow {
+  display: block;
+}
+
+.orders-advanced-field .splitdatetimerow > .splitdatetimepart {
+  display: inline-block;
+  width: calc(50% - 4px);
+  vertical-align: top;
+}
+
+.orders-advanced-field .splitdatetimerow > .splitdatetimepart:first-of-type {
+  margin-right: 4px;
+}
+
+.orders-advanced-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.orders-go-form {
+  max-width: 320px;
+}
+
+.orders-go-form .control-label {
+  display: none;
+}
+
+.orders-search-code-group {
+  width: 100%;
+}
+
 .orders-post-form,
 .orders-batch-select-actions {
   display: contents;
 }
 
-.orders-filter-form-group {
-  flex: 1 1 110px;
-  min-width: 100px;
-}
-.provider-group {
-  flex: 1 1 165px;
-  min-width: 165px;
-}
-.orders-search-code-group {
-  flex: 0 1 130px;
-}
 .orders-bulk-actions-menu {
-  margin: 0;
+  margin: 0 0 10px;
   min-width: 130px;
   flex: 0 0 auto;
-  order: -1;
 }
 
 .orders-filter-query-text,
-.orders-filter-form-group .form-group,
-.orders-filter-form-group .form-control,
 .orders-bulk-actions-menu .btn,
 .orders-bulk-action-hint-container,
 .orders-table-container,
@@ -40,25 +147,16 @@
   width: 100%;
 }
 
-.orders-filter-container .orders-filter-actions,
-.orders-filter-container .orders-filter-actions .filter-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin: 0;
-}
-
 .orders-filter-query-text,
 .order-bulk-action-hint {
   margin: 0;
 }
-.orders-filter-container .orders-filter-form-group .form-group {
-  margin-bottom: 0;
-}
+
 .orders-bulk-actions-menu .btn {
   padding: 6px 12px;
   height: 34px;
 }
+
 .orders-bulk-action-hint-container {
   text-align: center;
   margin-top: 10px;
@@ -67,9 +165,43 @@
 .product-hidden {
   display: none;
 }
+
 .order-product-list:hover .product-hidden {
   display: list-item;
 }
+
 .order-product-list:hover .product-ellipsis {
   display: none;
+}
+
+@media (max-width: 767px) {
+  .orders-search-actions {
+    width: 100%;
+  }
+
+  .orders-search-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .orders-search {
+    flex-direction: column;
+  }
+  
+  .orders-advanced-grid {
+    flex-wrap: wrap;
+  }
+}
+
+.orders-user-cell {
+  word-break: break-word;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 180px;
+}
+
+.orders-email-cell {
+  word-break: break-all;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 220px;
 }

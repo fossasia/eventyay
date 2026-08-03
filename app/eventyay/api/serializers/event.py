@@ -146,8 +146,26 @@ class EventSerializer(I18nAwareModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not hasattr(self.context['request'], 'event'):
-            self.fields.pop('valid_keys')
+        request = self.context.get('request')
+        if request and not hasattr(request, 'event'):
+            self.fields.pop('valid_keys', None)
+        # Hide startpage fields for non-admin callers
+        if not self._has_startpage_admin_permission(request):
+            for field_name in ('startpage_visible', 'startpage_featured'):
+                self.fields.pop(field_name, None)
+
+    @staticmethod
+    def _has_startpage_admin_permission(request):
+        if not request or isinstance(getattr(request, 'auth', None), (Device, TeamAPIToken)):
+            return False
+
+        user = getattr(request, 'user', None)
+        if not (user and getattr(user, 'is_authenticated', False) and (getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False))):
+            return False
+
+        session_key = getattr(getattr(request, 'session', None), 'session_key', None)
+        session_key = session_key if isinstance(session_key, str) and session_key else None
+        return bool(hasattr(user, 'has_active_staff_session') and user.has_active_staff_session(session_key))
 
     def validate(self, data):
         data = super().validate(data)
@@ -682,8 +700,7 @@ class EventSettingsSerializer(SettingsSerializer):
         'waiting_list_phones_asked',
         'waiting_list_phones_required',
         'waiting_list_phones_explanation_text',
-        'max_products_per_order',
-        'reservation_time',
+        'contact_form_enabled',
         'contact_mail',
         'show_variations_expanded',
         'hide_sold_out',
@@ -764,7 +781,6 @@ class EventSettingsSerializer(SettingsSerializer):
         'invoice_additional_text',
         'invoice_footer_text',
         'invoice_eu_currencies',
-        'invoice_logo_image',
         'cancel_allow_user',
         'cancel_allow_user_until',
         'cancel_allow_user_paid',
@@ -874,7 +890,6 @@ class DeviceEventSettingsSerializer(EventSettingsSerializer):
         'locale',
         'last_order_modification_date',
         'show_quota_left',
-        'max_products_per_order',
         'attendee_names_asked',
         'attendee_names_required',
         'attendee_emails_asked',

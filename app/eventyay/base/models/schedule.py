@@ -24,9 +24,11 @@ from qrcode.image.svg import SvgPathFillImage
 
 from eventyay.agenda.export_resources import enriched_resource_entry
 from eventyay.agenda.signals import register_recording_provider
+from eventyay.common.social_links import serialize_social_link
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
+from eventyay.common.video_embed import get_video_embed_info, parse_video_urls
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
 from eventyay.talk_rules.agenda import (
@@ -46,6 +48,7 @@ from .availability import Availability
 from .mail import MailTemplateRoles
 from .mixins import PretalxModel
 from .profile import SpeakerProfile
+from .question import TalkQuestionVariant
 from .slot import TalkSlot
 from .stream_schedule import StreamSchedule
 from .submission import Submission, SubmissionFavourite, SubmissionStates
@@ -988,16 +991,35 @@ class Schedule(PretalxModel):
                         for resource in talk.submission.resources.all()
                         if resource.url and (show_slides or resource.kind != 'slides')
                     ]
-                    talk_data['answers'] = [
-                        {
+                    talk_data['answers'] = []
+                    for answer in talk.submission.answers.all():
+                        if not answer.question or not answer.question.is_public:
+                            continue
+                        if answer.question.variant == TalkQuestionVariant.VIDEO:
+                            video_urls = parse_video_urls(answer.answer)
+                            if not video_urls and answer.answer_string:
+                                video_urls = [str(answer.answer_string)]
+                            for url in video_urls:
+                                answer_entry = {
+                                    'question': str(answer.question.question),
+                                    'answer': url,
+                                    'question_id': answer.question_id,
+                                    'options': [],
+                                    'variant': answer.question.variant,
+                                }
+                                embed = get_video_embed_info(url)
+                                if embed:
+                                    answer_entry['embed_url'] = embed['embed_url']
+                                talk_data['answers'].append(answer_entry)
+                            continue
+                        answer_entry = {
                             'question': str(answer.question.question),
                             'answer': str(answer.answer_string),
                             'question_id': answer.question_id,
                             'options': [str(opt.answer) for opt in answer.options.all()],
+                            'variant': answer.question.variant,
                         }
-                        for answer in talk.submission.answers.all()
-                        if answer.question and answer.question.is_public
-                    ]
+                        talk_data['answers'].append(answer_entry)
                     # Per-talk export URLs
                     code = talk.submission.code
                     ics_url = f'{base_url}talk/{code}.ics'
@@ -1063,8 +1085,11 @@ class Schedule(PretalxModel):
             for profile in SpeakerProfile.objects.filter(
                 event=self.event,
                 user__in=speakers,
-            ).select_related('user')
+            ).select_related('user').prefetch_related('social_links')
         }
+        show_social_links = getattr(self.event.cfp, 'request_social_links', False) and (
+            not respect_public_visibility or self.event.cfp.is_field_public('social_links')
+        )
         for user in speakers:
             # Avoid calling event_profile() here: it can hit the DB (and even create/save
             # a profile). For schedule JSON, missing profiles should simply result in
@@ -1084,6 +1109,8 @@ class Schedule(PretalxModel):
                 'is_featured': bool(getattr(profile, 'is_featured', False)),
                 'featured_position': getattr(profile, 'position', None),
             }
+            if show_social_links and profile:
+                speaker_data['social_links'] = [serialize_social_link(link) for link in profile.social_links.all()]
             if not include_featured_speaker_metadata:
                 speaker_data['is_featured'] = False
                 speaker_data['featured_position'] = None

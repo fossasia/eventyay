@@ -65,6 +65,7 @@ export default {
 	state: {
 		schedule: null,
 		scheduleMeta: null,
+		scheduleLoaded: false,
 		errorLoading: null,
 		now: moment(),
 		currentLanguage: localStorage.getItem('userLanguage') || 'en',
@@ -224,17 +225,20 @@ export default {
 		}
 	},
 	actions: {
-		async fetch ({ state, dispatch }) {
+		async fetch ({ commit, dispatch }) {
 			try {
-				state.errorLoading = null
+				commit('setScheduleLoaded', false)
+				commit('setErrorLoading', null)
 				if (window.eventyay?.schedule) {
-					state.schedule = window.eventyay.schedule
+					commit('setSchedule', window.eventyay.schedule)
 				}
 				if (window.eventyay?.scheduleMeta) {
-					state.scheduleMeta = window.eventyay.scheduleMeta
+					commit('setScheduleMeta', window.eventyay.scheduleMeta)
 				}
 			} catch (error) {
-				state.errorLoading = error
+				commit('setErrorLoading', error)
+			} finally {
+				commit('setScheduleLoaded', true)
 			}
 			// Load favourites from server / localStorage after schedule data is ready
 			dispatch('loadFavs')
@@ -321,6 +325,18 @@ export default {
 		}
 	},
 	mutations: {
+		setSchedule (state, schedule) {
+			state.schedule = schedule
+		},
+		setScheduleMeta (state, scheduleMeta) {
+			state.scheduleMeta = scheduleMeta
+		},
+		setScheduleLoaded (state, scheduleLoaded) {
+			state.scheduleLoaded = scheduleLoaded
+		},
+		setErrorLoading (state, errorLoading) {
+			state.errorLoading = errorLoading
+		},
 		setCurrentLanguage (state, language) {
 			state.currentLanguage = language
 		}

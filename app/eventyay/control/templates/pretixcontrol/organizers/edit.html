@@ -27,96 +27,87 @@
         {% csrf_token %}
         {% bootstrap_form_errors sform %}
         {% bootstrap_form_errors form %}
-        <div class="row">
-            <div class="col-xs-12 col-lg-10">
-                <div class="tabbed-form">
-                    <fieldset>
-                        <legend>{% trans "General" %}</legend>
-                        {% bootstrap_field form.name layout="control" %}
-                        {% bootstrap_field form.slug layout="control" %}
-                        {% comment 'Custom domain feature is temporarily disabled. Uncomment when ready for re-enablement.' %}
-                        {% if form.domain %}
-                            {% bootstrap_field form.domain layout="control" %}
-                        {% endif %}
-                        {% endcomment %}
-                        {% bootstrap_field sform.imprint_url layout="control" %}
-                        {% bootstrap_field sform.contact_mail layout="control" %}
-                        {% bootstrap_field sform.organizer_info_text layout="control" %}
-                        {% bootstrap_field sform.event_team_provisioning layout="control" %}
-                    </fieldset>
-                    <fieldset>
-                        <legend>{% trans "Organizer page" %}</legend>
-                        {% bootstrap_field sform.organizer_logo_image layout="control" %}
-                        {% bootstrap_field sform.organizer_header_image layout="control" %}
-                        {% bootstrap_field sform.organizer_header_image_large layout="control" %}
-                        {% bootstrap_field sform.organizer_homepage_text layout="control" %}
-                        {% bootstrap_field sform.event_list_type layout="control" %}
-                        {% bootstrap_field sform.event_list_availability layout="control" %}
-                        {% bootstrap_field sform.organizer_link_back layout="control" %}
-                    </fieldset>
-                    <fieldset>
-                        <legend>{% trans "Community" %}</legend>
-                        {% bootstrap_field sform.community_follow_enabled layout="control" %}
-                        {% bootstrap_field sform.community_show_follower_count layout="control" %}
-                    </fieldset>
-                    <fieldset>
-                        <legend>{% trans "Localization" %}</legend>
-                        {% bootstrap_field sform.locales layout="control" %}
-                        {% bootstrap_field sform.region layout="control" %}
-                    </fieldset>
-                    <fieldset>
-                        <legend>{% trans "Shop design" %}</legend>
-                        <p class="help-block">
-                            {% blocktrans trimmed %}
-                                These settings will be used for the organizer page as well as for the default settings
-                                for all events in this account that do not have their own design settings.
-                            {% endblocktrans %}
-                        </p>
-                        {% bootstrap_field sform.primary_color layout="control" %}
-                        {% bootstrap_field sform.header_background_color layout="control" %}
-                        {% bootstrap_field sform.header_text_color layout="control" %}
-                        {% bootstrap_field sform.navigation_text_color layout="control" %}
-                        {% bootstrap_field sform.menu_text_scroll_over_color layout="control" %}
-                        {% bootstrap_field sform.theme_color_success layout="control" %}
-                        {% bootstrap_field sform.theme_color_danger layout="control" %}
-                        {% bootstrap_field sform.theme_color_background layout="control" %}
-                        {% bootstrap_field sform.hover_button_color layout="control" %}
-                        {% bootstrap_field sform.theme_round_borders layout="control" %}
-                        {% bootstrap_field sform.primary_font layout="control" %}
-                    </fieldset>
-                    <fieldset>
-                        <legend>{% trans "Video area" %}</legend>
-                        {% bootstrap_field sform.video_navigation_background_color layout="control" %}
-                        {% bootstrap_field sform.video_sidebar_text_color layout="control" %}
-                        {% bootstrap_field sform.video_sidebar_hover_color layout="control" %}
-                    </fieldset>
-                    <fieldset>
-                        <legend>{% trans "Gift cards" %}</legend>
-                        {% bootstrap_field sform.giftcard_expiry_years layout="control" %}
-                        {% bootstrap_field sform.giftcard_length layout="control" %}
-                    </fieldset>
-                    <fieldset id="tab-organizer-privacy">
-                        <legend>{% trans "Privacy" %}</legend>
-                        {% bootstrap_field sform.privacy_policy layout="control" %}
-                    </fieldset>
-                </div>
-                <div class="form-group submit-group">
-                    <button type="submit" class="btn btn-primary btn-save">
-                        {% trans "Save" %}
-                    </button>
-                </div>
-            </div>
-            <div class="col-xs-12 col-lg-2">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">
-                            {% trans "Change history" %}
-                        </h3>
-                    </div>
-                    {% include "pretixcontrol/includes/logs.html" with obj=organizer %}
-                </div>
-            </div>
+        <div class="tabbed-form">
+            <fieldset>
+                <legend>{% trans "General" %}</legend>
+                {% bootstrap_field form.name layout="control" %}
+                {% bootstrap_field form.slug layout="control" %}
+                {% comment 'Custom domain feature is temporarily disabled. Uncomment when ready for re-enablement.' %}
+                {% if form.domain %}
+                    {% bootstrap_field form.domain layout="control" %}
+                {% endif %}
+                {% endcomment %}
+                {% bootstrap_field sform.imprint_url layout="control" %}
+                {% bootstrap_field sform.contact_mail layout="control" %}
+                {% bootstrap_field sform.organizer_info_text layout="control" %}
+                {% bootstrap_field sform.event_team_provisioning layout="control" %}
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Organizer page" %}</legend>
+                {% bootstrap_field sform.organizer_logo_image layout="control" %}
+                {% bootstrap_field sform.organizer_header_image layout="control" %}
+                {% bootstrap_field sform.organizer_header_image_large layout="control" %}
+                {% bootstrap_field sform.organizer_homepage_text layout="control" %}
+                {% bootstrap_field sform.event_list_type layout="control" %}
+                {% bootstrap_field sform.event_list_availability layout="control" %}
+                {% bootstrap_field sform.organizer_link_back layout="control" %}
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Community" %}</legend>
+                {% bootstrap_field sform.community_follow_enabled layout="control" %}
+                {% bootstrap_field sform.community_show_follower_count layout="control" %}
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Localization" %}</legend>
+                {% bootstrap_field sform.locales layout="control" %}
+                {% bootstrap_field sform.region layout="control" %}
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Shop design" %}</legend>
+                <p class="help-block">
+                    {% blocktrans trimmed %}
+                        These settings will be used for the organizer page as well as for the default settings
+                        for all events in this account that do not have their own design settings.
+                    {% endblocktrans %}
+                </p>
+                {% bootstrap_field sform.primary_color layout="control" %}
+                {% bootstrap_field sform.header_background_color layout="control" %}
+                {% bootstrap_field sform.header_text_color layout="control" %}
+                {% bootstrap_field sform.navigation_text_color layout="control" %}
+                {% bootstrap_field sform.menu_text_scroll_over_color layout="control" %}
+                {% bootstrap_field sform.theme_color_success layout="control" %}
+                {% bootstrap_field sform.theme_color_danger layout="control" %}
+                {% bootstrap_field sform.theme_color_background layout="control" %}
+                {% bootstrap_field sform.hover_button_color layout="control" %}
+                {% bootstrap_field sform.theme_round_borders layout="control" %}
+                {% bootstrap_field sform.primary_font layout="control" %}
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Video area" %}</legend>
+                {% bootstrap_field sform.video_navigation_background_color layout="control" %}
+                {% bootstrap_field sform.video_sidebar_text_color layout="control" %}
+                {% bootstrap_field sform.video_sidebar_hover_color layout="control" %}
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Gift cards" %}</legend>
+                {% bootstrap_field sform.giftcard_expiry_years layout="control" %}
+                {% bootstrap_field sform.giftcard_length layout="control" %}
+            </fieldset>
+            <fieldset id="tab-organizer-privacy">
+                <legend>{% trans "Privacy" %}</legend>
+                {% bootstrap_field sform.privacy_policy layout="control" %}
+            </fieldset>
+            <fieldset id="tab-organizer-change-history" data-no-submit>
+                <legend>{% trans "Change history" %}</legend>
+                {% include "pretixcontrol/includes/logs.html" with obj=organizer %}
+            </fieldset>
         </div>
+        <div class="form-group submit-group">
+            <button type="submit" class="btn btn-primary btn-save">
+                {% trans "Save" %}
+            </button>
+        </div>
+
     </form>
 
     <div class="modal fade" id="cropperModal" tabindex="-1" role="dialog" aria-labelledby="cropperModalLabel"

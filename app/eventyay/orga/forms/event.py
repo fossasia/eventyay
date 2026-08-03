@@ -56,13 +56,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         label='',
         help_text=_('You can type in your CSS instead of uploading it, too.'),
     )
-    imprint_url = forms.URLField(
-        label=_('Imprint URL'),
-        help_text=_(
-            'This should point e.g. to a part of your website that has your contact details and legal information.'
-        ),
-        required=False,
-    )
     show_featured = forms.ChoiceField(
         label=_('Show featured sessions'),
         choices=SHOW_FEATURED_VISIBILITY_CHOICES,
@@ -88,19 +81,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     session_popularity_show_on_schedule = forms.BooleanField(
         label=_('Show popularity on schedule'),
         help_text=_('Shows favourite counts on session cards in the schedule.'),
-        required=False,
-    )
-    export_html_on_release = forms.BooleanField(
-        label=_('Generate HTML export on schedule release'),
-        help_text=_('The static HTML export will be provided as a .zip archive on the schedule export page.'),
-        required=False,
-    )
-    html_export_url = forms.URLField(
-        label=_('HTML Export URL'),
-        help_text=_(
-            'If you publish your schedule via the HTML export, you will want the correct absolute URL to be set in various places. '
-            'Please only set this value once you have published your schedule. Should end with a slash.'
-        ),
         required=False,
     )
     header_pattern = forms.ChoiceField(
@@ -211,22 +191,42 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     class Meta:
         model = Event
         fields = [
-            'email',
             'custom_css',
         ]
         json_fields = {
-            'imprint_url': 'display_settings',
             'show_featured': 'feature_flags',
             'show_featured_speakers': 'feature_flags',
             'use_feedback': 'feature_flags',
             'session_popularity_enabled': 'feature_flags',
             'session_popularity_show_on_schedule': 'feature_flags',
-            'export_html_on_release': 'feature_flags',
-            'html_export_url': 'display_settings',
             'header_pattern': 'display_settings',
             'etherpad_enabled': 'feature_flags',
             'etherpad_auto_generate': 'feature_flags',
             'etherpad_public': 'display_settings',
+        }
+
+
+class ScheduleHtmlExportForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, forms.Form):
+    """Settings for the schedule HTML export feature, shown as a tab in Import/Export."""
+
+    export_html_on_release = forms.BooleanField(
+        label=_('Generate HTML export on schedule release'),
+        help_text=_('The static HTML export will be provided as a .zip archive on the schedule export page.'),
+        required=False,
+    )
+    html_export_url = forms.URLField(
+        label=_('HTML Export URL'),
+        help_text=_(
+            'If you publish your schedule via the HTML export, you will want the correct absolute URL to be set in various places. '
+            'Please only set this value once you have published your schedule. Should end with a slash.'
+        ),
+        required=False,
+    )
+
+    class Meta:
+        json_fields = {
+            'export_html_on_release': 'feature_flags',
+            'html_export_url': 'display_settings',
         }
 
 

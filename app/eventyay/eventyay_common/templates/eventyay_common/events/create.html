@@ -132,11 +132,7 @@
                         </div>
                     </div>
                 </div>
-                {% bootstrap_field basics_form.date_from layout="control" %}
-                {% if basics_form.date_to %}
-                    {% bootstrap_field basics_form.date_to layout="control" %}
-                {% endif %}
-                {% bootstrap_field basics_form.currency layout="control" %}
+                {% include "eventyay_common/includes/event_schedule_row.html" with date_from_form=basics_form.date_from date_to_form=basics_form.date_to timezone_form=basics_form.timezone %}
             </fieldset>
 
             <fieldset>
@@ -173,16 +169,6 @@
                         </div>
                     </div>
                 {% endwith %}
-            </fieldset>
-
-            <fieldset>
-                <legend>{% trans "Display settings" %}</legend>
-                {% bootstrap_field basics_form.timezone layout="control" %}
-            </fieldset>
-
-            <fieldset>
-                <legend>{% trans "Getting in touch" %}</legend>
-                {% bootstrap_field basics_form.email layout="control" %}
             </fieldset>
 
             <div class="form-group submit-group">

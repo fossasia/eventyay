@@ -1,9 +1,11 @@
 {% load i18n %}
 {% load static %}
 
+{% if submission_timeline_data or submission_type_data or submission_track_data or submission_state_data or submission_language_data or talk_timeline_data or talk_type_data or talk_track_data or talk_state_data or talk_language_data %}
 <div id="stats" class="mt-4">
     <div id="global-data" class="d-none" data-url="{{ request.event.orga_urls.submissions }}?" data-mapping="{{ id_mapping }}" data-annotations="{{ timeline_annotations }}"></div>
 
+    {% if submission_timeline_data or submission_type_data or submission_track_data or submission_state_data or submission_language_data %}
     <section class="stats-section mb-5" id="proposal-statistics">
         <h2>{% translate "Proposal Statistics" %}</h2>
 
@@ -57,7 +59,9 @@
             {% endif %}
         </div>
     </section>
+    {% endif %}
 
+    {% if talk_timeline_data or talk_type_data or talk_track_data or talk_state_data or talk_language_data %}
     <section class="stats-section mb-4" id="session-statistics">
         <h2>{% translate "Session Statistics" %}</h2>
 
@@ -111,4 +115,6 @@
             {% endif %}
         </div>
     </section>
+    {% endif %}
 </div>
+{% endif %}

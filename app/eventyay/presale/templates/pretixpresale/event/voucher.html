@@ -72,7 +72,7 @@
                 data-asynctask
                 data-asynctask-headline="{% trans "We're now trying to reserve this for you!" %}"
                 class="{% if voucher.seating_available %}has-seating{% endif %}"
-                data-asynctask-text="{% blocktrans with time=event.settings.reservation_time %}Once the items are in your cart, you will have {{ time }} minutes to complete your purchase.{% endblocktrans %}"
+                data-asynctask-text="{% blocktrans with time=global_settings.reservation_time %}Once the items are in your cart, you will have {{ time }} minutes to complete your purchase.{% endblocktrans %}"
             {% endif %}>
             {% csrf_token %}
             <input type="hidden" name="subevent" value="{{ subevent.id|default_if_none:"" }}" />

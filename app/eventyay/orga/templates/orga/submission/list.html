@@ -9,7 +9,10 @@
 
 {% block scripts %}
     {% compress js %}
-        <script defer src="{% static "orga/js/submission_filter.js" %}"></script>
+        <script defer src="{% static 'orga/js/submission_filter.js' %}"></script>
+        {% if session_videos_enabled %}
+        <script defer src="{% static 'orga/js/submission_video.js' %}"></script>
+        {% endif %}
     {% endcompress %}
 {% endblock scripts %}
 
@@ -102,6 +105,12 @@
                             <a href="{% querystring sort="-is_featured" %}"><i class="fa fa-caret-down"></i></a>
                             <a href="{% querystring sort="is_featured" %}"><i class="fa fa-caret-up"></i></a>
                         </th>
+                        {% if session_videos_enabled %}
+                        <th class="text-center">
+                            {% translate "Video" %}
+                            <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate 'Add a YouTube or Vimeo link shown as an embed on the public session page.' %}"></i>
+                        </th>
+                        {% endif %}
                         <th></th>
                     {% endif %}
                 </tr>
@@ -170,6 +179,23 @@
                                 <i class="done fa fa-check d-none text-success"></i>
                                 <i class="fail fa fa-times d-none"></i>
                             </td>
+                            {% if session_videos_enabled %}
+                            <td class="submission-video text-center">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm {% if submission.session_video_urls %}btn-success{% else %}btn-outline-secondary{% endif %} submission-video-btn"
+                                    data-url="{{ submission.orga_urls.video_link }}"
+                                    data-video-urls="{{ submission.session_video_urls_json }}"
+                                    data-title="{{ submission.title }}"
+                                    data-add-label="{% translate 'Add video links' %}"
+                                    data-edit-label="{% translate 'Edit video links' %}"
+                                    title="{% if submission.session_video_urls %}{% translate 'Edit video links' %}{% else %}{% translate 'Add video links' %}{% endif %}"
+                                    aria-label="{% if submission.session_video_urls %}{% translate 'Edit video links' %}{% else %}{% translate 'Add video links' %}{% endif %}"
+                                >
+                                    <i class="fa fa-youtube-play" aria-hidden="true"></i>
+                                </button>
+                            </td>
+                            {% endif %}
                             <td class="action-column">
                                 <a href="{{ submission.orga_urls.edit }}" title="{{ phrases.base.edit }}" class="btn btn-sm btn-info">
                                     <i class="fa fa-edit"></i>
@@ -187,5 +213,36 @@
 
     {% include "orga/includes/pagination.html" %}
     </div>
+
+    {% if can_change_submission and session_videos_enabled %}
+        <dialog
+            id="submission-video-dialog"
+            class="submission-video-dialog"
+            aria-labelledby="submission-video-dialog-title"
+            data-url-label="{% translate 'YouTube or Vimeo URL' %}"
+            data-remove-label="{% translate 'Remove' %}"
+        >
+            <form method="dialog" id="submission-video-form">
+                <h3 id="submission-video-dialog-title">{% translate "Session videos" %}</h3>
+                <p class="text-muted" id="submission-video-session-title"></p>
+                <div id="submission-video-url-list" class="submission-video-url-list"></div>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="submission-video-add">
+                    {% translate "Add another video" %}
+                </button>
+                <p class="text-danger small d-none" id="submission-video-error" role="alert"></p>
+                <div class="submission-video-dialog-actions">
+                    <button type="button" class="btn btn-outline-danger" id="submission-video-clear">
+                        {% translate "Remove all" %}
+                    </button>
+                    <button type="submit" class="btn btn-default" value="cancel" formmethod="dialog">
+                        {% translate "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-success" value="save" id="submission-video-save">
+                        {% translate "Save" %}
+                    </button>
+                </div>
+            </form>
+        </dialog>
+    {% endif %}
 
 {% endblock content %}

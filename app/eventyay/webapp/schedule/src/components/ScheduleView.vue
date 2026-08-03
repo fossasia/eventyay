@@ -81,6 +81,8 @@
 				@unfav="onUnfav")
 	.schedule-error(v-else-if="hasError")
 		| An error occurred while loading the schedule.
+	.schedule-empty(v-else-if="isScheduleLoaded")
+		| {{ t.no_schedule_available }}
 	.schedule-loading(v-else)
 		| Loading…
 </template>
@@ -124,6 +126,7 @@ export default {
 		loadStarredSharingPreference: { default: null },
 		updateStarredSharingPreference: { default: null },
 		onSaveTimezone: { default: null },
+		translationMessages: { default: () => ({}) },
 	},
 	props: {
 		schedule: Object,
@@ -137,6 +140,7 @@ export default {
 		hasAmPm: Boolean,
 		onHomeServer: Boolean,
 		errorLoading: Object,
+		scheduleLoaded: Boolean,
 		linearOnly: {
 			type: Boolean,
 			default: false
@@ -214,6 +218,15 @@ export default {
 		},
 		scheduleReady() {
 			return !!(this.resolvedSchedule && this.enrichedSessions.length)
+		},
+		isScheduleLoaded() {
+			return !!(this.scheduleLoaded || this.scheduleData?.scheduleLoaded)
+		},
+		t() {
+			const m = this.translationMessages || {}
+			return {
+				no_schedule_available: m.no_schedule_available || 'No schedule has been published yet. Please check back later.'
+			}
 		},
 		showFavCountOnSchedule() {
 			const flags = this.scheduleData?.schedule?.feature_flags || this.resolvedSchedule?.feature_flags || {}
@@ -652,6 +665,11 @@ export default {
 		text-align: center
 		color: $clr-danger
 		font-size: 18px
+	.schedule-empty
+		padding: 32px
+		text-align: center
+		font-size: 16px
+		color: $clr-secondary-text-light
 	.schedule-loading
 		padding: 32px
 		text-align: center
