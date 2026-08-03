@@ -16,7 +16,7 @@
 
 .advanced-filter-search .form-control,
 .advanced-filter-search .btn {
-  height: 38px;
+  /* Removed height: 38px to match standard 34px bootstrap sizing and align with select2 */
 }
 
 .advanced-filter-go-form {
