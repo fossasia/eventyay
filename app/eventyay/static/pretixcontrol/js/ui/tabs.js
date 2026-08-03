@@ -46,10 +46,18 @@ $(function () {
             i++;
         });
         var preselect = error_preselect !== null ? error_preselect : (hash_preselect !== null ? hash_preselect : 0);
-        $tabs.find("a").get(preselect).click();
         $tabs.find("a").on('shown.bs.tab', function (e) {
             history.replaceState(null, null, e.target.getAttribute("href") + "-open");
+            var targetId = e.target.getAttribute("href");
+            var $targetPane = $(targetId);
+            var $submitGroup = $form.closest("form").find(".submit-group");
+            if ($targetPane.is("[data-no-submit]")) {
+                $submitGroup.hide();
+            } else {
+                $submitGroup.show();
+            }
         });
+        $tabs.find("a").get(preselect).click();
         $form.closest("form").on("submit", function () {
             validity_error = false;
         });

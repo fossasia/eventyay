@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-06-25 22:01+0000\n"
+"PO-Revision-Date: 2026-08-03 18:02+0000\n"
 "Last-Translator: தமிழ்நேரம் <tamilneram247@gmail.com>\n"
 "Language-Team: Tamil <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ta/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.7.dev0\n"
+"X-Generator: Weblate 2026.8.1.dev0\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -167,8 +167,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"எங்கள் அட்டவணையைப் பார்க்க, JavaScript-ஐ இயக்கவும் அல்லது NoJS அட்டவணைக்காக <a "
-"href=\"%(href)s\">இங்கே</a> செல்லவும்."
+"எங்கள் அட்டவணையைப் பார்க்க, சாவாகைஉரையை இயக்கவும் அல்லது NoJS அட்டவணைக்காக <a href=\"%(href)"
+"s\">இங்கே</a> செல்லவும்."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -178,7 +178,7 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "நேர மண்டல மாற்றம் மற்றும் தனிப்பட்ட அட்டவணை அமைத்தல் போன்ற முழு செயல்பாடுகளுடன் எங்கள் "
-"அட்டவணையைப் பார்க்க, JavaScript-ஐ இயக்கி <a href=\"%(href)s\">இங்கே</a> செல்லவும்."
+"அட்டவணையைப் பார்க்க, சாவாகைஉரையை இயக்கி <a href=\"%(href)s\">இங்கே</a> செல்."
 
 #: agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -393,7 +393,7 @@ msgstr "நாட்காட்டியில் சேர்க்கவு�
 #: presale/templates/pretixpresale/organizers/calendar_week.html:44
 #: presale/templates/pretixpresale/organizers/index.html:50
 msgid "iCal"
-msgstr "iCal"
+msgstr "ஐகணக்கு"
 
 #: agenda/views/schedule.py:381 multidomain/views.py:163
 msgid "JSON"
@@ -405,7 +405,7 @@ msgstr "நீகுமொ"
 
 #: agenda/views/schedule.py:383 multidomain/views.py:165
 msgid "XCal"
-msgstr "XCal"
+msgstr "எக்சுகணக்கு"
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
 msgid "Google Calendar"
@@ -1563,7 +1563,8 @@ msgstr "ஒவ்வொரு இன்வாய்ஸிலும் இன்�
 msgid ""
 "e.g. Thank you for your purchase! You can find more information on the event "
 "at ..."
-msgstr "எ.கா. வாங்கியதற்கு நன்றி! நிகழ்வு குறித்த கூடுதல் தகவலை ... இல் காணலாம்"
+msgstr ""
+"எ.கா. வாங்கியதற்கு நன்றி! நிகழ்வு குறித்த கூடுதல் தகவலை இதில் காணலாம்..."
 
 #: base/configurations/default_setting.py:834
 msgid "Additional text"
@@ -2250,13 +2251,14 @@ msgid ""
 msgstr ""
 "வணக்கம்,\n"
 "\n"
-"{event} க்கான ஆர்டருக்கான இணைப்பை அனுப்புமாறு கேட்டதனால் இந்தச் செய்தி பெறப்படுகிறது.\n"
+"{event} க்கான ஆர்டருக்கான இணைப்பை அனுப்புமாறு கேட்டதனால்\n"
+"இந்தச் செய்தி பெறப்படுகிறது.\n"
 "\n"
 "கீழ்கண்ட முகவரியில் ஆர்டர் விவரங்களை மாற்றவும், ஆர்டரின் நிலையைப் பார்க்கவும் முடியும்:\n"
 "{url}\n"
 "\n"
-"மரியாதையுடன்,\n"
-"{event} குழு"
+"அன்புடன்,\n"
+"உங்கள் {event} குழு"
 
 #: base/configurations/default_setting.py:1670
 #, python-brace-format
@@ -2347,13 +2349,14 @@ msgstr ""
 "வணக்கம்,\n"
 "\n"
 "{event} க்கான ஆர்டரை வெற்றிகரமாகப் பெற்றோம். நிகழ்வு நடத்துநரின் அனுமதி தேவைப்படும்\n"
-"தயாரிப்பை ஆர்டர் செய்துள்ளதால், அடுத்த மின்னஞ்சலைக் காத்திருக்குமாறு கேட்டுக்கொள்கிறோம்.\n"
+"தயாரிப்பை ஆர்டர் செய்துள்ளதால், அடுத்த மின்னஞ்சலைக் காத்திருக்குமாறு\n"
+"கேட்டுக்கொள்கிறோம்.\n"
 "\n"
 "கீழ்கண்ட முகவரியில் ஆர்டர் விவரங்களை மாற்றவும், ஆர்டரின் நிலையைப் பார்க்கவும் முடியும்:\n"
 "{url}\n"
 "\n"
-"மரியாதையுடன்,\n"
-"{event} குழு"
+"அன்புடன்,\n"
+"உங்கள் {event} குழு"
 
 #: base/configurations/default_setting.py:1738
 #, python-brace-format
@@ -2500,14 +2503,14 @@ msgstr ""
 "வணக்கம்,\n"
 "\n"
 "{event} க்கான ஆர்டருக்கு முழுக் கட்டணம் இன்னும் பெறப்படவில்லை.\n"
-"{expire_date} க்கு முன் கட்டணம் பெறப்பட்டாலே ஆர்டர் உறுதியாகும் என்பதை நினைவில் "
-"கொள்ளவும்.\n"
+"{expire_date} க்கு முன் கட்டணம் பெறப்பட்டாலே ஆர்டர் உறுதியாகும் என்பதை\n"
+"நினைவில் கொள்ளவும்.\n"
 "\n"
 "கீழ்கண்ட முகவரியில் கட்டணத் தகவல்களையும் ஆர்டரின் நிலையையும் பார்க்கலாம்:\n"
 "{url}\n"
 "\n"
-"மரியாதையுடன்,\n"
-"{event} குழு"
+"அன்புடன்,\n"
+"உங்கள் {event} குழு"
 
 #: base/configurations/default_setting.py:1844
 #, python-brace-format
@@ -2537,8 +2540,8 @@ msgstr ""
 "\n"
 "{event} க்கான காத்திருப்பு பட்டியலில், {product} தயாரிப்பிற்காக பதிவு செய்துள்ளீர்கள்.\n"
 "\n"
-"இப்போது உங்களுக்கான டிக்கெட் தயாராக உள்ளது! அடுத்த {hours} மணிநேரங்களுக்குள் பின்வரும் "
-"வவுச்சர் குறியீட்டை உள்ளிட்டு எங்கள் டிக்கெட் கடையில் அதை பயன்படுத்தலாம்:\n"
+"இப்போது உங்களுக்கான டிக்கெட் தயாராக உள்ளது! அடுத்த {hours} மணிநேரங்களுக்குள்\n"
+"பின்வரும் வவுச்சர் குறியீட்டை உள்ளிட்டு எங்கள் டிக்கெட் கடையில் அதை பயன்படுத்தலாம்:\n"
 "\n"
 "{code}\n"
 "\n"
@@ -2548,11 +2551,11 @@ msgstr ""
 "\n"
 "இந்த இணைப்பு அடுத்த {hours} மணிநேரங்களுக்குள் மட்டுமே செல்லுபடியாகும் என்பதை "
 "கவனிக்கவும்!\n"
-"அந்த காலவரம்பிற்குள் வவுச்சரை பயன்படுத்தாவிட்டால், பட்டியலில் அடுத்தவருக்கு டிக்கெட் மீண்டும் "
-"ஒதுக்கப்படும்.\n"
+"அந்த காலவரம்பிற்குள் வவுச்சரை பயன்படுத்தாவிட்டால், பட்டியலில் அடுத்தவருக்கு\n"
+"டிக்கெட் மீண்டும் ஒதுக்கப்படும்.\n"
 "\n"
-"மரியாதையுடன்,\n"
-"{event} குழு"
+"அன்புடன்,\n"
+"உங்கள் {event} குழு"
 
 #: base/configurations/default_setting.py:1871
 #, python-brace-format
@@ -2605,7 +2608,7 @@ msgstr ""
 "{url}\n"
 "\n"
 "அன்புடன்,\n"
-"{event} குழு"
+"உங்கள் {event} குழு"
 
 #: base/configurations/default_setting.py:1907
 #, python-brace-format
@@ -2623,14 +2626,14 @@ msgid ""
 msgstr ""
 "வணக்கம்,\n"
 "\n"
-"{event}க்கான ஆர்டர் அனுமதிக்கப்பட்டது; நிகழ்வில் வரவேற்க மகிழ்ச்சி. இலவச தயாரிப்புகள் "
-"மட்டும் ஆர்டர் செய்யப்பட்டதால், கட்டணம் தேவையில்லை.\n"
+"{event}க்கான ஆர்டர் அனுமதிக்கப்பட்டது; நிகழ்வில் வரவேற்க மகிழ்ச்சி. \n"
+"இலவச தயாரிப்புகள் மட்டும் ஆர்டர் செய்யப்பட்டதால், கட்டணம் தேவையில்லை.\n"
 "\n"
 "ஆர்டர் விவரங்களை மாற்றவும், ஆர்டர் நிலையைப் பார்க்கவும் இங்கு செல்லலாம்:\n"
 "{url}\n"
 "\n"
 "அன்புடன்,\n"
-"{event} குழு"
+"உங்கள் {event} குழு"
 
 #: base/configurations/default_setting.py:1924
 #, python-brace-format
@@ -6206,7 +6209,7 @@ msgid ""
 "Nobody on your teams has the permissions to change settings for the event "
 "{event_name}"
 msgstr ""
-"அணிகளில் யாருக்கும் நிகழ்வு {event_name}-க்கு அமைப்புகளை மாற்றும் அனுமதிகள் இல்லை."
+"அணிகளில் யாருக்கும் நிகழ்வு {event_name}-க்கு அமைப்புகளை மாற்றும் அனுமதிகள் இல்லை"
 
 #: base/models/organizer.py:115
 msgid ""
@@ -6375,9 +6378,9 @@ msgid ""
 "setting will <strong>override the event settings</strong> and always hide "
 "speaker names for this team."
 msgstr ""
-"பொதுவாக, அடையாள மறைப்புச் (anonymisation) அமைப்பு நிகழ்வு மதிப்பாய்வு அமைப்புகளில் "
-"கட்டமைக்கப்படும். இந்த அமைப்பு <strong>நிகழ்வு அமைப்புகளை மீறி</strong> இந்தக் "
-"குழுவிற்காகப் பேச்சாளர்களின் பெயர்களை எப்போதும் மறைக்கும்."
+"பொதுவாக, அடையாள மறைப்புச் அமைப்பு நிகழ்வு மதிப்பாய்வு அமைப்புகளில் கட்டமைக்கப்படும். இந்த "
+"அமைப்பு <strong>நிகழ்வு அமைப்புகளை மீறி</strong> இந்தக் குழுவிற்காகப் பேச்சாளர்களின் "
+"பெயர்களை எப்போதும் மறைக்கும்."
 
 #: base/models/organizer.py:454
 msgid "Video: Can create stages"
@@ -6795,8 +6798,7 @@ msgid ""
 msgstr ""
 "இந்த விருப்பம் அமைக்கப்பட்டால், இந்த தயாரிப்பு பண்டில் தயாரிப்புகளின் பகுதியாக மட்டுமே "
 "விற்கப்படும். இந்த தயாரிப்பை அட்-ஆன் தயாரிப்பாக பயன்படுத்த விரும்பினால், ஆனால் நிலையான "
-"பண்டில்களுக்காக மட்டும் அல்ல என்றால், இந்த விருப்பத்தை <strong>தேர்வு செய்ய வேண்டாம்</"
-"strong>!"
+"பண்டில்களுக்காக மட்டும் அல்ல என்றால், இந்த விருப்பத்தை <strong>தேர்வு செய்ய வேண்டாம்</strong>!"
 
 #: base/models/product.py:416
 msgid "Allow product to be canceled or changed"
@@ -7004,10 +7006,9 @@ msgid ""
 "mixed taxation, but can be kept blank otherwise. This value will NOT be "
 "added to the base product's price."
 msgstr ""
-"அமைக்கப்பட்டால், மொத்த மொத்த விலையின் கொடுக்கப்பட்ட மதிப்பிற்கு இந்த தொகுப்பு தயாரிப்பு "
-"பொறுப்பாக இருப்பதாகக் காட்டப்படும். கலப்பு வரிவிதிப்பு உள்ள நிலைகளில் இது முக்கியமாக "
-"இருக்கலாம்; இல்லையெனில் காலியாக விடலாம். இந்த மதிப்பு அடிப்படை தயாரிப்பின் விலையில் "
-"சேர்க்கப்படாது."
+"அமைக்கப்பட்டால், மொத்த விலையின் கொடுக்கப்பட்ட மதிப்பிற்கு இந்த தொகுப்பு தயாரிப்பு பொறுப்பாக "
+"இருப்பதாகக் காட்டப்படும். கலப்பு வரிவிதிப்பு உள்ள நிலைகளில் இது முக்கியமாக இருக்கலாம்; "
+"இல்லையெனில் காலியாக விடலாம். இந்த மதிப்பு அடிப்படை தயாரிப்பின் விலையில் சேர்க்கப்படாது."
 
 #: base/models/product.py:1067
 msgid "The bundled product must belong to the same event as the product."
@@ -7682,7 +7683,7 @@ msgstr "லேயவுட் கோப்பு செல்லுபடிய�
 #: base/models/seating.py:34
 #, python-brace-format
 msgid "Your layout file is not a valid seating plan. Error message: {}"
-msgstr "லேயவுட் கோப்பு செல்லுபடியாகும் அமர்வு அமர்வு திட்டமல்ல. பிழை செய்தி: {}"
+msgstr "லேயவுட் கோப்பு செல்லுபடியாகும் அமர்வு திட்டமல்ல. பிழை செய்தி: {}"
 
 #: base/models/seating.py:159
 #, python-brace-format
@@ -7779,7 +7780,7 @@ msgid ""
 msgstr ""
 "வணக்கம்,\n"
 "\n"
-"வாழ்த்துகள், நிகழ்வு முடிந்துவிட்டது! இது நல்லபடியாக நடந்திருக்குமென நம்புகிறோம். "
+"வாழ்த்துகள், நிகழ்வு முடிந்துவிட்டது! இது நல்லபடியாக நடந்திருக்குமென நம்புகிறோம்.\n"
 "ஆர்வமாக இருக்கக்கூடிய சில புள்ளிவிவரங்கள் இங்கே:\n"
 "\n"
 "- {submission_count} முன்மொழிவுகள் இருந்தன,\n"
@@ -8788,7 +8789,7 @@ msgstr "ஆப்பிள் பே"
 #: base/payment.py:61
 msgctxt "payment"
 msgid "Google Pay"
-msgstr "Google Pay"
+msgstr "கூகிள் கட்டணம்"
 
 #: base/payment.py:255
 msgid "Enable payment method"
@@ -10865,8 +10866,8 @@ msgid ""
 "Your proposal can’t be withdrawn at this time – please contact us if you "
 "need to withdraw your proposal!"
 msgstr ""
-"இந்த நேரத்தில் முன்மொழிவை திரும்பப் பெற முடியாது — முன்மொழிவை திரும்பப் பெற "
-"வேண்டுமானால் தொடர்பு கொள்ளவும்."
+"இந்த நேரத்தில் முன்மொழிவை திரும்பப் பெற முடியாது — முன்மொழிவை திரும்பப் பெற வேண்டுமானால் "
+"தொடர்பு கொள்ளவும்!"
 
 #: cfp/phrases.py:23
 msgid "Your session has been confirmed – we’re looking forward to seeing you!"
@@ -12141,7 +12142,7 @@ msgstr "பேச்சாளர்களுக்கான அழைப்ப�
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
 msgid "CfS"
-msgstr "CfS"
+msgstr "சிஎப்எச்"
 
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -12589,7 +12590,7 @@ msgstr "இந்தப் பக்கம் இனி இல்லை."
 
 #: common/text/phrases.py:82
 msgid "Huh."
-msgstr "என்ன?"
+msgstr "ஓ."
 
 #: common/text/phrases.py:87
 msgid "New password (again)"
@@ -13323,7 +13324,7 @@ msgstr "Sendgrid டோக்கன்"
 
 #: control/forms/event.py:1183 control/forms/global_settings.py:45
 msgid "SendGrid"
-msgstr "SendGrid"
+msgstr "கட்டத்தைஅனுப்பு"
 
 #: control/forms/event.py:1183 control/forms/global_settings.py:45
 msgid "SMTP"
@@ -16711,7 +16712,8 @@ msgstr "நிகழ்வு தரவை நீக்கு"
 
 #: control/templates/control/event_clear.html:8
 msgid "Delete statistics, systemlog, chat messages, questions, …"
-msgstr "புள்ளிவிவரங்கள், systemlog, அரட்டை செய்திகள், கேள்விகள், … ஆகியவற்றை நீக்கு"
+msgstr ""
+"புள்ளிவிவரங்கள், கணினிபதிவு, அரட்டை செய்திகள், கேள்விகள் ஆகியவற்றை நீக்கு, …"
 
 #: control/templates/control/event_clear.html:9
 msgid "Delete user accounts and audit logs"
@@ -17138,7 +17140,8 @@ msgstr "eventyay பதிப்பு:"
 #: control/templates/pretixcontrol/admin/systemconfig.html:33
 #, python-format
 msgid "You can check for updates <a href=\"%(update_url)s\">here</a>."
-msgstr "புதுப்பிப்புகளை <a href=\"%(update_url)s\">இங்கே</a> சரிபார்க்கலாம்."
+msgstr ""
+"நீங்கள் புதுப்பிப்புகளை <a href=\"%(update_url)s\">இங்கே</a> சரிபார்க்கலாம்."
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:42
 msgid "Settings have been loaded from:"
@@ -17630,9 +17633,8 @@ msgid ""
 "people from actually buying tickets."
 msgstr ""
 "உங்கள் நிகழ்வில் <strong>சோதனை முறை ஆர்டர்கள்</strong> உள்ளன; <strong>சோதனை முறை "
-"முடக்கப்பட்டிருந்தாலும்</strong>. அவை அறிக்கைகள் மற்றும் புள்ளிவிவரங்களில் தோன்றாமல், "
-"மேலும் மக்கள் உண்மையில் டிக்கெட்டுகளை வாங்குவதைத் தடுக்காமல் இருக்க, அந்த ஆர்டர்களை நீக்க "
-"வேண்டும்."
+"முடக்கப்பட்டிருந்தாலும்</strong>. அவை அறிக்கைகள் மற்றும் புள்ளிவிவரங்களில் தோன்றாமல், மேலும் "
+"மக்கள் உண்மையில் டிக்கெட்டுகளை வாங்குவதைத் தடுக்காமல் இருக்க, அந்த ஆர்டர்களை நீக்க வேண்டும்."
 
 #: control/templates/pretixcontrol/base.html:384
 #: eventyay_common/templates/eventyay_common/base.html:346
@@ -17903,10 +17905,10 @@ msgid ""
 "are connected on the organizer level, you do not have to create a new device "
 "for every event but can reuse them over and over again."
 msgstr ""
-"தேவையான அமைப்பாளர்-நிலை அனுமதிகள் இருந்தால், புதிய சாதனங்களை கணக்குடன் இணைத்து, "
-"அவற்றைப் பயன்படுத்தி டிக்கெட்டுகளை சரிபார்க்கலாம். சாதனங்கள் அமைப்பாளர் நிலையிலேயே "
-"இணைக்கப்படுவதால், ஒவ்வொரு நிகழ்விற்கும் புதிய சாதனத்தை உருவாக்க வேண்டியதில்லை; அவற்றை "
-"மீண்டும் மீண்டும் பயன்படுத்தலாம்."
+"தேவையான அமைப்பாளர்-நிலை அனுமதிகள் இருந்தால், புதிய சாதனங்களை கணக்குடன் இணைத்து, அவற்றைப் "
+"பயன்படுத்தி டிக்கெட்டுகளை சரிபார்க்கலாம். சாதனங்கள் அமைப்பாளர் நிலையிலேயே இணைக்கப்படுவதால், "
+"ஒவ்வொரு நிகழ்விற்கும் புதிய சாதனத்தை உருவாக்க வேண்டியதில்லை; அவற்றை மறுநிகழ்வில் "
+"பயன்படுத்தலாம்."
 
 #: control/templates/pretixcontrol/checkin/lists.html:47
 msgid "Your search did not match any check-in lists."
@@ -18098,8 +18100,8 @@ msgid ""
 msgstr ""
 "வணக்கம்,\n"
 "\n"
-"உங்கள் eventyay கணக்கின் கணக்கு தகவல் மாற்றப்பட்டுள்ளது என்பதைத் தெரிவித்துக் கொள்கிறோம். "
-"குறிப்பாக, பின்வரும் மாற்றங்கள் செய்யப்பட்டுள்ளன:\n"
+"உங்கள் eventyay கணக்கின் கணக்கு தகவல் மாற்றப்பட்டுள்ளது என்பதைத் தெரிவித்துக்\n"
+" கொள்கிறோம். குறிப்பாக, பின்வரும் மாற்றங்கள் செய்யப்பட்டுள்ளன:\n"
 "\n"
 "%(messages)s\n"
 "\n"
@@ -18109,7 +18111,7 @@ msgstr ""
 "\n"
 "%(url)s\n"
 "\n"
-"மரியாதையுடன்,\n"
+"அன்புடன்,\n"
 "உங்கள் அமைப்பு குழு\n"
 
 #: control/templates/pretixcontrol/event/actions.html:3
@@ -18350,7 +18352,7 @@ msgid ""
 msgstr ""
 "இந்த நிகழ்வில் <strong>அதிகமாக செலுத்தப்பட்ட ஆர்டர்கள்</strong> உள்ளன; உதாரணமாக, இரட்டை "
 "கட்டண முயற்சிகளால். சம்பவங்களை ஆய்வு செய்து, அதிகமாக செலுத்தப்பட்ட தொகையைப் பயனருக்கு "
-"திருப்பித் தருவது குறித்து பரிசீலிக்கவும்."
+"திருப்பித் தருவது குறித்து சிந்திக்கவும்."
 
 #: control/templates/pretixcontrol/event/index.html:34
 msgid "Show overpaid orders"
