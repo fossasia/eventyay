@@ -23,3 +23,8 @@ def test_event_common_settings_form_has_separate_header_color_controls():
     assert 'header_background_color' in EventCommonSettingsForm.auto_fields
     assert 'header_text_color' in EventCommonSettingsForm.auto_fields
     assert 'navigation_text_color' in EventCommonSettingsForm.auto_fields
+
+
+def test_event_common_settings_form_includes_date_display_controls():
+    assert 'show_date_to' in EventCommonSettingsForm.auto_fields
+    assert 'show_times' in EventCommonSettingsForm.auto_fields
