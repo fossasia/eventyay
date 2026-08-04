@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import operator
@@ -20,6 +21,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseNotAllowed,
     JsonResponse,
+    FileResponse,
 )
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -35,6 +37,7 @@ from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
+from eventyay.common.sanitizers import sanitize_email_html
 from eventyay.base.models import (
     Event,
     LogEntry,
@@ -47,7 +50,7 @@ from eventyay.base.models.event import EventMetaValue
 from eventyay.base.services import tickets
 from eventyay.base.services.invoices import build_preview_invoice_pdf
 from eventyay.base.signals import register_ticket_outputs
-from eventyay.base.templatetags.rich_text import markdown_compile_email
+from eventyay.base.templatetags.rich_text import expand_email_preview_placeholders, markdown_compile_email
 from eventyay.control.forms.event import (
     CancelSettingsForm,
     CommentForm,
@@ -683,7 +686,10 @@ class InvoicePreview(EventPermissionRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         fname, ftype, fcontent = build_preview_invoice_pdf(request.event)
-        resp = HttpResponse(fcontent, content_type=ftype)
+        if isinstance(fcontent, bytes):
+            resp = FileResponse(io.BytesIO(fcontent), content_type=ftype)
+        else:
+            resp = HttpResponse(fcontent, content_type=ftype)
         resp['Content-Disposition'] = f'inline; filename="{fname}"'
         resp.xframe_options_exempt = True
         return resp
@@ -895,6 +901,37 @@ class MailSettingsRendererPreview(MailSettingsPreview):
             raise Http404(_('Unknown e-mail renderer.'))
 
 
+class EditorEmailPreview(EventPermissionRequiredMixin, View):
+    """AJAX endpoint for previewing email body HTML from the Tiptap email editor.
+
+    Accepts a JSON POST body ``{ "html": "<p>...</p>", "locale": "en" }``,
+    sanitizes the HTML, expands ``{placeholder}`` tokens with sample values,
+    and returns ``{ "html": "<p>...</p>" }``.
+    """
+
+    permission = ('can_change_orders', 'can_change_event_settings')
+
+    def post(self, request, *args, **kwargs):
+        try:
+            payload = json.loads(request.body)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return HttpResponseBadRequest('Invalid JSON body')
+
+        raw_html = payload.get('html', '')
+        if not isinstance(raw_html, str):
+            return HttpResponseBadRequest('html must be a string')
+
+        locale = payload.get('locale')
+        if locale is not None and not isinstance(locale, str):
+            return HttpResponseBadRequest('locale must be a string')
+
+        safe_html = sanitize_email_html(raw_html)
+        preview_html = expand_email_preview_placeholders(
+            safe_html, request.event, locale=locale or None
+        )
+        return JsonResponse({'html': preview_html})
+
+
 class TicketSettingsPreview(EventPermissionRequiredMixin, View):
     permission = 'can_change_event_settings'
 
@@ -912,9 +949,13 @@ class TicketSettingsPreview(EventPermissionRequiredMixin, View):
             return redirect(self.get_error_url())
 
         fname, mimet, data = tickets.preview(self.request.event.pk, self.output.identifier)
-        resp = HttpResponse(data, content_type=mimet)
+        if isinstance(data, bytes):
+            resp = FileResponse(io.BytesIO(data), content_type=mimet)
+        else:
+            resp = HttpResponse(data, content_type=mimet)
         ftype = fname.split('.')[-1]
-        resp['Content-Disposition'] = f'attachment; filename="ticket-preview.{ftype}"'
+        resp['Content-Disposition'] = f'inline; filename="ticket-preview.{ftype}"'
+        resp.xframe_options_exempt = True
         return resp
 
     def get_error_url(self) -> str:

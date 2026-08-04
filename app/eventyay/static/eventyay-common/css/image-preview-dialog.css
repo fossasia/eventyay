@@ -1,0 +1,56 @@
+.eventyay-image-preview-dialog {
+    border: none;
+    padding: 0;
+    margin: auto;
+    max-width: none;
+    max-height: none;
+    background: transparent;
+    overflow: visible;
+}
+
+.eventyay-image-preview-dialog::backdrop {
+    background: rgba(211, 211, 211, 0.8);
+}
+
+.eventyay-image-preview-dialog__close {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1;
+    border: none;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 48px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.eventyay-image-preview-dialog__close:hover,
+.eventyay-image-preview-dialog__close:focus {
+    color: #fff;
+    background: rgba(0, 0, 0, 0.8);
+    opacity: 1;
+}
+
+.eventyay-image-preview-dialog__close:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+.eventyay-image-preview-dialog__image {
+    display: block;
+    max-width: min(95vw, 1200px);
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+}
