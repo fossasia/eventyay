@@ -342,7 +342,7 @@ function drawAttendanceOverTime() {
     new ApexCharts(chartEl, options).render()
 }
 
-function drawFollowerChart(dataElId, chartElId, paletteIndex) {
+function drawFollowerChart(dataElId, chartElId, paletteIndex, isWeekly) {
     if (typeof ApexCharts === 'undefined') return
 
     const dataEl = document.getElementById(dataElId)
@@ -354,6 +354,19 @@ function drawFollowerChart(dataElId, chartElId, paletteIndex) {
 
     const label = dataEl.dataset.label || 'New followers'
     const color = PALETTE[paletteIndex] ?? PALETTE[0]
+
+    const tooltipXFormatter = isWeekly
+        ? (val) => {
+            const start = new Date(val)
+            const end = new Date(start)
+            end.setDate(end.getDate() + 6)
+            const fmt = date => date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+            return `${fmt(start)} - ${fmt(end)} ${start.getFullYear()}`
+        }
+        : (val) => {
+            const start = new Date(val)
+            return start.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+        }
 
     const options = {
         series: [
@@ -367,24 +380,28 @@ function drawFollowerChart(dataElId, chartElId, paletteIndex) {
             animations: { enabled: true }
         },
         colors: [color],
-        xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { format: 'dd MMM' } },
+        xaxis: {
+            type: 'datetime',
+            tooltip: { enabled: false },
+            labels: { format: isWeekly ? 'dd MMM' : 'MMM yyyy' }
+        },
         yaxis: { min: 0, labels: { formatter: (v) => Math.round(v) } },
         stroke: { curve: 'straight', width: 2 },
         fill: { type: 'solid', opacity: 0.15 },
         markers: { size: 4, hover: { size: 6 } },
         dataLabels: { enabled: false },
         legend: { show: false },
-        tooltip: { shared: true, x: { format: 'dd MMM yyyy' } }
+        tooltip: { shared: true, x: { formatter: tooltipXFormatter } }
     }
     new ApexCharts(chartEl, options).render()
 }
 
 function drawFollowerWeekly() {
-    drawFollowerChart('followers-weekly-data', 'followers-weekly-chart', 4)
+    drawFollowerChart('followers-weekly-data', 'followers-weekly-chart', 4, true)
 }
 
 function drawFollowerMonthly() {
-    drawFollowerChart('followers-monthly-data', 'followers-monthly-chart', 5)
+    drawFollowerChart('followers-monthly-data', 'followers-monthly-chart', 5, false)
 }
 
 function initCharts() {
