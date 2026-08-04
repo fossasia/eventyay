@@ -1723,10 +1723,6 @@ export default {
 						offer_audio: true,
 						offer_video: isScreenShare || (feedType === 'video' && this.videoOutput),
 					}
-					if (feedType === 'video') {
-						subscribe.substream = SIMULCAST_SUBSTREAMS[this.visibleVideoLayerByFeedId[id] || 'low']
-						subscribe.temporal = subscribe.substream
-					}
 					if (Janus.webRTCAdapter.browserDetails.browser === 'safari' &&
 						(videoCodec === 'vp9' || (videoCodec === 'vp8' && !Janus.safariVp8))) {
 						subscribe.offer_video = false
@@ -1812,7 +1808,7 @@ export default {
 					user: existingFeed?.user || null,
 					stream: null,
 					paused: false,
-					requestedLayer: feedType === 'video' ? (this.visibleVideoLayerByFeedId[id] || 'low') : null,
+					requestedLayer: null,
 				})
 				this.pausedVideoFeedIds = this.pausedVideoFeedIds.filter(item => !this.feedIdEquals(item, id))
 				if (!existingFeed?.user) {
@@ -1983,6 +1979,11 @@ export default {
 			})
 			this.upsertRemoteFeed(feed)
 		},
+		expectedTrackKindsForFeed(feed) {
+			if (feed.feedType === 'audio') return new Set(['audio'])
+			if (feed.feedType === 'video') return new Set(['video'])
+			return new Set(['audio', 'video'])
+		},
 		onRemoteTrack(feedId, track, on) {
 			if (!track) return
 			const id = this.normalizeFeedId(feedId)
@@ -1990,11 +1991,13 @@ export default {
 			log('janus-subscriber', 'debug', {
 				action: 'onRemoteTrack',
 				feedId: id,
+				feedType: feed?.feedType,
 				on,
 				track: summarizeTrack(track),
 				hasFeed: Boolean(feed),
 			})
 			if (!feed) return
+			if (!this.expectedTrackKindsForFeed(feed).has(track.kind)) return
 			if (!feed.stream) {
 				feed.stream = new MediaStream()
 			}
@@ -2034,12 +2037,14 @@ export default {
 			const feed = this.remoteFeeds.find(item => this.feedIdEquals(item.id, id))
 			const pc = handle?.webrtcStuff?.pc
 			if (!feed || !pc?.getReceivers) return
+			const expectedKinds = this.expectedTrackKindsForFeed(feed)
 			const tracks = pc.getReceivers()
 				.map(receiver => receiver.track)
-				.filter(track => track && track.readyState !== 'ended')
+				.filter(track => track && track.readyState !== 'ended' && expectedKinds.has(track.kind))
 			log('janus-subscriber', 'debug', {
 				action: 'syncRemoteTracksFromPeerConnection',
 				feedId: id,
+				feedType: feed.feedType,
 				hasFeed: Boolean(feed),
 				hasPeerConnection: Boolean(pc),
 				tracks: tracks.map(summarizeTrack),
@@ -2153,10 +2158,13 @@ export default {
 					existingTile.user = feed.user
 					existingTile.label = feed.user?.profile?.display_name || existingTile.label
 				}
-				if (feed.feedType === 'video' || feed.hasVideo || feed.stream?.getVideoTracks().length) {
+				if (feed.feedType === 'video') {
 					existingTile.videoFeedId = id
 					existingTile.cameraOn = Boolean(feed.cameraOn)
-					existingTile.hasVideo = Boolean(feed.hasVideo && feed.stream?.getVideoTracks().length)
+					existingTile.hasVideo = Boolean(
+						feed.hasVideo &&
+						feed.stream?.getVideoTracks().some(track => track.readyState === 'live' && !track.muted)
+					)
 					existingTile.cameraOnAt = feed.cameraOnAt
 				}
 				if (feed.feedType === 'audio' || feed.stream?.getAudioTracks().length) {
