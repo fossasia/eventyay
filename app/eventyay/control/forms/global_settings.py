@@ -233,10 +233,10 @@ class GlobalSettingsForm(SettingsForm):
                 ),
                 (
                     'smtp_password',
-                    forms.CharField(
+                    SecretKeySettingsField(
                         label=_('Password'),
                         required=False,
-                        widget=forms.PasswordInput(
+                        widget=SecretKeySettingsWidget(
                             attrs={
                                 'autocomplete': 'new-password',  # see https://bugs.chromium.org/p/chromium/issues/detail?id=370363#c7
                                 'data-display-dependency': '#id_email_vendor_1',
@@ -614,6 +614,8 @@ class GlobalSettingsForm(SettingsForm):
             )
             if not has_secret:
                 raise forms.ValidationError({'gmail_client_secret': _('This field is required when using Gmail as email vendor.')})
+
+
 
         return data
 

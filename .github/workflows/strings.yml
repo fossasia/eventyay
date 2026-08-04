@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Check gettext syntax
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up Python 3.12
         uses: actions/setup-python@v7
         with:

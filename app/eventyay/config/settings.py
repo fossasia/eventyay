@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 import django.conf.locale
 import importlib_metadata
+from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
@@ -414,6 +415,8 @@ CORS_URLS_REGEX = (
     r"/api/v1/.*"
     r")$"
 )
+
+CORS_ALLOW_HEADERS = [*default_headers, "exhibitor"]
 
 # TODO: This list is only for display. It should not be here.
 PLUGINS = []

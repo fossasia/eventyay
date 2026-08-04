@@ -6,4 +6,8 @@ register = template.Library()
 @register.simple_tag(takes_context=True)
 def get_top_menu_item_icon_class(context):
     request = context['request']
-    return 'fa-group' if getattr(request, 'organizer', None) else 'fa-tachometer'
+    if getattr(request, 'event', None):
+        return 'fa-dashboard'
+    elif getattr(request, 'organizer', None):
+        return 'fa-group'
+    return 'fa-dashboard'
