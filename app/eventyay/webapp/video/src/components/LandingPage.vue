@@ -233,12 +233,18 @@ export default {
 			}
 			return null
 		},
+		showDateTo() {
+			return config?.showDateTo ?? true
+		},
+		showTimes() {
+			return config?.showTimes ?? true
+		},
 		eventStartLine() {
 			if (!this.eventDateRange) return ''
 			return this.formatEventDateTime(this.eventDateRange.start)
 		},
 		showEventEndLine() {
-			if (!this.eventDateRange) return false
+			if (!this.eventDateRange || !this.showDateTo) return false
 			return !this.eventDateRange.start.isSame(this.eventDateRange.end, 'day')
 		},
 		eventEndLine() {
@@ -349,7 +355,10 @@ export default {
 		},
 		formatEventDateTime(value) {
 			const timezoneLabel = this.eventTimezone
-			return `${value.clone().tz(timezoneLabel).format('dddd, D MMMM, YYYY h:mm A')} (${timezoneLabel})`
+			if (!this.showTimes) {
+				return value.clone().tz(timezoneLabel).format('dddd, D MMMM, YYYY')
+			}
+			return `${value.clone().tz(timezoneLabel).format('dddd, D MMMM, YYYY HH:mm')} (${timezoneLabel})`
 		},
 		async fetchEventMeta() {
 			if (!config?.api?.base) return

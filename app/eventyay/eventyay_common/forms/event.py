@@ -59,6 +59,8 @@ class EventCommonSettingsForm(SettingsForm):
         'menu_label_tickets',
         'menu_label_join_video',
         'meta_noindex',
+        'show_date_to',
+        'show_times',
     ]
 
     def clean(self):

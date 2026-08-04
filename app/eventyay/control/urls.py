@@ -172,6 +172,15 @@ urlpatterns = [
         include(
             [
                 url(r'^$', dashboards.event_index, name='event.index'),
+                url(
+                    r'^statistics/$',
+                    RedirectView.as_view(
+                        pattern_name='control:event.index',
+                        permanent=True,
+                        query_string=True,
+                    ),
+                    name='event.statistics.redirect',
+                ),
                 url(r'^widgets.json$', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
                 url(r'^logs/$', event.EventLog.as_view(), name='event.log'),
                 url(r'^live/$', event.EventLive.as_view(), name='event.live'),
