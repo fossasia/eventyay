@@ -29,10 +29,9 @@ from eventyay.base.models import (
     SubmissionStates,
 )
 from eventyay.control.permissions import OrganizerPermissionRequiredMixin
-from eventyay.control.views.organizer_views.organizer_detail_view_mixin import OrganizerDetailViewMixin
 
 
-class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, TemplateView):
+class OrganizerAnalyticsView(OrganizerPermissionRequiredMixin, TemplateView):
 
     template_name = 'eventyay_common/organizers/dashboard.html'
     permission = None

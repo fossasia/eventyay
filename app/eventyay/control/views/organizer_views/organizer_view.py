@@ -343,7 +343,7 @@ class OrganizerSettingsFormView(OrganizerDetailViewMixin, OrganizerPermissionReq
             )
             return self.get(request)
 
-class OrganizerDashboard(OrganizerAnalyticsView):
+class OrganizerDashboard(OrganizerDetailViewMixin, OrganizerAnalyticsView):
     template_name = 'eventyay_common/organizers/dashboard.html'
     permission = None
 
