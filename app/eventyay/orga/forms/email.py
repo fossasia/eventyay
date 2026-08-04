@@ -133,12 +133,6 @@ class CentralMailSettingsForm(SettingsForm):
         finally:
             if f:
                 self.fields['test_email'] = f
-        if 'mail_reply_to' in self.changed_data and not self.cleaned_data.get('mail_reply_to'):
-            ms = self.obj.mail_settings
-            if ms.get('reply_to'):
-                ms['reply_to'] = ''
-                self.obj.mail_settings = ms
-                self.obj.save(update_fields=['mail_settings'])
         return result
 
     @property

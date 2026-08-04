@@ -32,10 +32,7 @@
         {% include "orga/includes/tablist.html" %}
 
         <section role="tabpanel" id="tabpanel-display" aria-labelledby="tab-display" tabindex="0" aria-hidden="false">
-            <fieldset>
-                <legend id="contact">{% translate "Contact information" %}</legend>
-                {{ form.email.as_field_group }}
-            </fieldset>
+
             <fieldset>
                 {# Needs to be later moved to common settings design: hiding Custom Event CSS upload/text fields and Header Pattern #}
 {#                <div id="csswrap">#}
