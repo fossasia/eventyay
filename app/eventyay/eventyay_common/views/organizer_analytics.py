@@ -193,36 +193,36 @@ class OrganizerAnalyticsView(OrganizerDetailViewMixin, OrganizerPermissionRequir
             for row in weekly_rows
             if row['period']
         }
-        min_week = min(weekly_by_date.keys()) if weekly_by_date else current_week_start
-        start_week = min(min_week, current_week_start - datetime.timedelta(weeks=11))
-
         followers_weekly = []
-        for d in dateutil.rrule.rrule(dateutil.rrule.WEEKLY, dtstart=start_week, until=current_week_start):
-            dt_key = d.date()
-            followers_weekly.append({
-                'x': dt_key.isoformat(),
-                'y': weekly_by_date.get(dt_key, 0)
-            })
+        if weekly_by_date:
+            min_week = min(weekly_by_date.keys())
+            start_week = max(min_week, current_week_start - datetime.timedelta(weeks=11))
+            for d in dateutil.rrule.rrule(dateutil.rrule.WEEKLY, dtstart=start_week, until=current_week_start):
+                dt_key = d.date()
+                followers_weekly.append({
+                    'x': dt_key.isoformat(),
+                    'y': weekly_by_date.get(dt_key, 0)
+                })
 
         monthly_by_date = {
             self._to_date(row['period']): row['count']
             for row in monthly_rows
             if row['period']
         }
-        min_month = min(monthly_by_date.keys()) if monthly_by_date else current_month_start
-        if current_month_start.month <= 11:
-            default_start_month = datetime.date(current_month_start.year - 1, current_month_start.month + 1, 1)
-        else:
-            default_start_month = datetime.date(current_month_start.year, 1, 1)
-        start_month = min(min_month, default_start_month)
-
         followers_monthly = []
-        for d in dateutil.rrule.rrule(dateutil.rrule.MONTHLY, dtstart=start_month, until=current_month_start):
-            dt_key = d.date()
-            followers_monthly.append({
-                'x': dt_key.isoformat(),
-                'y': monthly_by_date.get(dt_key, 0)
-            })
+        if monthly_by_date:
+            min_month = min(monthly_by_date.keys())
+            if current_month_start.month <= 11:
+                default_start_month = datetime.date(current_month_start.year - 1, current_month_start.month + 1, 1)
+            else:
+                default_start_month = datetime.date(current_month_start.year, 1, 1)
+            start_month = max(min_month, default_start_month)
+            for d in dateutil.rrule.rrule(dateutil.rrule.MONTHLY, dtstart=start_month, until=current_month_start):
+                dt_key = d.date()
+                followers_monthly.append({
+                    'x': dt_key.isoformat(),
+                    'y': monthly_by_date.get(dt_key, 0)
+                })
 
         return {
             'follower_total': follower_total,

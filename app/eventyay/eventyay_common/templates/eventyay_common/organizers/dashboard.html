@@ -16,11 +16,9 @@
 
 {% block inner %}
   <div class="page-header-with-actions">
-    {% if has_any_analytics %}
-      <a href="?refresh=true" class="btn btn-default btn-sm pull-right">
-        <span class="fa fa-refresh"></span> {% trans "Refresh Analytics" %}
-      </a>
-    {% endif %}
+    <a href="?refresh=true" class="btn btn-default btn-sm pull-right">
+      <span class="fa fa-refresh"></span> {% trans "Refresh Analytics" %}
+    </a>
     <h1>
       {% blocktrans with name=request.organizer.name %}{{ name }} Organizer Dashboard{% endblocktrans %}
     </h1>
@@ -117,8 +115,8 @@
                     id="orders-over-time-data"
                     class="d-none"
                     data-series="{{ orders_over_time_json }}"
-                    data-label-ordered="{% trans "Placed" %}"
-                    data-label-paid="{% trans "Paid" %}"
+                    data-label-ordered="{% trans 'Placed' %}"
+                    data-label-paid="{% trans 'Paid' %}"
                   ></div>
                   <div id="orders-over-time-chart"></div>
                 </div>
@@ -149,7 +147,7 @@
                     class="d-none"
                     data-series="{{ revenue_over_time_json }}"
                     data-currencies="{{ currencies_json }}"
-                    data-label="{% trans "Cumulative revenue" %}"
+                    data-label="{% trans 'Cumulative revenue' %}"
                   ></div>
                   <div id="revenue-over-time-chart"></div>
                 </div>
@@ -218,7 +216,7 @@
                     id="proposals-over-time-data"
                     class="d-none"
                     data-series="{{ proposals_over_time_json }}"
-                    data-label="{% trans "New proposals" %}"
+                    data-label="{% trans 'New proposals' %}"
                   ></div>
                   <div id="proposals-over-time-chart"></div>
                 </div>
@@ -274,8 +272,8 @@
                     id="checkin-rate-data"
                     class="d-none"
                     data-series="{{ checkin_rate_json }}"
-                    data-label-checked-in="{% trans "Checked in" %}"
-                    data-label-total="{% trans "Total" %}"
+                    data-label-checked-in="{% trans 'Checked in' %}"
+                    data-label-total="{% trans 'Total' %}"
                   ></div>
                   <div id="checkin-rate-chart"></div>
                 </div>
@@ -291,7 +289,7 @@
                     id="checkins-over-time-data"
                     class="d-none"
                     data-series="{{ checkins_over_time_json }}"
-                    data-label="{% trans "Check-ins" %}"
+                    data-label="{% trans 'Check-ins' %}"
                   ></div>
                   <div id="checkins-over-time-chart"></div>
                 </div>
@@ -325,8 +323,8 @@
                 id="attendance-over-time-data"
                 class="d-none"
                 data-series="{{ attendance_over_time_json }}"
-                data-label-orders="{% trans "Orders" %}"
-                data-label-registrations="{% trans "Registrations" %}"
+                data-label-orders="{% trans 'Orders' %}"
+                data-label-registrations="{% trans 'Registrations' %}"
               ></div>
               <div id="attendance-over-time-chart"></div>
             </div>
@@ -377,7 +375,7 @@
                     id="followers-weekly-data"
                     class="d-none"
                     data-series="{{ followers_weekly_json }}"
-                    data-label="{% trans "New followers" %}"
+                    data-label="{% trans 'New followers' %}"
                   ></div>
                   <div id="followers-weekly-chart"></div>
                 </div>
@@ -393,7 +391,7 @@
                     id="followers-monthly-data"
                     class="d-none"
                     data-series="{{ followers_monthly_json }}"
-                    data-label="{% trans "New followers" %}"
+                    data-label="{% trans 'New followers' %}"
                   ></div>
                   <div id="followers-monthly-chart"></div>
                 </div>
