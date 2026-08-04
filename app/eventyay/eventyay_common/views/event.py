@@ -469,7 +469,6 @@ class EventCreateView(TemplateView):
             default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
 
             ticketing_plugins = [
-                'eventyay.plugins.ticketoutputpdf',
                 'eventyay.plugins.banktransfer',
                 'eventyay.plugins.manualpayment',
             ]

@@ -4,6 +4,7 @@ var async_task_timeout = null;
 var async_task_check_url = null;
 var async_task_old_url = null;
 var async_task_is_download = false;
+var async_task_is_print = false;
 var async_task_is_long = false;
 var async_task_restored = false;
 
@@ -48,6 +49,23 @@ function async_task_check_callback(data, jqXHR, status) {
         ajaxErrDialog.hide();
         if (async_task_is_download && data.success) {
             _restore_async_old_url_once();
+        }
+        if (async_task_is_print && data.success) {
+            _restore_async_old_url_once();
+            var $iframe = $("#print-iframe");
+            if ($iframe.length === 0) {
+                $iframe = $('<iframe id="print-iframe" style="visibility:hidden; position:absolute; width:1px; height:1px; left:-9999px;"></iframe>');
+                $("body").append($iframe);
+            }
+            $iframe.off("load").on("load", function() {
+                try {
+                    this.contentWindow.print();
+                } catch(e) {
+                    console.log("Could not auto-print: ", e);
+                }
+            });
+            $iframe.attr("src", data.redirect);
+            return;
         }
         location.href = data.redirect;
         return;
@@ -126,6 +144,22 @@ function async_task_callback(data, jqXHR, status) {
         // back/forward history behaves as expected.
         if (location.href.indexOf("async_id") !== -1) {
             history.replaceState({}, "pretix", async_task_old_url);
+        }
+        if (async_task_is_print && data.success) {
+            var $iframe = $("#print-iframe");
+            if ($iframe.length === 0) {
+                $iframe = $('<iframe id="print-iframe" style="visibility:hidden; position:absolute; width:1px; height:1px; left:-9999px;"></iframe>');
+                $("body").append($iframe);
+            }
+            $iframe.off("load").on("load", function() {
+                try {
+                    this.contentWindow.print();
+                } catch(e) {
+                    console.log("Could not auto-print: ", e);
+                }
+            });
+            $iframe.attr("src", data.redirect);
+            return;
         }
         location.href = data.redirect;
         return;
@@ -214,6 +248,7 @@ $(function () {
         }
         async_task_id = null;
         async_task_is_download = $form.is("[data-asynctask-download]");
+        async_task_is_print = $form.is("[data-asynctask-print]");
         async_task_is_long = $form.is("[data-asynctask-long]");
         async_task_old_url = location.href;
         $("body").data('ajaxing', true);
