@@ -1573,14 +1573,6 @@ class QuickSetupView(FormView):
     def form_valid(self, form):
         plugins_active = self.request.event.get_plugins()
         if form.cleaned_data['ticket_download']:
-            if 'eventyay.plugins.ticketoutputpdf' not in plugins_active:
-                self.request.event.log_action(
-                    'eventyay.event.plugins.enabled',
-                    user=self.request.user,
-                    data={'plugin': 'eventyay.plugins.ticketoutputpdf'},
-                )
-                plugins_active.append('eventyay.plugins.ticketoutputpdf')
-
             self.request.event.settings.ticket_download = True
             self.request.event.settings.ticketoutput_pdf__enabled = True
 
