@@ -3,7 +3,7 @@ from eventyay.base.signals import order_paid, order_placed
 
 def clear_cache(sender, *args, **kwargs):
     suffixes = ['all']
-    if hasattr(sender, 'subevents'):
+    if getattr(sender, 'has_subevents', False):
         suffixes.extend([str(pk) for pk in sender.subevents.values_list('pk', flat=True)])
 
     prefixes = (

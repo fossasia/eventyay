@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 import pytest
+from django.test import override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -29,6 +29,7 @@ def env():
         user_with_perm = User.objects.create_user('with_perm@example.com', 'dummy')
         team_with_perm = Team.objects.create(
             organizer=organizer,
+            can_change_event_settings=True,
             can_view_orders=True,
             all_events=True,
         )
@@ -37,8 +38,8 @@ def env():
         user_no_perm = User.objects.create_user('no_perm@example.com', 'dummy')
         team_no_perm = Team.objects.create(
             organizer=organizer,
+            can_change_event_settings=True,
             can_view_orders=False,
-            can_change_items=True,
             all_events=True,
         )
         team_no_perm.members.add(user_no_perm)
@@ -55,6 +56,7 @@ def env():
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=True)
 def test_dashboard_shows_statistics_only_to_order_viewers(client, env):
     event = env['event']
     organizer = env['organizer']
@@ -94,6 +96,7 @@ def test_dashboard_shows_statistics_only_to_order_viewers(client, env):
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=True)
 def test_legacy_statistics_url_redirects_to_dashboard(client, env):
     organizer = env['organizer']
     event = env['event']
@@ -114,6 +117,7 @@ def test_legacy_statistics_url_redirects_to_dashboard(client, env):
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=True)
 def test_dashboard_statistics_hidden_when_no_orders(client, env):
     event = env['event']
     organizer = env['organizer']
@@ -131,10 +135,17 @@ def test_dashboard_statistics_hidden_when_no_orders(client, env):
 
 
 @pytest.mark.django_db
+@override_settings(
+    CACHES={
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'test-statistics-cache',
+        }
+    }
+)
 def test_statistics_cache_invalidation(env):
-    event = env['event']
-
     with scopes_disabled():
+        event = Event.objects.get(pk=env['event'].pk)
         event.cache.set('statistics_obd_dataall', 'cached_data')
         assert event.cache.get('statistics_obd_dataall') == 'cached_data'
 

@@ -525,7 +525,9 @@ def event_index(request, organizer, event):
     ctx['nearly_now'] = now().astimezone(ZoneInfo(request.event.timezone)) - timedelta(seconds=20)
     ctx['organizer_teams'] = request.organizer.teams.values_list('id', 'name')
     resp = render(request, 'pretixcontrol/event/index.html', ctx)
-    resp['Content-Security-Policy'] = "script-src 'unsafe-eval'; style-src 'unsafe-inline'"
+    if can_view_orders and ctx.get('stats_has_orders'):
+        resp['Content-Security-Policy'] = "script-src 'unsafe-eval'; style-src 'unsafe-inline'"
+        resp._csp_update = {'script-src': ["'unsafe-eval'"], 'style-src': ["'unsafe-inline'"]}
     return resp
 
 

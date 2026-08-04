@@ -15,6 +15,16 @@ from eventyay.plugins.statistics.signals import clear_cache
 
 
 def get_statistics_context(request, subevent=None):
+    has_orders = request.event.orders.exists()
+    if not has_orders:
+        return {
+            'stats_has_orders': False,
+            'stats_obd_data': '[]',
+            'stats_obp_data': '[]',
+            'stats_rev_data': '[]',
+            'stats_seats': {},
+        }
+
     tz = timezone.get_current_timezone()
 
     if 'latest' in request.GET:
