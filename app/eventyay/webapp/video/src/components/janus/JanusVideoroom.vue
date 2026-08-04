@@ -249,15 +249,15 @@ export default {
 		},
 		audioSessionId: {
 			type: [Number, String],
-			default: null
+			required: true
 		},
 		videoSessionId: {
 			type: [Number, String],
-			default: null
+			required: true
 		},
 		screenShareSessionId: {
 			type: [Number, String],
-			default: null
+			required: true
 		},
 		roomId: {
 			type: [Number, String],
@@ -354,13 +354,13 @@ export default {
 			return Number(this.sessionId)
 		},
 		janusAudioSessionId() {
-			return Number(this.audioSessionId || this.sessionId)
+			return Number(this.audioSessionId)
 		},
 		janusVideoSessionId() {
-			return Number(this.videoSessionId || Number(this.sessionId) + 1)
+			return Number(this.videoSessionId)
 		},
 		janusScreenShareSessionId() {
-			return Number(this.screenShareSessionId || Number(this.sessionId) + 1000000000)
+			return Number(this.screenShareSessionId)
 		},
 		gridStyle() {
 			const w = this.layout.width > 0 ? `${this.layout.width}px` : 'minmax(0, 1fr)'
@@ -546,6 +546,8 @@ export default {
 		tiles() {
 			this.$nextTick(() => {
 				this.onResize()
+				this.syncLocalMediaElements()
+				this.syncRemoteFeedMediaElements()
 			})
 		},
 		visibleVideoSubscriptionKey() {
@@ -1240,15 +1242,30 @@ export default {
 			this.$nextTick(() => {
 				const video = this.singleRef(this.$refs.localVideo)
 				if (!video) return
-				Janus.attachMediaStream(video, stream)
-				video.muted = true
-				const playPromise = video.play()
-				if (playPromise?.catch) {
-					playPromise.catch(error => {
-						log('venueless', 'warn', `Local video playback did not start automatically: ${error}`)
-					})
-				}
+				this.attachLocalMediaElement(video, stream, 'video')
 			})
+		},
+		attachLocalMediaElement(element, stream, medium) {
+			if (!element || !stream) return
+			if (element.srcObject !== stream) {
+				Janus.attachMediaStream(element, stream)
+			}
+			element.muted = true
+			if (!element.paused && element.readyState > 0) return
+			const playPromise = element.play()
+			if (playPromise?.catch) {
+				playPromise.catch(error => {
+					log('venueless', 'warn', `Local ${medium} playback did not start automatically: ${error}`)
+				})
+			}
+		},
+		syncLocalMediaElements() {
+			if (this.localVideoStream) {
+				this.attachLocalMediaElement(this.singleRef(this.$refs.localVideo), this.localVideoStream, 'video')
+			}
+			if (this.screenShareStream) {
+				this.attachLocalMediaElement(this.singleRef(this.$refs.localScreenVideo), this.screenShareStream, 'screen')
+			}
 		},
 		toggleMic() {
 			if (!this.audioPublisherHandle) {
@@ -1602,6 +1619,7 @@ export default {
 				return
 			}
 			const existingFeed = this.remoteFeeds.find(feed => this.feedIdEquals(feed.id, id))
+			const wasCameraOn = Boolean(existingFeed?.cameraOn)
 			const feed = existingFeed || {
 				id,
 				handle: null,
@@ -1634,6 +1652,9 @@ export default {
 			}
 			this.upsertRemoteFeed(feed)
 			this.fetchFeedUser(id)
+			if (feedType === 'video' && videoCodec && !wasCameraOn) {
+				this.$nextTick(() => this.syncVisibleVideoSubscriptions())
+			}
 			if (feedType === 'audio' || feedType === 'screen') {
 				this.subscribeToFeed(id, display, audioCodec, videoCodec)
 			}

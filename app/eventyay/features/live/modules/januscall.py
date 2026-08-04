@@ -115,23 +115,8 @@ class JanusCallModule(BaseModule):
                         self.consumer.event
                     )
 
-            audio_user_id = self._new_janus_room_id()
-            video_user_id = self._new_janus_room_id()
-            screenshare_user_id = self._new_janus_room_id()
-            await redis.setex(
-                f"januscall:user:{audio_user_id}",
-                3600 * 24,
-                str(self.consumer.user.pk),
-            )
-            await redis.setex(
-                f"januscall:user:{video_user_id}",
-                3600 * 24,
-                str(self.consumer.user.pk),
-            )
-            await redis.setex(
-                f"januscall:user:{screenshare_user_id}",
-                3600 * 24,
-                str(self.consumer.user.pk),
+            audio_user_id, video_user_id, screenshare_user_id = (
+                await self._reserve_janus_user_ids(redis, 3)
             )
 
         iceServers = turn_server.get_ice_servers() if turn_server else []
@@ -169,6 +154,31 @@ class JanusCallModule(BaseModule):
     @staticmethod
     def _new_janus_room_id():
         return secrets.randbelow(2_147_483_647) + 1
+
+    async def _reserve_janus_user_ids(self, redis, count):
+        user_ids = []
+        user_pk = str(self.consumer.user.pk)
+        attempts = 0
+
+        while len(user_ids) < count and attempts < 100:
+            attempts += 1
+            user_id = self._new_janus_room_id()
+            if user_id in user_ids:
+                continue
+
+            reserved = await redis.set(
+                f"januscall:user:{user_id}",
+                user_pk,
+                ex=3600 * 24,
+                nx=True,
+            )
+            if reserved:
+                user_ids.append(user_id)
+
+        if len(user_ids) != count:
+            raise ConsumerException("janus.failed", "Could not allocate video session ids")
+
+        return user_ids
 
     @staticmethod
     def _capture_janus_exception(exception):
