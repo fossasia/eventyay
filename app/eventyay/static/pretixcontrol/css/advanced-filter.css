@@ -6,25 +6,27 @@
 }
 
 .advanced-filter-search {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: block;
   width: 100%;
   margin-bottom: 15px;
 }
-
-.advanced-filter-search .form-control,
-.advanced-filter-search .btn {
-  /* Removed height: 38px to match standard 34px bootstrap sizing and align with select2 */
+/* Ensure the container clears its floating children */
+.advanced-filter-search::after {
+  content: "";
+  clear: both;
+  display: table;
 }
 
+
+
 .advanced-filter-go-form {
-  flex: 0 0 auto;
+  float: left;
+  margin-right: 12px;
+  margin-bottom: 12px;
 }
 
 .advanced-filter-search-form {
-  display: contents;
+  display: block;
 }
 
 .advanced-filter-search-bar {
@@ -63,11 +65,13 @@
 }
 
 .advanced-filter-advanced {
-  flex: 0 0 100%;
+  clear: both;
+  width: 100%;
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 12px;
   background: #fafafa;
+  margin-top: 12px;
 }
 
 .advanced-filter-advanced.is-collapsed,
@@ -134,7 +138,9 @@
   width: 100%;
 }
 
-.advanced-filter-post-form,
+.advanced-filter-post-form {
+  width: 100%;
+}
 .advanced-filter-batch-select-actions {
   display: contents;
 }
@@ -190,8 +196,13 @@
     flex: 1 1 auto;
   }
 
+  .advanced-filter-go-form {
+    float: none;
+    width: 100%;
+    margin-right: 0;
+  }
   .advanced-filter-search {
-    flex-direction: column;
+    display: block;
   }
   
   .advanced-filter-grid {
@@ -211,4 +222,9 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   max-width: 220px;
+}
+
+.advanced-filter-field--inline {
+  flex: 0 0 200px;
+  margin-bottom: 0;
 }

@@ -32,7 +32,7 @@ from eventyay.base.settings import (
     is_event_series_creation_enabled,
 )
 from eventyay.common.text.path import resolve_media_path
-from eventyay.control.forms.filter import EventFilterForm, OrganizerFilterForm
+from eventyay.control.forms.filter import EventFilterForm, OrganizerFilterForm, advanced_filters_open_from_get
 from eventyay.control.forms.organizer_forms import (
     OrganizerDeleteForm,
     OrganizerForm,
@@ -406,6 +406,7 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        ctx['advanced_filters_open'] = advanced_filters_open_from_get(self.filter_form)
         ctx['meta_fields'] = [self.filter_form['meta_{}'.format(p.name)] for p in self.organizer.meta_properties.all()]
         ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         return ctx

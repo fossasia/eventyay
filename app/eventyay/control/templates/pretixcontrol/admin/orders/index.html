@@ -20,7 +20,7 @@
     <form class="filter-form advanced-filter-search-form" action="" method="get">
         <div class="advanced-filter-search-bar">
             <div class="input-group advanced-filter-search-query-group">
-                <input id="id_query" type="text" name="query" class="form-control" placeholder="{% trans 'Search orders…' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
+                <input id="id_query" type="text" name="query" class="form-control" placeholder="{% trans 'Search orders…' %}" aria-label="{% trans 'Search orders…' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
                 <span class="input-group-btn">
                     <button class="btn btn-primary" type="submit">
                         <span class="fa fa-search" aria-hidden="true"></span>
@@ -29,7 +29,7 @@
                 </span>
             </div>
             
-            <div class="advanced-filter-field" style="flex: 0 0 200px; margin-bottom: 0;">
+            <div class="advanced-filter-field advanced-filter-field--inline">
                 {% bootstrap_field filter_form.status layout='inline' %}
             </div>
 
