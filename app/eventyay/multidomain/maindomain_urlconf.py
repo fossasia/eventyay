@@ -23,6 +23,7 @@ from eventyay.presale.views.startpage import (
 )
 
 from .views import AnonymousInviteRedirectView, VideoAssetView, VideoSPAView
+from eventyay.plugins.ticketoutputpdf import urls as ticketoutputpdf_urls
 
 
 logger = logging.getLogger(__name__)
@@ -82,6 +83,9 @@ for app in apps.get_app_configs():
                 logger.debug('Registered URLs under "%s" namespace:\n%s', app.label, single_plugin_patterns)
             except (ImportError, AttributeError, TypeError):
                 logger.exception('Error loading plugin URLs for %s', app.name)
+
+if hasattr(ticketoutputpdf_urls, 'urlpatterns'):
+    raw_plugin_patterns.append(path('', include((ticketoutputpdf_urls.urlpatterns, 'ticketoutputpdf'))))
 
 
 plugin_patterns = [path('', include((raw_plugin_patterns, 'plugins')))]
