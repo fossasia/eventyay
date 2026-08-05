@@ -18,6 +18,7 @@ from .views import (
     LayoutSettingsView,
     LayoutSetDefault,
     OrderPrintDo,
+    BadgeCachedDownloadView,
 )
 
 urlpatterns = [
@@ -70,6 +71,11 @@ urlpatterns = [
         'api/v1/organizers/<orgslug:organizer>/events/<slug:event>/orderpositions/<int:position>/preview/badge/',
         BadgePreviewView.as_view(),
         name='badge-preview',
+    ),
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/badges/download/<uuid:id>/',
+        BadgeCachedDownloadView.as_view(),
+        name='download',
     ),
 ]
 
