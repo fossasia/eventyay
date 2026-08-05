@@ -1121,6 +1121,20 @@ nav.navbar details.dropdown .dropdown-content button.dropdown-item:hover i {
   max-width: 220px;
 }
 
+.admin-table-cell-title {
+  max-width: 300px;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.admin-table-cell-speakers {
+  max-width: 250px;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
 .advanced-filter-field--inline {
   flex: 0 0 200px;
   margin-bottom: 0;

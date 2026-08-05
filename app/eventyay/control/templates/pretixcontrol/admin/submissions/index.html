@@ -133,14 +133,14 @@
                 <tbody>
                     {% for submission in submissions %}
                         <tr>
-                            <td style="max-width: 300px; white-space: normal; word-wrap: break-word;">
+                            <td class="admin-table-cell-title">
                                 <strong>
                                     <a href="{% url 'orga:submissions.content' organizer=submission.organizer_slug event=submission.event_slug code=submission.code %}">
                                         {{ submission.title }}
                                     </a>
                                 </strong>
                             </td>
-                            <td class="list-stack" style="max-width: 250px; white-space: normal; word-wrap: break-word;">
+                            <td class="list-stack admin-table-cell-speakers">
                                 {% if submission.speakers %}
                                     <ul class="list-unstyled order-product-list">
                                     {% for speaker in submission.speakers %}
