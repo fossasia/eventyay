@@ -6,7 +6,6 @@
 {% block title %}{% trans "Events" %}{% endblock %}
 {% block custom_header %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/advanced-filter.css' %}" />
     <link rel="stylesheet" href="{% static 'pretixcontrol/css/order-form-toggles.css' %}">
     <script defer src="{% static 'pretixcontrol/js/admin-events-startpage-toggle.js' %}"></script>
 {% endblock %}
@@ -206,5 +205,4 @@
             {% include "pretixcontrol/pagination.html" %}
         </div>
     {% endif %}
-    <script type="module" src="{% static 'pretixcontrol/js/ui/advanced-filter.js' %}"></script>
 {% endblock %}

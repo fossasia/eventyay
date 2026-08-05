@@ -344,8 +344,6 @@
 {% block custom_header %}
     {{ block.super }}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
-    <script type="module" src="{% static 'pretixcontrol/js/ui/advanced-filter.js' %}"></script>
-    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/advanced-filter.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
 {% endblock %}

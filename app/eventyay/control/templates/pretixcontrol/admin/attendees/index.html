@@ -10,7 +10,6 @@
 
 {% block custom_header %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/advanced-filter.css' %}" />
 {% endblock %}
 
 {% block content %}
@@ -173,5 +172,4 @@
             </div>
         {% endif %}
     </div>
-    <script type="module" src="{% static 'pretixcontrol/js/ui/advanced-filter.js' %}"></script>
 {% endblock %}

@@ -6,7 +6,6 @@
 {% block title %}{% trans "Users" %}{% endblock %}
 {% block custom_header %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/advanced-filter.css' %}" />
     <link rel="stylesheet" href="{% static 'pretixcontrol/css/order-form-toggles.css' %}">
     <script type="module" src="{% static 'pretixcontrol/js/ui/admin-users.js' %}"></script>
     <script defer src="{% static 'cfp/js/localDateTime.js' %}"></script>
@@ -310,5 +309,4 @@
             </div>
         </div>
     </dialog>
-    <script type="module" src="{% static 'pretixcontrol/js/ui/advanced-filter.js' %}"></script>
 {% endblock %}

@@ -7,7 +7,6 @@
 {% block custom_header %}
     {{ block.super }}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
-    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/advanced-filter.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
 {% endblock %}
@@ -190,5 +189,4 @@
             ¹ {% trans "If you click links in this column, you will only find orders that are canceled completely, while the numbers also include single canceled positions within valid orders." %}
         </p>
     </div>
-    <script type="module" src="{% static 'pretixcontrol/js/ui/advanced-filter.js' %}"></script>
 {% endblock %}
