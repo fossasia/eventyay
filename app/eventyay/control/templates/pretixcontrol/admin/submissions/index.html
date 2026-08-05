@@ -11,6 +11,7 @@
 {% block custom_header %}
     {{ block.super }}
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/advanced-filter.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders.css' %}" />
 {% endblock %}
 
 {% block content %}
@@ -119,7 +120,7 @@
                             {% translate "Tags" %}
                         </th>
                         <th>
-                            {% translate "Proposal State" %}
+                            {% translate "State" %}
                             <a href="?{% url_replace request 'ordering' 'state' %}">
                                 <i class="fa fa-caret-up"></i>
                             </a>
@@ -141,13 +142,24 @@
                                     </a>
                                 </strong>
                             </td>
-                            <td>
-                                {% if submission.speakers|length > 40 %}
-                                    <span title="{{ submission.speakers }}">
-                                        {{ submission.speakers|slice:":40" }}&hellip;
-                                    </span>
+                            <td class="list-stack" style="max-width: 250px; white-space: normal; word-wrap: break-word;">
+                                {% if submission.speakers %}
+                                    <ul class="list-unstyled order-product-list">
+                                    {% for speaker in submission.speakers %}
+                                        {% if forloop.counter <= 2 %}
+                                            <li>
+                                                <a href="{% url 'orga:speakers.view' organizer=submission.organizer_slug event=submission.event_slug code=speaker.code %}">{{ speaker.name }}</a>
+                                                {% if forloop.counter == 2 and not forloop.last %}
+                                                    <span class="product-ellipsis">&hellip;</span>
+                                                {% endif %}
+                                            </li>
+                                        {% else %}
+                                            <li class="product-hidden"><a href="{% url 'orga:speakers.view' organizer=submission.organizer_slug event=submission.event_slug code=speaker.code %}">{{ speaker.name }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    </ul>
                                 {% else %}
-                                    {{ submission.speakers }}
+                                    -
                                 {% endif %}
                             </td>
                             <td>
@@ -159,8 +171,25 @@
                             <td>
                                 {{ submission.track }}
                             </td>
-                            <td>
-                                {{ submission.tags }}
+                            <td class="list-stack">
+                                {% if submission.tags_list %}
+                                    <ul class="list-unstyled order-product-list">
+                                    {% for tag in submission.tags_list %}
+                                        {% if forloop.counter <= 2 %}
+                                            <li>
+                                                {{ tag }}
+                                                {% if forloop.counter == 2 and not forloop.last %}
+                                                    <span class="product-ellipsis">&hellip;</span>
+                                                {% endif %}
+                                            </li>
+                                        {% else %}
+                                            <li class="product-hidden">{{ tag }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    {{ submission.tags }}
+                                {% endif %}
                             </td>
                             <td>
                                 <span class="label 

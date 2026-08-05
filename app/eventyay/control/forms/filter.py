@@ -1524,7 +1524,7 @@ class UserFilterForm(FilterForm):
     status = forms.ChoiceField(
         label=_('Status'),
         choices=(
-            ('', _('All')),
+            ('', _('All statuses')),
             ('active', _('Active')),
             ('inactive', _('Inactive')),
         ),
@@ -1533,7 +1533,7 @@ class UserFilterForm(FilterForm):
     superuser = forms.ChoiceField(
         label=_('Administrator'),
         choices=(
-            ('', _('All')),
+            ('', _('All admin statuses')),
             ('yes', _('Administrator')),
             ('no', _('No administrator')),
         ),
@@ -1542,7 +1542,7 @@ class UserFilterForm(FilterForm):
     verified = forms.ChoiceField(
         label=_('Verified'),
         choices=(
-            ('', _('All')),
+            ('', _('All verification statuses')),
             ('yes', _('Verified')),
             ('no', _('Unverified')),
         ),
@@ -1551,7 +1551,7 @@ class UserFilterForm(FilterForm):
     spam = forms.ChoiceField(
         label=_('Spam'),
         choices=(
-            ('', _('All')),
+            ('', _('All spam statuses')),
             ('yes', _('Spam')),
             ('no', _('Not spam')),
         ),
