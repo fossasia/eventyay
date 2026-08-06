@@ -46,11 +46,11 @@ import { nativeToOps } from 'lib/emoji'
 
 const Delta = Quill.import('delta')
 const MENTION_BOUNDARIES = new Set([' ', '\n', '\t', '(', '[', '{', '<', '.', ',', ';', ':', '!', '?', '"', '\'', '`'])
-const MENTION_STOP_CHARS = new Set([...MENTION_BOUNDARIES, '@'])
+const MENTION_SEARCH_STOP_CHARS = new Set(['(', '[', '{', '<', '.', ',', ';', ':', '!', '?', '"', '\'', '`', '@'])
 
 function getMentionMatch(text) {
 	let index = text.length - 1
-	while (index >= 0 && !MENTION_STOP_CHARS.has(text[index])) {
+	while (index >= 0 && !MENTION_SEARCH_STOP_CHARS.has(text[index])) {
 		index -= 1
 	}
 	if (index < 0 || text[index] !== '@') return null
@@ -184,7 +184,10 @@ export default {
 			this.updateAutocomplete()
 		},
 		handleEnter() {
-			if (this.autocomplete) return this.handleMention()
+			if (this.autocomplete) {
+				if (this.autocomplete.options?.length) return this.handleMention()
+				this.closeAutocomplete()
+			}
 			return this.send()
 		},
 		handleTab() {
