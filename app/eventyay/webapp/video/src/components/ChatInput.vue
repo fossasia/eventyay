@@ -45,6 +45,21 @@ import UploadButton from 'components/UploadButton'
 import { nativeToOps } from 'lib/emoji'
 
 const Delta = Quill.import('delta')
+const MENTION_BOUNDARIES = new Set([' ', '\n', '\t', '(', '[', '{', '<', '.', ',', ';', ':', '!', '?', '"', '\'', '`'])
+const MENTION_STOP_CHARS = new Set([...MENTION_BOUNDARIES, '@'])
+
+function getMentionMatch(text) {
+	let index = text.length - 1
+	while (index >= 0 && !MENTION_STOP_CHARS.has(text[index])) {
+		index -= 1
+	}
+	if (index < 0 || text[index] !== '@') return null
+	if (index > 0 && !MENTION_BOUNDARIES.has(text[index - 1])) return null
+	return {
+		index,
+		search: text.slice(index + 1)
+	}
+}
 
 export default {
 	components: { Avatar, EmojiPickerButton, UploadButton },
@@ -56,7 +71,9 @@ export default {
 		return {
 			files: [],
 			uploading: false,
-			autocomplete: null
+			autocomplete: null,
+			autocompleteSearchSequence: 0,
+			autocompleteUpdateTimeout: null
 		}
 	},
 	computed: {
@@ -76,8 +93,11 @@ export default {
 			// TODO debounce?
 			if (!this.autocomplete) return
 			if (this.autocomplete.type === 'mention') {
+				const sequence = ++this.autocompleteSearchSequence
 				const { results } = await api.call('user.list.search', {search_term: search, page: 1, include_banned: false})
+				if (sequence !== this.autocompleteSearchSequence || !this.autocomplete || this.autocomplete.search !== search) return
 				this.autocomplete.options = results
+				this.autocomplete.selected = results.length ? Math.min(this.autocomplete.selected, results.length - 1) : 0
 				// if (results.length === 1) {
 				// 	this.autocomplete.selected = 0
 				// 	this.handleMention()
@@ -127,29 +147,30 @@ export default {
 			}
 		}
 	},
+	unmounted() {
+		window.clearTimeout(this.autocompleteUpdateTimeout)
+	},
 	methods: {
 		onTextChange(delta, oldDelta, source) {
 			if (source !== 'user') return
+			window.clearTimeout(this.autocompleteUpdateTimeout)
+			this.autocompleteUpdateTimeout = window.setTimeout(this.updateAutocomplete, 0)
+		},
+		updateAutocomplete() {
 			const selection = this.quill.getSelection()
 			if (selection === null) return
 			const caretPos = selection.index
-			const lookbackLength = Math.min(32, caretPos)
-			const lookbackOffset = caretPos - lookbackLength
-			const lookback = this.quill.getText(lookbackOffset, lookbackLength)
-			// only trigger when there is a space before @, except at the beginning of the message
-			const startsWithMention = lookbackOffset === 0 && lookback.startsWith('@')
-			const autocompleteCharIndex =
-				startsWithMention
-					? 0
-					: lookback.lastIndexOf(' @') // TODO any whitespace
-			if (autocompleteCharIndex > -1) {
+			const textBeforeCaret = this.quill.getText(0, caretPos)
+			const mentionMatch = getMentionMatch(textBeforeCaret)
+			if (mentionMatch) {
+				const mentionIndex = mentionMatch.index
 				this.autocomplete = {
 					type: 'mention',
-					search: lookback.slice(autocompleteCharIndex + 1 + !startsWithMention),
+					search: mentionMatch.search,
 					selection,
 					range: {
-						index: autocompleteCharIndex + lookbackOffset + !startsWithMention,
-						length: lookback.length
+						index: mentionIndex,
+						length: caretPos - mentionIndex
 					},
 					options: null,
 					selected: 0
@@ -159,7 +180,8 @@ export default {
 			}
 		},
 		onSelectionChange(range, oldRange, source) {
-			// TODO check mentions
+			if (source !== 'user') return
+			this.updateAutocomplete()
 		},
 		handleEnter() {
 			if (this.autocomplete) return this.handleMention()
@@ -170,11 +192,11 @@ export default {
 			return true
 		},
 		handleArrayUp() {
-			if (!this.autocomplete) return true
+			if (!this.autocomplete?.options?.length) return true
 			this.autocomplete.selected = Math.max(0, this.autocomplete.selected - 1)
 		},
 		handleArrayDown() {
-			if (!this.autocomplete) return true
+			if (!this.autocomplete?.options?.length) return true
 			this.autocomplete.selected = Math.min(this.autocomplete.options.length - 1, this.autocomplete.selected + 1)
 		},
 		handleEscape() {
@@ -186,10 +208,11 @@ export default {
 			this.autocomplete = null
 		},
 		selectMention(index) {
+			if (!this.autocomplete?.options?.length) return
 			this.autocomplete.selected = index
 		},
 		handleMention() {
-			if (!this.autocomplete) return true
+			if (!this.autocomplete?.options?.length) return true
 			const user = this.autocomplete.options[this.autocomplete.selected]
 			if (!user) return true
 			this.quill.setSelection(this.autocomplete.range.index, 0)
@@ -198,7 +221,8 @@ export default {
 				id: user.id,
 				name: user.profile.display_name
 			})
-			this.quill.setSelection(this.autocomplete.range.index + 1, 0)
+			this.quill.insertText(this.autocomplete.range.index + 1, ' ')
+			this.quill.setSelection(this.autocomplete.range.index + 2, 0)
 			this.autocomplete = null
 		},
 		send() {
