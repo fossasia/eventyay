@@ -284,10 +284,17 @@ class EventWizardBasicsForm(I18nModelForm):
 
     def clean(self):
         data = super().clean()
+        # If locale is not set or is not among the selected locales, fall back to
+        # the first selected locale.  This supports the new creation UX where the
+        # "Default language" dropdown is removed and the value is derived from the
+        # order of the "Event languages" tray (managed by JavaScript).
         if data.get('locale') not in self.locales:
-            raise ValidationError(
-                {'locale': _('Your default locale must also be enabled for your event (see box above).')}
-            )
+            if self.locales:
+                data['locale'] = self.locales[0]
+            else:
+                raise ValidationError(
+                    {'locale': _('Your default locale must also be enabled for your event (see box above).')}
+                )
         if data.get('timezone') not in common_timezones:
             raise ValidationError({'timezone': _('Your default locale must be specified.')})
 

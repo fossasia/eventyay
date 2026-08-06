@@ -97,7 +97,54 @@
             <fieldset>
                 <legend>{% trans "Localization" %}</legend>
                 {% bootstrap_field foundation_form.locales layout="control" %}
-                {% bootstrap_field basics_form.locale layout="control" %}
+                <input type="hidden" name="basics-locale" id="id_basics-locale" value="{{ basics_form.locale.value|default:'' }}">
+                <div id="language-order-wrapper" class="form-group" style="display: none;">
+                    <label class="col-md-3 control-label">
+                        {% trans "Language priority & default" %}
+                    </label>
+                    <div class="col-md-9">
+                        <style>
+                            .language-order-tray {
+                                display: flex;
+                                flex-wrap: wrap;
+                                gap: 8px;
+                                margin-top: 6px;
+                                margin-bottom: 6px;
+                            }
+                            .language-order-item {
+                                display: inline-flex;
+                                align-items: center;
+                                padding: 6px 12px;
+                                background-color: #f8f9fa;
+                                border: 1px solid #ced4da;
+                                border-radius: 4px;
+                                cursor: grab;
+                                user-select: none;
+                                font-size: 14px;
+                                transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+                            }
+                            .language-order-item:hover {
+                                background-color: #e9ecef;
+                                border-color: #adb5bd;
+                            }
+                            .language-order-item.dragging {
+                                opacity: 0.4;
+                            }
+                            .language-order-item .drag-handle {
+                                margin-right: 8px;
+                                color: #6c757d;
+                                font-size: 14px;
+                            }
+                            .language-order-item .default-badge {
+                                margin-right: 8px;
+                            }
+                        </style>
+                        <div id="language-order-tray" class="language-order-tray"></div>
+                        <p class="help-block">
+                            {% trans "Drag and drop languages to reorder them. The first language will be used as the default language for your event." %}
+                        </p>
+                    </div>
+                </div>
             </fieldset>
 
             <fieldset>
