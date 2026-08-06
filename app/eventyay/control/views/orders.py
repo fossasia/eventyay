@@ -55,6 +55,7 @@ from eventyay.base.decimal import round_decimal
 from eventyay.base.email import get_email_context
 from eventyay.base.exporter import BaseExporter
 from eventyay.base.i18n import language
+from eventyay.base.services.anonymize import anonymize_order
 from eventyay.base.models import (
     CachedCombinedTicket,
     CachedFile,
@@ -785,6 +786,31 @@ class OrderDelete(OrderView):
                 'order': self.order,
             },
         )
+
+
+class OrderAnonymize(OrderView):
+    permission = 'can_change_orders'
+
+    def get(self, *args, **kwargs):
+        return render(
+            self.request,
+            'pretixcontrol/order/anonymize.html',
+            {
+                'order': self.order,
+            },
+        )
+
+    def post(self, *args, **kwargs):
+        try:
+            anonymize_order(self.order, user=self.request.user)
+            messages.success(
+                self.request,
+                _('The ticket sales and personal attendee data for this order have been anonymized.')
+            )
+        except Exception:
+            logger.exception('Failed to anonymize order %s', self.order.code)
+            messages.error(self.request, _('An error occurred while anonymizing the order ticketing data.'))
+        return redirect(self.get_order_url())
 
 
 class OrderDeny(OrderView):

@@ -28,6 +28,7 @@ from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
 
 from eventyay.api.models import OAuthAccessToken
+from eventyay.base.services.anonymize import anonymize_order
 from eventyay.api.serializers.order import (
     InvoiceSerializer,
     OrderCreateSerializer,
@@ -576,6 +577,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             user=self.request.user,
             auth=self.request.auth,
         )
+        return self.retrieve(request, [], **kwargs)
+
+    @action(detail=True, methods=['POST'])
+    def anonymize(self, request, **kwargs):
+        order = self.get_object()
+        anonymize_order(order, user=self.request.user if self.request.user.is_authenticated else None)
         return self.retrieve(request, [], **kwargs)
 
     @action(detail=True, methods=['POST'])
