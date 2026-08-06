@@ -12,6 +12,7 @@ from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.base.auth import SPAM_ACCOUNT_ERROR
 from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
 
@@ -33,6 +34,15 @@ def require_provider_enabled(request, provider):
         raise ImmediateHttpResponse(
             HttpResponseRedirect(reverse('eventyay_common:auth.login'))
         )
+
+
+def require_not_spam(request, user):
+    """Reject SSO logins for accounts marked as spam before account linking."""
+    if user is None or not user.pk or not user.is_spam:
+        return
+    logger.warning('Social login attempt for account marked as spam: %s', user.pk)
+    messages.error(request, SPAM_ACCOUNT_ERROR)
+    raise ImmediateHttpResponse(HttpResponseRedirect(reverse('eventyay_common:auth.login')))
 
 
 def sync_wikimedia_username(user, sociallogin):
@@ -94,15 +104,13 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         super().pre_social_login(request, sociallogin)
         require_provider_enabled(request, sociallogin.account.provider)
 
-        # Email lookup failed — MediaWiki consumer likely lacks email permission.
-        # Fall back to matching by wikimedia_username set on the User profile.
+        # Fall back to matching by wikimedia_username if email lookup failed.
         if not sociallogin.is_existing:
             user = lookup_by_wikimedia_username(sociallogin)
             if user is not None:
                 sociallogin.user = user
-                # _did_authenticate_by_email is already None here: _lookup_by_email
-                # only sets it when it finds a match, which it didn't (we're in the
-                # not-existing branch).  No password-wipe risk.
 
         if sociallogin.is_existing:
             sync_wikimedia_username(sociallogin.user, sociallogin)
+
+        require_not_spam(request, getattr(sociallogin, 'user', None))
