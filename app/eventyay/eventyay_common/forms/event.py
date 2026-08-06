@@ -122,11 +122,11 @@ class EventCommonSettingsForm(SettingsForm):
                 self.cleaned_data.get('video_url', ''),
             )
 
-                reg_limit = self.cleaned_data.get('registration_limit')
-                quota = self.event.quotas.first()
-                if quota and quota.size != reg_limit:
-                    quota.size = reg_limit
-                    quota.save(update_fields=['size'])
+            reg_limit = self.cleaned_data.get('registration_limit')
+            quota = self.event.quotas.first()
+            if quota and quota.size != reg_limit:
+                quota.size = reg_limit
+                quota.save(update_fields=['size'])
 
         return super().save()
 
