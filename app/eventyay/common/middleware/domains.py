@@ -21,6 +21,7 @@ from eventyay.base.models import Event
 
 LOCAL_HOST_NAMES = ('testserver', 'localhost', '127.0.0.1')
 ANY_DOMAIN_ALLOWED = ('robots.txt', 'redirect')
+MAIN_DOMAIN_AUTH_ROUTES = ('auth.login', 'auth.login.2fa', 'auth.login.legacy')
 
 
 class MultiDomainMiddleware:
@@ -133,6 +134,8 @@ class MultiDomainMiddleware:
         ).order_by('-date_from')
         if events:
             request.uses_custom_domain = True
+            if resolved.url_name in MAIN_DOMAIN_AUTH_ROUTES:
+                return redirect(urljoin(settings.SITE_URL, request.get_full_path()))
             public_event = events.filter(is_public=True).first()
             if public_event:
                 return redirect(public_event.urls.base.full())
