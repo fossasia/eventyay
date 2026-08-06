@@ -292,7 +292,7 @@ class NotificationFlipOffView(TemplateView):
         dest = (
             reverse('eventyay_common:account.notifications')
             if request.user.is_authenticated
-            else reverse('eventyay_common:auth.login')
+            else reverse('auth.login')
         )
         return redirect(dest)
 

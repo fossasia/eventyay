@@ -25,11 +25,10 @@ class TestOrganizerPages:
         assert response.status_code == 302
         # Verify redirect is to login page
         redirect_path = urlparse(response.url).path
-        # Depending on deployment, auth routes may live under /common/login/
+        # Depending on deployment, auth routes may live under /login/ or /orga/login/.
         assert (
             redirect_path.startswith('/login')
             or redirect_path.startswith('/orga/login')
-            or redirect_path.startswith('/common/login')
         )
 
     def test_organizer_dashboard_with_auth(self, organizer_client, organizer):
@@ -64,7 +63,6 @@ class TestEventManagement:
         assert (
             redirect_path.startswith('/login')
             or redirect_path.startswith('/orga/login')
-            or redirect_path.startswith('/common/login')
         )
 
     def test_event_dashboard_with_auth(self, organizer_client, organizer, event):
@@ -81,7 +79,6 @@ class TestEventManagement:
             assert not (
                 redirect_path.startswith('/login')
                 or redirect_path.startswith('/orga/login')
-                or redirect_path.startswith('/common/login')
             )
 
 

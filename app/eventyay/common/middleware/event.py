@@ -65,7 +65,7 @@ def get_login_redirect(request):
     if event and not is_orga_path: 
         url = event.urls.login
         return redirect(url.full() + params)
-    return redirect(reverse('eventyay_common:auth.login') + params)
+    return redirect(reverse('auth.login') + params)
 
 
 class EventPermissionMiddleware:

@@ -25,7 +25,11 @@ class DashboardView(TemplateView):
 
 urlpatterns = [
     path('logout/', auth.logout, name='auth.logout'),
-    path('login/', auth.login, name='auth.login'),
+    path(
+        'login/',
+        RedirectView.as_view(pattern_name='auth.login', permanent=True, query_string=True),
+        name='auth.login.legacy',
+    ),
     path('login/2fa/', auth.Login2FAView.as_view(), name='auth.login.2fa'),
     path('invite/<str:token>/', auth.invite, name='auth.invite'),
     path('forgot/', auth.Forgot.as_view(), name='auth.forgot'),
