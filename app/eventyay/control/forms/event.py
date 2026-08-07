@@ -83,7 +83,7 @@ def apply_organizer_email_placeholder(field):
 
 
 def get_default_organizer_email() -> str:
-    default_email = GlobalSettingsObject().settings.mail_from or settings.MAIL_FROM
+    default_email = GlobalSettingsObject().settings.mail_from or settings.DEFAULT_FROM_EMAIL
     return str(default_email or ORGANIZER_EMAIL_MODEL_DEFAULT).strip()
 
 
@@ -581,9 +581,6 @@ class EventSettingsForm(SettingsForm):
         'presale_has_ended_text',
         'voucher_explanation_text',
         'checkout_success_text',
-        'show_dates_on_frontpage',
-        'show_date_to',
-        'show_times',
         'show_products_outside_presale_period',
         'display_net_prices',
         'presale_start_show_date',
@@ -750,9 +747,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'presale_has_ended_text',
         'voucher_explanation_text',
         'checkout_success_text',
-        'show_dates_on_frontpage',
-        'show_date_to',
-        'show_times',
         'show_products_outside_presale_period',
         'display_net_prices',
         'presale_start_show_date',
@@ -813,8 +807,6 @@ class OrderFormSettingsForm(EventSettingsForm):
         'require_registered_account_for_tickets',
         'include_wikimedia_username',
         'checkout_show_copy_answers_button',
-        'checkout_email_helptext',
-        'checkout_phone_helptext',
     ]
 
     def __init__(self, *args, **kwargs):
@@ -835,6 +827,30 @@ class OrderFormSettingsForm(EventSettingsForm):
             set_system_question_field_overrides(self.obj, field_id, {})
 
         return result
+
+
+class OrderFormCustomerFieldSettingsForm(SettingsForm):
+    FIELD_LABELS = {
+        'order_email': _('E-mail'),
+        'order_phone': _('Phone number'),
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.field_id = kwargs.pop('field_id', None)
+        
+        if self.field_id == 'order_email':
+            self.auto_fields = [
+                'order_email_asked_twice',
+                'checkout_email_helptext',
+            ]
+        elif self.field_id == 'order_phone':
+            self.auto_fields = [
+                'checkout_phone_helptext',
+            ]
+        else:
+            self.auto_fields = []
+            
+        super().__init__(*args, **kwargs)
 
 
 class OrderFormDefaultFieldSettingsForm(forms.Form):

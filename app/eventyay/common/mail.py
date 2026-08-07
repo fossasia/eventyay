@@ -84,7 +84,7 @@ def mail_send_task(
         event = Event.objects.get(pk=event)
         backend = event.get_mail_backend()
 
-        sender = event.settings.mail_from or settings.MAIL_FROM
+        sender = event.settings.mail_from or settings.DEFAULT_FROM_EMAIL
 
         if reply_to is None:
             reply_to = get_reply_to_address(event, sender_email=sender)
@@ -98,10 +98,10 @@ def mail_send_task(
             effective_bcc = [addr.strip() for addr in event.settings.mail_bcc.split(',') if addr.strip()]
         bcc = effective_bcc or None
 
-        sender = formataddr((str(event.name), sender or settings.MAIL_FROM))
+        sender = formataddr((str(event.name), sender or settings.DEFAULT_FROM_EMAIL))
 
     else:
-        sender = formataddr(('eventyay', settings.MAIL_FROM))
+        sender = formataddr(('eventyay', settings.DEFAULT_FROM_EMAIL))
         backend = get_connection(fail_silently=False)
 
     email = EmailMultiAlternatives(
@@ -157,9 +157,7 @@ def get_reply_to_address(
     override
     → template.reply_to
     → event.settings.mail_reply_to  (canonical common setting for both Tickets and Talks)
-    → event.email             (organizer email set on the event)
     → organizer.settings.contact_mail  (fallback to organizer-level contact address)
-    → mail_settings['reply_to']        (legacy Talks field, kept for backwards compat)
     → None
     """
     if override is not None:
@@ -172,14 +170,11 @@ def get_reply_to_address(
         return event.settings.mail_reply_to
 
     use_default_sender = not event.settings.smtp_use_custom
-    if use_default_sender and sender_email == settings.MAIL_FROM:
+    if use_default_sender and sender_email == settings.DEFAULT_FROM_EMAIL:
         if event.email:
             return event.email
         contact_mail = event.organizer.settings.get('contact_mail')
         if contact_mail:
             return contact_mail
-
-    if event.mail_settings.get('reply_to'):
-        return event.mail_settings['reply_to']
 
     return None

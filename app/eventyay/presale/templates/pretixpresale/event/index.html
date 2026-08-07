@@ -191,17 +191,13 @@
         {% if event_logo_image and request.event.settings.logo_show_title %}
             <h2 class="content-header">
                 <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
-                {% if request.event.settings.show_dates_on_frontpage %}
-                    <a class="event-public-text-link" href="{{ event_public_presale_home }}"><small>{{ event.get_date_range_display }}</small></a>
-                {% endif %}
+                <a class="event-public-text-link" href="{{ event_public_presale_home }}"><small>{{ event.get_date_range_display }}</small></a>
             </h2>
         {% endif %}
         {% if not event_logo_image %}
             <h2 class="content-header">
                 <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
-                {% if request.event.settings.show_dates_on_frontpage %}
-                    <a class="event-public-text-link" href="{{ event_public_presale_home }}"><small>{{ event.get_date_range_display }}</small></a>
-                {% endif %}
+                <a class="event-public-text-link" href="{{ event_public_presale_home }}"><small>{{ event.get_date_range_display }}</small></a>
             </h2>
         {% endif %}
         {% if frontpage_text and not cart_namespace %}
@@ -222,54 +218,52 @@
                         </p>
                     </div>
                 {% endif %}
-                {% if ev.settings.show_dates_on_frontpage %}
-                    <div class="info-row">
-                        <span class="fa fa-clock-o fa-fw" aria-hidden="true"></span>
-                        <p>
-                            <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ ev.get_date_range_display }}</a>
-                            {% if event.settings.show_times %}
+                <div class="info-row">
+                    <span class="fa fa-clock-o fa-fw" aria-hidden="true"></span>
+                    <p>
+                        <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ ev.get_date_range_display }}</a>
+                        {% if event.settings.show_times %}
+                            <br>
+                            <span data-time="{{ ev.date_from.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
+                                {% blocktrans trimmed with time=ev.date_from|date:"TIME_FORMAT" %}
+                                    Begin: {{ time }}
+                                {% endblocktrans %}
+                            </span>
+                            {% if event.settings.show_date_to and ev.date_to %}
                                 <br>
-                                <span data-time="{{ ev.date_from.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
-                                    {% blocktrans trimmed with time=ev.date_from|date:"TIME_FORMAT" %}
-                                        Begin: {{ time }}
+                                <span data-time="{{ ev.date_to.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
+                                    {% blocktrans trimmed with time=ev.date_to|date:"TIME_FORMAT" %}
+                                        End: {{ time }}
+                                    {% endblocktrans %}
+                               </span>
+                            {% endif %}
+                        {% endif %}
+                        {% if ev.date_admission %}
+                            <br>
+                            {% if ev.date_admission|date:"SHORT_DATE_FORMAT" == ev.date_from|date:"SHORT_DATE_FORMAT" %}
+                                <span data-time="{{ ev.date_admission.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
+                                    {% blocktrans trimmed with time=ev.date_admission|date:"TIME_FORMAT" %}
+                                        Admission: {{ time }}
                                     {% endblocktrans %}
                                 </span>
-                                {% if event.settings.show_date_to and ev.date_to %}
-                                    <br>
-                                    <span data-time="{{ ev.date_to.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
-                                        {% blocktrans trimmed with time=ev.date_to|date:"TIME_FORMAT" %}
-                                            End: {{ time }}
-                                        {% endblocktrans %}
-                                   </span>
-                                {% endif %}
-                            {% endif %}
-                            {% if ev.date_admission %}
-                                <br>
-                                {% if ev.date_admission|date:"SHORT_DATE_FORMAT" == ev.date_from|date:"SHORT_DATE_FORMAT" %}
-                                    <span data-time="{{ ev.date_admission.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
-                                        {% blocktrans trimmed with time=ev.date_admission|date:"TIME_FORMAT" %}
-                                            Admission: {{ time }}
-                                        {% endblocktrans %}
-                                    </span>
-                                {% else %}
-                                    <span data-time="{{ ev.date_admission.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
-                                        {% blocktrans trimmed with datetime=ev.date_admission|date:"SHORT_DATETIME_FORMAT" %}
-                                            Admission: {{ datetime }}
-                                        {% endblocktrans %}
-                                    </span>
-                                {% endif %}
-                            {% endif %}
-                            <br>
-                            {% if subevent %}
-                                <a href="{% eventurl event "presale:event.ical.download" subevent=subevent.pk %}">
                             {% else %}
-                                <a href="{% eventurl event "presale:event.ical.download" %}">
+                                <span data-time="{{ ev.date_admission.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
+                                    {% blocktrans trimmed with datetime=ev.date_admission|date:"SHORT_DATETIME_FORMAT" %}
+                                        Admission: {{ datetime }}
+                                    {% endblocktrans %}
+                                </span>
                             {% endif %}
-                                {% trans "Add to Calendar" %}
-                            </a>
-                        </p>
-                    </div>
-                {% endif %}
+                        {% endif %}
+                        <br>
+                        {% if subevent %}
+                            <a href="{% eventurl event "presale:event.ical.download" subevent=subevent.pk %}">
+                        {% else %}
+                            <a href="{% eventurl event "presale:event.ical.download" %}">
+                        {% endif %}
+                            {% trans "Add to Calendar" %}
+                        </a>
+                    </p>
+                </div>
 
             </div>
 
