@@ -232,6 +232,76 @@ On new server
 - `docker exec -i eventyay-next-db pg_restore --clean --verbose -U eventyay-prod-user -d eventyay_prod <eventyay_prod-$(date +%Y%m%d).tar`
 - `cd /home/fossasia/DEPLOYMENT/data ; tar -cvzf ~/data.tar.gz`
 
+## Dedicated Check-in Workers
+
+The deployment includes a separate Gunicorn instance (`web_checkin`) that
+handles safety-critical check-in, badge printing, device API, and organizer
+admin traffic. This isolates these endpoints from public schedule browsing
+so that a traffic spike on public pages cannot starve check-in workers.
+
+### Architecture
+
+```
+                         ┌──────────────────────┐
+                         │        Nginx          │
+                         │   (reverse proxy)     │
+                         └──────┬───────┬────────┘
+                                │       │
+              ┌─────────────────┘       └─────────────────┐
+              ▼                                           ▼
+┌──────────────────────────┐             ┌──────────────────────────┐
+│   web (port 8000)        │             │  web_checkin (port 8002) │
+│   4 Gunicorn workers     │             │  2 Gunicorn workers      │
+│   Public schedule,       │             │  Check-in, badges,       │
+│   presale, widgets       │             │  devices, control panel  │
+└──────────────────────────┘             └──────────────────────────┘
+```
+
+### Nginx Routing
+
+The `enext-direct` Nginx config uses two `upstream` blocks:
+
+- **`eventyay_public`** → `127.0.0.1:8000` (public traffic)
+- **`eventyay_checkin`** → `127.0.0.1:8002` (check-in traffic)
+
+Paths routed to the check-in upstream:
+
+| Path pattern | Purpose |
+|---|---|
+| `/api/v1/organizers/.../checkin/...` | Check-in redeem API |
+| `/api/v1/organizers/.../devices/...` | Device management API |
+| `/api/v1/organizers/.../events/.../checkinlists/...` | Check-in list API |
+| `/api/v1/.../orderpositions/.../download/badge/` | Badge PDF download |
+| `/api/v1/device/...` | Device initialisation and session API |
+| `/api/v1/checkin/health/` | Check-in health endpoint |
+| `/control/...` | Organizer admin panel |
+
+All other traffic goes to the public upstream.
+
+### Verifying the Health Endpoint
+
+After deployment, verify that the check-in health endpoint responds
+independently:
+
+```bash
+# Should return {"status": "ok"} with HTTP 200
+curl -s https://<SERVER_NAME>/api/v1/checkin/health/
+```
+
+### Tuning Worker Counts
+
+The default configuration uses 4 public workers and 2 check-in workers.
+Adjust these in `deployment/docker-compose.yml` based on your event size:
+
+| Event size | Public workers | Check-in workers |
+|---|---|---|
+| Small (< 500 attendees) | 2 | 2 |
+| Medium (500–2000) | 4 | 2 |
+| Large (2000+) | 8 | 4 |
+
+Each Gunicorn worker consumes approximately 200–300 MB of RAM. Ensure
+the server has sufficient memory for the total worker count.
+
 
 ## Start up
 
