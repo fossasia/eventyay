@@ -18,17 +18,20 @@ _RICH_TEXT_TAGS: frozenset[str] = frozenset({
     'ul', 'ol', 'li', 'a', 'blockquote',
 })
 
-_EMAIL_TAGS: frozenset[str] = _RICH_TEXT_TAGS | frozenset({'span'})
+_EMAIL_TAGS: frozenset[str] = _RICH_TEXT_TAGS | frozenset({'span', 'img'})
 
 _LINK_ATTRIBUTES: dict[str, set[str]] = {'a': {'href'}}
 
 _EMAIL_ATTRIBUTES: dict[str, set[str]] = {
-    **_LINK_ATTRIBUTES,
+    'a': {'href', 'class'},  # class: CTA buttons from email placeholders
     'span': {'data-variable', 'class'},
+    'img': {'src', 'alt', 'width', 'height'},
 }
 
 # Align with bleach ALLOWED_PROTOCOLS in base.templatetags.rich_text.
+# ``data`` is only for trusted QR ``<img src="data:image/...">`` placeholders.
 _SAFE_URL_SCHEMES: frozenset[str] = frozenset({'http', 'https', 'mailto', 'tel'})
+_EMAIL_URL_SCHEMES: frozenset[str] = _SAFE_URL_SCHEMES | frozenset({'data'})
 
 
 def _attribute_filter(allowed: Mapping[str, set[str]]) -> Callable[[str, str, str], str | None]:
@@ -39,9 +42,15 @@ def _attribute_filter(allowed: Mapping[str, set[str]]) -> Callable[[str, str, st
     """
 
     def filter_attr(tag: str, attr: str, value: str) -> str | None:
-        if attr in allowed.get(tag, ()):
-            return value
-        return None
+        if attr not in allowed.get(tag, ()):
+            return None
+        if tag == 'a' and attr == 'href' and value.lstrip().lower().startswith('data:'):
+            return None
+        if tag == 'img' and attr == 'src':
+            normalized = value.lstrip().lower()
+            if not normalized.startswith(('data:image/', 'http://', 'https://', '/')):
+                return None
+        return value
 
     return filter_attr
 
@@ -58,6 +67,7 @@ def _clean(
     attributes: Mapping[str, set[str]],
     attribute_filter: Callable[[str, str, str], str | None],
     link_rel: str | None,
+    url_schemes: frozenset[str] = _SAFE_URL_SCHEMES,
 ) -> str:
     if not html:
         return html
@@ -66,7 +76,7 @@ def _clean(
         tags=tags,
         attributes=attributes,
         attribute_filter=attribute_filter,
-        url_schemes=_SAFE_URL_SCHEMES,
+        url_schemes=url_schemes,
         link_rel=link_rel,
     )
 
@@ -86,7 +96,8 @@ def sanitize_email_html(html: str) -> str:
     """Sanitize HTML from the email body editor profile.
 
     Like ``sanitize_rich_text``, but does not inject ``rel`` (email clients are
-    picky) and allows ``span`` for placeholder chips.
+    picky), allows ``span`` for placeholder chips, and keeps trusted QR
+    ``<img src="data:image/...">`` placeholders used in order emails.
     """
     return _clean(
         html,
@@ -94,4 +105,5 @@ def sanitize_email_html(html: str) -> str:
         attributes=_EMAIL_ATTRIBUTES,
         attribute_filter=_EMAIL_ATTR_FILTER,
         link_rel=None,
+        url_schemes=_EMAIL_URL_SCHEMES,
     )
