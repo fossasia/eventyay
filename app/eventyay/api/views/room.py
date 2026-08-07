@@ -1,5 +1,11 @@
+import hashlib
+
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
+from django.utils.cache import patch_cache_control
+from django.utils.http import http_date
+from django.utils.timezone import now
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import exceptions, pagination, viewsets
 from rest_framework.decorators import action
@@ -71,44 +77,40 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     )
     @action(detail=True, methods=["get"], url_path="streams/current")
     def current_stream(self, request, pk=None, **kwargs):
-        from django.core.cache import cache
-        from django.utils.cache import patch_cache_control
-        from django.utils.http import http_date
-        from django.utils.timezone import now
-        import hashlib
-
         room = self.get_object()
         cache_key = f"stream:current:{room.pk}"
         cached = cache.get(cache_key)
-        current = None
 
         if cached is not None:
             if cached == "none":
                 return Response(status=404)
-            response = Response(cached)
+            data = cached["data"]
+            etag = cached["etag"]
+            last_modified = cached["last_modified"]
         else:
             current = room.get_current_stream()
-            if current:
-                data = StreamScheduleSerializer(current).data
-                ttl = min(60, max(1, int((current.end_time - now()).total_seconds())))
-                cache.set(cache_key, data, ttl)
-                response = Response(data)
-            else:
+            if not current:
                 cache.set(cache_key, "none", 30)
                 return Response(status=404)
+
+            data = StreamScheduleSerializer(current).data
+            etag = hashlib.md5(f"{current.pk}:{current.updated_at}".encode()).hexdigest()
+            last_modified = current.updated_at.timestamp()
+
+            ttl = min(60, max(1, int((current.end_time - now()).total_seconds())))
+            cache.set(cache_key, {"data": data, "etag": etag, "last_modified": last_modified}, ttl)
+
+        if request.META.get('HTTP_IF_NONE_MATCH') == f'"{etag}"':
+            return Response(status=304)
+
+        response = Response(data)
+        response['ETag'] = f'"{etag}"'
+        response['Last-Modified'] = http_date(last_modified)
 
         if not request.user.is_authenticated:
             patch_cache_control(response, max_age=30, public=True, stale_while_revalidate=60)
         else:
             patch_cache_control(response, no_store=True)
-
-        
-        if current:
-            etag = hashlib.md5(f"{current.pk}:{current.updated_at}".encode()).hexdigest()
-            if request.META.get('HTTP_IF_NONE_MATCH') == f'"{etag}"':
-                return Response(status=304)
-            response['ETag'] = f'"{etag}"'
-            response['Last-Modified'] = http_date(current.updated_at.timestamp())
 
         return response
 
