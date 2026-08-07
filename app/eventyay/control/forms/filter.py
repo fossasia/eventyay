@@ -511,21 +511,22 @@ class EventOrderFilterForm(OrderFilterForm):
 
 def advanced_filters_open_from_get(filter_form) -> bool:
     """Return True when the advanced filter panel should start expanded."""
+    if not filter_form:
+        return False
+        
     if filter_form.data.get('filters') == '1':
         return True
     
     if not filter_form.is_valid():
         return False
         
-    advanced_keys = (
-        'status',
-        'product',
-        'provider',
-        'subevent',
-        'created_from',
-        'created_to',
-    )
-    return any(bool(filter_form.cleaned_data.get(key)) for key in advanced_keys)
+    for key in filter_form.fields.keys():
+        if key in ('query', 'ordering'):
+            continue
+        if filter_form.cleaned_data.get(key):
+            return True
+            
+    return False
 
 
 def advanced_filter_count(filter_form) -> int:
@@ -533,7 +534,9 @@ def advanced_filter_count(filter_form) -> int:
     if not filter_form.is_valid():
         return 0
     count = 0
-    for key in ('status', 'product', 'provider', 'subevent', 'created_from', 'created_to'):
+    for key in filter_form.fields.keys():
+        if key in ('query', 'ordering'):
+            continue
         if filter_form.cleaned_data.get(key):
             count += 1
     return count
