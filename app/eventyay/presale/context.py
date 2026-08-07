@@ -190,6 +190,7 @@ def _default_context(request):
     ctx['global_settings'] = {
         'leaflet_tiles': global_settings.get('leaflet_tiles'),
         'leaflet_tiles_attribution': global_settings.get('leaflet_tiles_attribution'),
+        'reservation_time': global_settings.get('reservation_time', default=30) or 30,
     }
     ctx['django_settings'] = settings
 

@@ -22,14 +22,26 @@ class TestPresalePages:
         assert response.status_code in [302, 200]
 
     def test_upcoming_events_page_loads(self, client):
-        """Test that the upcoming events page loads."""
-        response = client.get('/all-events/upcoming/')
+        """Test that the upcoming events page loads at the new URL."""
+        response = client.get('/upcoming/')
         assert response.status_code == 200
 
+    def test_upcoming_events_old_url_redirects(self, client):
+        """Test that old /all-events/upcoming/ redirects to /upcoming/."""
+        response = client.get('/all-events/upcoming/')
+        assert response.status_code == 301
+        assert response['Location'] == '/upcoming/'
+
     def test_past_events_page_loads(self, client):
-        """Test that the past events page loads."""
-        response = client.get('/all-events/past/')
+        """Test that the past events page loads at the new URL."""
+        response = client.get('/past/')
         assert response.status_code == 200
+
+    def test_past_events_old_url_redirects(self, client):
+        """Test that old /all-events/past/ redirects to /past/."""
+        response = client.get('/all-events/past/')
+        assert response.status_code == 301
+        assert response['Location'] == '/past/'
 
     def test_followed_events_page_redirects_unauthenticated(self, client):
         """Test that followed events page redirects anonymous users to login."""

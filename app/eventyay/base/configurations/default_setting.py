@@ -2,6 +2,7 @@ import json
 from collections import OrderedDict
 from datetime import datetime
 from decimal import Decimal
+from types import SimpleNamespace
 
 from django import forms
 from django.conf import settings
@@ -56,7 +57,8 @@ def primary_font_kwargs():
     from eventyay.presale.style import SYSTEM_FONT_CHOICES, get_fonts
 
     choices = list(SYSTEM_FONT_CHOICES)
-    choices += [(a, {'title': a, 'data': v}) for a, v in get_fonts().items()]
+    # Label must not be a plain dict/Mapping: Django mistakes it for an optgroup
+    choices += [(a, SimpleNamespace(title=a, data=v)) for a, v in get_fonts().items()]
     return {
         'choices': choices,
     }
@@ -979,19 +981,6 @@ DEFAULT_SETTINGS = {
             **country_choice_kwargs(),
         ),
     },
-    'show_dates_on_frontpage': {
-        'default': 'True',
-        'type': bool,
-        'serializer_class': serializers.BooleanField,
-        'form_class': forms.BooleanField,
-        'form_kwargs': dict(
-            label=_('Show event times and dates on the ticket shop'),
-            help_text=_(
-                "If disabled, no date or time will be shown on the ticket shop's front page. This settings "
-                'does however not affect the display in other locations.'
-            ),
-        ),
-    },
     'show_date_to': {
         'default': 'True',
         'type': bool,
@@ -1569,14 +1558,28 @@ DEFAULT_SETTINGS = {
             label=_('Do not allow cancellations after'),
         ),
     },
+    'contact_form_enabled': {
+        'default': False,
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Contact form'),
+            required=False,
+        ),
+    },
     'contact_mail': {
         'default': None,
         'type': str,
         'serializer_class': serializers.EmailField,
         'form_class': forms.EmailField,
         'form_kwargs': dict(
-            label=_('Contact address'),
-            help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
+            label=_('Organizer email address'),
+            help_text=_(
+                'You need to provide an email address so attendees can reach you through a contact form. '
+                'Messages will be sent to this address. Your email address remains hidden from attendees.'
+            ),
+            required=False,
         ),
     },
     'imprint_url': {
@@ -1636,7 +1639,7 @@ DEFAULT_SETTINGS = {
     },
     'mail_bcc': {'default': None, 'type': str},
     'mail_from': {
-        'default': settings.MAIL_FROM,
+        'default': settings.DEFAULT_FROM_EMAIL,
         'type': str,
         'form_class': forms.EmailField,
         'serializer_class': serializers.EmailField,

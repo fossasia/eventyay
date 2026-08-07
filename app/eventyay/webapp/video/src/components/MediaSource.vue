@@ -560,15 +560,12 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 					break;
 				}
 				const config = module.value.config || {};
-				// Smart muting logic to balance autoplay and user control:
-				// - Always mute if already muted (e.g., for language translation)
-				// - Mute for autoplay ONLY if controls are visible (so user can unmute)
-				// - If controls are hidden, don't force mute (autoplay may fail, but user gets audio when they click)
-				const shouldMute = mute || (autoplay.value && !config.hideControls);
+				const shouldStartMuted = mute || !!config.startMuted;
+				const shouldAutoplay = autoplay.value && !config.hideControls && shouldStartMuted;
 				iframeUrl = getYoutubeUrl(
 					ytid,
-					autoplay.value,
-					shouldMute,
+					shouldAutoplay,
+					shouldStartMuted,
 					config.hideControls,
 					config.noRelated,
 					config.showInfo,

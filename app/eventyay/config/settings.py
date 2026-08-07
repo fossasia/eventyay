@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 import django.conf.locale
 import importlib_metadata
+from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
@@ -414,6 +415,8 @@ CORS_URLS_REGEX = (
     r"/api/v1/.*"
     r")$"
 )
+
+CORS_ALLOW_HEADERS = [*default_headers, "exhibitor"]
 
 # TODO: This list is only for display. It should not be here.
 PLUGINS = []
@@ -1178,9 +1181,7 @@ EMAIL_HOST_PASSWORD = conf.email_host_password
 EMAIL_USE_TLS = conf.email_use_tls
 # Ref: https://docs.djangoproject.com/en/5.2/ref/settings/#email-use-ssl
 EMAIL_USE_SSL = not conf.email_use_tls
-# TODO: `MAIL_FROM` is not a Django setting and seems to be duplicated with `DEFAULT_FROM_EMAIL`.
-# Also, DEFAULT_FROM_EMAIL and SERVER_EMAIL are for different purposes. They should not be the same.
-MAIL_FROM = SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
+SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
 
 # TODO: Remove (why we need to use different values from default?)
 SESSION_COOKIE_NAME = 'eventyay_session'

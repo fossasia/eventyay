@@ -57,9 +57,7 @@
 }
 
 .language-grid-summary-label {
-    font-size: 13px;
-    color: #888;
-    white-space: nowrap;
+    display: none;
 }
 
 /* -- Selected badges -- */

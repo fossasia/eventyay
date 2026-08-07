@@ -123,7 +123,7 @@ def get_event_navigation(request: HttpRequest):
         )
         nav.append(
             {
-                'label': _('Settings'),
+                'label': _('Ticket settings'),
                 'url': reverse(
                     'control:event.settings',
                     kwargs={
@@ -355,31 +355,6 @@ def get_event_navigation(request: HttpRequest):
             key=lambda r: (1 if r.get('parent') else 0, r['label']),
         ),
     )
-
-    orders_url = reverse(
-        'control:event.orders',
-        kwargs={
-            'event': request.event.slug,
-            'organizer': request.event.organizer.slug,
-        },
-    )
-    stats_url = reverse(
-        'plugins:statistics:index',
-        kwargs={
-            'event': request.event.slug,
-            'organizer': request.event.organizer.slug,
-        },
-    )
-    for nav_item in nav:
-        if nav_item.get('url') == orders_url and 'children' in nav_item:
-            children = nav_item['children']
-            stats_idx = next(
-                (i for i, c in enumerate(children) if c.get('url') == stats_url),
-                None,
-            )
-            if stats_idx is not None:
-                children.insert(1, children.pop(stats_idx))
-            break
 
     return nav
 
