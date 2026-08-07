@@ -21,6 +21,7 @@ from eventyay.base.models import (
     QuestionOption,
     Quota,
 )
+from eventyay.base.models.product import default_product_available_until
 from eventyay.consts import SizeKey
 
 
@@ -277,6 +278,8 @@ class ProductSerializer(I18nAwareModelSerializer):
         addons_data = validated_data.pop('addons') if 'addons' in validated_data else {}
         bundles_data = validated_data.pop('bundles') if 'bundles' in validated_data else {}
         meta_data = validated_data.pop('meta_data', None)
+        if 'available_until' not in validated_data:
+            validated_data['available_until'] = default_product_available_until(self.context['event'])
         product = Product.objects.create(**validated_data)
 
         for variation_data in variations_data:

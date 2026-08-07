@@ -167,6 +167,13 @@ class SubEventProductVariation(models.Model):
             self.subevent.event.cache.clear()
 
 
+def default_product_available_until(event):
+    """
+    Return the default ``available_until`` value for newly created products.
+    """
+    return event.date_to
+
+
 def filter_available(qs, channel='web', voucher=None, allow_addons=False):
     q = (
         # IMPORTANT: If this is updated, also update the ProductVariation query
