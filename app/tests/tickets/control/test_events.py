@@ -146,6 +146,28 @@ class EventsTest(SoupTest):
             assert q.size == 300
             assert q.items.count() == 2
 
+    def test_quick_setup_defaults_available_until(self):
+        self.event1.date_to = datetime.datetime(2013, 12, 28, 18, 0, tzinfo=datetime.timezone.utc)
+        self.event1.save()
+        doc = self.get_doc('/control/event/%s/%s/quickstart/' % (self.orga1.slug, self.event1.slug))
+        doc.select('[name=contact_mail]')[0]['value'] = 'test@example.org'
+        doc.select('[name=form-TOTAL_FORMS]')[0]['value'] = '1'
+        doc.select('[name=form-INITIAL_FORMS]')[0]['value'] = '1'
+        doc.select('[name=form-MIN_NUM_FORMS]')[0]['value'] = '0'
+        doc.select('[name=form-MAX_NUM_FORMS]')[0]['value'] = '1000'
+        doc.select('[name=form-0-name_0]')[0]['value'] = 'Normal ticket'
+        doc.select('[name=form-0-default_price]')[0]['value'] = '13.90'
+        doc.select('[name=form-0-quota]')[0]['value'] = '100'
+
+        doc = self.post_doc(
+            '/control/event/%s/%s/quickstart/' % (self.orga1.slug, self.event1.slug),
+            extract_form_fields(doc.select('.container-fluid form')[0]),
+        )
+        assert len(doc.select('.alert-success')) > 0
+        with scopes_disabled():
+            product = self.event1.items.get()
+            assert product.available_until == self.event1.date_to
+
     def test_quick_setup_single_quota(self):
         doc = self.get_doc('/control/event/%s/%s/quickstart/' % (self.orga1.slug, self.event1.slug))
         doc.select('[name=show_quota_left]')[0]['checked'] = 'checked'

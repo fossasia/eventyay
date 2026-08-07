@@ -1023,6 +1023,33 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
         assert 'name="variation_%d_%d' % (self.item.pk, var2.pk) not in html.rendered_content
 
 
+class VoucherRedemptionVisibilityTest(EventTestMixin, SoupTest):
+    @scopes_disabled()
+    def setUp(self):
+        super().setUp()
+        self.q = Quota.objects.create(event=self.event, name='Quota', size=2)
+        self.v = self.event.vouchers.create(quota=self.q)
+        self.item = Item.objects.create(
+            event=self.event,
+            name='Early-bird ticket',
+            default_price=Decimal('12.00'),
+            active=True,
+        )
+        self.q.items.add(self.item)
+
+    def test_hidden_when_no_redeemable_product(self):
+        self.item.available_until = now() - datetime.timedelta(days=1)
+        self.item.save()
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        assert 'Redeem a voucher' not in doc.text
+
+    def test_shown_when_redeemable_product_exists(self):
+        self.item.available_until = now() + datetime.timedelta(days=1)
+        self.item.save()
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        assert 'Redeem a voucher' in doc.text
+
+
 class WaitingListTest(EventTestMixin, SoupTest):
     @scopes_disabled()
     def setUp(self):
