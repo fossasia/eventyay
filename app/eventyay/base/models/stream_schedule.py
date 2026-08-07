@@ -93,6 +93,16 @@ class StreamSchedule(models.Model):
         if not skip_validation:
             self.full_clean()
         super().save(*args, **kwargs)
+        from django.core.cache import cache
+
+        cache.delete(f'stream:current:{self.room_id}')
+
+    def delete(self, *args, **kwargs):
+        room_id = self.room_id
+        super().delete(*args, **kwargs)
+        from django.core.cache import cache
+
+        cache.delete(f'stream:current:{room_id}')
 
     def is_active(self, at_time=None):
         from django.utils.timezone import now
