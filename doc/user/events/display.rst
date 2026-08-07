@@ -11,10 +11,22 @@ The upper part of the page contains settings that you always need to set specifi
 currently:
 
 Logo image
-    This logo will be shown as a banner above your shop. If you set it, the event name and date will no longer be
-    displayed by the shop, so we suggest to include them in the image yourself. The maximal height of the image is
-    120 pixels and if you want to use the full width, make your image 1140 pixels wide. If the user's screen is
-    smaller, the logo will be scaled down automatically, so it should still be legible at smaller sizes.
+    This logo will be shown in the header of the event public pages. If you upload a logo, the event
+    name and date will no longer be displayed by the shop, so we suggest to include them in the image
+    yourself. The maximal height of the image is 120 pixels and if you want to use the full width,
+    make your image 1140 pixels wide. If the user's screen is smaller, the logo will be scaled down
+    automatically, so it should still be legible at smaller sizes.
+
+Header image
+    This image appears at the top of all event pages, replacing the default color or pattern.
+    It is center-aligned and not stretched.
+
+Event preview image
+    This image is used specifically on the platform start page event cards and other event listing
+    views. It should be optimized for a rectangular card. We recommend a 16:9 aspect ratio
+    and at least 800 x 450 pixels for the best display results. Supported file types are JPEG, PNG,
+    GIF, and WEBP. If no preview image is uploaded, the display falls back to the header image,
+    then the logo, and finally a placeholder calendar icon.
 
 Frontpage text
     This text will be shown on the front page of your ticket shop, above the list of products. You can use it to explain

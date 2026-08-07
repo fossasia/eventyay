@@ -1,0 +1,134 @@
+/* Shared event navigation (Tickets / Talks / Videos) across control and orga. */
+
+#event-nav {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+#event-nav .navigation,
+.header-nav .navigation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  row-gap: 12px;
+  font-weight: 200;
+}
+
+#event-nav .navigation-title,
+.header-nav .navigation-title {
+  text-align: left;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#event-nav .navigation-title h1,
+#event-nav .navigation-title h2,
+.header-nav .navigation-title h1,
+.header-nav .navigation-title h2 {
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  overflow-wrap: break-word;
+}
+
+#event-nav .navigation-title h2 small,
+.header-nav .navigation-title h2 small {
+  white-space: nowrap;
+  font-size: 65%;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.navigation-button,
+#event-nav .navigation .navigation-button,
+.header-nav .navigation .navigation-button {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.navigation-button a.header-nav.btn,
+#event-nav .navigation .navigation-button a.header-nav.btn,
+.header-nav .navigation .navigation-button a.header-nav.btn {
+  border: 1px solid var(--color-primary-hover, #1a69a4);
+  background-color: #fff;
+  background-image: none;
+  color: var(--color-primary, #2185d0);
+  font-size: 16px;
+  font-weight: normal;
+  border-radius: 0;
+  padding: 7px 7px;
+  box-shadow: none;
+}
+
+.navigation-button a.header-nav.btn.active,
+.navigation-button a.header-nav.btn:hover,
+.navigation-button a.header-nav.btn:focus,
+.navigation-button a.header-nav.btn:active,
+#event-nav .navigation .navigation-button a.header-nav.btn.active,
+#event-nav .navigation .navigation-button a.header-nav.btn:hover,
+#event-nav .navigation .navigation-button a.header-nav.btn:focus,
+#event-nav .navigation .navigation-button a.header-nav.btn:active,
+.header-nav .navigation .navigation-button a.header-nav.btn.active,
+.header-nav .navigation .navigation-button a.header-nav.btn:hover,
+.header-nav .navigation .navigation-button a.header-nav.btn:focus,
+.header-nav .navigation .navigation-button a.header-nav.btn:active {
+  background-color: var(--color-primary, #2185d0);
+  background-image: none;
+  border-color: var(--color-primary-hover, #1a69a4);
+  color: #fff;
+  box-shadow: none;
+}
+
+.navigation-button a.header-nav.btn.active i,
+.navigation-button a.header-nav.btn:hover i,
+.navigation-button a.header-nav.btn:focus i,
+.navigation-button a.header-nav.btn:active i {
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  #event-nav .navigation,
+  .header-nav .navigation {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  #event-nav .navigation .navigation-button,
+  .header-nav .navigation .navigation-button {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  #event-nav .navigation,
+  .header-nav .navigation {
+    margin-top: 0;
+  }
+
+  /* Tame the oversized desktop heading so the title fits the phone width. */
+  #event-nav .navigation-title h1,
+  #event-nav .navigation-title h2,
+  .header-nav .navigation-title h1,
+  .header-nav .navigation-title h2 {
+    font-size: 22px;
+  }
+
+  #event-nav .navigation-title .submission-state-dropdown,
+  .header-nav .navigation-title .submission-state-dropdown,
+  #event-nav .navigation-title .submission-readonly-badge,
+  .header-nav .navigation-title .submission-readonly-badge,
+  #event-nav .navigation-title form.d-inline,
+  .header-nav .navigation-title form.d-inline {
+    display: inline-flex;
+    margin-left: 0;
+    margin-top: 0.5rem;
+    vertical-align: middle;
+  }
+}

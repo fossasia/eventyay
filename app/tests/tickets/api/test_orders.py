@@ -587,6 +587,31 @@ def test_payment_confirm(token_client, organizer, event, order):
 
 
 @pytest.mark.django_db
+def test_payment_confirm_quota_exceeded(token_client, organizer, event, order):
+    from eventyay.base.models import Quota
+    with scopes_disabled():
+        quota = event.quotas.first()
+        quota.size = 0
+        quota.save()
+        p = order.payments.get(local_id=2)
+        assert p.state == OrderPayment.PAYMENT_STATE_PENDING
+        
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/{}/payments/2/confirm/'.format(organizer.slug, event.slug, order.code),
+        format='json',
+        data={'force': False},
+    )
+    assert resp.status_code == 409
+    assert resp.data['error_code'] == 'QUOTA_EXCEEDED'
+
+    with scopes_disabled():
+        p.refresh_from_db()
+        order.refresh_from_db()
+        assert p.state == OrderPayment.PAYMENT_STATE_PENDING
+        assert order.status == Order.STATUS_PENDING
+
+
+@pytest.mark.django_db
 def test_payment_confirm_no_email(token_client, organizer, event, order):
     resp = token_client.post(
         '/api/v1/organizers/{}/events/{}/orders/{}/payments/2/confirm/'.format(organizer.slug, event.slug, order.code),

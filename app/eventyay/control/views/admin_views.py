@@ -9,7 +9,8 @@ from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.exceptions import PermissionDenied
+from django.utils.decorators import method_decorator
 from eventyay.base.models.auth import User
 from django.db import transaction
 from django.db.models import Count, F, Max, OuterRef, Subquery
@@ -28,6 +29,7 @@ from django.views.generic import (
     UpdateView,
     View,
 )
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from eventyay.base.models import (
     BBBCall,
@@ -57,14 +59,24 @@ from eventyay.control.forms.server_management import (
     EventForm,
 )
 from eventyay.base.models.log import LogEntry
+from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.tasks import clear_event_data
 
 
-class SuperuserBase(UserPassesTestMixin):
-    login_url = "/control/auth/login/"
+class AdminBase(AdministratorPermissionRequiredMixin):
+    """Simple View mixin for now, but will make it easier to
+    improve permissions in the future."""
 
-    def test_func(self):
-        return self.request.user.is_superuser
+    @method_decorator(xframe_options_sameorigin)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SuperuserBase(AdminBase):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class UserList(SuperuserBase, ListView):
@@ -90,25 +102,9 @@ class UserUpdate(SuperuserBase, UpdateView):
         return super().form_valid(form)
 
 
-class AdminBase(UserPassesTestMixin):
-    """Simple View mixin for now, but will make it easier to
-    improve permissions in the future."""
-
-    login_url = "/control/auth/login/"
-
-    def test_func(self):
-        secret_key = self.request.GET.get("control_token")
-        if secret_key and secret_key == settings.CONTROL_SECRET:
-            return True
-        return self.request.user.is_staff
-
-
-class SignupView(AdminBase, FormView):
+class SignupView(SuperuserBase, FormView):
     template_name = "registration/register.html"
     form_class = SignupForm
-
-    def test_func(self):
-        return self.request.user.is_superuser
 
     def form_valid(self, form):
         form.save()
@@ -241,7 +237,7 @@ class EventAdminToken(AdminBase, DetailView):
         secret = jwt_config["secret"]
         audience = jwt_config["audience"]
         issuer = jwt_config["issuer"]
-        iat = datetime.datetime.utcnow()
+        iat = datetime.datetime.now(datetime.timezone.utc)
         exp = iat + datetime.timedelta(days=7)
         payload = {
             "iss": issuer,

@@ -1521,3 +1521,54 @@ def test_remove_favourite_not_favourited(event, speaker_client, slot, speaker):
     assert response.status_code == 200
     with scope(event=event):
         assert not slot.submission.favourites.filter(user=speaker).exists()
+
+@pytest.mark.django_db
+def test_team_token_can_create_submission(client, event, submission_type):
+    from django_scopes import scope
+    from eventyay.base.models import TeamAPIToken
+    with scope(event=event):
+        team = event.organiser.teams.filter(can_change_submissions=True).first()
+        token = TeamAPIToken.objects.create(team=team, name="SubToken")
+
+    response = client.post(
+        event.api_urls.submissions,
+        follow=True,
+        data={
+            "title": "Team Token Submission",
+            "submission_type": submission_type.pk,
+            "abstract": "Abstract",
+            "description": "Description",
+            "duration": 45,
+            "content_locale": "en",
+        },
+        content_type="application/json",
+        headers={"Authorization": f"Token {token.token}"},
+    )
+    assert response.status_code == 201, response.text
+    content = response.json()
+    assert content["duration"] == 45
+    assert content["title"] == "Team Token Submission"
+
+
+@pytest.mark.django_db
+def test_team_token_read_only_team_forbidden_submission(client, event, submission_type):
+    from django_scopes import scope
+    from eventyay.base.models import TeamAPIToken
+    with scope(event=event):
+        team = event.organiser.teams.filter(can_change_submissions=False).first()
+        if not team:
+            team = event.organiser.teams.create(name="Read Only", can_change_submissions=False)
+            team.events.add(event)
+        token = TeamAPIToken.objects.create(team=team, name="ReadToken")
+
+    response = client.post(
+        event.api_urls.submissions,
+        follow=True,
+        data={
+            "title": "Team Token Submission",
+            "submission_type": submission_type.pk,
+        },
+        content_type="application/json",
+        headers={"Authorization": f"Token {token.token}"},
+    )
+    assert response.status_code in [403, 401]

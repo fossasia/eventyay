@@ -1,8 +1,14 @@
 {% extends "pretixcontrol/event/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% load static %}
 
 {% block title %}{% translate "Compose" %}{% endblock %}
+
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
+{% endblock %}
 
 {% block content %}
 <nav id="event-nav" class="header-nav">
@@ -14,10 +20,10 @@
     </div>
 </nav>
 
-<ul class="list-group">
+<ul class="list-group compose-mails-list">
     <li class="list-group-item">
         <h3 class="clearfix">
-            <a href="{% url 'plugins:sendmail:send' organizer=request.event.organizer.slug event=request.event.slug %}" class="text">
+            <a href="{% url 'control:event.mail.send' organizer=request.event.organizer.slug event=request.event.slug %}" class="text">
                 {% translate "Attendees, Orders, Tickets" %}
                 <i class="fa fa-chevron-right pull-right"></i>
             </a>
@@ -26,7 +32,7 @@
     </li>
     <li class="list-group-item">
         <h3 class="clearfix">
-            <a href="{% url 'plugins:sendmail:compose_email_teams' organizer=request.event.organizer.slug event=request.event.slug %}" class="text">
+            <a href="{% url 'control:event.mail.compose_teams' organizer=request.event.organizer.slug event=request.event.slug %}" class="text">
                 {% translate "Team members" %}
                 <i class="fa fa-chevron-right pull-right"></i>
             </a>

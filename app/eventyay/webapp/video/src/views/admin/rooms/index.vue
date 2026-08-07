@@ -4,7 +4,11 @@
 		.actions
 			h2 Rooms
 			bunt-link-button.btn-create(:to="{name: 'admin:rooms:new'}") Create a new room
-		bunt-input.search(name="search", placeholder="Search rooms", icon="search", v-model="search")
+		.right-actions
+			.export-actions(v-if="canExportBroadcastConfiguration")
+				a.export-button(:href="exportUrl('xlsx')") Export XLSX
+				a.export-button.secondary(:href="exportUrl('csv-excel')") CSV
+			bunt-input.search(name="search", placeholder="Search rooms", icon="search", v-model="search")
 	.error(v-if="error")
 		span Failed to load rooms.
 		span(v-if="errorCode")  ({{ errorCode }})
@@ -28,6 +32,7 @@
 // TODO show inferred type
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
+import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
 import RoomListItem from './RoomListItem'
 
@@ -62,7 +67,18 @@ export default {
 	beforeUnmount() {
 		if (this._unwatchConnected) this._unwatchConnected()
 	},
+	computed: {
+		...mapGetters(['eventRouting', 'hasPermission']),
+		canExportBroadcastConfiguration() {
+			return this.hasPermission('room:update') && this.eventRouting.organizer && this.eventRouting.event
+		}
+	},
 	methods: {
+		exportUrl(format) {
+			const organizer = encodeURIComponent(this.eventRouting.organizer)
+			const event = encodeURIComponent(this.eventRouting.event)
+			return `/api/v1/organizers/${organizer}/events/${event}/rooms/export-broadcast-configuration/?_format=${encodeURIComponent(format)}`
+		},
 		isRoomVisible(room) {
 			if (!this.search) return true
 			const search = this.search.trim()
@@ -113,7 +129,9 @@ export default {
 	flex-direction: column
 	min-height: 0
 	background-color: $clr-white
-	.header
+	> .header
+		display: flex
+		align-items: center
 		justify-content: space-between
 		background-color: $clr-grey-50
 		.actions
@@ -124,6 +142,31 @@ export default {
 				margin-right: 16px
 			.btn-create
 				themed-button-primary()
+		.right-actions
+			display: flex
+			align-items: center
+			margin-left: auto
+		.export-actions
+			display: flex
+			align-items: center
+			.export-button
+				display: inline-flex
+				align-items: center
+				height: 32px
+				padding: 0 12px
+				margin-right: 8px
+				border-radius: 3px
+				background-color: $clr-primary
+				color: $clr-white
+				font-size: 13px
+				font-weight: 500
+				text-decoration: none
+				&.secondary
+					background-color: transparent
+					color: $clr-primary
+				&:focus
+					outline: 2px solid $clr-primary
+					outline-offset: 2px
 	h2
 		margin: 16px
 	.search

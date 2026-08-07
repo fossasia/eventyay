@@ -26,11 +26,12 @@ def default_settings():
 # Every other module should import these instead of hard-coding field names.
 BUILTIN_SESSION_FIELDS = (
     'title', 'submission_type', 'abstract', 'description', 'notes', 'track',
-    'duration', 'slot_count', 'content_locale', 'image', 'slides', 'do_not_record',
+    'duration', 'slot_count', 'content_locale', 'image', 'slides', 'session_videos',
+    'do_not_record',
 )
 BUILTIN_SPEAKER_FIELDS = (
     'fullname', 'biography', 'avatar', 'avatar_source',
-    'avatar_license', 'availabilities', 'additional_speaker',
+    'avatar_license', 'availabilities', 'additional_speaker', 'social_links',
 )
 BUILTIN_FIELD_KEYS = {
     'session': BUILTIN_SESSION_FIELDS,
@@ -111,11 +112,13 @@ def default_fields():
         'do_not_record': {'visibility': 'optional', 'public': False},
         'image': {'visibility': 'optional', 'public': True},
         'slides': {'visibility': 'optional', 'max_count': 1, 'public': True},
+        'session_videos': {'visibility': 'do_not_ask', 'public': False},
         'track': {'visibility': 'do_not_ask', 'public': True},
         'duration': {'visibility': 'do_not_ask', 'public': True},
         'slot_count': {'visibility': 'optional', 'public': False},
         'content_locale': {'visibility': 'required', 'public': True},
         'additional_speaker': {'visibility': 'optional', 'public': False},
+        'social_links': {'visibility': 'do_not_ask', 'public': True},
         'fullname': {'visibility': 'required', 'public': True},
     }
 

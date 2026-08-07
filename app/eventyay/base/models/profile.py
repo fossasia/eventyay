@@ -2,10 +2,14 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.common.social_links import SOCIAL_LINK_CHOICES, get_social_link_spec
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.talk_rules.agenda import can_view_schedule, is_speaker_viewable
-from eventyay.talk_rules.orga import can_view_speaker_names
+from eventyay.talk_rules.orga import (
+    can_view_speaker_names,
+    enforces_hide_speaker_names,
+)
 from eventyay.talk_rules.person import (
     can_mark_speakers_arrived,
     is_administrator,
@@ -54,9 +58,9 @@ class SpeakerProfile(PretalxModel):
         rules_permissions = {
             'list': can_view_schedule | (is_reviewer & can_view_speaker_names),
             'reviewer_list': is_reviewer & can_view_speaker_names,
-            'orga_list': orga_can_change_submissions | (is_reviewer & can_view_speaker_names),
-            'view': is_speaker_viewable | orga_can_change_submissions | (is_reviewer & can_view_speaker_names),
-            'orga_view': orga_can_change_submissions | (is_reviewer & can_view_speaker_names),
+            'orga_list': ~enforces_hide_speaker_names & (orga_can_change_submissions | (is_reviewer & can_view_speaker_names)),
+            'view': is_speaker_viewable | (~enforces_hide_speaker_names & (orga_can_change_submissions | (is_reviewer & can_view_speaker_names))),
+            'orga_view': ~enforces_hide_speaker_names & (orga_can_change_submissions | (is_reviewer & can_view_speaker_names)),
             'create': is_administrator,
             'update': orga_can_change_submissions,
             'mark_arrived': orga_can_change_submissions & can_mark_speakers_arrived,
@@ -132,3 +136,25 @@ class SpeakerProfile(PretalxModel):
     def avatar_url(self):
         if self.event.cfp.request_avatar:
             return self.user.get_avatar_url(event=self.event)
+
+
+class SpeakerSocialLink(models.Model):
+    """A social media or website link on a speaker profile."""
+
+    profile = models.ForeignKey(
+        to=SpeakerProfile,
+        on_delete=models.CASCADE,
+        related_name='social_links',
+    )
+    network = models.CharField(max_length=32, choices=SOCIAL_LINK_CHOICES)
+    url = models.URLField(verbose_name=_('URL'))
+
+    class Meta:
+        ordering = ('network', 'url')
+
+    @property
+    def spec(self):
+        return get_social_link_spec(self.network)
+
+    def __str__(self):
+        return f'{self.get_network_display()}: {self.url}'

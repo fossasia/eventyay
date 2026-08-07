@@ -28,50 +28,62 @@ class EventCommonSettingsForm(SettingsForm):
         label=_('Event timezone'),
     )
 
+
     auto_fields = [
         'locales',
         'locale',
         'region',
-        'imprint_url',
+        'contact_form_enabled',
+        'contact_mail',
         'logo_image',
         'logo_image_large',
         'event_logo_image',
+        'event_preview_image',
         'logo_show_title',
         'og_image',
         'primary_color',
         'header_background_color',
         'header_text_color',
         'navigation_text_color',
+        'menu_text_scroll_over_color',
         'theme_color_success',
         'theme_color_danger',
         'theme_color_background',
         'hover_button_color',
+        'video_navigation_background_color',
+        'video_sidebar_text_color',
+        'video_sidebar_hover_color',
         'theme_round_borders',
         'primary_font',
         'frontpage_text',
         'menu_label_tickets',
         'menu_label_join_video',
         'meta_noindex',
+        'show_date_to',
+        'show_times',
     ]
 
     def clean(self):
         data = super().clean()
+        if data.get('contact_form_enabled') and not data.get('contact_mail'):
+            self.add_error(
+                'contact_mail',
+                _('Please provide an email address for the contact form.'),
+            )
         settings_dict = self.get_initial_settings()
         settings_dict.update(data)
         validate_event_settings(self.event, settings_dict)
         return data
 
     def save(self):
-        for image_field in ('event_logo_image', 'logo_image'):
+        for image_field in ('event_logo_image', 'logo_image', 'event_preview_image', 'og_image'):
             current_value = self.event.settings.get(image_field, as_type=str, default='') or ''
             new_value = self.cleaned_data.get(image_field)
-            if is_http_url(current_value) and (isinstance(new_value, UploadedFile) or not new_value):
-                del self.event.settings[image_field]
             current_file = get_file_url_path(current_value)
-            if isinstance(new_value, str) and current_file and current_value != new_value:
+            if isinstance(new_value, UploadedFile) and current_file:
                 default_storage.delete(current_file)
 
-                base_path, _ = os.path.splitext(current_file)
+                base_path, unused_ext = os.path.splitext(current_file)
                 orig_ext = self.event.settings.get(f'{image_field}_original_ext', as_type=str)
                 if orig_ext:
                     default_storage.delete(f'{base_path}_original.{orig_ext}')
@@ -110,8 +122,9 @@ class EventCommonSettingsForm(SettingsForm):
             uploaded.seek(0)
             return uploaded
 
-        new_filename = self.get_new_filename(uploaded.name or setting_key)
-        base_path, _ = os.path.splitext(new_filename)
+        clean_name, unused_ext = os.path.splitext(uploaded.name or setting_key)
+        new_filename = self.get_new_filename(clean_name)
+        base_path, unused_ext = os.path.splitext(new_filename)
 
         # Persist the optimized file.
         optimized_name = f'{base_path}.{result.optimized_ext}'
@@ -155,6 +168,23 @@ class EventCommonSettingsForm(SettingsForm):
         if 'meta_noindex' in self.fields:
             self.fields['meta_noindex'].label = _('Ask search engines not to index the event pages')
 
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.ClearableFileInput):
+                field.widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
+                field.widget.attrs['data-event-settings-image-tools'] = 'enabled'
+
+        if not self.is_bound and self.event:
+            contact_email = self.event.settings.contact_mail or self.event.email or ''
+            if contact_email:
+                if 'contact_form_enabled' in self.fields:
+                    raw = self.event.settings.get('contact_form_enabled')
+                    if raw in (None, '', False, 'False', 'false'):
+                        self.fields['contact_form_enabled'].initial = True
+                if 'contact_mail' in self.fields and not self.event.settings.contact_mail and self.event.email:
+                    self.fields['contact_mail'].initial = self.event.email
+
+
+
 
 class EventUpdateForm(I18nModelForm):
     def __init__(self, *args, **kwargs):
@@ -177,18 +207,12 @@ class EventUpdateForm(I18nModelForm):
             self.fields['slug'].widget.attrs['readonly'] = 'readonly'
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
-
-        # Configure email field with canonical label and help text
-        self.fields['email'].required = True
-        self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("Attendees can reach you through a contact form. Messages will be forwarded to this address.")
+        self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
+        self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
 
         if 'is_public' in self.fields:
             self.fields['is_public'].label = _('Show in search results and lists')
             self.fields['is_public'].help_text = _('If selected, this event will show up publicly on the list of events for your organizer account and in platform search results.')
-        if 'startpage_visible' in self.fields:
-            self.fields['startpage_visible'].label = _('Visible on start page')
-            self.fields['startpage_visible'].help_text = _('If selected, this event will be visible on the main page of the installation.')
 
         if self.domain_field_enabled:
             self.fields['domain'] = forms.CharField(
@@ -233,12 +257,6 @@ class EventUpdateForm(I18nModelForm):
             instance.cache.clear()
         return instance
 
-    def clean_startpage_visible(self):
-        val = self.cleaned_data.get('startpage_visible')
-        if not val:
-            self.instance.startpage_featured = False
-        return val
-
     def clean_slug(self):
         if self.change_slug:
             return self.cleaned_data['slug']
@@ -253,11 +271,9 @@ class EventUpdateForm(I18nModelForm):
             'date_to',
             'date_admission',
             'is_public',
-            'startpage_visible',
             'location',
             'geo_lat',
             'geo_lon',
-            'email',
         ]
         field_classes = {
             'date_from': SplitDateTimeField,

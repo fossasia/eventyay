@@ -11,6 +11,24 @@ from eventyay.control.signals import (
 )
 
 
+def _vouchers_nav_active(url) -> bool:
+    return 'event.vouchers' in url.url_name or 'event.voucher' in url.url_name
+
+
+def _vouchers_nav_item(request, url) -> dict:
+    return {
+        'label': _('Vouchers'),
+        'url': reverse(
+            'control:event.vouchers',
+            kwargs={
+                'event': request.event.slug,
+                'organizer': request.event.organizer.slug,
+            },
+        ),
+        'active': _vouchers_nav_active(url),
+    }
+
+
 def get_event_navigation(request: HttpRequest):
     url = request.resolver_match
     if not url:
@@ -50,17 +68,6 @@ def get_event_navigation(request: HttpRequest):
                     },
                 ),
                 'active': url.url_name == 'event.settings.tickets',
-            },
-            {
-                'label': _('E-mail'),
-                'url': reverse(
-                    'control:event.settings.mail',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': url.url_name == 'event.settings.mail',
             },
             {
                 'label': _('Tax rules'),
@@ -116,7 +123,7 @@ def get_event_navigation(request: HttpRequest):
         )
         nav.append(
             {
-                'label': _('Settings'),
+                'label': _('Ticket settings'),
                 'url': reverse(
                     'control:event.settings',
                     kwargs={
@@ -195,21 +202,7 @@ def get_event_navigation(request: HttpRequest):
         ]
 
         if 'can_view_vouchers' in request.eventpermset:
-            children.extend(
-                [
-                    {
-                        'label': _('Vouchers'),
-                        'url': reverse(
-                            'control:event.vouchers',
-                            kwargs={
-                                'event': request.event.slug,
-                                'organizer': request.event.organizer.slug,
-                            },
-                        ),
-                        'active': 'event.vouchers' in url.url_name,
-                    }
-                ]
-            )
+            children.append(_vouchers_nav_item(request, url))
 
         nav.append(
             {
@@ -224,6 +217,13 @@ def get_event_navigation(request: HttpRequest):
                 'active': False,
                 'icon': 'ticket',
                 'children': children,
+            }
+        )
+    elif 'can_view_vouchers' in request.eventpermset:
+        nav.append(
+            {
+                **_vouchers_nav_item(request, url),
+                'icon': 'ticket',
             }
         )
 
@@ -356,31 +356,6 @@ def get_event_navigation(request: HttpRequest):
         ),
     )
 
-    orders_url = reverse(
-        'control:event.orders',
-        kwargs={
-            'event': request.event.slug,
-            'organizer': request.event.organizer.slug,
-        },
-    )
-    stats_url = reverse(
-        'plugins:statistics:index',
-        kwargs={
-            'event': request.event.slug,
-            'organizer': request.event.organizer.slug,
-        },
-    )
-    for nav_item in nav:
-        if nav_item.get('url') == orders_url and 'children' in nav_item:
-            children = nav_item['children']
-            stats_idx = next(
-                (i for i, c in enumerate(children) if c.get('url') == stats_url),
-                None,
-            )
-            if stats_idx is not None:
-                children.insert(1, children.pop(stats_idx))
-            break
-
     return nav
 
 
@@ -466,6 +441,12 @@ def get_admin_navigation(request):
             'url': reverse('eventyay_admin:admin.submissions'),
             'active': 'submissions' in url.url_name,
             'icon': 'sticky-note-o',
+        },
+        {
+            'label': _('All Orders'),
+            'url': reverse('eventyay_admin:admin.orders'),
+            'active': 'orders' in url.url_name,
+            'icon': 'shopping-cart',
         },
         {
             'label': _('Task management'),

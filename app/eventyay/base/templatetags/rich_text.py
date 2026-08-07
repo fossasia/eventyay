@@ -1,4 +1,5 @@
 import html
+import re
 import urllib.parse
 from copy import copy
 from functools import partial
@@ -146,6 +147,118 @@ NO_LINKS_CLEANER = bleach.Cleaner(
 
 STRIKETHROUGH_RE = '(~{2})(.+?)(~{2})'
 
+# Email bodies may include trusted placeholder HTML such as QR ``<img>`` tags
+# (data-URI PNGs) and CTA buttons. Keep these allowlists scoped to email
+# compilation so public rich-text rendering stays stricter.
+EMAIL_ALLOWED_TAGS = ALLOWED_TAGS | {'img'}
+EMAIL_ALLOWED_ATTRIBUTES = {
+    **ALLOWED_ATTRIBUTES,
+    'img': ['src', 'alt', 'width', 'height'],
+}
+# ``data`` is allowed only so QR ``<img src="data:image/...">`` survives. Anchor
+# ``href`` values that use ``data:`` are rejected in ``email_allowed_attributes``.
+EMAIL_ALLOWED_PROTOCOLS = ALLOWED_PROTOCOLS | {'data'}
+
+_TIPTAP_BLOCK_START_RE = re.compile(
+    r'^\s*<(p|ul|ol|blockquote)(\s|>)',
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _is_tiptap_email_html(source: str) -> bool:
+    """Return True when *source* looks like HTML from the Tiptap email editor.
+
+    ``nh3.is_html()`` is too broad: legacy Markdown bodies may contain inline
+    tags such as ``<br>`` or ``<b>`` and must still be compiled.  Tiptap
+    output is always block-structured (``<p>``, lists, blockquote) or contains
+    placeholder chips with ``data-variable``.
+    """
+    if not source:
+        return False
+    source = str(source)
+    if 'data-variable=' in source:
+        return True
+    return bool(_TIPTAP_BLOCK_START_RE.match(source))
+
+
+_PREVIEW_PLACEHOLDER_CONTEXT: tuple[str, ...] = (
+    'event',
+    'order',
+    'position',
+    'position_or_address',
+    'team',
+    'invoice_address',
+)
+
+
+def expand_email_preview_placeholders(html_body: str, event, *, locale: str | None = None) -> str:
+    """Replace ``{placeholder}`` tokens / Tiptap chips with sample values for editor preview."""
+    from eventyay.base.i18n import language
+    from eventyay.base.services.mail import expand_email_variable_chips
+
+    resolved_locale = locale or event.settings.locale
+    if resolved_locale not in event.settings.locales:
+        resolved_locale = event.settings.locale
+
+    with language(resolved_locale, event.settings.region):
+        context_dict = build_email_preview_context(event, list(_PREVIEW_PLACEHOLDER_CONTEXT))
+        expanded = html_body.format_map(context_dict)
+        return expand_email_variable_chips(expanded, dict(context_dict))
+
+
+def compile_email_body(source: str) -> str:
+    """Render an email body fragment as HTML.
+
+    Plain-text and legacy Markdown bodies are compiled with
+    ``markdown_compile_email``.  Content that is already HTML (for example from
+    the Tiptap email editor) is sanitized and returned.
+    """
+    if not source:
+        return source
+    source = str(source)
+    if _is_tiptap_email_html(source):
+        from eventyay.common.sanitizers import sanitize_email_html
+        return sanitize_email_html(source)
+    return markdown_compile_email(source)
+
+
+def email_allowed_attributes(tag: str, name: str, value: str) -> bool:
+    """Allowlist email HTML attributes; forbid ``data:`` links on anchors."""
+    allowed_for_tag = EMAIL_ALLOWED_ATTRIBUTES.get(tag)
+    if not allowed_for_tag or name not in allowed_for_tag:
+        return False
+    if tag == 'a' and name == 'href' and value.lstrip().lower().startswith('data:'):
+        return False
+    if tag == 'img' and name == 'src':
+        normalized = value.lstrip().lower()
+        return normalized.startswith(('data:image/', 'http://', 'https://', '/'))
+    return True
+
+
+def is_placeholder_html_sample(sample: str) -> bool:
+    """Return True when a placeholder sample is trusted HTML (button, QR image)."""
+    stripped = str(sample).lstrip()
+    return stripped.startswith('<') and not stripped.startswith('</')
+
+
+def build_email_preview_context(event, base_parameters: list[str]):
+    """Build sendmail preview context, keeping HTML placeholder samples intact."""
+    from django.utils.translation import gettext
+
+    from eventyay.base.email import get_available_placeholders
+    from eventyay.base.services.mail import TolerantDict
+
+    context_dict = TolerantDict()
+    title = html.escape(str(gettext('This value will be replaced based on dynamic parameters.')))
+    for key, placeholder in get_available_placeholders(event, list(base_parameters)).items():
+        sample = str(placeholder.render_sample(event))
+        if is_placeholder_html_sample(sample):
+            context_dict[key] = sample
+        else:
+            context_dict[key] = f'<span class="placeholder" title="{title}">{html.escape(sample)}</span>'
+    return context_dict
+
+
 # TODO: Implement nh3 equivalent
 def markdown_compile_email(source):
     linker = bleach.Linker(
@@ -163,9 +276,9 @@ def markdown_compile_email(source):
                     #  'markdown.extensions.nl2br' # disabled for backwards-compatibility
                 ],
             ),
-            tags=ALLOWED_TAGS,
-            attributes=ALLOWED_ATTRIBUTES,
-            protocols=ALLOWED_PROTOCOLS,
+            tags=EMAIL_ALLOWED_TAGS,
+            attributes=email_allowed_attributes,
+            protocols=EMAIL_ALLOWED_PROTOCOLS,
         )
     )
 
@@ -209,6 +322,14 @@ def render_markdown_abslinks(text: str) -> str:
     return render_markdown(text, cleaner=ABSLINK_CLEANER)
 
 
+def _unwrap_single_paragraph(html: str) -> str:
+    """Return inline HTML for snippet contexts by removing one outer <p> wrapper."""
+    match = re.fullmatch(r'<p>(.*)</p>\s*', html, flags=re.DOTALL | re.IGNORECASE)
+    if match:
+        return match.group(1)
+    return html
+
+
 @register.filter
 def rich_text(text: str):
     return render_markdown(text, cleaner=CLEANER)
@@ -221,7 +342,10 @@ def rich_text_without_links(text: str):
 
 @register.filter
 def rich_text_snippet(text: str):
-    return render_markdown(text, cleaner=ABSLINK_CLEANER)
+    rendered = render_markdown(text, cleaner=ABSLINK_CLEANER)
+    if not rendered:
+        return rendered
+    return mark_safe(_unwrap_single_paragraph(str(rendered)))
 
 
 @register.filter

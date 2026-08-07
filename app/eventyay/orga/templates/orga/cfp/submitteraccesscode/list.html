@@ -15,12 +15,9 @@
     {% endcompress %}
 {% endblock scripts %}
 
-{% block page_title %}
-    {{ generic_title }}
-    <span data-dialog-target="#info-dialog" data-toggle="dialog">
-        <i class="fa fa-question-circle-o text-info ml-2"></i>
-    </span>
-{% endblock page_title %}
+{% block header_nav %}
+    {% include "common/includes/header_nav.html" with header_title=generic_title header_title_extra='<span data-dialog-target="#info-dialog" data-toggle="dialog"><i class="fa fa-question-circle-o text-info ml-2"></i></span>' %}
+{% endblock header_nav %}
 
 {% block list_content %}
     <dialog id="info-dialog">
@@ -48,9 +45,9 @@
             <tbody>
                 {% for code in access_code_list %}
                     <tr>
-                        <td>{{ code.code|copyable }}</td>
+                        <td data-label="{% translate 'Code' %}">{{ code.code|copyable }}</td>
                         {% if request.event|get_feature_flag:"use_tracks" %}
-                            <td>
+                            <td data-label="{% translate 'Track' %}">
                                 {% if code.track %}
                                     <a href="{{ code.track.urls.base }}">{{ code.track.name }}</a>
                                 {% else %}
@@ -58,15 +55,15 @@
                                 {% endif %}
                             </td>
                         {% endif %}
-                        <td>
+                        <td data-label="{% translate 'Session type' %}">
                             {% if code.submission_type %}
                                 <a href="{{ code.submission_type.urls.base }}">{{ code.submission_type.name }}</a>
                             {% else %}–{% endif %}
                         </td>
-                        <td class="numeric">
+                        <td class="numeric" data-label="{% translate 'Uses' %}">
                             {{ code.redeemed|default:0 }} / {{ code.maximum_uses|default:"∞" }}
                         </td>
-                        <td class="text-right">
+                        <td class="text-right" data-label="{% translate 'Settings' %}">
                             <div data-destination="{{ code.urls.cfp_url.full }}"
                                  role="button"
                                  title="{% translate "Copy access code link" %}"

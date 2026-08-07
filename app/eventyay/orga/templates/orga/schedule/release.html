@@ -16,13 +16,13 @@
                 {{ form.version.as_field_group }}
             </div>
         </h2>
-        {% if warnings.unconfirmed or warnings.unscheduled or warnings.no_track or warnings.talk_warnings %}
-            <div class="alert alert-warning">
-                <span></span><span>
-                    {% blocktranslate trimmed %}
-                        There are still warnings about the release of this schedule. Please review them carefully!
-                    {% endblocktranslate %}
-                </span>
+        {% if warnings.acknowledgement_messages %}
+            <div class="alert alert-warning schedule-release-alert" role="alert">
+                <div class="schedule-release-alert-body">
+                    <h4 class="alert-heading">
+                        {% translate "Please review the following before proceeding." %}
+                    </h4>
+                </div>
             </div>
         {% endif %}
 
@@ -56,6 +56,9 @@
                     {% endblocktranslate %}
                 {% endif %}
             </li>
+            {% for message in warnings.acknowledgement_messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
             {% if warnings.unconfirmed %}
                 <li>{% blocktranslate trimmed count count=warnings.unconfirmed %}
                     One session is still <strong>unconfirmed</strong> and will not show up

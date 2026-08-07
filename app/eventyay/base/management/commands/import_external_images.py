@@ -55,7 +55,14 @@ class Command(BaseCommand):
             return None
 
         try:
-            response = requests.get(url, timeout=10, stream=True)
+            response = requests.get(url, timeout=(5, 10), allow_redirects=False, stream=True)
+            if response.is_redirect:
+                location = response.headers.get('Location', '')
+                if not self.is_safe_url(location):
+                    self.stderr.write(self.style.ERROR(f"Redirect to unsafe URL blocked: {location}"))
+                    return None
+                response = requests.get(location, timeout=(5, 10), allow_redirects=False, stream=True)
+
             response.raise_for_status()
 
             # Limit size to 10MB
@@ -200,4 +207,66 @@ class Command(BaseCommand):
                     failure_count += 1
 
         if not dry_run:
-            self.stdout.write(self.style.SUCCESS(f"\nImport finished: {success_count} succeeded, {failure_count} failed."))
+            self.stdout.write(self.style.SUCCESS(f"\nImport phase 1-2 finished (before User.profile JSON avatars): {success_count} succeeded, {failure_count} failed."))
+
+        # 3. Process User profiles (external_avatar_url from JSON field)
+        profile_users = User.objects.filter(profile__avatar__url__startswith="http")
+        if dry_run:
+            self.stdout.write(self.style.SUCCESS(f"\n[DRY-RUN] Found {profile_users.count()} external images in User profiles."))
+            for instance in profile_users:
+                url = instance.external_avatar_url
+                self.stdout.write(self.style.SUCCESS(f"[DRY-RUN] Would download and import {url} on User {instance.pk}"))
+        else:
+            self.stdout.write(self.style.MIGRATE_HEADING(f"Processing User.profile avatars"))
+            for instance in profile_users:
+                if instance.avatar and instance.avatar.name != 'False':
+                    continue
+                url = instance.external_avatar_url
+                if not url or not url.startswith("http"):
+                    continue
+                
+                self.stdout.write(f"Found external URL in User profile {instance.pk}: {url}")
+                
+                content = self.download_image(url)
+                if not content:
+                    failure_count += 1
+                    continue
+
+                content_file = ContentFile(content)
+                
+                try:
+                    validate_image(content_file)
+                except Exception as e:
+                    self.stderr.write(self.style.ERROR(f"Invalid image content from {url}: {e}"))
+                    failure_count += 1
+                    continue
+
+                try:
+                    filename = urllib.parse.urlparse(url).path.split('/')[-1]
+                    if not filename:
+                        filename = "image.jpg"
+                        
+                    with transaction.atomic():
+                        field = instance.avatar
+                        field.save(filename, content_file, save=False)
+                        
+                        # Remove the external URL from the profile JSON
+                        profile = dict(instance.profile) if isinstance(instance.profile, dict) else {}
+                        avatar = profile.get('avatar')
+                        if isinstance(avatar, dict) and 'url' in avatar:
+                            del avatar['url']
+                        instance.profile = profile
+                        instance.save(update_fields=['avatar', 'profile'])
+                    
+                    self.stdout.write(self.style.SUCCESS(f"Successfully imported {url} to User {instance.pk} avatar"))
+                    
+                    if hasattr(instance, 'process_image'):
+                        instance.process_image('avatar', generate_thumbnail=True)
+                        
+                    success_count += 1
+                except Exception as e:
+                    self.stderr.write(self.style.ERROR(f"Error saving image from {url}: {e}"))
+                    failure_count += 1
+
+        if not dry_run:
+            self.stdout.write(self.style.SUCCESS(f"\nFinal import summary: {success_count} succeeded, {failure_count} failed."))

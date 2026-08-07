@@ -108,6 +108,7 @@ class SubmissionStates(Choices):
     }
 
     accepted_states = (ACCEPTED, CONFIRMED)
+    terminal_states = (REJECTED, DELETED, CANCELED, WITHDRAWN)
 
     @staticmethod
     def get_color(state):
@@ -365,6 +366,7 @@ class Submission(GenerateCode, PretalxModel):
         reviews = '{base}reviews/'
         feedback = '{base}feedback/'
         toggle_featured = '{base}toggle_featured'
+        video_link = '{base}video'
         apply_pending = '{base}apply_pending'
         anonymise = '{base}anonymise/'
         comments = '{base}comments/'
@@ -419,6 +421,7 @@ class Submission(GenerateCode, PretalxModel):
             self.answers.filter(
                 Q(question__submission_types__in=[self.submission_type]) | Q(question__submission_types__isnull=True),
                 question__is_public=True,
+                question__active=True,
                 question__event=self.event,
                 question__target=TalkQuestionTarget.SUBMISSION,
             )
@@ -496,14 +499,11 @@ class Submission(GenerateCode, PretalxModel):
             old_state = self.state
             self.state = new_state
             self.pending_state = None
-            if new_state in (
-                SubmissionStates.REJECTED,
-                SubmissionStates.DELETED,
-                SubmissionStates.CANCELED,
-                SubmissionStates.WITHDRAWN,
-            ):
+            update_fields = ['state', 'pending_state']
+            if new_state in SubmissionStates.terminal_states:
                 self.is_featured = False
-            self.save(update_fields=['state', 'pending_state'])
+                update_fields.append('is_featured')
+            self.save(update_fields=update_fields)
             self.update_talk_slots()
             submission_state_change.send_robust(
                 self.event,
@@ -608,18 +608,41 @@ class Submission(GenerateCode, PretalxModel):
             template.text = template_text
             template.save()
         if self.event.mail_settings['mail_on_new_submission']:
-            self.event.get_mail_template(MailTemplateRoles.NEW_SUBMISSION_INTERNAL).to_mail(
-                user=self.event.email,
-                event=self.event,
-                context_kwargs={
-                    'user': person,
-                    'submission': self,
-                },
-                context={'orga_url': self.orga_urls.base.full()},
-                skip_queue=True,
-                commit=False,  # Send immediately, don't save a record
-                locale=self.event.locale,
+            admin_emails = list(
+                filter(None, (
+                    self.event.teams.filter(can_change_event_settings=True)
+                    .values_list('members__email', flat=True)
+                    .distinct()
+                ))
             )
+            admin_emails = [e for e in admin_emails if e and e.strip()]
+            if not admin_emails:
+                fallback_source = (
+                    self.event.settings.get('mail_reply_to')
+                    or self.event.organizer.settings.get('contact_mail')
+                    or self.event.settings.mail_from
+                )
+                if fallback_source:
+                    raw_fallback = next(
+                        (a.strip() for a in fallback_source.split(',') if a.strip()),
+                        None,
+                    )
+                    if raw_fallback:
+                        admin_emails = [raw_fallback]
+
+            for admin_email in admin_emails:
+                self.event.get_mail_template(MailTemplateRoles.NEW_SUBMISSION_INTERNAL).to_mail(
+                    user=admin_email,
+                    event=self.event,
+                    context_kwargs={
+                        'user': person,
+                        'submission': self,
+                    },
+                    context={'orga_url': self.orga_urls.base.full()},
+                    skip_queue=True,
+                    commit=False,
+                    locale=self.event.locale,
+                )
 
     def make_submitted(
         self,
@@ -1067,6 +1090,13 @@ class Submission(GenerateCode, PretalxModel):
     def remove_speaker(self, speaker, orga=True, user=None):
         if self.speakers.filter(code=speaker.code).exists():
             self.speakers.remove(speaker)
+            from eventyay.agenda.views.utils import (
+                clear_featured_speakers_without_active_submissions,
+                clear_schedule_caches,
+            )
+
+            clear_featured_speakers_without_active_submissions(self.event, [speaker])
+            clear_schedule_caches(self.event, speaker=speaker)
             self.log_action(
                 'eventyay.submission.speakers.remove',
                 person=user or speaker,

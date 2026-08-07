@@ -55,17 +55,28 @@ export default {
 	background-color: $clr-secondary-text-light
 	display: flex
 	justify-content: center
-	align-items: center
+	align-items: safe center
+	overflow-y: auto
+	padding: 16px 0
+	box-sizing: border-box
 	.prompt-wrapper
 		card()
 		display: flex
 		flex-direction: column
 		width: 480px
-		max-height: 80vh
+		max-height: calc(var(--vh100) - 32px)
+		min-height: 0
+		flex-shrink: 1
 		position: relative
 		+below('m')
 			width: 100vw
-			max-height: 95vh
+			max-height: calc(var(--vh100) - 32px)
+		> .content
+			display: flex
+			flex-direction: column
+			flex: 1 1 auto
+			min-height: 0
+			overflow: hidden
 		#btn-close
 			icon-button-style(style: clear)
 			position: absolute

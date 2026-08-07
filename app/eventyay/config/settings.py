@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 import django.conf.locale
 import importlib_metadata
+from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
@@ -311,6 +312,7 @@ _LIBRARY_APPS = (
     'oauth2_provider',
     'statici18n',
     'rest_framework',
+    'drf_spectacular',
     # Provide styling for forms used by DRF API docs.
     'crispy_forms',
     'allauth',
@@ -400,8 +402,8 @@ CORE_MODULES = (
 )
 
 # Widgets are public embeds served to any origin, so all origins must be allowed.
-# CORS_URLS_REGEX restricts which URL paths receive the header — only widget and
-# event-CSS endpoints.
+# CORS_URLS_REGEX restricts which URL paths receive the header — widget endpoints,
+# event CSS, and /api/v1 (check-in app on access.eventyay.com or local Vite dev).
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_URLS_REGEX = (
@@ -409,9 +411,12 @@ CORS_URLS_REGEX = (
     r".*/widget[s]?/.*|"
     r".*/schedule/widget/.*|"
     r".*/static/event\.css|"
-    r".*/static/schedule/.*\.js"
+    r".*/static/schedule/.*\.js|"
+    r"/api/v1/.*"
     r")$"
 )
+
+CORS_ALLOW_HEADERS = [*default_headers, "exhibitor"]
 
 # TODO: This list is only for display. It should not be here.
 PLUGINS = []
@@ -434,6 +439,7 @@ AUTH_USER_MODEL = 'base.User'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 _LIBRARY_MIDDLEWARES = (
+    'eventyay.api.middleware.PrivateNetworkAccessMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -1081,6 +1087,12 @@ CELERY_TASK_QUEUES = (
     Queue('notifications', routing_key='notifications.#'),
 )
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_BEAT_SCHEDULE = {
+    'eventyay-periodic-task-signal': {
+        'task': 'eventyay.common.tasks.send_periodic_signal',
+        'schedule': 60.0,
+    },
+}
 CELERY_TASK_TRACK_STARTED = True
 # Keep Django/eventyay logging configuration in workers and avoid redirecting stdout/stderr.
 # This ensures logger output remains visible as configured and is not swallowed by Celery.
@@ -1169,9 +1181,7 @@ EMAIL_HOST_PASSWORD = conf.email_host_password
 EMAIL_USE_TLS = conf.email_use_tls
 # Ref: https://docs.djangoproject.com/en/5.2/ref/settings/#email-use-ssl
 EMAIL_USE_SSL = not conf.email_use_tls
-# TODO: `MAIL_FROM` is not a Django setting and seems to be duplicated with `DEFAULT_FROM_EMAIL`.
-# Also, DEFAULT_FROM_EMAIL and SERVER_EMAIL are for different purposes. They should not be the same.
-MAIL_FROM = SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
+SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
 
 # TODO: Remove (why we need to use different values from default?)
 SESSION_COOKIE_NAME = 'eventyay_session'
@@ -1328,17 +1338,34 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'eventyay.api.auth.permission.EventPermission',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
     'PAGE_SIZE': 50,
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'eventyay.api.auth.device.DeviceTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'eventyay.api.auth.token.TeamTokenAuthentication',
-        'eventyay.api.auth.device.DeviceTokenAuthentication',
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'UNICODE_JSON': False,
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'eventyay API',
+    'DESCRIPTION': 'API for managing eventyay organizers and events.',
+    'VERSION': 'v1',
+    'DEFAULT_GENERATOR_CLASS': 'eventyay.api.schema.EventyaySchemaGenerator',
+    'SCHEMA_PATH_PREFIX': r'/api/v1',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'PREPROCESSING_HOOKS': [
+        'eventyay.api.documentation.exclude_unmigrated_plugin_endpoints',
+    ],
+    'POSTPROCESSING_HOOKS': [
+        'drf_spectacular.hooks.postprocess_schema_enums',
+        'eventyay.api.documentation.postprocess_schema',
+    ],
 }
 
 STATIC_URL = '/static/'
@@ -1520,7 +1547,7 @@ DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
 PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
 
 CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
- 
+
 if IS_DEVELOPMENT:
     # Support for Android emulators and port forwarding
     if '*' not in ALLOWED_HOSTS:

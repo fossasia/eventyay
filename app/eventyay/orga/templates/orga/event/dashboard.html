@@ -11,7 +11,21 @@
     {% compress css %}
         <link rel="stylesheet" href="{% static "orga/css/dashboard.css" %}">
     {% endcompress %}
+    {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
+    {% if can_view_submission_stats %}
+        <link rel="stylesheet" type="text/css" href="{% static "vendored/apexcharts/apexcharts.css" %}" />
+    {% endif %}
 {% endblock stylesheets %}
+
+{% block scripts %}
+    {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
+    {% if can_view_submission_stats %}
+        {% compress js %}
+            <script defer src="{% static "vendored/apexcharts/apexcharts.min.js" %}"></script>
+            <script defer src="{% static "orga/js/stats.js" %}"></script>
+        {% endcompress %}
+    {% endif %}
+{% endblock scripts %}
 
 {% block content %}
     {% has_event_perm "base.orga_list_speakerprofile" request.user request request.event as can_view_speakers %}
@@ -26,17 +40,11 @@
             {% endblocktranslate %}
         </div>
     {% endif %}
-    <div id="main-title" class="d-md-flex justify-content-between">
-        <div class="navigation-title">
-            <h2>
-                {{ request.event.name|event_localize }}
-                <small class="event-date text-muted">
-                    {{ request.event.get_date_range_display }}
-                </small>
-            </h2>
-        </div>
-        {% include "orga/event/component_link.html" %}
-    </div>
+    {% with date_range=request.event.get_date_range_display %}
+    {% with header_extra="<small class='event-date text-muted'>"|add:date_range|add:"</small>" %}
+        {% include "common/includes/header_nav.html" with header_title=request.event.name|event_localize header_title_extra=header_extra %}
+    {% endwith %}
+    {% endwith %}
     <div id="timeline-steps" class="stages">
         {% for stp in timeline %}
             <div {% if stp.phase == "done" and stp.url %}href="{{ stp.url }}"{% endif %} class="step step-{{ stp.phase }}">
@@ -63,7 +71,7 @@
         {% endfor %}
     </div>
 
-    <div class="dashboard-list">
+    <div class="dashboard-list dashboard-list-metrics">
         {% if can_change_settings %}
             <a href="{% url 'eventyay_common:event.live' organizer=request.event.organizer.slug event=request.event.slug %}" class="dashboard-block">
                 <div class="dashboard-live-text">
@@ -109,8 +117,13 @@
         {% endfor %}
     </div>
 
+    {% has_event_perm "base.orga_list_submission" request.user request request.event as can_view_submission_stats %}
+    {% if can_view_submission_stats %}
+        {% include "orga/submission/includes/statistics.html" %}
+    {% endif %}
+
     {% if history and can_change_settings %}
-        <div class="dashboard-history">
+        <div class="dashboard-history mt-4">
             <div class="d-flex">
                 <h2>{% translate "History" %}</h2>
                 {% if can_change_settings %}

@@ -35,7 +35,7 @@ def money_filter(value: Decimal, arg='', hide_currency=False):
             # pretix, but we won't show wrong numbers!
             return '{} {}'.format(arg, floatformat(value, 2))
         return format_currency(value, arg, locale=translation.get_language()[:2])
-    except:
+    except Exception:
         return '{} {}'.format(arg, floatformat(value, places))
 
 

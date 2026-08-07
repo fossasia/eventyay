@@ -7,80 +7,23 @@
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
             <div class="navigation-title">
-                <h1>{% trans "E-mail settings" %}</h1>
+                <h1>{% trans "Ticket E-mail Settings" %}</h1>
             </div>
             {% include "pretixcontrol/event/component_link.html" %}
         </div>
     </nav>
-    <form action="" method="post" class="form-horizontal" enctype="multipart/form-data"
-            mail-preview-url="{% url "control:event.settings.mail.preview" event=request.event.slug organizer=request.event.organizer.slug %}">
-        {% csrf_token %}
-        {% bootstrap_form_errors form %}
-        <div class="tabbed-form">
-            <fieldset>
-                <legend>{% trans "General" %}</legend>
-                {% bootstrap_field form.mail_prefix layout="control" %}
-                {% bootstrap_field form.mail_from_name layout="control" %}
-                {% bootstrap_field form.mail_text_signature layout="control" %}
-                {% bootstrap_field form.mail_reply_to layout="control" %}
-                {% bootstrap_field form.mail_bcc layout="control" %}
-                {% bootstrap_field form.mail_attach_tickets layout="control" %}
-                {% bootstrap_field form.mail_attach_ical layout="control" %}
-                {% bootstrap_field form.mail_sales_channel_placed_paid layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "E-mail design" %}</legend>
-                <div class="row">
-                    {% for r in renderers.values %}
-                        <div class="col-md-3">
-                            <div class="well maildesignpreview text-center">
-                                <label class="radio">
-                                    <input type="radio" name="mail_html_renderer" value="{{ r.identifier }}"
-                                            {% if request.event.settings.mail_html_renderer == r.identifier %}checked{% endif %}>
-                                    {{ r.verbose_name }}
-                                </label>
-                                <img src="{% static r.thumbnail_filename %}">
-                                <a class="btn btn-default btn-sm" target="_blank"
-                                        href="{% url "control:event.settings.mail.preview.layout" event=request.event.slug organizer=request.event.organizer.slug %}?renderer={{ r.identifier }}">
-                                    {% trans "Preview" %}
-                                </a>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Advanced Settings" %}</legend>     
-                {% bootstrap_field form.smtp_use_custom layout="control" %}
-                <div data-display-dependency="#id_smtp_use_custom" data-disable-dependent>
-                    {% bootstrap_field form.mail_from layout="control" %}
-                    {% bootstrap_field form.email_vendor layout="control" %}
-                    <div data-display-dependency="#id_email_vendor_0" data-disable-dependent>
-                        {% bootstrap_field form.send_grid_api_key layout="control" %} 
-                    </div>
-                    <div data-display-dependency="#id_email_vendor_1" data-disable-dependent>
-                        {% bootstrap_field form.smtp_host layout="control" %}
-                        {% bootstrap_field form.smtp_port layout="control" %}
-                        {% bootstrap_field form.smtp_username layout="control" %}
-                        {% bootstrap_field form.smtp_password layout="control" %}
-                        {% bootstrap_field form.smtp_use_tls layout="control" %}
-                        {% bootstrap_field form.smtp_use_ssl layout="control" %}
-                    </div>
-                    {% bootstrap_field form.test_email layout="control" %}
-                    <div class="form-group">
-                        <div class="col-md-9 col-md-offset-3">
-                            <button type="submit" class="btn btn-default" name="test" value="1">
-                                {% trans "Save and send test email" %}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </fieldset>
-        </div>
-        <div class="form-group submit-group">
-            <button type="submit" class="btn btn-primary btn-save">
-                {% trans "Save" %}
-            </button>
-        </div>
-    </form>
+
+    <div class="alert alert-info" role="alert">
+        <strong>{% trans "SMTP is configured centrally" %}</strong> —
+        {% blocktrans trimmed %}
+            The email gateway (SMTP / SendGrid) used for all outgoing event emails is configured
+            in <strong>Event Settings › Email</strong>.
+            The settings on this page control Ticket-specific email content and formatting only.
+        {% endblocktrans %}
+        <a href="{% url 'eventyay_common:event.update' organizer=request.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-default ml-2">
+            {% trans "Go to Email Settings" %}
+        </a>
+    </div>
+
 {% endblock %}
+

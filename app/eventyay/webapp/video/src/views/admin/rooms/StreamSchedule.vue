@@ -20,7 +20,7 @@
 			p Click "Add Stream Schedule" to create one.
 	bunt-button.add-btn(@click="openCreateForm") + Add Stream Schedule
 	transition(name="prompt")
-		prompt.c-stream-schedule-prompt(v-if="showCreateForm || editingSchedule", @close="closeForm")
+		prompt.c-stream-schedule-prompt(v-if="showCreateForm || editingSchedule", @close="closeForm", :scrollable="false")
 			.content
 				h1 {{ editingSchedule ? 'Edit' : 'Create' }} Stream Schedule
 				form.stream-schedule-form(@submit.prevent="saveSchedule")
@@ -36,7 +36,16 @@
 						.error-message(v-if="v$.formData.end_time.$error") End time is required
 					.timezone-hint
 						i All times in {{ eventTimezone }}
-					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", :validation="v$.formData.stream_type")
+					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", option-value="id", option-label="label", :validation="v$.formData.stream_type")
+					.field-hint(v-if="formData.stream_type === 'iframe'") {{ IFRAME_PROVIDER_HELP_TEXT }}
+					.language-urls(v-if="formData.stream_type === 'youtube'")
+						h4 Languages and Audio Source
+						.language-url-entry(v-for="(entry, index) in formData.config.languageUrls" :key="index")
+							bunt-select(name="language", v-model="entry.language", :options="ISO_LANGUAGE_OPTIONS", label="Language")
+							bunt-input(name="youtube_id" v-model="entry.youtube_id" label="Audio Source (YouTube ID or WHEP URL)" @blur="normalizeLanguageYoutubeId(entry)")
+							bunt-switch(name="use_video" v-model="entry.use_video" label="Use video from this interpretation channel" hint="If enabled, attendees will see both the audio and video from this interpretation channel. If disabled, attendees will hear the interpretation audio while continuing to see the original main video.")
+							bunt-icon-button(@click="deleteLanguageUrl(index)") delete-outline
+						bunt-button(@click="addLanguageUrl") + Add Language and Audio Source
 					.form-error(v-if="saveError")
 						| {{ saveError }}
 					.form-actions
@@ -45,10 +54,13 @@
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core';
-import { required, url } from 'lib/validators';
+import { helpers } from '@vuelidate/validators';
+import { required, url, normalizeYoutubeVideoId } from 'lib/validators';
 import api from 'lib/api';
 import Prompt from 'components/Prompt';
 import moment from 'lib/timetravelMoment';
+import { IFRAME_PROVIDER_HELP_TEXT } from 'lib/stage-streams';
+import ISO6391 from 'iso-639-1';
 
 export default {
 	name: 'StreamSchedule',
@@ -56,14 +68,23 @@ export default {
 	props: {
 		roomId: {
 			type: [String, Number],
-			required: true,
+			default: null,
+		},
+		openCreateOnMount: {
+			type: Boolean,
+			default: false,
+		},
+		roomName: {
+			type: String,
+			default: '',
 		},
 	},
+	emits: ['create-requires-room', 'opened-create-on-mount'],
 	setup: () => ({ v$: useVuelidate({ $stopPropagation: true }) }),
 	data() {
 		return {
 			streamSchedules: null,
-			loading: true,
+			loading: !!this.roomId,
 			error: null,
 			showCreateForm: false,
 			editingSchedule: null,
@@ -71,17 +92,18 @@ export default {
 			saveError: null,
 			streamTypes: [
 				{ id: 'youtube', label: 'YouTube' },
-				{ id: 'vimeo', label: 'Vimeo' },
 				{ id: 'hls', label: 'HLS' },
 				{ id: 'iframe', label: 'Iframe' },
-				{ id: 'native', label: 'Native' },
 			],
+			IFRAME_PROVIDER_HELP_TEXT,
+			ISO_LANGUAGE_OPTIONS: [],
 			formData: {
 				title: '',
 				url: '',
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
+				config: {},
 			},
 		};
 	},
@@ -121,12 +143,21 @@ export default {
 		},
 	},
 	validations() {
+		const urlRules = {
+			required: required('Stream URL is required')
+		};
+		if (this.formData.stream_type === 'youtube') {
+			urlRules.youtubeid = helpers.withMessage('Must be a valid YouTube URL', (value) => {
+				if (!value) return true;
+				return !!normalizeYoutubeVideoId(value);
+			});
+		} else {
+			urlRules.url = url('Must be a valid URL');
+		}
+
 		const rules = {
 			formData: {
-				url: {
-					required: required('Stream URL is required'),
-					url: url('Must be a valid URL'),
-				},
+				url: urlRules,
 				start_time: {
 					required: required('Start time is required'),
 				},
@@ -141,9 +172,69 @@ export default {
 		return rules;
 	},
 	async created() {
+		this.ISO_LANGUAGE_OPTIONS = ISO6391.getAllCodes().map(code => ({
+			id: ISO6391.getName(code),
+			label: ISO6391.getName(code),
+		}));
+		if (!this.roomId) {
+			this.streamSchedules = [];
+			this.loading = false;
+			return;
+		}
 		await this.fetchStreamSchedules();
+		if (this.openCreateOnMount) {
+			const savedDraft = this.loadSavedDraft();
+			if (savedDraft) {
+				this.formData = savedDraft;
+				this.showCreateForm = true;
+				await this.saveSchedule();
+			} else {
+				this.openCreateForm();
+			}
+			this.$emit('opened-create-on-mount');
+		}
 	},
 	methods: {
+		serializeFormData() {
+			return {
+				title: this.formData.title || '',
+				url: this.formData.url,
+				start_time: this.formData.start_time
+					? this.formData.start_time.toISOString()
+					: null,
+				end_time: this.formData.end_time
+					? this.formData.end_time.toISOString()
+					: null,
+				stream_type: this.formData.stream_type,
+				config: {
+					...this.formData.config,
+					languageUrls: this.formData.config.languageUrls || [],
+				},
+			};
+		},
+		loadSavedDraft() {
+			const key = `streamScheduleDraft:${this.roomId}`;
+			const savedDraft = sessionStorage.getItem(key);
+			if (!savedDraft) return null;
+			sessionStorage.removeItem(key);
+			try {
+				const draft = JSON.parse(savedDraft);
+				const tz = this.eventTimezone || 'UTC';
+				return {
+					title: draft.title || '',
+					url: draft.url || '',
+					start_time: draft.start_time ? this.parseApiDateTime(draft.start_time).tz(tz) : null,
+					end_time: draft.end_time ? this.parseApiDateTime(draft.end_time).tz(tz) : null,
+					stream_type: draft.stream_type || 'youtube',
+					config: {
+						...(draft.config || {}),
+						languageUrls: draft.config?.languageUrls || [],
+					},
+				};
+			} catch (error) {
+				return null;
+			}
+		},
 		getCsrfToken() {
 			const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/);
 			return match ? match[1] : null;
@@ -158,7 +249,7 @@ export default {
 			// If not available from world state, try to extract from current URL path
 			if (!organizer || organizer === 'default') {
 				const pathParts = window.location.pathname.split('/').filter(Boolean);
-				// URL pattern: /{organizer}/{event}/video/admin/rooms/{roomId}
+				// URL pattern: /{organizer}/{event}/video/event/rooms/{roomId}
 				if (pathParts.length >= 2) {
 					organizer = pathParts[0];
 					event = pathParts[1];
@@ -169,6 +260,11 @@ export default {
 			return `/api/v1/organizers/${organizer}/events/${event}/rooms/${this.roomId}/stream-schedules/`;
 		},
 		async fetchStreamSchedules() {
+			if (!this.roomId) {
+				this.streamSchedules = [];
+				this.loading = false;
+				return;
+			}
 			try {
 				this.error = null;
 				this.loading = true;
@@ -208,12 +304,15 @@ export default {
 			this.v$.$reset();
 			this.editingSchedule = schedule;
 			const tz = this.eventTimezone || 'UTC';
+			let config = schedule.config ? JSON.parse(JSON.stringify(schedule.config)) : {};
+			config.languageUrls = config.languageUrls || [];
 			this.formData = {
 				title: schedule.title || '',
 				url: schedule.url,
 				start_time: schedule.start_time ? this.parseApiDateTime(schedule.start_time).tz(tz) : null,
 				end_time: schedule.end_time ? this.parseApiDateTime(schedule.end_time).tz(tz) : null,
 				stream_type: schedule.stream_type,
+				config: config,
 			};
 		},
 		closeForm() {
@@ -225,6 +324,7 @@ export default {
 				start_time: null,
 				end_time: null,
 				stream_type: 'youtube',
+				config: { languageUrls: [] },
 			};
 			this.saveError = null;
 			this.v$.$reset();
@@ -258,6 +358,14 @@ export default {
 					return;
 				}
 			}
+			if (!this.roomId) {
+				if (!this.roomName.trim()) {
+					this.saveError = 'Room name is required.';
+					return;
+				}
+				this.$emit('create-requires-room', this.serializeFormData());
+				return;
+			}
 
 			this.saving = true;
 			try {
@@ -275,17 +383,7 @@ export default {
 				const csrfToken = this.getCsrfToken();
 				if (csrfToken) headers['X-CSRFToken'] = csrfToken;
 
-				const payload = {
-					title: this.formData.title || '',
-					url: this.formData.url,
-					start_time: this.formData.start_time
-						? this.formData.start_time.toISOString()
-						: null,
-					end_time: this.formData.end_time
-						? this.formData.end_time.toISOString()
-						: null,
-					stream_type: this.formData.stream_type,
-				};
+				const payload = this.serializeFormData();
 
 				let response;
 				if (this.editingSchedule) {
@@ -401,6 +499,21 @@ export default {
 				this.error = error.message || 'Failed to delete stream schedule';
 			}
 		},
+		addLanguageUrl() {
+			if (!this.formData.config.languageUrls) {
+				this.formData.config.languageUrls = [];
+			}
+			this.formData.config.languageUrls.push({ language: '', youtube_id: '', use_video: false });
+		},
+		deleteLanguageUrl(index) {
+			if (!this.formData.config.languageUrls) return;
+			this.formData.config.languageUrls.splice(index, 1);
+		},
+		normalizeLanguageYoutubeId(entry) {
+			if (!entry?.youtube_id) return;
+			const id = normalizeYoutubeVideoId(entry.youtube_id);
+			if (id) entry.youtube_id = id;
+		},
 		formatDateTime(datetime) {
 			if (!datetime) return '';
 			const tz = this.eventTimezone || 'UTC';
@@ -473,6 +586,11 @@ export default {
 			margin: 4px 0
 	.add-btn
 		margin-top: 16px
+	.field-hint
+		margin-top: 4px
+		font-size: 12px
+		line-height: 18px
+		color: $clr-secondary-text-light
 
 .c-stream-schedule-prompt
 	.content
@@ -480,6 +598,7 @@ export default {
 		flex-direction: column
 		padding: 32px
 		position: relative
+		overflow-y: auto !important
 		h1
 			margin: 0 0 24px 0
 			font-size: 20px

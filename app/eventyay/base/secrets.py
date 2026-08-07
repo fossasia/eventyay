@@ -190,6 +190,7 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
         product: Product,
         variation: ProductVariation = None,
         subevent: SubEvent = None,
+        attendee_name: str = None,
         current_secret: str = None,
         force_invalidate=False,
     ):
@@ -197,7 +198,7 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
             ticket = self._parse(current_secret)
             if ticket:
                 unchanged = (
-                    ticket.product == product.pk
+                    ticket.item == product.pk
                     and ticket.variation == (variation.pk if variation else 0)
                     and ticket.subevent == (subevent.pk if subevent else 0)
                 )
@@ -206,7 +207,7 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
 
         t = pretix_sig1_pb2.Ticket()
         t.seed = get_random_string(9)
-        t.product = product.pk
+        t.item = product.pk
         t.variation = variation.pk if variation else 0
         t.subevent = subevent.pk if subevent else 0
         payload = t.SerializeToString()

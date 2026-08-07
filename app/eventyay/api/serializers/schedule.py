@@ -13,6 +13,7 @@ from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.base.models.schedule import Schedule
 from eventyay.base.models.slot import TalkSlot
+from eventyay.talk_rules.tracks import apply_track_limit_to_slots, user_has_track_limits
 
 
 @register_serializer()
@@ -37,6 +38,9 @@ class ScheduleSerializer(ScheduleListSerializer):
         qs = obj.talks.all()
         if only_visible_slots:
             qs = qs.filter(is_visible=True).exclude(room__deleted=True)
+        request = self.context.get('request')
+        if request and obj.event and user_has_track_limits(obj.event, request.user):
+            qs = apply_track_limit_to_slots(qs, obj.event, request.user)
         if serializer := self.get_extra_flex_field('slots', qs):
             return serializer.data
         return qs.values_list('pk', flat=True)

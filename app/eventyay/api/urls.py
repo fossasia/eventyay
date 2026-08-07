@@ -133,6 +133,8 @@ for app in apps.get_app_configs():
         if importlib.util.find_spec(app.name + '.urls'):
             importlib.import_module(app.name + '.urls')
 
+importlib.import_module('eventyay.plugins.ticketoutputpdf.urls')
+
 urlpatterns = [
     path('', include(router.urls)),
     path('organizers/<orgslug:organizer>/', include(orga_router.urls)),
@@ -217,6 +219,12 @@ urlpatterns = [
         name='device.initialize',
     ),
     path('device/update', device.UpdateView.as_view(), name='device.update'),
+    path('device/session', device.SessionView.as_view(), name='device.session'),
+    path(
+        'device/verify-setup-token',
+        device.VerifySetupTokenView.as_view(),
+        name='device.verify-setup-token',
+    ),
     path('device/roll', device.RollKeyView.as_view(), name='device.roll'),
     path('device/revoke', device.RevokeKeyView.as_view(), name='device.revoke'),
     path(
@@ -233,6 +241,7 @@ urlpatterns = [
         name='billing-testing',
     ),
     path('webhook/stripe', stripe_webhook_view, name='stripe-webhook'),
+    path('webhook/stripe/', stripe_webhook_view, name='stripe-webhook-slash'),
     path(
         '<orgslug:organizer>/<slug:event>/schedule-public',
         event.talk_schedule_public,

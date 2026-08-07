@@ -2,6 +2,10 @@
 {% load i18n %}
 {% load static %}
 {% block title %}{% trans "Import attendees" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
+{% endblock %}
 {% block content %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
@@ -12,12 +16,12 @@
         </div>
     </nav>
 
-    <div class="panel panel-default">
+    <div class="panel panel-default orders-import-panel">
         <div class="panel-heading">
             <h3 class="panel-title">{% trans "Upload a new file" %}</h3>
         </div>
         <div class="panel-body">
-            <form action="" method="post" enctype="multipart/form-data" class="form-inline">
+            <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
                 {% csrf_token %}
                 <p>
                     {% blocktrans trimmed %}
@@ -26,13 +30,16 @@
                     {% endblocktrans %}
                 </p>
                 <div class="form-group">
-                    <label for="file">{% trans "Import file" %}: </label>
-                    <input id="file" type="file" name="file" data-eventyay-file-wrapper="disabled"/>
+                    <label class="col-md-2 control-label" for="file">{% trans "Import file" %}:</label>
+                    <div class="col-md-5">
+                        <input id="file" type="file" name="file" accept=".csv" required data-eventyay-file-wrapper="disabled"/>
+                    </div>
                 </div>
-                <div class="clearfix"></div>
-                <button class="btn btn-primary pull-right flip" type="submit">
-                    <span class="icon icon-upload"></span> {% trans "Start import" %}
-                </button>
+                <div class="form-group submit-group">
+                    <button class="btn btn-primary btn-save" type="submit">
+                        <span class="icon icon-upload"></span> {% trans "Upload and continue" %}
+                    </button>
+                </div>
             </form>
         </div>
     </div>

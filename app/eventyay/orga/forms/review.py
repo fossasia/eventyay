@@ -362,7 +362,9 @@ class ReviewExportForm(ExportForm):
         queryset = Review.objects.filter(submission__event=self.event)
         if target != 'all':
             queryset = queryset.filter(submission__in=self.event.submissions.filter(state=target)).distinct()
-        # TODO auto-adjust further to available tracks etc
+        from eventyay.talk_rules.submission import submissions_for_user
+
+        queryset = queryset.filter(submission__in=submissions_for_user(self.event, self.user))
         queryset = queryset.exclude(submission__speakers__in=[self.user]).distinct()
         return queryset.select_related('submission', 'user').prefetch_related(
             'answers', 'answers__question', 'scores', 'scores__category'

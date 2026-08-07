@@ -2,6 +2,7 @@ import json
 from collections import OrderedDict
 from datetime import datetime
 from decimal import Decimal
+from types import SimpleNamespace
 
 from django import forms
 from django.conf import settings
@@ -56,7 +57,8 @@ def primary_font_kwargs():
     from eventyay.presale.style import SYSTEM_FONT_CHOICES, get_fonts
 
     choices = list(SYSTEM_FONT_CHOICES)
-    choices += [(a, {'title': a, 'data': v}) for a, v in get_fonts().items()]
+    # Label must not be a plain dict/Mapping: Django mistakes it for an optgroup
+    choices += [(a, SimpleNamespace(title=a, data=v)) for a, v in get_fonts().items()]
     return {
         'choices': choices,
     }
@@ -979,19 +981,6 @@ DEFAULT_SETTINGS = {
             **country_choice_kwargs(),
         ),
     },
-    'show_dates_on_frontpage': {
-        'default': 'True',
-        'type': bool,
-        'serializer_class': serializers.BooleanField,
-        'form_class': forms.BooleanField,
-        'form_kwargs': dict(
-            label=_('Show event times and dates on the ticket shop'),
-            help_text=_(
-                "If disabled, no date or time will be shown on the ticket shop's front page. This settings "
-                'does however not affect the display in other locations.'
-            ),
-        ),
-    },
     'show_date_to': {
         'default': 'True',
         'type': bool,
@@ -1159,6 +1148,12 @@ DEFAULT_SETTINGS = {
             label=_('Allow users to download tickets'),
             help_text=_('If this is off, nobody can download a ticket.'),
         ),
+    },
+    # PDF tickets are a core output (not an optional plugin). Default enabled so
+    # existing events get download/{download_tickets_pdf} without recreating data.
+    'ticketoutput_pdf__enabled': {
+        'default': 'True',
+        'type': bool,
     },
     'ticket_download_date': {
         'default': None,
@@ -1569,14 +1564,28 @@ DEFAULT_SETTINGS = {
             label=_('Do not allow cancellations after'),
         ),
     },
+    'contact_form_enabled': {
+        'default': False,
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Contact form'),
+            required=False,
+        ),
+    },
     'contact_mail': {
         'default': None,
         'type': str,
         'serializer_class': serializers.EmailField,
         'form_class': forms.EmailField,
         'form_kwargs': dict(
-            label=_('Contact address'),
-            help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
+            label=_('Organizer email address'),
+            help_text=_(
+                'You need to provide an email address so attendees can reach you through a contact form. '
+                'Messages will be sent to this address. Your email address remains hidden from attendees.'
+            ),
+            required=False,
         ),
     },
     'imprint_url': {
@@ -1636,13 +1645,13 @@ DEFAULT_SETTINGS = {
     },
     'mail_bcc': {'default': None, 'type': str},
     'mail_from': {
-        'default': settings.MAIL_FROM,
+        'default': settings.DEFAULT_FROM_EMAIL,
         'type': str,
         'form_class': forms.EmailField,
         'serializer_class': serializers.EmailField,
         'form_kwargs': dict(
             label=_('Sender address'),
-            help_text=_('Sender address for outgoing emails'),
+            help_text=_('Sender address for outgoing emails. When using a custom sender, replies go to this address unless a Reply-To is set.'),
         ),
     },
     'mail_reply_to': {
@@ -2028,7 +2037,8 @@ Your {event} team"""
     ),
     'header_background_color': hex_color_field_config(_('Header background color')),
     'header_text_color': hex_color_field_config(_('Header text color')),
-    'navigation_text_color': hex_color_field_config(_('Navigation text color')),
+    'navigation_text_color': hex_color_field_config(_('Menu text color')),
+    'menu_text_scroll_over_color': hex_color_field_config(_('Menu text hover color')),
     'theme_color_success': hex_color_field_config(
         _('Accent color for success'),
         default='#50a167',
@@ -2046,6 +2056,20 @@ Your {event} team"""
     ),
     'hover_button_color': hex_color_field_config(
         _('Scroll-over color'),
+        default='#2185d0',
+        widget_class='colorpickerfield no-contrast',
+    ),
+    'video_navigation_background_color': hex_color_field_config(
+        _('Video navigation background color'),
+        default='',
+        widget_class='colorpickerfield no-contrast',
+    ),
+    'video_sidebar_text_color': hex_color_field_config(
+        _('Video sidebar text color'),
+        default='#000000',
+    ),
+    'video_sidebar_hover_color': hex_color_field_config(
+        _('Video sidebar scroll-over color'),
         default='#2185d0',
         widget_class='colorpickerfield no-contrast',
     ),
@@ -2084,12 +2108,34 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'Upload a banner image shown at the top of all event pages. Accepted formats: PNG, JPEG, WebP. '
+                'Upload a banner image shown at the top of all event pages. '
                 'The banner is cropped to a 320 px tall strip by default. Keep important content (title, logo, key visual) in the center of the image — the sides are cropped on narrow screens. '
                 'Recommended size: 1920 × 640 px (the center 1920 × 320 px will always be visible). Images will be automatically optimized to max 3000 px wide on save.'
             ),
         ),
         'serializer_class': UploadedFileNoNewURLField,
+        'serializer_kwargs': dict(
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        ),
+    },
+    'event_preview_image': {
+        'default': None,
+        'type': File,
+        'form_class': ExtFileField,
+        'form_kwargs': dict(
+            label=_('Event preview image'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+            help_text=_(
+                'This image is used specifically for the platform start page event cards and other event listings. '
+                'If unset, the platform falls back to displaying the event header image, then the event logo, '
+                'and finally a default calendar placeholder icon. '
+                'It should be optimized for a rectangular card. '
+                'We recommend an aspect ratio of 16:9, and at least 800 x 450 px for best display results.'
+            ),
+        ),
+        'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
@@ -2104,7 +2150,7 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'Upload your event logo. Accepted formats: PNG, JPEG, GIF, SVG, WebP. '
+                'Upload your event logo. '
                 'The logo is displayed at up to 160 px tall (max-height), width proportional. We recommend a minimum of 320 px in height for crisp display on retina screens. '
                 'The logo will be automatically optimized on save (max 1000 px wide), except for SVG and animated images which remain unmodified.'
             ),
@@ -2140,22 +2186,43 @@ Your {event} team"""
         'type': File,
         'form_class': ExtFileField,
         'form_kwargs': dict(
-            label=_('Header image'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            label=_('Logo'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'This image appears at the top of all organizer pages, replacing the default color or pattern. '
-                'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
-                'We recommend an image 1140 px wide and 120 px in height (can be increased with the setting below).'
+                'Upload your organizer logo. The logo is displayed at up to 160 px tall (max-height), width proportional. '
+                'We recommend a minimum of 320 px in height for crisp display on retina screens. '
+                'The logo will be automatically optimized on save (max 1000 px wide), except for SVG and animated images which remain unmodified.'
             ),
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },
-    'organizer_logo_image_large': {
+
+    'organizer_header_image': {
+        'default': None,
+        'type': File,
+        'form_class': ExtFileField,
+        'form_kwargs': dict(
+            label=_('Header image'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+            help_text=_(
+                'This image appears at the top of all organizer pages, replacing the default color or pattern. '
+                'We recommend an image 1920 px wide and 640 px in height (the center 1920 × 320 px will always be visible). '
+                'Images will be automatically optimized to max 3000 px wide on save.'
+            ),
+        ),
+        'serializer_class': UploadedFileField,
+        'serializer_kwargs': dict(
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        ),
+    },
+    'organizer_header_image_large': {
         'default': 'False',
         'type': bool,
         'form_class': forms.BooleanField,
@@ -2577,12 +2644,16 @@ CSS_SETTINGS = {
     'header_background_color',
     'header_text_color',
     'navigation_text_color',
+    'menu_text_scroll_over_color',
     'theme_color_success',
     'theme_color_danger',
     'primary_font',
     'theme_color_background',
     'theme_round_borders',
     'hover_button_color',
+    'video_navigation_background_color',
+    'video_sidebar_text_color',
+    'video_sidebar_hover_color',
 }
 
 TITLE_GROUP = OrderedDict(

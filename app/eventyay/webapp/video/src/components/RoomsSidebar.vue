@@ -12,7 +12,7 @@ transition(name="sidebar")
 				span {{ $t('RoomsSidebar:stages-headline:text') }}
 				bunt-icon-button(v-if="hasPermission('world:rooms.create.stage')", tooltip="Create Stage", :tooltip-fixed="true", @click="showStageCreationPrompt = true") plus
 			.stages(role="group", aria-describedby="stages-title")
-				router-link.stage(v-for="stage of roomsByType.stage", :to="homeRoom && stage.room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: stage.room.id}}", :class="{active: stage.room.id === $route.params.roomId, session: stage.session, live: stage.session && stage.room.schedule_data, 'has-image': stage.image, 'starts-with-emoji': startsWithEmoji(stage.room.name)}")
+				router-link.stage(v-for="stage of roomsByType.stage", :to="homeRoom && stage.room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: stage.room.id}}", :class="{active: stage.room.id === $route.params.roomId, session: stage.session, live: stage.session && stage.room.schedule_data, 'has-image': stage.image}")
 					template(v-if="stage.session")
 						img.preview(v-if="stage.image", :src="stage.image")
 						.info
@@ -20,7 +20,7 @@ transition(name="sidebar")
 							.subtitle
 								.speakers {{ stage.session.speakers ? stage.session.speakers.map(s => s.name).join(', ') : '' }}
 								.room-wrapper
-									.room {{ stage.room.name }}
+									.room {{ $localize(stage.room.name) }}
 									.notifications(v-if="stage.notifications") {{ stage.notifications }}
 					template(v-else)
 						.room-icon(aria-hidden="true")
@@ -31,17 +31,24 @@ transition(name="sidebar")
 								i.mdi.mdi-account-group.icon-viewer
 								.name(v-html="stage.room.users")
 						.notifications(v-if="stage.notifications") {{ stage.notifications }}
+			.group-title#networking-title(v-if="roomsByType.networking.length || canCreateNetworkingRoom")
+				span {{ networkingTitle }}
+				bunt-icon-button(v-if="canCreateNetworkingRoom", tooltip="Create random video calls", :tooltip-fixed="true", @click="showNetworkingCreationPrompt = true") plus
+			.networking(role="group", aria-describedby="networking-title")
+				router-link.networking-room(v-for="room of roomsByType.networking", :to="homeRoom && room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: room.id}}", :class="{active: room.id === $route.params.roomId}")
+					.room-icon(aria-hidden="true")
+					.name(v-html="$emojify(room.name)")
 			.group-title#chats-title(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')")
 				span {{ $t('RoomsSidebar:channels-headline:text') }}
 				.buffer
 				bunt-icon-button(v-if="hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')", tooltip="Create Channel", :tooltip-fixed="true", @click="showChatCreationPrompt = true") plus
 				bunt-icon-button(v-if="worldHasTextChannels", tooltip="Browse all channels", :tooltip-fixed="true", @click="showChannelBrowser = true") compass-outline
 			.chats(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')", role="group", aria-describedby="chats-title")
-				router-link.video-chat(v-for="chat of roomsByType.videoChat", :to="homeRoom && chat === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: chat.id}}", :class="{active: chat.id === $route.params.roomId, 'starts-with-emoji': startsWithEmoji(chat.name)}")
+				router-link.video-chat(v-for="chat of roomsByType.videoChat", :to="homeRoom && chat === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: chat.id}}", :class="{active: chat.id === $route.params.roomId}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(chat.name)")
 					i.bunt-icon.activity-icon.mdi(v-if="chat.users === 'many' || chat.users === 'few'", :class="{'mdi-account-group': (chat.users === 'many'), 'mdi-account-multiple': (chat.users === 'few')}", v-tooltip.bottom.fixed="{text: $t('RoomsSidebar:users-tooltip:' + chat.users)}", :aria-label="$t('RoomsSidebar:users-tooltip:' + chat.users)")
-				router-link.text-chat(v-for="chat of roomsByType.textChat", :to="homeRoom && chat.room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: chat.room.id}}", :class="{unread: hasUnreadMessages(chat.room.modules[0].channel_id), 'starts-with-emoji': startsWithEmoji(chat.room.name)}")
+				router-link.text-chat(v-for="chat of roomsByType.textChat", :to="homeRoom && chat.room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: chat.room.id}}", :class="{unread: hasUnreadMessages(chat.room.modules[0].channel_id)}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(chat.room.name)")
 					.notifications(v-if="chat.notifications") {{ chat.notifications }}
@@ -66,7 +73,7 @@ transition(name="sidebar")
 				.group-title {{ $t('RoomsSidebar:posters-headline:text') }}
 				.admin
 					router-link(:to="{name: 'posters'}") {{ $t('RoomsSidebar:posters-manage:label') }}
-			template(v-if="hasPermission('world:users.list') || hasPermission('world:update') || hasPermission('world:announce') || hasPermission('room:update') || hasPermission('world:kiosks.manage')")
+			template(v-if="hasPermission('world:users.list') || hasPermission('world:update') || hasPermission('world:announce') || hasPermission('room:update') || hasPermission('world:kiosks.manage') || isAdminMode")
 				.group-title {{ $t('RoomsSidebar:admin-headline:text') }}
 				.admin
 					router-link.room(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')") {{ $t('RoomsSidebar:admin-announcements:label') }}
@@ -74,25 +81,28 @@ transition(name="sidebar")
 					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('RoomsSidebar:admin-rooms:label') }}
 					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:kiosks.manage')") {{ $t('RoomsSidebar:admin-kiosks:label') }}
 					router-link.room(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}") {{ $t('RoomsSidebar:admin-config:label') }}
+					router-link.room(v-if="isAdminMode", :to="{name: 'admin:video-admin'}") Video Admin
 		transition(name="prompt")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")
+			create-networking-prompt(v-else-if="showNetworkingCreationPrompt", @close="showNetworkingCreationPrompt = false")
 			create-chat-prompt(v-else-if="showChatCreationPrompt", @close="showChatCreationPrompt = false")
 			create-dm-prompt(v-else-if="showDMCreationPrompt && hasPermission('world:chat.direct')", @close="showDMCreationPrompt = false")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
 import theme from 'theme'
-import { startsWithEmoji } from 'lib/emoji'
-import { inferRoomType, inferType } from 'lib/room-types'
+import ROOM_TYPES, { NETWORKING_MODULE_TYPES, VIDEO_CHANNEL_MODULE_TYPES, inferRoomType, inferType } from 'lib/room-types'
+import { isRoomTypeAvailable } from 'lib/room-type-permissions'
 import Avatar from 'components/Avatar'
 import ChannelBrowser from 'components/ChannelBrowser'
 import CreateStagePrompt from 'components/CreateStagePrompt'
+import CreateNetworkingPrompt from 'components/CreateNetworkingPrompt'
 import CreateChatPrompt from 'components/CreateChatPrompt'
 import CreateDmPrompt from 'components/CreateDmPrompt'
 
 export default {
-	components: { Avatar, ChannelBrowser, CreateStagePrompt, CreateChatPrompt, CreateDmPrompt },
+	components: { Avatar, ChannelBrowser, CreateStagePrompt, CreateNetworkingPrompt, CreateChatPrompt, CreateDmPrompt },
 	props: {
 		show: Boolean
 	},
@@ -105,6 +115,7 @@ export default {
 			snapBack: false,
 			showChannelBrowser: false,
 			showStageCreationPrompt: false,
+			showNetworkingCreationPrompt: false,
 			showChatCreationPrompt: false,
 			showDMCreationPrompt: false
 		}
@@ -114,7 +125,7 @@ export default {
 		...mapState('schedule', ['schedule']),
 		...mapState('chat', ['joinedChannels', 'call']),
 		...mapState('exhibition', ['staffedExhibitions']),
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
 		...mapGetters('chat', ['hasUnreadMessages', 'notificationCount']),
 		...mapGetters('schedule', ['sessions', 'currentSessionPerRoom']),
 		homeRoom() {
@@ -130,6 +141,15 @@ export default {
 				}]
 			}
 		},
+		networkingTitle() {
+			return this.networkingRoomType?.name || 'Networking'
+		},
+		networkingRoomType() {
+			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')
+		},
+		canCreateNetworkingRoom() {
+			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission)
+		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {
 			if (this.pointerMovementX === 0) return
@@ -141,6 +161,7 @@ export default {
 			const rooms = {
 				page: [],
 				stage: [],
+				networking: [],
 				textChat: [],
 				videoChat: []
 			}
@@ -159,7 +180,9 @@ export default {
 						room,
 						notifications: notifications > 99 ? '99+' : notifications
 					})
-				} else if (room.modules.some(module => ['call.bigbluebutton', 'call.janus', 'call.zoom'].includes(module.type))) {
+				} else if (room.modules.some(module => NETWORKING_MODULE_TYPES.has(module.type))) {
+					rooms.networking.push(room)
+				} else if (room.modules.some(module => VIDEO_CHANNEL_MODULE_TYPES.has(module.type))) {
 					rooms.videoChat.push(room)
 				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe'].includes(module.type))) {
 					let session
@@ -208,12 +231,22 @@ export default {
 			return this.rooms.some(room => room.modules.length === 1 && room.modules[0].type === 'poster.native')
 		},
 	},
+	watch: {
+		show(show) {
+			if (show) return
+			this.closePrompts()
+		}
+	},
 	methods: {
+		closePrompts() {
+			this.showChannelBrowser = false
+			this.showStageCreationPrompt = false
+			this.showNetworkingCreationPrompt = false
+			this.showChatCreationPrompt = false
+			this.showDMCreationPrompt = false
+		},
 		getDMChannelName(channel) {
 			return channel.users.map(user => user.deleted ? this.$t('User:label:deleted') : user.profile.display_name).join(', ')
-		},
-		startsWithEmoji(string) {
-			return startsWithEmoji(string)
 		},
 		onPointerdown(event) {
 			// Begin tracking pointer for potential swipe-to-close gesture universally
@@ -244,6 +277,8 @@ export default {
 <style lang="stylus">
 .c-rooms-sidebar
 	background-color: var(--clr-sidebar)
+	border-right: 1px solid #e7e7e7
+	box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2)
 	display: flex
 	flex-direction: column
 	position: fixed
@@ -266,10 +301,10 @@ export default {
 		flex: auto
 		.scroll-content
 			flex: auto
-			color: var(--clr-sidebar-text-primary)
+			color: var(--color-text, $clr-primary-text-light)
 		.scrollbar-rail-y
 			.scrollbar-thumb
-				background-color: var(--clr-sidebar-text-secondary)
+				background-color: rgba(0, 0, 0, 0.2)
 	.global-links
 		flex: none
 		display: flex
@@ -280,13 +315,13 @@ export default {
 			height: 36px
 			line-height: 36px
 			padding: 0 24px
-			color: var(--clr-sidebar-text-secondary)
+			color: var(--clr-sidebar-text-primary)
 			&.router-link-exact-active
 				background-color: var(--clr-sidebar-active-bg)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--clr-sidebar-active-fg)
 			&:hover
 				background-color: var(--clr-sidebar-hover-bg)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--clr-sidebar-hover-fg)
 	.group-title
 		flex: none
 		color: var(--clr-sidebar-text-secondary)
@@ -307,7 +342,7 @@ export default {
 		vertical-align: text-bottom
 		&.needs-space
 			margin-right: 4px
-	.stages, .chats, .direct-messages, .admin
+	.stages, .networking, .chats, .direct-messages, .admin
 		flex: none
 		display: flex
 		flex-direction: column
@@ -316,18 +351,18 @@ export default {
 			height: 36px
 			line-height: 36px
 			padding: 0 18px
-			color: var(--clr-sidebar-text-secondary)
+			color: var(--clr-sidebar-text-primary)
 			display: flex
 			position: relative
 			&.router-link-exact-active, &.active
 				background-color: var(--clr-sidebar-active-bg)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--clr-sidebar-active-fg)
 			&:hover
 				background-color: var(--clr-sidebar-hover-bg)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--clr-sidebar-hover-fg)
 			&.router-link-exact-active, &.active
 				.room-icon::before
-					color: var(--clr-sidebar-text-secondary)
+					color: var(--clr-sidebar-active-fg)
 			.room-icon, .icon-viewer
 				width: 22px
 				&::before
@@ -342,30 +377,6 @@ export default {
 				&::before
 					line-height: 32px
 
-			&.starts-with-emoji
-				padding: 0 18px
-				// .room-icon
-				// 	position: absolute
-				// 	width: 18px
-				// 	height: @width
-				// 	left: 18px
-				// 	background-color: var(--clr-sidebar)
-				// 	border-radius: 50%
-				// 	&::before
-				// 		display: block
-				// 		height: 18px
-				// 		width: 18px
-				// 		line-height: @height
-				// 		font-size: 14px
-				// 		margin: 0 auto
-				// .room-icon
-				// 	width: 10px
-				// .name
-				// 	background-color: var(--clr-sidebar)
-				// 	padding-left: 3px
-				// 	border-radius: 18px
-				.room-icon
-					display: none
 			&.unread
 				color: var(--clr-sidebar-text-primary)
 				font-weight: 500
@@ -390,7 +401,7 @@ export default {
 				align-self: center
 				padding: 0 8px
 				font-size: 12px
-				color: var(--clr-sidebar-text-primary)
+				color: $clr-white
 		.stage
 			padding-right: 8px
 			&.session
@@ -472,7 +483,10 @@ export default {
 		.video-chat
 			.room-icon::before
 				content: '\F05A0'
-		.direct-message, .text-chat, .video-chat
+		.networking-room
+			.room-icon::before
+				content: '\F11D9'
+		.direct-message, .networking-room, .text-chat, .video-chat
 			padding-right: 8px
 			display: flex
 			align-items: flex-start
@@ -489,17 +503,18 @@ export default {
 			&:not(:hover) .bunt-icon-button
 				display: none
 		#btn-browse-channels-trailing
-			color: var(--clr-sidebar-text-secondary)
+			color: var(--clr-sidebar-text-primary)
 			background-color: transparent
 			font-size: 12px
 			font-weight: 500
 			border-radius: 0
 			&:hover:not(.disabled)
 				background-color: var(--clr-sidebar-hover-bg)
+				color: var(--clr-sidebar-hover-fg)
 	.admin
 		> .router-link-active
 				background-color: var(--clr-sidebar-active-bg)
-				color: var(--clr-sidebar-text-primary)
+				color: var(--clr-sidebar-active-fg)
 	.buffer
 		flex: auto
 	> .profile
@@ -509,7 +524,7 @@ export default {
 		cursor: pointer
 		color: var(--clr-sidebar-text-primary)
 		&:hover
-			background-color: rgba(255, 255, 255, 0.3)
+			background-color: var(--clr-sidebar-hover-bg)
 		.c-avatar
 			background-color: $clr-white
 			border-radius: 50%

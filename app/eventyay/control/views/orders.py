@@ -7,7 +7,8 @@ from datetime import datetime, time, timedelta
 from decimal import Decimal, DecimalException
 from urllib.parse import quote, urlencode
 
-import vat_moss.id
+import vat_moss_lite.errors
+import vat_moss_lite.id
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -125,7 +126,7 @@ from eventyay.base.signals import (
     register_ticket_outputs,
 )
 from eventyay.base.templatetags.money import money_filter
-from eventyay.base.templatetags.rich_text import markdown_compile_email
+from eventyay.base.templatetags.rich_text import compile_email_body
 from eventyay.base.views.mixins import OrderQuestionsViewMixin
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.forms.filter import (
@@ -133,6 +134,8 @@ from eventyay.control.forms.filter import (
     EventOrderFilterForm,
     OverviewFilterForm,
     RefundFilterForm,
+    advanced_filter_count,
+    advanced_filters_open_from_get,
 )
 from eventyay.control.forms.orders import (
     CancelForm,
@@ -158,7 +161,7 @@ from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.signals import order_search_forms
 from eventyay.control.views import PaginationMixin
 from eventyay.helpers.safedownload import check_token
-from eventyay.presale.signals import question_form_fields
+from eventyay.presale.utils import build_position_additional_fields
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +197,13 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
     permission = 'can_view_orders'
 
     def get_queryset(self):
-        qs = Order.objects.filter(event=self.request.event).select_related('invoice_address')
+        qs = Order.objects.filter(event=self.request.event).select_related('invoice_address').prefetch_related(
+            Prefetch(
+                'all_positions',
+                queryset=OrderPosition.objects.filter(canceled=False).select_related('product'),
+                to_attr='active_positions'
+            )
+        )
 
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
@@ -208,6 +217,8 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        ctx['advanced_filters_open'] = advanced_filters_open_from_get(self.filter_form)
+        ctx['advanced_filter_count'] = advanced_filter_count(self.filter_form)
 
         ctx['filter_strings'] = []
         for f in self.get_forms():
@@ -272,6 +283,9 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
             o.icnt = data['icnt']
             o.sales_channel_obj = scs[o.sales_channel]
 
+        for o in ctx['orders']:
+            o.bulk_approval_eligible = o.status == Order.STATUS_PENDING and o.require_approval
+
         if ctx['page_obj'].paginator.count < 1000:
             # Performance safeguard: Only count positions if the data set is small
             ctx['sums'] = (
@@ -324,19 +338,38 @@ class OrderBulkAction(EventPermissionRequiredMixin, View):
                 selected_by_code = {order.code: order for order in selected_orders}
                 selected_orders = [selected_by_code[code] for code in selected_codes]
 
-                invalid = [
-                    order.code
+                eligible_orders = [
+                    order
+                    for order in selected_orders
+                    if order.status == Order.STATUS_PENDING and order.require_approval
+                ]
+                skipped_orders = [
+                    order
                     for order in selected_orders
                     if order.status != Order.STATUS_PENDING or not order.require_approval
                 ]
-                if invalid:
+
+                if not eligible_orders:
                     messages.error(
                         self.request,
-                        _('Bulk actions are only possible if all selected orders are pending approval.'),
+                        _('None of the selected orders are pending approval. Bulk actions require at least one approval-pending order.'),
                     )
                     return self._redirect_back()
 
-                for order in selected_orders:
+                if skipped_orders:
+                    messages.warning(
+                        self.request,
+                        ngettext(
+                            '%(count)d order was skipped because it is not pending approval: %(codes)s',
+                            '%(count)d orders were skipped because they are not pending approval: %(codes)s',
+                            len(skipped_orders),
+                        ) % {
+                            'count': len(skipped_orders),
+                            'codes': ', '.join(o.code for o in skipped_orders),
+                        },
+                    )
+
+                for order in eligible_orders:
                     if action == 'approve':
                         invoice = approve_order_without_side_effects(order, user=self.request.user)
                         # Signals and emails must only run after the bulk transaction commits.
@@ -362,9 +395,9 @@ class OrderBulkAction(EventPermissionRequiredMixin, View):
                 ngettext(
                     '%(count)d order has been approved.',
                     '%(count)d orders have been approved.',
-                    len(selected_orders),
+                    len(eligible_orders),
                 )
-                % {'count': len(selected_orders)},
+                % {'count': len(eligible_orders)},
             )
         else:
             messages.success(
@@ -372,9 +405,9 @@ class OrderBulkAction(EventPermissionRequiredMixin, View):
                 ngettext(
                     '%(count)d order has been denied and is now canceled.',
                     '%(count)d orders have been denied and are now canceled.',
-                    len(selected_orders),
+                    len(eligible_orders),
                 )
-                % {'count': len(selected_orders)},
+                % {'count': len(eligible_orders)},
             )
         return self._redirect_back()
 
@@ -521,21 +554,7 @@ class OrderDetail(OrderView):
             return enabled_system_fields_by_product_id[product.pk]
 
         for p in cartpos:
-            responses = question_form_fields.send(sender=self.request.event, position=p)
-            p.additional_fields = []
-            data = p.meta_info_data
-            for r, response in sorted(responses, key=lambda r: str(r[0])):
-                if response:
-                    for key, value in response.items():
-                        answer = data.get('question_form_data', {}).get(key)
-                        if hasattr(value, 'get_display_value'):
-                            answer = value.get_display_value(answer)
-                        p.additional_fields.append(
-                            {
-                                'answer': answer,
-                                'question': value.label,
-                            }
-                        )
+            p.additional_fields = build_position_additional_fields(self.request.event, p)
 
             enabled_system_fields = get_enabled_system_fields_for_product(p.product)
             p.has_questions = (
@@ -1671,15 +1690,15 @@ class OrderCheckVATID(OrderView):
                 return redirect(self.get_order_url())
 
             try:
-                result = vat_moss.id.validate(ia.vat_id)
+                result = vat_moss_lite.id.validate(ia.vat_id)
                 if result:
                     country_code, normalized_id, company_name = result
                     ia.vat_id_validated = True
                     ia.vat_id = normalized_id
                     ia.save()
-            except vat_moss.errors.InvalidError:
+            except vat_moss_lite.errors.InvalidError:
                 messages.error(self.request, _('This VAT ID is not valid.'))
-            except vat_moss.errors.WebServiceUnavailableError:
+            except vat_moss_lite.errors.WebServiceUnavailableError:
                 logger.exception('VAT ID checking failed for country {}'.format(ia.country))
                 messages.error(
                     self.request,
@@ -1773,6 +1792,40 @@ class OrderResendLink(OrderView):
 
         messages.success(self.request, _('The email has been queued to be sent.'))
         return redirect(self.get_order_url())
+
+    def get(self, *args, **kwargs):
+        return HttpResponseNotAllowed(['POST'])
+
+
+class OrderPositionReinstate(OrderView):
+    permission = 'can_change_orders'
+
+    def post(self, *args, **kwargs):
+        try:
+            pos = get_object_or_404(
+                OrderPosition.all.filter(order=self.order, canceled=True),
+                pk=kwargs['position'],
+            )
+        except Http404:
+            messages.error(self.request, _('Position not found or not canceled.'))
+            return self._redirect_back()
+
+        if pos.addon_to_id and OrderPosition.all.filter(pk=pos.addon_to_id, canceled=True).exists():
+            messages.error(
+                self.request,
+                _('This is an add-on ticket whose base ticket is still canceled. Please reinstate the base ticket instead.'),
+            )
+            return self._redirect_back()
+
+        ocm = OrderChangeManager(self.order, user=self.request.user)
+        try:
+            ocm.reinstate(pos)
+            ocm.commit()
+        except OrderError as e:
+            messages.error(self.request, str(e))
+        else:
+            messages.success(self.request, _('The ticket has been reinstated.'))
+        return self._redirect_back()
 
     def get(self, *args, **kwargs):
         return HttpResponseNotAllowed(['POST'])
@@ -2241,6 +2294,9 @@ class OrderModifyInformation(OrderQuestionsViewMixin, OrderView):
             messages.success(self.request, _(success_message))
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
+        from eventyay.plugins.badges.utils import invalidate_badge_cache_for_order
+
+        invalidate_badge_cache_for_order(self.order)
 
         order_modified.send(sender=self.request.event, order=self.order)
         return redirect(self.get_order_url())
@@ -2394,7 +2450,7 @@ class OrderSendMail(EventPermissionRequiredMixin, OrderViewMixin, FormView):
         if self.request.POST.get('action') == 'preview':
             self.preview_output = {
                 'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': markdown_compile_email(email_content),
+                'html': compile_email_body(email_content),
             }
             return self.get(self.request, *self.args, **self.kwargs)
         else:
@@ -2465,7 +2521,7 @@ class OrderPositionSendMail(OrderSendMail):
         if self.request.POST.get('action') == 'preview':
             self.preview_output = {
                 'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': markdown_compile_email(email_content),
+                'html': compile_email_body(email_content),
             }
             return self.get(self.request, *self.args, **self.kwargs)
         else:

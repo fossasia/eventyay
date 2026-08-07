@@ -48,7 +48,7 @@ def get_used_placeholders(text):
     if not text:
         return set()
     if isinstance(text, str):
-        return {element[1] for element in string.Formatter().parse(text) if element[1]}
+        return {element[1].replace('\\_', '_') for element in string.Formatter().parse(text) if element[1]}
     if getattr(text, 'data', None):
         return get_used_placeholders(text.data)
     if isinstance(text, dict):

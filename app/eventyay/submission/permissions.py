@@ -1,8 +1,8 @@
 import rules
-from django.db.models import Q
 
 from eventyay.base.models import SubmissionStates
 from eventyay.person.permissions import can_change_submissions, is_reviewer
+from eventyay.talk_rules.submission import has_reviewer_access
 
 
 @rules.predicate
@@ -97,27 +97,6 @@ def can_view_all_reviews(user, obj):
     if not phase:
         return False
     return phase.can_see_other_reviews == "always"
-
-
-@rules.predicate
-def has_reviewer_access(user, obj):
-    from eventyay.base.models import Submission
-
-    obj = getattr(obj, "submission", obj)
-    if not isinstance(obj, Submission):
-        raise Exception("Incorrect use of reviewer permissions")
-    if user in obj.assigned_reviewers.all():
-        return True
-    phase = obj.event.active_review_phase
-    if not phase:
-        return False
-    if phase.proposal_visibility == "all":
-        return user.teams.filter(
-            Q(Q(all_events=True) | Q(limit_events__in=[obj.event]))
-            & Q(Q(limit_tracks__isnull=True) | Q(limit_tracks__in=[obj.track])),
-            is_reviewer=True,
-        ).exists()
-    return False
 
 
 @rules.predicate

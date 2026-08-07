@@ -23,7 +23,7 @@ from eventyay.base.models import CachedFile, OrderPosition
 from eventyay.base.pdf import Renderer
 from eventyay.base.services.tickets import invalidate_cache
 from eventyay.control.permissions import EventPermissionRequiredMixin
-from eventyay.control.views.pdf import BaseEditorView
+from eventyay.control.views.pdf import BaseEditorView, open_stored_pdf_file
 from eventyay.helpers.models import modelcopy
 from eventyay.plugins.ticketoutputpdf.forms import TicketLayoutForm
 from eventyay.plugins.ticketoutputpdf.ticketoutput import PdfTicketOutput
@@ -276,6 +276,12 @@ class LayoutEditorView(BaseEditorView):
 
     def get_current_background(self):
         return self.layout.background.url if self.layout.background else self.get_default_background()
+
+    def _open_saved_background_pdf(self):
+        return open_stored_pdf_file(
+            self.layout.background,
+            default_path='pretixpresale/pdf/ticket_default_a4.pdf',
+        )
 
     def save_background(self, f: CachedFile):
         if self.layout.background:

@@ -13,9 +13,9 @@ from eventyay.base.models import Order, OrderPosition
 from eventyay.common.urls import is_http_url
 from eventyay.common.permissions import is_admin_mode_active, user_has_cfp_submissions
 from eventyay.talk_rules.agenda import (
-    can_list_released_schedule_speakers,
     is_agenda_visible,
     is_wip_agenda_url,
+    public_speakers_list_available,
 )
 from eventyay.talk_rules.submission import (
     are_featured_submissions_visible,
@@ -212,7 +212,7 @@ def show_public_speakers_list(context, event=None):
     event = event or getattr(request, 'event', None)
     if not request or not event:
         return False
-    return can_list_released_schedule_speakers(AnonymousUser(), event)
+    return public_speakers_list_available(AnonymousUser(), event)
 
 
 @register.simple_tag(takes_context=True)

@@ -1,3 +1,4 @@
+import os
 from decimal import Decimal
 from urllib.parse import urlencode
 
@@ -19,7 +20,10 @@ from django_scopes.forms import (
     SafeModelChoiceField,
     SafeModelMultipleChoiceField,
 )
-from i18nfield.forms import I18nFormField, I18nTextarea
+from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
+
+from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.forms import I18nFormSet, I18nModelForm
@@ -32,10 +36,12 @@ from eventyay.base.models import (
     QuestionOption,
     Quota,
 )
-from eventyay.base.models.product import ProductAddOn, ProductBundle, ProductMetaValue
+from eventyay.base.models.product import ProductAddOn, ProductBundle, ProductMetaValue, default_product_available_until
 from eventyay.base.signals import product_copy_data
-from eventyay.control.forms import SplitDateTimeField, SplitDateTimePickerWidget
+from eventyay.consts import SizeKey
+from eventyay.control.forms import ExtFileField, SplitDateTimeField, SplitDateTimePickerWidget
 from eventyay.control.forms.widgets import Select2
+from eventyay.helpers.image_optimize import optimize_uploaded_image
 from eventyay.helpers.models import modelcopy
 from eventyay.helpers.money import change_decimal_field
 
@@ -317,6 +323,23 @@ class ProductCreateForm(I18nModelForm):
         ),
         required=False,
     )
+    tax_rule_name = I18nFormField(
+        label=_('Tax name'),
+        help_text=_('e.g. VAT'),
+        required=False,
+        widget=I18nTextInput,
+    )
+    tax_rule_rate = forms.DecimalField(
+        label=_('Tax rate (in %)'),
+        required=False,
+        max_digits=10,
+        decimal_places=2,
+    )
+    tax_rule_price_includes_tax = forms.BooleanField(
+        label=_('The configured product prices include the tax amount'),
+        required=False,
+        initial=True,
+    )
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs['event']
@@ -428,6 +451,28 @@ class ProductCreateForm(I18nModelForm):
         else:
             # Add to all sales channels by default
             self.instance.sales_channels = list(get_all_sales_channels().keys())
+            if self.instance.available_until is None:
+                self.instance.available_until = default_product_available_until(self.event)
+
+        tax_rule = self.cleaned_data.get('tax_rule')
+        tax_rule_name = self.cleaned_data.get('tax_rule_name')
+        tax_rule_rate = self.cleaned_data.get('tax_rule_rate')
+        if not tax_rule and tax_rule_name and tax_rule_rate is not None:
+            tax_rule = self.event.tax_rules.create(
+                name=tax_rule_name,
+                rate=tax_rule_rate,
+                price_includes_tax=self.cleaned_data.get('tax_rule_price_includes_tax', True)
+            )
+            tax_rule.log_action(
+                'eventyay.event.taxrule.added',
+                user=self.user,
+                data={
+                    'name': str(tax_rule.name),
+                    'rate': str(tax_rule.rate),
+                    'price_includes_tax': tax_rule.price_includes_tax,
+                },
+            )
+            self.instance.tax_rule = tax_rule
 
         self.instance.position = (self.event.products.aggregate(p=Max('position'))['p'] or 0) + 1
         instance = super().save(*args, **kwargs)
@@ -513,6 +558,15 @@ class ProductCreateForm(I18nModelForm):
                 if not self.cleaned_data.get('quota_add_existing'):
                     raise forms.ValidationError({'quota_add_existing': [_('Please select a quota.')]})
 
+        tax_rule = cleaned_data.get('tax_rule')
+        tax_rule_name = cleaned_data.get('tax_rule_name')
+        tax_rule_rate = cleaned_data.get('tax_rule_rate')
+        if not tax_rule:
+            if tax_rule_name and tax_rule_rate is None:
+                self.add_error('tax_rule_rate', _('Please enter a tax rate.'))
+            elif tax_rule_rate is not None and not tax_rule_name:
+                self.add_error('tax_rule_name', _('Please enter a tax name.'))
+
         clean_free_price_bounds(cleaned_data)
 
         return cleaned_data
@@ -554,8 +608,22 @@ class TicketNullBooleanSelect(forms.NullBooleanSelect):
 
 
 class ProductUpdateForm(I18nModelForm):
+    picture = ExtFileField(
+        label=_('Product picture'),
+        ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        required=False,
+        help_text=_(
+            'Upload a product image. '
+            'The image will be automatically optimized on save (max 1000 px wide).'
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if 'picture' in self.fields:
+            self.fields['picture'].widget.attrs['data-eventyay-file-wrapper'] = 'disabled'
+            self.fields['picture'].widget.attrs['data-event-settings-image-tools'] = 'enabled'
         self.fields['tax_rule'].queryset = self.instance.event.tax_rules.all()
         self.fields['description'].widget.attrs['placeholder'] = _(
             'e.g. This reduced price is available for full-time students, jobless and people '
@@ -642,6 +710,38 @@ class ProductUpdateForm(I18nModelForm):
         return d
 
     def save(self, *args, **kwargs):
+        new_picture = self.cleaned_data.get('picture')
+        if isinstance(new_picture, UploadedFile):
+            prefix = self.add_prefix('picture')
+            crop_fields = {
+                'x': self.data.get(f'{prefix}_crop_x'),
+                'y': self.data.get(f'{prefix}_crop_y'),
+                'w': self.data.get(f'{prefix}_crop_w'),
+                'h': self.data.get(f'{prefix}_crop_h'),
+            }
+            crop_box = None
+            if all(v not in (None, '') for v in crop_fields.values()):
+                try:
+                    crop_x = int(float(crop_fields['x']))
+                    crop_y = int(float(crop_fields['y']))
+                    crop_w = int(float(crop_fields['w']))
+                    crop_h = int(float(crop_fields['h']))
+                    _MAX_CROP_DIM = 10000
+                    if (
+                        crop_x >= 0 and crop_y >= 0
+                        and 0 < crop_w <= _MAX_CROP_DIM and 0 < crop_h <= _MAX_CROP_DIM
+                    ):
+                        crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
+                except (ValueError, TypeError):
+                    crop_box = None
+            try:
+                opt = optimize_uploaded_image(new_picture, 'picture', crop_box)
+                orig_name = os.path.splitext(new_picture.name or 'upload')[0]
+                opt.optimized.name = f'{orig_name}.{opt.optimized_ext}'
+                self.instance.picture = opt.optimized
+            except (ValueError, OSError):
+                if hasattr(new_picture, 'seek'):
+                    new_picture.seek(0)
         inst = super().save(*args, **kwargs)
         # Persist meta flag limit_one_per_user via ProductMetaProperty/Value
         pmp, _ = inst.event.product_meta_properties.get_or_create(name='limit_one_per_user', defaults={'default': ''})

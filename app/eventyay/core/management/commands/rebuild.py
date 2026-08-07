@@ -17,7 +17,7 @@ class Command(BaseCommand):
             del gs.settings.update_check_last
             del gs.settings.update_check_result
             del gs.settings.update_check_result_warning
-        except:
+        except Exception:
             # Fails when this is executed without a valid database configuration.
             # We don't care.
             pass

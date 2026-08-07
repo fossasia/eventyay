@@ -40,7 +40,6 @@ class StreamSchedule(models.Model):
             ('vimeo', 'Vimeo'),
             ('hls', 'HLS'),
             ('iframe', 'Iframe'),
-            ('native', 'Native'),
         ],
         verbose_name=_('Stream Type'),
     )

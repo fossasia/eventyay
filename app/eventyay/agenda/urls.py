@@ -90,6 +90,11 @@ urlpatterns = [
         schedule.schedule_messages,
         name='widget.messages',
     ),
+    path(
+        'schedule/starred-sharing.json',
+        schedule.starred_sharing_preference,
+        name='starred-sharing',
+    ),
     *get_schedule_urls('schedule'),
     *get_schedule_urls('schedule/v/<version>', 'versioned-'),
     path('schedule/v/wip/talk/<slug>/', talk.WipTalkView.as_view(), name='versioned-wip-talk.detail'),

@@ -24,7 +24,7 @@
 			.sidebar-backdrop(v-if="showSidebar", @click="showSidebar = false")
 		.app-content(:class="{'sidebar-open': showSidebar}", role="main", tabindex="-1")
 			// router-view no longer carries role=main; main landmark is the scroll container
-			router-view(:key="!$route.path.startsWith('/admin') ? $route.fullPath : null")
+			router-view(:key="!isAdminRoute ? $route.fullPath : null")
 			//- defining keys like this keeps the playing dom element alive for uninterupted transitions
 			//- Single MediaSource for room streaming (persists across navigation to prevent stream restart)
 			media-source(v-if="streamingRoom && user.profile.greeted && !hasFatalError(streamingRoom)", ref="mediaSource", :room="streamingRoom", :background="isStreamInBackground", :key="streamingRoom.id", :role="isStreamInBackground ? null : 'main'", @close="backgroundRoom = null")
@@ -47,6 +47,7 @@ import { mapState } from 'vuex'
 import { computed, reactive } from 'vue'
 import moment from 'lib/timetravelMoment'
 import { inferRoomType, inferType } from 'lib/room-types'
+import { loadStarredSharingPreference, updateStarredSharingPreference } from '@schedule/utils'
 import AppBar from 'components/AppBar'
 import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
@@ -69,8 +70,9 @@ export default {
 				days: computed(() => this.$store.getters['schedule/days']),
 				favs: computed(() => this.$store.getters['schedule/favs'] || []),
 				now: computed(() => this.$store.state.now),
-				timezone: localStorage.getItem('userTimezone') || moment.tz.guess(),
+				timezone: computed(() => this.$store.state.userTimezone || moment.tz.guess()),
 				hasAmPm: new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12,
+				scheduleLoaded: computed(() => this.$store.state.schedule?.scheduleLoaded),
 				errorLoading: computed(() => this.$store.state.schedule?.errorLoading),
 				speakersLookup: computed(() => this.$store.getters['schedule/speakersLookup']),
 				sessionsBySpeaker: computed(() => this.$store.getters['schedule/sessionsBySpeaker']),
@@ -90,11 +92,13 @@ export default {
 					await this.$router.push(this.getSessionRoute(session))
 				}
 			},
-			generateSpeakerLinkUrl: ({speaker}) => {
+			generateSpeakerLinkUrl: ({speaker} = {}) => {
+				if (!speaker?.code) return ''
 				return this.$router.resolve({name: 'schedule:speaker', params: {speakerId: speaker.code}}).href
 			},
 			onSpeakerLinkClick: async (event, speaker) => {
 				event.preventDefault()
+				if (!speaker?.code) return
 				await this.$router.push({name: 'schedule:speaker', params: {speakerId: speaker.code}})
 			},
 			showJoinRoom: true,
@@ -116,6 +120,10 @@ export default {
 					await this.$router.push({name: 'schedule:public-stars', params: {userCode: user.code}})
 				}
 			},
+			scheduleUserLoggedIn: computed(() => !!this.$store.state.user),
+			loadStarredSharingPreference: () => this.loadStarredSharingPreference(),
+			updateStarredSharingPreference: (value) => this.updateStarredSharingPreference(value),
+			onSaveTimezone: (timezone) => this.$store.dispatch('updateUserTimezone', timezone),
 			translationMessages: window.eventyay?.translationMessages || {}
 		}
 	},
@@ -123,7 +131,8 @@ export default {
 		return {
 			backgroundRoom: null,
 			showSidebar: false,
-			windowHeight: null
+			windowHeight: null,
+			shareStarredSessions: !!window.eventyay?.showPublicly,
 		}
 	},
 	computed: {
@@ -143,13 +152,19 @@ export default {
 		room() {
 			const routeName = this.$route?.name
 			if (!routeName) return
-			if (routeName.startsWith && routeName.startsWith('admin')) return
+			if (this.isAdminRoute) return
 			const rooms = this.rooms || []
 			if (routeName === 'about') {
 				return rooms.find(room => room && room.modules && room.modules.some(m => m.type === 'page.landing'))
 			}
 			const wantedId = String(this.$route.params.roomId)
 			return rooms.find(room => String(room.id) === wantedId)
+		},
+		isAdminRoute() {
+			const isAdminRouteName = name => typeof name === 'string' && name.startsWith('admin')
+			const route = this.$route
+			return isAdminRouteName(route?.name) ||
+				route?.matched?.some(match => isAdminRouteName(match.name))
 		},
 		// TODO since this is used EVERYWHERE, use provide/inject?
 		modules() {
@@ -256,6 +271,30 @@ export default {
 		window.removeEventListener('keydown', this.onKeydown, true)
 	},
 	methods: {
+		async loadStarredSharingPreference() {
+			if (!this.$store.state.user) {
+				this.shareStarredSessions = false
+				return false
+			}
+			const eventUrl = window.eventyay?.eventUrl || ''
+			const enabled = await loadStarredSharingPreference(eventUrl)
+			this.shareStarredSessions = enabled
+			return enabled
+		},
+		async updateStarredSharingPreference(value) {
+			if (!this.$store.state.user) return false
+			const eventUrl = window.eventyay?.eventUrl || ''
+			const previous = this.shareStarredSessions
+			this.shareStarredSessions = !!value
+			try {
+				const enabled = await updateStarredSharingPreference(eventUrl, this.shareStarredSessions)
+				this.shareStarredSessions = enabled
+				return enabled
+			} catch {
+				this.shareStarredSessions = previous
+				throw new Error('sharing preference update failed')
+			}
+		},
 		getSessionRoute(session) {
 			if (session.room?.modules) {
 				return {name: 'room', params: {roomId: session.room.id}}
@@ -383,6 +422,10 @@ export default {
 		position: relative
 		padding-top: 48px
 		z-index: 1
+		&:has(> .c-schedule-view), &:has(> .c-speaker-detail), &:has(> .c-speakers-list), &:has(> .c-talk-detail), &:has(> .c-public-stars)
+			padding-top: 50px !important
+			padding-left: 10px !important
+			padding-right: 10px !important
 	.sidebar-backdrop
 		position: fixed
 		top: 0

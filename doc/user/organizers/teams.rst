@@ -64,6 +64,29 @@ Permissions separate into two areas:
    * Can change vouchers – This permission allows to create and modify vouchers in all their details. It only works
      properly if the same users also have the "Can view vouchers" permission.
 
+Talk workflow permissions (reviews, proposals, schedule)
+--------------------------------------------------------
+
+For events that use tracks (or “devrooms”), you can also configure talk-specific team settings:
+
+* **Reviewer** – Can review and give feedback on proposals, but cannot edit proposal details or change states.
+
+* **Reviewer Manager** – Can edit and manage submissions (including accept/reject and review workflow oversight).
+
+* **Restrict access to tracks** – Optionally limit the team to selected tracks for each event. Members then only see
+  proposals, sessions, reviews, speakers, schedule data, exports, and API results for those tracks. Leave no tracks
+  selected to keep access to all tracks in the team’s events. Configure tracks per event with the event selector on
+  the team permissions page.
+
+* **Always hide speaker details** – Overrides each event’s review anonymisation settings for this team and always hides
+  speaker names and details in organiser views, exports, and API responses.
+
+* **Always hide speaker emails only** – Hides speaker email addresses for this team while still allowing other speaker
+  details (unless “Always hide speaker details” is also enabled).
+
+Track limits and speaker anonymisation are enforced server-side for organiser UI, exports, and APIs. They do not replace
+event-level review settings; they restrict what *this team* may see.
+
 .. thumbnail:: ../../screens/organizer/team_edit.png
    :align: center
    :class: screenshot

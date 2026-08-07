@@ -96,6 +96,11 @@ urlpatterns = [
         organizer_views.device_view.DeviceConnectView.as_view(),
         name='organizer.devices.connect',
     ),
+    path(
+        'organizer/<str:organizer>/device/<str:device>/regenerate',
+        organizer_views.device_view.DeviceRegenerateView.as_view(),
+        name='organizer.devices.regenerate',
+    ),
     path('organizer/<str:organizer>/gates', organizer_views.gate_view.GateListView.as_view(), name='organizer.gates'),
     path(
         'organizer/<str:organizer>/gate/add',

@@ -46,7 +46,7 @@ if (!window.venueless && !window.eventyay) {
 			},
 			colors: {
 				primary: '#2185d0',
-				sidebar: '#2185d0',
+				sidebar: '#f8f8f8',
 				bbb_background: '#ffffff',
 			}
 		},

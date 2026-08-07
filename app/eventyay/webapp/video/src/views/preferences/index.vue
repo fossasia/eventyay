@@ -7,7 +7,7 @@
 			.avatar-wrapper
 				avatar(:user="{profile}", :size="128")
 				bunt-button#btn-change-avatar(@click="showChangeAvatar = true") {{ $t('preferences/index:btn-change-avatar:label') }}
-			bunt-input.display-name(name="displayName", :label="$t('profile/GreetingPrompt:displayname:label')", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
+			bunt-input.display-name(name="displayName", :label="`${$t('profile/GreetingPrompt:displayname:label')} *`", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
 			change-additional-fields(v-model="profile.fields")
 			template(v-if="languages")
 				h2 {{ $t('preferences/index:interface-language:header') }}
@@ -160,11 +160,13 @@ export default {
 			display: flex
 			flex-direction: column
 			padding: 48px 32px 32px
+			min-height: 0
 		.actions
 			margin-top: 32px
 			align-self: stretch
 			display: flex
 			justify-content: flex-end
+			flex-shrink: 0
 		#btn-cancel
 			themed-button-secondary()
 			margin-right: 8px

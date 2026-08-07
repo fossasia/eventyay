@@ -1,0 +1,25 @@
+{% extends "pretixpresale/startpage_base.html" %}
+{% load i18n %}
+{% block page_title %}{% trans "Past Events" %}{% endblock %}
+{% block event_brand_class %} event-list-header-brand{% endblock %}
+{% block back_button %}
+<a class="event-home-back d-print-none" href="{% url 'presale:index' %}" aria-label="{% trans 'Home' %}">
+  <span class="event-home-back-pill">
+    <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
+    <span class="event-home-back-label" aria-hidden="true">{% trans "Home" %}</span>
+  </span>
+</a>
+{% endblock %}
+{% block content %}
+<section class="startpage-events" aria-label="{% trans "Past events" %}">
+  <h2>{% trans "Past Events" %}</h2>
+  <div class="startpage-event-list">
+    {% for event in events %}
+      {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+    {% empty %}
+      <p class="startpage-empty">{% trans "No past events." %}</p>
+    {% endfor %}
+  </div>
+</section>
+{% include "pretixpresale/pagination.html" %}
+{% endblock %}

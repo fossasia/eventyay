@@ -341,7 +341,12 @@ const unscheduled = computed<SessionData[]>(() => {
 const deletedRoomSessions = computed<SessionData[]>(() => {
   if (!schedule.value) return []
   return schedule.value.talks
-    .filter((session) => session.start && (!session.room || !roomsLookup.value[lookupKey(session.room)]))
+    .filter(
+      (session) =>
+        session.code &&
+        session.start &&
+        (!session.room || !roomsLookup.value[lookupKey(session.room)]),
+    )
     .map((session) => ({
       id: session.id,
       code: session.code,

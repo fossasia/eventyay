@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-roulette
 	.call(v-if="server")
-		janus-videoroom(:server="server", :token="token", :iceServers="iceServers", :sessionId="sessionId", :roomId="roomId", size="normal", :automute="false", :key="`janus-videoroom-${roomId}`", @hangup="stopCall")
+		janus-videoroom(:server="server", :token="token", :iceServers="iceServers", :sessionId="sessionId", :screenShareSessionId="screenShareSessionId", :roomId="roomId", size="normal", :automute="false", :key="`janus-videoroom-${roomId}`", @hangup="stopCall")
 	.status(v-else-if="loading && !callId")
 		div {{ $t('Roulette:waiting:text') }}
 		.detail {{ $t('Roulette:waiting-' + (recentPairs > 10 ? 'many' : (recentPairs > 0 ? 'few' : 'empty')) + ':text') }}
@@ -54,7 +54,7 @@ export default {
 	},
 	computed: {
 		...mapState(['connected']),
-		...mapState('roulette', ['callId', 'server', 'iceServers', 'token', 'roomId', 'sessionId', 'loading', 'error', 'recentPairs']),
+		...mapState('roulette', ['callId', 'server', 'iceServers', 'token', 'roomId', 'sessionId', 'screenShareSessionId', 'loading', 'error', 'recentPairs']),
 
 		soundBarWidth() {
 			return Math.min(1, this.soundLevel * 10) * 100

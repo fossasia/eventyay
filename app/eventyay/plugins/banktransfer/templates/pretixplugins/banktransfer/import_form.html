@@ -11,7 +11,7 @@
             {% endblocktrans %}
         </div>
     {% else %}
-        <div class="panel panel-default">
+        <div class="panel panel-default orders-import-panel tickets-import-panel">
             <div class="panel-heading">
                 <h3 class="panel-title">{% trans "Upload a new file" %}</h3>
             </div>
@@ -24,21 +24,24 @@
                 {% endblocktrans %}</p>
                 {% if job_running %}
                     <div class="alert alert-info" data-job-waiting
-                         data-job-waiting-url="{% url "plugins:banktransfer:import.job" event=request.event.slug organizer=request.event.organizer.slug job=job_running.pk %}?ajax=1">
+                         data-job-waiting-url="{% if request.event %}{% url "plugins:banktransfer:import.job" event=request.event.slug organizer=request.event.organizer.slug job=job_running.pk %}{% else %}{% url "plugins:banktransfer:import.job" organizer=request.organizer.slug job=job_running.pk %}{% endif %}?ajax=1">
                         <span class="fa fa-cog fa-spin"></span>
                         {% trans "An import is currently being processed, please try again in a few minutes." %}
                     </div>
                 {% else %}
-                    <form action="" method="post" enctype="multipart/form-data" class="form-inline">
+                    <form action="" method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-                        <div class="form-group">
-                            <label for="file">{% trans "Import file" %}: </label> <input id="file" type="file"
-                                                                                         name="file"/>
+                        <div class="banktransfer-file-group">
+                            <label class="banktransfer-file-label" for="file" onclick="event.preventDefault();">{% trans "Import file" %} *</label>
+                            <div class="banktransfer-file-input-wrapper">
+                                <input id="file" type="file" name="file" required/>
+                            </div>
                         </div>
-                        <div class="clearfix"></div>
-                        <button class="btn btn-primary pull-right flip" type="submit">
-                            <span class="icon icon-upload"></span> {% trans "Start upload" %}
-                        </button>
+                        <div class="banktransfer-submit-group">
+                            <button class="btn btn-primary btn-lg" type="submit">
+                                <i class="fa fa-upload"></i> {% trans "Upload and continue" %}
+                            </button>
+                        </div>
                     </form>
                 {% endif %}
             </div>

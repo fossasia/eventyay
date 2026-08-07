@@ -27,10 +27,8 @@
     <form method="post" enctype="multipart/form-data" novalidate>
         <fieldset>
             {% if not submission %}
-                <div id="main-title" class="d-md-flex justify-content-between">
-                    <h2>{% translate "Create proposal" %}</h2>
-                    {% include "orga/event/component_link.html" %}
-                </div>
+                {% trans "Create proposal" as header_title %}
+                {% include "common/includes/header_nav.html" with header_title=header_title %}
             {% endif %}
 
             {% if submission.access_code %}
@@ -88,6 +86,25 @@
             {% if form.slot_count %}{{ form.slot_count.as_field_group }}{% endif %}
             {% if form.image %}{{ form.image.as_field_group }}{% endif %}
             {% if form.slides %}{{ form.slides.as_field_group }}{% endif %}
+            {% if action != "create" and can_edit and session_videos_enabled %}
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label" for="session_video_urls">
+                        <span>{% translate "Session videos" %}</span>
+                        <span class="optional">{% translate "Optional" %}</span>
+                    </label>
+                    <div class="col-md-9">
+                        <textarea
+                            class="form-control"
+                            id="session_video_urls"
+                            name="session_video_urls"
+                            rows="3"
+                            autocomplete="off"
+                            placeholder="{% translate "One YouTube or Vimeo URL per line" %}"
+                        >{{ session_video_urls_text }}</textarea>
+                        <small class="form-text text-muted">{% translate "YouTube or Vimeo URLs, one per line." %}</small>
+                    </div>
+                </div>
+            {% endif %}
             {% if form.etherpad_url %}
                 {{ form.etherpad_url.as_field_group }}
                 {% if not form.etherpad_url.value or action != "create" and request.event.feature_flags.etherpad_auto_generate %}
@@ -134,5 +151,5 @@
             {% endif %}
         </fieldset></form>
 
-    <span id="vars" remoteUrl="{{ request.event.organiser.orga_urls.user_search }}"></span>
+    <span id="vars" remoteUrl="{{ request.event.organizer.orga_urls.user_search }}"></span>
 {% endblock submission_content %}

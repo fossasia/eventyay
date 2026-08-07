@@ -10,6 +10,15 @@ scrollbars()
 themed-buntpapier()
 @import 'common-ui'
 
+// Twemoji images rendered by $emojify (room names, chat, etc.)
+img.emoji
+	display: inline-block
+	vertical-align: text-bottom
+	width: 1.15em
+	height: 1.15em
+	&.needs-space
+		margin-right: 0.2em
+
 a
 	color: var(--clr-primary)
 	text-decoration: none

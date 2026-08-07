@@ -68,3 +68,27 @@
 	width: 100vw
 	height: var(--vh100)
 	z-index: 800
+
+.ui-radio-options
+	display: flex
+	flex-direction: column
+	border: border-separator()
+	border-radius: 4px
+.ui-radio-option
+	display: flex
+	gap: 10px
+	padding: 10px 12px
+	cursor: pointer
+	color: $clr-primary-text-light
+	&:not(:last-child)
+		border-bottom: border-separator()
+	input
+		margin-top: 3px
+		flex: none
+	.ui-radio-title
+		font-weight: 500
+		line-height: 20px
+	.ui-radio-description
+		color: $clr-secondary-text-light
+		font-size: 12px
+		line-height: 18px

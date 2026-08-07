@@ -3,7 +3,6 @@ from datetime import timedelta
 from io import BytesIO
 
 from django.contrib import messages
-from django.contrib.staticfiles import finders
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import transaction
@@ -15,22 +14,52 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView
+from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, TemplateView
+from django.views.decorators.clickjacking import xframe_options_sameorigin
+from django.utils.decorators import method_decorator
 from reportlab.lib import pagesizes
 from reportlab.pdfgen import canvas
 
 from eventyay.base.models import CachedFile, OrderPosition, Question, QuestionAnswer
 from eventyay.base.services.tickets import invalidate_cache
 from eventyay.base.views.tasks import AsyncAction
+from eventyay.base.views.cachedfiles import DownloadView
 from eventyay.control.permissions import EventPermissionRequiredMixin
-from eventyay.control.views.pdf import BaseEditorView
+from eventyay.control.views.pdf import BaseEditorView, open_stored_pdf_file
 from eventyay.helpers.models import modelcopy
 from eventyay.plugins.badges.forms import BadgeLayoutForm, BadgeLayoutSettingsForm
 from eventyay.plugins.badges.tasks import badges_create_pdf
-from eventyay.plugins.badges.utils import clear_badge_layout_cache
+from eventyay.plugins.badges.utils import (
+    BADGE_TICKET_PROVIDER,
+    clear_badge_layout_cache,
+    delete_badge_cached_pdfs,
+    position_has_printable_badge,
+)
 
-from .exporters import BadgeRenderer
+from .exporters import BadgeRenderer, _open_layout_background
 from .models import BadgeLayout
+from .providers import BadgeOutputProvider
+
+
+class LayoutGetDefault(EventPermissionRequiredMixin, View):
+    permission = 'can_change_event_settings'
+
+    def get(self, request, *args, **kwargs):
+        layout = BadgeLayout.objects.get_or_create(
+            event=request.event,
+            default=True,
+            defaults={'name': _('Default layout')},
+        )[0]
+        return redirect(
+            reverse(
+                'plugins:badges:edit',
+                kwargs={
+                    'organizer': request.event.organizer.slug,
+                    'event': request.event.slug,
+                    'layout': layout.pk,
+                },
+            )
+        )
 
 
 class BadgePluginEnabledMixin:
@@ -47,8 +76,11 @@ class BadgePluginEnabledMixin:
 def _schedule_badge_cache_invalidation(event):
     event_pk = event.pk
     clear_badge_layout_cache(event)
+    delete_badge_cached_pdfs(event)
     transaction.on_commit(
-        lambda event_pk=event_pk: invalidate_cache.apply_async(kwargs={'event': event_pk, 'provider': 'badge'})
+        lambda event_pk=event_pk: invalidate_cache.apply_async(
+            kwargs={'event': event_pk, 'provider': BADGE_TICKET_PROVIDER}
+        )
     )
 
 
@@ -98,6 +130,7 @@ class LayoutSettingsView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, 
             user=self.request.user,
             data={
                 'products': list(form.cleaned_data['products'].values_list('pk', flat=True)),
+                'vouchers': list(form.cleaned_data['vouchers'].values_list('pk', flat=True)),
                 'allow_customization': form.cleaned_data['allow_customization'],
                 'ask_user_fields': form.cleaned_data['ask_user_fields'],
             },
@@ -322,10 +355,8 @@ class LayoutEditorView(BaseEditorView):
         buffer = BytesIO()
         if override_background:
             bgf = default_storage.open(override_background.name, 'rb')
-        elif isinstance(self.layout.background, File) and self.layout.background.name:
-            bgf = default_storage.open(self.layout.background.name, 'rb')
         else:
-            bgf = open(finders.find('pretixplugins/badges/badge_default_a6l.pdf'), 'rb')
+            bgf = _open_layout_background(self.layout)
         r = BadgeRenderer(
             self.request.event,
             override_layout or self.get_current_layout(),
@@ -344,7 +375,26 @@ class LayoutEditorView(BaseEditorView):
     def get_current_background(self):
         return self.layout.background.url if self.layout.background else self.get_default_background()
 
+    def _open_saved_background_pdf(self):
+        return open_stored_pdf_file(
+            self.layout.background,
+            default_path='pretixplugins/badges/badge_default_a6l.pdf',
+        )
+
     def save_background(self, f: CachedFile):
+        # The editor creates a blank placeholder PDF for on-canvas sizing. Do not
+        # replace the layout artwork when the user only saves field positions.
+        if not f.file:
+            return
+        if f.file.name.endswith('empty.pdf'):
+            return
+        try:
+            if f.file.size < 15_000:
+                with f.file.open('rb') as handle:
+                    if b'ReportLab Generated PDF' in handle.read(120):
+                        return
+        except OSError:
+            pass
         if self.layout.background:
             self.layout.background.delete()
         self.layout.background.save('background.pdf', f.file)
@@ -360,7 +410,14 @@ class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncA
         return None
 
     def get_success_url(self, value):
-        return reverse('cachedfile.download', kwargs={'id': str(value)})
+        url = reverse('plugins:badges:download', kwargs={
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug,
+            'id': str(value)
+        })
+        if self.request.GET.get('action') != 'download':
+            url += '?inline=1'
+        return url
 
     def get_error_url(self):
         return reverse(
@@ -398,3 +455,12 @@ class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncA
             str(cf.id),
             positions,
         )
+
+
+class BadgeCachedDownloadView(DownloadView):
+    @method_decorator(xframe_options_sameorigin)
+    def get(self, request, *args, **kwargs):
+        resp = super().get(request, *args, **kwargs)
+        if request.GET.get('inline') in ('1', 'true') and getattr(self.object, 'file', None):
+            resp['Content-Disposition'] = 'inline; filename="{}"'.format(self.object.filename)
+        return resp

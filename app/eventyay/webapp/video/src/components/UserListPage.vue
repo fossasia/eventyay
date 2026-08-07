@@ -31,10 +31,10 @@
 				template(v-if="hasPermission('room:chat.moderate') && selectedUser.id !== user.id")
 					.devider {{ $t('UserAction:moderator-actions:title') }}
 					.action-row
-						bunt-button.reactivate(v-if="selectedUser.moderation_state", @click="userAction = 'reactivate'")
-							| {{ selectedUser.moderation_state === 'banned' ? $t('UserAction:action.unban:label') : $t('UserAction:action.unsilence:label') }}
 						bunt-button.ban(v-if="selectedUser.moderation_state !== 'banned'", @click="userAction = 'ban'") {{ $t('UserAction:action.ban:label') }}
 						bunt-button.silence(v-if="!selectedUser.moderation_state", @click="userAction = 'silence'") {{ $t('UserAction:action.silence:label') }}
+						bunt-button.reactivate(v-if="selectedUser.moderation_state", @click="userAction = 'reactivate'")
+							| {{ selectedUser.moderation_state === 'banned' ? $t('UserAction:action.unban:label') : $t('UserAction:action.unsilence:label') }}
 		.placeholder(v-else)
 			h2 {{ $t('UserListPage:placeholder:text') }}
 	user-action-prompt(v-if="userAction", :action="userAction", :user="selectedUser", @close="updateProfile")

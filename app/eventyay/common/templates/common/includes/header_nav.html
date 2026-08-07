@@ -1,0 +1,9 @@
+{% load i18n %}
+<nav id="event-nav" class="header-nav">
+    <div class="navigation">
+        <div class="navigation-title">
+            <h2>{{ header_title }}{% if header_title_extra %} {{ header_title_extra|safe }}{% endif %}</h2>
+        </div>
+        {% include "orga/event/component_link.html" %}
+    </div>
+</nav>

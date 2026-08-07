@@ -31,6 +31,9 @@ def test_team_serializer(team):
             "limit_events",
             "limit_tracks",
             "force_hide_speaker_names",
+            "can_change_exhibition_proposals",
+            "is_exhibition_reviewer",
+            "hide_exhibition_applicant_emails",
             "invites",
             "members",
         }

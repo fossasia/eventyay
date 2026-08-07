@@ -162,6 +162,7 @@ async def notify_schedule_change(event_id):
 
 
 def get_room_config(room, permissions):
+    str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
     room_config = {
         "id": str(room.id),
         "name": room.name,
@@ -169,7 +170,7 @@ def get_room_config(room, permissions):
         "picture": room.picture.url if room.picture else None,
         "import_id": room.import_id,
         "pretalx_id": room.pretalx_id,
-        "permissions": [p for p in permissions if not p.startswith("event:")],
+        "permissions": [p for p in str_permissions if not p.startswith("event:")],
         "force_join": room.force_join,
         "modules": [],
         "schedule_data": room.schedule_data or None,
@@ -207,7 +208,9 @@ def get_event_config_for_user(event, user):
         "title": getattr(event, "title", getattr(event, "name", "")),
         "slug": getattr(event, "slug", str(event.id)),
         "organizer_slug": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
-        "timezone": event.timezone,
+        "timezone": event.settings.timezone,
+        "date_from": event.date_from.isoformat() if event.date_from else None,
+        "date_to": event.date_to.isoformat() if event.date_to else None,
         "visible_logo_url": event.visible_logo_url,
         "visible_header_image_url": event.visible_header_image_url,
         "pretalx": pretalx_public,
@@ -294,7 +297,64 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
 
 async def create_room(event, data, creator):
     types = {m["type"] for m in data.get("modules", [])}
-    if "chat.native" in types:
+    livestream_types = {
+        "livestream.native",
+        "livestream.youtube",
+        "livestream.iframe",
+    }
+    livestream_modules = [
+        m for m in data.get("modules", []) if m.get("type") in livestream_types
+    ]
+
+    if livestream_modules:
+        allowed_stage_types = livestream_types | {"chat.native"}
+        if len(livestream_modules) != 1 or types - allowed_stage_types:
+            raise ValidationError(
+                f"The dynamic creation of rooms with the modules {types} is currently not allowed.",
+                code="invalid",
+            )
+        if not await event.has_permission_async(
+            user=creator, permission=Permission.EVENT_ROOMS_CREATE_STAGE
+        ):
+            raise ValidationError(
+                "This user is not allowed to create a room of this type.",
+                code="denied",
+            )
+
+        module = livestream_modules[0]
+        config = module.get("config", {}) or {}
+        playback_mode = config.get("playback_mode") or "always_on"
+        if playback_mode not in {"schedule_driven", "always_on"}:
+            raise ValidationError(
+                "Invalid stage playback mode.",
+                code="invalid",
+            )
+
+        clean_config = {"playback_mode": playback_mode}
+        if playback_mode == "always_on":
+            if module["type"] == "livestream.native":
+                clean_config["hls_url"] = config.get("hls_url", "")
+            elif module["type"] == "livestream.youtube":
+                clean_config["ytid"] = config.get("ytid", "")
+                for key in (
+                    "enablePrivacyEnhancedMode",
+                    "loop",
+                    "modestBranding",
+                    "hideControls",
+                    "noRelated",
+                    "disableKb",
+                    "showInfo",
+                ):
+                    if config.get(key):
+                        clean_config[key] = True
+            elif module["type"] == "livestream.iframe":
+                clean_config["url"] = config.get("url", "")
+        module["config"] = clean_config
+
+        if "chat.native" in types:
+            m = [m for m in data.get("modules", []) if m["type"] == "chat.native"][0]
+            m["config"] = {"volatile": m.get("config", {}).get("volatile", False)}
+    elif "chat.native" in types:
         if not await event.has_permission_async(
             user=creator, permission=Permission.EVENT_ROOMS_CREATE_CHAT
         ):
@@ -315,16 +375,16 @@ async def create_room(event, data, creator):
         m = [m for m in data.get("modules", []) if m["type"] == "call.bigbluebutton"][0]
         m["config"] = event.config.get("bbb_defaults", {})
         m["config"].pop("secret", None)  # legacy
-    elif "livestream.native" in types:
+    elif types == {"call.janus"}:
         if not await event.has_permission_async(
-            user=creator, permission=Permission.EVENT_ROOMS_CREATE_STAGE
+            user=creator, permission=Permission.EVENT_ROOMS_CREATE_BBB
         ):
             raise ValidationError(
                 "This user is not allowed to create a room of this type.",
                 code="denied",
             )
-        m = [m for m in data.get("modules", []) if m["type"] == "livestream.native"][0]
-        m["config"] = {"hls_url": m.get("config", {}).get("hls_url", "")}
+        m = [m for m in data.get("modules", []) if m["type"] == "call.janus"][0]
+        m["config"] = {}
     elif types == set():
         if not await event.has_permission_async(
             user=creator, permission=Permission.ROOM_UPDATE
@@ -376,7 +436,7 @@ def generate_tokens(event, number, traits, days, by_user, long=False):
     secret = jwt_config["secret"]
     audience = jwt_config["audience"]
     issuer = jwt_config["issuer"]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=days)
     result = []
     bulk_create = []

@@ -218,11 +218,6 @@ urlpatterns = [
                     name='submissions.apply_pending.bulk',
                 ),
                 path(
-                    'submissions/statistics/',
-                    submission.SubmissionStats.as_view(),
-                    name='submissions.statistics',
-                ),
-                path(
                     'submissions/feedback/',
                     submission.AllFeedbacksList.as_view(),
                     name='submissions.feedback',
@@ -315,6 +310,11 @@ urlpatterns = [
                                 'toggle_featured',
                                 submission.ToggleFeatured.as_view(),
                                 name='submissions.toggle_featured',
+                            ),
+                            path(
+                                'video',
+                                submission.SubmissionVideoLink.as_view(),
+                                name='submissions.video',
                             ),
                             path(
                                 'apply_pending',

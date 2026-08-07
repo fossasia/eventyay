@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.db.models import Q
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -25,17 +26,22 @@ from eventyay.base.models import (
     User,
 )
 from eventyay.base.models.seating import SeatingPlanLayoutValidator
+from eventyay.base.models.track import Track
 from eventyay.base.services.mail import SendMailException, mail
 from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.base.settings import validate_organizer_settings
 from eventyay.helpers.urls import build_absolute_uri
+
 
 logger = logging.getLogger(__name__)
 
 
 class OrganizerSerializer(I18nAwareModelSerializer):
     follower_count = serializers.SerializerMethodField(
-        help_text='Number of users following this organizer. Requires community_follow_enabled=True.',
+        help_text=(
+            'Number of users following this organizer, or null when follower counts '
+            'are hidden by the organizer.'
+        ),
     )
     is_following = serializers.SerializerMethodField(
         help_text='Whether the currently authenticated user is following this organizer.',
@@ -45,6 +51,7 @@ class OrganizerSerializer(I18nAwareModelSerializer):
         model = Organizer
         fields = ('name', 'slug', 'follower_count', 'is_following')
 
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_follower_count(self, obj):
         if not obj.settings.get('community_show_follower_count', as_type=bool, default=True):
             return None
@@ -52,6 +59,7 @@ class OrganizerSerializer(I18nAwareModelSerializer):
             return obj._follower_count
         return OrganizerFollower.objects.filter(organizer=obj).count()
 
+    @extend_schema_field(serializers.BooleanField())
     def get_is_following(self, obj):
         if hasattr(obj, '_is_following'):
             return obj._is_following
@@ -59,6 +67,25 @@ class OrganizerSerializer(I18nAwareModelSerializer):
         if request and request.user and request.user.is_authenticated:
             return OrganizerFollower.objects.filter(organizer=obj, user=request.user).exists()
         return False
+
+
+class OrganizerFollowResponseSerializer(serializers.Serializer):
+    following = serializers.BooleanField(read_only=True)
+    created = serializers.BooleanField(read_only=True)
+
+
+class OrganizerUnfollowResponseSerializer(serializers.Serializer):
+    following = serializers.BooleanField(read_only=True)
+    deleted = serializers.BooleanField(read_only=True)
+
+
+class OrganizerFollowersResponseSerializer(serializers.Serializer):
+    follower_count = serializers.IntegerField(allow_null=True, read_only=True)
+    is_following = serializers.BooleanField(read_only=True)
+
+
+class OrganizerErrorResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField(read_only=True)
 
 
 class SeatingPlanSerializer(I18nAwareModelSerializer):
@@ -126,6 +153,17 @@ class EventSlugField(serializers.SlugRelatedField):
 
 class TeamSerializer(serializers.ModelSerializer):
     limit_events = EventSlugField(slug_field='slug', many=True)
+    limit_tracks = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Track.objects.none(),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        organizer = self.context.get('organizer')
+        if organizer is not None:
+            self.fields['limit_tracks'].queryset = Track.objects.filter(event__organizer=organizer)
 
     class Meta:
         model = Team
@@ -134,6 +172,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'name',
             'all_events',
             'limit_events',
+            'limit_tracks',
             'can_create_events',
             'can_change_teams',
             'can_change_organizer_settings',
@@ -142,15 +181,20 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_change_items',
             'can_view_orders',
             'can_change_orders',
+            'can_manage_bank_transfers',
             'can_view_vouchers',
             'can_change_vouchers',
             'can_checkin_orders',
             'can_change_submissions',
             'is_reviewer',
             'force_hide_speaker_names',
+            'can_change_exhibition_proposals',
+            'is_exhibition_reviewer',
+            'hide_exhibition_applicant_emails',
+            'can_manage_social_media',
+            'force_hide_speaker_emails',
             'can_video_create_stages',
             'can_video_create_channels',
-            'can_video_direct_message',
             'can_video_manage_announcements',
             'can_video_view_users',
             'can_video_manage_users',
@@ -164,11 +208,16 @@ class TeamSerializer(serializers.ModelSerializer):
         full_data.update(data)
         if full_data.get('limit_events') and full_data.get('all_events'):
             raise ValidationError('Do not set both limit_events and all_events.')
+        for source, implied_permissions in Team.PERMISSION_IMPLICATIONS.items():
+            if full_data.get(source):
+                for implied in implied_permissions:
+                    data[implied] = True
         return data
 
 
 class DeviceSerializer(serializers.ModelSerializer):
     limit_events = EventSlugField(slug_field='slug', many=True)
+    limit_checkin_lists = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     device_id = serializers.IntegerField(read_only=True)
     unique_serial = serializers.CharField(read_only=True)
     hardware_brand = serializers.CharField(read_only=True)
@@ -197,6 +246,7 @@ class DeviceSerializer(serializers.ModelSerializer):
             'software_brand',
             'software_version',
             'security_profile',
+            'limit_checkin_lists',
         )
 
 
@@ -299,7 +349,8 @@ class OrganizerSettingsSerializer(SettingsSerializer):
         'event_list_availability',
         'organizer_homepage_text',
         'organizer_link_back',
-        'organizer_logo_image_large',
+        'organizer_header_image',
+        'organizer_header_image_large',
         'community_follow_enabled',
         'community_show_follower_count',
         'giftcard_length',
@@ -310,11 +361,15 @@ class OrganizerSettingsSerializer(SettingsSerializer):
         'header_background_color',
         'header_text_color',
         'navigation_text_color',
+        'menu_text_scroll_over_color',
         'primary_color',
         'theme_color_success',
         'theme_color_danger',
         'theme_color_background',
         'hover_button_color',
+        'video_navigation_background_color',
+        'video_sidebar_text_color',
+        'video_sidebar_hover_color',
         'theme_round_borders',
         'primary_font',
         'organizer_logo_image',

@@ -26,7 +26,7 @@ def event():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='eventyay.plugins.sendmail,tests.tickets.testdummy',
+        plugins='tests.tickets.testdummy',
     )
     return event
 

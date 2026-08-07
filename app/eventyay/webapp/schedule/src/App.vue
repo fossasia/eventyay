@@ -1,6 +1,9 @@
 <template lang="pug">
 .pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px', '--schedule-max-width': scheduleMaxWidth + 'px', '--pretalx-sticky-date-offset': '0px'}", :class="isSpeakerView ? ['speaker-view'] : isTalkView ? ['talk-view'] : sessionsMode ? ['sessions-view', 'list-schedule'] : showGrid ? ['grid-schedule'] : ['list-schedule']")
-	template(v-if="scheduleError")
+	template(v-if="scheduleUnavailable")
+		.schedule-unavailable
+			.info-message {{ noScheduleMessage }}
+	template(v-else-if="scheduleError")
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
 	template(v-else-if="isTalkView && schedule && resolvedTalk")
@@ -27,8 +30,9 @@
 			v-model:sortBy="sortBy",
 			:favsCount="favs.length",
 			:onlyFavs="onlyFavs",
+			v-model:shareStarredSessions="shareStarredSessions",
+			:scheduleUserLoggedIn="loggedIn",
 			:hasActiveFilters="onlyFavs || hasActiveFilterSelections || recordingFilter !== 'all'",
-			:inEventTimezone="inEventTimezone",
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="schedule.timezone",
 			:userTimezone="userTimezone",
@@ -42,11 +46,11 @@
 			v-model:includePopularitySortKey="sortIncludePopularity",
 			:popularityFeatureEnabled="popularityFeatureEnabled",
 			:popularitySortAvailable="popularitySortAvailable",
-			:loggedIn="loggedIn",
 			:exportsDisabled="exportsDisabled",
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
+			@update:shareStarredSessions="updateShareStarredSessions",
 			@resetFilters="onlyFavs = false; resetAllFilters()",
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
@@ -131,12 +135,7 @@ const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersLis
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending } from '~/utils'
-
-function getCsrfToken () {
-	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
-	return match ? match[1] : ''
-}
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, isPopularityFeatureEnabled, isPopularitySortAvailable, isPopularityVisibleOnSchedule, normalizePopularityCount, computeTalkExporters, areScheduleExportsDisabled, talksToScheduleSessions, buildSessionsBySpeaker, talkToSession, sortSessionsByStart, isTalkSchedulePending, getCsrfToken, loadStarredSharingPreference, updateStarredSharingPreference, fetchWidgetScheduleData } from '~/utils'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -281,7 +280,7 @@ export default {
 					this.showSpeakerDetails(speaker, event)
 				}
 			},
-			loggedIn: computed(() => this.loggedIn),
+			favsReadOnly: computed(() => this.favsReadOnly),
 			translationMessages: computed(() => this.translationMessages),
 			isWipPreview: computed(() => (this.version || this.scheduleMeta?.version || '') === 'wip'),
 			exportsDisabled: computed(() => this.exportsDisabled),
@@ -300,6 +299,8 @@ export default {
 			now: moment(),
 			currentDay: null,
 			forceScrollDay: 0,
+			userNavigatingToDay: null,
+			_dayNavTimeout: null,
 			currentTimezone: null,
 			favs: [],
 			userCode: null,
@@ -309,9 +310,12 @@ export default {
 			allTypes: [],
 			allLanguages: [],
 			onlyFavs: false,
+			shareStarredSessions: false,
 			scheduleError: false,
+			scheduleUnavailable: false,
 			onHomeServer: false,
 			loggedIn: false,
+			_initialized: false,
 			apiUrl: null,
 			translationMessages: {},
 			errorMessages: [],
@@ -549,10 +553,6 @@ export default {
 			}
 			return days
 		},
-		inEventTimezone () {
-			if (!this.schedule?.talks?.length) return false
-			return moment().utcOffset() === moment.tz(this.schedule.timezone).utcOffset()
-		},
 		hasAmPm () {
 			return new Intl.DateTimeFormat(this.locale, {hour: 'numeric'}).resolvedOptions().hour12
 		},
@@ -597,13 +597,11 @@ export default {
 		showPopularityOnSchedule () {
 			return isPopularityVisibleOnSchedule({
 				flags: this.schedule?.feature_flags || {},
-				loggedIn: this.loggedIn,
 			})
 		},
 		popularitySortAvailable () {
 			return isPopularitySortAvailable({
 				flags: this.schedule?.feature_flags || {},
-				loggedIn: this.loggedIn,
 			})
 		},
 		sortOptions () {
@@ -613,6 +611,10 @@ export default {
 		},
 		effectiveSortBy () {
 			return this.sortOptions.includes(this.sortBy) ? this.sortBy : 'title'
+		},
+		noScheduleMessage () {
+			const m = this.translationMessages || {}
+			return m.no_schedule_available || 'No schedule has been published yet. Please check back later.'
 		}
 	},
 	watch: {
@@ -629,13 +631,17 @@ export default {
 			}
 		},
 		loggedIn (isLoggedIn) {
+			if (!this._initialized) return
 			if (!isLoggedIn) {
-				this.sortIncludePopularity = false
+				this.shareStarredSessions = false
 			}
-			if (!isLoggedIn) {
-				this.onlyFavs = false
-				this.favs = []
+			if (!this.schedule || !this.remoteApiUrl) return
+			if (!this.apiUrl) {
+				this.apiUrl = this.remoteApiUrl
 			}
+			this.loadFavs().then((favs) => {
+				this.favs = this.pruneFavs(favs, this.schedule)
+			})
 		},
 		recordingFilter () {
 			this.writeRecordingQueryParam()
@@ -662,18 +668,16 @@ export default {
 			this.sessionsMode = true
 		}
 
-		// Detect login state from the DOM element (always rendered by Django),
-		// independent of whether the PRETALX_MESSAGES JS global loaded
 		const messagesEl = document.querySelector('#pretalx-messages')
 		if (messagesEl) {
 			this.onHomeServer = true
 			this.userCode = messagesEl.dataset.userCode ?? null
+			this.apiUrl = this.remoteApiUrl
 			if (messagesEl.dataset.loggedIn === 'true') {
 				this.loggedIn = true
 			}
 		}
 
-		// Load translation messages if available
 		/* global PRETALX_MESSAGES */
 		if (typeof PRETALX_MESSAGES !== 'undefined') {
 			this.translationMessages = PRETALX_MESSAGES
@@ -682,30 +686,31 @@ export default {
 		// Use inline data if available, otherwise fetch the schedule JSON.
 		const dataEl = document.getElementById('pretalx-schedule-data')
 		if (dataEl && dataEl.textContent.trim()) {
-			try { this.schedule = JSON.parse(dataEl.textContent) } catch (e) { /* ignore parse error, fall through to fetch */ }
+			try {
+				const parsed = JSON.parse(dataEl.textContent)
+				if (parsed && typeof parsed === 'object' && (parsed.timezone || parsed.schedule_unavailable || Array.isArray(parsed.talks))) {
+					this.schedule = parsed
+					if (!Array.isArray(this.schedule.talks)) {
+						this.schedule.talks = []
+					}
+				}
+			} catch (e) { /* ignore parse error, fall through to fetch */ }
 		}
 		if (this.schedule) {
 			this.onHomeServer = true
 		} else {
-			let version = ''
-			if (this.version)
-				version = `v/${this.version}/`
-			const params = new URLSearchParams()
-			if (this.enrichData) params.set('enrich', '1')
-			const query = params.toString()
-			const suffix = query ? `?${query}` : ''
-			const url = `${this.eventUrl}schedule/${version}widgets/schedule.json${suffix}`
-			const legacyUrl = `${this.eventUrl}schedule/${version}widget/v2.json${suffix}`
-			// fetch from url, but fall back to legacyUrl if url fails
 			try {
-				this.schedule = await (await fetch(url)).json()
-			} catch (e) {
-				try {
-					this.schedule = await (await fetch(legacyUrl)).json()
-				} catch (e) {
-					this.scheduleError = true
-					return
-				}
+				this.schedule = await fetchWidgetScheduleData(this.eventUrl, {
+					version: this.version || '',
+					enrichData: this.enrichData,
+				})
+			} catch {
+				this.scheduleError = true
+				return
+			}
+			if (!this.schedule) {
+				this.scheduleUnavailable = true
+				return
 			}
 		}
 		// Read toolbar metadata (version, exporters) injected by Django
@@ -716,21 +721,22 @@ export default {
 
 		// For speaker and talk views, we only need schedule data + favs (no day tabs, filters, etc.)
 		if (this.isSpeakerView || this.isTalkView) {
-			if (!this.schedule) {
-				this.scheduleError = true
+			if (!this.schedule || this.schedule.schedule_unavailable) {
+				this.scheduleUnavailable = true
 				return
 			}
 			this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
 			this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
 			this.now = moment.tz(this.currentTimezone)
 			setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
-			this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
+			this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
 			if (this.publicFavsUrl) {
 				this.favsReadOnly = true
 				this.onlyFavs = true
 				this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
 			} else {
 				this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+				if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
 			}
 			if (this.view === 'speaker' && this.speakerCode) {
 				this.fetchSpeakerApiContentIfNeeded(this.speakerCode)
@@ -738,8 +744,8 @@ export default {
 			return
 		}
 
-		if (!this.schedule.talks.length) {
-			this.scheduleError = true
+		if (this.schedule.schedule_unavailable || (!this.schedule.talks.length && !this.isFeaturedPage)) {
+			this.scheduleUnavailable = true
 			return
 		}
 		this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
@@ -789,14 +795,16 @@ export default {
 		})
 
 		// set API URL before loading favs
-		this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
+		this.apiUrl = this.remoteApiUrl || (window.location.origin + '/api/v1/events/' + this.eventSlug + '/')
 		if (this.publicFavsUrl) {
 			this.favsReadOnly = true
 			this.onlyFavs = true
 			this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
 		} else {
 			this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+			if (!this.loggedIn && this.favs.length) this.showAnonymousFavsInfo()
 		}
+		this.shareStarredSessions = await loadStarredSharingPreference(this.eventUrl)
 
 		if (fragment && fragment.length === 10) {
 			const initialDay = moment.tz(fragment, this.currentTimezone)
@@ -805,6 +813,7 @@ export default {
 				this.currentDay = filteredDays[0].format('YYYY-MM-DD')
 			}
 		}
+		this._initialized = true
 	},
 	async mounted () {
 		// We block until we have either a regular parent or a shadow DOM parent
@@ -868,11 +877,35 @@ export default {
 			}
 		},
 		setCurrentDay (day) {
-			// Find best match among days, because timezones can muddle this
-			const matchingDays = this.days.filter(d => d.format('YYYY-MM-DD') === day.format('YYYY-MM-DD'))
-			if (matchingDays.length) {
-				this.currentDay = matchingDays[0].format('YYYY-MM-DD')
+			const dayStr = day.format('YYYY-MM-DD')
+			if (this.userNavigatingToDay && dayStr !== this.userNavigatingToDay) {
+				return
 			}
+			const matchingDays = this.days.filter(d => d.format('YYYY-MM-DD') === dayStr)
+			if (!matchingDays.length) return
+			const nextDay = matchingDays[0].format('YYYY-MM-DD')
+			if (nextDay === this.currentDay) {
+				if (this.userNavigatingToDay === nextDay) {
+					this.clearDayNavigationLock()
+				}
+				return
+			}
+			this.currentDay = nextDay
+			if (this.userNavigatingToDay === nextDay) {
+				this.clearDayNavigationLock()
+			}
+		},
+		clearDayNavigationLock () {
+			if (this._dayNavTimeout) {
+				clearTimeout(this._dayNavTimeout)
+				this._dayNavTimeout = null
+			}
+			this.userNavigatingToDay = null
+		},
+		beginDayNavigation (dayId) {
+			this.clearDayNavigationLock()
+			this.userNavigatingToDay = dayId
+			this._dayNavTimeout = setTimeout(() => this.clearDayNavigationLock(), 2000)
 		},
 		changeDay (day) {
 			if (day.clone().startOf('day').format('YYYY-MM-DD') === this.currentDay) return
@@ -889,11 +922,14 @@ export default {
 			} catch (e) {
 				window.location.hash = dayId
 			}
-			if (dayId === this.currentDay) {
-				this.forceScrollDay++
-				return
+			if (dayId !== this.currentDay) {
+				this.beginDayNavigation(dayId)
+				this.currentDay = dayId
 			}
-			this.currentDay = dayId
+			// Always scroll on toolbar click. When the day is already visible,
+			// scroll-sync may have set currentDay with _scrollDayUpdate, which
+			// skips the currentDay watcher — forceScrollDay handles that case.
+			this.forceScrollDay++
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
@@ -910,13 +946,16 @@ export default {
 			return this.apiRequest(path, method, data, baseUrl)
 		},
 		async apiRequest (path, method, data, baseUrl) {
-			const base = baseUrl || this.apiUrl
+			const base = baseUrl || this.apiUrl || this.remoteApiUrl
+			if (!base) {
+				throw new Error('API base URL is not configured')
+			}
 			const url = `${base}${path}`
 			const headers = new Headers()
 			if (this.onHomeServer) {
 				headers.append('Content-Type', 'application/json')
 			}
-			if (method === 'POST' || method === 'DELETE') headers.append('X-CSRFToken', getCsrfToken())
+			if (method === 'POST' || method === 'DELETE' || method === 'PATCH') headers.append('X-CSRFToken', getCsrfToken())
 			const response = await fetch(url, {
 				method,
 				headers,
@@ -928,31 +967,43 @@ export default {
 			}
 			return response.json()
 		},
-		async loadFavs () {
-			if (!this.loggedIn) return []
-			const userStorageKey = this.getFavStorageKey(this.userCode)
-			const anonymousStorageKey = this.getFavStorageKey(null)
-			const localFavs = [...new Set([
-				...this.readLocalFavs(userStorageKey),
-				...this.readLocalFavs(anonymousStorageKey),
-			])]
-			if (this.loggedIn) {
-				try {
-					const merged = await this.apiRequest(
-						'submissions/favourites/merge/',
-						'POST',
-						localFavs
-					)
-					if (Array.isArray(merged)) {
-						localStorage.setItem(userStorageKey, JSON.stringify(merged))
-						localStorage.removeItem(anonymousStorageKey)
-						return merged
-					}
-				} catch {
-					this.pushErrorMessage(this.translationMessages.favs_not_saved)
-				}
+		async updateShareStarredSessions (value) {
+			const previous = this.shareStarredSessions
+			this.shareStarredSessions = !!value
+			if (!this.loggedIn) return
+			try {
+				this.shareStarredSessions = await updateStarredSharingPreference(this.eventUrl, this.shareStarredSessions)
+			} catch {
+				this.shareStarredSessions = previous
 			}
-			return localFavs
+		},
+		async loadFavs () {
+			const anonymousStorageKey = this.getFavStorageKey(null)
+			const localFavs = this.readLocalFavs(anonymousStorageKey)
+			if (!this.loggedIn) {
+				return localFavs
+			}
+			const userStorageKey = this.getFavStorageKey(this.userCode)
+			const mergedLocal = [...new Set([
+				...this.readLocalFavs(userStorageKey),
+				...localFavs,
+			])]
+			try {
+				const merged = await this.apiRequest(
+					'submissions/favourites/merge/',
+					'POST',
+					mergedLocal,
+					this.remoteApiUrl
+				)
+				if (Array.isArray(merged)) {
+					localStorage.setItem(userStorageKey, JSON.stringify(merged))
+					localStorage.removeItem(anonymousStorageKey)
+					return merged
+				}
+			} catch {
+				// Server sync is optional; local favourites are already loaded.
+			}
+			return mergedLocal
 		},
 		async loadPublicFavs () {
 			if (!this.publicFavsUrl) return []
@@ -972,17 +1023,28 @@ export default {
 			if (this.errorMessages.includes(message)) return
 			this.errorMessages.push(message)
 		},
+		showAnonymousFavsInfo () {
+			if (this.loggedIn || this.favsReadOnly) return
+			const message = this.translationMessages.favs_anonymous_notice
+			if (message) this.pushErrorMessage(message)
+		},
 		pruneFavs (favs, schedule) {
-			// we're not pushing the changed list to the server, as if a talk vanished but will appear again,
-			// we want it to still be faved
-			const talkSet = new Set((schedule.talks || []).map(e => e.code))
-			return favs.filter(e => talkSet.has(e))
+			const talkSet = new Set((schedule.talks || []).map(talk => talk.code))
+			return favs.filter(code => talkSet.has(code))
 		},
 		saveFavs () {
-			if (!this.loggedIn) return
+			const storageKey = this.getFavStorageKey(this.loggedIn ? this.userCode : null)
+			try {
+				localStorage.setItem(storageKey, JSON.stringify(this.favs))
+				return true
+			} catch (error) {
+				console.error('Failed to save favourites locally:', error)
+				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+				return false
+			}
 		},
 		toggleSessionModalFav (id) {
-			if (!this.loggedIn) return
+			if (this.favsReadOnly) return
 			if (this.favSet.has(id)) {
 				this.unfav(id)
 			} else {
@@ -990,36 +1052,52 @@ export default {
 			}
 		},
 		async fav (id) {
-			if (!this.loggedIn) return
 			if (this.favsReadOnly) return
 			if (this.favSet.has(id)) return
+			const previousFavs = [...this.favs]
 			this.favs.push(id)
 			const talk = this.schedule?.talks?.find(t => t.code === id)
+			const previousFavCount = talk ? Number(talk.fav_count || 0) : 0
 			if (talk) {
-				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) + 1)
+				talk.fav_count = Math.max(0, previousFavCount + 1)
 			}
-			this.saveFavs()
+			if (!this.saveFavs()) {
+				this.favs = previousFavs
+				if (talk) talk.fav_count = previousFavCount
+				return
+			}
+			if (!this.loggedIn) {
+				this.showAnonymousFavsInfo()
+				return
+			}
 			try {
-				await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
-			} catch (error) {
-				console.error('Failed to save favourite: %s', error)
-				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+				await this.apiRequest(`submissions/${id}/favourite/`, 'POST', undefined, this.remoteApiUrl)
+			} catch {
+				// Local favourite is already saved.
 			}
 		},
 		async unfav (id) {
-			if (!this.loggedIn) return
 			if (this.favsReadOnly) return
+			const previousFavs = [...this.favs]
 			this.favs = this.favs.filter(elem => elem !== id)
 			const talk = this.schedule?.talks?.find(t => t.code === id)
+			const previousFavCount = talk ? Number(talk.fav_count || 0) : 0
 			if (talk) {
-				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) - 1)
+				talk.fav_count = Math.max(0, previousFavCount - 1)
 			}
-			this.saveFavs()
+			if (!this.saveFavs()) {
+				this.favs = previousFavs
+				if (talk) talk.fav_count = previousFavCount
+				return
+			}
+			if (!this.loggedIn) {
+				if (!this.favs.length) this.onlyFavs = false
+				return
+			}
 			try {
-				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
-			} catch (error) {
-				console.error('Failed to remove favourite: %s', error)
-				this.pushErrorMessage(this.translationMessages.favs_not_saved)
+				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE', undefined, this.remoteApiUrl)
+			} catch {
+				// Local favourite is already saved.
 			}
 			if (!this.favs.length) this.onlyFavs = false
 		},
@@ -1179,6 +1257,14 @@ export default {
 	padding: 32px
 	.error-message
 		margin-top: 16px
+.schedule-unavailable
+	color: var(--pretalx-clr-text, rgb(13, 15, 16))
+	font-size: 18px
+	text-align: center
+	padding: 32px
+	.info-message
+		margin-top: 16px
+		line-height: 1.5
 
 .pretalx-schedule, dialog.pretalx-modal
 	color: rgb(13 15 16)

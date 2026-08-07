@@ -1,7 +1,7 @@
 from django.core.exceptions import PermissionDenied
 from django.dispatch import receiver
 from django.shortcuts import redirect
-from django.urls import resolve, reverse
+from django.urls import resolve, reverse, Resolver404
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.control.signals import nav_event_settings
@@ -12,7 +12,7 @@ from eventyay.presale.signals import process_request
 def returnurl_process_request(sender, request, **kwargs):
     try:
         r = resolve(request.path_info)
-    except:
+    except Resolver404:
         return
 
     urlname = r.url_name

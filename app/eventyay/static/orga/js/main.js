@@ -1,25 +1,38 @@
 const handleFeaturedChange = (element) => {
+    const statusWrapper = element.closest("td")
+    if (!statusWrapper) {
+        return
+    }
     const resetStatus = () => {
-        statusWrapper.querySelectorAll("i").forEach((element) => {
-            element.classList.add("d-none")
+        statusWrapper.querySelectorAll("i.working, i.done, i.fail").forEach((icon) => {
+            icon.classList.add("d-none")
         })
     }
     const setStatus = (statusName) => {
+        const statusIcon = statusWrapper.querySelector("." + statusName)
+        if (!statusIcon) {
+            return
+        }
         resetStatus()
-        statusWrapper.querySelector("." + statusName).classList.remove("d-none")
-        setTimeout(resetStatus, 3000)
+        statusIcon.classList.remove("d-none")
+
+        if (statusWrapper.resetTimeout) {
+            clearTimeout(statusWrapper.resetTimeout)
+        }
+        statusWrapper.resetTimeout = setTimeout(resetStatus, 3000)
     }
     const fail = () => {
         element.checked = !element.checked
         setStatus("fail")
     }
 
-    const id = element.dataset.id
-    const statusWrapper = element.parentElement.parentElement
     setStatus("working")
 
-    // Use the URL from the data-url attribute if available, otherwise construct it
-    const url = element.dataset.url || (window.location.pathname + (window.location.pathname.endsWith('/') ? '' : '/') + id + "/toggle_featured")
+    const url = element.dataset.url
+    if (!url) {
+        fail()
+        return
+    }
     const options = {
         method: "POST",
         headers: {
@@ -86,7 +99,7 @@ onReady(() => {
     initFeaturedToggles()
 })
 
-// Re-bind toggles inside table regions.
+// Re-bind featured toggles inside table regions replaced by AJAX filters.
 document.addEventListener("eventyay:ajax-results-replaced", (event) => {
     initFeaturedToggles(event.detail?.container ?? document)
 })

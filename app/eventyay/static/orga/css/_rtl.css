@@ -1,6 +1,6 @@
 html.rtl {
   #page-content {
-    margin-right: 250px;
+    margin-right: var(--sidebar-width);
     margin-left: 0;
   }
 

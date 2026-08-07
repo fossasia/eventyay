@@ -87,6 +87,7 @@ class TeamForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             "can_change_submissions",
             "is_reviewer",
             "force_hide_speaker_names",
+            "force_hide_speaker_emails",
             "limit_tracks",
         ]
         widgets = {
@@ -286,13 +287,6 @@ class EventWizardDisplayForm(forms.Form):
         super().__init__(*args, **kwargs)
         logo = Event._meta.get_field('logo')
         self.fields['logo'] = ImageField(required=False, label=logo.verbose_name, help_text=logo.help_text)
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
-        default_email = Event._meta.get_field('email').default
-        if not email or email == default_email:
-            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
-        return email
 
 
 class EventWizardCopyForm(forms.Form):

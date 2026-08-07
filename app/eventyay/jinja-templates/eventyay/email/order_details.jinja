@@ -59,7 +59,7 @@
       </td>
       <td>
         {{ event.name }}
-        {% if not event.has_subevents and event.settings.show_dates_on_frontpage %}
+        {% if not event.has_subevents %}
           <br>
           {{ event.get_date_range_display() }}
           {% if event.settings.show_times %}

@@ -61,7 +61,7 @@
 }
 
 .batch-select-actions-orders {
-    margin-top: 15px;
+    margin-bottom: 15px;
 
     .order-bulk-actions-menu {
         > .btn {
@@ -73,7 +73,6 @@
         }
 
         > .dropdown-menu {
-            min-width: 260px;
             padding: 8px 0;
             margin-bottom: 10px;
         }
@@ -110,6 +109,11 @@
             background: transparent;
             color: $text-muted;
             cursor: not-allowed;
+
+            &:hover,
+            &:focus {
+                background: transparent;
+            }
         }
 
         .fa {
@@ -117,5 +121,9 @@
             text-align: center;
             flex-shrink: 0;
         }
+    }
+
+    .order-bulk-action-hint {
+        margin: 0;
     }
 }

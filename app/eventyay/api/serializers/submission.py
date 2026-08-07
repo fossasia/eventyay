@@ -16,6 +16,7 @@ from eventyay.base.models.submission import Submission
 from eventyay.base.models.tag import Tag
 from eventyay.base.models.track import Track
 from eventyay.base.models.type import SubmissionType
+from eventyay.talk_rules.orga import can_view_speaker_names, is_reviewer_only_for_event
 
 
 @register_serializer()
@@ -177,6 +178,17 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def get_speakers(self, obj):
         if not self.event:
             return []
+        request = self.context.get('request')
+        from eventyay.talk_rules.orga import enforces_hide_speaker_names
+
+        if request and (
+            enforces_hide_speaker_names(request.user, self.event)
+            or (
+                is_reviewer_only_for_event(request.user, self.event)
+                and not can_view_speaker_names(request.user, self.event)
+            )
+        ):
+            return []
         profiles = SpeakerProfile.objects.filter(event=self.event, user__in=obj.speakers.all()).distinct()
         if serializer := self.get_extra_flex_field('speakers', profiles):
             return serializer.data
@@ -234,6 +246,61 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             else:
                 data['resources'] = [resource_id for resource_id in resources if resource_id in public_resource_ids]
         return data
+
+    def create(self, validated_data):
+        if not self.event:
+            raise serializers.ValidationError('Event is required for submissions.')
+        tags_data = validated_data.pop('tags', [])
+        image = validated_data.pop('image', None)
+        validated_data['event'] = self.event
+        if 'get_duration' in validated_data:
+            validated_data['duration'] = validated_data.pop('get_duration')
+        if not validated_data.get('content_locale'):
+            validated_data['content_locale'] = self.event.locale
+
+        submission = super().create(validated_data)
+
+        if tags_data:
+            submission.tags.set(tags_data)
+        if image:
+            submission.image.save(Path(image.name).name, image, save=True)
+            submission.save(update_fields=('image',))
+            submission.process_image('image', generate_thumbnail=True)
+        return submission
+
+    def update(self, instance, validated_data):
+        if not self.event:
+            raise serializers.ValidationError('Event is required for submissions.')
+        tags_data = validated_data.pop('tags', [])
+        image = validated_data.pop('image', None)
+        validated_data['event'] = self.event
+        duration_changed = False
+        if 'get_duration' in validated_data:
+            validated_data['duration'] = validated_data.pop('get_duration')
+            duration_changed = validated_data['duration'] != instance.duration
+        slot_count_changed = (
+            'slot_count' in validated_data
+            and validated_data['slot_count'] != instance.slot_count
+        )
+        track_changed = (
+            'track' in validated_data
+            and validated_data['track'] != instance.track
+        )
+
+        submission = super().update(instance, validated_data)
+
+        if tags_data:
+            submission.tags.set(tags_data)
+        if image:
+            submission.image.save(Path(image.name).name, image)
+            submission.process_image('image', generate_thumbnail=True)
+        if duration_changed:
+            submission.update_duration()
+        if slot_count_changed:
+            submission.update_talk_slots()
+        if track_changed:
+            submission.update_review_scores()
+        return submission
 
     class Meta:
         model = Submission
@@ -318,50 +385,7 @@ class SubmissionOrgaSerializer(SubmissionSerializer):
             raise serializers.ValidationError('Slot count may only be 1 in this event.')
         return value
 
-    def create(self, validated_data):
-        tags_data = validated_data.pop('tags', [])
-        image = validated_data.pop('image', None)
-        validated_data['event'] = self.event
-        if 'get_duration' in validated_data:
-            validated_data['duration'] = validated_data.pop('get_duration')
-        if not validated_data.get('content_locale'):
-            validated_data['content_locale'] = self.event.locale
 
-        submission = super().create(validated_data)
-
-        if tags_data:
-            submission.tags.set(tags_data)
-        if image:
-            submission.image.save(Path(image.name).name, image, save=True)
-            submission.save(update_fields=('image',))
-            submission.process_image('image', generate_thumbnail=True)
-        return submission
-
-    def update(self, instance, validated_data):
-        tags_data = validated_data.pop('tags', [])
-        image = validated_data.pop('image', None)
-        validated_data['event'] = self.event
-        duration_changed = False
-        if 'get_duration' in validated_data:
-            validated_data['duration'] = validated_data.pop('get_duration')
-            duration_changed = validated_data['duration'] != instance.duration
-        slot_count_changed = 'slot_count' in validated_data and validated_data['slot_count'] != instance.slot_count
-        track_changed = 'track' in validated_data and validated_data['track'] != instance.track
-
-        submission = super().update(instance, validated_data)
-
-        if tags_data:
-            submission.tags.set(tags_data)
-        if image:
-            submission.image.save(Path(image.name).name, image)
-            submission.process_image('image', generate_thumbnail=True)
-        if duration_changed:
-            submission.update_duration()
-        if slot_count_changed:
-            submission.update_talk_slots()
-        if track_changed:
-            submission.update_review_scores()
-        return submission
 
     class Meta(SubmissionSerializer.Meta):
         fields = SubmissionSerializer.Meta.fields + [

@@ -190,6 +190,11 @@ class User(
     wikimedia_username = models.CharField(max_length=255, blank=True, null=True, verbose_name=('Wikimedia username'))
     is_active = models.BooleanField(default=True, verbose_name=_('Is active'))
     is_staff = models.BooleanField(default=False, verbose_name=_('Is site admin'))
+    is_spam = models.BooleanField(
+        default=False,
+        verbose_name=_('Is marked as spam'),
+        help_text=_('Spam accounts are blocked from logging in but remain in the database.'),
+    )
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name=_('Date joined'))
     locale = models.CharField(
         max_length=50, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE, verbose_name=_('Language')
@@ -217,7 +222,7 @@ class User(
     type = models.CharField(
         max_length=8, default=UserType.PERSON, choices=UserType.choices
     )
-    show_publicly = models.BooleanField(default=True)
+    show_publicly = models.BooleanField(default=False)
     profile = JSONField(default=dict)
     client_state = JSONField(default=dict)
     traits = JSONField(blank=True, default=list)
@@ -551,11 +556,17 @@ class User(
         if request and self.has_active_staff_session(request.session.session_key):
             return Event.objects.all()
 
-        kwargs = {permission: True}
+        from .organizer import Team
+        implying_perms = [
+            p for p, implied in Team.PERMISSION_IMPLICATIONS.items() if permission in implied
+        ]
+        q = Q(**{permission: True})
+        for p in implying_perms:
+            q |= Q(**{p: True})
 
         return Event.objects.filter(
-            Q(organizer_id__in=self.teams.filter(all_events=True, **kwargs).values_list('organizer', flat=True))
-            | Q(id__in=self.teams.filter(**kwargs).values_list('limit_events__id', flat=True))
+            Q(organizer_id__in=self.teams.filter(q, all_events=True).values_list('organizer', flat=True))
+            | Q(id__in=self.teams.filter(q).values_list('limit_events__id', flat=True))
         )
 
     @scopes_disabled()
@@ -571,9 +582,15 @@ class User(
         if request and self.has_active_staff_session(request.session.session_key):
             return Organizer.objects.all()
 
-        kwargs = {permission: True}
+        from .organizer import Team
+        implying_perms = [
+            p for p, implied in Team.PERMISSION_IMPLICATIONS.items() if permission in implied
+        ]
+        q = Q(**{permission: True})
+        for p in implying_perms:
+            q |= Q(**{p: True})
 
-        return Organizer.objects.filter(id__in=self.teams.filter(**kwargs).values_list('organizer', flat=True))
+        return Organizer.objects.filter(id__in=self.teams.filter(q).values_list('organizer', flat=True))
 
 
     def has_active_staff_session(self, session_key=None):
@@ -1061,6 +1078,8 @@ the eventyay team"""
         if include_admin_info:
             d["moderation_state"] = self.moderation_state
             d["token_id"] = self.token_id
+            d["email"] = self.email
+            d["wikimedia_username"] = self.wikimedia_username
         if include_client_state:
             d["client_state"] = self.client_state
         if include_personal_data:

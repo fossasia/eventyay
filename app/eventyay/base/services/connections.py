@@ -1,8 +1,12 @@
+
+import logging
 import time
 
 from django.conf import settings
 
 from eventyay.core.utils.redis import aredis
+
+logger = logging.getLogger(__name__)
 
 
 async def register_connection():
@@ -55,15 +59,9 @@ async def unregister_user_connection(user_id, channel_name):
 
 async def get_user_connection_count(user_id):
     async with aredis() as redis:
-        print(
-            f"connections.list.user:{user_id}",
-            await redis.llen(
-                f"connections.list.user:{user_id}",
-            ),
-        )
-        return await redis.llen(
-            f"connections.list.user:{user_id}",
-        )
+        count = await redis.llen(f"connections.list.user:{user_id}")
+        logger.debug("connections.list.user:%s count=%s", user_id, count)
+        return count
 
 
 async def ping_connection(last_ping, user=None):

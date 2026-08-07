@@ -116,3 +116,16 @@ class ApiScopeMiddleware:
 
         with scope(organizer=getattr(request, 'organizer', None)):
             return self.get_response(request)
+
+
+class PrivateNetworkAccessMiddleware:
+    """Chrome requires this header on CORS preflight for loopback cross-origin calls."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest):
+        response = self.get_response(request)
+        if request.path_info.startswith('/api/') and request.method == 'OPTIONS':
+            response['Access-Control-Allow-Private-Network'] = 'true'
+        return response

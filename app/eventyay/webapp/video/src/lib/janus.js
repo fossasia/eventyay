@@ -1,8 +1,10 @@
 // Thin wrapper to make janus-gateway available as an ES module default export.
-// The janus-gateway package provides a UMD/global build that attaches `Janus` to window.
-// We import it for side effects, then re-export the global.
-import 'janus-gateway'
+// Vite keeps the package's browser script module-scoped, so do not rely on
+// window.Janus being populated as the old webpack exports-loader setup did.
+import JanusGateway from '../shims/janus-gateway'
 
-const Janus = (typeof window !== 'undefined') ? window.Janus : undefined
+const Janus = JanusGateway?.default || JanusGateway || (
+	typeof window !== 'undefined' ? window.Janus : undefined
+)
 
 export default Janus

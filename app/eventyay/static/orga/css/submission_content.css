@@ -14,9 +14,11 @@
 }
 
 .submission-content-view .form-group .col-md-9 {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center; /* Align inner content vertically */
+    display: block;
+}
+
+.submission-content-view .form-group .col-md-9.session-video-urls ul {
+    margin-bottom: 0;
 }
 
 .submission-content-view .form-group .col-md-9.custom-fields-container {
@@ -40,7 +42,7 @@
     margin-right: 0.25rem;
 }
 
-#main-title .submission-readonly-badge .badge {
+#event-nav .submission-readonly-badge .badge {
     font-size: 14px;
     padding: 0.3em 0.6em;
     vertical-align: middle;

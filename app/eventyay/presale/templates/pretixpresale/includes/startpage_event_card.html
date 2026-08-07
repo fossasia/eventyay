@@ -4,7 +4,7 @@
 
 {% eventurl event "presale:event.index" as event_url %}
 {% abseventurl event "presale:event.index" as event_url_abs %}
-{% with event.visible_logo_url|default:event.visible_header_image_url as event_image_url %}
+{% with event.preview_image_url_with_fallback as event_image_url %}
 {% with event.social_image_signature as share_image_signature %}
 <article
     class="startpage-event-card"
@@ -14,8 +14,8 @@
     data-event-image="{{ event_image_url|default:''|escape }}"
 >
     <a class="startpage-event-media" href="{{ event_url }}">
-        {% if event.visible_header_image_url %}
-            <img src="{{ event.visible_header_image_url }}" alt="{{ event.name|event_localize }}">
+        {% if event_image_url %}
+            <img src="{{ event_image_url }}" alt="{{ event.name|event_localize }}">
         {% else %}
             <div class="startpage-event-media-placeholder">
                 <i class="fa fa-calendar"></i>

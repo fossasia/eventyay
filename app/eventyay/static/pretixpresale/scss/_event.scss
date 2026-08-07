@@ -108,6 +108,15 @@
     border-bottom: 2px solid $table-border-color;
 }
 
+#main-card summary.product-row {
+    color: var(--color-text);
+
+    .product-description,
+    .product-description p {
+        color: var(--color-text);
+    }
+}
+
 .panel-body address:last-child {
     margin-bottom: 0;
 }
@@ -314,4 +323,8 @@ h2.subevent-head {
 }
 .banner-top, .site-notice-top {
     padding-bottom: 15px;
+}
+
+.list-group-item .checkbox {
+    margin: 0;
 }

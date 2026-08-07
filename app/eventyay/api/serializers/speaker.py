@@ -20,6 +20,8 @@ from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.base.models.auth import User
 from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.question import TalkQuestionTarget
+from eventyay.common.social_links import serialize_social_link
+from eventyay.talk_rules.orga import can_view_speaker_names, is_reviewer_only_for_event
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -31,10 +33,12 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     avatar_license = SerializerMethodField()
     answers = SerializerMethodField()
     submissions = SerializerMethodField()
+    social_links = SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.event:
+            self.fields.pop('social_links', None)
             return
 
         request = self.context.get('request')
@@ -48,6 +52,44 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             self.fields.pop('avatar_source', None)
         if is_public_view and not self.event.cfp.is_field_public('avatar_license'):
             self.fields.pop('avatar_license', None)
+        if not self.event.cfp.request_social_links or (
+            is_public_view and not self.event.cfp.is_field_public('social_links')
+        ):
+            self.fields.pop('social_links', None)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if (
+            self.event
+            and request
+            and request.user.has_perm('base.orga_list_speakerprofile', self.event)
+        ):
+            from eventyay.talk_rules.orga import (
+                can_view_speaker_emails,
+                can_view_speaker_names,
+                enforces_hide_speaker_emails,
+                enforces_hide_speaker_names,
+            )
+
+            hide_names = enforces_hide_speaker_names(request.user, self.event) or (
+                is_reviewer_only_for_event(request.user, self.event)
+                and not can_view_speaker_names(request.user, self.event)
+            )
+            hide_emails = enforces_hide_speaker_emails(request.user, self.event) or (
+                is_reviewer_only_for_event(request.user, self.event)
+                and not can_view_speaker_emails(request.user, self.event)
+            )
+
+            if hide_names:
+                data.pop('fullname', None)
+                data.pop('email', None)
+                data.pop('biography', None)
+                data.pop('avatar_url', None)
+                data.pop('social_links', None)
+            elif hide_emails:
+                data.pop('email', None)
+        return data
 
     @staticmethod
     def get_avatar_source(obj):
@@ -92,6 +134,10 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             return serializer.data
         return qs.values_list('pk', flat=True)
 
+    @extend_schema_field(list[dict])
+    def get_social_links(self, obj):
+        return [serialize_social_link(link) for link in obj.social_links.all()]
+
     def update(self, instance, validated_data):
         availabilities_data = validated_data.pop('availabilities', None)
         profile = super().update(instance, validated_data)
@@ -110,6 +156,7 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             'avatar_source',
             'avatar_license',
             'answers',
+            'social_links',
         )
         expandable_fields = {
             'submissions': (

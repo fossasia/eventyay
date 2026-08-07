@@ -1,5 +1,7 @@
 from collections import defaultdict
 from contextlib import suppress
+from datetime import timedelta
+from django.utils import timezone
 
 from bs4 import BeautifulSoup
 from django import forms
@@ -10,8 +12,11 @@ from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nModelForm
 
+from eventyay.base.forms.widgets import SplitDateTimePickerWidget
+from eventyay.control.forms import SplitDateTimeField
+
 from eventyay.common.exceptions import SendMailException
-from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag
+from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag, ScheduledAtValidationMixin
 from eventyay.common.forms.renderers import InlineFormRenderer, TabularFormRenderer
 from eventyay.common.forms.widgets import EnhancedSelectMultiple, SelectMultipleWithCount
 from eventyay.common.language import language
@@ -23,6 +28,25 @@ from eventyay.submission.forms import SubmissionFilterForm
 from eventyay.base.models import Track
 from eventyay.base.models.submission import Submission, SubmissionStates
 
+class TalkSplitDateTimePickerWidget(SplitDateTimePickerWidget):
+    """Talk-specific widget that uses native HTML5 date and time inputs."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        date_attrs = self.widgets[0].attrs.copy()
+        time_attrs = self.widgets[1].attrs.copy()
+        date_attrs['class'] = ' '.join(
+            c for c in date_attrs.get('class', '').split() if c != 'datepickerfield'
+        )
+        time_attrs['class'] = ' '.join(
+            c for c in time_attrs.get('class', '').split() if c != 'timepickerfield'
+        )
+        date_attrs['type'] = 'date'
+        time_attrs['type'] = 'time'
+        self.widgets = (
+            forms.DateInput(attrs=date_attrs, format='%Y-%m-%d'),
+            forms.TimeInput(attrs=time_attrs, format='%H:%M:%S'),
+        )
 
 class MailTemplateForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
@@ -143,7 +167,7 @@ class DraftRemindersForm(MailTemplateForm):
         fields = ['subject', 'text']
 
 
-class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
+class MailDetailForm(ScheduledAtValidationMixin, ReadOnlyFlag, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance or not self.instance.to_users.all().count():
@@ -179,21 +203,70 @@ class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
 
     class Meta:
         model = QueuedMail
-        fields = ['to', 'to_users', 'reply_to', 'cc', 'bcc', 'subject', 'text']
-        widgets = {'to_users': EnhancedSelectMultiple}
+        fields = ['to', 'to_users', 'reply_to', 'cc', 'bcc', 'subject', 'text', 'scheduled_at']
+        field_classes = {
+            'scheduled_at': SplitDateTimeField,
+        }
+        widgets = {
+            'to_users': EnhancedSelectMultiple,
+            'scheduled_at': TalkSplitDateTimePickerWidget(),
+        }
+        help_texts = {
+            'scheduled_at': _('If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
+        }
 
 
-class WriteMailBaseForm(MailTemplateForm):
+class WriteMailBaseForm(ScheduledAtValidationMixin, MailTemplateForm):
     skip_queue = forms.BooleanField(
         label=_('Send immediately'),
         required=False,
         help_text=_('If you check this, the emails will be sent immediately, instead of being put in the outbox.'),
     )
+    scheduled_at = forms.SplitDateTimeField(
+        label=_('Send later'),
+        required=False,
+        help_text=_('Leave empty to send immediately or queue to outbox. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
+        widget=TalkSplitDateTimePickerWidget(),
+    )
 
-    def __init__(self, *args, may_skip_queue=False, **kwargs):
+    def __init__(self, *args, may_skip_queue=False, source_template=None, **kwargs):
+        self.source_template = source_template
         super().__init__(*args, **kwargs)
         if not may_skip_queue:
             self.fields.pop('skip_queue', None)
+
+    def build_send_template(self):
+        """Build an unsaved template for rendering outgoing mails without persisting it."""
+        template = MailTemplate(event=self.event)
+        template.subject = self.cleaned_data['subject']
+        template.text = self.cleaned_data['text']
+        template.reply_to = self.cleaned_data.get('reply_to') or ''
+        template.bcc = self.cleaned_data.get('bcc') or ''
+        return template
+
+    def attach_template_reference(self, mail):
+        mail.template = self.source_template
+
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data.get('scheduled_at')
+        if scheduled_at is not None:
+            buffer = timedelta(minutes=1)
+            if scheduled_at < timezone.now() - buffer:
+                raise forms.ValidationError(
+                    _('Scheduled time must be in the future.')
+                )
+        return scheduled_at
+
+
+    def clean(self):
+        cleaned_data = super().clean()
+        skip_queue = cleaned_data.get('skip_queue')
+        scheduled_at = cleaned_data.get('scheduled_at')
+        if skip_queue and scheduled_at is not None:
+            raise forms.ValidationError(
+                _('You cannot select "Send immediately" and also specify a scheduled time.')
+            )
+        return cleaned_data
 
 
 class WriteTeamsMailForm(WriteMailBaseForm):
@@ -208,7 +281,9 @@ class WriteTeamsMailForm(WriteMailBaseForm):
 
         # Placing reviewer emails in the outbox would lead to a **ton** of permission
         # issues: who is allowed to see them, who to edit/send them, etc.
+        # Reviewer emails are always sent immediately, no scheduling.
         self.fields.pop('skip_queue')
+        self.fields.pop('scheduled_at', None)
 
         reviewer_teams = self.event.teams.filter(is_reviewer=True)
         other_teams = self.event.teams.exclude(is_reviewer=True)
@@ -236,24 +311,22 @@ class WriteTeamsMailForm(WriteMailBaseForm):
 
     @transaction.atomic
     def save(self):
-        self.instance.event = self.event
-        self.instance.is_auto_created = True
-        template = super().save()
+        send_template = self.build_send_template()
         result = []
         users = self.get_recipients()
         for user in users:
             # This happens when there are template errors
             with suppress(SendMailException):
-                result.append(
-                    template.to_mail(
-                        user=user,
-                        event=self.event,
-                        locale=user.locale,
-                        context_kwargs={'user': user, 'event': self.event},
-                        skip_queue=True,
-                        commit=False,
-                    )
+                mail = send_template.to_mail(
+                    user=user,
+                    event=self.event,
+                    locale=user.locale,
+                    context_kwargs={'user': user, 'event': self.event},
+                    skip_queue=True,
+                    commit=False,
                 )
+                self.attach_template_reference(mail)
+                result.append(mail)
         return result
 
 
@@ -337,17 +410,22 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
 
         result = []
         for submission in submissions:
-            for slot in submission.current_slots or []:
-                for speaker in submission.speakers.all():
-                    result.append(
-                        {
-                            'submission': submission,
-                            'slot': slot,
-                            'user': speaker,
-                        }
-                    )
+            speakers = list(submission.speakers.all())
+            current_slots = submission.current_slots or []
+            
+            # Use schedule slots if the submission is scheduled; otherwise fallback to just the speakers
+            if current_slots:
+                for slot in current_slots:
+                    for speaker in speakers:
+                        result.append(
+                            {
+                                'submission': submission,
+                                'slot': slot,
+                                'user': speaker,
+                            }
+                        )
             else:
-                for speaker in submission.speakers.all():
+                for speaker in speakers:
                     result.append(
                         {
                             'submission': submission,
@@ -376,9 +454,7 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
 
     @transaction.atomic
     def save(self):
-        self.instance.event = self.event
-        self.instance.is_auto_created = True
-        template = super().save()
+        send_template = self.build_send_template()
 
         mails_by_user = defaultdict(list)
         contexts = self.get_recipients()
@@ -387,7 +463,7 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
                 locale = context['user'].locale
                 if submission := context.get('submission'):
                     locale = submission.get_email_locale(context['user'].locale)
-                mail = template.to_mail(
+                mail = send_template.to_mail(
                     user=None,
                     event=self.event,
                     locale=locale,
@@ -395,9 +471,11 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
                     commit=False,
                     allow_empty_address=True,
                 )
+                self.attach_template_reference(mail)
                 mails_by_user[context['user']].append((mail, context))
 
         result = []
+        scheduled_at = self.cleaned_data.get('scheduled_at')
         for user, user_mails in mails_by_user.items():
             # Deduplicate emails: we don't want speakers to receive the same
             # email twice, just because they have multiple submissions.
@@ -407,13 +485,15 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
             # Now we can create the emails and add the speakers to them
             for mail_list in mail_dict.values():
                 mail = mail_list[0][0]
+                if scheduled_at:
+                    mail.scheduled_at = scheduled_at
                 mail.save()
                 mail.to_users.add(user)
                 for __, context in mail_list:
                     if submission := context.get('submission'):
                         mail.submissions.add(submission)
                 result.append(mail)
-        if self.cleaned_data.get('skip_queue'):
+        if self.cleaned_data.get('skip_queue') and not scheduled_at:
             for mail in result:
                 mail.send()
         return result

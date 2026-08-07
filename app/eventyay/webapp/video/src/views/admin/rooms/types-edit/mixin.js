@@ -7,6 +7,10 @@ export default {
 		modules: {
 			type: Object,
 			required: true
+		},
+		creating: {
+			type: Boolean,
+			default: false
 		}
 	},
 	methods: {

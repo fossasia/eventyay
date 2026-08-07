@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-30 15:15+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-07-15 15:02+0000\n"
+"Last-Translator: Goudarz Jafari <me@goudarzjafari.com>\n"
 "Language-Team: Persian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/fa/>\n"
 "Language: fa\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n==0 || n==1);\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 2026.8.dev0\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -156,7 +156,7 @@ msgstr "در حال حاضر نمی‌توانید برای این جلسه با
 
 #: agenda/templates/agenda/public_starred.html:38
 msgid "This page requires JavaScript to show the starred sessions."
-msgstr ""
+msgstr "این صفحه برای نمایش جلسه‌های ستاره‌دار به جاوااسکریپت نیاز دارد."
 
 #: agenda/templates/agenda/schedule.html:33
 #, python-format
@@ -270,7 +270,7 @@ msgstr "اطلاعات اضافی"
 
 #: agenda/views/public.py:56
 msgid "Anonymous (name not shared)"
-msgstr ""
+msgstr "ناشناس (نام هم‌رسانی نمی‌شود)"
 
 #: agenda/views/public.py:57
 #, python-format
@@ -303,7 +303,7 @@ msgstr "علاقه‌مندی‌های شما فقط می‌توانند به ص
 
 #: agenda/views/schedule.py:356 multidomain/views.py:140
 msgid "Sorry, no matching options."
-msgstr ""
+msgstr "با عرض پوزش، هیچ گزینه منطبقی وجود ندارد."
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
 msgid "View Changelog"
@@ -335,7 +335,7 @@ msgstr ""
 
 #: agenda/views/schedule.py:364 multidomain/views.py:148
 msgid "Fullscreen"
-msgstr ""
+msgstr "تمام صفحه"
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
 msgid "Exit Fullscreen"
@@ -359,7 +359,7 @@ msgstr "شما در حال مشاهده نسخه قدیمی‌تری از برن
 
 #: agenda/views/schedule.py:374 multidomain/views.py:156
 msgid "Join room"
-msgstr ""
+msgstr "به اتاق بپیوندید"
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
 msgid "View Video"
@@ -396,15 +396,15 @@ msgstr "iCal"
 
 #: agenda/views/schedule.py:381 multidomain/views.py:163
 msgid "JSON"
-msgstr ""
+msgstr "JSON"
 
 #: agenda/views/schedule.py:382 multidomain/views.py:164
 msgid "XML"
-msgstr ""
+msgstr "XML"
 
 #: agenda/views/schedule.py:383 multidomain/views.py:165
 msgid "XCal"
-msgstr ""
+msgstr "XCal"
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
 msgid "Google Calendar"
@@ -525,7 +525,7 @@ msgstr "نمای فهرست"
 
 #: agenda/views/schedule.py:403 multidomain/views.py:185
 msgid "Calendar View"
-msgstr ""
+msgstr "نمای تقویم"
 
 #: agenda/views/schedule.py:404 common/forms/forms.py:12
 #: common/forms/widgets.py:190
@@ -4464,7 +4464,7 @@ msgstr "شماره تلفن (بدون پیش‌شماره بین‌المللی)
 #: base/forms/questions.py:271
 msgctxt "phonenumber"
 msgid "Phone"
-msgstr ""
+msgstr "تلفن"
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275

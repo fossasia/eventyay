@@ -67,6 +67,16 @@ class DisableMigrations:
     def __getitem__(self, item):
         return None
 
+    def setdefault(self, key, default=None):
+        return None
+
 
 if not os.environ.get('TRAVIS', '') and not os.environ.get('GITHUB_WORKFLOW', ''):
     MIGRATION_MODULES = DisableMigrations()
+
+REST_FRAMEWORK = dict(REST_FRAMEWORK)
+REST_FRAMEWORK['TEST_REQUEST_RENDERER_CLASSES'] = [
+    'rest_framework.renderers.MultiPartRenderer',
+    'rest_framework.renderers.JSONRenderer',
+    'tests.testutils.api.UploadRenderer',
+]

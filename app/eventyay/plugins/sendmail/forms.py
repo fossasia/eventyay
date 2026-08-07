@@ -9,14 +9,18 @@ from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
-from eventyay.base.forms import I18nMarkdownTextarea, PlaceholderValidator, SettingsForm
+from eventyay.base.forms import PlaceholderValidator, SettingsForm
+from eventyay.common.forms.fields import I18nEmailBodyFormField
+from eventyay.common.forms.widgets import I18nEmailEditorWidget
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
+from eventyay.control.forms import SplitDateTimeField
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import Product
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.orders import Order
+from eventyay.common.forms.mixins import ScheduledAtValidationMixin
 from eventyay.consts import SizeKey
 from eventyay.control.forms import CachedFileField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
@@ -29,7 +33,7 @@ def contains_web_channel_validate(value):
     if 'web' not in value:
         raise ValidationError(_("The 'web' sales channel must be selected."))
 
-class MailForm(forms.Form):
+class MailForm(ScheduledAtValidationMixin, forms.Form):
     recipients = forms.ChoiceField(label=_('Send email to'), widget=forms.RadioSelect, initial='orders', choices=[])
     order_status = forms.MultipleChoiceField()  # overridden later
     subject = forms.CharField(label=_('Subject'))
@@ -103,6 +107,12 @@ class MailForm(forms.Form):
         label=pgettext_lazy('subevent', 'Only send to customers with orders created before'),
         required=False,
     )
+    scheduled_at = SplitDateTimeField(
+        widget=SplitDateTimePickerWidget(),
+        label=_('Send later'),
+        required=False,
+        help_text=_('Leave empty to send immediately. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
+    )
     browser_timezone = forms.CharField(
         widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
         required=False,
@@ -160,14 +170,21 @@ class MailForm(forms.Form):
             required=True,
             locales=event.settings.get('locales'),
         )
-        self.fields['message'] = I18nFormField(
+        message_placeholders = ['event', 'order', 'position_or_address']
+        placeholder_names = sorted(get_available_placeholders(self.event, message_placeholders).keys())
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+        self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
-            widget=I18nMarkdownTextarea,
+            widget=I18nEmailEditorWidget,
+            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
             required=True,
             locales=event.settings.get('locales'),
         )
-        self._set_field_placeholders('subject', ['event', 'order', 'position_or_address'])
-        self._set_field_placeholders('message', ['event', 'order', 'position_or_address'])
+        self._set_field_placeholders('subject', message_placeholders)
+        self._set_field_placeholders('message', message_placeholders)
         choices = [(e, l) for e, l in Order.STATUS_CHOICE if e != 'n']
         choices.insert(0, ('na', _('payment pending (except unapproved)')))
         choices.insert(0, ('pa', _('approval pending')))
@@ -428,7 +445,7 @@ class MailContentSettingsForm(SettingsForm):
                 self._set_field_placeholders(k, v)
 
 
-class EmailQueueEditForm(forms.ModelForm):
+class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
     new_attachment = forms.FileField(
         required=False,
         label=_("New attachment"),
@@ -447,18 +464,25 @@ class EmailQueueEditForm(forms.ModelForm):
         fields = [
             'reply_to',
             'bcc',
+            'scheduled_at',
         ]
+        field_classes = {
+            'scheduled_at': SplitDateTimeField,
+        }
         labels = {
             'reply_to': _('Reply-To'),
             'bcc': _('BCC'),
+            'scheduled_at': _('Send later'),
         }
         help_texts = {
-            'reply_to': _("Any changes to the Reply-To field will apply only to this queued email."),
+            'reply_to': _("Any changes to the Reply-To field apply only to this queued email. If left empty, the event's default Reply-To will be used."),
             'bcc': _("Any changes to the BCC field will apply only to this queued email."),
+            'scheduled_at': _("Leave empty to send immediately. If set, the email will be sent at this time."),
         }
         widgets = {
             'reply_to': forms.TextInput(attrs={'class': 'form-control'}),
             'bcc': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
+            'scheduled_at': SplitDateTimePickerWidget(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -491,12 +515,18 @@ class EmailQueueEditForm(forms.ModelForm):
             locales=list(allowed_locales),
             initial=self.instance.subject
         )
-        self.fields['message'] = I18nFormField(
+        placeholder_names = sorted(get_available_placeholders(self.event, base_placeholders).keys())
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug},
+        )
+        self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
-            widget=I18nMarkdownTextarea,
+            widget=I18nEmailEditorWidget,
+            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
             required=False,
             locales=list(allowed_locales),
-            initial=self.instance.message
+            initial=self.instance.message,
         )
 
         if not self.read_only:
@@ -556,7 +586,7 @@ class EmailQueueEditForm(forms.ModelForm):
         return instance
 
 
-class TeamMailForm(forms.Form):
+class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
     attachment = CachedFileField(
         label=_('Attachment'),
         required=False,
@@ -580,8 +610,13 @@ class TeamMailForm(forms.Form):
         if isinstance(locales, str):
             locales = [locales]
 
-        placeholder_keys = get_available_placeholders(self.event, ['event', 'team']).keys()
-        placeholder_text = _("Available placeholders: ") + ', '.join(f"{{{key}}}" for key in sorted(placeholder_keys))
+        team_placeholders = ['event', 'team']
+        placeholder_names = sorted(get_available_placeholders(self.event, team_placeholders).keys())
+        placeholder_text = _("Available placeholders: ") + ', '.join(f"{{{key}}}" for key in placeholder_names)
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug},
+        )
 
         self.fields['subject'] = I18nFormField(
             label=_('Subject'),
@@ -590,15 +625,22 @@ class TeamMailForm(forms.Form):
             locales=locales,
             help_text=placeholder_text
         )
-        self.fields['message'] = I18nFormField(
+        self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
-            widget=I18nMarkdownTextarea,
+            widget=I18nEmailEditorWidget,
+            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
             required=True,
             locales=locales,
-            help_text=placeholder_text
+            help_text=placeholder_text,
         )
         self.fields['teams'] = forms.ModelMultipleChoiceField(
             queryset=Team.objects.filter(organizer=self.event.organizer),
             widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
             label=_("Send to members of these teams")
+        )
+        self.fields['scheduled_at'] = SplitDateTimeField(
+            widget=SplitDateTimePickerWidget(),
+            label=_('Send later'),
+            required=False,
+            help_text=_('Leave empty to send immediately. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
         )

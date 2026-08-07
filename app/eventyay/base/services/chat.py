@@ -434,7 +434,7 @@ class ChatService:
         with transaction.atomic():
             users = list(
                 User.objects.prefetch_related("blocked_users").filter(
-                    event_id=self.event.id, id__in=user_ids
+                    id__in=user_ids
                 )
             )
             if (

@@ -1163,9 +1163,9 @@ def test_patch_event_settings_file(token_client, organizer, event):
 
 
 @pytest.mark.django_db
-def test_patch_event_settings_external_image_urls_rejected(token_client, organizer, event):
-    """External image URLs are no longer accepted for logo_image and event_logo_image."""
+def test_patch_event_settings_external_image_urls(token_client, organizer, event):
     header_url = 'HTTPS://cdn.example.com/header.png'
+    normalized_header_url = 'https://cdn.example.com/header.png'
     logo_url = 'https://cdn.example.com/logo.svg'
 
     resp = token_client.patch(
@@ -1184,15 +1184,11 @@ def test_patch_event_settings_external_image_urls_rejected(token_client, organiz
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    'url_value',
-    ['ftp://cdn.example.com/header.png', 'javascript:alert(1)', 'https://cdn.example.com/valid.png'],
-)
-def test_patch_event_settings_all_external_urls_rejected(token_client, organizer, event, url_value):
-    """All URL strings (including valid https) are rejected now that external image URLs are removed."""
+@pytest.mark.parametrize('invalid_url', ['ftp://cdn.example.com/header.png', 'javascript:alert(1)'])
+def test_patch_event_settings_external_image_urls_reject_invalid_urls(token_client, organizer, event, invalid_url):
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        {'logo_image': url_value},
+        {'logo_image': invalid_url},
         format='json',
     )
     assert resp.status_code == 400
@@ -1200,25 +1196,152 @@ def test_patch_event_settings_all_external_urls_rejected(token_client, organizer
 
 
 @pytest.mark.django_db
-def test_patch_event_settings_file_upload_reference_accepted(token_client, organizer, event):
-    """file:<uuid> upload references produced by /api/v1/upload are still accepted (not treated as URLs)."""
-    r = token_client.post(
+def test_patch_event_settings_preview_image(token_client, organizer, event):
+    r1 = token_client.post(
         '/api/v1/upload',
         data={
             'media_type': 'image/png',
-            'file': ContentFile(b'invalid png content', name='file.png'),
+            'file': ContentFile(b'invalid png content', name='preview.png'),
         },
         format='upload',
-        HTTP_CONTENT_DISPOSITION='attachment; filename="file.png"',
+        HTTP_CONTENT_DISPOSITION='attachment; filename="preview.png"',
     )
-    assert r.status_code == 201
-    file_id_png = r.data['id']
-    assert file_id_png.startswith('file:')
+    assert r1.status_code == 201
+    preview_file_id = r1.data['id']
 
+    r2 = token_client.post(
+        '/api/v1/upload',
+        data={
+            'media_type': 'image/png',
+            'file': ContentFile(b'invalid png content', name='header.png'),
+        },
+        format='upload',
+        HTTP_CONTENT_DISPOSITION='attachment; filename="header.png"',
+    )
+    assert r2.status_code == 201
+    header_file_id = r2.data['id']
+
+    r3 = token_client.post(
+        '/api/v1/upload',
+        data={
+            'media_type': 'image/png',
+            'file': ContentFile(b'invalid png content', name='logo.png'),
+        },
+        format='upload',
+        HTTP_CONTENT_DISPOSITION='attachment; filename="logo.png"',
+    )
+    assert r3.status_code == 201
+    logo_file_id = r3.data['id']
+
+    # Test settings patch
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        {'logo_image': file_id_png},
+        {
+            'event_preview_image': preview_file_id,
+            'logo_image': header_file_id,
+            'event_logo_image': logo_file_id,
+        },
         format='json',
     )
     assert resp.status_code == 200
+    assert resp.data['event_preview_image'].startswith('http')
     assert resp.data['logo_image'].startswith('http')
+    assert resp.data['event_logo_image'].startswith('http')
+
+    # Check model property resolution
+    event = Event.objects.get(pk=event.pk)
+    assert event.visible_preview_image_url is not None
+    assert event.visible_header_image_url is not None
+    assert event.visible_logo_url is not None
+
+    # Check fallback logic: event_preview_image is chosen first
+    assert event.preview_image_url_with_fallback == event.visible_preview_image_url
+
+    # Clear preview image and check fallback to header image
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+        {
+            'event_preview_image': None,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    event.settings.flush()
+    event = Event.objects.get(pk=event.pk)
+    assert event.visible_preview_image_url is None
+    assert event.preview_image_url_with_fallback == event.visible_header_image_url
+
+    # Clear header image and check fallback to logo
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+        {
+            'logo_image': None,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    event.settings.flush()
+    event = Event.objects.get(pk=event.pk)
+    assert event.visible_header_image_url is None
+    assert event.preview_image_url_with_fallback == event.visible_logo_url
+
+    # Clear logo image and check fallback is None
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+        {
+            'event_logo_image': None,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    event.settings.flush()
+    event = Event.objects.get(pk=event.pk)
+    assert event.visible_logo_url is None
+    assert event.preview_image_url_with_fallback is None
+
+
+@pytest.mark.django_db
+def test_preview_image_url_with_fallback_local_file_thumbnail(token_client, organizer, event):
+    """
+    When event_preview_image is a storage-relative path (not an HTTP URL),
+    preview_image_url_with_fallback should call get_thumbnail and return its URL.
+    This exercises the thumbnailing branch introduced in the PR.
+    """
+    local_path = 'pub/previews/my-event.png'
+    event.settings.event_preview_image = local_path
+
+    thumb_url = 'http://testserver/media/pub/previews/my-event.800x450.png'
+
+    with mock.patch('eventyay.helpers.thumb.get_thumbnail') as mock_thumb:
+        mock_thumb.return_value.thumb.url = thumb_url
+        # Flush cached_property so it recalculates.
+        event.__dict__.pop('_visible_preview_image_path', None)
+        event.__dict__.pop('preview_image_url_with_fallback', None)
+        result = event.preview_image_url_with_fallback
+
+    mock_thumb.assert_called_once_with(local_path, '800x450^')
+    assert result == thumb_url
+
+
+@pytest.mark.django_db
+def test_preview_image_url_with_fallback_local_file_thumbnail_exception(token_client, organizer, event):
+    """
+    When get_thumbnail raises (e.g. corrupt image), preview_image_url_with_fallback
+    should fall back to default_storage.url(path) instead of propagating the exception.
+    """
+    local_path = 'pub/previews/corrupt.png'
+    event.settings.event_preview_image = local_path
+
+    storage_url = 'http://testserver/media/pub/previews/corrupt.png'
+
+    with mock.patch('eventyay.helpers.thumb.get_thumbnail', side_effect=Exception('bad image')):
+        with mock.patch(
+            'eventyay.base.models.event.default_storage'
+        ) as mock_storage:
+            mock_storage.url.return_value = storage_url
+            event.__dict__.pop('_visible_preview_image_path', None)
+            event.__dict__.pop('preview_image_url_with_fallback', None)
+            result = event.preview_image_url_with_fallback
+
+    mock_storage.url.assert_called_once_with(local_path)
+    assert result == storage_url

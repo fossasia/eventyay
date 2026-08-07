@@ -5,7 +5,7 @@ from io import BytesIO
 from typing import Tuple
 
 import nh3
-import vat_moss.exchange_rates
+import vat_moss_lite.exchange_rates
 from django.contrib.staticfiles import finders
 from django.dispatch import receiver
 from django.utils.formats import date_format, localize
@@ -269,7 +269,7 @@ class BaseReportlabInvoiceRenderer(BaseInvoiceRenderer):
 
 class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
     identifier = 'classic'
-    verbose_name = pgettext('invoice', 'Classic renderer (pretix 1.0)')
+    verbose_name = pgettext('invoice', 'Classic')
 
     def canvas_class(self, *args, **kwargs):
         kwargs['font_regular'] = self.font_regular
@@ -339,8 +339,8 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
     logo_anchor = 'n'
 
     def _draw_logo(self, canvas):
-        if self.invoice.event.settings.invoice_logo_image:
-            logo_file = self.invoice.event.settings.get('invoice_logo_image', binary_file=True)
+        if self.invoice.event.settings.event_logo_image:
+            logo_file = self.invoice.event.settings.get('event_logo_image', binary_file=True)
             ir = ThumbnailingImageReader(logo_file)
             try:
                 ir.resize(self.logo_width, self.logo_height, 300)
@@ -437,7 +437,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
                 p_size = p.wrap(self.event_width, self.event_height)
             return txt
 
-        if not self.invoice.event.has_subevents and self.invoice.event.settings.show_dates_on_frontpage:
+        if not self.invoice.event.has_subevents:
             if self.invoice.event.settings.show_date_to and self.invoice.event.date_to:
                 p_str = (
                     shorten(self.invoice.event.name)
@@ -744,7 +744,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
 
         def fmt(val):
             try:
-                return vat_moss.exchange_rates.format(val, self.invoice.foreign_currency_display)
+                return vat_moss_lite.exchange_rates.format(val, self.invoice.foreign_currency_display)
             except ValueError:
                 return localize(val) + ' ' + self.invoice.foreign_currency_display
 
@@ -836,7 +836,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
 
 class Modern1Renderer(ClassicInvoiceRenderer):
     identifier = 'modern1'
-    verbose_name = gettext_lazy('Modern Invoice Renderer')
+    verbose_name = gettext_lazy('Modern')
     bottom_margin = 16.9 * mm
     top_margin = 16.9 * mm
     right_margin = 20 * mm

@@ -1,5 +1,5 @@
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from datetime import date, datetime, time, timedelta
 
 import dateutil.parser
@@ -117,6 +117,38 @@ class CheckInListMixin(BaseExporter):
                             else []
                         ),
                         widget=forms.RadioSelect,
+                        required=False,
+                    ),
+                ),
+                (
+                    'columns',
+                    forms.MultipleChoiceField(
+                        label=_('Export columns'),
+                        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+                        choices=[
+                            ('order_code', _('Order code')),
+                            ('attendee_name', _('Attendee name')),
+                            ('product', _('Product')),
+                            ('price', _('Price')),
+                            ('auto_checked_in', _('Automatically checked in')),
+                            ('status', _('Status (Paid)')),
+                            ('email', _('E-mail')),
+                            ('phone', _('Phone number')),
+                            ('company', _('Company')),
+                            ('voucher', _('Voucher code')),
+                            ('order_date', _('Order date')),
+                            ('requires_attention', _('Requires special attention')),
+                            ('comment', _('Comment')),
+                            ('seat', _('Seat details')),
+                            ('address', _('Address')),
+                            ('timestamp', _('Timestamp (Check-in and Check-out)')),
+                        ],
+                        initial=[
+                            'order_code', 'attendee_name', 'product', 'price',
+                            'auto_checked_in', 'status', 'email', 'phone', 'company', 'voucher',
+                            'order_date', 'requires_attention', 'comment', 'seat', 'address',
+                            'timestamp'
+                        ],
                         required=False,
                     ),
                 ),
@@ -245,7 +277,7 @@ class CheckInListMixin(BaseExporter):
             )
 
         if form_data.get('attention_only'):
-            qs = qs.filter(Q(item__checkin_attention=True) | Q(order__checkin_attention=True))
+            qs = qs.filter(Q(product__checkin_attention=True) | Q(order__checkin_attention=True))
 
         if not cl.include_pending:
             qs = qs.filter(order__status=Order.STATUS_PAID)
@@ -307,23 +339,123 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
 
         questions = tuple(Question.objects.filter(event=self.event, id__in=form_data.get('questions', [])))
 
+        columns = form_data.get('columns')
+        if not columns:
+            columns = [c[0] for c in self._fields['columns'].choices]
+
         headlinestyle = self.get_style()
         headlinestyle.fontSize = 15
         headlinestyle.fontName = 'OpenSansBd'
-        colwidths = [3 * mm, 8 * mm, 8 * mm] + [
-            a * (doc.width - 8 * mm)
-            for a in [0.1, 0.25, (0.25 if questions else 0.60)]
-            + ([0.35 / len(questions)] * len(questions) if questions else [])
-        ]
+        
+        fixed_colwidths = []
+        headers = []
+        if 'requires_attention' in columns:
+            fixed_colwidths.append(3 * mm)
+            headers.append('')
+            
+        fixed_colwidths.append(8 * mm) # Checkbox
+        headers.append('')
+            
+        if cl.include_pending and 'status' in columns:
+            fixed_colwidths.append(8 * mm)
+            headers.append(TableTextRotate(pgettext('tablehead', 'paid')))
+
+        dynamic_cols = [c for c in columns if c not in ['requires_attention', 'status']]
+        if 'timestamp' in dynamic_cols:
+            dynamic_cols.remove('timestamp')
+            dynamic_cols.insert(0, 'timestamp')
+        
+        weights = {
+            'order_code': 0.1,
+            'attendee_name': 0.25,
+            'product': 0.25,
+            'price': 0.1,
+            'timestamp': 0.2,
+            'auto_checked_in': 0.1,
+            'email': 0.2,
+            'phone': 0.15,
+            'company': 0.15,
+            'voucher': 0.1,
+            'order_date': 0.15,
+            'comment': 0.2,
+            'seat': 0.15,
+            'address': 0.25,
+        }
+        
+        total_weight = sum(weights.get(c, 0.1) for c in dynamic_cols) + (0.35 if questions else 0)
+        total_weight = total_weight or 1.0
+        
+        dyn_colwidths = []
+        header_map = {
+            'order_code': _('Order'),
+            'attendee_name': _('Name'),
+            'product': _('Product'),
+            'price': _('Price'),
+            'timestamp': _('Timestamp'),
+            'auto_checked_in': _('Auto check-in'),
+            'email': _('E-mail'),
+            'phone': _('Phone'),
+            'company': _('Company'),
+            'voucher': _('Voucher'),
+            'order_date': _('Order date'),
+            'comment': _('Comment'),
+            'seat': _('Seat'),
+            'address': _('Address'),
+        }
+        
+        num_cols = len(fixed_colwidths) + len(dynamic_cols) + len(questions)
+        if num_cols > 12:
+            font_size = 6
+        elif num_cols > 8:
+            font_size = 8
+        else:
+            font_size = 10
+
+        headrowstyle = self.get_style()
+        headrowstyle.fontName = 'OpenSansBd'
+        headrowstyle.wordWrap = 'CJK'
+        headrowstyle.fontSize = font_size
+        for c in dynamic_cols:
+            w = weights.get(c, 0.1)
+            headers.append(Paragraph(str(header_map.get(c, c)), headrowstyle))
+            dyn_colwidths.append((w / total_weight) * (doc.width - sum(fixed_colwidths)))
+            
+        colwidths = fixed_colwidths + dyn_colwidths
+        
+        for q in questions:
+            w = 0.35 / len(questions)
+            colwidths.append((w / total_weight) * (doc.width - sum(fixed_colwidths)))
+            
+        tdata = [headers]
+
         tstyledata = [
             ('VALIGN', (0, 0), (-1, 0), 'BOTTOM'),
-            ('ALIGN', (2, 0), (2, 0), 'CENTER'),
             ('VALIGN', (0, 1), (-1, -1), 'TOP'),
             ('FONTNAME', (0, 0), (-1, 0), 'OpenSansBd'),
-            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
-            ('TEXTCOLOR', (0, 0), (0, -1), '#990000'),
-            ('FONTNAME', (0, 0), (0, -1), 'OpenSansBd'),
+            ('FONTSIZE', (0, 0), (-1, -1), font_size),
+            ('LEFTPADDING', (0, 0), (-1, -1), 2),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
         ]
+        
+        current_idx = 0
+        if 'requires_attention' in columns:
+            tstyledata += [
+                ('ALIGN', (current_idx, 0), (current_idx, -1), 'CENTER'),
+                ('TEXTCOLOR', (current_idx, 0), (current_idx, -1), '#990000'),
+                ('FONTNAME', (current_idx, 0), (current_idx, -1), 'OpenSansBd'),
+            ]
+            current_idx += 1
+            
+        tstyledata.append(('ALIGN', (current_idx, 0), (current_idx, -1), 'CENTER'))
+        current_idx += 1
+        
+        status_col_idx = None
+        if cl.include_pending and 'status' in columns:
+            status_col_idx = current_idx
+            tstyledata.append(('ALIGN', (status_col_idx, 0), (status_col_idx, 0), 'CENTER'))
+            current_idx += 1
 
         story = [
             Paragraph(cl.name, headlinestyle),
@@ -342,18 +474,6 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
             ]
 
         story += [Spacer(1, 5 * mm)]
-
-        tdata = [
-            [
-                '',
-                '',
-                # Translators: maximum 5 characters
-                TableTextRotate(pgettext('tablehead', 'paid')),
-                _('Order'),
-                _('Name'),
-                _('Product') + ' / ' + _('Price'),
-            ],
-        ]
 
         headrowstyle = self.get_style()
         headrowstyle.fontName = 'OpenSansBd'
@@ -402,26 +522,66 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
                 )
             if op.seat:
                 item += '<br/>' + str(op.seat)
-            row = [
-                '!!' if op.product.checkin_attention or op.order.checkin_attention else '',
-                CBFlowable(bool(op.last_checked_in)),
-                '✘' if op.order.status != Order.STATUS_PAID else '✔',
-                op.order.code,
-                Paragraph(name, self.get_style()),
-                Paragraph(item, self.get_style()),
-            ]
+            row = []
+            if 'requires_attention' in columns:
+                row.append('!!' if op.product.checkin_attention or op.order.checkin_attention else '')
+                
+            row.append(CBFlowable(bool(op.last_checked_in)))
+            
+            if cl.include_pending and 'status' in columns:
+                row.append('✘' if op.order.status != Order.STATUS_PAID else '✔')
+                
+            rowstyle = self.get_style()
+            rowstyle.wordWrap = 'CJK'
+            rowstyle.fontSize = font_size
+            
+            for c in dynamic_cols:
+                if c == 'order_code':
+                    row.append(Paragraph(op.order.code, rowstyle))
+                elif c == 'attendee_name':
+                    row.append(Paragraph(name, rowstyle))
+                elif c == 'product':
+                    row.append(Paragraph(item, rowstyle))
+                elif c == 'price':
+                    row.append(Paragraph(str(money_filter(op.price, self.event.currency)), rowstyle))
+                elif c == 'timestamp':
+                    ts = []
+                    if op.last_checked_in:
+                        ts.append(date_format(op.last_checked_in.astimezone(self.event.tz), 'SHORT_DATETIME_FORMAT'))
+                    if op.last_checked_out:
+                        ts.append(date_format(op.last_checked_out.astimezone(self.event.tz), 'SHORT_DATETIME_FORMAT'))
+                    row.append(Paragraph('<br/>'.join(ts) if ts else '', rowstyle))
+                elif c == 'auto_checked_in':
+                    row.append(Paragraph(str(_('Yes') if op.auto_checked_in else _('No')), rowstyle))
+                elif c == 'email':
+                    row.append(Paragraph(op.attendee_email or (op.addon_to.attendee_email if op.addon_to else '') or op.order.email or '', rowstyle))
+                elif c == 'phone':
+                    row.append(Paragraph(str(op.order.phone) if op.order.phone else '', rowstyle))
+                elif c == 'company':
+                    row.append(Paragraph(op.company or iac, rowstyle))
+                elif c == 'voucher':
+                    row.append(Paragraph(op.voucher.code if op.voucher else '', rowstyle))
+                elif c == 'order_date':
+                    row.append(Paragraph(op.order.datetime.astimezone(self.event.tz).strftime('%Y-%m-%d'), rowstyle))
+                elif c == 'comment':
+                    row.append(Paragraph(op.order.comment or '', rowstyle))
+                elif c == 'seat':
+                    row.append(Paragraph(str(op.seat) if op.seat else '', rowstyle))
+                elif c == 'address':
+                    addr = [op.street, op.zipcode, op.city, str(op.country) if op.country else '', op.state]
+                    addr = [x for x in addr if x]
+                    row.append(Paragraph('<br/>'.join(addr), rowstyle))
+                else:
+                    row.append(Paragraph('', rowstyle))
+
             acache = {}
             if op.addon_to:
                 for a in op.addon_to.answers.all():
-                    # We do not want to localize Date, Time and Datetime question answers, as those can lead
-                    # to difficulties parsing the data (for example 2019-02-01 may become Février, 2019 01 in French).
                     if a.question.type in Question.UNLOCALIZED_TYPES:
                         acache[a.question_id] = a.answer
                     else:
                         acache[a.question_id] = str(a)
             for a in op.answers.all():
-                # We do not want to localize Date, Time and Datetime question answers, as those can lead
-                # to difficulties parsing the data (for example 2019-02-01 may become Février, 2019 01 in French).
                 if a.question.type in Question.UNLOCALIZED_TYPES:
                     acache[a.question_id] = a.answer
                 else:
@@ -445,11 +605,11 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
                         text_or_html = truncatechars(text_or_html, new_visual_length)
                     p = Paragraph(text_or_html, self.get_style())
                 row.append(p)
-            if op.order.status != Order.STATUS_PAID:
+            if op.order.status != Order.STATUS_PAID and status_col_idx is not None:
                 tstyledata += [
-                    ('BACKGROUND', (2, len(tdata)), (2, len(tdata)), '#990000'),
-                    ('TEXTCOLOR', (2, len(tdata)), (2, len(tdata)), '#ffffff'),
-                    ('ALIGN', (2, len(tdata)), (2, len(tdata)), 'CENTER'),
+                    ('BACKGROUND', (status_col_idx, len(tdata)), (status_col_idx, len(tdata)), '#990000'),
+                    ('TEXTCOLOR', (status_col_idx, len(tdata)), (status_col_idx, len(tdata)), '#ffffff'),
+                    ('ALIGN', (status_col_idx, len(tdata)), (status_col_idx, len(tdata)), 'CENTER'),
                 ]
             tdata.append(row)
 
@@ -469,96 +629,53 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
     def additional_form_fields(self):
         return self._fields
 
-    def iterate_list(self, form_data):
-        cl = self.event.checkin_lists.get(pk=form_data['list'])
+    @staticmethod
+    def _format_checkin_datetime(dt, tz):
+        if isinstance(dt, str):
+            dt = dateutil.parser.parse(dt)
+        elif not dt:
+            return ''
+        if not is_aware(dt):
+            dt = make_aware(dt, UTC)
+        return date_format(dt.astimezone(tz), 'SHORT_DATETIME_FORMAT')
 
-        questions = list(Question.objects.filter(event=self.event, id__in=form_data['questions']))
+    def _csv_row_for_position(
+        self,
+        op,
+        ia,
+        name_scheme,
+        questions,
+        cl,
+        form_data,
+        *,
+        checkin=None,
+    ):
+        columns = form_data.get('columns')
+        if not columns:
+            columns = [c[0] for c in self._fields['columns'].choices]
 
-        qs = self._get_queryset(cl, form_data)
-
-        name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme]
-        headers = [
-            _('Order code'),
-            _('Attendee name'),
-        ]
-        if len(name_scheme['fields']) > 1:
-            for k, label, w in name_scheme['fields']:
-                headers.append(_('Attendee name: {part}').format(part=label))
-        headers += [
-            _('Product'),
-            _('Price'),
-            _('Checked in'),
-            _('Checked out'),
-            _('Automatically checked in'),
-        ]
-        if not cl.include_pending:
-            qs = qs.filter(order__status=Order.STATUS_PAID)
+        if checkin:
+            checked_in = (
+                self._format_checkin_datetime(checkin.datetime, self.event.tz)
+                if checkin.type == Checkin.TYPE_ENTRY
+                else ''
+            )
+            checked_out = (
+                self._format_checkin_datetime(checkin.datetime, self.event.tz)
+                if checkin.type == Checkin.TYPE_EXIT
+                else ''
+            )
+            auto_checked_in = _('Yes') if checkin.auto_checked_in else _('No')
         else:
-            qs = qs.filter(order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING))
-            headers.append(_('Paid'))
+            checked_in = ''
+            checked_out = ''
+            auto_checked_in = _('Yes') if op.auto_checked_in else _('No')
 
-        if form_data['secrets']:
-            headers.append(_('Secret'))
-
-        headers.append(_('E-mail'))
-        headers.append(_('Phone number'))
-
-        if self.event.has_subevents:
-            headers.append(pgettext('subevent', 'Date'))
-            headers.append(_('Start date'))
-            headers.append(_('End date'))
-
-        for q in questions:
-            headers.append(str(q.question))
-
-        headers.append(_('Company'))
-        headers.append(_('Voucher code'))
-        headers.append(_('Order date'))
-        headers.append(_('Order time'))
-        headers.append(_('Requires special attention'))
-        headers.append(_('Comment'))
-        headers.append(_('Seat ID'))
-        headers.append(_('Seat name'))
-        headers.append(_('Seat zone'))
-        headers.append(_('Seat row'))
-        headers.append(_('Seat number'))
-        headers += [
-            _('Address'),
-            _('ZIP code'),
-            _('City'),
-            _('Country'),
-            pgettext('address', 'State'),
-        ]
-        yield headers
-
-        yield self.ProgressSetTotal(total=qs.count())
-
-        for op in qs:
-            try:
-                ia = op.order.invoice_address
-            except InvoiceAddress.DoesNotExist:
-                ia = InvoiceAddress()
-
-            last_checked_in = None
-            if isinstance(op.last_checked_in, str):  # SQLite
-                last_checked_in = dateutil.parser.parse(op.last_checked_in)
-            elif op.last_checked_in:
-                last_checked_in = op.last_checked_in
-            if last_checked_in and not is_aware(last_checked_in):
-                last_checked_in = make_aware(last_checked_in, UTC)
-
-            last_checked_out = None
-            if isinstance(op.last_checked_out, str):  # SQLite
-                last_checked_out = dateutil.parser.parse(op.last_checked_out)
-            elif op.last_checked_out:
-                last_checked_out = op.last_checked_out
-            if last_checked_out and not is_aware(last_checked_out):
-                last_checked_out = make_aware(last_checked_out, UTC)
-
-            row = [
-                op.order.code,
-                op.attendee_name or (op.addon_to.attendee_name if op.addon_to else '') or ia.name,
-            ]
+        row = []
+        if 'order_code' in columns:
+            row.append(op.order.code)
+        if 'attendee_name' in columns:
+            row.append(op.attendee_name or (op.addon_to.attendee_name if op.addon_to else '') or ia.name)
             if len(name_scheme['fields']) > 1:
                 for k, label, w in name_scheme['fields']:
                     row.append(
@@ -568,72 +685,68 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
                             or ia.name_parts
                         ).get(k, '')
                     )
-            row += [
-                str(op.product) + (' – ' + str(op.variation.value) if op.variation else ''),
-                op.price,
-                date_format(
-                    last_checked_in.astimezone(self.event.tz),
-                    'SHORT_DATETIME_FORMAT',
-                )
-                if last_checked_in
-                else '',
-                date_format(
-                    last_checked_out.astimezone(self.event.tz),
-                    'SHORT_DATETIME_FORMAT',
-                )
-                if last_checked_out
-                else '',
-                _('Yes') if op.auto_checked_in else _('No'),
-            ]
-            if cl.include_pending:
-                row.append(_('Yes') if op.order.status == Order.STATUS_PAID else _('No'))
-            if form_data['secrets']:
-                row.append(op.secret)
+        if 'product' in columns:
+            row.append(str(op.product) + (' – ' + str(op.variation.value) if op.variation else ''))
+        if 'price' in columns:
+            row.append(op.price)
+        if 'auto_checked_in' in columns:
+            row.append(auto_checked_in)
+        
+        if cl.include_pending and 'status' in columns:
+            row.append(_('Yes') if op.order.status == Order.STATUS_PAID else _('No'))
+            
+        if form_data.get('secrets'):
+            row.append(op.secret)
+        if 'email' in columns:
             row.append(op.attendee_email or (op.addon_to.attendee_email if op.addon_to else '') or op.order.email or '')
+        if 'phone' in columns:
             row.append(str(op.order.phone) if op.order.phone else '')
-            if self.event.has_subevents:
-                row.append(str(op.subevent.name))
+        if self.event.has_subevents:
+            row.append(str(op.subevent.name))
+            row.append(
+                date_format(
+                    op.subevent.date_from.astimezone(self.event.tz),
+                    'SHORT_DATETIME_FORMAT',
+                )
+            )
+            if op.subevent.date_to:
                 row.append(
                     date_format(
-                        op.subevent.date_from.astimezone(self.event.tz),
+                        op.subevent.date_to.astimezone(self.event.tz),
                         'SHORT_DATETIME_FORMAT',
                     )
                 )
-                if op.subevent.date_to:
-                    row.append(
-                        date_format(
-                            op.subevent.date_to.astimezone(self.event.tz),
-                            'SHORT_DATETIME_FORMAT',
-                        )
-                    )
-                else:
-                    row.append('')
-            acache = {}
-            if op.addon_to:
-                for a in op.addon_to.answers.all():
-                    # We do not want to localize Date, Time and Datetime question answers, as those can lead
-                    # to difficulties parsing the data (for example 2019-02-01 may become Février, 2019 01 in French).
-                    if a.question.type in Question.UNLOCALIZED_TYPES:
-                        acache[a.question_id] = a.answer
-                    else:
-                        acache[a.question_id] = str(a)
-            for a in op.answers.all():
-                # We do not want to localize Date, Time and Datetime question answers, as those can lead
-                # to difficulties parsing the data (for example 2019-02-01 may become Février, 2019 01 in French).
+            else:
+                row.append('')
+        
+        acache = {}
+        if op.addon_to:
+            for a in op.addon_to.answers.all():
                 if a.question.type in Question.UNLOCALIZED_TYPES:
                     acache[a.question_id] = a.answer
                 else:
                     acache[a.question_id] = str(a)
-            for q in questions:
-                row.append(acache.get(q.pk, ''))
+        for a in op.answers.all():
+            if a.question.type in Question.UNLOCALIZED_TYPES:
+                acache[a.question_id] = a.answer
+            else:
+                acache[a.question_id] = str(a)
+        for q in questions:
+            row.append(acache.get(q.pk, ''))
 
+        if 'company' in columns:
             row.append(op.company or ia.company)
+        if 'voucher' in columns:
             row.append(op.voucher.code if op.voucher else '')
+        if 'order_date' in columns:
             row.append(op.order.datetime.astimezone(self.event.tz).strftime('%Y-%m-%d'))
             row.append(op.order.datetime.astimezone(self.event.tz).strftime('%H:%M:%S %Z'))
+        if 'requires_attention' in columns:
             row.append(_('Yes') if op.order.checkin_attention or op.product.checkin_attention else _('No'))
+        if 'comment' in columns:
             row.append(op.order.comment or '')
 
+        if 'seat' in columns:
             if op.seat:
                 row += [
                     op.seat.seat_guid,
@@ -645,15 +758,143 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
             else:
                 row += ['', '', '', '', '']
 
+        if 'address' in columns:
             row += [
                 op.street or '',
                 op.zipcode or '',
                 op.city or '',
-                op.country if op.country else '',
+                str(op.country) if op.country else '',
                 op.state or '',
             ]
+            
+        if 'timestamp' in columns:
+            row.append(checked_in)
+            row.append(checked_out)
 
-            yield row
+        return row
+
+    def iterate_list(self, form_data):
+        cl = self.event.checkin_lists.get(pk=form_data['list'])
+
+        questions = list(Question.objects.filter(event=self.event, id__in=form_data['questions']))
+
+        qs = self._get_queryset(cl, form_data)
+
+        columns = form_data.get('columns')
+        if not columns:
+            columns = [c[0] for c in self._fields['columns'].choices]
+
+        name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme]
+        headers = []
+        if 'order_code' in columns:
+            headers.append(_('Order code'))
+        if 'attendee_name' in columns:
+            headers.append(_('Attendee name'))
+            if len(name_scheme['fields']) > 1:
+                for k, label, w in name_scheme['fields']:
+                    headers.append(_('Attendee name: {part}').format(part=label))
+        if 'product' in columns:
+            headers.append(_('Product'))
+        if 'price' in columns:
+            headers.append(_('Price'))
+
+        if 'auto_checked_in' in columns:
+            headers.append(_('Automatically checked in'))
+        
+        if not cl.include_pending:
+            qs = qs.filter(order__status=Order.STATUS_PAID)
+        else:
+            qs = qs.filter(order__status__in=(Order.STATUS_PAID, Order.STATUS_PENDING))
+            if 'status' in columns:
+                headers.append(_('Paid'))
+
+        if form_data.get('secrets'):
+            headers.append(_('Secret'))
+
+        if 'email' in columns:
+            headers.append(_('E-mail'))
+        if 'phone' in columns:
+            headers.append(_('Phone number'))
+
+        if self.event.has_subevents:
+            headers.append(pgettext('subevent', 'Date'))
+            headers.append(_('Start date'))
+            headers.append(_('End date'))
+
+        for q in questions:
+            headers.append(str(q.question))
+
+        if 'company' in columns:
+            headers.append(_('Company'))
+        if 'voucher' in columns:
+            headers.append(_('Voucher code'))
+        if 'order_date' in columns:
+            headers.append(_('Order date'))
+            headers.append(_('Order time'))
+        if 'requires_attention' in columns:
+            headers.append(_('Requires special attention'))
+        if 'comment' in columns:
+            headers.append(_('Comment'))
+        if 'seat' in columns:
+            headers.append(_('Seat ID'))
+            headers.append(_('Seat name'))
+            headers.append(_('Seat zone'))
+            headers.append(_('Seat row'))
+            headers.append(_('Seat number'))
+        if 'address' in columns:
+            headers += [
+                _('Address'),
+                _('ZIP code'),
+                _('City'),
+                _('Country'),
+                pgettext('address', 'State'),
+            ]
+            
+        if 'timestamp' in columns:
+            headers.append(_('Checked in'))
+            headers.append(_('Checked out'))
+        yield headers
+
+        positions = list(qs)
+        checkins_by_position = defaultdict(list)
+        if positions:
+            for ci in Checkin.objects.filter(
+                list=cl,
+                position_id__in=[op.pk for op in positions],
+            ).order_by('datetime', 'pk'):
+                checkins_by_position[ci.position_id].append(ci)
+
+        total_rows = sum(len(checkins_by_position.get(op.pk, [])) or 1 for op in positions)
+        yield self.ProgressSetTotal(total=total_rows)
+
+        for op in positions:
+            try:
+                ia = op.order.invoice_address
+            except InvoiceAddress.DoesNotExist:
+                ia = InvoiceAddress()
+
+            checkins = checkins_by_position.get(op.pk, [])
+            if not checkins:
+                yield self._csv_row_for_position(
+                    op,
+                    ia,
+                    name_scheme,
+                    questions,
+                    cl,
+                    form_data,
+                )
+                continue
+
+            for checkin in checkins:
+                yield self._csv_row_for_position(
+                    op,
+                    ia,
+                    name_scheme,
+                    questions,
+                    cl,
+                    form_data,
+                    checkin=checkin,
+                )
 
     def get_filename(self):
         return '{}_checkin'.format(self.event.slug)
@@ -685,12 +926,14 @@ class CheckinLogList(ListExporter):
         ]
 
         qs = Checkin.objects.filter(
-            position__order__event=self.event,
+            list__event=self.event,
         )
         if form_data.get('list'):
-            qs = qs.filter(list_id=form_data.get('list'))
+            qs = qs.filter(list_id=form_data['list'])
         if form_data.get('products'):
-            qs = qs.filter(position__item_id__in=form_data['products'])
+            product_ids = form_data['products']
+            if product_ids and len(product_ids) != self.event.products.count():
+                qs = qs.filter(position__product_id__in=product_ids)
 
         yield self.ProgressSetTotal(total=qs.count())
 
@@ -701,7 +944,7 @@ class CheckinLogList(ListExporter):
             'position',
             'list',
             'device',
-        ).order_by('datetime')
+        ).order_by('datetime', 'pk')
         for ci in qs.iterator():
             try:
                 ia = ci.position.order.invoice_address

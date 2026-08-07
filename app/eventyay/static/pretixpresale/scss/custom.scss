@@ -101,14 +101,16 @@
     border-bottom: 2px solid transparent;
 }
 
-.presale-sticky-tabs a.header-tab:hover {
+.presale-sticky-tabs a.header-tab:hover,
+.presale-sticky-tabs a.header-tab:focus-visible {
+    color: var(--color-header-navigation-hover);
     text-decoration: none;
-    border-bottom: 2px dotted var(--color-primary);
+    border-bottom: 2px dotted currentColor;
 }
 
 .presale-sticky-tabs a.header-tab.active,
 .presale-sticky-tabs a.header-tab.underline {
-    border-bottom: 2px solid var(--color-primary);
+    border-bottom: 2px solid currentColor;
 }
 
 .presale-sticky-tabs #header-nav-bar {
@@ -156,6 +158,13 @@
     color: var(--color-primary);
 }
 
+.presale-sticky-tabs .header-row-right details.dropdown summary:hover,
+.presale-sticky-tabs .header-row-right details.dropdown summary:focus-visible,
+.presale-sticky-tabs .header-row-right a:not(.header-nav):hover,
+.presale-sticky-tabs .header-row-right a:not(.header-nav):focus-visible {
+    color: var(--color-header-navigation-hover);
+}
+
 .presale-sticky-tabs .header-row-right .header-nav {
     border-color: var(--color-primary);
     background: transparent;
@@ -183,6 +192,15 @@
     margin-inline: 0;
 }
 
+#main-card summary.product-row {
+    color: var(--color-text);
+
+    .product-description,
+    .product-description p {
+        color: var(--color-text);
+    }
+}
+
 /* Desktop: hide icons that are mobile-only (globe + user in nav dropdowns) */
 .nav-icon-mobile {
     display: none;
@@ -203,11 +221,14 @@
     }
 
     .header-join-video-floating-mobile {
-        right: 0;
+        right: 15px;
     }
 }
 
 @media (max-width: 768px) {
+    #top-bg {
+        height: 480px;
+    }
 
     /* Keep the sticky tabs in a single flex row */
     .presale-sticky-tabs {
@@ -336,15 +357,6 @@
     #main-card>main>main {
         padding-left: 0;
         padding-right: 0;
-    }
-}
-
-@media (max-width: 480px) {
-    #locale-dropdown.dropdown-content {
-        transform: scale(0.75);
-        transform-origin: top right;
-        right: 0;
-        left: auto;
     }
 }
 

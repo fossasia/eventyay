@@ -172,6 +172,15 @@ urlpatterns = [
         include(
             [
                 url(r'^$', dashboards.event_index, name='event.index'),
+                url(
+                    r'^statistics/$',
+                    RedirectView.as_view(
+                        pattern_name='control:event.index',
+                        permanent=True,
+                        query_string=True,
+                    ),
+                    name='event.statistics.redirect',
+                ),
                 url(r'^widgets.json$', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
                 url(r'^logs/$', event.EventLog.as_view(), name='event.log'),
                 url(r'^live/$', event.EventLive.as_view(), name='event.live'),
@@ -214,6 +223,11 @@ urlpatterns = [
                     r'^settings/email/layoutpreview$',
                     event.MailSettingsRendererPreview.as_view(),
                     name='event.settings.mail.preview.layout',
+                ),
+                url(
+                    r'^editor/email-preview$',
+                    event.EditorEmailPreview.as_view(),
+                    name='event.editor.email.preview',
                 ),
                 url(r'^settings/cancel', event.CancelSettings.as_view(), name='event.settings.cancel'),
                 url(r'^settings/invoice$', event.InvoiceSettings.as_view(), name='event.settings.invoice'),
@@ -287,6 +301,11 @@ urlpatterns = [
                     r'^orderforms/default-fields/(?P<field>[a-z_]+)/$',
                     product.OrderFormDefaultFieldSettings.as_view(),
                     name='event.products.orderforms.defaultfield',
+                ),
+                url(
+                    r'^orderforms/customer-fields/(?P<field>[a-z_]+)/$',
+                    product.OrderFormCustomerFieldSettings.as_view(),
+                    name='event.products.orderforms.customerfield',
                 ),
                 url(r'^questions/$', product.QuestionList.as_view(), name='event.products.questions'),
                 url(r'^questions/reorder$', product.reorder_questions, name='event.products.questions.reorder'),
@@ -430,6 +449,11 @@ urlpatterns = [
                     name='event.order.position.sendmail',
                 ),
                 url(
+                    r'^orders/(?P<code>[0-9A-Z]+)/(?P<position>\d+)/reinstate$',
+                    orders.OrderPositionReinstate.as_view(),
+                    name='event.order.position.reinstate',
+                ),
+                url(
                     r'^orders/(?P<code>[0-9A-Z]+)/mail_history$',
                     orders.OrderEmailHistory.as_view(),
                     name='event.order.mail_history',
@@ -522,6 +546,7 @@ urlpatterns = [
                     checkin.CheckinListDelete.as_view(),
                     name='event.orders.checkinlists.delete',
                 ),
+                path('', include('eventyay.plugins.sendmail.urls')),
             ]
         ),
     ),

@@ -12,6 +12,7 @@ from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_DEFINITI
 TICKET_DASHBOARD_PERMISSIONS = (
     'can_view_orders',
     'can_change_orders',
+    'can_manage_bank_transfers',
     'can_change_items',
     'can_change_event_settings',
     'can_checkin_orders',

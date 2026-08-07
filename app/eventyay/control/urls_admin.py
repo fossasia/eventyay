@@ -22,6 +22,7 @@ urlpatterns = [
     path('events/startpage-toggle/', admin.AdminEventStartpageToggle.as_view(), name='admin.events.startpage.toggle'),
     path('attendees/', admin.AttendeeListView.as_view(), name='admin.attendees'),
     path('submissions/', admin.SubmissionListView.as_view(), name='admin.submissions'),
+    path('orders/', admin.AdminOrderListView.as_view(), name='admin.orders'),
     url(r'^task_management', admin.TaskList.as_view(), name='admin.task_management'),
     url(r'^sudo/(?P<id>\d+)/$', user.EditStaffSession.as_view(), name='admin.user.sudo.edit'),
     url(r'^sudo/sessions/$', user.StaffSessionList.as_view(), name='admin.user.sudo.list'),

@@ -271,3 +271,65 @@ def test_list_of_events(event, user, admin, admin_request):
         assert set(event3.get_users_with_permission('can_change_event_settings')) == {user}
         assert set(event4.get_users_with_permission('can_change_event_settings')) == set()
         assert set(event.get_users_with_permission('can_change_orders')) == {user}
+
+
+@pytest.mark.django_db
+def test_can_change_orders_implies_can_view_orders(event, user):
+    team = Team.objects.create(organizer=event.organizer, can_change_orders=True, all_events=True)
+    team.members.add(user)
+    user._teamcache = {}
+
+    assert user.has_event_permission(event.organizer, event, 'can_view_orders')
+    assert 'can_view_orders' in user.get_event_permission_set(event.organizer, event)
+    assert team.has_permission('can_view_orders')
+    assert 'can_view_orders' in team.permission_set()
+
+
+@pytest.mark.django_db
+def test_can_manage_bank_transfers_implies_can_view_orders(event, user):
+    team = Team.objects.create(organizer=event.organizer, can_manage_bank_transfers=True, all_events=True)
+    team.members.add(user)
+    user._teamcache = {}
+
+    assert user.has_event_permission(event.organizer, event, 'can_view_orders')
+    assert not user.has_event_permission(event.organizer, event, 'can_change_orders')
+    assert 'can_view_orders' in user.get_event_permission_set(event.organizer, event)
+
+
+@pytest.mark.django_db
+def test_can_change_vouchers_implies_can_view_vouchers(event, user):
+    team = Team.objects.create(organizer=event.organizer, can_change_vouchers=True, all_events=True)
+    team.members.add(user)
+    user._teamcache = {}
+
+    assert user.has_event_permission(event.organizer, event, 'can_view_vouchers')
+    assert 'can_view_vouchers' in user.get_event_permission_set(event.organizer, event)
+
+
+@pytest.mark.django_db
+def test_can_manage_bank_transfers_implies_can_view_orders_in_queryset(event, user):
+    team = Team.objects.create(organizer=event.organizer, can_manage_bank_transfers=True, all_events=True)
+    team.members.add(user)
+    user._teamcache = {}
+
+    with scope(organizer=event.organizer):
+        events = list(user.get_events_with_permission('can_view_orders'))
+        assert event in events
+
+        organizers = list(user.get_organizers_with_permission('can_view_orders'))
+        assert event.organizer in organizers
+
+
+@pytest.mark.django_db
+def test_can_change_orders_implies_can_view_orders_in_queryset(event, user):
+    team = Team.objects.create(organizer=event.organizer, can_change_orders=True, all_events=True)
+    team.members.add(user)
+    user._teamcache = {}
+
+    with scope(organizer=event.organizer):
+        events = list(user.get_events_with_permission('can_view_orders'))
+        assert event in events
+
+        organizers = list(user.get_organizers_with_permission('can_view_orders'))
+        assert event.organizer in organizers
+

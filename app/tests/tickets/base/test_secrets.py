@@ -33,7 +33,7 @@ def event():
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_force_invalidate(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -46,7 +46,7 @@ def test_force_invalidate(event, scheme):
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_keep_same(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -59,8 +59,8 @@ def test_keep_same(event, scheme):
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_change_if_required(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
-    item2 = event.items.create(name='Bar', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
+    item2 = event.products.create(name='Bar', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -76,7 +76,7 @@ def test_change_if_required(event, scheme):
 @pytest.mark.django_db
 @pytest.mark.parametrize('scheme', schemes)
 def test_change_if_invalid(event, scheme):
-    item = event.items.create(name='Foo', default_price=0)
+    item = event.products.create(name='Foo', default_price=0)
     generator, input_dependent = scheme
     g = generator(event)
 
@@ -115,4 +115,35 @@ def test_sig1_parse_invalid_secret_returns_none(event):
         # Valid signature framing but invalid protobuf payload (DecodeError)
         invalid_proto_secret = base64.b64encode(generator._sign_payload(b'\xff')).decode()[::-1]
         assert generator._parse(invalid_proto_secret) is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('scheme', schemes)
+def test_lsp_signature_compatibility(event, scheme):
+    item = event.products.create(name='Foo', default_price=0)
+    generator, _ = scheme
+    g = generator(event)
+
+    # Test keyword argument 'attendee_name'
+    secret1 = g.generate_secret(
+        product=item,
+        variation=None,
+        subevent=None,
+        attendee_name="John Doe",
+        current_secret=None,
+        force_invalidate=False
+    )
+    assert secret1
+
+    # Test positional arguments (matching the BaseTicketSecretGenerator order)
+    secret2 = g.generate_secret(
+        item,  # product
+        None,  # variation
+        None,  # subevent
+        "John Doe",  # attendee_name
+        secret1,  # current_secret
+        False  # force_invalidate
+    )
+    assert secret2
+
 

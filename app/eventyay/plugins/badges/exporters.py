@@ -1,19 +1,20 @@
-import copy
-import json
+import os
+import tempfile
 from collections import OrderedDict
+from decimal import Decimal
 from io import BytesIO
-from typing import Tuple
+from pathlib import Path
+from typing import BinaryIO
 
 from django import forms
 from django.conf import settings
 from django.contrib.staticfiles import finders
 from django.core.files import File
 from django.core.files.storage import default_storage
-from django.db.models import Exists, OuterRef, Q
 from django.db.models.functions import Coalesce
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from pypdf import Transformation
+from pypdf import PdfReader, PdfWriter, Transformation
 from reportlab.lib import pagesizes
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
@@ -23,18 +24,44 @@ from eventyay.base.exporters.date import build_date_filter, parse_date_input
 from eventyay.base.i18n import language
 from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
-from eventyay.base.services.orders import OrderError
+from eventyay.base.services.export import ExportError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
-from eventyay.plugins.badges.models import BadgeProduct, BadgeLayout
-from eventyay.plugins.badges.utils import get_badge_hidden_fields, normalize_badge_content_key
+from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
+from eventyay.plugins.badges.utils import (
+    BADGE_LAYOUT_PERSISTED_FIELDS,
+    _renderer_cache,
+    exclude_explicit_no_badge,
+    get_badge_hidden_fields,
+    get_badge_layout_for_position,
+    get_badge_layout_renderer_token,
+    get_badge_layout_version,
+    normalize_badge_content_key,
+    reset_badge_layout_assignment_cache,
+)
 
 from ...helpers.templatetags.jsonfield import JSONExtract
+
+SEARCHABLE_SCROLLING_CHECKBOXES = 'scrolling-multiple-choice scrolling-multiple-choice-searchable'
+
+
+def searchable_scrolling_checkbox_widget():
+    return forms.CheckboxSelectMultiple(attrs={'class': SEARCHABLE_SCROLLING_CHECKBOXES})
 
 
 class BadgeRenderer(Renderer):
     def __init__(self, event, layout, bgf, ask_user_fields=None):
         super().__init__(event, layout, bgf)
         self.ask_user_fields = {str(value) for value in (ask_user_fields or [])}
+
+    def _get_layout_hidden_fields(self, op: OrderPosition):
+        if not self.ask_user_fields:
+            return set()
+
+        hidden_fields = getattr(op, '_badge_hidden_fields_cache', None)
+        if hidden_fields is None:
+            hidden_fields = {str(value) for value in get_badge_hidden_fields(op)}
+            op._badge_hidden_fields_cache = hidden_fields
+        return {field for field in hidden_fields if field in self.ask_user_fields}
 
     def _get_text_content(self, op: OrderPosition, order: Order, o: dict, inner=False):
         content = normalize_badge_content_key(o.get('content'))
@@ -53,19 +80,69 @@ class BadgeRenderer(Renderer):
         return super()._get_text_content(op, order, o, inner=inner)
 
 
-def _renderer(event, layout):
-    if layout is None:
+def _is_placeholder_pdf(bgf):
+    pos = bgf.tell()
+    try:
+        bgf.seek(0, os.SEEK_END)
+        size = bgf.tell()
+        bgf.seek(pos)
+        if size < 1_000:
+            return True
+        if size < 15_000:
+            header = bgf.read(200)
+            return b'ReportLab Generated PDF' in header
+        return False
+    finally:
+        bgf.seek(pos)
+
+
+def _bundled_background_for_layout(layout):
+    media_dir = Path(settings.BASE_DIR) / 'plugins/badges/media'
+    if not media_dir.is_dir():
         return None
+    name_lower = layout.name.lower()
+    for pdf_path in sorted(media_dir.glob('*.pdf')):
+        if pdf_path.stem.lower() in name_lower:
+            return open(pdf_path, 'rb')
+    return None
+
+
+def _open_layout_background(layout):
     if isinstance(layout.background, File) and layout.background.name:
         bgf = default_storage.open(layout.background.name, 'rb')
-    else:
-        bgf = open(finders.find('pretixplugins/badges/badge_default_a6l.pdf'), 'rb')
-    return BadgeRenderer(
+        if not _is_placeholder_pdf(bgf):
+            return bgf
+        bgf.close()
+    bundled = _bundled_background_for_layout(layout)
+    if bundled:
+        return bundled
+    return open(finders.find('pretixplugins/badges/badge_default_a6l.pdf'), 'rb')
+
+
+def _renderer(event, layout, version):
+    if layout is None:
+        return None
+
+    token = get_badge_layout_renderer_token(layout)
+    cache_key = (event.pk, layout.pk, version, token)
+    if cache_key in _renderer_cache:
+        return _renderer_cache[cache_key]
+
+    # Drop older entries for this layout so the process-local cache cannot grow
+    # unbounded across repeated edits.
+    stale_keys = [key for key in _renderer_cache if key[0] == event.pk and key[1] == layout.pk]
+    for key in stale_keys:
+        del _renderer_cache[key]
+
+    bgf = _open_layout_background(layout)
+    renderer = BadgeRenderer(
         event,
         layout.layout_data,
         bgf,
         ask_user_fields=(layout.ask_user_fields_data if layout.allow_customization else []),
     )
+    _renderer_cache[cache_key] = renderer
+    return renderer
 
 
 OPTIONS = OrderedDict(
@@ -104,7 +181,7 @@ OPTIONS = OrderedDict(
                 'margins': [0 * mm, 0 * mm, 0 * mm, 0 * mm],
                 'offsets': [
                     pagesizes.portrait(pagesizes.A4)[0] / 2,
-                    pagesizes.portrait(pagesizes.A4)[0] / 2,
+                    pagesizes.portrait(pagesizes.A4)[1] / 2,
                 ],
                 'pagesize': pagesizes.portrait(pagesizes.A4),
             },
@@ -132,7 +209,7 @@ OPTIONS = OrderedDict(
                 'margins': [0 * mm, 0 * mm, 0 * mm, 0 * mm],
                 'offsets': [
                     pagesizes.landscape(pagesizes.A4)[0] / 4,
-                    pagesizes.landscape(pagesizes.A4)[0] / 2,
+                    pagesizes.landscape(pagesizes.A4)[1] / 2,
                 ],
                 'pagesize': pagesizes.landscape(pagesizes.A4),
             },
@@ -196,77 +273,199 @@ OPTIONS = OrderedDict(
 )
 
 
-def render_pdf(event, positions, opt):
-    from pypdf import PdfReader, PdfWriter
+def chunks(items, size):
+    for i in range(0, len(items), size):
+        yield items[i : i + size]
 
-    Renderer._register_fonts()
 
-    renderermap = {
-        bi.product_id: _renderer(event, bi.layout)
-        for bi in BadgeProduct.objects.select_related('layout').filter(product__event=event)
-    }
-    try:
-        default_renderer = _renderer(event, event.badge_layouts.get(default=True))
-    except BadgeLayout.DoesNotExist:
-        default_renderer = None
-    output_pdf_writer = PdfWriter()
+def _fit_badge_to_slot(page, slot_width, slot_height):
+    page_width = float(page.mediabox.width)
+    page_height = float(page.mediabox.height)
+    if page_width <= 0 or page_height <= 0:
+        return None
 
-    any = False
-    npp = opt['cols'] * opt['rows']
+    scale = min(slot_width / page_width, slot_height / page_height)
+    offset_x = (slot_width - page_width * scale) / 2
+    offset_y = (slot_height - page_height * scale) / 2
+    writer = PdfWriter()
+    fitted = writer.add_blank_page(
+        width=Decimal('%.5f' % slot_width),
+        height=Decimal('%.5f' % slot_height),
+    )
+    fitted.merge_transformed_page(
+        page,
+        Transformation().scale(scale, scale).translate(offset_x, offset_y),
+        expand=False,
+    )
+    return fitted
 
-    def render_page(positions):
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=pagesizes.A4)
-        for i, (op, r) in enumerate(positions):
-            offsetx = opt['margins'][3] + (i % opt['cols']) * opt['offsets'][0]
-            offsety = opt['margins'][2] + (opt['rows'] - 1 - i // opt['cols']) * opt['offsets'][1]
-            p.translate(offsetx, offsety)
-            with language(op.order.locale, op.order.event.settings.region):
-                r.draw_page(p, op.order, op, show_page=False)
-            p.translate(-offsetx, -offsety)
 
-        if opt['pagesize']:
-            p.setPageSize(opt['pagesize'])
-        p.showPage()
-        p.save()
-        buffer.seek(0)
-        canvas_pdf_reader = PdfReader(buffer)
-        empty_pdf_page = output_pdf_writer.add_blank_page(
-            width=opt['pagesize'][0] if opt['pagesize'] else positions[0][1].bg_pdf.pages[0].mediabox[2],
-            height=opt['pagesize'][1] if opt['pagesize'] else positions[0][1].bg_pdf.pages[0].mediabox[3],
-        )
-        for i, (op, r) in enumerate(positions):
-            bg_page = copy.copy(r.bg_pdf.pages[0])
-            offsetx = opt['margins'][3] + (i % opt['cols']) * opt['offsets'][0]
-            offsety = opt['margins'][2] + (opt['rows'] - 1 - i // opt['cols']) * opt['offsets'][1]
-            bg_page.add_transformation(Transformation().translate(offsetx, offsety))
-            empty_pdf_page.merge_page(bg_page)
-        empty_pdf_page.merge_page(canvas_pdf_reader.pages[0])
-
-    pagebuffer = []
-    outbuffer = BytesIO()
-    for op in positions:
-        r = renderermap.get(op.product_id, default_renderer)
-        if not r:
+def render_nup_page(nup_pdf: PdfWriter, input_pages, opt: dict):
+    badges_per_page = opt['cols'] * opt['rows']
+    slot_width = float(opt['offsets'][0])
+    slot_height = float(opt['offsets'][1])
+    nup_page = nup_pdf.add_blank_page(
+        width=Decimal('%.5f' % (opt['pagesize'][0])),
+        height=Decimal('%.5f' % (opt['pagesize'][1])),
+    )
+    for i, page in enumerate(input_pages):
+        slot = i % badges_per_page
+        tx = float(opt['margins'][3] + (slot % opt['cols']) * opt['offsets'][0])
+        ty = float(opt['margins'][2] + (opt['rows'] - 1 - (slot // opt['cols'])) * opt['offsets'][1])
+        fitted = _fit_badge_to_slot(page, slot_width, slot_height)
+        if fitted is None:
             continue
-        any = True
-        pagebuffer.append((op, r))
-        if len(pagebuffer) == npp:
-            render_page(pagebuffer)
-            pagebuffer.clear()
+        nup_page.merge_transformed_page(
+            fitted,
+            Transformation().translate(tx, ty),
+            expand=False,
+        )
+    return nup_page
 
-    if pagebuffer:
-        render_page(pagebuffer)
 
-    if not any:
-        raise OrderError(_('None of the selected products is configured to print badges.'))
-    output_pdf_writer.add_metadata(
+def merge_pages(file_paths: list[str], output_file: BinaryIO):
+    merger = PdfWriter()
+    merger.add_metadata(
         {
             '/Title': 'Badges',
             '/Creator': 'eventyay',
         }
     )
-    output_pdf_writer.write(outbuffer)
+    for pdf in file_paths:
+        merger.append(pdf)
+    merger.write(output_file)
+
+
+def render_nup(input_files: list[str], num_pages: int, output_file: BinaryIO, opt: dict):
+    badges_per_page = opt['cols'] * opt['rows']
+    max_nup_pages = 20
+    nup_pdf_files = []
+    temp_dir = None
+    if num_pages > badges_per_page * max_nup_pages:
+        try:
+            temp_dir = tempfile.TemporaryDirectory()
+        except OSError:
+            pass
+
+    try:
+        badges_pdf = PdfReader(input_files.pop(0))
+        offset = 0
+        for i, chunk_indices in enumerate(chunks(list(range(num_pages)), badges_per_page * max_nup_pages)):
+            chunk = []
+            for j in chunk_indices:
+                if j - offset >= len(badges_pdf.pages):
+                    offset += len(badges_pdf.pages)
+                    badges_pdf = PdfReader(input_files.pop(0))
+                chunk.append(badges_pdf.pages[j - offset])
+
+            nup_pdf = PdfWriter()
+            nup_pdf.add_metadata(
+                {
+                    '/Title': 'Badges',
+                    '/Creator': 'eventyay',
+                }
+            )
+
+            for page_chunk in chunks(chunk, badges_per_page):
+                render_nup_page(nup_pdf, page_chunk, opt)
+
+            if temp_dir:
+                file_path = os.path.join(temp_dir.name, f'badges-{i}.pdf')
+                nup_pdf.write(file_path)
+                nup_pdf_files.append(file_path)
+            else:
+                nup_pdf.write(output_file)
+                return
+
+        if temp_dir:
+            merge_pages(nup_pdf_files, output_file)
+    finally:
+        if temp_dir:
+            try:
+                temp_dir.cleanup()
+            except OSError:
+                pass
+
+
+def render_badges(event, positions, opt, apply_output_pagesize=False):
+    from itertools import groupby
+
+    # Always resolve assignments from the database for this render call.
+    reset_badge_layout_assignment_cache(event)
+
+    # Fetched once per render call (not per position) to avoid a cache round-trip per
+    # badge, while still guaranteeing that every render reflects the latest saved design.
+    version = get_badge_layout_version(event)
+    refreshed_layouts = set()
+
+    op_renderers = []
+    for op in positions:
+        layout = get_badge_layout_for_position(event, op)
+        if layout is None:
+            continue
+        if layout.pk not in refreshed_layouts:
+            # Assignment maps can retain older ORM instances; reload persisted fields
+            # once per layout so selected/default content always matches the database.
+            layout.refresh_from_db(fields=list(BADGE_LAYOUT_PERSISTED_FIELDS))
+            refreshed_layouts.add(layout.pk)
+        renderer = _renderer(event, layout, version)
+        if renderer:
+            op_renderers.append((op, renderer))
+
+    if not op_renderers:
+        raise ExportError(_('None of the selected products is configured to print badges.'))
+
+    badge_pdf = PdfWriter()
+    badge_pdf.add_metadata(
+        {
+            '/Title': 'Badges',
+            '/Creator': 'eventyay',
+        }
+    )
+
+    # Group consecutive badges by renderer to minimize Canvas and PdfReader overhead
+    for renderer, group in groupby(op_renderers, key=lambda x: x[1]):
+        ops = [x[0] for x in group]
+        buffer = BytesIO()
+        page = canvas.Canvas(buffer, pagesize=pagesizes.A4)
+
+        for op in ops:
+            with language(op.order.locale, op.order.event.settings.region):
+                renderer.draw_page(page, op.order, op, show_page=False)
+            if apply_output_pagesize and opt['pagesize']:
+                page.setPageSize(opt['pagesize'])
+            page.showPage()
+
+        page.save()
+        for merged_page in renderer.merge_foreground_buffer(buffer):
+            badge_pdf.add_page(merged_page)
+
+    return badge_pdf, len(badge_pdf.pages)
+
+
+def render_pdf(event, positions, opt):
+    Renderer._register_fonts()
+    badges_per_page = opt['cols'] * opt['rows']
+    outbuffer = BytesIO()
+
+    if badges_per_page == 1:
+        badge_pdf, _ = render_badges(event, positions, opt, apply_output_pagesize=True)
+        badge_pdf.write(outbuffer)
+    else:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            page_pdfs = []
+            total_num_pages = 0
+            for position_chunk in chunks(list(positions), 200):
+                badge_pdf, num_pages = render_badges(event, position_chunk, opt)
+                out_pdf_name = os.path.join(tmp_dir, f'chunk-{len(page_pdfs)}.pdf')
+                with open(out_pdf_name, 'wb') as out_pdf:
+                    badge_pdf.write(out_pdf)
+                page_pdfs.append(out_pdf_name)
+                total_num_pages += num_pages
+                del badge_pdf
+
+            render_nup(page_pdfs, total_num_pages, outbuffer, opt)
+
     outbuffer.seek(0)
     return outbuffer
 
@@ -283,12 +482,23 @@ class BadgeExporter(BaseExporter):
                 (
                     'products',
                     forms.ModelMultipleChoiceField(
-                        queryset=self.event.products.annotate(
-                            no_badging=Exists(BadgeProduct.objects.filter(product=OuterRef('pk'), layout__isnull=True))
-                        ).exclude(no_badging=True),
+                        queryset=exclude_explicit_no_badge(self.event.products, BadgeProduct, 'product'),
                         label=_('Limit to products'),
-                        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+                        widget=searchable_scrolling_checkbox_widget(),
                         initial=self.event.products.filter(admission=True),
+                    ),
+                ),
+                (
+                    'vouchers',
+                    forms.ModelMultipleChoiceField(
+                        queryset=exclude_explicit_no_badge(
+                            self.event.vouchers.order_by('code'),
+                            BadgeVoucher,
+                            'voucher',
+                        ),
+                        label=_('Limit to vouchers'),
+                        required=False,
+                        widget=searchable_scrolling_checkbox_widget(),
                     ),
                 ),
                 (
@@ -342,7 +552,7 @@ class BadgeExporter(BaseExporter):
                         + (
                             [
                                 (
-                                    'name:{}'.format(k),
+                                    f'name:{k}',
                                     _('Attendee name: {part}').format(part=label),
                                 )
                                 for k, label, w in name_scheme['fields']
@@ -356,12 +566,15 @@ class BadgeExporter(BaseExporter):
         )
         return d
 
-    def render(self, form_data: dict) -> Tuple[str, str, str]:
+    def render(self, form_data: dict) -> tuple[str, str, str]:
         qs = (
             OrderPosition.objects.filter(order__event=self.event, product_id__in=form_data['products'])
-            .prefetch_related('answers', 'answers__question')
-            .select_related('order', 'product', 'variation', 'addon_to')
+            .prefetch_related('answers', 'answers__question', 'answers__options')
+            .select_related('order', 'order__invoice_address', 'product', 'variation', 'addon_to', 'subevent', 'seat', 'voucher')
         )
+
+        if form_data.get('vouchers'):
+            qs = qs.filter(voucher_id__in=form_data['vouchers'])
 
         if not form_data.get('include_addons'):
             qs = qs.filter(addon_to__isnull=True)
@@ -400,6 +613,9 @@ class BadgeExporter(BaseExporter):
                 .annotate(resolved_name_part=JSONExtract('resolved_name', part))
                 .order_by('resolved_name_part')
             )
+
+        if not qs.exists():
+            return None
 
         outbuffer = render_pdf(self.event, qs, OPTIONS[form_data.get('rendering', 'one')])
         return 'badges.pdf', 'application/pdf', outbuffer.read()

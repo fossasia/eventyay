@@ -8,8 +8,8 @@ prompt.c-channel-browser(@close="$emit('close')", :scrollable="false")
 		scrollbars.channels(y)
 			router-link.channel(v-for="channel of searchedChannels", :to="{name: 'room', params: {roomId: channel.room.id}}", @click="$emit('close')")
 				.channel-info
-					.name {{ channel.room.name }}
-					.description {{ channel.room.description }}
+					.name(v-html="$emojify(channel.room.name)")
+					.description(v-html="$emojify(channel.room.description)")
 				.actions
 					template(v-if="channel.channelJoined")
 						bunt-button#btn-view {{ $t('ChannelBrowser:view:label') }}
@@ -42,7 +42,12 @@ export default {
 		},
 		searchedChannels() {
 			if (!this.search) return this.channels
-			return this.channels.filter(channel => fuzzysearch(this.search.toLowerCase(), channel.room.name.toLowerCase()) || fuzzysearch(this.search.toLowerCase(), channel.room.description?.toLowerCase()))
+			const query = this.search.toLowerCase()
+			return this.channels.filter(channel => {
+				const name = this.$localize(channel.room.name).toLowerCase()
+				const description = this.$localize(channel.room.description).toLowerCase()
+				return fuzzysearch(query, name) || fuzzysearch(query, description)
+			})
 		}
 	}
 }

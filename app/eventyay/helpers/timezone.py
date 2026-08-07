@@ -3,6 +3,8 @@ from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from django.utils.formats import date_format
+
 
 def get_browser_timezone(tz_string: Optional[str], fallback: str = 'UTC') -> ZoneInfo:
     """
@@ -36,3 +38,7 @@ def attach_timezone_to_naive_clock_time(dt_value: datetime, tz: ZoneInfo) -> dat
     dt_naive = dt_value.replace(tzinfo=None)
     return dt_naive.replace(tzinfo=tz)
 
+
+def format_scheduled_datetime(event, scheduled_at):
+    """Format a scheduled_at datetime for display in the event's timezone."""
+    return date_format(scheduled_at.astimezone(event.tz), 'SHORT_DATETIME_FORMAT')

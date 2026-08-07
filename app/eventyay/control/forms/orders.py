@@ -20,6 +20,7 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator
+from eventyay.common.forms.fields import EmailBodyField
 from eventyay.base.forms.questions import WrappedPhoneNumberPrefixWidget
 from eventyay.base.forms.widgets import (
     DatePickerWidget,
@@ -512,27 +513,36 @@ class OrderLocaleForm(forms.ModelForm):
 class OrderMailForm(forms.Form):
     subject = forms.CharField(label=_('Subject'), required=True)
 
-    def _set_field_placeholders(self, fn, base_parameters):
-        phs = ['{%s}' % p for p in sorted(get_available_placeholders(self.order.event, base_parameters).keys())]
-        ht = _('Available placeholders: {list}').format(list=', '.join(phs))
+    def _placeholder_names(self, base_parameters: list[str]) -> list[str]:
+        return sorted(get_available_placeholders(self.order.event, base_parameters).keys())
+
+    def _add_placeholder_help_text(self, fn: str, placeholder_names: list[str]) -> None:
+        phs_display = ['{%s}' % p for p in placeholder_names]
+        ht = _('Available placeholders: {list}').format(list=', '.join(phs_display))
         if self.fields[fn].help_text:
             self.fields[fn].help_text += ' ' + str(ht)
         else:
             self.fields[fn].help_text = ht
-        self.fields[fn].validators.append(PlaceholderValidator(phs))
+        self.fields[fn].validators.append(PlaceholderValidator(phs_display))
 
     def __init__(self, *args, **kwargs):
         order = self.order = kwargs.pop('order')
         super().__init__(*args, **kwargs)
         self.fields['sendto'] = forms.EmailField(label=_('Recipient'), required=True, initial=order.email)
         self.fields['sendto'].widget.attrs['readonly'] = 'readonly'
-        self.fields['message'] = forms.CharField(
+        placeholder_names = self._placeholder_names(['event', 'order'])
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': order.event.organizer.slug, 'event': order.event.slug},
+        )
+        self.fields['message'] = EmailBodyField(
             label=_('Message'),
             required=True,
-            widget=forms.Textarea,
-            initial=order.event.settings.mail_text_order_custom_mail.localize(order.locale),
+            placeholders=placeholder_names,
+            preview_url=preview_url,
+            initial=str(order.event.settings.mail_text_order_custom_mail.localize(order.locale)),
         )
-        self._set_field_placeholders('message', ['event', 'order'])
+        self._add_placeholder_help_text('message', placeholder_names)
 
 
 class OrderPositionMailForm(OrderMailForm):
@@ -540,13 +550,19 @@ class OrderPositionMailForm(OrderMailForm):
         position = self.position = kwargs.pop('position')
         super().__init__(*args, **kwargs)
         self.fields['sendto'].initial = position.attendee_email
-        self.fields['message'] = forms.CharField(
+        placeholder_names = self._placeholder_names(['event', 'order', 'position'])
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': self.order.event.organizer.slug, 'event': self.order.event.slug},
+        )
+        self.fields['message'] = EmailBodyField(
             label=_('Message'),
             required=True,
-            widget=forms.Textarea,
-            initial=self.order.event.settings.mail_text_order_custom_mail.localize(self.order.locale),
+            placeholders=placeholder_names,
+            preview_url=preview_url,
+            initial=str(self.order.event.settings.mail_text_order_custom_mail.localize(self.order.locale)),
         )
-        self._set_field_placeholders('message', ['event', 'order', 'position'])
+        self._add_placeholder_help_text('message', placeholder_names)
 
 
 class OrderRefundForm(forms.Form):

@@ -19,12 +19,9 @@
     {% endcompress %}
 {% endblock scripts %}
 
-{% block page_title %}
-    {{ generic_title }}
-    <span data-dialog-target="#info-dialog" data-toggle="dialog">
-        <i class="fa fa-question-circle-o text-info ml-2"></i>
-    </span>
-{% endblock page_title %}
+{% block header_nav %}
+    {% include "common/includes/header_nav.html" with header_title=generic_title header_title_extra='<span data-dialog-target="#info-dialog" data-toggle="dialog"><i class="fa fa-question-circle-o text-info ml-2"></i></span>' %}
+{% endblock header_nav %}
 
 {% block list_content %}
     <dialog id="info-dialog">
@@ -49,19 +46,19 @@
             <tbody dragsort-url="{{ request.cfp.urls.tracks }}">
                 {% for track in track_list %}
                     <tr dragsort-id="{{ track.id }}">
-                        <td>
+                        <td data-label="{% translate 'Track' %}">
                             <a href="{{ track.urls.edit }}">{{ track.name }}</a>
                             {% if track.requires_access_code %}
                                 <i class="fa fa-lock ml-1" title="{% translate "Requires access code" %}"></i>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="{% translate 'Color' %}">
                             <div class="color-square" style="background: {{ track.color }}"></div>
                         </td>
-                        <td class="numeric">
+                        <td class="numeric" data-label="{% translate 'Proposals' %}">
                             <a href="{{ request.event.orga_urls.submissions }}?track={{ track.id }}">{{ track.submissions.all.count }}</a>
                         </td>
-                        <td class="text-right">
+                        <td class="text-right" data-label="{% translate 'Settings' %}">
                             <button draggable="true" class="btn btn-sm btn-primary mr-1 dragsort-button" title="{% translate "Move item" %}">
                                 <i class="fa fa-arrows"></i>
                             </button>

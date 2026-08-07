@@ -1,27 +1,50 @@
 {% load i18n %}
 {% load urlreplace %}
-{% if is_paginated %}
-    <nav class="text-center">
-        <ul class="pagination">
-            {% if page_obj.has_previous %}
-                <li>
-                    <a href="?{% url_replace request 'page' page_obj.previous_page_number %}">
-                        <span>&laquo;</span>
-                    </a>
+{% if page_obj.paginator.count %}
+    <nav class="text-center pagination-container">
+        <ul class="pagination justify-content-center">
+            {% if is_paginated %}
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% url_replace request 'page' page_obj.previous_page_number %}">
+                            <span>&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+                <li class="page-item page-current disabled">
+                    <span class="page-link">
+                        {% blocktrans trimmed with page=page_obj.number of=page_obj.paginator.num_pages count=page_obj.paginator.count %}
+                            Page {{ page }} of {{ of }} ({{ count }} elements)
+                        {% endblocktrans %}
+                    </span>
                 </li>
-            {% endif %}
-            <li class="page-current"><a>
-                {% blocktrans trimmed with page=page_obj.number of=page_obj.paginator.num_pages %}
-                    Page {{ page }} of {{ of }}
-                {% endblocktrans %}
-            </a></li>
-            {% if page_obj.has_next %}
-                <li>
-                        <a href="?{% url_replace request 'page' page_obj.next_page_number %}">
-                        <span>&raquo;</span>
-                    </a>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% url_replace request 'page' page_obj.next_page_number %}">
+                            <span>&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            {% else %}
+                <li class="page-item page-current disabled">
+                    <span class="page-link">
+                        {% blocktrans trimmed with count=page_obj.paginator.count %}
+                            {{ count }} elements
+                        {% endblocktrans %}
+                    </span>
                 </li>
             {% endif %}
         </ul>
+        {% if page_size and pagination_sizes %}
+            <div class="clearfix">
+                <small>
+                    {% trans "Show per page:" %}
+                </small>
+                {% for size in pagination_sizes %}
+                    <a href="?{% url_replace request 'page_size' size 'page' '1' %}">
+                        {% if page_size == size %}<strong>{% endif %}{{ size }}{% if page_size == size %}</strong>{% endif %}</a>{% if not forloop.last %} |{% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
     </nav>
 {% endif %}

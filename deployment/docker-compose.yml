@@ -52,6 +52,21 @@ services:
       - db
       - redis
 
+  beat:
+    image: eventyay/eventyay-next:${TAG}
+    container_name: eventyay-next-beat
+    entrypoint: celery -A eventyay beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ${DATA_DIR:-./data}/static:/home/app/web/eventyay/static.dist
+      - ${DATA_DIR:-./data}/data:/home/app/web/eventyay/data
+    env_file:
+      - ./.env
+    environment:
+      - MPLCONFIGDIR=/tmp/matplotlib
+    depends_on:
+      - db
+      - redis
+
   db:
     image: postgres:15
     container_name: eventyay-next-db
@@ -80,8 +95,7 @@ services:
       WATCHTOWER_NOTIFICATIONS_HOSTNAME: ${WATCHTOWER_NOTIFICATIONS_HOSTNAME}
       WATCHTOWER_POLL_INTERVAL: 600
       WATCHTOWER_NOTIFICATION_URL: ${WATCHTOWER_NOTIFICATION_URL}
-    command: watchtower eventyay-next-watchtower eventyay-next-web eventyay-next-websocket eventyay-next-worker --cleanup
+    command: watchtower eventyay-next-watchtower eventyay-next-web eventyay-next-websocket eventyay-next-worker eventyay-next-beat --cleanup
 
 volumes:
   rd:
-

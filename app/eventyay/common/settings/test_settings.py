@@ -30,7 +30,7 @@ INSTALLED_APPS.append('tests.dummy_app.PluginApp')  # noqa
 atexit.register(tmpdir.cleanup)
 
 EMAIL_BACKEND = 'django.core.mail.outbox'
-MAIL_FROM = 'orga@orga.org'
+DEFAULT_FROM_EMAIL = 'orga@orga.org'
 
 COMPRESS_ENABLED = COMPRESS_OFFLINE = False
 STORAGES['staticfiles']['BACKEND'] = 'django.contrib.staticfiles.storage.StaticFilesStorage'
@@ -71,6 +71,9 @@ class DisableMigrations:
         return True
 
     def __getitem__(self, item):
+        return None
+
+    def setdefault(self, key, default=None):
         return None
 
 

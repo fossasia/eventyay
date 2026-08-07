@@ -199,7 +199,7 @@ def test_redirect_version_nonexistent_version(client, event):
 @pytest.mark.django_db
 def test_redirect_version_missing_query_param(client, event):
     response = client.get(event.api_urls.schedules + "by-version/")
-    assert response.status_code == 401
+    assert response.status_code == 400
 
 
 @pytest.mark.django_db
@@ -247,6 +247,25 @@ def test_orga_can_release_schedule(client, orga_user_write_token, event, slot):
         assert new_wip_schedule.pk != initial_wip_pk
         assert new_wip_schedule.version is None
         assert event.schedules.count() == initial_schedule_count + 1
+
+
+@pytest.mark.django_db
+def test_orga_can_release_breaks_only_schedule_via_api(client, orga_user_write_token, event, break_slot):
+    with scope(event=event):
+        event.wip_schedule.talks.filter(submission__isnull=False).delete()
+        initial_schedule_count = event.schedules.count()
+
+    release_data = {'version': 'v_breaks_only', 'comment': 'Breaks only release'}
+    response = client.post(
+        event.api_urls.schedules + 'release/',
+        data=json.dumps(release_data),
+        content_type='application/json',
+        headers={'Authorization': f'Token {orga_user_write_token.token}'},
+    )
+    assert response.status_code in (200, 201), response.text
+    with scope(event=event):
+        assert event.schedules.count() == initial_schedule_count + 1
+        assert event.schedules.filter(version='v_breaks_only').exists()
 
 
 @pytest.mark.django_db

@@ -12,6 +12,7 @@ from django.http import (
     HttpResponse,
     HttpResponsePermanentRedirect,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.urls import resolve, reverse
 from django.utils import timezone
@@ -19,6 +20,7 @@ from django.utils.functional import cached_property
 from django.utils.http import urlencode
 from django.utils.translation import get_language, gettext_lazy as _
 from django.views.decorators.cache import cache_page
+from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
 from django_context_decorator import context
 
@@ -32,6 +34,7 @@ from eventyay.agenda.views.utils import (
     is_public_schedule_empty,
     load_starred_ics_token,
     redirect_to_presale_with_warning,
+    starred_sharing_payload,
 )
 from eventyay.common.signals import register_my_data_exporters
 from eventyay.common.urls import get_base_url
@@ -373,14 +376,19 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return ctx
 
 
-@cache_page(60 * 60 * 24)
+@cache_page(60 * 60 * 24, key_prefix='schedule-messages-v4')
 def schedule_messages(request, **kwargs):
-    """This view is cached for a day, as it is small and non-critical, but loaded synchronously."""
+    """Cached for static exports; bump key_prefix when message keys or copy change."""
     strings = {
-        'favs_not_logged_in': _(
-            "You're currently not logged in, so your favourited talks will only be stored locally in your browser."
+        'favs_anonymous_notice': _(
+            'Your favourites can only be saved locally in this browser. '
+            'Please sign in or register to sync starred sessions and use more features. '
+            'Locally saved stars may be lost if you clear your browser data; '
+            'we are not responsible for data loss in this case.'
         ),
-        'favs_not_saved': _('Your favourites could only be saved locally in your browser.'),
+        'favs_not_saved': _(
+            'Could not save favourites in this browser. Please check your browser storage settings.'
+        ),
         'no_matching_options': _('Sorry, no matching options.'),
         'view_changelog': _('View Changelog'),
         'go_to_current_version': _('Go to current version'),
@@ -396,7 +404,8 @@ def schedule_messages(request, **kwargs):
             'You are currently viewing the editable schedule version. It may not match the released version.'
         ),
         'version_warning_wip': _(
-            'You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.'
+            'You are currently viewing the unreleased schedule preview. '
+            'It may change at any time and is not visible to the public.'
         ),
         'version_warning_old': _('You are currently viewing an older schedule version.'),
         'join_room': _('Join room'),
@@ -423,6 +432,10 @@ def schedule_messages(request, **kwargs):
         'downloads': _('Downloads'),
         'starred_by': _('Starred by'),
         'starred': _('Starred'),
+        'show_talk_starrers': _('Share starred sessions'),
+        'show_talk_starrers_tooltip': _(
+            'Make your starred sessions visible to others. You can open someone else\'s starred list only if they have enabled sharing.'
+        ),
         'export': _('Export'),
         'exports': _('Exports'),
         'no_file_provided': _('No file provided'),
@@ -437,14 +450,46 @@ def schedule_messages(request, **kwargs):
         'view_profile': _('View speaker profile'),
         'no_starred_sessions': _('No starred sessions.'),
         'schedule_do_not_record': _('This session will not be recorded.'),
+        'schedule_room_has_interpretation': _('This room has live interpretation.'),
         'back': _('Back'),
         'schedule_pending_secondary': _('Coming soon'),
+        'schedule_speakers_overflow_hint': _('+%(count)s more'),
+        'schedule_speakers_overflow_label': _('+%(count)s more speakers'),
+        'no_schedule_available': _('No schedule has been published yet. Please check back later.'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(
         f'const PRETALX_MESSAGES = {json.dumps(strings)};',
         content_type='application/javascript',
     )
+
+
+@require_http_methods(['GET', 'POST'])
+def starred_sharing_preference(request, event, **kwargs):
+    """Read or update whether the logged-in user shares starred sessions publicly."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'detail': str(_('Authentication required'))}, status=403)
+    if not request.user.has_perm('base.list_schedule', request.event):
+        return JsonResponse({'detail': str(_('Permission denied'))}, status=403)
+
+    if request.method == 'GET':
+        response = JsonResponse(starred_sharing_payload(request.user, request.event))
+    else:
+        try:
+            data = json.loads(request.body.decode() or '{}')
+        except json.JSONDecodeError:
+            return JsonResponse({'detail': str(_('Invalid JSON'))}, status=400)
+
+        show_publicly = data.get('show_publicly')
+        if not isinstance(show_publicly, bool):
+            return JsonResponse({'detail': str(_('Expected boolean show_publicly.'))}, status=400)
+
+        request.user.show_publicly = show_publicly
+        request.user.save(update_fields=['show_publicly'])
+        response = JsonResponse(starred_sharing_payload(request.user, request.event))
+
+    response['Cache-Control'] = 'no-store'
+    return response
 
 
 def talk_sort_key(talk):

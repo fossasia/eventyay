@@ -220,7 +220,10 @@ def _speaker_profile_by_code(event, speaker_code, *, select_related=()):
 
 def public_speakers_list_available(user, event):
     """Whether the public speakers overview page and its nav links may be shown."""
-    return can_list_released_schedule_speakers(user, getattr(event, 'event', event))
+    event_obj = getattr(event, 'event', event)
+    if not can_list_released_schedule_speakers(user, event_obj):
+        return False
+    return event_obj.speakers.exists()
 
 
 def agenda_speakers_page_reachable(user, event):

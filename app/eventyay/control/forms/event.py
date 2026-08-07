@@ -72,6 +72,8 @@ REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT = _(
     'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
     'The "Continue as a Guest" option will not be available for attendees in this event.'
 )
+
+
 ORGANIZER_EMAIL_MODEL_DEFAULT = Event._meta.get_field('email').default
 ORGANIZER_EMAIL_PLACEHOLDER = _('name@example.org')
 
@@ -81,7 +83,7 @@ def apply_organizer_email_placeholder(field):
 
 
 def get_default_organizer_email() -> str:
-    default_email = GlobalSettingsObject().settings.mail_from or settings.MAIL_FROM
+    default_email = GlobalSettingsObject().settings.mail_from or settings.DEFAULT_FROM_EMAIL
     return str(default_email or ORGANIZER_EMAIL_MODEL_DEFAULT).strip()
 
 
@@ -90,11 +92,6 @@ def normalize_organizer_email_initial(email) -> str:
     if cleaned_email in {get_default_organizer_email(), ORGANIZER_EMAIL_MODEL_DEFAULT}:
         return ''
     return cleaned_email
-
-
-def clean_organizer_email(email):
-    cleaned_email = str(email or '').strip()
-    return cleaned_email or get_default_organizer_email()
 
 
 class EventWizardFoundationForm(forms.Form):
@@ -206,7 +203,6 @@ class EventWizardBasicsForm(I18nModelForm):
         fields = [
             'name',
             'slug',
-            'currency',
             'date_from',
             'date_to',
             'presale_start',
@@ -214,7 +210,6 @@ class EventWizardBasicsForm(I18nModelForm):
             'location',
             'geo_lat',
             'geo_lon',
-            'email',
         ]
         field_classes = {
             'date_from': SplitDateTimeField,
@@ -252,14 +247,6 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
         self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
-        self.fields['email'].required = False
-        self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("Attendees can reach you through a contact form. Messages will be forwarded to this address.")
-        email_initial = self.initial.get('email', self.fields['email'].initial)
-        normalized_email = normalize_organizer_email_initial(email_initial)
-        self.initial['email'] = normalized_email
-        self.fields['email'].initial = normalized_email
-        apply_organizer_email_placeholder(self.fields['email'])
 
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
@@ -322,8 +309,6 @@ class EventWizardBasicsForm(I18nModelForm):
             raise forms.ValidationError(self.error_messages['duplicate_slug'], code='duplicate_slug')
         return slug.lower()
 
-    def clean_email(self):
-        return clean_organizer_email(self.cleaned_data.get('email', ''))
 
     @staticmethod
     def has_control_rights(user, organizer):
@@ -424,10 +409,6 @@ class EventWizardDisplayForm(forms.Form):
         super().__init__(*args, **kwargs)
         logo = Event._meta.get_field('logo')
         self.fields['logo'] = ImageField(required=False, label=logo.verbose_name, help_text=logo.help_text)
-        apply_organizer_email_placeholder(self.fields['email'])
-
-    def clean_email(self):
-        return clean_organizer_email(self.cleaned_data.get('email', ''))
 
 
 class EventWizardInitialForm(forms.Form):
@@ -541,10 +522,6 @@ class EventUpdateForm(I18nModelForm):
         kwargs.setdefault('initial', {})
         self.instance = kwargs['instance']
         super().__init__(*args, **kwargs)
-        self.fields['location'].widget.attrs['rows'] = '3'
-        self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
-        self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
-        self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['sales_channels'] = forms.MultipleChoiceField(
             label=self.fields['sales_channels'].label,
             help_text=self.fields['sales_channels'].help_text,
@@ -567,9 +544,6 @@ class EventUpdateForm(I18nModelForm):
         localized_fields = '__all__'
         fields = [
             'currency',
-            'location',
-            'geo_lat',
-            'geo_lon',
             'presale_start',
             'presale_end',
             'sales_channels',
@@ -604,13 +578,9 @@ class EventSettingsForm(SettingsForm):
     )
 
     auto_fields = [
-        'checkout_email_helptext',
         'presale_has_ended_text',
         'voucher_explanation_text',
         'checkout_success_text',
-        'show_dates_on_frontpage',
-        'show_date_to',
-        'show_times',
         'show_products_outside_presale_period',
         'display_net_prices',
         'presale_start_show_date',
@@ -623,8 +593,6 @@ class EventSettingsForm(SettingsForm):
         'waiting_list_phones_asked',
         'waiting_list_phones_required',
         'waiting_list_phones_explanation_text',
-        'max_products_per_order',
-        'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
         'redirect_to_checkout_directly',
@@ -647,7 +615,6 @@ class EventSettingsForm(SettingsForm):
         'attendee_data_explanation_text',
         'order_phone_asked',
         'order_phone_required',
-        'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
         'order_email_asked',
@@ -664,10 +631,14 @@ class EventSettingsForm(SettingsForm):
         'theme_color_background',
         'theme_round_borders',
         'hover_button_color',
+        'video_navigation_background_color',
+        'video_sidebar_text_color',
+        'video_sidebar_hover_color',
         'primary_font',
         'logo_image',
         'logo_image_large',
         'event_logo_image',
+        'event_preview_image',
         'logo_show_title',
         'og_image',
         'menu_label_tickets',
@@ -773,13 +744,9 @@ class GeneralEventSettingsForm(EventSettingsForm):
     """
 
     auto_fields = [
-        'checkout_email_helptext',
         'presale_has_ended_text',
         'voucher_explanation_text',
         'checkout_success_text',
-        'show_dates_on_frontpage',
-        'show_date_to',
-        'show_times',
         'show_products_outside_presale_period',
         'display_net_prices',
         'presale_start_show_date',
@@ -792,8 +759,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'waiting_list_phones_asked',
         'waiting_list_phones_required',
         'waiting_list_phones_explanation_text',
-        'max_products_per_order',
-        'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
         'redirect_to_checkout_directly',
@@ -801,7 +766,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'event_list_type',
         'event_list_available_only',
         'event_info_text',
-        'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
         'allow_modifications',
@@ -863,6 +827,30 @@ class OrderFormSettingsForm(EventSettingsForm):
             set_system_question_field_overrides(self.obj, field_id, {})
 
         return result
+
+
+class OrderFormCustomerFieldSettingsForm(SettingsForm):
+    FIELD_LABELS = {
+        'order_email': _('E-mail'),
+        'order_phone': _('Phone number'),
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.field_id = kwargs.pop('field_id', None)
+        
+        if self.field_id == 'order_email':
+            self.auto_fields = [
+                'order_email_asked_twice',
+                'checkout_email_helptext',
+            ]
+        elif self.field_id == 'order_phone':
+            self.auto_fields = [
+                'checkout_phone_helptext',
+            ]
+        else:
+            self.auto_fields = []
+            
+        super().__init__(*args, **kwargs)
 
 
 class OrderFormDefaultFieldSettingsForm(forms.Form):
@@ -1153,7 +1141,6 @@ class InvoiceSettingsForm(SettingsForm):
         'invoice_additional_text',
         'invoice_footer_text',
         'invoice_eu_currencies',
-        'invoice_logo_image',
     ]
 
     invoice_generate_sales_channels = forms.MultipleChoiceField(
@@ -1417,127 +1404,6 @@ class MailSettingsForm(SettingsForm):
         required=False,
         widget=I18nTextarea,
     )
-    smtp_use_custom = forms.BooleanField(
-        label=_('Use custom email'),
-        help_text=_('All mail related to your event will be sent over your specified email gateway.'),
-        required=False,
-    )
-    send_grid_api_key = forms.CharField(
-        label=_('Sendgrid token'),
-        required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
-    )
-    test_email = forms.CharField(
-        label=_('Send test email to'),
-        help_text=_('Enter one or more email addresses separated by commas to send a test email.'),
-        validators=[multimail_validate],
-        required=False,
-    )
-
-    smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP'))]
-
-    email_vendor = forms.ChoiceField(
-        label=_('Email vendor'),
-        required=False,
-        widget=forms.RadioSelect,
-        choices=smtp_select,
-    )
-    smtp_host = forms.CharField(
-        label=_('Hostname'),
-        required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'mail.example.org'}),
-    )
-    smtp_port = forms.IntegerField(
-        label=_('Port'),
-        required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'e.g. 587, 465, 25, ...'}),
-    )
-    smtp_username = forms.CharField(
-        label=_('Username'),
-        widget=forms.TextInput(attrs={'placeholder': 'myuser@example.org'}),
-        required=False,
-    )
-    smtp_password = forms.CharField(
-        label=_('Password'),
-        required=False,
-        widget=forms.PasswordInput(
-            attrs={
-                'autocomplete': 'new-password'  # see https://bugs.chromium.org/p/chromium/issues/detail?id=370363#c7
-            }
-        ),
-    )
-    smtp_use_tls = forms.BooleanField(
-        label=_('Use STARTTLS'),
-        help_text=_('Commonly enabled on port 587.'),
-        required=False,
-    )
-    smtp_use_ssl = forms.BooleanField(label=_('Use SSL'), help_text=_('Commonly enabled on port 465.'), required=False)
-    @property
-    def changed_data(self):
-        data = super().changed_data
-        if 'test_email' in data:
-            return [d for d in data if d != 'test_email']
-        return data
-
-    def save(self, *args, **kwargs):
-        # test_email should not be persisted as a setting.
-        # HierarkeyForm.save() iterates over self.fields and expects them in self.cleaned_data.
-        # We temporarily remove it from self.fields to ensure it's not saved.
-        f = self.fields.pop('test_email', None)
-        try:
-            return super().save(*args, **kwargs)
-        finally:
-            if f:
-                self.fields['test_email'] = f
-
-    def clean(self):
-        data = super().clean()
-        if not data.get('smtp_use_custom'):
-            gs = GlobalSettingsObject()
-            default_from = gs.settings.mail_from or settings.MAIL_FROM
-            submitted_mail_from = data.get('mail_from')
-            if submitted_mail_from and submitted_mail_from != default_from:
-                self.add_error('mail_from', _('Custom sender email can only be used when "Use custom email" is enabled.'))
-            data['mail_from'] = default_from
-
-        if not data.get('smtp_use_custom'):
-            # If custom email is disabled, we restore all previous custom settings to avoid wiping them
-            for field in ('email_vendor', 'send_grid_api_key', 'smtp_host', 'smtp_port',
-                          'smtp_username', 'smtp_password', 'smtp_use_tls', 'smtp_use_ssl'):
-                if not data.get(field) and self.initial.get(field):
-                    data[field] = self.initial.get(field)
-
-        elif data.get('email_vendor') == 'smtp':
-            # If SMTP is active, preserve SendGrid settings
-            if not data.get('send_grid_api_key') and self.initial.get('send_grid_api_key'):
-                data['send_grid_api_key'] = self.initial.get('send_grid_api_key')
-
-        elif data.get('email_vendor') == 'sendgrid':
-            # If SendGrid is active, preserve SMTP settings
-            for field in ('smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
-                          'smtp_use_tls', 'smtp_use_ssl'):
-                if not data.get(field) and self.initial.get(field):
-                    data[field] = self.initial.get(field)
-
-        # Standard password restoration logic (even if username/password are currently active)
-        if not data.get('smtp_password') and data.get('smtp_username') and self.initial.get('smtp_password'):
-            data['smtp_password'] = self.initial.get('smtp_password')
-
-        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
-            raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
-
-        # Validate email_vendor is selected when custom email is enabled
-        if data.get('smtp_use_custom') and not data.get('email_vendor'):
-            self.add_error('email_vendor', _('This field is required when "Use custom email" is enabled.'))
-
-        # Validate SendGrid token is provided when SendGrid is selected
-        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
-            if not data.get('send_grid_api_key'):
-                msg = _('This field is required when using SendGrid as email vendor.')
-                raise ValidationError({'send_grid_api_key': msg})
-
-        return data
-
     base_context = {
         'mail_text_order_placed': ['event', 'order', 'payment'],
         'mail_text_order_placed_attendee': ['event', 'order', 'position'],
@@ -1783,6 +1649,28 @@ class EventDeleteForm(forms.Form):
 
 
 class QuickSetupForm(I18nForm):
+    currency = forms.ChoiceField(
+        label=_('Event currency'),
+        choices=Event.CURRENCY_CHOICES,
+        required=True,
+    )
+    tax_name = I18nFormField(
+        label=_('Tax name'),
+        help_text=_('e.g. VAT'),
+        required=False,
+        widget=I18nTextInput,
+    )
+    tax_rate = forms.DecimalField(
+        label=_('Tax rate (in %)'),
+        required=False,
+        max_digits=10,
+        decimal_places=2,
+    )
+    tax_price_includes_tax = forms.BooleanField(
+        label=_('The configured product prices include the tax amount'),
+        required=False,
+        initial=True,
+    )
     show_quota_left = forms.BooleanField(
         label=_('Show number of tickets left'),
         help_text=_('Publicly show how many tickets of a certain type are still available.'),
@@ -1865,6 +1753,14 @@ class QuickSetupForm(I18nForm):
         if cleaned_data.get('payment_banktransfer__enabled'):
             provider = BankTransfer(self.obj)
             cleaned_data = provider.settings_form_clean(cleaned_data)
+        
+        tax_name = cleaned_data.get('tax_name')
+        tax_rate = cleaned_data.get('tax_rate')
+        if tax_name and tax_rate is None:
+            self.add_error('tax_rate', _('Please enter a tax rate.'))
+        elif tax_rate is not None and not tax_name:
+            self.add_error('tax_name', _('Please enter a tax name.'))
+            
         return cleaned_data
 
 
@@ -1914,25 +1810,3 @@ class ProductMetaPropertyForm(forms.ModelForm):
         widgets = {'default': forms.TextInput()}
 
 
-class ConfirmTextForm(I18nForm):
-    text = I18nFormField(
-        widget=I18nTextarea,
-        widget_kwargs={'attrs': {'rows': '2'}},
-    )
-
-
-class BaseConfirmTextFormSet(I18nFormSetMixin, forms.BaseFormSet):
-    def __init__(self, *args, **kwargs):
-        event = kwargs.pop('event', None)
-        if event:
-            kwargs['locales'] = event.settings.get('locales')
-        super().__init__(*args, **kwargs)
-
-
-ConfirmTextFormset = formset_factory(
-    ConfirmTextForm,
-    formset=BaseConfirmTextFormSet,
-    can_order=True,
-    can_delete=True,
-    extra=0,
-)

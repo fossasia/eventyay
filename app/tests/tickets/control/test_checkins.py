@@ -338,10 +338,12 @@ def test_manual_checkins_revert(client, checkin_list_env):
         '/control/event/dummy/dummy/checkinlists/{}/'.format(checkin_list_env[6].pk),
         {'checkin': [checkin_list_env[5][3].pk]},
     )
+    assert checkin_list_env[6].checkin_count == 3
     client.post(
         '/control/event/dummy/dummy/checkinlists/{}/'.format(checkin_list_env[6].pk),
         {'checkin': [checkin_list_env[5][3].pk], 'revert': 'true'},
     )
+    assert checkin_list_env[6].checkin_count == 2
     with scopes_disabled():
         assert not checkin_list_env[5][3].checkins.exists()
     assert LogEntry.objects.filter(

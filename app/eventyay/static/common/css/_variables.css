@@ -21,6 +21,7 @@
   --color-header-background: var(--color-primary);
   --color-header-text: var(--color-white);
   --color-header-navigation: var(--color-primary);
+  --color-header-navigation-hover: var(--color-header-navigation);
   --color-secondary: var(--color-grey-medium);
 
   --color-success: var(--color-pretalx);
@@ -48,6 +49,10 @@
   --color-danger: #b23e65;
   --color-danger-text: color-mix(in srgb, var(--color-danger), black 10%);
   --color-danger-text-dark: color-mix(in srgb, var(--color-danger), black 40%);
+
+  --color-positive: #28a745;
+  --color-positive-text: color-mix(in srgb, var(--color-positive), black 10%);
+  --color-positive-text-dark: color-mix(in srgb, var(--color-positive), black 40%);
 
   --color-white: #fff;
   --color-offwhite: #f8f9fa;
