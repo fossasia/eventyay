@@ -885,6 +885,23 @@ class ItemsTest(ItemFormTest):
             q = Quota.objects.get(name__icontains='New Quota')
             assert q.items.filter(pk=i.pk).exists()
 
+    def test_create_defaults_available_until(self):
+        self.event1.date_to = datetime.datetime(2013, 12, 28, 18, 0, tzinfo=datetime.timezone.utc)
+        self.event1.save()
+        doc = self.get_doc('/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug))
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['name_0'] = 'Timed ticket'
+        form_data['default_price'] = '2.00'
+        form_data['quota_option'] = 'none'
+        doc = self.post_doc(
+            '/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug),
+            form_data,
+        )
+        assert doc.select('.alert-success')
+        with scopes_disabled():
+            item = Item.objects.get(name__icontains='Timed ticket')
+            assert item.available_until == self.event1.date_to
+
     def test_order_forms_save_does_not_reset_common_settings(self):
         self.event1.settings.set('frontpage_text', LazyI18nString({'en': 'Presale intro text'}))
         self.event1.settings.set('primary_color', '#8fc93a')
