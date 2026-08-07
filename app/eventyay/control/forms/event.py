@@ -807,8 +807,6 @@ class OrderFormSettingsForm(EventSettingsForm):
         'require_registered_account_for_tickets',
         'include_wikimedia_username',
         'checkout_show_copy_answers_button',
-        'checkout_email_helptext',
-        'checkout_phone_helptext',
     ]
 
     def __init__(self, *args, **kwargs):
@@ -829,6 +827,30 @@ class OrderFormSettingsForm(EventSettingsForm):
             set_system_question_field_overrides(self.obj, field_id, {})
 
         return result
+
+
+class OrderFormCustomerFieldSettingsForm(SettingsForm):
+    FIELD_LABELS = {
+        'order_email': _('E-mail'),
+        'order_phone': _('Phone number'),
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.field_id = kwargs.pop('field_id', None)
+        
+        if self.field_id == 'order_email':
+            self.auto_fields = [
+                'order_email_asked_twice',
+                'checkout_email_helptext',
+            ]
+        elif self.field_id == 'order_phone':
+            self.auto_fields = [
+                'checkout_phone_helptext',
+            ]
+        else:
+            self.auto_fields = []
+            
+        super().__init__(*args, **kwargs)
 
 
 class OrderFormDefaultFieldSettingsForm(forms.Form):
