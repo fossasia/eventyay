@@ -1520,6 +1520,10 @@ class UserFilterForm(FilterForm):
     orders = {
         'fullname': 'fullname',
         'email': 'email',
+        'active': 'is_active',
+        'verified': 'is_email_verified',
+        'admin': 'is_staff',
+        'spam': 'is_spam',
     }
     status = forms.ChoiceField(
         label=_('Status'),

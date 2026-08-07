@@ -73,10 +73,26 @@
                         <a href="?{% url_replace request 'ordering' 'fullname' %}"><i class="fa fa-caret-up"></i></a>
                     </th>
                     <th>{% trans "Video username" %}</th>
-                    <th class="text-center">{% trans "Active" %}</th>
-                    <th class="text-center">{% trans "Verified" %}</th>
-                    <th class="text-center">{% trans "Admin" %}</th>
-                    <th class="text-center">{% trans "Mark as Spam" %}</th>
+                    <th class="text-center">
+                        {% trans "Active" %}
+                        <a href="?{% url_replace request 'ordering' '-active' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'active' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
+                    <th class="text-center">
+                        {% trans "Verified" %}
+                        <a href="?{% url_replace request 'ordering' '-verified' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'verified' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
+                    <th class="text-center">
+                        {% trans "Admin" %}
+                        <a href="?{% url_replace request 'ordering' '-admin' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'admin' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
+                    <th class="text-center">
+                        {% trans "Mark as Spam" %}
+                        <a href="?{% url_replace request 'ordering' '-spam' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'spam' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
                     <th class="text-nowrap">
                         {% trans "Member Since" %}
                         <span class="text-muted small" data-browser-timezone-label></span>
