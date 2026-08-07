@@ -101,8 +101,8 @@ class EventWizardFoundationForm(forms.Form):
         widget=MultipleLanguagesWidget,
         help_text=_(
             "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
-            "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
-            "event's default language instead."
+            "these languages. Drag and drop selected languages to reorder them — the first language (bold border) "
+            "is used as your event's default language."
         ),
     )
     has_subevents = forms.BooleanField(
@@ -284,10 +284,6 @@ class EventWizardBasicsForm(I18nModelForm):
 
     def clean(self):
         data = super().clean()
-        # If locale is not set or is not among the selected locales, fall back to
-        # the first selected locale.  This supports the new creation UX where the
-        # "Default language" dropdown is removed and the value is derived from the
-        # order of the "Event languages" tray (managed by JavaScript).
         if data.get('locale') not in self.locales:
             if self.locales:
                 data['locale'] = self.locales[0]

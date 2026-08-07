@@ -2,7 +2,7 @@
     "use strict";
 
     var currentLocaleOrder = [];
-    var draggedLocale = null;
+    var draggedCode = null;
 
     function organizerSlugOptions() {
         var data = document.getElementById("event-create-organizers");
@@ -36,12 +36,10 @@
         var checkedLocales = getCheckedLocalesFromDOM();
         var checkedSet = new Set(checkedLocales);
 
-        // Remove unselected locales
         currentLocaleOrder = currentLocaleOrder.filter(function (code) {
             return checkedSet.has(code);
         });
 
-        // Add newly selected locales to the end
         checkedLocales.forEach(function (code) {
             if (currentLocaleOrder.indexOf(code) === -1) {
                 currentLocaleOrder.push(code);
@@ -77,79 +75,72 @@
         return code;
     }
 
-    function renderOrderTray() {
-        var wrapper = document.getElementById("language-order-wrapper");
-        var tray = document.getElementById("language-order-tray");
-        if (!wrapper || !tray) {
+    function renderLanguageBadges() {
+        var badgesContainer = document.querySelector('[data-language-grid-badges]');
+        if (!badgesContainer) {
             return;
         }
 
         updateLocaleOrderList();
-
-        if (currentLocaleOrder.length === 0) {
-            wrapper.style.display = "none";
-            tray.replaceChildren();
-            return;
-        }
-
-        wrapper.style.display = "block";
-        tray.replaceChildren();
+        badgesContainer.replaceChildren();
 
         currentLocaleOrder.forEach(function (code, index) {
-            var item = document.createElement("div");
-            item.className = "language-order-item";
-            item.draggable = true;
-            item.dataset.locale = code;
+            var badge = document.createElement("span");
+            badge.className = "language-grid-badge" + (index === 0 ? " is-default-language" : "");
+            badge.draggable = true;
+            badge.dataset.code = code;
 
             var handle = document.createElement("span");
             handle.className = "drag-handle";
             handle.textContent = "⠿";
-            item.appendChild(handle);
+            badge.appendChild(handle);
 
-            if (index === 0) {
-                var badge = document.createElement("span");
-                badge.className = "label label-primary default-badge";
-                badge.textContent = "Default";
-                item.appendChild(badge);
-            }
+            var textSpan = document.createElement("span");
+            textSpan.textContent = getLanguageLabel(code);
+            badge.appendChild(textSpan);
 
-            var nameSpan = document.createElement("span");
-            nameSpan.textContent = getLanguageLabel(code);
-            item.appendChild(nameSpan);
-
-            item.addEventListener("dragstart", function (e) {
-                draggedLocale = code;
-                item.classList.add("dragging");
+            badge.addEventListener("dragstart", function (e) {
+                draggedCode = code;
+                badge.classList.add("dragging");
                 e.dataTransfer.effectAllowed = "move";
                 e.dataTransfer.setData("text/plain", code);
             });
 
-            item.addEventListener("dragend", function () {
-                draggedLocale = null;
-                item.classList.remove("dragging");
+            badge.addEventListener("dragend", function () {
+                draggedCode = null;
+                badge.classList.remove("dragging");
             });
 
-            item.addEventListener("dragover", function (e) {
+            badge.addEventListener("dragover", function (e) {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = "move";
             });
 
-            item.addEventListener("drop", function (e) {
+            badge.addEventListener("drop", function (e) {
                 e.preventDefault();
-                if (!draggedLocale || draggedLocale === code) {
+                if (!draggedCode || draggedCode === code) {
                     return;
                 }
-                var fromIndex = currentLocaleOrder.indexOf(draggedLocale);
+                var fromIndex = currentLocaleOrder.indexOf(draggedCode);
                 var toIndex = currentLocaleOrder.indexOf(code);
                 if (fromIndex !== -1 && toIndex !== -1) {
                     currentLocaleOrder.splice(fromIndex, 1);
-                    currentLocaleOrder.splice(toIndex, 0, draggedLocale);
+                    currentLocaleOrder.splice(toIndex, 0, draggedCode);
                     syncLocaleOrder();
                 }
             });
 
-            tray.appendChild(item);
+            badgesContainer.appendChild(badge);
         });
+
+        var countLabel = document.querySelector('[data-language-grid-count]');
+        if (countLabel) {
+            if (currentLocaleOrder.length === 0) {
+                countLabel.style.display = "";
+            } else {
+                countLabel.style.display = "none";
+            }
+        }
     }
 
     function syncLocaleOrder() {
@@ -157,7 +148,7 @@
         if (hiddenLocaleInput) {
             hiddenLocaleInput.value = currentLocaleOrder[0] || "";
         }
-        renderOrderTray();
+        renderLanguageBadges();
     }
 
     function updateDefaultLanguageChoices() {
