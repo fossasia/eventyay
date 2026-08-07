@@ -83,7 +83,7 @@ def apply_organizer_email_placeholder(field):
 
 
 def get_default_organizer_email() -> str:
-    default_email = GlobalSettingsObject().settings.mail_from or settings.MAIL_FROM
+    default_email = GlobalSettingsObject().settings.mail_from or settings.DEFAULT_FROM_EMAIL
     return str(default_email or ORGANIZER_EMAIL_MODEL_DEFAULT).strip()
 
 
@@ -578,13 +578,9 @@ class EventSettingsForm(SettingsForm):
     )
 
     auto_fields = [
-        'checkout_email_helptext',
         'presale_has_ended_text',
         'voucher_explanation_text',
         'checkout_success_text',
-        'show_dates_on_frontpage',
-        'show_date_to',
-        'show_times',
         'show_products_outside_presale_period',
         'display_net_prices',
         'presale_start_show_date',
@@ -597,8 +593,6 @@ class EventSettingsForm(SettingsForm):
         'waiting_list_phones_asked',
         'waiting_list_phones_required',
         'waiting_list_phones_explanation_text',
-        'max_products_per_order',
-        'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
         'redirect_to_checkout_directly',
@@ -621,7 +615,6 @@ class EventSettingsForm(SettingsForm):
         'attendee_data_explanation_text',
         'order_phone_asked',
         'order_phone_required',
-        'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
         'order_email_asked',
@@ -751,13 +744,9 @@ class GeneralEventSettingsForm(EventSettingsForm):
     """
 
     auto_fields = [
-        'checkout_email_helptext',
         'presale_has_ended_text',
         'voucher_explanation_text',
         'checkout_success_text',
-        'show_dates_on_frontpage',
-        'show_date_to',
-        'show_times',
         'show_products_outside_presale_period',
         'display_net_prices',
         'presale_start_show_date',
@@ -770,8 +759,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'waiting_list_phones_asked',
         'waiting_list_phones_required',
         'waiting_list_phones_explanation_text',
-        'max_products_per_order',
-        'reservation_time',
         'show_variations_expanded',
         'hide_sold_out',
         'redirect_to_checkout_directly',
@@ -779,7 +766,6 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'event_list_type',
         'event_list_available_only',
         'event_info_text',
-        'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
         'allow_modifications',
@@ -841,6 +827,30 @@ class OrderFormSettingsForm(EventSettingsForm):
             set_system_question_field_overrides(self.obj, field_id, {})
 
         return result
+
+
+class OrderFormCustomerFieldSettingsForm(SettingsForm):
+    FIELD_LABELS = {
+        'order_email': _('E-mail'),
+        'order_phone': _('Phone number'),
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.field_id = kwargs.pop('field_id', None)
+        
+        if self.field_id == 'order_email':
+            self.auto_fields = [
+                'order_email_asked_twice',
+                'checkout_email_helptext',
+            ]
+        elif self.field_id == 'order_phone':
+            self.auto_fields = [
+                'checkout_phone_helptext',
+            ]
+        else:
+            self.auto_fields = []
+            
+        super().__init__(*args, **kwargs)
 
 
 class OrderFormDefaultFieldSettingsForm(forms.Form):
@@ -1131,7 +1141,6 @@ class InvoiceSettingsForm(SettingsForm):
         'invoice_additional_text',
         'invoice_footer_text',
         'invoice_eu_currencies',
-        'invoice_logo_image',
     ]
 
     invoice_generate_sales_channels = forms.MultipleChoiceField(
@@ -1786,25 +1795,3 @@ class ProductMetaPropertyForm(forms.ModelForm):
         widgets = {'default': forms.TextInput()}
 
 
-class ConfirmTextForm(I18nForm):
-    text = I18nFormField(
-        widget=I18nTextarea,
-        widget_kwargs={'attrs': {'rows': '2'}},
-    )
-
-
-class BaseConfirmTextFormSet(I18nFormSetMixin, forms.BaseFormSet):
-    def __init__(self, *args, **kwargs):
-        event = kwargs.pop('event', None)
-        if event:
-            kwargs['locales'] = event.settings.get('locales')
-        super().__init__(*args, **kwargs)
-
-
-ConfirmTextFormset = formset_factory(
-    ConfirmTextForm,
-    formset=BaseConfirmTextFormSet,
-    can_order=True,
-    can_delete=True,
-    extra=0,
-)

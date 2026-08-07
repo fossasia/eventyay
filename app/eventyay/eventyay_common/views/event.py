@@ -469,7 +469,6 @@ class EventCreateView(TemplateView):
             default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
 
             ticketing_plugins = [
-                'eventyay.plugins.ticketoutputpdf',
                 'eventyay.plugins.banktransfer',
                 'eventyay.plugins.manualpayment',
             ]
@@ -683,6 +682,13 @@ class EventUpdate(
         )
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
+
+        if self.sform.has_changed():
+            self.request.event.log_action(
+                'eventyay.event.settings',
+                user=self.request.user,
+                data={k: self.request.event.settings.get(k) for k in self.sform.changed_data},
+            )
 
         has_updates = any(
             (

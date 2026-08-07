@@ -47,6 +47,7 @@ from eventyay.control.permissions import (
 from eventyay.control.signals import nav_organizer
 from eventyay.control.tasks import delete_organizer_data
 from eventyay.control.views import PaginationMixin
+from eventyay.eventyay_common.views.organizer_analytics import OrganizerAnalyticsView
 from eventyay.helpers.stripe_utils import (
     create_setup_intent,
     get_payment_method_info,
@@ -342,8 +343,7 @@ class OrganizerSettingsFormView(OrganizerDetailViewMixin, OrganizerPermissionReq
             )
             return self.get(request)
 
-
-class OrganizerDashboard(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, TemplateView):
+class OrganizerDashboard(OrganizerDetailViewMixin, OrganizerAnalyticsView):
     template_name = 'eventyay_common/organizers/dashboard.html'
     permission = None
 
@@ -354,6 +354,14 @@ class OrganizerDashboard(OrganizerDetailViewMixin, OrganizerPermissionRequiredMi
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
+        ctx['has_any_analytics'] = any([
+            ctx.get('has_orders'),
+            ctx.get('has_proposals'),
+            ctx.get('show_checkins'),
+            ctx.get('has_attendance'),
+            ctx.get('has_email_engagement'),
+            ctx.get('has_followers'),
+        ])
         return ctx
 
 

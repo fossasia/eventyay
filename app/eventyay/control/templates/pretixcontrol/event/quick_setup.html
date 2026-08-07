@@ -7,18 +7,17 @@
     {% if request.method == "GET" %}
         <div class="quick-setup-step">
             <div class="quick-icon">
-                <span class="fa fa-fw fa-check-circle text-success"></span>
+                <span class="fa fa-fw fa-magic text-muted"></span>
             </div>
             <div class="quick-content">
 
-                <h2>{% trans "Congratulations!" %}</h2>
+                <h2>{% trans "Ticketing Quickstart" %}</h2>
                 <p>
-                    <strong>{% trans "You just created an event!" %}</strong>
+                    {% trans "Create your first ticket products here." %}
                 </p>
                 <p>
                     {% blocktrans trimmed %}
-                        You can scroll down and create your first ticket products quickly, or you can use the navigation
-                        on the left to modify the settings of your event in much more detail.
+                        You can configure more ticket, product, payment, tax, order form, and check-in options from the menu on the left.
                     {% endblocktrans %}
                 </p>
                 <div class="clearfix"></div>

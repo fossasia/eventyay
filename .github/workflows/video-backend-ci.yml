@@ -30,14 +30,14 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system packages (gettext)
         run: |
           sudo apt-get update
           sudo apt-get install -y gettext
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -62,9 +62,9 @@ jobs:
       run:
         working-directory: app/eventyay/webapp/video
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
@@ -104,14 +104,14 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system packages (gettext)
         run: |
           sudo apt-get update
           sudo apt-get install -y gettext
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -177,7 +177,7 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system packages (gettext + redis-tools)
         run: |
@@ -186,7 +186,7 @@ jobs:
           # postgresql-client provides pg_isready on ubuntu-latest (often already present, but keep it explicit).
           sudo apt-get install -y gettext redis-tools curl postgresql-client
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 

@@ -9,12 +9,6 @@ class TicketOutputPdfApp(AppConfig):
     name = 'eventyay.plugins.ticketoutputpdf'
     verbose_name = _('PDF ticket output')
 
-    class EventyayPluginMeta:
-        name = _('PDF ticket output')
-        version = version
-        category = 'FORMAT'
-        featured = True
-        description = _('This plugin allows you to print out tickets as PDF files')
 
     def ready(self):
         from . import signals  # NOQA

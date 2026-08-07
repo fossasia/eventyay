@@ -40,6 +40,7 @@ from eventyay.helpers.thumb import get_thumbnail
 from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.presale.views.cart import get_or_create_cart_id
 from eventyay.presale.views.event import (
+    event_has_redeemable_voucher_products,
     get_grouped_products,
     product_group_by_category,
 )
@@ -793,11 +794,11 @@ class WidgetAPIProductList(EventListMixin, View):
 
         data['has_seating_plan'] = ev.seating_plan is not None
 
-        vouchers_exist = self.request.event.get_cache().get('vouchers_exist')
-        if vouchers_exist is None:
-            vouchers_exist = self.request.event.vouchers.exists()
-            self.request.event.get_cache().set('vouchers_exist', vouchers_exist)
-        data['vouchers_exist'] = vouchers_exist
+        data['vouchers_exist'] = event_has_redeemable_voucher_products(
+            request.event,
+            self.subevent,
+            channel=request.sales_channel.identifier,
+        )
 
         if 'cart_id' not in request.GET:
             cache.set(cache_key, data, 10)
