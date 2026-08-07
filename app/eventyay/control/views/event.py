@@ -1655,7 +1655,23 @@ class QuickSetupView(FormView):
 
         products = []
         category = None
-        tax_rule = self.request.event.tax_rules.first()
+        if form.cleaned_data.get('tax_name') and form.cleaned_data.get('tax_rate') is not None:
+            tax_rule = self.request.event.tax_rules.create(
+                name=form.cleaned_data['tax_name'],
+                rate=form.cleaned_data['tax_rate'],
+                price_includes_tax=form.cleaned_data.get('tax_price_includes_tax', True),
+            )
+            tax_rule.log_action(
+                'eventyay.event.taxrule.added',
+                user=self.request.user,
+                data={
+                    'name': str(tax_rule.name),
+                    'rate': str(tax_rule.rate),
+                    'price_includes_tax': tax_rule.price_includes_tax,
+                },
+            )
+        else:
+            tax_rule = self.request.event.tax_rules.first()
         if any(f not in self.formset.deleted_forms for f in self.formset):
             category = self.request.event.categories.create(name=LazyI18nString.from_gettext(gettext('Tickets')))
             category.log_action(
