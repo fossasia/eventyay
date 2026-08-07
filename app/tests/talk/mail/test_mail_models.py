@@ -14,7 +14,7 @@ from eventyay.common.exceptions import SendMailException
     (
         ("1", "a"),
         ("2", "b"),
-        ("3", "3"),
+        ("3", "{3}"),
     ),
 )
 def test_tolerant_dict(key, value):
