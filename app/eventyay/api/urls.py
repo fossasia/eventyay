@@ -15,6 +15,7 @@ from .views import (
     device,
     event,
     exporters,
+    health,
     mail,
     oauth,
     order,
@@ -235,6 +236,11 @@ urlpatterns = [
     path('upload', upload.UploadView.as_view(), name='upload'),
     path('me', user.MeView.as_view(), name='user.me'),
     path('version', version.VersionView.as_view(), name='version'),
+    path(
+        'checkin/health/',
+        health.CheckinHealthView.as_view(),
+        name='checkin.health',
+    ),
     path(
         'billing-testing/<task>',
         BillingInvoicePreview.as_view(),
