@@ -82,6 +82,7 @@ from eventyay.control.permissions import (
     EventPermissionRequiredMixin,
     event_permission_required,
 )
+from eventyay.control.views.event import EventSettingsFormView
 from eventyay.control.signals import product_forms, product_formsets
 from eventyay.helpers.models import modelcopy
 
@@ -1883,5 +1884,36 @@ class OrderFormDefaultFieldSettings(EventPermissionRequiredMixin, FormView):
                 'organizer': self.request.event.organizer.slug,
                 'event': self.request.event.slug,
                 'field': self.kwargs['field'],
+            },
+        )
+
+
+class OrderFormCustomerFieldSettings(EventSettingsFormView):
+    template_name = 'pretixcontrol/items/orderform_customer_field_settings.html'
+    permission = 'can_change_items'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['field_id'] = self.kwargs.get('field')
+        return kwargs
+
+    def get_form_class(self):
+        from eventyay.control.forms.event import OrderFormCustomerFieldSettingsForm
+        return OrderFormCustomerFieldSettingsForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        field_id = self.kwargs.get('field')
+        from eventyay.control.forms.event import OrderFormCustomerFieldSettingsForm
+        context['field_id'] = field_id
+        context['field_label'] = OrderFormCustomerFieldSettingsForm.FIELD_LABELS.get(field_id, field_id)
+        return context
+
+    def get_success_url(self):
+        return reverse(
+            'control:event.products.orderforms',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
             },
         )
