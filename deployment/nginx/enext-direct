@@ -1,3 +1,13 @@
+upstream eventyay_public {
+	server 127.0.0.1:8000;
+	keepalive 16;
+}
+
+upstream eventyay_checkin {
+	server 127.0.0.1:8002;
+	keepalive 8;
+}
+
 server {
 	server_name <SERVER_NAME>;
 
@@ -61,16 +71,27 @@ server {
 		return 301 /ev/$1;
 	}
 
-	# Widget embedded API requests - route to gunicorn without stripping CORS
+	# Widget embedded API requests - route to public gunicorn without stripping CORS
 	location ~ /widgets?/ {
-		proxy_pass http://127.0.0.1:8000;
+		proxy_pass http://eventyay_public;
 		proxy_set_header Host $http_host;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto $scheme;
 		proxy_redirect off;
 	}
 
-	# Regular HTTP requests - route to gunicorn
+	# Check-in, badge, device, and organizer admin → dedicated check-in workers
+	# Isolated from public schedule traffic to prevent worker starvation (#4605)
+	location ~ ^/(api/v1/(organizers/[^/]+/(checkin|devices|events/[^/]+/(checkinlists|orderpositions/\d+/download/badge))|device/|checkin/)|control/) {
+		proxy_pass http://eventyay_checkin;
+		proxy_set_header Host $http_host;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_redirect off;
+		proxy_read_timeout 30s;
+	}
+
+	# Regular HTTP requests - route to public gunicorn
 	location / {
 		add_header Referrer-Policy same-origin always;
 
@@ -102,7 +123,7 @@ server {
 		proxy_hide_header Access-Control-Allow-Headers;
 		proxy_hide_header Access-Control-Allow-Methods;
 		proxy_hide_header Access-Control-Expose-Headers;
-		proxy_pass http://127.0.0.1:8000;
+		proxy_pass http://eventyay_public;
 		proxy_set_header Host $http_host;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto $scheme;
