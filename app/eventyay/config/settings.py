@@ -1350,6 +1350,10 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'UNICODE_JSON': False,
+    'DEFAULT_THROTTLE_RATES': {
+        'checkin': None,              # Unlimited for authenticated check-in devices
+        'public_browsing': '60/minute',  # Rate-limit anonymous public browsing
+    },
 }
 
 SPECTACULAR_SETTINGS = {

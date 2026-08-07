@@ -58,6 +58,7 @@ from eventyay.base.services.checkin import (
     SQLLogic,
     perform_checkin,
 )
+from eventyay.api.throttles import CheckinEndpointThrottle
 from eventyay.consts import SizeKey
 from eventyay.helpers.database import FixedOrderBy
 
@@ -87,6 +88,7 @@ class CheckinListViewSet(viewsets.ModelViewSet):
     queryset = CheckinList.objects.none()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = CheckinListFilter
+    throttle_classes = [CheckinEndpointThrottle]
     permission = (
         'can_view_orders',
         'can_checkin_orders',
@@ -1045,6 +1047,8 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class CheckinRedeemView(views.APIView):
+    throttle_classes = [CheckinEndpointThrottle]
+
     def post(self, request, *args, **kwargs):
         auth = self.request.auth
         user = self.request.user
