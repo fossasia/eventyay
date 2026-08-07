@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import (
     Count,
     Exists,
@@ -807,7 +807,7 @@ class OrderAnonymize(OrderView):
                 self.request,
                 _('The ticket sales and personal attendee data for this order have been anonymized.')
             )
-        except Exception:
+        except (DatabaseError, ValidationError):
             logger.exception('Failed to anonymize order %s', self.order.code)
             messages.error(self.request, _('An error occurred while anonymizing the order ticketing data.'))
         return redirect(self.get_order_url())

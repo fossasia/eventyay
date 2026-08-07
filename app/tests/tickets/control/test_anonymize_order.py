@@ -1,8 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 
-import pytest
-from django.test import TestCase, override_settings
+from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 

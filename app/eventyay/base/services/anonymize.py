@@ -1,14 +1,16 @@
 import json
+import logging
 from django.db import transaction
 from eventyay.base.models import (
     CachedCombinedTicket,
     CachedTicket,
     InvoiceAddress,
     Order,
-    OrderPosition,
     QuestionAnswer,
 )
 from eventyay.base.shredder import shred_log_fields
+
+logger = logging.getLogger(__name__)
 
 
 @transaction.atomic
@@ -85,7 +87,7 @@ def anonymize_order(order: Order, user=None):
             try:
                 ans.file.delete(save=False)
             except Exception:
-                pass
+                logger.warning('Failed to delete question answer file: %s', ans.file, exc_info=True)
             ans.file = None
         ans.answer = "█"
         ans.save(update_fields=['answer', 'file'])
