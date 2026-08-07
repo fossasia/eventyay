@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.core import context
+from allauth.core.exceptions import ImmediateHttpResponse
 from django.conf import settings
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponseRedirect
@@ -57,7 +58,9 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         # Reject login for accounts marked as spam.
         if user.is_spam:
             messages.error(request, SPAM_ACCOUNT_ERROR)
-            return HttpResponseRedirect(reverse('eventyay_common:auth.login'))
+            raise ImmediateHttpResponse(
+                HttpResponseRedirect(reverse('eventyay_common:auth.login'))
+            )
         return super().pre_login(
             request,
             user,
