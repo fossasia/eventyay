@@ -2741,7 +2741,7 @@ class Event(
         that concern this event."""
 
         return self.organizer.teams.filter(
-            models.Q(all_events=True) | models.Q(models.Q(all_events=False) & models.Q(limit_events__in=[self]))
+            models.Q(all_events=True) | models.Q(models.Q(all_events=False) & models.Q(limit_events=self))
         ).distinct()
 
     @cached_property
