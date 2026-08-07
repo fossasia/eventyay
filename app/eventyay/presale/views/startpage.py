@@ -168,7 +168,8 @@ class UpcomingEventsView(PaginationMixin, ListView):
         qs = (
             Event.objects.select_related('organizer')
             .prefetch_related('_settings_objects')
-            .filter(live=True, startpage_visible=True, startpage_featured=False)
+            .filter(live=True)
+            .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
             .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
             .filter(testmode=False)
             .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
@@ -195,7 +196,8 @@ class PastEventsView(PaginationMixin, ListView):
         qs = (
             Event.objects.select_related('organizer')
             .prefetch_related('_settings_objects')
-            .filter(live=True, startpage_visible=True)
+            .filter(live=True)
+            .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
             .filter(Q(date_to__lt=today) | Q(date_to__isnull=True, date_from__lt=today))
             .filter(testmode=False)
             .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')

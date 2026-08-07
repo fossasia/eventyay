@@ -1654,6 +1654,23 @@ class QuickSetupForm(I18nForm):
         choices=Event.CURRENCY_CHOICES,
         required=True,
     )
+    tax_name = I18nFormField(
+        label=_('Tax name'),
+        help_text=_('e.g. VAT'),
+        required=False,
+        widget=I18nTextInput,
+    )
+    tax_rate = forms.DecimalField(
+        label=_('Tax rate (in %)'),
+        required=False,
+        max_digits=10,
+        decimal_places=2,
+    )
+    tax_price_includes_tax = forms.BooleanField(
+        label=_('The configured product prices include the tax amount'),
+        required=False,
+        initial=True,
+    )
     show_quota_left = forms.BooleanField(
         label=_('Show number of tickets left'),
         help_text=_('Publicly show how many tickets of a certain type are still available.'),
@@ -1736,6 +1753,14 @@ class QuickSetupForm(I18nForm):
         if cleaned_data.get('payment_banktransfer__enabled'):
             provider = BankTransfer(self.obj)
             cleaned_data = provider.settings_form_clean(cleaned_data)
+        
+        tax_name = cleaned_data.get('tax_name')
+        tax_rate = cleaned_data.get('tax_rate')
+        if tax_name and tax_rate is None:
+            self.add_error('tax_rate', _('Please enter a tax rate.'))
+        elif tax_rate is not None and not tax_name:
+            self.add_error('tax_name', _('Please enter a tax name.'))
+            
         return cleaned_data
 
 
