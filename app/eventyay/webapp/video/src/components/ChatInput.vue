@@ -26,6 +26,9 @@ bunt-input-outline-container.c-chat-input
 					.user(:class="{selected: index === autocomplete.selected}", :title="option.profile.display_name", @mouseover="selectMention(index)", @click.stop="handleMention")
 						avatar(:user="option", :size="24")
 						.name {{ option.profile.display_name }}
+				button.load-more(v-if="autocomplete.nextPage", type="button", :disabled="autocomplete.loading", @click.stop="loadMoreMentionResults")
+					bunt-progress-circular(v-if="autocomplete.loading", size="small")
+					template(v-else) {{ $t('Exhibition:more:label') }}
 			bunt-progress-circular(v-else, size="large", :page="true")
 </template>
 <script>
@@ -47,6 +50,7 @@ import { nativeToOps } from 'lib/emoji'
 const Delta = Quill.import('delta')
 const MENTION_BOUNDARIES = new Set([' ', '\n', '\t', '(', '[', '{', '<', '.', ',', ';', ':', '!', '?', '"', '\'', '`'])
 const MENTION_SEARCH_STOP_CHARS = new Set(['(', '[', '{', '<', '.', ',', ';', ':', '!', '?', '"', '\'', '`', '@'])
+const MENTION_SEARCH_DEBOUNCE_MS = 250
 
 function getMentionMatch(text) {
 	let index = text.length - 1
@@ -73,6 +77,7 @@ export default {
 			uploading: false,
 			autocomplete: null,
 			autocompleteSearchSequence: 0,
+			autocompleteSearchTimeout: null,
 			autocompleteUpdateTimeout: null
 		}
 	},
@@ -89,19 +94,10 @@ export default {
 		}
 	},
 	watch: {
-		async 'autocomplete.search'(search) {
-			// TODO debounce?
+		'autocomplete.search'(search) {
 			if (!this.autocomplete) return
 			if (this.autocomplete.type === 'mention') {
-				const sequence = ++this.autocompleteSearchSequence
-				const { results } = await api.call('user.list.search', {search_term: search, page: 1, include_banned: false})
-				if (sequence !== this.autocompleteSearchSequence || !this.autocomplete || this.autocomplete.search !== search) return
-				this.autocomplete.options = results
-				this.autocomplete.selected = results.length ? Math.min(this.autocomplete.selected, results.length - 1) : 0
-				// if (results.length === 1) {
-				// 	this.autocomplete.selected = 0
-				// 	this.handleMention()
-				// }
+				this.scheduleMentionSearch(search)
 			}
 		}
 	},
@@ -148,6 +144,7 @@ export default {
 		}
 	},
 	unmounted() {
+		window.clearTimeout(this.autocompleteSearchTimeout)
 		window.clearTimeout(this.autocompleteUpdateTimeout)
 	},
 	methods: {
@@ -173,11 +170,38 @@ export default {
 						length: caretPos - mentionIndex
 					},
 					options: null,
-					selected: 0
+					selected: 0,
+					loading: false,
+					nextPage: null
 				}
 			} else {
 				this.autocomplete = null
 			}
+		},
+		scheduleMentionSearch(search) {
+			window.clearTimeout(this.autocompleteSearchTimeout)
+			const sequence = ++this.autocompleteSearchSequence
+			this.autocompleteSearchTimeout = window.setTimeout(() => {
+				this.loadMentionResults(search, 1, sequence)
+			}, MENTION_SEARCH_DEBOUNCE_MS)
+		},
+		async loadMentionResults(search, page, sequence = ++this.autocompleteSearchSequence) {
+			if (!this.autocomplete || this.autocomplete.type !== 'mention' || this.autocomplete.search !== search) return
+			this.autocomplete.loading = true
+			const newPage = await api.call('user.list.search', {search_term: search, page, include_banned: false})
+			if (sequence !== this.autocompleteSearchSequence || !this.autocomplete || this.autocomplete.search !== search) return
+			this.autocomplete.options = newPage.results
+			this.autocomplete.selected = 0
+			this.autocomplete.nextPage = newPage.isLastPage ? null : page + 1
+			this.autocomplete.loading = false
+			// if (newPage.results.length === 1) {
+			// 	this.autocomplete.selected = 0
+			// 	this.handleMention()
+			// }
+		},
+		loadMoreMentionResults() {
+			if (!this.autocomplete?.nextPage || this.autocomplete.loading) return
+			this.loadMentionResults(this.autocomplete.search, this.autocomplete.nextPage)
 		},
 		onSelectionChange(range, oldRange, source) {
 			if (source !== 'user') return
@@ -207,6 +231,8 @@ export default {
 			this.closeAutocomplete()
 		},
 		closeAutocomplete() {
+			window.clearTimeout(this.autocompleteSearchTimeout)
+			this.autocompleteSearchSequence++
 			this.quill.setSelection(this.autocomplete.selection)
 			this.autocomplete = null
 		},
@@ -226,6 +252,8 @@ export default {
 			})
 			this.quill.insertText(this.autocomplete.range.index + 1, ' ')
 			this.quill.setSelection(this.autocomplete.range.index + 2, 0)
+			window.clearTimeout(this.autocompleteSearchTimeout)
+			this.autocompleteSearchSequence++
 			this.autocomplete = null
 		},
 		send() {
@@ -414,4 +442,16 @@ export default {
 				padding: 1px
 			.name
 				ellipsis()
+		.load-more
+			height: 32px
+			border: 0
+			border-top: border-separator()
+			background: $clr-white
+			color: $clr-primary
+			cursor: pointer
+			font-family: $font-stack
+			font-size: 14px
+			font-weight: 500
+			&:disabled
+				cursor: default
 </style>
