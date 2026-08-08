@@ -27,17 +27,17 @@ from eventyay.base.models import (
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23, admission=True)
 
 
 @pytest.fixture
 def item_on_wrong_event(event2):
-    return event2.items.create(name='Budget Ticket', default_price=23)
+    return event2.products.create(name='Budget Ticket', default_price=23, admission=True)
 
 
 @pytest.fixture
 def other_item(event):
-    return event.items.create(name='Budget Ticket', default_price=23)
+    return event.products.create(name='Budget Ticket', default_price=23, admission=True)
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def order(event, item, other_item, taxrule):
         OrderPosition.objects.create(
             order=o,
             positionid=1,
-            item=item,
+            product=item,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Peter'},
@@ -71,7 +71,7 @@ def order(event, item, other_item, taxrule):
         OrderPosition.objects.create(
             order=o,
             positionid=2,
-            item=other_item,
+            product=other_item,
             variation=None,
             price=Decimal('23'),
             attendee_name_parts={'full_name': 'Michael'},
@@ -87,7 +87,7 @@ TEST_ORDERPOSITION1_RES = {
     'order__status': 'p',
     'order': 'FOO',
     'positionid': 1,
-    'item': 1,
+    'product': 1,
     'variation': None,
     'price': '23.00',
     'attendee_name': 'Peter',
@@ -119,7 +119,7 @@ TEST_ORDERPOSITION2_RES = {
     'order__status': 'p',
     'order': 'FOO',
     'positionid': 2,
-    'item': 1,
+    'product': 1,
     'variation': None,
     'price': '23.00',
     'attendee_name': 'Michael',
@@ -154,6 +154,9 @@ TEST_LIST_RES = {
     'include_pending': False,
     'allow_multiple_entries': False,
     'allow_entry_after_exit': True,
+    'limit_one_checkin_per_day': False,
+    'limit_one_checkin_per_gate': False,
+    'display_popup_fields': [],
     'subevent': None,
     'exit_all_at': None,
     'rules': {},
@@ -748,7 +751,9 @@ def test_only_once(token_client, organizer, clist, event, order):
     )
     assert resp.status_code == 400
     assert resp.data['status'] == 'error'
-    assert resp.data['reason'] == 'already_redeemed'
+    assert resp.data['reason'] == 'checkout_required'
+    assert resp.data['reason_explanation']
+    assert 'cross_gate' not in resp.data
 
 
 @pytest.mark.django_db
@@ -985,7 +990,7 @@ def question(event, item):
     )
     a1 = q.options.create(answer=LazyI18nString('M'))
     a2 = q.options.create(answer=LazyI18nString('L'))
-    q.items.add(item)
+    q.products.add(item)
     return q, a1, a2
 
 
