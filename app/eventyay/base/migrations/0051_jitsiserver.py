@@ -26,8 +26,12 @@ JITSI_ROLE_PERMISSION_AUGMENTS = {
 
 def add_jitsi_permissions_to_roles(apps, schema_editor):
     Event = apps.get_model('base', 'Event')
-    World = apps.get_model('base', 'World')
-    for model in (Event, World):
+    models_to_update = [Event]
+    try:
+        models_to_update.append(apps.get_model('base', 'World'))
+    except LookupError:
+        pass
+    for model in models_to_update:
         for obj in model.objects.exclude(roles__isnull=True):
             roles = obj.roles or {}
             changed = False

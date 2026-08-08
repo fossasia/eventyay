@@ -40,15 +40,15 @@ MAX_JITSI_ROOM_NAME_LENGTH = 200
 JITSI_JWT_LIFETIME_SECONDS = 12 * 60 * 60
 
 
-def normalize_jitsi_room_name(configured_room_name, room_id):
+def normalize_jitsi_room_name(configured_room_name, event_id, room_id):
     room_name = (configured_room_name or "").strip()
     if (
         not room_name
         or room_name == "*"
         or len(room_name) > MAX_JITSI_ROOM_NAME_LENGTH
     ):
-        return f"room-{room_id}"
-    return room_name
+        room_name = "room"
+    return f"event-{event_id}-room-{room_id}-{room_name}"
 
 
 class JitsiModule(BaseModule):
@@ -78,6 +78,7 @@ class JitsiModule(BaseModule):
         domain = server["domain"] if server else None
         room_name = normalize_jitsi_room_name(
             self.module_config.get("room_name"),
+            self.consumer.event.id,
             self.room.id,
         )
         if not domain:

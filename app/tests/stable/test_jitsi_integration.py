@@ -175,14 +175,14 @@ def test_normalize_server_url(value, expected):
 @pytest.mark.parametrize(
     ("configured", "expected"),
     [
-        ("Main Stage", "Main Stage"),
-        ("", "room-42"),
-        ("*", "room-42"),
-        ("x" * 201, "room-42"),
+        ("Main Stage", "event-7-room-42-Main Stage"),
+        ("", "event-7-room-42-room"),
+        ("*", "event-7-room-42-room"),
+        ("x" * 201, "event-7-room-42-room"),
     ],
 )
 def test_normalize_jitsi_room_name(configured, expected):
-    assert normalize_jitsi_room_name(configured, 42) == expected
+    assert normalize_jitsi_room_name(configured, 7, 42) == expected
 
 
 @pytest.mark.django_db
@@ -330,11 +330,13 @@ async def test_room_config_returns_participant_jwt():
         issuer=server.app_id,
     )
     assert consumer.response["domain"] == "meet.example.org"
-    assert consumer.response["roomName"] == "Main Stage"
+    assert consumer.response["roomName"] == (
+        f"event-{event.pk}-room-{room.pk}-Main Stage"
+    )
     assert consumer.response["moderator"] is False
     assert consumer.response["configOverwrite"]["toolbarButtons"]
     assert payload["sub"] == "meet.example.org"
-    assert payload["room"] == "Main Stage"
+    assert payload["room"] == f"event-{event.pk}-room-{room.pk}-Main Stage"
     assert payload["exp"] - payload["nbf"] == JITSI_JWT_LIFETIME_SECONDS + 10
     assert payload["context"]["user"]["affiliation"] == "member"
     assert payload["context"]["user"]["moderator"] is False
@@ -363,7 +365,7 @@ async def test_room_config_returns_moderator_jwt():
     )
     assert consumer.response["moderator"] is True
     assert "toolbarButtons" not in consumer.response["configOverwrite"]
-    assert payload["room"] == f"room-{room.pk}"
+    assert payload["room"] == f"event-{event.pk}-room-{room.pk}-room"
     assert payload["context"]["user"]["affiliation"] == "owner"
     assert payload["context"]["user"]["moderator"] is True
 

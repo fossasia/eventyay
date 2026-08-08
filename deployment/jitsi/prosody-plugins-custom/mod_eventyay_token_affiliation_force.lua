@@ -44,10 +44,65 @@ local function apply_affiliation(room, occupant, session, phase)
     set_forced_affiliation(room, occupant, affiliation, phase)
 end
 
+local function session_from_occupant_session(real_jid, occupant_session)
+    return prosody.full_sessions[real_jid]
+        or occupant_session.session
+        or occupant_session
+end
+
+local function occupant_session(occupant, real_jid)
+    if real_jid then
+        local session = prosody.full_sessions[real_jid]
+        if session then
+            return session
+        end
+    end
+
+    if occupant.sessions then
+        for session_jid, occupant_session_info in pairs(occupant.sessions) do
+            local session = session_from_occupant_session(
+                session_jid,
+                occupant_session_info
+            )
+            if session then
+                return session
+            end
+        end
+    end
+
+    if occupant.bare_jid then
+        local sessions = prosody.bare_sessions[occupant.bare_jid]
+        if sessions then
+            for _, session in pairs(sessions.sessions or sessions) do
+                if session then
+                    return session
+                end
+            end
+        end
+    end
+
+    return prosody.full_sessions[occupant.jid]
+end
+
+local function occupant_has_token_owner(occupant)
+    if occupant.sessions then
+        for real_jid, occupant_session_info in pairs(occupant.sessions) do
+            local session = session_from_occupant_session(
+                real_jid,
+                occupant_session_info
+            )
+            if affiliation_from_token(session) == 'owner' then
+                return true
+            end
+        end
+    end
+
+    return affiliation_from_token(occupant_session(occupant)) == 'owner'
+end
+
 local function room_has_token_owner(room)
     for _, occupant in room:each_occupant() do
-        local session = prosody.full_sessions[occupant.jid]
-        if affiliation_from_token(session) == 'owner' then
+        if occupant_has_token_owner(occupant) then
             return true
         end
     end
@@ -74,7 +129,7 @@ local function occupant_and_session_for_jid(room, real_jid)
         return nil, nil
     end
 
-    return occupant, prosody.full_sessions[occupant.jid]
+    return occupant, occupant_session(occupant, real_jid)
 end
 
 local enforcing = {}

@@ -60,7 +60,7 @@ export default {
 					permission: 'world:rooms.create.bbb'
 				})
 			}
-			if (this.hasPermission('world:rooms.create.jitsi')) {
+			if (JITSI_ROOM_TYPE && this.hasPermission('world:rooms.create.jitsi')) {
 				types.push({
 					id: 'jitsi',
 					label: JITSI_ROOM_TYPE.name,
