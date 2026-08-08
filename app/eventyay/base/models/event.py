@@ -2740,9 +2740,9 @@ class Event(
         """Returns all :class:`~eventyay.base.models.organizer.Team` objects
         that concern this event."""
 
-        return self.organizer.teams.all().filter(
-            models.Q(all_events=True) | models.Q(models.Q(all_events=False) & models.Q(limit_events__in=[self]))
-        )
+        return self.organizer.teams.filter(
+            models.Q(all_events=True) | models.Q(models.Q(all_events=False) & models.Q(limit_events=self))
+        ).distinct()
 
     @cached_property
     def reviewers(self):

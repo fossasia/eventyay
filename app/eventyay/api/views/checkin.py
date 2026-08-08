@@ -19,6 +19,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
@@ -56,7 +57,10 @@ from eventyay.base.services.checkin import (
     CheckInError,
     RequiredQuestionsError,
     SQLLogic,
+    checkin_error_response_data,
+    checkin_reason_explanation,
     perform_checkin,
+    resolve_checkin_api_error,
 )
 from eventyay.consts import SizeKey
 from eventyay.helpers.database import FixedOrderBy
@@ -557,9 +561,19 @@ def _process_given_answers(op, answers_data, user, auth):
 
 
 def _append_badge_download(downloads, op, request):
-    if 'eventyay.plugins.badges' in op.order.event.plugins:
-        badge_url = f'/api/v1/organizers/{request.organizer.slug}/events/{op.order.event.slug}/orderpositions/{op.pk}/download/badge/'
-        downloads.append({'output': 'badge', 'url': badge_url})
+    if 'eventyay.plugins.badges' not in op.order.event.plugins:
+        return downloads
+    badge_url = reverse(
+        'api-v1:orderposition-download',
+        kwargs={
+            'organizer': request.organizer.slug,
+            'event': op.order.event.slug,
+            'pk': op.pk,
+            'output': 'badge',
+        },
+    )
+    downloads = [d for d in downloads if d.get('output') != 'badge']
+    downloads.append({'output': 'badge', 'url': badge_url})
     return downloads
 
 
@@ -672,6 +686,7 @@ def _redeem_process(
                 status=400,
             )
         except CheckInError as e:
+            explanation = checkin_reason_explanation(e, op, op.order.event)
             if not simulate:
                 op.order.log_action(
                     'eventyay.event.checkin.denied',
@@ -679,7 +694,7 @@ def _redeem_process(
                         'position': op.id,
                         'positionid': op.positionid,
                         'errorcode': e.code,
-                        'reason_explanation': 'unkown',
+                        'reason_explanation': explanation,
                         'force': force,
                         'datetime': dateandtime,
                         'type': checkin_type,
@@ -688,25 +703,25 @@ def _redeem_process(
                     user=user,
                     auth=auth,
                 )
-                Checkin.objects.create(
-                    position=op,
-                    **common_checkin_args,
-                )
 
             serializer_context = _setup_context(request, expand, op.order.event, pdf_data, user, auth)
             position_data = CheckinListOrderPositionSerializer(op, context=serializer_context).data
             downloads = _append_badge_download(position_data['downloads'], op, request)
             position_data['downloads'] = downloads
 
+            status, reason, http_status = resolve_checkin_api_error(e)
+
             return Response(
                 {
-                    'status': 'redeemed',
-                    'reason': 'Already checked in',
+                    'status': status,
+                    'reason': reason,
+                    'reason_explanation': explanation,
                     'require_attention': op.require_checkin_attention,
                     'position': position_data,
                     'list': MiniCheckinListSerializer(list_by_event[op.order.event_id]).data,
+                    **checkin_error_response_data(e),
                 },
-                status=201,
+                status=http_status,
             )
         else:
             serializer_context = _setup_context(request, expand, op.order.event, pdf_data, user, auth)
@@ -986,12 +1001,14 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
                 status=400,
             )
         except CheckInError as e:
+            explanation = checkin_reason_explanation(e, op, op.order.event)
             op.order.log_action(
                 'eventyay.event.checkin.denied',
                 data={
                     'position': op.id,
                     'positionid': op.positionid,
                     'errorcode': e.code,
+                    'reason_explanation': explanation,
                     'force': force,
                     'datetime': dt,
                     'type': type,
@@ -1000,14 +1017,17 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
                 user=self.request.user,
                 auth=self.request.auth,
             )
+            status, reason, http_status = resolve_checkin_api_error(e)
             return Response(
                 {
-                    'status': 'error',
-                    'reason': e.code,
+                    'status': status,
+                    'reason': reason,
+                    'reason_explanation': explanation,
                     'require_attention': op.require_checkin_attention,
                     'position': CheckinListOrderPositionSerializer(op, context=self.get_serializer_context()).data,
+                    **checkin_error_response_data(e),
                 },
-                status=400,
+                status=http_status,
             )
         else:
             return Response(
