@@ -30,7 +30,11 @@ urlpatterns = [
         RedirectView.as_view(pattern_name='auth.login', permanent=True, query_string=True),
         name='auth.login.legacy',
     ),
-    path('login/2fa/', auth.Login2FAView.as_view(), name='auth.login.2fa'),
+    path(
+        'login/2fa/',
+        RedirectView.as_view(pattern_name='auth.login.2fa', permanent=True, query_string=True),
+        name='auth.login.2fa.legacy',
+    ),
     path('invite/<str:token>/', auth.invite, name='auth.invite'),
     path('forgot/', auth.Forgot.as_view(), name='auth.forgot'),
     path('forgot/recover/', auth.Recover.as_view(), name='auth.forgot.recover'),

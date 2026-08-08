@@ -29,6 +29,7 @@ MAIN_DOMAIN_AUTH_ROUTES = (
     'auth.login',
     'auth.login.2fa',
     'auth.login.legacy',
+    'auth.login.2fa.legacy',
     'auth.logout',
     'social.oauth.login',
 )
