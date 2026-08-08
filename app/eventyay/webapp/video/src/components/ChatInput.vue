@@ -198,7 +198,7 @@ export default {
 				}
 				this.autocomplete.nextPage = newPage.isLastPage ? null : page + 1
 			} finally {
-				if (this.autocomplete) {
+				if (this.autocomplete && sequence === this.autocompleteSearchSequence) {
 					this.autocomplete.loading = false
 				}
 			}
