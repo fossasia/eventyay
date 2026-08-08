@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 
+from eventyay.base.email import get_available_placeholders, get_email_context
 from eventyay.base.models import Event, Organizer
 from eventyay.base.templatetags.rich_text import (
     compile_email_body,
@@ -51,6 +52,18 @@ def test_compile_email_body_compiles_legacy_inline_html():
     result = compile_email_body('Hello <b>world</b>')
     assert '<p>' in result
     assert 'world' in result
+
+
+@pytest.mark.django_db
+def test_event_name_alias_registered_and_renders(event):
+    placeholders = get_available_placeholders(event, ['event'])
+    assert 'event' in placeholders
+    assert 'event_name' in placeholders
+    assert str(placeholders['event_name'].render_sample(event)) == str(event.name)
+
+    ctx = get_email_context(event=event)
+    assert str(ctx['event_name']) == str(event.name)
+    assert str(ctx['event']) == str(event.name)
 
 
 @pytest.mark.parametrize(

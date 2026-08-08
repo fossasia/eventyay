@@ -36,4 +36,9 @@ $(function () {
 
   $("[name=has_variations]").change(toggleblock);
   toggleblock();
+
+  $('#add-new-tax-btn').on('click', function() {
+      $('#new-tax-fields').removeClass('hidden');
+      $('#add-new-tax-btn-group').addClass('hidden');
+  });
 });

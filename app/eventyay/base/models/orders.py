@@ -1157,6 +1157,7 @@ class Order(LockModel, LoggedModel):
         from eventyay.base.services.mail import (
             SendMailException,
             TolerantDict,
+            _stringify_mail_context,
             mail,
             render_mail,
         )
@@ -1174,7 +1175,7 @@ class Order(LockModel, LoggedModel):
 
             try:
                 email_content = render_mail(template, context)
-                subject = subject.format_map(TolerantDict(context))
+                subject = str(subject).format_map(TolerantDict(_stringify_mail_context(context)))
                 mail(
                     recipient,
                     subject,

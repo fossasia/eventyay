@@ -1,3 +1,4 @@
+import html
 import io
 import json
 import logging
@@ -50,7 +51,11 @@ from eventyay.base.models.event import EventMetaValue
 from eventyay.base.services import tickets
 from eventyay.base.services.invoices import build_preview_invoice_pdf
 from eventyay.base.signals import register_ticket_outputs
-from eventyay.base.templatetags.rich_text import expand_email_preview_placeholders, markdown_compile_email
+from eventyay.base.templatetags.rich_text import (
+    expand_email_preview_placeholders,
+    is_placeholder_html_sample,
+    markdown_compile_email,
+)
 from eventyay.control.forms.event import (
     CancelSettingsForm,
     CommentForm,
@@ -826,13 +831,14 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
         for p in get_available_placeholders(self.request.event, MailSettingsForm.base_context[product]).values():
             s = str(p.render_sample(self.request.event)).strip()
 
-            if s.startswith('*'):
+            if s.startswith('*') or is_placeholder_html_sample(s):
                 ctx[p.identifier] = s
             elif url_pattern.match(s):
                 ctx[p.identifier] = f'<a href="{s}" target="_blank" rel="noopener noreferrer">{s}</a>'
             else:
                 ctx[p.identifier] = '<span class="placeholder" title="{}">{}</span>'.format(
-                    _('This value will be replaced based on dynamic parameters.'), s
+                    _('This value will be replaced based on dynamic parameters.'),
+                    html.escape(s),
                 )
         return self.SafeDict(ctx)
 
@@ -1646,7 +1652,23 @@ class QuickSetupView(FormView):
 
         products = []
         category = None
-        tax_rule = self.request.event.tax_rules.first()
+        if form.cleaned_data.get('tax_name') and form.cleaned_data.get('tax_rate') is not None:
+            tax_rule = self.request.event.tax_rules.create(
+                name=form.cleaned_data['tax_name'],
+                rate=form.cleaned_data['tax_rate'],
+                price_includes_tax=form.cleaned_data.get('tax_price_includes_tax', True),
+            )
+            tax_rule.log_action(
+                'eventyay.event.taxrule.added',
+                user=self.request.user,
+                data={
+                    'name': str(tax_rule.name),
+                    'rate': str(tax_rule.rate),
+                    'price_includes_tax': tax_rule.price_includes_tax,
+                },
+            )
+        else:
+            tax_rule = self.request.event.tax_rules.first()
         if any(f not in self.formset.deleted_forms for f in self.formset):
             category = self.request.event.categories.create(name=LazyI18nString.from_gettext(gettext('Tickets')))
             category.log_action(
