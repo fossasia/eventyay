@@ -21,7 +21,17 @@ from eventyay.base.models import Event
 
 LOCAL_HOST_NAMES = ('testserver', 'localhost', '127.0.0.1')
 ANY_DOMAIN_ALLOWED = ('robots.txt', 'redirect')
-MAIN_DOMAIN_AUTH_ROUTES = ('auth.login', 'auth.login.2fa', 'auth.login.legacy')
+MAIN_DOMAIN_AUTH_ROUTES = (
+    'account_signup',
+    'auth.forgot',
+    'auth.forgot.recover',
+    'auth.invite',
+    'auth.login',
+    'auth.login.2fa',
+    'auth.login.legacy',
+    'auth.logout',
+    'social.oauth.login',
+)
 
 
 class MultiDomainMiddleware:
