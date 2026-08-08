@@ -40,6 +40,8 @@ def choose_server(event, prefer_server=None):
 def choose_server_for_room(room, prefer_server=None):
     locked_room = Room.objects.select_for_update().select_related("event").get(pk=room.pk)
     jitsi_config = _get_jitsi_config(locked_room)
+    if jitsi_config is None:
+        return choose_server(event=locked_room.event, prefer_server=prefer_server)
     selected_server_url = jitsi_config.get("selected_server_url")
     server = choose_server(
         event=locked_room.event,
@@ -59,7 +61,7 @@ def _get_jitsi_config(room):
     for module in room.module_config or []:
         if module.get("type") == "call.jitsi":
             return module.setdefault("config", {})
-    return {}
+    return None
 
 
 def _server_matches_preference(server, preferred):

@@ -753,7 +753,10 @@ function loadJitsiExternalApi(domain) {
 		script.async = true;
 		script.src = `https://${domain}/external_api.js`;
 		script.onload = resolve;
-		script.onerror = reject;
+		script.onerror = error => {
+			jitsiScriptLoads.delete(domain);
+			reject(error);
+		};
 		document.head.appendChild(script);
 	});
 	jitsiScriptLoads.set(domain, promise);

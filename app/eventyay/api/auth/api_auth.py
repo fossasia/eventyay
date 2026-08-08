@@ -99,6 +99,7 @@ class RoomPermissions(permissions.BasePermission):
                 permissions=[
                     Permission.EVENT_ROOMS_CREATE_STAGE,
                     Permission.EVENT_ROOMS_CREATE_BBB,
+                    Permission.EVENT_ROOMS_CREATE_JITSI,
                     Permission.EVENT_ROOMS_CREATE_CHAT,
                 ],
             )

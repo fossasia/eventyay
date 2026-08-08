@@ -6,6 +6,43 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+JITSI_ROLE_PERMISSION_AUGMENTS = {
+    'participant': ['room:jitsi.join'],
+    'room_owner': ['room:jitsi.join', 'room:jitsi.moderate'],
+    'speaker': ['room:jitsi.join', 'room:jitsi.moderate'],
+    'moderator': ['room:jitsi.join', 'room:jitsi.moderate'],
+    'admin': [
+        'room:jitsi.join',
+        'room:jitsi.moderate',
+        'event:rooms.create.jitsi',
+    ],
+    'apiuser': [
+        'room:jitsi.join',
+        'room:jitsi.moderate',
+        'event:rooms.create.jitsi',
+    ],
+}
+
+
+def add_jitsi_permissions_to_roles(apps, schema_editor):
+    Event = apps.get_model('base', 'Event')
+    World = apps.get_model('base', 'World')
+    for model in (Event, World):
+        for obj in model.objects.exclude(roles__isnull=True):
+            roles = obj.roles or {}
+            changed = False
+            for role, permissions in JITSI_ROLE_PERMISSION_AUGMENTS.items():
+                role_permissions = roles.get(role)
+                if role_permissions is None:
+                    continue
+                for permission in permissions:
+                    if permission not in role_permissions:
+                        role_permissions.append(permission)
+                        changed = True
+            if changed:
+                obj.save(update_fields=['roles'])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -16,7 +53,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='JitsiServer',
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False)),
+                (
+                    'id',
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
                 ('active', models.BooleanField(default=True)),
                 ('url', models.URLField()),
                 ('app_id', models.CharField(max_length=200)),
@@ -32,5 +76,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+        ),
+        migrations.RunPython(
+            add_jitsi_permissions_to_roles,
+            reverse_code=migrations.RunPython.noop,
         ),
     ]

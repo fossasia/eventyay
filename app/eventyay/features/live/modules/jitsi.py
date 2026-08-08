@@ -37,6 +37,7 @@ JITSI_PARTICIPANT_TOOLBAR_BUTTONS = [
 ]
 
 MAX_JITSI_ROOM_NAME_LENGTH = 200
+JITSI_JWT_LIFETIME_SECONDS = 12 * 60 * 60
 
 
 def normalize_jitsi_room_name(configured_room_name, room_id):
@@ -159,7 +160,7 @@ class JitsiModule(BaseModule):
             "sub": domain,
             "room": room_name,
             "nbf": now - 10,
-            "exp": now + 60 * 60,
+            "exp": now + JITSI_JWT_LIFETIME_SECONDS,
             "context": {
                 "user": {
                     "id": str(self.consumer.user.pk),
