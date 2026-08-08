@@ -9,6 +9,7 @@
 			// Added dropdown menu for audio translations near the reactions bar
 			reactions-bar(:expanded="true", @expand="activeStageTool = 'reaction'")
 			AudioTranslationDropdown(v-if="languages.length > 1", :key="room.id", :languages="languages", :selected-language="selectedAudioTranslationLanguage", @languageChanged="handleLanguageChange")
+	CaptionBox(v-if="activeCaptionUrl && listenerToken", :captionUrl="activeCaptionUrl", :listenerToken="listenerToken")
 	media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom']")
 	roulette(v-else-if="modules['networking.roulette'] && $features.enabled('roulette')", :module="modules['networking.roulette']", :room="room")
 	landing-page(v-else-if="modules['page.landing']", :module="modules['page.landing']")
@@ -48,8 +49,10 @@ import Questions from 'components/Questions'
 import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
+import CaptionBox from 'components/CaptionBox'
 import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
 import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
+import config from 'config'
 
 export default {
 	name: 'Room',
@@ -70,6 +73,7 @@ export default {
 		MediaSourcePlaceholder,
 		AudioTranslationDropdown,
 		UpcomingStreamCountdown,
+		CaptionBox,
 	},
 	props: {
 		room: Object,
@@ -84,7 +88,9 @@ export default {
 				polls: false
 			},
 			activeStageTool: null, // reaction, qa
-			languages: [] // Languages for the dropdown menu
+			languages: [], // Languages for the dropdown menu
+			listenerToken: null,
+			voxbentoConfig: null,
 		}
 	},
 	computed: {
@@ -94,6 +100,12 @@ export default {
 		},
 		selectedAudioTranslationLanguage() {
 			return this.getLanguageForTranslation(this.currentYoutubeTranslation) || 'Original'
+		},
+		activeCaptionUrl() {
+			if (!this.voxbentoConfig?.booths) return null;
+			const booths = Object.values(this.voxbentoConfig.booths);
+			const matchingBooth = booths.find(b => b.language === this.selectedAudioTranslationLanguage);
+			return matchingBooth?.caption_url || null;
 		},
 		usesStreamPolling() {
 			return Boolean(
@@ -151,14 +163,47 @@ export default {
 				youtubeTranslation: translationConfig
 			})
 		},
-		initializeLanguages() {
+		async fetchVoxbentoConfig() {
+			if (!this.room?.id) return null;
+			try {
+				const res = await fetch(`${config.api.base}rooms/${this.room.id}/interpretation/config/`, {
+					headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${this.$store.state.token}` }
+				});
+				if (!res.ok) return null;
+				const data = await res.json();
+				if (data.interpreter === 'voxbento' && data.room_enabled) {
+					// Also fetch listener token
+					const tokenRes = await fetch(`${config.api.base}rooms/${this.room.id}/interpretation/listener-token/`, {
+						method: 'GET',
+						headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${this.$store.state.token}` }
+					});
+					if (tokenRes.ok) {
+						const tokenData = await tokenRes.json();
+						this.listenerToken = tokenData.token;
+					}
+					return data;
+				}
+			} catch (e) {
+				console.warn('Failed to fetch interpretation config', e);
+			}
+			return null;
+		},
+		async initializeLanguages() {
 			this.languages = []
+			this.voxbentoConfig = await this.fetchVoxbentoConfig();
 			let languageUrls = null
 
 			const stageModule = this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
 			const isScheduleDriven = getStagePlaybackMode(stageModule) === PLAYBACK_MODE_SCHEDULE_DRIVEN
 
-			if (isScheduleDriven) {
+			if (this.voxbentoConfig?.booths) {
+				// Inject Voxbento booths as languages
+				languageUrls = Object.values(this.voxbentoConfig.booths).map(booth => ({
+					language: booth.language,
+					youtube_id: booth.whep_url,
+					use_video: false
+				}));
+			} else if (isScheduleDriven) {
 				if (this.room?.currentStream?.stream_type === 'youtube' && this.room.currentStream.config?.languageUrls) {
 					languageUrls = this.room.currentStream.config.languageUrls
 				}
