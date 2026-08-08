@@ -22,10 +22,9 @@ bunt-input-outline-container.c-chat-input
 	.ui-background-blocker(v-if="autocompleteCoordinates", @click="closeAutocomplete")
 		.autocomplete-dropdown(:style="autocompleteCoordinates")
 			template(v-if="autocomplete.options")
-				template(v-for="option, index of autocomplete.options")
-					.user(:class="{selected: index === autocomplete.selected}", :title="option.profile.display_name", @mouseover="selectMention(index)", @click.stop="handleMention")
-						avatar(:user="option", :size="24")
-						.name {{ option.profile.display_name }}
+				.user(v-for="(option, index) of autocomplete.options", :key="option.id", :class="{selected: index === autocomplete.selected}", :title="option.profile.display_name", @mouseover="selectMention(index)", @click.stop="handleMention")
+					avatar(:user="option", :size="24")
+					.name {{ option.profile.display_name }}
 				button.load-more(v-if="autocomplete.nextPage", type="button", :disabled="autocomplete.loading", @click.stop="loadMoreMentionResults")
 					bunt-progress-circular(v-if="autocomplete.loading", size="small")
 					template(v-else) {{ $t('Exhibition:more:label') }}
@@ -188,16 +187,21 @@ export default {
 		async loadMentionResults(search, page, sequence = ++this.autocompleteSearchSequence) {
 			if (!this.autocomplete || this.autocomplete.type !== 'mention' || this.autocomplete.search !== search) return
 			this.autocomplete.loading = true
-			const newPage = await api.call('user.list.search', {search_term: search, page, include_banned: false})
-			if (sequence !== this.autocompleteSearchSequence || !this.autocomplete || this.autocomplete.search !== search) return
-			this.autocomplete.options = newPage.results
-			this.autocomplete.selected = 0
-			this.autocomplete.nextPage = newPage.isLastPage ? null : page + 1
-			this.autocomplete.loading = false
-			// if (newPage.results.length === 1) {
-			// 	this.autocomplete.selected = 0
-			// 	this.handleMention()
-			// }
+			try {
+				const newPage = await api.call('user.list.search', {search_term: search, page, include_banned: false})
+				if (sequence !== this.autocompleteSearchSequence || !this.autocomplete || this.autocomplete.search !== search) return
+				this.autocomplete.options = page > 1
+					? [...(this.autocomplete.options || []), ...newPage.results]
+					: newPage.results
+				if (page === 1) {
+					this.autocomplete.selected = 0
+				}
+				this.autocomplete.nextPage = newPage.isLastPage ? null : page + 1
+			} finally {
+				if (this.autocomplete) {
+					this.autocomplete.loading = false
+				}
+			}
 		},
 		loadMoreMentionResults() {
 			if (!this.autocomplete?.nextPage || this.autocomplete.loading) return
@@ -426,9 +430,12 @@ export default {
 		width: 240px
 		display: flex
 		flex-direction: column
+		height: calc(32px * 20)
+		overflow-y: auto
 		.user
 			display: flex
 			height: 32px
+			flex-shrink: 0
 			align-items: center
 			gap: 8px
 			padding: 0 8px
@@ -444,6 +451,7 @@ export default {
 				ellipsis()
 		.load-more
 			height: 32px
+			flex-shrink: 0
 			border: 0
 			border-top: border-separator()
 			background: $clr-white
