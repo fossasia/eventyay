@@ -337,9 +337,6 @@
     min-width: 0;
   }
 
-    flex-wrap: nowrap;
-  }
-
   #page-wrapper .waiting-list-filter .advanced-filter-footer .filter-actions {
     flex: 1 1 auto;
   }
