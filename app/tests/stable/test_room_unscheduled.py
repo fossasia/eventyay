@@ -8,7 +8,10 @@ from eventyay.base.models import Room
 from eventyay.base.models.event import permissions_with_jitsi_defaults
 from eventyay.base.models.room import room_has_linked_submissions
 from eventyay.base.models.slot import TalkSlot
-from eventyay.core.permissions import Permission, SYSTEM_ROLES
+from eventyay.core.permissions import (
+    Permission,
+    SYSTEM_ROLES,
+)
 
 
 def test_video_content_manager_grants_room_create_and_edit_permissions():

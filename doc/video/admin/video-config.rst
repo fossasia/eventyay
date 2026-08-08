@@ -99,7 +99,8 @@ enters an anonymous room.
 
 Room configuration fields:
 
-* :code:`room_name`: Jitsi room name. If omitted, Eventyay uses the room ID.
+* :code:`room_name`: Jitsi room name suffix. Eventyay namespaces the final Jitsi room by event and room ID,
+  so two Eventyay rooms with the same configured name do not share a Jitsi conference.
 * :code:`prefer_server`: Optional Jitsi server URL preference. Eventyay still only selects an active
   configured server available for the event.
 * :code:`start_with_audio_muted`: Ask Jitsi to join with audio muted.
@@ -119,12 +120,11 @@ Deployment checklist for docker-jitsi-meet:
   :code:`JWT_APP_SECRET`.
 * Keep anonymous/empty-token access disabled, for example :code:`ENABLE_GUESTS=0` and
   :code:`JWT_ALLOW_EMPTY=0`.
-* Load Jitsi's :code:`token_affiliation` module and the Eventyay Prosody modules from
-  :code:`deployment/jitsi/prosody-plugins-custom/`. The affiliation module prevents attendees from being
-  promoted to owner, and the guarded :code:`end_conference` module prevents token members from ending the
-  meeting for everyone.
-* Set :code:`wait_for_host_disable_auto_owners = true` in the active Prosody MUC configuration so the first
-  attendee is not automatically promoted to owner.
+* Copy the Eventyay Prosody modules from :code:`deployment/jitsi/prosody-plugins-custom/` into the Jitsi
+  Prosody custom plugin directory and load them as MUC modules, for example with
+  :code:`XMPP_MUC_MODULES=eventyay_token_affiliation_force,end_conference` in docker-jitsi-meet. The
+  affiliation module prevents attendees from being promoted to owner, and the guarded :code:`end_conference`
+  module prevents token members from ending the meeting for everyone.
 * After changing Prosody modules or Jitsi environment, restart the Jitsi stack and confirm Prosody logs show
   :code:`eventyay forced affiliation=member role=participant` for attendees without
   :code:`room:jitsi.moderate`.
