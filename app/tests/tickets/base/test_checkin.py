@@ -8,11 +8,13 @@ from django.utils.timezone import now
 from django_scopes import scope
 from freezegun import freeze_time
 
-from eventyay.base.models import Checkin, Event, Order, OrderPosition, Organizer
+from eventyay.base.models import Checkin, Device, Event, Order, OrderPosition, Organizer
 from eventyay.base.services.checkin import (
     CheckInError,
     RequiredQuestionsError,
     SQLLogic,
+    checkin_error_response_data,
+    checkin_reason_explanation,
     perform_checkin,
     process_exit_all,
 )
@@ -41,7 +43,7 @@ def clist(event):
 
 @pytest.fixture
 def item(event):
-    return event.items.create(name='Ticket', default_price=3, admission=True)
+    return event.products.create(name='Ticket', default_price=3, admission=True)
 
 
 @pytest.fixture
@@ -58,7 +60,7 @@ def position(event, item):
     )
     return OrderPosition.objects.create(
         order=order,
-        item=item,
+        product=item,
         variation=None,
         price=Decimal('23.00'),
         attendee_name_parts={'full_name': 'Peter'},
@@ -113,7 +115,7 @@ def test_checkin_invalid_product(position, clist):
     with pytest.raises(CheckInError) as excinfo:
         perform_checkin(position, clist, {})
     assert excinfo.value.code == 'product'
-    clist.limit_products.add(position.item)
+    clist.limit_products.add(position.product)
     perform_checkin(position, clist, {})
 
 
@@ -130,7 +132,7 @@ def test_checkin_invalid_subevent(position, clist, event):
 
     with pytest.raises(CheckInError) as excinfo:
         perform_checkin(position, clist, {})
-    assert excinfo.value.code == 'product'
+    assert excinfo.value.code == 'subevent'
 
 
 @pytest.mark.django_db
@@ -189,7 +191,7 @@ def test_required_question_missing(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.product)
     with pytest.raises(RequiredQuestionsError) as excinfo:
         perform_checkin(position, clist, {}, questions_supported=True)
     assert excinfo.value.code == 'incomplete'
@@ -204,7 +206,7 @@ def test_required_question_missing_but_not_supported(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.product)
     perform_checkin(position, clist, {}, questions_supported=False)
 
 
@@ -216,7 +218,7 @@ def test_required_question_missing_but_forced(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.product)
     perform_checkin(position, clist, {}, questions_supported=True, force=True)
 
 
@@ -228,7 +230,7 @@ def test_optional_question_missing(event, position, clist):
         required=False,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.product)
     with pytest.raises(RequiredQuestionsError) as excinfo:
         perform_checkin(position, clist, {}, questions_supported=True)
     assert excinfo.value.code == 'incomplete'
@@ -243,7 +245,7 @@ def test_required_online_question_missing(event, position, clist):
         required=True,
         ask_during_checkin=False,
     )
-    q.items.add(position.item)
+    q.products.add(position.product)
     perform_checkin(position, clist, {}, questions_supported=True)
 
 
@@ -255,7 +257,7 @@ def test_question_filled_previously(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.product)
     position.answers.create(question=q, answer='Foo')
     perform_checkin(position, clist, {}, questions_supported=True)
 
@@ -268,7 +270,7 @@ def test_question_filled(event, position, clist):
         required=True,
         ask_during_checkin=True,
     )
-    q.items.add(position.item)
+    q.products.add(position.product)
     perform_checkin(position, clist, {q: 'Foo'}, questions_supported=True)
     a = position.answers.get()
     assert a.question == q
@@ -281,7 +283,8 @@ def test_single_entry(position, clist):
 
     with pytest.raises(CheckInError) as excinfo:
         perform_checkin(position, clist, {})
-    assert excinfo.value.code == 'already_redeemed'
+    assert excinfo.value.code == 'checkout_required'
+    assert not excinfo.value.cross_gate
 
     assert position.checkins.count() == 1
 
@@ -389,7 +392,7 @@ def test_rules_simple(position, clist):
 
 @pytest.mark.django_db
 def test_rules_product(event, position, clist):
-    i2 = event.items.create(name='Ticket', default_price=3, admission=True)
+    i2 = event.products.create(name='Ticket', default_price=3, admission=True)
     clist.rules = {
         'inList': [
             {'var': 'product'},
@@ -412,7 +415,7 @@ def test_rules_product(event, position, clist):
             {
                 'objectList': [
                     {'lookup': ['product', str(i2.pk), 'Ticket']},
-                    {'lookup': ['product', str(position.item.pk), 'Ticket']},
+                    {'lookup': ['product', str(position.product.pk), 'Ticket']},
                 ]
             },
         ]
@@ -693,3 +696,92 @@ def test_auto_check_out_only_if_checked_in(event, position, clist):
     with freeze_time('2020-01-03 03:05:00+01:00'):
         process_exit_all(sender=None)
     assert position.checkins.count() == 2
+
+
+@pytest.mark.django_db
+def test_limit_one_checkin_per_day_allows_next_day(position, clist):
+    clist.limit_one_checkin_per_day = True
+    clist.save()
+
+    with freeze_time('2020-01-01 10:00:00+01:00'):
+        perform_checkin(position, clist, {})
+    with freeze_time('2020-01-01 18:00:00+01:00'):
+        perform_checkin(position, clist, {}, type=Checkin.TYPE_EXIT)
+
+    with freeze_time('2020-01-02 10:00:00+01:00'):
+        perform_checkin(position, clist, {})
+
+    assert position.checkins.filter(type=Checkin.TYPE_ENTRY).count() == 2
+
+
+@pytest.mark.django_db
+def test_limit_one_checkin_per_gate(position, clist, event):
+    gate_a = event.organizer.gates.create(name='Gate A')
+    gate_b = event.organizer.gates.create(name='Gate B')
+    device_a = Device.objects.create(organizer=event.organizer, name='Scanner A', all_events=True, gate=gate_a)
+    device_b = Device.objects.create(organizer=event.organizer, name='Scanner B', all_events=True, gate=gate_b)
+
+    clist.limit_one_checkin_per_gate = True
+    clist.allow_entry_after_exit = True
+    clist.save()
+
+    with freeze_time('2020-01-01 10:00:00+01:00'):
+        perform_checkin(position, clist, {}, auth=device_a)
+    with freeze_time('2020-01-01 11:00:00+01:00'):
+        perform_checkin(position, clist, {}, type=Checkin.TYPE_EXIT, auth=device_a)
+
+    with freeze_time('2020-01-01 12:00:00+01:00'):
+        with pytest.raises(CheckInError) as excinfo:
+            perform_checkin(position, clist, {}, auth=device_a)
+        assert excinfo.value.code == 'already_redeemed'
+
+        perform_checkin(position, clist, {}, auth=device_b)
+    assert position.checkins.filter(type=Checkin.TYPE_ENTRY).count() == 2
+
+
+@pytest.mark.django_db
+def test_limit_one_checkin_per_day(position, clist):
+    clist.limit_one_checkin_per_day = True
+    clist.save()
+
+    with freeze_time('2020-01-01 10:00:00+01:00'):
+        perform_checkin(position, clist, {})
+    with freeze_time('2020-01-01 11:00:00+01:00'):
+        perform_checkin(position, clist, {}, type=Checkin.TYPE_EXIT)
+
+    with freeze_time('2020-01-01 12:00:00+01:00'):
+        with pytest.raises(CheckInError) as excinfo:
+            perform_checkin(position, clist, {})
+        assert excinfo.value.code == 'already_redeemed'
+    assert position.checkins.filter(type=Checkin.TYPE_ENTRY).count() == 1
+
+
+@pytest.mark.django_db
+def test_checkout_required_cross_gate(position, clist, event):
+    gate_a = event.organizer.gates.create(name='Gate A')
+    gate_b = event.organizer.gates.create(name='Gate B')
+    device_a = Device.objects.create(organizer=event.organizer, name='Scanner A', all_events=True, gate=gate_a)
+    device_b = Device.objects.create(organizer=event.organizer, name='Scanner B', all_events=True, gate=gate_b)
+
+    perform_checkin(position, clist, {}, auth=device_a)
+
+    with pytest.raises(CheckInError) as excinfo:
+        perform_checkin(position, clist, {}, auth=device_b)
+    assert excinfo.value.code == 'checkout_required'
+    assert excinfo.value.cross_gate is True
+    assert 'Gate A' in str(excinfo.value)
+    assert checkin_reason_explanation(excinfo.value, position, event)
+    assert checkin_error_response_data(excinfo.value) == {'cross_gate': True}
+
+
+@pytest.mark.django_db
+def test_already_redeemed_includes_reason_explanation(position, clist):
+    clist.allow_entry_after_exit = False
+    clist.save()
+    perform_checkin(position, clist, {})
+    perform_checkin(position, clist, {}, type=Checkin.TYPE_EXIT)
+
+    with pytest.raises(CheckInError) as excinfo:
+        perform_checkin(position, clist, {})
+    assert excinfo.value.code == 'already_redeemed'
+    assert checkin_reason_explanation(excinfo.value, position, clist.event) == str(excinfo.value)
