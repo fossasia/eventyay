@@ -7,14 +7,8 @@
 {% load static %}
 {% block title %}{% trans "Orders" %}{% endblock %}
 {% block content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h1>{% trans "Orders" %}</h1>
-            </div>
-            {% include "pretixcontrol/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Orders" as header_title %}
+    {% include "common/includes/header_nav.html" with header_title=header_title header_component_link="pretixcontrol/event/component_link.html" %}
     {% if not filter_form.filtered and orders|length == 0 and not filter_strings %}
         <div class="empty-collection">
             <p>

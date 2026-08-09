@@ -26,6 +26,7 @@ from pytz import common_timezones, timezone
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
+from eventyay.base.meetup import add_video_field_errors, build_video_form_fields
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
@@ -1810,3 +1811,54 @@ class ProductMetaPropertyForm(forms.ModelForm):
         widgets = {'default': forms.TextInput()}
 
 
+class ConfirmTextForm(I18nForm):
+    text = I18nFormField(
+        widget=I18nTextarea,
+        widget_kwargs={'attrs': {'rows': '2'}},
+    )
+
+
+class BaseConfirmTextFormSet(I18nFormSetMixin, forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        event = kwargs.pop('event', None)
+        if event:
+            kwargs['locales'] = event.settings.get('locales')
+        super().__init__(*args, **kwargs)
+
+
+ConfirmTextFormset = formset_factory(
+    ConfirmTextForm,
+    formset=BaseConfirmTextFormSet,
+    can_order=True,
+    can_delete=True,
+    extra=0,
+)
+
+
+class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
+    """Event basics for meetups: currency is implicit, video stream is inline."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.update(
+            build_video_form_fields(
+                type_help_text=_('Optional: configure a live video stream for this meetup.')
+            )
+        )
+        currency_field = self.fields.get('currency')
+        if currency_field is not None:
+            currency_field.required = False
+            if not self.initial.get('currency'):
+                self.initial['currency'] = self._default_currency()
+
+    @staticmethod
+    def _default_currency():
+        return getattr(settings, 'DEFAULT_CURRENCY', 'USD')
+
+    def clean_currency(self):
+        return self.cleaned_data.get('currency', '') or self._default_currency()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        add_video_field_errors(self, cleaned_data.get('video_type'), cleaned_data.get('video_url'))
+        return cleaned_data

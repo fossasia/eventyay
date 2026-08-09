@@ -7,6 +7,13 @@ import router from 'router'
 import i18n from 'i18n'
 import { contentToPlainText } from 'components/ChatContent'
 
+const UUID_PATTERN = '[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}'
+const MENTION_REGEX = new RegExp(`@(${UUID_PATTERN}|[0-9]+)`, 'g')
+
+function extractMentionedUserIds(content) {
+	return Array.from((content || '').matchAll(MENTION_REGEX), match => match[1])
+}
+
 export default {
 	namespaced: true,
 	state: {
@@ -129,7 +136,6 @@ export default {
 				// assume past events don't just appear and stop forever when results are smaller than count
 				state.beforeCursor = results.length < 25 ? null : results[0].event_id
 				// hit the user profile cache for each message
-				// TODO search for mentions
 				const missingProfiles = new Set()
 				for (const event of results) {
 					if (!state.usersLookup[event.sender]) {
@@ -137,6 +143,13 @@ export default {
 					}
 					if (event.content.user && !state.usersLookup[event.content.user.id]) {
 						missingProfiles.add(event.content.user.id)
+					}
+					if (event.content.type === 'text') {
+						for (const userId of extractMentionedUserIds(event.content.body)) {
+							if (!state.usersLookup[userId]) {
+								missingProfiles.add(userId)
+							}
+						}
 					}
 				}
 				await dispatch('fetchUsers', Array.from(missingProfiles))
@@ -328,6 +341,9 @@ export default {
 			}
 			if (!state.usersLookup[event.sender]) {
 				await dispatch('fetchUsers', [event.sender])
+			}
+			if (event.content.type === 'text') {
+				await dispatch('fetchUsers', extractMentionedUserIds(event.content.body).filter(userId => !state.usersLookup[userId]))
 			}
 		},
 		'api::chat.channels'({state}, {channels}) {

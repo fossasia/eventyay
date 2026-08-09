@@ -29,6 +29,12 @@
                 {% trans "Create Event Series" %}
             </a>
             {% endif %}
+            {% if meetup_creation_enabled %}
+            <a href='{% url "eventyay_common:events.add" %}?meetup=1' class="btn btn-default btn-lg">
+                <span class="fa fa-users"></span>
+                {% trans "Create Meetup" %}
+            </a>
+            {% endif %}
         </div>
     {% else %}
         <div class="advanced-filter-search" data-advanced-filter-search>
@@ -72,6 +78,12 @@
                 <a href='{% url "eventyay_common:events.add" %}?series=1' class="btn btn-default">
                     {% include "eventyay_common/includes/icon_calendar_series.html" %}
                     {% trans "Create Event Series" %}
+                </a>
+                {% endif %}
+                {% if meetup_creation_enabled %}
+                <a href='{% url "eventyay_common:events.add" %}?meetup=1' class="btn btn-default">
+                    <span class="fa fa-users"></span>
+                    {% trans "Create Meetup" %}
                 </a>
                 {% endif %}
             </p>
