@@ -24,7 +24,7 @@
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.34",
     "dompurify": "^3.4.11",
-    "markdown-it": "^14.2.0",
+    "markdown-it": "^15.0.0",
     "markdown-it-multimd-table": "^4.2.3",
     "moment-timezone": "^0.6.2",
     "vue": "^3.5.39"
