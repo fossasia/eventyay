@@ -934,15 +934,15 @@ wheels = [
 
 [[package]]
 name = "django-localflavor"
-version = "5.0"
+version = "5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "python-stdnum" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/9f/4792bc2359211988f199e947f7b4cd439c6cda92de0f2d14d47d491853f7/django_localflavor-5.0.tar.gz", hash = "sha256:9ddcce5dac6a956d076f3134071c64d4c76e1c7063e8aa7730414a2a1c5ded59", size = 5000251, upload-time = "2025-05-21T08:01:16.028Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/82/844921ee72877bc0ed12dffd91d6fcd60cebc1363094b528cf159a157779/django_localflavor-5.1.tar.gz", hash = "sha256:afacbe4902698a6772c5621a0cad18f4e2f9f198a7284d3da57418c78c150080", size = 3053847, upload-time = "2026-08-01T11:24:34.101Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/10/677a837683be26517a79f3f45f3a34baca14fa31b0c3c46f8a746f93349b/django_localflavor-5.0-py3-none-any.whl", hash = "sha256:ee32749420cc4a93b18667939fe7fa0da36d71024a0d9578b40809a71489cee7", size = 2979096, upload-time = "2025-05-21T08:01:13.488Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/0e/52994debc76b6b3c6f6143483835f05212466472d99066c41ea2709d7f2f/django_localflavor-5.1-py3-none-any.whl", hash = "sha256:33a0b5418c99c733e87fd949e08ba3c6ccf7e7a9edd1458dac15586701b2cd90", size = 3073491, upload-time = "2026-08-01T11:24:32.339Z" },
 ]
 
 [[package]]
@@ -1515,7 +1515,7 @@ requires-dist = [
     { name = "django-i18nfield", specifier = ">=1.11.0" },
     { name = "django-jquery-js", specifier = ">=3.1.1" },
     { name = "django-libsass", specifier = ">=0.9" },
-    { name = "django-localflavor", specifier = ">=4.0" },
+    { name = "django-localflavor", specifier = ">=5.1" },
     { name = "django-markup", specifier = ">=1.9.1" },
     { name = "django-multifactor", specifier = ">=0.9.3" },
     { name = "django-oauth-toolkit", specifier = ">=3.3.0" },
