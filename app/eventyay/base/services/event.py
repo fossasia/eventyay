@@ -392,13 +392,16 @@ async def create_room(event, data, creator):
                 code="denied",
             )
         m = [m for m in data.get("modules", []) if m["type"] == "call.jitsi"][0]
+        config = m.get("config", {})
+        if not isinstance(config, dict):
+            config = {}
         m["config"] = {
-            "room_name": m.get("config", {}).get("room_name", ""),
-            "prefer_server": m.get("config", {}).get("prefer_server", ""),
-            "start_with_audio_muted": m.get("config", {}).get(
+            "room_name": config.get("room_name") or data.get("name", ""),
+            "prefer_server": config.get("prefer_server", ""),
+            "start_with_audio_muted": config.get(
                 "start_with_audio_muted", False
             ),
-            "start_with_video_muted": m.get("config", {}).get(
+            "start_with_video_muted": config.get(
                 "start_with_video_muted", False
             ),
         }

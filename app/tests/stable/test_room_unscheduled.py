@@ -214,3 +214,50 @@ def test_validate_room_config_patch_ignores_read_only_body_fields(event):
         )
     assert validated_data == {'name': 'Updated'}
     assert update_fields == {'name'}
+
+
+@pytest.mark.django_db
+def test_validate_room_config_patch_ignores_malformed_jitsi_modules(event):
+    from eventyay.base.services.room import validate_room_config_patch
+
+    module_config = [
+        None,
+        'invalid',
+        {
+            'type': 'call.jitsi',
+            'config': {
+                'room_name': 'Main Stage',
+                'app_secret': 'client-submitted-secret',
+            },
+        },
+        {
+            'type': 'call.jitsi',
+            'config': 'invalid',
+        },
+    ]
+
+    with scope(event=event):
+        room = Room.objects.create(event=event, name='Stage')
+        validated_data, update_fields = validate_room_config_patch(
+            room,
+            {'module_config': module_config},
+        )
+
+    assert validated_data == {
+        'module_config': [
+            None,
+            'invalid',
+            {
+                'type': 'call.jitsi',
+                'config': {
+                    'room_name': 'Main Stage',
+                },
+            },
+            {
+                'type': 'call.jitsi',
+                'config': {},
+            },
+        ],
+    }
+    assert update_fields == {'module_config'}
+    assert module_config[2]['config'] == {'room_name': 'Main Stage'}

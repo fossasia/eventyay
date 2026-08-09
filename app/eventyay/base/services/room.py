@@ -92,9 +92,14 @@ def _sanitize_jitsi_config(module_config):
     if not isinstance(module_config, list):
         return
     for module in module_config:
+        if not isinstance(module, dict):
+            continue
         if module.get("type") != "call.jitsi":
             continue
         config = module.setdefault("config", {})
+        if not isinstance(config, dict):
+            config = {}
+            module["config"] = config
         for key in ("domain", "jwt_enabled", "app_id", "key_id", "app_secret"):
             config.pop(key, None)
 

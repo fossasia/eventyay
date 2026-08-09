@@ -1,6 +1,5 @@
 <template lang="pug">
 .c-channel-jitsi-settings
-	bunt-input(v-model="module.config.room_name", label="Room name", name="jitsi_room_name")
 	bunt-input(v-model="module.config.prefer_server", label="Preferred Jitsi server URL", name="jitsi_prefer_server")
 	bunt-checkbox(v-model="module.config.start_with_audio_muted", label="Start with audio muted", name="jitsi_audio_muted")
 	bunt-checkbox(v-model="module.config.start_with_video_muted", label="Start with video muted", name="jitsi_video_muted")
@@ -20,12 +19,12 @@ export default {
 	},
 	created() {
 		this.module.config = {
-			room_name: '',
 			prefer_server: '',
 			start_with_audio_muted: false,
 			start_with_video_muted: false,
 			...this.module.config
 		}
+		delete this.module.config.room_name
 		delete this.module.config.domain
 		delete this.module.config.jwt_enabled
 		delete this.module.config.app_id

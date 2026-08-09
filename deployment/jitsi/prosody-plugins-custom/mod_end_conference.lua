@@ -50,7 +50,7 @@ end
 
 module:log('info', 'Starting Eventyay guarded end_conference for %s', muc_component_host)
 
-function on_message(event)
+local function on_message(event)
     local session = event.origin
 
     if event.stanza.attr.type == 'error' then

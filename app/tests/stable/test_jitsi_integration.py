@@ -7,6 +7,7 @@ from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import Event, JitsiServer, Organizer, Room, User
 from eventyay.base.models.cache import VersionedModel
@@ -183,6 +184,20 @@ def test_normalize_server_url(value, expected):
 )
 def test_normalize_jitsi_room_name(configured, expected):
     assert normalize_jitsi_room_name(configured, 7, 42) == expected
+
+
+def test_normalize_jitsi_room_name_uses_room_name_fallback():
+    assert (
+        normalize_jitsi_room_name("", 7, 42, "Main Stage")
+        == "event-7-room-42-Main Stage"
+    )
+
+
+def test_normalize_jitsi_room_name_uses_i18n_room_name_fallback():
+    assert (
+        normalize_jitsi_room_name("", 7, 42, LazyI18nString("Main Stage"))
+        == "event-7-room-42-Main Stage"
+    )
 
 
 @pytest.mark.django_db

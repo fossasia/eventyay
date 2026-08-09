@@ -42,8 +42,6 @@ import {
 	STREAM_TYPE_YOUTUBE,
 } from 'lib/stage-streams';
 
-const jitsiScriptLoads = new Map();
-
 // Props & Emits
 defineOptions({
 	components: { Livestream, JanusCall, JanusChannelCall, IframeBlocker },
@@ -69,7 +67,6 @@ const consentBlockedUrl = ref(null);
 // Prevents overlapping initializeIframe runs (e.g. store watcher + consent handler)
 // from both passing the iframeEl guard before the first await.
 let iframeInitInProgress = false;
-let jitsiApi = null;
 
 // WHEP audio client
 const whepAudioEl = ref(null);
@@ -341,8 +338,6 @@ onBeforeUnmount(() => {
 		disconnectWhepTranslation();
 	}
 	iframeEl.value?.remove();
-	jitsiApi?.dispose?.();
-	jitsiApi = null;
 	if (api.socketState !== 'open') return;
 	// TODO move to store?
 	if (props.room) api.call('room.leave', { room: props.room.id });
@@ -672,8 +667,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 }
 
 function destroyIframe() {
-	jitsiApi?.dispose?.();
-	jitsiApi = null;
 	iframeEl.value?.remove();
 	iframeEl.value = null;
 	languageIframeUrl.value = null;
@@ -681,46 +674,10 @@ function destroyIframe() {
 	consentBlockedUrl.value = null;
 }
 
-async function createJitsiIframe(config, hideIfBackground) {
+function createJitsiIframe(config, hideIfBackground) {
 	const container = document.querySelector('#media-source-iframes');
 	if (!container) return;
-	if (config.protocol === 'http:') {
-		createJitsiDirectIframe(config, hideIfBackground, container);
-		return;
-	}
-	await loadJitsiExternalApi(config.domain);
-	if (isUnmounted.value || !window.JitsiMeetExternalAPI) return;
-
-	const options = {
-		roomName: config.roomName,
-		parentNode: container,
-		userInfo: config.userInfo || {},
-		configOverwrite: config.configOverwrite || {},
-		interfaceConfigOverwrite: config.interfaceConfigOverwrite || {},
-	};
-	if (config.jwt) {
-		options.jwt = config.jwt;
-	}
-
-	jitsiApi = new window.JitsiMeetExternalAPI(config.domain, options);
-	const iframe = jitsiApi.getIFrame();
-	if (!iframe) return;
-	iframe.classList.add('iframe-media-source');
-	iframe.classList.add('jitsi-media-source');
-	if (hideIfBackground) {
-		iframe.classList.add('hide-if-background');
-	}
-	if (props.background) {
-		iframe.classList.add('background');
-		iframe.classList.add('size-tiny');
-	}
-	iframe.allow =
-		'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' +
-		(autoplay.value ? '; autoplay *' : '');
-	iframe.allowFullscreen = true;
-	iframe.setAttribute('allowusermedia', 'true');
-	iframe.setAttribute('allowfullscreen', '');
-	iframeEl.value = iframe;
+	createJitsiDirectIframe(config, hideIfBackground, container);
 }
 
 function createJitsiDirectIframe(config, hideIfBackground, container) {
@@ -743,24 +700,6 @@ function createJitsiDirectIframe(config, hideIfBackground, container) {
 	iframe.setAttribute('allowfullscreen', '');
 	container.appendChild(iframe);
 	iframeEl.value = iframe;
-}
-
-function loadJitsiExternalApi(domain) {
-	if (window.JitsiMeetExternalAPI) return Promise.resolve();
-	if (jitsiScriptLoads.has(domain)) return jitsiScriptLoads.get(domain);
-	const promise = new Promise((resolve, reject) => {
-		const script = document.createElement('script');
-		script.async = true;
-		script.src = `https://${domain}/external_api.js`;
-		script.onload = resolve;
-		script.onerror = error => {
-			jitsiScriptLoads.delete(domain);
-			reject(error);
-		};
-		document.head.appendChild(script);
-	});
-	jitsiScriptLoads.set(domain, promise);
-	return promise;
 }
 
 function encodeJitsiHash(prefix, values) {
