@@ -9,7 +9,7 @@ from django.db import migrations, models
 JITSI_ROLE_PERMISSION_AUGMENTS = {
     'participant': ['room:jitsi.join'],
     'room_owner': ['room:jitsi.join', 'room:jitsi.moderate'],
-    'speaker': ['room:jitsi.join', 'room:jitsi.moderate'],
+    'speaker': ['room:jitsi.join'],
     'moderator': ['room:jitsi.join', 'room:jitsi.moderate'],
     'admin': [
         'room:jitsi.join',
