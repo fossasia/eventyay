@@ -1033,14 +1033,14 @@ wheels = [
 
 [[package]]
 name = "django-scopes"
-version = "2.0.0"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/d7/a26ccb685b64e8e0b21f107b01ea16636a899a380175fe29d7c01d3d8395/django-scopes-2.0.0.tar.gz", hash = "sha256:d190d9a2462bce812bc6fdd254e47ba031f6fba3279c8ac7397c671df0a4e54f", size = 15118, upload-time = "2023-04-22T17:07:52.352Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e1/03/8032bb05788e91a7cbe7dcfa796b9692add0bd82a7fec3011ad8cec33eb9/django_scopes-2.1.0.tar.gz", hash = "sha256:dedd74c8ba09a5dad607d0f9e9a9407d92aaf94eea6a963f1ec11c98f007bbb3", size = 15599, upload-time = "2026-07-24T11:06:37.905Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/3d/94d82839c111a36145b5ec1fb407a85f9a460af5974a07f4c6d3cc414358/django_scopes-2.0.0-py3-none-any.whl", hash = "sha256:9cf521b4d543ffa2ff6369fb5a1dda03567e862ba89626c01405f3d93ca04724", size = 16660, upload-time = "2023-04-22T17:08:45.058Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/60/64e5561647399f06cdea4a6500db358647e0aae957dd59152380e1064017/django_scopes-2.1.0-py3-none-any.whl", hash = "sha256:c44b9ee8a00ab2755e9a4e96c2b1b1ee4d0d0cc762f68c24fbeb1c023d219d6d", size = 12737, upload-time = "2026-07-24T11:06:36.747Z" },
 ]
 
 [[package]]
@@ -1523,7 +1523,7 @@ requires-dist = [
     { name = "django-pdb", specifier = ">=0.6.2" },
     { name = "django-phonenumber-field", specifier = ">=8.4.0" },
     { name = "django-redis", specifier = ">=7.0.0" },
-    { name = "django-scopes", specifier = ">=2.0.0" },
+    { name = "django-scopes", specifier = ">=2.1.0" },
     { name = "django-sso", specifier = ">=3.0.2" },
     { name = "django-statici18n", specifier = ">=2.5.0" },
     { name = "django-timezone-field", specifier = ">=7.2.2" },
