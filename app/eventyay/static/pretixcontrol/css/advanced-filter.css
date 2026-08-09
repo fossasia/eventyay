@@ -1,0 +1,351 @@
+/* Advanced filter panel styles */
+.advanced-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.advanced-filter-search {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.advanced-filter-search-form {
+  display: contents;
+}
+
+.advanced-filter-search-bar {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.advanced-filter-search-query-group {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.advanced-filter-search-query-group.input-group .form-group {
+  display: table-cell;
+  margin-bottom: 0;
+  vertical-align: middle;
+}
+
+.advanced-filter-search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.advanced-filter-badge {
+  margin-left: 4px;
+  vertical-align: baseline;
+}
+
+.advanced-filter-advanced {
+  clear: both;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  background: #fafafa;
+  margin-top: 12px;
+}
+
+.advanced-filter-advanced.is-collapsed,
+.advanced-filter-go-form.is-collapsed {
+  display: none;
+}
+
+.advanced-filter-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: end;
+}
+
+.advanced-filter-field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.advanced-filter-field .form-group {
+  margin-bottom: 0;
+}
+
+.advanced-filter-field .form-control,
+.advanced-filter-field select {
+  width: 100%;
+}
+
+/* Force date and time inputs to sit on the same row */
+.advanced-filter-field .splitdatetimerow {
+  display: block;
+}
+
+.advanced-filter-field .splitdatetimerow > .splitdatetimepart {
+  display: inline-block;
+  width: calc(50% - 4px);
+  vertical-align: top;
+}
+
+.advanced-filter-field .splitdatetimerow > .splitdatetimepart:first-of-type {
+  margin-right: 4px;
+}
+
+.advanced-filter-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.advanced-filter-go-form {
+  flex: 0 0 auto;
+  max-width: 320px;
+}
+
+.advanced-filter-go-form .control-label {
+  display: none;
+}
+
+.advanced-filter-search-code-group {
+  width: 100%;
+}
+
+.advanced-filter-post-form {
+  width: 100%;
+}
+.advanced-filter-batch-select-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.advanced-filter-bulk-actions-menu {
+  margin: 0 0 10px;
+  min-width: 130px;
+  flex: 0 0 auto;
+}
+
+.advanced-filter-query-text,
+.advanced-filter-bulk-actions-menu .btn,
+.advanced-filter-bulk-action-hint-container,
+.advanced-filter-table-container,
+.advanced-filter-pagination-container,
+.pagination-container {
+  width: 100%;
+}
+
+.advanced-filter-query-text,
+.order-bulk-action-hint {
+  margin: 0;
+}
+
+.advanced-filter-bulk-actions-menu .btn {
+  padding: 6px 12px;
+  height: 34px;
+}
+
+.advanced-filter-bulk-action-hint-container {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.product-hidden {
+  display: none;
+}
+
+.order-product-list:hover .product-hidden {
+  display: list-item;
+}
+
+.order-product-list:hover .product-ellipsis {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .advanced-filter-search-actions {
+    width: 100%;
+  }
+
+  .advanced-filter-search-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .advanced-filter-go-form {
+    width: 100%;
+    max-width: none;
+  }
+  .advanced-filter-search {
+    flex-direction: column;
+  }
+
+  .advanced-filter-grid {
+    flex-wrap: wrap;
+  }
+}
+
+.orders-user-cell {
+  word-break: break-word;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 180px;
+}
+
+.orders-email-cell {
+  word-break: break-all;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 220px;
+}
+
+.admin-table-cell-title {
+  max-width: 300px;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.admin-table-cell-speakers {
+  max-width: 250px;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.advanced-filter-field--inline {
+  flex: 0 0 200px;
+  margin-bottom: 0;
+}
+
+
+
+/* Mobile overrides */
+@media (max-width: 767px) {
+  #page-wrapper .advanced-filter-container {
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  #page-wrapper .advanced-filter-search-code-group {
+    flex: 1 1 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #page-wrapper .advanced-filter-search-code-group .form-control {
+    flex: 1 1 auto;
+    display: block;
+    float: none;
+    width: auto;
+    min-width: 0;
+  }
+
+  #page-wrapper .advanced-filter-search-code-group .input-group-btn {
+    flex: 0 0 auto;
+    display: flex;
+    float: none;
+    width: auto;
+  }
+
+  #page-wrapper .advanced-filter-search-code-group .input-group-btn .btn {
+    white-space: nowrap;
+  }
+
+  #page-wrapper .advanced-filter-field.advanced-filter-search {
+    flex: 1 1 100%;
+  }
+
+  #page-wrapper .advanced-filter-field {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 0;
+  }
+
+  #page-wrapper .advanced-filter-search-actions {
+    flex: 1 1 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  #page-wrapper .advanced-filter-container .filter-actions {
+    flex: 1 1 auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    width: auto;
+    margin: 0;
+  }
+
+  #page-wrapper .advanced-filter-container .filter-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+  }
+
+  #page-wrapper .advanced-filter-search-actions > .btn {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  #page-wrapper .advanced-filter-container .form-group label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  #page-wrapper .advanced-filter-batch-select-actions {
+    flex: 1 1 100%;
+    order: 0;
+    margin-bottom: 0.75rem;
+  }
+
+  #page-wrapper .advanced-filter-bulk-actions-menu {
+    order: 0;
+    width: 100%;
+    min-width: 0;
+  }
+
+  #page-wrapper .advanced-filter-bulk-actions-menu > .btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  #page-wrapper .waiting-list-filter .advanced-filter-footer .filter-actions {
+    flex: 1 1 auto;
+  }
+
+  #page-wrapper .waiting-list-filter .advanced-filter-footer > .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: normal;
+    text-align: center;
+  }
+
+}

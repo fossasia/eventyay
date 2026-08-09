@@ -13,6 +13,9 @@
 <script defer src="{% static 'eventyay-common/js/contact-form-toggle.js' %}"></script>
 <script type="module" src="{% static 'pretixcontrol/js/ui/secret-toggle.js' %}"></script>
 {{ sform.media }}
+{% if is_meetup_event %}
+<script type="module" src="{% static 'eventyay-common/js/ui/meetup-video-fields.js' %}"></script>
+{% endif %}
 {% endblock %}
 {% block inside %}
 <nav id="event-nav" class="header-nav">
@@ -29,7 +32,7 @@
                 class="header-nav btn btn-outline-success">
                 <i class="fa fa-ticket"></i> {% trans "Tickets" %}
             </a>
-            {% if is_talk_event_created %}
+            {% if is_talk_event_created and not is_meetup_event %}
             <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}'
                 class="header-nav btn btn-outline-success">
                 <i class="fa fa-group"></i> {% trans "Talks" %}
@@ -197,6 +200,17 @@
             </div>
             {% endcomment %}
         </fieldset>
+
+        {% if is_meetup_event %}
+        <fieldset>
+            <legend>{% trans "Video stream" %}</legend>
+            {% bootstrap_field sform.video_type layout="control" %}
+            <div id="video-url-group" {% if not sform.video_type.value %}hidden{% endif %}>
+                {% bootstrap_field sform.video_url layout="control" %}
+            </div>
+        </fieldset>
+        {% endif %}
+
         <fieldset>
             <legend>{% trans "Localization" %}</legend>
             {% bootstrap_field sform.locales layout="control" %}
