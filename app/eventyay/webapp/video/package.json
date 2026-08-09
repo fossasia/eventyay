@@ -80,6 +80,11 @@
     "vue-eslint-parser": "^10.4.1"
   },
   "overrides": {
-    "eslint-scope": "^9.1.2"
+    "eslint-scope": "^9.1.2",
+    "immutable": "5.1.9",
+    "minimatch@3": "3.1.5",
+    "minimatch@5": "5.1.9",
+    "minimatch@9": "9.0.9",
+    "minimatch@10": "10.2.6"
   }
 }
