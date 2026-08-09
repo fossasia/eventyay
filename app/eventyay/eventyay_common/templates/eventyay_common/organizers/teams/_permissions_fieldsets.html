@@ -20,6 +20,7 @@
     {% bootstrap_field form.all_events layout="control" %}
     {% bootstrap_field form.limit_events layout="control" %}
     {% bootstrap_field form.can_change_event_settings layout="control" %}
+    {% bootstrap_field form.can_change_config layout="control" %}
 </fieldset>
 
 <fieldset>
@@ -178,15 +179,10 @@
 
 <fieldset>
     <legend>{% translate "Video permissions" %}</legend>
-    {% bootstrap_field form.can_video_create_stages layout="control" %}
-    {% bootstrap_field form.can_video_create_channels layout="control" %}
-    {% bootstrap_field form.can_video_manage_announcements layout="control" %}
-    {% bootstrap_field form.can_video_view_users layout="control" %}
-    {% bootstrap_field form.can_video_manage_users layout="control" %}
-    {% bootstrap_field form.can_video_manage_rooms layout="control" %}
-    {% bootstrap_field form.can_video_manage_polls_questions layout="control" %}
+    {% bootstrap_field form.can_video_manage_content layout="control" %}
+    {% bootstrap_field form.can_video_moderate layout="control" %}
     {% bootstrap_field form.can_video_manage_kiosks layout="control" %}
-    {% bootstrap_field form.can_video_manage_configuration layout="control" %}
+    {% bootstrap_field form.can_video_view_analytics layout="control" %}
 </fieldset>
 
 {% if form.can_manage_social_media %}

@@ -111,6 +111,7 @@ class TeamForm(forms.ModelForm):
             'can_change_organizer_settings',
             'can_manage_gift_cards',
             'can_change_event_settings',
+            'can_change_config',
             'can_change_items',
             'can_view_orders',
             'can_change_orders',
@@ -127,15 +128,10 @@ class TeamForm(forms.ModelForm):
             'is_exhibition_reviewer',
             'hide_exhibition_applicant_emails',
             'can_manage_social_media',
-            'can_video_create_stages',
-            'can_video_create_channels',
-            'can_video_manage_announcements',
-            'can_video_view_users',
-            'can_video_manage_users',
-            'can_video_manage_rooms',
-            'can_video_manage_polls_questions',
+            'can_video_manage_content',
+            'can_video_moderate',
             'can_video_manage_kiosks',
-            'can_video_manage_configuration',
+            'can_video_view_analytics',
         ]
         widgets = {
             'limit_events': forms.CheckboxSelectMultiple(
@@ -177,6 +173,7 @@ class TeamForm(forms.ModelForm):
             'can_change_organizer_settings',
             'can_manage_gift_cards',
             'can_change_event_settings',
+            'can_change_config',
             'can_change_items',
             'can_view_orders',
             'can_change_orders',
@@ -189,15 +186,10 @@ class TeamForm(forms.ModelForm):
             'can_change_exhibition_proposals',
             'is_exhibition_reviewer',
             'can_manage_social_media',
-            'can_video_create_stages',
-            'can_video_create_channels',
-            'can_video_manage_announcements',
-            'can_video_view_users',
-            'can_video_manage_users',
-            'can_video_manage_rooms',
-            'can_video_manage_polls_questions',
+            'can_video_manage_content',
+            'can_video_moderate',
             'can_video_manage_kiosks',
-            'can_video_manage_configuration',
+            'can_video_view_analytics',
         )
         if not any(data.get(permission) for permission in permissions):
             error = forms.ValidationError(

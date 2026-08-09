@@ -382,6 +382,13 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     can_manage_gift_cards = models.BooleanField(default=False, verbose_name=_('Can manage gift cards'))
 
     can_change_event_settings = models.BooleanField(default=False, verbose_name=_('Can change event settings'))
+    can_change_config = models.BooleanField(
+        default=False,
+        verbose_name=_('Can change config'),
+        help_text=_(
+            'Edit in-video Event Config such as theme, connection limits, and BBB defaults.'
+        ),
+    )
     can_change_items = models.BooleanField(default=False, verbose_name=_('Can change product settings'))
     can_view_orders = models.BooleanField(default=False, verbose_name=_('Can view orders'))
     can_change_orders = models.BooleanField(default=False, verbose_name=_('Can change orders'))
@@ -567,57 +574,31 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     )
 
 
-    can_video_create_stages = models.BooleanField(
+    can_video_manage_content = models.BooleanField(
         default=False,
-        verbose_name=_('Video: Can create stages'),
-        help_text=_('Allows creating livestream stages inside Eventyay Video.'),
-    )
-    can_video_create_channels = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can create channels'),
-        help_text=_('Allows creating chat/video channels inside Eventyay Video.'),
-    )
-    can_video_direct_message = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can send direct messages'),
-        help_text=_('Grants permission to open new direct message conversations.'),
-    )
-    can_video_manage_announcements = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can create announcements'),
-        help_text=_('Allows posting announcements in the Eventyay Video interface.'),
-    )
-    can_video_view_users = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can view users'),
-        help_text=_('Allows access to the user directory in Eventyay Video.'),
-    )
-    can_video_manage_users = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can message, ban, and silence users'),
+        verbose_name=_('Video: Can manage rooms and content'),
         help_text=_(
-            'Allows moderating users (ban, silence, reactivate) and deleting chat messages.'
+            'Create and edit stages, chat/video channels, exhibition booths, and poster '
+            'sessions; edit and delete rooms.'
         ),
     )
-    can_video_manage_rooms = models.BooleanField(
+    can_video_moderate = models.BooleanField(
         default=False,
-        verbose_name=_('Video: Can create and edit rooms'),
-        help_text=_('Allows editing and deleting rooms inside Eventyay Video.'),
-    )
-    can_video_manage_polls_questions = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can manage polls and questions'),
-        help_text=_('Allows managing polls and questions in rooms inside Eventyay Video.'),
+        verbose_name=_('Video: Can moderate users and engagement'),
+        help_text=_(
+            'Announce globally and in rooms; list and moderate users; moderate chat; '
+            'see room viewers; manage polls and Q&A; access BBB recordings.'
+        ),
     )
     can_video_manage_kiosks = models.BooleanField(
         default=False,
-        verbose_name=_('Video: Can create and edit kiosks'),
-        help_text=_('Allows managing kiosk displays inside Eventyay Video.'),
+        verbose_name=_('Video: Can manage kiosks'),
+        help_text=_('Allows creating and editing kiosk displays inside Eventyay Video.'),
     )
-    can_video_manage_configuration = models.BooleanField(
+    can_video_view_analytics = models.BooleanField(
         default=False,
-        verbose_name=_('Video: Can edit event configuration'),
-        help_text=_('Allows editing the global Eventyay Video configuration.'),
+        verbose_name=_('Video: Can view analytics'),
+        help_text=_('Allows viewing Eventyay Video statistics and analytics dashboards.'),
     )
 
     @cached_property
