@@ -56,6 +56,33 @@ def normalize_jitsi_room_name(
     return f"event-{event_id}-room-{room_id}-{room_name}"
 
 
+def build_jitsi_config_overwrite(module_config, is_moderator):
+    config_overwrite = {
+        "startWithAudioMuted": module_config.get(
+            "start_with_audio_muted", False
+        ),
+        "startWithVideoMuted": module_config.get(
+            "start_with_video_muted", False
+        ),
+        "enableUserRolesBasedOnToken": True,
+        "disableSelfView": False,
+        "remoteVideoMenu": {
+            "disableKick": not is_moderator,
+            "disableGrantModerator": not is_moderator,
+        },
+    }
+    if not is_moderator:
+        config_overwrite.update(
+            {
+                "disableRemoteMute": True,
+                "disableInviteFunctions": True,
+                "disableModeratorIndicator": True,
+                "toolbarButtons": JITSI_PARTICIPANT_TOOLBAR_BUTTONS,
+            }
+        )
+    return config_overwrite
+
+
 class JitsiModule(BaseModule):
     prefix = "jitsi"
 
@@ -107,29 +134,6 @@ class JitsiModule(BaseModule):
             server_model.pk,
         )
 
-        config_overwrite = {
-            "startWithAudioMuted": self.module_config.get(
-                "start_with_audio_muted", False
-            ),
-            "startWithVideoMuted": self.module_config.get(
-                "start_with_video_muted", False
-            ),
-            "enableUserRolesBasedOnToken": True,
-            "remoteVideoMenu": {
-                "disableKick": not is_moderator,
-                "disableGrantModerator": not is_moderator,
-            },
-        }
-        if not is_moderator:
-            config_overwrite.update(
-                {
-                    "disableRemoteMute": True,
-                    "disableInviteFunctions": True,
-                    "disableModeratorIndicator": True,
-                    "toolbarButtons": JITSI_PARTICIPANT_TOOLBAR_BUTTONS,
-                }
-            )
-
         result = {
             "domain": domain,
             "url": server["url"],
@@ -139,7 +143,10 @@ class JitsiModule(BaseModule):
                 "displayName": display_name,
                 "email": self.consumer.user.profile.get("email") or "",
             },
-            "configOverwrite": config_overwrite,
+            "configOverwrite": build_jitsi_config_overwrite(
+                self.module_config,
+                is_moderator,
+            ),
             "interfaceConfigOverwrite": {},
             "moderator": is_moderator,
         }

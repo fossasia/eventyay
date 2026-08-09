@@ -1,4 +1,7 @@
+from types import SimpleNamespace
+
 import pytest
+from asgiref.sync import async_to_sync
 from django.core.exceptions import ValidationError
 from django_scopes import scope
 from rest_framework import serializers
@@ -8,10 +11,24 @@ from eventyay.base.models import Room
 from eventyay.base.models.event import permissions_with_jitsi_defaults
 from eventyay.base.models.room import room_has_linked_submissions
 from eventyay.base.models.slot import TalkSlot
+from eventyay.base.services import event as event_service
 from eventyay.core.permissions import (
-    Permission,
     SYSTEM_ROLES,
+    Permission,
 )
+
+
+async def _allow_permission(**kwargs):
+    return True
+
+
+class ChannelLayer:
+    async def group_send(self, *args, **kwargs):
+        pass
+
+
+def _channel_layer():
+    return ChannelLayer()
 
 
 def test_video_content_manager_grants_room_create_and_edit_permissions():
@@ -261,3 +278,77 @@ def test_validate_room_config_patch_ignores_malformed_jitsi_modules(event):
     }
     assert update_fields == {'module_config'}
     assert module_config[2]['config'] == {'room_name': 'Main Stage'}
+
+
+def test_get_jitsi_config_ignores_malformed_modules():
+    from eventyay.base.services.jitsi import _get_jitsi_config
+
+    module_config = [
+        None,
+        'invalid',
+        {
+            'type': 'call.jitsi',
+            'config': 'invalid',
+        },
+    ]
+    room = SimpleNamespace(module_config=module_config)
+
+    assert _get_jitsi_config(room) == {}
+    assert module_config[2]['config'] == {}
+
+
+def test_create_jitsi_room_does_not_persist_implicit_room_name(monkeypatch):
+    created = {}
+
+    async def fake_create_room(data, with_channel=False, **kwargs):
+        created['data'] = data
+        created['with_channel'] = with_channel
+        return SimpleNamespace(id='room-id'), None
+
+    monkeypatch.setattr(event_service, '_create_room', fake_create_room)
+    monkeypatch.setattr(event_service, 'get_channel_layer', _channel_layer)
+    event = SimpleNamespace(id='event-id', has_permission_async=_allow_permission)
+
+    result = async_to_sync(event_service.create_room)(
+        event,
+        {
+            'name': 'Main Stage',
+            'description': 'a description',
+            'modules': [
+                {
+                    'type': 'call.jitsi',
+                    'config': {
+                        'prefer_server': 'https://meet.example.org',
+                        'start_with_audio_muted': True,
+                    },
+                },
+            ],
+        },
+        object(),
+    )
+
+    jitsi = created['data']['module_config'][0]
+    assert result == {'room': 'room-id', 'channel': None}
+    assert created['with_channel'] is False
+    assert jitsi['config'] == {
+        'prefer_server': 'https://meet.example.org',
+        'start_with_audio_muted': True,
+        'start_with_video_muted': False,
+    }
+
+
+def test_jitsi_config_keeps_self_view_visible_for_moderators_and_participants():
+    from eventyay.features.live.modules.jitsi import build_jitsi_config_overwrite
+
+    module_config = {
+        'start_with_audio_muted': True,
+        'start_with_video_muted': False,
+    }
+
+    moderator_config = build_jitsi_config_overwrite(module_config, True)
+    participant_config = build_jitsi_config_overwrite(module_config, False)
+
+    assert moderator_config['disableSelfView'] is False
+    assert participant_config['disableSelfView'] is False
+    assert 'toolbarButtons' not in moderator_config
+    assert participant_config['toolbarButtons']

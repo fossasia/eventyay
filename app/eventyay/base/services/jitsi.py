@@ -59,8 +59,14 @@ def choose_server_for_room(room, prefer_server=None):
 
 def _get_jitsi_config(room):
     for module in room.module_config or []:
+        if not isinstance(module, dict):
+            continue
         if module.get("type") == "call.jitsi":
-            return module.setdefault("config", {})
+            config = module.setdefault("config", {})
+            if not isinstance(config, dict):
+                config = {}
+                module["config"] = config
+            return config
     return None
 
 

@@ -396,7 +396,6 @@ async def create_room(event, data, creator):
         if not isinstance(config, dict):
             config = {}
         m["config"] = {
-            "room_name": config.get("room_name") or data.get("name", ""),
             "prefer_server": config.get("prefer_server", ""),
             "start_with_audio_muted": config.get(
                 "start_with_audio_muted", False
