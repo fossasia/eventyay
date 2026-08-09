@@ -48,6 +48,7 @@ from eventyay.agenda.views.utils import (
     serialize_widget_schedule_data,
 )
 from eventyay.base.channels import get_all_sales_channels
+from eventyay.base.meetup import ensure_video_credentials, is_meetup_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import (
     Order,
@@ -71,6 +72,11 @@ from eventyay.helpers.formats.en.formats import WEEK_FORMAT
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.ical import get_ical
 from eventyay.presale.signals import product_description
+from eventyay.presale.views.meetup import (
+    MEETUP_RSVP_SESSION_KEY,
+    GuestRsvpForm,
+    has_rsvp_order,
+)
 from eventyay.presale.views.organizer import (
     EventListMixin,
     add_subevents_for_days,
@@ -704,8 +710,26 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             else:
                 return super().get(request, *args, **kwargs)
 
+    def get_meetup_context(self):
+        event = self.request.event
+        if not is_meetup_event(event):
+            return {'is_meetup_event': False, 'attendee_already_registered': False}
+
+        if self.request.user.is_authenticated:
+            already_registered = has_rsvp_order(event, self.request.user.email)
+        else:
+            already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
+
+        return {
+            'is_meetup_event': True,
+            'attendee_already_registered': already_registered,
+            'rsvp_guest_form': getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm(),
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        context.update(self.get_meetup_context())
 
         # Show voucher option only if redeemable products exist for active vouchers
         vouchers_exist = event_has_redeemable_voucher_products(
@@ -1078,10 +1102,14 @@ class EventAuth(View):
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class JoinOnlineVideoView(EventViewMixin, View):
     def get(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return login_redirect_with_next(request)
+        event = self.request.event
+        is_allowed, order_position, order = self.validate_access(request, *args, **kwargs)
+        if not is_allowed:
+            return HttpResponse(status=403, content='user_not_allowed')
 
-        # First check if video is configured
+        if is_meetup_event(event):
+            ensure_video_credentials(event, request=request)
+
         if (
             not self.request.event.settings.venueless_url
             or not self.request.event.settings.venueless_issuer
@@ -1090,12 +1118,6 @@ class JoinOnlineVideoView(EventViewMixin, View):
         ):
             logger.error('Video Online configuration is not available for this event.')
             raise PermissionDenied(_('Please go back and try again.'))
-
-        # Validate if customer allow to join this online video
-        is_allowed, order_position, order = self.validate_access(request, *args, **kwargs)
-        if not is_allowed:
-            # Show popup
-            return HttpResponse(status=403, content='user_not_allowed')
 
         redirect_url = self.generate_token_url(request, order_position, order)
         logger.info('Redirecting to %s...', redirect_url)
@@ -1110,26 +1132,27 @@ class JoinOnlineVideoView(EventViewMixin, View):
             allowed_statuses.append(Order.STATUS_PENDING)
 
         # Get all PAID orders of customer which belong to this event
-        # CRITICAL FIX: Only paid orders should grant video access
-        # Also include orders where the user is an attendee
-        order_list = (
-            Order.objects.filter(
-                Q(event=self.request.event)
-                & (
-                    Q(email__iexact=self.request.user.email)
-                    | Q(all_positions__attendee_email__iexact=self.request.user.email)
+        with scope(event=self.request.event):
+            order_list = list(
+                Order.objects.filter(
+                    Q(event=self.request.event)
+                    & (
+                        Q(email__iexact=self.request.user.email)
+                        | Q(all_positions__attendee_email__iexact=self.request.user.email)
+                    )
+                    & Q(status__in=allowed_statuses)
                 )
-                & Q(status__in=allowed_statuses)  # Check allowed statuses (PAID, and optionally PENDING)
+                .select_related('event')
+                .order_by('-datetime')
+                .distinct()
             )
-            .select_related('event')
-            .order_by('-datetime')
-            .distinct()
-        )
         # Check qs is empty
         if not order_list:
             # no paid order found
             return False, None, None
-        
+
+        if is_meetup_event(self.request.event):
+            return True, None, order_list[0]
         list_allow_ticket_type = self.request.event.settings.venueless_products
         all_products_allowed = self.request.event.settings.venueless_all_products
         
