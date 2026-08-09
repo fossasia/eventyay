@@ -602,6 +602,13 @@ class EventCreateView(TemplateView):
                     video_url=basics_data.get('video_url', ''),
                     request=self.request,
                 )
+                reg_limit = basics_data.get('registration_limit')
+                if reg_limit is not None:
+                    with scope(event=event):
+                        quota = event.quotas.first()
+                        if quota:
+                            quota.size = reg_limit
+                            quota.save(update_fields=['size'])
 
         return redirect(
             reverse(

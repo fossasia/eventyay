@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 from pytz import common_timezones
 
 from eventyay.base.forms import I18nModelForm, SettingsForm
@@ -123,10 +124,11 @@ class EventCommonSettingsForm(SettingsForm):
             )
 
             reg_limit = self.cleaned_data.get('registration_limit')
-            quota = self.event.quotas.first()
-            if quota and quota.size != reg_limit:
-                quota.size = reg_limit
-                quota.save(update_fields=['size'])
+            with scope(event=self.event):
+                quota = self.event.quotas.first()
+                if quota and quota.size != reg_limit:
+                    quota.size = reg_limit
+                    quota.save(update_fields=['size'])
 
         return super().save()
 

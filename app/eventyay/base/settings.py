@@ -145,7 +145,9 @@ def user_can_create_meetups(request) -> bool:
     user = getattr(request, 'user', None)
     if not user or not user.is_authenticated:
         return False
-    return user.has_active_staff_session(request.session.session_key) or user.teams.filter(
+    session = getattr(request, 'session', None)
+    session_key = session.session_key if session else None
+    return (user.has_active_staff_session(session_key) if session_key else False) or user.teams.filter(
         can_create_events=True, can_create_meetups=True
     ).exists()
 
