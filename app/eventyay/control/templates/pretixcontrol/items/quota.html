@@ -6,7 +6,7 @@
 {% load captureas %}
 {% block title %}{% blocktrans with name=quota.name %}Quota: {{ name }}{% endblocktrans %}{% endblock %}
 {% block inside %}
-    {% blocktrans with name=quota.name as header_title_var %}Quota: {{ name }}{% endblocktrans %}
+    {% blocktrans with name=quota.name asvar header_title_var %}Quota: {{ name }}{% endblocktrans %}
     {% captureas header_extra_var %}
         {% if 'can_change_items' in request.eventpermset %}
             <a href="{% url "control:event.products.quotas.edit" event=request.event.slug organizer=request.event.organizer.slug quota=quota.pk %}"

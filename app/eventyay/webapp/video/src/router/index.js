@@ -252,11 +252,6 @@ const routes = [
 					component: () => import('views/admin/config/main')
 				},
 				{
-					path: 'permissions',
-					name: 'admin:config:permissions',
-					component: () => import('views/admin/config/permissions')
-				},
-				{
 					path: 'token-generator',
 					name: 'admin:config:token-generator',
 					component: () => import('views/admin/config/token-generator')

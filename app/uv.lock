@@ -1184,7 +1184,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=main#9c19b5c250a598e7229d9263276e4bf6548afe50" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=main#b84a91b5adb9d6a03cba751c67fb38a57271fa45" }
 dependencies = [
     { name = "requests" },
 ]

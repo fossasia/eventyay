@@ -11,7 +11,7 @@
 {% endblock %}
 {% block inside %}
     {% if rule %}
-        {% blocktrans with name=rule.name as header_title_var %}Tax rule: {{ name }}{% endblocktrans %}
+        {% blocktrans with name=rule.name asvar header_title_var %}Tax rule: {{ name }}{% endblocktrans %}
     {% else %}
         {% trans "Tax rule" as header_title_var %}
     {% endif %}
