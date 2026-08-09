@@ -12,7 +12,7 @@
 {% endblock %}
 {% block inside %}
     {% if question %}
-        {% blocktrans with name=question.question as header_title_var %}Custom Field: {{ name }}{% endblocktrans %}
+        {% blocktrans with name=question.question asvar header_title_var %}Custom Field: {{ name }}{% endblocktrans %}
     {% else %}
         {% trans "Custom Field" as header_title_var %}
     {% endif %}

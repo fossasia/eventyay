@@ -10,7 +10,7 @@
 {% endblock %}
 {% block inside %}
     {% if question %}
-        {% blocktrans with name=quota.name as header_title_var %}Quota: {{ name }}{% endblocktrans %}
+        {% blocktrans with name=quota.name asvar header_title_var %}Quota: {{ name }}{% endblocktrans %}
     {% else %}
         {% trans "Quota" as header_title_var %}
     {% endif %}

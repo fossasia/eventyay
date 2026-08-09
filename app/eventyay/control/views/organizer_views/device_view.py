@@ -1,5 +1,4 @@
 import json
-import os
 
 from django.conf import settings
 from django.contrib import messages
@@ -16,6 +15,7 @@ from eventyay.api.auth.devicesecurity import DEVICE_SECURITY_PROFILES
 from eventyay.base.models.checkin import Checkin
 from eventyay.base.models.devices import Device, generate_initialization_token
 from eventyay.base.models.log import LogEntry
+from eventyay.control.checkin_app import get_eventyay_checkin_app_url, is_eventyay_checkin_app_dev
 from eventyay.control.forms.organizer_forms.device_form import DeviceForm
 from eventyay.control.permissions import OrganizerPermissionRequiredMixin
 from eventyay.control.views.organizer_views.organizer_detail_view_mixin import (
@@ -295,13 +295,8 @@ class DeviceConnectView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMix
             if settings.DEBUG
             else settings.SITE_URL.rstrip('/')
         )
-        checkin_host = self.request.get_host().split(':')[0]
-        if os.environ.get('EVY_NPM_DEV') == '1':
-            checkin_app_url = f'http://{checkin_host}:8085/'
-        else:
-            checkin_app_url = 'https://access.eventyay.com/'
-        ctx['checkin_app_url'] = checkin_app_url
-        ctx['checkin_app_is_dev'] = os.environ.get('EVY_NPM_DEV') == '1'
+        ctx['checkin_app_url'] = get_eventyay_checkin_app_url(self.request)
+        ctx['checkin_app_is_dev'] = is_eventyay_checkin_app_dev()
         ctx['registration_site_url'] = site_url
         ctx['qrdata'] = json.dumps(
             {
