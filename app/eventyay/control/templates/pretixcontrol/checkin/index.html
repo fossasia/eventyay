@@ -8,7 +8,7 @@
     {% blocktrans with name=checkinlist.name %}Check-in list: {{ name }}{% endblocktrans %}
 {% endblock %}
 {% block content %}
-    {% blocktrans with name=checkinlist.name as header_title_var %}Check-in list: {{ name }}{% endblocktrans %}
+    {% blocktrans with name=checkinlist.name asvar header_title_var %}Check-in list: {{ name }}{% endblocktrans %}
     {% captureas header_extra_var %}
         {% if 'can_change_event_settings' in request.eventpermset %}
             <a href="{% url "control:event.orders.checkinlists.edit" event=request.event.slug organizer=request.event.organizer.slug list=checkinlist.pk %}"
