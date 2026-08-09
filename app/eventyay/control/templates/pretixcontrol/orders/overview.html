@@ -3,6 +3,7 @@
 {% load bootstrap3 %}
 {% load order_overview %}
 {% load static %}
+{% load captureas %}
 {% block title %}{% trans "Order overview" %}{% endblock %}
 {% block custom_header %}
     {{ block.super }}
@@ -13,21 +14,15 @@
 {% endblock %}
 {% block content %}
     {% url "control:event.orders" organizer=request.event.organizer.slug event=request.event.slug as listurl %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h1>
-                    {% trans "Order overview" %}
-                    <a href="{% url "control:event.orders.export" event=request.event.slug organizer=request.event.organizer.slug %}?identifier=pdfreport"
-                       class="btn btn-default" target="_blank">
-                        <span class="fa fa-download"></span>
-                        {% trans "PDF" %}
-                    </a>
-                </h1>
-            </div>
-            {% include "pretixcontrol/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Order overview" as header_title_var %}
+    {% captureas header_extra_var %}
+        <a href="{% url "control:event.orders.export" event=request.event.slug organizer=request.event.organizer.slug %}?identifier=pdfreport"
+           class="btn btn-default" target="_blank">
+            <span class="fa fa-download"></span>
+            {% trans "PDF" %}
+        </a>
+    {% endcaptureas %}
+    {% include "common/includes/header_nav.html" with header_title=header_title_var header_title_extra=header_extra_var header_component_link="pretixcontrol/event/component_link.html" %}
     <div class="orders-filter-container">
         <form class="orders-filter-form" action="" method="get">
             {% if request.event.has_subevents %}
