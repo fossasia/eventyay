@@ -6,16 +6,18 @@
 {% block content %}
 	<h1>{% translate "Organizers" %}</h1>
     <form class="row filter-form" action="" method="get">
-        <div class="col-md-10 col-sm-6 col-xs-12">
-            {% bootstrap_field filter_form.query layout='inline' %}
-        </div>
-        <div class="col-md-2 col-sm-6 col-xs-12">
-            <button class="btn btn-primary btn-block" type="submit">
-                <span class="fa fa-search"></span>
-                <span class="hidden-md">
-                    {% translate "Search" %}
+        <div class="col-md-12 col-sm-12 col-xs-12 form-group">
+            <div class="input-group">
+                <input type="text" name="query" class="form-control" placeholder="{% translate 'Search organizers' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
+                <span class="input-group-btn">
+                    <button class="btn btn-primary" type="submit">
+                        <span class="fa fa-search"></span>
+                        <span class="hidden-md">
+                            {% translate "Search" %}
+                        </span>
+                    </button>
                 </span>
-            </button>
+            </div>
         </div>
     </form>
     {% if can_create_organizer %}

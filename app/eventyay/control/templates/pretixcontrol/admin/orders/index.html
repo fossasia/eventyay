@@ -1,32 +1,49 @@
 {% extends "pretixcontrol/admin/base.html" %}
 {% load i18n %}
+{% load static %}
 {% load urlreplace %}
 {% load bootstrap3 %}
 {% load money %}
 
 {% block title %}{% translate "All Orders" %}{% endblock %}
 
+{% block custom_header %}
+    {{ block.super }}
+{% endblock %}
+
 {% block content %}
 <h1>{% translate "All Orders" %}</h1>
 <p>{% translate "This is a list of all orders across all events." %}</p>
 
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <h3 class="panel-title">{% translate "Filter" %}</h3>
-    </div>
-    <div class="panel-body">
-        <form method="get" class="row filter-form">
-            <div class="col-md-5 col-sm-6 col-xs-12 form-group">
-                {% bootstrap_field filter_form.query layout='inline' %}
+<div class="advanced-filter-search" data-advanced-filter-search>
+    <form class="filter-form advanced-filter-search-form" action="" method="get">
+        <div class="advanced-filter-search-bar">
+            <div class="input-group advanced-filter-search-query-group">
+                <input id="id_query" type="text" name="query" class="form-control" placeholder="{% trans 'Search orders…' %}" aria-label="{% trans 'Search orders…' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
+                <span class="input-group-btn">
+                    <button class="btn btn-primary" type="submit">
+                        <span class="fa fa-search" aria-hidden="true"></span>
+                        {% trans "Search" %}
+                    </button>
+                </span>
             </div>
-            <div class="col-md-3 col-sm-6 col-xs-12 form-group">
+            
+            <div class="advanced-filter-field advanced-filter-field--inline">
                 {% bootstrap_field filter_form.status layout='inline' %}
             </div>
-            <div class="col-md-4 col-sm-6 col-xs-12 form-group">
-                {% include "eventyay_common/filter_actions.html" %}
+
+            <div class="advanced-filter-search-actions">
+                <button class="btn btn-primary" type="submit">
+                    <span class="fa fa-filter" aria-hidden="true"></span>
+                    {% trans "Filter" %}
+                </button>
+                <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                    <span class="fa fa-eraser" aria-hidden="true"></span>
+                    <span class="sr-only">{% trans "Clear filters" %}</span>
+                </a>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
 <div data-ajax-results-region>
