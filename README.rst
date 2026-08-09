@@ -464,6 +464,11 @@ Eventyay Checkin
 
 `Eventyay Checkin <https://github.com/fossasia/eventyay-checkin>`_ is a separate check in component for kiosk stations. It enables organisers to check in attendees at dedicated check in stations during an event.
 
+Eventyay Interpretation
+~~~~~~~~~~~~~~~~~~~~~~~
+
+`Eventyay Interpretation <https://github.com/fossasia/eventyay-interpretation>`_ is a separate component for live interpretation. It enables multi-language audio streaming for sessions in an event.
+
 Translation workflow
 --------------------
 
