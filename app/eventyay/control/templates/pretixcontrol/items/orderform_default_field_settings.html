@@ -5,14 +5,8 @@
 {% block title %}{% blocktrans with field=field_label %}Field settings: {{ field }}{% endblocktrans %}{% endblock %}
 
 {% block inside %}
-  <nav id="event-nav" class="header-nav">
-    <div class="navigation">
-      <div class="navigation-title">
-        <h1>{% blocktrans with field=field_label %}Field settings: {{ field }}{% endblocktrans %}</h1>
-      </div>
-      {% include 'pretixcontrol/event/component_link.html' %}
-    </div>
-  </nav>
+  {% blocktrans with field=field_label as header_title_var %}Field settings: {{ field }}{% endblocktrans %}
+  {% include 'common/includes/header_nav.html' with header_title=header_title_var header_component_link='pretixcontrol/event/component_link.html' %}
 
   <form action="" method="post" class="form-horizontal">
     {% csrf_token %}

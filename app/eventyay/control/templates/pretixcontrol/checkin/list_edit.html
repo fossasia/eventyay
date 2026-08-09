@@ -11,18 +11,12 @@
     {% endif %}
 {% endblock %}
 {% block inside %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                {% if checkinlist %}
-                    <h1>{% blocktrans with name=checkinlist.name %}Check-in list: {{ name }}{% endblocktrans %}</h1>
-                {% else %}
-                    <h1>{% trans "Check-in list" %}</h1>
-                {% endif %}
-            </div>
-            {% include "pretixcontrol/event/component_link.html" %}
-        </div>
-    </nav>
+    {% if checkinlist %}
+        {% blocktrans with name=checkinlist.name as header_title_var %}Check-in list: {{ name }}{% endblocktrans %}
+    {% else %}
+        {% trans "Check-in list" as header_title_var %}
+    {% endif %}
+    {% include "common/includes/header_nav.html" with header_title=header_title_var header_component_link="pretixcontrol/event/component_link.html" %}
     <form action="" method="post" class="form-horizontal">
         <script type="text/plain"
                 id="product-select2">{% url "control:event.products.select2" event=request.event.slug organizer=request.organizer.slug %}</script>
@@ -40,6 +34,34 @@
                 {% bootstrap_field form.include_pending layout="control" %}
                 {% bootstrap_field form.all_products layout="control" %}
                 {% bootstrap_field form.limit_products layout="control" %}
+                <fieldset>
+                    <legend>{% trans "Check-in App Display" %}</legend>
+                    <p class="help-block">
+                        {% blocktrans trimmed %}
+                            Select additional attendee registration data fields to display on the check-in success pop-up screen.
+                        {% endblocktrans %}
+                    </p>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">{% trans "Always shown" %}</label>
+                        <div class="col-md-9">
+                            <ul class="help-block list-unstyled" style="margin-bottom: 12px;">
+                                <li>
+                                    <label>
+                                        <input type="checkbox" checked disabled aria-checked="true">
+                                        {% trans "Attendee name" %}
+                                    </label>
+                                </li>
+                                <li>
+                                    <label>
+                                        <input type="checkbox" checked disabled aria-checked="true">
+                                        {% trans "Ticket name / variant" %}
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% bootstrap_field form.display_popup_fields layout="control" %}
+                </fieldset>
             </fieldset>
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
@@ -65,6 +87,8 @@
 
                 {% bootstrap_field form.allow_multiple_entries layout="control" %}
                 {% bootstrap_field form.allow_entry_after_exit layout="control" %}
+                {% bootstrap_field form.limit_one_checkin_per_day layout="control" %}
+                {% bootstrap_field form.limit_one_checkin_per_gate layout="control" %}
                 {% bootstrap_field form.exit_all_at layout="control" %}
                 {% bootstrap_field form.auto_checkin_sales_channels layout="control" %}
                 {% if form.gates %}
