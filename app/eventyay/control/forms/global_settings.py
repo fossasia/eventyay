@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
 from eventyay.base.forms import SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
-from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, GlobalSettingsObject
+from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 
 
@@ -24,6 +24,8 @@ class GlobalSettingsForm(SettingsForm):
             global_settings.set('billing_validation', True)
         if global_settings.get(EVENT_SERIES_CREATION_ENABLED) is None:
             global_settings.set(EVENT_SERIES_CREATION_ENABLED, True)
+        if global_settings.get(MEETUP_CREATION_ENABLED) is None:
+            global_settings.set(MEETUP_CREATION_ENABLED, False)
         if global_settings.get('reservation_time') is None or global_settings.get('reservation_time') == '':
             global_settings.set('reservation_time', 30)
         if global_settings.get('max_products_per_order') is None or global_settings.get('max_products_per_order') == '':
@@ -75,6 +77,18 @@ class GlobalSettingsForm(SettingsForm):
                         ),
                     ),
                 ),
+                (
+                    MEETUP_CREATION_ENABLED,
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Allow meetup creation'),
+                        help_text=_(
+                            'When enabled, organizers can create simplified meetup events in addition to standard events. '
+                            'Disable this to restrict event creation to standard events only.'
+                        ),
+                    ),
+                ),
+
                 (
                     'footer_text',
                     I18nFormField(
@@ -542,6 +556,7 @@ class GlobalSettingsForm(SettingsForm):
             ]),
             ('event_creation', _('Event Creation'), [
                 EVENT_SERIES_CREATION_ENABLED,
+                MEETUP_CREATION_ENABLED,
             ]),
             ('etherpad', _('Etherpad'), [
                 'etherpad_enabled',

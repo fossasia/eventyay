@@ -27,6 +27,13 @@
               </a>
           </div>
           {% endif %}
+          {% if meetup_creation_enabled %}
+          <div class="widget-small widget-container">
+              <a href="{% url 'eventyay_common:events.add' %}?meetup=1" class="widget">
+                  <div class="newevent"><span class="fa fa-users"></span>{% trans "Create Meetup" %}</div>
+              </a>
+          </div>
+          {% endif %}
       {% endif %}
       {% for w in upcoming %}
           <div class="widget-{{ w.display_size|default:'small' }} {{ w.container_class|default:'widget-container' }} {% if w.lazy %}widget-lazy-loading{% endif %}" data-lazy-id="{{ w.lazy }}">

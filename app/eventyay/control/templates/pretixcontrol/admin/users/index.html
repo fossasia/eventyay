@@ -12,26 +12,45 @@
 {% endblock %}
 {% block content %}
     <h1>{% trans "Users" %}</h1>
-    <form class="row filter-form" action="" method="get">
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            {% bootstrap_field filter_form.query layout='inline' %}
-        </div>
-        <div class="col-md-2 col-sm-6 col-xs-12">
-            {% bootstrap_field filter_form.status layout='inline' %}
-        </div>
-        <div class="col-md-2 col-sm-6 col-xs-12">
-            {% bootstrap_field filter_form.superuser layout='inline' %}
-        </div>
-        <div class="col-md-2 col-sm-6 col-xs-12">
-            {% bootstrap_field filter_form.verified layout='inline' %}
-        </div>
-        <div class="col-md-1 col-sm-6 col-xs-12">
-            {% bootstrap_field filter_form.spam layout='inline' %}
-        </div>
-        <div class="col-md-2 col-sm-6 col-xs-12">
-            {% include "eventyay_common/filter_actions.html" %}
-        </div>
-    </form>
+    <div class="advanced-filter-search" data-advanced-filter-search>
+        <form class="filter-form advanced-filter-search-form" action="" method="get">
+            <div class="advanced-filter-search-bar">
+                <div class="input-group advanced-filter-search-query-group">
+                    <input id="id_query" type="text" name="query" class="form-control" placeholder="{% trans 'Search users…' %}" aria-label="{% trans 'Search users…' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary" type="submit">
+                            <span class="fa fa-search" aria-hidden="true"></span>
+                            {% trans "Search" %}
+                        </button>
+                    </span>
+                </div>
+
+                <div class="advanced-filter-field advanced-filter-field--inline">
+                    {% bootstrap_field filter_form.status layout='inline' %}
+                </div>
+                <div class="advanced-filter-field advanced-filter-field--inline">
+                    {% bootstrap_field filter_form.superuser layout='inline' %}
+                </div>
+                <div class="advanced-filter-field advanced-filter-field--inline">
+                    {% bootstrap_field filter_form.verified layout='inline' %}
+                </div>
+                <div class="advanced-filter-field advanced-filter-field--inline">
+                    {% bootstrap_field filter_form.spam layout='inline' %}
+                </div>
+
+                <div class="advanced-filter-search-actions">
+                    <button class="btn btn-primary" type="submit">
+                        <span class="fa fa-filter" aria-hidden="true"></span>
+                        {% trans "Filter" %}
+                    </button>
+                    <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                        <span class="fa fa-eraser" aria-hidden="true"></span>
+                        <span class="sr-only">{% trans "Clear filters" %}</span>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
     <p>
         <a href='{% url "eventyay_admin:admin.users.add" %}' class="btn btn-default">
             <span class="fa fa-plus"></span>
@@ -54,10 +73,26 @@
                         <a href="?{% url_replace request 'ordering' 'fullname' %}"><i class="fa fa-caret-up"></i></a>
                     </th>
                     <th>{% trans "Video username" %}</th>
-                    <th class="text-center">{% trans "Active" %}</th>
-                    <th class="text-center">{% trans "Verified" %}</th>
-                    <th class="text-center">{% trans "Admin" %}</th>
-                    <th class="text-center">{% trans "Mark as Spam" %}</th>
+                    <th class="text-center">
+                        {% trans "Active" %}
+                        <a href="?{% url_replace request 'ordering' '-active' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'active' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
+                    <th class="text-center">
+                        {% trans "Verified" %}
+                        <a href="?{% url_replace request 'ordering' '-verified' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'verified' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
+                    <th class="text-center">
+                        {% trans "Admin" %}
+                        <a href="?{% url_replace request 'ordering' '-admin' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'admin' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
+                    <th class="text-center">
+                        {% trans "Mark as Spam" %}
+                        <a href="?{% url_replace request 'ordering' '-spam' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'spam' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
                     <th class="text-nowrap">
                         {% trans "Member Since" %}
                         <span class="text-muted small" data-browser-timezone-label></span>
@@ -74,15 +109,15 @@
                 {% trans 'No email' as no_email %}
                 {% for u in users %}
                     <tr data-user-id="{{ u.pk }}"{% if u.event_id %} class="text-muted"{% endif %}>
-                        <td><strong>
+                        <td class="orders-email-cell"><strong>
                             {% if u.event_id %}
                                 {{ u.admin_list_email|default:no_email }}
                             {% else %}
                                 <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}'>{{ u.admin_list_email|default:no_email }}</a>
                             {% endif %}
                         </strong></td>
-                        <td>{{ u.admin_list_fullname|default_if_none:"" }}</td>
-                        <td>{{ u.video_username|default_if_none:"" }}</td>
+                        <td class="orders-user-cell">{{ u.admin_list_fullname|default_if_none:"" }}</td>
+                        <td class="orders-user-cell">{{ u.video_username|default_if_none:"" }}</td>
 
                         {# Active column #}
                         <td class="text-center">

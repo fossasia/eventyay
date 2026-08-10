@@ -31,6 +31,10 @@ _WIKI_PROFILE_FIELD_KEYS = (
 
 # Non-empty sentinel: Redis cache may not round-trip empty strings reliably.
 _EMAIL_HASH_CACHE_MISS = "-"
+_EMAIL_HASH_CACHE_TTL = 1800
+# Negative account lookups use a shorter TTL and cache.add so a concurrent
+# account create can overwrite (or block) a stale miss.
+_ACCOUNT_HASH_MISS_TTL = 60
 
 
 def display_wikimedia_username_from_profile(profile, stored_username):
@@ -83,9 +87,67 @@ def _make_ticket_row(order_code, ticket_code, contact_email):
     }
 
 
+def _email_hash_cache_key(event_id, token_hash):
+    return f'video:email_hash:{event_id}:{token_hash}'
+
+
+def _account_hash_cache_key(token_hash):
+    return f'video:account_hash:{token_hash}'
+
+
+def _set_hash_cache_values(keys, value, ttl=_EMAIL_HASH_CACHE_TTL):
+    for key in keys:
+        cache.set(key, value, ttl)
+
+
+def _add_hash_cache_misses(keys, ttl=_ACCOUNT_HASH_MISS_TTL):
+    """Store misses only if the key is empty so a concurrent hit wins."""
+    for key in keys:
+        cache.add(key, _EMAIL_HASH_CACHE_MISS, ttl)
+
+
 def _cache_email_hash_hits(event_id, email):
-    for h in _order_email_hash_keys(email):
-        cache.set(f'video:email_hash:{event_id}:{h}', email, 1800)
+    _set_hash_cache_values(
+        (_email_hash_cache_key(event_id, h) for h in _order_email_hash_keys(email)),
+        email,
+    )
+
+
+def _cache_account_hash_hits(email, wikimedia_username=''):
+    """Cache platform account fields for all email-hash variants of an address."""
+    payload = {
+        'email': email,
+        'wikimedia_username': (wikimedia_username or '').strip(),
+    }
+    _set_hash_cache_values(
+        (_account_hash_cache_key(h) for h in _order_email_hash_keys(email)),
+        payload,
+    )
+
+
+def invalidate_account_hash_cache_for_emails(emails):
+    """
+    Drop account-hash cache entries for the given emails.
+
+    Call when a platform account is created or its email / Wikimedia username
+    changes so auth does not keep a stale hit or a cached miss.
+    Team permission edits do not need this: traits are recomputed live.
+    """
+    keys = []
+    for email in emails:
+        for h in _order_email_hash_keys(email):
+            keys.append(_account_hash_cache_key(h))
+    if keys:
+        cache.delete_many(keys)
+
+
+def refresh_account_hash_cache(email, wikimedia_username=''):
+    """Invalidate then write-through current account fields for an email."""
+    normalized = (email or '').strip()
+    if not normalized:
+        return
+    invalidate_account_hash_cache_for_emails([normalized])
+    _cache_account_hash_hits(normalized, wikimedia_username)
 
 
 def _unresolved_hash_tokens(token_ids, ticket_by_token):
@@ -206,39 +268,65 @@ def resolve_wikimedia_usernames_by_email(emails):
 
 
 def resolve_account_fields_by_token_ids(token_ids):
-    """Map video JWT uid (email hash) to account email and Wikimedia username."""
+    """Map video JWT uid (email hash) to account email and Wikimedia username.
+
+    Uses a short-TTL cache keyed by email hash so hot paths (Video auth /
+    websocket connect) avoid a full platform-user table scan on every call.
+    Entries are invalidated when a platform account email/username changes.
+    """
     hash_tokens = [t for t in token_ids if t and _is_email_hash_uid_token(t)]
     if not hash_tokens:
         return {}
     wanted = {t.upper() for t in hash_tokens}
     result = {}
-    with scopes_disabled():
-        for row in (
-            User.objects.filter(event__isnull=True)
-            .exclude(email__isnull=True)
-            .exclude(email__exact="")
-            .values("email", "wikimedia_username")
-            .iterator(chunk_size=2000)
-        ):
-            email = (row.get("email") or "").strip()
-            if not email:
-                continue
-            for h in _order_email_hash_keys(email):
-                if h in wanted and h not in result:
-                    result[h] = {
-                        "email": email,
-                        "wikimedia_username": (
-                            row.get("wikimedia_username") or ""
-                        ).strip(),
-                    }
-            if len(result) >= len(wanted):
-                break
-    keyed = {
+    uncached = set()
+    for h in wanted:
+        val = cache.get(_account_hash_cache_key(h))
+        if val is None:
+            uncached.add(h)
+        elif val and val != _EMAIL_HASH_CACHE_MISS:
+            result[h] = val
+
+    if uncached:
+        with scopes_disabled():
+            for row in (
+                User.objects.filter(event__isnull=True)
+                .exclude(email__isnull=True)
+                .exclude(email__exact="")
+                .values("email", "wikimedia_username")
+                .iterator(chunk_size=2000)
+            ):
+                email = (row.get("email") or "").strip()
+                if not email:
+                    continue
+                email_hashes = _order_email_hash_keys(email)
+                matched_hashes = [
+                    h for h in email_hashes if h in uncached and h not in result
+                ]
+                if not matched_hashes:
+                    continue
+                payload = {
+                    "email": email,
+                    "wikimedia_username": (
+                        row.get("wikimedia_username") or ""
+                    ).strip(),
+                }
+                for h in matched_hashes:
+                    result[h] = payload
+                _cache_account_hash_hits(email, payload["wikimedia_username"])
+                uncached.difference_update(email_hashes)
+                if not uncached:
+                    break
+        # Use add() so a concurrent account create/write-through wins over this miss.
+        _add_hash_cache_misses(
+            _account_hash_cache_key(h) for h in uncached
+        )
+
+    return {
         token: result[token.upper()]
         for token in hash_tokens
         if token.upper() in result
     }
-    return keyed
 
 
 def resolve_video_jwt_contact_email(event_id, token_id):
@@ -352,7 +440,7 @@ def build_admin_ticket_rows_by_token(event_id, token_ids):
         # from encode_email(email) never changes for a given address.
         uncached = set()
         for h in need_hash_upper:
-            val = cache.get(f'video:email_hash:{event_id}:{h}')
+            val = cache.get(_email_hash_cache_key(event_id, h))
             if val is not None:
                 if val and val != _EMAIL_HASH_CACHE_MISS:
                     hash_to_email[h] = val
@@ -382,11 +470,14 @@ def build_admin_ticket_rows_by_token(event_id, token_ids):
                         uncached.discard(matched_hash)
                         if not uncached:
                             break
-        for h in need_hash_upper:
-            if h not in hash_to_email:
-                cache.set(
-                    f'video:email_hash:{event_id}:{h}', _EMAIL_HASH_CACHE_MISS, 1800
-                )
+        _set_hash_cache_values(
+            (
+                _email_hash_cache_key(event_id, h)
+                for h in need_hash_upper
+                if h not in hash_to_email
+            ),
+            _EMAIL_HASH_CACHE_MISS,
+        )
 
         resolved = [
             hash_to_email[t.upper()]
@@ -624,8 +715,15 @@ def get_user(
 
     token_id = None
     anonymous_invite = None
+    token_traits = None
     if with_token:
+        from eventyay.eventyay_common.video.traits_sync import apply_live_team_video_traits
+
         token_id = with_token["uid"]
+        # Team Video traits must follow live Organizer → Teams grants, not a cached JWT.
+        token_traits = apply_live_team_video_traits(
+            event, token_id, with_token.get("traits")
+        )
         user = get_user_by_token_id(event.id, token_id)
     elif with_client_id:
         user = get_user_by_client_id(event.id, with_client_id)
@@ -645,15 +743,14 @@ def get_user(
 
     if user:
         if with_token:
-            if user.traits != with_token.get("traits"):
-                traits = with_token["traits"]
-                update_user(event.id, id=user.id, traits=traits)
+            if list(user.traits or []) != list(token_traits or []):
+                update_user(event.id, id=user.id, traits=token_traits, serialize=False)
                 user = get_user_by_id(event.id, user.id)
             if token_id:
                 apply_video_jwt_contact_to_profile(user, event.id, token_id)
         return user
 
-    traits = with_token.get("traits") if with_token else None
+    traits = token_traits if with_token else None
     if not anonymous_invite and not event.has_permission_implicit(
         traits=traits or [],
         permissions=[Permission.EVENT_VIEW],
