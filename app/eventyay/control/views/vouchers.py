@@ -33,7 +33,7 @@ from eventyay.base.models.vouchers import _generate_random_code
 from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.vouchers import vouchers_send
 from eventyay.base.views.tasks import AsyncFormView
-from eventyay.control.forms.filter import VoucherFilterForm, VoucherTagFilterForm
+from eventyay.control.forms.filter import VoucherFilterForm, VoucherTagFilterForm, advanced_filters_open_from_get
 from eventyay.control.forms.vouchers import VoucherBulkForm, VoucherForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.signals import voucher_form_class
@@ -87,6 +87,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        ctx['advanced_filters_open'] = advanced_filters_open_from_get(self.filter_form)
         ctx['tags_filter_form'] = self.tags_filter_form
         ctx['tab'] = self._active_tab
         if ctx['tab'] == 'tags':

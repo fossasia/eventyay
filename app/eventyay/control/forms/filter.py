@@ -511,21 +511,22 @@ class EventOrderFilterForm(OrderFilterForm):
 
 def advanced_filters_open_from_get(filter_form) -> bool:
     """Return True when the advanced filter panel should start expanded."""
+    if not filter_form:
+        return False
+        
     if filter_form.data.get('filters') == '1':
         return True
     
     if not filter_form.is_valid():
         return False
         
-    advanced_keys = (
-        'status',
-        'product',
-        'provider',
-        'subevent',
-        'created_from',
-        'created_to',
-    )
-    return any(bool(filter_form.cleaned_data.get(key)) for key in advanced_keys)
+    for key in filter_form.fields.keys():
+        if key in ('query', 'ordering'):
+            continue
+        if filter_form.cleaned_data.get(key):
+            return True
+            
+    return False
 
 
 def advanced_filter_count(filter_form) -> int:
@@ -533,7 +534,9 @@ def advanced_filter_count(filter_form) -> int:
     if not filter_form.is_valid():
         return 0
     count = 0
-    for key in ('status', 'product', 'provider', 'subevent', 'created_from', 'created_to'):
+    for key in filter_form.fields.keys():
+        if key in ('query', 'ordering'):
+            continue
         if filter_form.cleaned_data.get(key):
             count += 1
     return count
@@ -1520,11 +1523,15 @@ class UserFilterForm(FilterForm):
     orders = {
         'fullname': 'fullname',
         'email': 'email',
+        'active': 'is_active',
+        'verified': 'is_email_verified',
+        'admin': 'is_staff',
+        'spam': 'is_spam',
     }
     status = forms.ChoiceField(
         label=_('Status'),
         choices=(
-            ('', _('All')),
+            ('', _('All statuses')),
             ('active', _('Active')),
             ('inactive', _('Inactive')),
         ),
@@ -1533,7 +1540,7 @@ class UserFilterForm(FilterForm):
     superuser = forms.ChoiceField(
         label=_('Administrator'),
         choices=(
-            ('', _('All')),
+            ('', _('All admin statuses')),
             ('yes', _('Administrator')),
             ('no', _('No administrator')),
         ),
@@ -1542,7 +1549,7 @@ class UserFilterForm(FilterForm):
     verified = forms.ChoiceField(
         label=_('Verified'),
         choices=(
-            ('', _('All')),
+            ('', _('All verification statuses')),
             ('yes', _('Verified')),
             ('no', _('Unverified')),
         ),
@@ -1551,7 +1558,7 @@ class UserFilterForm(FilterForm):
     spam = forms.ChoiceField(
         label=_('Spam'),
         choices=(
-            ('', _('All')),
+            ('', _('All spam statuses')),
             ('yes', _('Spam')),
             ('no', _('Not spam')),
         ),

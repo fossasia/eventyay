@@ -11,6 +11,18 @@ from eventyay.base.models import Checkin, CheckinList
 class CheckinListSerializer(I18nAwareModelSerializer):
     checkin_count = serializers.IntegerField(read_only=True)
     position_count = serializers.IntegerField(read_only=True)
+    display_popup_fields = serializers.ListField(
+        child=serializers.CharField(max_length=190),
+        required=False,
+        allow_empty=True,
+    )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['display_popup_fields'] = CheckinList.normalize_display_popup_fields(
+            data.get('display_popup_fields')
+        )
+        return data
 
     class Meta:
         model = CheckinList
@@ -26,6 +38,9 @@ class CheckinListSerializer(I18nAwareModelSerializer):
             'auto_checkin_sales_channels',
             'allow_multiple_entries',
             'allow_entry_after_exit',
+            'limit_one_checkin_per_day',
+            'limit_one_checkin_per_gate',
+            'display_popup_fields',
             'rules',
             'exit_all_at',
         )
@@ -68,6 +83,12 @@ class CheckinListSerializer(I18nAwareModelSerializer):
 
         CheckinList.validate_rules(data.get('rules'))
 
+        if 'display_popup_fields' in data:
+            data['display_popup_fields'] = CheckinList.validate_display_popup_fields(
+                event,
+                data.get('display_popup_fields'),
+            )
+
         return data
 
 
@@ -93,10 +114,21 @@ class CheckinRedeemInputSerializer(serializers.Serializer):
 class MiniCheckinListSerializer(I18nAwareModelSerializer):
     event = serializers.SlugRelatedField(slug_field='slug', read_only=True)
     subevent = serializers.PrimaryKeyRelatedField(read_only=True)
+    display_popup_fields = serializers.ListField(
+        child=serializers.CharField(max_length=190),
+        read_only=True,
+    )
 
     class Meta:
         model = CheckinList
-        fields = ('id', 'name', 'event', 'subevent', 'include_pending')
+        fields = ('id', 'name', 'event', 'subevent', 'include_pending', 'display_popup_fields')
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['display_popup_fields'] = CheckinList.normalize_display_popup_fields(
+            data.get('display_popup_fields')
+        )
+        return data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

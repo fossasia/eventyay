@@ -1149,6 +1149,12 @@ DEFAULT_SETTINGS = {
             help_text=_('If this is off, nobody can download a ticket.'),
         ),
     },
+    # PDF tickets are a core output (not an optional plugin). Default enabled so
+    # existing events get download/{download_tickets_pdf} without recreating data.
+    'ticketoutput_pdf__enabled': {
+        'default': 'True',
+        'type': bool,
+    },
     'ticket_download_date': {
         'default': None,
         'type': RelativeDateWrapper,
