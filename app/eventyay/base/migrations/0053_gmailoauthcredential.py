@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0051_consolidate_video_team_permissions'),
+        ('base', '0052_admission_validity_fields'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
