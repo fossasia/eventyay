@@ -1,7 +1,7 @@
 import sys
 import uuid
 from collections import Counter, OrderedDict
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
 
 import dateutil.parser
@@ -212,7 +212,44 @@ class ProductQuerySetManager(ScopedManager(organizer='event__organizer').__class
         return filter_available(self.get_queryset(), channel, voucher, allow_addons)
 
 
-class Product(LoggedModel):
+class AdmissionValidityBoundMixin(models.Model):
+    """Shared fixed-window and offset fields for product/variation admission validity."""
+
+    admission_valid_from = models.DateTimeField(
+        verbose_name=_('Admission valid from'),
+        help_text=_('Used when admission validity mode is "Fixed start and end".'),
+        null=True,
+        blank=True,
+    )
+    admission_valid_until = models.DateTimeField(
+        verbose_name=_('Admission valid until'),
+        help_text=_('Used when admission validity mode is "Fixed start and end".'),
+        null=True,
+        blank=True,
+    )
+    admission_valid_from_offset_minutes = models.IntegerField(
+        verbose_name=_('Admission valid from offset (minutes)'),
+        help_text=_(
+            'For event or date-based validity: minutes after the window start when check-in becomes allowed.'
+        ),
+        null=True,
+        blank=True,
+    )
+    admission_valid_until_offset_minutes = models.IntegerField(
+        verbose_name=_('Admission valid until offset (minutes)'),
+        help_text=_(
+            'For event or date-based validity: minutes after the window start when check-in stops. '
+            'Leave empty to use the window end.'
+        ),
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class Product(AdmissionValidityBoundMixin, LoggedModel):
     """
     An product is a thing which can be sold. It belongs to an event and may or may not belong to a category.
     Product was previously named 'Item' or referenced as 'items' internally due to historic reasons.
@@ -357,6 +394,24 @@ class Product(LoggedModel):
         verbose_name=_('Is an admission ticket'),
         help_text=_('Whether or not buying this product allows a person to enter your event'),
         default=False,
+    )
+    ADMISSION_VALIDITY_MODE_NONE = ''
+    ADMISSION_VALIDITY_MODE_FIXED = 'fixed'
+    ADMISSION_VALIDITY_MODE_SUBEVENT = 'subevent'
+    ADMISSION_VALIDITY_MODE_EVENT = 'event'
+    ADMISSION_VALIDITY_MODE_CHOICES = (
+        (ADMISSION_VALIDITY_MODE_NONE, _('No check-in time restriction')),
+        (ADMISSION_VALIDITY_MODE_FIXED, _('Fixed start and end')),
+        (ADMISSION_VALIDITY_MODE_SUBEVENT, _('Valid during assigned event date')),
+        (ADMISSION_VALIDITY_MODE_EVENT, _('Valid during entire event')),
+    )
+    admission_validity_mode = models.CharField(
+        verbose_name=_('Admission validity mode'),
+        help_text=_('How check-in validity is determined for tickets of this product.'),
+        max_length=20,
+        choices=ADMISSION_VALIDITY_MODE_CHOICES,
+        blank=True,
+        default=ADMISSION_VALIDITY_MODE_NONE,
     )
     generate_tickets = models.BooleanField(
         verbose_name=_('Generate tickets'),
@@ -728,6 +783,51 @@ class Product(LoggedModel):
             if from_date > until_date:
                 raise ValidationError(_("The product's availability cannot end before it starts."))
 
+    @staticmethod
+    def clean_admission_valid(valid_from, valid_until):
+        if valid_from is not None and valid_until is not None and valid_from > valid_until:
+            raise ValidationError(_('Admission validity cannot end before it starts.'))
+
+    @staticmethod
+    def clean_admission_validity(
+        mode, valid_from, valid_until, offset_from=None, offset_until=None, event=None
+    ):
+        effective_mode = mode or Product.ADMISSION_VALIDITY_MODE_NONE
+        if effective_mode == ProductVariation.ADMISSION_VALIDITY_MODE_INHERIT:
+            # Inherit uses product mode at resolve-time; only validate provided fields here.
+            effective_mode = Product.ADMISSION_VALIDITY_MODE_NONE
+        if effective_mode == Product.ADMISSION_VALIDITY_MODE_NONE and (valid_from or valid_until):
+            effective_mode = Product.ADMISSION_VALIDITY_MODE_FIXED
+        if effective_mode == Product.ADMISSION_VALIDITY_MODE_FIXED:
+            Product.clean_admission_valid(valid_from, valid_until)
+        for offset in (offset_from, offset_until):
+            if offset is not None and offset < 0:
+                raise ValidationError(_('Admission validity offsets cannot be negative.'))
+        if offset_from is not None and offset_until is not None and offset_from > offset_until:
+            raise ValidationError(_('Admission validity offset cannot end before it starts.'))
+        if (
+            effective_mode == Product.ADMISSION_VALIDITY_MODE_EVENT
+            and event is not None
+            and event.date_from
+            and event.date_to
+            and offset_until is not None
+            and event.date_from + timedelta(minutes=offset_until) > event.date_to
+        ):
+            raise ValidationError(
+                _('Admission validity until offset cannot extend past the event end.')
+            )
+
+    @staticmethod
+    def clean_admission_validity_data(data, event=None):
+        Product.clean_admission_validity(
+            data.get('admission_validity_mode'),
+            data.get('admission_valid_from'),
+            data.get('admission_valid_until'),
+            data.get('admission_valid_from_offset_minutes'),
+            data.get('admission_valid_until_offset_minutes'),
+            event=event,
+        )
+
     @property
     def meta_data(self):
         data = {p.name: p.default for p in self.event.product_meta_properties.all()}
@@ -739,7 +839,7 @@ class Product(LoggedModel):
         return OrderedDict((k, v) for k, v in sorted(data.items(), key=lambda k: k[0]))
 
 
-class ProductVariation(models.Model):
+class ProductVariation(AdmissionValidityBoundMixin, models.Model):
     """
     A variation of a product. For example, if your product is 'T-Shirt'
     then an example for a variation would be 'T-Shirt XL'.
@@ -788,6 +888,26 @@ class ProductVariation(models.Model):
             'If set, this will be displayed next to the current price to show that the current price is a '
             'discounted one. This is just a cosmetic setting and will not actually impact pricing.'
         ),
+    )
+    ADMISSION_VALIDITY_MODE_INHERIT = 'inherit'
+    ADMISSION_VALIDITY_MODE_CHOICES = (
+        (ADMISSION_VALIDITY_MODE_INHERIT, _('Same as product')),
+        (Product.ADMISSION_VALIDITY_MODE_NONE, _('No check-in time restriction')),
+        (Product.ADMISSION_VALIDITY_MODE_FIXED, _('Fixed start and end')),
+        (Product.ADMISSION_VALIDITY_MODE_SUBEVENT, _('Valid during assigned event date')),
+        (Product.ADMISSION_VALIDITY_MODE_EVENT, _('Valid during entire event')),
+    )
+    admission_validity_mode = models.CharField(
+        verbose_name=_('Admission validity mode'),
+        help_text=_(
+            'Use "Same as product" to inherit the product mode and overlay only the '
+            'variation fields you set. Choose "No check-in time restriction" to explicitly '
+            'clear a product-level restriction for this variation.'
+        ),
+        max_length=20,
+        choices=ADMISSION_VALIDITY_MODE_CHOICES,
+        blank=False,
+        default=ADMISSION_VALIDITY_MODE_INHERIT,
     )
 
     objects = ScopedManager(organizer='product__event__organizer')
