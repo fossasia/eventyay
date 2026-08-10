@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0049_alter_talkquestion_variant_add_video'),
+        ('base', '0051_consolidate_video_team_permissions'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
