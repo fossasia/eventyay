@@ -1033,14 +1033,14 @@ wheels = [
 
 [[package]]
 name = "django-scopes"
-version = "2.0.0"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/d7/a26ccb685b64e8e0b21f107b01ea16636a899a380175fe29d7c01d3d8395/django-scopes-2.0.0.tar.gz", hash = "sha256:d190d9a2462bce812bc6fdd254e47ba031f6fba3279c8ac7397c671df0a4e54f", size = 15118, upload-time = "2023-04-22T17:07:52.352Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e1/03/8032bb05788e91a7cbe7dcfa796b9692add0bd82a7fec3011ad8cec33eb9/django_scopes-2.1.0.tar.gz", hash = "sha256:dedd74c8ba09a5dad607d0f9e9a9407d92aaf94eea6a963f1ec11c98f007bbb3", size = 15599, upload-time = "2026-07-24T11:06:37.905Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/3d/94d82839c111a36145b5ec1fb407a85f9a460af5974a07f4c6d3cc414358/django_scopes-2.0.0-py3-none-any.whl", hash = "sha256:9cf521b4d543ffa2ff6369fb5a1dda03567e862ba89626c01405f3d93ca04724", size = 16660, upload-time = "2023-04-22T17:08:45.058Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/60/64e5561647399f06cdea4a6500db358647e0aae957dd59152380e1064017/django_scopes-2.1.0-py3-none-any.whl", hash = "sha256:c44b9ee8a00ab2755e9a4e96c2b1b1ee4d0d0cc762f68c24fbeb1c023d219d6d", size = 12737, upload-time = "2026-07-24T11:06:36.747Z" },
 ]
 
 [[package]]
@@ -1523,7 +1523,7 @@ requires-dist = [
     { name = "django-pdb", specifier = ">=0.6.2" },
     { name = "django-phonenumber-field", specifier = ">=8.4.0" },
     { name = "django-redis", specifier = ">=7.0.0" },
-    { name = "django-scopes", specifier = ">=2.0.0" },
+    { name = "django-scopes", specifier = ">=2.1.0" },
     { name = "django-sso", specifier = ">=3.0.2" },
     { name = "django-statici18n", specifier = ">=2.5.0" },
     { name = "django-timezone-field", specifier = ">=7.2.2" },
@@ -1672,14 +1672,14 @@ test = [
     { name = "coverage", specifier = ">=7.15.2" },
     { name = "coveralls", specifier = ">=4.0.2" },
     { name = "faker", specifier = ">=40.36.0" },
-    { name = "fakeredis", specifier = ">=2.36.2" },
+    { name = "fakeredis", specifier = ">=2.37.0" },
     { name = "freezegun", specifier = ">=1.5.5" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-asyncio", specifier = ">=1.4.0" },
     { name = "pytest-cache", specifier = ">=1.0" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "pytest-django", specifier = ">=4.9.0" },
-    { name = "pytest-env", specifier = ">=1.6.0" },
+    { name = "pytest-env", specifier = ">=1.7.0" },
     { name = "pytest-mock", specifier = ">=3.15.1" },
     { name = "pytest-rerunfailures", specifier = ">=16.4" },
     { name = "pytest-sugar", specifier = ">=1.1.1" },
@@ -1714,15 +1714,15 @@ wheels = [
 
 [[package]]
 name = "fakeredis"
-version = "2.36.2"
+version = "2.37.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "redis" },
     { name = "sortedcontainers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0a/ed/86ed74d8829c3bc565025c1c9efaf8518c9165fbf8c9cc2c026c8ed21bd9/fakeredis-2.36.2.tar.gz", hash = "sha256:c37a0b307fae3f27ec7c19e59519e57b8c52782e00303df9075361b5ba441be6", size = 213336, upload-time = "2026-06-17T13:25:38.934Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cb/34/73256495885f68b125b6a95f6a8448e103adf34825746ab8905db52183a0/fakeredis-2.37.0.tar.gz", hash = "sha256:7461f124dcba04a80691d72270b3d1d5cd100ef14dc068c76db825940f3ed799", size = 236339, upload-time = "2026-07-22T20:04:53.753Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/4d/e6e40f93031adbf654d34e542bd396e9f3bc1c6209b40c920d58c9e1317a/fakeredis-2.36.2-py3-none-any.whl", hash = "sha256:84cbb9c74ca8946c0d2499daadf3a5d0bfe3cfbac71e3398316d1a1eab3421c4", size = 141039, upload-time = "2026-06-17T13:25:36.638Z" },
+    { url = "https://files.pythonhosted.org/packages/76/e2/964e6ef372770dd7c32f9738b50ff4924f1d3cccd665b568680e4bcb0167/fakeredis-2.37.0-py3-none-any.whl", hash = "sha256:657a2a695a1123be0c13f98db409371497bd94c29d260dd76a9fc7ce1a633745", size = 151526, upload-time = "2026-07-22T20:04:51.979Z" },
 ]
 
 [[package]]
@@ -2836,15 +2836,15 @@ wheels = [
 
 [[package]]
 name = "pytest-env"
-version = "1.6.0"
+version = "1.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
     { name = "python-dotenv" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ff/69/4db1c30625af0621df8dbe73797b38b6d1b04e15d021dd5d26a6d297f78c/pytest_env-1.6.0.tar.gz", hash = "sha256:ac02d6fba16af54d61e311dd70a3c61024a4e966881ea844affc3c8f0bf207d3", size = 16163, upload-time = "2026-03-12T22:39:43.78Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/65/49/08ee056f9cc655e437abcf2ae399884844b623223476ae6a77244131db03/pytest_env-1.7.0.tar.gz", hash = "sha256:0c1dc1101fb8d3ab3611e8f8d657ba06c3c0c167fc85c90457e5b27f2508f43e", size = 16408, upload-time = "2026-07-21T13:09:21.834Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/27/16/ad52f56b96d851a2bcfdc1e754c3531341885bd7177a128c13ff2ca72ab4/pytest_env-1.6.0-py3-none-any.whl", hash = "sha256:1e7f8a62215e5885835daaed694de8657c908505b964ec8097a7ce77b403d9a3", size = 10400, upload-time = "2026-03-12T22:39:41.887Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/fc/9f2975c41d41bf5bd9a7d0fc03085ec20052b456b079df53828ae4a1b100/pytest_env-1.7.0-py3-none-any.whl", hash = "sha256:9ee0f1fe859d23fcdb533fe2909a404b3b133d02674a56df275bbe4df4eb104b", size = 10263, upload-time = "2026-07-21T13:09:20.677Z" },
 ]
 
 [[package]]
