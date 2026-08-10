@@ -934,15 +934,15 @@ wheels = [
 
 [[package]]
 name = "django-localflavor"
-version = "5.0"
+version = "5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "python-stdnum" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/9f/4792bc2359211988f199e947f7b4cd439c6cda92de0f2d14d47d491853f7/django_localflavor-5.0.tar.gz", hash = "sha256:9ddcce5dac6a956d076f3134071c64d4c76e1c7063e8aa7730414a2a1c5ded59", size = 5000251, upload-time = "2025-05-21T08:01:16.028Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/82/844921ee72877bc0ed12dffd91d6fcd60cebc1363094b528cf159a157779/django_localflavor-5.1.tar.gz", hash = "sha256:afacbe4902698a6772c5621a0cad18f4e2f9f198a7284d3da57418c78c150080", size = 3053847, upload-time = "2026-08-01T11:24:34.101Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/10/677a837683be26517a79f3f45f3a34baca14fa31b0c3c46f8a746f93349b/django_localflavor-5.0-py3-none-any.whl", hash = "sha256:ee32749420cc4a93b18667939fe7fa0da36d71024a0d9578b40809a71489cee7", size = 2979096, upload-time = "2025-05-21T08:01:13.488Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/0e/52994debc76b6b3c6f6143483835f05212466472d99066c41ea2709d7f2f/django_localflavor-5.1-py3-none-any.whl", hash = "sha256:33a0b5418c99c733e87fd949e08ba3c6ccf7e7a9edd1458dac15586701b2cd90", size = 3073491, upload-time = "2026-08-01T11:24:32.339Z" },
 ]
 
 [[package]]
@@ -1007,14 +1007,14 @@ sdist = { url = "https://files.pythonhosted.org/packages/97/e8/25c9fa3a6c27da51d
 
 [[package]]
 name = "django-phonenumber-field"
-version = "8.4.0"
+version = "8.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/87/bf/8aa60c9834773b955dff1ddea842e361e8daaf6b0945d5bfc29fc66d53ab/django_phonenumber_field-8.4.0.tar.gz", hash = "sha256:2b83e843dac35eec6a69880a166487235b737a71a1e38c9a52e5ad67d6996083", size = 45512, upload-time = "2025-11-24T15:09:51.904Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/82/479b070133cd493cad0f59bc04d6dd3e2e88b2c1f48cd6f54fd897225199/django_phonenumber_field-8.5.0.tar.gz", hash = "sha256:19c606fda7bb25630c4913f7ac83c1824186ea17e2e4c6dc9aa9373e8f5843c5", size = 46311, upload-time = "2026-07-23T12:24:16.471Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8b/a3/f6b85a9246e22cf719752ad83f5e95aa9ba12419b2f9eff70f20d30e55df/django_phonenumber_field-8.4.0-py3-none-any.whl", hash = "sha256:7a1cb3a6456edb54d879f11ffa0acb227ded08c93b587035d0f28093f0e46511", size = 69528, upload-time = "2025-11-24T15:09:45.479Z" },
+    { url = "https://files.pythonhosted.org/packages/77/14/4e33f4055afbf517ac3223371334f6f3226beecc92b781131a6eb6eeda1c/django_phonenumber_field-8.5.0-py3-none-any.whl", hash = "sha256:a6dd71250f7fd0724aad995df01bdb4ac457a65622f120d0d623792fe8283798", size = 69514, upload-time = "2026-07-23T12:24:14.955Z" },
 ]
 
 [[package]]
@@ -1515,13 +1515,13 @@ requires-dist = [
     { name = "django-i18nfield", specifier = ">=1.11.0" },
     { name = "django-jquery-js", specifier = ">=3.1.1" },
     { name = "django-libsass", specifier = ">=0.9" },
-    { name = "django-localflavor", specifier = ">=4.0" },
+    { name = "django-localflavor", specifier = ">=5.1" },
     { name = "django-markup", specifier = ">=1.9.1" },
     { name = "django-multifactor", specifier = ">=0.9.3" },
     { name = "django-oauth-toolkit", specifier = ">=3.3.0" },
     { name = "django-otp", specifier = ">=1.7.0" },
     { name = "django-pdb", specifier = ">=0.6.2" },
-    { name = "django-phonenumber-field", specifier = ">=8.4.0" },
+    { name = "django-phonenumber-field", specifier = ">=8.5.0" },
     { name = "django-redis", specifier = ">=7.0.0" },
     { name = "django-scopes", specifier = ">=2.1.0" },
     { name = "django-sso", specifier = ">=3.0.2" },
@@ -1576,7 +1576,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=3.0.3" },
     { name = "pdf2image", specifier = ">=1.17.0" },
     { name = "pdfrw", specifier = ">=0.4" },
-    { name = "phonenumberslite", specifier = ">=9.0.35" },
+    { name = "phonenumberslite", specifier = ">=9.0.36" },
     { name = "pillow", specifier = ">=12.3.0" },
     { name = "polib", specifier = ">=1.2.0" },
     { name = "potypo", specifier = ">=0.0.2" },
@@ -2383,11 +2383,11 @@ wheels = [
 
 [[package]]
 name = "phonenumberslite"
-version = "9.0.35"
+version = "9.0.36"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/66/99/7fdff4d1cd75d3905d0c2597d125034b7f3b7df2a14d2433d8a1862340d3/phonenumberslite-9.0.35.tar.gz", hash = "sha256:5ab0bd8aa8483c3e2734c36260568b72da699e094fa8fc11b2096a59deb96ef8", size = 288841, upload-time = "2026-07-26T08:27:57.816Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/44/3c/aecc0d641dd17c67f2cb6825421e94785f03d83208df42170f6670e48ccc/phonenumberslite-9.0.36.tar.gz", hash = "sha256:a56e4a70e3ad4bc2b001560d2771b78d20603142cf2fb78d7a0316422896b89e", size = 289261, upload-time = "2026-08-01T06:13:29.867Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/95/ce/89ba746c9f98951306c5f224a2302c2c71b588f0848ecebb716f05fd5497/phonenumberslite-9.0.35-py2.py3-none-any.whl", hash = "sha256:ce22760d0f434c5378d515523236cc88fa1f1824e84bcd3fa9a96ca1d63d04de", size = 473267, upload-time = "2026-07-26T08:27:56.371Z" },
+    { url = "https://files.pythonhosted.org/packages/93/b7/3d24491cd77aa93f62ab889b12f5b8855e45bb617075ac96ea9669910dd8/phonenumberslite-9.0.36-py2.py3-none-any.whl", hash = "sha256:1c0e2f68d2a17121c00ef373c2716e666e6586f9d43aab13ba9856b07e2679cf", size = 473356, upload-time = "2026-08-01T06:13:28.509Z" },
 ]
 
 [[package]]
