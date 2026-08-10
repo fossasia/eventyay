@@ -138,7 +138,16 @@ async function init({ token, inviteToken }) {
     setInterval(() => store.commit('updateNow'), 60000)
   }, 60000 - (Date.now() % 60000))
 
-  setInterval(() => store.dispatch('notifications/pollExternals'), 1000)
+  function pollExternalsIfVisible() {
+    if (!document.hidden) {
+      store.dispatch('notifications/pollExternals')
+    }
+  }
+  const pollExternalsJitter = Math.random() * 15000
+  setTimeout(() => {
+    setInterval(pollExternalsIfVisible, 30000)
+  }, pollExternalsJitter)
+
   window.__venueless__release = RELEASE
 
   window.addEventListener('beforeinstallprompt', function (event) {
