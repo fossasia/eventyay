@@ -50,7 +50,7 @@ def add_jitsi_permissions_to_roles(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0051_consolidate_video_team_permissions'),
+        ('base', '0052_admission_validity_fields'),
     ]
 
     operations = [
