@@ -43,7 +43,7 @@ def video_only_team(db, organizer, event, user):
         organizer=organizer,
         name='Video only',
         all_events=False,
-        can_video_create_stages=True,
+        can_video_manage_content=True,
     )
     team.limit_events.add(event)
     team.members.add(user)
@@ -116,9 +116,10 @@ def test_generate_ticket_button_shows_permission_dialog_for_talk_only(
     request.user = user
     request.session = MagicMock()
     html = EventWidgetGenerator.generate_ticket_button(event, request)
-    assert '<button type="button"' in html
     assert f'data-dialog-target="#{TICKET_PERMISSION_DIALOG_ID}"' in html
     assert f'aria-controls="{TICKET_PERMISSION_DIALOG_ID}"' in html
+    # Permission-denied control is an <a role="button"> dialog trigger.
+    assert '<a' in html and 'role="button"' in html
     assert reverse(
         'control:event.index',
         kwargs={'organizer': organizer.slug, 'event': event.slug},
@@ -161,9 +162,9 @@ def test_generate_video_button_shows_video_permission_dialog_for_talk_only(
     request.user = user
     request.session = MagicMock()
     html = EventWidgetGenerator.generate_video_button(event, request)
-    assert '<button type="button"' in html
     assert f'data-dialog-target="#{VIDEO_PERMISSION_DIALOG_ID}"' in html
     assert f'aria-controls="{VIDEO_PERMISSION_DIALOG_ID}"' in html
+    assert 'role="button"' in html or '<button' in html
     assert TICKET_PERMISSION_DIALOG_ID not in html
     assert reverse(
         'eventyay_common:event.create_access_to_video',

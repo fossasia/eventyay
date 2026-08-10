@@ -4,7 +4,7 @@
 {% block title %}{{ object.name }} :: {% trans "Product" %}{% endblock %}
 {% block content %}
     {% if object.id %}
-        {% blocktrans trimmed with name=object.name as header_title_var %}Modify product: {{ name }}{% endblocktrans %}
+        {% blocktrans trimmed with name=object.name asvar header_title_var %}Modify product: {{ name }}{% endblocktrans %}
         {% include "common/includes/header_nav.html" with header_title=header_title_var header_component_link="pretixcontrol/event/component_link.html" %}
     {% else %}
         {% trans "Create product" as header_title_var %}

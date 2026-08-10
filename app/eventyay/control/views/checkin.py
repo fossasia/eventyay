@@ -15,8 +15,9 @@ from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import Checkin, Order, OrderPosition
 from eventyay.base.models.checkin import CheckinList
 from eventyay.base.services.checkin import CheckInError, perform_checkin
+from eventyay.control.checkin_app import get_eventyay_checkin_app_url, user_can_open_checkin_app
 from eventyay.control.forms.checkin import CheckinListForm
-from eventyay.control.forms.filter import CheckInFilterForm
+from eventyay.control.forms.filter import CheckInFilterForm, advanced_filters_open_from_get
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.helpers.models import modelcopy
@@ -99,6 +100,7 @@ class CheckInListShow(EventPermissionRequiredMixin, PaginationMixin, ListView):
         else:
             ctx['seats'] = self.request.event.seating_plan_id
         ctx['filter_form'] = self.filter_form
+        ctx['advanced_filters_open'] = advanced_filters_open_from_get(self.filter_form)
         for e in ctx['entries']:
             if e.last_entry:
                 if isinstance(e.last_entry, str):
@@ -246,6 +248,8 @@ class CheckinListList(EventPermissionRequiredMixin, PaginationMixin, ListView):
         ctx['can_change_organizer_settings'] = self.request.user.has_organizer_permission(
             self.request.organizer, 'can_change_organizer_settings', self.request
         )
+        ctx['can_open_checkin_app'] = user_can_open_checkin_app(self.request)
+        ctx['checkin_app_url'] = get_eventyay_checkin_app_url(self.request)
 
         return ctx
 

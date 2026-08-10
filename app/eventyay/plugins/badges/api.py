@@ -39,6 +39,7 @@ class BadgeLayoutSerializer(I18nAwareModelSerializer):
             'name',
             'default',
             'allow_customization',
+            'allow_badge_editing',
             'layout',
             'ask_user_fields',
             'size',

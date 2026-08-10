@@ -12,7 +12,7 @@
 {% endblock %}
 {% block inside %}
     {% if checkinlist %}
-        {% blocktrans with name=checkinlist.name as header_title_var %}Check-in list: {{ name }}{% endblocktrans %}
+        {% blocktrans with name=checkinlist.name asvar header_title_var %}Check-in list: {{ name }}{% endblocktrans %}
     {% else %}
         {% trans "Check-in list" as header_title_var %}
     {% endif %}

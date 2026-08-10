@@ -52,48 +52,54 @@
 
       {% bootstrap_field form.allow_customization layout='control' %}
 
-      <div id="badge-customization-fields" class="form-group">
-        <label class="col-md-3 control-label">
-          {% trans 'Badge fields' %}
-        </label>
-        <div class="col-md-9">
-          {% if form.customizable_fields %}
-            <p class="help-block">
-              {% trans 'Enable Ask user for any field that attendees should be able to hide from their badge at checkout. If Ask user is disabled, that field will always appear on the printed badge.' %}
-            </p>
-            <div class="table-responsive">
-              <table class="table table-condensed table-hover">
-                <thead>
-                  <tr>
-                    <th>{% trans 'Field' %}</th>
-                    <th class="text-right flip">{% trans 'Ask user' %}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for choice in form.ask_user_fields %}
+      <div id="badge-customization-fields">
+        {% if form.customizable_fields %}
+          {% bootstrap_field form.allow_badge_editing layout='control' %}
+        {% endif %}
+
+        <div class="form-group">
+          <label class="col-md-3 control-label">
+            {% trans 'Badge fields' %}
+          </label>
+          <div class="col-md-9">
+            {% if form.customizable_fields %}
+              <p class="help-block">
+                {% trans 'Enable Ask user for any field that attendees should be able to hide from their badge at checkout. If Ask user is disabled, that field will always appear on the printed badge.' %}
+              </p>
+              <div class="table-responsive">
+                <table class="table table-condensed table-hover">
+                  <thead>
                     <tr>
-                      <td>
-                        <label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
-                      </td>
-                      <td class="text-right flip">
-                        <label class="toggle-switch" for="{{ choice.id_for_label }}" aria-label="{% blocktrans trimmed with field=choice.choice_label %}Ask user for {{ field }}{% endblocktrans %}">
-                          {{ choice.tag }}
-                          <span class="toggle-slider"></span>
-                        </label>
-                      </td>
+                      <th>{% trans 'Field' %}</th>
+                      <th class="text-right flip">{% trans 'Ask user' %}</th>
                     </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            {% for error in form.ask_user_fields.errors %}
-              <p class="help-block text-danger">{{ error }}</p>
-            {% endfor %}
-          {% else %}
-            <p class="help-block text-muted">
-              {% trans 'This layout does not currently contain any dynamic text fields that can be customized.' %}
-            </p>
-          {% endif %}
+                  </thead>
+                  <tbody>
+                    {% for choice in form.ask_user_fields %}
+                      <tr>
+                        <td>
+                          <label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                        </td>
+                        <td class="text-right flip">
+                          <label class="toggle-switch" for="{{ choice.id_for_label }}" aria-label="{% blocktrans trimmed with field=choice.choice_label %}Ask user for {{ field }}{% endblocktrans %}">
+                            {{ choice.tag }}
+                            <span class="toggle-slider"></span>
+                          </label>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% for error in form.ask_user_fields.errors %}
+                <p class="help-block text-danger">{{ error }}</p>
+              {% endfor %}
+            {% else %}
+              <p class="help-block text-muted">
+                {% trans 'This layout does not currently contain any dynamic text fields that can be customized.' %}
+              </p>
+            {% endif %}
+          </div>
         </div>
       </div>
     </fieldset>
@@ -115,7 +121,12 @@
           $('#badge-customization-fields').show();
           return;
         }
-        $('#badge-customization-fields').toggle($('#id_allow_customization').is(':checked'));
+        const customizationEnabled = $('#id_allow_customization').is(':checked');
+        $('#badge-customization-fields').toggle(customizationEnabled);
+        $('#id_allow_badge_editing').prop('disabled', !customizationEnabled);
+        if (!customizationEnabled) {
+          $('#id_allow_badge_editing').prop('checked', false);
+        }
       }
 
       $('#id_allow_customization').on('change', toggleBadgeCustomizationFields);
