@@ -132,6 +132,7 @@ class LayoutSettingsView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, 
                 'products': list(form.cleaned_data['products'].values_list('pk', flat=True)),
                 'vouchers': list(form.cleaned_data['vouchers'].values_list('pk', flat=True)),
                 'allow_customization': form.cleaned_data['allow_customization'],
+                'allow_badge_editing': form.cleaned_data['allow_badge_editing'],
                 'ask_user_fields': form.cleaned_data['ask_user_fields'],
             },
         )
