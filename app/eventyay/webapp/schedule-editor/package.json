@@ -23,7 +23,7 @@
     "buntpapier": "^2.0.0-alpha.34",
     "i18next": "^26.3.6",
     "lodash": "^4.18.1",
-    "markdown-it": "^14.3.0",
+    "markdown-it": "^15.0.0",
     "moment": "^2.30.1",
     "moment-timezone": "^0.6.3",
     "process": "^0.11.10",
