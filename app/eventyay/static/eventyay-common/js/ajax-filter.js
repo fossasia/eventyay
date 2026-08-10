@@ -120,6 +120,7 @@ const syncFilterBadge = function(oldContext, newContext) {
     if (newCount > 0) {
         if (badge) {
             badge.textContent = String(newCount);
+            badge.hidden = false;  
         } else {
             badge = document.createElement('span');
             badge.className = 'badge advanced-filter-badge';
@@ -128,6 +129,7 @@ const syncFilterBadge = function(oldContext, newContext) {
             toggle.appendChild(badge);
         }
     } else if (badge) {
+        badge.hidden = true;
         badge.remove();
     }
 };
