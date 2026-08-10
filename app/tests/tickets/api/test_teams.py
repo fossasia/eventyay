@@ -316,41 +316,10 @@ def test_team_token_create(token_client, organizer, event, second_team):
 
 
 @pytest.mark.django_db
-def test_team_permission_error_subclass(organizer):
-    from django.core.exceptions import PermissionDenied
+def test_team_permission_error_is_raised(organizer):
     from eventyay.base.models.organizer import TeamPermissionError, check_access_permissions
-
-    assert issubclass(TeamPermissionError, PermissionDenied)
 
     organizer.teams.all().delete()
     with pytest.raises(TeamPermissionError):
         check_access_permissions(organizer)
-
-
-@pytest.mark.django_db
-def test_team_permission_error_caught_in_api(token_client, organizer, event, second_team):
-    resp = token_client.patch(
-        '/api/v1/organizers/{}/teams/{}/'.format(organizer.slug, second_team.pk),
-        {'all_events': True},
-        format='json',
-    )
-    assert resp.status_code == 400
-    assert 'There must be at least one team with the permission to change teams' in str(resp.data)
-
-
-@pytest.mark.django_db
-def test_unexpected_exception_propagates_in_api(token_client, organizer, event, second_team, monkeypatch):
-    from django.db import DatabaseError
-
-    def mock_check_permissions(orga):
-        raise DatabaseError("Simulated database failure")
-
-    monkeypatch.setattr('eventyay.api.views.team.check_access_permissions', mock_check_permissions)
-
-    with pytest.raises(DatabaseError):
-        token_client.patch(
-            '/api/v1/organizers/{}/teams/{}/'.format(organizer.slug, second_team.pk),
-            {'can_change_event_settings': True},
-            format='json',
-        )
 

@@ -6,7 +6,6 @@ from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Q
@@ -38,7 +37,7 @@ from .auth import User
 logger = logging.getLogger(__name__)
 
 
-class TeamPermissionError(PermissionDenied):
+class TeamPermissionError(Exception):
     """Raised when team access permission checks fail to preserve administrator access."""
 
     pass
