@@ -37,6 +37,12 @@ from .auth import User
 logger = logging.getLogger(__name__)
 
 
+class TeamPermissionError(Exception):
+    """Raised when team access permission checks fail to preserve administrator access."""
+
+    pass
+
+
 def check_access_permissions(organizer):
     """We run this method when team permissions are changed, inside a transaction.
 
@@ -46,8 +52,7 @@ def check_access_permissions(organizer):
     warnings = []
     teams = organizer.teams.all().annotate(member_count=models.Count('members')).filter(member_count__gt=0)
     if not [t for t in teams if t.can_change_teams]:
-        # TODO: Should use a concrete exception type
-        raise Exception(
+        raise TeamPermissionError(
             _(
                 'There must be at least one team with the permission to change teams, '
                 'as otherwise nobody can create new teams or grant permissions to existing teams.'
@@ -71,8 +76,7 @@ def check_access_permissions(organizer):
     for event in organizer.events.all():
         event_teams = teams.filter(models.Q(limit_events=event) | models.Q(all_events=True)).distinct()
         if not event_teams:
-            # TODO: Should use a concrete exception type
-            raise Exception(
+            raise TeamPermissionError(
                 str(
                     _(
                         'There must be at least one team with access to every event. '

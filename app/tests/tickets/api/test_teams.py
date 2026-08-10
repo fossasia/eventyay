@@ -313,3 +313,13 @@ def test_team_token_create(token_client, organizer, event, second_team):
     assert t.name == 'New token'
     assert t.active
     assert resp.data['token'] == t.token
+
+
+@pytest.mark.django_db
+def test_team_permission_error_is_raised(organizer):
+    from eventyay.base.models.organizer import TeamPermissionError, check_access_permissions
+
+    organizer.teams.all().delete()
+    with pytest.raises(TeamPermissionError):
+        check_access_permissions(organizer)
+
