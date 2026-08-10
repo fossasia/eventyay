@@ -92,9 +92,15 @@
         {% endif %}
     {% endif %}
     <h2>
-        {% blocktrans trimmed with code=order.code %}
-            Your order: {{ code }}
-        {% endblocktrans %}
+        {% if is_meetup_event %}
+            {% blocktrans trimmed with code=order.code %}
+                Your registration: {{ code }}
+            {% endblocktrans %}
+        {% else %}
+            {% blocktrans trimmed with code=order.code %}
+                Your order: {{ code }}
+            {% endblocktrans %}
+        {% endif %}
         {% if order.testmode %}
             <span class="label label-warning">{% trans "TEST MODE" %}</span>
         {% endif %}
@@ -222,15 +228,21 @@
             </div>
         {% endif %}
     {% endif %}
-    {% include "pretixpresale/event/fragment_downloads.html" with position_page=False %}
+    {% if not is_meetup_event %}
+        {% include "pretixpresale/event/fragment_downloads.html" with position_page=False %}
+    {% endif %}
     <div class="panel panel-primary cart">
         <div class="panel-heading">
             {% if user_change_allowed or can_modify_order %}
                 <div class="pull-right flip">
                     {% if user_change_allowed %}
-                        <a href="{% eventurl event 'presale:event.order.change' secret=order.secret order=order.code %}" aria-label="{% trans 'Change ordered items' %}">
+                        <a href="{% eventurl event 'presale:event.order.change' secret=order.secret order=order.code %}" aria-label="{% if is_meetup_event %}{% trans 'Change registered items' %}{% else %}{% trans 'Change ordered items' %}{% endif %}">
                             <span class="fa fa-edit" aria-hidden="true"></span>
-                            {% trans "Change order" %}
+                            {% if is_meetup_event %}
+                                {% trans "Change registration" %}
+                            {% else %}
+                                {% trans "Change order" %}
+                            {% endif %}
                         </a>
                     {% endif %}
                     {% if user_change_allowed and can_modify_order %}
@@ -245,11 +257,19 @@
                 </div>
             {% endif %}
             <h3 class="panel-title">
-                {% trans "Ordered items" %}
+                {% if is_meetup_event %}
+                    {% trans "Registered items" %}
+                {% else %}
+                    {% trans "Ordered items" %}
+                {% endif %}
             </h3>
         </div>
         <div class="panel-body">
-            {% include "pretixpresale/event/fragment_cart.html" with cart=cart event=request.event download=can_download editable=False %}
+            {% if is_meetup_event %}
+                {% include "pretixpresale/event/fragment_cart.html" with cart=cart event=request.event download=False editable=False %}
+            {% else %}
+                {% include "pretixpresale/event/fragment_cart.html" with cart=cart event=request.event download=can_download editable=False %}
+            {% endif %}
             {% if order.status == "n" and order.total > pending_sum %}
                 <div class="row cart-row">
                     <div class="col-md-4 col-xs-6">
@@ -393,14 +413,34 @@
         <div class="panel panel-primary panel-cancellation">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    {% if user_change_allowed or user_partial_cancel_allowed %}
-                        {% trans "Change or cancel your order" context "action" %}
+                    {% if is_meetup_event %}
+                        {% trans "Cancel your registration" context "action" %}
                     {% else %}
-                        {% trans "Cancel your order" context "action" %}
+                        {% if user_change_allowed or user_partial_cancel_allowed %}
+                            {% trans "Change or cancel your order" context "action" %}
+                        {% else %}
+                            {% trans "Cancel your order" context "action" %}
+                        {% endif %}
                     {% endif %}
                 </h3>
             </div>
             <ul class="list-group">
+                {% if is_meetup_event %}
+                    {% if user_cancel_allowed %}
+                        <li class="list-group-item">
+                            <p>
+                                {% blocktrans trimmed %}
+                                    You can cancel this registration using the following button.
+                                    This will invalidate your RSVP registration.
+                                {% endblocktrans %}
+                            </p>
+                            <a href="{% eventurl event 'presale:event.order.cancel' secret=order.secret order=order.code %}" class="btn btn-delete btn-danger">
+                                <span class="fa fa-remove" aria-hidden="true"></span>
+                                {% trans "Cancel registration" %}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% else %}
                 {% if user_change_allowed %}
                     <li class="list-group-item">
                         <p>
@@ -510,6 +550,7 @@
                         {% endif %}
                     </li>
                 {% endif %}
+            {% endif %}
             </ul>
         </div>
     {% endif %}

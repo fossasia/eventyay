@@ -7,14 +7,8 @@
 {% load static %}
 {% block title %}{% trans "Orders" %}{% endblock %}
 {% block content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h1>{% trans "Orders" %}</h1>
-            </div>
-            {% include "pretixcontrol/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Orders" as header_title %}
+    {% include "common/includes/header_nav.html" with header_title=header_title header_component_link="pretixcontrol/event/component_link.html" %}
     {% if not filter_form.filtered and orders|length == 0 and not filter_strings %}
         <div class="empty-collection">
             <p>
@@ -35,9 +29,9 @@
             {% endif %}
         </div>
     {% else %}
-        <div class="orders-filter-container">
+        <div class="advanced-filter-container">
         {% if filter_strings %}
-            <p class="orders-filter-query-text">
+            <p class="advanced-filter-query-text">
                 <span class="fa fa-filter"></span>
                 {% trans "Search query:" %}
                 {{ filter_strings|join:" · " }}
@@ -48,21 +42,21 @@
                 </a>
             </p>
         {% else %}
-            <div class="orders-search" data-orders-search>
-                <form class="orders-go-form"
+            <div class="advanced-filter-search" data-advanced-filter-search>
+                <form class="advanced-filter-go-form"
                       action="{% url 'control:event.orders.go' event=request.event.slug organizer=request.event.organizer.slug %}"
                       method="get"
-                      data-orders-go-form>
-                    <div class="input-group orders-search-code-group">
+                      data-advanced-filter-go-form>
+                    <div class="input-group advanced-filter-search-code-group">
                         <input id="orders-go-code" type="text" name="code" class="form-control" placeholder="{% trans 'Order code' %}">
                         <span class="input-group-btn">
                             <button class="btn btn-primary" type="submit">{% trans "Go!" %}</button>
                         </span>
                     </div>
                 </form>
-                <form class="filter-form orders-search-form" action="" method="get">
-                    <div class="orders-search-bar">
-                        <div class="input-group orders-search-query-group">
+                <form class="filter-form advanced-filter-search-form" action="" method="get">
+                    <div class="advanced-filter-search-bar">
+                        <div class="input-group advanced-filter-search-query-group">
                             <input id="id_query" type="text" name="query" class="form-control" placeholder="{% trans 'Search orders…' %}" value="{{ filter_form.query.value|default_if_none:'' }}" autofocus="autofocus" aria-label="{% trans 'Search orders' %}">
                             <span class="input-group-btn">
                                 <button class="btn btn-primary" type="submit">
@@ -71,52 +65,52 @@
                                 </button>
                             </span>
                         </div>
-                        <div class="orders-search-actions">
+                        <div class="advanced-filter-search-actions">
                             <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
                                 <span class="fa fa-eraser" aria-hidden="true"></span>
                                 <span class="sr-only">{% trans "Clear filters" %}</span>
                             </a>
                             <button type="button"
-                                    class="btn btn-default orders-filters-toggle"
-                                    data-orders-filters-toggle
-                                    aria-controls="orders-advanced-filters"
+                                    class="btn btn-default advanced-filter-toggle"
+                                    data-advanced-filter-toggle
+                                    aria-controls="advanced-filter-advanced"
                                     aria-expanded="{% if advanced_filters_open %}true{% else %}false{% endif %}">
                                 <span class="fa fa-sliders" aria-hidden="true"></span>
                                 {% trans "Filters" %}
                                 {% if advanced_filter_count %}
-                                    <span class="badge orders-filters-badge" data-orders-filters-count>{{ advanced_filter_count }}</span>
+                                    <span class="badge advanced-filter-badge" data-advanced-filter-count>{{ advanced_filter_count }}</span>
                                 {% endif %}
                             </button>
                         </div>
                     </div>
-                    <div id="orders-advanced-filters"
-                         class="orders-advanced-filters{% if not advanced_filters_open %} is-collapsed{% endif %}"
-                         data-orders-advanced-filters
+                    <div id="advanced-filter-advanced"
+                         class="advanced-filter-advanced{% if not advanced_filters_open %} is-collapsed{% endif %}"
+                         data-advanced-filter-advanced
                          {% if not advanced_filters_open %}hidden{% endif %}>
-                        <div class="orders-advanced-grid">
-                            <div class="orders-advanced-field">
+                        <div class="advanced-filter-grid">
+                            <div class="advanced-filter-field">
                                 {% bootstrap_field filter_form.status %}
                             </div>
-                            <div class="orders-advanced-field">
+                            <div class="advanced-filter-field">
                                 {% bootstrap_field filter_form.product %}
                             </div>
-                            <div class="orders-advanced-field">
+                            <div class="advanced-filter-field">
                                 {% bootstrap_field filter_form.provider %}
                             </div>
                             {% if request.event.has_subevents %}
-                                <div class="orders-advanced-field">
+                                <div class="advanced-filter-field">
                                     {% bootstrap_field filter_form.subevent %}
                                 </div>
                             {% endif %}
-                            <div class="orders-advanced-field">
+                            <div class="advanced-filter-field">
                                 {% bootstrap_field filter_form.created_from %}
                             </div>
-                            <div class="orders-advanced-field">
+                            <div class="advanced-filter-field">
                                 {% bootstrap_field filter_form.created_to %}
                             </div>
                             {{ filter_form.browser_timezone }}
                         </div>
-                        <div class="orders-advanced-footer">
+                        <div class="advanced-filter-footer">
                             <button class="btn btn-primary" type="submit">
                                 <span class="fa fa-filter" aria-hidden="true"></span>
                                 {% trans "Apply filters" %}
@@ -132,7 +126,7 @@
             </div>
         {% endif %}
         {% if filter_form.is_valid and filter_form.cleaned_data.question %}
-            <p class="text-muted orders-filter-query-text">
+            <p class="text-muted advanced-filter-query-text">
                 <span class="fa fa-filter"></span>
                 {% blocktrans trimmed with question=filter_form.cleaned_data.question.question %}
                     List filtered by answers to question "{{ question }}".
@@ -143,16 +137,16 @@
                 </a>
             </p>
         {% endif %}
-        <form action="{% url 'control:event.orders.bulk_action' event=request.event.slug organizer=request.event.organizer.slug %}" method="post" class="orders-post-form">
+        <form action="{% url 'control:event.orders.bulk_action' event=request.event.slug organizer=request.event.organizer.slug %}" method="post" class="advanced-filter-post-form">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <div data-ajax-results-region class="orders-post-form">
+            <div data-ajax-results-region class="advanced-filter-post-form">
             {% if "can_change_orders" in request.eventpermset %}
-                <div class="batch-select-actions batch-select-actions-orders orders-batch-select-actions"
+                <div class="batch-select-actions batch-select-actions-orders advanced-filter-batch-select-actions"
                      data-batch-disabled-reason-none="{% trans 'Select at least one order.' %}"
                      data-batch-disabled-reason-ineligible="{% trans 'None of the selected orders are pending approval. Only approval-pending orders can be approved or denied.' %}"
                      data-batch-partial-skip-notice="{% trans '{count} selected orders are not pending approval and will be skipped.' %}">
-                    <div class="btn-group dropdown order-bulk-actions-menu orders-bulk-actions-menu">
+                    <div class="btn-group dropdown order-bulk-actions-menu advanced-filter-bulk-actions-menu">
                         <button type="button" class="btn btn-default btn-save dropdown-toggle"
                                 data-toggle="dropdown" aria-haspopup="true"
                                 aria-expanded="false">
@@ -176,12 +170,12 @@
                             </li>
                         </ul>
                     </div>
-                    <div class="orders-bulk-action-hint-container">
+                    <div class="advanced-filter-bulk-action-hint-container">
                         <p class="order-bulk-action-hint text-muted" data-batch-action-hint hidden></p>
                     </div>
                 </div>
             {% endif %}
-            <div class="table-responsive orders-table-container">
+            <div class="table-responsive advanced-filter-table-container">
                 <table class="table table-condensed table-hover table-orders table-flip tickets-table orders-table">
                     <thead>
                     <tr>
@@ -333,7 +327,7 @@
                     {% endif %}
                 </table>
             </div>
-            <div class="orders-pagination-container">
+            <div class="advanced-filter-pagination-container">
                 {% include "pretixcontrol/pagination.html" %}
             </div>
             </div>
@@ -344,8 +338,6 @@
 {% block custom_header %}
     {{ block.super }}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
-    <script type="module" src="{% static 'pretixcontrol/js/ui/orders-filter.js' %}"></script>
-    <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/orders-mobile.css' %}" />
 {% endblock %}

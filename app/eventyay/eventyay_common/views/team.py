@@ -22,6 +22,10 @@ from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
 from ...control.forms.organizer_forms import TeamForm
 from ...control.permissions import OrganizerPermissionRequiredMixin
+from ..video.traits_sync import (
+    sync_video_traits_for_platform_users,
+    sync_video_traits_for_team,
+)
 
 
 class UnifiedTeamManagementRedirectMixin:
@@ -138,6 +142,7 @@ class TeamMemberView(
                         user=self.request.user,
                         data={'email': user.email, 'user': user.pk},
                     )
+                    sync_video_traits_for_team(self.object, members=[user])
                     messages.success(self.request, _('The member has been removed from the team.'))
                     return redirect(self.get_success_url())
 
@@ -234,6 +239,7 @@ class TeamMemberView(
                         'user': user.pk,
                     },
                 )
+                sync_video_traits_for_team(self.object, members=[user])
 
                 send_team_invitation_email(
                     user=user,
@@ -409,6 +415,8 @@ class TeamUpdateView(
         messages.success(self.request, _("Changes to the team '%(team_name)s' have been saved.") % {"team_name": team_name})
         form.instance.organizer = self.request.organizer
         response = super().form_valid(form)
+        # Refresh Video JWT/session traits so revoked team flags take effect immediately.
+        sync_video_traits_for_team(self.object)
         return response
 
     def form_invalid(self, form):
@@ -466,11 +474,17 @@ class TeamDeleteView(
         self.object = self.get_object()
         if self.can_deleted():
             team_name = self.object.name
+            members = list(self.object.members.all())
+            organizer = self.object.organizer
             self.object.log_action(
                 'eventyay.team.deleted',
                 user=self.request.user,
             )
             self.object.delete()
+            # Recompute Video traits without this team (after commit).
+            transaction.on_commit(
+                lambda: sync_video_traits_for_platform_users(organizer, members)
+            )
             messages.success(
                 self.request,
                 _("The team '%(team_name)s' has been deleted.") % {'team_name': team_name},

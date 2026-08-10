@@ -21,8 +21,14 @@ const outDir = process.env.OUT_DIR
 	: 'dist'
 
 export default defineConfig({
+	server: {
+		host: '0.0.0.0',
+		port: 8082,
+	},
 	define: {
 		"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
+		__BUNDLED_DEV__: 'false',
+		__SERVER_FORWARD_CONSOLE__: 'false',
 	},
 	plugins: [
 		vue({
@@ -37,16 +43,19 @@ export default defineConfig({
 		}),
 	],
 	css: {
+		preprocessorMaxWorkers: 0,
 		preprocessorOptions: {
 			stylus: stylusOptions,
 			styl: stylusOptions
 		}
 	},
 	resolve: {
+		dedupe: ['vue'],
 		extensions: ['.js', '.json', '.vue'],
-		alias: {
-			'~': path.resolve(__dirname, 'src')
-		}
+		alias: [
+			{ find: '~', replacement: path.resolve(__dirname, 'src') },
+			{ find: /^buntpapier$/, replacement: path.resolve(__dirname, 'node_modules/buntpapier/src/index.js') },
+		],
 	},
 	build: {
 		outDir,
@@ -70,7 +79,6 @@ export default defineConfig({
 						if (id.includes('moment')) return 'vendor-moment'
 						if (id.includes('markdown-it')) return 'vendor-markdown'
 						if (id.includes('dompurify')) return 'vendor-dompurify'
-						if (id.includes('buntpapier')) return 'vendor-buntpapier'
 						return 'vendor'
 					}
 					if (id.includes('/src/components/GridSchedule')) return 'chunk-grid'
@@ -80,5 +88,9 @@ export default defineConfig({
 				},
 			}
 		}
-	}
+	},
+	optimizeDeps: {
+		exclude: ['buntpapier'],
+		include: ['fuzzysearch', 'popper.js', 'resize-observer-polyfill'],
+	},
 })

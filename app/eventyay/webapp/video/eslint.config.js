@@ -1,6 +1,5 @@
 import pluginVue from 'eslint-plugin-vue'
 import vueParser from 'vue-eslint-parser'
-import babelParser from '@babel/eslint-parser'
 
 export default [
   // Ignore node_modules and dist
@@ -17,14 +16,8 @@ export default [
     languageOptions: {
       parser: vueParser,
       parserOptions: {
-        parser: babelParser,
-        requireConfigFile: false,
         ecmaVersion: 'latest',
         sourceType: 'module',
-        babelOptions: {
-          babelrc: false,
-          configFile: false
-        }
       },
       globals: {
         // Node.js globals

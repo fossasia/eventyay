@@ -154,6 +154,24 @@
                                     {% endif %}
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">
+                                    <strong>{{ form.meetup_creation_enabled.label }}</strong>
+                                </label>
+                                <div class="col-md-9">
+                                    <div class="checkbox">
+                                        <label>
+                                            {{ form.meetup_creation_enabled }} {% trans "Enable" %}
+                                        </label>
+                                    </div>
+                                    {% if form.meetup_creation_enabled.help_text %}
+                                        <span class="help-block">{{ form.meetup_creation_enabled.help_text }}</span>
+                                    {% endif %}
+                                    {% if form.meetup_creation_enabled.errors %}
+                                        <div class="help-block">{{ form.meetup_creation_enabled.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </fieldset>
                     {% elif group_key == "billing_validation" %}
                         <fieldset>
