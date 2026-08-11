@@ -9,7 +9,6 @@ from django_scopes.forms import SafeModelMultipleChoiceField
 
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.track import Track
-from eventyay.base.settings import is_meetup_creation_enabled
 from eventyay.control.forms.event import SafeEventMultipleChoiceField
 
 
