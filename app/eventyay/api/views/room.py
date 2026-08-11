@@ -12,6 +12,7 @@ from eventyay.api.documentation import build_search_docs
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
 from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
+from eventyay.api.throttles import PublicStreamThrottle
 from eventyay.base.exporters.room_broadcast import (
     VideoRoomBroadcastConfigurationExporter,
 )
@@ -114,6 +115,8 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     )
     @action(detail=True, methods=["get"], url_path="streams/current")
     def current_stream(self, request, pk=None, **kwargs):
+        # Apply stricter throttling for public stream polling
+        self.throttle_classes = [PublicStreamThrottle]
         room = self.get_object()
         current = room.get_current_stream()
         if current:

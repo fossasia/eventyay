@@ -473,6 +473,7 @@ _OURS_MIDDLEWARES = (
     'eventyay.presale.middleware.EventMiddleware',
     'oauth2_provider.middleware.OAuth2TokenMiddleware',
     'eventyay.api.middleware.ApiScopeMiddleware',
+    'eventyay.middleware.block_404.Block404Middleware',
 )
 
 MIDDLEWARE = _LIBRARY_MIDDLEWARES + _OURS_MIDDLEWARES
@@ -1349,6 +1350,18 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'UNICODE_JSON': False,
+    # Throttling defaults
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '60/minute',
+        'user': '300/minute',
+        'public_stream': '10/minute',
+        'public_schedule': '30/minute',
+        'excessive_404': '1/minute',
+    },
 }
 
 SPECTACULAR_SETTINGS = {
