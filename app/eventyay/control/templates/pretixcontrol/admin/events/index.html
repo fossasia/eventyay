@@ -21,33 +21,43 @@
             </p>
         </div>
     {% else %}
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">{% trans "Filter" %}</h3>
-            </div>
-            <div class="panel-body">
-                <form class="" action="" method="get">
-                    <div class="row filter-form">
-                        <div class="col-md-3 col-sm-6 col-xs-12">
-                            {% bootstrap_field filter_form.query layout='inline' %}
-                        </div>
-                        <div class="col-md-3 col-sm-6 col-xs-12">
-                            {% bootstrap_field filter_form.status layout='inline' %}
-                        </div>
-                        <div class="col-md-3 col-sm-6 col-xs-12">
-                            {% bootstrap_field filter_form.organizer layout='inline' %}
-                        </div>
-                        {% for mf in meta_fields %}
-                            <div class="col-md-3 col-sm-6 col-xs-12">
-                                {% bootstrap_field mf layout='inline' %}
-                            </div>
-                        {% endfor %}
-                        <div class="col-md-3 col-sm-6 col-xs-12">
-                            {% include "eventyay_common/filter_actions.html" %}
-                        </div>
+        <div class="advanced-filter-search" data-advanced-filter-search>
+            <form class="filter-form advanced-filter-search-form" action="" method="get">
+                <div class="advanced-filter-search-bar">
+                    <div class="input-group advanced-filter-search-query-group">
+                        <input id="id_query" type="text" name="query" class="form-control" placeholder="{% trans 'Search events…' %}" aria-label="{% trans 'Search events…' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
+                        <span class="input-group-btn">
+                            <button class="btn btn-primary" type="submit">
+                                <span class="fa fa-search" aria-hidden="true"></span>
+                                {% trans "Search" %}
+                            </button>
+                        </span>
                     </div>
-                </form>
-            </div>
+
+                    <div class="advanced-filter-field advanced-filter-field--inline">
+                        {% bootstrap_field filter_form.status layout='inline' %}
+                    </div>
+                    <div class="advanced-filter-field advanced-filter-field--inline">
+                        {% bootstrap_field filter_form.organizer layout='inline' %}
+                    </div>
+                    {% for mf in meta_fields %}
+                        <div class="advanced-filter-field advanced-filter-field--inline">
+                            {% bootstrap_field mf layout='inline' %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="advanced-filter-search-actions">
+                        <button class="btn btn-primary" type="submit">
+                            <span class="fa fa-filter" aria-hidden="true"></span>
+                            {% trans "Filter" %}
+                        </button>
+                        <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                            <span class="fa fa-eraser" aria-hidden="true"></span>
+                            <span class="sr-only">{% trans "Clear filters" %}</span>
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
         <div data-ajax-results-region>
             <table class="table table-condensed table-hover"

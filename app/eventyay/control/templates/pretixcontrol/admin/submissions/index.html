@@ -1,10 +1,15 @@
 {% extends "pretixcontrol/admin/base.html" %}
 {% load i18n %}
+{% load static %}
 {% load urlreplace %}
 {% load bootstrap3 %}
 
 {% block title %}
     {% translate "Submissions" %}
+{% endblock %}
+
+{% block custom_header %}
+    {{ block.super }}
 {% endblock %}
 
 {% block content %}
@@ -15,36 +20,47 @@
         {% translate "This is a list of all talk submissions across events." %}
     </p>
 
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">{% translate "Filter" %}</h3>
-        </div>
-
-        <div class="panel-body">
-            <form method="get" class="row filter-form">
-                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
-                    {% bootstrap_field filter_form.query layout='inline' %}
+    <div class="advanced-filter-search" data-advanced-filter-search>
+        <form class="filter-form advanced-filter-search-form" action="" method="get">
+            <div class="advanced-filter-search-bar">
+                <div class="input-group advanced-filter-search-query-group">
+                    <input id="id_query" type="text" name="query" class="form-control" placeholder="{% trans 'Search submissions…' %}" aria-label="{% trans 'Search submissions…' %}" value="{{ filter_form.query.value|default_if_none:'' }}">
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary" type="submit">
+                            <span class="fa fa-search" aria-hidden="true"></span>
+                            {% trans "Search" %}
+                        </button>
+                    </span>
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
+
+                <div class="advanced-filter-field advanced-filter-field--inline">
                     {% bootstrap_field filter_form.event_query layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
+                <div class="advanced-filter-field advanced-filter-field--inline">
                     {% bootstrap_field filter_form.submission_type layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
+                <div class="advanced-filter-field advanced-filter-field--inline">
                     {% bootstrap_field filter_form.track layout='inline' %}
                 </div>
-                <div class="col-md-4 col-sm-6 col-xs-12 form-group">
+                <div class="advanced-filter-field advanced-filter-field--inline">
                     {% bootstrap_field filter_form.tags layout='inline' %}
                 </div>
-                <div class="col-md-4 col-sm-6 col-xs-12 form-group">
+                <div class="advanced-filter-field advanced-filter-field--inline">
                     {% bootstrap_field filter_form.proposal_state layout='inline' %}
                 </div>
-                <div class="col-md-4 col-sm-6 col-xs-12 form-group">
-                    {% include "eventyay_common/filter_actions.html" %}
+
+                <div class="advanced-filter-search-actions">
+                    <button class="btn btn-primary" type="submit">
+                        <span class="fa fa-filter" aria-hidden="true"></span>
+                        {% trans "Filter" %}
+                    </button>
+                    <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                        <span class="fa fa-eraser" aria-hidden="true"></span>
+                        <span class="sr-only">{% trans "Clear filters" %}</span>
+                    </a>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 
     <div data-ajax-results-region>
@@ -90,7 +106,19 @@
                             </a>
                         </th>
                         <th>
-                            {% translate "Proposal State" %}
+                            {% translate "Track" %}
+                            <a href="?{% url_replace request 'ordering' 'track' %}">
+                                <i class="fa fa-caret-up"></i>
+                            </a>
+                            <a href="?{% url_replace request 'ordering' '-track' %}">
+                                <i class="fa fa-caret-down"></i>
+                            </a>
+                        </th>
+                        <th>
+                            {% translate "Tags" %}
+                        </th>
+                        <th>
+                            {% translate "State" %}
                             <a href="?{% url_replace request 'ordering' 'state' %}">
                                 <i class="fa fa-caret-up"></i>
                             </a>
@@ -105,20 +133,31 @@
                 <tbody>
                     {% for submission in submissions %}
                         <tr>
-                            <td>
+                            <td class="admin-table-cell-title">
                                 <strong>
                                     <a href="{% url 'orga:submissions.content' organizer=submission.organizer_slug event=submission.event_slug code=submission.code %}">
                                         {{ submission.title }}
                                     </a>
                                 </strong>
                             </td>
-                            <td>
-                                {% if submission.speakers|length > 40 %}
-                                    <span title="{{ submission.speakers }}">
-                                        {{ submission.speakers|slice:":40" }}&hellip;
-                                    </span>
+                            <td class="list-stack admin-table-cell-speakers">
+                                {% if submission.speakers %}
+                                    <ul class="list-unstyled order-product-list">
+                                    {% for speaker in submission.speakers %}
+                                        {% if forloop.counter <= 2 %}
+                                            <li>
+                                                <a href="{% url 'orga:speakers.view' organizer=submission.organizer_slug event=submission.event_slug code=speaker.code %}">{{ speaker.name }}</a>
+                                                {% if forloop.counter == 2 and not forloop.last %}
+                                                    <span class="product-ellipsis">&hellip;</span>
+                                                {% endif %}
+                                            </li>
+                                        {% else %}
+                                            <li class="product-hidden"><a href="{% url 'orga:speakers.view' organizer=submission.organizer_slug event=submission.event_slug code=speaker.code %}">{{ speaker.name }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    </ul>
                                 {% else %}
-                                    {{ submission.speakers }}
+                                    -
                                 {% endif %}
                             </td>
                             <td>
@@ -127,6 +166,29 @@
                                 </a>
                             </td>
                             <td>{{ submission.session_type }}</td>
+                            <td>
+                                {{ submission.track }}
+                            </td>
+                            <td class="list-stack">
+                                {% if submission.tags_list %}
+                                    <ul class="list-unstyled order-product-list">
+                                    {% for tag in submission.tags_list %}
+                                        {% if forloop.counter <= 2 %}
+                                            <li>
+                                                {{ tag }}
+                                                {% if forloop.counter == 2 and not forloop.last %}
+                                                    <span class="product-ellipsis">&hellip;</span>
+                                                {% endif %}
+                                            </li>
+                                        {% else %}
+                                            <li class="product-hidden">{{ tag }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    {{ submission.tags }}
+                                {% endif %}
+                            </td>
                             <td>
                                 <span class="label 
                                     {% if submission.proposal_state == 'accepted' %}
