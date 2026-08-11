@@ -136,9 +136,7 @@ def is_meetup_creation_enabled(request=None) -> bool:
 def user_can_create_meetups(request) -> bool:
     """Return True if the requesting user may create meetup events.
 
-    Combines the global feature flag with per-user permission:
-    staff sessions bypass the team filter; regular users need a team
-    that carries both ``can_create_events`` and ``can_create_meetups``.
+    Combines the global feature flag with event creation permissions.
     """
     if not is_meetup_creation_enabled(request):
         return False
@@ -148,7 +146,7 @@ def user_can_create_meetups(request) -> bool:
     session = getattr(request, 'session', None)
     session_key = session.session_key if session else None
     return (user.has_active_staff_session(session_key) if session_key else False) or user.teams.filter(
-        can_create_events=True, can_create_meetups=True
+        can_create_events=True
     ).exists()
 
 

@@ -192,18 +192,9 @@ class EventCreateView(TemplateView):
     def get_create_organizer_queryset(self):
         queryset = Organizer.objects.all()
         if not self.request.user.has_active_staff_session(self.request.session.session_key):
-            if self.is_meetup_request:
-                # Must have BOTH can_create_events and can_create_meetups
-                queryset = queryset.filter(
-                    id__in=self.request.user.teams.filter(
-                        can_create_events=True,
-                        can_create_meetups=True
-                    ).values_list('organizer', flat=True)
-                )
-            else:
-                queryset = queryset.filter(
-                    id__in=self.request.user.teams.filter(can_create_events=True).values_list('organizer', flat=True)
-                )
+            queryset = queryset.filter(
+                id__in=self.request.user.teams.filter(can_create_events=True).values_list('organizer', flat=True)
+            )
         return queryset
 
     def get_fallback_organizer(self):
@@ -316,8 +307,8 @@ class EventCreateView(TemplateView):
             if not is_meetup_creation_enabled(request):
                 raise PermissionDenied(_('Meetup creation is currently disabled.'))
             if not request.user.has_active_staff_session(request.session.session_key):
-                has_meetup_perm = request.user.teams.filter(can_create_events=True, can_create_meetups=True).exists()
-                if not has_meetup_perm:
+                has_event_perm = request.user.teams.filter(can_create_events=True).exists()
+                if not has_event_perm:
                     raise PermissionDenied(_('You do not have permission to create meetup events.'))
         return super().dispatch(request, *args, **kwargs)
 
@@ -544,9 +535,8 @@ class EventCreateView(TemplateView):
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)
                 for team in self.request.user.teams.filter(organizer=event.organizer):
-                    if not team.all_events:
-                        if (self.is_meetup_request and team.can_create_events and team.can_create_meetups) or (not self.is_meetup_request and team.can_create_events):
-                            team.limit_events.add(event)
+                    if not team.all_events and team.can_create_events:
+                        team.limit_events.add(event)
             event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']

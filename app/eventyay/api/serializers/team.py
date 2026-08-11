@@ -57,7 +57,6 @@ class TeamSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             "limit_events",
             "limit_tracks",
             "can_create_events",
-            "can_create_meetups",
             "can_change_teams",
             "can_change_organiser_settings",
             "can_change_event_settings",
@@ -103,17 +102,8 @@ class TeamSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             raise exceptions.ValidationError(
                 "Please either pick some events for this team, or grant access to all your events!"
             )
-
-        can_create_events = self.get_with_fallback(data, "can_create_events")
-        can_create_meetups = self.get_with_fallback(data, "can_create_meetups")
-        if can_create_meetups and not can_create_events:
-            raise exceptions.ValidationError(
-                'Creating meetups requires the "Can create events" permission to be enabled.'
-            )
-
         permissions = (
             "can_create_events",
-            "can_create_meetups",
             "can_change_teams",
             "can_change_organiser_settings",
             "can_change_event_settings",
