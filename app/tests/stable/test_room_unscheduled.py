@@ -297,6 +297,22 @@ def test_get_jitsi_config_ignores_malformed_modules():
     assert module_config[2]['config'] == {}
 
 
+def test_normalize_jitsi_server_url_canonicalizes_host_only():
+    from eventyay.base.services.jitsi import normalize_server_url
+
+    assert normalize_server_url('meet.example.org') == {
+        'domain': 'meet.example.org',
+        'url': 'https://meet.example.org',
+        'protocol': 'https:',
+    }
+    assert normalize_server_url('HTTPS://Meet.Example.Org/some/path?x=1') == {
+        'domain': 'meet.example.org',
+        'url': 'https://meet.example.org',
+        'protocol': 'https:',
+    }
+    assert normalize_server_url('https:///missing-host') is None
+
+
 def test_create_jitsi_room_does_not_persist_implicit_room_name(monkeypatch):
     created = {}
 

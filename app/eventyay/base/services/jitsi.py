@@ -106,8 +106,9 @@ def normalize_server_url(url):
         return None
     domain = parsed.netloc.lower()
     protocol = parsed.scheme.lower() + ":"
+    scheme = parsed.scheme.lower()
     return {
         "domain": domain,
-        "url": f"{parsed.scheme.lower()}://{domain}",
+        "url": f"{scheme}://{domain}",
         "protocol": protocol,
     }
