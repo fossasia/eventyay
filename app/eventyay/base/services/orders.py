@@ -30,6 +30,7 @@ from django_scopes import scopes_disabled
 
 from eventyay import consts
 from eventyay.api.models import OAuthApplication
+from eventyay.base.admission_validity import assign_issued_admission_bounds
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_email_context
 from eventyay.base.i18n import (
@@ -2007,6 +2008,7 @@ class OrderChangeManager:
                             invoice_address=self._invoice_address,
                         ).gross,
                     )
+                assign_issued_admission_bounds(op.position)
                 assign_ticket_secret(
                     event=self.event,
                     position=op.position,
@@ -2051,6 +2053,7 @@ class OrderChangeManager:
                     },
                 )
                 op.position.subevent = op.subevent
+                assign_issued_admission_bounds(op.position)
                 assign_ticket_secret(
                     event=self.event,
                     position=op.position,
