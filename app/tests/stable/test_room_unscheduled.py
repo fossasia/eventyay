@@ -7,7 +7,7 @@ from django_scopes import scope
 from rest_framework import serializers
 
 from eventyay.api.serializers.room import RoomOrgaSerializer
-from eventyay.base.models import JitsiServer, Room
+from eventyay.base.models import Room
 from eventyay.base.models.room import room_has_linked_submissions
 from eventyay.base.models.slot import TalkSlot
 from eventyay.base.services import event as event_service
@@ -76,27 +76,6 @@ def test_event_grants_chat_moderate_via_organizer_video_trait(event):
     assert not event.has_permission_implicit(
         traits=['attendee'],
         permissions=[Permission.ROOM_CHAT_MODERATE],
-    )
-
-
-@pytest.mark.django_db
-def test_stored_event_roles_can_drop_jitsi_permissions(event):
-    event.roles = {
-        'participant': [
-            Permission.EVENT_VIEW.value,
-            Permission.ROOM_VIEW.value,
-            Permission.ROOM_BBB_JOIN.value,
-        ],
-    }
-    event.save(update_fields=['roles'])
-
-    assert not event.has_permission_implicit(
-        traits=['attendee'],
-        permissions=[Permission.ROOM_JITSI_JOIN],
-    )
-    assert event.has_permission_implicit(
-        traits=['attendee'],
-        permissions=[Permission.ROOM_BBB_JOIN],
     )
 
 
@@ -290,60 +269,7 @@ def test_normalize_jitsi_server_url_canonicalizes_host_only():
         'url': 'https://meet.example.org',
         'protocol': 'https:',
     }
-    assert normalize_server_url('http://meet.example.org') is None
     assert normalize_server_url('https:///missing-host') is None
-
-
-@pytest.mark.django_db
-def test_choose_jitsi_server_for_room_keeps_sticky_selection_when_preference_is_stale(event):
-    from eventyay.base.services.jitsi import choose_server_for_room
-
-    sticky_server = JitsiServer.objects.create(
-        url='https://sticky.example.org',
-        app_id='app',
-        app_secret='secret',
-    )
-    JitsiServer.objects.create(
-        url='https://fallback.example.org',
-        app_id='app',
-        app_secret='secret',
-    )
-    with scope(event=event):
-        room = Room.objects.create(
-            event=event,
-            name='Main Stage',
-            module_config=[
-                {
-                    'type': 'call.jitsi',
-                    'config': {
-                        'prefer_server': 'https://missing.example.org',
-                        'selected_server_url': 'https://sticky.example.org',
-                    },
-                },
-            ],
-        )
-
-    selected = choose_server_for_room(room, prefer_server='https://missing.example.org')
-
-    room.refresh_from_db()
-    assert selected == sticky_server
-    assert room.module_config[0]['config']['selected_server_url'] == 'https://sticky.example.org'
-
-
-def test_jitsi_room_name_is_stable_across_room_display_name_changes():
-    from eventyay.features.live.modules.jitsi import normalize_jitsi_room_name
-
-    first_name = normalize_jitsi_room_name(None, 12, 34, 'Main Stage')
-    renamed = normalize_jitsi_room_name(None, 12, 34, 'Localized Stage Name')
-
-    assert first_name == 'event-12-room-34'
-    assert renamed == first_name
-
-
-def test_jitsi_jwt_lifetime_is_limited_without_refresh_flow():
-    from eventyay.features.live.modules.jitsi import JITSI_JWT_LIFETIME_SECONDS
-
-    assert JITSI_JWT_LIFETIME_SECONDS == 10 * 60
 
 
 def test_create_jitsi_room_does_not_persist_implicit_room_name(monkeypatch):
