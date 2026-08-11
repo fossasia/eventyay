@@ -26,11 +26,12 @@ from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
 from eventyay.base.services.export import ExportError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
-from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
+from eventyay.plugins.badges.models import BadgeLayout, BadgeProduct, BadgeVoucher
 from eventyay.plugins.badges.utils import (
     BADGE_LAYOUT_PERSISTED_FIELDS,
     _renderer_cache,
     exclude_explicit_no_badge,
+    get_badge_field_overrides,
     get_badge_hidden_fields,
     get_badge_layout_for_position,
     get_badge_layout_renderer_token,
@@ -72,6 +73,13 @@ class BadgeRenderer(Renderer):
                 op._badge_hidden_fields_cache = hidden_fields
             if content in hidden_fields:
                 return ''
+
+            overrides = getattr(op, '_badge_field_overrides_cache', None)
+            if overrides is None:
+                overrides = get_badge_field_overrides(op)
+                op._badge_field_overrides_cache = overrides
+            if content in overrides:
+                return overrides[content]
 
         if content != o.get('content'):
             o = dict(o)

@@ -47,6 +47,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from phonenumber_field.phonenumber import PhoneNumber
 from phonenumbers import NumberParseException
 
+from eventyay.base.admission_validity import assign_issued_admission_bounds
 from eventyay.base.banlist import banned
 from eventyay.base.decimal import round_decimal
 from eventyay.base.email import get_email_context
@@ -2338,6 +2339,26 @@ class OrderPosition(AbstractPosition):
     web_secret = models.CharField(max_length=32, default=generate_secret, db_index=True)
     pseudonymization_id = models.CharField(max_length=16, unique=True, db_index=True)
     canceled = models.BooleanField(default=False)
+    admission_valid_from = models.DateTimeField(
+        verbose_name=_('Issued admission valid from'),
+        help_text=_(
+            'Check-in allowed from this time for this ticket (snapshotted from the product '
+            'when the order was placed). If both issued fields are empty, current product '
+            'admission settings are used.'
+        ),
+        null=True,
+        blank=True,
+    )
+    admission_valid_until = models.DateTimeField(
+        verbose_name=_('Issued admission valid until'),
+        help_text=_(
+            'Check-in allowed until this time for this ticket (snapshotted from the product '
+            'when the order was placed). If both issued fields are empty, current product '
+            'admission settings are used.'
+        ),
+        null=True,
+        blank=True,
+    )
 
     all = ScopedManager(organizer='order__event__organizer')
     objects = ActivePositionManager()
@@ -2485,6 +2506,9 @@ class OrderPosition(AbstractPosition):
 
         if not self.pseudonymization_id:
             self.assign_pseudonymization_id()
+
+        if not self.pk:
+            assign_issued_admission_bounds(self)
 
         return super().save(*args, **kwargs)
 
