@@ -93,10 +93,11 @@ from . import ChartContainingView, CreateView, PaginationMixin, UpdateView
 logger = logging.getLogger(__name__)
 
 
-class ProductList(PaginationMixin, ListView):
+class ProductList(EventPermissionRequiredMixin, PaginationMixin, ListView):
     model = Product
     context_object_name = 'products'
     template_name = 'pretixcontrol/items/index.html'
+    permission = 'can_change_items'
 
     def get_queryset(self):
         return (
@@ -321,10 +322,11 @@ class CategoryCreate(EventPermissionRequiredMixin, CreateView):
         return super().form_invalid(form)
 
 
-class CategoryList(PaginationMixin, ListView):
+class CategoryList(EventPermissionRequiredMixin, PaginationMixin, ListView):
     model = ProductCategory
     context_object_name = 'categories'
     template_name = 'pretixcontrol/items/categories.html'
+    permission = 'can_change_items'
 
     def get_queryset(self):
         return self.request.event.categories.all()
@@ -852,10 +854,11 @@ def question_options_ajax(request, organizer, event, question):
         return JsonResponse({'error': 'Question not found'}, status=404)
 
 
-class QuotaList(PaginationMixin, ListView):
+class QuotaList(EventPermissionRequiredMixin, PaginationMixin, ListView):
     model = Quota
     context_object_name = 'quotas'
     template_name = 'pretixcontrol/items/quotas.html'
+    permission = 'can_change_items'
 
     def get_queryset(self):
         qs = self.request.event.quotas.prefetch_related(
@@ -956,10 +959,11 @@ class QuotaCreate(EventPermissionRequiredMixin, CreateView):
         return super().form_invalid(form)
 
 
-class QuotaView(ChartContainingView, DetailView):
+class QuotaView(EventPermissionRequiredMixin, ChartContainingView, DetailView):
     model = Quota
     template_name = 'pretixcontrol/items/quota.html'
     context_object_name = 'quota'
+    permission = 'can_change_items'
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data()

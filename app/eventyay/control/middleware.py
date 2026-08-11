@@ -23,6 +23,7 @@ from eventyay.helpers.security import (
     SessionReauthRequired,
     assert_session_valid,
 )
+from eventyay.eventyay_common.permissions import user_has_ticket_dashboard_access
 
 
 logger = logging.getLogger(__name__)
@@ -155,7 +156,13 @@ class PermissionMiddleware:
                     .first()
                 )
             request.event = event
-            if not event or not request.user.has_event_permission(event.organizer, event, request=request):
+            if not event:
+                raise Http404(_('The selected event was not found or you have no permission to administrate it.'))
+
+            if request.path.startswith(get_script_prefix() + 'control'):
+                if not user_has_ticket_dashboard_access(request.user, event.organizer, event, request=request):
+                    raise Http404(_('The selected event was not found or you have no permission to administrate it.'))
+            elif not request.user.has_event_permission(event.organizer, event, request=request):
                 raise Http404(_('The selected event was not found or you have no permission to administrate it.'))
             logger.info(
                 'Found organizer %s from event %s. Attaching to request.',
