@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import django_filters
 import pytz
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Prefetch, Q
 from django.db.models.functions import Coalesce, Concat
@@ -582,7 +583,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['POST'])
     def anonymize(self, request, **kwargs):
         order = self.get_object()
-        anonymize_order(order, user=self.request.user if self.request.user.is_authenticated else None)
+        try:
+            anonymize_order(order, user=self.request.user if self.request.user.is_authenticated else None)
+        except DjangoValidationError as e:
+            msg = e.message if hasattr(e, 'message') else (e.messages[0] if hasattr(e, 'messages') else str(e))
+            return Response({'detail': msg}, status=status.HTTP_400_BAD_REQUEST)
         return self.retrieve(request, [], **kwargs)
 
     @action(detail=True, methods=['POST'])

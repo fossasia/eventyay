@@ -1,6 +1,10 @@
 import json
 import logging
+from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
+
 from eventyay.base.models import (
     CachedCombinedTicket,
     CachedTicket,
@@ -13,12 +17,43 @@ from eventyay.base.shredder import shred_log_fields
 logger = logging.getLogger(__name__)
 
 
+def is_order_event_ended(order: Order, current_time=None) -> bool:
+    """
+    Returns True if the event (and any subevent associated with the order's positions)
+    has ended as of current_time (default now()).
+    """
+    if current_time is None:
+        current_time = now()
+
+    event = order.event
+    if event.has_subevents:
+        subevent_ids = [
+            sid for sid in order.all_positions.values_list('subevent_id', flat=True).distinct()
+            if sid is not None
+        ]
+        if subevent_ids:
+            subevents = event.subevents.filter(id__in=subevent_ids)
+            for se in subevents:
+                end_time = se.date_to or se.date_from
+                if end_time and current_time <= end_time:
+                    return False
+            return True
+
+    end_time = event.date_to or event.date_from
+    if end_time and current_time <= end_time:
+        return False
+    return True
+
+
 @transaction.atomic
 def anonymize_order(order: Order, user=None):
     """
     Anonymizes ticket sales and personal attendee/billing data on an order
     without disabling or altering the associated user account.
     """
+    if not is_order_event_ended(order):
+        raise ValidationError(_('Order ticketing data cannot be anonymized before the associated event has ended.'))
+
     # 1. Anonymize Order contact fields
     order.email = f"anonymized-order-{order.code}@eventyay.local"
     order.phone = None

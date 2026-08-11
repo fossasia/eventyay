@@ -1,6 +1,8 @@
 from datetime import timedelta
 from decimal import Decimal
 
+import pytest
+from django.core.exceptions import ValidationError
 from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -14,10 +16,11 @@ from eventyay.base.models import (
     Product,
     Question,
     QuestionAnswer,
+    SubEvent,
     Team,
     User,
 )
-from eventyay.base.services.anonymize import anonymize_order
+from eventyay.base.services.anonymize import anonymize_order, is_order_event_ended
 from tests.tickets.base import SoupTest
 
 
@@ -31,7 +34,8 @@ class OrderAnonymizeTest(SoupTest):
             organizer=self.orga,
             name='Dummy Event',
             slug='dummy',
-            date_from=now(),
+            date_from=now() - timedelta(days=2),
+            date_to=now() - timedelta(days=1),
         )
         self.user = User.objects.create_user('orga@example.com', 'test')
         self.team = Team.objects.create(
@@ -88,7 +92,7 @@ class OrderAnonymizeTest(SoupTest):
         )
 
     def test_anonymize_order_service(self):
-        """The anonymize_order service should scrub PII from order/positions/invoice_address/answers."""
+        """The anonymize_order service should scrub PII from order/positions/invoice_address/answers when event has ended."""
         with scopes_disabled():
             anonymize_order(self.order, user=self.user)
             self.order.refresh_from_db()
@@ -130,7 +134,7 @@ class OrderAnonymizeTest(SoupTest):
             assert self.order.all_logentries().filter(action_type='eventyay.event.order.anonymized').exists()
 
     def test_anonymize_order_view_get_and_post(self):
-        """GET shows the confirmation page; POST triggers anonymization and redirects."""
+        """GET shows the confirmation page; POST triggers anonymization and redirects when event has ended."""
         url = f'/control/event/{self.orga.slug}/{self.event.slug}/orders/ANON1/anonymize'
 
         response = self.client.get(url)
@@ -143,3 +147,51 @@ class OrderAnonymizeTest(SoupTest):
         with scopes_disabled():
             self.order.refresh_from_db()
             assert self.order.email == 'anonymized-order-ANON1@eventyay.local'
+
+    def test_anonymize_order_before_event_end_fails(self):
+        """Order anonymization before event end should raise ValidationError and block UI control view."""
+        with scopes_disabled():
+            self.event.date_from = now() + timedelta(days=1)
+            self.event.date_to = now() + timedelta(days=2)
+            self.event.save()
+
+            assert is_order_event_ended(self.order) is False
+
+            with pytest.raises(ValidationError):
+                anonymize_order(self.order, user=self.user)
+
+        url = f'/control/event/{self.orga.slug}/{self.event.slug}/orders/ANON1/anonymize'
+
+        # GET redirects to order page with error
+        response = self.client.get(url, follow=True)
+        assert response.status_code == 200
+        assert 'cannot be anonymized before the associated event has ended' in response.content.decode()
+
+        # POST redirects to order page with error without modifying order
+        response = self.client.post(url, follow=True)
+        assert response.status_code == 200
+        assert 'cannot be anonymized before the associated event has ended' in response.content.decode()
+
+        with scopes_disabled():
+            self.order.refresh_from_db()
+            assert self.order.email == 'customer@example.com'
+
+    def test_anonymize_order_subevent_not_ended_fails(self):
+        """If event has subevents and position subevent has not ended, anonymization fails."""
+        with scopes_disabled():
+            self.event.has_subevents = True
+            self.event.save()
+
+            se = SubEvent.objects.create(
+                event=self.event,
+                name='Sub Event',
+                date_from=now() + timedelta(days=1),
+                date_to=now() + timedelta(days=2),
+            )
+            self.position.subevent = se
+            self.position.save()
+
+            assert is_order_event_ended(self.order) is False
+
+            with pytest.raises(ValidationError):
+                anonymize_order(self.order, user=self.user)
