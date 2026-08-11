@@ -113,10 +113,8 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         description="Returns the currently active stream schedule for this room, if any.",
         responses={200: StreamScheduleSerializer, 404: None},
     )
-    @action(detail=True, methods=["get"], url_path="streams/current")
+    @action(detail=True, methods=["get"], url_path="streams/current", throttle_classes=[PublicStreamThrottle])
     def current_stream(self, request, pk=None, **kwargs):
-        # Apply stricter throttling for public stream polling
-        self.throttle_classes = [PublicStreamThrottle]
         room = self.get_object()
         current = room.get_current_stream()
         if current:

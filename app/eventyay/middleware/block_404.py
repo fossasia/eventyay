@@ -24,9 +24,10 @@ class Block404Middleware(MiddlewareMixin):
         ip = self._get_client_ip(request)
         cache = caches[self.CACHE_ALIAS]
         key = f'404_counter:{ip}'
-        count = cache.get(key, 0) + 1
-        # Store the count for 60 seconds (sliding window).
-        cache.set(key, count, timeout=60)
+        
+        # Atomically increment counter, setting initial value if it doesn't exist
+        cache.add(key, 0, timeout=60)
+        count = cache.incr(key)
 
         if count > self.MAX_404_PER_MINUTE:
             # Apply the custom throttling class to produce a 429 with Retry-After.
