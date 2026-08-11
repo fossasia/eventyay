@@ -31,9 +31,11 @@ document.addEventListener('DOMContentLoaded', function () {
             children.forEach(function (child) {
                 if (child.getAttribute('data-globally-disabled') === 'true') {
                     child.disabled = true;
+                    child.setAttribute('aria-disabled', 'true');
                     child.checked = false;
                 } else {
                     child.disabled = !enabled;
+                    child.setAttribute('aria-disabled', !enabled ? 'true' : 'false');
                     if (!enabled) {
                         child.checked = false;
                     }

@@ -116,19 +116,21 @@ class EventCommonSettingsForm(SettingsForm):
                     crop_box = None
                 self.cleaned_data[image_field] = self._save_optimized(new_value, image_field, crop_box)
 
-        if is_meetup_event(self.event) and 'video_type' in self.cleaned_data:
-            apply_video_configuration(
-                self.event,
-                self.cleaned_data.get('video_type'),
-                self.cleaned_data.get('video_url', ''),
-            )
+        if is_meetup_event(self.event):
+            if 'video_type' in self.cleaned_data:
+                apply_video_configuration(
+                    self.event,
+                    self.cleaned_data.get('video_type'),
+                    self.cleaned_data.get('video_url', ''),
+                )
 
-            reg_limit = self.cleaned_data.get('registration_limit')
-            with scope(event=self.event):
-                quota = self.event.quotas.first()
-                if quota and quota.size != reg_limit:
-                    quota.size = reg_limit
-                    quota.save(update_fields=['size'])
+            if 'registration_limit' in self.cleaned_data:
+                reg_limit = self.cleaned_data.get('registration_limit')
+                with scope(event=self.event):
+                    quota = self.event.quotas.first()
+                    if quota and quota.size != reg_limit:
+                        quota.size = reg_limit
+                        quota.save(update_fields=['size'])
 
         return super().save()
 
