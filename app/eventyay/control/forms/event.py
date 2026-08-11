@@ -1729,6 +1729,13 @@ class QuickSetupForm(I18nForm):
         ),
         required=False,
     )
+    payment_manualpayment__enabled = forms.BooleanField(
+        label=_('Manual payment'),
+        help_text=_(
+            'Your customers will be instructed to pay the money manually. You can then mark them as paid.'
+        ),
+        required=False,
+    )
     require_registered_account_for_tickets = forms.BooleanField(
         label=REQUIRE_REGISTERED_ACCOUNT_LABEL,
         help_text=REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT,
@@ -1743,18 +1750,37 @@ class QuickSetupForm(I18nForm):
     payment_banktransfer_bank_details = btf['bank_details']
 
     def __init__(self, *args, **kwargs):
+        from eventyay.base.plugins import get_all_plugins
+
         self.obj = kwargs.pop('event', None)
         self.locales = self.obj.settings.get('locales') if self.obj else kwargs.pop('locales', None)
         kwargs['locales'] = self.locales
         super().__init__(*args, **kwargs)
-        plugins_active = self.obj.get_plugins()
-        if 'eventyay_stripe' not in plugins_active:
+        
+        plugins_available = {
+            p.module for p in get_all_plugins(self.obj)
+            if getattr(p, 'visible', True) and not p.name.startswith('.')
+        }
+
+        if 'eventyay.plugins.stripe' not in plugins_available:
             del self.fields['payment_stripe__enabled']
-        if 'eventyay_paypal' not in plugins_active:
+        if 'eventyay.plugins.paypal' not in plugins_available:
             del self.fields['payment_paypal__enabled']
-        if 'eventyay.plugins.banktransfer' not in plugins_active:
+            
+        if 'eventyay.plugins.banktransfer' not in plugins_available:
             del self.fields['payment_banktransfer__enabled']
-        self.fields['payment_banktransfer_bank_details'].required = False
+            del self.fields['payment_banktransfer_bank_details_type']
+            del self.fields['payment_banktransfer_bank_details_sepa_name']
+            del self.fields['payment_banktransfer_bank_details_sepa_iban']
+            del self.fields['payment_banktransfer_bank_details_sepa_bic']
+            del self.fields['payment_banktransfer_bank_details_sepa_bank']
+            del self.fields['payment_banktransfer_bank_details']
+        else:
+            self.fields['payment_banktransfer_bank_details'].required = False
+            
+        if 'eventyay.plugins.manualpayment' not in plugins_available:
+            del self.fields['payment_manualpayment__enabled']
+
         for f in self.fields.values():
             if 'data-required-if' in f.widget.attrs:
                 del f.widget.attrs['data-required-if']

@@ -237,6 +237,9 @@
                         </div>
                     </div>
                 {% endif %}
+                {% if form.payment_manualpayment__enabled %}
+                    {% bootstrap_field form.payment_manualpayment__enabled layout="control" label_class="sr-only" field_class="col-md-12" %}
+                {% endif %}
                 <p>&nbsp;</p>
             </div>
         </fieldset>
