@@ -133,21 +133,7 @@ def is_meetup_creation_enabled(request=None) -> bool:
     return result
 
 
-def user_can_create_meetups(request) -> bool:
-    """Return True if the requesting user may create meetup events.
 
-    Combines the global feature flag with event creation permissions.
-    """
-    if not is_meetup_creation_enabled(request):
-        return False
-    user = getattr(request, 'user', None)
-    if not user or not user.is_authenticated:
-        return False
-    session = getattr(request, 'session', None)
-    session_key = session.session_key if session else None
-    return (user.has_active_staff_session(session_key) if session_key else False) or user.teams.filter(
-        can_create_events=True
-    ).exists()
 
 
 

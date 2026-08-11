@@ -18,7 +18,7 @@ from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
 from eventyay.base.services.mail import SendMailException, mail
 from eventyay.base.services.teams import send_team_invitation_email
-from eventyay.base.settings import user_can_create_meetups
+from eventyay.base.settings import is_meetup_creation_enabled
 from eventyay.control.forms.filter import OrganizerFilterForm
 from eventyay.control.permissions import (
     OrganizerCreationPermissionMixin,
@@ -197,7 +197,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             ctx['team_panels'] = []
             ctx['team_create_form'] = None
 
-        ctx['meetup_creation_enabled'] = user_can_create_meetups(self.request)
+        ctx['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
         return ctx
 
     def get_form(self, form_class=None):
