@@ -49,6 +49,7 @@ import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
 import { isUsableAudioTranslationEntry, normalizeAudioTranslationSource } from 'lib/validators'
+import { initializeLanguageList, roomUsesPluginLanguageStreams } from '../../interpretation-streams'
 import { getStagePlaybackMode, PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 
 export default {
@@ -117,6 +118,12 @@ export default {
 		'room.currentStream': {
 			handler: 'initializeLanguages'
 		},
+		'room.interpretation_language_streams': {
+			handler: 'initializeLanguages'
+		},
+		'room.interpretation_use_plugin_streams': {
+			handler: 'initializeLanguages'
+		},
 		'room.id'(roomId) {
 			this.$store.dispatch('stopStreamPolling')
 			if (roomId && this.usesStreamPolling) {
@@ -152,6 +159,16 @@ export default {
 			})
 		},
 		initializeLanguages() {
+			if (roomUsesPluginLanguageStreams(this.room)) {
+				this.languages = initializeLanguageList({
+					room: this.room,
+					modules: this.modules,
+					coreInitializer: () => [],
+				})
+				this.clearStaleTranslation()
+				return
+			}
+
 			this.languages = []
 			let languageUrls = null
 
