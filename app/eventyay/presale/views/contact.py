@@ -43,10 +43,17 @@ class ContactOrganizerView(EventViewMixin, View):
         return False
 
     def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse(
+                {'success': False, 'error': _('You must be logged in to send a message.')},
+                status=401,
+            )
+
         message = request.POST.get('message', '').strip()
         sender_email = request.POST.get('email', '').strip()
+        send_copy = request.POST.get('send_copy') == 'on'
 
-        if request.user.is_authenticated and request.user.email:
+        if request.user.email:
             sender_email = request.user.email
 
         if not message:
@@ -118,11 +125,14 @@ class ContactOrganizerView(EventViewMixin, View):
                 to=[contact_email],
                 reply_to=[sender_email],
             )
+            if send_copy:
+                email.bcc = [sender_email]
             backend.send_messages([email])
-        except (smtplib.SMTPException, BadHeaderError, ConnectionError, OSError):
+        except (smtplib.SMTPException, BadHeaderError, ConnectionError, OSError) as e:
             logger.exception('Failed to send contact organizer email')
+            error_msg = _('Failed to send message: {error}').format(error=str(e))
             return JsonResponse(
-                {'success': False, 'error': _('Failed to send message. Please try again later.')},
+                {'success': False, 'error': error_msg},
                 status=500,
             )
 
