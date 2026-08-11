@@ -36,8 +36,7 @@ JITSI_PARTICIPANT_TOOLBAR_BUTTONS = [
     "videoquality",
 ]
 
-MAX_JITSI_ROOM_NAME_LENGTH = 200
-JITSI_JWT_LIFETIME_SECONDS = 12 * 60 * 60
+JITSI_JWT_LIFETIME_SECONDS = 10 * 60
 
 
 def normalize_jitsi_room_name(
@@ -46,14 +45,7 @@ def normalize_jitsi_room_name(
     room_id,
     room_name_fallback="room",
 ):
-    room_name = str(configured_room_name or "").strip()
-    if (
-        not room_name
-        or room_name == "*"
-        or len(room_name) > MAX_JITSI_ROOM_NAME_LENGTH
-    ):
-        room_name = str(room_name_fallback or "").strip() or "room"
-    return f"event-{event_id}-room-{room_id}-{room_name}"
+    return f"event-{event_id}-room-{room_id}"
 
 
 def build_jitsi_config_overwrite(module_config, is_moderator):

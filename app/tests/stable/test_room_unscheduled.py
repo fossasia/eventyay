@@ -7,8 +7,7 @@ from django_scopes import scope
 from rest_framework import serializers
 
 from eventyay.api.serializers.room import RoomOrgaSerializer
-from eventyay.base.models import Room
-from eventyay.base.models.event import permissions_with_jitsi_defaults
+from eventyay.base.models import JitsiServer, Room
 from eventyay.base.models.room import room_has_linked_submissions
 from eventyay.base.models.slot import TalkSlot
 from eventyay.base.services import event as event_service
@@ -80,44 +79,25 @@ def test_event_grants_chat_moderate_via_organizer_video_trait(event):
     )
 
 
-def test_stale_event_roles_are_augmented_with_jitsi_permissions():
-    participant_permissions = permissions_with_jitsi_defaults(
-        'participant',
-        [
+@pytest.mark.django_db
+def test_stored_event_roles_can_drop_jitsi_permissions(event):
+    event.roles = {
+        'participant': [
+            Permission.EVENT_VIEW.value,
+            Permission.ROOM_VIEW.value,
             Permission.ROOM_BBB_JOIN.value,
-            Permission.ROOM_JANUSCALL_JOIN.value,
-            Permission.ROOM_ZOOM_JOIN.value,
         ],
-    )
-    speaker_permissions = permissions_with_jitsi_defaults(
-        'speaker',
-        [
-            Permission.ROOM_BBB_JOIN.value,
-            Permission.ROOM_BBB_MODERATE.value,
-        ],
-    )
-    room_owner_permissions = permissions_with_jitsi_defaults(
-        'room_owner',
-        [
-            Permission.ROOM_BBB_JOIN.value,
-            Permission.ROOM_INVITE.value,
-            Permission.ROOM_DELETE.value,
-        ],
-    )
+    }
+    event.save(update_fields=['roles'])
 
-    assert Permission.ROOM_JITSI_JOIN.value in participant_permissions
-    assert Permission.ROOM_JITSI_JOIN.value in speaker_permissions
-    assert Permission.ROOM_JITSI_MODERATE.value not in speaker_permissions
-    assert Permission.ROOM_JITSI_MODERATE.value in room_owner_permissions
-    moderator_permissions = permissions_with_jitsi_defaults(
-        'moderator',
-        [
-            Permission.ROOM_BBB_JOIN.value,
-            Permission.ROOM_BBB_MODERATE.value,
-            Permission.ROOM_CHAT_MODERATE.value,
-        ],
+    assert not event.has_permission_implicit(
+        traits=['attendee'],
+        permissions=[Permission.ROOM_JITSI_JOIN],
     )
-    assert Permission.ROOM_JITSI_MODERATE.value in moderator_permissions
+    assert event.has_permission_implicit(
+        traits=['attendee'],
+        permissions=[Permission.ROOM_BBB_JOIN],
+    )
 
 
 @pytest.mark.django_db
@@ -310,7 +290,60 @@ def test_normalize_jitsi_server_url_canonicalizes_host_only():
         'url': 'https://meet.example.org',
         'protocol': 'https:',
     }
+    assert normalize_server_url('http://meet.example.org') is None
     assert normalize_server_url('https:///missing-host') is None
+
+
+@pytest.mark.django_db
+def test_choose_jitsi_server_for_room_keeps_sticky_selection_when_preference_is_stale(event):
+    from eventyay.base.services.jitsi import choose_server_for_room
+
+    sticky_server = JitsiServer.objects.create(
+        url='https://sticky.example.org',
+        app_id='app',
+        app_secret='secret',
+    )
+    JitsiServer.objects.create(
+        url='https://fallback.example.org',
+        app_id='app',
+        app_secret='secret',
+    )
+    with scope(event=event):
+        room = Room.objects.create(
+            event=event,
+            name='Main Stage',
+            module_config=[
+                {
+                    'type': 'call.jitsi',
+                    'config': {
+                        'prefer_server': 'https://missing.example.org',
+                        'selected_server_url': 'https://sticky.example.org',
+                    },
+                },
+            ],
+        )
+
+    selected = choose_server_for_room(room, prefer_server='https://missing.example.org')
+
+    room.refresh_from_db()
+    assert selected == sticky_server
+    assert room.module_config[0]['config']['selected_server_url'] == 'https://sticky.example.org'
+
+
+def test_jitsi_room_name_is_stable_across_room_display_name_changes():
+    from eventyay.features.live.modules.jitsi import normalize_jitsi_room_name
+
+    first_name = normalize_jitsi_room_name(None, 12, 34, 'Main Stage')
+    renamed = normalize_jitsi_room_name(None, 12, 34, 'Localized Stage Name')
+
+    assert first_name == 'event-12-room-34'
+    assert renamed == first_name
+
+
+def test_jitsi_jwt_lifetime_is_limited_without_refresh_flow():
+    from eventyay.features.live.modules.jitsi import JITSI_JWT_LIFETIME_SECONDS
+
+    assert JITSI_JWT_LIFETIME_SECONDS == 10 * 60
 
 
 def test_create_jitsi_room_does_not_persist_implicit_room_name(monkeypatch):

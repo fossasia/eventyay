@@ -14,17 +14,29 @@ class JitsiServerUnavailable(Exception):
 def choose_server(event, prefer_server=None):
     servers = JitsiServer.objects.filter(active=True)
     if prefer_server:
-        preferred = normalize_server_url(prefer_server)
-        if preferred:
-            preferred_servers = [
-                server
-                for server in servers.filter(
-                    Q(event_exclusive=event) | Q(event_exclusive__isnull=True)
-                )
-                if _server_matches_preference(server, preferred)
-            ]
-            if preferred_servers:
-                return random.choice(preferred_servers)
+        preferred_server = _choose_preferred_server(servers, event, prefer_server)
+        if preferred_server:
+            return preferred_server
+    return _choose_any_available_server(servers, event)
+
+
+def _choose_preferred_server(servers, event, prefer_server):
+    preferred = normalize_server_url(prefer_server)
+    if not preferred:
+        return None
+    preferred_servers = [
+        server
+        for server in servers.filter(
+            Q(event_exclusive=event) | Q(event_exclusive__isnull=True)
+        )
+        if _server_matches_preference(server, preferred)
+    ]
+    if preferred_servers:
+        return random.choice(preferred_servers)
+    return None
+
+
+def _choose_any_available_server(servers, event):
     querysets = (
         servers.filter(event_exclusive=event),
         servers.filter(event_exclusive__isnull=True),
@@ -43,10 +55,16 @@ def choose_server_for_room(room, prefer_server=None):
     if jitsi_config is None:
         return choose_server(event=locked_room.event, prefer_server=prefer_server)
     selected_server_url = jitsi_config.get("selected_server_url")
-    server = choose_server(
-        event=locked_room.event,
-        prefer_server=prefer_server or selected_server_url,
-    )
+    servers = JitsiServer.objects.filter(active=True)
+    server = None
+    for preferred_url in (prefer_server, selected_server_url):
+        if not preferred_url:
+            continue
+        server = _choose_preferred_server(servers, locked_room.event, preferred_url)
+        if server:
+            break
+    if server is None:
+        server = _choose_any_available_server(servers, locked_room.event)
     if server is None:
         return None
 
@@ -107,6 +125,8 @@ def normalize_server_url(url):
     domain = parsed.netloc.lower()
     protocol = parsed.scheme.lower() + ":"
     scheme = parsed.scheme.lower()
+    if scheme != "https":
+        return None
     return {
         "domain": domain,
         "url": f"{scheme}://{domain}",
