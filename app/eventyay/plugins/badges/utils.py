@@ -157,6 +157,25 @@ def get_badge_layout_for_position(event, position):
     return default_layout
 
 
+def resolve_badge_layout_override(event, layout_id):
+    """Return a BadgeLayout for ``layout_id`` belonging to ``event``, or None.
+
+    Raises ``ValidationError`` when ``layout_id`` is provided but invalid.
+    """
+    from django.core.exceptions import ValidationError as DjangoValidationError
+
+    if layout_id is None or layout_id == '':
+        return None
+    try:
+        pk = int(layout_id)
+    except (TypeError, ValueError) as exc:
+        raise DjangoValidationError(_('Invalid badge layout id.')) from exc
+    try:
+        return event.badge_layouts.get(pk=pk)
+    except BadgeLayout.DoesNotExist as exc:
+        raise DjangoValidationError(_('Unknown badge layout.')) from exc
+
+
 def position_has_printable_badge(event, position):
     return get_badge_layout_for_position(event, position) is not None
 
