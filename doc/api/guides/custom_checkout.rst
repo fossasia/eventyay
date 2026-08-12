@@ -89,32 +89,7 @@ If you passed a ``payment_provider`` during order creation above, eventyay will 
 ``created`` that you can see in the returned order object. This payment object will have an attribute ``payment_url``
 that you can use to let the user pay. For example, you could link or redirect to this page.
 
-If you want the user to return to your application after the payment is complete, you can pass a query parameter
-``return_url``. To prepare your event for this, open your event in the eventyay backend and go to "Settings", then
-"Plugins". Enable the plugin "Redirection from order page". Then, go to the new page "Settings", then "Redirection".
-Enter the base URL of your web application. This will allow you to redirect to pages under this base URL later on.
-For example, if you want users to be redirected to ``https://example.org/order/return?tx_id=1234``, you could now
-either enter ``https://example.org`` or ``https://example.org/order/``.
 
-The user will be redirected back to your page instead of eventyay' order confirmation page after the payment,
-**regardless of whether it was successful or not**. Make sure you use our API to check if the payment actually
-worked! Your final URL could look like this::
-
-    https://test.eventyay.com/democon/3vjrh/order/NSLEZ/ujbrnsjzbq4dzhck/pay/123/?return_url=https%3A%2F%2Fexample.org%2Forder%2Freturn%3Ftx_id%3D1234
-
-You can also embed this page in an ``<iframe>`` instead. Note, however, that this causes problems with some payment
-methods such as PayPal which do not allow being opened in an iframe. eventyay can partly work around these issues by
-opening a new window, but will only to so if you also append an ``iframe=1`` parameter to the URL::
-
-    https://test.eventyay.com/democon/3vjrh/order/NSLEZ/ujbrnsjzbq4dzhck/pay/123/?return_url=https%3A%2F%2Fexample.org%2Forder%2Freturn%3Ftx_id%3D1234&iframe=1
-
-If you did **not** pass a payment method since you want us to ask the user which payment method they want to use, you
-need to construct the URL from the ``url`` attribute of the order and the sub-path ``pay/change```. For example, you
-would end up with the following URL::
-
-    https://test.eventyay.com/democon/3vjrh/order/NSLEZ/ujbrnsjzbq4dzhck/pay/change
-
-Of course, you can also use the ``iframe`` and ``return_url`` parameters here.
 
 Optional: Cart reservations
 ---------------------------
