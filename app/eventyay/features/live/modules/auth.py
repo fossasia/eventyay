@@ -288,6 +288,7 @@ class AuthModule(BaseModule):
     @require_event_permission(Permission.EVENT_VIEW)
     async def set_publicly_visible(self, body):
         """Toggle the user's show_publicly flag from within the video platform."""
+        body = body or {}
         show_publicly = body.get("show_publicly")
         if not isinstance(show_publicly, bool):
             await self.consumer.send_error(code="user.set_publicly_visible.invalid")
@@ -295,40 +296,45 @@ class AuthModule(BaseModule):
 
         old_show_publicly = bool(self.consumer.user.show_publicly)
 
-        def _save(user, value):
+        def _save_and_get_active_room_ids(user, value):
+            from eventyay.base.models.room import RoomView
+
             user.show_publicly = value
             user.save(update_fields=["show_publicly"])
+            return list(
+                RoomView.objects.filter(user=user, end__isnull=True)
+                .values_list("room_id", flat=True)
+                .distinct()
+            )
 
-        await database_sync_to_async(_save)(self.consumer.user, show_publicly)
+        active_room_ids = await database_sync_to_async(_save_and_get_active_room_ids)(
+            self.consumer.user, show_publicly
+        )
 
-        if old_show_publicly != show_publicly:
-            room_module = self.consumer.components.get("room")
-            if room_module and room_module.current_views:
-                from channels.layers import get_channel_layer
-                from eventyay.features.live.channels import GROUP_ROOM_VIEWERS
+        if old_show_publicly != show_publicly and active_room_ids:
+            from eventyay.features.live.channels import GROUP_ROOM_VIEWERS
 
-                channel_layer = get_channel_layer()
-                for room in room_module.current_views.keys():
-                    if show_publicly:
-                        await channel_layer.group_send(
-                            GROUP_ROOM_VIEWERS.format(id=room.pk),
-                            {
-                                "type": "room.viewer.added",
-                                "user": self.consumer.user.serialize_public(
-                                    trait_badges_map=self._event_config().get(
-                                        "trait_badges_map"
-                                    )
-                                ),
-                            },
-                        )
-                    else:
-                        await channel_layer.group_send(
-                            GROUP_ROOM_VIEWERS.format(id=room.pk),
-                            {
-                                "type": "room.viewer.removed",
-                                "user_id": str(self.consumer.user.id),
-                            },
-                        )
+            for room_id in active_room_ids:
+                if show_publicly:
+                    await self.consumer.channel_layer.group_send(
+                        GROUP_ROOM_VIEWERS.format(id=room_id),
+                        {
+                            "type": "room.viewer.added",
+                            "user": self.consumer.user.serialize_public(
+                                trait_badges_map=self._event_config().get(
+                                    "trait_badges_map"
+                                )
+                            ),
+                        },
+                    )
+                else:
+                    await self.consumer.channel_layer.group_send(
+                        GROUP_ROOM_VIEWERS.format(id=room_id),
+                        {
+                            "type": "room.viewer.removed",
+                            "user_id": str(self.consumer.user.id),
+                        },
+                    )
 
         await self.consumer.send_success({"show_publicly": show_publicly})
 
