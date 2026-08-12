@@ -21,11 +21,11 @@ class BadgeOutputProvider(BaseTicketOutput):
             setattr(self.event, '_badge_layouts_exist', cached)
         return cached
 
-    def generate(self, op: OrderPosition) -> tuple[str, str, bytes]:
+    def generate(self, op: OrderPosition, layout=None) -> tuple[str, str, bytes]:
         try:
             from .exporters import OPTIONS, render_pdf
 
-            pdf_buffer = render_pdf(op.order.event, [op], OPTIONS['one'])
+            pdf_buffer = render_pdf(op.order.event, [op], OPTIONS['one'], layout_override=layout)
             if pdf_buffer is None:
                 raise Exception('Failed to generate PDF')
 
