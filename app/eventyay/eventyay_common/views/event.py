@@ -555,21 +555,7 @@ class EventCreateView(TemplateView):
             create_for = EventCreatedFor.BOTH.value
             event.settings.set('create_for', create_for)
 
-            # Smart defaults work for all event types
-            if create_for in [EventCreatedFor.BOTH.value, EventCreatedFor.TICKET.value, EventCreatedFor.TALK.value]:
-                event_dict = {
-                    'organiser_slug': event.organizer.slug,
-                    'name': event.name.data,
-                    'slug': event.slug,
-                    'is_public': event.live,
-                    'date_from': str(event.date_from),
-                    'date_to': str(event.date_to),
-                    'timezone': str(basics_data.get('timezone')),
-                    'locale': event.settings.locale,
-                    'locales': event.settings.locales,
-                    'content_locales': content_locales,
-                    'is_video_creation': final_is_video_creation,
-                }
+
 
             event.log_action(
                     action='eventyay.event.added',
