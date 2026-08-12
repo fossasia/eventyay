@@ -36,6 +36,22 @@ JITSI_PARTICIPANT_TOOLBAR_BUTTONS = [
     "videoquality",
 ]
 
+JITSI_MODERATOR_TOOLBAR_BUTTONS = [
+    *JITSI_PARTICIPANT_TOOLBAR_BUTTONS,
+    "download",
+    "etherpad",
+    "feedback",
+    "help",
+    "livestreaming",
+    "participants-pane",
+    "recording",
+    "security",
+    "sharedvideo",
+    "shortcuts",
+    "stats",
+    "whiteboard",
+]
+
 JITSI_JWT_LIFETIME_SECONDS = 10 * 60
 
 
@@ -48,7 +64,15 @@ def normalize_jitsi_room_name(
     return f"event-{event_id}-room-{room_id}"
 
 
-def build_jitsi_config_overwrite(module_config, is_moderator):
+def get_jitsi_room_display_name(room):
+    return str(room.name or "room")
+
+
+def build_jitsi_config_overwrite(
+    module_config,
+    is_moderator,
+    room_display_name=None,
+):
     config_overwrite = {
         "startWithAudioMuted": module_config.get(
             "start_with_audio_muted", False
@@ -59,18 +83,32 @@ def build_jitsi_config_overwrite(module_config, is_moderator):
         "enableUserRolesBasedOnToken": True,
         "readOnlyName": True,
         "enableClosePage": False,
+        "disableInviteFunctions": True,
         "disableSelfView": False,
         "remoteVideoMenu": {
             "disableKick": not is_moderator,
             "disableGrantModerator": not is_moderator,
         },
     }
+    if room_display_name:
+        config_overwrite["subject"] = room_display_name
+    if is_moderator:
+        config_overwrite["toolbarButtons"] = JITSI_MODERATOR_TOOLBAR_BUTTONS
     if not is_moderator:
         config_overwrite.update(
             {
                 "disableRemoteMute": True,
-                "disableInviteFunctions": True,
                 "disableModeratorIndicator": True,
+                "participantsPane": {
+                    "hideModeratorSettingsTab": True,
+                    "hideMoreActionsButton": True,
+                    "hideMuteAllButton": True,
+                },
+                "breakoutRooms": {
+                    "hideModeratorSettingsTab": True,
+                    "hideMoreActionsButton": True,
+                    "hideMuteAllButton": True,
+                },
                 "toolbarButtons": JITSI_PARTICIPANT_TOOLBAR_BUTTONS,
             }
         )
@@ -108,6 +146,7 @@ class JitsiModule(BaseModule):
             self.room.id,
             self.room.name,
         )
+        room_display_name = get_jitsi_room_display_name(self.room)
         if not domain:
             raise ConsumerException("jitsi.missing_domain")
         if not server_model.app_id or not server_model.app_secret:
@@ -133,6 +172,7 @@ class JitsiModule(BaseModule):
             "url": server["url"],
             "protocol": server["protocol"],
             "roomName": room_name,
+            "roomDisplayName": room_display_name,
             "userInfo": {
                 "displayName": display_name,
                 "email": self.consumer.user.profile.get("email") or "",
@@ -140,6 +180,7 @@ class JitsiModule(BaseModule):
             "configOverwrite": build_jitsi_config_overwrite(
                 self.module_config,
                 is_moderator,
+                room_display_name,
             ),
             "interfaceConfigOverwrite": {},
             "moderator": is_moderator,
@@ -155,7 +196,14 @@ class JitsiModule(BaseModule):
 
         await self.consumer.send_success(result)
 
-    def _build_jwt(self, server, domain, room_name, display_name, is_moderator):
+    def _build_jwt(
+        self,
+        server,
+        domain,
+        room_name,
+        display_name,
+        is_moderator,
+    ):
         app_id = server.app_id
         app_secret = server.app_secret
         if not app_id or not app_secret:

@@ -329,5 +329,27 @@ def test_jitsi_config_keeps_self_view_visible_for_moderators_and_participants():
     assert participant_config['readOnlyName'] is True
     assert moderator_config['enableClosePage'] is False
     assert participant_config['enableClosePage'] is False
-    assert 'toolbarButtons' not in moderator_config
+    assert moderator_config['disableInviteFunctions'] is True
+    assert participant_config['disableInviteFunctions'] is True
+    assert participant_config['participantsPane'] == {
+        'hideModeratorSettingsTab': True,
+        'hideMoreActionsButton': True,
+        'hideMuteAllButton': True,
+    }
+    assert participant_config['breakoutRooms'] == {
+        'hideModeratorSettingsTab': True,
+        'hideMoreActionsButton': True,
+        'hideMuteAllButton': True,
+    }
+    assert moderator_config['toolbarButtons']
     assert participant_config['toolbarButtons']
+    assert 'invite' not in moderator_config['toolbarButtons']
+    assert 'invite' not in participant_config['toolbarButtons']
+
+
+def test_jitsi_config_uses_actual_room_name_as_subject():
+    from eventyay.features.live.modules.jitsi import build_jitsi_config_overwrite
+
+    config = build_jitsi_config_overwrite({}, False, 'Main Hall')
+
+    assert config['subject'] == 'Main Hall'

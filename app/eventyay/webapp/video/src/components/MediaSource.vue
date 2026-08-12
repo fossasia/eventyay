@@ -720,6 +720,7 @@ async function createJitsiApiIframe(config, hideIfBackground, container) {
 	iframe.setAttribute('allowusermedia', 'true');
 	iframe.setAttribute('allowfullscreen', '');
 	iframeEl.value = iframe;
+	jitsiApi.addListener('videoConferenceJoined', () => applyJitsiDisplayOverrides(config));
 	jitsiApi.addListener('videoConferenceLeft', closeJitsiIframe);
 	jitsiApi.addListener('readyToClose', closeJitsiIframe);
 }
@@ -728,6 +729,23 @@ function closeJitsiIframe() {
 	destroyIframe();
 	emit('close');
 	router.push({ name: 'about' }).catch(() => {});
+}
+
+function applyJitsiDisplayOverrides(config) {
+	const commands = {};
+	if (config.roomDisplayName) {
+		commands.subject = [config.roomDisplayName];
+		commands.localSubject = [config.roomDisplayName];
+	}
+	if (!Object.keys(commands).length) return;
+	try {
+		jitsiApi.executeCommands(commands);
+	} catch (error) {
+		console.warn('Failed to apply Jitsi display overrides', {
+			roomId: props.room?.id,
+			error,
+		});
+	}
 }
 
 function loadJitsiExternalApi(config) {
