@@ -713,14 +713,14 @@ wheels = [
 
 [[package]]
 name = "django-bootstrap3"
-version = "26.1"
+version = "26.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f7/71/289b22cc19292e9a035a5a89277ef40ac3072b3bc52b12b00dadfbd9a3ba/django_bootstrap3-26.1.tar.gz", hash = "sha256:c437ec3bf19d9ef0b7554664b4dbea27c73fbd9927f8c7aa20559c68d38e8eea", size = 41832, upload-time = "2026-01-03T11:51:25.404Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/e3/0f0f40276e34e9b22cc95a284a26e732675dde272f44eb8b5b2bb49c4809/django_bootstrap3-26.2.tar.gz", hash = "sha256:e9be75b7bbf63c14a4c5955cf77546eb1d36eb80c135943ae094aa4d5b2f7d4e", size = 46887, upload-time = "2026-07-30T11:12:23.686Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/2d/c00d368d32d153b998a22b167b20db038f2f7d469d5d08f23256d8037518/django_bootstrap3-26.1-py3-none-any.whl", hash = "sha256:657201127b6c09f69d0ca60e944a32593fb6132923a9d1293bc6bfaacdb1a4ba", size = 24232, upload-time = "2026-01-03T11:51:24.335Z" },
+    { url = "https://files.pythonhosted.org/packages/83/59/fdbd0fa0ba375b4831bab34d4e3a8063de9b0bfed44f38feee7bdcb2a671/django_bootstrap3-26.2-py3-none-any.whl", hash = "sha256:7b86df95f2c10d2d94f0e1d327b7b32c4f3a4022d20804180f396e165f9aab4e", size = 24172, upload-time = "2026-07-30T11:12:22.658Z" },
 ]
 
 [[package]]
@@ -1500,7 +1500,7 @@ requires-dist = [
     { name = "django", specifier = ">=6.0.7,<6.1" },
     { name = "django-allauth", specifier = ">=65.19.0" },
     { name = "django-appconf", specifier = ">=1.2.0" },
-    { name = "django-bootstrap3", specifier = ">=26.1" },
+    { name = "django-bootstrap3", specifier = ">=26.2" },
     { name = "django-celery-beat", specifier = ">=2.9.0" },
     { name = "django-compressor", specifier = ">=4.6.0" },
     { name = "django-context-decorator", specifier = ">=1.6.1" },
