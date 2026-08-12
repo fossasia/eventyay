@@ -23,6 +23,7 @@ prompt.c-create-chat-prompt(@close="$emit('close')")
 import {mapGetters} from 'vuex'
 import Prompt from 'components/Prompt'
 import ROOM_TYPES from 'lib/room-types'
+import { isRoomTypeAvailable } from 'lib/room-type-permissions'
 
 const JITSI_ROOM_TYPE = ROOM_TYPES.find(type => type.id === 'channel-jitsi')
 
@@ -39,12 +40,13 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
 		types() {
 			const types = []
 			if (this.hasPermission('world:rooms.create.chat')) {
 				types.push({
 					id: 'text',
+					roomTypeId: 'channel-text',
 					label: this.$t('CreateChatPrompt:type.text:label'),
 					icon: 'pound',
 					moduleType: 'chat.native',
@@ -54,15 +56,17 @@ export default {
 			if (this.hasPermission('world:rooms.create.bbb')) {
 				types.push({
 					id: 'video',
+					roomTypeId: 'channel-bbb',
 					label: this.$t('CreateChatPrompt:type.video:label'),
 					icon: 'webcam',
 					moduleType: 'call.bigbluebutton',
 					permission: 'world:rooms.create.bbb'
 				})
 			}
-			if (JITSI_ROOM_TYPE && this.hasPermission('world:rooms.create.jitsi')) {
+			if (JITSI_ROOM_TYPE && isRoomTypeAvailable(JITSI_ROOM_TYPE.id, this.hasPermission, this.isAdminMode)) {
 				types.push({
 					id: 'jitsi',
+					roomTypeId: JITSI_ROOM_TYPE.id,
 					label: JITSI_ROOM_TYPE.name,
 					icon: JITSI_ROOM_TYPE.icon,
 					moduleType: JITSI_ROOM_TYPE.startingModule,
@@ -105,7 +109,7 @@ export default {
 			}
 
 			// Verify permission for selected type
-			if (!this.hasPermission(this.selectedType.permission)) {
+			if (!isRoomTypeAvailable(this.selectedType.roomTypeId, this.hasPermission, this.isAdminMode)) {
 				this.error = this.$t('CreateChatPrompt:error:no-permission') || 'You do not have permission to create channels.'
 				return
 			}

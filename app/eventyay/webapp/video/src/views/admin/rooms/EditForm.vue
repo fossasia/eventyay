@@ -73,9 +73,9 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
 		roomTypes() {
-			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission)
+			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode)
 		},
 		modules() {
 			return this.config?.module_config.reduce((acc, module) => {

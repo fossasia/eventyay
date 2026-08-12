@@ -148,12 +148,12 @@ export default {
 			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')
 		},
 		canCreateNetworkingRoom() {
-			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission)
+			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission, this.isAdminMode)
 		},
 		canCreateChatRoom() {
 			return ROOM_TYPES
 				.filter(type => ['channel-text', 'channel-bbb', 'channel-jitsi'].includes(type.id))
-				.some(type => isRoomTypeAvailable(type.id, this.hasPermission))
+				.some(type => isRoomTypeAvailable(type.id, this.hasPermission, this.isAdminMode))
 		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {

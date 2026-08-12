@@ -11,6 +11,30 @@ class JitsiServerUnavailable(Exception):
     pass
 
 
+def module_config_contains_jitsi(module_config):
+    return any(
+        isinstance(module, dict) and module.get("type") == "call.jitsi"
+        for module in module_config or []
+    )
+
+
+def has_jitsi_development_admin_trait(traits):
+    # TODO(jitsi-dev-gate): Remove when Jitsi room creation is released to normal roles.
+    return "admin" in (traits or [])
+
+
+async def user_can_create_jitsi_room_during_development(user):
+    # TODO(jitsi-dev-gate): Remove when Jitsi room creation is released to normal roles.
+    if getattr(user, "is_administrator", False):
+        return True
+    if has_jitsi_development_admin_trait(getattr(user, "traits", None)):
+        return True
+    get_role_grants_async = getattr(user, "get_role_grants_async", None)
+    if get_role_grants_async is None:
+        return False
+    return "admin" in await get_role_grants_async()
+
+
 def choose_server(event, prefer_server=None):
     servers = JitsiServer.objects.filter(active=True)
     if prefer_server:
