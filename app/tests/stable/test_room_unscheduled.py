@@ -331,6 +331,8 @@ def test_jitsi_config_keeps_self_view_visible_for_moderators_and_participants():
     assert participant_config['enableClosePage'] is False
     assert moderator_config['disableInviteFunctions'] is True
     assert participant_config['disableInviteFunctions'] is True
+    assert moderator_config['hiddenPremeetingButtons'] == ['invite']
+    assert participant_config['hiddenPremeetingButtons'] == ['invite']
     assert participant_config['participantsPane'] == {
         'hideModeratorSettingsTab': True,
         'hideMoreActionsButton': True,
@@ -345,6 +347,12 @@ def test_jitsi_config_keeps_self_view_visible_for_moderators_and_participants():
     assert participant_config['toolbarButtons']
     assert 'invite' not in moderator_config['toolbarButtons']
     assert 'invite' not in participant_config['toolbarButtons']
+    assert 'settings' in moderator_config['toolbarButtons']
+    assert 'participants-pane' in moderator_config['toolbarButtons']
+    assert 'polls' in moderator_config['toolbarButtons']
+    assert 'shareaudio' in moderator_config['toolbarButtons']
+    assert 'stats' in moderator_config['toolbarButtons']
+    assert 'participantsPane' not in moderator_config
 
 
 def test_jitsi_config_uses_actual_room_name_as_subject():
