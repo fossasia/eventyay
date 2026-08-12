@@ -395,7 +395,7 @@ def render_nup(input_files: list[str], num_pages: int, output_file: BinaryIO, op
                 pass
 
 
-def render_badges(event, positions, opt, apply_output_pagesize=False):
+def render_badges(event, positions, opt, apply_output_pagesize=False, layout_override=None):
     from itertools import groupby
 
     # Always resolve assignments from the database for this render call.
@@ -408,7 +408,7 @@ def render_badges(event, positions, opt, apply_output_pagesize=False):
 
     op_renderers = []
     for op in positions:
-        layout = get_badge_layout_for_position(event, op)
+        layout = layout_override or get_badge_layout_for_position(event, op)
         if layout is None:
             continue
         if layout.pk not in refreshed_layouts:
@@ -451,20 +451,24 @@ def render_badges(event, positions, opt, apply_output_pagesize=False):
     return badge_pdf, len(badge_pdf.pages)
 
 
-def render_pdf(event, positions, opt):
+def render_pdf(event, positions, opt, layout_override=None):
     Renderer._register_fonts()
     badges_per_page = opt['cols'] * opt['rows']
     outbuffer = BytesIO()
 
     if badges_per_page == 1:
-        badge_pdf, _ = render_badges(event, positions, opt, apply_output_pagesize=True)
+        badge_pdf, _ = render_badges(
+            event, positions, opt, apply_output_pagesize=True, layout_override=layout_override
+        )
         badge_pdf.write(outbuffer)
     else:
         with tempfile.TemporaryDirectory() as tmp_dir:
             page_pdfs = []
             total_num_pages = 0
             for position_chunk in chunks(list(positions), 200):
-                badge_pdf, num_pages = render_badges(event, position_chunk, opt)
+                badge_pdf, num_pages = render_badges(
+                    event, position_chunk, opt, layout_override=layout_override
+                )
                 out_pdf_name = os.path.join(tmp_dir, f'chunk-{len(page_pdfs)}.pdf')
                 with open(out_pdf_name, 'wb') as out_pdf:
                     badge_pdf.write(out_pdf)

@@ -311,23 +311,25 @@ class PositionDownloadsField(serializers.Field):
             if provider.identifier == 'badge':
                 from eventyay.plugins.badges.utils import get_badge_layout_for_position
 
-                if not get_badge_layout_for_position(instance.order.event, instance):
+                layout = get_badge_layout_for_position(instance.order.event, instance)
+                if not layout:
                     continue
-            res.append(
-                {
-                    'output': provider.identifier,
-                    'url': reverse(
-                        'api-v1:orderposition-download',
-                        kwargs={
-                            'organizer': instance.order.event.organizer.slug,
-                            'event': instance.order.event.slug,
-                            'pk': instance.pk,
-                            'output': provider.identifier,
-                        },
-                        request=request,
-                    ),
-                }
-            )
+            entry = {
+                'output': provider.identifier,
+                'url': reverse(
+                    'api-v1:orderposition-download',
+                    kwargs={
+                        'organizer': instance.order.event.organizer.slug,
+                        'event': instance.order.event.slug,
+                        'pk': instance.pk,
+                        'output': provider.identifier,
+                    },
+                    request=request,
+                ),
+            }
+            if provider.identifier == 'badge':
+                entry['layout'] = layout.pk
+            res.append(entry)
         return res
 
 
