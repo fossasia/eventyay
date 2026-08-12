@@ -242,7 +242,7 @@ lint = [
     "ruff>=0.16.2",
 ]
 test = [
-    "coverage>=7.15.2",
+    "coverage>=7.15.4",
     "coveralls>=4.0.2",
     "faker>=40.36.0",
     "fakeredis>=2.37.0",
