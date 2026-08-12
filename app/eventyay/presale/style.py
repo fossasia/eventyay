@@ -35,7 +35,31 @@ affected_keys = [
     'primary_color',
     'theme_color_success',
     'theme_color_danger',
+    'theme_color_background',
+    'hover_button_color',
+    'theme_round_borders',
+    'header_background_color',
+    'header_text_color',
+    'navigation_text_color',
+    'menu_text_scroll_over_color',
+    'video_navigation_background_color',
+    'video_sidebar_text_color',
+    'video_sidebar_hover_color',
 ]
+
+_CSS_CUSTOM_PROPERTY_MAP = {
+    'primary_color': '--color-primary',
+    'theme_color_success': '--color-success',
+    'theme_color_danger': '--color-danger',
+    'theme_color_background': '--color-bg',
+    'header_background_color': '--color-header-background',
+    'header_text_color': '--color-header-text',
+    'navigation_text_color': '--color-header-navigation',
+    'menu_text_scroll_over_color': '--color-header-navigation-hover',
+    'video_navigation_background_color': '--color-video-nav-background',
+    'video_sidebar_text_color': '--color-video-sidebar-text',
+    'video_sidebar_hover_color': '--color-video-sidebar-hover',
+}
 
 BASE_SANS_STACK = '"Open Sans", "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif'
 
@@ -132,6 +156,15 @@ def compile_scss(object, file='main.scss', fonts=True):
             f':root {{ --font-family: {font_family_value}; --font-family-title: {font_family_value}; }}'
         )
 
+    # Append CSS custom property overrides for runtime theme variables
+    css_custom_props = []
+    for setting_key, css_var in _CSS_CUSTOM_PROPERTY_MAP.items():
+        value = object.settings.get(setting_key)
+        if value:
+            css_custom_props.append(f'{css_var}: {value};')
+    if css_custom_props:
+        sassrules.append(':root {{ {} }}'.format(' '.join(css_custom_props)))
+
     if isinstance(object, Event):
         for recv, resp in sass_postamble.send(object, filename=file):
             sassrules.append(resp)
@@ -165,7 +198,10 @@ def regenerate_css(event):
     css, checksum = compile_scss(event)
     fname = f'pub/{event.organizer.slug}/{event.slug}/presale.{checksum[:16]}.css'
 
-    if event.settings.get('presale_css_checksum', '') != checksum:
+    if (
+        not event.settings.get('presale_css_file')
+        or event.settings.get('presale_css_checksum', '') != checksum
+    ):
         newname = default_storage.save(fname, ContentFile(css.encode('utf-8')))
         event.settings.set('presale_css_file', newname)
         event.settings.set('presale_css_checksum', checksum)
@@ -174,7 +210,10 @@ def regenerate_css(event):
     css, checksum = compile_scss(event, file='widget.scss', fonts=False)
     fname = f'pub/{event.organizer.slug}/{event.slug}/widget.{checksum[:16]}.css'
 
-    if event.settings.get('presale_widget_css_checksum', '') != checksum:
+    if (
+        not event.settings.get('presale_widget_css_file')
+        or event.settings.get('presale_widget_css_checksum', '') != checksum
+    ):
         newname = default_storage.save(fname, ContentFile(css.encode('utf-8')))
         event.settings.set('presale_widget_css_file', newname)
         event.settings.set('presale_widget_css_checksum', checksum)
@@ -188,7 +227,10 @@ def regenerate_organizer_css(organizer_id: int):
         # main.scss
         css, checksum = compile_scss(organizer)
         fname = f'pub/{organizer.slug}/presale.{checksum[:16]}.css'
-        if organizer.settings.get('presale_css_checksum', '') != checksum:
+        if (
+            not organizer.settings.get('presale_css_file')
+            or organizer.settings.get('presale_css_checksum', '') != checksum
+        ):
             newname = default_storage.save(fname, ContentFile(css.encode('utf-8')))
             organizer.settings.set('presale_css_file', newname)
             organizer.settings.set('presale_css_checksum', checksum)
@@ -196,7 +238,10 @@ def regenerate_organizer_css(organizer_id: int):
         # widget.scss
         css, checksum = compile_scss(organizer, file='widget.scss', fonts=False)
         fname = f'pub/{organizer.slug}/widget.{checksum[:16]}.css'
-        if organizer.settings.get('presale_widget_css_checksum', '') != checksum:
+        if (
+            not organizer.settings.get('presale_widget_css_file')
+            or organizer.settings.get('presale_widget_css_checksum', '') != checksum
+        ):
             newname = default_storage.save(fname, ContentFile(css.encode('utf-8')))
             organizer.settings.set('presale_widget_css_file', newname)
             organizer.settings.set('presale_widget_css_checksum', checksum)
