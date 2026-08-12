@@ -1182,6 +1182,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "eventyay-hubspot"
+version = "1.0.0"
+source = { git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev#2e5b390e860d3f25a9c858d495ec7e99c81f7bfa" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "python-dotenv" },
+    { name = "requests" },
+]
+
+[[package]]
 name = "eventyay-interpretation"
 version = "1.0.0"
 source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=main#b84a91b5adb9d6a03cba751c67fb38a57271fa45" }
@@ -1299,6 +1309,7 @@ dependencies = [
     { name = "emoji" },
     { name = "et-xmlfile" },
     { name = "eventyay-bitpay" },
+    { name = "eventyay-hubspot" },
     { name = "eventyay-interpretation" },
     { name = "eventyay-paypal" },
     { name = "eventyay-socialmedia" },
@@ -1534,6 +1545,7 @@ requires-dist = [
     { name = "emoji", specifier = ">=2.15.0" },
     { name = "et-xmlfile", specifier = ">=2.0.0" },
     { name = "eventyay-bitpay", git = "https://github.com/fossasia/eventyay-bitpay.git?rev=main" },
+    { name = "eventyay-hubspot", git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev" },
     { name = "eventyay-interpretation", git = "https://github.com/fossasia/eventyay-interpretation.git?rev=main" },
     { name = "eventyay-paypal", git = "https://github.com/fossasia/eventyay-paypal.git?rev=main" },
     { name = "eventyay-socialmedia", git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main" },
