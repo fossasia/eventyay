@@ -4,14 +4,18 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "daily"
+      time: "06:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 15
 
   - package-ecosystem: "uv"
     directory: "/app"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "daily"
+      time: "06:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 15
     versioning-strategy: increase
     ignore:
       - dependency-name: "django"
@@ -25,17 +29,23 @@ updates:
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/video"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "daily"
+      time: "06:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 15
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/schedule"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "daily"
+      time: "06:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 15
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/schedule-editor"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "daily"
+      time: "06:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 15
