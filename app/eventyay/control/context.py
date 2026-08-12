@@ -7,6 +7,7 @@ from django.urls import Resolver404, get_script_prefix, resolve
 from django.utils.translation import get_language
 from django_scopes import scope
 
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
@@ -63,6 +64,9 @@ def _default_context(request):
         for receiver, response in html_head.send(request.event, request=request):
             _html_head.append(response)
         from django.urls import reverse
+        is_meetup = is_meetup_event(request.event)
+        ctx['is_meetup'] = is_meetup
+        ctx['is_meetup_event'] = is_meetup
         ctx['talk_edit_url'] = reverse(
             'orga:event.dashboard',
             kwargs={'organizer': request.event.organizer.slug,

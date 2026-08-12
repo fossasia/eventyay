@@ -2,12 +2,12 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse
 from django.utils.timezone import now
 from django.views.generic import TemplateView
 from django_context_decorator import context
 
 from eventyay.base.models import Event
+from eventyay.common.views.helpers import build_login_url_with_next
 from eventyay.common.views.mixins import PermissionRequired
 from eventyay.talk_rules.event import get_events_for_user
 
@@ -22,7 +22,7 @@ class EventPageMixin(PermissionRequired):
 # check login first, then permission so users get redirected to /login, if they are missing one
 class LoggedInEventPageMixin(LoginRequiredMixin, EventPageMixin):
     def get_login_url(self) -> str:
-        return reverse('cfp:event.login', kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug})
+        return build_login_url_with_next(self.request.get_full_path())
 
 
 class EventStartpage(EventPageMixin, TemplateView):

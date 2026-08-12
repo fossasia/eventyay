@@ -81,6 +81,22 @@ class EventModule(BaseModule):
     @command("config.patch")
     @require_event_permission(Permission.EVENT_UPDATE)
     async def config_patch(self, body):
+        # Staff Video permissions are assigned only via Organizer → Teams.
+        # Reject in-video role/trait editing so the Teams dashboard stays authoritative.
+        blocked = [key for key in ("roles", "trait_grants") if key in body]
+        if blocked:
+            await self.consumer.send_error(
+                code="config.permission_managed_externally",
+                details={
+                    key: (
+                        "Video staff permissions and role grants are managed in "
+                        "Organizer → Teams, not in the Video UI."
+                    )
+                    for key in blocked
+                },
+            )
+            return
+
         old = _config_serializer(self.consumer.event).data
         s = _config_serializer(self.consumer.event, data=body, partial=True)
         if s.is_valid():
@@ -104,8 +120,6 @@ class EventModule(BaseModule):
                 "title": "name",
                 "locale": "locale",
                 "timezone": "timezone",
-                "roles": "roles",
-                "trait_grants": "trait_grants",
             }
             update_fields = set()
 

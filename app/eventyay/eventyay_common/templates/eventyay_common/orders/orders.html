@@ -3,18 +3,31 @@
 {% load bootstrap3 %}
 {% load eventurl %}
 {% load money %}
+{% load static %}
+
 {% block title %}{% trans "My Orders" %}{% endblock %}
+
+{% block custom_header %}
+    {{ block.super }}
+{% endblock %}
 
 {% block content %}
     <h1>{% trans "My Orders" %}</h1>
-    <div class="row filter-form">
-        <form action="" method="get">
-            <div class="col-md-3 col-sm-6 col-xs-12">
-                <!-- Add the event filter here -->
-                {% bootstrap_field filter_form.event layout='inline' %}
-            </div>
-            <div class="col-md-2 col-sm-6 col-xs-12">
-                {% include "eventyay_common/filter_actions.html" %}
+    <div class="advanced-filter-search" data-advanced-filter-search>
+        <form class="filter-form advanced-filter-search-form" action="" method="get">
+            <div class="advanced-filter-search-bar">
+                <div class="advanced-filter-field" style="flex: 1 1 0; margin-bottom: 0;">
+                    {% bootstrap_field filter_form.event layout='inline' %}
+                </div>
+                <div class="advanced-filter-search-actions">
+                    <button type="submit" class="btn btn-primary" aria-label="{% trans 'Apply filters' %}">
+                        <span class="fa fa-filter" aria-hidden="true"></span>
+                    </button>
+                    <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                        <span class="fa fa-eraser" aria-hidden="true"></span>
+                        <span class="sr-only">{% trans "Clear filters" %}</span>
+                    </a>
+                </div>
             </div>
         </form>
     </div>

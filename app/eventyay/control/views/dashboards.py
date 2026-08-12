@@ -46,7 +46,7 @@ from eventyay.base.models import (
     WaitingListEntry,
 )
 from eventyay.base.services.quotas import QuotaAvailability
-from eventyay.base.settings import is_event_series_creation_enabled
+from eventyay.base.settings import is_event_series_creation_enabled, is_meetup_creation_enabled
 from eventyay.base.timeline import timeline_for_event
 from eventyay.control.forms.event import CommentForm
 from eventyay.control.signals import (
@@ -540,14 +540,19 @@ def event_index_widgets_lazy(request, organizer, event):
         except SubEvent.DoesNotExist:
             pass
 
+    can_view_orders = request.user.has_event_permission(
+        request.organizer, request.event, 'can_view_orders', request=request
+    )
+
     widgets = []
-    for r, result in event_dashboard_widgets.send(
-        sender=request.event,
-        subevent=subevent,
-        lazy=False,
-        request=request,
-    ):
-        widgets.extend(result)
+    if can_view_orders:
+        for r, result in event_dashboard_widgets.send(
+            sender=request.event,
+            subevent=subevent,
+            lazy=False,
+            request=request,
+        ):
+            widgets.extend(result)
 
     return JsonResponse({'widgets': widgets})
 
@@ -756,6 +761,7 @@ def user_index(request):
         'widgets': rearrange(widgets),
         'can_create_event': request.user.teams.filter(can_create_events=True).exists(),
         'event_series_creation_enabled': is_event_series_creation_enabled(request),
+        'meetup_creation_enabled': is_meetup_creation_enabled(request),
         'upcoming': widgets_for_event_qs(
             request,
             annotated_event_query(request, lazy=True)

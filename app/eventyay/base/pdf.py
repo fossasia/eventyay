@@ -36,6 +36,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph
 
+from eventyay.base.admission_validity import format_issued_admission_validity
 from eventyay.base.i18n import language
 from eventyay.base.invoice import ThumbnailingImageReader
 from eventyay.base.models import Order, OrderPosition, Question
@@ -139,6 +140,16 @@ DEFAULT_VARIABLES = OrderedDict(
                 'editor_sample': _('Ticket category'),
                 'evaluate': lambda orderposition, order, event: (
                     str(orderposition.product.category.name) if orderposition.product.category else ''
+                ),
+            },
+        ),
+        (
+            'ticket_validity',
+            {
+                'label': _('Ticket validity'),
+                'editor_sample': _('May 31st, 2025 – June 1st, 2025'),
+                'evaluate': lambda orderposition, order, event: format_issued_admission_validity(
+                    orderposition, event, fallback_to_event=True
                 ),
             },
         ),
@@ -746,6 +757,40 @@ def get_variables(event):
     return v
 
 
+def font_supports_text(font_name, text):
+    try:
+        font_obj = pdfmetrics.getFont(font_name)
+    except KeyError:
+        return False
+    face = getattr(font_obj, 'face', None)
+    char_to_glyph = getattr(face, 'charToGlyph', None) if face is not None else None
+    if char_to_glyph is None:
+        return False
+    return all(ord(char) < 32 or ord(char) in char_to_glyph for char in text)
+
+
+def resolve_textarea_font(font, text_content):
+    """
+    Pick a font (and optionally transliterate) so ticket text can be drawn.
+
+    Prefer switching to the broader AND font before transliterating attendee-visible
+    text with ``text_unidecode``.
+    """
+    if not text_content or font_supports_text(font, text_content):
+        return font, text_content
+    if font_supports_text('AND', text_content):
+        return 'AND', text_content
+
+    import text_unidecode
+
+    transliterated = text_unidecode.unidecode(text_content)
+    if transliterated and font_supports_text(font, transliterated):
+        return font, transliterated
+    if transliterated and font_supports_text('AND', transliterated):
+        return 'AND', transliterated
+    return font, text_content
+
+
 class Renderer:
     def __init__(self, event, layout, background_file):
         self.layout = layout
@@ -772,6 +817,12 @@ class Renderer:
         pdfmetrics.registerFont(TTFont('Open Sans I', finders.find('fonts/OpenSans-Italic.ttf')))
         pdfmetrics.registerFont(TTFont('Open Sans B', finders.find('fonts/OpenSans-Bold.ttf')))
         pdfmetrics.registerFont(TTFont('Open Sans B I', finders.find('fonts/OpenSans-BoldItalic.ttf')))
+        try:
+            and_font = finders.find('fonts/AND-Regular.ttf')
+            if and_font:
+                pdfmetrics.registerFont(TTFont('AND', and_font))
+        except (OSError, TypeError, ValueError) as exc:
+            logger.warning('Failed to register AND font: %s', exc)
 
         try:
             pdfmetrics.registerFont(TTFont('NotoNaskhArabic', finders.find('fonts/NotoNaskhArabic-Regular.ttf')))
@@ -1046,6 +1097,8 @@ class Renderer:
             self._style_cache = {}
 
         text_content = self._get_text_content(op, order, o) or ''
+        font, text_content = resolve_textarea_font(font, text_content)
+
         fontsize = float(o['fontsize'])
         if o.get('autofit_width'):
             fontsize = self._fit_fontsize_to_width(text_content, font, fontsize, o['width'])

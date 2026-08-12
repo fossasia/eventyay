@@ -37,7 +37,7 @@
         </div>
     </div>
     {% endif %}
-    {% if has_talk_access %}
+    {% if has_talk_access and not is_meetup_event %}
     <div class="panel panel-default widget-container widget-small no-padding {% if not has_video_access %}last-column{% else %}column{% endif %}">
         <div class="panel-heading">
             <h3 class="panel-title">

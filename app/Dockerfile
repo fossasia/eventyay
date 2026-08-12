@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 ###########
 # BUILDER #
 ###########
@@ -35,10 +36,17 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --all-extras --all-groups
 
-# Run npm stuff (needs nodejs)
-RUN make npminstall
+# Read EVY_NPM_DEV from repo-root .env.dev (via compose additional_contexts).
+# When set to 1, skip make npminstall — Vite HMR installs deps at runtime.
+RUN --mount=type=bind,from=project_root,target=/project_root,ro \
+    if [ -f /project_root/.env.dev ] && grep -qE '^[[:space:]]*EVY_NPM_DEV=1([[:space:]]|#|$)' /project_root/.env.dev; then \
+      echo "EVY_NPM_DEV=1: skipping make npminstall (Vite HMR will install deps at runtime)"; \
+    else \
+      make npminstall; \
+    fi
 
-# Pre-build static.dist so the image ships with the Vite manifest
+# Pre-build static.dist so the image ships with Django/static assets (and Vite
+# manifests when npminstall ran above).
 RUN uv run python manage.py collectstatic --noinput
 
 
