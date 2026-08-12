@@ -60,12 +60,7 @@ JITSI_MODERATOR_TOOLBAR_BUTTONS = [
 JITSI_JWT_LIFETIME_SECONDS = 10 * 60
 
 
-def normalize_jitsi_room_name(
-    configured_room_name,
-    event_id,
-    room_id,
-    room_name_fallback="room",
-):
+def normalize_jitsi_room_name(event_id, room_id):
     return f"event-{event_id}-room-{room_id}"
 
 
@@ -146,12 +141,7 @@ class JitsiModule(BaseModule):
 
         server = normalize_server_url(server_model.url)
         domain = server["domain"] if server else None
-        room_name = normalize_jitsi_room_name(
-            self.module_config.get("room_name"),
-            self.consumer.event.id,
-            self.room.id,
-            self.room.name,
-        )
+        room_name = normalize_jitsi_room_name(self.consumer.event.id, self.room.id)
         room_display_name = get_jitsi_room_display_name(self.room)
         if not domain:
             raise ConsumerException("jitsi.missing_domain")

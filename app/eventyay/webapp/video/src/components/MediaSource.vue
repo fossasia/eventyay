@@ -732,6 +732,7 @@ function closeJitsiIframe() {
 }
 
 function applyJitsiDisplayOverrides(config) {
+	if (!jitsiApi) return;
 	const commands = {};
 	if (config.roomDisplayName) {
 		commands.subject = [config.roomDisplayName];
@@ -764,14 +765,18 @@ function loadJitsiExternalApi(config) {
 		const script = document.createElement('script');
 		script.src = scriptUrl;
 		script.async = true;
+		const rejectAndForget = (error) => {
+			jitsiExternalApiLoaders.delete(scriptUrl);
+			reject(error);
+		};
 		script.onload = () => {
 			if (window.JitsiMeetExternalAPI) {
 				resolve(window.JitsiMeetExternalAPI);
 			} else {
-				reject(new Error('Jitsi external API did not load'));
+				rejectAndForget(new Error('Jitsi external API did not load'));
 			}
 		};
-		script.onerror = () => reject(new Error('Jitsi external API could not be loaded'));
+		script.onerror = () => rejectAndForget(new Error('Jitsi external API could not be loaded'));
 		document.head.appendChild(script);
 	});
 	jitsiExternalApiLoaders.set(scriptUrl, loader);

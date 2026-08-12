@@ -81,7 +81,7 @@ def choose_server_for_room(room, prefer_server=None):
     selected_server_url = jitsi_config.get("selected_server_url")
     servers = JitsiServer.objects.filter(active=True)
     server = None
-    for preferred_url in (prefer_server, selected_server_url):
+    for preferred_url in (selected_server_url, prefer_server):
         if not preferred_url:
             continue
         server = _choose_preferred_server(servers, locked_room.event, preferred_url)
