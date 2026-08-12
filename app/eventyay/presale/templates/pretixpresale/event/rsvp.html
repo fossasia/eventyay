@@ -64,7 +64,7 @@
             </div>
             <div class="panel-body">
                 <p>{% trans "Please log in to register for this event." %}</p>
-                <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}" class="btn btn-primary">
+                <a href="{% url 'auth.login' %}?next={{ request.path|urlencode }}" class="btn btn-primary">
                     <span class="fa fa-sign-in" aria-hidden="true"></span>
                     {% trans "Log in" %}
                 </a>
