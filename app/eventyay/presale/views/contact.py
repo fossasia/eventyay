@@ -128,11 +128,10 @@ class ContactOrganizerView(EventViewMixin, View):
             if send_copy:
                 email.bcc = [sender_email]
             backend.send_messages([email])
-        except (smtplib.SMTPException, BadHeaderError, ConnectionError, OSError) as e:
+        except (smtplib.SMTPException, BadHeaderError, ConnectionError, OSError):
             logger.exception('Failed to send contact organizer email')
-            error_msg = _('Failed to send message: {error}').format(error=str(e))
             return JsonResponse(
-                {'success': False, 'error': error_msg},
+                {'success': False, 'error': _('Failed to send message. Please try again later.')},
                 status=500,
             )
 
