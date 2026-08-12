@@ -325,5 +325,9 @@ def test_jitsi_config_keeps_self_view_visible_for_moderators_and_participants():
 
     assert moderator_config['disableSelfView'] is False
     assert participant_config['disableSelfView'] is False
+    assert moderator_config['readOnlyName'] is True
+    assert participant_config['readOnlyName'] is True
+    assert moderator_config['enableClosePage'] is False
+    assert participant_config['enableClosePage'] is False
     assert 'toolbarButtons' not in moderator_config
     assert participant_config['toolbarButtons']

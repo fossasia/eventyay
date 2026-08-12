@@ -57,6 +57,8 @@ def build_jitsi_config_overwrite(module_config, is_moderator):
             "start_with_video_muted", False
         ),
         "enableUserRolesBasedOnToken": True,
+        "readOnlyName": True,
+        "enableClosePage": False,
         "disableSelfView": False,
         "remoteVideoMenu": {
             "disableKick": not is_moderator,
