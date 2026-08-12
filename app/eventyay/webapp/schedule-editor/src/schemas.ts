@@ -60,6 +60,25 @@ const AvailabilityEntrySchema = z.object({
   end: z.string()
 });
 
+const AssignedUserSchema = z.object({
+  id: z.number(),
+  name: z.string()
+});
+
+const RoleAssignmentSchema = z.object({
+  id: z.number(),
+  name: LocalizedTextSchema,
+  capacity: z.number(),
+  assigned: z.array(AssignedUserSchema).default([]),
+  is_restricted: z.boolean().optional().default(false)
+});
+
+const ScheduleRoleSchema = z.object({
+  id: z.number(),
+  name: LocalizedTextSchema,
+  is_restricted: z.boolean().optional().default(false)
+});
+
 export const TalkSchema = z.object({
   id: z.number(),
   code: z.string().optional(),
@@ -88,6 +107,8 @@ export const TalkSchema = z.object({
   availabilities: z.array(AvailabilityEntrySchema).optional().default([]),
   duration: z.number().optional(),
   do_not_record: z.union([z.boolean(), z.null()]).optional().transform(val => val === true).default(false),
+  roles: z.array(RoleAssignmentSchema).nullable().optional().default([]),
+  kind: z.enum(['talk', 'break', 'shift']).optional(),
 });
 
 export const WarningSchema = z.object({
@@ -107,7 +128,8 @@ export const ScheduleSchema = z.object({
   speakers: z.array(SpeakerSchema).default([]),
   talks: z.array(TalkSchema).default([]),
   now: z.string().optional(),
-  warnings: WarningRecordSchema.optional().default({})
+  warnings: WarningRecordSchema.optional().default({}),
+  roles: z.array(ScheduleRoleSchema).nullable().optional().default([])
 });
 
 export const AvailabilitySchema = z.object({
@@ -126,3 +148,7 @@ export type Talk = z.infer<typeof TalkSchema>;
 export type Schedule = z.infer<typeof ScheduleSchema>;
 export type Availability = z.infer<typeof AvailabilitySchema>;
 export type Warnings = z.infer<typeof WarningsSchema>;
+export type AssignedUser = z.infer<typeof AssignedUserSchema>;
+export type RoleAssignment = z.infer<typeof RoleAssignmentSchema>;
+export type ScheduleRole = z.infer<typeof ScheduleRoleSchema>;
+export type { SessionKind } from './teamshifts-adapter/types';

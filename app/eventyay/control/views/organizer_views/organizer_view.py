@@ -177,6 +177,8 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
             )
 
         if change_css:
+            # Force CSS regeneration even if a checksum exists.
+            self.request.organizer.settings.delete('presale_css_checksum')
             transaction.on_commit(lambda: regenerate_organizer_css.apply_async(args=(self.request.organizer.pk,)))
             messages.success(
                 self.request,
