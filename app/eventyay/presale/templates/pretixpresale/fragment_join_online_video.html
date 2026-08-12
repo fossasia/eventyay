@@ -64,7 +64,7 @@
                         {% blocktrans with event_name=event_name %}
                             Already have a {{ event_name }} account?
                         {% endblocktrans %}
-                        <a class="btn btn-link" href="{% url 'eventyay_common:auth.login' %}?next={{ request.get_full_path|urlencode }}">
+                        <a class="btn btn-link" href="{% url 'auth.login' %}?next={{ request.get_full_path|urlencode }}">
                             {% translate 'Login here' %}
                         </a>
                     </p>

@@ -20,6 +20,7 @@ from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.base.models import Event
 from eventyay.base.models import Resource
+from eventyay.common.views.helpers import build_login_url_with_next
 
 
 @pytest.mark.skipif(
@@ -299,7 +300,7 @@ def test_schedule_calendar_redirect_my_google_calendar_anonymous_redirects_to_lo
     )
     response = client.get(url, follow=False)
     assert response.status_code == 302
-    assert response['Location'] == slot.submission.event.urls.login
+    assert response['Location'] == build_login_url_with_next(url)
 
 
 @pytest.mark.django_db
@@ -310,7 +311,7 @@ def test_schedule_calendar_redirect_my_webcal_anonymous_redirects_to_login(slot,
     )
     response = client.get(url, follow=False)
     assert response.status_code == 302
-    assert response['Location'] == slot.submission.event.urls.login
+    assert response['Location'] == build_login_url_with_next(url)
 
 
 @pytest.mark.django_db
