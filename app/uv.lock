@@ -974,17 +974,18 @@ wheels = [
 
 [[package]]
 name = "django-oauth-toolkit"
-version = "3.3.0"
+version = "3.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "jwcrypto" },
     { name = "oauthlib" },
     { name = "requests" },
+    { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/62/2b/011f3e964f474b7814828586de0277ad373197096b28274d0ae8bf45d5f9/django_oauth_toolkit-3.3.0.tar.gz", hash = "sha256:2b375d14b1c0ff86e5df5e5de5d1a6d9868873304f54aca37c50158552d5b922", size = 118319, upload-time = "2026-05-29T18:13:57.065Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/59/a7/f185dc058f859b104c1fed06ab25eeebbb7e182c3e25c6f7e11e8df3f739/django_oauth_toolkit-3.4.0.tar.gz", hash = "sha256:e43bef1568d6322b44175e27eff82ed7d7cf210889a07d10b8a64e4190ff1351", size = 220227, upload-time = "2026-07-24T02:50:38.186Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/26/e4/d05b3d50d0250f2d2f3a5dc9cd21f85e313ee1493ff60b729dccb8e08c46/django_oauth_toolkit-3.3.0-py3-none-any.whl", hash = "sha256:7af1365cd80735211454b0dca810bc9e860c631e61fd17768ad0fa331737954f", size = 88415, upload-time = "2026-05-29T18:13:55.827Z" },
+    { url = "https://files.pythonhosted.org/packages/56/64/3cb3a71aaac17ebfc1db56522fdacddeb79dd041f1174584b210988df4c3/django_oauth_toolkit-3.4.0-py3-none-any.whl", hash = "sha256:c504457898a363d332fb98beed5eceeec9da4aa659055a50a93aa52e8ed55534", size = 145738, upload-time = "2026-07-24T02:50:36.852Z" },
 ]
 
 [[package]]
@@ -1518,7 +1519,7 @@ requires-dist = [
     { name = "django-localflavor", specifier = ">=5.1" },
     { name = "django-markup", specifier = ">=1.9.1" },
     { name = "django-multifactor", specifier = ">=0.9.3" },
-    { name = "django-oauth-toolkit", specifier = ">=3.3.0" },
+    { name = "django-oauth-toolkit", specifier = ">=3.4.0" },
     { name = "django-otp", specifier = ">=1.7.0" },
     { name = "django-pdb", specifier = ">=0.6.2" },
     { name = "django-phonenumber-field", specifier = ">=8.5.0" },
