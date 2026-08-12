@@ -1197,7 +1197,7 @@ source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#a6d9c
 [[package]]
 name = "eventyay-socialmedia"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#485983f00c3d8c97360d82c88013a5337a48cdbe" }
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#a352605b6c118b9e32d1acaad884f0cc9bae431d" }
 dependencies = [
     { name = "mastodon-py" },
 ]
