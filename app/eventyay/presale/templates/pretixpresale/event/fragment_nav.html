@@ -12,7 +12,11 @@
         {% tickets_tab_visible as show_tickets_tab %}
         {% can_view_talks as show_talks_tab %}
         <a href="{% eventurl request.event 'presale:event.index' %}" id="nav-tab-info" class="header-tab {% if request.resolver_match.url_name == 'event.index' %}underline{% endif %}">
-            <i class="fa fa-info-circle"></i> {% translate "Info" %}
+            {% if is_meetup_event %}
+                {% translate "Details" %}
+            {% else %}
+                <i class="fa fa-info-circle"></i> {% translate "Info" %}
+            {% endif %}
         </a>
 
         {% if request.event.live or is_organiser %}
