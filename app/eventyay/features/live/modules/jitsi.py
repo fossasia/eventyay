@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 JITSI_PARTICIPANT_TOOLBAR_BUTTONS = [
     "camera",
-    "chat",
     "closedcaptions",
     "desktop",
     "filmstrip",
@@ -47,7 +46,6 @@ JITSI_MODERATOR_TOOLBAR_BUTTONS = [
     "mute-everyone",
     "mute-video-everyone",
     "participants-pane",
-    "polls",
     "recording",
     "security",
     "shareaudio",
@@ -56,6 +54,21 @@ JITSI_MODERATOR_TOOLBAR_BUTTONS = [
     "stats",
     "whiteboard",
 ]
+
+JITSI_INTERFACE_CONFIG_OVERWRITE = {
+    "APP_NAME": "Eventyay Video",
+    "NATIVE_APP_NAME": "Eventyay Video",
+    "PROVIDER_NAME": "Eventyay",
+    "BRAND_WATERMARK_LINK": "",
+    "DEFAULT_LOGO_URL": "",
+    "DEFAULT_WELCOME_PAGE_LOGO_URL": "",
+    "JITSI_WATERMARK_LINK": "",
+    "SHOW_BRAND_WATERMARK": False,
+    "SHOW_CHROME_EXTENSION_BANNER": False,
+    "SHOW_JITSI_WATERMARK": False,
+    "SHOW_POWERED_BY": False,
+    "SHOW_WATERMARK_FOR_GUESTS": False,
+}
 
 JITSI_JWT_LIFETIME_SECONDS = 10 * 60
 
@@ -84,8 +97,13 @@ def build_jitsi_config_overwrite(
         "readOnlyName": True,
         "enableClosePage": False,
         "disableInviteFunctions": True,
+        "disablePolls": True,
         "hiddenPremeetingButtons": ["invite"],
         "disableSelfView": False,
+        "breakoutRooms": {
+            "hideAddRoomButton": True,
+            "hideAutoAssignButton": True,
+        },
         "remoteVideoMenu": {
             "disableKick": not is_moderator,
             "disableGrantModerator": not is_moderator,
@@ -106,6 +124,8 @@ def build_jitsi_config_overwrite(
                     "hideMuteAllButton": True,
                 },
                 "breakoutRooms": {
+                    **config_overwrite["breakoutRooms"],
+                    "hideJoinRoomButton": True,
                     "hideModeratorSettingsTab": True,
                     "hideMoreActionsButton": True,
                     "hideMuteAllButton": True,
@@ -114,6 +134,10 @@ def build_jitsi_config_overwrite(
             }
         )
     return config_overwrite
+
+
+def build_jitsi_interface_config_overwrite():
+    return dict(JITSI_INTERFACE_CONFIG_OVERWRITE)
 
 
 class JitsiModule(BaseModule):
@@ -178,7 +202,7 @@ class JitsiModule(BaseModule):
                 is_moderator,
                 room_display_name,
             ),
-            "interfaceConfigOverwrite": {},
+            "interfaceConfigOverwrite": build_jitsi_interface_config_overwrite(),
             "moderator": is_moderator,
         }
 

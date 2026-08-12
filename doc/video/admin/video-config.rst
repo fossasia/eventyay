@@ -302,7 +302,27 @@ The following runbook installs docker-jitsi-meet on an Ubuntu Azure VM with a pu
    directory. Loading :code:`end_conference` through :code:`XMPP_MUC_MODULES` causes a
    :code:`No muc_component specified` Prosody error.
 
-10. Start Jitsi.
+10. Copy the Eventyay Jitsi web customizations.
+
+    These files remove Jitsi branding from the served web app and hide disabled Jitsi features.
+    The iframe overrides sent by Eventyay are still kept, but the server-side files are required for Jitsi
+    versions that do not honor branding and disabled-feature changes from client-side overrides.
+
+    From the Eventyay repository on the local development machine:
+
+    .. code-block:: bash
+
+       scp deployment/jitsi/web/custom-*.js <vm-user>@meet.example.org:/tmp/
+
+    On the VM:
+
+    .. code-block:: bash
+
+       cp /tmp/custom-config.js ~/.jitsi-meet-cfg/web/custom-config.js
+       cp /tmp/custom-interface_config.js ~/.jitsi-meet-cfg/web/custom-interface_config.js
+       ls -l ~/.jitsi-meet-cfg/web/custom-*.js
+
+11. Start Jitsi.
 
     .. code-block:: bash
 
@@ -312,7 +332,7 @@ The following runbook installs docker-jitsi-meet on an Ubuntu Azure VM with a pu
 
     The :code:`web`, :code:`prosody`, :code:`jicofo`, and :code:`jvb` services should all be :code:`Up`.
 
-11. Verify the deployment.
+12. Verify the deployment.
 
     Check HTTPS:
 
@@ -350,7 +370,7 @@ The following runbook installs docker-jitsi-meet on an Ubuntu Azure VM with a pu
 
        eventyay forced affiliation=member role=participant
 
-12. Configure Eventyay.
+13. Configure Eventyay.
 
     Start Eventyay locally from the branch and apply migrations:
 
@@ -379,6 +399,8 @@ Manual Test Checklist
 
 * Join as a user with :code:`room:jitsi.join` and verify the Jitsi room opens.
 * Join as a user with :code:`room:jitsi.moderate` and verify the user receives moderator behavior.
+* Confirm the Jitsi watermark/logo is not visible in the embedded room.
+* Confirm the Jitsi room UI uses the default Jitsi palette without Jitsi branding.
 * Join as a user without :code:`room:jitsi.join` and verify Eventyay denies the room configuration request.
 * Join as an attendee and verify Prosody logs show forced member affiliation.
 * Confirm attendees cannot grant themselves moderator status or end the conference for everyone.
