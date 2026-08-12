@@ -284,6 +284,22 @@ class AuthModule(BaseModule):
         await self.consumer.user.refresh_from_db_if_outdated(allowed_age=0)
         await ChatService(self.consumer.event).enforce_forced_joins(self.consumer.user)
 
+    @command("set_publicly_visible")
+    @require_event_permission(Permission.EVENT_VIEW)
+    async def set_publicly_visible(self, body):
+        """Toggle the user's show_publicly flag from within the video platform."""
+        show_publicly = body.get("show_publicly")
+        if not isinstance(show_publicly, bool):
+            await self.consumer.send_error(code="user.set_publicly_visible.invalid")
+            return
+
+        def _save(user, value):
+            user.show_publicly = value
+            user.save(update_fields=["show_publicly"])
+
+        await database_sync_to_async(_save)(self.consumer.user, show_publicly)
+        await self.consumer.send_success({"show_publicly": show_publicly})
+
     @command("admin.update")
     @require_event_permission(Permission.EVENT_USERS_MANAGE)
     async def admin_update(self, body):
