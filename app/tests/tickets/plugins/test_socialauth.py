@@ -43,7 +43,7 @@ def preferred_login_providers():
 
 @pytest.mark.django_db
 def test_preferred_provider_renders_before_email_form(client, preferred_login_providers):
-    response = client.get(reverse('eventyay_common:auth.login'))
+    response = client.get(reverse('auth.login'))
 
     assert response.status_code == 200
     assert response.text.index('Login with Github') < response.text.index("id='login-form'")
@@ -61,7 +61,7 @@ def test_failed_email_login_keeps_native_form_expanded(client, preferred_login_p
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
 
     response = client.post(
-        reverse('eventyay_common:auth.login'),
+        reverse('auth.login'),
         data={
             'email': user.email,
             'password': 'wrong-password',

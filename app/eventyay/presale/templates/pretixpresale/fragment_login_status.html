@@ -13,7 +13,7 @@
             </a>
         </div>
     {% else %}
-        <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.get_full_path|urlencode }}">
+        <a href="{% url 'auth.login' %}?next={{ request.get_full_path|urlencode }}">
             {% translate "Log in" %}
         </a>
 
