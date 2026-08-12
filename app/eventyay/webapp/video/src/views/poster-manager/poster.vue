@@ -90,7 +90,6 @@ import * as pdfjs from 'pdfjs-dist'
 import PdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?worker'
 // Configure PDF.js to use a dedicated worker in Vite
 pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker()
-import Quill from 'quill'
 import { mapGetters } from 'vuex'
 import { useVuelidate } from '@vuelidate/core'
 import { required } from 'lib/validators'
@@ -102,8 +101,6 @@ import UserSelect from 'components/UserSelect'
 import UploadUrlInput from 'components/UploadUrlInput'
 import RichTextEditor from 'components/RichTextEditor'
 import ExhibitorPreview from 'views/exhibitors/item'
-
-const Delta = Quill.import('delta')
 
 export default {
 	components: { Avatar, ExhibitorPreview, Prompt, UploadUrlInput, UserSelect, RichTextEditor },
@@ -156,7 +153,7 @@ export default {
 				id: '', // needs to be empty string for creation to work
 				parent_room_id: null,
 				title: '',
-				abstract: new Delta(),
+				abstract: '',
 				authors: {
 					authors: [],
 					organizations: []
@@ -172,7 +169,7 @@ export default {
 			}
 		} else {
 			this.poster = await api.call('poster.get', {poster: this.posterId})
-			this.poster.abstract = new Delta(this.poster.abstract)
+			this.poster.abstract = this.poster.abstract || ''
 			this.tags = this.poster.tags.join(',')
 		}
 	},
@@ -225,7 +222,6 @@ export default {
 			this.saving = true
 			this.poster.tags = this.tags === '' ? [] : this.tags.split(',').map(tag => tag.trim())
 			let poster = Object.assign({}, this.poster)
-			poster.abstract = poster.abstract.ops
 			poster.links.forEach((link, index) => link.sorting_priority = index)
 			poster = await api.call('poster.patch', poster)
 			if (this.create) await router.push({name: 'posters:poster', params: {posterId: poster.id}})

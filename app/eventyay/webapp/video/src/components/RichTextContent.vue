@@ -1,38 +1,43 @@
 <template lang="pug">
-.rich-text-content(@click="handleClick")
+.rich-text-content(v-html="sanitizedContent", @click="handleClick")
 </template>
 <script>
-import Quill from 'quill'
+import DOMPurify from 'dompurify'
 import router from 'router'
-import VideoResponsive from 'lib/quill/VideoResponsive'
-import fullWidthFormat from 'lib/quill/fullWidthFormat'
 
 export default {
 	props: {
-		content: [Array, Object],
+		// HTML string (Tiptap) or legacy Quill Delta object ({ ops: [...] })
+		content: [String, Array, Object],
 	},
-	watch: {
-		content: {
-			handler(val) {
-				this.quill.setContents(val)
-			},
-			deep: true
+	computed: {
+		sanitizedContent() {
+			if (!this.content) return ''
+
+			// Legacy Quill Delta: render ops as plain text fallback
+			if (typeof this.content === 'object' && !Array.isArray(this.content) && Array.isArray(this.content?.ops)) {
+				const text = this.content.ops
+					.filter(op => typeof op.insert === 'string')
+					.map(op => op.insert)
+					.join('')
+				return DOMPurify.sanitize(`<p>${text.replace(/\n/g, '<br>')}</p>`)
+			}
+
+			// HTML string from Tiptap
+			if (typeof this.content === 'string') {
+				return DOMPurify.sanitize(this.content, {
+					ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'a', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'img'],
+					ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt'],
+				})
+			}
+
+			return ''
 		},
-	},
-	mounted() {
-		Quill.register(VideoResponsive)
-		Quill.register(fullWidthFormat)
-		const quill = new Quill(this.$el, {
-			readOnly: true
-		})
-		quill.setContents(this.content)
-		this.quill = quill
 	},
 	methods: {
 		handleClick(event) {
 			const a = event.target.closest('a')
 			if (!a) return
-			// from https://github.com/vuejs/vue-router/blob/dfc289202703319cf7beb38d03c9258c806c4d62/src/components/link.js#L165
 			// don't redirect with control keys
 			if (event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) return
 			// don't redirect on right click
@@ -43,7 +48,63 @@ export default {
 			if (window.location.hostname !== url.hostname) return
 			event.preventDefault()
 			router.push(url.pathname + url.hash)
-		}
+		},
 	},
 }
 </script>
+<style lang="stylus">
+.rich-text-content
+	font-size: 14px
+	line-height: 1.6
+
+	> * + *
+		margin-top: 0.5em
+
+	p, h1, h2, h3, h4, h5, h6
+		margin: 0 16px
+
+	blockquote
+		border-left: 3px solid #ccc
+		margin: 0 16px 0.5em
+		padding-left: 1em
+		color: #666
+
+	ul, ol
+		padding-left: calc(16px + 1.5em)
+		margin: 0 0 0.5em
+		max-width: none
+
+	li
+		line-height: 1.6
+		max-width: none
+
+	ul, ol
+		li::before
+			content: ""
+
+	img
+		margin: 0 auto
+		display: block
+		max-width: 100%
+
+	a
+		&:hover, &[href]:not([class]):hover
+			text-decoration: underline
+
+	pre
+		margin: 0 16px 0.5em
+		background: #f4f4f4
+		padding: 8px 12px
+		border-radius: 4px
+		overflow-x: auto
+		font-size: 1.1em
+		code
+			background: none
+			padding: 0
+
+	code
+		background: #f4f4f4
+		padding: 2px 4px
+		border-radius: 3px
+		font-size: 0.95em
+</style>
