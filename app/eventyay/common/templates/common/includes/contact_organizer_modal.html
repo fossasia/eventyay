@@ -18,7 +18,7 @@
                 {% translate "You need to log in before contacting the organizer." %}
             </p>
             <div style="margin-top: 20px; text-align: center;">
-                <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path }}" class="contact-form-submit" style="display: inline-block; text-decoration: none;">
+                <a href="{% url 'auth.login' %}?next={{ request.get_full_path|urlencode }}" class="contact-form-submit" style="display: inline-block; text-decoration: none;">
                     {% translate "Log in" %}
                 </a>
             </div>
