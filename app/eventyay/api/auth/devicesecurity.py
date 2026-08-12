@@ -81,6 +81,17 @@ _CHECKIN_CORE_ALLOWLIST = (
     ('POST', 'api-v1:upload'),
     ('GET', 'badges:api-badge-download'),
     ('GET', 'plugins:badges:api-badge-download'),
+    ('GET', 'badges:badge-preview'),
+    ('GET', 'plugins:badges:badge-preview'),
+    # Badge layout picker for staff / kiosk print prompts
+    ('GET', 'api-v1:badgelayout-list'),
+    ('GET', 'api-v1:badgelayout-detail'),
+    ('GET', 'api-v1:badgelayouts-list'),
+    ('GET', 'api-v1:badgelayouts-detail'),
+    ('GET', 'api-v1:badgeproduct-list'),
+    ('GET', 'api-v1:badgeproduct-detail'),
+    ('GET', 'api-v1:badgeitems-list'),
+    ('GET', 'api-v1:badgeitems-detail'),
 )
 
 # Badge Station (kiosk): scan, check-in, search, badge download.
