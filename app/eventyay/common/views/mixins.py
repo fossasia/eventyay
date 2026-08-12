@@ -2,7 +2,6 @@ import logging
 import urllib
 from collections import defaultdict
 from contextlib import suppress
-from urllib.parse import quote
 
 from csp.decorators import csp_exempt
 from django import forms
@@ -23,6 +22,7 @@ from rules.contrib.views import PermissionRequiredMixin
 from eventyay.common.forms import SearchForm
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.text.phrases import phrases
+from eventyay.common.views.helpers import build_login_url_with_next
 
 SessionStore = import_string(f'{settings.SESSION_ENGINE}.SessionStore')
 logger = logging.getLogger(__name__)
@@ -269,8 +269,7 @@ class PermissionRequired(PermissionRequiredMixin):
             and request.user.is_anonymous
             and 'cfp' in request.resolver_match.namespaces
         ):
-            params = '&' + request.GET.urlencode() if request.GET else ''
-            return redirect(request.event.urls.login + f'?next={quote(request.path)}' + params)
+            return redirect(build_login_url_with_next(request.get_full_path()))
         raise Http404()
 
 

@@ -25,6 +25,7 @@ from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
 from eventyay.common.text.path import safe_filename
+from eventyay.common.views.helpers import build_login_url_with_next
 from eventyay.schedule.exporters import FavedICalExporter, filter_featured_public_talk_slots
 from eventyay.talk_rules.agenda import (
     can_list_released_schedule_speakers,
@@ -1228,7 +1229,7 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
         if request.GET.get('talks'):
             exporter.talk_ids = set(request.GET.get('talks').split(','))
         else:
-            return HttpResponseRedirect(request.event.urls.login)
+            return HttpResponseRedirect(build_login_url_with_next(request.get_full_path()))
     if token and '-my' in exporter.identifier:
         user_id = parse_ics_token(token, event=request.event)
         if not user_id:

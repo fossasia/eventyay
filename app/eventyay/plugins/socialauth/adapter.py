@@ -31,7 +31,7 @@ def require_provider_enabled(request, provider):
         logger.warning('Social login attempt for unavailable provider: %s', provider)
         messages.error(request, _('This login method is not available.'))
         raise ImmediateHttpResponse(
-            HttpResponseRedirect(reverse('eventyay_common:auth.login'))
+            HttpResponseRedirect(reverse('auth.login'))
         )
 
 
