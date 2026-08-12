@@ -22,7 +22,7 @@
 <script setup>
 // TODO functional component?
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { isEqual } from 'lodash';
 import api from 'lib/api';
@@ -42,6 +42,8 @@ import {
 	STREAM_TYPE_YOUTUBE,
 } from 'lib/stage-streams';
 
+const jitsiExternalApiLoaders = new Map();
+
 // Props & Emits
 defineOptions({
 	components: { Livestream, JanusCall, JanusChannelCall, IframeBlocker },
@@ -58,6 +60,7 @@ const emit = defineEmits(['close']);
 
 const store = useStore();
 const route = useRoute();
+const router = useRouter();
 
 const iframeError = ref(null);
 const iframeEl = ref(null);
@@ -76,6 +79,7 @@ let whepClient = null;
 // Template refs
 const livestream = ref(null);
 const janus = ref(null);
+let jitsiApi = null;
 
 // Mapped state/getters
 const streamingRoom = computed(() => store.state.streamingRoom);
@@ -667,6 +671,11 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 }
 
 function destroyIframe() {
+	if (jitsiApi) {
+		const api = jitsiApi;
+		jitsiApi = null;
+		api.dispose();
+	}
 	iframeEl.value?.remove();
 	iframeEl.value = null;
 	languageIframeUrl.value = null;
@@ -677,12 +686,24 @@ function destroyIframe() {
 function createJitsiIframe(config, hideIfBackground) {
 	const container = document.querySelector('#media-source-iframes');
 	if (!container) return;
-	createJitsiDirectIframe(config, hideIfBackground, container);
+	return createJitsiApiIframe(config, hideIfBackground, container);
 }
 
-function createJitsiDirectIframe(config, hideIfBackground, container) {
-	const iframe = document.createElement('iframe');
-	iframe.src = getJitsiRoomUrl(config);
+async function createJitsiApiIframe(config, hideIfBackground, container) {
+	const JitsiMeetExternalAPI = await loadJitsiExternalApi(config);
+	if (isUnmounted.value) return;
+
+	jitsiApi = new JitsiMeetExternalAPI(config.domain, {
+		roomName: config.roomName,
+		parentNode: container,
+		jwt: config.jwt,
+		noSSL: config.protocol === 'http',
+		configOverwrite: config.configOverwrite,
+		interfaceConfigOverwrite: config.interfaceConfigOverwrite,
+		userInfo: config.userInfo,
+	});
+
+	const iframe = jitsiApi.getIFrame();
 	iframe.classList.add('iframe-media-source');
 	iframe.classList.add('jitsi-media-source');
 	if (hideIfBackground) {
@@ -698,8 +719,45 @@ function createJitsiDirectIframe(config, hideIfBackground, container) {
 	iframe.allowFullscreen = true;
 	iframe.setAttribute('allowusermedia', 'true');
 	iframe.setAttribute('allowfullscreen', '');
-	container.appendChild(iframe);
 	iframeEl.value = iframe;
+	jitsiApi.addListener('videoConferenceLeft', closeJitsiIframe);
+	jitsiApi.addListener('readyToClose', closeJitsiIframe);
+}
+
+function closeJitsiIframe() {
+	destroyIframe();
+	emit('close');
+	router.push({ name: 'about' }).catch(() => {});
+}
+
+function loadJitsiExternalApi(config) {
+	const url = new URL(config.url || `https://${config.domain}`);
+	url.pathname = '/external_api.js';
+	url.search = '';
+	url.hash = '';
+	const scriptUrl = url.toString();
+	if (window.JitsiMeetExternalAPI) {
+		return Promise.resolve(window.JitsiMeetExternalAPI);
+	}
+	if (jitsiExternalApiLoaders.has(scriptUrl)) {
+		return jitsiExternalApiLoaders.get(scriptUrl);
+	}
+	const loader = new Promise((resolve, reject) => {
+		const script = document.createElement('script');
+		script.src = scriptUrl;
+		script.async = true;
+		script.onload = () => {
+			if (window.JitsiMeetExternalAPI) {
+				resolve(window.JitsiMeetExternalAPI);
+			} else {
+				reject(new Error('Jitsi external API did not load'));
+			}
+		};
+		script.onerror = () => reject(new Error('Jitsi external API could not be loaded'));
+		document.head.appendChild(script);
+	});
+	jitsiExternalApiLoaders.set(scriptUrl, loader);
+	return loader;
 }
 
 function encodeJitsiHash(prefix, values) {
