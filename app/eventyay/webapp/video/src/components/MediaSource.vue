@@ -22,7 +22,7 @@
 <script setup>
 // TODO functional component?
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { isEqual } from 'lodash';
 import api from 'lib/api';
@@ -42,6 +42,8 @@ import {
 	STREAM_TYPE_YOUTUBE,
 } from 'lib/stage-streams';
 
+const jitsiExternalApiLoaders = new Map();
+
 // Props & Emits
 defineOptions({
 	components: { Livestream, JanusCall, JanusChannelCall, IframeBlocker },
@@ -58,6 +60,7 @@ const emit = defineEmits(['close']);
 
 const store = useStore();
 const route = useRoute();
+const router = useRouter();
 
 const iframeError = ref(null);
 const iframeEl = ref(null);
@@ -76,6 +79,7 @@ let whepClient = null;
 // Template refs
 const livestream = ref(null);
 const janus = ref(null);
+let jitsiApi = null;
 
 // Mapped state/getters
 const streamingRoom = computed(() => store.state.streamingRoom);
@@ -96,14 +100,27 @@ const module = computed(() => {
 			'call.bigbluebutton',
 			'call.janus',
 			'call.zoom',
+			'call.jitsi',
 		].includes(m.type)
 	);
 });
 
+const isLivestreamModule = computed(() =>
+	[
+		'livestream.native',
+		'livestream.youtube',
+		'livestream.iframe',
+	].includes(module.value?.type)
+);
+
+const isScheduleDrivenStage = computed(() =>
+	isLivestreamModule.value &&
+	getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN
+);
+
 const shouldUseLivestream = computed(() => {
 	if (!props.room || !module.value) return false;
-	const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
-	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 
 	if (streamType) {
 		return streamType === STREAM_TYPE_HLS;
@@ -122,7 +139,7 @@ const iframeOffline = computed(() => {
 	if (!props.room || !module.value) return false;
 	if (shouldUseLivestream.value) return false;
 
-	const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
+	const isScheduleDriven = isScheduleDrivenStage.value;
 	const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 	const streamType = currentStream?.stream_type;
 	const moduleType = module.value.type;
@@ -228,8 +245,7 @@ watch(youtubeTranslation, applyYoutubeTranslation);
 
 async function applyYoutubeTranslation(transConfig) {
 	if (!props.room) return;
-	const isScheduleDriven = module.value && getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
-	const streamType = isScheduleDriven ? props.room?.currentStream?.stream_type : null;
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
 	const isYouTube = streamType === STREAM_TYPE_YOUTUBE || module.value?.type === 'livestream.youtube';
 	if (!isYouTube) return;
 
@@ -490,7 +506,8 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		let iframeUrl;
 		let hideIfBackground = false;
 		let isYouTube = false;
-		const isScheduleDriven = getStagePlaybackMode(module.value) === PLAYBACK_MODE_SCHEDULE_DRIVEN;
+		let jitsiConfig = null;
+		const isScheduleDriven = isScheduleDrivenStage.value;
 		const currentStream = isScheduleDriven ? props.room?.currentStream : null;
 		const streamType = currentStream?.stream_type;
 		const effectiveModuleType = streamType === STREAM_TYPE_YOUTUBE
@@ -513,6 +530,14 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 				({ url: iframeUrl } = await api.call('zoom.room_url', {
 					room: props.room.id,
 				}));
+				hideIfBackground = true;
+				break;
+			}
+			case 'call.jitsi': {
+				jitsiConfig = await api.call('jitsi.room_config', {
+					room: props.room.id,
+				});
+				iframeUrl = getJitsiRoomUrl(jitsiConfig);
 				hideIfBackground = true;
 				break;
 			}
@@ -594,6 +619,11 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		// Consent is satisfied (or not required); clear any previous gate.
 		consentBlockedUrl.value = null
 
+		if (jitsiConfig) {
+			await createJitsiIframe(jitsiConfig, hideIfBackground);
+			return;
+		}
+
 		const iframe = document.createElement('iframe');
 		iframe.src = iframeUrl;
 		iframe.classList.add('iframe-media-source');
@@ -641,11 +671,139 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 }
 
 function destroyIframe() {
+	if (jitsiApi) {
+		const api = jitsiApi;
+		jitsiApi = null;
+		api.dispose();
+	}
 	iframeEl.value?.remove();
 	iframeEl.value = null;
 	languageIframeUrl.value = null;
 	disconnectWhepTranslation();
 	consentBlockedUrl.value = null;
+}
+
+function createJitsiIframe(config, hideIfBackground) {
+	const container = document.querySelector('#media-source-iframes');
+	if (!container) return;
+	return createJitsiApiIframe(config, hideIfBackground, container);
+}
+
+async function createJitsiApiIframe(config, hideIfBackground, container) {
+	const JitsiMeetExternalAPI = await loadJitsiExternalApi(config);
+	if (isUnmounted.value) return;
+
+	jitsiApi = new JitsiMeetExternalAPI(config.domain, {
+		roomName: config.roomName,
+		parentNode: container,
+		jwt: config.jwt,
+		noSSL: config.protocol === 'http',
+		configOverwrite: config.configOverwrite,
+		interfaceConfigOverwrite: config.interfaceConfigOverwrite,
+		userInfo: config.userInfo,
+	});
+
+	const iframe = jitsiApi.getIFrame();
+	iframe.classList.add('iframe-media-source');
+	iframe.classList.add('jitsi-media-source');
+	if (hideIfBackground) {
+		iframe.classList.add('hide-if-background');
+	}
+	if (props.background) {
+		iframe.classList.add('background');
+		iframe.classList.add('size-tiny');
+	}
+	iframe.allow =
+		'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' +
+		(autoplay.value ? '; autoplay *' : '');
+	iframe.allowFullscreen = true;
+	iframe.setAttribute('allowusermedia', 'true');
+	iframe.setAttribute('allowfullscreen', '');
+	iframeEl.value = iframe;
+	jitsiApi.addListener('videoConferenceJoined', () => applyJitsiDisplayOverrides(config));
+	jitsiApi.addListener('videoConferenceLeft', closeJitsiIframe);
+	jitsiApi.addListener('readyToClose', closeJitsiIframe);
+}
+
+function closeJitsiIframe() {
+	destroyIframe();
+	emit('close');
+	router.push({ name: 'about' }).catch(() => {});
+}
+
+function applyJitsiDisplayOverrides(config) {
+	if (!jitsiApi) return;
+	const commands = {};
+	if (config.roomDisplayName) {
+		commands.subject = [config.roomDisplayName];
+		commands.localSubject = [config.roomDisplayName];
+	}
+	if (!Object.keys(commands).length) return;
+	try {
+		jitsiApi.executeCommands(commands);
+	} catch (error) {
+		console.warn('Failed to apply Jitsi display overrides', {
+			roomId: props.room?.id,
+			error,
+		});
+	}
+}
+
+function loadJitsiExternalApi(config) {
+	const url = new URL(config.url || `https://${config.domain}`);
+	url.pathname = '/external_api.js';
+	url.search = '';
+	url.hash = '';
+	const scriptUrl = url.toString();
+	if (window.JitsiMeetExternalAPI) {
+		return Promise.resolve(window.JitsiMeetExternalAPI);
+	}
+	if (jitsiExternalApiLoaders.has(scriptUrl)) {
+		return jitsiExternalApiLoaders.get(scriptUrl);
+	}
+	const loader = new Promise((resolve, reject) => {
+		const script = document.createElement('script');
+		script.src = scriptUrl;
+		script.async = true;
+		const rejectAndForget = (error) => {
+			jitsiExternalApiLoaders.delete(scriptUrl);
+			reject(error);
+		};
+		script.onload = () => {
+			if (window.JitsiMeetExternalAPI) {
+				resolve(window.JitsiMeetExternalAPI);
+			} else {
+				rejectAndForget(new Error('Jitsi external API did not load'));
+			}
+		};
+		script.onerror = () => rejectAndForget(new Error('Jitsi external API could not be loaded'));
+		document.head.appendChild(script);
+	});
+	jitsiExternalApiLoaders.set(scriptUrl, loader);
+	return loader;
+}
+
+function encodeJitsiHash(prefix, values) {
+	return Object.entries(values || {})
+		.filter(([, value]) => value !== undefined && value !== null)
+		.map(([key, value]) => `${prefix}.${key}=${encodeURIComponent(JSON.stringify(value))}`);
+}
+
+function getJitsiRoomUrl(config) {
+	const url = new URL(config.url || `https://${config.domain}`);
+	url.pathname = `/${encodeURIComponent(config.roomName)}`;
+	if (config.jwt) {
+		url.searchParams.set('jwt', config.jwt);
+	}
+	const hash = [
+		...encodeJitsiHash('config', config.configOverwrite),
+		...encodeJitsiHash('interfaceConfig', config.interfaceConfigOverwrite),
+		...encodeJitsiHash('userInfo', config.userInfo),
+	];
+	if (hash.length) {
+		url.hash = hash.join('&');
+	}
+	return url.toString();
 }
 
 function onConsentGiven(persistent) {
@@ -820,14 +978,22 @@ defineExpose({ isPlaying });
 iframe.iframe-media-source
 	transition: all .3s ease
 	border: none
+	&.jitsi-media-source
+		// Jitsi External API writes inline width/height on the generated iframe.
+		// Force it back into the same measured media placeholder used by BBB/Zoom.
+		&:not(.size-tiny):not(.background)
+			top: var(--mediasource-placeholder-top, 104px) !important
+			left: var(--mediasource-placeholder-left, var(--sidebar-width)) !important
+			width: var(--mediasource-placeholder-width, 100vw) !important
+			height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh)) !important
 	&.background
 		pointer-events: none
-		height: 48px
-		width: 86px
+		height: 48px !important
+		width: 86px !important
 		z-index: 101
 		&.hide-if-background
-			width: 0
-			height: 0
+			width: 0 !important
+			height: 0 !important
 .c-media-source .iframe-consent-gate
 	position: fixed
 	display: flex

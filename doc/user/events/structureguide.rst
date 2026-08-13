@@ -1,3 +1,5 @@
+:orphan:
+
 Product structure guide
 =======================
 

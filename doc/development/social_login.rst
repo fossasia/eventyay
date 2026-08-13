@@ -1,3 +1,5 @@
+:orphan:
+
 Social Login Setup
 --------------------------
 

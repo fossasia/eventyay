@@ -1,3 +1,5 @@
+:orphan:
+
 .. _`rest-api`:
 
 REST API

@@ -1,3 +1,5 @@
+:orphan:
+
 .. _`user-index`:
 
 User Guide
@@ -15,7 +17,6 @@ updating it in the coming months.
    :maxdepth: 2
    :caption: Contents:
 
-   sessions
    event/widget
    event/etherpad
    markdown
