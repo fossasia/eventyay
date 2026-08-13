@@ -1,3 +1,5 @@
+:orphan:
+
 Plugin documentation
 ====================
 

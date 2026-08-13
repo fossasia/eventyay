@@ -15,10 +15,6 @@ Agenda Module
 .. automodule:: eventyay.agenda.phrases
    :members:
 
-.. automodule:: eventyay.agenda.permissions
-   :members:
-   :no-index:
-
 .. automodule:: eventyay.agenda.recording
    :members:
    :no-index:

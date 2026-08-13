@@ -1,3 +1,5 @@
+.. _developer-translations:
+
 Translations
 ============
 

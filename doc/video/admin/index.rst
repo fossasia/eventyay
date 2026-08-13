@@ -1,3 +1,5 @@
+:orphan:
+
 Administrator documentation
 ===========================
 

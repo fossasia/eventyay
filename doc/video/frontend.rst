@@ -1,3 +1,5 @@
+:orphan:
+
 .. highlight:: javascript
    :linenothreshold: 5
 

@@ -1,3 +1,5 @@
+:orphan:
+
 Legacy release URL
 ==================
 
