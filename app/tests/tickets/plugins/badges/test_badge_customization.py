@@ -136,6 +136,50 @@ def test_save_overrides_invalidates_cached_badge(badge_customization_env):
 
 
 @pytest.mark.django_db
+def test_badge_download_layout_override_returns_pdf(badge_customization_env, monkeypatch):
+    event, order, position, product, layout = badge_customization_env
+    alt_layout = event.badge_layouts.create(name='Alt', default=False)
+    client = _api_client_for_event(event)
+
+    monkeypatch.setattr(
+        'eventyay.plugins.badges.providers.BadgeOutputProvider.generate',
+        lambda self, op, layout=None: (
+            'badge.pdf',
+            'application/pdf',
+            b'%PDF-override-' + str(layout.pk if layout else 0).encode(),
+        ),
+    )
+
+    resp = client.get(
+        '/api/v1/organizers/{}/events/{}/orderpositions/{}/download/badge/?layout={}'.format(
+            event.organizer.slug,
+            event.slug,
+            position.pk,
+            alt_layout.pk,
+        )
+    )
+    assert resp.status_code == 200
+    assert resp['Content-Type'].startswith('application/pdf')
+    assert resp.content.startswith(b'%PDF-override-')
+    assert str(alt_layout.pk).encode() in resp.content
+
+
+@pytest.mark.django_db
+def test_badge_download_rejects_unknown_layout(badge_customization_env):
+    event, order, position, product, layout = badge_customization_env
+    client = _api_client_for_event(event)
+
+    resp = client.get(
+        '/api/v1/organizers/{}/events/{}/orderpositions/{}/download/badge/?layout=999999'.format(
+            event.organizer.slug,
+            event.slug,
+            position.pk,
+        )
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
 def test_badge_download_allows_unpaid_when_plugin_enabled(badge_customization_env):
     event, order, position, product, layout = badge_customization_env
     order.status = Order.STATUS_PENDING

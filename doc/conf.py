@@ -88,8 +88,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Ticket Component'
-copyright = '2025 Apache 2.0 License by contributors'
+project = 'Eventyay'
+copyright = '2026 Apache 2.0 License by contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

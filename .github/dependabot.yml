@@ -4,15 +4,28 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "daily"
+      time: "06:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 15
 
   - package-ecosystem: "uv"
     directory: "/app"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "daily"
+      time: "06:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 15
     versioning-strategy: increase
+    groups:
+      # Keep documentation extras in dedicated PRs so they are not starved by
+      # the shared open-pull-requests-limit against the main dependency set.
+      documentation:
+        patterns:
+          - "docutils"
+          - "pyenchant"
+          - "pygments-markdown-lexer"
+          - "sphinx*"
     ignore:
       - dependency-name: "django"
         versions: [">=6.0.0"]
@@ -25,17 +38,23 @@ updates:
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/video"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "daily"
+      time: "06:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 15
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/schedule"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "daily"
+      time: "06:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 15
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/schedule-editor"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "daily"
+      time: "06:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 15
