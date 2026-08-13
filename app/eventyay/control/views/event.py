@@ -34,6 +34,7 @@ from django.views.generic import DeleteView, FormView, ListView
 from django.views.generic.base import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from i18nfield.strings import LazyI18nString
+from i18nfield.utils import I18nJSONEncoder
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.meetup import is_meetup_event

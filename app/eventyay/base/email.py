@@ -36,6 +36,7 @@ from eventyay.base.i18n import (
     LazyExpiresDate,
     LazyNumber,
 )
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Event
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.base.signals import (
@@ -1010,7 +1011,6 @@ def base_placeholders(sender: Event, **kwargs):
 @receiver(register_mail_placeholders, dispatch_uid='pretixbase_register_meetup_mail_placeholders')
 def meetup_placeholders(sender: Event, **kwargs):
     """Placeholders only available for meetup events."""
-    from eventyay.base.meetup import is_meetup_event
     from eventyay.multidomain.urlreverse import build_absolute_uri
 
     if not is_meetup_event(sender):
