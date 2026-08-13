@@ -7,7 +7,7 @@
 	template(v-else)
 		.interpretation-plugin-language-streams(v-if="roomId && showPluginLanguageStreams")
 			LanguageAudioSourceList(
-				title="Languages and Audio Source (Interpretation plugin)"
+				title="Interpretation source"
 				:entries="pluginLanguageStreamEntries"
 			)
 			p.plugin-language-streams-hint Room-level plugin streams used when “Use plugin language streams” is enabled on the Interpretation overview.

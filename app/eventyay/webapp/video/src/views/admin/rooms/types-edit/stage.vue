@@ -37,7 +37,7 @@
 			)
 			LanguageAudioSourceList.plugin-language-streams(
 				v-if="showPluginLanguageStreams"
-				title="Languages and Audio Source (Interpretation plugin)"
+				title="Interpretation source"
 				:entries="pluginLanguageStreamEntries"
 			)
 			// Switch button for no-cookies domain

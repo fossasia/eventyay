@@ -153,6 +153,7 @@ export default {
 				this.interpretationAdmin.usePluginStreams = Boolean(
 					data.use_plugin_language_streams
 				)
+				this.config.interpretation_use_plugin_streams = this.interpretationAdmin.usePluginStreams
 				if (this.interpretationAdmin.usePluginStreams) {
 					this.interpretationAdmin.languageStreams = cloneLanguageStreamEntries(
 						data.language_streams

@@ -1,23 +1,26 @@
 import { isUsableAudioTranslationEntry } from 'lib/validators'
 
+const ORIGINAL_LANGUAGE = 'Original'
+
 export function roomUsesPluginLanguageStreams(room) {
 	return Boolean(room?.interpretation_use_plugin_streams)
 }
 
-export function pluginLanguageStreams(room) {
-	if (!roomUsesPluginLanguageStreams(room)) {
-		return null
+function ensureOriginalLanguageEntry(languages) {
+	const list = Array.isArray(languages) ? [...languages] : []
+	if (!list.some(entry => entry?.language === ORIGINAL_LANGUAGE)) {
+		list.unshift({ language: ORIGINAL_LANGUAGE, youtube_id: null, use_video: false })
 	}
-	const streams = room?.interpretation_language_streams
-	if (!Array.isArray(streams)) {
-		return []
-	}
-	return streams.filter(entry => isUsableAudioTranslationEntry(entry))
+	return list
 }
 
-export function initializeLanguageList({ room, modules, coreInitializer }) {
-	if (roomUsesPluginLanguageStreams(room)) {
-		return pluginLanguageStreams(room)
+export function pluginLanguageStreams(room) {
+	if (!roomUsesPluginLanguageStreams(room)) {
+		return []
 	}
-	return coreInitializer({ room, modules })
+	const streams = room?.interpretation_language_streams
+	const usable = Array.isArray(streams)
+		? streams.filter(entry => isUsableAudioTranslationEntry(entry))
+		: []
+	return ensureOriginalLanguageEntry(usable)
 }
