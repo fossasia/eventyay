@@ -79,6 +79,7 @@ class OrderAnonymizeTest(SoupTest):
             city='Tech City',
             zipcode='12345',
             vat_id='EU123456789',
+            custom_field='TAX12345',
         )
         self.question = Question.objects.create(
             event=self.event,
@@ -126,6 +127,7 @@ class OrderAnonymizeTest(SoupTest):
             assert self.invoice_addr.company == ''
             assert self.invoice_addr.street == ''
             assert self.invoice_addr.vat_id == ''
+            assert self.invoice_addr.custom_field == ''
 
             # QuestionAnswer content
             assert self.qa.answer == '█'
@@ -176,6 +178,26 @@ class OrderAnonymizeTest(SoupTest):
             self.order.refresh_from_db()
             assert self.order.email == 'customer@example.com'
 
+    def test_anonymize_order_future_event_without_date_to_fails(self):
+        """An event whose start date is in the future and has no date_to should not be treated as ended."""
+        with scopes_disabled():
+            self.event.has_subevents = True
+            self.event.save()
+
+            se = SubEvent.objects.create(
+                event=self.event,
+                name='Future Sub Event',
+                date_from=now() + timedelta(days=1),
+                date_to=None,
+            )
+            self.position.subevent = se
+            self.position.save()
+
+            assert is_order_event_ended(self.order) is False
+
+            with pytest.raises(ValidationError):
+                anonymize_order(self.order, user=self.user)
+
     def test_anonymize_order_subevent_not_ended_fails(self):
         """If event has subevents and position subevent has not ended, anonymization fails."""
         with scopes_disabled():
@@ -195,3 +217,4 @@ class OrderAnonymizeTest(SoupTest):
 
             with pytest.raises(ValidationError):
                 anonymize_order(self.order, user=self.user)
+

@@ -584,7 +584,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     def anonymize(self, request, **kwargs):
         order = self.get_object()
         try:
-            anonymize_order(order, user=self.request.user if self.request.user.is_authenticated else None)
+            anonymize_order(
+                order,
+                user=self.request.user if self.request.user.is_authenticated else None,
+                auth=self.request.auth,
+            )
         except DjangoValidationError as e:
             msg = e.message if hasattr(e, 'message') else (e.messages[0] if hasattr(e, 'messages') else str(e))
             return Response({'detail': msg}, status=status.HTTP_400_BAD_REQUEST)
