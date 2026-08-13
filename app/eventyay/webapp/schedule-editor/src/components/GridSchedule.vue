@@ -17,11 +17,14 @@
 			session(
 				v-if="hasValidPosition(session)"
 				:session="session",
-				:warnings="session.code ? warnings[session.code] : []",
+				:warnings="getSessionWarnings(session)",
 				:isDragged="draggedSession && (session.id === draggedSession.id)",
 				:style="getSessionStyle(session)",
 				:showRoom="false",
 				@startDragging="startDragging($event)",
+				@editSession="emit('editSession', $event)",
+				@deleteSession="emit('deleteSession', $event)",
+				@assignMembers="emit('assignMembers', $event)",
 			)
 		.availability(v-for="availability of visibleAvailabilities", :key="`${availability.room.id}-${availability.start.valueOf()}-${availability.end.valueOf()}`", :style="getSessionStyle(availability)", :class="availability.active ? ['active'] : []")
 	#hidden-rooms.no-print(v-if="hiddenRooms.length")
@@ -118,11 +121,14 @@ const props = defineProps<{
   draggedSession: SessionDatum | null
   density: 'compact' | 'default' | 'comfortable'
   timeDensityMinutes: number
+  allowOverlap?: boolean
 }>()
 
 const emit = defineEmits([
   'startDragging',
   'editSession',
+  'deleteSession',
+  'assignMembers',
   'createSession',
   'rescheduleSession',
   'changeDay'
@@ -177,6 +183,7 @@ const getSliceName = (date: Moment): string => `slice-${date.format('MM-DD-HH-mm
 
 const hoverSliceLegal = computed(() => {
   if (!hoverSlice.value || !hoverSlice.value.room || !props.draggedSession) return false
+  if (props.allowOverlap) return true
   const start = hoverSlice.value.time
   const end = hoverSlice.value.time.clone().add(props.draggedSession.duration, 'm')
   const sessionId = props.draggedSession.id
@@ -580,9 +587,36 @@ const getHoverSliceStyle = (): Record<string, string> | undefined => {
   }
 }
 
+const getSessionWarnings = (session: SessionDatum): { message: string }[] => {
+  return session.code ? (props.warnings[session.code] || []) : []
+}
+
+const getOverlapGroup = (session: SessionDatum | Availability): { index: number; total: number } => {
+  if (!session.room || !session.start || !session.end) return { index: 0, total: 1 }
+  if (!('id' in session)) return { index: 0, total: 1 }
+
+  const overlapping = visibleSessions.value.filter(s => {
+    if (s.id === (session as SessionDatum).id) return true
+    if (!s.room || !s.start || !s.end) return false
+    if (s.room.id !== session.room.id) return false
+    return s.start.isBefore(session.end) && s.end.isAfter(session.start)
+  })
+
+  return { index: 0, total: overlapping.length }
+}
+
 const getSessionStyle = (session: SessionDatum | Availability): Record<string, string | number> => {
   if (!session.room || !session.start) return {}
   const roomIndex = visibleRooms.value.indexOf(session.room)
+  const { total } = getOverlapGroup(session)
+
+  if (props.allowOverlap && total > 1 && 'id' in session) {
+    return {
+      'grid-row-start': getSliceName(session.start),
+      'grid-column': roomIndex > -1 ? (roomIndex + 2).toString() : '',
+    }
+  }
+
   return {
     'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
     'grid-column': roomIndex > -1 ? (roomIndex + 2).toString() : '',

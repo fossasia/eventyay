@@ -33,6 +33,7 @@ RES_LAYOUT = {
     'name': 'Foo',
     'default': True,
     'allow_customization': False,
+    'allow_badge_editing': False,
     'product_assignments': [{'product': 1}],
     'layout': [{'a': 2}],
     'ask_user_fields': [],

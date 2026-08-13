@@ -458,6 +458,8 @@ class QuestionFieldsMixin:
                 label=label_text,
                 required=question.required,
                 empty_label=None if question.required else _('— No selection —'),
+                # Django 6 clears empty_label for RadioSelect unless blank=True.
+                blank=not question.required,
                 initial=initial_value,
                 disabled=read_only,
                 help_text=help_text,

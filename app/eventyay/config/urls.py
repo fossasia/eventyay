@@ -16,6 +16,7 @@ import eventyay.presale.urls
 from eventyay.api.views.stripe import stripe_webhook_view
 from eventyay.base.views import cachedfiles, csp, health, js_catalog, js_helpers, metrics, redirect
 from eventyay.control.views import pages
+from eventyay.eventyay_common.views import auth
 from eventyay.eventyay_common.views.custom import ConfirmEmailView, SignupView
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,8 @@ base_patterns = [
     # account_signup references in the app route to our customized Jinja view.
     path('accounts/signup/', SignupView.as_view(), name='account_signup'),
     path('accounts/', include('allauth.urls')),
+    path('login/', auth.login, name='auth.login'),
+    path('login/2fa/', auth.Login2FAView.as_view(), name='auth.login.2fa'),
 ]
 
 control_patterns = [

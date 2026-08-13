@@ -15,13 +15,15 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 
-from eventyay.base.email import get_available_placeholders
 from eventyay.base.i18n import language
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import Order, OrderPosition
-from eventyay.base.services.mail import TolerantDict
-from eventyay.base.templatetags.rich_text import compile_email_body
+from eventyay.base.templatetags.rich_text import (
+    build_email_preview_context,
+    compile_email_body,
+)
+from eventyay.base.services.mail import expand_email_variable_chips
 from eventyay.common.mail import get_reply_to_address
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
@@ -129,19 +131,16 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
             self.output = {}
             for l in self.request.event.settings.locales:
                 with language(l, self.request.event.settings.region):
-                    context_dict = TolerantDict()
-                    for k, v in get_available_placeholders(
+                    context_dict = build_email_preview_context(
                         self.request.event, ['event', 'order', 'position_or_address']
-                    ).items():
-                        context_dict[k] = '<span class="placeholder" title="{}">{}</span>'.format(
-                            _('This value will be replaced based on dynamic parameters.'),
-                            v.render_sample(self.request.event),
-                        )
-
+                    )
                     subject = nh3.clean(form.cleaned_data['subject'].localize(l), tags=set())
-                    preview_subject = subject.format_map(context_dict)
+                    preview_subject = nh3.clean(subject.format_map(context_dict), tags=set())
                     message = form.cleaned_data['message'].localize(l)
-                    preview_text = compile_email_body(message.format_map(context_dict))
+                    message_preview = expand_email_variable_chips(
+                        message.format_map(context_dict), dict(context_dict)
+                    )
+                    preview_text = compile_email_body(message_preview)
 
                     self.output[l] = {
                         'subject': _('Subject: {subject}').format(subject=preview_subject),
@@ -381,21 +380,22 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
 
             for l in event.settings.locales:
                 with language(l, event.settings.region):
-                    context_dict = {
-                        k: f"""<span class="placeholder" title="{
-                            _('This value will be replaced based on dynamic parameters.')
-                            }">{v.render_sample(self.request.event)}</span>"""
-                        for k, v in get_available_placeholders(event, base_placeholders).items()
-                    }
+                    context_dict = build_email_preview_context(event, base_placeholders)
 
                     try:
-                        subject_preview = subject.localize(l).format_map(context_dict)
+                        subject_preview = nh3.clean(
+                            subject.localize(l).format_map(context_dict),
+                            tags=set(),
+                        )
                     except KeyError as e:
                         form.add_error('subject', _('Invalid placeholder(s): {}').format(str(e)))
                         return self.form_invalid(form)
 
                     try:
-                        message_preview = message.localize(l).format_map(context_dict)
+                        message_preview = expand_email_variable_chips(
+                            message.localize(l).format_map(context_dict),
+                            dict(context_dict),
+                        )
                     except KeyError as e:
                         form.add_error('message', _('Invalid placeholder(s): {}').format(str(e)))
                         return self.form_invalid(form)
@@ -566,21 +566,22 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyTo
         self.output = {}
         for l in event.settings.locales:
             with language(l, event.settings.region):
-                context_dict = {
-                    k: f"""<span class="placeholder" title="{
-                        _('This value will be replaced based on dynamic parameters.')
-                        }">{v.render_sample(self.request.event)}</span>"""
-                    for k, v in get_available_placeholders(event, ['event', 'team']).items()
-                }
+                context_dict = build_email_preview_context(event, ['event', 'team'])
 
                 try:
-                    subject_preview = subject.localize(l).format_map(context_dict)
+                    subject_preview = nh3.clean(
+                        subject.localize(l).format_map(context_dict),
+                        tags=set(),
+                    )
                 except KeyError as e:
                     form.add_error('subject', _('Invalid placeholder(s): {}').format(str(e)))
                     return self.form_invalid(form)
 
                 try:
-                    message_preview = message.localize(l).format_map(context_dict)
+                    message_preview = expand_email_variable_chips(
+                        message.localize(l).format_map(context_dict),
+                        dict(context_dict),
+                    )
                 except KeyError as e:
                     form.add_error('message', _('Invalid placeholder(s): {}').format(str(e)))
                     return self.form_invalid(form)

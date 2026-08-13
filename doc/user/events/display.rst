@@ -31,7 +31,9 @@ Event preview image
 Frontpage text
     This text will be shown on the front page of your ticket shop, above the list of products. You can use it to explain
     your product types, give more information on the event or for other general notices.
-    You can use :ref:`Markdown syntax <markdown-guide>` in this field.
+    This field supports the current Eventyay rich-text workflow. The
+    implementation details are documented in
+    :doc:`the editor reference </developer-guide/editors>`.
 
 Voucher explanation
     This text will be shown above the voucher input box. You can use it to explain how to obtain a voucher and use it.

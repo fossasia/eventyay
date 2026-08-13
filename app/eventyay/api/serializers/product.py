@@ -10,6 +10,7 @@ from rest_framework import serializers
 from eventyay.api.serializers.event import MetaDataField
 from eventyay.api.serializers.fields import UploadedFileField
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
+from eventyay.base.admission_validity import ADMISSION_VALIDITY_FIELD_NAMES
 from eventyay.base.models import (
     Product,
     ProductAddOn,
@@ -21,7 +22,19 @@ from eventyay.base.models import (
     QuestionOption,
     Quota,
 )
+from eventyay.base.models.product import default_product_available_until
 from eventyay.consts import SizeKey
+
+_VARIATION_SERIALIZER_FIELDS = (
+    'id',
+    'value',
+    'active',
+    'description',
+    'position',
+    'default_price',
+    'price',
+    'original_price',
+) + ADMISSION_VALIDITY_FIELD_NAMES
 
 
 class InlineProductVariationSerializer(I18nAwareModelSerializer):
@@ -29,16 +42,7 @@ class InlineProductVariationSerializer(I18nAwareModelSerializer):
 
     class Meta:
         model = ProductVariation
-        fields = (
-            'id',
-            'value',
-            'active',
-            'description',
-            'position',
-            'default_price',
-            'price',
-            'original_price',
-        )
+        fields = _VARIATION_SERIALIZER_FIELDS
 
 
 class ProductVariationSerializer(I18nAwareModelSerializer):
@@ -46,16 +50,17 @@ class ProductVariationSerializer(I18nAwareModelSerializer):
 
     class Meta:
         model = ProductVariation
-        fields = (
-            'id',
-            'value',
-            'active',
-            'description',
-            'position',
-            'default_price',
-            'price',
-            'original_price',
-        )
+        fields = _VARIATION_SERIALIZER_FIELDS
+
+    def validate(self, data):
+        data = super().validate(data)
+        full_data = self.to_internal_value(self.to_representation(self.instance)) if self.instance else {}
+        full_data.update(data)
+        event = self.context.get('event')
+        if event is None and self.instance is not None:
+            event = self.instance.product.event
+        Product.clean_admission_validity_data(full_data, event=event)
+        return data
 
 
 class InlineProductBundleSerializer(serializers.ModelSerializer):
@@ -176,6 +181,7 @@ class ProductSerializer(I18nAwareModelSerializer):
             'tax_rate',
             'tax_rule',
             'admission',
+            *ADMISSION_VALIDITY_FIELD_NAMES,
             'position',
             'picture',
             'available_from',
@@ -213,18 +219,22 @@ class ProductSerializer(I18nAwareModelSerializer):
                 )
             )
 
-        Product.clean_per_order(data.get('min_per_order'), data.get('max_per_order'))
-        Product.clean_available(data.get('available_from'), data.get('available_until'))
+        full_data = self.to_internal_value(self.to_representation(self.instance)) if self.instance else {}
+        full_data.update(data)
 
-        if data.get('issue_giftcard'):
-            if data.get('tax_rule') and data.get('tax_rule').rate > 0:
+        Product.clean_per_order(full_data.get('min_per_order'), full_data.get('max_per_order'))
+        Product.clean_available(full_data.get('available_from'), full_data.get('available_until'))
+        Product.clean_admission_validity_data(full_data, event=self.context.get('event'))
+
+        if full_data.get('issue_giftcard'):
+            if full_data.get('tax_rule') and full_data.get('tax_rule').rate > 0:
                 raise ValidationError(
                     _(
                         'Gift card products should not be associated with non-zero tax rates since sales tax will be '
                         'applied when the gift card is redeemed.'
                     )
                 )
-            if data.get('admission'):
+            if full_data.get('admission'):
                 raise ValidationError(_('Gift card products should not be admission products at the same time.'))
 
         return data
@@ -277,6 +287,8 @@ class ProductSerializer(I18nAwareModelSerializer):
         addons_data = validated_data.pop('addons') if 'addons' in validated_data else {}
         bundles_data = validated_data.pop('bundles') if 'bundles' in validated_data else {}
         meta_data = validated_data.pop('meta_data', None)
+        if 'available_until' not in validated_data:
+            validated_data['available_until'] = default_product_available_until(self.context['event'])
         product = Product.objects.create(**validated_data)
 
         for variation_data in variations_data:

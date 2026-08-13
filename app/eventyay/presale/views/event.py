@@ -48,6 +48,7 @@ from eventyay.agenda.views.utils import (
     serialize_widget_schedule_data,
 )
 from eventyay.base.channels import get_all_sales_channels
+from eventyay.base.meetup import ensure_video_credentials, is_meetup_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import (
     Order,
@@ -71,6 +72,11 @@ from eventyay.helpers.formats.en.formats import WEEK_FORMAT
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.ical import get_ical
 from eventyay.presale.signals import product_description
+from eventyay.presale.views.meetup import (
+    MEETUP_RSVP_SESSION_KEY,
+    GuestRsvpForm,
+    has_rsvp_order,
+)
 from eventyay.presale.views.organizer import (
     EventListMixin,
     add_subevents_for_days,
@@ -466,6 +472,176 @@ def get_grouped_products(
     return products, display_add_to_cart
 
 
+def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
+    """
+    Return whether at least one active voucher can still be used to purchase
+    an available product.
+    """
+    cache_key = f'event_has_redeemable_voucher_products:{event.pk}:{subevent.id if subevent else 0}:{channel}'
+    res = event.cache.get(cache_key)
+    if res is not None:
+        return res
+
+    active_vouchers = event.vouchers.filter(
+        redeemed__lt=F('max_usages')
+    ).filter(
+        Q(valid_until__isnull=True) | Q(valid_until__gte=now())
+    )
+    if not active_vouchers.exists():
+        event.cache.set(cache_key, False, 10)
+        return False
+
+    if event.has_subevents and subevent is None:
+        subevents_to_check = list(event.subevents.filter(active=True))
+    else:
+        subevents_to_check = [subevent]
+
+    if not subevents_to_check:
+        event.cache.set(cache_key, False, 10)
+        return False
+
+    if event.has_subevents:
+        vouchers = list(active_vouchers.filter(
+            Q(subevent__in=subevents_to_check) | Q(subevent__isnull=True)
+        ).select_related('product', 'quota'))
+    else:
+        vouchers = list(active_vouchers.filter(
+            Q(subevent__isnull=True)
+        ).select_related('product', 'quota'))
+
+    if not vouchers:
+        event.cache.set(cache_key, False, 10)
+        return False
+
+    products_qs = event.products.filter(
+        active=True,
+        require_bundling=False
+    ).filter(
+        Q(available_from__isnull=True) | Q(available_from__lte=now())
+    ).filter(
+        Q(available_until__isnull=True) | Q(available_until__gte=now())
+    ).filter(
+        sales_channels__contains=channel
+    ).filter(
+        Q(category__isnull=True) | Q(category__is_addon=False)
+    )
+
+    products = list(products_qs.prefetch_related('quotas', 'variations'))
+    if not products:
+        event.cache.set(cache_key, False, 10)
+        return False
+
+    variations_qs = ProductVariation.objects.filter(
+        product__event=event,
+        active=True
+    ).prefetch_related('quotas')
+
+    variations_list = list(variations_qs)
+    variations_by_product = defaultdict(list)
+    for var in variations_list:
+        variations_by_product[var.product_id].append(var)
+
+    disabled_products = set()
+    disabled_variations = set()
+    if event.has_subevents:
+        se_ids = [se.id for se in subevents_to_check if se]
+        if se_ids:
+            disabled_products = set(
+                SubEventProduct.objects.filter(
+                    subevent_id__in=se_ids,
+                    disabled=True
+                ).values_list('subevent_id', 'product_id')
+            )
+            disabled_variations = set(
+                SubEventProductVariation.objects.filter(
+                    subevent_id__in=se_ids,
+                    disabled=True
+                ).values_list('subevent_id', 'variation_id')
+            )
+
+    all_quotas = set()
+    items_to_check = []
+
+    for se in subevents_to_check:
+        se_id = se.id if se else None
+        se_vouchers = [v for v in vouchers if v.subevent_id is None or v.subevent_id == se_id]
+        
+        if not se_vouchers:
+            continue
+            
+        for p in products:
+            if (se_id, p.pk) in disabled_products:
+                continue
+                
+            if p.has_variations:
+                for var in variations_by_product.get(p.pk, []):
+                    if (se_id, var.pk) in disabled_variations:
+                        continue
+                    
+                    items_to_check.append((se, se_vouchers, p, var))
+                    for q in var.quotas.all():
+                        if q.subevent_id == se_id:
+                            all_quotas.add(q)
+            else:
+                items_to_check.append((se, se_vouchers, p, None))
+                for q in p.quotas.all():
+                    if q.subevent_id == se_id:
+                        all_quotas.add(q)
+
+    if not items_to_check:
+        event.cache.set(cache_key, False, 10)
+        return False
+
+    quota_cache = {}
+    if all_quotas:
+        qa = QuotaAvailability()
+        qa.queue(*all_quotas)
+        qa.compute()
+        quota_cache = {q.pk: r for q, r in qa.results.items()}
+
+    def voucher_applies_to(v, p, var=None):
+        if v.quota_id:
+            if var:
+                return any(q.pk == v.quota_id for q in var.quotas.all())
+            return any(q.pk == v.quota_id for q in p.quotas.all())
+        if v.product_id and not v.variation_id:
+            return v.product_id == p.pk
+        if v.product_id:
+            return v.product_id == p.pk and var and v.variation_id == var.pk
+        return True
+
+    def check_item_avail(quotas, se, ignore_quota=False):
+        if ignore_quota:
+            return True
+        se_quotas = [q for q in quotas if q.subevent_id == (se.id if se else None)]
+        if not se_quotas:
+            return False
+        for q in se_quotas:
+            res = quota_cache.get(q.pk)
+            if not res:
+                return False
+            if event.settings.hide_sold_out and res[0] < Quota.AVAILABILITY_RESERVED:
+                return False
+            if res[1] is not None and res[1] <= 0:
+                return False
+            if res[0] == Quota.AVAILABILITY_GONE:
+                return False
+        return True
+
+    for se, se_vouchers, p, var in items_to_check:
+        quotas = var.quotas.all() if var else p.quotas.all()
+        is_normally_available = check_item_avail(quotas, se, False)
+        
+        for v in se_vouchers:
+            if voucher_applies_to(v, p, var):
+                if p.hide_without_voucher and not v.show_hidden_products:
+                    continue
+                if is_normally_available or v.allow_ignore_quota or v.block_quota:
+                    event.cache.set(cache_key, True, 10)
+                    return True
+
+    event.cache.set(cache_key, False, 10)
+    return False
 @method_decorator(allow_frame_if_namespaced, 'dispatch')
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
@@ -534,14 +710,33 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             else:
                 return super().get(request, *args, **kwargs)
 
+    def get_meetup_context(self):
+        event = self.request.event
+        if not is_meetup_event(event):
+            return {'is_meetup_event': False, 'attendee_already_registered': False}
+
+        if self.request.user.is_authenticated:
+            already_registered = has_rsvp_order(event, self.request.user.email)
+        else:
+            already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
+
+        return {
+            'is_meetup_event': True,
+            'attendee_already_registered': already_registered,
+            'rsvp_guest_form': getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm(),
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Show voucher option if an event is selected and vouchers exist
-        vouchers_exist = self.request.event.cache.get('vouchers_exist')
-        if vouchers_exist is None:
-            vouchers_exist = self.request.event.vouchers.exists()
-            self.request.event.cache.set('vouchers_exist', vouchers_exist)
+        context.update(self.get_meetup_context())
+
+        # Show voucher option only if redeemable products exist for active vouchers
+        vouchers_exist = event_has_redeemable_voucher_products(
+            self.request.event,
+            self.subevent,
+            channel=self.request.sales_channel.identifier,
+        )
         context['show_vouchers'] = context['vouchers_exist'] = vouchers_exist
 
         if not self.request.event.has_subevents or self.subevent:
@@ -907,10 +1102,14 @@ class EventAuth(View):
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class JoinOnlineVideoView(EventViewMixin, View):
     def get(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return login_redirect_with_next(request)
+        event = self.request.event
+        is_allowed, order_position, order = self.validate_access(request, *args, **kwargs)
+        if not is_allowed:
+            return HttpResponse(status=403, content='user_not_allowed')
 
-        # First check if video is configured
+        if is_meetup_event(event):
+            ensure_video_credentials(event, request=request)
+
         if (
             not self.request.event.settings.venueless_url
             or not self.request.event.settings.venueless_issuer
@@ -919,12 +1118,6 @@ class JoinOnlineVideoView(EventViewMixin, View):
         ):
             logger.error('Video Online configuration is not available for this event.')
             raise PermissionDenied(_('Please go back and try again.'))
-
-        # Validate if customer allow to join this online video
-        is_allowed, order_position, order = self.validate_access(request, *args, **kwargs)
-        if not is_allowed:
-            # Show popup
-            return HttpResponse(status=403, content='user_not_allowed')
 
         redirect_url = self.generate_token_url(request, order_position, order)
         logger.info('Redirecting to %s...', redirect_url)
@@ -939,26 +1132,27 @@ class JoinOnlineVideoView(EventViewMixin, View):
             allowed_statuses.append(Order.STATUS_PENDING)
 
         # Get all PAID orders of customer which belong to this event
-        # CRITICAL FIX: Only paid orders should grant video access
-        # Also include orders where the user is an attendee
-        order_list = (
-            Order.objects.filter(
-                Q(event=self.request.event)
-                & (
-                    Q(email__iexact=self.request.user.email)
-                    | Q(all_positions__attendee_email__iexact=self.request.user.email)
+        with scope(event=self.request.event):
+            order_list = list(
+                Order.objects.filter(
+                    Q(event=self.request.event)
+                    & (
+                        Q(email__iexact=self.request.user.email)
+                        | Q(all_positions__attendee_email__iexact=self.request.user.email)
+                    )
+                    & Q(status__in=allowed_statuses)
                 )
-                & Q(status__in=allowed_statuses)  # Check allowed statuses (PAID, and optionally PENDING)
+                .select_related('event')
+                .order_by('-datetime')
+                .distinct()
             )
-            .select_related('event')
-            .order_by('-datetime')
-            .distinct()
-        )
         # Check qs is empty
         if not order_list:
             # no paid order found
             return False, None, None
-        
+
+        if is_meetup_event(self.request.event):
+            return True, None, order_list[0]
         list_allow_ticket_type = self.request.event.settings.venueless_products
         all_products_allowed = self.request.event.settings.venueless_all_products
         

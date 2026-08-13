@@ -116,6 +116,21 @@
             </div>
 
             {% bootstrap_field form.tax_rule layout="control" %}
+            {% if not form.fields.tax_rule.queryset.exists %}
+                <div class="form-group {% if form.tax_rule_name.errors or form.tax_rule_rate.errors %}hidden{% endif %}" id="add-new-tax-btn-group">
+                    <div class="col-md-9 col-md-offset-3">
+                        <button type="button" class="btn btn-default" id="add-new-tax-btn">
+                            <span class="fa fa-plus"></span> {% trans "Add new tax option" %}
+                        </button>
+                    </div>
+                </div>
+                <div id="new-tax-fields" class="{% if not form.tax_rule_name.errors and not form.tax_rule_rate.errors %}hidden{% endif %}">
+                    {% bootstrap_field form.tax_rule_name layout="control" %}
+                    {% bootstrap_field form.tax_rule_rate layout="control" %}
+                    {% bootstrap_field form.tax_rule_price_includes_tax layout="control" %}
+                </div>
+
+            {% endif %}
         </fieldset>
         <div class="form-group submit-group">
             <button type="submit" class="btn btn-primary btn-save">

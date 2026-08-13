@@ -3,7 +3,9 @@ from decimal import Decimal
 from urllib.parse import urlencode
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Max
 from django.forms.formsets import DELETION_FIELD_NAME
 from django.urls import reverse
@@ -20,11 +22,9 @@ from django_scopes.forms import (
     SafeModelChoiceField,
     SafeModelMultipleChoiceField,
 )
-from i18nfield.forms import I18nFormField, I18nTextarea
+from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
-from django.conf import settings
-from django.core.files.uploadedfile import UploadedFile
-
+from eventyay.base.admission_validity import ADMISSION_VALIDITY_FIELD_NAMES
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.forms import I18nFormSet, I18nModelForm
 from eventyay.base.forms.widgets import DatePickerWidget
@@ -36,7 +36,7 @@ from eventyay.base.models import (
     QuestionOption,
     Quota,
 )
-from eventyay.base.models.product import ProductAddOn, ProductBundle, ProductMetaValue
+from eventyay.base.models.product import ProductAddOn, ProductBundle, ProductMetaValue, default_product_available_until
 from eventyay.base.signals import product_copy_data
 from eventyay.consts import SizeKey
 from eventyay.control.forms import ExtFileField, SplitDateTimeField, SplitDateTimePickerWidget
@@ -323,6 +323,23 @@ class ProductCreateForm(I18nModelForm):
         ),
         required=False,
     )
+    tax_rule_name = I18nFormField(
+        label=_('Tax name'),
+        help_text=_('e.g. VAT'),
+        required=False,
+        widget=I18nTextInput,
+    )
+    tax_rule_rate = forms.DecimalField(
+        label=_('Tax rate (in %)'),
+        required=False,
+        max_digits=10,
+        decimal_places=2,
+    )
+    tax_rule_price_includes_tax = forms.BooleanField(
+        label=_('The configured product prices include the tax amount'),
+        required=False,
+        initial=True,
+    )
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs['event']
@@ -434,6 +451,28 @@ class ProductCreateForm(I18nModelForm):
         else:
             # Add to all sales channels by default
             self.instance.sales_channels = list(get_all_sales_channels().keys())
+            if self.instance.available_until is None:
+                self.instance.available_until = default_product_available_until(self.event)
+
+        tax_rule = self.cleaned_data.get('tax_rule')
+        tax_rule_name = self.cleaned_data.get('tax_rule_name')
+        tax_rule_rate = self.cleaned_data.get('tax_rule_rate')
+        if not tax_rule and tax_rule_name and tax_rule_rate is not None:
+            tax_rule = self.event.tax_rules.create(
+                name=tax_rule_name,
+                rate=tax_rule_rate,
+                price_includes_tax=self.cleaned_data.get('tax_rule_price_includes_tax', True)
+            )
+            tax_rule.log_action(
+                'eventyay.event.taxrule.added',
+                user=self.user,
+                data={
+                    'name': str(tax_rule.name),
+                    'rate': str(tax_rule.rate),
+                    'price_includes_tax': tax_rule.price_includes_tax,
+                },
+            )
+            self.instance.tax_rule = tax_rule
 
         self.instance.position = (self.event.products.aggregate(p=Max('position'))['p'] or 0) + 1
         instance = super().save(*args, **kwargs)
@@ -518,6 +557,15 @@ class ProductCreateForm(I18nModelForm):
             elif cleaned_data.get('quota_option') == self.EXISTING:
                 if not self.cleaned_data.get('quota_add_existing'):
                     raise forms.ValidationError({'quota_add_existing': [_('Please select a quota.')]})
+
+        tax_rule = cleaned_data.get('tax_rule')
+        tax_rule_name = cleaned_data.get('tax_rule_name')
+        tax_rule_rate = cleaned_data.get('tax_rule_rate')
+        if not tax_rule:
+            if tax_rule_name and tax_rule_rate is None:
+                self.add_error('tax_rule_rate', _('Please enter a tax rate.'))
+            elif tax_rule_rate is not None and not tax_rule_name:
+                self.add_error('tax_rule_name', _('Please enter a tax name.'))
 
         clean_free_price_bounds(cleaned_data)
 
@@ -658,6 +706,7 @@ class ProductUpdateForm(I18nModelForm):
                     _('Gift card products should not be admission products at the same time.'),
                 )
         clean_free_price_bounds(d, form=self)
+        Product.clean_admission_validity_data(d, event=self.event)
 
         return d
 
@@ -723,6 +772,7 @@ class ProductUpdateForm(I18nModelForm):
             'tax_rule',
             'available_from',
             'available_until',
+            *ADMISSION_VALIDITY_FIELD_NAMES,
             'require_voucher',
             'require_approval',
             'hide_without_voucher',
@@ -742,11 +792,15 @@ class ProductUpdateForm(I18nModelForm):
         field_classes = {
             'available_from': SplitDateTimeField,
             'available_until': SplitDateTimeField,
+            'admission_valid_from': SplitDateTimeField,
+            'admission_valid_until': SplitDateTimeField,
             'hidden_if_available': SafeModelChoiceField,
         }
         widgets = {
             'available_from': SplitDateTimePickerWidget(),
             'available_until': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_available_from_0'}),
+            'admission_valid_from': SplitDateTimePickerWidget(),
+            'admission_valid_until': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_admission_valid_from_0'}),
             'generate_tickets': TicketNullBooleanSelect(),
             'show_quota_left': ShowQuotaNullBooleanSelect(),
         }
@@ -805,6 +859,11 @@ class ProductVariationForm(I18nModelForm):
         super().__init__(*args, **kwargs)
         change_decimal_field(self.fields['default_price'], self.event.currency)
 
+    def clean(self):
+        cleaned_data = super().clean()
+        Product.clean_admission_validity_data(cleaned_data, event=self.event)
+        return cleaned_data
+
     class Meta:
         model = ProductVariation
         localized_fields = '__all__'
@@ -814,7 +873,16 @@ class ProductVariationForm(I18nModelForm):
             'default_price',
             'original_price',
             'description',
+            *ADMISSION_VALIDITY_FIELD_NAMES,
         ]
+        field_classes = {
+            'admission_valid_from': SplitDateTimeField,
+            'admission_valid_until': SplitDateTimeField,
+        }
+        widgets = {
+            'admission_valid_from': SplitDateTimePickerWidget(),
+            'admission_valid_until': SplitDateTimePickerWidget(),
+        }
 
 
 class ProductAddOnsFormSet(I18nFormSet):

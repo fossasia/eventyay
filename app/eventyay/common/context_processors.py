@@ -11,6 +11,7 @@ from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from django_scopes import get_scope
 
+from eventyay.base.meetup import has_video_stream, is_meetup_event
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.cfp.signals import footer_link, html_head
 from eventyay.helpers.formats.variants import get_day_month_date_format
@@ -121,7 +122,15 @@ def system_information(request):
             context['header_links'] = [
                 {'label': link.label, 'url': link.url} for link in event.extra_links.all() if link.role == 'header'
             ]
-            context['show_online_video_link'] = bool(event.settings.venueless_url) and event.settings.get('venueless_show_public_link', False)
+            is_meetup = is_meetup_event(event)
+            context['is_meetup_event'] = is_meetup
+
+            if is_meetup:
+                context['show_online_video_link'] = has_video_stream(event)
+            else:
+                context['show_online_video_link'] = (
+                    bool(event.settings.venueless_url) and event.settings.get('venueless_show_public_link', False)
+                )
         for __, response in footer_link.send(event, request=request):
             if isinstance(response, list):
                 _footer += response

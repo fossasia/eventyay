@@ -82,6 +82,7 @@ from eventyay.control.permissions import (
     EventPermissionRequiredMixin,
     event_permission_required,
 )
+from eventyay.control.views.event import EventSettingsFormView
 from eventyay.control.signals import product_forms, product_formsets
 from eventyay.helpers.models import modelcopy
 
@@ -92,10 +93,11 @@ from . import ChartContainingView, CreateView, PaginationMixin, UpdateView
 logger = logging.getLogger(__name__)
 
 
-class ProductList(PaginationMixin, ListView):
+class ProductList(EventPermissionRequiredMixin, PaginationMixin, ListView):
     model = Product
     context_object_name = 'products'
     template_name = 'pretixcontrol/items/index.html'
+    permission = 'can_change_items'
 
     def get_queryset(self):
         return (
@@ -320,10 +322,11 @@ class CategoryCreate(EventPermissionRequiredMixin, CreateView):
         return super().form_invalid(form)
 
 
-class CategoryList(PaginationMixin, ListView):
+class CategoryList(EventPermissionRequiredMixin, PaginationMixin, ListView):
     model = ProductCategory
     context_object_name = 'categories'
     template_name = 'pretixcontrol/items/categories.html'
+    permission = 'can_change_items'
 
     def get_queryset(self):
         return self.request.event.categories.all()
@@ -851,10 +854,11 @@ def question_options_ajax(request, organizer, event, question):
         return JsonResponse({'error': 'Question not found'}, status=404)
 
 
-class QuotaList(PaginationMixin, ListView):
+class QuotaList(EventPermissionRequiredMixin, PaginationMixin, ListView):
     model = Quota
     context_object_name = 'quotas'
     template_name = 'pretixcontrol/items/quotas.html'
+    permission = 'can_change_items'
 
     def get_queryset(self):
         qs = self.request.event.quotas.prefetch_related(
@@ -955,10 +959,11 @@ class QuotaCreate(EventPermissionRequiredMixin, CreateView):
         return super().form_invalid(form)
 
 
-class QuotaView(ChartContainingView, DetailView):
+class QuotaView(EventPermissionRequiredMixin, ChartContainingView, DetailView):
     model = Quota
     template_name = 'pretixcontrol/items/quota.html'
     context_object_name = 'quota'
+    permission = 'can_change_items'
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data()
@@ -1883,5 +1888,36 @@ class OrderFormDefaultFieldSettings(EventPermissionRequiredMixin, FormView):
                 'organizer': self.request.event.organizer.slug,
                 'event': self.request.event.slug,
                 'field': self.kwargs['field'],
+            },
+        )
+
+
+class OrderFormCustomerFieldSettings(EventSettingsFormView):
+    template_name = 'pretixcontrol/items/orderform_customer_field_settings.html'
+    permission = 'can_change_items'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['field_id'] = self.kwargs.get('field')
+        return kwargs
+
+    def get_form_class(self):
+        from eventyay.control.forms.event import OrderFormCustomerFieldSettingsForm
+        return OrderFormCustomerFieldSettingsForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        field_id = self.kwargs.get('field')
+        from eventyay.control.forms.event import OrderFormCustomerFieldSettingsForm
+        context['field_id'] = field_id
+        context['field_label'] = OrderFormCustomerFieldSettingsForm.FIELD_LABELS.get(field_id, field_id)
+        return context
+
+    def get_success_url(self):
+        return reverse(
+            'control:event.products.orderforms',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
             },
         )

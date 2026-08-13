@@ -302,6 +302,11 @@ urlpatterns = [
                     product.OrderFormDefaultFieldSettings.as_view(),
                     name='event.products.orderforms.defaultfield',
                 ),
+                url(
+                    r'^orderforms/customer-fields/(?P<field>[a-z_]+)/$',
+                    product.OrderFormCustomerFieldSettings.as_view(),
+                    name='event.products.orderforms.customerfield',
+                ),
                 url(r'^questions/$', product.QuestionList.as_view(), name='event.products.questions'),
                 url(r'^questions/reorder$', product.reorder_questions, name='event.products.questions.reorder'),
                 url(
