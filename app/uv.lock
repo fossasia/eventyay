@@ -1184,7 +1184,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=main#b84a91b5adb9d6a03cba751c67fb38a57271fa45" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#21f3808c03de17c261758016ff909212c86c8954" }
 dependencies = [
     { name = "requests" },
 ]
@@ -1197,7 +1197,7 @@ source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#a6d9c
 [[package]]
 name = "eventyay-socialmedia"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#a352605b6c118b9e32d1acaad884f0cc9bae431d" }
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev#a352605b6c118b9e32d1acaad884f0cc9bae431d" }
 dependencies = [
     { name = "mastodon-py" },
 ]
@@ -1213,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#adcd1b351ab70d81afd4e7cc1c07d590257b87c9" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev#26671f40567e40ca521f9be72fb96ac26cef8d5b" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1537,13 +1537,13 @@ requires-dist = [
     { name = "emoji", specifier = ">=2.15.0" },
     { name = "et-xmlfile", specifier = ">=2.0.0" },
     { name = "eventyay-bitpay", git = "https://github.com/fossasia/eventyay-bitpay.git?rev=main" },
-    { name = "eventyay-interpretation", git = "https://github.com/fossasia/eventyay-interpretation.git?rev=main" },
+    { name = "eventyay-interpretation", git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev" },
     { name = "eventyay-paypal", git = "https://github.com/fossasia/eventyay-paypal.git?rev=main" },
-    { name = "eventyay-socialmedia", git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main" },
+    { name = "eventyay-socialmedia", git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev" },
     { name = "eventyay-stripe", git = "https://github.com/fossasia/eventyay-stripe.git?rev=main" },
-    { name = "eventyay-teamshifts", git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main" },
+    { name = "eventyay-teamshifts", git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev" },
     { name = "execnet", specifier = ">=2.1.2" },
-    { name = "exhibition", git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main" },
+    { name = "exhibition", git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev" },
     { name = "fido2", specifier = ">=2.2.0" },
     { name = "fonttools", specifier = ">=4.63.0" },
     { name = "frozenlist", specifier = ">=1.8.0" },
@@ -1699,7 +1699,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#fcd5854b87556100341d688158bc14e8d94f9c45" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev#fcd5854b87556100341d688158bc14e8d94f9c45" }
 
 [[package]]
 name = "faker"
