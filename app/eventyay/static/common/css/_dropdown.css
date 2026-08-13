@@ -272,6 +272,7 @@ details.dropdown .dropdown-content {
   right: 0;
   left: auto;
   transform: none;
+  --dropdown-item-accent: var(--color-header-navigation);
 }
 
 .presale-sticky-tabs .header-row-right details.dropdown .dropdown-content::before,
