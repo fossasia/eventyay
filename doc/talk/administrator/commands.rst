@@ -30,7 +30,8 @@ Running ``migrate`` if eventyay has no pending database changes  is harmless. It
 will result in no changes to the database.
 
 If migrations touch upon large populated tables, they may run for some time.
-The :ref:`changelog` will include a warning if an upgrade can trigger this
+The `Eventyay GitHub releases <https://github.com/fossasia/eventyay/releases>`_
+will include a warning if an upgrade can trigger this
 behaviour.
 
 ``showmigrations``

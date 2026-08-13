@@ -1184,7 +1184,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=main#b84a91b5adb9d6a03cba751c67fb38a57271fa45" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#21f3808c03de17c261758016ff909212c86c8954" }
 dependencies = [
     { name = "requests" },
 ]
@@ -1197,7 +1197,7 @@ source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#a6d9c
 [[package]]
 name = "eventyay-socialmedia"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main#a352605b6c118b9e32d1acaad884f0cc9bae431d" }
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev#a352605b6c118b9e32d1acaad884f0cc9bae431d" }
 dependencies = [
     { name = "mastodon-py" },
 ]
@@ -1213,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main#adcd1b351ab70d81afd4e7cc1c07d590257b87c9" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev#26671f40567e40ca521f9be72fb96ac26cef8d5b" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1415,12 +1415,7 @@ dependencies = [
     { name = "zxcvbn" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "django-debug-toolbar" },
-    { name = "django-extensions" },
-    { name = "wlc" },
-]
+[package.optional-dependencies]
 docs = [
     { name = "docutils" },
     { name = "pyenchant" },
@@ -1431,6 +1426,13 @@ docs = [
     { name = "sphinxcontrib-images" },
     { name = "sphinxcontrib-spelling" },
     { name = "sphinxemoji" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "django-debug-toolbar" },
+    { name = "django-extensions" },
+    { name = "wlc" },
 ]
 lint = [
     { name = "ruff" },
@@ -1528,19 +1530,20 @@ requires-dist = [
     { name = "django-statici18n", specifier = ">=2.5.0" },
     { name = "django-timezone-field", specifier = ">=7.2.2" },
     { name = "djangorestframework", specifier = ">=3.15.2" },
+    { name = "docutils", marker = "extra == 'docs'", specifier = ">=0.22.4" },
     { name = "drf-flex-fields", specifier = ">=1.0.0" },
     { name = "drf-spectacular", specifier = ">=0.30.0" },
     { name = "elementpath", specifier = ">=5.1.4" },
     { name = "emoji", specifier = ">=2.15.0" },
     { name = "et-xmlfile", specifier = ">=2.0.0" },
     { name = "eventyay-bitpay", git = "https://github.com/fossasia/eventyay-bitpay.git?rev=main" },
-    { name = "eventyay-interpretation", git = "https://github.com/fossasia/eventyay-interpretation.git?rev=main" },
+    { name = "eventyay-interpretation", git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev" },
     { name = "eventyay-paypal", git = "https://github.com/fossasia/eventyay-paypal.git?rev=main" },
-    { name = "eventyay-socialmedia", git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=main" },
+    { name = "eventyay-socialmedia", git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev" },
     { name = "eventyay-stripe", git = "https://github.com/fossasia/eventyay-stripe.git?rev=main" },
-    { name = "eventyay-teamshifts", git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=main" },
+    { name = "eventyay-teamshifts", git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev" },
     { name = "execnet", specifier = ">=2.1.2" },
-    { name = "exhibition", git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main" },
+    { name = "exhibition", git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev" },
     { name = "fido2", specifier = ">=2.2.0" },
     { name = "fonttools", specifier = ">=4.63.0" },
     { name = "frozenlist", specifier = ">=1.8.0" },
@@ -1592,7 +1595,9 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.3" },
     { name = "pydantic-core", specifier = ">=2.46.4" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
+    { name = "pyenchant", marker = "extra == 'docs'", specifier = ">=3.3.0" },
     { name = "pygments", specifier = ">=2.19.1" },
+    { name = "pygments-markdown-lexer", marker = "extra == 'docs'", specifier = ">=0.1.0.dev39" },
     { name = "pyjwt", specifier = ">=2.13.0" },
     { name = "pyopenssl", specifier = ">=26.4.0" },
     { name = "pyotp", specifier = ">=2.10.0" },
@@ -1625,6 +1630,12 @@ requires-dist = [
     { name = "service-identity", specifier = ">=26.1.0" },
     { name = "sortedcontainers", specifier = ">=2.4.0" },
     { name = "soupsieve", specifier = ">=2.9.2" },
+    { name = "sphinx", marker = "extra == 'docs'", specifier = ">=9.1.0" },
+    { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=3.1.0" },
+    { name = "sphinxcontrib-httpdomain", marker = "extra == 'docs'", specifier = ">=1.8.1" },
+    { name = "sphinxcontrib-images", marker = "extra == 'docs'", specifier = ">=1.0.1" },
+    { name = "sphinxcontrib-spelling", marker = "extra == 'docs'", specifier = ">=8.0.2" },
+    { name = "sphinxemoji", marker = "extra == 'docs'", specifier = ">=0.3.2" },
     { name = "sqlparse", specifier = ">=0.5.5" },
     { name = "starkbank-ecdsa", specifier = ">=2.3.1" },
     { name = "text-unidecode", specifier = ">=1.3" },
@@ -1649,23 +1660,13 @@ requires-dist = [
     { name = "zipp", specifier = ">=4.1.0" },
     { name = "zxcvbn", specifier = ">=4.4.28" },
 ]
+provides-extras = ["docs"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "django-debug-toolbar", specifier = ">=7.0.0" },
     { name = "django-extensions", specifier = ">=4.1" },
     { name = "wlc", specifier = ">=2.1.1" },
-]
-docs = [
-    { name = "docutils", specifier = ">=0.22.4" },
-    { name = "pyenchant", specifier = ">=3.3.0" },
-    { name = "pygments-markdown-lexer", specifier = ">=0.1.0.dev39" },
-    { name = "sphinx", specifier = ">=9.1.0" },
-    { name = "sphinx-rtd-theme", specifier = ">=3.1.0" },
-    { name = "sphinxcontrib-httpdomain", specifier = ">=1.8.1" },
-    { name = "sphinxcontrib-images", specifier = ">=1.0.1" },
-    { name = "sphinxcontrib-spelling", specifier = ">=8.0.2" },
-    { name = "sphinxemoji", specifier = ">=0.3.2" },
 ]
 lint = [{ name = "ruff", specifier = ">=0.16.2" }]
 test = [
@@ -1698,7 +1699,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#fcd5854b87556100341d688158bc14e8d94f9c45" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev#fcd5854b87556100341d688158bc14e8d94f9c45" }
 
 [[package]]
 name = "faker"
