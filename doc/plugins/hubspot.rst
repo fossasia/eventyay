@@ -1,7 +1,7 @@
 HubSpot Integration
 ===================
 
-The **HubSpot Integration** plugin automatically transfers order and attendee data from Eventyay to your HubSpot CRM. When an order is placed or updated, the plugin pushes the relevant data to HubSpot as Contacts and/or Deals, keeping your CRM in sync with your event registrations.
+The **HubSpot Integration** plugin automatically transfers order and attendee data from Eventyay to your HubSpot CRM. When a paid order is placed or updated, the plugin pushes the relevant data to HubSpot as Contacts and/or Deals, keeping your CRM in sync with your event registrations.
 
 .. contents:: On this page
    :local:
@@ -9,6 +9,30 @@ The **HubSpot Integration** plugin automatically transfers order and attendee da
 
 Connecting to HubSpot
 ---------------------
+
+Before configuring the integration, ensure the plugin is enabled. 
+
+Enabling the Plugin
+^^^^^^^^^^^^^^^^^^^
+
+If you have already enabled HubSpot at the organizer level (see below), the plugin will be automatically enabled for any newly created events under that organizer. The new event will immediately use the organizer's default connection and object mappings, requiring no manual setup.
+
+To manually enable the plugin for an existing event:
+
+1. Go to your Event dashboard.
+2. Click **Plugins** in the left sidebar.
+3. Navigate to the **Integrations** tab.
+4. Find **Hubspot** in the list and click **Enable**.
+
+.. image:: ../images/hubspot/hubspot-plugin-enable.png
+   :alt: Enabling the HubSpot plugin in event settings
+   :width: 100%
+
+Once enabled, a new **HubSpot** menu item will appear in the left sidebar of your event dashboard.
+
+
+Connection Levels
+^^^^^^^^^^^^^^^^^
 
 The plugin uses OAuth to securely connect Eventyay to your HubSpot account. You can connect at two levels: for a single event, or for your entire organizer account.
 
@@ -27,20 +51,39 @@ Connecting at the organizer level shares a single HubSpot connection across all 
 
 4. Click **Connect to HubSpot**.
 
-.. image:: ../images/hubspot/hubspot-organizer.png
+.. image:: ../images/hubspot/hubspot-organizer-connected.png
    :alt: Organizer HubSpot page (connected, with event list)
    :width: 100%
 
-Once connected, the organizer page shows:
+Once connected, the organizer page shows several sections:
 
-- The **HubSpot Connection** panel displaying the connected portal name and a **Disconnect** button.
-- A **Your Events** table listing each event under this organizer, with columns for:
+HubSpot Connection
+  Displays the connected portal name and a **Disconnect** button.
+
+Your Events
+  A table listing each event under this organizer, with columns for:
 
   - **Connection Status** -- Whether the event is ``Not connected``, ``Connected (Event token)`` (has its own token), or ``Connected (Organizer fallback)`` (uses the organizer's token).
-  - **Mapping Status** -- ``Custom`` if the event has its own object/field mappings configured, or ``Organizer default`` otherwise.
+  - **Mapping Status** -- ``Custom`` if the event has its own object/field mappings configured, or ``Default`` otherwise.
   - **Sync Enabled** -- A per-event toggle to enable or disable synchronization for that specific event.
 
-Click **Save changes** at the bottom to persist the per-event sync toggles.
+  Click **Save changes** at the bottom to persist the per-event sync toggles.
+
+Default Object Mappings
+  Set up default object and field mappings for all events under this organizer. Events with a ``Default`` mapping status will automatically inherit these settings, so you don't have to configure mappings for every single event. 
+  
+  **Note:** When a new event is created under an organizer that has HubSpot enabled, the integration is automatically turned on for that event and seeded with these organizer default mappings.
+
+  .. image:: ../images/hubspot/hubspot-org-default-and-logs.png
+     :alt: Organizer HubSpot page showing default object mappings
+     :width: 100%
+
+Activity Logs
+  Displays sync and settings logs across all your events in one central place. You can select a specific event from the dropdown to filter the activity logs.
+
+  .. image:: ../images/hubspot/hubspot-org-activity-logs.png
+     :alt: Organizer HubSpot page showing activity logs
+     :width: 100%
 
 Event-level connection
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -68,7 +111,7 @@ When you click Connect (at either level), you are redirected to HubSpot's author
    :alt: HubSpot OAuth -- choose account
    :width: 80%
 
-**Step 3:** Review the permissions Eventyay is requesting. The plugin needs access to view and modify Contacts and Deals.
+**Step 3:** Review the permissions Eventyay is requesting. The plugin requires scopes to **create, delete, or make changes** to Contacts and Deals. Note that this includes delete capabilities.
 
 .. image:: ../images/hubspot/oauth-3.png
    :alt: HubSpot OAuth -- review permissions
@@ -81,6 +124,14 @@ When you click Connect (at either level), you are redirected to HubSpot's author
    :width: 60%
 
 After authorization, you are redirected back to Eventyay and the connection status updates to show the connected portal.
+
+Security Notes for Operators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- **OAuth Scopes:** Eventyay requests permissions to create, update, and delete Contacts and Deals in HubSpot.
+- **Data Storage:** OAuth tokens are stored by Eventyay and are encrypted at rest using the application's secret key.
+- **Data Transfer:** Enabling synchronization means attendee and order data will be sent to HubSpot under the granted scopes.
+- **Revocation:** Clicking **Disconnect** inside Eventyay will immediately revoke and clear the connection tokens.
 
 
 Event HubSpot settings
@@ -168,6 +219,36 @@ Delete
 Click **+ Add row** to add another field mapping. Click **Save configuration** when done.
 
 
+Mapping Conflicts
+-----------------
+
+If an event uses custom mappings and there are changes to the organizer default mappings, a conflict might arise (for example, if the default mapping requires a different unique identifier). 
+
+When a conflict occurs, the **Your Events** table on the Organizer HubSpot page will display a warning: ``Conflict with defaults``.
+
+.. image:: ../images/hubspot/hubspot-org-mapping-conflict.png
+   :alt: Organizer HubSpot page showing a mapping conflict
+   :width: 100%
+
+Clicking the **Resolve** button takes you to the event's Field Mapping page, where an **Identifier Conflict Detected** banner appears.
+
+.. image:: ../images/hubspot/hubspot-mapping-conflict-resolve.png
+   :alt: Field mapping page showing an identifier conflict
+   :width: 100%
+
+Since an object mapping can only have one active identifier, you must choose how to resolve the conflict:
+
+- **Keep the default identifier:** This uses the identifier from the organizer's default settings.
+- **Keep your custom identifier:** This retains the identifier you previously configured for this event.
+- **Choose a completely new identifier:** This disables both current identifiers and lets you configure a new one manually.
+
+Select your preferred option and click **Save configuration**. The conflict warning will be removed and your mappings will be updated.
+
+.. image:: ../images/hubspot/resolved-conflict.png
+   :alt: Field mapping page after a conflict is resolved
+   :width: 100%
+
+
 Activity Log
 ------------
 
@@ -203,13 +284,39 @@ Each row shows:
 - **Mapping Type** -- Which HubSpot object this record maps to (e.g. ``Contacts``).
 - **Last Attempt** -- When the last sync was tried.
 - **Error Message** -- A description of what went wrong (e.g. authentication failure, invalid field data, duplicate record).
-- **Actions** -- A retry button to re-queue the individual record for sync.
+- **Actions** -- A retry button to re-queue the individual record for sync, and a dismiss button to ignore the error.
 
-The page also provides:
+.. image:: ../images/hubspot/hubspot-problem-sync.png
+   :alt: HubSpot Sync Problems showing failed sync and retry options
+   :width: 100%
+
+The page also provides bulk actions:
 
 - **Filter toolbar** -- Filter by status (All Problems, Pending, Failed), search by order code or error text, and filter by date range.
 - **Retry selected** -- Select multiple records using the checkboxes and click the green **Retry selected** button to bulk-retry them.
-- **Dismiss** -- For failed records, you can dismiss the error if you no longer want to sync that particular record.
+- **Retry all failed** -- Click this button to quickly re-queue all records that are currently in a failed state.
+
+
+Order Details HubSpot Sync
+--------------------------
+
+You can also view the HubSpot sync status for an individual order directly from its order details page in the Eventyay backend.
+
+.. image:: ../images/hubspot/hubspot-order-detail.png
+   :alt: HubSpot sync status section on the order details page
+   :width: 100%
+
+In the HubSpot Sync Status panel, you can see the current sync state (e.g., ``Waiting to sync`` or ``Synced``). If an order hasn't been synced yet, or if you want to push an update manually, you can click the **Sync now** button.
+
+.. image:: ../images/hubspot/hubspot-order-detail-waiting.png
+   :alt: HubSpot order sync status waiting
+   :width: 100%
+
+If your HubSpot mapping configuration has been updated since the order was last synced, an info banner will notify you. This helps you identify orders that might need to be re-synced to apply the new mappings.
+
+.. image:: ../images/hubspot/hubspot-order-detail-section.png
+   :alt: HubSpot order sync status with mapping update warning
+   :width: 100%
 
 
 Disconnecting
