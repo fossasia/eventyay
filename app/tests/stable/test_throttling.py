@@ -1,12 +1,14 @@
 import pytest
+from django.conf import settings
 from django.core.cache import caches
 from django.test import override_settings
 
 LOC_MEM_CACHE = {
+    **settings.CACHES,
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-    }
+        'LOCATION': 'throttle-tests',
+    },
 }
 
 

@@ -1,63 +1,65 @@
 import logging
-from django.utils.deprecation import MiddlewareMixin
+
 from django.core.cache import caches
 from django.http import HttpResponse
+
 from eventyay.helpers.http import get_client_ip
 
 logger = logging.getLogger(__name__)
 
 
-class Block404Middleware(MiddlewareMixin):
+class Block404Middleware:
     """
     Middleware that tracks the number of 404 responses per client IP and applies a throttle
     when the limit is breached.
     """
-    # Thresholds – can be overridden via Django settings if required.
     MAX_404_PER_MINUTE = 30
-    CACHE_ALIAS = 'default'  # Use the primary cache (Redis)
+    CACHE_ALIAS = 'default'
+    RETRY_AFTER_SECONDS = '60'
 
-    def process_request(self, request):
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
         ip = get_client_ip(request)
         cache = caches[self.CACHE_ALIAS]
         key = f'404_counter:{ip}'
+
         try:
-            count = cache.get(key, 0)
+            count = int(cache.get(key, 0))
         except Exception:
             count = 0
-            
-        if count and int(count) > self.MAX_404_PER_MINUTE:
-            return HttpResponse(
-                content='Too many 404 responses – request throttled.',
-                status=429,
-                headers={'Retry-After': '60'}
-            )
-        return None
 
-    def process_response(self, request, response):
-        # Only act on 404 responses.
+        if count >= self.MAX_404_PER_MINUTE:
+            return self._too_many_requests_response()
+
+        response = self.get_response(request)
+
         if response.status_code != 404:
             return response
 
-        ip = get_client_ip(request)
-        cache = caches[self.CACHE_ALIAS]
-        key = f'404_counter:{ip}'
-        
         try:
-            # Atomically increment counter, setting initial value if it doesn't exist
-            cache.add(key, 0, timeout=60)
-            count = cache.incr(key)
-        except ValueError:
-            # DummyCache raises ValueError on incr if key not found (but add doesn't actually store in DummyCache)
-            return response
+            count = self._increment(cache, key)
         except Exception:
-            # Fail open on other cache errors (Redis down, etc.)
+            logger.exception('Failed to increment 404 counter for IP %s', ip)
             return response
 
         if count > self.MAX_404_PER_MINUTE:
-            return HttpResponse(
-                content='Too many 404 responses – request throttled.',
-                status=429,
-                headers={'Retry-After': '60'}
-            )
+            return self._too_many_requests_response()
         return response
 
+    @classmethod
+    def _increment(cls, cache, key):
+        try:
+            return cache.incr(key)
+        except ValueError:
+            cache.set(key, 1, timeout=60)
+            return 1
+
+    @classmethod
+    def _too_many_requests_response(cls):
+        return HttpResponse(
+            content='Too many 404 responses – request throttled.',
+            status=429,
+            headers={'Retry-After': cls.RETRY_AFTER_SECONDS},
+        )

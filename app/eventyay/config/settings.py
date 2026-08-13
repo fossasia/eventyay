@@ -437,6 +437,7 @@ AUTH_USER_MODEL = 'base.User'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 _LIBRARY_MIDDLEWARES = (
+    'eventyay.middleware.block_404.Block404Middleware',
     'eventyay.api.middleware.PrivateNetworkAccessMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -472,7 +473,6 @@ _OURS_MIDDLEWARES = (
     'eventyay.presale.middleware.EventMiddleware',
     'oauth2_provider.middleware.OAuth2TokenMiddleware',
     'eventyay.api.middleware.ApiScopeMiddleware',
-    'eventyay.middleware.block_404.Block404Middleware',
 )
 
 MIDDLEWARE = _LIBRARY_MIDDLEWARES + _OURS_MIDDLEWARES

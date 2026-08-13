@@ -60,6 +60,12 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return RoomOrgaSerializer
         return RoomSerializer
 
+    def initial(self, request, *args, **kwargs):
+        # Public polling endpoints are read-only and throttled for anonymous clients.
+        if getattr(self, 'action', None) in ('current_stream', 'next_stream'):
+            self.allow_public_read = True
+        super().initial(request, *args, **kwargs)
+
     def perform_destroy(self, instance):
         try:
             with transaction.atomic():
