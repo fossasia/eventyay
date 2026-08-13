@@ -8,7 +8,8 @@ in new forms.
 Overview
 --------
 
-eventyay uses three editor implementations:
+eventyay currently uses three editor implementations. This is a current
+implementation reference, not a user-facing Markdown editor tutorial:
 
 .. list-table::
    :header-rows: 1

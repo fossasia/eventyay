@@ -1,15 +1,7 @@
 .. _`admindocs`:
 
-Administrator documentation
-===========================
+Platform administration
+=======================
 
-This documentation is for everyone who wants to install eventyay on a server.
-
-.. toctree::
-   :maxdepth: 2
-
-   installation/index
-   config
-   maintainance
-   scaling
-   indexes
+This URL is retained for existing links. Platform operators should use the
+unified :doc:`/platform-administration/index` section.

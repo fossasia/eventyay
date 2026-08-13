@@ -17,6 +17,15 @@ updates:
       timezone: "Asia/Singapore"
     open-pull-requests-limit: 15
     versioning-strategy: increase
+    groups:
+      # Keep documentation extras in dedicated PRs so they are not starved by
+      # the shared open-pull-requests-limit against the main dependency set.
+      documentation:
+        patterns:
+          - "docutils"
+          - "pyenchant"
+          - "pygments-markdown-lexer"
+          - "sphinx*"
     ignore:
       - dependency-name: "django"
         versions: [">=6.0.0"]

@@ -4,8 +4,8 @@ API documentation
 =================
 
 Eventyay has a REST-style API.  This API is not yet considered stable, so the
-API may change between releases. We will document API changes in our
-:ref:`changelog`.
+API may change between releases. Current API documentation is maintained in
+the unified :doc:`API reference </api-reference/index>`.
 
 The API provides no write capabilities. We hope to extended the functionality
 over time.
@@ -15,4 +15,3 @@ over time.
 
    fundamentals
    resources
-   changelog

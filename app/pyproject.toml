@@ -100,10 +100,10 @@ dependencies = [
     "eventyay-paypal @ git+https://github.com/fossasia/eventyay-paypal.git@main",
     "eventyay-stripe @ git+https://github.com/fossasia/eventyay-stripe.git@main",
     "eventyay-bitpay @ git+https://github.com/fossasia/eventyay-bitpay.git@main",
-    "eventyay-socialmedia @ git+https://github.com/fossasia/eventyay-socialmedia.git@main",
-    "exhibition @ git+https://github.com/fossasia/eventyay-exhibition.git@main",
-    "eventyay-teamshifts @ git+https://github.com/fossasia/eventyay-teamshifts.git@main",
-    "eventyay-interpretation @ git+https://github.com/fossasia/eventyay-interpretation.git@main",
+    "eventyay-socialmedia @ git+https://github.com/fossasia/eventyay-socialmedia.git@dev",
+    "exhibition @ git+https://github.com/fossasia/eventyay-exhibition.git@dev",
+    "eventyay-teamshifts @ git+https://github.com/fossasia/eventyay-teamshifts.git@dev",
+    "eventyay-interpretation @ git+https://github.com/fossasia/eventyay-interpretation.git@dev",
     "execnet>=2.1.2",
     "fido2>=2.2.0",
     "fonttools>=4.63.0",
@@ -221,12 +221,9 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
-[dependency-groups]
-dev = [
-    "django-debug-toolbar>=7.0.0",
-    "django-extensions>=4.1",
-    "wlc>=2.1.1",
-]
+[project.optional-dependencies]
+# Kept as optional-dependencies (not a dependency-group) so Dependabot's uv
+# ecosystem reliably tracks documentation library updates.
 docs = [
     "docutils>=0.22.4",
     "pyenchant>=3.3.0",
@@ -237,6 +234,13 @@ docs = [
     "sphinxcontrib-images>=1.0.1",
     "sphinxcontrib-spelling>=8.0.2",
     "sphinxemoji>=0.3.2",
+]
+
+[dependency-groups]
+dev = [
+    "django-debug-toolbar>=7.0.0",
+    "django-extensions>=4.1",
+    "wlc>=2.1.1",
 ]
 lint = [
     "ruff>=0.16.2",
