@@ -48,7 +48,7 @@ from eventyay.agenda.views.utils import (
     serialize_widget_schedule_data,
 )
 from eventyay.base.channels import get_all_sales_channels
-from eventyay.base.meetup import ensure_video_credentials, is_meetup_event
+from eventyay.base.meetup import ensure_video_credentials, get_rsvp_product_and_quota, is_meetup_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import (
     Order,
@@ -722,9 +722,9 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         rsvp_registration_closed = False
         with scope(event=event):
-            quota = event.quotas.first()
+            product, quota = get_rsvp_product_and_quota(event)
             if quota and quota.size is not None:
-                avail, _ = quota.availability()
+                avail, count = quota.availability()
                 rsvp_registration_closed = avail != Quota.AVAILABILITY_OK
 
         return {
@@ -1148,11 +1148,10 @@ class JoinOnlineVideoView(EventViewMixin, View):
         with scope(event=self.request.event):
             filters = Q(event=self.request.event) & Q(status__in=allowed_statuses)
             if self.request.user.is_authenticated:
-                user_filter = Q(email__iexact=self.request.user.email) | Q(all_positions__attendee_email__iexact=self.request.user.email)
-                if session_order_code:
-                    filters &= (user_filter | Q(code=session_order_code))
-                else:
-                    filters &= user_filter
+                filters &= (
+                    Q(email__iexact=self.request.user.email)
+                    | Q(all_positions__attendee_email__iexact=self.request.user.email)
+                )
             elif session_order_code:
                 filters &= Q(code=session_order_code)
             else:

@@ -37,6 +37,7 @@ from django.apps import apps
 
 from eventyay.base.i18n import language
 from eventyay.base.meetup import (
+    get_rsvp_product_and_quota,
     get_video_config_initial,
     is_meetup_event,
     provision_meetup_event,
@@ -581,7 +582,7 @@ class EventCreateView(TemplateView):
                 reg_limit = basics_data.get('registration_limit')
                 if reg_limit is not None:
                     with scope(event=event):
-                        quota = event.quotas.first()
+                        product, quota = get_rsvp_product_and_quota(event)
                         if quota:
                             quota.size = reg_limit
                             quota.save(update_fields=['size'])

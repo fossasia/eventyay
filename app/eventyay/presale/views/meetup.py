@@ -117,7 +117,7 @@ class MeetupRsvpView(EventViewMixin, View):
         with scope(event=request.event), transaction.atomic():
             quota = product.quotas.select_for_update().first()
             if quota is not None:
-                avail, _ = quota.availability()
+                avail, count = quota.availability()
                 if avail != Quota.AVAILABILITY_OK:
                     return None
 

@@ -16,6 +16,7 @@ from eventyay.base.meetup import (
     add_video_field_errors,
     apply_video_configuration,
     build_video_form_fields,
+    get_rsvp_product_and_quota,
     get_video_config_initial,
     is_meetup_event,
 )
@@ -127,7 +128,7 @@ class EventCommonSettingsForm(SettingsForm):
             if 'registration_limit' in self.cleaned_data:
                 reg_limit = self.cleaned_data.get('registration_limit')
                 with scope(event=self.event):
-                    quota = self.event.quotas.first()
+                    product, quota = get_rsvp_product_and_quota(self.event)
                     if quota and quota.size != reg_limit:
                         quota.size = reg_limit
                         quota.save(update_fields=['size'])

@@ -255,7 +255,7 @@ def get_rsvp_product_and_quota(event):
         product = event.products.filter(admission=True, active=True).first()
         if product is None:
             return None, None
-        quota = product.quotas.filter(size__isnull=True).first() or product.quotas.first()
+        quota = product.quotas.first()
         return product, quota
 
 
