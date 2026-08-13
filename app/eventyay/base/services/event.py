@@ -10,7 +10,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Max, OuterRef, Subquery, Q
-from pytz import common_timezones
+from eventyay.timezones import common_timezones
 from rest_framework import serializers
 
 from eventyay.base.models.room import Room

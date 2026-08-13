@@ -4,7 +4,8 @@ from decimal import Decimal
 
 import dateutil.parser
 import nh3
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from django.core.exceptions import ObjectDoesNotExist
 from django.dispatch import receiver
 from django.urls import reverse
@@ -239,7 +240,7 @@ def _display_checkin(event, logentry, action_type: str):
     if 'datetime' in data:
         dt = dateutil.parser.parse(data.get('datetime'))
         show_dt = abs((logentry.datetime - dt).total_seconds()) > 5 or 'forced' in data
-        tz = pytz.timezone(event.settings.timezone)
+        tz = ZoneInfo(event.settings.timezone)
         dt_formatted = date_format(dt.astimezone(tz), 'SHORT_DATETIME_FORMAT')
 
     checkin_list = _get_checkin_list_name(event, data.get('list'))
@@ -758,7 +759,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
     if action_type == 'eventyay.control.views.checkin':
         # deprecated
         dt = dateutil.parser.parse(data.get('datetime'))
-        tz = pytz.timezone(sender.settings.timezone)
+        tz = ZoneInfo(sender.settings.timezone)
         dt_formatted = date_format(dt.astimezone(tz), 'SHORT_DATETIME_FORMAT')
         checkin_list = _get_checkin_list_name(sender, data.get('list'))
 
