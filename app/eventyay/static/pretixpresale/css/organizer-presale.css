@@ -25,18 +25,19 @@ body.organizer-presale-page .presale-sticky-tabs a.header-tab {
   font-weight: 500;
   padding: 8px 10px 4px;
   white-space: nowrap;
-  color: var(--color-primary);
+  color: var(--color-header-navigation);
   text-decoration: none;
   border-bottom: 2px solid transparent;
 }
 
 body.organizer-presale-page .presale-sticky-tabs a.header-tab:hover {
+  color: var(--color-header-navigation-hover);
   text-decoration: none;
-  border-bottom: 2px dotted var(--color-primary);
+  border-bottom: 2px dotted var(--color-header-navigation-hover);
 }
 
 body.organizer-presale-page .presale-sticky-tabs a.header-tab.underline {
-  border-bottom: 2px solid var(--color-primary);
+  border-bottom: 2px solid var(--color-header-navigation);
   font-weight: 600;
 }
 
@@ -125,12 +126,13 @@ body.organizer-presale-page h2.content-header {
   gap: 0.5rem;
   padding: 0.625rem 0.875rem;
   font-size: 1rem;
-  color: var(--color-text);
   text-decoration: none;
+  color: var(--color-text, #333);
 }
 
 .organizer-export-dropdown .dropdown-item:hover {
   background: var(--color-grey-ultralight, #f5f5f5);
+  color: var(--color-text, #333);
 }
 
 /* Event list table */
