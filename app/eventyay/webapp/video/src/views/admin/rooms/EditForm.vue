@@ -84,6 +84,7 @@ export default {
 				usePluginStreams: false,
 				languageStreams: [],
 				loaded: false,
+				streamsLoadFailed: false,
 			},
 		}
 	},
@@ -145,6 +146,7 @@ export default {
 	methods: {
 		async loadInterpretationLanguageStreams() {
 			if (this.creating || !this.config?.id) return
+			this.interpretationAdmin.streamsLoadFailed = false
 			try {
 				const data = await fetchInterpretationLanguageStreams(
 					this.$store,
@@ -161,6 +163,7 @@ export default {
 				}
 			} catch (error) {
 				console.warn('interpretation language streams unavailable', error)
+				this.interpretationAdmin.streamsLoadFailed = true
 				this.interpretationAdmin.usePluginStreams = Boolean(
 					this.config.interpretation_use_plugin_streams
 				)
@@ -197,7 +200,8 @@ export default {
 				if (
 					this.interpretationAdmin.usePluginStreams &&
 					roomId &&
-					this.interpretationAdmin.loaded
+					this.interpretationAdmin.loaded &&
+					!this.interpretationAdmin.streamsLoadFailed
 				) {
 					await saveInterpretationLanguageStreams(
 						this.$store,
