@@ -64,6 +64,23 @@ def event(db, organizer):
 
 
 @pytest.fixture
+def room(db, event):
+    """Create a test room for API throttling tests."""
+    from django_scopes import scope
+
+    from eventyay.base.models import Room
+
+    with scope(event=event):
+        return Room.objects.create(
+            event=event,
+            name='Test Room',
+            description='A test room',
+            position=1,
+            capacity=50,
+        )
+
+
+@pytest.fixture
 def team(db, organizer, user):
     """Create a team and add user as member."""
     from eventyay.base.models import Team
