@@ -1,7 +1,38 @@
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle, SimpleRateThrottle
 
 
-class PublicStreamThrottle(AnonRateThrottle):
+class EventyayAnonRateThrottle(AnonRateThrottle):
+    """
+    Limits the rate of API calls for anonymous clients.
+    Does NOT apply to authenticated users or API tokens (TeamToken/Device).
+    """
+    def get_cache_key(self, request, view):
+        if request.user.is_authenticated or request.auth:
+            return None  # Only throttle truly anonymous users
+        return super().get_cache_key(request, view)
+
+
+class EventyayUserRateThrottle(UserRateThrottle):
+    """
+    Limits the rate of API calls for authenticated clients.
+    Keys on user PK, or token PK if using API tokens.
+    """
+    def get_cache_key(self, request, view):
+        if request.user.is_authenticated:
+            ident = request.user.pk
+        elif request.auth:
+            # Synthetic authenticated principal (TeamAPIToken or Device)
+            ident = f"{type(request.auth).__name__}_{request.auth.pk}"
+        else:
+            return None  # Fall back to EventyayAnonRateThrottle
+            
+        return self.cache_format % {
+            'scope': self.scope,
+            'ident': ident
+        }
+
+
+class PublicStreamThrottle(EventyayAnonRateThrottle):
     """
     Stricter throttle for the ``/rooms/{id}/streams/current`` endpoint.
     The frontend polls this endpoint; the server‑side limit acts as a
@@ -10,23 +41,11 @@ class PublicStreamThrottle(AnonRateThrottle):
     scope = 'public_stream'
 
 
-class PublicScheduleThrottle(AnonRateThrottle):
+class PublicScheduleThrottle(EventyayAnonRateThrottle):
     """
     Throttle for schedule‑related public endpoints (e.g. ``/schedule``).
     """
     scope = 'public_schedule'
 
 
-class Excessive404Throttle(SimpleRateThrottle):
-    """
-    Generic throttle used by the ``Block404Middleware`` to
-    limit clients that generate a large number of 404 responses in a short
-    period.  The ``excessive_404`` scope is defined in ``DEFAULT_THROTTLE_RATES``.
-    """
-    scope = 'excessive_404'
 
-    def get_cache_key(self, request, view):
-        return self.cache_format % {
-            'scope': self.scope,
-            'ident': self.get_ident(request)
-        }

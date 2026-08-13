@@ -9,7 +9,10 @@ def clear_cache():
     yield
     caches['default'].clear()
 
+from django.test import override_settings
+
 @pytest.mark.django_db
+@override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'unique-snowflake'}})
 class TestThrottling:
 
     def test_block_404_middleware(self, client):
@@ -62,7 +65,7 @@ class TestThrottling:
 
     def test_block_404_middleware_authenticated(self, authenticated_client):
         """
-        Ensure Excessive404Throttle throttles authenticated users as well (inherits from SimpleRateThrottle).
+        Ensure Block404Middleware throttles authenticated users as well.
         """
         for _ in range(30):
             response = authenticated_client.get('/api/v1/non_existent_endpoint_auth/')

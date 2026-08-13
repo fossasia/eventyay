@@ -2,7 +2,6 @@ import logging
 from django.utils.deprecation import MiddlewareMixin
 from django.core.cache import caches
 from django.http import HttpResponse
-from eventyay.api.throttles import Excessive404Throttle
 from eventyay.helpers.http import get_client_ip
 
 logger = logging.getLogger(__name__)
@@ -21,18 +20,17 @@ class Block404Middleware(MiddlewareMixin):
         ip = get_client_ip(request)
         cache = caches[self.CACHE_ALIAS]
         key = f'404_counter:{ip}'
-        count = cache.get(key, 0)
-        
+        try:
+            count = cache.get(key, 0)
+        except Exception:
+            count = 0
+            
         if count and int(count) > self.MAX_404_PER_MINUTE:
-            throttle = Excessive404Throttle()
-            if not throttle.allow_request(request, view=None):
-                wait_time = throttle.wait()
-                retry_after = int(wait_time) if wait_time is not None else 60
-                return HttpResponse(
-                    content='Too many 404 responses – request throttled.',
-                    status=429,
-                    headers={'Retry-After': str(retry_after)}
-                )
+            return HttpResponse(
+                content='Too many 404 responses – request throttled.',
+                status=429,
+                headers={'Retry-After': '60'}
+            )
         return None
 
     def process_response(self, request, response):
@@ -44,21 +42,22 @@ class Block404Middleware(MiddlewareMixin):
         cache = caches[self.CACHE_ALIAS]
         key = f'404_counter:{ip}'
         
-        # Atomically increment counter, setting initial value if it doesn't exist
-        cache.add(key, 0, timeout=60)
-        count = cache.incr(key)
+        try:
+            # Atomically increment counter, setting initial value if it doesn't exist
+            cache.add(key, 0, timeout=60)
+            count = cache.incr(key)
+        except ValueError:
+            # DummyCache raises ValueError on incr if key not found (but add doesn't actually store in DummyCache)
+            return response
+        except Exception:
+            # Fail open on other cache errors (Redis down, etc.)
+            return response
 
         if count > self.MAX_404_PER_MINUTE:
-            # Apply the custom throttling class to produce a 429 with Retry-After.
-            throttle = Excessive404Throttle()
-            if not throttle.allow_request(request, view=None):
-                # throttle.wait() returns the remaining wait time in seconds.
-                wait_time = throttle.wait()
-                retry_after = int(wait_time) if wait_time is not None else 60
-                return HttpResponse(
-                    content='Too many 404 responses – request throttled.',
-                    status=429,
-                    headers={'Retry-After': str(retry_after)}
-                )
+            return HttpResponse(
+                content='Too many 404 responses – request throttled.',
+                status=429,
+                headers={'Retry-After': '60'}
+            )
         return response
 

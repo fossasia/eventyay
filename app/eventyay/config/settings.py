@@ -1351,8 +1351,8 @@ REST_FRAMEWORK = {
     'UNICODE_JSON': False,
     # Throttling defaults
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
+        'eventyay.api.throttles.EventyayAnonRateThrottle',
+        'eventyay.api.throttles.EventyayUserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '60/minute',

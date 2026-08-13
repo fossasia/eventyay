@@ -12,7 +12,7 @@ from eventyay.api.documentation import build_search_docs
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
 from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
-from eventyay.api.throttles import PublicStreamThrottle
+from eventyay.api.throttles import EventyayUserRateThrottle, PublicStreamThrottle
 from eventyay.base.exporters.room_broadcast import (
     VideoRoomBroadcastConfigurationExporter,
 )
@@ -113,7 +113,7 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         description="Returns the currently active stream schedule for this room, if any.",
         responses={200: StreamScheduleSerializer, 404: None},
     )
-    @action(detail=True, methods=["get"], url_path="streams/current", throttle_classes=[PublicStreamThrottle])
+    @action(detail=True, methods=["get"], url_path="streams/current", throttle_classes=[PublicStreamThrottle, EventyayUserRateThrottle])
     def current_stream(self, request, pk=None, **kwargs):
         room = self.get_object()
         current = room.get_current_stream()
