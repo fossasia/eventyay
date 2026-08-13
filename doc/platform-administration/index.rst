@@ -11,5 +11,6 @@ and troubleshooting for the unified platform.
    installation
    deployment
    configuration
+   platform-runtime
    operations
    troubleshooting
