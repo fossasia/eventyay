@@ -215,3 +215,32 @@ async def test_config_patch(world):
             "code": "config.invalid",
             "details": {"social_logins": ["Invalid value for social_logins"]},
         }
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_config_patch_rejects_roles_and_trait_grants(world):
+    async with world_communicator(token=get_token(world, ["admin"])) as c1:
+        await c1.send_json_to(
+            [
+                "world.config.patch",
+                123,
+                {"roles": {"attendee": ["event.view"]}},
+            ]
+        )
+        response = await c1.receive_json_from()
+        assert response[0] == "error"
+        assert response[2]["code"] == "config.permission_managed_externally"
+        assert "roles" in response[2]["details"]
+
+        await c1.send_json_to(
+            [
+                "world.config.patch",
+                123,
+                {"trait_grants": {"attendee": ["attendee"]}},
+            ]
+        )
+        response = await c1.receive_json_from()
+        assert response[0] == "error"
+        assert response[2]["code"] == "config.permission_managed_externally"
+        assert "trait_grants" in response[2]["details"]

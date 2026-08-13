@@ -270,10 +270,11 @@ The repository contains several frontend applications under ``app/eventyay/webap
    app/eventyay/webapp/
    ├── schedule/              Schedule display web component
    ├── schedule-editor/       Schedule editor frontend
-   ├── video/                 Online event video frontend
-   └── webcheckin/            Web check in frontend
+   └── video/                 Online event video frontend
 
 The root app ``Makefile`` installs and builds these frontend applications through npm and places compiled assets into the Django app data directory.
+
+Check-in uses the separate ``eventyay-checkin`` plugin (not built by the Makefile ``npminstall`` target).
 
 By default, Docker serves prebuilt frontend assets. To enable hot module replacement for frontend development, set this in ``.env.dev``:
 
@@ -281,12 +282,12 @@ By default, Docker serves prebuilt frontend assets. To enable hot module replace
 
    EVY_NPM_DEV=1
 
-When enabled, Vite dev servers start automatically inside the container for the frontend webapps.
+When ``EVY_NPM_DEV=1`` in ``.env.dev``, the Docker image build skips ``make npminstall``, and Vite dev servers start automatically inside the container, install npm dependencies as needed, and serve the webapps with HMR.
 
 - ``schedule-editor`` runs on port ``8080``.
 - ``video`` runs on port ``8880``.
-- ``webcheckin`` runs on port ``8081``.
 - ``schedule`` runs on port ``8082``.
+- ``eventyay-checkin`` runs on port ``8085`` (plugin checkout mounted at ``plugins/eventyay-checkin``).
 
 You do not normally need to visit these ports directly. The frontend works alongside ``http://localhost:8000`` with hot module replacement.
 
@@ -294,7 +295,7 @@ The container must be recreated, not only restarted, for the environment change 
 
 .. code-block:: bash
 
-   docker compose up -d web
+   docker compose up -d --build web
 
 The default is:
 
@@ -302,7 +303,7 @@ The default is:
 
    EVY_NPM_DEV=0
 
-Before submitting frontend changes, always verify that the production asset build still works with the default value:
+With ``EVY_NPM_DEV=0``, Django serves prebuilt assets, so run ``make npminstall`` after frontend changes. Before submitting frontend changes, always verify that the production asset build still works with the default value:
 
 .. code-block:: bash
 
@@ -463,6 +464,11 @@ Eventyay Checkin
 ~~~~~~~~~~~~~~~~
 
 `Eventyay Checkin <https://github.com/fossasia/eventyay-checkin>`_ is a separate check in component for kiosk stations. It enables organisers to check in attendees at dedicated check in stations during an event.
+
+Eventyay Interpretation
+~~~~~~~~~~~~~~~~~~~~~~~
+
+`Eventyay Interpretation <https://github.com/fossasia/eventyay-interpretation>`_ is a separate component for live interpretation. It enables multi-language audio streaming for sessions in an event.
 
 Translation workflow
 --------------------

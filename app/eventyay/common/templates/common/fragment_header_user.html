@@ -153,7 +153,7 @@
             </div>
         </details>
     {% elif not subheader_login_link_disabled and not is_html_export %}
-        <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}" class="login-link" aria-label="{% translate 'Login' %}">
+        <a href="{% url 'auth.login' %}?next={{ request.path|urlencode }}" class="login-link" aria-label="{% translate 'Login' %}">
             <i class="fa fa-user nav-icon-mobile" aria-hidden="true"></i>
             <span class="mobile-hide-text">{% translate "Login" %}</span>
         </a>

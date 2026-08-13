@@ -36,17 +36,32 @@ from django.views import View
 from django.apps import apps
 
 from eventyay.base.i18n import language
+from eventyay.base.meetup import (
+    get_video_config_initial,
+    is_meetup_event,
+    provision_meetup_event,
+)
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import DEFAULTS, SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
+from eventyay.base.settings import (
+    DEFAULTS,
+    SETTINGS_AFFECTING_CSS,
+    is_event_series_creation_enabled,
+    is_meetup_creation_enabled,
+)
 from eventyay.eventyay_common.video.permissions import video_attendee_trait
 from eventyay.presale.style import regenerate_css
 from eventyay.common.text.path import resolve_media_path
 from eventyay.base.services.quotas import QuotaAvailability
-from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
+from eventyay.control.forms.event import (
+    EventWizardBasicsForm,
+    EventWizardCopyForm,
+    EventWizardFoundationForm,
+    MeetupEventWizardBasicsForm,
+)
 from eventyay.control.forms.filter import EventFilterForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin, UpdateView
@@ -67,6 +82,7 @@ from eventyay.multidomain.urlreverse import build_absolute_uri
 from ..forms.event import EventUpdateForm
 
 logger = logging.getLogger(__name__)
+
 
 class EventList(PaginationMixin, ListView):
     model = Event
@@ -161,6 +177,7 @@ class EventList(PaginationMixin, ListView):
                     (round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100),
                 )
         ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
+        ctx['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
         return ctx
 
     @cached_property
@@ -200,6 +217,9 @@ class EventCreateView(TemplateView):
         request_get = self.request.GET
 
         initial_form['is_video_creation'] = True
+        if request_get.get('meetup') == '1':
+            initial_form['is_video_creation'] = False
+            initial_form['is_meetup'] = True
         initial_form['locales'] = ['en']
         initial_form['create_for'] = EventCreatedFor.BOTH.value
         initial_form['has_subevents'] = request_get.get('series') == '1'
@@ -236,6 +256,8 @@ class EventCreateView(TemplateView):
                     'locale': clone_from.settings.get('locale') or clone_from.locale,
                 }
             )
+            if is_meetup_event(clone_from):
+                initial_form.update(get_video_config_initial(clone_from))
         else:
             initial_form['locale'] = 'en'
 
@@ -269,10 +291,20 @@ class EventCreateView(TemplateView):
                 pass
         return None
 
+    @property
+    def is_meetup_request(self):
+        return bool(
+            self.request.GET.get('meetup') == '1'
+            or self.request.POST.get('is_meetup') == 'on'
+            or is_meetup_event(self.clone_from)
+        )
+
     def dispatch(self, request, *args, **kwargs):
         is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
         if is_series and not is_event_series_creation_enabled(request):
             raise PermissionDenied(_('Event series creation is currently disabled.'))
+        if self.is_meetup_request and not is_meetup_creation_enabled(request):
+            raise PermissionDenied(_('Meetup creation is currently disabled.'))
         return super().dispatch(request, *args, **kwargs)
 
     def get_foundation_form(self):
@@ -288,7 +320,8 @@ class EventCreateView(TemplateView):
         if foundation_data is None:
             foundation_data = self.get_foundation_initial()
         organizer = foundation_data.get('organizer') or self.get_fallback_organizer()
-        return EventWizardBasicsForm(
+        form_class = MeetupEventWizardBasicsForm if self.is_meetup_request else EventWizardBasicsForm
+        return form_class(
             data=self.request.POST if bind and self.request.method == 'POST' else None,
             initial=self.get_basics_initial(foundation_data),
             prefix='basics',
@@ -326,7 +359,9 @@ class EventCreateView(TemplateView):
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
         context['clone_from'] = self.clone_from
         context['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
+        context['meetup_creation_enabled'] = is_meetup_creation_enabled(self.request)
         context['type_preselected'] = 'series' in self.request.GET
+        context['is_meetup'] = self.is_meetup_request
         return context
 
     def post(self, request, *args, **kwargs):
@@ -489,6 +524,7 @@ class EventCreateView(TemplateView):
             basics_form.save()
             if self.clone_from:
                 event.clone_from(self.clone_from, new_secrets=True)
+                event.copy_data_from(self.clone_from)
 
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)
@@ -519,25 +555,19 @@ class EventCreateView(TemplateView):
             create_for = EventCreatedFor.BOTH.value
             event.settings.set('create_for', create_for)
 
-            # Smart defaults work for all event types
-            if create_for in [EventCreatedFor.BOTH.value, EventCreatedFor.TICKET.value, EventCreatedFor.TALK.value]:
-                event_dict = {
-                    'organiser_slug': event.organizer.slug,
-                    'name': event.name.data,
-                    'slug': event.slug,
-                    'is_public': event.live,
-                    'date_from': str(event.date_from),
-                    'date_to': str(event.date_to),
-                    'timezone': str(basics_data.get('timezone')),
-                    'locale': event.settings.locale,
-                    'locales': event.settings.locales,
-                    'content_locales': content_locales,
-                    'is_video_creation': final_is_video_creation,
-                }
+
 
             event.log_action(
                     action='eventyay.event.added',
                     user=self.request.user,
+                )
+
+            if self.is_meetup_request:
+                provision_meetup_event(
+                    event,
+                    video_type=basics_data.get('video_type', ''),
+                    video_url=basics_data.get('video_url', ''),
+                    request=self.request,
                 )
 
         return redirect(
@@ -614,6 +644,7 @@ class EventUpdate(
         context['header_links_formset'] = self.header_links_formset
         context['footer_links_formset'] = self.footer_links_formset
         context['is_video_enabled'] = is_video_enabled(self.object)
+        context['is_meetup_event'] = is_meetup_event(self.object)
         context['is_talk_event_created'] = False
         if (
             self.object.settings.create_for == EventCreatedFor.BOTH

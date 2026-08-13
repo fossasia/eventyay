@@ -4,14 +4,8 @@
 {% load hierarkey_form %}
 {% load static %}
 {% block inside %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h1>{% trans "Ticket E-mail Settings" %}</h1>
-            </div>
-            {% include "pretixcontrol/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Ticket E-mail Settings" as header_title %}
+    {% include "common/includes/header_nav.html" with header_title=header_title header_component_link="pretixcontrol/event/component_link.html" %}
 
     <div class="alert alert-info" role="alert">
         <strong>{% trans "SMTP is configured centrally" %}</strong> —

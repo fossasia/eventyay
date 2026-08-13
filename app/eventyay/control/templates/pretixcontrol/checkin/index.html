@@ -3,51 +3,85 @@
 {% load eventurl %}
 {% load urlreplace %}
 {% load bootstrap3 %}
+{% load static %}
+{% load captureas %}
 {% block title %}
     {% blocktrans with name=checkinlist.name %}Check-in list: {{ name }}{% endblocktrans %}
 {% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+{% endblock %}
 {% block content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                    <h1>
-                        {% blocktrans with name=checkinlist.name %}Check-in list: {{ name }}{% endblocktrans %}
-                        {% if 'can_change_event_settings' in request.eventpermset %}
-                            <a href="{% url "control:event.orders.checkinlists.edit" event=request.event.slug organizer=request.event.organizer.slug list=checkinlist.pk %}"
-                                    class="btn btn-default">
-                                <span class="fa fa-wrench"></span>
-                                {% trans "Edit list configuration" %}
-                            </a>
-                        {% endif %}
-                        <a href="{% url "control:event.orders.export" event=request.event.slug organizer=request.event.organizer.slug %}?identifier=checkinlistpdf&checkinlistpdf-list={{ checkinlist.pk }}"
-                                class="btn btn-default" target="_blank">
-                            <span class="fa fa-download"></span>
-                            {% trans "PDF" %}
-                        </a>
-                        <a href="{% url "control:event.orders.export" event=request.event.slug organizer=request.event.organizer.slug %}?identifier=checkinlist&checkinlist-list={{ checkinlist.pk }}"
-                                class="btn btn-default" target="_blank">
-                            <span class="fa fa-download"></span>
-                            {% trans "CSV" %}
-                        </a>
-                    </h1>
+    {% blocktrans with name=checkinlist.name asvar header_title_var %}Check-in list: {{ name }}{% endblocktrans %}
+    {% captureas header_extra_var %}
+        {% if 'can_change_event_settings' in request.eventpermset %}
+            <a href="{% url "control:event.orders.checkinlists.edit" event=request.event.slug organizer=request.event.organizer.slug list=checkinlist.pk %}"
+                    class="btn btn-default">
+                <span class="fa fa-wrench"></span>
+                {% trans "Edit list configuration" %}
+            </a>
+        {% endif %}
+        <a href="{% url "control:event.orders.export" event=request.event.slug organizer=request.event.organizer.slug %}?identifier=checkinlistpdf&checkinlistpdf-list={{ checkinlist.pk }}"
+                class="btn btn-default" target="_blank">
+            <span class="fa fa-download"></span>
+            {% trans "PDF" %}
+        </a>
+        <a href="{% url "control:event.orders.export" event=request.event.slug organizer=request.event.organizer.slug %}?identifier=checkinlist&checkinlist-list={{ checkinlist.pk }}"
+                class="btn btn-default" target="_blank">
+            <span class="fa fa-download"></span>
+            {% trans "CSV" %}
+        </a>
+    {% endcaptureas %}
+    {% include "common/includes/header_nav.html" with header_title=header_title_var header_title_extra=header_extra_var header_component_link="pretixcontrol/event/component_link.html" %}
+
+    <div class="advanced-filter-search" data-advanced-filter-search>
+        <form class="filter-form advanced-filter-search-form" action="" method="get">
+            <div class="advanced-filter-search-bar">
+                <div class="input-group advanced-filter-search-query-group">
+                    <input id="id_user" type="text" name="user" class="form-control" placeholder="{% trans 'Search attendee…' %}" aria-label="{% trans 'Search attendee…' %}" value="{{ filter_form.user.value|default_if_none:'' }}" autofocus="autofocus">
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary" type="submit">
+                            <span class="fa fa-search" aria-hidden="true"></span>
+                            {% trans "Search" %}
+                        </button>
+                    </span>
+                </div>
+                <div class="advanced-filter-search-actions">
+                    <a href="{{ request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                        <span class="fa fa-eraser" aria-hidden="true"></span>
+                        <span class="sr-only">{% trans "Clear filters" %}</span>
+                    </a>
+                    <button type="button"
+                            class="btn btn-default advanced-filter-toggle"
+                            data-advanced-filter-toggle
+                            aria-controls="advanced-filter-advanced"
+                            aria-expanded="{% if advanced_filters_open %}true{% else %}false{% endif %}">
+                        <span class="fa fa-sliders" aria-hidden="true"></span>
+                        {% trans "Filters" %}
+                    </button>
+                </div>
             </div>
-            {% include "pretixcontrol/event/component_link.html" %}
-        </div>
-    </nav>
-    <form class="row filter-form" action="" method="get">
-        <div class="col-md-4 col-sm-6 col-xs-12">
-            {% bootstrap_field filter_form.user layout='inline' %}
-        </div>
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            {% bootstrap_field filter_form.status layout='inline' %}
-        </div>
-        <div class="col-md-3 col-sm-6 col-xs-12">
-            {% bootstrap_field filter_form.product layout='inline' %}
-        </div>
-        <div class="col-md-2 col-sm-6 col-xs-12">
-            {% include "eventyay_common/filter_actions.html" %}
-        </div>
-    </form>
+            <div id="advanced-filter-advanced"
+                 class="advanced-filter-advanced{% if not advanced_filters_open %} is-collapsed{% endif %}"
+                 data-advanced-filter-advanced
+                 {% if not advanced_filters_open %}hidden{% endif %}>
+                <div class="advanced-filter-grid">
+                    <div class="advanced-filter-field">
+                        {% bootstrap_field filter_form.status %}
+                    </div>
+                    <div class="advanced-filter-field">
+                        {% bootstrap_field filter_form.product %}
+                    </div>
+                </div>
+                <div class="advanced-filter-footer">
+                    <button class="btn btn-primary" type="submit">
+                        <span class="fa fa-filter" aria-hidden="true"></span>
+                        {% trans "Apply filters" %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
     <div data-ajax-results-region>
         {% if entries|length == 0 %}
             <div class="empty-collection">

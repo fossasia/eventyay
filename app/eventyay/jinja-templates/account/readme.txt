@@ -53,7 +53,7 @@ Django-Allauth Templates (allauth/account/):
   - Email verification notice page shown after signup or resend-verification actions
   - Rendered by django-allauth EmailVerificationSentView via template override
   - Keeps allauth default verification guidance text
-  - Includes a link back to Eventyay login page (`eventyay_common:auth.login`)
+  - Includes a link back to Eventyay login page (`auth.login`)
   - Uses boxed, centered layout via shared allauth.css container classes
 
 Shared Styling:

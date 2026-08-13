@@ -141,7 +141,7 @@
                     {% include "common/fragment_profile_dropdown.html" %}
                 {% else %}
                     <li>
-                        <a href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}" aria-label="{% trans 'Login' %}">
+                        <a href="{% url 'auth.login' %}?next={{ request.get_full_path|urlencode }}" aria-label="{% trans 'Login' %}">
                             <i class="fa fa-sign-in"></i> <span class="hidden-xs">{% trans "Login" %}</span>
                         </a>
                     </li>

@@ -28,6 +28,7 @@ from eventyay.control.views.organizer import InviteForm, TokenForm
 from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
+from ..video.traits_sync import sync_video_traits_for_team
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,7 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
             can_manage_gift_cards=True,
             can_change_organizer_settings=True,
             can_change_event_settings=True,
+            can_change_config=True,
             can_change_items=True,
             can_view_orders=True,
             can_change_orders=True,
@@ -93,15 +95,10 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
             can_change_exhibition_proposals=True,
             is_exhibition_reviewer=True,
             can_manage_social_media=True,
-            can_video_create_stages=True,
-            can_video_create_channels=True,
-            can_video_manage_announcements=True,
-            can_video_view_users=True,
-            can_video_manage_users=True,
-            can_video_manage_rooms=True,
-            can_video_manage_polls_questions=True,
+            can_video_manage_content=True,
+            can_video_moderate=True,
             can_video_manage_kiosks=True,
-            can_video_manage_configuration=True,
+            can_video_view_analytics=True,
         )
         # Trigger webhook in talk to create organiser in talk component
         team.members.add(self.request.user)
@@ -404,6 +401,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                 self.request,
                 _("Changes to the team '%(team_name)s' have been saved.") % {'team_name': team_name},
             )
+            sync_video_traits_for_team(team)
             return_next = self._validated_teams_return_next(self.request.POST.get('next'))
             if return_next:
                 return redirect(return_next)
@@ -470,6 +468,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             user=self.request.user,
             data={'email': user.email, 'user': user.pk},
         )
+        sync_video_traits_for_team(team, members=[user])
         messages.success(self.request, _('The member has been removed from the team.'))
         return self._redirect_to_team_permissions(team.pk)
 
@@ -528,6 +527,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             user=self.request.user,
             data={'email': user.email, 'user': user.pk},
         )
+        sync_video_traits_for_team(team, members=[user])
 
         send_team_invitation_email(
             user=user,

@@ -796,7 +796,7 @@ def _safe_redirect_back(request, organizer):
     return redirect(eventreverse(organizer, 'presale:organizer.index'))
 
 
-@method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
+@method_decorator(login_required(login_url='auth.login'), name='dispatch')
 class OrganizerFollow(OrganizerViewMixin, View):
     def post(self, request, *args, **kwargs):
         organizer = request.organizer
@@ -812,7 +812,7 @@ class OrganizerFollow(OrganizerViewMixin, View):
         return _safe_redirect_back(request, organizer)
 
 
-@method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
+@method_decorator(login_required(login_url='auth.login'), name='dispatch')
 class OrganizerUnfollow(OrganizerViewMixin, View):
     def post(self, request, *args, **kwargs):
         organizer = request.organizer

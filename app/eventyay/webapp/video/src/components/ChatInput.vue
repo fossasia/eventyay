@@ -22,10 +22,12 @@ bunt-input-outline-container.c-chat-input
 	.ui-background-blocker(v-if="autocompleteCoordinates", @click="closeAutocomplete")
 		.autocomplete-dropdown(:style="autocompleteCoordinates")
 			template(v-if="autocomplete.options")
-				template(v-for="option, index of autocomplete.options")
-					.user(:class="{selected: index === autocomplete.selected}", :title="option.profile.display_name", @mouseover="selectMention(index)", @click.stop="handleMention")
-						avatar(:user="option", :size="24")
-						.name {{ option.profile.display_name }}
+				.user(v-for="(option, index) of autocomplete.options", :key="option.id", :class="{selected: index === autocomplete.selected}", :title="option.profile.display_name", @mouseover="selectMention(index)", @click.stop="handleMention")
+					avatar(:user="option", :size="24")
+					.name {{ option.profile.display_name }}
+				button.load-more(v-if="autocomplete.nextPage", type="button", :disabled="autocomplete.loading", @click.stop="loadMoreMentionResults")
+					bunt-progress-circular(v-if="autocomplete.loading", size="small")
+					template(v-else) {{ $t('Exhibition:more:label') }}
 			bunt-progress-circular(v-else, size="large", :page="true")
 </template>
 <script>
@@ -45,6 +47,22 @@ import UploadButton from 'components/UploadButton'
 import { nativeToOps } from 'lib/emoji'
 
 const Delta = Quill.import('delta')
+const MENTION_BOUNDARIES = new Set([' ', '\n', '\t', '(', '[', '{', '<', '.', ',', ';', ':', '!', '?', '"', '\'', '`'])
+const MENTION_SEARCH_STOP_CHARS = new Set(['(', '[', '{', '<', '.', ',', ';', ':', '!', '?', '"', '\'', '`', '@'])
+const MENTION_SEARCH_DEBOUNCE_MS = 250
+
+function getMentionMatch(text) {
+	let index = text.length - 1
+	while (index >= 0 && !MENTION_SEARCH_STOP_CHARS.has(text[index])) {
+		index -= 1
+	}
+	if (index < 0 || text[index] !== '@') return null
+	if (index > 0 && !MENTION_BOUNDARIES.has(text[index - 1])) return null
+	return {
+		index,
+		search: text.slice(index + 1)
+	}
+}
 
 export default {
 	components: { Avatar, EmojiPickerButton, UploadButton },
@@ -56,7 +74,10 @@ export default {
 		return {
 			files: [],
 			uploading: false,
-			autocomplete: null
+			autocomplete: null,
+			autocompleteSearchSequence: 0,
+			autocompleteSearchTimeout: null,
+			autocompleteUpdateTimeout: null
 		}
 	},
 	computed: {
@@ -72,16 +93,10 @@ export default {
 		}
 	},
 	watch: {
-		async 'autocomplete.search'(search) {
-			// TODO debounce?
+		'autocomplete.search'(search) {
 			if (!this.autocomplete) return
 			if (this.autocomplete.type === 'mention') {
-				const { results } = await api.call('user.list.search', {search_term: search, page: 1, include_banned: false})
-				this.autocomplete.options = results
-				// if (results.length === 1) {
-				// 	this.autocomplete.selected = 0
-				// 	this.handleMention()
-				// }
+				this.scheduleMentionSearch(search)
 			}
 		}
 	},
@@ -127,42 +142,80 @@ export default {
 			}
 		}
 	},
+	unmounted() {
+		window.clearTimeout(this.autocompleteSearchTimeout)
+		window.clearTimeout(this.autocompleteUpdateTimeout)
+	},
 	methods: {
 		onTextChange(delta, oldDelta, source) {
 			if (source !== 'user') return
+			window.clearTimeout(this.autocompleteUpdateTimeout)
+			this.autocompleteUpdateTimeout = window.setTimeout(this.updateAutocomplete, 0)
+		},
+		updateAutocomplete() {
 			const selection = this.quill.getSelection()
 			if (selection === null) return
 			const caretPos = selection.index
-			const lookbackLength = Math.min(32, caretPos)
-			const lookbackOffset = caretPos - lookbackLength
-			const lookback = this.quill.getText(lookbackOffset, lookbackLength)
-			// only trigger when there is a space before @, except at the beginning of the message
-			const startsWithMention = lookbackOffset === 0 && lookback.startsWith('@')
-			const autocompleteCharIndex =
-				startsWithMention
-					? 0
-					: lookback.lastIndexOf(' @') // TODO any whitespace
-			if (autocompleteCharIndex > -1) {
+			const textBeforeCaret = this.quill.getText(0, caretPos)
+			const mentionMatch = getMentionMatch(textBeforeCaret)
+			if (mentionMatch) {
+				const mentionIndex = mentionMatch.index
 				this.autocomplete = {
 					type: 'mention',
-					search: lookback.slice(autocompleteCharIndex + 1 + !startsWithMention),
+					search: mentionMatch.search,
 					selection,
 					range: {
-						index: autocompleteCharIndex + lookbackOffset + !startsWithMention,
-						length: lookback.length
+						index: mentionIndex,
+						length: caretPos - mentionIndex
 					},
 					options: null,
-					selected: 0
+					selected: 0,
+					loading: false,
+					nextPage: null
 				}
 			} else {
 				this.autocomplete = null
 			}
 		},
+		scheduleMentionSearch(search) {
+			window.clearTimeout(this.autocompleteSearchTimeout)
+			const sequence = ++this.autocompleteSearchSequence
+			this.autocompleteSearchTimeout = window.setTimeout(() => {
+				this.loadMentionResults(search, 1, sequence)
+			}, MENTION_SEARCH_DEBOUNCE_MS)
+		},
+		async loadMentionResults(search, page, sequence = ++this.autocompleteSearchSequence) {
+			if (!this.autocomplete || this.autocomplete.type !== 'mention' || this.autocomplete.search !== search) return
+			this.autocomplete.loading = true
+			try {
+				const newPage = await api.call('user.list.search', {search_term: search, page, include_banned: false})
+				if (sequence !== this.autocompleteSearchSequence || !this.autocomplete || this.autocomplete.search !== search) return
+				this.autocomplete.options = page > 1
+					? [...(this.autocomplete.options || []), ...newPage.results]
+					: newPage.results
+				if (page === 1) {
+					this.autocomplete.selected = 0
+				}
+				this.autocomplete.nextPage = newPage.isLastPage ? null : page + 1
+			} finally {
+				if (this.autocomplete && sequence === this.autocompleteSearchSequence) {
+					this.autocomplete.loading = false
+				}
+			}
+		},
+		loadMoreMentionResults() {
+			if (!this.autocomplete?.nextPage || this.autocomplete.loading) return
+			this.loadMentionResults(this.autocomplete.search, this.autocomplete.nextPage)
+		},
 		onSelectionChange(range, oldRange, source) {
-			// TODO check mentions
+			if (source !== 'user') return
+			this.updateAutocomplete()
 		},
 		handleEnter() {
-			if (this.autocomplete) return this.handleMention()
+			if (this.autocomplete) {
+				if (this.autocomplete.options?.length) return this.handleMention()
+				this.closeAutocomplete()
+			}
 			return this.send()
 		},
 		handleTab() {
@@ -170,11 +223,11 @@ export default {
 			return true
 		},
 		handleArrayUp() {
-			if (!this.autocomplete) return true
+			if (!this.autocomplete?.options?.length) return true
 			this.autocomplete.selected = Math.max(0, this.autocomplete.selected - 1)
 		},
 		handleArrayDown() {
-			if (!this.autocomplete) return true
+			if (!this.autocomplete?.options?.length) return true
 			this.autocomplete.selected = Math.min(this.autocomplete.options.length - 1, this.autocomplete.selected + 1)
 		},
 		handleEscape() {
@@ -182,14 +235,17 @@ export default {
 			this.closeAutocomplete()
 		},
 		closeAutocomplete() {
+			window.clearTimeout(this.autocompleteSearchTimeout)
+			this.autocompleteSearchSequence++
 			this.quill.setSelection(this.autocomplete.selection)
 			this.autocomplete = null
 		},
 		selectMention(index) {
+			if (!this.autocomplete?.options?.length) return
 			this.autocomplete.selected = index
 		},
 		handleMention() {
-			if (!this.autocomplete) return true
+			if (!this.autocomplete?.options?.length) return true
 			const user = this.autocomplete.options[this.autocomplete.selected]
 			if (!user) return true
 			this.quill.setSelection(this.autocomplete.range.index, 0)
@@ -198,7 +254,10 @@ export default {
 				id: user.id,
 				name: user.profile.display_name
 			})
-			this.quill.setSelection(this.autocomplete.range.index + 1, 0)
+			this.quill.insertText(this.autocomplete.range.index + 1, ' ')
+			this.quill.setSelection(this.autocomplete.range.index + 2, 0)
+			window.clearTimeout(this.autocompleteSearchTimeout)
+			this.autocompleteSearchSequence++
 			this.autocomplete = null
 		},
 		send() {
@@ -371,9 +430,12 @@ export default {
 		width: 240px
 		display: flex
 		flex-direction: column
+		height: calc(32px * 20)
+		overflow-y: auto
 		.user
 			display: flex
 			height: 32px
+			flex-shrink: 0
 			align-items: center
 			gap: 8px
 			padding: 0 8px
@@ -387,4 +449,17 @@ export default {
 				padding: 1px
 			.name
 				ellipsis()
+		.load-more
+			height: 32px
+			flex-shrink: 0
+			border: 0
+			border-top: border-separator()
+			background: $clr-white
+			color: $clr-primary
+			cursor: pointer
+			font-family: $font-stack
+			font-size: 14px
+			font-weight: 500
+			&:disabled
+				cursor: default
 </style>
