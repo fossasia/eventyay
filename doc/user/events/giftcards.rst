@@ -1,3 +1,5 @@
+:orphan:
+
 .. _giftcards:
 
 Gift cards

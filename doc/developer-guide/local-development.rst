@@ -1,3 +1,5 @@
+.. _devsetup:
+
 Local development setup
 =======================
 
@@ -82,7 +84,7 @@ Install external dependencies on Debian or Ubuntu:
 
 For Nushell:
 
-.. code-block:: nu
+.. code-block:: text
 
    open deb-packages.txt | lines | sudo apt install ...$in
 

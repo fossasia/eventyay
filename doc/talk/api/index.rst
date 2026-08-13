@@ -1,3 +1,5 @@
+:orphan:
+
 .. _`talk-rest-api`:
 
 API documentation

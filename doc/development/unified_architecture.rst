@@ -1,5 +1,3 @@
-.. _unified_architecture:
-
 Unified eventyay Architecture
 =============================
 
@@ -316,4 +314,3 @@ See Also
 * :ref:`pluginsetup` - Creating plugins
 * :doc:`../api/index` - API documentation
 * :ref:`admindocs` - Administrator documentation
-

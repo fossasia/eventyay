@@ -21,8 +21,6 @@ Core Components
 .. automodule:: eventyay.eventyay_common.navigation
    :members:
 
-.. automodule:: eventyay.eventyay_common.base_tasks
-   :members:
    :exclude-members: ignore_result, reject_on_worker_lost, track_started, acks_late, acks_on_failure_or_timeout
 
 .. automodule:: eventyay.eventyay_common.billing_invoice

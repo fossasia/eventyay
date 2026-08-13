@@ -1,3 +1,5 @@
+:orphan:
+
 .. _`installation`:
 
 Installation guide
