@@ -1,11 +1,13 @@
-API guides
-==========
+.. _`rest-api-guides`:
 
 API Usage Guides
-----------------
+================
+
+This part of the documentation contains how-to guides on some special use cases of our API.
 
 .. toctree::
    :maxdepth: 2
+   :hidden:
 
-   ../../api/guides/order_lifecycle
-   ../../api/guides/custom_checkout
+   order_lifecycle
+   custom_checkout
