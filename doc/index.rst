@@ -1,52 +1,21 @@
 Eventyay Documentation
 ======================
 
-Welcome to the unified eventyay documentation! eventyay is an open-source event management platform built by FOSSASIA.
-
-This documentation covers:
-
-* **Ticket Component** - Ticket sales, registration, and event management
-* **Talk Component** - Call for Papers (CfP) and schedule management  
-* **Video Component** - Virtual event platform with video conferencing
-
-Ticket Component
-----------------
+Welcome to the Eventyay documentation. Eventyay is an open-source event
+management platform built by FOSSASIA. The documentation is organised by the
+task and audience you have, rather than by historical platform components.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Ticket Component
+   :caption: Documentation
 
-   user/index
-   admin/index
-   api/index
-   development/index
-   plugins/index
-   deployment/nginx_and_url_path_config
+   getting-started/index
+   user-guide/index
+   platform-administration/index
+   developer-guide/index
+   api-reference/index
+   reference/index
 
-Talk Component
---------------
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Talk Component
-
-   talk/user/index
-   talk/administrator/index
-   talk/api/index
-   talk/developer/index
-   talk/changelog
-   talk/support
-   talk/maintainer/release
-
-Video Component
----------------
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Video Component
-
-   video/frontend
-   video/integration/index
-   video/admin/index
-   video/developer/index
-   video/rest/index
+The existing feature guides cover ticketing, talks, schedules, video, badges,
+check-in, plugins, and attendee-facing event pages as parts of one Eventyay
+event workflow.

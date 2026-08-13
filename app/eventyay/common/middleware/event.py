@@ -2,14 +2,14 @@ import logging
 import traceback
 import zoneinfo
 from contextlib import suppress
-from urllib.parse import quote, urljoin
+from urllib.parse import urljoin
 
 import jwt
 from django.conf import settings
 from django.contrib.auth import login
 from django.db.models import OuterRef, Subquery
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect, reverse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import resolve
 from django.utils import timezone, translation
 from django.utils.translation.trans_real import language_code_re, parse_accept_lang_header
@@ -25,6 +25,7 @@ from eventyay.common.utils.language import (
     strict_match_language,
     validate_language,
 )
+from eventyay.common.views.helpers import build_login_url_with_next
 from eventyay.talk_rules.agenda import agenda_page_allowed_without_talks_published
 
 
@@ -53,19 +54,8 @@ def _agenda_featured_allowed_without_talks_published(url, request, event):
 
 
 def get_login_redirect(request):
-    params = request.GET.copy()
-    next_url = params.pop('next', None)
-    next_url = next_url[0] if next_url else request.path
-    params = request.GET.urlencode() if request.GET else ''
-    params = f'?next={quote(next_url)}&{params}'
-    # event = getattr(request, 'event', None)
-    # if event:
-    is_orga_path = request.path.startswith('/orga')
-    event = getattr(request, 'event', None)
-    if event and not is_orga_path: 
-        url = event.urls.login
-        return redirect(url.full() + params)
-    return redirect(reverse('eventyay_common:auth.login') + params)
+    next_url = request.GET.get('next') or request.get_full_path()
+    return redirect(build_login_url_with_next(next_url))
 
 
 class EventPermissionMiddleware:
