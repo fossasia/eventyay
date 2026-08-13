@@ -95,26 +95,27 @@ class StartPageView(TemplateView):
                     'testmode',
                     'startpage_visible',
                     'startpage_featured',
+                    'header_image',
                 )
             )
-            future_filter = Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today)
-            past_filter = Q(date_to__lt=today) | Q(date_to__isnull=True, date_from__lt=today)
+            future_filter = Q(date_to__date__gte=today) | Q(date_to__isnull=True, date_from__date__gte=today)
+            past_filter = Q(date_to__date__lt=today) | Q(date_to__isnull=True, date_from__date__lt=today)
 
-            featured_qs = base_qs.filter(startpage_featured=True).filter(future_filter).order_by('date_from')[:12]
+            featured_qs = base_qs.filter(startpage_featured=True).filter(future_filter).order_by('date_from')[:8]
             upcoming_qs = (
                 base_qs.filter(startpage_visible=True, startpage_featured=False)
                 .filter(future_filter)
-                .order_by('date_from')[:12]
+                .order_by('date_from')[:8]
             )
             past_qs = (
                 base_qs.filter(startpage_visible=True)
                 .filter(past_filter)
-                .order_by('-date_from')[:12]
+                .order_by('-date_from')[:8]
             )
 
-            ctx['featured_events'] = [e for e in featured_qs if not e.has_component_testmode][:8]
-            ctx['upcoming_events'] = [e for e in upcoming_qs if not e.has_component_testmode][:8]
-            ctx['past_events'] = [e for e in past_qs if not e.has_component_testmode][:8]
+            ctx['featured_events'] = list(featured_qs)
+            ctx['upcoming_events'] = list(upcoming_qs)
+            ctx['past_events'] = list(past_qs)
 
             followed_upcoming_events = []
             if self.request.user.is_authenticated:
@@ -127,9 +128,9 @@ class StartPageView(TemplateView):
                     )
                     .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
                     .filter(future_filter)
-                    .order_by('date_from')[:12]
+                    .order_by('date_from')[:8]
                 )
-                followed_upcoming_events = [e for e in followed_qs if not e.has_component_testmode][:8]
+                followed_upcoming_events = list(followed_qs)
 
             ctx['followed_upcoming_events'] = followed_upcoming_events
         return ctx
@@ -181,7 +182,7 @@ class UpcomingEventsView(PaginationMixin, ListView):
             .prefetch_related('_settings_objects')
             .filter(live=True)
             .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
+            .filter(Q(date_to__date__gte=today) | Q(date_to__isnull=True, date_from__date__gte=today))
             .filter(testmode=False)
             .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
             .order_by('date_from')
@@ -209,7 +210,7 @@ class PastEventsView(PaginationMixin, ListView):
             .prefetch_related('_settings_objects')
             .filter(live=True)
             .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            .filter(Q(date_to__lt=today) | Q(date_to__isnull=True, date_from__lt=today))
+            .filter(Q(date_to__date__lt=today) | Q(date_to__isnull=True, date_from__date__lt=today))
             .filter(testmode=False)
             .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
             .order_by('-date_from')
@@ -247,7 +248,7 @@ class FollowedEventsView(TemplateView):
                     live=True,
                 )
                 .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-                .filter(Q(date_to__gte=today) | Q(date_to__isnull=True, date_from__gte=today))
+                .filter(Q(date_to__date__gte=today) | Q(date_to__isnull=True, date_from__date__gte=today))
                 .filter(testmode=False)
                 .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
                 .select_related('organizer')
