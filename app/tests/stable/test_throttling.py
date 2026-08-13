@@ -1,7 +1,6 @@
 import pytest
 from django.conf import settings
 from django.core.cache import caches
-from django.test import override_settings
 
 LOC_MEM_CACHE = {
     **settings.CACHES,
@@ -13,14 +12,16 @@ LOC_MEM_CACHE = {
 
 
 @pytest.fixture(autouse=True)
-def clear_cache():
+def setup_throttle_cache(settings):
+    # Override settings for all tests in this module
+    settings.CACHES = LOC_MEM_CACHE
     caches['default'].clear()
     yield
     caches['default'].clear()
 
 
+
 @pytest.mark.django_db
-@override_settings(CACHES=LOC_MEM_CACHE)
 def test_block_404_middleware(client):
     """
     Test that Block404Middleware triggers HTTP 429 after 30 404 requests
@@ -39,7 +40,6 @@ def test_block_404_middleware(client):
 
 
 @pytest.mark.django_db
-@override_settings(CACHES=LOC_MEM_CACHE)
 def test_public_stream_throttle_anonymous(client, event, room):
     """
     Test rate-limit enforcement on GET /api/v1/organizers/{event.organizer.slug}/events/{event.slug}/rooms/{room.pk}/streams/current/.
@@ -59,7 +59,6 @@ def test_public_stream_throttle_anonymous(client, event, room):
 
 
 @pytest.mark.django_db
-@override_settings(CACHES=LOC_MEM_CACHE)
 def test_public_stream_throttle_authenticated(authenticated_client, event, room):
     """
     Test that authenticated users are NOT throttled by the PublicStreamThrottle
@@ -74,7 +73,6 @@ def test_public_stream_throttle_authenticated(authenticated_client, event, room)
 
 
 @pytest.mark.django_db
-@override_settings(CACHES=LOC_MEM_CACHE)
 def test_block_404_middleware_authenticated(authenticated_client):
     """
     Ensure Block404Middleware throttles authenticated users as well.
