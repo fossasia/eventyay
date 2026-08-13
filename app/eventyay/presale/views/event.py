@@ -740,10 +740,10 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             )
             attendees_preview = [
                 {
-                    'name': pos.attendee_name or pos.order.email,
-                    'email': pos.attendee_email or pos.order.email,
+                    'name': pos.attendee_name,
                 }
                 for pos in preview_positions
+                if pos.attendee_name
             ]
 
         return {

@@ -22,6 +22,18 @@
     {% compress css %}
         <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/meetup.css' %}" />
     {% endcompress %}
+    {% if ev.location or venue_map_location %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/venue-map.css' %}" />
+        {% endcompress %}
+    {% endif %}
+    {% if venue_map_location %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
+        {% endcompress %}
+        <script type="text/javascript" src="{% static 'leaflet/leaflet.js' %}"></script>
+        <script type="module" src="{% static 'pretixpresale/js/ui/public_geo.js' %}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block testmode_alert %}{% endblock testmode_alert %}
@@ -37,13 +49,6 @@
     {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
     {% include "pretixpresale/event/fragment_testmode_alert.html" %}
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert {{ message.tags }}">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
 
     <div class="meetup-layout">
         <div>
@@ -76,16 +81,20 @@
             {% endif %}
 
             <div class="meetup-registered-section">
-                <div class="meetup-registered-header">
-                    <span class="meetup-subheading-label">
-                        {% trans "Organised by" %}
-                    </span>
-                </div>
+                <h2 class="meetup-section-heading">{% trans "Organised by" %}</h2>
                 <div class="meetup-attendees-grid">
                     <div class="meetup-attendee-card">
-                        <div class="meetup-attendee-avatar">
-                            {{ request.organizer.name|slice:":2" }}
-                        </div>
+                        {% if organizer_logo %}
+                            {% if organizer_logo|lower|slice:"-4:" == ".gif" or organizer_logo|lower|slice:"-4:" == ".svg" %}
+                                <img loading="lazy" src="{{ organizer_logo_url }}" alt="{{ request.organizer.name }}" class="meetup-attendee-avatar-img">
+                            {% else %}
+                                <img loading="lazy" src="{{ organizer_logo|thumb:'500x500' }}" alt="{{ request.organizer.name }}" class="meetup-attendee-avatar-img">
+                            {% endif %}
+                        {% else %}
+                            <div class="meetup-attendee-avatar">
+                                {{ request.organizer.name|slice:":2" }}
+                            </div>
+                        {% endif %}
                         <div class="meetup-attendee-info">
                             <div class="meetup-attendee-name">{{ request.organizer.name }}</div>
                             <div class="meetup-attendee-role">{% trans "Organizer" %}</div>
@@ -93,6 +102,31 @@
                     </div>
                 </div>
             </div>
+
+            {% if ev.location or venue_map_location %}
+                <div class="meetup-section-divider"></div>
+                <div class="meetup-registered-section">
+                    <h2 class="meetup-section-heading">{% trans "Location" %}</h2>
+                    {% if ev.location %}
+                        <div class="meetup-location-address">
+                            <p>{{ ev.location|event_localize|linebreaksbr }}</p>
+                        </div>
+                    {% endif %}
+                    {% if venue_map_location %}
+                        <div class="public-geodata-group meetup-location-map"
+                             data-lat="{{ venue_map_location.lat }}"
+                             data-lon="{{ venue_map_location.lon }}"
+                             data-tiles="{{ global_settings.leaflet_tiles }}"
+                             data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
+                             data-icon="{% static 'leaflet/images/marker-icon.png' %}"
+                             data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
+                            <div class="public-geodata-map meetup-map-container" aria-hidden="true"></div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+
 
             {% eventsignal event "eventyay.presale.signals.front_page_bottom" subevent=subevent request=request %}
         </div>
@@ -128,7 +162,7 @@
                             <strong>{{ ev.date_from|date:"l, N j, Y" }}</strong>
                             {% if event.settings.show_times %}
                                 <br>
-                                <span>{{ ev.date_from|date:"TIME_FORMAT" }}</span>{% if event.settings.show_date_to and ev.date_to %} &ndash; <span>{{ ev.date_to|date:"TIME_FORMAT" }}</span>{% endif %} ({{ request.event.settings.timezone }})
+                                <span>{{ ev.date_from|date:"H:i" }}</span>{% if event.settings.show_date_to and ev.date_to %} &ndash; <span>{{ ev.date_to|date:"H:i" }}</span>{% endif %} ({{ request.event.settings.timezone }})
                             {% endif %}
                             <br>
                             {% if subevent %}
@@ -136,7 +170,7 @@
                             {% else %}
                                 <a href="{% eventurl event "presale:event.ical.download" %}" class="text-muted meetup-ical-link">
                             {% endif %}
-                                <i class="fa fa-calendar" aria-hidden="true"></i> {% trans "Add to Calendar" %}
+                                <i class="fa fa-calendar-plus-o" aria-hidden="true"></i> {% trans "Add to Calendar" %}
                             </a>
                         </div>
                     </div>
@@ -159,15 +193,6 @@
                         </div>
                     {% endif %}
 
-                    {% if venue_map_location %}
-                        <div class="meetup-venue-map-container">
-                            <div id="venue-map"
-                                 class="meetup-venue-map"
-                                 data-lat="{{ venue_map_location.lat }}"
-                                 data-lon="{{ venue_map_location.lon }}">
-                            </div>
-                        </div>
-                    {% endif %}
 
                     <hr class="meetup-card-divider">
 
@@ -196,7 +221,6 @@
                             {% endif %}
                         </div>
                     {% endif %}
-
                 </div>
             </div>
         </div>

@@ -17,7 +17,7 @@
         <div class="meetup-rsvp-block">
             <div class="meetup-rsvp-text">
                 <strong>{% trans "Reserve your spot" %}</strong><br>
-                <small>{% trans "Click the button below to register for this event instantly." %}</small>
+                <small>{% trans "Click the button below to register for this event." %}</small>
             </div>
             <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}" class="meetup-rsvp-form">
                 {% csrf_token %}
