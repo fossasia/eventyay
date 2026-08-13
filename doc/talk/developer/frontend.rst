@@ -337,5 +337,4 @@ See Also
 - :doc:`/development/frontend` - Complete frontend documentation
 - :doc:`/video/frontend` - Video frontend documentation
 - :doc:`/development/api/index` - Backend API reference
-- :doc:`/talk/developer/setup` - Talk development setup
-
+- :doc:`/developer-guide/local-development` - Unified local development setup
