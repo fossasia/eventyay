@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import smtplib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from urllib.parse import urlparse
 
@@ -1415,7 +1415,7 @@ class VideoAccessAuthenticator(View):
 
     def generate_token_url(self, request, traits, resume_suffix: str | None = None):
         uid_token = encode_email(request.user.email)
-        iat = datetime.now(tz.utc)
+        iat = datetime.now(timezone.utc)
         exp = iat + dt.timedelta(days=1)
         payload = {
             'iss': self.request.event.settings.venueless_issuer,
