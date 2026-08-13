@@ -114,13 +114,15 @@ class MeetupRsvpView(EventViewMixin, View):
         return view.get(request, *self.args, **self.kwargs)
 
     def _create_rsvp_order(self, request, product, email, name):
-        with scope(event=request.event), transaction.atomic():
-            quota = product.quotas.select_for_update().first()
+        # Check quota availability before creating the order
+        with scope(event=request.event):
+            quota = product.quotas.first()
             if quota is not None:
                 avail, _ = quota.availability()
                 if avail != Quota.AVAILABILITY_OK:
                     return None
 
+        with scope(event=request.event), transaction.atomic():
             order = Order(
                 status=Order.STATUS_PENDING,
                 event=request.event,

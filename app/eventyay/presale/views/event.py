@@ -720,19 +720,10 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         else:
             already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
 
-        rsvp_registration_closed = False
-        with scope(event=event):
-            quota = event.quotas.first()
-            if quota and quota.size is not None:
-                avail, _ = quota.availability()
-                rsvp_registration_closed = avail != Quota.AVAILABILITY_OK
-
         return {
             'is_meetup_event': True,
             'attendee_already_registered': already_registered,
             'rsvp_guest_form': getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm(),
-            'rsvp_registration_closed': rsvp_registration_closed,
-            'guest_checkout_allowed': not event.settings.require_registered_account_for_tickets,
         }
 
     def get_context_data(self, **kwargs):
@@ -1133,33 +1124,24 @@ class JoinOnlineVideoView(EventViewMixin, View):
         return redirect_or_json_redirect(request, redirect_url)
 
     def validate_access(self, request, *args, **kwargs):
-        session_order_code = (
-            request.session.get(MEETUP_RSVP_SESSION_KEY.format(self.request.event.pk))
-            if is_meetup_event(self.request.event)
-            else None
-        )
-        if not self.request.user.is_authenticated and not session_order_code:
+        if not self.request.user.is_authenticated:
             return False, None, None
         
         allowed_statuses = [Order.STATUS_PAID]
         if self.request.event.settings.venueless_allow_pending:
             allowed_statuses.append(Order.STATUS_PENDING)
 
+        # Get all PAID orders of customer which belong to this event
         with scope(event=self.request.event):
-            filters = Q(event=self.request.event) & Q(status__in=allowed_statuses)
-            if self.request.user.is_authenticated:
-                user_filter = Q(email__iexact=self.request.user.email) | Q(all_positions__attendee_email__iexact=self.request.user.email)
-                if session_order_code:
-                    filters &= (user_filter | Q(code=session_order_code))
-                else:
-                    filters &= user_filter
-            elif session_order_code:
-                filters &= Q(code=session_order_code)
-            else:
-                return False, None, None
-
             order_list = list(
-                Order.objects.filter(filters)
+                Order.objects.filter(
+                    Q(event=self.request.event)
+                    & (
+                        Q(email__iexact=self.request.user.email)
+                        | Q(all_positions__attendee_email__iexact=self.request.user.email)
+                    )
+                    & Q(status__in=allowed_statuses)
+                )
                 .select_related('event')
                 .order_by('-datetime')
                 .distinct()
