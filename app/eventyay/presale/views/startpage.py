@@ -212,7 +212,7 @@ class PastEventsView(PaginationMixin, ListView):
         return ctx
 
 
-@method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
+@method_decorator(login_required(login_url='auth.login'), name='dispatch')
 @method_decorator(scopes_disabled(), name='dispatch')
 class FollowedEventsView(TemplateView):
     template_name = 'pretixpresale/events/followed.html'

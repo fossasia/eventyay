@@ -54,8 +54,9 @@ The eventyay API version *can* change in a new release, but does not *have* to
 change: sometimes, a eventyay release will not contain any API changes, and it
 would be needlessly annoying to users to still increment the API version. So,
 while eventyay uses a calendar-based API versioning scheme, and will continue to
-note relevant API changes in the :ref:`changelog`, there is also a separate
-:ref:`api-changelog` listing API versions to help you update your tokens.
+note relevant API changes in the `Eventyay GitHub releases
+<https://github.com/fossasia/eventyay/releases>`_, which list API changes when
+they affect integrations.
 
 The following changes do **not** lead to a new API version release, so your
 client should be able to deal with them gracefully:

@@ -17,7 +17,8 @@ Updates
 This guide assumes that you followed the :ref:`installation` documentation.
 
 We try to make upgrades as painless as possible. To this end, we provide
-:ref:`changelog` and our release `blog post`_. Please read them – they contain
+the `Eventyay GitHub releases <https://github.com/fossasia/eventyay/releases>`_
+and our release `blog post`_. Please read them – they contain
 important upgrade notes and warnings. Also, make sure you have a current
 backup.
 
