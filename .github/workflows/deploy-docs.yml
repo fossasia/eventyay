@@ -62,7 +62,7 @@ jobs:
           enable-cache: true
 
       - name: Install Python dependencies
-        run: uv sync --group docs
+        run: uv sync --extra docs
         working-directory: ./app
 
       - name: Build documentation

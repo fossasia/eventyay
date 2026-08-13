@@ -154,7 +154,7 @@ class DashboardOrganizerListView(PermissionRequired, TemplateView):
 
 class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, TemplateView):
     template_name = 'orga/event/dashboard.html'
-    permission_required = 'base.orga_access_event'
+    permission_required = 'base.talk_orga_access_event'
 
     def get_cfp_tiles(self, _now, can_change_submissions=False):
         result = []
