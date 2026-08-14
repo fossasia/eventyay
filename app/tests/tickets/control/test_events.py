@@ -773,6 +773,50 @@ class EventsTest(SoupTest):
             ev = Event.objects.get(slug='reordered-lang-event')
             assert ev.settings.locale == 'de'
 
+    def test_create_event_without_locales_returns_validation_error(self):
+        response = self.client.post(
+            '/common/events/add',
+            {
+                'foundation-organizer': self.orga1.pk,
+                'basics-locale': 'en',
+                'basics-name_0': 'No Locales',
+                'basics-slug': 'no-locales-test',
+                'basics-date_from_0': '2016-12-27',
+                'basics-date_from_1': '10:00:00',
+                'basics-date_to_0': '2016-12-30',
+                'basics-date_to_1': '19:00:00',
+                'basics-location_0': 'Berlin',
+                'basics-currency': 'EUR',
+                'basics-timezone': 'Europe/Berlin',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        foundation_form = response.context['foundation_form']
+        self.assertIn('locales', foundation_form.errors)
+
+    def test_create_event_defaults_locale_from_selected_languages(self):
+        response = self.client.post(
+            '/common/events/add',
+            {
+                'foundation-organizer': self.orga1.pk,
+                'foundation-locales': 'en',
+                'basics-locale': '',
+                'basics-name_0': 'Default English',
+                'basics-slug': 'default-english-event',
+                'basics-date_from_0': '2016-12-27',
+                'basics-date_from_1': '10:00:00',
+                'basics-date_to_0': '2016-12-30',
+                'basics-date_to_1': '19:00:00',
+                'basics-location_0': 'Berlin',
+                'basics-currency': 'EUR',
+                'basics-timezone': 'Europe/Berlin',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        with scopes_disabled():
+            ev = Event.objects.get(slug='default-english-event')
+            assert ev.settings.locale == 'en'
+
     def test_create_duplicate_slug(self):
         doc = self.post_doc(
             '/control/events/add',

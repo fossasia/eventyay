@@ -178,6 +178,7 @@ class EventWizardBasicsForm(I18nModelForm):
     locale = forms.ChoiceField(
         choices=settings.LANGUAGES,
         label=_('Default language'),
+        required=False,
     )
     tax_rate = forms.DecimalField(
         label=_('Sales tax rate'),
@@ -286,6 +287,8 @@ class EventWizardBasicsForm(I18nModelForm):
 
     def clean(self):
         data = super().clean()
+        if not data.get('locale') and self.locales:
+            data['locale'] = self.locales[0]
         if data.get('locale') not in self.locales:
             if self.locales:
                 data['locale'] = self.locales[0]
