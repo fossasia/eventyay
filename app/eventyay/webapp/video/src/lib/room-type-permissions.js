@@ -1,9 +1,12 @@
-export function isRoomTypeAvailable(typeId, hasPermission) {
+export function isRoomTypeAvailable(typeId, hasPermission, isAdminMode = false) {
 	if (typeId === 'stage') {
 		return hasPermission('world:rooms.create.stage')
 	}
 	if (typeId === 'channel-bbb' || typeId === 'channel-janus' || typeId === 'channel-zoom') {
 		return hasPermission('world:rooms.create.bbb')
+	}
+	if (typeId === 'channel-jitsi') {
+		return isAdminMode && hasPermission('world:rooms.create.jitsi')
 	}
 	if (typeId === 'channel-text') {
 		return hasPermission('world:rooms.create.chat')
@@ -24,7 +27,6 @@ export function isRoomTypeAvailable(typeId, hasPermission) {
 	return true
 }
 
-export function filterRoomTypesByPermission(roomTypes, hasPermission) {
-	return roomTypes.filter(type => isRoomTypeAvailable(type.id, hasPermission))
+export function filterRoomTypesByPermission(roomTypes, hasPermission, isAdminMode = false) {
+	return roomTypes.filter(type => isRoomTypeAvailable(type.id, hasPermission, isAdminMode))
 }
-

@@ -1,10 +1,17 @@
+from urllib.parse import parse_qs, urlparse
+
 import pytest
+from django.urls import reverse
+
+
+def shared_login_url(next_url):
+    return f'{reverse("auth.login")}?next={next_url}'
 
 
 @pytest.mark.django_db
 def test_can_login_with_email(speaker, client, event):
     response = client.post(
-        event.urls.login,
+        shared_login_url(event.urls.user_submissions),
         data={"login_email": "jane@speaker.org", "login_password": "speakerpwd1!"},
         follow=True,
     )
@@ -15,7 +22,7 @@ def test_can_login_with_email(speaker, client, event):
 @pytest.mark.django_db
 def test_cannot_login_with_incorrect_email(client, event, speaker):
     response = client.post(
-        event.urls.login,
+        shared_login_url(event.urls.user_submissions),
         data={"login_email": "jane001@me.space", "login_password": "speakerpwd1!"},
         follow=True,
     )
@@ -60,7 +67,7 @@ def test_can_reset_password_by_email(speaker, client, event):
     speaker.refresh_from_db()
     assert not speaker.pw_reset_token
     response = client.post(
-        event.urls.login,
+        shared_login_url(event.urls.user_submissions),
         data={"login_email": speaker.email, "login_password": "mynewpassword1!"},
         follow=True,
     )
@@ -98,7 +105,7 @@ def test_cannot_reset_password_with_incorrect_input(speaker, client, event):
     speaker.refresh_from_db()
     assert speaker.pw_reset_token
     response = client.post(
-        event.urls.login,
+        shared_login_url(event.urls.user_submissions),
         data={"login_email": speaker.email, "login_password": "mynewpassword1!"},
         follow=True,
     )
@@ -126,7 +133,7 @@ def test_cannot_reset_password_to_insecure_password(speaker, client, event):
     speaker.refresh_from_db()
     assert speaker.pw_reset_token
     response = client.post(
-        event.urls.login,
+        shared_login_url(event.urls.user_submissions),
         data={"login_email": speaker.email, "login_password": "mynewpassword1!"},
         follow=True,
     )
@@ -143,3 +150,13 @@ def test_cannot_reset_password_without_account(speaker, client, event):
         follow=True,
     )
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_event_login_redirects_to_shared_login(client, event):
+    response = client.get(event.urls.login)
+
+    assert response.status_code == 302
+    parsed = urlparse(response.url)
+    assert parsed.path == reverse("auth.login")
+    assert parse_qs(parsed.query) == {"next": [str(event.urls.user_submissions)]}

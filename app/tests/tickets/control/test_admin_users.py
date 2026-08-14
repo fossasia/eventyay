@@ -67,14 +67,14 @@ class SpamLoginBlockingTest(TestCase):
 
     def test_normal_user_can_login(self):
         response = self.client.post(
-            reverse('eventyay_common:auth.login'),
+            reverse('auth.login'),
             {'email': 'spam@example.com', 'password': 'good_pw_123!'},
         )
         self.assertEqual(response.status_code, 302)
 
     def test_spam_user_blocked(self):
         response = self.client.post(
-            reverse('eventyay_common:auth.login'),
+            reverse('auth.login'),
             {'email': 'markedspam@example.com', 'password': 'good_pw_123!'},
         )
         self.assertEqual(response.status_code, 200)

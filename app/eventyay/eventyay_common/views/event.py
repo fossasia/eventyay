@@ -497,7 +497,15 @@ class EventCreateView(TemplateView):
         has_permission = check_create_permission(self.request)
         final_is_video_creation = foundation_data.get('is_video_creation', True) and has_permission
 
-        with transaction.atomic(), language(basics_data['locale']):
+        # Derive the default locale: use whatever the form provides (set by the
+        # hidden input that JS syncs from the language-order tray), but always fall
+        # back to the first selected locale so the UI change is backward-compatible.
+        locales_list = foundation_data['locales']
+        chosen_locale = basics_data.get('locale') or (locales_list[0] if locales_list else 'en')
+        if chosen_locale not in locales_list and locales_list:
+            chosen_locale = locales_list[0]
+
+        with transaction.atomic(), language(chosen_locale):
             event = basics_form.instance
             event.organizer = foundation_data['organizer']
 
@@ -534,7 +542,7 @@ class EventCreateView(TemplateView):
             event.update_language_configuration(
                 locales=foundation_data['locales'],
                 content_locales=content_locales,
-                default_locale=basics_data['locale']
+                default_locale=chosen_locale,
             )
             event.refresh_from_db()
             cfp = event.cfp
@@ -555,21 +563,7 @@ class EventCreateView(TemplateView):
             create_for = EventCreatedFor.BOTH.value
             event.settings.set('create_for', create_for)
 
-            # Smart defaults work for all event types
-            if create_for in [EventCreatedFor.BOTH.value, EventCreatedFor.TICKET.value, EventCreatedFor.TALK.value]:
-                event_dict = {
-                    'organiser_slug': event.organizer.slug,
-                    'name': event.name.data,
-                    'slug': event.slug,
-                    'is_public': event.live,
-                    'date_from': str(event.date_from),
-                    'date_to': str(event.date_to),
-                    'timezone': str(basics_data.get('timezone')),
-                    'locale': event.settings.locale,
-                    'locales': event.settings.locales,
-                    'content_locales': content_locales,
-                    'is_video_creation': final_is_video_creation,
-                }
+
 
             event.log_action(
                     action='eventyay.event.added',

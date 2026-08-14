@@ -22,8 +22,8 @@ def is_ajax_request(request):
 
 
 def build_login_url_with_next(next_path):
-    """Build ``/common/login/?next=…`` for post-login return navigation."""
-    return f'{reverse("eventyay_common:auth.login")}?{urlencode({"next": next_path})}'
+    """Build ``/login/?next=…`` for post-login return navigation."""
+    return f'{reverse("auth.login")}?{urlencode({"next": next_path})}'
 
 
 def login_redirect_with_next(request, next_path=None):

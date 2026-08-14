@@ -198,11 +198,7 @@
                                 </div>
                             </details>
                         {% elif not subheader_login_link_disabled and not is_html_export %}
-                            {% if request.event %}
-                                <a href="{{ request.event.urls.login }}?next={{ request.path|urlencode }}">login</a>
-                            {% else %}
-                                <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}">login</a>
-                            {% endif %}
+                            <a href="{% url 'auth.login' %}?next={{ request.path|urlencode }}">login</a>
                         {% endif %}
                     </div>
                 </h1>
