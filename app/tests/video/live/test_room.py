@@ -469,6 +469,82 @@ async def test_viewers(world, stream_room):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
+async def test_private_viewers_visible_to_admin(world, stream_room):
+    token = get_token(world, ["admin"], uid="admin")
+
+    async with world_communicator(token=token) as c1, world_communicator(
+        client_id="private-guest"
+    ) as c2:
+        u2 = await database_sync_to_async(User.objects.get)(client_id="private-guest")
+        u2.show_publicly = False
+        await database_sync_to_async(u2.save)(update_fields=["show_publicly"])
+
+        await c2.send_json_to(["room.enter", 123, {"room": str(stream_room.pk)}])
+        response = await c2.receive_json_from()
+        assert response[0] == "success"
+        await c1.receive_json_from()  # world.user_count_change
+        await c2.receive_json_from()  # world.user_count_change
+
+        await c1.send_json_to(["room.enter", 123, {"room": str(stream_room.pk)}])
+        response = await c1.receive_json_from()
+        assert response[0] == "success"
+        viewers = response[2]["viewers"]
+        assert str(u2.pk) in {str(viewer["id"]) for viewer in viewers}
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_private_viewer_events_hidden_from_non_organizer(world, stream_room):
+    admin_token = get_token(world, ["admin"], uid="admin")
+    viewer_token = get_token(world, ["moderator"], uid="viewer")
+
+    async with world_communicator(token=admin_token) as admin, world_communicator(
+        token=viewer_token
+    ) as viewer, world_communicator(client_id="private-guest") as guest:
+        admin_user = await database_sync_to_async(User.objects.get)(token_id="admin")
+        admin_user.show_publicly = True
+        await database_sync_to_async(admin_user.save)(update_fields=["show_publicly"])
+
+        guest_user = await database_sync_to_async(User.objects.get)(
+            client_id="private-guest"
+        )
+        guest_user.show_publicly = False
+        await database_sync_to_async(guest_user.save)(update_fields=["show_publicly"])
+
+        await admin.send_json_to(["room.enter", 123, {"room": str(stream_room.pk)}])
+        response = await admin.receive_json_from()
+        assert response[0] == "success"
+        await admin.receive_json_from()  # world.user_count_change
+        await viewer.receive_json_from()  # world.user_count_change
+        await guest.receive_json_from()  # world.user_count_change
+
+        await viewer.send_json_to(["room.enter", 123, {"room": str(stream_room.pk)}])
+        response = await viewer.receive_json_from()
+        assert response[0] == "success"
+        assert response[2]["viewers"]
+        await admin.receive_json_from()  # room.viewer.added
+        await admin.receive_json_from()  # world.user_count_change
+        await viewer.receive_json_from()  # world.user_count_change
+        await guest.receive_json_from()  # world.user_count_change
+
+        await guest.send_json_to(["room.enter", 123, {"room": str(stream_room.pk)}])
+        response = await guest.receive_json_from()
+        assert response[0] == "success"
+
+        response = await admin.receive_json_from()
+        assert response[0] == "room.viewer.added"
+        assert str(response[1]["user"]["id"]) == str(guest_user.pk)
+
+        await admin.receive_json_from()  # world.user_count_change
+        await viewer.receive_json_from()  # world.user_count_change
+        await guest.receive_json_from()  # world.user_count_change
+
+        with pytest.raises(asyncio.TimeoutError):
+            await viewer.receive_json_from()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
 @override_settings(SHORT_URL="https://vnls.io")
 async def test_invite_anonymous_link(world, stream_room):
     async with world_communicator(token=get_token(world, ["admin"])) as c1:

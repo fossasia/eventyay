@@ -325,6 +325,8 @@ class AuthModule(BaseModule):
                                     "trait_badges_map"
                                 )
                             ),
+                            "_show_publicly": True,
+                            "_room": str(room_id),
                         },
                     )
                 else:
@@ -333,6 +335,9 @@ class AuthModule(BaseModule):
                         {
                             "type": "room.viewer.removed",
                             "user_id": str(self.consumer.user.id),
+                            "_show_publicly": False,
+                            "_visibility_changed": True,
+                            "_room": str(room_id),
                         },
                     )
 
@@ -460,6 +465,9 @@ class AuthModule(BaseModule):
                     permission=Permission.EVENT_USERS_MANAGE,
                 ),
                 trait_badges_map=self._event_config().get("trait_badges_map"),
+                include_private=await self.consumer.event.has_organizer_role_async(
+                    user=self.consumer.user,
+                ),
             )
         await self.consumer.send_success(result)
 

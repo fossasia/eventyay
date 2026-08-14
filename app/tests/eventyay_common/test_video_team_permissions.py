@@ -299,6 +299,25 @@ def test_admin_role_includes_kiosks_and_invite(event):
     )
 
 
+@pytest.mark.django_db
+def test_empty_organizer_trait_grant_does_not_make_attendees_organizers(event):
+    event.trait_grants = {
+        'admin': ['admin'],
+        'attendee': ['attendee'],
+        'scheduleuser': [],
+    }
+    event.save(update_fields=['trait_grants'])
+
+    attendee = User.objects.create(event=event, traits=['attendee'])
+    organizer = User.objects.create(event=event, traits=['attendee'])
+    organizer.event_grants.create(event=event, role='scheduleuser')
+
+    assert not event.has_organizer_role_implicit(traits=['attendee'])
+    assert not event.has_organizer_role(user=attendee)
+    assert event.has_organizer_role_implicit(traits=['admin'])
+    assert event.has_organizer_role(user=organizer)
+
+
 def test_default_roles_are_shared_between_event_and_world():
     assert event_models.default_roles is default_roles
     assert world_models.default_roles is default_roles
