@@ -78,9 +78,6 @@ Public Agenda
    :members:
    :no-index:
 
-.. automodule:: eventyay.agenda.permissions
-   :members:
-
 .. automodule:: eventyay.agenda.recording
    :members:
    :no-index:
@@ -291,4 +288,3 @@ Template Tags
 
 .. automodule:: eventyay.common.templatetags.times
    :members:
-
