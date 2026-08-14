@@ -1,6 +1,9 @@
 (function () {
     "use strict";
 
+    var currentLocaleOrder = [];
+    var draggedCode = null;
+
     function organizerSlugOptions() {
         var data = document.getElementById("event-create-organizers");
         if (!data) {
@@ -15,7 +18,7 @@
         }
     }
 
-    function selectedActiveLanguages() {
+    function getCheckedLocalesFromDOM() {
         var hiddenSelect = document.querySelector('select[name="foundation-locales"]');
         if (hiddenSelect) {
             return Array.from(hiddenSelect.selectedOptions).map(function (option) {
@@ -29,6 +32,34 @@
         );
     }
 
+    function updateLocaleOrderList() {
+        var checkedLocales = getCheckedLocalesFromDOM();
+        var checkedSet = new Set(checkedLocales);
+
+        currentLocaleOrder = currentLocaleOrder.filter(function (code) {
+            return checkedSet.has(code);
+        });
+
+        if (currentLocaleOrder.length === 0 && checkedLocales.length > 0) {
+            var initialDefaultInput = document.getElementById("id_basics-locale");
+            var initialDefault = initialDefaultInput ? initialDefaultInput.value : "";
+            if (initialDefault && checkedSet.has(initialDefault)) {
+                currentLocaleOrder.push(initialDefault);
+            }
+        }
+
+        checkedLocales.forEach(function (code) {
+            if (currentLocaleOrder.indexOf(code) === -1) {
+                currentLocaleOrder.push(code);
+            }
+        });
+    }
+
+    function selectedActiveLanguages() {
+        updateLocaleOrderList();
+        return currentLocaleOrder.slice();
+    }
+
     function isActiveLanguageControl(target) {
         if (target.matches('input[name="foundation-locales"], select[name="foundation-locales"]')) {
             return true;
@@ -37,28 +68,177 @@
         return Boolean(wrapper && wrapper.querySelector('select[name="foundation-locales"]'));
     }
 
-    function updateDefaultLanguageChoices() {
-        var defaultLanguage = document.getElementById("id_basics-locale");
-        if (!defaultLanguage) {
+    function getLanguageLabel(code) {
+        var cell = document.querySelector('.language-grid-cell input[name="foundation-locales"][value="' + code + '"]');
+        if (cell) {
+            var gridCell = cell.closest('.language-grid-cell');
+            if (gridCell && gridCell.dataset.languageName) {
+                return gridCell.dataset.languageName;
+            }
+            var label = gridCell ? gridCell.querySelector('label') : null;
+            if (label) {
+                return label.textContent.trim();
+            }
+        }
+        return code;
+    }
+
+    function renderLanguageBadges() {
+        var badgesContainer = document.querySelector('[data-language-grid-badges]');
+        if (!badgesContainer) {
             return;
         }
+        badgesContainer.dataset.customBadges = "true";
 
-        var activeLanguages = selectedActiveLanguages();
-        var activeSet = new Set(activeLanguages);
-        var firstAvailableValue = null;
+        updateLocaleOrderList();
+        badgesContainer.replaceChildren();
 
-        Array.from(defaultLanguage.options).forEach(function (option) {
-            var isAvailable = activeSet.has(option.value);
-            option.hidden = !isAvailable;
-            option.disabled = !isAvailable;
-            if (isAvailable && firstAvailableValue === null) {
-                firstAvailableValue = option.value;
-            }
+        currentLocaleOrder.forEach(function (code, index) {
+            var badge = document.createElement("span");
+            badge.className = "language-grid-badge" + (index === 0 ? " is-default-language" : "");
+            badge.draggable = true;
+            badge.dataset.code = code;
+            badge.tabIndex = 0;
+            badge.setAttribute("role", "button");
+            var labelText = getLanguageLabel(code);
+            badge.setAttribute(
+                "aria-label",
+                labelText + (index === 0 ? " (Default language)" : ". Click or press Space to set as default language.")
+            );
+            badge.setAttribute("title", index === 0 ? "Default language" : "Click or press Space/Arrow keys to reorder/set as default");
+
+            var handle = document.createElement("span");
+            handle.className = "drag-handle";
+            handle.textContent = "⠿";
+            badge.appendChild(handle);
+
+            var textSpan = document.createElement("span");
+            textSpan.textContent = labelText;
+            badge.appendChild(textSpan);
+
+            badge.addEventListener("click", function (e) {
+                if (index !== 0) {
+                    var fromIndex = currentLocaleOrder.indexOf(code);
+                    if (fromIndex !== -1) {
+                        currentLocaleOrder.splice(fromIndex, 1);
+                        currentLocaleOrder.unshift(code);
+                        syncLocaleOrder();
+                        updateEventI18nFields();
+                    }
+                }
+            });
+
+            badge.addEventListener("keydown", function (e) {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    if (index !== 0) {
+                        var fromIndex = currentLocaleOrder.indexOf(code);
+                        if (fromIndex !== -1) {
+                            currentLocaleOrder.splice(fromIndex, 1);
+                            currentLocaleOrder.unshift(code);
+                            syncLocaleOrder();
+                            updateEventI18nFields();
+                        }
+                    }
+                } else if (e.key === "ArrowLeft" && index > 0) {
+                    e.preventDefault();
+                    var prevCode = currentLocaleOrder[index - 1];
+                    currentLocaleOrder[index - 1] = code;
+                    currentLocaleOrder[index] = prevCode;
+                    syncLocaleOrder();
+                    updateEventI18nFields();
+                } else if (e.key === "ArrowRight" && index < currentLocaleOrder.length - 1) {
+                    e.preventDefault();
+                    var nextCode = currentLocaleOrder[index + 1];
+                    currentLocaleOrder[index + 1] = code;
+                    currentLocaleOrder[index] = nextCode;
+                    syncLocaleOrder();
+                    updateEventI18nFields();
+                }
+            });
+
+            badge.addEventListener("dragstart", function (e) {
+                draggedCode = code;
+                badge.classList.add("dragging");
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", code);
+            });
+
+            badge.addEventListener("dragend", function () {
+                draggedCode = null;
+                badge.classList.remove("dragging");
+            });
+
+            badge.addEventListener("dragover", function (e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+            });
+
+            badge.addEventListener("drop", function (e) {
+                e.preventDefault();
+                if (!draggedCode || draggedCode === code) {
+                    return;
+                }
+                var fromIndex = currentLocaleOrder.indexOf(draggedCode);
+                var toIndex = currentLocaleOrder.indexOf(code);
+                if (fromIndex !== -1 && toIndex !== -1) {
+                    currentLocaleOrder.splice(fromIndex, 1);
+                    currentLocaleOrder.splice(toIndex, 0, draggedCode);
+                    syncLocaleOrder();
+                    updateEventI18nFields();
+                }
+            });
+
+            badgesContainer.appendChild(badge);
         });
 
-        if (!activeSet.has(defaultLanguage.value)) {
-            defaultLanguage.value = firstAvailableValue || "";
+        var countLabel = document.querySelector('[data-language-grid-count]');
+        if (countLabel) {
+            if (currentLocaleOrder.length === 0) {
+                countLabel.style.display = "";
+            } else {
+                countLabel.style.display = "none";
+            }
         }
+    }
+
+    function syncLocaleOrder() {
+        var hiddenLocaleInput = document.getElementById("id_basics-locale");
+        if (hiddenLocaleInput) {
+            hiddenLocaleInput.value = currentLocaleOrder[0] || "";
+        }
+        renderLanguageBadges();
+    }
+
+    function syncFoundationLocalesOnSubmit(form) {
+        if (!form) return;
+        var checkboxes = form.querySelectorAll('input[type="checkbox"][name="foundation-locales"]');
+        checkboxes.forEach(function (input) {
+            input.removeAttribute("name");
+        });
+        var select = form.querySelector('select[name="foundation-locales"]');
+        if (select) {
+            select.removeAttribute("name");
+        }
+        var oldContainer = document.getElementById("event-create-locales-order-container");
+        if (oldContainer) {
+            oldContainer.remove();
+        }
+        var container = document.createElement("div");
+        container.id = "event-create-locales-order-container";
+        container.style.display = "none";
+        currentLocaleOrder.forEach(function (code) {
+            var hidden = document.createElement("input");
+            hidden.type = "hidden";
+            hidden.name = "foundation-locales";
+            hidden.value = code;
+            container.appendChild(hidden);
+        });
+        form.appendChild(container);
+    }
+
+    function updateDefaultLanguageChoices() {
+        syncLocaleOrder();
     }
 
     var eventI18nValues = {};
@@ -198,16 +378,23 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         var options = organizerSlugOptions();
+        var form = document.querySelector("form");
+        if (form) {
+            form.addEventListener("submit", function () {
+                syncLocaleOrder();
+                syncFoundationLocalesOnSubmit(form);
+            });
+        }
         document.addEventListener("change", function (event) {
             if (isActiveLanguageControl(event.target)) {
-                updateDefaultLanguageChoices();
+                syncLocaleOrder();
                 updateEventI18nFields();
             }
         });
         document.addEventListener("click", function (event) {
             var removeButton = event.target.closest('[data-role="remove-language"]');
             if (removeButton && isActiveLanguageControl(removeButton)) {
-                updateDefaultLanguageChoices();
+                syncLocaleOrder();
                 updateEventI18nFields();
             }
         });
@@ -235,6 +422,8 @@
                 updateRandomSlug(randomSlugButton, true);
             });
         }
-        updateDefaultLanguageChoices();
+        syncLocaleOrder();
+        updateEventI18nFields();
     });
 })();
+

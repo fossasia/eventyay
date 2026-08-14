@@ -154,7 +154,7 @@ dependencies = [
     "pycparser>=2.23",
     "pycryptodome>=3.20.0",
     "pydantic>=2.13.3",
-    "pydantic-core>=2.46.4",
+    "pydantic-core>=2.48.0",
     "pydantic-settings>=2.15.0",
     "pygments>=2.19.1",
     "pyjwt>=2.13.0",
@@ -184,7 +184,7 @@ dependencies = [
     "rpds-py>=2026.6.3",
     "rules>=3.5",
     "sendgrid>=6.12.5",
-    "sentry-sdk>=2.66.1",
+    "sentry-sdk>=2.67.1",
     "sepaxml>=2.7.0",
     "service-identity>=26.1.0",
     "sortedcontainers>=2.4.0",
@@ -238,7 +238,7 @@ docs = [
 
 [dependency-groups]
 dev = [
-    "django-debug-toolbar>=7.0.0",
+    "django-debug-toolbar>=7.1.0",
     "django-extensions>=4.1",
     "wlc>=2.1.1",
 ]
@@ -255,7 +255,7 @@ test = [
     "pytest-asyncio>=1.4.0",
     "pytest-cache>=1.0",
     "pytest-cov>=7.1.0",
-    "pytest-django>=4.13.0",
+    "pytest-django>=4.14.0",
     "pytest-env>=1.7.0",
     "pytest-mock>=3.15.1",
     "pytest-rerunfailures>=16.4",

@@ -9,18 +9,17 @@ from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count, Max, OuterRef, Subquery, Q
+from django.db.models import Count, Max, OuterRef, Q, Subquery
 from pytz import common_timezones
 from rest_framework import serializers
 
-from eventyay.base.models.room import Room
-from eventyay.base.models.event import Event
-from eventyay.base.models.room import RoomConfigSerializer, RoomView
-from eventyay.core.permissions import Permission
-# Add missing imports for models referenced in this module
-from eventyay.base.models.chat import Channel
 from eventyay.base.models.audit import AuditLog
+from eventyay.base.models.chat import Channel
+from eventyay.base.models.event import Event
+from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
+from eventyay.base.services.jitsi import user_can_create_jitsi_room_during_development
 from eventyay.base.services.video_theme import build_video_theme_for_event
+from eventyay.core.permissions import Permission
 
 
 class EventConfigSerializer(serializers.Serializer):
@@ -184,6 +183,14 @@ def get_room_config(room, permissions):
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
             module_config["config"] = {}
+        elif module["type"] == "call.jitsi":
+            cfg = module_config.get("config")
+            if isinstance(cfg, dict):
+                cfg.pop("domain", None)
+                cfg.pop("jwt_enabled", None)
+                cfg.pop("app_id", None)
+                cfg.pop("key_id", None)
+                cfg.pop("app_secret", None)
         elif module["type"] == "chat.native":
             # Strip webhook secrets — these are server-side only
             cfg = module_config.get("config")
@@ -375,6 +382,25 @@ async def create_room(event, data, creator):
         m = [m for m in data.get("modules", []) if m["type"] == "call.bigbluebutton"][0]
         m["config"] = event.config.get("bbb_defaults", {})
         m["config"].pop("secret", None)  # legacy
+    elif types == {"call.jitsi"}:
+        if not await user_can_create_jitsi_room_during_development(creator):
+            raise ValidationError(
+                "This user is not allowed to create a room of this type.",
+                code="denied",
+            )
+        m = [m for m in data.get("modules", []) if m["type"] == "call.jitsi"][0]
+        config = m.get("config", {})
+        if not isinstance(config, dict):
+            config = {}
+        m["config"] = {
+            "prefer_server": config.get("prefer_server", ""),
+            "start_with_audio_muted": config.get(
+                "start_with_audio_muted", False
+            ),
+            "start_with_video_muted": config.get(
+                "start_with_video_muted", False
+            ),
+        }
     elif types == {"call.janus"}:
         if not await event.has_permission_async(
             user=creator, permission=Permission.EVENT_ROOMS_CREATE_BBB

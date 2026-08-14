@@ -31,6 +31,14 @@ const ROOM_TYPES = [{
 	videoChannel: true,
 	behindFeatureFlag: 'zoom'
 }, {
+	id: 'channel-jitsi',
+	icon: 'webcam',
+	name: 'Video Channel (Jitsi)',
+	description: 'This room type allows you to connect with attendees through a Jitsi meeting.',
+	startingModule: 'call.jitsi',
+	videoChannel: true,
+	behindFeatureFlag: 'jitsi'
+}, {
 	id: 'channel-text',
 	icon: 'pound',
 	name: 'Text Channel',
