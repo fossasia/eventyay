@@ -234,6 +234,43 @@ def test_create_team(event, admin_user, admin_team, client):
 
 
 @pytest.mark.django_db
+def test_create_team_validation_failure_keeps_form_open(event, admin_user, admin_team, client):
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    resp = client.post(
+        '/control/organizer/dummy/teams',
+        {
+            'team_action': 'create',
+            'team-create-name': 'Invalid Team',
+            'team-create-all_events': 'on',
+        },
+        follow=True,
+    )
+    content = resp.content.decode()
+    assert 'Something went wrong' in content
+    assert 'Please pick at least one permission for this team!' in content
+    assert 'id="create-team-form" class="collapse in"' in content
+
+
+@pytest.mark.django_db
+def test_create_team_success_collapses_form(event, admin_user, admin_team, client):
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    resp = client.post(
+        '/control/organizer/dummy/teams',
+        {
+            'team_action': 'create',
+            'team-create-name': 'New Team',
+            'team-create-all_events': 'on',
+            'team-create-can_create_events': 'on',
+        },
+        follow=True,
+    )
+    content = resp.content.decode()
+    assert 'The team has been created.' in content
+    assert 'id="create-team-form" class="collapse in"' not in content
+    assert 'id="create-team-form" class="collapse"' in content
+
+
+@pytest.mark.django_db
 def test_update_team(event, admin_user, admin_team, client):
     client.login(email='dummy@dummy.dummy', password='dummy')
     client.post(
