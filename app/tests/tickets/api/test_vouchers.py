@@ -6,7 +6,8 @@ import pytest
 from django.utils import timezone
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
-from pytz import UTC
+import datetime
+UTC = datetime.timezone.utc
 
 from eventyay.base.models import Event, SeatingPlan, Voucher
 

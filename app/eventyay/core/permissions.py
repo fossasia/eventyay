@@ -11,6 +11,7 @@ class Permission(Enum):
     EVENT_ROOMS_CREATE_STAGE = "event:rooms.create.stage"
     EVENT_ROOMS_CREATE_CHAT = "event:rooms.create.chat"
     EVENT_ROOMS_CREATE_BBB = "event:rooms.create.bbb"
+    EVENT_ROOMS_CREATE_JITSI = "event:rooms.create.jitsi"
     EVENT_ROOMS_CREATE_EXHIBITION = "event:rooms.create.exhibition"
     EVENT_ROOMS_CREATE_POSTER = "event:rooms.create.poster"
     EVENT_USERS_LIST = "event:users.list"
@@ -35,6 +36,8 @@ class Permission(Enum):
     ROOM_BBB_JOIN = "room:bbb.join"
     ROOM_BBB_MODERATE = "room:bbb.moderate"
     ROOM_BBB_RECORDINGS = "room:bbb.recordings"
+    ROOM_JITSI_JOIN = "room:jitsi.join"
+    ROOM_JITSI_MODERATE = "room:jitsi.moderate"
     ROOM_ZOOM_JOIN = "room:zoom.join"
     ROOM_QUESTION_READ = "room:question.read"
     ROOM_QUESTION_ASK = "room:question.ask"
@@ -60,6 +63,7 @@ VIDEO_CONTENT_MANAGER_PERMISSIONS = [
     Permission.EVENT_ROOMS_CREATE_STAGE.value,
     Permission.EVENT_ROOMS_CREATE_CHAT.value,
     Permission.EVENT_ROOMS_CREATE_BBB.value,
+    Permission.EVENT_ROOMS_CREATE_JITSI.value,
     Permission.EVENT_ROOMS_CREATE_EXHIBITION.value,
     Permission.EVENT_ROOMS_CREATE_POSTER.value,
     Permission.ROOM_UPDATE.value,
@@ -109,6 +113,7 @@ LEGACY_VIDEO_ROLE_PERMISSIONS: dict[str, list[str]] = {
     'video_channel_manager': [
         Permission.EVENT_ROOMS_CREATE_CHAT.value,
         Permission.EVENT_ROOMS_CREATE_BBB.value,
+        Permission.EVENT_ROOMS_CREATE_JITSI.value,
     ],
     'video_announcement_manager': [
         Permission.EVENT_ANNOUNCE.value,
@@ -192,12 +197,14 @@ def default_roles():
         Permission.ROOM_ROULETTE_JOIN,
         Permission.ROOM_BBB_JOIN,
         Permission.ROOM_JANUSCALL_JOIN,
+        Permission.ROOM_JITSI_JOIN,
         Permission.ROOM_ZOOM_JOIN,
     ]
     room_creator = [Permission.EVENT_ROOMS_CREATE_CHAT]
     room_owner = participant + [
         Permission.ROOM_INVITE,
         Permission.ROOM_DELETE,
+        Permission.ROOM_JITSI_MODERATE,
     ]
     speaker = participant + [
         Permission.ROOM_BBB_MODERATE,
@@ -223,6 +230,7 @@ def default_roles():
             Permission.ROOM_UPDATE,
             Permission.ROOM_INVITE,
             Permission.EVENT_ROOMS_CREATE_BBB,
+            Permission.EVENT_ROOMS_CREATE_JITSI,
             Permission.EVENT_ROOMS_CREATE_STAGE,
             Permission.EVENT_ROOMS_CREATE_EXHIBITION,
             Permission.EVENT_ROOMS_CREATE_POSTER,

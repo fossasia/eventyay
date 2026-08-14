@@ -1,10 +1,11 @@
 import datetime
+import logging
 import mimetypes
 import os
 from decimal import Decimal
 
 import django_filters
-import pytz
+from zoneinfo import ZoneInfo
 from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Prefetch, Q
 from django.db.models.functions import Coalesce, Concat
@@ -25,6 +26,7 @@ from rest_framework.exceptions import (
 )
 from rest_framework.filters import OrderingFilter
 from rest_framework.mixins import CreateModelMixin
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.response import Response
 
 from eventyay.api.models import OAuthAccessToken
@@ -97,6 +99,23 @@ from eventyay.base.signals import (
 )
 from eventyay.base.templatetags.money import money_filter
 from eventyay.control.signals import order_search_filter_q
+
+
+logger = logging.getLogger(__name__)
+
+
+class BinaryPDFRenderer(BaseRenderer):
+    """Satisfy Accept: application/pdf for download actions that return HttpResponse."""
+
+    media_type = 'application/pdf'
+    format = 'pdf'
+    charset = None
+    render_style = 'binary'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if isinstance(data, (bytes, bytearray)):
+            return data
+        return data
 
 
 with scopes_disabled():
@@ -593,7 +612,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         except:
             return Response({'detail': 'New date is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        tz = pytz.timezone(self.request.event.settings.timezone)
+        tz = ZoneInfo(self.request.event.settings.timezone)
         new_date = make_aware(
             datetime.datetime.combine(new_date, datetime.time(hour=23, minute=59, second=59)),
             tz,
@@ -1075,7 +1094,12 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         )
         return resp
 
-    @action(detail=True, url_name='download', url_path='download/(?P<output>[^/]+)')
+    @action(
+        detail=True,
+        url_name='download',
+        url_path='download/(?P<output>[^/]+)',
+        renderer_classes=[JSONRenderer, BinaryPDFRenderer],
+    )
     def download(self, request, output, **kwargs):
         provider = self._get_output_provider(output)
         pos = self.get_object()
@@ -1083,11 +1107,46 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
             output == 'badge' and 'eventyay.plugins.badges' in self.request.event.plugins
         )
 
+        layout_override = None
+        if badge_download:
+            from django.core.exceptions import ValidationError as DjangoValidationError
+
+            from eventyay.plugins.badges.utils import resolve_badge_layout_override
+
+            try:
+                layout_override = resolve_badge_layout_override(
+                    self.request.event, request.query_params.get('layout')
+                )
+            except DjangoValidationError as exc:
+                raise ValidationError({'layout': exc.messages})
+
         if not badge_download:
             if pos.order.status != Order.STATUS_PAID:
                 raise PermissionDenied('Downloads are not available for unpaid orders.')
             if not pos.generate_ticket:
                 raise PermissionDenied('Downloads are not enabled for this product.')
+
+        # Always generate badge PDFs immediately so check-in print works without CachedTicket.
+        if badge_download:
+            from eventyay.base.services.export import ExportError
+            from eventyay.plugins.badges.providers import BadgeOutputProvider
+
+            try:
+                _filename, mimetype, pdf_content = BadgeOutputProvider(self.request.event).generate(
+                    pos, layout=layout_override
+                )
+            except ExportError as exc:
+                raise ValidationError(str(exc))
+            except Exception:
+                logger.exception('Badge generation failed for position %s', pos.pk)
+                raise ValidationError(_('Could not generate the badge PDF.'))
+            resp = HttpResponse(pdf_content, content_type=mimetype or 'application/pdf')
+            resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-badge.pdf"'.format(
+                self.request.event.slug.upper(),
+                pos.order.code,
+                pos.positionid,
+            )
+            return resp
 
         ct = CachedTicket.objects.filter(order_position=pos, provider=provider.identifier, file__isnull=False).last()
         if not ct or not ct.file:

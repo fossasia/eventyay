@@ -38,7 +38,9 @@ class PermissionMiddleware:
 
     EXCEPTIONS = (
         'auth.login',
+        'auth.login.legacy',
         'auth.login.2fa',
+        'auth.login.2fa.legacy',
         'account_signup',
         'auth.forgot',
         'auth.forgot.recover',

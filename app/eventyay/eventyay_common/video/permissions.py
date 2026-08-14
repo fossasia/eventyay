@@ -124,8 +124,6 @@ def replace_managed_video_traits(
         seen.add(trait)
         kept.append(trait)
     return kept
-
-
 def collect_user_video_traits(event_slug: str, team_permission_set: Iterable[str]) -> list[str]:
     """
     Given an event slug and the permission set for the current user, return the list of

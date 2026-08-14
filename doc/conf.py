@@ -24,6 +24,9 @@ import sys
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.settings')
 # Use 'testing' environment to turn off rich logging.
 os.environ.setdefault('EVY_RUNNING_ENVIRONMENT', 'testing')
+# Tell the application settings module to use in-memory infrastructure while
+# autodoc imports Django modules.
+os.environ.setdefault('EVY_DOCS_BUILD', '1')
 
 import django
 
@@ -35,11 +38,12 @@ except Exception as e:
     # Documentation build can continue even if Django setup fails
     print(f"Warning: Django setup failed: {e}", file=sys.stderr)
 
-
 try:
-    import enchant  # noqa: F401
+    import enchant
+
+    enchant.Dict('en_US')
     HAS_PYENCHANT = True
-except ImportError:
+except Exception:
     HAS_PYENCHANT = False
 
 # -- General configuration ------------------------------------------------
@@ -88,8 +92,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Ticket Component'
-copyright = '2025 Apache 2.0 License by contributors'
+project = 'Eventyay'
+copyright = '2026 Apache 2.0 License by contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -121,6 +125,12 @@ exclude_patterns = [
     '_build',
     '.venv',
     'venv',
+    # These sources are included by unified replacement pages. Excluding the
+    # originals prevents their labels from being parsed a second time.
+    'admin/config.rst',
+    'development/unified_architecture.rst',
+    'talk/user/sessions.rst',
+    'user/events/create.rst',
 ]
 
 # The reST default role (used for this markup: `text`) to use for all

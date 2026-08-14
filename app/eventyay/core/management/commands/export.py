@@ -1,7 +1,8 @@
 import json
 import sys
 
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from django.core.management.base import BaseCommand
 from django.utils.timezone import override
 from django_scopes import scope
@@ -40,7 +41,7 @@ class Command(BaseCommand):
             sys.exit(1)
 
         locale = options.get('locale', None)
-        timezone = pytz.timezone(options['timezone']) if options.get('timezone') else None
+        timezone = ZoneInfo(options['timezone']) if options.get('timezone') else None
 
         with scope(organizer=o):
             if options['event_slug']:

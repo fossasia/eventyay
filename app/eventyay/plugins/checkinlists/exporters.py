@@ -23,7 +23,8 @@ from django.utils.formats import date_format
 from django.utils.timezone import is_aware, make_aware
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, pgettext
-from pytz import UTC
+import datetime
+UTC = datetime.timezone.utc
 from reportlab.lib.units import mm
 from reportlab.platypus import Flowable, Paragraph, Spacer, Table, TableStyle
 
