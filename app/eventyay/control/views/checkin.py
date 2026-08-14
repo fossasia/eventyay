@@ -9,7 +9,8 @@ from django.utils.functional import cached_property
 from django.utils.timezone import is_aware, make_aware
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DeleteView, ListView
-from pytz import UTC
+import datetime
+UTC = datetime.timezone.utc
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import Checkin, Order, OrderPosition
