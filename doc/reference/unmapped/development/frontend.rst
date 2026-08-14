@@ -1,6 +1,3 @@
-Frontend development
-====================
-
 .. highlight:: javascript
    :linenothreshold: 5
 
@@ -473,5 +470,4 @@ Further Reading
 - Vuex Documentation: https://vuex.vuejs.org
 - Vite Documentation: https://vitejs.dev
 - TypeScript: https://www.typescriptlang.org
-
 
