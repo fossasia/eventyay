@@ -104,7 +104,7 @@
             <fieldset>
                 <legend>{% trans "Localization" %}</legend>
                 {% bootstrap_field foundation_form.locales layout="control" %}
-                {% bootstrap_field basics_form.locale layout="control" %}
+                <input type="hidden" name="basics-locale" id="id_basics-locale" value="{{ basics_form.locale.value|default:foundation_form.locales.value.0|default:'en' }}">
             </fieldset>
 
             <fieldset>

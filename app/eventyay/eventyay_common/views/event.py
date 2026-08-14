@@ -497,7 +497,15 @@ class EventCreateView(TemplateView):
         has_permission = check_create_permission(self.request)
         final_is_video_creation = foundation_data.get('is_video_creation', True) and has_permission
 
-        with transaction.atomic(), language(basics_data['locale']):
+        # Derive the default locale: use whatever the form provides (set by the
+        # hidden input that JS syncs from the language-order tray), but always fall
+        # back to the first selected locale so the UI change is backward-compatible.
+        locales_list = foundation_data['locales']
+        chosen_locale = basics_data.get('locale') or (locales_list[0] if locales_list else 'en')
+        if chosen_locale not in locales_list and locales_list:
+            chosen_locale = locales_list[0]
+
+        with transaction.atomic(), language(chosen_locale):
             event = basics_form.instance
             event.organizer = foundation_data['organizer']
 
@@ -534,7 +542,7 @@ class EventCreateView(TemplateView):
             event.update_language_configuration(
                 locales=foundation_data['locales'],
                 content_locales=content_locales,
-                default_locale=basics_data['locale']
+                default_locale=chosen_locale,
             )
             event.refresh_from_db()
             cfp = event.cfp

@@ -22,6 +22,10 @@ prompt.c-create-chat-prompt(@close="$emit('close')")
 <script>
 import {mapGetters} from 'vuex'
 import Prompt from 'components/Prompt'
+import ROOM_TYPES from 'lib/room-types'
+import { isRoomTypeAvailable } from 'lib/room-type-permissions'
+
+const JITSI_ROOM_TYPE = ROOM_TYPES.find(type => type.id === 'channel-jitsi')
 
 export default {
 	components: { Prompt },
@@ -36,21 +40,37 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
 		types() {
 			const types = []
 			if (this.hasPermission('world:rooms.create.chat')) {
 				types.push({
 					id: 'text',
+					roomTypeId: 'channel-text',
 					label: this.$t('CreateChatPrompt:type.text:label'),
-					icon: 'pound'
+					icon: 'pound',
+					moduleType: 'chat.native',
+					permission: 'world:rooms.create.chat'
 				})
 			}
 			if (this.hasPermission('world:rooms.create.bbb')) {
 				types.push({
 					id: 'video',
+					roomTypeId: 'channel-bbb',
 					label: this.$t('CreateChatPrompt:type.video:label'),
-					icon: 'webcam'
+					icon: 'webcam',
+					moduleType: 'call.bigbluebutton',
+					permission: 'world:rooms.create.bbb'
+				})
+			}
+			if (JITSI_ROOM_TYPE && isRoomTypeAvailable(JITSI_ROOM_TYPE.id, this.hasPermission, this.isAdminMode)) {
+				types.push({
+					id: 'jitsi',
+					roomTypeId: JITSI_ROOM_TYPE.id,
+					label: JITSI_ROOM_TYPE.name,
+					icon: JITSI_ROOM_TYPE.icon,
+					moduleType: JITSI_ROOM_TYPE.startingModule,
+					permission: 'world:rooms.create.jitsi'
 				})
 			}
 			return types
@@ -84,28 +104,18 @@ export default {
 				this.error = this.$t('CreateChatPrompt:error:no-permission') || 'You do not have permission to create channels.'
 				return
 			}
-
-			// Verify permission for selected type
-			if (this.type === 'text' && !this.hasPermission('world:rooms.create.chat')) {
-				this.error = this.$t('CreateChatPrompt:error:no-text-permission') || 'You do not have permission to create text channels.'
+			if (!this.selectedType) {
 				return
 			}
-			if (this.type === 'video' && !this.hasPermission('world:rooms.create.bbb')) {
-				this.error = this.$t('CreateChatPrompt:error:no-video-permission') || 'You do not have permission to create video channels.'
+
+			// Verify permission for selected type
+			if (!isRoomTypeAvailable(this.selectedType.roomTypeId, this.hasPermission, this.isAdminMode)) {
+				this.error = this.$t('CreateChatPrompt:error:no-permission') || 'You do not have permission to create channels.'
 				return
 			}
 
 			this.loading = true
-			const modules = []
-			if (this.type === 'text') {
-				modules.push({
-					type: 'chat.native'
-				})
-			} else {
-				modules.push({
-					type: 'call.bigbluebutton'
-				})
-			}
+			const modules = [{ type: this.selectedType.moduleType }]
 			let room
 			try {
 				({ room } = await this.$store.dispatch('createRoom', {
