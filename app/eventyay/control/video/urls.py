@@ -19,6 +19,11 @@ urlpatterns = [
     path("janus/new/", views.JanusServerCreate.as_view(), name="janusserver.create"),
     path("janus/<uuid:pk>/delete", views.JanusServerDelete.as_view(), name="janusserver.delete"),
     path("janus/<uuid:pk>/", views.JanusServerUpdate.as_view(), name="janusserver.update"),
+    # Jitsi Server Management URLs
+    path("jitsi/", views.JitsiServerList.as_view(), name="jitsiserver.list"),
+    path("jitsi/new/", views.JitsiServerCreate.as_view(), name="jitsiserver.create"),
+    path("jitsi/<uuid:pk>/delete", views.JitsiServerDelete.as_view(), name="jitsiserver.delete"),
+    path("jitsi/<uuid:pk>/", views.JitsiServerUpdate.as_view(), name="jitsiserver.update"),
     # Turn Server Management URLs
     path("turns/", views.TurnServerList.as_view(), name="turnserver.list"),
     path("turns/new/", views.TurnServerCreate.as_view(), name="turnserver.create"),

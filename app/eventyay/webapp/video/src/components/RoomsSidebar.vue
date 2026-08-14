@@ -38,12 +38,12 @@ transition(name="sidebar")
 				router-link.networking-room(v-for="room of roomsByType.networking", :to="homeRoom && room === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: room.id}}", :class="{active: room.id === $route.params.roomId}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(room.name)")
-			.group-title#chats-title(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')")
+			.group-title#chats-title(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || canCreateChatRoom")
 				span {{ $t('RoomsSidebar:channels-headline:text') }}
 				.buffer
-				bunt-icon-button(v-if="hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')", tooltip="Create Channel", :tooltip-fixed="true", @click="showChatCreationPrompt = true") plus
+				bunt-icon-button(v-if="canCreateChatRoom", tooltip="Create Channel", :tooltip-fixed="true", @click="showChatCreationPrompt = true") plus
 				bunt-icon-button(v-if="worldHasTextChannels", tooltip="Browse all channels", :tooltip-fixed="true", @click="showChannelBrowser = true") compass-outline
-			.chats(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')", role="group", aria-describedby="chats-title")
+			.chats(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || canCreateChatRoom", role="group", aria-describedby="chats-title")
 				router-link.video-chat(v-for="chat of roomsByType.videoChat", :to="homeRoom && chat === homeRoom ? {name: 'about'} : {name: 'room', params: {roomId: chat.id}}", :class="{active: chat.id === $route.params.roomId}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(chat.name)")
@@ -148,7 +148,12 @@ export default {
 			return ROOM_TYPES.find(type => type.sidebarGroup === 'networking')
 		},
 		canCreateNetworkingRoom() {
-			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission)
+			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission, this.isAdminMode)
+		},
+		canCreateChatRoom() {
+			return ROOM_TYPES
+				.filter(type => ['channel-text', 'channel-bbb', 'channel-jitsi'].includes(type.id))
+				.some(type => isRoomTypeAvailable(type.id, this.hasPermission, this.isAdminMode))
 		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {

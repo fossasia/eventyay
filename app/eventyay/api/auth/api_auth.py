@@ -2,8 +2,12 @@ from django.shortcuts import get_object_or_404
 from rest_framework import authentication, exceptions, permissions
 from rest_framework.authentication import get_authorization_header
 
-from eventyay.base.models.room import Room
 from eventyay.base.models.event import Event
+from eventyay.base.models.room import Room
+from eventyay.base.services.jitsi import (
+    has_jitsi_development_admin_trait,
+    module_config_contains_jitsi,
+)
 from eventyay.core.permissions import Permission
 
 
@@ -94,11 +98,20 @@ class RoomPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method == "POST":
             traits = request.auth.get("traits")
+            if module_config_contains_jitsi(request.data.get("module_config")):
+                return (
+                    has_jitsi_development_admin_trait(traits)
+                    and request.event.has_permission_implicit(
+                        traits=traits,
+                        permissions=[Permission.EVENT_ROOMS_CREATE_JITSI],
+                    )
+                )
             return request.event.has_permission_implicit(
                 traits=traits,
                 permissions=[
                     Permission.EVENT_ROOMS_CREATE_STAGE,
                     Permission.EVENT_ROOMS_CREATE_BBB,
+                    Permission.EVENT_ROOMS_CREATE_JITSI,
                     Permission.EVENT_ROOMS_CREATE_CHAT,
                 ],
             )
