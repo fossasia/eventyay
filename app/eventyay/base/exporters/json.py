@@ -1,7 +1,8 @@
 import json
 from decimal import Decimal
 
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from django.core.serializers.json import DjangoJSONEncoder
 from django.dispatch import receiver
 
@@ -14,7 +15,7 @@ class JSONExporter(BaseExporter):
     verbose_name = 'Order data (JSON)'
 
     def render(self, form_data):
-        event_tz = pytz.timezone(self.event.settings.timezone)
+        event_tz = ZoneInfo(self.event.settings.timezone)
         jo = {
             'event': {
                 'name': str(self.event.name),
