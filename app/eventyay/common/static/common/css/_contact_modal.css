@@ -172,3 +172,14 @@ footer .contact-organizer-btn:hover {
     font-size: 13px;
     margin-top: 8px;
 }
+
+.contact-modal-login-wrapper {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.contact-modal-login-btn {
+    display: inline-block;
+    text-decoration: none;
+}
+
