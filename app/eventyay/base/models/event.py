@@ -109,6 +109,7 @@ FEATURE_FLAGS = [
     'page.landing',
     'zoom',
     'janus',
+    'jitsi',
     'polls',
     'poster',
     'conftool',
@@ -2162,6 +2163,7 @@ class Event(
 
         self.bbbserver_set.update(event_exclusive=None)
         self.janusserver_set.update(event_exclusive=None)
+        self.jitsiserver_set.update(event_exclusive=None)
         self.turnserver_set.update(event_exclusive=None)
 
         self.vouchers.all().delete()

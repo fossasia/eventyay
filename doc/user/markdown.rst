@@ -1,3 +1,5 @@
+:orphan:
+
 Legacy editor documentation URL
 ===============================
 

@@ -1,3 +1,5 @@
+:orphan:
+
 .. _`admindocs`:
 
 Platform administration

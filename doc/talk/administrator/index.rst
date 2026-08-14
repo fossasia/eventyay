@@ -1,3 +1,5 @@
+:orphan:
+
 .. _`administrator-index`:
 
 Administrator documentation
