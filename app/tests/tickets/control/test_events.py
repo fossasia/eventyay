@@ -791,7 +791,8 @@ class EventsTest(SoupTest):
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn('could not create', response.content.decode().lower())
+        foundation_form = response.context['foundation_form']
+        self.assertIn('locales', foundation_form.errors)
 
     def test_create_event_defaults_locale_from_selected_languages(self):
         response = self.client.post(
