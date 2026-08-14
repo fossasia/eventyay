@@ -7,42 +7,42 @@ import router from 'router'
 
 export default {
 	props: {
-		// HTML string (Tiptap) or legacy Quill Delta object ({ ops: [...] })
 		content: [String, Array, Object],
 	},
 	computed: {
-		sanitizedContent() {
+		sanitizedContent () {
 			if (!this.content) return ''
 
-			// Legacy Quill Delta: render ops as plain text fallback
-			if (typeof this.content === 'object' && !Array.isArray(this.content) && Array.isArray(this.content?.ops)) {
-				const text = this.content.ops
-					.filter(op => typeof op.insert === 'string')
-					.map(op => op.insert)
-					.join('')
-				return DOMPurify.sanitize(`<p>${text.replace(/\n/g, '<br>')}</p>`)
+			// Handle legacy Quill Delta — an array of ops OR { ops: [...] }
+			if (typeof this.content === 'object') {
+				const ops = Array.isArray(this.content)
+					? this.content
+					: this.content?.ops
+				if (Array.isArray(ops)) {
+					// Render as plain text fallback (no formatting)
+					const plain = ops
+						.map(op => (typeof op.insert === 'string' ? op.insert : ''))
+						.join('')
+					return DOMPurify.sanitize('<p>' + plain.replace(/\n/g, '<br>') + '</p>')
+				}
+				return ''
 			}
 
-			// HTML string from Tiptap
-			if (typeof this.content === 'string') {
-				return DOMPurify.sanitize(this.content, {
-					ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'a', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'img'],
-					ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt'],
-				})
-			}
-
-			return ''
+			// Regular HTML string
+			return DOMPurify.sanitize(this.content, {
+				ADD_ATTR: ['target'],
+			})
 		},
 	},
 	methods: {
-		handleClick(event) {
+		handleClick (event) {
 			const a = event.target.closest('a')
 			if (!a) return
-			// don't redirect with control keys
+			// Don't intercept with modifier keys
 			if (event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) return
-			// don't redirect on right click
+			// Don't intercept right-click
 			if (event.button !== undefined && event.button !== 0) return
-			// don't handle same page links/anchors or external links
+			// Don't intercept external or same-page links
 			const url = new URL(a.href)
 			if (window.location.pathname === url.pathname) return
 			if (window.location.hostname !== url.hostname) return
@@ -54,57 +54,57 @@ export default {
 </script>
 <style lang="stylus">
 .rich-text-content
-	font-size: 14px
-	line-height: 1.6
-
-	> * + *
-		margin-top: 0.5em
-
-	p, h1, h2, h3, h4, h5, h6
+	p, h1, h2, h3, h4, h5, h6, blockquote, ul, ol, pre, li
+		max-width: none
 		margin: 0 16px
 
-	blockquote
-		border-left: 3px solid #ccc
-		margin: 0 16px 0.5em
-		padding-left: 1em
-		color: #666
-
 	ul, ol
-		padding-left: calc(16px + 1.5em)
-		margin: 0 0 0.5em
 		max-width: none
-
-	li
-		line-height: 1.6
-		max-width: none
-
-	ul, ol
-		li::before
-			content: ""
+		padding-left: 2em
 
 	img
 		margin: 0 auto
 		display: block
 		max-width: 100%
 
-	a
-		&:hover, &[href]:not([class]):hover
+	a, a[href]:not([class])
+		&:hover
 			text-decoration: underline
 
+	li
+		line-height: 1.6
+
 	pre
-		margin: 0 16px 0.5em
 		background: #f4f4f4
-		padding: 8px 12px
 		border-radius: 4px
+		padding: 0.75rem 1rem
 		overflow-x: auto
-		font-size: 1.1em
+		margin: 0 16px
 		code
 			background: none
 			padding: 0
+			font-size: 0.875em
 
 	code
-		background: #f4f4f4
-		padding: 2px 4px
+		background: rgba(0, 0, 0, 0.06)
 		border-radius: 3px
-		font-size: 0.95em
+		padding: 0.2em 0.4em
+		font-size: 0.9em
+
+	blockquote
+		padding-left: 1em
+		border-left: 3px solid #ccc
+		margin: 0 16px
+		color: #666
+
+	h1, h2, h3, h4, h5, h6
+		margin: 0 16px
+
+	// Text-align support (set by Tiptap TextAlign extension)
+	[style*="text-align: center"], .text-center
+		text-align: center
+	[style*="text-align: right"], .text-right
+		text-align: right
+	[style*="text-align: left"], .text-left
+		text-align: left
 </style>

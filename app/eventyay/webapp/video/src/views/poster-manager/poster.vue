@@ -169,7 +169,14 @@ export default {
 			}
 		} else {
 			this.poster = await api.call('poster.get', {poster: this.posterId})
-			this.poster.abstract = this.poster.abstract || ''
+			// abstract may be a legacy Quill Delta object or an HTML string
+			if (this.poster.abstract && typeof this.poster.abstract === 'object') {
+				// Legacy Delta: render ops as plain text
+				const ops = Array.isArray(this.poster.abstract) ? this.poster.abstract : this.poster.abstract?.ops
+				this.poster.abstract = ops ? ops.filter(op => typeof op.insert === 'string').map(op => op.insert).join('') : ''
+			} else {
+				this.poster.abstract = this.poster.abstract || ''
+			}
 			this.tags = this.poster.tags.join(',')
 		}
 	},
@@ -222,6 +229,7 @@ export default {
 			this.saving = true
 			this.poster.tags = this.tags === '' ? [] : this.tags.split(',').map(tag => tag.trim())
 			let poster = Object.assign({}, this.poster)
+			// abstract is now a plain HTML string — send as-is
 			poster.links.forEach((link, index) => link.sorting_priority = index)
 			poster = await api.call('poster.patch', poster)
 			if (this.create) await router.push({name: 'posters:poster', params: {posterId: poster.id}})
