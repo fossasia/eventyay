@@ -39,7 +39,7 @@ class GuestRsvpForm(forms.Form):
 def has_rsvp_order(event, email) -> bool:
     if not email:
         return False
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         return event.orders.filter(email__iexact=email, status__in=RSVP_ORDER_STATUSES).exists()
 
 
@@ -114,7 +114,7 @@ class MeetupRsvpView(EventViewMixin, View):
         return view.get(request, *self.args, **self.kwargs)
 
     def _create_rsvp_order(self, request, product, email, name):
-        with scope(event=request.event), transaction.atomic():
+        with scope(organizer=request.event.organizer), transaction.atomic():
             quota = product.quotas.select_for_update().first()
             if quota is not None:
                 avail, count = quota.availability()

@@ -120,7 +120,6 @@ class EventWizardFoundationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
         self.session = kwargs.pop('session')
-        is_meetup = kwargs.pop('is_meetup', False)
         super().__init__(*args, **kwargs)
         localized_language_choices = get_language_choices_native_with_ui_name()
         self.fields['locales'].choices = localized_language_choices

@@ -127,7 +127,7 @@ class EventCommonSettingsForm(SettingsForm):
 
             if 'registration_limit' in self.cleaned_data:
                 reg_limit = self.cleaned_data.get('registration_limit')
-                with scope(event=self.event):
+                with scope(organizer=self.event.organizer):
                     product, quota = get_rsvp_product_and_quota(self.event)
                     if quota and quota.size != reg_limit:
                         quota.size = reg_limit
@@ -192,8 +192,8 @@ class EventCommonSettingsForm(SettingsForm):
                 label=_('Registration limit'),
                 help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
             )
-            with scope(event=self.event):
-                quota = self.event.quotas.first()
+            with scope(organizer=self.event.organizer):
+                product, quota = get_rsvp_product_and_quota(self.event)
                 if quota and quota.size is not None:
                     self.initial['registration_limit'] = quota.size
         localized_language_choices = get_language_choices_native_with_ui_name()

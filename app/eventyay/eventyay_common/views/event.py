@@ -320,7 +320,6 @@ class EventCreateView(TemplateView):
             prefix='foundation',
             user=self.request.user,
             session=self.request.session,
-            is_meetup=self.is_meetup_request,
         )
 
     def get_basics_form(self, foundation_data=None, bind=True):
@@ -589,7 +588,7 @@ class EventCreateView(TemplateView):
                 )
                 reg_limit = basics_data.get('registration_limit')
                 if reg_limit is not None:
-                    with scope(event=event):
+                    with scope(organizer=event.organizer):
                         product, quota = get_rsvp_product_and_quota(event)
                         if quota:
                             quota.size = reg_limit

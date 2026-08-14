@@ -721,7 +721,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
 
         rsvp_registration_closed = False
-        with scope(event=event):
+        with scope(organizer=event.organizer):
             product, quota = get_rsvp_product_and_quota(event)
             if quota and quota.size is not None:
                 avail, count = quota.availability()
@@ -1145,7 +1145,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
         if self.request.event.settings.venueless_allow_pending:
             allowed_statuses.append(Order.STATUS_PENDING)
 
-        with scope(event=self.request.event):
+        with scope(organizer=self.request.event.organizer):
             filters = Q(event=self.request.event) & Q(status__in=allowed_statuses)
             if self.request.user.is_authenticated:
                 filters &= (

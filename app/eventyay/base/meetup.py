@@ -230,7 +230,7 @@ def ensure_rsvp_product(event):
     from eventyay.base.models.product import Product
 
     locale = getattr(event, 'locale', 'en') or 'en'
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         product = event.products.filter(admission=True, active=True).first()
         if product is None:
             product = Product(
@@ -251,7 +251,7 @@ def ensure_rsvp_product(event):
 
 
 def get_rsvp_product_and_quota(event):
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         product = event.products.filter(admission=True, active=True).first()
         if product is None:
             return None, None
