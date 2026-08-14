@@ -51,6 +51,7 @@ export function initLanguageGrid(widget) {
 
   function syncBadges() {
     if (!badgesContainer) return;
+    if (badgesContainer.dataset.customBadges === 'true' || widget.dataset.customBadges === 'true') return;
 
     badgesContainer.innerHTML = '';
     const selected = getSelectedLanguages(cells, checkboxes);
