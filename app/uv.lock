@@ -1184,7 +1184,7 @@ dependencies = [
 [[package]]
 name = "eventyay-hubspot"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev#2e5b390e860d3f25a9c858d495ec7e99c81f7bfa" }
+source = { git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev#01e048eea4c47e721456a840ff99af674623e463" }
 dependencies = [
     { name = "cryptography" },
     { name = "python-dotenv" },
