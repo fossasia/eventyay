@@ -1,6 +1,6 @@
 from datetime import datetime, time
 
-import pytz
+from zoneinfo import ZoneInfo
 from dateutil.parser import parse
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max, Min, Q
@@ -57,7 +57,7 @@ def serialize_event(e):
         if e.min_from is None:
             dr = pgettext('subevent', 'No dates')
         else:
-            tz = pytz.timezone(e.settings.timezone)
+            tz = ZoneInfo(e.settings.timezone)
             dr = (
                 _('Series:')
                 + ' '

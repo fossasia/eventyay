@@ -817,15 +817,15 @@ wheels = [
 
 [[package]]
 name = "django-debug-toolbar"
-version = "7.0.0"
+version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "sqlparse" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1e/ac/3ac674f99c64bfbcd9ae3d7f5f3577f23ea52884e5ac36842e1f024dce03/django_debug_toolbar-7.0.0.tar.gz", hash = "sha256:ef7494c5b459c149e87cc2da88d86e944064945e86bd7b2d879093586b5fefbf", size = 359560, upload-time = "2026-06-19T00:21:23.346Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f9/53/ed6f028efe4044931d86cf7fdadb52d1a0addd8314ed35b5761e5fb597e7/django_debug_toolbar-7.1.0.tar.gz", hash = "sha256:d9c64faaaf171c1fb485bd0ef855e31809c21ddf032202545efd255701e29782", size = 363278, upload-time = "2026-08-10T15:22:42.227Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/ab/684a56624f9ed35127e203e52d2c241f3b7b70d37cfa8cb2ba4fc8e1e8d7/django_debug_toolbar-7.0.0-py3-none-any.whl", hash = "sha256:656161388ce48384276342eeb16d532113ec670816fa1546cc3753730aa51b3d", size = 302038, upload-time = "2026-06-19T00:21:21.531Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/35/5f22dafc8f0c44c215872cd06c9daef5c856674b6e1c7e582de49c19a796/django_debug_toolbar-7.1.0-py3-none-any.whl", hash = "sha256:814be55805f77b04b1a94395049c80fb7e08f95c6e8d070256c9ed8fd0295084", size = 304247, upload-time = "2026-08-10T15:22:40.842Z" },
 ]
 
 [[package]]
@@ -1182,6 +1182,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "eventyay-hubspot"
+version = "1.0.0"
+source = { git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev#01e048eea4c47e721456a840ff99af674623e463" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "python-dotenv" },
+    { name = "requests" },
+]
+
+[[package]]
 name = "eventyay-interpretation"
 version = "1.0.0"
 source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#21f3808c03de17c261758016ff909212c86c8954" }
@@ -1299,6 +1309,7 @@ dependencies = [
     { name = "emoji" },
     { name = "et-xmlfile" },
     { name = "eventyay-bitpay" },
+    { name = "eventyay-hubspot" },
     { name = "eventyay-interpretation" },
     { name = "eventyay-paypal" },
     { name = "eventyay-socialmedia" },
@@ -1368,7 +1379,6 @@ dependencies = [
     { name = "python-crontab" },
     { name = "python-dateutil" },
     { name = "python-stdnum" },
-    { name = "pytz" },
     { name = "pyuca" },
     { name = "pyvat" },
     { name = "pyyaml" },
@@ -1537,6 +1547,7 @@ requires-dist = [
     { name = "emoji", specifier = ">=2.15.0" },
     { name = "et-xmlfile", specifier = ">=2.0.0" },
     { name = "eventyay-bitpay", git = "https://github.com/fossasia/eventyay-bitpay.git?rev=main" },
+    { name = "eventyay-hubspot", git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev" },
     { name = "eventyay-interpretation", git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev" },
     { name = "eventyay-paypal", git = "https://github.com/fossasia/eventyay-paypal.git?rev=main" },
     { name = "eventyay-socialmedia", git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev" },
@@ -1608,7 +1619,6 @@ requires-dist = [
     { name = "python-crontab", specifier = ">=3.2.0" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
     { name = "python-stdnum", specifier = ">=2.2" },
-    { name = "pytz", specifier = ">=2026.3.post1" },
     { name = "pyuca", specifier = ">=1.2" },
     { name = "pyvat", specifier = ">=1.3.18" },
     { name = "pyyaml", specifier = ">=6.0.3" },
@@ -1625,7 +1635,7 @@ requires-dist = [
     { name = "rpds-py", specifier = ">=2026.6.3" },
     { name = "rules", specifier = ">=3.5" },
     { name = "sendgrid", specifier = ">=6.12.5" },
-    { name = "sentry-sdk", specifier = ">=2.66.1" },
+    { name = "sentry-sdk", specifier = ">=2.67.1" },
     { name = "sepaxml", specifier = ">=2.7.0" },
     { name = "service-identity", specifier = ">=26.1.0" },
     { name = "sortedcontainers", specifier = ">=2.4.0" },
@@ -1664,7 +1674,7 @@ provides-extras = ["docs"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "django-debug-toolbar", specifier = ">=7.0.0" },
+    { name = "django-debug-toolbar", specifier = ">=7.1.0" },
     { name = "django-extensions", specifier = ">=4.1" },
     { name = "wlc", specifier = ">=2.1.1" },
 ]
@@ -3274,15 +3284,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.66.1"
+version = "2.67.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7f/6f/d59cad0889d15fde85254cf58e701484de3f3f0406003b3197746910b19b/sentry_sdk-2.66.1.tar.gz", hash = "sha256:f882fb08710c5f8bfc603aafa3e901b384009a19cc3f76a572b863392ee81cdc", size = 940543, upload-time = "2026-07-22T12:26:54.553Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/8a/b2eec40df8a67bf073e244d29001d04ee365d163bc4f15efdfce35f53090/sentry_sdk-2.67.1.tar.gz", hash = "sha256:f263d8c9aa4137750640de8fb0ed5404df6bb564e20e4b59cb16a6eeba18d4ed", size = 990599, upload-time = "2026-08-10T13:05:55.892Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/d3/726bd88f0eece09ddf431bea4c9191c18e7a8d070b854eb0014d447712ee/sentry_sdk-2.66.1-py3-none-any.whl", hash = "sha256:86002793161d9a95ef04bdd8d442e9bfece5d989b755f05d6360215094a7aff6", size = 505555, upload-time = "2026-07-22T12:26:52.71Z" },
+    { url = "https://files.pythonhosted.org/packages/34/e2/70692eba662037cddf93391cbbf98297159f3038612e9b9a8129e16feb7a/sentry_sdk-2.67.1-py3-none-any.whl", hash = "sha256:a66bfbce1cd8a93c51c369d642ad85b46253ea7a6f7938141315b83e2823cda5", size = 515591, upload-time = "2026-08-10T13:05:54.213Z" },
 ]
 
 [[package]]

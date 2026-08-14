@@ -5,7 +5,7 @@ from collections import defaultdict
 from functools import partial
 
 import pandas
-import pytz
+from zoneinfo import ZoneInfo
 from dateutil.parser import parse
 from django.core.exceptions import ValidationError
 from django.utils.timezone import make_aware
@@ -39,7 +39,7 @@ def to_iso(value, timezone=None):
     if not isinstance(value, dt.datetime):
         raise Exception("Not a valid date and time.")
     if timezone:
-        value = make_aware(value, pytz.timezone(timezone))
+        value = make_aware(value, ZoneInfo(timezone))
     return value.isoformat()
 
 

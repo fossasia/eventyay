@@ -32,7 +32,7 @@ as well as the type of underlying hardware. Example:
        "token": "kpp4jn8g2ynzonp6",
        "hardware_brand": "Samsung",
        "hardware_model": "Galaxy S",
-       "software_brand": "pretixdroid",
+       "software_brand": "eventyay-checkin",
        "software_version": "4.0.0"
    }
 
@@ -98,7 +98,7 @@ following endpoint:
    {
        "hardware_brand": "Samsung",
        "hardware_model": "Galaxy S",
-       "software_brand": "pretixdroid",
+       "software_brand": "eventyay-checkin",
        "software_version": "4.1.0"
    }
 
@@ -145,8 +145,13 @@ Device authentication is currently hardcoded to grant the following permissions:
 Devices cannot change events or products and cannot access vouchers.
 
 Additionally, when creating a device through the user interface or API, a user can specify a "security profile" for
-the device. These include an allow list of specific API calls that may be made by the device. eventyay ships with security
-policies for official eventyay apps like pretixSCAN and pretixPOS.
+the device. These include an allow list of specific API calls that may be made by the device. eventyay ships with:
+
+* ``full`` — Full device access (lead scanning and unrestricted API use within device permissions).
+* ``eventyay_checkin`` — Check-In Staff: redeem, search, live registration, badge printing, and **offline sync**
+  (``GET`` event ``orders`` with ``modified_since`` / ``pdf_data``, ``revokedsecrets``, and badge layouts).
+* ``eventyay_checkin_online_kiosk`` — Badge Station (kiosk): online check-in and badge printing only (no order sync,
+  no revoked-secret sync, no live registration).
 
 Removing a device
 -----------------

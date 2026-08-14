@@ -1,7 +1,7 @@
 import datetime
 from urllib.parse import urlparse
 
-import pytz
+from zoneinfo import ZoneInfo
 import vobject
 from django.conf import settings
 from django.utils.formats import date_format
@@ -14,11 +14,11 @@ from eventyay.multidomain.urlreverse import build_absolute_uri
 def get_ical(events):
     cal = vobject.iCalendar()
     cal.add('prodid').value = '-//eventyay//{}//'.format(settings.INSTANCE_NAME.replace(' ', '_'))
-    creation_time = datetime.datetime.now(pytz.utc)
+    creation_time = datetime.datetime.now(datetime.timezone.utc)
 
     for ev in events:
         event = ev if isinstance(ev, Event) else ev.event
-        tz = pytz.timezone(event.settings.timezone)
+        tz = ZoneInfo(event.settings.timezone)
         if isinstance(ev, Event):
             url = build_absolute_uri(event, 'presale:event.index')
         else:
