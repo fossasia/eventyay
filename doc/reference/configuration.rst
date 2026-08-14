@@ -125,7 +125,7 @@ Example::
     The system's default locale. Default: ``en``
 
 ``timezone``
-    The system's default timezone as a ``pytz`` name. Default: ``UTC``
+    The system's default timezone as an IANA time zone name (for example ``UTC`` or ``Europe/Berlin``). Default: ``UTC``
 
 Database settings
 -----------------

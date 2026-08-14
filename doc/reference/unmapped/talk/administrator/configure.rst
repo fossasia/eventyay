@@ -321,7 +321,7 @@ The locale section
 ``time_zone``
 ~~~~~~~~~~~~~
 
-- The system’s default time zone as a ``pytz`` name.
+- The system’s default time zone as an IANA time zone name (for example ``UTC`` or ``Europe/Berlin``).
 - **Environment variable:** ``PRETALX_TIME_ZONE``
 - **Default:** ``UTC``
 
