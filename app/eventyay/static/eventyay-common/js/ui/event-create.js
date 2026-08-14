@@ -204,14 +204,22 @@
 
     function syncLocaleOrder() {
         var hiddenLocaleInput = document.getElementById("id_basics-locale");
+        updateLocaleOrderList();
         if (hiddenLocaleInput) {
-            hiddenLocaleInput.value = currentLocaleOrder[0] || "";
+            var checkedLocales = getCheckedLocalesFromDOM();
+            hiddenLocaleInput.value =
+                currentLocaleOrder[0] || hiddenLocaleInput.value || checkedLocales[0] || "en";
         }
         renderLanguageBadges();
     }
 
     function syncFoundationLocalesOnSubmit(form) {
         if (!form) return;
+        updateLocaleOrderList();
+        var localesToSubmit = currentLocaleOrder.length ? currentLocaleOrder : getCheckedLocalesFromDOM();
+        if (localesToSubmit.length === 0) {
+            return;
+        }
         var checkboxes = form.querySelectorAll('input[type="checkbox"][name="foundation-locales"]');
         checkboxes.forEach(function (input) {
             input.removeAttribute("name");
@@ -227,7 +235,7 @@
         var container = document.createElement("div");
         container.id = "event-create-locales-order-container";
         container.style.display = "none";
-        currentLocaleOrder.forEach(function (code) {
+        localesToSubmit.forEach(function (code) {
             var hidden = document.createElement("input");
             hidden.type = "hidden";
             hidden.name = "foundation-locales";
@@ -235,6 +243,10 @@
             container.appendChild(hidden);
         });
         form.appendChild(container);
+        var hiddenLocaleInput = document.getElementById("id_basics-locale");
+        if (hiddenLocaleInput && !hiddenLocaleInput.value) {
+            hiddenLocaleInput.value = localesToSubmit[0] || "en";
+        }
     }
 
     function updateDefaultLanguageChoices() {

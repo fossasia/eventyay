@@ -460,10 +460,13 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         request = self.context.get('request')
+        eventpermset = getattr(request, 'eventpermset', None) if request else None
+        # If eventpermset is not available yet (nested field bind), keep pdf_data;
+        # OrderSerializer / the view will drop it when unauthorized or not requested.
         if (
             not request
-            or not self.context['request'].query_params.get('pdf_data', 'false') == 'true'
-            or 'can_view_orders' not in request.eventpermset
+            or request.query_params.get('pdf_data', 'false') != 'true'
+            or (eventpermset is not None and 'can_view_orders' not in eventpermset)
         ):
             self.fields.pop('pdf_data', None)
 
