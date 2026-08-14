@@ -13,7 +13,8 @@ from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
-from pytz import UTC
+import datetime
+UTC = datetime.timezone.utc
 
 from eventyay.api.serializers.product import QuestionSerializer
 from eventyay.base.models import (
