@@ -1,3 +1,5 @@
+.. _checksandtests:
+
 Testing and CI
 ==============
 

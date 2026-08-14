@@ -1,5 +1,5 @@
 Unified Eventyay installation
-============================
+=============================
 
 Eventyay is installed as one platform. Do not install separate Tickets, Talk,
 or Video services. Choose the deployment approach that matches the capacity
