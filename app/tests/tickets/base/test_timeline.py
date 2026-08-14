@@ -2,14 +2,14 @@ from datetime import datetime
 from decimal import Decimal
 
 import pytest
-import pytz
+from zoneinfo import ZoneInfo
 from django_scopes import scope
 
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, Organizer
 from eventyay.base.timeline import timeline_for_event
 
-tz = pytz.timezone('Europe/Berlin')
+tz = ZoneInfo('Europe/Berlin')
 
 
 def one(iterable):

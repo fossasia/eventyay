@@ -21,7 +21,8 @@ from i18nfield.forms import (
     I18nTextarea,
     I18nTextInput,
 )
-from pytz import common_timezones, timezone
+from zoneinfo import ZoneInfo
+from eventyay.timezones import common_timezones, localize_datetime
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
@@ -296,7 +297,7 @@ class EventWizardBasicsForm(I18nModelForm):
             raise ValidationError({'timezone': _('Your default locale must be specified.')})
 
         # change timezone
-        zone = timezone(data.get('timezone'))
+        zone = ZoneInfo(data.get('timezone'))
         data['date_from'] = self.reset_timezone(zone, data.get('date_from'))
         data['date_to'] = self.reset_timezone(zone, data.get('date_to'))
         data['presale_start'] = self.reset_timezone(zone, data.get('presale_start'))
@@ -304,8 +305,8 @@ class EventWizardBasicsForm(I18nModelForm):
         return data
 
     @staticmethod
-    def reset_timezone(tz, dt):
-        return tz.localize(dt.replace(tzinfo=None)) if dt is not None else None
+    def reset_timezone(zone, dt):
+        return localize_datetime(dt, zone)
 
     def clean_slug(self):
         slug = self.cleaned_data['slug']

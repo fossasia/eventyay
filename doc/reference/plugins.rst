@@ -14,3 +14,4 @@ plugin catalog.
    plugins/campaigns
    plugins/digital
    plugins/webinar
+   plugins/hubspot

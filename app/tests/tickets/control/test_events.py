@@ -3,11 +3,11 @@ import json
 import time
 from decimal import Decimal
 
-import pytz
+from zoneinfo import ZoneInfo
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
-from pytz import timezone
+
 
 from eventyay.base.models import Event, Order, Organizer, Team, User
 from eventyay.base.models.organizer import OrganizerBillingModel
@@ -871,11 +871,11 @@ class EventsTest(SoupTest):
             assert ev.location == LazyI18nString({'de': 'Hamburg', 'en': 'Hamburg'})
             assert Team.objects.filter(limit_events=ev, members=self.user).exists()
 
-            berlin_tz = timezone('Europe/Berlin')
-            assert ev.date_from == berlin_tz.localize(datetime.datetime(2016, 12, 27, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.date_to == berlin_tz.localize(datetime.datetime(2016, 12, 30, 19, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_start == berlin_tz.localize(datetime.datetime(2016, 11, 1, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_end == berlin_tz.localize(datetime.datetime(2016, 11, 30, 18, 0, 0)).astimezone(pytz.utc)
+            berlin_tz = ZoneInfo('Europe/Berlin')
+            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.date_to == datetime.datetime(2016, 12, 30, 19, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_start == datetime.datetime(2016, 11, 1, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_end == datetime.datetime(2016, 11, 30, 18, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
 
             assert ev.tax_rules.filter(rate=Decimal('19.00')).exists()
 
@@ -1009,11 +1009,11 @@ class EventsTest(SoupTest):
             assert Team.objects.filter(limit_events=ev, members=self.user).exists()
             assert ev.items.count() == 1
 
-            berlin_tz = timezone('Europe/Berlin')
-            assert ev.date_from == berlin_tz.localize(datetime.datetime(2016, 12, 27, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.date_to == berlin_tz.localize(datetime.datetime(2016, 12, 30, 19, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_start == berlin_tz.localize(datetime.datetime(2016, 11, 1, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_end == berlin_tz.localize(datetime.datetime(2016, 11, 30, 18, 0, 0)).astimezone(pytz.utc)
+            berlin_tz = ZoneInfo('Europe/Berlin')
+            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.date_to == datetime.datetime(2016, 12, 30, 19, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_start == datetime.datetime(2016, 11, 1, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_end == datetime.datetime(2016, 11, 30, 18, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
 
             assert ev.tax_rules.filter(rate=Decimal('19.00')).count() == 1
             i = ev.items.get()
@@ -1088,11 +1088,11 @@ class EventsTest(SoupTest):
             assert Team.objects.filter(limit_events=ev, members=self.user).exists()
             assert ev.items.count() == 1
 
-            berlin_tz = timezone('Europe/Berlin')
-            assert ev.date_from == berlin_tz.localize(datetime.datetime(2016, 12, 27, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.date_to == berlin_tz.localize(datetime.datetime(2016, 12, 30, 19, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_start == berlin_tz.localize(datetime.datetime(2016, 11, 1, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_end == berlin_tz.localize(datetime.datetime(2016, 11, 30, 18, 0, 0)).astimezone(pytz.utc)
+            berlin_tz = ZoneInfo('Europe/Berlin')
+            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.date_to == datetime.datetime(2016, 12, 30, 19, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_start == datetime.datetime(2016, 11, 1, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_end == datetime.datetime(2016, 11, 30, 18, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
 
             assert ev.tax_rules.filter(rate=Decimal('19.00')).count() == 1
 
@@ -1149,7 +1149,7 @@ class EventsTest(SoupTest):
             assert ev.organizer == self.orga1
             assert ev.location == LazyI18nString({'en': 'Hamburg'})
             assert Team.objects.filter(limit_events=ev, members=self.user).exists()
-            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=pytz.utc)
+            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=datetime.timezone.utc)
             assert ev.date_to is None
             assert ev.presale_start is None
             assert ev.presale_end is None
@@ -1207,7 +1207,7 @@ class EventsTest(SoupTest):
             assert ev.location == LazyI18nString({'en': 'Hamburg'})
             team = Team.objects.filter(limit_events=ev, members=self.user).first()
             assert team == self.team2
-            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=pytz.utc)
+            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=datetime.timezone.utc)
             assert ev.date_to is None
             assert ev.presale_start is None
             assert ev.presale_end is None

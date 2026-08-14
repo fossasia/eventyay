@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
-import pytz
+from zoneinfo import ZoneInfo
 from django.db.models import Exists, OuterRef, Q
 from django.template.loader import get_template
 from django.utils.encoding import force_str
@@ -55,11 +55,11 @@ def get_organizer_export_events(request):
 
 def _event_entry(ev):
     event = ev if isinstance(ev, Event) else ev.event
-    tz = pytz.timezone(event.settings.timezone)
+    tz = ZoneInfo(event.settings.timezone)
     start = ev.date_from.astimezone(tz)
     end = ev.date_to.astimezone(tz) if event.settings.show_date_to and ev.date_to else start + timedelta(hours=1)
-    start_utc = ev.date_from.astimezone(pytz.utc)
-    end_utc = ev.date_to.astimezone(pytz.utc) if event.settings.show_date_to and ev.date_to else start_utc + timedelta(hours=1)
+    start_utc = ev.date_from.astimezone(datetime.timezone.utc)
+    end_utc = ev.date_to.astimezone(datetime.timezone.utc) if event.settings.show_date_to and ev.date_to else start_utc + timedelta(hours=1)
 
     if isinstance(ev, Event):
         url = build_absolute_uri(event, 'presale:event.index')
@@ -109,11 +109,11 @@ def build_organizer_frab_data(organizer, events, base_url):
                 date_bounds[day]['end'] = entry['end']
 
     if not by_date:
-        today = datetime.now(pytz.utc).date()
+        today = datetime.now(datetime.timezone.utc).date()
         by_date[today] = []
         date_bounds[today] = {
-            'start': datetime.combine(today, datetime.min.time()).replace(tzinfo=pytz.utc),
-            'end': datetime.combine(today, datetime.max.time()).replace(tzinfo=pytz.utc),
+            'start': datetime.combine(today, datetime.min.time()).replace(tzinfo=datetime.timezone.utc),
+            'end': datetime.combine(today, datetime.max.time()).replace(tzinfo=datetime.timezone.utc),
         }
 
     days = []
@@ -144,7 +144,7 @@ def build_organizer_frab_data(organizer, events, base_url):
 
     all_starts = [e['start'] for d in days for r in d['rooms'] for e in r['entries']]
     all_ends = [e['end'] for d in days for r in d['rooms'] for e in r['entries']]
-    conf_start = min(all_starts) if all_starts else datetime.now(pytz.utc)
+    conf_start = min(all_starts) if all_starts else datetime.now(datetime.timezone.utc)
     conf_end = max(all_ends) if all_ends else conf_start
 
     return {
