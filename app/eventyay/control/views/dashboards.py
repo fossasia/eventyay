@@ -2,7 +2,8 @@ from datetime import timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-import pytz
+import datetime
+
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import (
@@ -46,13 +47,14 @@ from eventyay.base.models import (
     WaitingListEntry,
 )
 from eventyay.base.services.quotas import QuotaAvailability
-from eventyay.base.settings import is_event_series_creation_enabled
+from eventyay.base.settings import is_event_series_creation_enabled, is_meetup_creation_enabled
 from eventyay.base.timeline import timeline_for_event
 from eventyay.control.forms.event import CommentForm
 from eventyay.control.signals import (
     event_dashboard_widgets,
     user_dashboard_widgets,
 )
+from eventyay.plugins.statistics.views import get_statistics_context
 from eventyay.helpers.daterange import daterange
 
 from ...base.models.orders import CancellationRequest
@@ -467,7 +469,11 @@ def event_index(request, organizer, event):
             initial={'comment': request.event.comment},
             readonly=not can_change_event_settings,
         ),
+        'can_view_orders': can_view_orders,
     }
+
+    if can_view_orders:
+        ctx.update(get_statistics_context(request, subevent=subevent))
 
     ctx['has_overpaid_orders'] = (
         can_view_orders
@@ -520,7 +526,9 @@ def event_index(request, organizer, event):
     ctx['nearly_now'] = now().astimezone(ZoneInfo(request.event.timezone)) - timedelta(seconds=20)
     ctx['organizer_teams'] = request.organizer.teams.values_list('id', 'name')
     resp = render(request, 'pretixcontrol/event/index.html', ctx)
-    # resp['Content-Security-Policy'] = "style-src 'unsafe-inline'"
+    if can_view_orders and ctx.get('stats_has_orders'):
+        resp['Content-Security-Policy'] = "script-src 'unsafe-eval'; style-src 'unsafe-inline'"
+        resp._csp_update = {'script-src': ["'unsafe-eval'"], 'style-src': ["'unsafe-inline'"]}
     return resp
 
 
@@ -533,14 +541,19 @@ def event_index_widgets_lazy(request, organizer, event):
         except SubEvent.DoesNotExist:
             pass
 
+    can_view_orders = request.user.has_event_permission(
+        request.organizer, request.event, 'can_view_orders', request=request
+    )
+
     widgets = []
-    for r, result in event_dashboard_widgets.send(
-        sender=request.event,
-        subevent=subevent,
-        lazy=False,
-        request=request,
-    ):
-        widgets.extend(result)
+    if can_view_orders:
+        for r, result in event_dashboard_widgets.send(
+            sender=request.event,
+            subevent=subevent,
+            lazy=False,
+            request=request,
+        ):
+            widgets.extend(result)
 
     return JsonResponse({'widgets': widgets})
 
@@ -611,7 +624,7 @@ def widgets_for_event_qs(request, qs, user, nmax, lazy=False):
     for event in events:
         if not lazy:
             tzname = event.cache.get_or_set('timezone', lambda: event.settings.timezone)
-            tz = pytz.timezone(tzname)
+            tz = ZoneInfo(tzname)
             if event.has_subevents:
                 if event.min_from is None:
                     dr = pgettext('subevent', 'No dates')
@@ -749,6 +762,7 @@ def user_index(request):
         'widgets': rearrange(widgets),
         'can_create_event': request.user.teams.filter(can_create_events=True).exists(),
         'event_series_creation_enabled': is_event_series_creation_enabled(request),
+        'meetup_creation_enabled': is_meetup_creation_enabled(request),
         'upcoming': widgets_for_event_qs(
             request,
             annotated_event_query(request, lazy=True)

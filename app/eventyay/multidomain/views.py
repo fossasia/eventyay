@@ -155,6 +155,8 @@ class VideoSPAView(View):
                 'eventTitle': str(event.name),
                 'visibleLogoUrl': event.visible_logo_url or '',
                 'visibleHeaderImageUrl': event.visible_header_image_url or '',
+                'showDateTo': bool(event.settings.show_date_to),
+                'showTimes': bool(event.settings.show_times),
                 'basePath': base_path,
                 'defaultLocale': 'en',
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],

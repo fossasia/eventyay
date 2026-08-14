@@ -26,11 +26,12 @@ from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
 from eventyay.base.services.export import ExportError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
-from eventyay.plugins.badges.models import BadgeProduct, BadgeVoucher
+from eventyay.plugins.badges.models import BadgeLayout, BadgeProduct, BadgeVoucher
 from eventyay.plugins.badges.utils import (
     BADGE_LAYOUT_PERSISTED_FIELDS,
     _renderer_cache,
     exclude_explicit_no_badge,
+    get_badge_field_overrides,
     get_badge_hidden_fields,
     get_badge_layout_for_position,
     get_badge_layout_renderer_token,
@@ -72,6 +73,13 @@ class BadgeRenderer(Renderer):
                 op._badge_hidden_fields_cache = hidden_fields
             if content in hidden_fields:
                 return ''
+
+            overrides = getattr(op, '_badge_field_overrides_cache', None)
+            if overrides is None:
+                overrides = get_badge_field_overrides(op)
+                op._badge_field_overrides_cache = overrides
+            if content in overrides:
+                return overrides[content]
 
         if content != o.get('content'):
             o = dict(o)
@@ -387,7 +395,7 @@ def render_nup(input_files: list[str], num_pages: int, output_file: BinaryIO, op
                 pass
 
 
-def render_badges(event, positions, opt, apply_output_pagesize=False):
+def render_badges(event, positions, opt, apply_output_pagesize=False, layout_override=None):
     from itertools import groupby
 
     # Always resolve assignments from the database for this render call.
@@ -400,7 +408,7 @@ def render_badges(event, positions, opt, apply_output_pagesize=False):
 
     op_renderers = []
     for op in positions:
-        layout = get_badge_layout_for_position(event, op)
+        layout = layout_override or get_badge_layout_for_position(event, op)
         if layout is None:
             continue
         if layout.pk not in refreshed_layouts:
@@ -443,20 +451,24 @@ def render_badges(event, positions, opt, apply_output_pagesize=False):
     return badge_pdf, len(badge_pdf.pages)
 
 
-def render_pdf(event, positions, opt):
+def render_pdf(event, positions, opt, layout_override=None):
     Renderer._register_fonts()
     badges_per_page = opt['cols'] * opt['rows']
     outbuffer = BytesIO()
 
     if badges_per_page == 1:
-        badge_pdf, _ = render_badges(event, positions, opt, apply_output_pagesize=True)
+        badge_pdf, _ = render_badges(
+            event, positions, opt, apply_output_pagesize=True, layout_override=layout_override
+        )
         badge_pdf.write(outbuffer)
     else:
         with tempfile.TemporaryDirectory() as tmp_dir:
             page_pdfs = []
             total_num_pages = 0
             for position_chunk in chunks(list(positions), 200):
-                badge_pdf, num_pages = render_badges(event, position_chunk, opt)
+                badge_pdf, num_pages = render_badges(
+                    event, position_chunk, opt, layout_override=layout_override
+                )
                 out_pdf_name = os.path.join(tmp_dir, f'chunk-{len(page_pdfs)}.pdf')
                 with open(out_pdf_name, 'wb') as out_pdf:
                     badge_pdf.write(out_pdf)

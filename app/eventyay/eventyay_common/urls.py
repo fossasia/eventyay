@@ -11,7 +11,6 @@ from eventyay.eventyay_common.views import (
     organizer,
     team,
 )
-from eventyay.eventyay_common.views.organizer_analytics import OrganizerAnalyticsView
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
 from eventyay.eventyay_common.views.orders import MyOrdersView
 from eventyay.eventyay_common.views.sessions import MySessionsView
@@ -26,8 +25,16 @@ class DashboardView(TemplateView):
 
 urlpatterns = [
     path('logout/', auth.logout, name='auth.logout'),
-    path('login/', auth.login, name='auth.login'),
-    path('login/2fa/', auth.Login2FAView.as_view(), name='auth.login.2fa'),
+    path(
+        'login/',
+        RedirectView.as_view(pattern_name='auth.login', permanent=True, query_string=True),
+        name='auth.login.legacy',
+    ),
+    path(
+        'login/2fa/',
+        RedirectView.as_view(pattern_name='auth.login.2fa', permanent=True, query_string=True),
+        name='auth.login.2fa.legacy',
+    ),
     path('invite/<str:token>/', auth.invite, name='auth.invite'),
     path('forgot/', auth.Forgot.as_view(), name='auth.forgot'),
     path('forgot/recover/', auth.Recover.as_view(), name='auth.forgot.recover'),
@@ -120,7 +127,6 @@ urlpatterns = [
     ),
     path('organizer/<str:organizer>/export', organizer_control.ExportView.as_view(), name='organizer.export'),
     path('organizer/<str:organizer>/export/do', organizer_control.ExportDoView.as_view(), name='organizer.export.do'),
-    path('organizer/<str:organizer>/analytics', OrganizerAnalyticsView.as_view(), name='organizer.analytics'),
     path('organizer/<str:organizer>/team/add', team.TeamCreateView.as_view(), name='organizer.team.add'),
     path('organizer/<str:organizer>/team/<str:team>', team.TeamMemberView.as_view(), name='organizer.team'),
     path('organizer/<str:organizer>/team/<str:team>/edit', team.TeamUpdateView.as_view(), name='organizer.team.edit'),

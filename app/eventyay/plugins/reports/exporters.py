@@ -5,7 +5,8 @@ from collections import OrderedDict, defaultdict
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
@@ -53,7 +54,7 @@ class ReportlabExportMixin:
         )
 
     def get_filename(self):
-        tz = pytz.timezone(self.event.settings.timezone)
+        tz = ZoneInfo(self.event.settings.timezone)
         return '%s-%s.pdf' % (
             self.name,
             now().astimezone(tz).strftime('%Y-%m-%d-%H-%M-%S'),
@@ -463,7 +464,7 @@ class OrderTaxListReportPDF(Report):
         headlinestyle = self.get_style()
         headlinestyle.fontSize = 15
         headlinestyle.fontName = 'OpenSansBd'
-        tz = pytz.timezone(self.event.settings.timezone)
+        tz = ZoneInfo(self.event.settings.timezone)
 
         tax_rates = set(
             a

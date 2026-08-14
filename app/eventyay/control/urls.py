@@ -172,6 +172,15 @@ urlpatterns = [
         include(
             [
                 url(r'^$', dashboards.event_index, name='event.index'),
+                url(
+                    r'^statistics/$',
+                    RedirectView.as_view(
+                        pattern_name='control:event.index',
+                        permanent=True,
+                        query_string=True,
+                    ),
+                    name='event.statistics.redirect',
+                ),
                 url(r'^widgets.json$', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
                 url(r'^logs/$', event.EventLog.as_view(), name='event.log'),
                 url(r'^live/$', event.EventLive.as_view(), name='event.live'),
@@ -292,6 +301,11 @@ urlpatterns = [
                     r'^orderforms/default-fields/(?P<field>[a-z_]+)/$',
                     product.OrderFormDefaultFieldSettings.as_view(),
                     name='event.products.orderforms.defaultfield',
+                ),
+                url(
+                    r'^orderforms/customer-fields/(?P<field>[a-z_]+)/$',
+                    product.OrderFormCustomerFieldSettings.as_view(),
+                    name='event.products.orderforms.customerfield',
                 ),
                 url(r'^questions/$', product.QuestionList.as_view(), name='event.products.questions'),
                 url(r'^questions/reorder$', product.reorder_questions, name='event.products.questions.reorder'),

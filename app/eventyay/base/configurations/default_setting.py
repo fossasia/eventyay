@@ -981,19 +981,6 @@ DEFAULT_SETTINGS = {
             **country_choice_kwargs(),
         ),
     },
-    'show_dates_on_frontpage': {
-        'default': 'True',
-        'type': bool,
-        'serializer_class': serializers.BooleanField,
-        'form_class': forms.BooleanField,
-        'form_kwargs': dict(
-            label=_('Show event times and dates on the ticket shop'),
-            help_text=_(
-                "If disabled, no date or time will be shown on the ticket shop's front page. This settings "
-                'does however not affect the display in other locations.'
-            ),
-        ),
-    },
     'show_date_to': {
         'default': 'True',
         'type': bool,
@@ -1161,6 +1148,12 @@ DEFAULT_SETTINGS = {
             label=_('Allow users to download tickets'),
             help_text=_('If this is off, nobody can download a ticket.'),
         ),
+    },
+    # PDF tickets are a core output (not an optional plugin). Default enabled so
+    # existing events get download/{download_tickets_pdf} without recreating data.
+    'ticketoutput_pdf__enabled': {
+        'default': 'True',
+        'type': bool,
     },
     'ticket_download_date': {
         'default': None,

@@ -39,6 +39,31 @@
                     {% endblocktrans %}
                 </p>
                 {% bootstrap_field form.currency layout="control" label_class="sr-only" field_class="col-md-12" %}
+                
+                <br>
+                <legend>{% trans "Tax Setup" %}</legend>
+                <p class="bigger">
+                    {% blocktrans trimmed %}
+                        Set up a tax rule (e.g. VAT) that applies to your tickets.
+                    {% endblocktrans %}
+                </p>
+                <div class="row hidden-sm hidden-xs">
+                    <div class="col-md-6">
+                        <strong>{% trans "Tax name (optional)" %}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>{% trans "Tax rate (in %) (optional)" %}</strong>
+                    </div>
+                </div>
+                <div class="row quick-setup-tax-row">
+                    <div class="col-md-6">
+                        {% bootstrap_field form.tax_name layout="inline" form_group_class="" %}
+                    </div>
+                    <div class="col-md-6">
+                        {% bootstrap_field form.tax_rate layout="inline" form_group_class="" %}
+                    </div>
+                </div>
+                {% bootstrap_field form.tax_price_includes_tax %}
                 <p>&nbsp;</p>
             </div>
         </fieldset>

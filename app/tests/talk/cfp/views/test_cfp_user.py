@@ -1,3 +1,5 @@
+from urllib.parse import parse_qs, urlparse
+
 import pytest
 from django.conf import settings
 from django.core import mail as djmail
@@ -5,8 +7,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django_scopes import scope
 
-from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 from eventyay.base.models import SubmissionStates
+from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 
 
 @pytest.mark.django_db
@@ -14,6 +16,16 @@ def test_can_see_submission_list(speaker_client, submission):
     response = speaker_client.get(submission.event.urls.user_submissions, follow=True)
     assert response.status_code == 200
     assert submission.title in response.text
+
+
+@pytest.mark.django_db
+def test_anonymous_submission_list_redirects_to_shared_login(client, event):
+    response = client.get(event.urls.user_submissions)
+
+    assert response.status_code == 302
+    parsed = urlparse(response.url)
+    assert parsed.path == reverse("auth.login")
+    assert parse_qs(parsed.query) == {"next": [str(event.urls.user_submissions)]}
 
 
 @pytest.mark.django_db

@@ -36,6 +36,7 @@ from eventyay.base.models import (
     BBBServer,
     SystemLog,
     JanusServer,
+    JitsiServer,
     StreamingServer,
     TurnServer,
     Event,
@@ -49,6 +50,7 @@ from eventyay.control.forms.server_management import (
     BBBServerForm,
     ConftoolSyncPostersForm,
     JanusServerForm,
+    JitsiServerForm,
     PlannedUsageFormSet,
     ProfileForm,
     SignupForm,
@@ -325,6 +327,7 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
         }
         if self.copy_from:
             form.instance.clone_from(self.copy_from, new_secrets=True)
+            form.instance.copy_data_from(self.copy_from)
 
         self.object = form.save()
 
@@ -339,7 +342,9 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
             # Point to SPA at /video/<event_id>
             base_site = settings.SITE_URL.rstrip('/')
             self.object.settings.venueless_url = f"{base_site}/video/{self.object.pk}"
-        except Exception:
+            if self.copy_from and self.copy_from.settings.get('event_type') == 'meetup':
+                self.object.settings.set('meetup_video_active', True)
+        except (KeyError, IndexError, TypeError, AttributeError):
             pass
 
         for f in self.formset.extra_forms:
@@ -360,7 +365,7 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
                 self.object.settings.venueless_audience = audience
                 base_site = settings.SITE_URL.rstrip('/')
                 self.object.settings.venueless_url = f"{base_site}/video/{self.object.pk}"
-            except Exception:
+            except (KeyError, IndexError, TypeError, AttributeError):
                 pass
 
         LogEntry.objects.create(
@@ -564,6 +569,77 @@ class JanusServerDelete(AdminBase, DeleteView):
         self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
+
+
+class JitsiServerList(AdminBase, ListView):
+    template_name = "control/jitsi_list.html"
+    queryset = JitsiServer.objects.select_related("event_exclusive").order_by("url")
+    context_object_name = "servers"
+
+
+class JitsiServerCreate(AdminBase, CreateView):
+    template_name = "control/jitsi_form.html"
+    form_class = JitsiServerForm
+    success_url = "/admin/video/jitsi/"
+
+    @transaction.atomic()
+    def form_valid(self, form):
+        self.object = form.save()
+
+        LogEntry.objects.create(
+            content_object=form.instance,
+            user=self.request.user,
+            action_type="jitsiserver.created",
+            data=_redact_jitsi_server_log_data(form.cleaned_data),
+        )
+        messages.success(self.request, _("Ok!"))
+        return super().form_valid(form)
+
+
+class JitsiServerUpdate(AdminBase, UpdateView):
+    template_name = "control/jitsi_form.html"
+    form_class = JitsiServerForm
+    queryset = JitsiServer.objects.all()
+    success_url = "/admin/video/jitsi/"
+
+    def form_valid(self, form):
+        self.object = form.save()
+
+        LogEntry.objects.create(
+            content_object=form.instance,
+            user=self.request.user,
+            action_type="jitsiserver.updated",
+            data=_redact_jitsi_server_log_data(form.cleaned_data),
+        )
+        messages.success(self.request, _("Ok!"))
+        return super().form_valid(form)
+
+
+class JitsiServerDelete(AdminBase, DeleteView):
+    template_name = "control/jitsi_delete.html"
+    queryset = JitsiServer.objects.all()
+    success_url = "/admin/video/jitsi/"
+    context_object_name = "server"
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        LogEntry.objects.create(
+            content_object=self.object,
+            user=self.request.user,
+            action_type="jitsiserver.deleted",
+            data={},
+        )
+        success_url = self.get_success_url()
+        self.object.delete()
+        messages.success(self.request, _("Ok!"))
+        return HttpResponseRedirect(success_url)
+
+
+def _redact_jitsi_server_log_data(data):
+    return {
+        key: "*****" if key == "app_secret" and value else str(value)
+        for key, value in data.items()
+    }
 
 
 class TurnServerList(AdminBase, ListView):

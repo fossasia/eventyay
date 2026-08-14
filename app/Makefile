@@ -13,7 +13,7 @@ staticfiles: jsi18n
 	./manage.py collectstatic --noinput
 
 compress: npminstall
-	./manage.py compress
+	./manage.py compress --force
 
 jsi18n: localecompile
 	./manage.py compilejsi18n
@@ -29,8 +29,6 @@ npminstall:
 	npm ci --prefix=eventyay/webapp/schedule-editor
 	npm ci --prefix=eventyay/webapp/schedule
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/schedule-editor
-	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build:wc --prefix=eventyay/webapp/schedule
-	npm ci --prefix=eventyay/webapp/webcheckin
-	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/webcheckin
+	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/schedule
 	npm ci --prefix=eventyay/webapp/video
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/video

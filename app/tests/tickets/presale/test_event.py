@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
-from pytz import timezone
+from zoneinfo import ZoneInfo
 
 from eventyay.base.models import (
     Event,
@@ -55,6 +55,36 @@ class EventMiddlewareTest(EventTestMixin, SoupTest):
         print('####', self.event.name)
         print('####', doc)
         self.assertIn(str(self.event.name), doc.find('title').text.strip())
+
+    def test_date_range_always_shown(self):
+        self.event.date_to = self.event.date_from + datetime.timedelta(days=1)
+        self.event.settings.show_date_to = True
+        self.event.settings.show_times = True
+        self.event.save()
+        resp = self.client.get('/%s/%s/' % (self.orga.slug, self.event.slug))
+        self.assertIn(self.event.get_date_range_display(), resp.rendered_content)
+        self.assertIn('Begin:', resp.rendered_content)
+        self.assertIn('End:', resp.rendered_content)
+
+    def test_date_range_shown_without_times(self):
+        self.event.date_to = self.event.date_from + datetime.timedelta(days=1)
+        self.event.settings.show_date_to = True
+        self.event.settings.show_times = False
+        self.event.save()
+        resp = self.client.get('/%s/%s/' % (self.orga.slug, self.event.slug))
+        self.assertIn(self.event.get_date_range_display(), resp.rendered_content)
+        self.assertNotIn('Begin:', resp.rendered_content)
+        self.assertNotIn('End:', resp.rendered_content)
+
+    def test_date_to_hidden_when_disabled(self):
+        self.event.date_to = self.event.date_from + datetime.timedelta(days=1)
+        self.event.settings.show_date_to = False
+        self.event.settings.show_times = True
+        self.event.save()
+        resp = self.client.get('/%s/%s/' % (self.orga.slug, self.event.slug))
+        self.assertIn(self.event.get_date_range_display(), resp.rendered_content)
+        self.assertIn('Begin:', resp.rendered_content)
+        self.assertNotIn('End:', resp.rendered_content)
 
     def test_not_found(self):
         resp = self.client.get('/%s/%s/' % ('foo', 'bar'))
@@ -993,6 +1023,33 @@ class VoucherRedeemItemDisplayTest(EventTestMixin, SoupTest):
         assert 'name="variation_%d_%d' % (self.item.pk, var2.pk) not in html.rendered_content
 
 
+class VoucherRedemptionVisibilityTest(EventTestMixin, SoupTest):
+    @scopes_disabled()
+    def setUp(self):
+        super().setUp()
+        self.q = Quota.objects.create(event=self.event, name='Quota', size=2)
+        self.v = self.event.vouchers.create(quota=self.q)
+        self.item = Item.objects.create(
+            event=self.event,
+            name='Early-bird ticket',
+            default_price=Decimal('12.00'),
+            active=True,
+        )
+        self.q.items.add(self.item)
+
+    def test_hidden_when_no_redeemable_product(self):
+        self.item.available_until = now() - datetime.timedelta(days=1)
+        self.item.save()
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        assert 'Redeem a voucher' not in doc.text
+
+    def test_shown_when_redeemable_product_exists(self):
+        self.item.available_until = now() + datetime.timedelta(days=1)
+        self.item.save()
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        assert 'Redeem a voucher' in doc.text
+
+
 class WaitingListTest(EventTestMixin, SoupTest):
     @scopes_disabled()
     def setUp(self):
@@ -1362,7 +1419,7 @@ class EventIcalDownloadTest(EventTestMixin, SoupTest):
             'DTSTART;TZID=%s:%s'
             % (
                 self.event.settings.timezone,
-                self.event.date_from.astimezone(timezone(self.event.settings.timezone)).strftime(fmt),
+                self.event.date_from.astimezone(ZoneInfo(self.event.settings.timezone)).strftime(fmt),
             ),
             ical,
             'incorrect start time',
@@ -1371,7 +1428,7 @@ class EventIcalDownloadTest(EventTestMixin, SoupTest):
             'DTEND;TZID=%s:%s'
             % (
                 self.event.settings.timezone,
-                self.event.date_to.astimezone(timezone(self.event.settings.timezone)).strftime(fmt),
+                self.event.date_to.astimezone(ZoneInfo(self.event.settings.timezone)).strftime(fmt),
             ),
             ical,
             'incorrect end time',
@@ -1403,7 +1460,7 @@ class EventIcalDownloadTest(EventTestMixin, SoupTest):
             'DTSTART;TZID=%s:%s'
             % (
                 self.event.settings.timezone,
-                self.event.date_from.astimezone(timezone(self.event.settings.timezone)).strftime(fmt),
+                self.event.date_from.astimezone(ZoneInfo(self.event.settings.timezone)).strftime(fmt),
             ),
             ical,
             'incorrect start time',

@@ -10,14 +10,8 @@
     <link rel="stylesheet" type="text/css" href="{% static 'pretixcontrol/css/tickets-mobile.css' %}" />
 {% endblock %}
 {% block content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h1>{% trans "Vouchers" %}</h1>
-            </div>
-            {% include "pretixcontrol/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Vouchers" as header_title %}
+    {% include "common/includes/header_nav.html" with header_title=header_title header_component_link="pretixcontrol/event/component_link.html" %}
     <ul class="nav nav-tabs">
         <li {% if tab == "vouchers" %}class="active"{% endif %}>
             <a href="?{% url_replace request 'tab' 'vouchers' %}">
@@ -38,46 +32,72 @@
                     reserve some quota for your very special guests.
                 {% endblocktrans %}
             </p>
-            <div class="vouchers-filter-container">
-                <form class="vouchers-filter-form" action="{% url "control:event.vouchers.go" event=request.event.slug organizer=request.event.organizer.slug %}">
-                    <div class="vouchers-filter-go">
-                        <div class="input-group">
-                            <input type="text" name="code" class="form-control" placeholder="{% trans "Voucher code" %}" autofocus>
-                            <span class="input-group-btn">
-                                <button class="btn btn-primary" type="submit">{% trans "Go!" %}</button>
-                            </span>
-                        </div>
+            <div class="advanced-filter-search" data-advanced-filter-search>
+                <form class="advanced-filter-go-form" action="{% url 'control:event.vouchers.go' event=request.event.slug organizer=request.event.organizer.slug %}" data-advanced-filter-go-form>
+                    <div class="input-group advanced-filter-search-code-group">
+                        <input type="text" name="code" class="form-control" placeholder="{% trans 'Voucher code' %}" autofocus>
+                        <span class="input-group-btn">
+                            <button class="btn btn-primary" type="submit">{% trans "Go!" %}</button>
+                        </span>
                     </div>
                 </form>
                 {% if filter_form %}
-                <form class="vouchers-filter-form" action="" method="get">
+                <form class="filter-form advanced-filter-search-form" action="" method="get">
                     <input type="hidden" name="tab" value="vouchers">
-                    <div class="vouchers-filter-search">
-                        {% bootstrap_field filter_form.search layout='inline' %}
-                    </div>
-                    <div class="vouchers-filter-field">
-                        {% bootstrap_field filter_form.tag layout='inline' %}
-                    </div>
-                    {% if request.event.has_subevents %}
-                        <div class="vouchers-filter-field">
-                            {% bootstrap_field filter_form.status layout='inline' %}
+                    <div class="advanced-filter-search-bar">
+                        <div class="input-group advanced-filter-search-query-group">
+                            <input id="id_search" type="text" name="search" class="form-control" placeholder="{% trans 'Search voucher…' %}" aria-label="{% trans 'Search voucher…' %}" value="{{ filter_form.search.value|default_if_none:'' }}">
+                            <span class="input-group-btn">
+                                <button class="btn btn-primary" type="submit">
+                                    <span class="fa fa-search" aria-hidden="true"></span>
+                                    {% trans "Search" %}
+                                </button>
+                            </span>
                         </div>
-                        <div class="vouchers-filter-field vouchers-filter-field-wide">
-                            {% bootstrap_field filter_form.subevent layout='inline' %}
+                        <div class="advanced-filter-search-actions">
+                            <a href="?tab=vouchers" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                                <span class="fa fa-eraser" aria-hidden="true"></span>
+                                <span class="sr-only">{% trans "Clear filters" %}</span>
+                            </a>
+                            <button type="button"
+                                    class="btn btn-default advanced-filter-toggle"
+                                    data-advanced-filter-toggle
+                                    aria-controls="advanced-filter-advanced"
+                                    aria-expanded="{% if advanced_filters_open %}true{% else %}false{% endif %}">
+                                <span class="fa fa-sliders" aria-hidden="true"></span>
+                                {% trans "Filters" %}
+                            </button>
                         </div>
-                    {% else %}
-                        <div class="vouchers-filter-field">
-                            {% bootstrap_field filter_form.status layout='inline' %}
+                    </div>
+                    <div id="advanced-filter-advanced"
+                         class="advanced-filter-advanced{% if not advanced_filters_open %} is-collapsed{% endif %}"
+                         data-advanced-filter-advanced
+                         {% if not advanced_filters_open %}hidden{% endif %}>
+                        <div class="advanced-filter-grid">
+                            <div class="advanced-filter-field">
+                                {% bootstrap_field filter_form.tag %}
+                            </div>
+                            <div class="advanced-filter-field">
+                                {% bootstrap_field filter_form.status %}
+                            </div>
+                            {% if request.event.has_subevents %}
+                                <div class="advanced-filter-field">
+                                    {% bootstrap_field filter_form.subevent %}
+                                </div>
+                            {% endif %}
+                            <div class="advanced-filter-field">
+                                {% bootstrap_field filter_form.productvar %}
+                            </div>
+                            <div class="advanced-filter-field">
+                                {% bootstrap_field filter_form.qm %}
+                            </div>
                         </div>
-                    {% endif %}
-                    <div class="vouchers-filter-field vouchers-filter-field-wide">
-                        {% bootstrap_field filter_form.productvar layout='inline' %}
-                    </div>
-                    <div class="vouchers-filter-field">
-                        {% bootstrap_field filter_form.qm layout='inline' %}
-                    </div>
-                    <div class="vouchers-filter-actions">
-                        {% include "eventyay_common/filter_actions.html" with clear_url='?tab=vouchers' %}
+                        <div class="advanced-filter-footer">
+                            <button class="btn btn-primary" type="submit">
+                                <span class="fa fa-filter" aria-hidden="true"></span>
+                                {% trans "Apply filters" %}
+                            </button>
+                        </div>
                     </div>
                 </form>
                 {% endif %}
@@ -235,14 +255,22 @@
                 {% endblocktrans %}
             </p>
             {% if request.event.has_subevents %}
-                <div class="vouchers-filter-container">
-                    <form class="vouchers-filter-form" action="" method="get">
+                <div class="advanced-filter-search" data-advanced-filter-search>
+                    <form class="filter-form advanced-filter-search-form" action="" method="get">
                         <input type="hidden" name="tab" value="tags">
-                        <div class="vouchers-filter-field vouchers-filter-field-wide">
-                            {% bootstrap_field tags_filter_form.subevent layout='inline' %}
-                        </div>
-                        <div class="vouchers-filter-actions">
-                            {% include "eventyay_common/filter_actions.html" with clear_url='?tab=tags' %}
+                        <div class="advanced-filter-search-bar">
+                            <div class="input-group advanced-filter-search-query-group">
+                                {% bootstrap_field tags_filter_form.subevent layout='inline' %}
+                                <span class="input-group-btn">
+                                    <a href="?tab=tags" class="btn btn-default btn-clear-filter" aria-label="{% trans 'Clear filters' %}" title="{% trans 'Clear filters' %}">
+                                        <span class="fa fa-eraser" aria-hidden="true"></span>
+                                        <span class="sr-only">{% trans "Clear filters" %}</span>
+                                    </a>
+                                    <button class="btn btn-primary" type="submit" aria-label="{% trans 'Apply filters' %}">
+                                        <span class="fa fa-filter" aria-hidden="true"></span>
+                                    </button>
+                                </span>
+                            </div>
                         </div>
                     </form>
                 </div>

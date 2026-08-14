@@ -13,36 +13,15 @@
 <script defer src="{% static 'eventyay-common/js/contact-form-toggle.js' %}"></script>
 <script type="module" src="{% static 'pretixcontrol/js/ui/secret-toggle.js' %}"></script>
 {{ sform.media }}
+{% if is_meetup_event %}
+<script type="module" src="{% static 'eventyay-common/js/ui/meetup-video-fields.js' %}"></script>
+{% endif %}
 {% endblock %}
 {% block inside %}
-<nav id="event-nav" class="header-nav">
-    <div class="navigation">
-        <div class="navigation-title">
-            <h1>{{ request.event.name|event_localize }} {% trans "- Settings" %}</h1>
-        </div>
-        <div class="navigation-button">
-            <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}"
-                class="header-nav btn btn-outline-success active">
-                <i class="fa fa-home"></i> {% trans "Home" %}
-            </a>
-            <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}'
-                class="header-nav btn btn-outline-success">
-                <i class="fa fa-ticket"></i> {% trans "Tickets" %}
-            </a>
-            {% if is_talk_event_created %}
-            <a href='{% url "orga:event.dashboard" organizer=request.event.organizer.slug event=request.event.slug %}'
-                class="header-nav btn btn-outline-success">
-                <i class="fa fa-group"></i> {% trans "Talks" %}
-            </a>
-            {% endif %}
-            <a class="header-nav btn btn-outline-success"
-                href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'
-                title="{% trans 'Access videos related to this event' %}">
-                <i class="fa fa-video-camera"></i> {% trans "Videos" %}
-            </a>
-        </div>
-    </div>
-</nav>
+{% blocktrans trimmed with name=request.event.name|event_localize asvar header_title %}
+{{ name }} - Settings
+{% endblocktrans %}
+{% include "common/includes/header_nav.html" with header_title=header_title header_component_link="eventyay_common/event/component_link.html" %}
 <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
     {% csrf_token %}
     {% bootstrap_form_errors form %}
@@ -197,6 +176,17 @@
             </div>
             {% endcomment %}
         </fieldset>
+
+        {% if is_meetup_event %}
+        <fieldset>
+            <legend>{% trans "Video stream" %}</legend>
+            {% bootstrap_field sform.video_type layout="control" %}
+            <div id="video-url-group" {% if not sform.video_type.value %}hidden{% endif %}>
+                {% bootstrap_field sform.video_url layout="control" %}
+            </div>
+        </fieldset>
+        {% endif %}
+
         <fieldset>
             <legend>{% trans "Localization" %}</legend>
             {% bootstrap_field sform.locales layout="control" %}
@@ -235,6 +225,11 @@
             {% bootstrap_field sform.video_sidebar_text_color layout="control" %}
             {% bootstrap_field sform.video_sidebar_hover_color layout="control" %}
             {% endpropagated %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Display" %}</legend>
+            {% bootstrap_field sform.show_date_to layout="control" %}
+            {% bootstrap_field sform.show_times layout="control" %}
         </fieldset>
         <fieldset>
             <legend>{% trans "Publication" %}</legend>

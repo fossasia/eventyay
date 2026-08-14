@@ -1,3 +1,4 @@
+import html
 import io
 import json
 import logging
@@ -35,6 +36,7 @@ from django.views.generic.detail import SingleObjectMixin
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
 
+from eventyay.timezones import localize_datetime
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.common.sanitizers import sanitize_email_html
@@ -50,7 +52,11 @@ from eventyay.base.models.event import EventMetaValue
 from eventyay.base.services import tickets
 from eventyay.base.services.invoices import build_preview_invoice_pdf
 from eventyay.base.signals import register_ticket_outputs
-from eventyay.base.templatetags.rich_text import expand_email_preview_placeholders, markdown_compile_email
+from eventyay.base.templatetags.rich_text import (
+    expand_email_preview_placeholders,
+    is_placeholder_html_sample,
+    markdown_compile_email,
+)
 from eventyay.control.forms.event import (
     CancelSettingsForm,
     CommentForm,
@@ -286,8 +292,8 @@ class EventUpdate(
             return self.form_invalid(form)
 
     @staticmethod
-    def reset_timezone(tz, dt):
-        return tz.localize(dt.replace(tzinfo=None)) if dt is not None else None
+    def reset_timezone(zone, dt):
+        return localize_datetime(dt, zone)
 
     @cached_property
     def product_meta_property_formset(self):
@@ -826,13 +832,14 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
         for p in get_available_placeholders(self.request.event, MailSettingsForm.base_context[product]).values():
             s = str(p.render_sample(self.request.event)).strip()
 
-            if s.startswith('*'):
+            if s.startswith('*') or is_placeholder_html_sample(s):
                 ctx[p.identifier] = s
             elif url_pattern.match(s):
                 ctx[p.identifier] = f'<a href="{s}" target="_blank" rel="noopener noreferrer">{s}</a>'
             else:
                 ctx[p.identifier] = '<span class="placeholder" title="{}">{}</span>'.format(
-                    _('This value will be replaced based on dynamic parameters.'), s
+                    _('This value will be replaced based on dynamic parameters.'),
+                    html.escape(s),
                 )
         return self.SafeDict(ctx)
 
@@ -1573,14 +1580,6 @@ class QuickSetupView(FormView):
     def form_valid(self, form):
         plugins_active = self.request.event.get_plugins()
         if form.cleaned_data['ticket_download']:
-            if 'eventyay.plugins.ticketoutputpdf' not in plugins_active:
-                self.request.event.log_action(
-                    'eventyay.event.plugins.enabled',
-                    user=self.request.user,
-                    data={'plugin': 'eventyay.plugins.ticketoutputpdf'},
-                )
-                plugins_active.append('eventyay.plugins.ticketoutputpdf')
-
             self.request.event.settings.ticket_download = True
             self.request.event.settings.ticketoutput_pdf__enabled = True
 
@@ -1654,7 +1653,23 @@ class QuickSetupView(FormView):
 
         products = []
         category = None
-        tax_rule = self.request.event.tax_rules.first()
+        if form.cleaned_data.get('tax_name') and form.cleaned_data.get('tax_rate') is not None:
+            tax_rule = self.request.event.tax_rules.create(
+                name=form.cleaned_data['tax_name'],
+                rate=form.cleaned_data['tax_rate'],
+                price_includes_tax=form.cleaned_data.get('tax_price_includes_tax', True),
+            )
+            tax_rule.log_action(
+                'eventyay.event.taxrule.added',
+                user=self.request.user,
+                data={
+                    'name': str(tax_rule.name),
+                    'rate': str(tax_rule.rate),
+                    'price_includes_tax': tax_rule.price_includes_tax,
+                },
+            )
+        else:
+            tax_rule = self.request.event.tax_rules.first()
         if any(f not in self.formset.deleted_forms for f in self.formset):
             category = self.request.event.categories.create(name=LazyI18nString.from_gettext(gettext('Tickets')))
             category.log_action(
@@ -1677,6 +1692,7 @@ class QuickSetupView(FormView):
                 admission=True,
                 position=i,
                 sales_channels=list(get_all_sales_channels().keys()),
+                available_until=self.request.event.date_to,
             )
             product.log_action(
                 'eventyay.event.product.added',

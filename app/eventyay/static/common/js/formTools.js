@@ -781,6 +781,7 @@ const initFormChanges = (form) => {
 const initFormButton = (form) => {
     form.querySelectorAll("button[type=submit]").forEach(submitButton => {
         if (submitButton.hasAttribute('data-no-loading') || submitButton.id === 'button-sudo' || submitButton.id === 'button-shop') return;
+        const submitButtonHTML = submitButton.innerHTML
         const submitButtonText = submitButton.textContent
         let lastSubmit = 0
         form.addEventListener("submit", (event) => {
@@ -793,7 +794,7 @@ const initFormButton = (form) => {
 
                 spinner.className = 'fa fa-spinner fa-spin pr-0';
 
-                submitButton.textContent = '';
+                submitButton.innerHTML = '';
 
                 submitButton.append(spinner, ` ${submitButtonText}`);
 
@@ -818,7 +819,7 @@ const initFormButton = (form) => {
             if (submitButton.classList.contains("disabled")) {
                 if (Date.now() - lastSubmit > 5000) {
                     submitButton.classList.remove("disabled")
-                    submitButton.innerHTML = submitButtonText
+                    submitButton.innerHTML = submitButtonHTML
                     submitButton.removeAttribute("aria-busy")
                 }
             }

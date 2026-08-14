@@ -4,7 +4,8 @@ from unittest import mock
 
 import pytest
 from django_scopes import scopes_disabled
-from pytz import UTC
+import datetime
+UTC = datetime.timezone.utc
 
 from eventyay.base.models import WaitingListEntry
 

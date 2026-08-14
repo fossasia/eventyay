@@ -4,6 +4,7 @@
 {% load rich_text %}
 {% load money %}
 {% load presale_locale %}
+{% load admission_validity %}
 {% blocktrans asvar s_taxes %}taxes{% endblocktrans %}
 {% for line in cart.positions %}
     <div class="row cart-row {% if download %}has-downloads{% endif %}{% if editable %}editable{% endif %}">
@@ -34,6 +35,11 @@
                         {{ line.subevent.date_from|date:"TIME_FORMAT" }}
                     </span>
                 {% endif %}
+            {% endif %}
+            {% product_admission_validity_text line.product event line.subevent line.variation as validity_text %}
+            {% if validity_text %}
+                <br /><span class="fa fa-clock-o fa-fw" aria-hidden="true"></span>
+                {% trans "Valid:" %} {{ validity_text }}
             {% endif %}
 
             {% if line.issued_gift_cards %}
@@ -150,6 +156,7 @@
             </div>
         {% elif line.addon_to %}
             <div class="count">&nbsp;</div>
+            {% if not is_meetup_event %}
             <div class="singleprice price">
                 <span class="sr-only">{% trans "price per product" %}</span>
                 {% if event.settings.display_net_prices %}
@@ -158,6 +165,7 @@
                     {{ line.price|money:event.currency }}
                 {% endif %}
             </div>
+            {% endif %}
         {% else %}
             <div class="count">
                 {% if editable %}
@@ -201,6 +209,7 @@
                 </form>
                 {% endif %}
             </div>
+            {% if not is_meetup_event %}
             <div class="singleprice price">
                 <span class="sr-only">{% trans "price per product" %}</span>
                 {% if event.settings.display_net_prices %}
@@ -209,7 +218,9 @@
                     {{ line.price|money:event.currency }}
                 {% endif %}
             </div>
+            {% endif %}
         {% endif %}
+        {% if not is_meetup_event %}
         <div class="totalprice price">
             <span class="sr-only">{% trans "price" %}</span>
             {% if event.settings.display_net_prices %}
@@ -234,9 +245,11 @@
                 {% endif %}
             {% endif %}
         </div>
+        {% endif %}
         <div class="clearfix"></div>
     </div>
 {% endfor %}
+{% if not is_meetup_event %}
 {% for fee in cart.fees %}
     <div class="row cart-row">
         <div class="col-md-4 col-xs-6">
@@ -268,7 +281,8 @@
         <div class="clearfix"></div>
     </div>
 {% endfor %}
-{% if event.settings.display_net_prices and cart.tax_total %}
+{% endif %}
+{% if not is_meetup_event and event.settings.display_net_prices and cart.tax_total %}
     <div class="row cart-row total">
         <div class="col-md-4 col-xs-6">
             <strong>{% trans "Net total" %}</strong>
@@ -288,6 +302,7 @@
         <div class="clearfix"></div>
     </div>
 {% endif %}
+{% if not is_meetup_event %}
 <div class="row cart-row total">
     <div class="product">
         <strong>{% trans "Total" %}</strong><br>
@@ -335,3 +350,4 @@
     </div>
     <div class="clearfix"></div>
 </div>
+{% endif %}

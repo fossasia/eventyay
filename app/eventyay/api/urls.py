@@ -133,6 +133,8 @@ for app in apps.get_app_configs():
         if importlib.util.find_spec(app.name + '.urls'):
             importlib.import_module(app.name + '.urls')
 
+importlib.import_module('eventyay.plugins.ticketoutputpdf.urls')
+
 urlpatterns = [
     path('', include(router.urls)),
     path('organizers/<orgslug:organizer>/', include(orga_router.urls)),

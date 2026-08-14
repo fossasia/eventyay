@@ -2,6 +2,7 @@ import datetime
 import pytest
 from django.test import override_settings
 from django.urls import reverse
+from django.urls.exceptions import NoReverseMatch
 from django.utils import timezone
 from django_scopes import scopes_disabled
 
@@ -44,14 +45,17 @@ def test_to_date_helpers():
 @pytest.mark.django_db
 @override_settings(EVENTYAY_OBLIGATORY_2FA=False, SITE_URL="https://testserver")
 def test_organizer_analytics_view_permissions(organizer_client, client, organizer):
-    url = reverse('eventyay_common:organizer.analytics', kwargs={'organizer': organizer.slug})
+    with pytest.raises(NoReverseMatch):
+        reverse('eventyay_common:organizer.analytics', kwargs={'organizer': organizer.slug})
 
-    response = organizer_client.get(url)
-    assert response.status_code == 200, f"Redirected to {response.get('Location') or 'unknown'}"
-    assert "analytics-page" in response.content.decode()
+    dashboard_url = reverse('eventyay_common:organizer.dashboard', kwargs={'organizer': organizer.slug})
+
+    response = organizer_client.get(dashboard_url)
+    assert response.status_code == 200
+    assert "Organizer Dashboard" in response.content.decode()
 
     client.logout()
-    response = client.get(url)
+    response = client.get(dashboard_url)
     assert response.status_code == 302
 
 
@@ -124,7 +128,7 @@ def test_organizer_analytics_view_context(organizer_client, organizer, event, us
             user=user,
         )
 
-    url = reverse('eventyay_common:organizer.analytics', kwargs={'organizer': organizer.slug})
+    url = reverse('eventyay_common:organizer.dashboard', kwargs={'organizer': organizer.slug})
     response = organizer_client.get(url)
     assert response.status_code == 200, f"Redirected to {response.get('Location') or 'unknown'}"
 
@@ -191,7 +195,7 @@ def test_organizer_analytics_scoped_permissions(organizer, user, client):
         team_orders.members.add(user)
 
     client.force_login(user)
-    url = reverse('eventyay_common:organizer.analytics', kwargs={'organizer': organizer.slug})
+    url = reverse('eventyay_common:organizer.dashboard', kwargs={'organizer': organizer.slug})
     response = client.get(url)
     assert response.status_code == 200, f"Redirected to {response.get('Location') or 'unknown'}"
 
@@ -205,7 +209,7 @@ def test_organizer_analytics_scoped_permissions(organizer, user, client):
 @pytest.mark.django_db
 @override_settings(EVENTYAY_OBLIGATORY_2FA=False, SITE_URL="https://testserver")
 def test_organizer_analytics_empty_state_and_attendance_filter(organizer_client, organizer, event):
-    url = reverse('eventyay_common:organizer.analytics', kwargs={'organizer': organizer.slug})
+    url = reverse('eventyay_common:organizer.dashboard', kwargs={'organizer': organizer.slug})
 
     response = organizer_client.get(url)
     assert response.status_code == 200
@@ -247,7 +251,7 @@ def test_email_engagement_requires_cfp_permission(organizer, user, client):
         )
 
     client.force_login(user)
-    url = reverse('eventyay_common:organizer.analytics', kwargs={'organizer': organizer.slug})
+    url = reverse('eventyay_common:organizer.dashboard', kwargs={'organizer': organizer.slug})
     response = client.get(url)
     assert response.status_code == 200
     ctx = response.context

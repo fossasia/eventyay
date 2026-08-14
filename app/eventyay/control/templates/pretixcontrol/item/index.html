@@ -1,7 +1,12 @@
 {% extends "pretixcontrol/item/base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% load bootstrap3 %}
 {% load formset_tags %}
+{% block custom_header %}
+    {{ block.super }}
+    <link type="text/css" rel="stylesheet" href="{% static 'vendored/cropperjs/cropper.min.css' %}">
+    <link type="text/css" rel="stylesheet" href="{% static 'eventyay-common/css/settings.css' %}">
+{% endblock %}
 {% block inside %}
     <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
         {% csrf_token %}
@@ -121,6 +126,16 @@
                         <legend>{% trans "Tickets & check-in" %}</legend>
                         {% bootstrap_field form.generate_tickets layout="control" %}
                         {% bootstrap_field form.checkin_attention layout="control" %}
+                        {% if form.admission.value %}
+                            {% bootstrap_field form.admission_validity_mode layout="control" %}
+                            {% bootstrap_field form.admission_valid_from layout="control" %}
+                            {% bootstrap_field form.admission_valid_until layout="control" %}
+                            {% bootstrap_field form.admission_valid_from_offset_minutes layout="control" %}
+                            {% bootstrap_field form.admission_valid_until_offset_minutes layout="control" %}
+                            <p class="help-block">
+                                {% trans "Choose how check-in validity is determined. Fixed times apply explicit start/end datetimes. Event or date modes use the event or assigned date range, optionally shifted by non-negative minute offsets that stay within that window. Offsets may not be negative or extend past the event end. Variations default to the product settings and can overlay individual fields, or explicitly choose no restriction." %}
+                            </p>
+                        {% endif %}
                     </fieldset>
                     <fieldset id="tab-item-additional-settings">
                         <legend>{% trans "Additional settings" %}</legend>
@@ -148,4 +163,32 @@
             </div>
         </div>
     </form>
+
+    <!-- Cropper Modal -->
+    <div class="modal fade" id="cropperModal" tabindex="-1" role="dialog" aria-labelledby="cropperModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="cropperModalLabel">{% trans "Crop Image" %}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="img-container">
+                        <img id="cropperImage" src="" alt="Picture">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-primary" id="cropperSaveBtn">{% trans "Apply Crop" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'vendored/cropperjs/cropper.min.js' %}"></script>
+    <script src="{% static 'eventyay-common/image_cropper.js' %}"></script>
+    <script src="{% static 'eventyay-common/js/event-settings-images.js' %}" type="module"></script>
 {% endblock %}
