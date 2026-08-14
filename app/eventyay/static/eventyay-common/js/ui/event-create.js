@@ -212,6 +212,10 @@
 
     function syncFoundationLocalesOnSubmit(form) {
         if (!form) return;
+        updateLocaleOrderList();
+        if (currentLocaleOrder.length === 0) {
+            return;
+        }
         var checkboxes = form.querySelectorAll('input[type="checkbox"][name="foundation-locales"]');
         checkboxes.forEach(function (input) {
             input.removeAttribute("name");
