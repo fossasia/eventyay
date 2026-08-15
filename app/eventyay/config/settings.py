@@ -1375,7 +1375,6 @@ REST_FRAMEWORK = {
         'user': '300/minute',
         'public_stream': '10/minute',
         'public_schedule': '30/minute',
-        'excessive_404': '1/minute',
     },
 }
 

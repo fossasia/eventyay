@@ -7,11 +7,19 @@ from eventyay.helpers.http import get_client_ip
 
 logger = logging.getLogger(__name__)
 
+# Only guard API paths — HTML pages, static files, and admin URLs are excluded
+# to avoid blocking legitimate browsers under shared NAT or misconfigured proxies.
+_API_PATH_PREFIX = '/api/'
+
 
 class Block404Middleware:
     """
-    Middleware that tracks the number of 404 responses per client IP and applies a throttle
-    when the limit is breached.
+    Middleware that tracks the number of 404 responses *on API paths* per client
+    IP (or user id for authenticated requests) and returns 429 Too Many Requests
+    once the limit is breached.
+
+    Scoped to ``/api/`` paths only so that normal browser navigation, static-file
+    misses, and CMS 404s never trigger the block.
     """
     MAX_404_PER_MINUTE = 30
     CACHE_ALIAS = 'default'
@@ -21,13 +29,16 @@ class Block404Middleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        ip = get_client_ip(request)
+        # Only guard API paths
+        if not request.path.startswith(_API_PATH_PREFIX):
+            return self.get_response(request)
+
+        key = self._cache_key(request)
         cache = caches[self.CACHE_ALIAS]
-        key = f'404_counter:{ip}'
 
         try:
-            count = int(cache.get(key, 0))
-        except Exception:
+            count = int(cache.get(key) or 0)
+        except (ValueError, TypeError):
             count = 0
 
         if count >= self.MAX_404_PER_MINUTE:
@@ -41,12 +52,26 @@ class Block404Middleware:
         try:
             count = self._increment(cache, key)
         except Exception:
-            logger.exception('Failed to increment 404 counter for IP %s', ip)
+            logger.exception('Failed to increment 404 counter for key %s', key)
             return response
 
         if count > self.MAX_404_PER_MINUTE:
             return self._too_many_requests_response()
         return response
+
+    @staticmethod
+    def _cache_key(request):
+        """
+        Key authenticated requests by user / token identity so a single bad
+        client behind shared NAT does not block other users at the same IP.
+        """
+        if request.user.is_authenticated:
+            return f'404_counter:user:{request.user.pk}'
+        if getattr(request, 'auth', None):
+            auth = request.auth
+            return f'404_counter:token:{type(auth).__name__}_{auth.pk}'
+        ip = get_client_ip(request)
+        return f'404_counter:ip:{ip}'
 
     @classmethod
     def _increment(cls, cache, key):
