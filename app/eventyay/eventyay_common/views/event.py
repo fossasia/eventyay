@@ -661,6 +661,8 @@ class EventUpdate(
         ):
             # Ignore case Event is created only for Talk as it not enable yet.
             context['is_talk_event_created'] = True
+            
+        
         return context
 
     def _run_email_test(self):
@@ -940,40 +942,42 @@ class EventLive(TemplateView):
         ctx['public_pages'] = public_pages
         warnings = []
         suggestions = []
-        if not self.request.event.cfp.text or len(str(self.request.event.cfp.text)) < 50:
-            warnings.append(
-                {
-                    'text': _('The CfP doesn’t have a full text yet.'),
-                    'url': self.request.event.cfp.urls.text,
-                }
-            )
-        if (
-            self.request.event.get_feature_flag('use_tracks')
-            and self.request.event.cfp.request_track
-            and self.request.event.tracks.count() < 2
-        ):
-            suggestions.append(
-                {
-                    'text': _(
-                        'You want submitters to choose the tracks for their proposals, but you do not offer tracks for selection. Add at least one track!'
-                    ),
-                    'url': self.request.event.cfp.urls.tracks,
-                }
-            )
-        if self.request.event.submission_types.count() == 1:
-            suggestions.append(
-                {
-                    'text': _('You have configured only one session type so far.'),
-                    'url': self.request.event.cfp.urls.types,
-                }
-            )
-        if not self.request.event.talkquestions.exists():
-            suggestions.append(
-                {
-                    'text': _('You have configured no custom fields yet.'),
-                    'url': self.request.event.cfp.urls.new_question,
-                }
-            )
+        if hasattr(self.request.event, 'cfp'):
+            cfp = self.request.event.cfp
+            if not cfp.text or len(str(cfp.text)) < 50:
+                warnings.append(
+                    {
+                        'text': _('The CfP doesn’t have a full text yet.'),
+                        'url': cfp.urls.text,
+                    }
+                )
+            if (
+                self.request.event.get_feature_flag('use_tracks')
+                and cfp.request_track
+                and self.request.event.tracks.count() < 2
+            ):
+                suggestions.append(
+                    {
+                        'text': _(
+                            'You want submitters to choose the tracks for their proposals, but you do not offer tracks for selection. Add at least one track!'
+                        ),
+                        'url': cfp.urls.tracks,
+                    }
+                )
+            if self.request.event.submission_types.count() == 1:
+                suggestions.append(
+                    {
+                        'text': _('You have configured only one session type so far.'),
+                        'url': cfp.urls.types,
+                    }
+                )
+            if not self.request.event.talkquestions.exists():
+                suggestions.append(
+                    {
+                        'text': _('You have configured no custom fields yet.'),
+                        'url': cfp.urls.new_question,
+                    }
+                )
         ctx['warnings'] = warnings
         ctx['suggestions'] = suggestions
         return ctx

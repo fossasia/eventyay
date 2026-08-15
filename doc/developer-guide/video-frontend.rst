@@ -1016,7 +1016,7 @@ Setup
 
 **Prerequisites**:
 - Node.js 18+ and npm
-- Python 3.11+ (for backend)
+- Python 3.12+ (for backend)
 - Modern web browser
 
 **Installation**:

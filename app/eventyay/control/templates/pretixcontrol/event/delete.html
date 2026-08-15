@@ -19,11 +19,11 @@
         <form action="" method="post">
             {% csrf_token %}
             <p>
-                {% blocktrans trimmed with slug=request.event.slug %}
-                    To confirm you really want this, please type out the event's short name ("{{ slug }}") here:
+                {% blocktrans trimmed with name=request.event.name %}
+                    To confirm you really want this, please type out the event's name ("{{ name }}") here:
                 {% endblocktrans %}
             </p>
-            {% bootstrap_field form.slug layout="inline" %}
+            {% bootstrap_field form.name layout="inline" %}
 
             <div class="form-group submit-group">
                 <button type="submit" class="btn btn-delete btn-danger btn-save">
