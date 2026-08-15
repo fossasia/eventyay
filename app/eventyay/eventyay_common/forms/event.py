@@ -9,7 +9,8 @@ from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
-from pytz import common_timezones
+
+from eventyay.timezones import common_timezones
 
 from eventyay.base.forms import I18nModelForm, SettingsForm
 from eventyay.base.meetup import (

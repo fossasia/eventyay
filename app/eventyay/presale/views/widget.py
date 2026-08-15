@@ -8,7 +8,8 @@ from zoneinfo import ZoneInfo
 from urllib.parse import urljoin
 
 import isoweek
-import pytz
+import datetime
+
 from django.conf import settings
 from django.contrib.staticfiles import finders
 from django.core.cache import cache
@@ -423,7 +424,7 @@ class WidgetAPIProductList(EventListMixin, View):
                 event = ev.event
             else:
                 event = ev
-            tz = pytz.timezone(e['timezone'])
+            tz = ZoneInfo(e['timezone'])
             time = (
                 date_format(ev.date_from.astimezone(tz), 'TIME_FORMAT')
                 if e.get('time') and event.settings.show_times
@@ -493,9 +494,9 @@ class WidgetAPIProductList(EventListMixin, View):
 
             data['date'] = date(self.year, self.month, 1)
             if hasattr(self.request, 'event'):
-                tz = pytz.timezone(self.request.event.settings.timezone)
+                tz = ZoneInfo(self.request.event.settings.timezone)
             else:
-                tz = pytz.UTC
+                tz = datetime.timezone.utc
             before = datetime(self.year, self.month, 1, 0, 0, 0, tzinfo=tz) - timedelta(days=1)
             after = datetime(self.year, self.month, ndays, 0, 0, 0, tzinfo=tz) + timedelta(days=1)
 
@@ -562,9 +563,9 @@ class WidgetAPIProductList(EventListMixin, View):
             self._set_week_year()
 
             if hasattr(self.request, 'event'):
-                tz = pytz.timezone(self.request.event.settings.timezone)
+                tz = ZoneInfo(self.request.event.settings.timezone)
             else:
-                tz = pytz.UTC
+                tz = datetime.timezone.utc
 
             week = isoweek.Week(self.year, self.week)
             data['week'] = [self.year, self.week]
@@ -642,7 +643,7 @@ class WidgetAPIProductList(EventListMixin, View):
                         self.request,
                     )
                 )
-                tz = pytz.timezone(request.event.settings.timezone)
+                tz = ZoneInfo(request.event.settings.timezone)
                 if self.request.event.settings.event_list_available_only:
                     evs = [
                         se
@@ -665,7 +666,7 @@ class WidgetAPIProductList(EventListMixin, View):
                 data['events'] = []
                 qs = self._get_event_queryset()
                 for event in qs:
-                    tz = pytz.timezone(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
+                    tz = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
                     if event.has_subevents:
                         dr = daterange(
                             event.min_from.astimezone(tz),

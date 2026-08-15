@@ -2,7 +2,8 @@ import logging
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from django.contrib.contenttypes.models import ContentType
 from django.contrib import messages
@@ -28,8 +29,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
-from pytz.tzinfo import DstTzInfo
-from zoneinfo import ZoneInfo
+
 
 from eventyay.base.models import (
     Event,
@@ -449,7 +449,7 @@ class EventWidgetGenerator:
         ]
 
     @staticmethod
-    def format_event_daterange(event: Event, tz: DstTzInfo) -> str:
+    def format_event_daterange(event: Event, tz: ZoneInfo) -> str:
         """
         Generate a formatted date range for an event.
         """
@@ -469,7 +469,7 @@ class EventWidgetGenerator:
         return date_format(event.date_from.astimezone(tz), 'DATE_FORMAT')
 
     @staticmethod
-    def format_event_times(event: Event, tz: DstTzInfo, request: HttpRequest) -> str:
+    def format_event_times(event: Event, tz: ZoneInfo, request: HttpRequest) -> str:
         """
         Generate a formatted time string for an event.
         """
@@ -585,7 +585,7 @@ class EventWidgetGenerator:
         widget_content = ''
         if not lazy:
             tzname = event.cache.get_or_set('timezone', lambda e=event: e.settings.timezone)
-            tz = pytz.timezone(tzname)
+            tz = ZoneInfo(tzname)
 
             widget_template = """
             <a href="{url}" class="event">

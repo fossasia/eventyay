@@ -6,7 +6,7 @@ from datetime import datetime
 from urllib.parse import urlencode, urljoin, urlparse
 
 import aiohttp
-import pytz
+from zoneinfo import ZoneInfo
 from channels.db import database_sync_to_async
 from django.conf import settings
 from django.db import models, transaction
@@ -419,7 +419,7 @@ class BBBService:
                     continue
 
                 server_recordings = []
-                tz = pytz.timezone(self.event.timezone)
+                tz = ZoneInfo(self.event.timezone)
                 recordings_nodes = root.xpath("recordings")
                 if not recordings_nodes:
                     logger.error(
@@ -460,7 +460,7 @@ class BBBService:
                                 # is the same as ours…
                                 datetime.fromtimestamp(
                                     int(rec.xpath("startTime")[0].text) / 1000,
-                                    pytz.timezone(settings.TIME_ZONE),
+                                    ZoneInfo(settings.TIME_ZONE),
                                 )
                             )
                             .astimezone(tz)
@@ -468,7 +468,7 @@ class BBBService:
                             "end": (
                                 datetime.fromtimestamp(
                                     int(rec.xpath("endTime")[0].text) / 1000,
-                                    pytz.timezone(settings.TIME_ZONE),
+                                    ZoneInfo(settings.TIME_ZONE),
                                 )
                             )
                             .astimezone(tz)

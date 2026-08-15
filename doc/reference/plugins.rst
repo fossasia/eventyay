@@ -8,9 +8,14 @@ plugin catalog.
    :maxdepth: 2
 
    plugins/list
-   plugins/banktransfer
-   plugins/ticketoutputpdf
    plugins/badges
-   plugins/campaigns
-   plugins/digital
-   plugins/webinar
+   plugins/banktransfer
+   plugins/bitpay
+   plugins/exhibition
+   plugins/hubspot
+   plugins/interpretation
+   plugins/paypal
+   plugins/socialmedia
+   plugins/stripe
+   plugins/teamshifts
+   plugins/ticketoutputpdf

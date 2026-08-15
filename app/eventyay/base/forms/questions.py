@@ -6,7 +6,8 @@ from urllib.error import HTTPError
 
 import dateutil.parser
 import pycountry
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 import vat_moss_lite.errors
 import vat_moss_lite.id
 from babel import Locale
@@ -584,7 +585,7 @@ class BaseQuestionsForm(forms.Form):
             # Do we already have an answer? Provide it as the initial value
             answers = [a for a in pos.answerlist if a.question_id == q.id]
             initial = answers[0] if answers else None
-            tz = pytz.timezone(event.settings.timezone)
+            tz = ZoneInfo(event.settings.timezone)
             help_text = rich_text(q.help_text)
             label = mark_safe(q.question)
             required = q.required and not self.all_optional
