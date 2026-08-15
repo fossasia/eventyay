@@ -116,7 +116,7 @@ Fill the configuration file ``/etc/eventyay/eventyay.cfg`` with the following co
     backend=redis://127.0.0.1/1
     broker=redis://127.0.0.1/2
 
-See :ref:`email configuration <mail-settings>` to learn more about configuring mail features.
+See the ``[mail]`` section of your ``eventyay.local.toml`` file to learn more about configuring mail features.
 
 Install eventyay from PyPI
 --------------------------
@@ -134,7 +134,7 @@ command if you're running MySQL::
 
     (venv)$ pip3 install "eventyay[postgres]" gunicorn
 
-Note that you need Python 3.11 or newer. You can find out your Python version using ``python -V``.
+Note that you need Python 3.12 or newer. You can find out your Python version using ``python -V``.
 
 We also need to create a data directory::
 

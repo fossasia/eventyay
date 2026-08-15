@@ -13,41 +13,52 @@
             <i class="fa fa-envelope-o"></i>
         </div>
         <h2 class="contact-modal-title" id="contact-modal-title">{% translate "Contact the Organizer" %}</h2>
-        <p class="contact-modal-description" id="contact-modal-desc">
-            {% translate "Have a question about the event? You can send a message to the organizer." %}
-        </p>
-        <form id="contact-organizer-form" method="post" action="{{ contact_url }}" data-url="{{ contact_url }}">
-            {% csrf_token %}
-            {% if not request.user.is_authenticated or not request.user.email %}
-            <div class="contact-form-group">
-                <input type="email" name="email" id="contact-email"
-                       placeholder="{% translate 'Your email address' %}"
-                       aria-label="{% translate 'Your email address' %}"
-                       required class="contact-form-input">
+        {% if not request.user.is_authenticated %}
+            <p class="contact-modal-description" id="contact-modal-desc">
+                {% translate "You need to log in before contacting the organizer." %}
+            </p>
+            <div class="contact-modal-login-wrapper">
+                <a href="{% url 'auth.login' %}?next={{ request.get_full_path|urlencode }}" class="contact-form-submit contact-modal-login-btn">
+                    {% translate "Log in" %}
+                </a>
             </div>
-            {% endif %}
-            <div class="contact-form-group">
-                <textarea name="message" id="contact-message" rows="4" minlength="10" maxlength="5000"
-                          placeholder="{% translate 'What\'s your question for the organizer?' %}"
-                          aria-label="{% translate 'Your message' %}"
-                          required class="contact-form-textarea"></textarea>
-            </div>
-            <p class="contact-modal-helper">
-                {% if request.user.is_authenticated and request.user.email %}
+        {% else %}
+            <p class="contact-modal-description" id="contact-modal-desc">
+                {% translate "Have a question about the event? You can send a message to the organizer." %}
+            </p>
+            <form id="contact-organizer-form" method="post" action="{{ contact_url }}" data-url="{{ contact_url }}">
+                {% csrf_token %}
+                <div class="contact-form-group">
+                    <label for="contact-email">{% translate 'From' %}</label>
+                    <input type="email" id="contact-email"
+                           value="{{ request.user.email }}"
+                           readonly disabled class="contact-form-input">
+                </div>
+                <div class="contact-form-group">
+                    <textarea name="message" id="contact-message" rows="4" minlength="10" maxlength="5000"
+                              placeholder="{% translate 'What\'s your question for the organizer?' %}"
+                              aria-label="{% translate 'Your message' %}"
+                              required class="contact-form-textarea"></textarea>
+                </div>
+                <div class="contact-form-group checkbox">
+                    <label>
+                        <input type="checkbox" name="send_copy" id="contact-send-copy">
+                        {% translate "Send copy to myself" %}
+                    </label>
+                </div>
+                <p class="contact-modal-helper">
                     {% blocktranslate with email=request.user.email %}
                         The organizer will send replies to {{ email }}.
                     {% endblocktranslate %}
-                {% else %}
-                    {% translate "The organizer will send replies to the email address you provide above." %}
-                {% endif %}
-            </p>
-            <button type="submit" class="contact-form-submit" id="contact-submit-btn">
-                {% translate "Send Message" %}
-            </button>
-        </form>
-        <div id="contact-success-message" class="contact-success" role="status" aria-live="polite">
-            <i class="fa fa-check-circle"></i>
-            <p>{% translate "Your message has been sent successfully!" %}</p>
-        </div>
+                </p>
+                <button type="submit" class="contact-form-submit" id="contact-submit-btn">
+                    {% translate "Send Message" %}
+                </button>
+            </form>
+            <div id="contact-success-message" class="contact-success" role="status" aria-live="polite">
+                <i class="fa fa-check-circle"></i>
+                <p>{% translate "Your message has been sent successfully!" %}</p>
+            </div>
+        {% endif %}
     </div>
 </dialog>

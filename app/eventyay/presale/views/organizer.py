@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta
 from urllib.parse import quote, urlencode, urlparse, urlunparse
 
 import isoweek
-import pytz
+from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -20,7 +20,8 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, TemplateView
-from pytz import UTC
+import datetime
+UTC = datetime.timezone.utc
 
 from eventyay.base.i18n import language
 from eventyay.base.models import (
@@ -87,7 +88,7 @@ class EventListMixin:
         return qs
 
     def _set_month_to_next_subevent(self):
-        tz = pytz.timezone(self.request.event.settings.timezone)
+        tz = ZoneInfo(self.request.event.settings.timezone)
         is_old = 'old' in self.request.GET
         qs = self.request.event.subevents.using(settings.DATABASE_REPLICA).filter(
             active=True, is_public=True
@@ -167,7 +168,7 @@ class EventListMixin:
             datetime_from = next_ev.date_from
 
         if datetime_from:
-            tz = pytz.timezone(next_ev.settings.timezone)
+            tz = ZoneInfo(next_ev.settings.timezone)
             self.year = datetime_from.astimezone(tz).year
             self.month = datetime_from.astimezone(tz).month
         else:
@@ -176,7 +177,7 @@ class EventListMixin:
 
     def _set_month_year(self):
         if hasattr(self.request, 'event') and self.subevent:
-            tz = pytz.timezone(self.request.event.settings.timezone)
+            tz = ZoneInfo(self.request.event.settings.timezone)
             self.year = self.subevent.date_from.astimezone(tz).year
             self.month = self.subevent.date_from.astimezone(tz).month
         if 'year' in self.request.GET and 'month' in self.request.GET:
@@ -193,7 +194,7 @@ class EventListMixin:
                 self._set_month_to_next_event()
 
     def _set_week_to_next_subevent(self):
-        tz = pytz.timezone(self.request.event.settings.timezone)
+        tz = ZoneInfo(self.request.event.settings.timezone)
         is_old = 'old' in self.request.GET
         qs = self.request.event.subevents.using(settings.DATABASE_REPLICA).filter(
             active=True, is_public=True
@@ -273,7 +274,7 @@ class EventListMixin:
             datetime_from = next_ev.date_from
 
         if datetime_from:
-            tz = pytz.timezone(next_ev.settings.timezone)
+            tz = ZoneInfo(next_ev.settings.timezone)
             self.year = datetime_from.astimezone(tz).isocalendar()[0]
             self.week = datetime_from.astimezone(tz).isocalendar()[1]
         else:
@@ -282,7 +283,7 @@ class EventListMixin:
 
     def _set_week_year(self):
         if hasattr(self.request, 'event') and self.subevent:
-            tz = pytz.timezone(self.request.event.settings.timezone)
+            tz = ZoneInfo(self.request.event.settings.timezone)
             self.year = self.subevent.date_from.astimezone(tz).year
             self.month = self.subevent.date_from.astimezone(tz).month
         if 'year' in self.request.GET and 'week' in self.request.GET:
@@ -319,7 +320,7 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         for event in ctx['events']:
-            event.tzname = pytz.timezone(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
+            event.tzname = ZoneInfo(event.cache.get_or_set('timezone', lambda: event.settings.timezone))
             if event.has_subevents:
                 event.daterange = daterange(
                     event.min_from.astimezone(event.tzname),
@@ -353,7 +354,7 @@ def add_events_for_days(request, baseqs, before, after, ebd, timezones):
         qs = filter_qs_by_attr(qs, request)
     for event in qs:
         timezones.add(event.settings.timezones)
-        tz = pytz.timezone(event.settings.timezone)
+        tz = ZoneInfo(event.settings.timezone)
         datetime_from = event.date_from.astimezone(tz)
         date_from = datetime_from.date()
         if event.settings.show_date_to and event.date_to:
@@ -442,7 +443,7 @@ def add_subevents_for_days(qs, before, after, ebd, timezones, event=None, cart_n
                 continue
 
         timezones.add(s.timezones)
-        tz = pytz.timezone(s.timezone)
+        tz = ZoneInfo(s.timezone)
         datetime_from = se.date_from.astimezone(tz)
         date_from = datetime_from.date()
         if name is None:

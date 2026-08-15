@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
-import pytz
+from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
@@ -1322,8 +1322,8 @@ class OrderTestCase(BaseQuotaTestCase):
     @classscope(attr='o')
     def test_payment_term_last_relative(self):
         self.event.settings.set('payment_term_last', date(2017, 5, 3))
-        assert self.order.payment_term_last == datetime.datetime(2017, 5, 3, 23, 59, 59, tzinfo=pytz.UTC)
-        self.event.date_from = datetime.datetime(2017, 5, 3, 12, 0, 0, tzinfo=pytz.UTC)
+        assert self.order.payment_term_last == datetime.datetime(2017, 5, 3, 23, 59, 59, tzinfo=datetime.timezone.utc)
+        self.event.date_from = datetime.datetime(2017, 5, 3, 12, 0, 0, tzinfo=datetime.timezone.utc)
         self.event.save()
         self.event.settings.set(
             'payment_term_last',
@@ -1336,7 +1336,7 @@ class OrderTestCase(BaseQuotaTestCase):
                 )
             ),
         )
-        assert self.order.payment_term_last == datetime.datetime(2017, 5, 1, 23, 59, 59, tzinfo=pytz.UTC)
+        assert self.order.payment_term_last == datetime.datetime(2017, 5, 1, 23, 59, 59, tzinfo=datetime.timezone.utc)
 
     @classscope(attr='o')
     def test_payment_term_last_subevent(self):
@@ -1371,10 +1371,10 @@ class OrderTestCase(BaseQuotaTestCase):
     def test_ticket_download_date_relative(self):
         self.event.settings.set(
             'ticket_download_date',
-            datetime.datetime(2017, 5, 3, 12, 59, 59, tzinfo=pytz.UTC),
+            datetime.datetime(2017, 5, 3, 12, 59, 59, tzinfo=datetime.timezone.utc),
         )
-        assert self.order.ticket_download_date == datetime.datetime(2017, 5, 3, 12, 59, 59, tzinfo=pytz.UTC)
-        self.event.date_from = datetime.datetime(2017, 5, 3, 12, 0, 0, tzinfo=pytz.UTC)
+        assert self.order.ticket_download_date == datetime.datetime(2017, 5, 3, 12, 59, 59, tzinfo=datetime.timezone.utc)
+        self.event.date_from = datetime.datetime(2017, 5, 3, 12, 0, 0, tzinfo=datetime.timezone.utc)
         self.event.save()
         self.event.settings.set(
             'ticket_download_date',
@@ -1387,7 +1387,7 @@ class OrderTestCase(BaseQuotaTestCase):
                 )
             ),
         )
-        assert self.order.ticket_download_date == datetime.datetime(2017, 5, 1, 12, 0, 0, tzinfo=pytz.UTC)
+        assert self.order.ticket_download_date == datetime.datetime(2017, 5, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
 
     @classscope(attr='o')
     def test_ticket_download_date_subevent(self):
@@ -2998,17 +2998,17 @@ class SeatingTestCase(TestCase):
         (
             Question.TYPE_DATETIME,
             '2018-01-16T15:20:00',
-            datetime.datetime(2018, 1, 16, 15, 20, 0, tzinfo=pytz.timezone('Europe/Berlin')),
+            datetime.datetime(2018, 1, 16, 15, 20, 0, tzinfo=ZoneInfo('Europe/Berlin')),
         ),
         (
             Question.TYPE_DATETIME,
             '2018-01-16T14:20:00Z',
-            datetime.datetime(2018, 1, 16, 14, 20, 0, tzinfo=pytz.UTC).astimezone(pytz.timezone('Europe/Berlin')),
+            datetime.datetime(2018, 1, 16, 14, 20, 0, tzinfo=datetime.timezone.utc).astimezone(ZoneInfo('Europe/Berlin')),
         ),
         (
             Question.TYPE_DATETIME,
             '2018-01-16T15:20:00',
-            datetime.datetime(2018, 1, 16, 15, 20, 0, tzinfo=pytz.timezone('Europe/Berlin')),
+            datetime.datetime(2018, 1, 16, 15, 20, 0, tzinfo=ZoneInfo('Europe/Berlin')),
         ),
         (Question.TYPE_DATETIME, '2018-01-16T15:AB:CD', ValidationError),
         (Question.TYPE_DATETIME, '2018-01-16T13:20:00+01:00', ValidationError),
@@ -3030,8 +3030,8 @@ def test_question_answer_validation(qtype, answer, expected):
             event=event,
             valid_date_min=datetime.date(2018, 1, 15),
             valid_date_max=datetime.date(2018, 12, 15),
-            valid_datetime_min=datetime.datetime(2018, 1, 16, 14, 0, 0, tzinfo=pytz.timezone('Europe/Berlin')),
-            valid_datetime_max=datetime.datetime(2018, 1, 16, 16, 0, 0, tzinfo=pytz.timezone('Europe/Berlin')),
+            valid_datetime_min=datetime.datetime(2018, 1, 16, 14, 0, 0, tzinfo=ZoneInfo('Europe/Berlin')),
+            valid_datetime_max=datetime.datetime(2018, 1, 16, 16, 0, 0, tzinfo=ZoneInfo('Europe/Berlin')),
             valid_number_min=Decimal('1'),
             valid_number_max=Decimal('100'),
         )

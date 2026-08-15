@@ -32,7 +32,7 @@ as well as the type of underlying hardware. Example:
        "token": "kpp4jn8g2ynzonp6",
        "hardware_brand": "Samsung",
        "hardware_model": "Galaxy S",
-       "software_brand": "pretixdroid",
+       "software_brand": "eventyay-checkin",
        "software_version": "4.0.0"
    }
 
@@ -98,7 +98,7 @@ following endpoint:
    {
        "hardware_brand": "Samsung",
        "hardware_model": "Galaxy S",
-       "software_brand": "pretixdroid",
+       "software_brand": "eventyay-checkin",
        "software_version": "4.1.0"
    }
 
