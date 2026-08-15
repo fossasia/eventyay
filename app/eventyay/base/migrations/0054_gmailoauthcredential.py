@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0052_admission_validity_fields'),
+        ('base', '0053_jitsiserver'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
