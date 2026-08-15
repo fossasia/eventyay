@@ -81,12 +81,12 @@ def test_settings_form_initial_and_save_updates_quota_size(meetup_event):
 
     data = form.initial.copy()
     data['registration_limit'] = 50
+    data.setdefault('timezone', 'UTC')
+    data.setdefault('locale', 'en')
+    data.setdefault('locales', ['en'])
     bound_form = EventCommonSettingsForm(data=data, obj=meetup_event)
-    if bound_form.is_valid():
-        bound_form.save()
-    else:
-        bound_form.cleaned_data = {**form.initial, 'registration_limit': 50}
-        bound_form.save()
+    assert bound_form.is_valid(), bound_form.errors
+    bound_form.save()
 
     product, quota = get_rsvp_product_and_quota(meetup_event)
     assert quota.size == 50

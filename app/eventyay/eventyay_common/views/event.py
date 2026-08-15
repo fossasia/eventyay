@@ -308,10 +308,8 @@ class EventCreateView(TemplateView):
         if self.is_meetup_request:
             if not is_meetup_creation_enabled(request):
                 raise PermissionDenied(_('Meetup creation is currently disabled.'))
-            if not request.user.has_active_staff_session(request.session.session_key):
-                has_event_perm = request.user.teams.filter(can_create_events=True).exists()
-                if not has_event_perm:
-                    raise PermissionDenied(_('You do not have permission to create meetup events.'))
+            if not self.get_create_organizer_queryset().exists():
+                raise PermissionDenied(_('You do not have permission to create meetup events.'))
         return super().dispatch(request, *args, **kwargs)
 
     def get_foundation_form(self):
@@ -589,9 +587,9 @@ class EventCreateView(TemplateView):
                 )
                 reg_limit = basics_data.get('registration_limit')
                 if reg_limit is not None:
-                    with scope(organizer=event.organizer):
-                        product, quota = get_rsvp_product_and_quota(event)
-                        if quota:
+                    product, quota = get_rsvp_product_and_quota(event)
+                    if quota and quota.size != reg_limit:
+                        with scope(organizer=event.organizer):
                             quota.size = reg_limit
                             quota.save(update_fields=['size'])
 

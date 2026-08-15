@@ -226,6 +226,14 @@ def ensure_video_credentials(event, request=None, force=False) -> bool:
 
 
 def ensure_rsvp_product(event):
+    """
+    Ensure an active admission product and quota exist for a meetup event.
+
+    Note: Product and Quota models in Eventyay are scoped by organizer
+    (`event__organizer`) in the ORM, so this helper establishes organizer
+    scope internally. Callers should not wrap calls to this helper in
+    redundant `scope(organizer=...)` blocks.
+    """
     from eventyay.base.models import Quota
     from eventyay.base.models.product import Product
 
@@ -251,6 +259,14 @@ def ensure_rsvp_product(event):
 
 
 def get_rsvp_product_and_quota(event):
+    """
+    Retrieve the active RSVP product and associated quota for a meetup event.
+
+    Note: Product and Quota models in Eventyay are scoped by organizer
+    (`event__organizer`) in the ORM, so this helper establishes organizer
+    scope internally. Callers should not wrap calls to this helper in
+    redundant `scope(organizer=...)` blocks.
+    """
     with scope(organizer=event.organizer):
         product = event.products.filter(admission=True, active=True).first()
         if product is None:

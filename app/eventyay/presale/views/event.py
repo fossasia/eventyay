@@ -721,9 +721,9 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
 
         rsvp_registration_closed = False
-        with scope(organizer=event.organizer):
-            product, quota = get_rsvp_product_and_quota(event)
-            if quota and quota.size is not None:
+        product, quota = get_rsvp_product_and_quota(event)
+        if quota and quota.size is not None:
+            with scope(organizer=event.organizer):
                 avail, count = quota.availability()
                 rsvp_registration_closed = avail != Quota.AVAILABILITY_OK
 
