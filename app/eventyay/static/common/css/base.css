@@ -1241,9 +1241,12 @@ a.event-public-text-link:visited {
   }
 
   /* Hide interactive navigation, toolbars, buttons, modals, and extraneous UI */
-  /* !important ensures fixed-position headers, sidebars, and action forms stay hidden across all viewports */
+  body nav.navbar,
+  nav.navbar.navbar-inverse,
+  .navbar-inverse,
   nav.navbar,
   .navbar,
+  body aside.sidebar,
   aside.sidebar,
   .sidebar,
   #sidebar,
@@ -1269,11 +1272,12 @@ a.event-public-text-link:visited {
   .toastui-editor-defaultUI,
   .pagination,
   footer {
-    display: none !important;
+    display: none;
+    position: static;
   }
 
   .d-print-none {
-    display: none !important;
+    display: none;
   }
 
   /* Suppress printing raw URLs for links/buttons */

@@ -248,6 +248,26 @@
 }
 
 @media print {
+    body nav.navbar,
+    body nav.navbar.navbar-inverse,
+    nav.navbar.navbar-inverse,
+    .navbar-inverse,
+    nav.navbar,
+    .navbar,
+    .navbar-header,
+    .navbar-top-links,
+    aside.sidebar,
+    .sidebar,
+    #sidebar {
+        display: none;
+        position: static;
+    }
+
+    body #wrapper,
+    #wrapper {
+        padding-top: 0;
+    }
+
     .analytics-page {
         margin-top: 0;
         padding-bottom: 0;
@@ -259,11 +279,11 @@
         break-inside: avoid;
     }
 
-    /* !important ensures interactive action buttons and chart toolbars stay suppressed in print */
     .analytics-section .form-inline,
     .page-header-with-actions .btn {
-        display: none !important;
+        display: none;
     }
+
 
     .analytics-page .row,
     .analytics-section .row {
@@ -313,11 +333,10 @@
         overflow: visible;
     }
 
-
     .apexcharts-toolbar,
     .apexcharts-tooltip,
     .resize-triggers {
-        display: none !important;
+        display: none;
     }
 
 

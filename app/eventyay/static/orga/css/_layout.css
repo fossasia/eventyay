@@ -3039,9 +3039,12 @@ button.btn-speaker-not-arrived {
   }
 
   /* Hide navigation, sidebars, forms, and actions */
-  /* !important is required to override position: fixed and responsive sidebar/navbar display rules */
+  body nav.navbar,
+  nav.navbar.navbar-inverse,
+  .navbar-inverse,
   nav.navbar,
   .navbar,
+  body aside.sidebar,
   aside.sidebar,
   .sidebar,
   #sidebar,
@@ -3055,11 +3058,12 @@ button.btn-speaker-not-arrived {
   .pagination,
   .btn:not(.btn-print-keep),
   footer {
-    display: none !important;
+    display: none;
+    position: static;
   }
 
   .d-print-none {
-    display: none !important;
+    display: none;
   }
 
   .submission-list-header {

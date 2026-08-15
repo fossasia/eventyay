@@ -67,9 +67,12 @@
 
 
   /* Hide navigation, sidebars, buttons, toolbars, and action UI */
-  /* !important is required here to override fixed positioning and screen media query rules from Bootstrap 3 and main.scss */
+  body nav.navbar,
+  nav.navbar.navbar-inverse,
+  .navbar-inverse,
   nav.navbar,
   .navbar,
+  body aside.sidebar,
   aside.sidebar,
   .sidebar,
   #side-menu,
@@ -91,11 +94,12 @@
   #ajaxerr,
   .pagination,
   footer {
-    display: none !important;
+    display: none;
+    position: static;
   }
 
   .d-print-none {
-    display: none !important;
+    display: none;
   }
 
 
@@ -115,10 +119,9 @@
   }
 
   /* Retain clean structure and borders for panels and cards */
-  /* !important on background-color is strictly required to counter Bootstrap 3's '* { background: transparent !important; }' print reset */
   .panel {
     border: 1px solid #ddd;
-    background-color: #fff !important;
+    background-color: #fff;
     break-inside: avoid;
     page-break-inside: avoid;
     margin-bottom: 15px;
@@ -126,18 +129,18 @@
 
   .panel-default > .panel-heading,
   .panel-heading {
-    background-color: #f5f5f5 !important;
+    background-color: #f5f5f5;
     border-bottom: 1px solid #ddd;
     color: #333;
   }
 
   .panel-body {
-    background-color: #fff !important;
+    background-color: #fff;
   }
 
   .dashboard .widget-container {
     border: 1px solid #e0e0e0;
-    background: #f8f8f8 !important;
+    background: #f8f8f8;
     min-height: auto;
     break-inside: avoid;
     page-break-inside: avoid;
@@ -202,7 +205,7 @@
   table.vouchers-table > tbody > tr > td,
   table.events-table > tbody > tr > td {
     display: table-cell;
-    background-color: #fff !important;
+    background-color: #fff;
     border-top: 1px solid #ddd;
     padding: 6px 8px;
   }
@@ -216,7 +219,7 @@
   .label,
   .badge {
     border: 1px solid #bbb;
-    background-color: #f0f0f0 !important;
+    background-color: #f0f0f0;
     color: #333;
   }
 

@@ -534,13 +534,17 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
 }
 
 @media print {
-  /* !important is required to override position: fixed and screen media rules on the navbar */
+  body nav.navbar,
+  nav.navbar.navbar-inverse,
+  .navbar-inverse,
   nav.navbar,
   .navbar {
-    display: none !important;
+    display: none;
+    position: static;
   }
 
+  body #wrapper,
   #wrapper {
-    padding-top: 0 !important;
+    padding-top: 0;
   }
 }

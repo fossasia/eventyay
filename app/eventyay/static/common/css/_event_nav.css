@@ -134,6 +134,26 @@
 }
 
 @media print {
+  body nav.navbar,
+  body nav.navbar.navbar-inverse,
+  nav.navbar.navbar-inverse,
+  .navbar-inverse,
+  nav.navbar,
+  .navbar,
+  .navbar-header,
+  .navbar-top-links,
+  aside.sidebar,
+  .sidebar,
+  #sidebar {
+    display: none;
+    position: static;
+  }
+
+  body #wrapper,
+  #wrapper {
+    padding-top: 0;
+  }
+
   .navigation-button,
   #event-nav .navigation-button,
   .header-nav .navigation-button {
