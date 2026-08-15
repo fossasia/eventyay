@@ -76,6 +76,22 @@ class GmailAPIEmail:
         except Exception as exc:
             _, _, _, HttpError = require_google_api_dependencies()
             if isinstance(exc, HttpError):
+                if exc.resp.status == 401:
+                    logger.warning("Got 401 from Gmail API, attempting to refresh token before permanent failure.")
+                    from eventyay.base.gmail.oauth import build_google_credentials
+                    from google.auth.transport.requests import Request
+                    try:
+                        creds = build_google_credentials(self.credential)
+                        creds.refresh(Request())
+                        self.credential.update_access_token(creds.token, creds.expiry)
+                        
+                        service = build_gmail_service(self.credential)
+                        service.users().messages().send(userId='me', body={'raw': encoded_message}).execute()
+                        self.credential.record_send(recipient_count)
+                        return 1
+                    except Exception as refresh_exc:
+                        logger.warning("Failed to refresh token after 401: %s", refresh_exc)
+
                 self.credential.set_last_error(str(exc))
                 try:
                     classify_http_error(exc)

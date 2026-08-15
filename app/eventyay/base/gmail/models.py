@@ -131,6 +131,15 @@ class GmailOAuthCredential(LoggedModel):
 
     def disconnect(self):
         self.is_active = False
+        
+        try:
+            import requests
+            refresh_token = self.get_refresh_token()
+            if refresh_token:
+                requests.post('https://oauth2.googleapis.com/revoke', params={'token': refresh_token}, timeout=5)
+        except Exception as exc:
+            logger.warning('Failed to revoke Google token during disconnect for %s: %s', self.sender_email, exc)
+
         self.encrypted_refresh_token = ''
         self.encrypted_access_token = ''
         self.token_expiry = None

@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 
 from django.contrib import messages
+from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.timezone import now
@@ -82,19 +83,20 @@ class GmailOAuthCallbackView(AdministratorPermissionRequiredMixin, View):
             )
             return redirect(payload.get('next_url') or reverse('eventyay_admin:admin.global.settings'))
 
-        GmailOAuthCredential.deactivate_for_scope(event=None)
-        credential = GmailOAuthCredential.objects.create(
-            sender_email=sender_email,
-            connected_by=request.user,
-        )
         expiry = None
         if token_data.get('expires_in'):
             expiry = now() + timedelta(seconds=int(token_data['expires_in']))
-        credential.store_tokens(
-            refresh_token=refresh_token,
-            access_token=token_data.get('access_token', ''),
-            expiry=expiry,
-        )
+
+        from eventyay.base.gmail.crypto import encrypt_value
+        with transaction.atomic():
+            GmailOAuthCredential.deactivate_for_scope(event=None)
+            credential = GmailOAuthCredential.objects.create(
+                sender_email=sender_email,
+                connected_by=request.user,
+                encrypted_refresh_token=encrypt_value(refresh_token),
+                encrypted_access_token=encrypt_value(token_data.get('access_token', '')) if token_data.get('access_token') else '',
+                token_expiry=expiry,
+            )
         messages.success(
             request,
             _('Gmail account %(email)s connected successfully.') % {'email': sender_email},
@@ -195,20 +197,21 @@ class EventGmailOAuthCallbackView(EventPermissionRequiredMixin, View):
             )
             return redirect(next_url)
 
-        GmailOAuthCredential.deactivate_for_scope(event=event)
-        credential = GmailOAuthCredential.objects.create(
-            event=event,
-            sender_email=sender_email,
-            connected_by=request.user,
-        )
         expiry = None
         if token_data.get('expires_in'):
             expiry = now() + timedelta(seconds=int(token_data['expires_in']))
-        credential.store_tokens(
-            refresh_token=refresh_token,
-            access_token=token_data.get('access_token', ''),
-            expiry=expiry,
-        )
+
+        from eventyay.base.gmail.crypto import encrypt_value
+        with transaction.atomic():
+            GmailOAuthCredential.deactivate_for_scope(event=event)
+            credential = GmailOAuthCredential.objects.create(
+                event=event,
+                sender_email=sender_email,
+                connected_by=request.user,
+                encrypted_refresh_token=encrypt_value(refresh_token),
+                encrypted_access_token=encrypt_value(token_data.get('access_token', '')) if token_data.get('access_token') else '',
+                token_expiry=expiry,
+            )
         messages.success(
             request,
             _('Gmail account %(email)s connected for this event.') % {'email': sender_email},

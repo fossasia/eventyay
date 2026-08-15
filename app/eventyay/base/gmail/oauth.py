@@ -107,6 +107,7 @@ def build_google_credentials(credential: GmailOAuthCredential):
         client_id=client_id,
         client_secret=client_secret,
         scopes=list(GMAIL_OAUTH_SCOPES),
+        expiry=credential.token_expiry,
     )
     if creds.expired and creds.refresh_token:
         creds.refresh(Request())

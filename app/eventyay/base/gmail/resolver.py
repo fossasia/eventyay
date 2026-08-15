@@ -70,10 +70,14 @@ def get_gmail_mail_backend(*, event=None, timeout=None, force_custom=False):
     if event is not None and (event.settings.smtp_use_custom or force_custom):
         if event.settings.get('email_vendor') == 'gmail_api':
             credential = GmailOAuthCredential.get_active_for_event(event)
+            if not credential:
+                raise ValueError("Gmail API is selected for this event, but no active credential exists.")
     elif event is None or not event.settings.smtp_use_custom:
         gs = GlobalSettingsObject()
         if gs.settings.get('email_vendor') == 'gmail_api':
             credential = GmailOAuthCredential.get_active_global()
+            if not credential:
+                raise ValueError("Gmail API is selected globally, but no active credential exists.")
 
     if not credential:
         return None
