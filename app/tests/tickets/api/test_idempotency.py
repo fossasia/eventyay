@@ -3,7 +3,8 @@ import json
 
 import pytest
 from django.utils.timezone import now
-from pytz import UTC
+import datetime
+UTC = datetime.timezone.utc
 
 from eventyay.api.models import ApiCall
 from eventyay.base.models import Order

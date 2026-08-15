@@ -22,12 +22,12 @@
         <p>{% blocktrans trimmed with device=device.name %}
             Are you sure you want to delete the authentication device "{{ device }}"?
         {% endblocktrans %}</p>
-        <p>{{ _('You will no longer be able to use this device to log in to pretix.') }}</p>
+        <p>{{ _('You will no longer be able to use this device to log in to Eventyay.') }}</p>
         <p>
             {{ _('If this is the only device connected to your account, we will disable two-factor authentication.') }}
         </p>
         <div class='form-group submit-group'>
-            <a href="{% url 'eventay_common:account.2fa' %}" class='btn btn-default btn-cancel'>
+            <a href="{% url 'eventyay_common:account.2fa' %}" class='btn btn-default btn-cancel'>
                 {{ _('Cancel') }}
             </a>
             <button type='submit' class='btn btn-delete btn-danger btn-save'>

@@ -43,11 +43,21 @@ class ContactOrganizerView(EventViewMixin, View):
         return False
 
     def post(self, request, *args, **kwargs):
-        message = request.POST.get('message', '').strip()
-        sender_email = request.POST.get('email', '').strip()
+        if not request.user.is_authenticated:
+            return JsonResponse(
+                {'success': False, 'error': _('You must be logged in to send a message.')},
+                status=401,
+            )
 
-        if request.user.is_authenticated and request.user.email:
-            sender_email = request.user.email
+        message = request.POST.get('message', '').strip()
+        send_copy = request.POST.get('send_copy') == 'on'
+
+        sender_email = request.user.email
+        if not sender_email:
+            return JsonResponse(
+                {'success': False, 'error': _('Your account must have an email address to send messages.')},
+                status=400,
+            )
 
         if not message:
             return JsonResponse(
@@ -67,17 +77,11 @@ class ContactOrganizerView(EventViewMixin, View):
                 status=400,
             )
 
-        if not sender_email:
-            return JsonResponse(
-                {'success': False, 'error': _('Please enter your email address.')},
-                status=400,
-            )
-
         try:
             validate_email(sender_email)
         except ValidationError:
             return JsonResponse(
-                {'success': False, 'error': _('Please enter a valid email address.')},
+                {'success': False, 'error': _('Your account email address is invalid.')},
                 status=400,
             )
 
@@ -118,11 +122,20 @@ class ContactOrganizerView(EventViewMixin, View):
                 to=[contact_email],
                 reply_to=[sender_email],
             )
+            if send_copy:
+                email.bcc = [sender_email]
             backend.send_messages([email])
-        except (smtplib.SMTPException, BadHeaderError, ConnectionError, OSError):
+        except (smtplib.SMTPException, BadHeaderError, ConnectionError, OSError) as e:
             logger.exception('Failed to send contact organizer email')
+            error_msg = _('Failed to send message. Please try again later.')
+            if isinstance(e, BadHeaderError):
+                error_msg = _('Failed to send message: Invalid email header.')
+            elif isinstance(e, (ConnectionError, OSError)):
+                error_msg = _('Failed to send message: Network error communicating with mail server.')
+            elif isinstance(e, smtplib.SMTPException):
+                error_msg = _('Failed to send message: Mail server rejected the message.')
             return JsonResponse(
-                {'success': False, 'error': _('Failed to send message. Please try again later.')},
+                {'success': False, 'error': error_msg},
                 status=500,
             )
 
