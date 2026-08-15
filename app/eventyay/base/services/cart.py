@@ -9,7 +9,7 @@ from django.db import DatabaseError, transaction
 from django.db.models import Count, Exists, IntegerField, OuterRef, Q, Value
 from django.dispatch import receiver
 from django.utils.timezone import make_aware, now
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, ngettext
 from django.utils.translation import pgettext_lazy
 from django_scopes import scopes_disabled
 
@@ -73,7 +73,6 @@ error_messages = {
         'Some of the products you selected are no longer available in '
         'the quantity you selected. Please see below for details.'
     ),
-    'max_products': _('You cannot select more than %s products per order.'),
     'max_products_per_product': _('You cannot select more than %(max)s products of the product %(product)s.'),
     'min_products_per_product': _('You need to select at least %(min)s products of the product %(product)s.'),
     'min_products_per_product_removed': _(
@@ -326,8 +325,11 @@ class CartManager:
             )
             max_products = int(GlobalSettingsObject().settings.get('max_products_per_order', default=0) or 0)
             if max_products > 0 and cartsize > max_products:
-                # TODO: i18n plurals
-                raise CartError(_(error_messages['max_products']) % (max_products,))
+                raise CartError(ngettext(
+                    'You cannot select more than %s product per order.',
+                    'You cannot select more than %s products per order.',
+                    max_products
+                ) % (max_products,))
 
     def _check_product_constraints(self, op, current_ops=[]):
         if isinstance(op, (self.AddOperation, self.ExtendOperation)):
