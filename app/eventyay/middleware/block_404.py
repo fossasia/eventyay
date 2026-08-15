@@ -82,6 +82,7 @@ class Block404Middleware:
         try:
             return cache.incr(key)
         except ValueError:
+            # Key does not exist yet — initialise to 1 with a 60 s TTL.
             cache.set(key, 1, timeout=60)
             return 1
 

@@ -60,8 +60,6 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return RoomOrgaSerializer
         return RoomSerializer
 
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
 
     def perform_destroy(self, instance):
         try:
