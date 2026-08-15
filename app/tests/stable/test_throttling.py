@@ -22,6 +22,18 @@ LOCMEM_CACHE = {
 }
 
 
+class _AnonymousUser:
+    """Minimal stand-in for AnonymousUser — avoids importing Django auth."""
+    is_authenticated = False
+    pk = None
+
+
+def _anon_user():
+    """Return a fresh anonymous-user stub for attaching to RequestFactory requests."""
+    return _AnonymousUser()
+
+
+
 def _make_get_response(status_code=200):
     """Return a simple WSGI callable that always returns a fixed status."""
     def get_response(request):
@@ -48,6 +60,7 @@ class TestBlock404Middleware:
 
         for _ in range(50):
             request = factory.get('/some-html-page/')
+            request.user = _anon_user()
             response = middleware(request)
             assert response.status_code == 404, "Non-API 404 should never be blocked"
 
@@ -63,6 +76,7 @@ class TestBlock404Middleware:
 
         for i in range(Block404Middleware.MAX_404_PER_MINUTE):
             request = factory.get(f'{_API_PATH_PREFIX}v1/nonexistent/')
+            request.user = _anon_user()
             response = middleware(request)
             assert response.status_code == 404, f"Request {i + 1} should still be 404"
 
@@ -79,10 +93,12 @@ class TestBlock404Middleware:
         # Exhaust the limit
         for _ in range(Block404Middleware.MAX_404_PER_MINUTE + 1):
             request = factory.get(f'{_API_PATH_PREFIX}v1/nonexistent/')
+            request.user = _anon_user()
             middleware(request)
 
         # Next request should be throttled
         request = factory.get(f'{_API_PATH_PREFIX}v1/nonexistent/')
+        request.user = _anon_user()
         response = middleware(request)
         assert response.status_code == 429
 
@@ -98,9 +114,11 @@ class TestBlock404Middleware:
 
         for _ in range(Block404Middleware.MAX_404_PER_MINUTE + 1):
             request = factory.get(f'{_API_PATH_PREFIX}v1/nonexistent/')
+            request.user = _anon_user()
             middleware(request)
 
         request = factory.get(f'{_API_PATH_PREFIX}v1/nonexistent/')
+        request.user = _anon_user()
         response = middleware(request)
         assert response.status_code == 429
         assert response['Retry-After'] == Block404Middleware.RETRY_AFTER_SECONDS
@@ -117,6 +135,7 @@ class TestBlock404Middleware:
 
         for _ in range(Block404Middleware.MAX_404_PER_MINUTE + 10):
             request = factory.get(f'{_API_PATH_PREFIX}v1/rooms/')
+            request.user = _anon_user()
             response = middleware(request)
             assert response.status_code == 200
 

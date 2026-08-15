@@ -64,11 +64,15 @@ class Block404Middleware:
         """
         Key authenticated requests by user / token identity so a single bad
         client behind shared NAT does not block other users at the same IP.
+
+        Falls back to IP keying when ``request.user`` is not yet set (i.e. when
+        the middleware runs before ``SessionMiddleware`` / ``AuthenticationMiddleware``).
         """
-        if request.user.is_authenticated:
-            return f'404_counter:user:{request.user.pk}'
-        if getattr(request, 'auth', None):
-            auth = request.auth
+        user = getattr(request, 'user', None)
+        if user is not None and getattr(user, 'is_authenticated', False):
+            return f'404_counter:user:{user.pk}'
+        auth = getattr(request, 'auth', None)
+        if auth is not None:
             return f'404_counter:token:{type(auth).__name__}_{auth.pk}'
         ip = get_client_ip(request)
         return f'404_counter:ip:{ip}'
