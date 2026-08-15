@@ -9,7 +9,7 @@ from django.db import DatabaseError, transaction
 from django.db.models import Count, Exists, IntegerField, OuterRef, Q, Value
 from django.dispatch import receiver
 from django.utils.timezone import make_aware, now
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, ngettext
 from django.utils.translation import pgettext_lazy
 from django_scopes import scopes_disabled
 
@@ -73,7 +73,8 @@ error_messages = {
         'Some of the products you selected are no longer available in '
         'the quantity you selected. Please see below for details.'
     ),
-    'max_products': _('You cannot select more than %s products per order.'),
+    'max_products': 'You cannot select more than %(max)s product per order.',
+    'max_products_plural': 'You cannot select more than %(max)s products per order.',
     'max_products_per_product': _('You cannot select more than %(max)s products of the product %(product)s.'),
     'min_products_per_product': _('You need to select at least %(min)s products of the product %(product)s.'),
     'min_products_per_product_removed': _(
@@ -140,8 +141,12 @@ error_messages = {
         "Gift cards can be entered later on when you're asked for your payment details."
     ),
     'country_blocked': _('One of the selected products is not available in the selected country.'),
-    'one_ticket_per_user': _('Only one ticket per user is allowed for a product in your cart. You already have a ticket.'),
-    'one_ticket_per_user_cart': _('Only one ticket per user is allowed for this product. Quantity has been adjusted to 1.'),
+    'one_ticket_per_user': _(
+        'Only one ticket per user is allowed for a product in your cart. You already have a ticket.'
+    ),
+    'one_ticket_per_user_cart': _(
+        'Only one ticket per user is allowed for this product. Quantity has been adjusted to 1.'
+    ),
 }
 
 
@@ -229,7 +234,9 @@ class CartManager:
         return self._seated_cache[product, subevent]
 
     def _calculate_expiry(self):
-        self._expiry = self.now_dt + timedelta(minutes=int(GlobalSettingsObject().settings.get('reservation_time', default=30) or 30))
+        self._expiry = self.now_dt + timedelta(
+            minutes=int(GlobalSettingsObject().settings.get('reservation_time', default=30) or 30)
+        )
 
     def _check_presale_dates(self):
         if self.event.presale_start and self.now_dt < self.event.presale_start:
@@ -326,8 +333,11 @@ class CartManager:
             )
             max_products = int(GlobalSettingsObject().settings.get('max_products_per_order', default=0) or 0)
             if max_products > 0 and cartsize > max_products:
-                # TODO: i18n plurals
-                raise CartError(_(error_messages['max_products']) % (max_products,))
+                ngettext(
+                    error_messages['max_products'],
+                    error_messages['max_products_plural'],
+                    max_products,
+                ) % {'max': max_products}
 
     def _check_product_constraints(self, op, current_ops=[]):
         if isinstance(op, (self.AddOperation, self.ExtendOperation)):
@@ -1025,11 +1035,11 @@ class CartManager:
             ).exclude(pk__in=[op.position.id for op in self._operations if isinstance(op, self.ExtendOperation)])
             cart_count = redeemed_in_carts.count()
             v_avail = voucher.max_usages - voucher.redeemed - cart_count
-            
+
             # Validate availability after acquiring lock to prevent over-redemption
             if v_avail < count:
                 raise CartError(error_messages['voucher_redeemed'])
-            
+
             if cart_count > 0:
                 self._voucher_depend_on_cart.add(voucher)
             vouchers_ok[voucher] = v_avail
@@ -1112,7 +1122,7 @@ class CartManager:
         # Only products with the 'limit_one_per_user' meta property are affected
         quantity_adjusted = False
         adjusted_operations = []
-        
+
         for op in self._operations:
             if isinstance(op, self.AddOperation) and op.product.id in flagged_product_ids:
                 # This product has the limit_one_per_user flag, check if total would exceed 1
@@ -1132,13 +1142,13 @@ class CartManager:
                     adjusted_operations.append(op)
             else:
                 adjusted_operations.append(op)
-        
+
         # Replace operations list with adjusted version
         self._operations = adjusted_operations
 
         # If we have an email, also check existing orders for flagged products
         email = None
-        
+
         # Try to get email from widget data if present
         if hasattr(self, '_widget_data') and self._widget_data and self._widget_data.get('email'):
             email = self._widget_data.get('email')
@@ -1150,7 +1160,12 @@ class CartManager:
                     break
 
         # Fallback to invoice_address.email if it somehow gets monkey-patched
-        if not email and hasattr(self, 'invoice_address') and self.invoice_address and getattr(self.invoice_address, 'email', None):
+        if (
+            not email
+            and hasattr(self, 'invoice_address')
+            and self.invoice_address
+            and getattr(self.invoice_address, 'email', None)
+        ):
             email = self.invoice_address.email
 
         if email and flagged_product_ids:
@@ -1220,7 +1235,9 @@ class CartManager:
 
                 if voucher_available_count < 1:
                     if op.voucher in self._voucher_depend_on_cart:
-                        err = err or error_messages['voucher_redeemed_cart'] % GlobalSettingsObject().settings.get('reservation_time', default='30')
+                        err = err or error_messages['voucher_redeemed_cart'] % GlobalSettingsObject().settings.get(
+                            'reservation_time', default='30'
+                        )
                     else:
                         err = err or error_messages['voucher_redeemed']
                 elif voucher_available_count < requested_count:
@@ -1560,14 +1577,14 @@ def add_products_to_cart(
                 )
                 cm.add_new_products(products)
                 cm.commit()
-                
+
                 # Check if there was a warning about quantity adjustment
                 warning = cm.get_last_warning()
                 if warning:
                     return {'success': True, 'warning': str(warning)}
                 else:
                     return {'success': True}
-                    
+
             except LockTimeoutException:
                 self.retry()
         except (MaxRetriesExceededError, LockTimeoutException):
