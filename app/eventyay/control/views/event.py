@@ -35,10 +35,12 @@ from django.views.generic.base import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
+
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.meetup import is_meetup_event
 from eventyay.common.sanitizers import sanitize_email_html
+from eventyay.timezones import localize_datetime
 from eventyay.base.models import (
     Event,
     LogEntry,
@@ -291,8 +293,8 @@ class EventUpdate(
             return self.form_invalid(form)
 
     @staticmethod
-    def reset_timezone(tz, dt):
-        return tz.localize(dt.replace(tzinfo=None)) if dt is not None else None
+    def reset_timezone(zone, dt):
+        return localize_datetime(dt, zone)
 
     @cached_property
     def product_meta_property_formset(self):

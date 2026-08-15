@@ -21,7 +21,8 @@ from i18nfield.forms import (
     I18nTextarea,
     I18nTextInput,
 )
-from pytz import common_timezones, timezone
+from zoneinfo import ZoneInfo
+from eventyay.timezones import common_timezones, localize_datetime
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
@@ -102,8 +103,8 @@ class EventWizardFoundationForm(forms.Form):
         widget=MultipleLanguagesWidget,
         help_text=_(
             "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
-            "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
-            "event's default language instead."
+            "these languages. Drag and drop selected languages to reorder them — the first language (bold border) "
+            "is used as your event's default language."
         ),
     )
     has_subevents = forms.BooleanField(
@@ -177,6 +178,7 @@ class EventWizardBasicsForm(I18nModelForm):
     locale = forms.ChoiceField(
         choices=settings.LANGUAGES,
         label=_('Default language'),
+        required=False,
     )
     tax_rate = forms.DecimalField(
         label=_('Sales tax rate'),
@@ -285,15 +287,20 @@ class EventWizardBasicsForm(I18nModelForm):
 
     def clean(self):
         data = super().clean()
+        if not data.get('locale') and self.locales:
+            data['locale'] = self.locales[0]
         if data.get('locale') not in self.locales:
-            raise ValidationError(
-                {'locale': _('Your default locale must also be enabled for your event (see box above).')}
-            )
+            if self.locales:
+                data['locale'] = self.locales[0]
+            else:
+                raise ValidationError(
+                    {'locale': _('Your default locale must also be enabled for your event (see box above).')}
+                )
         if data.get('timezone') not in common_timezones:
             raise ValidationError({'timezone': _('Your default locale must be specified.')})
 
         # change timezone
-        zone = timezone(data.get('timezone'))
+        zone = ZoneInfo(data.get('timezone'))
         data['date_from'] = self.reset_timezone(zone, data.get('date_from'))
         data['date_to'] = self.reset_timezone(zone, data.get('date_to'))
         data['presale_start'] = self.reset_timezone(zone, data.get('presale_start'))
@@ -301,8 +308,8 @@ class EventWizardBasicsForm(I18nModelForm):
         return data
 
     @staticmethod
-    def reset_timezone(tz, dt):
-        return tz.localize(dt.replace(tzinfo=None)) if dt is not None else None
+    def reset_timezone(zone, dt):
+        return localize_datetime(dt, zone)
 
     def clean_slug(self):
         slug = self.cleaned_data['slug']

@@ -1,0 +1,12 @@
+interfaceConfig.APP_NAME = "Eventyay Video";
+interfaceConfig.NATIVE_APP_NAME = "Eventyay Video";
+interfaceConfig.PROVIDER_NAME = "Eventyay";
+interfaceConfig.DEFAULT_LOGO_URL = "";
+interfaceConfig.DEFAULT_WELCOME_PAGE_LOGO_URL = "";
+interfaceConfig.BRAND_WATERMARK_LINK = "";
+interfaceConfig.JITSI_WATERMARK_LINK = "";
+interfaceConfig.SHOW_BRAND_WATERMARK = false;
+interfaceConfig.SHOW_CHROME_EXTENSION_BANNER = false;
+interfaceConfig.SHOW_JITSI_WATERMARK = false;
+interfaceConfig.SHOW_POWERED_BY = false;
+interfaceConfig.SHOW_WATERMARK_FOR_GUESTS = false;

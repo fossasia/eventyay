@@ -12,7 +12,8 @@ from email.utils import formataddr
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 import requests
 from bs4 import BeautifulSoup
 from celery import chain
@@ -268,9 +269,9 @@ def mail(
                 )
             body_plain += '\r\n'
         elif user:
-            timezone = pytz.timezone(user.timezone)
+            timezone = ZoneInfo(user.timezone)
         else:
-            timezone = pytz.timezone(settings.TIME_ZONE)
+            timezone = ZoneInfo(settings.TIME_ZONE)
 
         with override(timezone):
             try:

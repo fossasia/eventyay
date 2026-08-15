@@ -5,7 +5,8 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
 
 import dateutil.parser
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -1539,7 +1540,7 @@ class Question(LoggedModel):
             try:
                 dt = dateutil.parser.parse(answer)
                 if is_naive(dt):
-                    dt = make_aware(dt, pytz.timezone(self.event.settings.timezone))
+                    dt = make_aware(dt, ZoneInfo(self.event.settings.timezone))
             except:
                 raise ValidationError(_('Invalid datetime input.'))
             else:
