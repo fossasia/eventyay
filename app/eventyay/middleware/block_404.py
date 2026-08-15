@@ -64,9 +64,6 @@ class Block404Middleware:
         """
         Key authenticated requests by user / token identity so a single bad
         client behind shared NAT does not block other users at the same IP.
-
-        Falls back to IP keying when ``request.user`` is not yet set (i.e. when
-        the middleware runs before ``SessionMiddleware`` / ``AuthenticationMiddleware``).
         """
         user = getattr(request, 'user', None)
         if user is not None and getattr(user, 'is_authenticated', False):
