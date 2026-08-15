@@ -1982,13 +1982,13 @@ h2 .user-name-display img {
 }
 
 @media print {
-
   body,
   #page-content,
   .pretalx-schedule {
-    height: 100% !important;
+    height: 100%;
   }
 }
+
 
 #page-content .orga-widget-preview pretalx-schedule {
   --pretalx-sticky-top-offset: -18px;
@@ -3020,5 +3020,102 @@ button.btn-speaker-not-arrived {
 
   .speaker-action-label--short {
     display: inline;
+  }
+}
+
+@media print {
+  body,
+  #page-wrapper,
+  #page-content,
+  .pretalx-schedule {
+    margin: 0;
+    padding: 0;
+    margin-left: 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: auto;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Hide navigation, sidebars, forms, and actions */
+  /* !important is required to override position: fixed and responsive sidebar/navbar display rules */
+  nav.navbar,
+  .navbar,
+  aside.sidebar,
+  .sidebar,
+  #sidebar,
+  #nav-search-wrapper,
+  .global-top-warning,
+  .impersonate-warning,
+  .submission-page-actions,
+  .speaker-header-actions,
+  .submit-group,
+  .filter-form,
+  .pagination,
+  .btn:not(.btn-print-keep),
+  footer {
+    display: none !important;
+  }
+
+  .d-print-none {
+    display: none !important;
+  }
+
+  .submission-list-header {
+    display: block;
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+
+  .submission-list-header h2 {
+    margin-top: 0;
+    margin-bottom: 8px;
+  }
+
+  /* Force table-flip to render as a clean desktop table in print */
+  table.table-flip {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  table.table-flip thead {
+    display: table-header-group;
+  }
+
+  table.table-flip tbody {
+    display: table-row-group;
+  }
+
+  table.table-flip tbody tr {
+    display: table-row;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: none;
+    box-shadow: none;
+  }
+
+  table.table-flip tbody th,
+  table.table-flip tbody td {
+    display: table-cell;
+    text-align: left;
+    border-top: 1px solid var(--color-grey-light, #ddd);
+    padding: 6px 8px;
+    border-bottom: none;
+  }
+
+  table.table-flip tbody td::before {
+    display: none;
+    content: none;
+  }
+
+  .flex-content,
+  .panel,
+  .card,
+  .table,
+  .logentry {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }

@@ -532,3 +532,15 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   }
 
 }
+
+@media print {
+  /* !important is required to override position: fixed and screen media rules on the navbar */
+  nav.navbar,
+  .navbar {
+    display: none !important;
+  }
+
+  #wrapper {
+    padding-top: 0 !important;
+  }
+}

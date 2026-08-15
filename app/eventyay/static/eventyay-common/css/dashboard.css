@@ -246,3 +246,109 @@
     justify-content: space-between;
     align-items: center;
 }
+
+@media print {
+    .analytics-page {
+        margin-top: 0;
+        padding-bottom: 0;
+    }
+
+    .analytics-section {
+        margin-bottom: 20px;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* !important ensures interactive action buttons and chart toolbars stay suppressed in print */
+    .analytics-section .form-inline,
+    .page-header-with-actions .btn {
+        display: none !important;
+    }
+
+    .analytics-page .row,
+    .analytics-section .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .analytics-page .row > [class*="col-"],
+    .analytics-section .row > [class*="col-"] {
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    .chart-panel-body,
+    .panel-body,
+    #orders-over-time-chart,
+    #orders-by-status-chart,
+    #proposals-by-state-chart,
+    #proposals-over-time-chart,
+    #checkin-rate-chart,
+    #checkins-over-time-chart,
+    #revenue-over-time-chart,
+    #attendance-over-time-chart {
+        min-height: auto;
+        height: auto;
+        overflow: visible;
+    }
+
+    .apexcharts-canvas {
+        max-width: 100%;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+        zoom: 0.85;
+    }
+
+    .apexcharts-canvas svg,
+    .apexcharts-svg {
+        max-width: 100%;
+        height: auto;
+        overflow: visible;
+    }
+
+    .apexcharts-xaxis,
+    .apexcharts-xaxis-texts-g,
+    .apexcharts-inner {
+        overflow: visible;
+    }
+
+
+    .apexcharts-toolbar,
+    .apexcharts-tooltip,
+    .resize-triggers {
+        display: none !important;
+    }
+
+
+    /* Force tables to remain in tabular layout in print */
+    table.events-table {
+        display: table;
+        width: 100%;
+    }
+
+    table.events-table thead {
+        display: table-header-group;
+    }
+
+    table.events-table tbody {
+        display: table-row-group;
+    }
+
+    table.events-table > tbody > tr {
+        display: table-row;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    table.events-table > tbody > tr > td {
+        display: table-cell;
+        text-align: inherit;
+        border-top: 1px solid #ddd;
+        padding: 6px 8px;
+    }
+
+    table.events-table > tbody > tr > td::before {
+        display: none;
+    }
+}

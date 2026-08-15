@@ -1203,42 +1203,167 @@ a.event-public-text-link:visited {
   *,
   *::before,
   *::after {
-    text-shadow: none !important;
-    box-shadow: none !important;
+    text-shadow: none;
+    box-shadow: none;
   }
+
+  html,
   body {
-    color: black;
-    background: white;
-    overflow: visible !important;
+    color: #111;
+    background: #fff;
+    overflow: visible;
     height: auto;
+    min-height: auto;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  .badge {
-    border: 1px solid black;
+
+  /* Reset layout wrappers to full printable width */
+  #wrapper,
+  #page-wrapper,
+  #page-content,
+  main,
+  .container-fluid,
+  .container {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: auto;
+    height: auto;
+    float: none;
+    overflow: visible;
+    left: 0;
+    right: 0;
   }
+
+  /* Hide interactive navigation, toolbars, buttons, modals, and extraneous UI */
+  /* !important ensures fixed-position headers, sidebars, and action forms stay hidden across all viewports */
+  nav.navbar,
+  .navbar,
+  aside.sidebar,
+  .sidebar,
+  #sidebar,
+  .navbar-default.sidebar,
+  #side-menu,
+  .navigation-button,
+  .page-header-with-actions .btn,
+  .submission-page-actions,
+  .impersonate-warning,
+  .global-top-warning,
+  .advanced-filter-search,
+  .filter-form,
+  .submit-group,
+  .alert-warning .btn,
+  .alert-danger .btn,
+  .alert-info .btn,
+  .panel-footer,
+  .btn:not(.btn-print-keep),
+  .dropdown-menu,
+  .arrow,
+  #loadingmodal,
+  #ajaxerr,
+  .toastui-editor-defaultUI,
+  .pagination,
+  footer {
+    display: none !important;
+  }
+
   .d-print-none {
     display: none !important;
   }
+
+  /* Suppress printing raw URLs for links/buttons */
+  a[href]::after,
+  a[href]:after,
+  a[href^="#"]::after,
+  a.event-public-text-link[href]::after {
+    content: "";
+  }
+
   a:not([role="button"]):not(.event-public-text-link) {
-    text-decoration: underline;
+    text-decoration: none;
+    color: inherit;
   }
+
+  .badge,
+  .label {
+    border: 1px solid #999;
+  }
+
   pre {
-    white-space: pre-wrap !important;
+    white-space: pre-wrap;
   }
+
   pre,
   blockquote {
-    border: 1px solid var(--color-grey-medium);
+    border: 1px solid var(--color-grey-medium, #ccc);
     page-break-inside: avoid;
+    break-inside: avoid;
   }
+
   thead {
     display: table-header-group;
   }
 
-  tr,
-  footer,
-  svg,
-  img {
-    page-break-inside: avoid;
+  /* Enforce desktop tabular layout for tables and table-flip in print */
+  table.table,
+  table.table-flip {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
   }
+
+  table.table thead,
+  table.table-flip thead {
+    display: table-header-group;
+  }
+
+  table.table tbody,
+  table.table-flip tbody {
+    display: table-row-group;
+  }
+
+  table.table tbody tr,
+  table.table-flip tbody tr {
+    display: table-row;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: none;
+    box-shadow: none;
+  }
+
+  table.table th,
+  table.table td,
+  table.table-flip tbody th,
+  table.table-flip tbody td {
+    display: table-cell;
+    text-align: left;
+    border-top: 1px solid var(--color-grey-light, #ddd);
+    padding: 6px 8px;
+    border-bottom: none;
+  }
+
+  table.table-flip tbody td::before {
+    display: none;
+    content: none;
+  }
+
+
+  tr,
+  svg,
+  img,
+  .panel,
+  .card,
+  .widget-container,
+  .dashboard-block-wrapper {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
   p,
   h2,
   h3 {
@@ -1246,31 +1371,18 @@ a.event-public-text-link:visited {
     widows: 3;
   }
 
+  h1,
   h2,
   h3,
   h4,
   h5,
   summary {
     page-break-after: avoid;
+    break-after: avoid;
   }
 
-  a[href]::after {
-    content: " (" attr(href) ")";
-  }
-  a[href^="#"]::after {
-    content: "";
-  }
-
-  /* Match pre-linkify print: hero/content title links should not show raw URLs */
-  a.event-public-text-link[href]::after {
-    content: "";
-  }
-
-  nav.navbar {
-    display: none;
-  }
   @page {
-    size: A4 landscape;
-    margin: 5mm;
+    size: auto;
+    margin: 10mm;
   }
 }

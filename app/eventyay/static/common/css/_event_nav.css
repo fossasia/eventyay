@@ -132,3 +132,25 @@
     vertical-align: middle;
   }
 }
+
+@media print {
+  .navigation-button,
+  #event-nav .navigation-button,
+  .header-nav .navigation-button {
+    display: none;
+  }
+
+  #event-nav,
+  .header-nav {
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+
+  #event-nav .navigation-title h1,
+  #event-nav .navigation-title h2,
+  .header-nav .navigation-title h1,
+  .header-nav .navigation-title h2 {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+}
