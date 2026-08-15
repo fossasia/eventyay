@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
-from pytz import UTC
+import datetime
+UTC = datetime.timezone.utc
 
 from eventyay.base.models import Event, Organizer
 

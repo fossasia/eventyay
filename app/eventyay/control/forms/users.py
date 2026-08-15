@@ -6,7 +6,7 @@ from django.contrib.auth.password_validation import (
 )
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
-from pytz import common_timezones
+from eventyay.timezones import common_timezones
 
 from eventyay.base.models import User
 from eventyay.base.models.auth import StaffSession

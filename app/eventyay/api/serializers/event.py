@@ -8,7 +8,7 @@ from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django_countries.serializers import CountryFieldMixin
-from pytz import common_timezones
+from eventyay.timezones import common_timezones
 from rest_framework.fields import ChoiceField, Field
 from rest_framework.relations import SlugRelatedField
 

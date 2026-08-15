@@ -10,7 +10,8 @@ from django.core.files.base import ContentFile
 from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scope, scopes_disabled
-from pytz import UTC
+import datetime
+UTC = datetime.timezone.utc
 
 from eventyay.base.models import (
     InvoiceAddress,

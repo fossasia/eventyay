@@ -7,7 +7,8 @@ import time
 from io import BytesIO
 
 import dateutil.parser
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 import requests
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -51,7 +52,7 @@ def fetch_schedule_from_conftool(url, password):
         "speakers": [],
         "talks": [],
     }
-    tz = pytz.timezone(tzname)
+    tz = ZoneInfo(tzname)
     room_time_combos = set()
 
     def parse_date(date_in):

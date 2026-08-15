@@ -1039,41 +1039,57 @@ django.conf.locale.LANG_INFO.update(EXTRA_LANG_INFO)
 # This maintains backward compatibility with existing code
 LANGUAGES_INFORMATION = _LANGUAGES_CONFIG
 
-# Use Redis for caching
+# Documentation imports Django modules through autodoc. Keep those imports
+# deterministic: documentation builds must not require a live Redis service or
+# a Celery broker just to render Python API pages.
+DOCS_BUILD = os.getenv('EVY_DOCS_BUILD') == '1'
+
+# Use Redis for caching in normal application environments. Sphinx uses local
+# memory caches so importing forms and views does not contact external services.
 REDIS_URL = conf.redis_url
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': REDIS_URL,
-    },
-    'process': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': REDIS_URL,
-    },
-    # TODO: Remove. Use the 'default' cache everywhere.
-    'redis': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': REDIS_URL,
-        'OPTIONS': {
-            'REDIS_CLIENT_KWARGS': {'health_check_interval': 30},
+CACHES = (
+    {
+        name: {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': f'eventyay-docs-{name}',
+        }
+        for name in ('default', 'process', 'redis')
+    }
+    if DOCS_BUILD
+    else {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
         },
-    },
-}
+        'process': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+        },
+        # TODO: Remove. Use the 'default' cache everywhere.
+        'redis': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'REDIS_CLIENT_KWARGS': {'health_check_interval': 30},
+            },
+        },
+    }
+)
 
 # Use Redis for session storage
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
 # TODO: Remove. Redis is always required.
-HAS_REDIS = bool(REDIS_URL)
+HAS_REDIS = bool(REDIS_URL) and not DOCS_BUILD
 
 # TODO: Remove. Always use Redis Pub/Sub for Channels.
-REDIS_USE_PUBSUB = True
+REDIS_USE_PUBSUB = not DOCS_BUILD
 
 HAS_CELERY = True
-CELERY_BROKER_URL = increase_redis_db(REDIS_URL, 1)
-CELERY_RESULT_BACKEND = increase_redis_db(REDIS_URL, 2)
-CELERY_TASK_ALWAYS_EAGER = conf.celery_always_eager
+CELERY_BROKER_URL = 'memory://' if DOCS_BUILD else increase_redis_db(REDIS_URL, 1)
+CELERY_RESULT_BACKEND = 'cache+memory://' if DOCS_BUILD else increase_redis_db(REDIS_URL, 2)
+CELERY_TASK_ALWAYS_EAGER = True if DOCS_BUILD else conf.celery_always_eager
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_DEFAULT_QUEUE = 'default'

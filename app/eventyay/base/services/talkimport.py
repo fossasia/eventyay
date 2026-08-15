@@ -46,15 +46,11 @@ from eventyay.celery_app import app
 from eventyay.consts import SizeKey
 
 
-try:
-    from pytz.exceptions import AmbiguousTimeError, NonExistentTimeError
-except ImportError:
+class AmbiguousTimeError(ValueError):
+    pass
 
-    class AmbiguousTimeError(ValueError):
-        pass
-
-    class NonExistentTimeError(ValueError):
-        pass
+class NonExistentTimeError(ValueError):
+    pass
 
 
 logger = logging.getLogger(__name__)

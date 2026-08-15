@@ -5,8 +5,9 @@ import os
 from decimal import Decimal
 
 import django_filters
-import pytz
+
 from django.core.exceptions import ValidationError as DjangoValidationError
+from zoneinfo import ZoneInfo
 from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Prefetch, Q
 from django.db.models.functions import Coalesce, Concat
@@ -628,7 +629,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         except:
             return Response({'detail': 'New date is invalid.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        tz = pytz.timezone(self.request.event.settings.timezone)
+        tz = ZoneInfo(self.request.event.settings.timezone)
         new_date = make_aware(
             datetime.datetime.combine(new_date, datetime.time(hour=23, minute=59, second=59)),
             tz,
