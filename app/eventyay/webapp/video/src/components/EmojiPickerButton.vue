@@ -123,5 +123,5 @@ export default {
 	left: 0
 	width: 100vw
 	height: var(--vh100)
-	z-index: 9998
+	z-index: 900
 </style>

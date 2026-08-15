@@ -29,7 +29,7 @@ export default {
 <style lang="stylus">
 .c-emoji-picker
 	position: fixed
-	z-index: 9999
+	z-index: 901
 	em-emoji-picker
 		--border-radius: 8px
 		--font-family: inherit
