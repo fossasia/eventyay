@@ -9,7 +9,7 @@ import datetime
 from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Q
 from django.utils import formats
@@ -352,6 +352,7 @@ class Product(AdmissionValidityBoundMixin, LoggedModel):
         max_digits=7,
         decimal_places=2,
         null=True,
+        validators=[MinValueValidator(Decimal('0.00'))],
     )
     free_price = models.BooleanField(
         default=False,
@@ -878,6 +879,7 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
         null=True,
         blank=True,
         verbose_name=_('Default price'),
+        validators=[MinValueValidator(Decimal('0.00'))],
     )
     original_price = models.DecimalField(
         verbose_name=_('Original price'),
