@@ -263,6 +263,14 @@ class User(
     )
     avatar_thumbnail = models.ImageField(null=True, blank=True, upload_to='avatars/')
     avatar_thumbnail_tiny = models.ImageField(null=True, blank=True, upload_to='avatars/')
+    default_organizer = models.ForeignKey(
+        'Organizer',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='default_for_users',
+        verbose_name=_('Default organizer'),
+    )
     get_gravatar = models.BooleanField(
         default=False,
         verbose_name=_('Retrieve profile picture via gravatar'),
@@ -637,6 +645,44 @@ class User(
             q |= Q(**{p: True})
 
         return Organizer.objects.filter(id__in=self.teams.filter(q).values_list('organizer', flat=True))
+
+    def get_default_organizer(self, can_create_events=False):
+        """
+        Returns the user's default organizer.
+        If default_organizer is set and valid (the user still belongs to it), returns it.
+        If default_organizer is invalid or unset, finds the first organizer the user was added to,
+        sets it as default_organizer (persisting it if self.pk exists), and returns it.
+        If the user belongs to no organizers, returns None.
+        """
+        if not self.pk:
+            return None
+
+        user_team_organizer_ids = list(self.teams.values_list('organizer_id', flat=True))
+
+        if self.default_organizer_id:
+            if self.default_organizer_id in user_team_organizer_ids:
+                if can_create_events:
+                    if self.teams.filter(organizer_id=self.default_organizer_id, can_create_events=True).exists():
+                        return self.default_organizer
+                else:
+                    return self.default_organizer
+            else:
+                self.default_organizer = None
+                self.save(update_fields=['default_organizer'])
+
+        # Fallback to the first organizer the user was added to
+        teams_qs = self.teams.all()
+        if can_create_events:
+            teams_qs = teams_qs.filter(can_create_events=True)
+
+        first_team = teams_qs.order_by('created', 'id').select_related('organizer').first()
+        if first_team and first_team.organizer:
+            if not can_create_events:
+                self.default_organizer = first_team.organizer
+                self.save(update_fields=['default_organizer'])
+            return first_team.organizer
+
+        return None
 
 
     def has_active_staff_session(self, session_key=None):

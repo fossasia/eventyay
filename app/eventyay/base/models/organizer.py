@@ -10,6 +10,8 @@ from django.core.exceptions import PermissionDenied
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Q
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
@@ -884,3 +886,40 @@ class OrganizerBillingModel(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.organizer.cache.clear()
+
+
+@receiver(m2m_changed, sender=Team.members.through)
+def handle_team_members_changed(sender, instance, action, reverse, pk_set, **kwargs):
+    if action == 'post_add':
+        if reverse:
+            user = instance
+            if not user.default_organizer_id:
+                first_team = user.teams.order_by('created', 'id').select_related('organizer').first()
+                if first_team and first_team.organizer:
+                    user.default_organizer = first_team.organizer
+                    user.save(update_fields=['default_organizer'])
+        else:
+            team = instance
+            if pk_set:
+                for user in User.objects.filter(pk__in=pk_set, default_organizer__isnull=True):
+                    user.get_default_organizer()
+
+    elif action in ('post_remove', 'post_clear'):
+        if reverse:
+            user = instance
+            if user.default_organizer_id and not user.teams.filter(organizer_id=user.default_organizer_id).exists():
+                next_team = user.teams.order_by('created', 'id').select_related('organizer').first()
+                user.default_organizer = next_team.organizer if next_team else None
+                user.save(update_fields=['default_organizer'])
+        else:
+            team = instance
+            users_to_check = (
+                User.objects.filter(pk__in=pk_set, default_organizer=team.organizer)
+                if pk_set
+                else User.objects.filter(default_organizer=team.organizer)
+            )
+            for user in users_to_check:
+                if not user.teams.filter(organizer=team.organizer).exists():
+                    next_team = user.teams.order_by('created', 'id').select_related('organizer').first()
+                    user.default_organizer = next_team.organizer if next_team else None
+                    user.save(update_fields=['default_organizer'])
