@@ -936,7 +936,7 @@ class SubmissionStatsMixin:
             )
             for submission_type in self.request.event.submission_types.filter(deadline__isnull=False)
         ]
-        if self.request.event.cfp.deadline:
+        if hasattr(self.request.event, 'cfp') and self.request.event.cfp.deadline:
             deadlines.append(
                 (
                     self.request.event.cfp.deadline.astimezone(self.request.event.tz).strftime('%Y-%m-%d'),
