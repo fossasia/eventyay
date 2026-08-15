@@ -509,7 +509,6 @@ urlpatterns = [
                 url(r'^orders/bulk-action$', orders.OrderBulkAction.as_view(), name='event.orders.bulk_action'),
                 url(r'^orders/$', orders.OrderList.as_view(), name='event.orders'),
                 url(r'^orders/search$', orders.OrderSearch.as_view(), name='event.orders.search'),
-                url(r'^dangerzone/$', event.DangerZone.as_view(), name='event.dangerzone'),
                 url(r'^cancel/$', orders.EventCancel.as_view(), name='event.cancel'),
                 url(r'^shredder/$', shredder.StartShredView.as_view(), name='event.shredder.start'),
                 url(r'^shredder/export$', shredder.ShredExportView.as_view(), name='event.shredder.export'),

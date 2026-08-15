@@ -130,7 +130,7 @@ Endpoints
             ],
             "sales_channels": [
               "web",
-              "pretixpos",
+              "eventyay-pos",
               "resellers"
             ]
           }
@@ -213,7 +213,7 @@ Endpoints
         },
         "sales_channels": [
           "web",
-          "pretixpos",
+          "eventyay-pos",
           "resellers"
         ]
       }
@@ -269,7 +269,7 @@ Endpoints
         ],
         "sales_channels": [
           "web",
-          "pretixpos",
+          "eventyay-pos",
           "resellers"
         ]
       }
@@ -309,7 +309,7 @@ Endpoints
         ],
         "sales_channels": [
           "web",
-          "pretixpos",
+          "eventyay-pos",
           "resellers"
         ]
       }
@@ -369,7 +369,7 @@ Endpoints
         ],
         "sales_channels": [
           "web",
-          "pretixpos",
+          "eventyay-pos",
           "resellers"
         ]
       }
@@ -409,7 +409,7 @@ Endpoints
         ],
         "sales_channels": [
           "web",
-          "pretixpos",
+          "eventyay-pos",
           "resellers"
         ]
       }
@@ -478,11 +478,11 @@ Endpoints
           "eventyay.plugins.banktransfer",
           "eventyay.plugins.stripe",
           "eventyay.plugins.paypal",
-          "eventyay.plugins.pretixdroid"
+          "eventyay.plugins.eventyay-checkin"
         ],
         "sales_channels": [
           "web",
-          "pretixpos",
+          "eventyay-pos",
           "resellers"
         ]
       }

@@ -1635,25 +1635,25 @@ class WidgetCodeForm(forms.Form):
 
 class EventDeleteForm(forms.Form):
     error_messages = {
-        'slug_wrong': _('The slug you entered was not correct.'),
+        'name_wrong': _('The event name you entered was not correct.'),
     }
-    slug = forms.CharField(
+    name = forms.CharField(
         max_length=255,
-        label=_('Event slug'),
+        label=_('Event name'),
     )
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
         super().__init__(*args, **kwargs)
 
-    def clean_slug(self):
-        slug = self.cleaned_data.get('slug')
-        if slug != self.event.slug:
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if name != str(self.event.name):
             raise forms.ValidationError(
-                self.error_messages['slug_wrong'],
-                code='slug_wrong',
+                self.error_messages['name_wrong'],
+                code='name_wrong',
             )
-        return slug
+        return name
 
 
 class QuickSetupForm(I18nForm):
