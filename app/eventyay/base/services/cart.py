@@ -73,6 +73,10 @@ error_messages = {
         'Some of the products you selected are no longer available in '
         'the quantity you selected. Please see below for details.'
     ),
+    'max_products': (
+        'You cannot select more than %s product per order.',
+        'You cannot select more than %s products per order.',
+    ),
     'max_products_per_product': _('You cannot select more than %(max)s products of the product %(product)s.'),
     'min_products_per_product': _('You need to select at least %(min)s products of the product %(product)s.'),
     'min_products_per_product_removed': _(
@@ -326,8 +330,8 @@ class CartManager:
             max_products = int(GlobalSettingsObject().settings.get('max_products_per_order', default=0) or 0)
             if max_products > 0 and cartsize > max_products:
                 raise CartError(ngettext(
-                    'You cannot select more than %s product per order.',
-                    'You cannot select more than %s products per order.',
+                    error_messages['max_products'][0],
+                    error_messages['max_products'][1],
                     max_products
                 ) % (max_products,))
 
