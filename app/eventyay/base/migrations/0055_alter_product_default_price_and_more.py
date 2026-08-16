@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0053_jitsiserver'),
+        ('base', '0054_team_teamshifts_permissions'),
     ]
 
     operations = [
