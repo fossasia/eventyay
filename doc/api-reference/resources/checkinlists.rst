@@ -93,7 +93,7 @@ Endpoints
             "exit_all_at": null,
             "rules": {},
             "auto_checkin_sales_channels": [
-              "pretixpos"
+              "eventyay-pos"
             ]
           }
         ]
@@ -145,7 +145,7 @@ Endpoints
         "exit_all_at": null,
         "rules": {},
         "auto_checkin_sales_channels": [
-          "pretixpos"
+          "eventyay-pos"
         ]
       }
 
@@ -244,7 +244,7 @@ Endpoints
         "allow_multiple_entries": false,
         "allow_entry_after_exit": true,
         "auto_checkin_sales_channels": [
-          "pretixpos"
+          "eventyay-pos"
         ]
       }
 
@@ -268,7 +268,7 @@ Endpoints
         "allow_multiple_entries": false,
         "allow_entry_after_exit": true,
         "auto_checkin_sales_channels": [
-          "pretixpos"
+          "eventyay-pos"
         ]
       }
 
@@ -322,7 +322,7 @@ Endpoints
         "allow_multiple_entries": false,
         "allow_entry_after_exit": true,
         "auto_checkin_sales_channels": [
-          "pretixpos"
+          "eventyay-pos"
         ]
       }
 

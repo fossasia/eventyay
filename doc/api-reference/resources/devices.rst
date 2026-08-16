@@ -74,7 +74,7 @@ Device endpoints
             "security_profile": "full",
             "hardware_brand": "Zebra",
             "hardware_model": "TC25",
-            "software_brand": "pretixSCAN",
+            "software_brand": "eventyay-checkin",
             "software_version": "1.5.1"
           }
         ]
@@ -121,7 +121,7 @@ Device endpoints
         "security_profile": "full",
         "hardware_brand": "Zebra",
         "hardware_model": "TC25",
-        "software_brand": "pretixSCAN",
+        "software_brand": "eventyay-checkin",
         "software_version": "1.5.1"
       }
 

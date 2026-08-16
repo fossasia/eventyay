@@ -70,18 +70,7 @@
         </section>
 
         <div class="submit-group panel">
-            <span>
-                {% url "eventyay_common:event.update" organizer=request.event.organizer.slug event=request.event.slug as event_settings_url %}
-                <a class="btn btn-outline-info" href="{{ event_settings_url }}">
-                    <i class="fa fa-cog"></i>
-                    {% translate "Event settings" %}
-                </a>
-                {% if request.user.is_administrator %}
-                    <a class="btn btn-outline-danger" href="{{ request.event.orga_urls.delete }}">
-                        {% translate "Delete talk data" %}
-                    </a>
-                {% endif %}
-            </span>
+            <span></span>
             <span>
                 <button type="submit" class="btn btn-success">
                     <i class="fa fa-check"></i>
@@ -90,4 +79,5 @@
             </span>
         </div>
     </form>
+
 {% endblock settings_content %}

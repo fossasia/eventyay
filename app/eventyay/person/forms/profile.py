@@ -153,13 +153,14 @@ class SpeakerProfileForm(
                     self.fields[field_name].widget.is_required = not self.not_strict
 
         cfp_defaults = default_fields()
-        count_length_in = self.event.cfp.settings.get('count_length_in', 'chars')
+        _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
+        count_length_in = (_cfp.settings.get('count_length_in', 'chars') if _cfp else 'chars')
         count_chars = count_length_in == 'chars'
         for key in ('avatar_source', 'avatar_license', 'additional_speaker'):
             if key not in self.fields:
                 continue
             default_config = cfp_defaults.get(key, {})
-            config = self.event.cfp.fields.get(key, default_config)
+            config = (_cfp.fields.get(key, default_config) if _cfp else default_config)
             visibility = config.get('visibility', default_config.get('visibility', 'optional'))
             if visibility == 'do_not_ask':
                 self.fields.pop(key, None)
@@ -189,13 +190,13 @@ class SpeakerProfileForm(
                     part for part in (field.original_help_text, field.added_help_text) if part
                 )
 
-        if not self.event.cfp.request_avatar:
+        if not (_cfp and _cfp.request_avatar):
             self.fields.pop('avatar', None)
             self.fields.pop('avatar_source', None)
             self.fields.pop('avatar_license', None)
             self.fields.pop('get_gravatar', None)
         else:
-            if not self.event.cfp.enable_gravatar:
+            if not _cfp.enable_gravatar:
                 self.fields.pop('get_gravatar', None)
             if 'avatar' in self.fields:
                 self.fields['avatar'].required = False
@@ -245,8 +246,9 @@ class SpeakerProfileForm(
 
     def clean(self):
         data = super().clean()
-        if not getattr(self, 'not_strict', False) and self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
-            if self.event.cfp.enable_gravatar:
+        _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
+        if not getattr(self, 'not_strict', False) and _cfp and _cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
+            if _cfp.enable_gravatar:
                 msg = _('Please provide a profile picture or allow us to load your picture from gravatar!')
             else:
                 msg = _('Please provide a profile picture!')
