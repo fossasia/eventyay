@@ -284,6 +284,7 @@ export default {
 	background-color: var(--clr-sidebar)
 	border-right: 1px solid #e7e7e7
 	box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2)
+	box-sizing: border-box
 	display: flex
 	flex-direction: column
 	position: fixed
@@ -291,7 +292,8 @@ export default {
 	left: 0
 	z-index: 125
 	width: var(--sidebar-width)
-	height: calc(var(--vh100) - 48px)
+	bottom: 0
+	padding-bottom: 24px
 	// Start off-screen on mobile, visible on desktop
 	transform: translateX(0)
 	// Animate open/close on all screen sizes
@@ -303,9 +305,13 @@ export default {
 		margin: 8px
 		icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)
 	> .c-scrollbars
-		flex: auto
+		flex: 1
+		min-height: 0
 		.scroll-content
-			flex: auto
+			flex: 1
+			min-height: 0
+			overflow-y: auto
+			overflow-x: hidden
 			color: var(--color-text, $clr-primary-text-light)
 		.scrollbar-rail-y
 			.scrollbar-thumb
