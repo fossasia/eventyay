@@ -333,11 +333,14 @@ class CartManager:
             )
             max_products = int(GlobalSettingsObject().settings.get('max_products_per_order', default=0) or 0)
             if max_products > 0 and cartsize > max_products:
-                ngettext(
-                    error_messages['max_products'],
-                    error_messages['max_products_plural'],
-                    max_products,
-                ) % {'max': max_products}
+                raise CartError(
+                    ngettext(
+                        error_messages['max_products'],
+                        error_messages['max_products_plural'],
+                        max_products,
+                    )
+                    % {'max': max_products}
+                )
 
     def _check_product_constraints(self, op, current_ops=[]):
         if isinstance(op, (self.AddOperation, self.ExtendOperation)):
