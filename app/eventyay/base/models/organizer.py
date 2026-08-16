@@ -215,7 +215,6 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
         this organizer, so you don't have to prefix your cache keys. In addition, the cache
         is being cleared every time the organizer changes.
         """
-        # FIXME: This "cache" module is missing.
         from eventyay.base.cache import ObjectRelatedCache
 
         return ObjectRelatedCache(self)
