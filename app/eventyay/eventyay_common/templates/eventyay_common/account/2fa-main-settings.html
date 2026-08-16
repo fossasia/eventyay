@@ -24,7 +24,7 @@
             smartphone or a hardware token generator and that changes on a regular basis.
         {% endblocktrans %}
     </p>
-    {% if settings.PRETIX_OBLIGATORY_2FA %}
+    {% if settings.EVENTYAY_OBLIGATORY_2FA %}
         <div class='panel panel-warning'>
             <div class='panel-heading'>
                 <h3 class='panel-title'>{{ _('Obligatory usage of two-factor authentication') }}</h3>
@@ -36,48 +36,100 @@
             {% if not devices %}
                 <p>{{ _('Please set up at least one device below.') }}</p>
             {% elif not user.require_2fa %}
-                <p>{{ _('Please activate two-factor authentication using the button below.') }}</p>
+                <p>{{ _('Please activate two-factor authentication using the toggle switch below.') }}</p>
             {% endif %}
             </div>
         </div>
 
     {% endif %}
-    {% if user.require_2fa %}
-        <div class='panel panel-success'>
-            <div class='panel-heading'>
-                <h3 class='panel-title'>{{ _('Two-factor status') }}</h3>
-            </div>
-            <div class='panel-body'>
-                {% if not settings.PRETIX_OBLIGATORY_2FA %}
-                    <a href="{% url 'eventyay_common:account.2fa.disable' %}" class='btn btn-primary pull-right flip'>
-                        {{ _('Disable') }}
-                    </a>
-                {% endif %}
-                <p>
-                    <strong>{{ _('Two-factor authentication is currently enabled.') }}</strong>
-                </p>
-            </div>
+    <div class='panel panel-default two-factor-status-panel'>
+        <div class='panel-heading'>
+            <h3 class='panel-title'>{{ _('Two-factor status') }}</h3>
         </div>
-    {% else %}
-        <div class='panel panel-warning'>
-            <div class='panel-heading'>
-                <h3 class='panel-title'>{{ _('Two-factor status') }}</h3>
+        <div class='panel-body'>
+            <div class='two-factor-status-info'>
+                <p>
+                    {% if user.require_2fa %}
+                        <strong class='text-success'>{{ _('Two-factor authentication is currently enabled.') }}</strong>
+                    {% else %}
+                        <strong class='text-muted'>{{ _('Two-factor authentication is currently disabled.') }}</strong>
+                    {% endif %}
+                </p>
+                {% if not user.require_2fa and not devices|length %}
+                    <p class='text-muted'>{{ _('To enable it, you need to configure at least one device below.') }}</p>
+                {% endif %}
             </div>
-            <div class='panel-body'>
+            {% if user.require_2fa %}
+                {% if not settings.EVENTYAY_OBLIGATORY_2FA %}
+                    <button type='button'
+                            class='toggle-switch active'
+                            data-toggle='modal'
+                            data-target='#disable-2fa-modal'
+                            title="{{ _('Disable two-factor authentication') }}"
+                            aria-label="{{ _('Disable two-factor authentication') }}">
+                        <span class='toggle-slider'></span>
+                    </button>
+                {% else %}
+                    <button type='button'
+                            class='toggle-switch active disabled'
+                            disabled
+                            title="{{ _('Two-factor authentication is mandatory on this system') }}"
+                            aria-label="{{ _('Two-factor authentication is mandatory on this system') }}">
+                        <span class='toggle-slider'></span>
+                    </button>
+                {% endif %}
+            {% else %}
                 {% if devices|length %}
-                    <a href="{% url 'eventyay_common:account.2fa.enable' %}" class='btn btn-primary pull-right flip'>
-                        {{ _('Enable') }}
-                    </a>
+                    <form method='post' action="{% url 'eventyay_common:account.2fa.enable' %}" class='inline-block-form'>
+                        {% csrf_token %}
+                        <button type='submit'
+                                class='toggle-switch'
+                                title="{{ _('Enable two-factor authentication') }}"
+                                aria-label="{{ _('Enable two-factor authentication') }}">
+                            <span class='toggle-slider'></span>
+                        </button>
+                    </form>
+                {% else %}
+                    <button type='button'
+                            class='toggle-switch disabled'
+                            disabled
+                            title="{{ _('To enable it, you need to configure at least one device below.') }}"
+                            aria-label="{{ _('Two-factor authentication disabled') }}">
+                        <span class='toggle-slider'></span>
+                    </button>
                 {% endif %}
-                <p>
-                    <strong>{{ _('Two-factor authentication is currently disabled.') }}</strong>
-                </p>
-                {% if not devices|length %}
-                    <p>{{ _('To enable it, you need to configure at least one device below.') }}</p>
-                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class='modal fade' id='disable-2fa-modal' tabindex='-1' role='dialog' aria-labelledby='disable2faModalLabel'>
+        <div class='modal-dialog' role='document'>
+            <div class='modal-content'>
+                <div class='modal-header'>
+                    <button type='button' class='close' data-dismiss='modal' aria-label="{{ _('Close') }}">
+                        <span aria-hidden='true'>&times;</span>
+                    </button>
+                    <h4 class='modal-title' id='disable2faModalLabel'>{{ _('Disable Two-Factor Authentication') }}</h4>
+                </div>
+                <div class='modal-body'>
+                    <p>
+                        {% blocktrans trimmed %}
+                            Are you sure you want to disable two-factor authentication for your account?
+                            This will remove the additional security protection when logging in.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+                <div class='modal-footer'>
+                    <form method='post' action="{% url 'eventyay_common:account.2fa.disable' %}">
+                        {% csrf_token %}
+                        <button type='button' class='btn btn-default' data-dismiss='modal'>{{ _('Cancel') }}</button>
+                        <button type='submit' class='btn btn-danger'>{{ _('Disable Two-Factor Authentication') }}</button>
+                    </form>
+                </div>
             </div>
         </div>
-    {% endif %}
+    </div>
+
     <div class='panel panel-default'>
         <div class='panel-heading'>
             <h3 class='panel-title'>{{ _('Registered devices') }}</h3>
@@ -87,7 +139,7 @@
                 <li class='list-group-item'>
                     <a class='btn btn-delete btn-danger btn-xs pull-right flip'
                             href="{% url 'eventyay_common:account.2fa.delete' devicetype=d.devicetype device_id=d.pk %}">
-                        Delete
+                        {{ _('Delete') }}
                     </a>
                     {% if d.devicetype == "totp" %}
                         <span class='fa fa-mobile'></span>
