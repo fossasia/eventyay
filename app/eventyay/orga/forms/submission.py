@@ -318,10 +318,10 @@ class AddSpeakerForm(forms.Form):
         required=False,
     )
     biography = forms.CharField(
-    label=_('Biography'),
-    required=False,
-    widget=MarkdownWidget,
-)
+        label=_('Biography'),
+        required=False,
+        widget=MarkdownWidget,
+    )
     locale = forms.ChoiceField(
         label=_('Invite language'),
         choices=[],
