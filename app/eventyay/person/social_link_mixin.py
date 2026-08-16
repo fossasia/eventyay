@@ -16,11 +16,11 @@ class SpeakerSocialLinksMixin:
 
     def social_links_enabled(self):
         event = getattr(self, 'event', None) or getattr(getattr(self, 'request', None), 'event', None)
-        return bool(event and event.cfp.request_social_links)
+        return bool(event and hasattr(event, 'cfp') and event.cfp.request_social_links)
 
     def social_links_required(self):
         event = getattr(self, 'event', None) or getattr(getattr(self, 'request', None), 'event', None)
-        return bool(event and event.cfp.require_social_links)
+        return bool(event and hasattr(event, 'cfp') and event.cfp.require_social_links)
 
     def social_links_should_bind_post(self):
         request = getattr(self, 'request', None)
