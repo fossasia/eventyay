@@ -37,6 +37,13 @@
         <h1>{{ submission.title|event_localize }}</h1>
         <p>{{ submission_description|event_localize }}</p>
     </noscript>
+    {% if submission.does_accept_feedback and request.event|get_feature_flag:"use_feedback" and not is_html_export %}
+        <div class="mt-4 mb-4 text-center pb-4">
+            <a href="{{ submission.urls.feedback }}" class="btn btn-success btn-lg">
+                <i class="fa fa-comments"></i> {{ phrases.agenda.feedback }}
+            </a>
+        </div>
+    {% endif %}
 </div>
 {% html_signal "eventyay.agenda.signals.html_below_session_pages" sender=request.event request=request submission=submission %}
 {% endblock agenda_content %}
