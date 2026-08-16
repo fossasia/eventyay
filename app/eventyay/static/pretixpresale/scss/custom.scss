@@ -130,7 +130,7 @@
 }
 
 .presale-sticky-tabs .header-row-right {
-    color: var(--color-primary);
+    color: var(--color-header-navigation);
     margin-left: auto;
     margin-right: 10px;
     display: flex;
@@ -155,7 +155,7 @@
 .presale-sticky-tabs .header-row-right .header-nav,
 .presale-sticky-tabs .header-row-right .locale-switch-toggle,
 .presale-sticky-tabs .header-row-right a {
-    color: var(--color-primary);
+    color: var(--color-header-navigation);
 }
 
 .presale-sticky-tabs .header-row-right details.dropdown summary:hover,
@@ -166,7 +166,7 @@
 }
 
 .presale-sticky-tabs .header-row-right .header-nav {
-    border-color: var(--color-primary);
+    border-color: var(--color-header-navigation);
     background: transparent;
 }
 

@@ -2,7 +2,8 @@ from datetime import timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-import pytz
+import datetime
+
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import (
@@ -540,14 +541,19 @@ def event_index_widgets_lazy(request, organizer, event):
         except SubEvent.DoesNotExist:
             pass
 
+    can_view_orders = request.user.has_event_permission(
+        request.organizer, request.event, 'can_view_orders', request=request
+    )
+
     widgets = []
-    for r, result in event_dashboard_widgets.send(
-        sender=request.event,
-        subevent=subevent,
-        lazy=False,
-        request=request,
-    ):
-        widgets.extend(result)
+    if can_view_orders:
+        for r, result in event_dashboard_widgets.send(
+            sender=request.event,
+            subevent=subevent,
+            lazy=False,
+            request=request,
+        ):
+            widgets.extend(result)
 
     return JsonResponse({'widgets': widgets})
 
@@ -618,7 +624,7 @@ def widgets_for_event_qs(request, qs, user, nmax, lazy=False):
     for event in events:
         if not lazy:
             tzname = event.cache.get_or_set('timezone', lambda: event.settings.timezone)
-            tz = pytz.timezone(tzname)
+            tz = ZoneInfo(tzname)
             if event.has_subevents:
                 if event.min_from is None:
                     dr = pgettext('subevent', 'No dates')

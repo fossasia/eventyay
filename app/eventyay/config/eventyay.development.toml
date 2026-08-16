@@ -30,3 +30,9 @@ short_url = 'http://localhost:8000'
 
 # External Response Size Limits
 # response_size_webhook = 1            # Max external response size for questions
+
+# Default plugins enabled for new events in development
+plugins_default = [
+    'eventyay.plugins.checkinlists',
+    'hubspot',
+]

@@ -2,7 +2,8 @@ import logging
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from django.contrib.contenttypes.models import ContentType
 from django.contrib import messages
@@ -28,8 +29,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
-from pytz.tzinfo import DstTzInfo
-from zoneinfo import ZoneInfo
+
 
 from eventyay.base.models import (
     Event,
@@ -95,6 +95,7 @@ def get_event_dashboard_widget_permissions(request: HttpRequest) -> dict[str, bo
     return {
         'has_ticket_dashboard_access': access['has_ticket_access'],
         'can_change_event_settings': access['can_change_event_settings'],
+        'can_view_orders': access['can_view_orders'],
     }
 
 
@@ -109,7 +110,29 @@ def filter_event_dashboard_widgets_for_request(
         widgets,
         has_ticket_dashboard_access=permissions['has_ticket_dashboard_access'],
         can_change_event_settings=permissions['can_change_event_settings'],
+        can_view_orders=permissions.get('can_view_orders', False),
     )
+
+
+# Widget ``lazy`` keys whose data comes from orders (attendees, revenue, etc.).
+# These require ``can_view_orders`` even for users who have general ticket access.
+_ORDER_DATA_WIDGET_LAZY_KEYS = (
+    'attendees-ordered',
+    'attendees-paid',
+    'total-revenue',
+)
+_ORDER_DATA_WIDGET_LAZY_PREFIXES = (
+    'waitinglist-',
+    'checkin-',
+)
+
+
+def _is_order_data_widget(widget: Dict[str, Any]) -> bool:
+    """Return True when a widget displays order-level data (attendees, revenue, etc.)."""
+    lazy_key = widget.get('lazy', '')
+    if lazy_key in _ORDER_DATA_WIDGET_LAZY_KEYS:
+        return True
+    return any(lazy_key.startswith(prefix) for prefix in _ORDER_DATA_WIDGET_LAZY_PREFIXES)
 
 
 def filter_common_event_dashboard_widgets(
@@ -117,12 +140,18 @@ def filter_common_event_dashboard_widgets(
     *,
     has_ticket_dashboard_access: bool,
     can_change_event_settings: bool,
+    can_view_orders: bool = False,
 ) -> List[Dict[str, Any]]:
     """Limit dashboard widgets on the common event home for talk-only users.
 
     Users without ticket dashboard access only see widgets whose ``key`` is
     ``shop_state`` (ticket shop live status). Other widgets are omitted unless
     they declare that key or the user gains ticket dashboard access.
+
+    Additionally, widgets that expose order data (attendee counts, revenue,
+    waiting-list lengths, check-in stats) are suppressed for users who have
+    generic ticket access (e.g. ``can_change_items``) but lack the specific
+    ``can_view_orders`` permission.
     """
     if widgets is None:
         widgets = []
@@ -146,6 +175,10 @@ def filter_common_event_dashboard_widgets(
             widget.pop('link', None)
             widget['content'] = _sanitize_widget_content_for_permission_dialog(widget.get('content', ''))
             widget['permission_dialog_id'] = EVENT_SETTINGS_PERMISSION_DIALOG_ID
+        # Suppress order-data widgets (attendees, revenue, etc.) for users
+        # who have ticket dashboard access but not can_view_orders.
+        if not can_view_orders and _is_order_data_widget(widget):
+            continue
         filtered.append(widget)
     return filtered
 
@@ -416,7 +449,7 @@ class EventWidgetGenerator:
         ]
 
     @staticmethod
-    def format_event_daterange(event: Event, tz: DstTzInfo) -> str:
+    def format_event_daterange(event: Event, tz: ZoneInfo) -> str:
         """
         Generate a formatted date range for an event.
         """
@@ -436,7 +469,7 @@ class EventWidgetGenerator:
         return date_format(event.date_from.astimezone(tz), 'DATE_FORMAT')
 
     @staticmethod
-    def format_event_times(event: Event, tz: DstTzInfo, request: HttpRequest) -> str:
+    def format_event_times(event: Event, tz: ZoneInfo, request: HttpRequest) -> str:
         """
         Generate a formatted time string for an event.
         """
@@ -552,7 +585,7 @@ class EventWidgetGenerator:
         widget_content = ''
         if not lazy:
             tzname = event.cache.get_or_set('timezone', lambda e=event: e.settings.timezone)
-            tz = pytz.timezone(tzname)
+            tz = ZoneInfo(tzname)
 
             widget_template = """
             <a href="{url}" class="event">

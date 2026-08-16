@@ -3,8 +3,7 @@ import logging
 import os
 import re
 import smtplib
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from urllib.parse import urlparse
 
@@ -30,10 +29,12 @@ from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, TemplateView
 from django_scopes import scope
-from pytz import timezone
+from zoneinfo import ZoneInfo
 from rest_framework import views
 from django.views import View
 from django.apps import apps
+
+from eventyay.timezones import localize_datetime
 
 from eventyay.base.i18n import language
 from eventyay.base.meetup import (
@@ -262,8 +263,8 @@ class EventCreateView(TemplateView):
             initial_form['locale'] = 'en'
 
             # Set default dates: 3 months from now, 9 AM to 5 PM in user's timezone
-            user_tz = timezone(get_current_timezone_name())
-            now = user_tz.localize(datetime.now())
+            user_tz = ZoneInfo(get_current_timezone_name())
+            now = datetime.now(user_tz)
             default_start = now + timedelta(days=90)
             default_start = default_start.replace(hour=9, minute=0, second=0, microsecond=0)
             default_end = default_start.replace(hour=17, minute=0, second=0, microsecond=0)
@@ -497,7 +498,15 @@ class EventCreateView(TemplateView):
         has_permission = check_create_permission(self.request)
         final_is_video_creation = foundation_data.get('is_video_creation', True) and has_permission
 
-        with transaction.atomic(), language(basics_data['locale']):
+        # Derive the default locale: use whatever the form provides (set by the
+        # hidden input that JS syncs from the language-order tray), but always fall
+        # back to the first selected locale so the UI change is backward-compatible.
+        locales_list = foundation_data['locales']
+        chosen_locale = basics_data.get('locale') or (locales_list[0] if locales_list else 'en')
+        if chosen_locale not in locales_list and locales_list:
+            chosen_locale = locales_list[0]
+
+        with transaction.atomic(), language(chosen_locale):
             event = basics_form.instance
             event.organizer = foundation_data['organizer']
 
@@ -534,7 +543,7 @@ class EventCreateView(TemplateView):
             event.update_language_configuration(
                 locales=foundation_data['locales'],
                 content_locales=content_locales,
-                default_locale=basics_data['locale']
+                default_locale=chosen_locale,
             )
             event.refresh_from_db()
             cfp = event.cfp
@@ -555,21 +564,7 @@ class EventCreateView(TemplateView):
             create_for = EventCreatedFor.BOTH.value
             event.settings.set('create_for', create_for)
 
-            # Smart defaults work for all event types
-            if create_for in [EventCreatedFor.BOTH.value, EventCreatedFor.TICKET.value, EventCreatedFor.TALK.value]:
-                event_dict = {
-                    'organiser_slug': event.organizer.slug,
-                    'name': event.name.data,
-                    'slug': event.slug,
-                    'is_public': event.live,
-                    'date_from': str(event.date_from),
-                    'date_to': str(event.date_to),
-                    'timezone': str(basics_data.get('timezone')),
-                    'locale': event.settings.locale,
-                    'locales': event.settings.locales,
-                    'content_locales': content_locales,
-                    'is_video_creation': final_is_video_creation,
-                }
+
 
             event.log_action(
                     action='eventyay.event.added',
@@ -666,6 +661,8 @@ class EventUpdate(
         ):
             # Ignore case Event is created only for Talk as it not enable yet.
             context['is_talk_event_created'] = True
+            
+        
         return context
 
     def _run_email_test(self):
@@ -859,7 +856,7 @@ class EventUpdate(
                 and self.header_links_formset.is_valid()
                 and self.footer_links_formset.is_valid()
             ):
-                zone = timezone(self.sform.cleaned_data['timezone'])
+                zone = ZoneInfo(self.sform.cleaned_data['timezone'])
                 event = form.instance
                 event.date_from = self.reset_timezone(zone, event.date_from)
                 event.date_to = self.reset_timezone(zone, event.date_to)
@@ -875,8 +872,8 @@ class EventUpdate(
             return HttpResponseRedirect(self.request.path)
 
     @staticmethod
-    def reset_timezone(tz, dt):
-        return tz.localize(dt.replace(tzinfo=None)) if dt is not None else None
+    def reset_timezone(zone, dt):
+        return localize_datetime(dt, zone)
 
 
 class EventPlugins(ControlEventPlugins):
@@ -945,40 +942,42 @@ class EventLive(TemplateView):
         ctx['public_pages'] = public_pages
         warnings = []
         suggestions = []
-        if not self.request.event.cfp.text or len(str(self.request.event.cfp.text)) < 50:
-            warnings.append(
-                {
-                    'text': _('The CfP doesn’t have a full text yet.'),
-                    'url': self.request.event.cfp.urls.text,
-                }
-            )
-        if (
-            self.request.event.get_feature_flag('use_tracks')
-            and self.request.event.cfp.request_track
-            and self.request.event.tracks.count() < 2
-        ):
-            suggestions.append(
-                {
-                    'text': _(
-                        'You want submitters to choose the tracks for their proposals, but you do not offer tracks for selection. Add at least one track!'
-                    ),
-                    'url': self.request.event.cfp.urls.tracks,
-                }
-            )
-        if self.request.event.submission_types.count() == 1:
-            suggestions.append(
-                {
-                    'text': _('You have configured only one session type so far.'),
-                    'url': self.request.event.cfp.urls.types,
-                }
-            )
-        if not self.request.event.talkquestions.exists():
-            suggestions.append(
-                {
-                    'text': _('You have configured no custom fields yet.'),
-                    'url': self.request.event.cfp.urls.new_question,
-                }
-            )
+        if hasattr(self.request.event, 'cfp'):
+            cfp = self.request.event.cfp
+            if not cfp.text or len(str(cfp.text)) < 50:
+                warnings.append(
+                    {
+                        'text': _('The CfP doesn’t have a full text yet.'),
+                        'url': cfp.urls.text,
+                    }
+                )
+            if (
+                self.request.event.get_feature_flag('use_tracks')
+                and cfp.request_track
+                and self.request.event.tracks.count() < 2
+            ):
+                suggestions.append(
+                    {
+                        'text': _(
+                            'You want submitters to choose the tracks for their proposals, but you do not offer tracks for selection. Add at least one track!'
+                        ),
+                        'url': cfp.urls.tracks,
+                    }
+                )
+            if self.request.event.submission_types.count() == 1:
+                suggestions.append(
+                    {
+                        'text': _('You have configured only one session type so far.'),
+                        'url': cfp.urls.types,
+                    }
+                )
+            if not self.request.event.talkquestions.exists():
+                suggestions.append(
+                    {
+                        'text': _('You have configured no custom fields yet.'),
+                        'url': cfp.urls.new_question,
+                    }
+                )
         ctx['warnings'] = warnings
         ctx['suggestions'] = suggestions
         return ctx
@@ -1428,7 +1427,7 @@ class VideoAccessAuthenticator(View):
 
     def generate_token_url(self, request, traits, resume_suffix: str | None = None):
         uid_token = encode_email(request.user.email)
-        iat = datetime.now(tz.utc)
+        iat = datetime.now(timezone.utc)
         exp = iat + dt.timedelta(days=1)
         payload = {
             'iss': self.request.event.settings.venueless_issuer,

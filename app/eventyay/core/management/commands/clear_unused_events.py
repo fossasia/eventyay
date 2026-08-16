@@ -1,6 +1,6 @@
 from datetime import datetime, time, timedelta
 
-import pytz
+from zoneinfo import ZoneInfo
 from django.core.management.base import BaseCommand
 from django.db.models import Max, Q
 from django.utils.timezone import now
@@ -38,7 +38,7 @@ class Command(BaseCommand):
                     m=Max("timestamp")
                 )["m"],
                 (
-                    pytz.UTC.localize(datetime.combine(planned_end, time(0)))
+                    datetime.combine(planned_end, time(0), tzinfo=datetime.timezone.utc)
                     if planned_end
                     else None
                 ),

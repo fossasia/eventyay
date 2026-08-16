@@ -4,9 +4,8 @@ from datetime import datetime
 from datetime import timezone as tz
 from decimal import Decimal
 from typing import Optional, Tuple
-from urllib.parse import urljoin
 
-import pytz
+from zoneinfo import ZoneInfo
 import requests
 from celery import shared_task
 from dateutil.relativedelta import relativedelta
@@ -29,10 +28,8 @@ from ..base.services.mail import mail_send_task
 from ..base.settings import GlobalSettingsObject
 from ..consts import EVENTYAY_EMAIL_NONE_VALUE
 from ..helpers.jwt_generate import generate_sso_token
-from .base_tasks import CreateWorldTask, SendEventTask
 from .billing_invoice import InvoicePDFGenerator
 from .schemas.billing import CollectBillingResponse
-from .video.permissions import build_video_traits_for_event
 
 logger = logging.getLogger(__name__)
 
@@ -71,86 +68,6 @@ def send_team_webhook(self, user_id, team):
             self.retry(exc=e)
         except self.MaxRetriesExceededError:
             logger.error('Max retries exceeded for sending organizer webhook.')
-
-
-@shared_task(
-    bind=True, max_retries=5, default_retry_delay=60, base=CreateWorldTask
-)  # Retries up to 5 times with a 60-second delay
-def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[dict]:
-    """
-    Create a video system for the specified event.
-
-    :param self: Task instance
-    :param is_video_creation: A boolean indicating whether the user has chosen to add a video.
-    :param event_data: A dictionary containing the following event details:
-        - id (str): The unique identifier for the event.
-        - title (str): The title of the event.
-        - timezone (str): The timezone in which the event takes place.
-        - locale (str): The locale for the event.
-        - token (str): Authorization token for making the request.
-        - has_permission (bool): Indicates if the user has 'can_create_events' permission or is in admin session mode.
-
-    To successfully create a world, both conditions must be satisfied:
-    - The user must have the necessary permission.
-    - The user must choose to create a video.
-    """
-
-    def _create_world(payload: dict, headers: dict) -> Optional[dict]:
-        try:
-            response = requests.post(
-                urljoin(settings.VIDEO_SERVER_HOSTNAME, 'api/v1/create-world/'),
-                json=payload,
-                headers=headers,
-            )
-            response.raise_for_status()
-            return response.json()
-        except (
-            requests.exceptions.JSONDecodeError,
-            requests.exceptions.ConnectionError,
-            requests.exceptions.Timeout,
-            requests.exceptions.RequestException,
-        ) as e:
-            error_type = type(e).__name__
-            logger.error('%s during video world creation: %s', error_type, e)
-            raise
-
-    has_permission = event_data.get('has_permission', False)
-    if not (is_video_creation and has_permission):
-        logger.info(
-            'Skipping video world creation - Video enabled: %s, Has permission: %s',
-            is_video_creation,
-            has_permission,
-        )
-        return None
-
-    event_slug = event_data.get('id', '')
-    video_traits = build_video_traits_for_event(event_slug)
-    payload = {
-        'id': event_slug,
-        'title': event_data.get('title', ''),
-        'timezone': event_data.get('timezone', ''),
-        'locale': event_data.get('locale', ''),
-        'traits': {
-            'attendee': 'eventyay-video-event-{}'.format(event_slug),
-            **video_traits,
-        },
-    }
-
-    try:
-        return _create_world(
-            payload=payload,
-            headers={'Authorization': 'Bearer ' + event_data.get('token', '')},
-        )
-    except requests.RequestException as e:
-        try:
-            self.retry(exc=e)
-        except self.MaxRetriesExceededError:
-            logger.error(
-                'Max retries exceeded for video world creation. Event: %s, Error: %s',
-                event_slug,
-                e,
-            )
-
 
 def get_header_token(user_id):
     # Fetch the user and organizer instances
@@ -516,7 +433,7 @@ def retry_failed_payment(self):
     pending_invoices = BillingInvoice.objects.filter(status=BillingInvoice.STATUS_PENDING)
     today = datetime.now(tz.utc)
     logger.info('Start - running task to retry failed payment: %s', today)
-    timezone = pytz.timezone(settings.TIME_ZONE)
+    timezone = ZoneInfo(settings.TIME_ZONE)
     for invoice in pending_invoices:
         if invoice.final_ticket_fee <= 0:
             continue
@@ -526,7 +443,7 @@ def retry_failed_payment(self):
         reminder_dates.sort()
         for reminder_date in reminder_dates:
             reminder_date = datetime(today.year, today.month, reminder_date)
-            reminder_date = timezone.localize(reminder_date)
+            reminder_date = reminder_date.replace(tzinfo=timezone)
             if (
                 not invoice.last_reminder_datetime or invoice.last_reminder_datetime < reminder_date
             ) and reminder_date <= today:
@@ -546,7 +463,7 @@ def check_billing_status_for_warning(self):
     pending_invoices = BillingInvoice.objects.filter(status=BillingInvoice.STATUS_PENDING, reminder_enabled=True)
     today = datetime.now(tz.utc)
     logger.info('Start - running task to check billing status for warning on: %s', today)
-    timezone = pytz.timezone(settings.TIME_ZONE)
+    timezone = ZoneInfo(settings.TIME_ZONE)
     for invoice in pending_invoices:
         if invoice.final_ticket_fee <= 0:
             continue
@@ -566,7 +483,7 @@ def check_billing_status_for_warning(self):
             continue
         for reminder_date in reminder_dates:
             reminder_date = datetime(today.year, today.month, reminder_date)
-            reminder_date = timezone.localize(reminder_date)
+            reminder_date = reminder_date.replace(tzinfo=timezone)
             if (
                 not invoice.last_reminder_datetime or invoice.last_reminder_datetime < reminder_date
             ) and reminder_date <= today:

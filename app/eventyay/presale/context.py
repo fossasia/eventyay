@@ -27,6 +27,7 @@ from .signals import (
     html_head,
     html_page_header,
 )
+from .style import regenerate_organizer_css
 
 
 logger = logging.getLogger(__name__)
@@ -136,20 +137,24 @@ def _default_context(request):
         if request.resolver_match:
             ctx['cart_namespace'] = request.resolver_match.kwargs.get('cart_namespace', '')
     elif hasattr(request, 'organizer'):
-        if not request.organizer.settings.get('presale_css_file') and not hasattr(request, 'event'):
-            lock_key = f'presale:regenerate_organizer_css:{request.organizer.pk}'
-            if cache.add(lock_key, True, 60):
-                try:
-                    from eventyay.presale.style import regenerate_organizer_css
-
-                    regenerate_organizer_css.apply_async(args=(request.organizer.pk,))
-                except Exception:
-                    cache.delete(lock_key)
-                    logger.warning(
-                        'Could not enqueue presale CSS regeneration for %s',
-                        request.organizer.slug,
-                        exc_info=True,
-                    )
+        if not hasattr(request, 'event'):
+            # Re-generate CSS if missing or checksum is cleared.
+            needs_regen = (
+                not request.organizer.settings.get('presale_css_file')
+                or not request.organizer.settings.get('presale_css_checksum')
+            )
+            if needs_regen:
+                lock_key = f'presale:regenerate_organizer_css:{request.organizer.pk}'
+                if cache.add(lock_key, True, 60):
+                    try:
+                        regenerate_organizer_css.apply_async(args=(request.organizer.pk,))
+                    except Exception:
+                        cache.delete(lock_key)
+                        logger.warning(
+                            'Could not enqueue presale CSS regeneration for %s',
+                            request.organizer.slug,
+                            exc_info=True,
+                        )
         ctx['languages'] = [_safe_language_info(code) for code in request.organizer.settings.locales]
         if request.organizer.settings.presale_css_file and not hasattr(request, 'event'):
             ctx['css_file'] = default_storage.url(request.organizer.settings.presale_css_file)

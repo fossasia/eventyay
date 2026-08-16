@@ -311,23 +311,25 @@ class PositionDownloadsField(serializers.Field):
             if provider.identifier == 'badge':
                 from eventyay.plugins.badges.utils import get_badge_layout_for_position
 
-                if not get_badge_layout_for_position(instance.order.event, instance):
+                layout = get_badge_layout_for_position(instance.order.event, instance)
+                if not layout:
                     continue
-            res.append(
-                {
-                    'output': provider.identifier,
-                    'url': reverse(
-                        'api-v1:orderposition-download',
-                        kwargs={
-                            'organizer': instance.order.event.organizer.slug,
-                            'event': instance.order.event.slug,
-                            'pk': instance.pk,
-                            'output': provider.identifier,
-                        },
-                        request=request,
-                    ),
-                }
-            )
+            entry = {
+                'output': provider.identifier,
+                'url': reverse(
+                    'api-v1:orderposition-download',
+                    kwargs={
+                        'organizer': instance.order.event.organizer.slug,
+                        'event': instance.order.event.slug,
+                        'pk': instance.pk,
+                        'output': provider.identifier,
+                    },
+                    request=request,
+                ),
+            }
+            if provider.identifier == 'badge':
+                entry['layout'] = layout.pk
+            res.append(entry)
         return res
 
 
@@ -458,10 +460,13 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         request = self.context.get('request')
+        eventpermset = getattr(request, 'eventpermset', None) if request else None
+        # If eventpermset is not available yet (nested field bind), keep pdf_data;
+        # OrderSerializer / the view will drop it when unauthorized or not requested.
         if (
             not request
-            or not self.context['request'].query_params.get('pdf_data', 'false') == 'true'
-            or 'can_view_orders' not in request.eventpermset
+            or request.query_params.get('pdf_data', 'false') != 'true'
+            or (eventpermset is not None and 'can_view_orders' not in eventpermset)
         ):
             self.fields.pop('pdf_data', None)
 

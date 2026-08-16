@@ -31,9 +31,9 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
 		ROOM_TYPES() {
-			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission)
+			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode)
 		},
 		chosenType() {
 			return this.ROOM_TYPES.find(t => t.id === this.type)
@@ -54,7 +54,11 @@ export default {
 		},
 		updateType() {
 			this.type = this.$route.params.type
-			if (!this.type || !this.chosenType) return
+			if (!this.type) return
+			if (!this.chosenType) {
+				this.$router.replace({name: 'admin:rooms:new'})
+				return
+			}
 			this.config = {
 				name: '',
 				description: '',
