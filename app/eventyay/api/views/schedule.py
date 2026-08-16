@@ -11,6 +11,7 @@ from drf_spectacular.utils import (
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from eventyay.api.throttles import EventyayUserRateThrottle, PublicScheduleThrottle
 
 from eventyay.agenda.views.utils import get_schedule_exporter_content
 from eventyay.api.documentation import build_expand_docs, build_search_docs
@@ -60,6 +61,7 @@ from eventyay.talk_rules.tracks import apply_track_limit_to_slots, user_has_trac
 )
 class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = LegacyScheduleSerializer
+    throttle_classes = [PublicScheduleThrottle, EventyayUserRateThrottle]
     queryset = Schedule.objects.none()
     endpoint = 'schedules'
     search_fields = ('version',)
@@ -266,6 +268,7 @@ class TalkSlotViewSet(
     viewsets.GenericViewSet,
 ):
     serializer_class = TalkSlotSerializer
+    throttle_classes = [PublicScheduleThrottle, EventyayUserRateThrottle]
     queryset = TalkSlot.objects.none()
     endpoint = 'slots'
     search_fields = ('submission__title', 'submission__speakers__fullname')

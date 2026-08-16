@@ -71,7 +71,7 @@ class PublicContent:
         if event and not event.get_feature_flag('show_schedule'):
             return
         for field_name in self.Meta.public_fields:
-            if event and not event.cfp.is_field_public(field_name):
+            if event and hasattr(event, 'cfp') and not event.cfp.is_field_public(field_name):
                 continue
             field = self.fields.get(field_name)
             if field:
@@ -83,15 +83,19 @@ class PublicContent:
 class RequestRequire:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        count_chars = self.event.cfp.settings['count_length_in'] == 'chars'
+        _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
+        _cfp_settings = _cfp.settings if _cfp else {}
+        _cfp_fields = _cfp.fields if _cfp else default_fields()
+        count_chars = _cfp_settings.get('count_length_in', 'chars') == 'chars'
+        count_length_in = _cfp_settings.get('count_length_in', 'chars')
         for key in self.Meta.request_require:
-            visibility = self.event.cfp.fields.get(key, default_fields()[key])['visibility']
+            visibility = _cfp_fields.get(key, default_fields()[key])['visibility']
             if visibility == 'do_not_ask':
                 self.fields.pop(key, None)
             elif field := self.fields.get(key):
                 field.required = visibility == 'required'
-                min_value = self.event.cfp.fields.get(key, {}).get('min_length')
-                max_value = self.event.cfp.fields.get(key, {}).get('max_length')
+                min_value = _cfp_fields.get(key, {}).get('min_length')
+                max_value = _cfp_fields.get(key, {}).get('max_length')
                 if min_value or max_value:
                     if min_value and count_chars:
                         field.widget.attrs['minlength'] = min_value
@@ -102,7 +106,7 @@ class RequestRequire:
                             self.validate_field_length,
                             min_length=min_value,
                             max_length=max_value,
-                            count_in=self.event.cfp.settings['count_length_in'],
+                            count_in=count_length_in,
                         )
                     )
                     field.original_help_text = getattr(field, 'original_help_text', '')
@@ -110,7 +114,7 @@ class RequestRequire:
                         '',
                         min_value,
                         max_value,
-                        self.event.cfp.settings['count_length_in'],
+                        count_length_in,
                     )
                     field.help_text = field.original_help_text + ' ' + field.added_help_text
 
@@ -271,7 +275,9 @@ class QuestionFieldsMixin:
         help_text = rich_text(original_help_text or '')[len('<p>') : -len('</p>')]
         if question.is_public and self.event.get_feature_flag('show_schedule'):
             help_text += ' ' + str(phrases.base.public_content)
-        count_chars = self.event.cfp.settings['count_length_in'] == 'chars'
+        count_chars = (
+            getattr(getattr(self.event, 'cfp', None), 'settings', {}).get('count_length_in', 'chars') == 'chars'
+        )
         if question.variant == TalkQuestionVariant.BOOLEAN:
             # For some reason, django-bootstrap4 does not set the required attribute
             # itself.
@@ -311,7 +317,7 @@ class QuestionFieldsMixin:
                     help_text,
                     question.min_length,
                     question.max_length,
-                    self.event.cfp.settings['count_length_in'],
+                    getattr(getattr(self.event, 'cfp', None), 'settings', {}).get('count_length_in', 'chars'),
                 ),
                 label=label_text,
                 required=question.required,
@@ -326,7 +332,7 @@ class QuestionFieldsMixin:
                     RequestRequire.validate_field_length,
                     min_length=question.min_length,
                     max_length=question.max_length,
-                    count_in=self.event.cfp.settings['count_length_in'],
+                    count_in=getattr(getattr(self.event, 'cfp', None), 'settings', {}).get('count_length_in', 'chars'),
                 )
             )
             return field
@@ -383,7 +389,7 @@ class QuestionFieldsMixin:
                     help_text,
                     question.min_length,
                     question.max_length,
-                    self.event.cfp.settings['count_length_in'],
+                    getattr(getattr(self.event, 'cfp', None), 'settings', {}).get('count_length_in', 'chars'),
                 ),
                 initial=initial,
                 min_length=question.min_length if count_chars else None,
@@ -394,7 +400,7 @@ class QuestionFieldsMixin:
                     RequestRequire.validate_field_length,
                     min_length=question.min_length,
                     max_length=question.max_length,
-                    count_in=self.event.cfp.settings['count_length_in'],
+                    count_in=getattr(getattr(self.event, 'cfp', None), 'settings', {}).get('count_length_in', 'chars'),
                 )
             )
             field.original_help_text = original_help_text
@@ -773,7 +779,8 @@ class HierarkeyMixin:
 
 class ConfiguredFieldOrderMixin:
     def order_fields_by_config(self, config_key):
-        fields_config = self.event.cfp.settings.get('fields_config', {}).get(config_key, [])
+        _cfp = getattr(self.event, 'cfp', None) if hasattr(self.event, 'cfp') else None
+        fields_config = (_cfp.settings.get('fields_config', {}).get(config_key, []) if _cfp else [])
         if fields_config:
             builtin_names = set(BUILTIN_FIELD_KEYS.get(config_key, ()))
             # Ensure every built-in field is present at its canonical position.
