@@ -41,6 +41,7 @@ def task_periodic_event_services(event_slug):
 
         if (
             not event.settings.sent_mail_cfp_closed
+            and hasattr(event, 'cfp')
             and event.cfp.deadline
             and dt.timedelta(0) <= (_now - event.cfp.deadline) <= dt.timedelta(days=1)
         ):
