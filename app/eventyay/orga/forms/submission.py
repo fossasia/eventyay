@@ -317,6 +317,11 @@ class AddSpeakerForm(forms.Form):
         help_text=_('The name of the speaker that should be displayed publicly.'),
         required=False,
     )
+    biography = forms.CharField(
+    label=_('Biography'),
+    required=False,
+    widget=MarkdownWidget,
+)
     locale = forms.ChoiceField(
         label=_('Invite language'),
         choices=[],
@@ -325,9 +330,25 @@ class AddSpeakerForm(forms.Form):
         widget=EnhancedSelect,
     )
 
-    def __init__(self, *args, event=None, form_renderer=None, require_name=False, **kwargs):
+    def __init__(
+     self,
+     *args,
+     event=None,
+     form_renderer=None,
+     require_name=False,
+     include_biography=False,
+     **kwargs,
+):
         super().__init__(*args, **kwargs)
         self.require_name = require_name
+        if not include_biography:
+          self.fields.pop('biography', None)
+        else:
+         visibility = event.cfp.fields.get('biography', default_fields()['biography'])['visibility']
+         if visibility == 'do_not_ask':
+            self.fields.pop('biography', None)
+         else:
+          self.fields['biography'].required = visibility == 'required'
         email_key = self.add_prefix('email')
         name_key = self.add_prefix('name')
         email_widget = self.fields['email'].widget
@@ -353,7 +374,5 @@ class AddSpeakerForm(forms.Form):
         if data.get('name') and not data.get('email'):
             self.add_error('email', _('Please provide an email address.'))
         return data
-
-
 class AddSpeakerInlineForm(AddSpeakerForm):
     default_renderer = InlineFormLabelRenderer
