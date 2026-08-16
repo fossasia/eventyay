@@ -1784,7 +1784,7 @@ class QuickSetupProductForm(I18nForm):
         decimal_places=2,
         required=False,
         localize=True,
-        widget=forms.TextInput(attrs={'placeholder': _('Free'), 'min': '0'}),
+        widget=forms.TextInput(attrs={'placeholder': _('Free')}),
     )
     quota = forms.IntegerField(
         label=_('Quantity available'),

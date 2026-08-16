@@ -83,7 +83,7 @@ def clean_free_price_bounds(cleaned_data, form=None):
 
 def clean_default_price(value):
     if value is not None and value < 0:
-        raise forms.ValidationError(_('The price cannot be negative.'))
+        raise forms.ValidationError(_('The price must not be negative.'))
     return value
 
 
