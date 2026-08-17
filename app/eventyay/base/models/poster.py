@@ -1,10 +1,27 @@
+from contextlib import suppress
 import uuid
 
 from django.db import models
+from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
+
+from eventyay.common.text.path import path_with_hash
 
 
 def default_text():
     return []
+
+
+def poster_file_path(instance, filename: str) -> str:
+    event_slug = getattr(instance.event, "slug", str(instance.event_id))
+    base_path = f"events/{event_slug}/posters"
+    return path_with_hash(filename, base_path=base_path)
+
+
+def poster_preview_file_path(instance, filename: str) -> str:
+    event_slug = getattr(instance.event, "slug", str(instance.event_id))
+    base_path = f"events/{event_slug}/posters/previews"
+    return path_with_hash(filename, base_path=base_path)
 
 
 class Poster(models.Model):
@@ -16,8 +33,22 @@ class Poster(models.Model):
     tags = models.JSONField(default=default_text)
     category = models.TextField(null=True, blank=True)
 
-    poster_url = models.URLField(null=True, blank=True)  # TODO file upload
-    poster_preview = models.URLField(null=True, blank=True)  # TODO file upload
+    poster_url = models.URLField(null=True, blank=True, max_length=2048, verbose_name=_("Poster URL"))
+    poster_preview = models.URLField(null=True, blank=True, max_length=2048, verbose_name=_("Poster Preview URL"))
+    poster_file = models.FileField(
+        upload_to=poster_file_path,
+        null=True,
+        blank=True,
+        max_length=255,
+        verbose_name=_("Poster File"),
+    )
+    poster_preview_file = models.FileField(
+        upload_to=poster_preview_file_path,
+        null=True,
+        blank=True,
+        max_length=255,
+        verbose_name=_("Poster Preview File"),
+    )
     schedule_session = models.TextField(null=True, blank=True)
 
     event = models.ForeignKey(
@@ -44,6 +75,20 @@ class Poster(models.Model):
         blank=True,
         null=True,
     )
+
+    @cached_property
+    def resolved_poster_url(self):
+        if self.poster_file:
+            with suppress(ValueError):
+                return self.poster_file.url
+        return self.poster_url
+
+    @cached_property
+    def resolved_poster_preview(self):
+        if self.poster_preview_file:
+            with suppress(ValueError):
+                return self.poster_preview_file.url
+        return self.poster_preview
 
     def serialize(self, user=None, list_format=False):
         abstract = self.abstract
@@ -74,8 +119,8 @@ class Poster(models.Model):
             authors=self.authors,
             category=self.category,
             tags=self.tags,
-            poster_url=self.poster_url,
-            poster_preview=self.poster_preview,
+            poster_url=self.resolved_poster_url,
+            poster_preview=self.resolved_poster_preview,
         )
 
         if not list_format:
@@ -116,6 +161,12 @@ class Poster(models.Model):
         return r
 
     def delete(self, *args, **kwargs):
+        if self.poster_file:
+            with suppress(ValueError, OSError):
+                self.poster_file.delete(save=False)
+        if self.poster_preview_file:
+            with suppress(ValueError, OSError):
+                self.poster_preview_file.delete(save=False)
         r = super().delete(*args, **kwargs)
         self.parent_room.touch()
         return r

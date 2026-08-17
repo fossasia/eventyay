@@ -161,6 +161,8 @@ class PosterService:
             "category",
             "poster_url",
             "poster_preview",
+            "poster_file",
+            "poster_preview_file",
             "schedule_session",
         )
         for key, value in data.items():
