@@ -338,17 +338,22 @@ class AddSpeakerForm(forms.Form):
         require_name=False,
         include_biography=False,
         **kwargs,
-):
+    ):
         super().__init__(*args, **kwargs)
         self.require_name = require_name
+
+        self.biography_required = False
         if not include_biography:
-         self.fields.pop('biography', None)
-        else:
-         visibility = event.cfp.fields.get('biography', default_fields()['biography'])['visibility']
-         if visibility == 'do_not_ask':
             self.fields.pop('biography', None)
-         else:
-          self.fields['biography'].required = visibility == 'required'
+        else:
+            cfp_fields = event.cfp.fields if hasattr(event, 'cfp') else default_fields()
+            visibility = cfp_fields.get('biography', default_fields()['biography'])['visibility']
+            if visibility == 'do_not_ask':
+                self.fields.pop('biography', None)
+            else:
+                # Keep optional unless a speaker is actually added; validate in clean().
+                self.biography_required = visibility == 'required'
+                self.fields['biography'].required = False
         email_key = self.add_prefix('email')
         name_key = self.add_prefix('name')
         email_widget = self.fields['email'].widget
