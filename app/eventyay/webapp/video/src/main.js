@@ -25,7 +25,6 @@ import features from 'features'
 import config from 'config'
 import { loadThemeConfig } from 'theme'
 import 'webrtc-adapter'
-import { isAuthFailureError } from 'store/streamPolling'
 
 function ensureWebsiteFontsLoaded() {
   if (document.head.querySelector('link[data-eventyay-fonts]')) {
@@ -139,25 +138,7 @@ async function init({ token, inviteToken }) {
     setInterval(() => store.commit('updateNow'), 60000)
   }, 60000 - (Date.now() % 60000))
 
-  let notificationPollInterval = null
-  const pollExternalsIfVisible = async () => {
-    if (document.hidden) {
-      return
-    }
-    try {
-      await store.dispatch('notifications/pollExternals')
-    } catch (error) {
-      if (isAuthFailureError(error) && notificationPollInterval) {
-        clearInterval(notificationPollInterval)
-        notificationPollInterval = null
-      }
-    }
-  }
-  const notificationPollJitter = Math.random() * 15000
-  setTimeout(() => {
-    pollExternalsIfVisible()
-    notificationPollInterval = setInterval(pollExternalsIfVisible, 30000)
-  }, notificationPollJitter)
+  store.dispatch('notifications/startExternalPolling')
   window.__venueless__release = RELEASE
 
   window.addEventListener('beforeinstallprompt', function (event) {
