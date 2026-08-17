@@ -42,7 +42,7 @@ dependencies = [
     "channels>=4.3.2",
     "channels-redis>=4.2.1",
     "chardet>=7.5.1",
-    "charset-normalizer>=3.4.9",
+    "charset-normalizer>=3.5.0",
     "click>=8.4.2",
     "click-didyoumean>=0.3.1",
     "click-plugins>=1.1.1",
@@ -161,7 +161,7 @@ dependencies = [
     "pyjwt>=2.13.0",
     "pyopenssl>=26.4.0",
     "pyotp>=2.10.0",
-    "pypdf>=6.15.0",
+    "pypdf>=6.16.0",
     "pypng>=0.20220715.0",
     "python-bidi>=0.6.11",
     "python-creole>=1.4.10",
@@ -243,7 +243,7 @@ dev = [
     "wlc>=2.1.1",
 ]
 lint = [
-    "ruff>=0.16.2",
+    "ruff>=0.16.3",
 ]
 test = [
     "coverage>=7.15.4",
@@ -258,7 +258,7 @@ test = [
     "pytest-django>=4.14.0",
     "pytest-env>=1.7.0",
     "pytest-mock>=3.15.1",
-    "pytest-rerunfailures>=16.4",
+    "pytest-rerunfailures>=16.5",
     "pytest-sugar>=1.1.1",
     "pytest-xdist>=3.6.1",
 ]
