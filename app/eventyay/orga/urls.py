@@ -73,6 +73,7 @@ urlpatterns = [
         include(
             [
                 path("delete", event.EventDelete.as_view(), name="event.delete"),
+                path("delete_talk_data", event.EventDeleteTalkData.as_view(), name="event.delete_talk_data"),
                 path("reset/", auth.ResetView.as_view(), name="event.auth.reset"),
                 path(
                     "reset/<token>",

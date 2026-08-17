@@ -79,6 +79,26 @@
     color: #1a73a7;
     border: 1px solid #c4dfe6;
     white-space: nowrap;
+    cursor: grab;
+    user-select: none;
+    transition: all 0.15s ease-in-out;
+}
+
+.language-grid-badge.is-default-language {
+    border: 2px solid #0056b3;
+    font-weight: bold;
+    background: #d0e7ff;
+    color: #004085;
+}
+
+.language-grid-badge.dragging {
+    opacity: 0.4;
+}
+
+.language-grid-badge .drag-handle {
+    margin-right: 4px;
+    font-size: 10px;
+    opacity: 0.6;
 }
 
 .language-grid-badge-overflow {

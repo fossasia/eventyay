@@ -2,7 +2,7 @@ import datetime
 from decimal import Decimal
 
 import pytest
-import pytz
+from zoneinfo import ZoneInfo
 from django.utils.timezone import now
 from django_scopes import scope
 
@@ -41,7 +41,7 @@ def event():
             email='dummy@dummy.test',
             phone='+498912345678',
             status=Order.STATUS_PAID,
-            datetime=datetime.datetime(2019, 2, 22, 14, 0, 0, tzinfo=pytz.UTC),
+            datetime=datetime.datetime(2019, 2, 22, 14, 0, 0, tzinfo=datetime.timezone.utc),
             expires=now() + datetime.timedelta(days=10),
             total=33,
             locale='en',
@@ -167,7 +167,7 @@ def test_csv_order_by_inherited_name_parts(event):  # noqa
             email='dummy@dummy.test',
             phone='+498912345678',
             status=Order.STATUS_PAID,
-            datetime=datetime.datetime(2019, 2, 22, 14, 0, 0, tzinfo=pytz.UTC),
+            datetime=datetime.datetime(2019, 2, 22, 14, 0, 0, tzinfo=datetime.timezone.utc),
             expires=now() + datetime.timedelta(days=10),
             total=33,
             locale='en',
@@ -271,13 +271,13 @@ def test_csv_includes_all_checkins(event):
             position=op,
             list=cl,
             type=Checkin.TYPE_ENTRY,
-            datetime=datetime.datetime(2019, 2, 22, 15, 0, 0, tzinfo=pytz.UTC),
+            datetime=datetime.datetime(2019, 2, 22, 15, 0, 0, tzinfo=datetime.timezone.utc),
         )
         Checkin.objects.create(
             position=op,
             list=cl,
             type=Checkin.TYPE_ENTRY,
-            datetime=datetime.datetime(2019, 2, 22, 16, 0, 0, tzinfo=pytz.UTC),
+            datetime=datetime.datetime(2019, 2, 22, 16, 0, 0, tzinfo=datetime.timezone.utc),
         )
 
     c = CSVCheckinList(event)
@@ -306,13 +306,13 @@ def test_checkinlog_includes_all_checkins(event):
             position=op,
             list=cl,
             type=Checkin.TYPE_ENTRY,
-            datetime=datetime.datetime(2019, 2, 22, 15, 0, 0, tzinfo=pytz.UTC),
+            datetime=datetime.datetime(2019, 2, 22, 15, 0, 0, tzinfo=datetime.timezone.utc),
         )
         Checkin.objects.create(
             position=op,
             list=cl,
             type=Checkin.TYPE_ENTRY,
-            datetime=datetime.datetime(2019, 2, 22, 16, 0, 0, tzinfo=pytz.UTC),
+            datetime=datetime.datetime(2019, 2, 22, 16, 0, 0, tzinfo=datetime.timezone.utc),
         )
 
     exporter = CheckinLogList(event)

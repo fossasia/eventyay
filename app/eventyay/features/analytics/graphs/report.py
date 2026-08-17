@@ -3,7 +3,8 @@ import tempfile
 from datetime import timedelta
 
 import dateutil.parser
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import (
@@ -165,7 +166,7 @@ class ReportGenerator:
 
     @cached_property
     def tz(self):
-        return pytz.timezone(self.event.timezone)
+        return ZoneInfo(self.event.timezone)
 
     @cached_property
     def date_begin(self):

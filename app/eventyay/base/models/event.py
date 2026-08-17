@@ -109,6 +109,7 @@ FEATURE_FLAGS = [
     'page.landing',
     'zoom',
     'janus',
+    'jitsi',
     'polls',
     'poster',
     'conftool',
@@ -1009,7 +1010,6 @@ class Event(
         this event, so you don't have to prefix your cache keys. In addition, the cache
         is being cleared every time the event or one of its related objects change.
         """
-        # FIXME: This "cache" module is missing.
         from eventyay.base.cache import ObjectRelatedCache
 
         return ObjectRelatedCache(self)
@@ -2162,6 +2162,7 @@ class Event(
 
         self.bbbserver_set.update(event_exclusive=None)
         self.janusserver_set.update(event_exclusive=None)
+        self.jitsiserver_set.update(event_exclusive=None)
         self.turnserver_set.update(event_exclusive=None)
 
         self.vouchers.all().delete()
@@ -2198,6 +2199,65 @@ class Event(
             cfp.delete()
         self.submitter_access_codes.all().delete()
         self.submission_types.all().delete()
+
+    @scopes_disabled()
+    @transaction.atomic
+    def delete_talk_data(self):
+        from django.core.exceptions import ObjectDoesNotExist
+
+        from eventyay.base.models.mail import QueuedMail
+        from eventyay.base.models.profile import SpeakerProfile
+        from eventyay.base.models.feedback import Feedback
+        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.resource import Resource
+        from eventyay.base.models.slot import TalkSlot
+
+        answers = Answer.objects.filter(question__event=self)
+        for answer in answers.only('pk', 'answer_file').iterator():
+            try:
+                answer._delete_files()
+            except Exception:
+                logger.error("Failed to delete files for Answer %s", answer.pk, exc_info=True)
+        answers.delete()
+        AnswerOption.objects.filter(question__event=self).delete()
+
+        TalkSlot.objects.filter(schedule__event=self).delete()
+        Feedback.objects.filter(talk__event=self).delete()
+
+        resources = Resource.objects.filter(submission__event=self)
+        for resource in resources.only('pk', 'resource').iterator():
+            try:
+                resource._delete_files()
+            except Exception:
+                logger.error("Failed to delete files for Resource %s", resource.pk, exc_info=True)
+        resources.delete()
+
+        SpeakerProfile.objects.filter(event=self).delete()
+
+        # Clear unsent (outbox) emails linked to this event
+        QueuedMail.objects.filter(event=self, sent__isnull=True).delete()
+
+        self.talkquestions.all().delete()
+        self.submissions.all().delete()
+        self.rooms.all().delete()
+        self.tracks.all().delete()
+        self.tags.all().delete()
+        self.schedules.all().delete()
+        try:
+            cfp = self.cfp
+        except ObjectDoesNotExist:
+            cfp = None
+        if cfp is not None and cfp.pk is not None:
+            cfp.delete()
+            try:
+                del self.__dict__['cfp']
+            except KeyError:
+                pass
+        self.submitter_access_codes.all().delete()
+        self.submission_types.all().delete()
+        self.score_categories.all().delete()
+        self.review_phases.all().delete()
+        self.build_initial_data()
 
     def set_active_plugins(self, modules, allow_restricted=False):
         from eventyay.base.plugins import get_all_plugins
@@ -2318,6 +2378,7 @@ class Event(
             self.content_locale_array = ','.join(content_locales_list)
             self.settings.set('content_locales', content_locales_list)
         if locales_list or content_locales is not None or default_locale:
+            self.save()
             self._clear_language_caches()
 
     @cached_property
@@ -2887,9 +2948,11 @@ class Event(
 
     def build_initial_data(self):
         from eventyay.base.models import CfP, MailTemplateRoles, Schedule
+        from django_scopes import scope
 
-        if not hasattr(self, 'cfp'):
-            CfP.objects.create(event=self, default_type=self._get_default_submission_type())
+        with scope(event=self):
+            if not CfP.objects.filter(event=self).exists():
+                CfP.objects.create(event=self, default_type=self._get_default_submission_type())
 
         with scope(event=self):
             if not self.schedules.filter(version__isnull=True).exists():
