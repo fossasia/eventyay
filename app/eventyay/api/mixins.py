@@ -10,6 +10,7 @@ from rest_flex_fields.utils import split_levels
 from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
+from rest_framework.settings import api_settings
 
 from eventyay.api.versions import get_api_version_from_request, get_serializer_by_version
 from eventyay.base.models import Answer, SpeakerProfile, User
@@ -187,10 +188,8 @@ class CachedCatalogListMixin:
     def uses_catalog_list_cache(self):
         if not self.event or not self.catalog_name:
             return False
-        if getattr(self, 'paginator', None) is not None and (
-            self.request.query_params.get('limit') is not None
-            or self.request.query_params.get('offset') is not None
-        ):
+        pagination_class = getattr(self, 'pagination_class', api_settings.DEFAULT_PAGINATION_CLASS)
+        if pagination_class is not None:
             return False
         return True
 

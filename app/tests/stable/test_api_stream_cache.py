@@ -242,3 +242,26 @@ def test_talk_slots_filter_key_includes_ordering():
     default = talk_slots_filter_key(factory.get('/'), ['room'])
     ordered = talk_slots_filter_key(factory.get('/?ordering=-start'), ['room'])
     assert default != ordered
+
+
+def test_catalog_list_cache_skips_paginated_viewsets():
+    from types import SimpleNamespace
+
+    from rest_framework.pagination import LimitOffsetPagination
+
+    from eventyay.api.mixins import CachedCatalogListMixin
+
+    class PaginatedCatalog(CachedCatalogListMixin):
+        catalog_name = 'tracks'
+        pagination_class = LimitOffsetPagination
+        event = SimpleNamespace(pk=1)
+        request = SimpleNamespace(query_params={})
+
+    class UnpaginatedCatalog(CachedCatalogListMixin):
+        catalog_name = 'tracks'
+        pagination_class = None
+        event = SimpleNamespace(pk=1)
+        request = SimpleNamespace(query_params={})
+
+    assert PaginatedCatalog().uses_catalog_list_cache() is False
+    assert UnpaginatedCatalog().uses_catalog_list_cache() is True
