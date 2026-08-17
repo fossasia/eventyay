@@ -2,6 +2,7 @@ from django.http import (
     HttpResponseForbidden,
     HttpResponseNotFound,
     HttpResponseServerError,
+    JsonResponse,
 )
 from django.middleware.csrf import REASON_NO_CSRF_COOKIE, REASON_NO_REFERER
 from django.template import TemplateDoesNotExist, loader
@@ -44,8 +45,19 @@ def csrf_failure(request, reason=''):
     return HttpResponseForbidden(t.render(c), content_type='text/html')
 
 
+def wants_json_404(request):
+    path = request.path or ''
+    if path.startswith('/api/'):
+        return True
+    accept = request.headers.get('Accept', '')
+    return 'application/json' in accept and 'text/html' not in accept
+
+
 @requires_csrf_token
 def page_not_found(request, exception):
+    if wants_json_404(request):
+        return JsonResponse({'detail': 'Not found.'}, status=404)
+
     exception_repr = exception.__class__.__name__
     # Try to get an "interesting" exception message, if any (and not the ugly
     # Resolver404 dictionary)
