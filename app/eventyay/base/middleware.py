@@ -512,13 +512,8 @@ class LoadSheddingMiddleware:
     Default 4 concurrent requests per Gunicorn worker process, aligned with
     ``gthread`` ``--threads 4`` in production compose. With ``workers=2`` the
     effective container cap is roughly 8. Set ``MAX_CONCURRENT_REQUESTS=0`` to
-<<<<<<< HEAD
     disable. Overloaded responses include ``Retry-After`` and keep JSON for API
     callers while returning a simple 503 page to browsers.
-=======
-    disable. Overloaded responses are JSON 503 with ``Retry-After`` (including
-    non-API paths).
->>>>>>> 0d7c4d7866 (fix: align load shedding with gthread and tighten check-in exempts)
     """
 
     active_requests = 0

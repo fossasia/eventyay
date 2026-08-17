@@ -77,6 +77,28 @@ def test_load_shedding_returns_503(monkeypatch):
         response = middleware(RequestFactory().get('/schedule/'))
         assert response.status_code == 503
         assert response['Retry-After'] == '10'
+        assert response['Content-Type'] == 'application/json'
+
+
+def test_load_shedding_returns_html_to_browsers(monkeypatch):
+    from django.test import RequestFactory
+
+    with overloaded_middleware(monkeypatch) as middleware:
+        response = middleware(RequestFactory().get('/schedule/', HTTP_ACCEPT='text/html'))
+        assert response.status_code == 503
+        assert response['Retry-After'] == '10'
+        assert response['Content-Type'] == 'text/plain'
+
+
+def test_load_shedding_keeps_api_overload_json(monkeypatch):
+    from django.test import RequestFactory
+
+    with overloaded_middleware(monkeypatch) as middleware:
+        response = middleware(
+            RequestFactory().get('/api/v1/organizers/wm/events/wm/schedule/', HTTP_ACCEPT='text/html')
+        )
+        assert response.status_code == 503
+        assert response['Content-Type'] == 'application/json'
 
 
 @pytest.mark.parametrize(
