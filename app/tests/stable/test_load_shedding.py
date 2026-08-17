@@ -106,6 +106,7 @@ def test_load_shedding_keeps_api_overload_json(monkeypatch):
     [
         '/healthcheck/',
         '/api/v1/organizers/wm/checkin/redeem/',
+        '/api/v1/organizers/wm/events/wm/checkinlists/',
         '/api/v1/organizers/wm/events/wm/checkinlists/1/positions/',
     ],
 )

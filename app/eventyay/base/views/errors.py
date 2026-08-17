@@ -12,6 +12,8 @@ from django.utils.translation import gettext as _
 from django.views.decorators.csrf import requires_csrf_token
 from sentry_sdk import last_event_id
 
+from eventyay.base.middleware import request_prefers_json_api
+
 
 def csrf_failure(request, reason=''):
     t = get_template('csrffail.html')
@@ -46,11 +48,7 @@ def csrf_failure(request, reason=''):
 
 
 def wants_json_404(request):
-    path = request.path or ''
-    if path.startswith('/api/'):
-        return True
-    accept = request.headers.get('Accept', '')
-    return 'application/json' in accept and 'text/html' not in accept
+    return request_prefers_json_api(request)
 
 
 @requires_csrf_token
