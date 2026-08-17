@@ -136,6 +136,9 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     def _schedule_cache_scope(self):
         if not self.event or self.kwargs.get(self.lookup_field) == 'wip':
             return None
+        # Orga responses include hidden slots; never share cache entries with public users.
+        if self.has_perm('orga_view', self.event):
+            return None
         return schedule_cache_user_scope(self.event, self.request.user)
 
     def retrieve(self, request, *args, **kwargs):

@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import JSONField, Q
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models.fields.files import FieldFile
 from django.shortcuts import get_object_or_404
@@ -1193,10 +1193,12 @@ class SubmissionFavourite(PretalxModel):
 
 
 @receiver(post_save, sender=Submission)
-@receiver(post_delete, sender=Submission)
 def invalidate_schedule_cache_on_submission_change(sender, instance, **kwargs):
     from eventyay.base.models.slot import TalkSlot
     from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
+
+    if kwargs.get('created'):
+        return
 
     event_id = instance.event_id
     if not event_id:

@@ -267,6 +267,21 @@ def test_schedule_cache_user_scope_public_for_anonymous():
     assert schedule_cache_user_scope(event, AnonymousUser()) == 'public'
 
 
+def test_schedule_retrieve_cache_skips_orga_view():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    from eventyay.api.views.schedule import ScheduleViewSet
+
+    view = ScheduleViewSet()
+    view.request = SimpleNamespace(user=SimpleNamespace(is_authenticated=True))
+    view.event = SimpleNamespace(pk=1)
+    view.kwargs = {'pk': '5'}
+    view.has_perm = MagicMock(side_effect=lambda perm, obj=None: perm == 'orga_view')
+
+    assert view._schedule_cache_scope() is None
+
+
 def test_talk_slots_filter_key_includes_ordering():
     from django.test import RequestFactory
 
