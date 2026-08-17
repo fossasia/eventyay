@@ -225,6 +225,35 @@ def test_variation_can_explicitly_clear_product_restriction(event, item):
 
     assert resolve_catalog_admission_bounds(item, variation, event=event) == (None, None)
 
+@pytest.mark.django_db
+def test_checkin_respects_variation_admission_validity(event, item, clist):
+    item.admission_validity_mode = Product.ADMISSION_VALIDITY_MODE_EVENT
+    item.admission_valid_from_offset_minutes = 0
+    item.admission_valid_until_offset_minutes = 120
+    item.save()
+
+    variation = item.variations.create(
+        value='Early',
+        admission_validity_mode=ProductVariation.ADMISSION_VALIDITY_MODE_INHERIT,
+        admission_valid_from_offset_minutes=30,
+    )
+
+    position = _make_position(
+        event,
+        item,
+        variation=variation,
+    )
+
+    with freeze_time(event.date_from + timedelta(minutes=15)):
+        with pytest.raises(CheckInError) as excinfo:
+            perform_checkin(position, clist, {})
+
+        assert excinfo.value.code == 'invalid_time'
+
+    with freeze_time(event.date_from + timedelta(minutes=45)):
+        perform_checkin(position, clist, {})
+
+    assert position.checkins.count() == 1
 
 @pytest.mark.django_db
 def test_negative_offsets_rejected(event):

@@ -28,10 +28,12 @@ export default {
 </script>
 <style lang="stylus">
 .c-emoji-picker
+	position: fixed
+	z-index: 901
 	em-emoji-picker
 		--border-radius: 8px
 		--font-family: inherit
-		--rgb-background: var(--clr-background, #fff)
-		--rgb-color: var(--clr-primary-text, #333)
-		--rgb-input: var(--clr-grey-200, #eee)
+		--rgb-background: 255, 255, 255
+		--rgb-color: 51, 51, 51
+		--rgb-input: 238, 238, 238
 </style>

@@ -31,13 +31,15 @@
 		bunt-input(v-else-if="modules['livestream.youtube']", name="ytid", v-model="modules['livestream.youtube'].config.ytid", label="YouTube Video ID or URL", :validation="v$.modules['livestream.youtube'].config.ytid", @blur="normalizePrimaryYoutubeId")
 		// Language and URL input for YouTube stream
 		.language-urls(v-if="modules['livestream.youtube']")
-			h4 Languages and Audio Source
-			.language-url-entry(v-for="(entry, index) in modules['livestream.youtube'].config.languageUrls" :key="index")
-				bunt-select(name="language", v-model="entry.language", :options="ISO_LANGUAGE_OPTIONS", label="Language")
-				bunt-input(name="youtube_id" v-model="entry.youtube_id" label="Audio Source (YouTube ID or WHEP URL)" @blur="normalizeLanguageYoutubeId(entry)")
-				bunt-switch(name="use_video" v-model="entry.use_video" label="Use video from this interpretation channel" hint="If enabled, attendees will see both the audio and video from this interpretation channel. If disabled, attendees will hear the interpretation audio while continuing to see the original main video.")
-				bunt-icon-button(@click="deleteLanguageUrl(index)") delete-outline
-			bunt-button(@click="addLanguageUrl") + Add Language and Audio Source
+			LanguageAudioSourceList(
+				title="Languages and Audio Source"
+				:entries="modules['livestream.youtube'].config.languageUrls"
+			)
+			LanguageAudioSourceList.plugin-language-streams(
+				v-if="showPluginLanguageStreams"
+				title="Interpretation source"
+				:entries="pluginLanguageStreamEntries"
+			)
 			// Switch button for no-cookies domain
 			.bunt-switch-container
 				bunt-switch(name="enablePrivacyEnhancedMode", v-model="enablePrivacyEnhancedMode", label="Enable No-Cookies")
@@ -54,9 +56,9 @@
 import { defineComponent } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import UploadUrlInput from 'components/UploadUrlInput'
+import LanguageAudioSourceList from 'components/LanguageAudioSourceList'
 import mixin from './mixin'
 import {youtubeid, normalizeYoutubeVideoId} from 'lib/validators'
-import ISO6391 from 'iso-639-1'
 import {
 	PLAYBACK_MODE_ALWAYS_ON,
 	PLAYBACK_MODE_OPTIONS,
@@ -97,13 +99,18 @@ function getDefaultStreamConfig(streamSource, playbackMode = PLAYBACK_MODE_ALWAY
 }
 
 export default defineComponent({
-	components: { UploadUrlInput },
+	components: { UploadUrlInput, LanguageAudioSourceList },
 	mixins: [mixin],
+	props: {
+		interpretationAdmin: {
+			type: Object,
+			default: null,
+		},
+	},
 	setup: () => ({ v$: useVuelidate() }),
 	data() {
 		return {
 			STREAM_SOURCE_OPTIONS,
-			ISO_LANGUAGE_OPTIONS: [],
 			b_streamSource: null,
 			streamSourceConfigs: {},
 			playbackModeInputName: `playback-mode-${++playbackModeInputId}`,
@@ -113,19 +120,17 @@ export default defineComponent({
 		}
 	},
 	validations() {
-		const rules = {
-			modules: {}
-		}
-		if (this.modules && this.modules['livestream.youtube']) {
-			rules.modules['livestream.youtube'] = {
-				config: {
-					ytid: {
-						youtubeid: youtubeid('not a valid YouTube video ID or URL')
+		return {
+			modules: {
+				'livestream.youtube': {
+					config: {
+						ytid: {
+							youtubeid: youtubeid('not a valid YouTube video ID or URL')
+						}
 					}
 				}
 			}
 		}
-		return rules
 	},
 	computed: {
 		playbackMode: {
@@ -211,18 +216,21 @@ export default defineComponent({
 			set(value) {
 				this.setYoutubeConfigProp('showInfo', value)
 			}
+		},
+		showPluginLanguageStreams() {
+			return Boolean(this.config?.interpretation_use_plugin_streams)
+		},
+		pluginLanguageStreamEntries() {
+			return this.interpretationAdmin?.languageStreams ?? []
 		}
 	},
 	created() {
-		// Initialize language options
-		this.ISO_LANGUAGE_OPTIONS = this.getLanguageOptions()
-
 		if (this.modules['livestream.native']) {
 			this.b_streamSource = 'hls'
 		} else if (this.modules['livestream.youtube']) {
 			this.b_streamSource = 'youtube'
 			// languageUrls is set in the created lifecycle hook
-			if (this.modules['livestream.youtube'].config && !this.modules['livestream.youtube'].config.languageUrls) {
+			if (!this.modules['livestream.youtube'].config.languageUrls) {
 				this.modules['livestream.youtube'].config.languageUrls = []
 			}
 		} else if (this.modules['livestream.iframe']) {
@@ -277,11 +285,6 @@ export default defineComponent({
 			const id = normalizeYoutubeVideoId(val)
 			if (id) this.modules['livestream.youtube'].config.ytid = id
 		},
-		normalizeLanguageYoutubeId(entry) {
-			if (!entry?.youtube_id) return
-			const id = normalizeYoutubeVideoId(entry.youtube_id)
-			if (id) entry.youtube_id = id
-		},
 		setYoutubeConfigProp(prop, value) {
 			if (!this.modules['livestream.youtube']) return
 
@@ -291,17 +294,6 @@ export default defineComponent({
 				delete this.modules['livestream.youtube'].config[prop]
 			}
 		},
-		addLanguageUrl() {
-			if (!this.modules['livestream.youtube']) return
-			if (!this.modules['livestream.youtube'].config.languageUrls) {
-				this.modules['livestream.youtube'].config.languageUrls = []
-			}
-			this.modules['livestream.youtube'].config.languageUrls.push({ language: '', youtube_id: '', use_video: false })
-		},
-		deleteLanguageUrl(index) {
-			if (!this.modules['livestream.youtube']?.config.languageUrls) return
-			this.modules['livestream.youtube'].config.languageUrls.splice(index, 1)
-		},
 		deleteAlternativeStream(index) {
 			if (!this.modules['livestream.native']?.config.alternatives) return
 			this.modules['livestream.native'].config.alternatives.splice(index, 1)
@@ -309,18 +301,16 @@ export default defineComponent({
 				this.modules['livestream.native'].config.alternatives = undefined
 			}
 		},
-		getLanguageOptions() {
-			return ISO6391.getAllCodes().map(code => ({
-				id: ISO6391.getName(code),
-				label: ISO6391.getName(code),
-			}))
-		}
 	}
 })
 </script>
 <style lang="stylus">
 .c-stage-settings
 	// no local radio styles needed anymore
+	.plugin-language-streams
+		margin-top: 24px
+		padding-top: 16px
+		border-top: 1px solid $clr-grey-300
 .bunt-switch-container
 	margin-top: 16px
 @supports (-moz-appearance: none)
