@@ -1,6 +1,3 @@
-import hashlib
-import json
-
 from django.db.models import Prefetch
 from django.utils.cache import patch_cache_control
 from django.utils.functional import cached_property
@@ -17,7 +14,11 @@ from rest_framework.serializers import ModelSerializer
 from eventyay.api.versions import get_api_version_from_request, get_serializer_by_version
 from eventyay.base.models import Answer, SpeakerProfile, User
 from eventyay.base.models.question import TalkQuestionTarget
-from eventyay.base.services.stale_cache import CATALOG_HOT_TTL, get_cached_catalog_list
+from eventyay.base.services.stale_cache import (
+    CATALOG_HOT_TTL,
+    api_cache_fingerprint,
+    get_cached_catalog_list,
+)
 
 
 class ApiVersionException(exceptions.APIException):
@@ -155,12 +156,8 @@ def request_is_private(request):
     return getattr(request, 'auth', None) is not None
 
 
-def json_cache_fingerprint(data):
-    return hashlib.md5(json.dumps(data, sort_keys=True, default=str).encode(), usedforsecurity=False).hexdigest()
-
-
 def cached_json_response(request, data, *, max_age, updated_at=None, etag=None):
-    etag = etag or json_cache_fingerprint(data)
+    etag = etag or api_cache_fingerprint(data)
     etag_header = f'"{etag}"'
     if_none_match = request.headers.get('If-None-Match', '')
     if etag_header in {part.strip() for part in if_none_match.split(',')}:
