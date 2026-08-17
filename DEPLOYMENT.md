@@ -1,4 +1,3 @@
-````md
 # Eventyay Production Deployment Guide
 
 This guide describes a production/self-hosted deployment of Eventyay using Docker Compose, PostgreSQL, Redis, nginx, certbot, and the deployment files in `deployment/`.
