@@ -1,21 +1,27 @@
+import json
 from datetime import timedelta
 from decimal import Decimal
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import (
     Event,
+    Invoice,
     InvoiceAddress,
+    InvoiceLine,
     Order,
+    OrderPayment,
     OrderPosition,
     Organizer,
     Product,
     Question,
     QuestionAnswer,
+    QuestionOption,
     SubEvent,
     Team,
     User,
@@ -36,6 +42,7 @@ class OrderAnonymizeTest(SoupTest):
             slug='dummy',
             date_from=now() - timedelta(days=2),
             date_to=now() - timedelta(days=1),
+            plugins='eventyay.plugins.banktransfer',
         )
         self.user = User.objects.create_user('orga@example.com', 'test')
         self.team = Team.objects.create(
@@ -70,6 +77,7 @@ class OrderAnonymizeTest(SoupTest):
             street='123 Main St',
             city='Tech City',
             zipcode='12345',
+            country='DE',
         )
         self.invoice_addr = InvoiceAddress.objects.create(
             order=self.order,
@@ -78,6 +86,7 @@ class OrderAnonymizeTest(SoupTest):
             street='123 Main St',
             city='Tech City',
             zipcode='12345',
+            country='DE',
             vat_id='EU123456789',
             custom_field='TAX12345',
         )
@@ -91,16 +100,83 @@ class OrderAnonymizeTest(SoupTest):
             question=self.question,
             answer='Vegan',
         )
+        self.choice_question = Question.objects.create(
+            event=self.event,
+            question='T-Shirt size',
+            type=Question.TYPE_CHOICE,
+        )
+        self.choice_opt = QuestionOption.objects.create(
+            question=self.choice_question,
+            answer='L',
+            identifier='L',
+        )
+        self.qa_choice = QuestionAnswer.objects.create(
+            orderposition=self.position,
+            question=self.choice_question,
+            answer='L',
+        )
+        self.qa_choice.options.add(self.choice_opt)
+
+        self.invoice = Invoice.objects.create(
+            order=self.order,
+            event=self.event,
+            organizer=self.orga,
+            prefix='INV',
+            invoice_no='1001',
+            full_invoice_no='INV-1001',
+            date=now().date(),
+            invoice_to='John Doe\nACME Corp\n123 Main St',
+            introductory_text='Hello John',
+            additional_text='Thank you',
+            payment_provider_text='Paid via bank transfer',
+        )
+        self.invoice.file.save('invoice.pdf', ContentFile(b'fake pdf data'))
+        self.invoice_line = InvoiceLine.objects.create(
+            invoice=self.invoice,
+            description='Ticket for John Doe',
+            gross_value=Decimal('23.00'),
+            tax_value=Decimal('0.00'),
+            tax_rate=Decimal('0.00'),
+        )
+
+        self.payment = self.order.payments.create(
+            state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+            amount=Decimal('23.00'),
+            payment_date=now(),
+            provider='banktransfer',
+            info=json.dumps({'payer': 'John Doe', 'iban': 'DE1234567890', 'reference': 'REF123'}),
+        )
+
+        self.order.log_action(
+            'eventyay.event.order.modified',
+            data={
+                'data': [{
+                    'positionid': self.position.positionid,
+                    'attendee_name': 'John Doe',
+                    'attendee_email': 'customer@example.com',
+                    'company': 'ACME Corp',
+                }],
+                'invoice_data': {
+                    'name_cached': 'John Doe',
+                    'street': '123 Main St',
+                },
+            },
+            user=self.user,
+        )
 
     def test_anonymize_order_service(self):
-        """The anonymize_order service should scrub PII from order/positions/invoice_address/answers when event has ended."""
+        """The anonymize_order service should scrub all PII from order, positions, invoices, answers, payments, and logs."""
         with scopes_disabled():
             anonymize_order(self.order, user=self.user)
             self.order.refresh_from_db()
             self.position.refresh_from_db()
             self.invoice_addr.refresh_from_db()
             self.qa.refresh_from_db()
+            self.qa_choice.refresh_from_db()
             self.customer.refresh_from_db()
+            self.invoice.refresh_from_db()
+            self.invoice_line.refresh_from_db()
+            self.payment.refresh_from_db()
 
             # User account is unaffected
             assert self.customer.is_active is True
@@ -121,6 +197,7 @@ class OrderAnonymizeTest(SoupTest):
             assert self.position.company is None
             assert self.position.street is None
             assert self.position.city is None
+            assert self.position.country is None
 
             # InvoiceAddress fields
             assert self.invoice_addr.name_cached == ''
@@ -128,12 +205,35 @@ class OrderAnonymizeTest(SoupTest):
             assert self.invoice_addr.street == ''
             assert self.invoice_addr.vat_id == ''
             assert self.invoice_addr.custom_field == ''
+            assert str(self.invoice_addr.country) == ''
+            assert self.invoice_addr.name_parts == {}
 
-            # QuestionAnswer content
+            # QuestionAnswer content & choice options cleared
             assert self.qa.answer == '█'
+            assert self.qa_choice.answer == '█'
+            assert self.qa_choice.options.count() == 0
 
-            # Audit log entry written
+            # Invoices shredded
+            assert self.invoice.shredded is True
+            assert bool(self.invoice.file) is False
+            assert self.invoice.invoice_to == '█'
+            assert self.invoice.introductory_text == '█'
+            assert self.invoice.additional_text == '█'
+            assert self.invoice.payment_provider_text == '█'
+            assert self.invoice.invoice_no == '1001'
+            assert self.invoice_line.gross_value == Decimal('23.00')
+
+            # Payment info shredded
+            assert self.payment.info_data.get('_shredded') is True
+            assert self.payment.info_data.get('payer') == '█'
+
+            # Audit log entry written & modified log redacted
             assert self.order.all_logentries().filter(action_type='eventyay.event.order.anonymized').exists()
+            mod_log = self.order.all_logentries().filter(action_type='eventyay.event.order.modified').first()
+            assert mod_log.shredded is True
+            assert mod_log.parsed_data['data'][0]['attendee_name'] == '█'
+            assert mod_log.parsed_data['data'][0]['attendee_email'] == '█'
+            assert mod_log.parsed_data['invoice_data']['name_cached'] == '█'
 
     def test_anonymize_order_view_get_and_post(self):
         """GET shows the confirmation page; POST triggers anonymization and redirects when event has ended."""
@@ -149,6 +249,25 @@ class OrderAnonymizeTest(SoupTest):
         with scopes_disabled():
             self.order.refresh_from_db()
             assert self.order.email == 'anonymized-order-ANON1@eventyay.local'
+
+    def test_order_detail_view_toolbar_button(self):
+        """Order detail view toolbar displays anonymize button only when event has ended."""
+        url = f'/control/event/{self.orga.slug}/{self.event.slug}/orders/ANON1/'
+
+        # Event is ended (date_to was yesterday)
+        response = self.client.get(url)
+        assert response.status_code == 200
+        assert 'Anonymize ticket data' in response.content.decode()
+
+        # Future event
+        with scopes_disabled():
+            self.event.date_from = now() + timedelta(days=1)
+            self.event.date_to = now() + timedelta(days=2)
+            self.event.save()
+
+        response = self.client.get(url)
+        assert response.status_code == 200
+        assert 'Anonymize ticket data' not in response.content.decode()
 
     def test_anonymize_order_before_event_end_fails(self):
         """Order anonymization before event end should raise ValidationError and block UI control view."""
@@ -217,4 +336,3 @@ class OrderAnonymizeTest(SoupTest):
 
             with pytest.raises(ValidationError):
                 anonymize_order(self.order, user=self.user)
-

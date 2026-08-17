@@ -497,6 +497,7 @@ class OrderDetail(OrderView):
         ctx['download_buttons'] = self.download_buttons
         ctx['payment_refund_sum'] = self.order.payment_refund_sum
         ctx['pending_sum'] = self.order.pending_sum
+        ctx['can_anonymize'] = is_order_event_ended(self.order)
         return ctx
 
     @cached_property

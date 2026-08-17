@@ -78,9 +78,11 @@
                     <a href="{% url "control:event.order.mail_history" event=request.event.slug organizer=request.event.organizer.slug code=order.code %}" class="btn btn-default">
                         {% trans "View email history" %}
                     </a>
-                    <a href="{% url 'control:event.order.anonymize' event=request.event.slug organizer=request.event.organizer.slug code=order.code %}" class="btn btn-default">
-                        {% trans "Anonymize ticket data" %}
-                    </a>
+                    {% if can_anonymize %}
+                        <a href="{% url 'control:event.order.anonymize' event=request.event.slug organizer=request.event.organizer.slug code=order.code %}" class="btn btn-default">
+                            {% trans "Anonymize ticket data" %}
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </form>

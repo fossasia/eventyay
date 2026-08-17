@@ -110,41 +110,98 @@ def anonymize_order(order: Order, user=None, auth=None):
                 ia.zipcode = ""
                 ia.city = ""
                 ia.state = ""
+                ia.country = ""
                 ia.vat_id = ""
                 ia.custom_field = ""
                 ia.internal_reference = ""
                 ia.beneficiary = ""
                 ia.save(update_fields=[
                     'name_cached', 'name_parts', 'company', 'street', 'zipcode',
-                    'city', 'state', 'vat_id', 'custom_field', 'internal_reference', 'beneficiary'
+                    'city', 'state', 'country', 'vat_id', 'custom_field', 'internal_reference', 'beneficiary'
                 ])
         except InvoiceAddress.DoesNotExist:
             pass
 
-        # 4. Anonymize / clear QuestionAnswer records for position/order
+        # 4. Shred Invoices and generated invoice PDFs
+        for inv in order.invoices.filter(shredded=False):
+            if inv.file:
+                try:
+                    inv.file.delete(save=False)
+                except (OSError, IOError):
+                    logger.exception('Failed to delete invoice file: %s', inv.file)
+                inv.file = None
+            inv.shredded = True
+            inv.introductory_text = '█'
+            inv.additional_text = '█'
+            inv.invoice_to = '█'
+            inv.payment_provider_text = '█'
+            inv.save(update_fields=['file', 'shredded', 'introductory_text', 'additional_text', 'invoice_to', 'payment_provider_text'])
+            inv.lines.update(description='█')
+
+        # 5. Anonymize / clear QuestionAnswer records for position/order
         answers = QuestionAnswer.objects.filter(orderposition__order=order)
         for ans in answers:
             if ans.file:
                 try:
                     ans.file.delete(save=False)
-                except Exception:
-                    logger.warning('Failed to delete question answer file: %s', ans.file, exc_info=True)
+                except (OSError, IOError):
+                    logger.exception('Failed to delete question answer file: %s', ans.file)
                 ans.file = None
+            ans.options.clear()
             ans.answer = "█"
             ans.save(update_fields=['answer', 'file'])
 
-        # 5. Delete cached tickets for position and order
+        # 6. Shred payment and refund information (e.g. bank transfer IBAN/payer details)
+        provs = order.event.get_payment_providers()
+        for payment in order.payments.all():
+            pprov = provs.get(payment.provider)
+            if pprov:
+                pprov.shred_payment_info(payment)
+            elif payment.info:
+                payment.info = '{}'
+                payment.save(update_fields=['info'])
+        for refund in order.refunds.all():
+            pprov = provs.get(refund.provider)
+            if pprov:
+                pprov.shred_payment_info(refund)
+            elif refund.info:
+                refund.info = '{}'
+                refund.save(update_fields=['info'])
+
+        # 7. Delete cached tickets for position and order
         CachedTicket.objects.filter(order_position__order=order).delete()
         CachedCombinedTicket.objects.filter(order=order).delete()
 
-        # 6. Shred personal fields from past LogEntries for this order
+        # 8. Shred personal fields from past LogEntries for this order
         for le in order.all_logentries():
             shred_log_fields(le, banlist=[
                 'old_email', 'new_email', 'recipient', 'message', 'subject',
                 'old_phone', 'new_phone', 'attendee_name', 'attendee_name_parts',
                 'company', 'street', 'zipcode', 'city', 'name_parts', 'name_cached'
             ])
+            if le.action_type == 'eventyay.event.order.modified' and le.data:
+                d = le.parsed_data
+                changed = False
+                if 'data' in d and isinstance(d['data'], list):
+                    for i, row in enumerate(d['data']):
+                        if isinstance(row, dict):
+                            for k in row:
+                                if k in ('attendee_name', 'attendee_email', 'company', 'street', 'zipcode', 'city', 'state', 'country'):
+                                    d['data'][i][k] = '█'
+                                elif k == 'attendee_name_parts':
+                                    d['data'][i][k] = {'_legacy': '█'}
+                                elif k not in ('product', 'variation', 'price', 'secret', 'addon_to'):
+                                    d['data'][i][k] = '█'
+                            changed = True
+                if 'invoice_data' in d and isinstance(d['invoice_data'], dict):
+                    for field in d['invoice_data']:
+                        if d['invoice_data'][field]:
+                            d['invoice_data'][field] = '█'
+                    changed = True
+                if changed:
+                    le.data = json.dumps(d)
+                    le.shredded = True
+                    le.save(update_fields=['data', 'shredded'])
 
-        # 7. Audit log action
+        # 9. Audit log action
         order.log_action('eventyay.event.order.anonymized', user=user, auth=auth)
-
