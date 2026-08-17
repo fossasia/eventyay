@@ -156,14 +156,24 @@ def anonymize_order(order: Order, user=None, auth=None):
         for payment in order.payments.all():
             pprov = provs.get(payment.provider)
             if pprov:
-                pprov.shred_payment_info(payment)
+                try:
+                    pprov.shred_payment_info(payment)
+                except Exception:
+                    logger.exception('Failed to shred payment info via provider %s, falling back to empty info', payment.provider)
+                    payment.info = '{}'
+                    payment.save(update_fields=['info'])
             elif payment.info:
                 payment.info = '{}'
                 payment.save(update_fields=['info'])
         for refund in order.refunds.all():
             pprov = provs.get(refund.provider)
             if pprov:
-                pprov.shred_payment_info(refund)
+                try:
+                    pprov.shred_payment_info(refund)
+                except Exception:
+                    logger.exception('Failed to shred refund info via provider %s, falling back to empty info', refund.provider)
+                    refund.info = '{}'
+                    refund.save(update_fields=['info'])
             elif refund.info:
                 refund.info = '{}'
                 refund.save(update_fields=['info'])
