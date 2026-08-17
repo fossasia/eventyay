@@ -2,9 +2,11 @@ import uuid
 from functools import cached_property
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Exists, JSONField, OuterRef, Q
 from django.db.models.expressions import RawSQL, Value
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils.crypto import get_random_string
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -420,6 +422,16 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
             .order_by('start_time')
             .first()
         )
+
+
+@receiver(post_save, sender=Room)
+@receiver(post_delete, sender=Room)
+def invalidate_room_catalog_cache(sender, instance, **kwargs):
+    from eventyay.base.services.stale_cache import invalidate_catalog_cache
+
+    event_id = instance.event_id
+    if event_id:
+        transaction.on_commit(lambda: invalidate_catalog_cache(event_id, 'rooms'))
 
 
 class Reaction(models.Model):

@@ -115,6 +115,16 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def get_answers(self, obj):
         request = self.context.get('request')
         if self.event and request and not request.user.has_perm('base.orga_list_speakerprofile', self.event):
+            answers = getattr(obj.user, 'event_answers', None)
+            if answers is not None:
+                public_answers = [
+                    answer
+                    for answer in answers
+                    if answer.question.target == TalkQuestionTarget.SPEAKER and answer.question.is_public
+                ]
+                if serializer := self.get_extra_flex_field('answers', public_answers):
+                    return serializer.data
+                return [answer.pk for answer in public_answers]
             qs = obj.answers.filter(
                 question__event=self.event,
                 question__target=TalkQuestionTarget.SPEAKER,
