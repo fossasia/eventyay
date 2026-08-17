@@ -18,6 +18,7 @@ from eventyay.base.models.question import TalkQuestionTarget
 from eventyay.base.services.stale_cache import (
     CATALOG_HOT_TTL,
     api_cache_fingerprint,
+    api_locale_key,
     get_cached_catalog_list,
 )
 
@@ -202,7 +203,8 @@ class CachedCatalogListMixin:
             serializer = self.get_serializer(queryset, many=True)
             return serializer.data
 
-        data, etag = get_cached_catalog_list(self.event.pk, self.catalog_name, loader)
+        locale_key = api_locale_key(request, self.event)
+        data, etag = get_cached_catalog_list(self.event.pk, self.catalog_name, locale_key, loader)
         return cached_json_response(request, data, max_age=self.catalog_max_age, etag=etag)
 
 

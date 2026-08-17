@@ -14,7 +14,7 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
 from eventyay.api.documentation import build_search_docs
-from eventyay.api.mixins import CachedCatalogListMixin, PretalxViewSetMixin
+from eventyay.api.mixins import PretalxViewSetMixin, request_is_private
 from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
 from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
 from eventyay.api.throttles import EventyayUserRateThrottle, PublicStreamThrottle
@@ -28,13 +28,6 @@ from eventyay.base.services.room import (
     get_cached_current_stream_data,
     get_cached_next_stream_data,
 )
-
-
-def _current_stream_response_is_private(request):
-    user = getattr(request, 'user', None)
-    if user is not None and getattr(user, 'is_authenticated', False):
-        return True
-    return getattr(request, 'auth', None) is not None
 
 
 def stream_http_response(request, data, *, max_age):
@@ -60,7 +53,7 @@ def stream_http_response(request, data, *, max_age):
     else:
         response = Response(status=404)
 
-    if _current_stream_response_is_private(request):
+    if request_is_private(request):
         patch_cache_control(response, no_store=True)
     else:
         patch_cache_control(
@@ -100,15 +93,12 @@ class RoomPagination(pagination.LimitOffsetPagination):
     ),
     destroy=extend_schema(summary="Delete Rooms"),
 )
-class RoomViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelViewSet):
+class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     queryset = Room.objects.none()
     serializer_class = RoomSerializer
     pagination_class = RoomPagination
     endpoint = "rooms"
     search_fields = ("name",)
-    allow_public_read = True
-    catalog_name = 'rooms'
-    catalog_max_age = 600
 
     def get_queryset(self):
         if self.event:
@@ -119,11 +109,6 @@ class RoomViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelVie
         if self.request.method not in SAFE_METHODS or self.has_perm("update"):
             return RoomOrgaSerializer
         return RoomSerializer
-
-    def uses_catalog_list_cache(self):
-        if self.request.method in SAFE_METHODS and self.has_perm('update'):
-            return False
-        return super().uses_catalog_list_cache()
 
     def perform_destroy(self, instance):
         try:

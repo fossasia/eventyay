@@ -191,12 +191,44 @@ def test_catalog_list_cache_avoids_repeat_serialization():
         calls.append(1)
         return [{'id': 1, 'name': 'Track A'}]
 
-    data, etag = get_cached_catalog_list(7, 'tracks', loader)
-    cached, cached_etag = get_cached_catalog_list(7, 'tracks', loader)
+    data, etag = get_cached_catalog_list(7, 'tracks', 'all', loader)
+    cached, cached_etag = get_cached_catalog_list(7, 'tracks', 'all', loader)
     assert data == cached
     assert etag == cached_etag
     assert etag
     assert calls == [1]
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+def test_catalog_list_cache_scopes_by_locale():
+    from eventyay.base.services.stale_cache import get_cached_catalog_list
+
+    en_calls = []
+    de_calls = []
+
+    data_en, _ = get_cached_catalog_list(
+        7,
+        'tracks',
+        'en',
+        lambda: en_calls.append(1) or [{'id': 1, 'name': 'English'}],
+    )
+    data_de, _ = get_cached_catalog_list(
+        7,
+        'tracks',
+        'de',
+        lambda: de_calls.append(1) or [{'id': 1, 'name': 'Deutsch'}],
+    )
+    assert data_en != data_de
+    assert en_calls == [1]
+    assert de_calls == [1]
+
+    get_cached_catalog_list(
+        7,
+        'tracks',
+        'en',
+        lambda: en_calls.append(1) or [{'id': 1, 'name': 'English'}],
+    )
+    assert en_calls == [1]
 
 
 @pytest.mark.django_db
@@ -205,21 +237,23 @@ def test_catalog_cache_invalidates_on_track_save(event, django_capture_on_commit
     from django.core.cache import cache
 
     from eventyay.base.models import Track
-    from eventyay.base.services.stale_cache import catalog_cache_keys, get_cached_catalog_list
+    from eventyay.base.services.stale_cache import get_cached_catalog_list
 
     cache.clear()
-    hot_key, _ = catalog_cache_keys(event.pk, 'tracks')
+    calls = []
 
     def loader():
+        calls.append(1)
         return [{'id': 1, 'name': 'Track A'}]
 
-    get_cached_catalog_list(event.pk, 'tracks', loader)
-    assert cache.get(hot_key) is not None
+    get_cached_catalog_list(event.pk, 'tracks', 'all', loader)
+    assert calls == [1]
 
     with django_capture_on_commit_callbacks:
         Track.objects.create(event=event, name={'en': 'New Track'}, color='#ff0000')
 
-    assert cache.get(hot_key) is None
+    get_cached_catalog_list(event.pk, 'tracks', 'all', loader)
+    assert calls == [1, 1]
 
 
 def test_schedule_cache_user_scope_public_for_anonymous():

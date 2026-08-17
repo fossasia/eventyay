@@ -25,6 +25,7 @@ from eventyay.api.mixins import (
 )
 from eventyay.base.services.stale_cache import (
     SCHEDULE_HOT_TTL,
+    api_locale_key,
     get_cached_schedule_detail,
     get_cached_talk_slots_list,
     talk_slots_filter_key,
@@ -147,12 +148,15 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
             return super().retrieve(request, *args, **kwargs)
 
         expand_key = request.query_params.get('expand', '')
+        locale_key = api_locale_key(request, self.event)
 
         def loader():
             serializer = self.get_serializer(instance)
             return serializer.data
 
-        data, etag = get_cached_schedule_detail(self.event.pk, instance.pk, expand_key, scope, loader)
+        data, etag = get_cached_schedule_detail(
+            self.event.pk, instance.pk, expand_key, scope, locale_key, loader
+        )
         return cached_json_response(request, data, max_age=SCHEDULE_HOT_TTL, etag=etag)
 
     def get_object(self):
@@ -401,6 +405,7 @@ class TalkSlotViewSet(
         user_scope = schedule_cache_user_scope(self.event, request.user)
         expand_key = request.query_params.get('expand', '')
         filter_key = talk_slots_filter_key(request, self.filterset_class.get_fields().keys())
+        locale_key = api_locale_key(request, self.event)
 
         def loader():
             queryset = self.filter_queryset(self.get_queryset())
@@ -412,6 +417,7 @@ class TalkSlotViewSet(
             user_scope,
             expand_key,
             filter_key,
+            locale_key,
             loader,
         )
         return cached_json_response(request, data, max_age=SCHEDULE_HOT_TTL, etag=etag)

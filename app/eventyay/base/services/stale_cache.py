@@ -17,7 +17,7 @@ CATALOG_STALE_TTL = 3600
 SCHEDULE_HOT_TTL = 300
 SCHEDULE_STALE_TTL = 3600
 
-CATALOG_NAMES = ('tracks', 'tags', 'submission-types', 'rooms')
+CATALOG_NAMES = ('tracks', 'tags', 'submission-types')
 
 
 def cache_get(key):
@@ -122,20 +122,48 @@ def _flush_schedule_cache_bump(event_id):
     bump_schedule_cache_version(event_id)
 
 
-def catalog_cache_keys(event_id, catalog):
-    prefix = f'api:catalog:{event_id}:{catalog}'
+def api_locale_key(request, event):
+    """Cache key segment for ?lang= responses (DocumentedI18nField override)."""
+    if not event:
+        return 'all'
+    params = getattr(request, 'query_params', request.GET)
+    locale = params.get('lang')
+    if locale and locale in event.locales:
+        return locale
+    return 'all'
+
+
+def catalog_cache_version_key(event_id, catalog):
+    return f'api:catalog:ver:{event_id}:{catalog}'
+
+
+def get_catalog_cache_version(event_id, catalog):
+    return cache_get(catalog_cache_version_key(event_id, catalog)) or 0
+
+
+def bump_catalog_cache_version(event_id, catalog):
+    key = catalog_cache_version_key(event_id, catalog)
+    try:
+        cache.incr(key)
+    except ValueError:
+        cache_set(key, 1, None)
+
+
+def catalog_cache_keys(event_id, catalog, locale_key='all'):
+    version = get_catalog_cache_version(event_id, catalog)
+    prefix = f'api:catalog:{event_id}:{catalog}:v{version}:{locale_key}'
     return f'{prefix}:hot', f'{prefix}:stale'
 
 
-def schedule_detail_cache_keys(event_id, schedule_id, expand_key, user_scope):
+def schedule_detail_cache_keys(event_id, schedule_id, expand_key, user_scope, locale_key='all'):
     version = get_schedule_cache_version(event_id)
-    prefix = f'api:schedule:{event_id}:v{version}:{schedule_id}:{user_scope}:{expand_key}'
+    prefix = f'api:schedule:{event_id}:v{version}:{schedule_id}:{user_scope}:{locale_key}:{expand_key}'
     return f'{prefix}:hot', f'{prefix}:stale'
 
 
-def talk_slots_list_cache_keys(event_id, user_scope, expand_key, filter_key):
+def talk_slots_list_cache_keys(event_id, user_scope, expand_key, filter_key, locale_key='all'):
     version = get_schedule_cache_version(event_id)
-    prefix = f'api:talk-slots:{event_id}:v{version}:{user_scope}:{expand_key}:{filter_key}'
+    prefix = f'api:talk-slots:{event_id}:v{version}:{user_scope}:{locale_key}:{expand_key}:{filter_key}'
     return f'{prefix}:hot', f'{prefix}:stale'
 
 
@@ -150,8 +178,7 @@ def invalidate_event_catalog_cache(event_id):
 
 
 def invalidate_catalog_cache(event_id, catalog):
-    hot, stale = catalog_cache_keys(event_id, catalog)
-    cache_delete(hot, stale)
+    bump_catalog_cache_version(event_id, catalog)
 
 
 def invalidate_next_stream_cache(room_id):
@@ -159,8 +186,8 @@ def invalidate_next_stream_cache(room_id):
     cache_delete(hot, stale)
 
 
-def get_cached_catalog_list(event_id, catalog, loader):
-    hot_key, stale_key = catalog_cache_keys(event_id, catalog)
+def get_cached_catalog_list(event_id, catalog, locale_key, loader):
+    hot_key, stale_key = catalog_cache_keys(event_id, catalog, locale_key)
 
     def wrapping_loader():
         return wrap_api_cache_payload(loader())
@@ -177,8 +204,10 @@ def get_cached_catalog_list(event_id, catalog, loader):
     return data, etag
 
 
-def get_cached_schedule_detail(event_id, schedule_id, expand_key, user_scope, loader):
-    hot_key, stale_key = schedule_detail_cache_keys(event_id, schedule_id, expand_key, user_scope)
+def get_cached_schedule_detail(event_id, schedule_id, expand_key, user_scope, locale_key, loader):
+    hot_key, stale_key = schedule_detail_cache_keys(
+        event_id, schedule_id, expand_key, user_scope, locale_key
+    )
 
     def wrapping_loader():
         return wrap_api_cache_payload(loader())
@@ -195,8 +224,10 @@ def get_cached_schedule_detail(event_id, schedule_id, expand_key, user_scope, lo
     return data, etag
 
 
-def get_cached_talk_slots_list(event_id, user_scope, expand_key, filter_key, loader):
-    hot_key, stale_key = talk_slots_list_cache_keys(event_id, user_scope, expand_key, filter_key)
+def get_cached_talk_slots_list(event_id, user_scope, expand_key, filter_key, locale_key, loader):
+    hot_key, stale_key = talk_slots_list_cache_keys(
+        event_id, user_scope, expand_key, filter_key, locale_key
+    )
 
     def wrapping_loader():
         return wrap_api_cache_payload(loader())
