@@ -159,8 +159,8 @@ def json_cache_fingerprint(data):
     return hashlib.md5(json.dumps(data, sort_keys=True, default=str).encode(), usedforsecurity=False).hexdigest()
 
 
-def cached_json_response(request, data, *, max_age, updated_at=None):
-    etag = json_cache_fingerprint(data)
+def cached_json_response(request, data, *, max_age, updated_at=None, etag=None):
+    etag = etag or json_cache_fingerprint(data)
     etag_header = f'"{etag}"'
     if_none_match = request.headers.get('If-None-Match', '')
     if etag_header in {part.strip() for part in if_none_match.split(',')}:
@@ -206,8 +206,8 @@ class CachedCatalogListMixin:
             serializer = self.get_serializer(queryset, many=True)
             return serializer.data
 
-        data = get_cached_catalog_list(self.event.pk, self.catalog_name, loader)
-        return cached_json_response(request, data, max_age=self.catalog_max_age)
+        data, etag = get_cached_catalog_list(self.event.pk, self.catalog_name, loader)
+        return cached_json_response(request, data, max_age=self.catalog_max_age, etag=etag)
 
 
 def prefetch_submission_speakers(queryset, event):

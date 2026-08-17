@@ -152,8 +152,8 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
             serializer = self.get_serializer(instance)
             return serializer.data
 
-        data = get_cached_schedule_detail(self.event.pk, instance.pk, expand_key, scope, loader)
-        return cached_json_response(request, data, max_age=SCHEDULE_HOT_TTL)
+        data, etag = get_cached_schedule_detail(self.event.pk, instance.pk, expand_key, scope, loader)
+        return cached_json_response(request, data, max_age=SCHEDULE_HOT_TTL, etag=etag)
 
     def get_object(self):
         identifier = self.kwargs.get(self.lookup_field)
@@ -407,14 +407,14 @@ class TalkSlotViewSet(
             serializer = self.get_serializer(queryset, many=True)
             return serializer.data
 
-        data = get_cached_talk_slots_list(
+        data, etag = get_cached_talk_slots_list(
             self.event.pk,
             user_scope,
             expand_key,
             filter_key,
             loader,
         )
-        return cached_json_response(request, data, max_age=SCHEDULE_HOT_TTL)
+        return cached_json_response(request, data, max_age=SCHEDULE_HOT_TTL, etag=etag)
 
     @action(detail=True, methods=['get'])
     def ical(self, request, event, pk=None):

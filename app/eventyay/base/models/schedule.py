@@ -38,7 +38,7 @@ from eventyay.talk_rules.agenda import (
     is_widget_visible,
 )
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
-from eventyay.base.services.stale_cache import bump_schedule_cache_version
+from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
 
 from .auth import (
     User,
@@ -198,7 +198,7 @@ class Schedule(PretalxModel):
 
         schedule_release.send_robust(self.event, schedule=self, user=user)
 
-        transaction.on_commit(lambda: bump_schedule_cache_version(self.event_id))
+        bump_schedule_cache_version_on_commit(self.event_id)
 
         if self.event.get_feature_flag('export_html_on_release'):
             if not settings.CELERY_TASK_ALWAYS_EAGER:

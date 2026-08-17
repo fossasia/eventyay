@@ -246,7 +246,7 @@ class TalkSlot(PretalxModel):
 @receiver(post_save, sender=TalkSlot)
 @receiver(post_delete, sender=TalkSlot)
 def invalidate_schedule_cache_on_slot_change(sender, instance, **kwargs):
-    from eventyay.base.services.stale_cache import bump_schedule_cache_version
+    from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
 
     if instance.schedule.version:
-        transaction.on_commit(lambda: bump_schedule_cache_version(instance.schedule.event_id))
+        bump_schedule_cache_version_on_commit(instance.schedule.event_id)

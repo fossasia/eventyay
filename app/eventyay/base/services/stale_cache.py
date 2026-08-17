@@ -1,8 +1,10 @@
 import hashlib
+import json
 import logging
+import threading
 
 from django.core.cache import cache
-from django.db import DatabaseError, OperationalError
+from django.db import DatabaseError, OperationalError, transaction
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,20 @@ def deserialize_none_sentinel(cached):
     return None if cached == NONE_SENTINEL else cached
 
 
+def api_cache_fingerprint(data):
+    return hashlib.md5(json.dumps(data, sort_keys=True, default=str).encode(), usedforsecurity=False).hexdigest()
+
+
+def wrap_api_cache_payload(data):
+    return {'payload': data, 'etag': api_cache_fingerprint(data)}
+
+
+def unwrap_api_cache_payload(cached):
+    if isinstance(cached, dict) and 'payload' in cached and 'etag' in cached:
+        return cached['payload'], cached['etag']
+    return cached, None
+
+
 def get_stale_cached(hot_key, stale_key, loader, hot_ttl, stale_ttl, *, log_context=''):
     cached = cache_get(hot_key)
     if cached is not None:
@@ -82,6 +98,28 @@ def bump_schedule_cache_version(event_id):
         cache.incr(key)
     except ValueError:
         cache_set(key, 1, None)
+
+
+_bump_on_commit_local = threading.local()
+
+
+def bump_schedule_cache_version_on_commit(event_id):
+    """Bump at most once per event per database transaction."""
+    pending = getattr(_bump_on_commit_local, 'pending', None)
+    if pending is None:
+        pending = set()
+        _bump_on_commit_local.pending = pending
+    if event_id in pending:
+        return
+    pending.add(event_id)
+    transaction.on_commit(lambda: _flush_schedule_cache_bump(event_id))
+
+
+def _flush_schedule_cache_bump(event_id):
+    pending = getattr(_bump_on_commit_local, 'pending', None)
+    if pending is not None:
+        pending.discard(event_id)
+    bump_schedule_cache_version(event_id)
 
 
 def catalog_cache_keys(event_id, catalog):
@@ -123,52 +161,71 @@ def invalidate_next_stream_cache(room_id):
 
 def get_cached_catalog_list(event_id, catalog, loader):
     hot_key, stale_key = catalog_cache_keys(event_id, catalog)
+
+    def wrapping_loader():
+        return wrap_api_cache_payload(loader())
+
     cached = get_stale_cached(
         hot_key,
         stale_key,
-        loader,
+        wrapping_loader,
         CATALOG_HOT_TTL,
         CATALOG_STALE_TTL,
         log_context=f'catalog {catalog} event {event_id}',
     )
-    return deserialize_none_sentinel(cached)
+    data, etag = unwrap_api_cache_payload(deserialize_none_sentinel(cached))
+    return data, etag
 
 
 def get_cached_schedule_detail(event_id, schedule_id, expand_key, user_scope, loader):
     hot_key, stale_key = schedule_detail_cache_keys(event_id, schedule_id, expand_key, user_scope)
+
+    def wrapping_loader():
+        return wrap_api_cache_payload(loader())
+
     cached = get_stale_cached(
         hot_key,
         stale_key,
-        loader,
+        wrapping_loader,
         SCHEDULE_HOT_TTL,
         SCHEDULE_STALE_TTL,
         log_context=f'schedule {schedule_id} event {event_id}',
     )
-    return deserialize_none_sentinel(cached)
+    data, etag = unwrap_api_cache_payload(deserialize_none_sentinel(cached))
+    return data, etag
 
 
 def get_cached_talk_slots_list(event_id, user_scope, expand_key, filter_key, loader):
     hot_key, stale_key = talk_slots_list_cache_keys(event_id, user_scope, expand_key, filter_key)
+
+    def wrapping_loader():
+        return wrap_api_cache_payload(loader())
+
     cached = get_stale_cached(
         hot_key,
         stale_key,
-        loader,
+        wrapping_loader,
         SCHEDULE_HOT_TTL,
         SCHEDULE_STALE_TTL,
         log_context=f'talk slots event {event_id}',
     )
-    return deserialize_none_sentinel(cached)
+    data, etag = unwrap_api_cache_payload(deserialize_none_sentinel(cached))
+    return data, etag
 
 
 def talk_slots_filter_key(request, filter_fields):
+    params = getattr(request, 'query_params', request.GET)
     parts = []
     for field in sorted(filter_fields):
-        value = request.query_params.get(field)
+        value = params.get(field)
         if value is not None:
             parts.append(f'{field}={value}')
-    search = request.query_params.get('search')
+    search = params.get('search')
     if search:
         parts.append(f'search={search}')
+    ordering = params.get('ordering')
+    if ordering:
+        parts.append(f'ordering={ordering}')
     if not parts:
         return 'default'
     return hashlib.md5('|'.join(parts).encode(), usedforsecurity=False).hexdigest()

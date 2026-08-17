@@ -1196,7 +1196,7 @@ class SubmissionFavourite(PretalxModel):
 @receiver(post_delete, sender=Submission)
 def invalidate_schedule_cache_on_submission_change(sender, instance, **kwargs):
     from eventyay.base.models.slot import TalkSlot
-    from eventyay.base.services.stale_cache import bump_schedule_cache_version
+    from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
 
     event_id = instance.event_id
     if not event_id:
@@ -1206,4 +1206,4 @@ def invalidate_schedule_cache_on_submission_change(sender, instance, **kwargs):
         schedule__version__isnull=False,
     ).exists():
         return
-    transaction.on_commit(lambda: bump_schedule_cache_version(event_id))
+    bump_schedule_cache_version_on_commit(event_id)

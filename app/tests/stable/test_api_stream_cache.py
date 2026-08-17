@@ -191,9 +191,11 @@ def test_catalog_list_cache_avoids_repeat_serialization():
         calls.append(1)
         return [{'id': 1, 'name': 'Track A'}]
 
-    data = get_cached_catalog_list(7, 'tracks', loader)
-    cached = get_cached_catalog_list(7, 'tracks', loader)
+    data, etag = get_cached_catalog_list(7, 'tracks', loader)
+    cached, cached_etag = get_cached_catalog_list(7, 'tracks', loader)
     assert data == cached
+    assert etag == cached_etag
+    assert etag
     assert calls == [1]
 
 
@@ -229,3 +231,14 @@ def test_schedule_cache_user_scope_public_for_anonymous():
 
     event = SimpleNamespace()
     assert schedule_cache_user_scope(event, AnonymousUser()) == 'public'
+
+
+def test_talk_slots_filter_key_includes_ordering():
+    from django.test import RequestFactory
+
+    from eventyay.base.services.stale_cache import talk_slots_filter_key
+
+    factory = RequestFactory()
+    default = talk_slots_filter_key(factory.get('/'), ['room'])
+    ordered = talk_slots_filter_key(factory.get('/?ordering=-start'), ['room'])
+    assert default != ordered
