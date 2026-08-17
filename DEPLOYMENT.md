@@ -8,24 +8,6 @@ For local development, use the Docker quick start in `README.rst`. This file is 
 
 - [Scope](#scope)
 - [Architecture](#architecture)
-- [Requirements](#requirements)
-- [Variables](#variables)
-- [Server preparation](#server-preparation)
-- [Install Docker](#install-docker)
-- [Create deployment user](#create-deployment-user)
-- [Create deployment directory](#create-deployment-directory)
-- [Create data directories](#create-data-directories)
-- [Configure environment](#configure-environment)
-- [Install nginx and certbot](#install-nginx-and-certbot)
-- [Configure nginx](#configure-nginx)
-- [Configure SSL](#configure-ssl)
-- [Start Eventyay](#start-eventyay)
-- [Initial verification](#initial-verification)
-- [Backups](#backups)
-- [Updating Eventyay](#updating-eventyay)
-- [Database and media migration](#database-and-media-migration)
-- [Troubleshooting](#troubleshooting)
-- [Security notes](#security-notes)
 
 ## Scope
 
@@ -72,3 +54,4 @@ nginx
   +--> web:8000       Django / Gunicorn
   |
   +--> websocket:8001 ASGI / Daphne
+```
