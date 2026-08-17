@@ -68,7 +68,7 @@
     "eslint": "^10.8.1",
     "eslint-plugin-vue": "^10.10.0",
     "eslint-plugin-vue-pug": "^1.0.0-alpha.6",
-    "globals": "^17.9.0",
+    "globals": "^17.11.0",
     "i18next-parser": "^9.4.0",
     "pug": "^3.0.4",
     "rollup-plugin-visualizer": "^7.0.1",
