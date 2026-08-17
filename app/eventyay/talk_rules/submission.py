@@ -39,7 +39,7 @@ orga_or_reviewer_can_change_submission = orga_can_change_submissions | (is_revie
 @rules.predicate
 def is_cfp_open(user, obj):
     event = getattr(obj, 'event', None)
-    return event and event.talks_published and event.cfp.is_open
+    return bool(event and event.talks_published and hasattr(event, 'cfp') and event.cfp.is_open)
 
 
 def _normalize_featured_visibility(raw, default='never'):
@@ -254,7 +254,11 @@ def can_be_edited(user, obj):
 def can_request_speakers(user, submission):
     from eventyay.base.models import SubmissionStates
 
-    return submission.state != SubmissionStates.DRAFT and submission.event.cfp.request_additional_speaker
+    return (
+        submission.state != SubmissionStates.DRAFT
+        and hasattr(submission.event, 'cfp')
+        and submission.event.cfp.request_additional_speaker
+    )
 
 
 @rules.predicate
