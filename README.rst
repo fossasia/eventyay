@@ -26,7 +26,7 @@ Contents
 - `Deployment`_
 - `Documentation`_
 - `Contributing`_
-- `License`_
+- `Legal and licensing`_
 
 Project status and branch model
 -------------------------------
