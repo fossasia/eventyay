@@ -1073,9 +1073,9 @@ class Submission(GenerateCode, PretalxModel):
             )
 
         if biography:
-         profile = SpeakerProfile.objects.get(user=speaker, event=self.event)
-         profile.biography = biography
-         profile.save(update_fields=['biography'])
+            profile = SpeakerProfile.objects.get(user=speaker, event=self.event)
+            profile.biography = biography
+            profile.save(update_fields=['biography'])
 
         self.speakers.add(speaker)
         self.log_action('eventyay.submission.speakers.add', person=user, orga=True)

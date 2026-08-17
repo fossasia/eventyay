@@ -566,7 +566,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                     name=self.new_speaker_form.cleaned_data['name'],
                     locale=self.new_speaker_form.cleaned_data.get('locale'),
                     user=self.request.user,
-                     biography=self.new_speaker_form.cleaned_data.get('biography'),
+                    biography=self.new_speaker_form.cleaned_data.get('biography'),
                 )
         else:
             formset_result = self.save_formset(form.instance)

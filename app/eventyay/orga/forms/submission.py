@@ -331,18 +331,18 @@ class AddSpeakerForm(forms.Form):
     )
 
     def __init__(
-     self,
-     *args,
-     event=None,
-     form_renderer=None,
-     require_name=False,
-     include_biography=False,
-     **kwargs,
+        self,
+        *args,
+        event=None,
+        form_renderer=None,
+        require_name=False,
+        include_biography=False,
+        **kwargs,
 ):
         super().__init__(*args, **kwargs)
         self.require_name = require_name
         if not include_biography:
-          self.fields.pop('biography', None)
+         self.fields.pop('biography', None)
         else:
          visibility = event.cfp.fields.get('biography', default_fields()['biography'])['visibility']
          if visibility == 'do_not_ask':
@@ -373,6 +373,12 @@ class AddSpeakerForm(forms.Form):
         data = super().clean()
         if data.get('name') and not data.get('email'):
             self.add_error('email', _('Please provide an email address.'))
+            if (
+                data.get('email')
+                and getattr(self, 'biography_required', False)
+                and not data.get('biography')
+    ):
+                self.add_error('biography', _('This field is required.'))
         return data
 class AddSpeakerInlineForm(AddSpeakerForm):
     default_renderer = InlineFormLabelRenderer
