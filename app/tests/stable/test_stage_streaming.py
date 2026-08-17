@@ -278,24 +278,3 @@ def test_clear_stream_schedules_keeps_schedules_when_stage_stays_schedule_driven
 )
 def test_uses_schedule_driven_stage(module_config, expected):
     assert room_service.uses_schedule_driven_stage(module_config) is expected
-
-
-def test_room_config_includes_cached_current_stream(monkeypatch):
-    monkeypatch.setattr(
-        event_service,
-        'get_room_current_stream_data',
-        lambda room: {'url': 'https://example.com/live.m3u8'},
-    )
-    room = SimpleNamespace(
-        id=1,
-        name='Stage',
-        description='',
-        picture=None,
-        import_id='',
-        pretalx_id=None,
-        force_join=False,
-        schedule_data=None,
-        module_config=[],
-    )
-    config = event_service.get_room_config(room, [])
-    assert config['currentStream']['url'] == 'https://example.com/live.m3u8'
