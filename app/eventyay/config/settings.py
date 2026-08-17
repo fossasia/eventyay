@@ -159,6 +159,7 @@ class BaseSettings(_BaseSettings):
     call_for_speaker_login_button_label: str = 'default'
     # Set to 1 to enable Vite dev servers with HMR for live frontend development.
     npm_dev: bool = False
+    fetch_ecb_rates: bool = True
 
     @classmethod
     def settings_customise_sources(
@@ -254,6 +255,7 @@ conf = BaseSettings()
 DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
 DATABASE_REPLICA = 'default'
+FETCH_ECB_RATES = conf.fetch_ecb_rates
 
 DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'
