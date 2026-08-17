@@ -25,22 +25,37 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 			.session-type(v-if="sessionTypeLabel", :class="{'single-line-clamped': isGridVeryShort}", :title="gridMetaTitle(sessionTypeLabel)") {{ sessionTypeLabel }}
 		template(v-else)
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
-		.speakers-row(v-if="namedSpeakers.length")
-			.speakers(
-				ref="speakersRow",
-				:class="{'names-clamped': isShortSession}",
-				:aria-label="speakersAriaLabel")
-				span.speaker(v-for="(speaker, i) of namedSpeakers", :key="speaker.code || i")
-					img(
-						v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
-						:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
-						alt="",
-						aria-hidden="true")
-					span.speaker-label {{ speaker.name }}
-					span.speaker-separator(v-if="i + 1 < namedSpeakers.length", aria-hidden="true") ,
-			span.speakers-overflow-hint(
-				v-if="speakersHiddenCount > 0",
-				:aria-label="speakersOverflowLabel") {{ speakersOverflowHint }}
+		template(v-if="hasShiftRoles")
+			.shift-roles-list
+				.shift-role-item(v-for="role in session.roles", :key="role.id")
+					.shift-role-header
+						span.shift-role-name
+							| {{ role.name }}
+							span.shift-role-restricted(v-if="role.is_restricted") &nbsp;RESTRICTED
+						span.shift-role-badge(:class="'badge-' + getCapacityStatus(role)") {{ role.assigned_count }}/{{ role.capacity }} assigned
+					.shift-role-assignees(v-if="role.assigned_names && role.assigned_names.length")
+						span(v-for="(name, i) in role.assigned_names", :key="i")
+							i.fa.fa-user
+							|  {{ name }}{{ i < role.assigned_names.length - 1 ? ', ' : '' }}
+					.shift-role-assignees(v-else)
+						span.shift-role-none None assigned
+		template(v-else)
+			.speakers-row(v-if="namedSpeakers.length")
+				.speakers(
+					ref="speakersRow",
+					:class="{'names-clamped': isShortSession}",
+					:aria-label="speakersAriaLabel")
+					span.speaker(v-for="(speaker, i) of namedSpeakers", :key="speaker.code || i")
+						img(
+							v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							alt="",
+							aria-hidden="true")
+						span.speaker-label {{ speaker.name }}
+						span.speaker-separator(v-if="i + 1 < namedSpeakers.length", aria-hidden="true") ,
+				span.speakers-overflow-hint(
+					v-if="speakersHiddenCount > 0",
+					:aria-label="speakersOverflowLabel") {{ speakersOverflowHint }}
 		.tags-box(v-if="showTags && session.tags && session.tags.length")
 			.tags(v-for="tag_item of session.tags")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
@@ -69,6 +84,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session
 <script>
 import MarkdownIt from 'markdown-it'
 import { getLocalizedString, getPrettyDuration, getSessionTime, getContrastColor, normalizePopularityCount, getSessionTypeLabel } from '../utils'
+import { isShiftSession, getCapacityStatus } from '../teamshifts-adapter'
 import FavButton from './FavButton.vue'
 
 const markdownIt = MarkdownIt({
@@ -150,6 +166,7 @@ export default {
 			getLocalizedString,
 			getSessionTime,
 			getContrastColor,
+			getCapacityStatus,
 			speakersHiddenCount: 0,
 		}
 	},
@@ -276,6 +293,9 @@ export default {
 		},
 		namedSpeakers () {
 			return (this.session.speakers || []).filter(s => (s.name || '').trim())
+		},
+		hasShiftRoles () {
+			return isShiftSession(this.session)
 		},
 		speakersAriaLabel () {
 			return this.namedSpeakers.map(speaker => speaker.name).join(', ')
@@ -931,4 +951,56 @@ expandClampedSessionText()
 			font-size: 14px
 	&.has-fav-count .info.has-icons
 		padding-right: 76px
+	.shift-roles-list
+		margin-top: 6px
+		.shift-role-item
+			padding: 6px 0
+			border-bottom: 1px solid rgba(0, 0, 0, 0.08)
+			&:last-child
+				border-bottom: none
+		.shift-role-header
+			display: flex
+			justify-content: space-between
+			align-items: center
+			gap: 8px
+		.shift-role-name
+			font-weight: 700
+			font-size: 14px
+			color: #333
+		.shift-role-restricted
+			font-size: 10px
+			font-weight: 700
+			background: #888
+			color: #fff
+			padding: 1px 5px
+			border-radius: 3px
+			margin-left: 6px
+			vertical-align: middle
+		.shift-role-badge
+			font-size: 12px
+			font-weight: 700
+			font-style: italic
+			padding: 2px 8px
+			border-radius: 12px
+			border: 1.5px solid
+			white-space: nowrap
+			&.badge-open
+				color: #d9534f
+				border-color: #d9534f
+			&.badge-partial
+				color: #f0ad4e
+				border-color: #f0ad4e
+			&.badge-full
+				color: #5cb85c
+				border-color: #5cb85c
+		.shift-role-assignees
+			font-size: 13px
+			color: #555
+			margin-top: 2px
+			.fa-user
+				font-size: 11px
+				color: #888
+		.shift-role-none
+			color: #999
+			font-style: italic
 </style>
