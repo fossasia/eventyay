@@ -13,6 +13,14 @@ import schedule from './schedule'
 import notifications from './notifications'
 import moment from 'lib/timetravelMoment'
 import { normalizeIframeConsentDomain } from 'lib/iframeConsentDomain'
+import {
+	STREAM_POLL_BASE_DELAY,
+	isPermanentStreamPollError,
+	nextStreamPollDelay,
+	shouldStopAfterTransientErrors,
+	streamPollJitter,
+	usesHttpStreamFallback,
+} from './streamPolling'
 
 export default new Vuex.Store({
 	state: {
@@ -36,6 +44,9 @@ export default new Vuex.Store({
 		autoplayUserSetting: !localStorage.disableAutoplay ? null : localStorage.disableAutoplay !== 'true',
 		stageStreamCollapsed: false,
 		streamPollInterval: null,
+		streamVisibilityHandler: null,
+		streamPollingErrorCount: 0,
+		streamPollingRetryDelay: STREAM_POLL_BASE_DELAY,
 		lastKnownStreamId: null,
 		now: moment(),
 		unblockedIframeDomains: new Set(
@@ -173,11 +184,13 @@ export default new Vuex.Store({
 				// 	// TODO return after profile update?
 				// }
 				dispatch('schedule/fetch', {root: true})
+				dispatch('refreshStreamPolling')
 			})
 			api.on('closed', (code) => {
 				state.connected = false
 				state.socketCloseCode = code
 				dispatch('chat/disconnected', {root: true})
+				dispatch('refreshStreamPolling')
 			})
 			api.on('error', error => {
 				switch (error.code) {
@@ -215,7 +228,7 @@ export default new Vuex.Store({
 			dispatch('chat/updateUser', {id: state.user.id, update})
 		},
 		async fetchCurrentStream({state, getters, commit}, roomId) {
-			if (!roomId || !state.connected) return
+			if (!roomId) return
 			const room = state.rooms?.find(r => r.id === roomId)
 			if (!room) return
 
@@ -231,7 +244,9 @@ export default new Vuex.Store({
 
 			const response = await fetch(url, { headers, credentials: 'include' })
 			if (!response.ok && response.status !== 404) {
-				throw new Error(`Failed to fetch: ${response.status}`)
+				const error = new Error(`Failed to fetch current stream: ${response.status}`)
+				error.status = response.status
+				throw error
 			}
 
 			const currentStream = response.status === 404 ? null : await response.json()
@@ -247,33 +262,86 @@ export default new Vuex.Store({
 				commit('setLastKnownStreamId', streamId)
 			}
 		},
-		startStreamPolling({state, commit, dispatch}, roomId) {
-			if (state.streamPollInterval) {
-				clearInterval(state.streamPollInterval)
+		refreshStreamPolling({state, dispatch}) {
+			if (state.streamVisibilityHandler && state.activeRoom?.id) {
+				dispatch('startStreamPolling', state.activeRoom.id)
 			}
-			dispatch('fetchCurrentStream', roomId).catch(() => {
-				// Polling failures are non-critical, continue polling
-			})
+		},
+		startStreamPolling({state, commit, dispatch}, roomId) {
+			dispatch('stopStreamPolling')
 
-			const intervalId = setInterval(async () => {
+			const scheduleNext = (delay) => {
+				commit('setStreamPollInterval', setTimeout(tick, delay))
+			}
+
+			const onVisibilityChange = () => {
+				if (document.hidden) {
+					if (state.streamPollInterval) {
+						clearTimeout(state.streamPollInterval)
+						commit('setStreamPollInterval', null)
+					}
+					return
+				}
+				if (!state.connected) {
+					scheduleNext(STREAM_POLL_BASE_DELAY)
+				}
+			}
+
+			const handlePollError = (error) => {
+				console.error('Current stream poll failed', {roomId, status: error.status})
+				if (isPermanentStreamPollError(error)) {
+					dispatch('stopStreamPolling')
+					return
+				}
+				state.streamPollingErrorCount += 1
+				if (shouldStopAfterTransientErrors(state.streamPollingErrorCount)) {
+					dispatch('stopStreamPolling')
+					return
+				}
+				state.streamPollingRetryDelay = nextStreamPollDelay(state.streamPollingRetryDelay)
+				scheduleNext(streamPollJitter(state.streamPollingRetryDelay))
+			}
+
+			const tick = async () => {
 				if (!state.activeRoom || state.activeRoom.id !== roomId) {
 					dispatch('stopStreamPolling')
 					return
 				}
-				if (!state.connected) return
+				if (document.hidden) {
+					return
+				}
+				if (!usesHttpStreamFallback(state.connected)) {
+					return
+				}
 				try {
 					await dispatch('fetchCurrentStream', roomId)
-				} catch {
-					// Polling failures are non-critical, continue polling
+					state.streamPollingErrorCount = 0
+					state.streamPollingRetryDelay = STREAM_POLL_BASE_DELAY
+					scheduleNext(streamPollJitter(STREAM_POLL_BASE_DELAY))
+				} catch (error) {
+					handlePollError(error)
 				}
-			}, 10000)
-			commit('setStreamPollInterval', intervalId)
+			}
+
+			state.streamVisibilityHandler = onVisibilityChange
+			document.addEventListener('visibilitychange', onVisibilityChange)
+
+			if (!usesHttpStreamFallback(state.connected)) {
+				return
+			}
+			scheduleNext(streamPollJitter(0))
 		},
 		stopStreamPolling({state, commit}) {
 			if (state.streamPollInterval) {
-				clearInterval(state.streamPollInterval)
+				clearTimeout(state.streamPollInterval)
 				commit('setStreamPollInterval', null)
 			}
+			if (state.streamVisibilityHandler) {
+				document.removeEventListener('visibilitychange', state.streamVisibilityHandler)
+				state.streamVisibilityHandler = null
+			}
+			state.streamPollingErrorCount = 0
+			state.streamPollingRetryDelay = STREAM_POLL_BASE_DELAY
 		},
 		async adminUpdateUser({dispatch}, update) {
 			await api.call('user.admin.update', update)

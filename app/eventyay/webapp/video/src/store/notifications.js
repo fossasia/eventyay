@@ -35,7 +35,7 @@ export default {
 	actions: {
 		// sets state from browser permission and localStorage
 		// TODO prevent switching of settings at app load
-		pollExternals({state, dispatch}) {
+		pollExternals({state}) {
 			state.permission = notificationsSupported && Notification.permission
 			state.permissionPromptDismissed = !!localStorage.notificationPermissionPromptDismissed
 			const settings = loadSettings()

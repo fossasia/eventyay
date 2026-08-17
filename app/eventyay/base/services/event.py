@@ -18,6 +18,7 @@ from eventyay.base.models.chat import Channel
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
 from eventyay.base.services.jitsi import user_can_create_jitsi_room_during_development
+from eventyay.base.services.room import get_cached_current_stream_data
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.core.permissions import Permission
 
@@ -173,6 +174,7 @@ def get_room_config(room, permissions):
         "force_join": room.force_join,
         "modules": [],
         "schedule_data": room.schedule_data or None,
+        "currentStream": get_cached_current_stream_data(room),
     }
 
     if hasattr(room, "current_roomviews"):
