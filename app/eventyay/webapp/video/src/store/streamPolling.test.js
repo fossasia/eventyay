@@ -7,7 +7,6 @@ import assert from 'node:assert/strict'
 import {
 	STREAM_POLL_MAX_DELAY,
 	httpErrorStatus,
-	isAuthFailureError,
 	isPermanentStreamPollError,
 	nextStreamPollDelay,
 	shouldStopAfterTransientErrors,
@@ -23,11 +22,9 @@ test('permanent errors stop polling on 401 and 403', () => {
 	assert.equal(isPermanentStreamPollError({}), false)
 })
 
-test('auth failures are 401 and 403', () => {
-	assert.equal(isAuthFailureError({status: 401}), true)
-	assert.equal(isAuthFailureError({response: {status: 403}}), true)
-	assert.equal(isAuthFailureError({status: 404}), false)
+test('httpErrorStatus reads nested response status', () => {
 	assert.equal(httpErrorStatus({response: {status: 403}}), 403)
+	assert.equal(httpErrorStatus({status: 404}), 404)
 })
 
 test('transient errors double the delay until the cap', () => {

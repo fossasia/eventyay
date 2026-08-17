@@ -2,7 +2,6 @@ export const STREAM_POLL_BASE_DELAY = 60000
 export const STREAM_POLL_MAX_DELAY = 300000
 export const STREAM_POLL_MAX_TRANSIENT_ERRORS = 5
 export const STREAM_POLL_PERMANENT_STATUSES = [401, 403]
-export const AUTH_FAILURE_STATUSES = [401, 403]
 
 export function httpErrorStatus (error) {
 	return error?.status ?? error?.response?.status
@@ -10,10 +9,6 @@ export function httpErrorStatus (error) {
 
 export function isPermanentStreamPollError (error) {
 	return STREAM_POLL_PERMANENT_STATUSES.includes(httpErrorStatus(error))
-}
-
-export function isAuthFailureError (error) {
-	return AUTH_FAILURE_STATUSES.includes(httpErrorStatus(error))
 }
 
 export function nextStreamPollDelay (currentDelay, maxDelay = STREAM_POLL_MAX_DELAY) {
