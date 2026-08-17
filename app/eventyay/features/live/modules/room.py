@@ -36,6 +36,10 @@ from eventyay.base.services.room import (
     start_view,
     validate_room_config_patch,
 )
+from eventyay.base.services.room_creation_gate import (
+    module_config_contains_server_backed_room,
+    user_can_create_server_backed_room_during_development,
+)
 from eventyay.core.permissions import Permission
 from eventyay.core.utils.redis import aredis
 from eventyay.features.live.channels import (
@@ -512,6 +516,16 @@ class RoomModule(BaseModule):
     @command("config.patch")
     @room_action(permission_required=Permission.ROOM_UPDATE)
     async def config_patch(self, body):
+        if (
+            "module_config" in body
+            and module_config_contains_server_backed_room(body["module_config"])
+        ):
+            if not await user_can_create_server_backed_room_during_development(
+                self.consumer.user
+            ):
+                await self.consumer.send_error(code="config.denied")
+                return
+
         old = await database_sync_to_async(serialize_room_config)(self.room)
         validated_data, update_fields = await database_sync_to_async(
             validate_room_config_patch

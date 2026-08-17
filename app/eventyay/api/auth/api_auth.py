@@ -4,9 +4,10 @@ from rest_framework.authentication import get_authorization_header
 
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import Room
-from eventyay.base.services.jitsi import (
-    has_jitsi_development_admin_trait,
-    module_config_contains_jitsi,
+from eventyay.base.services.room_creation_gate import (
+    has_server_room_development_admin_trait,
+    module_config_contains_server_backed_room,
+    server_backed_room_create_permissions,
 )
 from eventyay.core.permissions import Permission
 
@@ -98,12 +99,13 @@ class RoomPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method == "POST":
             traits = request.auth.get("traits")
-            if module_config_contains_jitsi(request.data.get("module_config")):
+            module_config = request.data.get("module_config")
+            if module_config_contains_server_backed_room(module_config):
                 return (
-                    has_jitsi_development_admin_trait(traits)
+                    has_server_room_development_admin_trait(traits)
                     and request.event.has_permission_implicit(
                         traits=traits,
-                        permissions=[Permission.EVENT_ROOMS_CREATE_JITSI],
+                        permissions=server_backed_room_create_permissions(module_config),
                     )
                 )
             return request.event.has_permission_implicit(
@@ -120,13 +122,27 @@ class RoomPermissions(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj: Room):
         permission = None
+        traits = request.auth.get("traits")
+        module_config = request.data.get("module_config")
+        if (
+            request.method in ("PATCH", "PUT")
+            and module_config_contains_server_backed_room(module_config)
+        ):
+            if not (
+                has_server_room_development_admin_trait(traits)
+                and request.event.has_permission_implicit(
+                    traits=traits,
+                    permissions=server_backed_room_create_permissions(module_config),
+                )
+            ):
+                return False
         if request.method in ("PATCH", "PUT"):
             permission = Permission.ROOM_UPDATE
         elif request.method == "DELETE":
             permission = Permission.ROOM_DELETE
         if permission:
             return request.event.has_permission_implicit(
-                permissions=[permission], traits=request.auth.get("traits")
+                permissions=[permission], traits=traits
             )
         else:
             return True
