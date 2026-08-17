@@ -48,3 +48,39 @@ def test_room_current_stream_uses_serialize_helper(monkeypatch):
 
     data = event_service.get_room_current_stream_data(room)
     assert data == {'url': 'https://example.com/live.m3u8', 'id': 1}
+
+
+def test_batch_room_current_stream_data_uses_one_query(event, django_assert_num_queries):
+    import datetime as dt
+
+    from django.utils.timezone import now
+
+    from eventyay.base.models import Room
+    from eventyay.base.models.stream_schedule import StreamSchedule
+
+    start = now() - dt.timedelta(minutes=5)
+    end = now() + dt.timedelta(hours=1)
+    room_a = Room.objects.create(event=event, name='Stage A')
+    room_b = Room.objects.create(event=event, name='Stage B')
+    StreamSchedule.objects.create(
+        room=room_a,
+        title='Live A',
+        url='https://example.com/a.m3u8',
+        start_time=start,
+        end_time=end,
+        stream_type='hls',
+    )
+    StreamSchedule.objects.create(
+        room=room_b,
+        title='Live B',
+        url='https://example.com/b.m3u8',
+        start_time=start,
+        end_time=end,
+        stream_type='hls',
+    )
+
+    with django_assert_num_queries(1):
+        data = event_service.batch_room_current_stream_data([room_a, room_b])
+
+    assert data[room_a.pk]['url'] == 'https://example.com/a.m3u8'
+    assert data[room_b.pk]['url'] == 'https://example.com/b.m3u8'
