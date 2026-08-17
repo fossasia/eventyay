@@ -1,3 +1,5 @@
+import datetime
+
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
@@ -73,33 +75,18 @@ class StartPageView(TemplateView):
                 ctx['events'] = [e for e in qs if not e.has_component_testmode]
                 return ctx
 
-            today = timezone.localdate()
+            today_start = timezone.make_aware(
+                datetime.datetime.combine(timezone.localdate(), datetime.time.min),
+                timezone.get_current_timezone(),
+            )
             base_qs = (
                 Event.objects.select_related('organizer')
                 .prefetch_related('_settings_objects')
                 .filter(live=True, testmode=False)
                 .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
-                .only(
-                    'id',
-                    'organizer_id',
-                    'organizer__id',
-                    'organizer__name',
-                    'organizer__slug',
-                    'name',
-                    'slug',
-                    'date_from',
-                    'date_to',
-                    'location',
-                    'live',
-                    'is_public',
-                    'testmode',
-                    'startpage_visible',
-                    'startpage_featured',
-                    'header_image',
-                )
             )
-            future_filter = Q(date_to__date__gte=today) | Q(date_to__isnull=True, date_from__date__gte=today)
-            past_filter = Q(date_to__date__lt=today) | Q(date_to__isnull=True, date_from__date__lt=today)
+            future_filter = Q(date_to__gte=today_start) | Q(date_to__isnull=True, date_from__gte=today_start)
+            past_filter = Q(date_to__lt=today_start) | Q(date_to__isnull=True, date_from__lt=today_start)
 
             featured_qs = base_qs.filter(startpage_featured=True).filter(future_filter).order_by('date_from')[:8]
             upcoming_qs = (
@@ -176,13 +163,16 @@ class UpcomingEventsView(PaginationMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        today = timezone.localdate()
+        today_start = timezone.make_aware(
+            datetime.datetime.combine(timezone.localdate(), datetime.time.min),
+            timezone.get_current_timezone(),
+        )
         qs = (
             Event.objects.select_related('organizer')
             .prefetch_related('_settings_objects')
             .filter(live=True)
             .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            .filter(Q(date_to__date__gte=today) | Q(date_to__isnull=True, date_from__date__gte=today))
+            .filter(Q(date_to__gte=today_start) | Q(date_to__isnull=True, date_from__gte=today_start))
             .filter(testmode=False)
             .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
             .order_by('date_from')
@@ -204,13 +194,16 @@ class PastEventsView(PaginationMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        today = timezone.localdate()
+        today_start = timezone.make_aware(
+            datetime.datetime.combine(timezone.localdate(), datetime.time.min),
+            timezone.get_current_timezone(),
+        )
         qs = (
             Event.objects.select_related('organizer')
             .prefetch_related('_settings_objects')
             .filter(live=True)
             .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            .filter(Q(date_to__date__lt=today) | Q(date_to__isnull=True, date_from__date__lt=today))
+            .filter(Q(date_to__lt=today_start) | Q(date_to__isnull=True, date_from__lt=today_start))
             .filter(testmode=False)
             .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
             .order_by('-date_from')
@@ -232,7 +225,10 @@ class FollowedEventsView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_common_base_context(self.request))
-        today = timezone.localdate()
+        today_start = timezone.make_aware(
+            datetime.datetime.combine(timezone.localdate(), datetime.time.min),
+            timezone.get_current_timezone(),
+        )
 
         followed_org_ids = OrganizerFollower.objects.filter(
             user=self.request.user
@@ -248,7 +244,7 @@ class FollowedEventsView(TemplateView):
                     live=True,
                 )
                 .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-                .filter(Q(date_to__date__gte=today) | Q(date_to__isnull=True, date_from__date__gte=today))
+                .filter(Q(date_to__gte=today_start) | Q(date_to__isnull=True, date_from__gte=today_start))
                 .filter(testmode=False)
                 .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
                 .select_related('organizer')
