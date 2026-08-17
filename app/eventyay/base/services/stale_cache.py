@@ -257,6 +257,12 @@ def talk_slots_filter_key(request, filter_fields):
     ordering = params.get('ordering')
     if ordering:
         parts.append(f'ordering={ordering}')
+    for key in ('page', 'page_size', 'limit', 'offset'):
+        value = params.get(key)
+        if value is not None:
+            parts.append(f'{key}={value}')
+    if not any(params.get(key) is not None for key in ('page', 'page_size', 'limit', 'offset')):
+        parts.append('page=1')
     if not parts:
         return 'default'
     return hashlib.md5('|'.join(parts).encode(), usedforsecurity=False).hexdigest()

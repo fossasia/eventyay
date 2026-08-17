@@ -182,16 +182,6 @@ def cached_json_response(request, data, *, max_age, updated_at=None, etag=None):
     return response
 
 
-def cached_list_response(view, request, data, *, max_age, etag=None, updated_at=None):
-    """Apply DRF pagination when configured, then attach cache headers."""
-    paginator = view.paginator
-    if paginator is not None:
-        page = paginator.paginate_queryset(data, request, view=view)
-        if page is not None:
-            data = paginator.get_paginated_response(page).data
-    return cached_json_response(request, data, max_age=max_age, etag=etag, updated_at=updated_at)
-
-
 class CachedCatalogListMixin:
     catalog_name = None
     catalog_max_age = CATALOG_HOT_TTL

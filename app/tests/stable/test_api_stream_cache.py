@@ -293,6 +293,17 @@ def test_talk_slots_filter_key_includes_ordering():
     assert default != ordered
 
 
+def test_talk_slots_filter_key_includes_page():
+    from django.test import RequestFactory
+
+    from eventyay.base.services.stale_cache import talk_slots_filter_key
+
+    factory = RequestFactory()
+    page1 = talk_slots_filter_key(factory.get('/'), ['room'])
+    page2 = talk_slots_filter_key(factory.get('/?page=2'), ['room'])
+    assert page1 != page2
+
+
 def test_catalog_list_cache_skips_paginated_viewsets():
     from types import SimpleNamespace
 
@@ -324,11 +335,16 @@ def test_talk_slots_cached_list_returns_paginated_envelope():
 
     from django.contrib.auth.models import AnonymousUser
     from django.test import RequestFactory
-    from rest_framework.pagination import PageNumberPagination
 
     from eventyay.api.views.schedule import TalkSlotViewSet
 
-    slots = [{'id': index, 'submission': f'talk-{index}'} for index in range(1, 4)]
+    page_results = [{'id': index, 'submission': f'talk-{index}'} for index in range(1, 4)]
+    paginated = {
+        'count': 120,
+        'next': 'http://example.com/slots/?page=2',
+        'previous': None,
+        'results': page_results,
+    }
     request = RequestFactory().get('/slots/')
     request.user = AnonymousUser()
     request.query_params = request.GET
@@ -336,23 +352,20 @@ def test_talk_slots_cached_list_returns_paginated_envelope():
     view = TalkSlotViewSet()
     view.request = request
     view.format_kwarg = None
-    view.pagination_class = PageNumberPagination
     view.event = SimpleNamespace(pk=1, current_schedule=SimpleNamespace(pk=1))
     view.action = 'list'
     view.is_orga = False
     view.filterset_class = MagicMock(get_fields=lambda: {})
-    view.filter_queryset = lambda queryset: queryset
-    view.get_queryset = lambda: []
-    view.get_serializer = lambda queryset, many=False: SimpleNamespace(data=slots)
 
     with patch(
         'eventyay.api.views.schedule.get_cached_talk_slots_list',
-        return_value=(slots, 'etag-value'),
-    ):
+        return_value=(paginated, 'etag-value'),
+    ) as cached:
         response = view.list(request)
 
+    cached.assert_called_once()
     assert response.status_code == 200
-    assert response.data['count'] == 3
+    assert response.data['count'] == 120
     assert len(response.data['results']) == 3
     assert response.data['results'][0]['id'] == 1
     assert response['ETag'] == '"etag-value"'

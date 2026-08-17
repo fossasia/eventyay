@@ -21,7 +21,6 @@ from eventyay.api.filters.schedule import TalkSlotFilter
 from eventyay.api.mixins import (
     PretalxViewSetMixin,
     cached_json_response,
-    cached_list_response,
     prefetch_talk_slots,
 )
 from eventyay.base.services.stale_cache import (
@@ -413,6 +412,12 @@ class TalkSlotViewSet(
 
         def loader():
             queryset = self.filter_queryset(self.get_queryset())
+            paginator = self.paginator
+            if paginator is not None:
+                page = paginator.paginate_queryset(queryset, request, view=self)
+                if page is not None:
+                    serializer = self.get_serializer(page, many=True)
+                    return paginator.get_paginated_response(serializer.data).data
             serializer = self.get_serializer(queryset, many=True)
             return serializer.data
 
@@ -424,9 +429,7 @@ class TalkSlotViewSet(
             locale_key,
             loader,
         )
-        return cached_list_response(
-            self, request, data, max_age=SCHEDULE_HOT_TTL, etag=etag
-        )
+        return cached_json_response(request, data, max_age=SCHEDULE_HOT_TTL, etag=etag)
 
     @action(detail=True, methods=['get'])
     def ical(self, request, event, pk=None):
