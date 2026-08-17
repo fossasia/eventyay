@@ -1,7 +1,10 @@
 import json
 from collections import Counter
 from operator import itemgetter
+import csv
+from io import StringIO
 
+from django.http import HttpResponse
 from dateutil import rrule
 from django.conf import settings
 from django.contrib import messages
@@ -1220,8 +1223,45 @@ class AllFeedbacksList(EventPermissionRequired, PaginationMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        return Feedback.objects.order_by('-pk').select_related('talk').filter(talk__event=self.request.event)
+        return Feedback.objects.order_by('-pk').select_related(
+            'talk',
+            'speaker',
+        ).filter(
+            talk__event=self.request.event
+        )
 
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('export') == 'csv':
+            return self.export_csv()
+        return super().get(request, *args, **kwargs)
+
+    def export_csv(self):
+        output = StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            'Session',
+            'Speaker',
+            'Rating',
+            'Feedback',
+        ])
+
+        for feedback in self.get_queryset():
+            writer.writerow([
+                feedback.talk.title,
+                feedback.speaker.fullname if feedback.speaker else '',
+                feedback.rating,
+                feedback.review,
+            ])
+
+        response = HttpResponse(
+            output.getvalue(),
+            content_type='text/csv; charset=utf-8',
+        )
+        response['Content-Disposition'] = (
+            f'attachment; filename="{self.request.event.slug}_feedback.csv"'
+        )
+        return response
 
 class TagView(OrgaCRUDView):
     model = Tag

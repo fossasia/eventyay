@@ -10,6 +10,15 @@
 {% block content %}
     {% trans "Attendee feedback" as header_title %}
     {% include "common/includes/header_nav.html" with header_title=header_title %}
+    <div class="submit-group panel mb-4">
+    <span></span>
+    <span>
+        <a href="?export=csv" class="btn btn-success">
+            <i class="fa fa-download"></i>
+            {% translate "Download CSV" %}
+        </a>
+    </span>
+    </div>
 
     {% regroup feedback|dictsort:"talk.title" by talk.title as feedbacks_list %}
 
