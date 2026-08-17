@@ -906,3 +906,6 @@ input.password_strength {
 .password-input-wrapper .js-password-toggle:hover {
   color: #374151;
 }
+.teamshifts-roles-selector {
+  margin-top: 15px;
+}

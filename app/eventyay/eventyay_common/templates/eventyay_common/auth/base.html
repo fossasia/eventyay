@@ -32,6 +32,12 @@
     {% comment %} <meta name="msapplication-config" content="{% url "presale:browserconfig.xml" %}"> {% endcomment %}
     <meta name="theme-color" content="#2185d0">
     <script type="module" src="{% static "common/js/password_toggle.js" %}"></script>
+    <script>
+        window.passwordToggleLabels = {
+            show: "{% translate 'Show password' %}",
+            hide: "{% translate 'Hide password' %}"
+        };
+    </script>
 </head>
 <body>
     <div id="wrapper">

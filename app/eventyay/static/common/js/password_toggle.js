@@ -1,48 +1,3 @@
-function injectStyles() {
-    if (document.getElementById('password-toggle-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'password-toggle-styles';
-    style.innerHTML = `
-        .password-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
-        .password-input-wrapper input[type="password"],
-        .password-input-wrapper input[type="text"] {
-            width: 100%;
-            padding-right: 40px !important;
-        }
-        .password-input-wrapper .js-password-toggle {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: transparent !important;
-            border: none !important;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: none !important;
-            color: #6b7280;
-            outline: none;
-            z-index: 10;
-            cursor: pointer;
-        }
-        .password-input-wrapper .js-password-toggle:hover {
-            color: #374151;
-        }
-        .password-input-wrapper .js-password-toggle svg {
-            color: #6b7280;
-        }
-    `;
-    document.head.appendChild(style);
-}
-
 export function autoWrapPasswordFields(root = document) {
     root.querySelectorAll('input[type="password"]').forEach(input => {
         // Skip if already inside a .password-input-wrapper (e.g. signup form manual wraps)
@@ -59,11 +14,15 @@ export function autoWrapPasswordFields(root = document) {
         input.parentNode.insertBefore(wrapper, input);
         wrapper.appendChild(input);
         
+        // Get translation string
+        const showLabel = window.passwordToggleLabels?.show || 'Show password';
+
         // Create toggle button
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'js-password-toggle';
-        btn.setAttribute('aria-label', 'Toggle password visibility');
+        btn.setAttribute('aria-label', showLabel);
+        btn.setAttribute('aria-pressed', 'false');
         btn.innerHTML = `
             <svg class="icon-eye" style="width: 20px; height: 20px; display: block;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
@@ -80,7 +39,6 @@ export function autoWrapPasswordFields(root = document) {
 }
 
 export function initPasswordToggles(root = document) {
-    injectStyles();
     autoWrapPasswordFields(root);
 
     root.querySelectorAll('.js-password-toggle').forEach(btn => {
@@ -97,14 +55,21 @@ export function initPasswordToggles(root = document) {
             const iconEyeSlash = this.querySelector('.icon-eye-slash');
             
             if (input && iconEye && iconEyeSlash) {
+                const showLabel = window.passwordToggleLabels?.show || 'Show password';
+                const hideLabel = window.passwordToggleLabels?.hide || 'Hide password';
+
                 if (input.type === 'password') {
                     input.type = 'text';
                     iconEye.style.display = 'none';
                     iconEyeSlash.style.display = 'block';
+                    btn.setAttribute('aria-pressed', 'true');
+                    btn.setAttribute('aria-label', hideLabel);
                 } else {
                     input.type = 'password';
                     iconEye.style.display = 'block';
                     iconEyeSlash.style.display = 'none';
+                    btn.setAttribute('aria-pressed', 'false');
+                    btn.setAttribute('aria-label', showLabel);
                 }
             }
         });

@@ -34,6 +34,13 @@
   </style>
 
   {% block extra_head %}{% endblock extra_head %}
+  <script type="module" src="{{ static_url('common/js/password_toggle.js') }}"></script>
+  <script>
+    window.passwordToggleLabels = {
+      show: "{{ _('Show password') }}",
+      hide: "{{ _('Hide password') }}"
+    };
+  </script>
 </head>
 <body>
   <div class='page-wrapper'>
