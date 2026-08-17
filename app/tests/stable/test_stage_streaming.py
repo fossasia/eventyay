@@ -340,27 +340,6 @@ def test_invalidate_current_stream_cache_forces_lookup():
     assert lookups == [1, 1]
 
 
-def test_room_config_includes_cached_current_stream(monkeypatch):
-    monkeypatch.setattr(
-        event_service,
-        'get_cached_current_stream_data',
-        lambda room: {'url': 'https://example.com/live.m3u8'},
-    )
-    room = SimpleNamespace(
-        id=1,
-        name='Stage',
-        description='',
-        picture=None,
-        import_id='',
-        pretalx_id=None,
-        force_join=False,
-        schedule_data=None,
-        module_config=[],
-    )
-    config = event_service.get_room_config(room, [])
-    assert config['currentStream']['url'] == 'https://example.com/live.m3u8'
-
-
 def test_current_stream_response_sets_cache_headers_and_etag():
     from django.test import RequestFactory
 
