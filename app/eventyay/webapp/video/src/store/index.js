@@ -283,6 +283,10 @@ export default new Vuex.Store({
 		startStreamPolling({state, commit, dispatch}, roomId) {
 			dispatch('stopStreamPolling')
 
+			if (!usesHttpStreamFallback(state.connected)) {
+				return
+			}
+
 			const scheduleNext = (delay) => {
 				commit('setStreamPollInterval', setTimeout(tick, delay))
 			}
@@ -295,6 +299,8 @@ export default new Vuex.Store({
 					}
 					return
 				}
+				// tick() exits without rescheduling while the tab is hidden; restart
+				// fallback polling when the tab becomes visible again.
 				if (!state.connected) {
 					scheduleNext(STREAM_POLL_BASE_DELAY)
 				}
@@ -337,10 +343,6 @@ export default new Vuex.Store({
 
 			commit('setStreamVisibilityHandler', onVisibilityChange)
 			document.addEventListener('visibilitychange', onVisibilityChange)
-
-			if (!usesHttpStreamFallback(state.connected)) {
-				return
-			}
 			scheduleNext(streamPollJitter(0))
 		},
 		stopStreamPolling({state, commit}) {
