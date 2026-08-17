@@ -14,6 +14,8 @@ services:
       - 8000
     env_file:
       - ./.env
+    environment:
+      - MAX_CONCURRENT_REQUESTS=4
     depends_on:
       - db
       - redis

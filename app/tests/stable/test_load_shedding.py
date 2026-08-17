@@ -50,7 +50,7 @@ def overloaded_middleware(monkeypatch):
 def test_load_shedding_is_enabled_by_default():
     from eventyay.base.middleware import MAX_CONCURRENT_REQUESTS
 
-    assert MAX_CONCURRENT_REQUESTS == 16
+    assert MAX_CONCURRENT_REQUESTS == 4
 
 
 def test_load_shedding_can_be_disabled(monkeypatch):
@@ -92,6 +92,20 @@ def test_load_shedding_exempts_checkin_and_health(path, monkeypatch):
 
     with overloaded_middleware(monkeypatch) as middleware:
         assert middleware(RequestFactory().get(path)).status_code == 200
+
+
+@pytest.mark.parametrize(
+    'path',
+    [
+        '/schedule/',
+        '/api/v1/organizers/wm/events/wm/checkinlists-backup/',
+    ],
+)
+def test_load_shedding_does_not_exempt_unrelated_paths(path, monkeypatch):
+    from django.test import RequestFactory
+
+    with overloaded_middleware(monkeypatch) as middleware:
+        assert middleware(RequestFactory().get(path)).status_code == 503
 
 
 def test_heavy_celery_tasks_routed_to_longrunning():
