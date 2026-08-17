@@ -134,6 +134,19 @@ export default new Vuex.Store({
 		setStreamPollInterval(state, streamPollInterval) {
 			state.streamPollInterval = streamPollInterval
 		},
+		resetStreamPollingBackoff(state) {
+			state.streamPollingErrorCount = 0
+			state.streamPollingRetryDelay = STREAM_POLL_BASE_DELAY
+		},
+		incrementStreamPollingErrorCount(state) {
+			state.streamPollingErrorCount += 1
+		},
+		setStreamPollingRetryDelay(state, delay) {
+			state.streamPollingRetryDelay = delay
+		},
+		setStreamVisibilityHandler(state, handler) {
+			state.streamVisibilityHandler = handler
+		},
 		setLastKnownStreamId(state, streamId) {
 			state.lastKnownStreamId = streamId
 		},
@@ -263,7 +276,7 @@ export default new Vuex.Store({
 			}
 		},
 		refreshStreamPolling({state, dispatch}) {
-			if (state.streamVisibilityHandler && state.activeRoom?.id) {
+			if (state.activeRoom?.id) {
 				dispatch('startStreamPolling', state.activeRoom.id)
 			}
 		},
@@ -293,12 +306,12 @@ export default new Vuex.Store({
 					dispatch('stopStreamPolling')
 					return
 				}
-				state.streamPollingErrorCount += 1
+				commit('incrementStreamPollingErrorCount')
 				if (shouldStopAfterTransientErrors(state.streamPollingErrorCount)) {
 					dispatch('stopStreamPolling')
 					return
 				}
-				state.streamPollingRetryDelay = nextStreamPollDelay(state.streamPollingRetryDelay)
+				commit('setStreamPollingRetryDelay', nextStreamPollDelay(state.streamPollingRetryDelay))
 				scheduleNext(streamPollJitter(state.streamPollingRetryDelay))
 			}
 
@@ -315,15 +328,14 @@ export default new Vuex.Store({
 				}
 				try {
 					await dispatch('fetchCurrentStream', roomId)
-					state.streamPollingErrorCount = 0
-					state.streamPollingRetryDelay = STREAM_POLL_BASE_DELAY
+					commit('resetStreamPollingBackoff')
 					scheduleNext(streamPollJitter(STREAM_POLL_BASE_DELAY))
 				} catch (error) {
 					handlePollError(error)
 				}
 			}
 
-			state.streamVisibilityHandler = onVisibilityChange
+			commit('setStreamVisibilityHandler', onVisibilityChange)
 			document.addEventListener('visibilitychange', onVisibilityChange)
 
 			if (!usesHttpStreamFallback(state.connected)) {
@@ -338,10 +350,9 @@ export default new Vuex.Store({
 			}
 			if (state.streamVisibilityHandler) {
 				document.removeEventListener('visibilitychange', state.streamVisibilityHandler)
-				state.streamVisibilityHandler = null
+				commit('setStreamVisibilityHandler', null)
 			}
-			state.streamPollingErrorCount = 0
-			state.streamPollingRetryDelay = STREAM_POLL_BASE_DELAY
+			commit('resetStreamPollingBackoff')
 		},
 		async adminUpdateUser({dispatch}, update) {
 			await api.call('user.admin.update', update)

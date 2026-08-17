@@ -22,3 +22,31 @@ def test_room_config_includes_current_stream(monkeypatch):
     )
     config = event_service.get_room_config(room, [])
     assert config['currentStream']['url'] == 'https://example.com/live.m3u8'
+
+
+def test_room_current_stream_uses_serialize_helper(monkeypatch):
+    stream = SimpleNamespace(
+        pk=1,
+        room_id=2,
+        title='Live',
+        url='https://example.com/live.m3u8',
+        start_time=None,
+        end_time=None,
+        stream_type='hls',
+        config={},
+        created_at=None,
+        updated_at=None,
+    )
+    room = SimpleNamespace(pk=2, get_current_stream=lambda: stream)
+
+    import eventyay.base.services.room as room_service
+
+    monkeypatch.setattr(
+        room_service,
+        'serialize_current_stream',
+        lambda current: {'url': current.url, 'id': current.pk},
+    )
+    monkeypatch.delattr(room_service, 'get_cached_current_stream_data', raising=False)
+
+    data = event_service.get_room_current_stream_data(room)
+    assert data == {'url': 'https://example.com/live.m3u8', 'id': 1}

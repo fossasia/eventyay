@@ -175,6 +175,10 @@ def get_room_current_stream_data(room):
     if not current:
         return None
 
+    serializer = getattr(room_service, 'serialize_current_stream', None)
+    if serializer is not None:
+        return serializer(current)
+
     def isoformat(value):
         return value.isoformat() if value else None
 

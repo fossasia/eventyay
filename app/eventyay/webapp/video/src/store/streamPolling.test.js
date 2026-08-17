@@ -14,11 +14,10 @@ import {
 	usesHttpStreamFallback,
 } from './streamPolling.js'
 
-test('permanent errors stop polling on 401 and 403', () => {
-	for (const status of [401, 403]) {
+test('permanent errors stop polling on 400, 401, and 403', () => {
+	for (const status of [400, 401, 403]) {
 		assert.equal(isPermanentStreamPollError({status}), true)
 	}
-	assert.equal(isPermanentStreamPollError({status: 400}), false)
 	assert.equal(isPermanentStreamPollError({status: 500}), false)
 	assert.equal(isPermanentStreamPollError({}), false)
 })
@@ -45,4 +44,15 @@ test('polling stops after five consecutive transient errors', () => {
 	assert.equal(shouldStopAfterTransientErrors(4), false)
 	assert.equal(shouldStopAfterTransientErrors(5), true)
 	assert.equal(shouldStopAfterTransientErrors(6), true)
+})
+
+test('fallback polling resumes after websocket disconnect', () => {
+	assert.equal(usesHttpStreamFallback(true), false, 'connected socket should not poll')
+	assert.equal(usesHttpStreamFallback(false), true, 'disconnected socket should poll')
+	assert.equal(isPermanentStreamPollError({status: 400}), true, '400 stops fallback after disconnect')
+	let delay = 60000
+	for (let i = 0; i < 3; i += 1) {
+		delay = nextStreamPollDelay(delay)
+	}
+	assert.equal(delay, STREAM_POLL_MAX_DELAY)
 })

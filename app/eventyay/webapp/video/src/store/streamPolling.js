@@ -1,7 +1,7 @@
 export const STREAM_POLL_BASE_DELAY = 60000
 export const STREAM_POLL_MAX_DELAY = 300000
 export const STREAM_POLL_MAX_TRANSIENT_ERRORS = 5
-export const STREAM_POLL_PERMANENT_STATUSES = [401, 403]
+export const STREAM_POLL_PERMANENT_STATUSES = [400, 401, 403]
 export const AUTH_FAILURE_STATUSES = [401, 403]
 
 export function httpErrorStatus (error) {
