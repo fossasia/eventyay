@@ -1479,6 +1479,7 @@ EVENTYAY_ENVIRONMENT = os.getenv('EVENTYAY_ENVIRONMENT', 'unknown')
 
 # Sentry configuration
 SENTRY_DSN = conf.sentry_dsn
+SENTRY_ENABLED = bool(SENTRY_DSN)
 if SENTRY_DSN:
     import sentry_sdk
     from sentry_sdk.integrations.celery import CeleryIntegration
