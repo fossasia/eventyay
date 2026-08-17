@@ -283,7 +283,7 @@ def test_uses_schedule_driven_stage(module_config, expected):
 def test_room_config_includes_cached_current_stream(monkeypatch):
     monkeypatch.setattr(
         event_service,
-        'get_cached_current_stream_data',
+        'get_room_current_stream_data',
         lambda room: {'url': 'https://example.com/live.m3u8'},
     )
     room = SimpleNamespace(

@@ -486,7 +486,7 @@ export default new Vuex.Store({
 			const streamId = stream?.id || null
 			commit('setRoomCurrentStream', { roomId: room.id, stream })
 			commit('setLastKnownStreamId', streamId)
-			if (reload) {
+			if (reload && usesHttpStreamFallback(state.connected)) {
 				dispatch('fetchCurrentStream', room.id).catch(() => {
 					// Stream refresh failures are non-critical
 				})
