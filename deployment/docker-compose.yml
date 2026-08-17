@@ -58,6 +58,7 @@ services:
       - redis
 
   worker-heavy:
+    # Required in production: processes longrunning/background queues (badges, exports, imports).
     image: eventyay/eventyay-next:${TAG}
     container_name: eventyay-next-worker-heavy
     entrypoint: celery -A eventyay worker -l info -Q longrunning,background -c 1 --prefetch-multiplier=1 --max-tasks-per-child=200

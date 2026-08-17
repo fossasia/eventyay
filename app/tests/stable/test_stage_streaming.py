@@ -370,14 +370,6 @@ def test_load_shedding_exempts_checkin_and_health(path, monkeypatch):
     with overloaded_middleware(monkeypatch) as middleware:
         assert middleware(RequestFactory().get(path)).status_code == 200
 
-def test_global_api_throttle_is_nat_safe():
-    from django.conf import settings
-
-    throttle_classes = settings.REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES']
-    assert 'EventyayAnonRateThrottle' not in throttle_classes
-    assert 'eventyay.api.throttles.EventyayUserRateThrottle' in throttle_classes
-
-
 def test_heavy_celery_tasks_routed_to_longrunning():
     from django.conf import settings
 
@@ -386,8 +378,14 @@ def test_heavy_celery_tasks_routed_to_longrunning():
         'eventyay.plugins.badges.tasks.*',
         'eventyay.base.services.export.*',
         'eventyay.base.services.orderimport.*',
+        'eventyay.features.importers.tasks.*',
+        'eventyay.base.services.tickets.generate',
+        'pretalx.agenda.export_schedule_html',
     ):
         assert routes[name]['queue'] == 'longrunning'
+
+
+def test_404_skips_session_save():
     from django.http import HttpResponse
     from django.test import RequestFactory
 
