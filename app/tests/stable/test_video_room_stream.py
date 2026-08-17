@@ -39,14 +39,12 @@ def test_room_current_stream_uses_serialize_helper(monkeypatch):
     )
     room = SimpleNamespace(pk=2, get_current_stream=lambda: stream)
 
-    import eventyay.base.services.room as room_service
-
     monkeypatch.setattr(
-        room_service,
-        'serialize_current_stream',
+        'eventyay.base.services.room.serialize_current_stream',
         lambda current: {'url': current.url, 'id': current.pk},
+        raising=False,
     )
-    monkeypatch.delattr(room_service, 'get_cached_current_stream_data', raising=False)
+    monkeypatch.delattr('eventyay.base.services.room.get_cached_current_stream_data', raising=False)
 
     data = event_service.get_room_current_stream_data(room)
     assert data == {'url': 'https://example.com/live.m3u8', 'id': 1}
