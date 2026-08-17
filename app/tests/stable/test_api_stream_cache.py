@@ -299,6 +299,7 @@ def test_catalog_list_cache_skips_paginated_viewsets():
     from rest_framework.pagination import LimitOffsetPagination
 
     from eventyay.api.mixins import CachedCatalogListMixin
+    from eventyay.api.views.submission import TrackViewSet
 
     class PaginatedCatalog(CachedCatalogListMixin):
         catalog_name = 'tracks'
@@ -308,9 +309,50 @@ def test_catalog_list_cache_skips_paginated_viewsets():
 
     class UnpaginatedCatalog(CachedCatalogListMixin):
         catalog_name = 'tracks'
-        pagination_class = None
         event = SimpleNamespace(pk=1)
         request = SimpleNamespace(query_params={})
 
     assert PaginatedCatalog().uses_catalog_list_cache() is False
     assert UnpaginatedCatalog().uses_catalog_list_cache() is True
+    assert CachedCatalogListMixin.pagination_class is None
+    assert TrackViewSet.pagination_class is None
+
+
+def test_talk_slots_cached_list_returns_paginated_envelope():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+
+    from django.contrib.auth.models import AnonymousUser
+    from django.test import RequestFactory
+    from rest_framework.pagination import PageNumberPagination
+
+    from eventyay.api.views.schedule import TalkSlotViewSet
+
+    slots = [{'id': index, 'submission': f'talk-{index}'} for index in range(1, 4)]
+    request = RequestFactory().get('/slots/')
+    request.user = AnonymousUser()
+    request.query_params = request.GET
+
+    view = TalkSlotViewSet()
+    view.request = request
+    view.format_kwarg = None
+    view.pagination_class = PageNumberPagination
+    view.event = SimpleNamespace(pk=1, current_schedule=SimpleNamespace(pk=1))
+    view.action = 'list'
+    view.is_orga = False
+    view.filterset_class = MagicMock(get_fields=lambda: {})
+    view.filter_queryset = lambda queryset: queryset
+    view.get_queryset = lambda: []
+    view.get_serializer = lambda queryset, many=False: SimpleNamespace(data=slots)
+
+    with patch(
+        'eventyay.api.views.schedule.get_cached_talk_slots_list',
+        return_value=(slots, 'etag-value'),
+    ):
+        response = view.list(request)
+
+    assert response.status_code == 200
+    assert response.data['count'] == 3
+    assert len(response.data['results']) == 3
+    assert response.data['results'][0]['id'] == 1
+    assert response['ETag'] == '"etag-value"'

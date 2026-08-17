@@ -9,6 +9,7 @@ from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.serializers.fields import UploadedFileField
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.base.models.auth import User
+from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.models.question import TalkQuestionTarget
 from eventyay.base.models.resource import Resource
 from eventyay.base.models.submission import Submission
@@ -188,12 +189,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             )
         ):
             return []
-        profiles = []
-        for user in obj.speakers.all():
-            for profile in user.profiles.all():
-                if profile.event_id == self.event.pk:
-                    profiles.append(profile)
-                    break
+        profiles = SpeakerProfile.objects.filter(event=self.event, user__in=obj.speakers.all()).distinct()
         if serializer := self.get_extra_flex_field('speakers', profiles):
             return serializer.data
         return obj.speakers.values_list('code', flat=True)
