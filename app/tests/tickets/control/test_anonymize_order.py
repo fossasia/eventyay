@@ -251,15 +251,17 @@ class OrderAnonymizeTest(SoupTest):
             assert self.order.email == 'anonymized-order-ANON1@eventyay.local'
 
     def test_order_detail_view_toolbar_button(self):
-        """Order detail view toolbar displays anonymize button only when event has ended."""
+        """Order detail view toolbar displays enabled link when event ended and disabled button with tooltip when ongoing."""
         url = f'/control/event/{self.orga.slug}/{self.event.slug}/orders/ANON1/'
 
-        # Event is ended (date_to was yesterday)
+        # Event is ended (date_to was yesterday): link is active
         response = self.client.get(url)
         assert response.status_code == 200
-        assert 'Anonymize ticket data' in response.content.decode()
+        content = response.content.decode()
+        assert 'Anonymize ticket data' in content
+        assert f'/orders/ANON1/anonymize' in content
 
-        # Future event
+        # Future event: button is disabled with tooltip
         with scopes_disabled():
             self.event.date_from = now() + timedelta(days=1)
             self.event.date_to = now() + timedelta(days=2)
@@ -267,7 +269,10 @@ class OrderAnonymizeTest(SoupTest):
 
         response = self.client.get(url)
         assert response.status_code == 200
-        assert 'Anonymize ticket data' not in response.content.decode()
+        content = response.content.decode()
+        assert 'Anonymize ticket data' in content
+        assert 'disabled' in content
+        assert 'Order ticketing data cannot be anonymized before the associated event has ended.' in content
 
     def test_anonymize_order_before_event_end_fails(self):
         """Order anonymization before event end should raise ValidationError and block UI control view."""
