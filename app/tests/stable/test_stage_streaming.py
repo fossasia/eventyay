@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from unittest.mock import MagicMock
 import pytest
 from asgiref.sync import async_to_sync
+from django.test.utils import override_settings
 from django.utils.timezone import now
 
 from eventyay.base.models import Room

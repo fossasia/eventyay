@@ -14,7 +14,7 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
 from eventyay.api.documentation import build_search_docs
-from eventyay.api.mixins import CachedCatalogListMixin, PretalxViewSetMixin, cached_json_response
+from eventyay.api.mixins import CachedCatalogListMixin, PretalxViewSetMixin
 from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
 from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
 from eventyay.api.throttles import EventyayUserRateThrottle, PublicStreamThrottle
@@ -37,7 +37,7 @@ def _current_stream_response_is_private(request):
     return getattr(request, 'auth', None) is not None
 
 
-def current_stream_http_response(request, data):
+def stream_http_response(request, data, *, max_age):
     if data:
         etag = hashlib.md5(
             f'{data.get("id")}:{data.get("updated_at")}'.encode(),
@@ -65,11 +65,15 @@ def current_stream_http_response(request, data):
     else:
         patch_cache_control(
             response,
-            max_age=CURRENT_STREAM_HTTP_MAX_AGE,
+            max_age=max_age,
             public=True,
             stale_while_revalidate=60,
         )
     return response
+
+
+def current_stream_http_response(request, data):
+    return stream_http_response(request, data, max_age=CURRENT_STREAM_HTTP_MAX_AGE)
 
 
 class RoomPagination(pagination.LimitOffsetPagination):
@@ -116,6 +120,10 @@ class RoomViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelVie
             return RoomOrgaSerializer
         return RoomSerializer
 
+    def uses_catalog_list_cache(self):
+        if self.request.method in SAFE_METHODS and self.has_perm('update'):
+            return False
+        return super().uses_catalog_list_cache()
 
     def perform_destroy(self, instance):
         try:
@@ -186,6 +194,4 @@ class RoomViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelVie
     def next_stream(self, request, pk=None, **kwargs):
         room = self.get_object()
         data = get_cached_next_stream_data(room)
-        if not data:
-            return Response(status=404)
-        return cached_json_response(request, data, max_age=NEXT_STREAM_HTTP_MAX_AGE)
+        return stream_http_response(request, data, max_age=NEXT_STREAM_HTTP_MAX_AGE)

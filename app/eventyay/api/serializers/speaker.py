@@ -10,7 +10,7 @@ from rest_framework.serializers import (
     URLField,
 )
 
-from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.mixins import PretalxSerializer, filter_public_speaker_answers
 from eventyay.api.serializers.availability import (
     AvailabilitiesMixin,
     AvailabilitySerializer,
@@ -115,13 +115,8 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def get_answers(self, obj):
         request = self.context.get('request')
         if self.event and request and not request.user.has_perm('base.orga_list_speakerprofile', self.event):
-            answers = getattr(obj.user, 'event_answers', None)
-            if answers is not None:
-                public_answers = [
-                    answer
-                    for answer in answers
-                    if answer.question.target == TalkQuestionTarget.SPEAKER and answer.question.is_public
-                ]
+            public_answers = filter_public_speaker_answers(obj.user, is_public_only=True)
+            if public_answers is not None:
                 if serializer := self.get_extra_flex_field('answers', public_answers):
                     return serializer.data
                 return [answer.pk for answer in public_answers]

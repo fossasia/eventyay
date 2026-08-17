@@ -187,8 +187,18 @@ class CachedCatalogListMixin:
     catalog_name = None
     catalog_max_age = CATALOG_HOT_TTL
 
-    def list(self, request, *args, **kwargs):
+    def uses_catalog_list_cache(self):
         if not self.event or not self.catalog_name:
+            return False
+        if getattr(self, 'paginator', None) is not None and (
+            self.request.query_params.get('limit') is not None
+            or self.request.query_params.get('offset') is not None
+        ):
+            return False
+        return True
+
+    def list(self, request, *args, **kwargs):
+        if not self.uses_catalog_list_cache():
             return super().list(request, *args, **kwargs)
 
         def loader():
@@ -215,20 +225,22 @@ def prefetch_submission_speakers(queryset, event):
 
 
 def prefetch_submission_relations(queryset, event, expanded_fields=()):
-    queryset = queryset.select_related('event', 'event__cfp', 'track', 'submission_type')
-    queryset = queryset.prefetch_related('tags', 'resources', 'speakers', 'slots')
-    queryset = prefetch_submission_speakers(queryset, event)
-    queryset = queryset.prefetch_related('answers', 'answers__question')
-
-    extra_prefetches = [
-        field.replace('.', '__')
-        for field in expanded_fields
-        if field.startswith(('slots.', 'answers.', 'resources'))
-    ]
-    if extra_prefetches:
-        if any(name.startswith('answers') for name in extra_prefetches):
-            extra_prefetches = ['answers'] + extra_prefetches
-        queryset = queryset.prefetch_related(*extra_prefetches)
+    queryset = queryset.select_related('event', 'track', 'submission_type')
+    queryset = queryset.prefetch_related('speakers', 'slots')
+    expand = set(expanded_fields)
+    if 'speakers.user' in expand:
+        queryset = prefetch_submission_speakers(queryset, event)
+    answer_fields = [field for field in expanded_fields if field.startswith('answers')]
+    if answer_fields:
+        prefetch_fields = [field.replace('.', '__') for field in answer_fields]
+        if any(name.startswith('answers') for name in prefetch_fields):
+            prefetch_fields = ['answers'] + prefetch_fields
+        queryset = queryset.prefetch_related(*prefetch_fields)
+    slot_fields = [field for field in expanded_fields if field.startswith('slots')]
+    if slot_fields:
+        queryset = queryset.prefetch_related(*[field.replace('.', '__') for field in slot_fields])
+    if 'resources' in expand:
+        queryset = queryset.prefetch_related('resources')
     return queryset
 
 
