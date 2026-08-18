@@ -94,6 +94,11 @@ urlpatterns = [
                     name='settings.review',
                 ),
                 path(
+                    'settings/feedback/',
+                    event.FeedbackSettings.as_view(),
+                    name='settings.feedback',
+                ),
+                path(
                     'settings/review/phase/<int:pk>/',
                     include(
                         [

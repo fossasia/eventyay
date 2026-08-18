@@ -607,8 +607,7 @@ def base_placeholders(sender: Event, **kwargs):
     )
     def render_video_join_link(event: Event, order) -> str:
         url = build_join_video_url(event, order)
-        # TODO: Make the label translatable.
-        return f'<a href="{url}" class="button">Join online event</a>'
+        return f'<a href="{url}" class="button">{_("Join online event")}</a>'
 
     def sample_ticket_qr(event=None):
         return render_qr_code_img(
