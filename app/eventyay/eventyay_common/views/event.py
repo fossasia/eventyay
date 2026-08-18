@@ -42,7 +42,7 @@ from eventyay.base.meetup import (
     is_meetup_event,
     provision_meetup_event,
 )
-from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.base.models import Event, EventMetaValue, GlobalPluginConfig, Organizer, Quota
 from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
@@ -511,6 +511,7 @@ class EventCreateView(TemplateView):
             event.organizer = foundation_data['organizer']
 
             default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
+            global_default_plugins = GlobalPluginConfig.get_default_enabled_modules()
 
             ticketing_plugins = [
                 'eventyay.plugins.banktransfer',
@@ -523,7 +524,9 @@ class EventCreateView(TemplateView):
                 if plugin_name in installed_apps:
                     ticketing_plugins.append(plugin_name)
 
-            all_plugins = list(dict.fromkeys(default_plugins + ticketing_plugins))
+            all_plugins = list(dict.fromkeys(default_plugins + global_default_plugins + ticketing_plugins))
+            globally_disabled = GlobalPluginConfig.get_disabled_modules()
+            all_plugins = [m for m in all_plugins if m not in globally_disabled]
             event.plugins = ','.join(all_plugins)
 
             event.has_subevents = foundation_data['has_subevents']

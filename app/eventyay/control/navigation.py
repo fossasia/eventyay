@@ -527,6 +527,11 @@ def get_admin_navigation(request):
                     'url': reverse('plugins:socialauth:admin.global.social.auth.settings'),
                     'active': (url.url_name == 'admin.global.social.auth.settings'),
                 },
+                {
+                    'label': _('Plugins'),
+                    'url': reverse('eventyay_admin:admin.global.plugins'),
+                    'active': (url.url_name == 'admin.global.plugins'),
+                },
             ],
         },
         {
