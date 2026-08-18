@@ -174,6 +174,12 @@
 				svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 					path(d="M9 18l6-6-6-6")
 		.toolbar-right
+			button.toolbar-btn.now-btn(
+				@click="$emit('goToNow')", :aria-label="t.now",
+				:disabled="!isCurrentDayToday",
+				:title="isCurrentDayToday ? '' : t.now_disabled",
+				:class="{ 'is-disabled': !isCurrentDayToday }")
+				| {{ t.now }}
 			.search-area(ref="searchArea")
 				.search-compact(:class="{expanded: searchExpanded}")
 					button.toolbar-btn.icon-only.search-toggle(@click="toggleSearch", :aria-label="t.search")
@@ -372,6 +378,7 @@ export default {
 		currentTimezone: String,
 		scheduleTimezone: String,
 		userTimezone: String,
+		now: { type: Object, default: null },
 		days: { type: Array, default: () => [] },
 		currentDay: { type: String, default: '' }
 		,
@@ -389,7 +396,7 @@ export default {
 		isFeaturedPage: { type: Boolean, default: false },
 		isListView: { type: Boolean, default: false }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'update:shareStarredSessions', 'filterToggle', 'selectDay', 'goToNow', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
 		return {
 			exportOpen: false,
@@ -446,6 +453,8 @@ export default {
 				public_schedule_only: m.public_schedule_only || 'Only available on the public schedule once a schedule is released and public.',
 				export: m.export || 'Export',
 				current: m.current || 'current',
+				now: m.now || 'Go to now',
+				now_disabled: m.now_disabled || 'Go to now is only available on the current day',
 				list_view: m.list_view || 'List View',
 				calendar_view: m.calendar_view || 'Calendar View',
 				search: m.search || 'Search',
@@ -622,6 +631,13 @@ export default {
 					id: day.format('YYYY-MM-DD'),
 					label: day.format('ddd D MMM')
 				}))
+		},
+		isCurrentDayToday() {
+			if (!this.now || !this.currentDay) return false
+			const today = this.currentTimezone
+				? this.now.clone().tz(this.currentTimezone)
+				: this.now.clone()
+			return this.currentDay === today.format('YYYY-MM-DD')
 		}
 	},
 	watch: {
@@ -1060,6 +1076,8 @@ export default {
 			white-space: nowrap
 			&:hover
 				color: #533f03
+	.toolbar-btn.now-btn.is-disabled
+		cursor: not-allowed
 	.toolbar-row
 		display: flex
 		align-items: center
