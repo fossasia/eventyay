@@ -6,6 +6,7 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import Event
 from eventyay.control.navigation import merge_in
 from eventyay.control.signals import nav_event_common, nav_global, nav_organizer
@@ -85,7 +86,7 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     if has_settings_perm:
         nav = [
             {
-                'label': _('Event settings'),
+                'label': _('Meetup settings') if is_meetup_event(event) else _('Event settings'),
                 'url': reverse(
                     'eventyay_common:event.update',
                     kwargs={

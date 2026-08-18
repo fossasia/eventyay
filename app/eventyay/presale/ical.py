@@ -14,7 +14,7 @@ from eventyay.multidomain.urlreverse import build_absolute_uri
 def get_ical(events):
     cal = vobject.iCalendar()
     cal.add('prodid').value = '-//eventyay//{}//'.format(settings.INSTANCE_NAME.replace(' ', '_'))
-    creation_time = datetime.datetime.now(datetime.timezone.utc)
+    creation_time = datetime.datetime.now(ZoneInfo('UTC'))
 
     for ev in events:
         event = ev if isinstance(ev, Event) else ev.event

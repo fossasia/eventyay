@@ -17,6 +17,19 @@
                 </div>
             </div>
 
+    {% elif rsvp_registration_closed %}
+        <div class="panel panel-danger" role="alert">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <span class="fa fa-ban" aria-hidden="true"></span>
+                    {% trans "Registration is closed" %}
+                </h3>
+            </div>
+            <div class="panel-body">
+                <p>{% trans "This event has reached its maximum number of registrations." %}</p>
+            </div>
+        </div>
+
     {% elif request.user.is_authenticated %}
             <div class="panel panel-primary">
                 <div class="panel-heading">

@@ -270,7 +270,10 @@
                                         <span>{{ phrases.base.general }}</span>
                                     </a>
                                     <a href="{{ request.event.orga_urls.review_settings }}" class="nav-link nav-link-second-level{% if "settings.review" in url_name %} active{% endif %}">
-                                        <span>{% translate "Review" %}</span>
+                                        <span>{% translate "Review settings" %}</span>
+                                    </a>
+                                    <a href="{{ request.event.orga_urls.feedback_settings }}" class="nav-link nav-link-second-level{% if "settings.feedback" in url_name %} active{% endif %}">
+                                        <span>{% translate "Feedback" %}</span>
                                     </a>
                                     <a href="{{ request.event.orga_urls.widget_settings }}" class="nav-link nav-link-second-level{% if "settings.widget" in url_name %} active{% endif %}">
                                         <span>{% translate "Widget" %}</span>
@@ -287,15 +290,39 @@
                             </div>
                             <div class="nav-fold">
                                 <span class="has-children">
+                                    <a class="nav-link nav-link-inner" href="{{ request.event.orga_urls.room_settings }}">
+                                        <i class="fa fa-th-list"></i>
+                                        <span class="sidebar-text">{% translate "Rooms, Tracks, Types" %}</span>
+                                    </a>
+                                    <a class="arrow nav-link" data-toggle="collapse" data-target="#collapseRTT" aria-controls="collapseRTT" aria-expanded="{% if 'rtt.' in url_name or 'schedule.rooms.' in url_name or 'cfp.track' in url_name or 'cfp.type' in url_name %}true{% else %}false{% endif %}">
+                                        <i class="fa fa-angle-down"></i>
+                                    </a>
+                                </span>
+                                <div class="collapse{% if 'rtt.' in url_name or 'schedule.rooms.' in url_name or 'cfp.track' in url_name or 'cfp.type' in url_name %} show{% endif %}" aria-hidden="{% if 'rtt.' in url_name or 'schedule.rooms.' in url_name or 'cfp.track' in url_name or 'cfp.type' in url_name %}false{% else %}true{% endif %}" id="collapseRTT">
+                                    <a href="{{ request.event.orga_urls.room_settings }}" class="nav-link nav-link-second-level{% if 'schedule.rooms.' in url_name %} active{% endif %}">
+                                        <span>{% translate "Rooms" %}</span>
+                                    </a>
+                                    {% if request.event|get_feature_flag:"use_tracks" %}
+                                        <a href="{{ request.event.cfp.urls.tracks }}" class="nav-link nav-link-second-level{% if 'cfp.track' in url_name %} active{% endif %}">
+                                            <span>{% translate "Tracks" %}</span>
+                                        </a>
+                                    {% endif %}
+                                    <a href="{{ request.event.cfp.urls.types }}" class="nav-link nav-link-second-level{% if 'cfp.type' in url_name %} active{% endif %}">
+                                        <span>{% translate "Session Types" %}</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="nav-fold">
+                                <span class="has-children">
                                     <a class="nav-link nav-link-inner" href="{{ request.event.cfp.urls.text }}">
                                         <i class="fa fa-bullhorn"></i>
                                         <span class="sidebar-text">{% translate "Call for Proposals" %}</span>
                                     </a>
-                                    <a class="arrow nav-link" data-toggle="collapse" data-target="#collapseCfP" aria-controls="collapseCfP" aria-expanded="{% if "cfp." in url_name %}true{% else %}false{% endif %}">
+                                    <a class="arrow nav-link" data-toggle="collapse" data-target="#collapseCfP" aria-controls="collapseCfP" aria-expanded="{% if "cfp." in url_name and "cfp.track" not in url_name and "cfp.type" not in url_name %}true{% else %}false{% endif %}">
                                         <i class="fa fa-angle-down"></i>
                                     </a>
                                 </span>
-                                <div class="collapse{% if "cfp." in url_name %} show{% endif %}" aria-hidden="{% if "cfp." in url_name %}false{% else %}true{% endif %}" id="collapseCfP">
+                                <div class="collapse{% if "cfp." in url_name and "cfp.track" not in url_name and "cfp.type" not in url_name %} show{% endif %}" aria-hidden="{% if "cfp." in url_name and "cfp.track" not in url_name and "cfp.type" not in url_name %}false{% else %}true{% endif %}" id="collapseCfP">
                                     <a href="{{ request.event.cfp.urls.text }}" class="nav-link nav-link-second-level{% if "cfp.text" in url_name %} active{% endif %}">
                                         <span>{% translate "Content" %}</span>
                                     </a>
@@ -304,14 +331,6 @@
                                     </a>
                                     <a href="{{ request.event.cfp.urls.questions }}" class="nav-link nav-link-second-level{% if "cfp.question" in url_name %} active{% endif %}">
                                         <span>{% translate "Forms" %}</span>
-                                    </a>
-                                    {% if request.event|get_feature_flag:"use_tracks" %}
-                                        <a href="{{ request.event.cfp.urls.tracks }}" class="nav-link nav-link-second-level{% if "cfp.track" in url_name %} active{% endif %}">
-                                            <span>{% translate "Tracks" %}</span>
-                                        </a>
-                                    {% endif %}
-                                    <a href="{{ request.event.cfp.urls.types }}" class="nav-link nav-link-second-level{% if "cfp.type" in url_name %} active{% endif %}">
-                                        <span>{% translate "Session types" %}</span>
                                     </a>
                                     <a href="{{ request.event.cfp.urls.access_codes }}" class="nav-link nav-link-second-level{% if "cfp.access_code" in url_name %} active{% endif %}">
                                         <span>{% translate "Access codes" %}</span>
@@ -373,7 +392,7 @@
                                 <span class="has-children">
                                     <a class="nav-link nav-link-inner" href="{% url 'orga:reviews.dashboard' organizer=request.event.organizer.slug event=request.event.slug %}">
                                         <i class="fa fa-eye"></i>
-                                        <span class="sidebar-text">{% translate "Review" %}</span>
+                                        <span class="sidebar-text">{% translate "Reviews" %}</span>
                                     </a>
                                     <a class="arrow nav-link" data-toggle="collapse" data-target="#collapseReviews" aria-controls="collapseReviews" aria-expanded="{% if "reviews." in url_name|slice:":9" %}true{% else %}false{% endif %}">
                                         <i class="fa fa-angle-down"></i>
@@ -381,7 +400,7 @@
                                 </span>
                                 <div class="collapse{% if "reviews." in url_name|slice:":9" %} show{% endif %}" aria-hidden="{% if "reviews." in url_name|slice:":9" %}false{% else %}true{% endif %}" id="collapseReviews">
                                     <a href="{% url 'orga:reviews.dashboard' organizer=request.event.organizer.slug event=request.event.slug %}" class="nav-link nav-link-second-level{% if "reviews.dashboard" in url_name %} active{% endif %}">
-                                        <span>{% translate "Review" %}</span>
+                                        <span>{% translate "Review proposals" %}</span>
                                     </a>
                                     <a href="{% url 'orga:reviews.assign' organizer=request.event.organizer.slug event=request.event.slug %}" class="nav-link nav-link-second-level{% if "reviews.assign" in url_name %} active{% endif %}">
                                         <span>{% translate "Assign reviewers" %}</span>
@@ -391,7 +410,7 @@
                         {% else %}
                             <a class="nav-link {% if "reviews." in url_name %}active{% endif %}" href="{% url 'orga:reviews.dashboard' organizer=request.event.organizer.slug event=request.event.slug %}">
                                 <i class="fa fa-eye"></i>
-                                <span class="sidebar-text">{% translate "Review" %}</span>
+                                <span class="sidebar-text">{% translate "Reviews" %}</span>
                             </a>
                         {% endif %}
                         
@@ -404,16 +423,13 @@
                                     <i class="fa fa-calendar-o"></i>
                                     <span class="sidebar-text">{{ phrases.schedule.schedule }}</span>
                                 </a>
-                                <a class="arrow nav-link" data-toggle="collapse" data-target="#collapseSchedule" aria-controls="collapseSchedule" aria-expanded="{% if "schedule." in url_name %}true{% else %}false{% endif %}">
+                                <a class="arrow nav-link" data-toggle="collapse" data-target="#collapseSchedule" aria-controls="collapseSchedule" aria-expanded="{% if "schedule." in url_name and "schedule.rooms." not in url_name %}true{% else %}false{% endif %}">
                                     <i class="fa fa-angle-down"></i>
                                 </a>
                             </span>
-                            <div class="collapse{% if "schedule." in url_name %} show{% endif %}" aria-hidden="{% if "schedule." in url_name %}false{% else %}true{% endif %}" id="collapseSchedule">
+                            <div class="collapse{% if "schedule." in url_name and "schedule.rooms." not in url_name %} show{% endif %}" aria-hidden="{% if "schedule." in url_name and "schedule.rooms." not in url_name %}false{% else %}true{% endif %}" id="collapseSchedule">
                                 <a href="{{ request.event.orga_urls.schedule }}" class="nav-link nav-link-second-level{% if "schedule.main" in url_name %} active{% endif %}">
                                     <span>{% translate "Editor" %}</span>
-                                </a>
-                                <a href="{{ request.event.orga_urls.room_settings }}" class="nav-link nav-link-second-level{% if "schedule.rooms." in url_name %} active{% endif %}">
-                                    <span>{% translate "Rooms" %}</span>
                                 </a>
                             </div>
                         </div>
