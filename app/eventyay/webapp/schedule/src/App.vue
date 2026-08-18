@@ -38,6 +38,7 @@
 			:userTimezone="userTimezone",
 			:days="allDays",
 			:currentDay="currentDay",
+			:now="now",
 			:sessionsMode="sessionsMode",
 			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",
@@ -54,8 +55,9 @@
 			@resetFilters="onlyFavs = false; resetAllFilters()",
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
-			@setTimeDensityMinutes="setTimeDensityMinutes($event)")
-		grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
+			@setTimeDensityMinutes="setTimeDensityMinutes($event)",
+			@goToNow="goToNow")
+		grid-schedule-wrapper(ref="scheduleDisplay", v-if="showGrid && !sessionsMode",
 			:sessions="sessions",
 			:rooms="rooms",
 			:days="days",
@@ -75,7 +77,7 @@
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
-		linear-schedule(v-else,
+		linear-schedule(ref="scheduleDisplay", v-else,
 			:sessions="sessionsMode ? properSessions : sessions",
 			:rooms="rooms",
 			:currentDay="currentDay",
@@ -752,7 +754,9 @@ export default {
 		this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
 		this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
 		if (this.days?.length) {
-			this.currentDay = this.days[0].format('YYYY-MM-DD')
+			const todayStr = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+			const todayDay = this.days.find(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === todayStr)
+			this.currentDay = todayDay ? todayStr : this.days[0].format('YYYY-MM-DD')
 		}
 		this.now = moment.tz(this.currentTimezone)
 		setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
@@ -931,6 +935,17 @@ export default {
 			// scroll-sync may have set currentDay with _scrollDayUpdate, which
 			// skips the currentDay watcher — forceScrollDay handles that case.
 			this.forceScrollDay++
+		},
+		goToNow () {
+			const today = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
+			const todayExists = (this.allDays || this.days || []).some(day => day.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === today)
+			if (!todayExists) return
+			if (this.currentDay !== today) {
+				this.selectDay(today)
+			}
+			this.$nextTick(() => {
+				this.$refs.scheduleDisplay?.scrollToNow?.()
+			})
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
