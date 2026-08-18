@@ -508,6 +508,7 @@ class EventOrderFilterForm(OrderFilterForm):
 
         return qs
 
+FILTER_COUNT_IGNORED_FIELDS = ('query', 'search', 'ordering', 'browser_timezone')
 
 def advanced_filters_open_from_get(filter_form) -> bool:
     """Return True when the advanced filter panel should start expanded."""
@@ -521,11 +522,10 @@ def advanced_filters_open_from_get(filter_form) -> bool:
         return False
         
     for key in filter_form.fields.keys():
-        if key in ('query', 'ordering'):
+        if key in FILTER_COUNT_IGNORED_FIELDS:
             continue
         if filter_form.cleaned_data.get(key):
             return True
-            
     return False
 
 
@@ -535,7 +535,7 @@ def advanced_filter_count(filter_form) -> int:
         return 0
     count = 0
     for key in filter_form.fields.keys():
-        if key in ('query', 'ordering'):
+        if key in FILTER_COUNT_IGNORED_FIELDS:
             continue
         if filter_form.cleaned_data.get(key):
             count += 1
