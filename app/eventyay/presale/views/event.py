@@ -52,6 +52,7 @@ from eventyay.base.meetup import ensure_video_credentials, get_rsvp_product_and_
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import (
     Order,
+    OrderPosition,
     ProductVariation,
     Quota,
     SeatCategoryMapping,
@@ -74,6 +75,7 @@ from eventyay.presale.ical import get_ical
 from eventyay.presale.signals import product_description
 from eventyay.presale.views.meetup import (
     MEETUP_RSVP_SESSION_KEY,
+    RSVP_ORDER_STATUSES,
     GuestRsvpForm,
     has_rsvp_order,
 )
@@ -647,6 +649,11 @@ def event_has_redeemable_voucher_products(event, subevent=None, channel='web'):
 class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     template_name = 'pretixpresale/event/index.html'
 
+    def get_template_names(self):
+        if is_meetup_event(self.request.event):
+            return ['pretixpresale/event/meetup_index.html']
+        return [self.template_name]
+
     def get(self, request, *args, **kwargs):
         from eventyay.presale.views.cart import get_or_create_cart_id
 
@@ -720,6 +727,25 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         else:
             already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
 
+        with scope(event=event):
+            attendee_count = event.orders.filter(status__in=RSVP_ORDER_STATUSES).count()
+            preview_positions = (
+                OrderPosition.objects.filter(
+                    order__event=event,
+                    order__status__in=RSVP_ORDER_STATUSES,
+                )
+                .select_related('order')
+                .order_by('order__datetime')
+                [:6]
+            )
+            attendees_preview = [
+                {
+                    'name': pos.attendee_name,
+                }
+                for pos in preview_positions
+                if pos.attendee_name
+            ]
+
         rsvp_registration_closed = False
         product, quota = get_rsvp_product_and_quota(event)
         if quota and quota.size is not None:
@@ -731,6 +757,8 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             'is_meetup_event': True,
             'attendee_already_registered': already_registered,
             'rsvp_guest_form': getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm(),
+            'meetup_attendee_count': attendee_count,
+            'meetup_attendees_preview': attendees_preview,
             'rsvp_registration_closed': rsvp_registration_closed,
             'guest_checkout_allowed': not event.settings.require_registered_account_for_tickets,
         }
