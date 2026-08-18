@@ -458,6 +458,7 @@ if DEBUG and importlib.util.find_spec('debug_toolbar'):
 
 _OURS_MIDDLEWARES = (
     'eventyay.base.middleware.CustomCommonMiddleware',
+    'eventyay.base.middleware.GloballyDisabledPluginMiddleware',
     'eventyay.common.middleware.SessionMiddleware',  # Add session handling
     'eventyay.common.middleware.MultiDomainMiddleware',  # Check which host is used and if it is valid
     'eventyay.common.middleware.EventPermissionMiddleware',  # Sets locales, request.event, available events, etc.

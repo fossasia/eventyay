@@ -48,7 +48,7 @@ from eventyay.agenda.views.utils import (
     serialize_widget_schedule_data,
 )
 from eventyay.base.channels import get_all_sales_channels
-from eventyay.base.meetup import ensure_video_credentials, is_meetup_event
+from eventyay.base.meetup import ensure_video_credentials, get_rsvp_product_and_quota, is_meetup_event
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.models import (
     Order,
@@ -713,17 +713,26 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     def get_meetup_context(self):
         event = self.request.event
         if not is_meetup_event(event):
-            return {'is_meetup_event': False, 'attendee_already_registered': False}
+            return {'is_meetup_event': False, 'attendee_already_registered': False, 'rsvp_registration_closed': False}
 
         if self.request.user.is_authenticated:
             already_registered = has_rsvp_order(event, self.request.user.email)
         else:
             already_registered = bool(self.request.session.get(MEETUP_RSVP_SESSION_KEY.format(event.pk)))
 
+        rsvp_registration_closed = False
+        product, quota = get_rsvp_product_and_quota(event)
+        if quota and quota.size is not None:
+            with scope(organizer=event.organizer):
+                avail, count = quota.availability()
+                rsvp_registration_closed = avail != Quota.AVAILABILITY_OK
+
         return {
             'is_meetup_event': True,
             'attendee_already_registered': already_registered,
             'rsvp_guest_form': getattr(self.request, '_rsvp_guest_form', None) or GuestRsvpForm(),
+            'rsvp_registration_closed': rsvp_registration_closed,
+            'guest_checkout_allowed': not event.settings.require_registered_account_for_tickets,
         }
 
     def get_context_data(self, **kwargs):
@@ -1124,24 +1133,32 @@ class JoinOnlineVideoView(EventViewMixin, View):
         return redirect_or_json_redirect(request, redirect_url)
 
     def validate_access(self, request, *args, **kwargs):
-        if not self.request.user.is_authenticated:
+        session_order_code = (
+            request.session.get(MEETUP_RSVP_SESSION_KEY.format(self.request.event.pk))
+            if is_meetup_event(self.request.event)
+            else None
+        )
+        if not self.request.user.is_authenticated and not session_order_code:
             return False, None, None
         
         allowed_statuses = [Order.STATUS_PAID]
         if self.request.event.settings.venueless_allow_pending:
             allowed_statuses.append(Order.STATUS_PENDING)
 
-        # Get all PAID orders of customer which belong to this event
-        with scope(event=self.request.event):
-            order_list = list(
-                Order.objects.filter(
-                    Q(event=self.request.event)
-                    & (
-                        Q(email__iexact=self.request.user.email)
-                        | Q(all_positions__attendee_email__iexact=self.request.user.email)
-                    )
-                    & Q(status__in=allowed_statuses)
+        with scope(organizer=self.request.event.organizer):
+            filters = Q(event=self.request.event) & Q(status__in=allowed_statuses)
+            if self.request.user.is_authenticated:
+                filters &= (
+                    Q(email__iexact=self.request.user.email)
+                    | Q(all_positions__attendee_email__iexact=self.request.user.email)
                 )
+            elif session_order_code:
+                filters &= Q(code=session_order_code)
+            else:
+                return False, None, None
+
+            order_list = list(
+                Order.objects.filter(filters)
                 .select_related('event')
                 .order_by('-datetime')
                 .distinct()

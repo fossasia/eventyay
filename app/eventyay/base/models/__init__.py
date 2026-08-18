@@ -39,6 +39,7 @@ from .exhibitor import (
 from .feedback import Feedback
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
 from eventyay.base.gmail.models import GmailOAuthCredential
+from .global_plugin_config import GlobalPluginConfig
 from .invoices import Invoice, InvoiceLine, invoice_filename
 from .janus import JanusServer
 from .jitsi import JitsiServer
@@ -166,6 +167,7 @@ __all__ = [
     'GiftCard',
     'GiftCardAcceptance',
     'GiftCardTransaction',
+    'GlobalPluginConfig',
     'GlobalSettings',
     'Invoice',
     'InvoiceAddress',
