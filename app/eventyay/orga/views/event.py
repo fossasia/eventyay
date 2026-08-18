@@ -33,6 +33,7 @@ from eventyay.orga.forms.event import (
     ReviewPhaseForm,
     ReviewScoreCategoryForm,
     ReviewSettingsForm,
+    FeedbackSettingsForm,
     ScheduleHtmlExportForm,
     WidgetGenerationForm,
     WidgetSettingsForm,
@@ -77,7 +78,7 @@ class EventDetail(EventSettingsPermission, ActionFromUrl, UpdateView):
     @context
     def tablist(self):
         return {
-            'display': _('Display settings'),
+            'general': _('General settings'),
         }
 
     def get_success_url(self) -> str:
@@ -129,7 +130,7 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
     @context
     def tablist(self):
         return {
-            'general': _('General information'),
+            'general': _('Review settings'),
             'scores': _('Review scoring'),
             'phases': _('Review phases'),
         }
@@ -273,6 +274,25 @@ class EventReviewSettings(EventSettingsPermission, ActionFromUrl, FormView):
         if weights_changed:
             ReviewScoreCategory.recalculate_scores(self.request.event)
         return True
+
+
+class FeedbackSettings(EventSettingsPermission, ActionFromUrl, FormView):
+    form_class = FeedbackSettingsForm
+    template_name = 'orga/settings/feedback.html'
+
+    def get_success_url(self) -> str:
+        return self.request.event.orga_urls.feedback_settings
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['obj'] = self.request.event
+        return kwargs
+
+    @transaction.atomic
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, phrases.base.saved)
+        return super().form_valid(form)
 
 
 class PhaseActivate(EventSettingsPermission, View):
