@@ -284,6 +284,65 @@ class AuthModule(BaseModule):
         await self.consumer.user.refresh_from_db_if_outdated(allowed_age=0)
         await ChatService(self.consumer.event).enforce_forced_joins(self.consumer.user)
 
+    @command("set_publicly_visible")
+    @require_event_permission(Permission.EVENT_VIEW)
+    async def set_publicly_visible(self, body):
+        """Toggle the user's show_publicly flag from within the video platform."""
+        body = body or {}
+        show_publicly = body.get("show_publicly")
+        if not isinstance(show_publicly, bool):
+            await self.consumer.send_error(code="user.set_publicly_visible.invalid")
+            return
+
+        old_show_publicly = bool(self.consumer.user.show_publicly)
+
+        def _save_and_get_active_room_ids(user, value):
+            from eventyay.base.models.room import RoomView
+
+            user.show_publicly = value
+            user.save(update_fields=["show_publicly"])
+            return list(
+                RoomView.objects.filter(user=user, end__isnull=True)
+                .values_list("room_id", flat=True)
+                .distinct()
+            )
+
+        active_room_ids = await database_sync_to_async(_save_and_get_active_room_ids)(
+            self.consumer.user, show_publicly
+        )
+
+        if old_show_publicly != show_publicly and active_room_ids:
+            from eventyay.features.live.channels import GROUP_ROOM_VIEWERS
+
+            for room_id in active_room_ids:
+                if show_publicly:
+                    await self.consumer.channel_layer.group_send(
+                        GROUP_ROOM_VIEWERS.format(id=room_id),
+                        {
+                            "type": "room.viewer.added",
+                            "user": self.consumer.user.serialize_public(
+                                trait_badges_map=self._event_config().get(
+                                    "trait_badges_map"
+                                )
+                            ),
+                            "_show_publicly": True,
+                            "_room": str(room_id),
+                        },
+                    )
+                else:
+                    await self.consumer.channel_layer.group_send(
+                        GROUP_ROOM_VIEWERS.format(id=room_id),
+                        {
+                            "type": "room.viewer.removed",
+                            "user_id": str(self.consumer.user.id),
+                            "_show_publicly": False,
+                            "_visibility_changed": True,
+                            "_room": str(room_id),
+                        },
+                    )
+
+        await self.consumer.send_success({"show_publicly": show_publicly})
+
     @command("admin.update")
     @require_event_permission(Permission.EVENT_USERS_MANAGE)
     async def admin_update(self, body):
@@ -406,6 +465,9 @@ class AuthModule(BaseModule):
                     permission=Permission.EVENT_USERS_MANAGE,
                 ),
                 trait_badges_map=self._event_config().get("trait_badges_map"),
+                include_private=await self.consumer.event.has_organizer_role_async(
+                    user=self.consumer.user,
+                ),
             )
         await self.consumer.send_success(result)
 

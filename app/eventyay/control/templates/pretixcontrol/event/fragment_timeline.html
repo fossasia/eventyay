@@ -13,22 +13,36 @@
                     <strong>{{ day.grouper|date:"SHORT_DATE_FORMAT" }}</strong>
                 </div>
                 <div class="col-event">
-                    {% for e in day.list %}
-                        <strong class="">{{ e.time|date:"TIME_FORMAT" }}</strong>
-                        &nbsp;
-                        <span class="{% if e.time < nearly_now %}text-muted{% endif %}">
-                            {{ e.entry.description }}
-                        </span>
-                        {% if e.entry.edit_url %}
+                    {% if is_meetup_event %}
+                        {% for e in day.list %}
+                            <strong class="">{{ e.time|date:"TIME_FORMAT" }}</strong>{% if not forloop.last %} &ndash; {% endif %}
+                        {% endfor %}
+                        {% with first_entry=day.list.0.entry %}
+                            {% if first_entry.edit_url %}
+                                &nbsp;
+                                <a href="{{ first_entry.edit_url }}" class="text-muted">
+                                    <span class="fa fa-edit"></span>
+                                </a>
+                            {% endif %}
+                        {% endwith %}
+                    {% else %}
+                        {% for e in day.list %}
+                            <strong class="">{{ e.time|date:"TIME_FORMAT" }}</strong>
                             &nbsp;
-                            <a href="{{ e.entry.edit_url }}" class="text-muted">
-                                <span class="fa fa-edit"></span>
-                            </a>
-                        {% endif %}
-                        {% if forloop.revcounter > 1 %}
-                            <br/>
-                        {% endif %}
-                    {% endfor %}
+                            <span class="{% if e.time < nearly_now %}text-muted{% endif %}">
+                                {{ e.entry.description }}
+                            </span>
+                            {% if e.entry.edit_url %}
+                                &nbsp;
+                                <a href="{{ e.entry.edit_url }}" class="text-muted">
+                                    <span class="fa fa-edit"></span>
+                                </a>
+                            {% endif %}
+                            {% if forloop.revcounter > 1 %}
+                                <br/>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}

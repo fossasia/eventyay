@@ -5,8 +5,31 @@ Eventyay is an open source event management platform by `FOSSASIA <https://fossa
 
 Eventyay has been in development since 2014. Parts of the system historically originated from separate components for tickets, talks, and video. The current repository contains the unified Eventyay codebase.
 
-Project status and release cycle
---------------------------------
+Contents
+--------
+
+- `Project status and branch model`_
+- `Main features`_
+- `Technology stack`_
+- `Quick start with Docker`_
+- `Python based local development`_
+- `Frontend development`_
+- `Configuration overview`_
+- `Plugins and extensions`_
+- `Separate Eventyay components`_
+- `Translation workflow`_
+- `Common development commands`_
+- `API and service endpoints`_
+- `Repository layout`_
+- `Architecture rules for contributors`_
+- `Troubleshooting`_
+- `Deployment`_
+- `Documentation`_
+- `Contributing`_
+- `Legal and licensing`_
+
+Project status and branch model
+-------------------------------
 
 Eventyay is actively developed.
 
@@ -30,14 +53,14 @@ Eventyay includes:
 * Public event pages
 * Schedule display and schedule editor frontends
 * Online event and video related workflows
-* Separate check in station support through the Eventyay Checkin component
+* Separate check-in station support through the Eventyay Checkin component
 * PDF ticket and badge related workflows
 * REST API endpoints
 * OAuth and social authentication support
 * Multi domain and multi event handling
 * Plugin discovery and plugin URL registration
 * Standard plugins and external plugin extensions for payments, CRM, exhibitions, social media, team shifts, interpretation, and spatial event integrations
-* Email, notifications, scheduled tasks, reports, statistics, and check in lists
+* Email, notifications, scheduled tasks, reports, statistics, and check-in lists
 * Health check and metrics endpoints
 * Internationalisation and translation infrastructure with Hosted Weblate based browser translation workflow
 
@@ -68,7 +91,9 @@ Frontend:
 Quick start with Docker
 -----------------------
 
-Docker is the recommended way to start quickly.
+Docker is the recommended way to start quickly for local development and first testing. For production or self-hosted server deployment, see the `Deployment`_ section below and ``DEPLOYMENT.md``.
+
+The local Docker stack starts the Django web service, Celery worker, Celery beat, Redis, and PostgreSQL. It also mounts ``./plugins`` for local plugin development.
 
 Requirements:
 
@@ -246,7 +271,6 @@ Run Celery locally when working on background tasks:
 Mobile testing note
 ~~~~~~~~~~~~~~~~~~~
 
-
 If you want to test the site from an Android emulator, use:
 
 .. code-block:: text
@@ -274,7 +298,7 @@ The repository contains several frontend applications under ``app/eventyay/webap
 
 The root app ``Makefile`` installs and builds these frontend applications through npm and places compiled assets into the Django app data directory.
 
-Check-in uses the separate ``eventyay-checkin`` plugin (not built by the Makefile ``npminstall`` target).
+Check-in uses the separate ``eventyay-checkin`` plugin and is not built by the Makefile ``npminstall`` target.
 
 By default, Docker serves prebuilt frontend assets. To enable hot module replacement for frontend development, set this in ``.env.dev``:
 
@@ -287,7 +311,7 @@ When ``EVY_NPM_DEV=1`` in ``.env.dev``, the Docker image build skips ``make npmi
 - ``schedule-editor`` runs on port ``8080``.
 - ``video`` runs on port ``8880``.
 - ``schedule`` runs on port ``8082``.
-- ``eventyay-checkin`` runs on port ``8085`` (plugin checkout mounted at ``plugins/eventyay-checkin``).
+- ``eventyay-checkin`` runs on port ``8085`` when the plugin checkout is mounted at ``plugins/eventyay-checkin``.
 
 You do not normally need to visit these ports directly. The frontend works alongside ``http://localhost:8000`` with hot module replacement.
 
@@ -310,8 +334,8 @@ With ``EVY_NPM_DEV=0``, Django serves prebuilt assets, so run ``make npminstall`
    docker exec -ti eventyay-next-web make npminstall
    docker exec -ti eventyay-next-web python manage.py collectstatic --noinput
 
-Configuration
--------------
+Configuration overview
+----------------------
 
 The Eventyay configuration is based on TOML files, environment variables, dotenv files, and secret files. To see possible configuration keys and default values, check the ``BaseSettings`` class in ``app/eventyay/config/settings.py``.
 
@@ -381,6 +405,11 @@ For example, to provide a value for the ``secret_key`` setting, create this file
 
 If you deploy the app via Docker containers, you can provide secret data through `Docker secrets <https://docs.docker.com/engine/swarm/secrets/>`_.
 
+Geocoding
+~~~~~~~~~
+
+In development, Nominatim geocoding is used automatically when no OpenCage or MapQuest key is configured. Production deployments should configure a geocoding provider or explicitly enable public Nominatim geocoding in global settings.
+
 Email configuration for testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -401,9 +430,9 @@ If 2FA is enabled on the Google account, you may need to use an App Password.
 Plugins and extensions
 ----------------------
 
-Eventyay comes with several plugins that are part of the standard setup. These built in plugins provide common functionality for authentication, reports, badges, check in workflows, scheduled tasks, statistics, and ticket outputs.
+Eventyay comes with several plugins that are part of the standard setup. These built-in plugins provide common functionality for authentication, reports, badges, check-in workflows, scheduled tasks, statistics, and ticket outputs.
 
-Built in and standard plugin areas include:
+Built-in and standard plugin areas include:
 
 - Authentication and social auth
 - Bank transfer
@@ -411,7 +440,7 @@ Built in and standard plugin areas include:
 - Sendmail
 - Statistics
 - Reports
-- Check in lists
+- Check-in lists
 - Manual payment
 - Return URLs
 - Scheduled tasks
@@ -463,7 +492,7 @@ Eventyay also provides separate components that can be used together with the ma
 Eventyay Checkin
 ~~~~~~~~~~~~~~~~
 
-`Eventyay Checkin <https://github.com/fossasia/eventyay-checkin>`_ is a separate check in component for kiosk stations. It enables organisers to check in attendees at dedicated check in stations during an event.
+`Eventyay Checkin <https://github.com/fossasia/eventyay-checkin>`_ is a separate check-in component for kiosk stations. It enables organisers to check in attendees at dedicated check-in stations during an event.
 
 Eventyay Interpretation
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -590,7 +619,7 @@ Important paths:
    ├── tools/                 Repository level tools
    ├── docker-compose.yml     Local Docker development stack
    ├── CONTRIBUTING.md        Contribution workflow
-   ├── DEPLOYMENT.md          Deployment notes
+   ├── DEPLOYMENT.md          Production and self-hosted deployment guide
    ├── CLA.md                 Contributor License Agreement information
    ├── LICENSE                Apache License 2.0
    └── NOTICE                 Attribution and upstream notices
@@ -635,45 +664,6 @@ Important rules for changes:
 - Prefer external ES modules for JavaScript.
 - Use ``select_related`` and ``prefetch_related`` where appropriate to avoid N+1 queries.
 
-Contributing
-------------
-
-We welcome contributions.
-
-Basic workflow:
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Make focused changes.
-4. Add or update tests when behaviour changes.
-5. Run tests and relevant build commands locally.
-6. Open a pull request against the ``dev`` branch.
-
-Pull request expectations:
-
-- Link the PR to a GitHub issue.
-- Use closing keywords such as ``Fixes #123`` in the PR description.
-- Keep PRs small enough to review in less than a day where possible.
-- Add screenshots or short videos for UI changes.
-- Open draft PRs early for large or long running work.
-- Respond to review comments and keep the branch up to date.
-- Do not repeatedly tag reviewers.
-
-See `CONTRIBUTING.md <CONTRIBUTING.md>`_ for the full contribution guidelines.
-
-AI assisted development
-~~~~~~~~~~~~~~~~~~~~~~~
-
-This repository includes structured guidance for AI assisted development.
-
-AI tools should consult:
-
-- ``agents.md``
-- ``.github/instructions/``
-- ``.agents/skills/``
-
-These files define repository specific coding, architecture, documentation, and pull request expectations.
-
 Troubleshooting
 ---------------
 
@@ -693,6 +683,7 @@ This usually means a static asset was requested but an HTML response, such as a 
 Rebuild static assets:
 
 .. code-block:: bash
+
    docker exec -ti eventyay-next-redis redis-cli FLUSHDB
    docker exec -ti eventyay-next-web rm -rf /usr/src/app/eventyay/static.dist/CACHE/css/*
    docker exec -ti eventyay-next-web make npminstall
@@ -751,11 +742,76 @@ Bring the development stack back up in detached mode with a rebuild:
 Deployment
 ----------
 
-See `DEPLOYMENT.md <DEPLOYMENT.md>`_.
+The Docker quick start in this README is intended for local development and first testing. For production or self-hosted server deployments, use the dedicated deployment guide:
 
-The documented deployment path assumes an Ubuntu based server, Docker, Docker Compose, nginx, certbot, PostgreSQL data storage, static file handling, and a deployment specific ``.env`` file.
+`DEPLOYMENT.md <DEPLOYMENT.md>`_
 
-The deployment documentation is a starting point and should be reviewed before production use. Operators should adapt the setup to their infrastructure, backup, monitoring, TLS, mail delivery, and security requirements.
+The deployment guide covers server setup, Docker, Docker Compose, nginx, certbot, PostgreSQL data storage, static file handling, deployment specific environment configuration, backups, and maintenance related setup.
+
+Operators should review and adapt the deployment instructions for their own infrastructure, backup strategy, monitoring, TLS setup, mail delivery, payment providers, and security requirements.
+
+Documentation
+-------------
+
+Full Eventyay documentation is available at:
+
+https://docs.eventyay.com
+
+Useful entry points:
+
+- `Deployment guide <DEPLOYMENT.md>`_
+- `Contribution guide <CONTRIBUTING.md>`_
+- `Contributor License Agreement <CLA.md>`_
+- `License <LICENSE>`_
+
+The documentation website should be used for the full user guide, platform administration documentation, developer documentation, API documentation, and reference material.
+
+Continuous integration
+----------------------
+
+Pull requests are checked through GitHub Actions. The workflow set includes tests, style checks, documentation builds, Docker image builds, PR deployment workflows, and selected component-specific checks.
+
+Before opening a pull request, run the relevant local checks for the files you changed. At minimum, run the test or build command related to the affected area.
+
+
+Contributing
+------------
+
+We welcome contributions.
+
+Basic workflow:
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make focused changes.
+4. Add or update tests when behaviour changes.
+5. Run tests and relevant build commands locally.
+6. Open a pull request against the ``dev`` branch.
+
+Pull request expectations:
+
+- Link the PR to a GitHub issue.
+- Use closing keywords such as ``Fixes #123`` in the PR description.
+- Keep PRs small enough to review in less than a day where possible.
+- Add screenshots or short videos for UI changes.
+- Open draft PRs early for large or long running work.
+- Respond to review comments and keep the branch up to date.
+- Do not repeatedly tag reviewers.
+
+See `CONTRIBUTING.md <CONTRIBUTING.md>`_ for the full contribution guidelines.
+
+AI assisted development
+~~~~~~~~~~~~~~~~~~~~~~~
+
+This repository includes structured guidance for AI assisted development.
+
+AI tools should consult:
+
+- ``agents.md``
+- ``.github/instructions/``
+- ``.agents/skills/``
+
+These files define repository specific coding, architecture, documentation, and pull request expectations.
 
 Future improvements
 -------------------
