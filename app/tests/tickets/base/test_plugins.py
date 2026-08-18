@@ -7,7 +7,7 @@ from eventyay.base.models import Event, Organizer
 from eventyay.base.plugins import get_all_plugins
 from eventyay.base.signals import register_ticket_outputs
 
-plugins = get_all_plugins()
+plugins = get_all_plugins(include_inactive=True)
 
 
 @pytest.mark.django_db
