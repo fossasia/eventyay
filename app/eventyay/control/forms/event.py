@@ -1794,6 +1794,12 @@ class QuickSetupProductForm(I18nForm):
         required=False,
     )
 
+    def clean_default_price(self):
+        value = self.cleaned_data.get('default_price')
+        if value is not None and value < 0:
+            raise ValidationError(_('The price must not be negative.'))
+        return value
+
 
 class BaseQuickSetupProductFormSet(I18nFormSetMixin, forms.BaseFormSet):
     def __init__(self, *args, **kwargs):

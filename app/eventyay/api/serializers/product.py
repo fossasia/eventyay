@@ -62,6 +62,11 @@ class ProductVariationSerializer(I18nAwareModelSerializer):
         Product.clean_admission_validity_data(full_data, event=event)
         return data
 
+    def validate_default_price(self, value):
+        if value is not None and value < 0:
+            raise ValidationError(_('The price must not be negative.'))
+        return value
+
 
 class InlineProductBundleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -245,6 +250,11 @@ class ProductSerializer(I18nAwareModelSerializer):
 
     def validate_tax_rule(self, value):
         Product.clean_tax_rule(value, self.context['event'])
+        return value
+
+    def validate_default_price(self, value):
+        if value is not None and value < 0:
+            raise ValidationError(_('The price must not be negative.'))
         return value
 
     def validate_bundles(self, value):
