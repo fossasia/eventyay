@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0053_jitsiserver'),
+        ('base', '0055_alter_product_default_price_and_more'),
     ]
 
     operations = [
