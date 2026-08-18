@@ -175,10 +175,11 @@
 					path(d="M9 18l6-6-6-6")
 		.toolbar-right
 			button.toolbar-btn.now-btn(
-				@click="$emit('goToNow')", :aria-label="t.now",
-				:disabled="!isCurrentDayToday",
-				:title="isCurrentDayToday ? '' : t.now_disabled",
-				:class="{ 'is-disabled': !isCurrentDayToday }")
+				@click="$emit('goToNow')",
+				:aria-label="t.now",
+				:disabled="!isEventHappeningToday",
+				:title="isEventHappeningToday ? '' : t.now_disabled",
+				:class="{ 'is-disabled': !isEventHappeningToday }") 
 				| {{ t.now }}
 			.search-area(ref="searchArea")
 				.search-compact(:class="{expanded: searchExpanded}")
@@ -632,12 +633,15 @@ export default {
 					label: day.format('ddd D MMM')
 				}))
 		},
-		isCurrentDayToday() {
-			if (!this.now || !this.currentDay) return false
+		isEventHappeningToday() {
+			if (!this.now || !this.days?.length) return false
 			const today = this.currentTimezone
 				? this.now.clone().tz(this.currentTimezone)
 				: this.now.clone()
-			return this.currentDay === today.format('YYYY-MM-DD')
+			return this.days.some(day => {
+				const dayDate = day.clone ? day.clone().tz(this.currentTimezone) : day
+				return dayDate.format('YYYY-MM-DD') === today.format('YYYY-MM-DD')
+			})
 		}
 	},
 	watch: {
