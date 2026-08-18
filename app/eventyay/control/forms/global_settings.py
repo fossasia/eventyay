@@ -564,6 +564,11 @@ class GlobalSettingsForm(SettingsForm):
                 'etherpad_api_key',
                 'etherpad_pad_name_pattern',
             ]),
+            ('hubspot', _('HubSpot'), [
+                'hubspot_client_id',
+                'hubspot_client_secret',
+                'hubspot_property_sync_ttl_minutes',
+            ]),
         ]
 
     def clean_etherpad_pad_name_pattern(self):
