@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0054_team_teamshifts_permissions'),
+        ('base', '0056_global_plugin_config'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
