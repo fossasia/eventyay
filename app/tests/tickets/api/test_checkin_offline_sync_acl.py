@@ -133,6 +133,16 @@ def test_checkin_staff_can_list_badge_layouts_for_offline_sync(offline_sync_env)
 
 
 @pytest.mark.django_db
+def test_checkin_staff_can_download_badge_layout_background(offline_sync_env):
+    env = offline_sync_env
+    client = _device_client(env['staff'])
+    layout = env['event'].badge_layouts.get(default=True)
+
+    resp = client.get(f'{_layouts_url(env)}{layout.pk}/background/')
+    assert resp.status_code in (200, 404)
+
+
+@pytest.mark.django_db
 def test_badge_station_cannot_list_orders_for_sync(offline_sync_env):
     env = offline_sync_env
     client = _device_client(env['kiosk'])

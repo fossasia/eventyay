@@ -105,6 +105,35 @@ const updateNextInputs = function(url, tabId) {
     });
 };
 
+const syncFilterBadge = function(oldContext, newContext) {
+    if (!oldContext || !newContext) return;
+    
+    const toggle = oldContext.querySelector('[data-advanced-filter-toggle]');
+    const newToggle = newContext.querySelector('[data-advanced-filter-toggle]');
+    if (!toggle || !newToggle) return;
+    toggle.setAttribute('aria-expanded', newToggle.getAttribute('aria-expanded'));
+
+    const newCount = parseInt(newToggle.getAttribute('data-filter-count'), 10) || 0;
+    toggle.setAttribute('data-filter-count', String(newCount));
+
+    let badge = toggle.querySelector('[data-advanced-filter-count]');
+    if (newCount > 0) {
+        if (badge) {
+            badge.textContent = String(newCount);
+            badge.hidden = false;  
+        } else {
+            badge = document.createElement('span');
+            badge.className = 'badge advanced-filter-badge';
+            badge.setAttribute('data-advanced-filter-count', '');
+            badge.textContent = String(newCount);
+            toggle.appendChild(badge);
+        }
+    } else if (badge) {
+        badge.hidden = true;
+        badge.remove();
+    }
+};
+
 const fetchAndReplace = async function(url, replaceUrlParams, form) {
     const tabContext = getTabContextFromForm(form);
     let resultsContainer = getResultsContainer(tabContext.context);
@@ -152,6 +181,8 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
         resultsContainer = newResultsContainer;
         resultsContainer.style.opacity = '1';
 
+        syncFilterBadge(tabContext.context, newContext); 
+        
         reinitializeBehaviors(resultsContainer);
 
         if (replaceUrlParams) {

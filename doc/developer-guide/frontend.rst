@@ -357,7 +357,7 @@ Prerequisites
 ~~~~~~~~~~~~~
 
 - Node.js 18+ and npm
-- Python 3.11+ (for backend API)
+- Python 3.12+ (for backend API)
 - Modern web browser
 
 Full Stack Development

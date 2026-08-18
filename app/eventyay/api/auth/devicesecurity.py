@@ -86,8 +86,10 @@ _CHECKIN_CORE_ALLOWLIST = (
     # Badge layout picker for staff / kiosk print prompts
     ('GET', 'api-v1:badgelayout-list'),
     ('GET', 'api-v1:badgelayout-detail'),
+    ('GET', 'api-v1:badgelayout-background'),
     ('GET', 'api-v1:badgelayouts-list'),
     ('GET', 'api-v1:badgelayouts-detail'),
+    ('GET', 'api-v1:badgelayouts-background'),
     ('GET', 'api-v1:badgeproduct-list'),
     ('GET', 'api-v1:badgeproduct-detail'),
     ('GET', 'api-v1:badgeitems-list'),
@@ -108,8 +110,10 @@ _CHECKIN_STAFF_EXTRA_ALLOWLIST = (
     # Offline badge print: layout JSON synced separately from per-attendee pdf_data.
     ('GET', 'api-v1:badgelayout-list'),
     ('GET', 'api-v1:badgelayout-detail'),
+    ('GET', 'api-v1:badgelayout-background'),
     ('GET', 'api-v1:badgelayouts-list'),
     ('GET', 'api-v1:badgelayouts-detail'),
+    ('GET', 'api-v1:badgelayouts-background'),
     ('GET', 'api-v1:badgeproduct-list'),
     ('GET', 'api-v1:badgeproduct-detail'),
     ('GET', 'api-v1:badgeitems-list'),

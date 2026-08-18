@@ -159,6 +159,7 @@ class BaseSettings(_BaseSettings):
     call_for_speaker_login_button_label: str = 'default'
     # Set to 1 to enable Vite dev servers with HMR for live frontend development.
     npm_dev: bool = False
+    fetch_ecb_rates: bool = True
 
     @classmethod
     def settings_customise_sources(
@@ -254,6 +255,7 @@ conf = BaseSettings()
 DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
 DATABASE_REPLICA = 'default'
+FETCH_ECB_RATES = conf.fetch_ecb_rates
 
 DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'
@@ -445,6 +447,7 @@ _LIBRARY_MIDDLEWARES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'eventyay.middleware.block_404.Block404Middleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
@@ -1364,6 +1367,17 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'UNICODE_JSON': False,
+    # Throttling defaults
+    'DEFAULT_THROTTLE_CLASSES': [
+        'eventyay.api.throttles.EventyayAnonRateThrottle',
+        'eventyay.api.throttles.EventyayUserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '60/minute',
+        'user': '300/minute',
+        'public_stream': '10/minute',
+        'public_schedule': '30/minute',
+    },
 }
 
 SPECTACULAR_SETTINGS = {
@@ -1467,6 +1481,7 @@ EVENTYAY_ENVIRONMENT = os.getenv('EVENTYAY_ENVIRONMENT', 'unknown')
 
 # Sentry configuration
 SENTRY_DSN = conf.sentry_dsn
+SENTRY_ENABLED = bool(SENTRY_DSN)
 if SENTRY_DSN:
     import sentry_sdk
     from sentry_sdk.integrations.celery import CeleryIntegration

@@ -224,7 +224,7 @@ missing HTTPS encryption on your case or a really small screen (mobile), it will
 Therefore, make sure you call this *in direct response to a user action*, otherwise most browser will block it as an
 unwanted pop-up.
 
-.. js:function:: window.PretixWidget.open(target_url [, voucher [, subevent [, items, [, widget_data [, skip_ssl_check ]]]]])
+.. js:function:: window.EventyayWidget.open(target_url [, voucher [, subevent [, items, [, widget_data [, skip_ssl_check ]]]]])
 
    :param string target_url: The URL of the ticket shop.
    :param string voucher: A voucher code to be pre-selected, or ``null``.
@@ -233,6 +233,9 @@ unwanted pop-up.
    :param object widget_data: Additional data to be passed to the shop, see below.
    :param boolean skip_ssl_check: Whether to ignore the check for HTTPS. Only to be used during development.
 
+The canonical global API object is ``window.EventyayWidget``.
+For backward compatibility, legacy integrations that still reference ``window.PretixWidget`` continue to work as an alias.
+
 Dynamically loading the widget
 ------------------------------
 
@@ -240,21 +243,25 @@ If you need to control the way or timing the widget loads, for example because y
 below) dynamically via JavaScript, you can register a listener that we will call before creating the widget::
 
     <script type="text/javascript">
-    window.pretixWidgetCallback = function () {
+    window.eventyayWidgetCallback = function () {
         // Will be run before we create the widget.
     }
     </script>
 
+Legacy integrations may still use ``window.pretixWidgetCallback`` instead; both callback names are supported.
+Only values that are functions are invoked, so a placeholder or unrelated property with the same name will not
+prevent the widget from loading.
+
 If you want, you can suppress us loading the widget and/or modify the user data passed to the widget::
 
     <script type="text/javascript">
-    window.pretixWidgetCallback = function () {
-        window.PretixWidget.build_widgets = false;
-        window.PretixWidget.widget_data["email"] = "test@example.org";
+    window.eventyayWidgetCallback = function () {
+        window.EventyayWidget.build_widgets = false;
+        window.EventyayWidget.widget_data["email"] = "test@example.org";
     }
     </script>
 
-If you then later want to trigger loading the widgets, just call ``window.PretixWidget.buildWidgets()``.
+If you then later want to trigger loading the widgets, just call ``window.EventyayWidget.buildWidgets()``.
 
 Waiting for the widget to load
 ------------------------------
@@ -264,8 +271,8 @@ this function might be run multiple times, for example if you have multiple widg
 e.g. from an event list to an event detail view::
 
     <script type="text/javascript">
-    window.pretixWidgetCallback = function () {
-        window.PretixWidget.addLoadListener(function () {
+    window.eventyayWidgetCallback = function () {
+        window.EventyayWidget.addLoadListener(function () {
             console.log("Widget has loaded!");
         });
     }
@@ -334,11 +341,11 @@ Hosted or eventyay Enterprise are active, you can pass the following fields:
         gtag('js', new Date());
         gtag('config', '<MEASUREMENT_ID>');
 
-        window.pretixWidgetCallback = function () {
-            window.PretixWidget.build_widgets = false;
+        window.eventyayWidgetCallback = function () {
+            window.EventyayWidget.build_widgets = false;
             window.addEventListener('load', function() { // Wait for GA to be loaded
                 if (!window['google_tag_manager']) {
-                    window.PretixWidget.buildWidgets();
+                    window.EventyayWidget.buildWidgets();
                     return;
                 }
 
@@ -350,9 +357,9 @@ Hosted or eventyay Enterprise are active, you can pass the following fields:
                     if (!loadingTimeout) return;
                     window.clearTimeout(loadingTimeout);
                     loadingTimeout = null;
-                    if (clientId) window.PretixWidget.widget_data["tracking-ga-id"] = clientId;
-                    if (sessionId) window.PretixWidget.widget_data["tracking-ga-sessid"] = sessionId;
-                    window.PretixWidget.buildWidgets();
+                    if (clientId) window.EventyayWidget.widget_data["tracking-ga-id"] = clientId;
+                    if (sessionId) window.EventyayWidget.widget_data["tracking-ga-sessid"] = sessionId;
+                    window.EventyayWidget.buildWidgets();
                 };
                 // make sure to build eventyay-widgets if gtag fails to load either client_id or session_id
                 loadingTimeout = window.setTimeout(build, 2000);
@@ -378,25 +385,25 @@ Hosted or eventyay Enterprise are active, you can pass the following fields:
         gtag('js', new Date());
         gtag('config', '<MEASUREMENT_ID>');
 
-        window.pretixWidgetCallback = function () {
-            window.PretixWidget.build_widgets = false;
+        window.eventyayWidgetCallback = function () {
+            window.EventyayWidget.build_widgets = false;
             window.addEventListener('load', function() { // Wait for GA to be loaded
                 if (!window['google_tag_manager']) {
-                    window.PretixWidget.buildWidgets();
+                    window.EventyayWidget.buildWidgets();
                     return;
                 }
 
                 // make sure to build eventyay-widgets if gtag fails to load client_id
                 var loadingTimeout = window.setTimeout(function() {
                     loadingTimeout = null;
-                    window.PretixWidget.buildWidgets();
+                    window.EventyayWidget.buildWidgets();
                 }, 1000);
 
                 gtag('get', '<MEASUREMENT_ID>', 'client_id', function(id) {
                     if (loadingTimeout) {
                         window.clearTimeout(loadingTimeout);
-                        window.PretixWidget.widget_data["tracking-ga-id"] = id;
-                        window.PretixWidget.buildWidgets();
+                        window.EventyayWidget.widget_data["tracking-ga-id"] = id;
+                        window.EventyayWidget.buildWidgets();
                     }
                 });
             });
@@ -414,24 +421,24 @@ Hosted or eventyay Enterprise are active, you can pass the following fields:
         ga('create', '<MEASUREMENT_ID>', 'auto');
         ga('send', 'pageview');
 
-        window.pretixWidgetCallback = function () {
-            window.PretixWidget.build_widgets = false;
+        window.eventyayWidgetCallback = function () {
+            window.EventyayWidget.build_widgets = false;
             window.addEventListener('load', function() { // Wait for GA to be loaded
                 if (!window['ga'] || !ga.create) {
                     // Tracking is probably blocked
-                    window.PretixWidget.buildWidgets()
+                    window.EventyayWidget.buildWidgets()
                     return;
                 }
 
                 var loadingTimeout = window.setTimeout(function() {
                     loadingTimeout = null;
-                    window.PretixWidget.buildWidgets();
+                    window.EventyayWidget.buildWidgets();
                 }, 1000);
                 ga(function(tracker) {
                     if (loadingTimeout) {
                         window.clearTimeout(loadingTimeout);
-                        window.PretixWidget.widget_data["tracking-ga-id"] = tracker.get('clientId');
-                        window.PretixWidget.buildWidgets();
+                        window.EventyayWidget.widget_data["tracking-ga-id"] = tracker.get('clientId');
+                        window.EventyayWidget.buildWidgets();
                     }
                 });
             });
