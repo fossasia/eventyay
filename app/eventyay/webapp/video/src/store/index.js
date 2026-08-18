@@ -240,6 +240,12 @@ export default new Vuex.Store({
 			}
 			dispatch('chat/updateUser', {id: state.user.id, update})
 		},
+		async setProfileVisibility({state}, showPublicly) {
+			const result = await api.call('user.set_publicly_visible', {show_publicly: showPublicly})
+			const newValue = (result && typeof result.show_publicly === 'boolean') ? result.show_publicly : showPublicly
+			// Use Object.assign so Vue's reactivity proxy tracks the updated key
+			state.user = Object.assign({}, state.user, {show_publicly: newValue})
+		},
 		async fetchCurrentStream({state, getters, commit}, roomId) {
 			if (!roomId) return
 			const room = state.rooms?.find(r => r.id === roomId)

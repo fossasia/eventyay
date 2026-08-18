@@ -134,7 +134,7 @@
         <div>
             <div class="meetup-card meetup-card-sticky">
 
-                {% if ev.presale_has_ended %}
+                {% if ev.presale_has_ended or rsvp_registration_closed %}
                     <div class="meetup-card-header">
                         <i class="fa fa-calendar-times-o" aria-hidden="true"></i>
                         {% trans "Registration closed" %}

@@ -108,6 +108,11 @@
     border: 1px solid color-mix(in srgb, var(--color-positive, #3c763d) 30%, var(--color-white, #fff));
     color: var(--color-positive, #3c763d);
 }
+.meetup-rsvp-status.closed {
+    background: color-mix(in srgb, var(--color-danger, #d9534f) 15%, var(--color-white, #fff));
+    border: 1px solid color-mix(in srgb, var(--color-danger, #d9534f) 30%, var(--color-white, #fff));
+    color: var(--color-danger, #a94442);
+}
 .meetup-rsvp-status .fa {
     margin-top: 3px;
 }

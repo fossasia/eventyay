@@ -13,6 +13,15 @@
             </div>
         </div>
 
+    {% elif rsvp_registration_closed %}
+        <div class="meetup-rsvp-status closed" role="alert">
+            <i class="fa fa-ban" aria-hidden="true"></i>
+            <div>
+                <strong>{% trans "Registration is closed" %}</strong><br>
+                <small>{% trans "This event has reached its maximum number of registrations." %}</small>
+            </div>
+        </div>
+
     {% elif request.user.is_authenticated %}
         <div class="meetup-rsvp-block">
             <div class="meetup-rsvp-text">
