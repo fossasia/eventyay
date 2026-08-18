@@ -43,6 +43,7 @@ from eventyay.base.models import (
     Quota,
     TaxRule,
 )
+from eventyay.common.views.helpers import build_login_url_with_next
 from eventyay.base.models.checkin import CheckinList
 from eventyay.base.models.orders import (
     CachedCombinedTicket,
@@ -148,18 +149,24 @@ class OrderProtectedActionMixin:
     def dispatch(self, request, *args, **kwargs):
         self.request = request
         order = getattr(self, 'order', None)
-        if order is None and hasattr(self, 'position') and self.position:
-            order = self.position.order
+        position = getattr(self, 'position', None)
+
+        if order is None and position:
+            order = position.order
 
         if not request.user.is_authenticated:
-            from django.shortcuts import redirect
-            from eventyay.common.views.helpers import build_login_url_with_next
-            return redirect(build_login_url_with_next(request.path))
+            return redirect(build_login_url_with_next(request.get_full_path()))
 
-        if order and order.email:
-            if order.email.lower() != request.user.email.lower():
-                from django.core.exceptions import PermissionDenied
-                from django.utils.translation import gettext_lazy as _
+        if order:
+            user_email = (request.user.email or '').lower()
+            allowed_emails = {(order.email or '').lower()}
+
+            if position and position.attendee_email:
+                allowed_emails.add(position.attendee_email.lower())
+
+            allowed_emails.discard('')
+
+            if user_email not in allowed_emails:
                 raise PermissionDenied(_('You are not authorized to access this order.'))
 
         return super().dispatch(request, *args, **kwargs)
