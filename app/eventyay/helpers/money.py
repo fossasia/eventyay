@@ -30,6 +30,7 @@ def change_decimal_field(field, currency):
     field.localize = True
     if isinstance(field.widget, NumberInput):
         field.widget.attrs['step'] = str(Decimal('1') / 10**places).lower()
+        field.widget.attrs.setdefault('min', '0')
     elif isinstance(field.widget, TextInput):
         field.widget = DecimalTextInput(places=places)
     v = [v for v in field.validators if isinstance(v, DecimalValidator)]

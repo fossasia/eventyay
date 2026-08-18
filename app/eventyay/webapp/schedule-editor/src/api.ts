@@ -46,7 +46,7 @@ interface TalkPayload {
 type HttpRequestBody = Record<string, unknown> | string | null
 
 interface MembersResponse {
-  members: { id: number; name: string; email: string }[]
+  members: { id: number; name: string; email?: string }[]
 }
 
 interface AssignmentResponse {
