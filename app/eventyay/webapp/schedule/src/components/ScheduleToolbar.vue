@@ -178,9 +178,9 @@
 				@click="$emit('goToNow')",
 				:aria-label="t.now",
 				:disabled="!isEventHappeningToday",
-				:title="isEventHappeningToday ? '' : t.now_disabled",
-				:class="{ 'is-disabled': !isEventHappeningToday }") 
+				:title="isEventHappeningToday ? '' : t.now_disabled")
 				| {{ t.now }}
+				i.fa.fa-arrow-right(aria-hidden="true")
 			.search-area(ref="searchArea")
 				.search-compact(:class="{expanded: searchExpanded}")
 					button.toolbar-btn.icon-only.search-toggle(@click="toggleSearch", :aria-label="t.search")
@@ -454,7 +454,7 @@ export default {
 				public_schedule_only: m.public_schedule_only || 'Only available on the public schedule once a schedule is released and public.',
 				export: m.export || 'Export',
 				current: m.current || 'current',
-				now: m.now || 'Go to now',
+				now: m.now || 'Now ->',
 				now_disabled: m.now_disabled || 'Go to now is only available on the current day',
 				list_view: m.list_view || 'List View',
 				calendar_view: m.calendar_view || 'Calendar View',
@@ -1080,6 +1080,11 @@ export default {
 			white-space: nowrap
 			&:hover
 				color: #533f03
+	.toolbar-btn.now-btn
+		display: inline-flex
+		align-items: center
+		gap: 0.35rem
+		white-space: nowrap
 	.toolbar-btn.now-btn.is-disabled
 		cursor: not-allowed
 	.toolbar-row
