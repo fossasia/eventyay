@@ -1130,6 +1130,7 @@ the eventyay team"""
             d["client_state"] = self.client_state
         if include_personal_data:
             d["wikimedia_username"] = self.wikimedia_username
+            d["show_publicly"] = bool(self.show_publicly)
         return d
 
     @property

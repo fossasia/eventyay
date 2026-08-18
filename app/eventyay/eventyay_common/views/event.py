@@ -38,11 +38,12 @@ from eventyay.timezones import localize_datetime
 
 from eventyay.base.i18n import language
 from eventyay.base.meetup import (
+    get_rsvp_product_and_quota,
     get_video_config_initial,
     is_meetup_event,
     provision_meetup_event,
 )
-from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.base.models import Event, EventMetaValue, GlobalPluginConfig, Organizer, Quota
 from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
@@ -304,8 +305,11 @@ class EventCreateView(TemplateView):
         is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
         if is_series and not is_event_series_creation_enabled(request):
             raise PermissionDenied(_('Event series creation is currently disabled.'))
-        if self.is_meetup_request and not is_meetup_creation_enabled(request):
-            raise PermissionDenied(_('Meetup creation is currently disabled.'))
+        if self.is_meetup_request:
+            if not is_meetup_creation_enabled(request):
+                raise PermissionDenied(_('Meetup creation is currently disabled.'))
+            if not self.get_create_organizer_queryset().exists():
+                raise PermissionDenied(_('You do not have permission to create meetup events.'))
         return super().dispatch(request, *args, **kwargs)
 
     def get_foundation_form(self):
@@ -511,6 +515,7 @@ class EventCreateView(TemplateView):
             event.organizer = foundation_data['organizer']
 
             default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
+            global_default_plugins = GlobalPluginConfig.get_default_enabled_modules()
 
             ticketing_plugins = [
                 'eventyay.plugins.banktransfer',
@@ -523,7 +528,9 @@ class EventCreateView(TemplateView):
                 if plugin_name in installed_apps:
                     ticketing_plugins.append(plugin_name)
 
-            all_plugins = list(dict.fromkeys(default_plugins + ticketing_plugins))
+            all_plugins = list(dict.fromkeys(default_plugins + global_default_plugins + ticketing_plugins))
+            globally_disabled = GlobalPluginConfig.get_disabled_modules()
+            all_plugins = [m for m in all_plugins if m not in globally_disabled]
             event.plugins = ','.join(all_plugins)
 
             event.has_subevents = foundation_data['has_subevents']
@@ -537,6 +544,9 @@ class EventCreateView(TemplateView):
 
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)
+                for team in self.request.user.teams.filter(organizer=event.organizer):
+                    if not team.all_events and team.can_create_events:
+                        team.limit_events.add(event)
             event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
@@ -578,6 +588,13 @@ class EventCreateView(TemplateView):
                     video_url=basics_data.get('video_url', ''),
                     request=self.request,
                 )
+                reg_limit = basics_data.get('registration_limit')
+                if reg_limit is not None:
+                    product, quota = get_rsvp_product_and_quota(event)
+                    if quota and quota.size != reg_limit:
+                        with scope(organizer=event.organizer):
+                            quota.size = reg_limit
+                            quota.save(update_fields=['size'])
 
         return redirect(
             reverse(

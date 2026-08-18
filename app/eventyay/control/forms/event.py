@@ -131,13 +131,15 @@ class EventWizardFoundationForm(forms.Form):
         organizer_count = qs.count()
         is_required = organizer_count > 1
 
+        select2_url = reverse('control:organizers.select2') + '?can_create=1'
+
         self.fields['organizer'] = forms.ModelChoiceField(
             label=_('Organizer'),
             queryset=qs,
             widget=Select2(
                 attrs={
                     'data-model-select2': 'generic',
-                    'data-select2-url': reverse('control:organizers.select2') + '?can_create=1',
+                    'data-select2-url': select2_url,
                     'data-placeholder': _('Organizer'),
                 }
             ),
@@ -1850,6 +1852,13 @@ ConfirmTextFormset = formset_factory(
 
 class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
     """Event basics for meetups: currency is implicit, video stream is inline."""
+
+    registration_limit = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label=_('Registration limit'),
+        help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

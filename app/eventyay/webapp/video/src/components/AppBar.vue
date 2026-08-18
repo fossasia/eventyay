@@ -34,6 +34,10 @@
 					span.user-caret(role="button", :aria-expanded="String(profileMenuOpen)", aria-haspopup="true", tabindex="0", @click.stop="toggleProfileMenu", @keydown.enter.prevent="toggleProfileMenu", @keydown.space.prevent="toggleProfileMenu", :class="{open: profileMenuOpen}")
 				transition(name="dropdown-reveal")
 					.profile-dropdown(v-if="profileMenuOpen", role="menu", @click.stop)
+						.visibility-row(v-if="!isAnonymous")
+							span.visibility-label Profile visibility
+							span.visibility-badge(:class="isPublic ? 'badge-public' : 'badge-private'") {{ isPublic ? 'Public' : 'Private' }}
+						div.menu-separator(v-if="!isAnonymous")
 						template(v-for="item in menuItems", :key="item.key")
 							div.menu-separator(v-if="item.separatorBefore")
 							a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
@@ -92,6 +96,8 @@ const router = useRouter()
 const user = computed(() => store.state.user)
 const world = computed(() => store.state.world)
 const token = computed(() => store.state.token)
+
+const isPublic = computed(() => !!user.value?.show_publicly)
 
 function decodeTokenPayload(rawToken) {
 	if (!rawToken) return null
@@ -635,6 +641,31 @@ onBeforeUnmount(() => {
 				height: 1px
 				background: rgba(0,0,0,0.08)
 				margin: 6px 0
+			.visibility-row
+				display: flex
+				align-items: center
+				justify-content: space-between
+				gap: 8px
+				padding: 8px 18px
+				.visibility-label
+					font-size: 13px
+					font-weight: 500
+					color: #495057
+					white-space: nowrap
+				.visibility-badge
+					display: inline-block
+					padding: 2px 8px
+					border-radius: 10px
+					font-size: 11px
+					font-weight: 600
+					letter-spacing: 0.02em
+					white-space: nowrap
+					&.badge-public
+						background: #d4edda
+						color: #155724
+					&.badge-private
+						background: #f8d7da
+						color: #721c24
 
 .dropdown-reveal-enter-active,
 .dropdown-reveal-leave-active
