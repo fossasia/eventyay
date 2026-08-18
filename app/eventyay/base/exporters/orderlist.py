@@ -745,9 +745,13 @@ class OrderListExporter(MultiSheetListExporter):
         base_qs = OrderPosition.objects.filter(
             order__event__in=self.events,
         )
+        wikimedia_query = User.objects.filter(
+        email=OuterRef('order__email')
+        ).values('wikimedia_username')[:1]
         qs = (
             base_qs.annotate(
                 payment_providers=Subquery(p_providers, output_field=CharField()),
+                wikimedia_username=Subquery(wikimedia_query, output_field=CharField()),
             )
             .select_related(
                 'order',
@@ -788,6 +792,7 @@ class OrderListExporter(MultiSheetListExporter):
             _('Tax rule'),
             _('Tax value'),
             _('Attendee name'),
+            _('SSO username'),
         ]
         name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme] if not self.is_multievent else None
         if name_scheme and len(name_scheme['fields']) > 1:
@@ -914,6 +919,7 @@ class OrderListExporter(MultiSheetListExporter):
                     op.attendee_name
                     or (op.addon_to.attendee_name if op.addon_to else '')
                     or (invoice_address.name if invoice_address else ''),
+                    op.wikimedia_username or '',
                 ]
                 if name_scheme and len(name_scheme['fields']) > 1:
                     for k, label, w in name_scheme['fields']:

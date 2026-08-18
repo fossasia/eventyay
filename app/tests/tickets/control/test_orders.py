@@ -413,6 +413,26 @@ def test_order_position_list_exporter_matches_combined_positions_sheet(env):
 
     assert combined_rows == dedicated_rows
 
+@pytest.mark.django_db
+def test_order_position_list_exporter_includes_sso_username(env):
+    event, user, order, ticket = env
+    user.email = order.email
+    user.wikimedia_username = 'TestSSOUser'
+    user.save(update_fields=['email', 'wikimedia_username'])
+
+    exporter = OrderPositionListExporter(event)
+    rows = [
+        row
+        for row in exporter.iterate_list({'paid_only': False})
+        if not isinstance(row, exporter.ProgressSetTotal)
+    ]
+
+    headers = rows[0]
+    data = rows[1]
+
+    assert 'SSO username' in headers
+    assert data[headers.index('SSO username')] == 'TestSSOUser'
+
 
 @pytest.mark.django_db
 def test_order_position_list_exporter_csv_render(env):
