@@ -6,7 +6,7 @@ from django.contrib.auth.password_validation import (
     validate_password,
 )
 from django.utils.translation import gettext_lazy as _
-from pytz import common_timezones
+from eventyay.timezones import common_timezones
 
 from eventyay.base.models import User
 from eventyay.control.forms import SingleLanguageWidget

@@ -273,13 +273,12 @@ event_permission_urls = [
     ('can_change_event_settings', 'settings/tax/add', 200),
     ('can_change_event_settings', 'settings/tax/1/delete', 404),
     ('can_change_event_settings', 'comment/', 405),
-    # Lists are currently not access-controlled
-    # ("can_change_items", "items/", 200),
+    ('can_change_items', 'items/', 200),
     ('can_change_items', 'items/add', 200),
     ('can_change_items', 'items/1/up', 404),
     ('can_change_items', 'items/1/down', 404),
     ('can_change_items', 'items/1/delete', 404),
-    # ("can_change_items", "categories/", 200),
+    ('can_change_items', 'categories/', 200),
     # We don't have to create categories and similar objects
     # for testing this, it is enough to test that a 404 error
     # is returned instead of a 403 one.
@@ -288,12 +287,13 @@ event_permission_urls = [
     ('can_change_items', 'categories/2/up', 404),
     ('can_change_items', 'categories/2/down', 404),
     ('can_change_items', 'categories/add', 200),
-    # ("can_change_items", "questions/", 200),
+    ('can_change_items', 'questions/', 200),
     ('can_change_items', 'questions/2/', 404),
     ('can_change_items', 'questions/2/delete', 404),
     ('can_change_items', 'questions/reorder', 400),
     ('can_change_items', 'questions/add', 200),
-    # ("can_change_items", "quotas/", 200),
+    ('can_change_items', 'quotas/', 200),
+    ('can_change_items', 'quotas/2/', 404),
     ('can_change_items', 'quotas/2/change', 404),
     ('can_change_items', 'quotas/2/delete', 404),
     ('can_change_items', 'quotas/add', 200),
@@ -494,3 +494,45 @@ def test_correct_organizer_permission(perf_patch, client, env, perm, url, code):
     client.session.save()
     response = client.get('/control/' + url)
     assert response.status_code == code
+
+
+@pytest.mark.django_db
+def test_widget_lazy_no_order_permission_returns_empty(perf_patch, client, env):
+    """
+    A user with only can_change_items (no can_view_orders) must receive an
+    empty widget list from the lazy-loading endpoint.  This prevents leaking
+    attendee counts, revenue, and similar order data to unprivileged users
+    who know the URL.
+    """
+    t = Team(organizer=env[2], all_events=True, can_change_items=True)
+    t.save()
+    t.members.add(env[1])
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    session = client.session
+    session['pretix_auth_login_time'] = int(time.time())
+    session.save()
+    response = client.get('/control/event/dummy/dummy/widgets.json')
+    assert response.status_code == 200
+    data = response.json()
+    assert data['widgets'] == []
+
+
+@pytest.mark.django_db
+def test_widget_lazy_with_order_permission_returns_widgets(perf_patch, client, env):
+    """
+    A user with can_view_orders should receive the widget data from the
+    lazy-loading endpoint.
+    """
+    t = Team(organizer=env[2], all_events=True, can_view_orders=True)
+    t.save()
+    t.members.add(env[1])
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    session = client.session
+    session['pretix_auth_login_time'] = int(time.time())
+    session.save()
+    response = client.get('/control/event/dummy/dummy/widgets.json')
+    assert response.status_code == 200
+    data = response.json()
+    # Widgets list is non-empty — the order-related widgets are included.
+    assert isinstance(data['widgets'], list)
+    assert len(data['widgets']) > 0

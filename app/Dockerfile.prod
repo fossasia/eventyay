@@ -73,16 +73,11 @@ RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix
 # schedule widget
 COPY eventyay/webapp/schedule eventyay/webapp/schedule
 RUN npm ci --prefix=eventyay/webapp/schedule
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build:wc --prefix=eventyay/webapp/schedule
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp/schedule
 # Video SPA app
 COPY eventyay/webapp/video eventyay/webapp/video
 RUN npm ci --prefix=eventyay/webapp/video
 RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp/video
-# webcheckin web component build
-COPY eventyay/webapp/webcheckin eventyay/webapp/webcheckin
-RUN npm ci --prefix=eventyay/webapp/webcheckin
-# Write build output to compiled-frontend (collected by collectstatic)
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/webcheckin
 # esbuild needed by Django-Compressor
 RUN npm install -g esbuild
 

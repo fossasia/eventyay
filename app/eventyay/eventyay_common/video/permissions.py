@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Iterable
 
+from eventyay.core.permissions import LEGACY_VIDEO_ROLE_NAMES
+
 if TYPE_CHECKING:
     from eventyay.base.models import Event
 
@@ -42,15 +44,22 @@ def resolve_attendee_trait_grant(event: Event, attendee_grant):
 
 
 VIDEO_PERMISSION_DEFINITIONS: dict[str, VideoPermissionDefinition] = {
-    'can_video_create_stages': VideoPermissionDefinition('can_video_create_stages', 'video_stage_manager'),
-    'can_video_create_channels': VideoPermissionDefinition('can_video_create_channels', 'video_channel_manager'),
-    'can_video_manage_announcements': VideoPermissionDefinition('can_video_manage_announcements', 'video_announcement_manager'),
-    'can_video_view_users': VideoPermissionDefinition('can_video_view_users', 'video_user_viewer'),
-    'can_video_manage_users': VideoPermissionDefinition('can_video_manage_users', 'video_user_moderator'),
-    'can_video_manage_rooms': VideoPermissionDefinition('can_video_manage_rooms', 'video_room_manager'),
-    'can_video_manage_polls_questions': VideoPermissionDefinition('can_video_manage_polls_questions', 'video_poll_question_manager'),
-    'can_video_manage_kiosks': VideoPermissionDefinition('can_video_manage_kiosks', 'video_kiosk_manager'),
-    'can_video_manage_configuration': VideoPermissionDefinition('can_video_manage_configuration', 'video_config_manager'),
+    'can_video_manage_content': VideoPermissionDefinition(
+        'can_video_manage_content', 'video_content_manager'
+    ),
+    'can_video_moderate': VideoPermissionDefinition(
+        'can_video_moderate', 'video_moderator'
+    ),
+    'can_video_manage_kiosks': VideoPermissionDefinition(
+        'can_video_manage_kiosks', 'video_kiosk_manager'
+    ),
+    'can_video_view_analytics': VideoPermissionDefinition(
+        'can_video_view_analytics', 'video_analyst'
+    ),
+    # In-video Event Config (theme, connection limits, BBB defaults).
+    'can_change_config': VideoPermissionDefinition(
+        'can_change_config', 'video_config_manager'
+    ),
 }
 
 VIDEO_PERMISSION_BY_FIELD: dict[str, VideoPermissionDefinition] = VIDEO_PERMISSION_DEFINITIONS
@@ -64,6 +73,9 @@ VIDEO_TRAIT_ROLE_MAP: dict[str, str] = {
     definition.trait_name: definition.trait_name
     for definition in VIDEO_PERMISSION_DEFINITIONS.values()
 }
+
+# Pre-consolidation trait names that may still appear in cached JWTs / user rows.
+LEGACY_VIDEO_TRAIT_NAMES: tuple[str, ...] = LEGACY_VIDEO_ROLE_NAMES
 
 
 def iter_video_permission_definitions() -> Iterable[VideoPermissionDefinition]:
@@ -80,6 +92,38 @@ def build_video_traits_for_event(event_slug: str) -> dict[str, str]:
     }
 
 
+def managed_video_trait_values(event_slug: str) -> set[str]:
+    """All team-managed Video trait values for an event (current + legacy)."""
+    values = set(build_video_traits_for_event(event_slug).values())
+    for trait_name in LEGACY_VIDEO_TRAIT_NAMES:
+        values.add(f'eventyay-video-event-{event_slug}-{trait_name.replace("_", "-")}')
+    return values
+
+
+def replace_managed_video_traits(
+    event_slug: str,
+    traits: Iterable[str] | None,
+    team_traits: Iterable[str] | None,
+) -> list[str]:
+    """
+    Drop team-managed Video traits from ``traits`` and append ``team_traits``.
+
+    Non-managed traits (attendee, ticket, admin/organizer) are preserved.
+    """
+    managed = managed_video_trait_values(event_slug)
+    kept: list[str] = []
+    seen: set[str] = set()
+    for trait in traits or []:
+        if not trait or trait in managed or trait in seen:
+            continue
+        seen.add(trait)
+        kept.append(trait)
+    for trait in team_traits or []:
+        if not trait or trait in seen:
+            continue
+        seen.add(trait)
+        kept.append(trait)
+    return kept
 def collect_user_video_traits(event_slug: str, team_permission_set: Iterable[str]) -> list[str]:
     """
     Given an event slug and the permission set for the current user, return the list of

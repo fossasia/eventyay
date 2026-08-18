@@ -178,6 +178,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_change_organizer_settings',
             'can_manage_gift_cards',
             'can_change_event_settings',
+            'can_change_config',
             'can_change_items',
             'can_view_orders',
             'can_change_orders',
@@ -193,14 +194,10 @@ class TeamSerializer(serializers.ModelSerializer):
             'hide_exhibition_applicant_emails',
             'can_manage_social_media',
             'force_hide_speaker_emails',
-            'can_video_create_stages',
-            'can_video_create_channels',
-            'can_video_manage_announcements',
-            'can_video_view_users',
-            'can_video_manage_users',
-            'can_video_manage_rooms',
+            'can_video_manage_content',
+            'can_video_moderate',
             'can_video_manage_kiosks',
-            'can_video_manage_configuration',
+            'can_video_view_analytics',
         )
 
     def validate(self, data):

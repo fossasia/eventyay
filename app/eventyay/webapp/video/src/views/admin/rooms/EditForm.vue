@@ -9,8 +9,8 @@
 					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", label="Unscheduled room (hide from schedule/sessions)", :disabled="config.has_linked_sessions")
 				template(v-if="inferredType")
 					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
-			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating")
-			stream-schedule(ref="streamSchedule", v-if="showStreamSchedule", :room-id="config.id ? String(config.id) : null", :room-name="localizedName", :open-create-on-mount="openStreamScheduleCreateOnMount", @opened-create-on-mount="clearOpenStreamScheduleCreateQuery", @create-requires-room="createRoomForStreamSchedule")
+			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating", :interpretation-admin="interpretationAdmin")
+			stream-schedule(ref="streamSchedule", v-if="showStreamSchedule", :config="config", :room-id="config.id ? String(config.id) : null", :room-name="localizedName", :open-create-on-mount="openStreamScheduleCreateOnMount", @opened-create-on-mount="clearOpenStreamScheduleCreateQuery", @create-requires-room="createRoomForStreamSchedule")
 			sidebar-addons(v-if="inferredType && inferredType.id === 'stage'", :config="config", :modules="modules", :creating="creating")
 	.ui-form-actions
 		bunt-button.btn-save(@click="save", :loading="saving", :error="!!error") {{ creating ? 'create' : 'save' }}
@@ -31,16 +31,27 @@ import PageStatic from './types-edit/page-static'
 import PageIframe from './types-edit/page-iframe'
 import ChannelBBB from './types-edit/channel-bbb'
 import ChannelJanus from './types-edit/channel-janus'
+import ChannelJitsi from './types-edit/channel-jitsi'
 import ChannelZoom from './types-edit/channel-zoom'
 import ChannelRoulette from './types-edit/channel-roulette'
 import Posters from './types-edit/posters'
 import PageLanding from './types-edit/page-landing'
 import StreamSchedule from './StreamSchedule'
 import SidebarAddons from './types-edit/SidebarAddons'
+import {
+	cloneLanguageStreamEntries,
+	fetchInterpretationLanguageStreams,
+	saveInterpretationLanguageStreams,
+} from 'lib/interpretation-language-streams'
 
 export default {
 	components: { StreamSchedule, SidebarAddons },
 	mixins: [ValidationErrorsMixin],
+	provide() {
+		return {
+			interpretationAdmin: this.interpretationAdmin,
+		}
+	},
 	props: {
 		config: {
 			type: Object,
@@ -63,17 +74,27 @@ export default {
 				'channel-bbb': ChannelBBB,
 				'channel-roulette': ChannelRoulette,
 				'channel-janus': ChannelJanus,
+				'channel-jitsi': ChannelJitsi,
 				'channel-zoom': ChannelZoom,
 				posters: Posters
 			}),
 			saving: false,
-			error: null
+			error: null,
+			interpretationAdmin: {
+				usePluginStreams: false,
+				languageStreams: [],
+				loaded: false,
+				streamsLoadFailed: false,
+			},
 		}
 	},
+	async created() {
+		await this.loadInterpretationLanguageStreams()
+	},
 	computed: {
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
 		roomTypes() {
-			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission)
+			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode)
 		},
 		modules() {
 			return this.config?.module_config.reduce((acc, module) => {
@@ -123,6 +144,34 @@ export default {
 		}
 	},
 	methods: {
+		async loadInterpretationLanguageStreams() {
+			if (this.creating || !this.config?.id) return
+			this.interpretationAdmin.streamsLoadFailed = false
+			try {
+				const data = await fetchInterpretationLanguageStreams(
+					this.$store,
+					this.config.id
+				)
+				this.interpretationAdmin.usePluginStreams = Boolean(
+					data.use_plugin_language_streams
+				)
+				this.config.interpretation_use_plugin_streams = this.interpretationAdmin.usePluginStreams
+				if (this.interpretationAdmin.usePluginStreams) {
+					this.interpretationAdmin.languageStreams = cloneLanguageStreamEntries(
+						data.language_streams
+					)
+				}
+			} catch (error) {
+				console.warn('interpretation language streams unavailable', error)
+				this.interpretationAdmin.streamsLoadFailed = true
+				this.interpretationAdmin.usePluginStreams = Boolean(
+					this.config.interpretation_use_plugin_streams
+				)
+				this.interpretationAdmin.languageStreams = []
+			} finally {
+				this.interpretationAdmin.loaded = true
+			}
+		},
 		async save({ openScheduleAfterCreate = false, streamScheduleDraft = null } = {}) {
 			this.error = null
 			this.v$.$touch()
@@ -148,6 +197,18 @@ export default {
 					module_config: this.config.module_config,
 				})
 				Object.assign(this.config, updated)
+				if (
+					this.interpretationAdmin.usePluginStreams &&
+					roomId &&
+					this.interpretationAdmin.loaded &&
+					!this.interpretationAdmin.streamsLoadFailed
+				) {
+					await saveInterpretationLanguageStreams(
+						this.$store,
+						roomId,
+						this.interpretationAdmin.languageStreams
+					)
+				}
 				this.saving = false
 				if (this.creating) {
 					if (streamScheduleDraft) {

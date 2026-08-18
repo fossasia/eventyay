@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
-import pytz
+import datetime
+from zoneinfo import ZoneInfo
 from django import forms
 from django.db.models import F, Q
 from django.dispatch import receiver
@@ -114,7 +115,7 @@ class WaitingListExporter(ListExporter):
 
             # which event should be used to output dates in columns "Start date" and "End date"
             event_for_date_columns = entry.subevent if entry.subevent else entry.event
-            tz = pytz.timezone(entry.event.settings.timezone)
+            tz = ZoneInfo(entry.event.settings.timezone)
             datetime_format = '%Y-%m-%d %H:%M:%S %Z'
 
             row = [

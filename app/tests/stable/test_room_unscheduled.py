@@ -10,29 +10,44 @@ from eventyay.base.models.slot import TalkSlot
 from eventyay.core.permissions import Permission, SYSTEM_ROLES
 
 
-def test_video_poll_question_manager_grants_read_and_moderate_permissions():
-    perms = set(SYSTEM_ROLES['video_poll_question_manager'])
-    assert Permission.ROOM_QUESTION_READ.value in perms
-    assert Permission.ROOM_QUESTION_MODERATE.value in perms
-    assert Permission.ROOM_POLL_READ.value in perms
-    assert Permission.ROOM_POLL_MANAGE.value in perms
+def test_video_content_manager_grants_room_create_and_edit_permissions():
+    perms = set(SYSTEM_ROLES['video_content_manager'])
+    assert Permission.EVENT_ROOMS_CREATE_STAGE.value in perms
+    assert Permission.EVENT_ROOMS_CREATE_CHAT.value in perms
+    assert Permission.EVENT_ROOMS_CREATE_BBB.value in perms
+    assert Permission.EVENT_ROOMS_CREATE_EXHIBITION.value in perms
+    assert Permission.EVENT_ROOMS_CREATE_POSTER.value in perms
+    assert Permission.ROOM_UPDATE.value in perms
+    assert Permission.ROOM_DELETE.value in perms
 
 
-def test_video_user_moderator_grants_chat_moderate_without_admin_role():
-    """Organizers with manage-users video permission can delete chat messages
+def test_video_moderator_grants_engagement_without_admin_role():
+    """Organizers with moderate video permission can moderate chat/users/polls
     without needing the staff admin trait/session."""
-    perms = set(SYSTEM_ROLES['video_user_moderator'])
+    perms = set(SYSTEM_ROLES['video_moderator'])
+    assert Permission.EVENT_USERS_LIST.value in perms
     assert Permission.EVENT_USERS_MANAGE.value in perms
     assert Permission.ROOM_CHAT_MODERATE.value in perms
+    assert Permission.ROOM_ANNOUNCE.value in perms
+    assert Permission.ROOM_VIEWERS.value in perms
+    assert Permission.ROOM_QUESTION_MODERATE.value in perms
+    assert Permission.ROOM_POLL_MANAGE.value in perms
     # Must remain a scoped organizer role — not the full admin role set
     assert Permission.EVENT_UPDATE.value not in perms
     assert Permission.ROOM_UPDATE.value not in perms
+    assert Permission.EVENT_CHAT_DIRECT.value not in perms
+
+
+def test_video_analyst_and_config_are_split():
+    assert SYSTEM_ROLES['video_analyst'] == [Permission.EVENT_GRAPHS.value]
+    assert SYSTEM_ROLES['video_config_manager'] == [Permission.EVENT_UPDATE.value]
+    assert Permission.EVENT_GRAPHS.value not in SYSTEM_ROLES['video_config_manager']
 
 
 @pytest.mark.django_db
 def test_event_grants_chat_moderate_via_organizer_video_trait(event):
     """Organizer JWT traits (without admin) must unlock room:chat.moderate."""
-    trait = f'eventyay-video-event-{event.slug}-video-user-moderator'
+    trait = f'eventyay-video-event-{event.slug}-video-moderator'
     assert event.has_permission_implicit(
         traits=['attendee', trait],
         permissions=[Permission.ROOM_CHAT_MODERATE],
