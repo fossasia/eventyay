@@ -12,6 +12,14 @@
 			template(v-if="languages")
 				h2 {{ $t('preferences/index:interface-language:header') }}
 				bunt-select#select-interface-language(name="interface-language", v-model="interfaceLanguage", :options="languages", option-value="code", option-label="nativeLabel")
+			h2 Profile Visibility
+			p Making your profile public allows other attendees to find you in the networking chat list and see you in room viewer lists. Private profiles are completely hidden.
+			bunt-switch#switch-show-publicly(
+				name="showPublicly",
+				:label="showPublicly ? 'Public – visible to other attendees' : 'Private – hidden from attendee lists'",
+				:model-value="showPublicly",
+				@update:modelValue="toggleVisibility"
+			)
 			h2 {{ $t('preferences/index:notifications:header') }}
 			p {{ $t('preferences/index:notifications:description') }}
 			bunt-button#btn-enable-desktop-notifications(v-if="notificationPermission === 'default'", icon="bell", @click="$store.dispatch('notifications/askForPermission')") {{ $t('preferences/index:btn-enable-desktop-notifications:label') }}
@@ -73,6 +81,9 @@ export default {
 		...mapState('notifications', {
 			notificationPermission: 'permission'
 		}),
+		showPublicly() {
+			return !!this.$store.state.user?.show_publicly
+		},
 		languages() {
 			if (!config.locales?.length) return null
 			return locales.filter(locale => config.locales.includes(locale.code))
@@ -88,6 +99,9 @@ export default {
 		}
 	},
 	methods: {
+		async toggleVisibility(value) {
+			await this.$store.dispatch('setProfileVisibility', value)
+		},
 		async uploadAvatar() {
 			this.savingAvatar = true
 			await this.$refs.avatar.update()
@@ -152,6 +166,8 @@ export default {
 		border-radius: 4px
 		padding: 16px
 		font-weight: 500
+	#switch-show-publicly
+		margin-top: 4px
 	#btn-save
 		themed-button-primary()
 

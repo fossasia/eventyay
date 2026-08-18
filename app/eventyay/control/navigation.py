@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
+from eventyay.base.meetup import is_meetup_event
 from eventyay.control.checkin_app import get_eventyay_checkin_app_url, user_can_open_checkin_app
 from eventyay.control.signals import (
     nav_event,
@@ -124,7 +125,7 @@ def get_event_navigation(request: HttpRequest):
         )
         nav.append(
             {
-                'label': _('Ticket settings'),
+                'label': _('Registration settings') if is_meetup_event(request.event) else _('Ticket settings'),
                 'url': reverse(
                     'control:event.settings',
                     kwargs={
@@ -526,6 +527,11 @@ def get_admin_navigation(request):
                     'label': _('Social login settings'),
                     'url': reverse('plugins:socialauth:admin.global.social.auth.settings'),
                     'active': (url.url_name == 'admin.global.social.auth.settings'),
+                },
+                {
+                    'label': _('Plugins'),
+                    'url': reverse('eventyay_admin:admin.global.plugins'),
+                    'active': (url.url_name == 'admin.global.plugins'),
                 },
             ],
         },
