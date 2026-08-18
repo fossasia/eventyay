@@ -326,18 +326,19 @@ export default new Vuex.Store({
 					dispatch('stopStreamPolling')
 					return
 				}
-				if (document.hidden) {
-					return
-				}
-				if (!usesHttpStreamFallback(state.connected)) {
-					return
-				}
-				try {
-					await dispatch('fetchCurrentStream', roomId)
-					commit('resetStreamPollingBackoff')
-					scheduleNext(streamPollJitter(STREAM_POLL_BASE_DELAY))
-				} catch (error) {
-					handlePollError(error)
+				
+				let shouldFetch = !document.hidden && usesHttpStreamFallback(state.connected);
+				
+				if (shouldFetch) {
+					try {
+						await dispatch('fetchCurrentStream', roomId)
+						commit('resetStreamPollingBackoff')
+						scheduleNext(streamPollJitter(STREAM_POLL_BASE_DELAY))
+					} catch (error) {
+						handlePollError(error)
+					}
+				} else {
+					scheduleNext(STREAM_POLL_BASE_DELAY)
 				}
 			}
 
