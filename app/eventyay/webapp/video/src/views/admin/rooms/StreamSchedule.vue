@@ -5,6 +5,12 @@
 	.loading(v-if="loading")
 		bunt-progress-circular(size="large")
 	template(v-else)
+		.interpretation-plugin-language-streams(v-if="roomId && showPluginLanguageStreams")
+			LanguageAudioSourceList(
+				title="Interpretation source"
+				:entries="pluginLanguageStreamEntries"
+			)
+			p.plugin-language-streams-hint Room-level plugin streams used when “Use plugin language streams” is enabled on the Interpretation overview.
 		.stream-schedules-list(v-scrollbar.y="", v-if="streamSchedules && streamSchedules.length > 0")
 			.stream-schedule-item(v-for="schedule in streamSchedules", :key="schedule.id")
 				.info
@@ -39,13 +45,10 @@
 					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", option-value="id", option-label="label", :validation="v$.formData.stream_type")
 					.field-hint(v-if="formData.stream_type === 'iframe'") {{ IFRAME_PROVIDER_HELP_TEXT }}
 					.language-urls(v-if="formData.stream_type === 'youtube'")
-						h4 Languages and Audio Source
-						.language-url-entry(v-for="(entry, index) in formData.config.languageUrls" :key="index")
-							bunt-select(name="language", v-model="entry.language", :options="ISO_LANGUAGE_OPTIONS", label="Language")
-							bunt-input(name="youtube_id" v-model="entry.youtube_id" label="Audio Source (YouTube ID or WHEP URL)" @blur="normalizeLanguageYoutubeId(entry)")
-							bunt-switch(name="use_video" v-model="entry.use_video" label="Use video from this interpretation channel" hint="If enabled, attendees will see both the audio and video from this interpretation channel. If disabled, attendees will hear the interpretation audio while continuing to see the original main video.")
-							bunt-icon-button(@click="deleteLanguageUrl(index)") delete-outline
-						bunt-button(@click="addLanguageUrl") + Add Language and Audio Source
+						LanguageAudioSourceList(
+							title="Languages and Audio Source"
+							:entries="formData.config.languageUrls"
+						)
 					.form-error(v-if="saveError")
 						| {{ saveError }}
 					.form-actions
@@ -58,14 +61,21 @@ import { helpers } from '@vuelidate/validators';
 import { required, url, normalizeYoutubeVideoId } from 'lib/validators';
 import api from 'lib/api';
 import Prompt from 'components/Prompt';
+import LanguageAudioSourceList from 'components/LanguageAudioSourceList';
 import moment from 'lib/timetravelMoment';
 import { IFRAME_PROVIDER_HELP_TEXT } from 'lib/stage-streams';
-import ISO6391 from 'iso-639-1';
 
 export default {
 	name: 'StreamSchedule',
-	components: { Prompt },
+	components: { Prompt, LanguageAudioSourceList },
+	inject: {
+		interpretationAdmin: { default: null },
+	},
 	props: {
+		config: {
+			type: Object,
+			default: null,
+		},
 		roomId: {
 			type: [String, Number],
 			default: null,
@@ -96,7 +106,6 @@ export default {
 				{ id: 'iframe', label: 'Iframe' },
 			],
 			IFRAME_PROVIDER_HELP_TEXT,
-			ISO_LANGUAGE_OPTIONS: [],
 			formData: {
 				title: '',
 				url: '',
@@ -108,6 +117,12 @@ export default {
 		};
 	},
 	computed: {
+		showPluginLanguageStreams() {
+			return Boolean(this.config?.interpretation_use_plugin_streams)
+		},
+		pluginLanguageStreamEntries() {
+			return this.interpretationAdmin?.languageStreams ?? []
+		},
 		eventTimezone() {
 			return this.$store.state.world?.timezone || 'UTC';
 		},
@@ -172,10 +187,6 @@ export default {
 		return rules;
 	},
 	async created() {
-		this.ISO_LANGUAGE_OPTIONS = ISO6391.getAllCodes().map(code => ({
-			id: ISO6391.getName(code),
-			label: ISO6391.getName(code),
-		}));
 		if (!this.roomId) {
 			this.streamSchedules = [];
 			this.loading = false;
@@ -499,21 +510,6 @@ export default {
 				this.error = error.message || 'Failed to delete stream schedule';
 			}
 		},
-		addLanguageUrl() {
-			if (!this.formData.config.languageUrls) {
-				this.formData.config.languageUrls = [];
-			}
-			this.formData.config.languageUrls.push({ language: '', youtube_id: '', use_video: false });
-		},
-		deleteLanguageUrl(index) {
-			if (!this.formData.config.languageUrls) return;
-			this.formData.config.languageUrls.splice(index, 1);
-		},
-		normalizeLanguageYoutubeId(entry) {
-			if (!entry?.youtube_id) return;
-			const id = normalizeYoutubeVideoId(entry.youtube_id);
-			if (id) entry.youtube_id = id;
-		},
 		formatDateTime(datetime) {
 			if (!datetime) return '';
 			const tz = this.eventTimezone || 'UTC';
@@ -578,6 +574,14 @@ export default {
 		display: flex
 		justify-content: center
 		padding: 24px
+	.interpretation-plugin-language-streams
+		margin-bottom: 24px
+		padding-bottom: 16px
+		border-bottom: 1px solid $clr-grey-300
+		.plugin-language-streams-hint
+			margin: 8px 0 0
+			font-size: 13px
+			color: $clr-secondary-text-light
 	.empty-state
 		text-align: center
 		padding: 24px

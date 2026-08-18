@@ -305,6 +305,113 @@
                 </div>
             </div>
         </fieldset>
+
+                        <fieldset id="danger-zone-tab" class="danger-zone-container">
+            <legend class="text-danger">{% trans "Danger zone" %}</legend>
+
+            <!-- Top Alert -->
+            <div class="danger-zone-alert">
+                {% blocktrans trimmed %}
+                    <strong>Danger zone:</strong> These actions can affect your event and may be irreversible. Please proceed with caution.
+                {% endblocktrans %}
+            </div>
+
+            <!-- Section 1: Event status -->
+            <div class="danger-zone-section">
+                <h4>{% trans "Event status" %}</h4>
+                <p class="text-muted">{% trans "Manage the visibility or status of your event." %}</p>
+                
+                <div class="row">
+                    <!-- Go offline -->
+                    <div class="col-md-6">
+                        <div class="danger-card">
+                            <div class="danger-card-content">
+                                <strong>{% trans "Take event offline" %}</strong>
+                                <p>{% blocktrans trimmed %}Hide this event from attendees. You can bring it back online anytime.{% endblocktrans %}</p>
+                            </div>
+                            <div class="danger-card-action">
+                                <a href="{% url 'eventyay_common:event.live' event=request.event.slug organizer=request.event.organizer.slug %}" class="btn btn-default text-danger danger-action-btn">
+                                    {% trans "Go offline" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cancel event -->
+                    <div class="col-md-6">
+                        <div class="danger-card">
+                            <div class="danger-card-content">
+                                <strong>{% trans "Cancel event" %}</strong>
+                                <p>{% blocktrans trimmed %}Cancel this event and start the cancellation process. Ticket holders may need to be refunded.{% endblocktrans %}</p>
+                            </div>
+                            <div class="danger-card-action">
+                                <a href="{% url 'control:event.cancel' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default text-danger danger-action-btn">
+                                    {% trans "Cancel event" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Data management -->
+            <div class="danger-zone-section">
+                <h4>{% trans "Data management" %}</h4>
+                <p class="text-muted">{% trans "Manage and remove specific data while retaining required financial records." %}</p>
+                
+                <div class="row">
+                    <!-- Delete personal data -->
+                    <div class="col-md-6">
+                        <div class="danger-card">
+                            <div class="danger-card-content">
+                                <strong>{% trans "Delete personal data" %}</strong>
+                                <p>{% blocktrans trimmed %}Remove personal information such as attendee names and email addresses while retaining required financial records.{% endblocktrans %}</p>
+                            </div>
+                            <div class="danger-card-action">
+                                <a href="{% url 'control:event.shredder.start' event=request.event.slug organizer=request.event.organizer.slug %}" class="btn btn-default text-danger danger-action-btn">
+                                    {% trans "Delete data" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delete talk data -->
+                    {% if is_talk_event_created %}
+                    <div class="col-md-6">
+                        <div class="danger-card">
+                            <div class="danger-card-content">
+                                <strong>{% trans "Delete talk data" %}</strong>
+                                <p>{% blocktrans trimmed %}Permanently remove proposals, speaker profiles, and uploaded talk-related content.{% endblocktrans %}</p>
+                            </div>
+                            <div class="danger-card-action">
+                                <a href="{% url 'orga:event.delete_talk_data' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default text-danger danger-action-btn">
+                                    {% trans "Delete talk data" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Section 3: Permanent deletion -->
+            <div class="danger-zone-section section-red-bg">
+                <h4 class="text-danger">{% trans "Permanent deletion" %}</h4>
+                <p class="text-danger">{% trans "These actions cannot be undone. Please be absolutely sure." %}</p>
+                
+                <div class="danger-card danger-card-solid-red">
+                    <div class="danger-card-content">
+                        <strong>{% trans "Delete event" %}</strong>
+                        <p>{% blocktrans trimmed %}Permanently delete this event and all deletable associated data. Events containing protected records, such as completed orders outside test mode, cannot be deleted.{% endblocktrans %}</p>
+                    </div>
+                    <div class="danger-card-action">
+                        <a href="{% url 'control:event.delete' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-danger {% if not request.event.allow_delete %}disabled{% endif %}">
+                            {% trans "Delete event" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
     </div>
     <div class="form-group submit-group">
         <button type="submit" class="btn btn-primary btn-save">

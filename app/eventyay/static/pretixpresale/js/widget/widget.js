@@ -1,14 +1,41 @@
 /*global siteglobals, module, lang, django*/
-/* PRETIX WIDGET BEGINS HERE */
+/* EVENTYAY WIDGET BEGINS HERE */
 /* This is embedded in an isolation wrapper that exposes siteglobals as the global
    scope. */
 
-window.PretixWidget = {
-    'build_widgets': true,
-    'widget_data': {
-        'referer': location.href
+if (typeof window.EventyayWidget === "undefined") {
+    window.EventyayWidget = window.PretixWidget || {
+        'build_widgets': true,
+        'widget_data': {
+            'referer': location.href
+        }
+    };
+    if (!window.EventyayWidget.widget_data) {
+        window.EventyayWidget.widget_data = {};
     }
-};
+    if (!window.EventyayWidget.widget_data.referer) {
+        window.EventyayWidget.widget_data.referer = location.href;
+    }
+    if (typeof window.EventyayWidget.build_widgets === "undefined") {
+        window.EventyayWidget.build_widgets = true;
+    }
+}
+
+// Backward compatibility for window.PretixWidget
+try {
+    Object.defineProperty(window, 'PretixWidget', {
+        get: function () {
+            return window.EventyayWidget;
+        },
+        set: function (val) {
+            window.EventyayWidget = val;
+        },
+        configurable: true,
+        enumerable: true
+    });
+} catch (e) {
+    window.PretixWidget = window.EventyayWidget;
+}
 
 var Vue = module.exports;
 Vue.component('resize-observer', VueResize.ResizeObserver)
@@ -1247,7 +1274,7 @@ Vue.component('pretix-widget-event-week-calendar', {
     },
 });
 
-Vue.component('pretix-widget', {
+var widgetComponentOptions = {
     template: ('<div class="pretix-widget-wrapper" ref="wrapper">'
         + '<div :class="classObject">'
         + '<resize-observer @notify="handleResize" />'
@@ -1278,9 +1305,11 @@ Vue.component('pretix-widget', {
             return o;
         }
     }
-});
+};
+Vue.component('pretix-widget', widgetComponentOptions);
+Vue.component('eventyay-widget', widgetComponentOptions);
 
-Vue.component('pretix-button', {
+var buttonComponentOptions = {
     template: ('<div class="pretix-widget-wrapper">'
         + '<div class="pretix-widget-button-container">'
         + '<form :method="$root.formMethod" :action="$root.formAction" ref="form" :target="$root.formTarget">'
@@ -1299,7 +1328,9 @@ Vue.component('pretix-button', {
     ),
     data: shared_widget_data,
     methods: shared_methods,
-});
+};
+Vue.component('pretix-button', buttonComponentOptions);
+Vue.component('eventyay-button', buttonComponentOptions);
 
 /* Function to create the actual Vue instances */
 
@@ -1321,8 +1352,8 @@ var shared_root_methods = {
     },
     trigger_load_callback: function () {
         this.$nextTick(function () {
-            for (var i = 0; i < window.PretixWidget._loaded.length; i++) {
-                window.PretixWidget._loaded[i]()
+            for (var i = 0; i < window.EventyayWidget._loaded.length; i++) {
+                window.EventyayWidget._loaded[i]()
             }
         });
     },
@@ -1591,7 +1622,7 @@ var create_widget = function (element) {
     var skip_ssl = element.attributes["skip-ssl-check"] ? true : false;
     var disable_iframe = element.attributes["disable-iframe"] ? true : false;
     var disable_vouchers = element.attributes["disable-vouchers"] ? true : false;
-    var widget_data = JSON.parse(JSON.stringify(window.PretixWidget.widget_data));
+    var widget_data = JSON.parse(JSON.stringify(window.EventyayWidget.widget_data));
     var filter = element.attributes.filter ? element.attributes.filter.value : null;
     var items = element.attributes.items ? element.attributes.items.value : null;
     var categories = element.attributes.categories ? element.attributes.categories.value : null;
@@ -1602,8 +1633,12 @@ var create_widget = function (element) {
         }
     }
 
-    if (element.tagName !== "pretix-widget") {
-        element.innerHTML = "<pretix-widget></pretix-widget>";
+    var tagName = element.tagName.toLowerCase();
+    if (tagName !== "eventyay-widget" && tagName !== "pretix-widget") {
+        while (element.firstChild) {
+            element.removeChild(element.firstChild);
+        }
+        element.appendChild(document.createElement("eventyay-widget"));
     }
 
     var app = new Vue({
@@ -1670,8 +1705,8 @@ var create_button = function (element) {
     var raw_items = element.attributes.items ? element.attributes.items.value : "";
     var skip_ssl = element.attributes["skip-ssl-check"] ? true : false;
     var disable_iframe = element.attributes["disable-iframe"] ? true : false;
-    var button_text = element.innerHTML;
-    var widget_data = JSON.parse(JSON.stringify(window.PretixWidget.widget_data));
+    var button_text = element.textContent;
+    var widget_data = JSON.parse(JSON.stringify(window.EventyayWidget.widget_data));
     for (var i = 0; i < element.attributes.length; i++) {
         var attrib = element.attributes[i];
         if (attrib.name.match(/^data-.*$/)) {
@@ -1679,8 +1714,13 @@ var create_button = function (element) {
         }
     }
 
-    if (element.tagName !== "pretix-button") {
-        element.innerHTML = "<pretix-button>" + element.innerHTML + "</pretix-button>";
+    var tagName = element.tagName.toLowerCase();
+    if (tagName !== "eventyay-button" && tagName !== "pretix-button") {
+        var btnWrapper = document.createElement("eventyay-button");
+        while (element.firstChild) {
+            btnWrapper.appendChild(element.firstChild);
+        }
+        element.appendChild(btnWrapper);
     }
 
     var itemsplit = raw_items.split(",");
@@ -1723,22 +1763,24 @@ var create_button = function (element) {
 /* Find all widgets on the page and render them */
 widgetlist = [];
 buttonlist = [];
-window.PretixWidget._loaded = [];
-window.PretixWidget.addLoadListener = function (f) {
-    window.PretixWidget._loaded.push(f);
+window.EventyayWidget._loaded = [];
+window.EventyayWidget.addLoadListener = function (f) {
+    window.EventyayWidget._loaded.push(f);
 }
-window.PretixWidget.buildWidgets = function () {
+window.EventyayWidget.buildWidgets = function () {
+    document.createElement("eventyay-widget");
+    document.createElement("eventyay-button");
     document.createElement("pretix-widget");
     document.createElement("pretix-button");
     docReady(function () {
-        var widgets = document.querySelectorAll("pretix-widget, div.pretix-widget-compat");
+        var widgets = document.querySelectorAll("eventyay-widget, div.eventyay-widget-compat, pretix-widget, div.pretix-widget-compat");
         var wlength = widgets.length;
         for (var i = 0; i < wlength; i++) {
             var widget = widgets[i];
             widgetlist.push(create_widget(widget));
         }
 
-        var buttons = document.querySelectorAll("pretix-button, div.pretix-button-compat");
+        var buttons = document.querySelectorAll("eventyay-button, div.eventyay-button-compat, pretix-button, div.pretix-button-compat");
         var blength = buttons.length;
         for (var i = 0; i < blength; i++) {
             var button = buttons[i];
@@ -1747,19 +1789,21 @@ window.PretixWidget.buildWidgets = function () {
     });
 };
 
-window.PretixWidget.open = function (target_url, voucher, subevent, items, widget_data, skip_ssl_check, disable_iframe) {
+window.EventyayWidget.open = function (target_url, voucher, subevent, items, widget_data, skip_ssl_check, disable_iframe) {
     if (!target_url.match(/\/$/)) {
         target_url += "/";
     }
 
-    var all_widget_data = JSON.parse(JSON.stringify(window.PretixWidget.widget_data));
+    var all_widget_data = JSON.parse(JSON.stringify(window.EventyayWidget.widget_data));
     if (widget_data) {
         Object.keys(widget_data).forEach(function(key) { all_widget_data[key] = widget_data[key]; });
     }
     var root = document.createElement("div");
     document.body.appendChild(root);
     root.classList.add("pretix-widget-hidden");
-    root.innerHTML = "<pretix-button ref='btn'></pretix-button>";
+    var openBtn = document.createElement("eventyay-button");
+    openBtn.setAttribute("ref", "btn");
+    root.appendChild(openBtn);
     var app = new Vue({
         el: root,
         data: function () {
@@ -1795,17 +1839,21 @@ window.PretixWidget.open = function (target_url, voucher, subevent, items, widge
     })
 };
 
-if (typeof window.pretixWidgetCallback !== "undefined") {
+if (typeof window.eventyayWidgetCallback === "function") {
+    window.eventyayWidgetCallback();
+}
+if (typeof window.pretixWidgetCallback === "function") {
     window.pretixWidgetCallback();
 }
-if (window.PretixWidget.build_widgets) {
-    window.PretixWidget.buildWidgets();
+if (window.EventyayWidget.build_widgets) {
+    window.EventyayWidget.buildWidgets();
 }
 
 /* Set a global variable for debugging. In DEBUG mode, siteglobals will be window, otherwise it will be something
    unnamed. */
-siteglobals.pretixwidget_debug = {
+siteglobals.eventyaywidget_debug = {
     'Vue': Vue,
     'widgets': widgetlist,
     'buttons': buttonlist
 };
+siteglobals.pretixwidget_debug = siteglobals.eventyaywidget_debug;
