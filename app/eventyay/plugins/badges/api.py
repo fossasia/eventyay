@@ -3,6 +3,7 @@ import base64
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,6 +14,7 @@ from eventyay.base.models import OrderPosition
 from eventyay.base.services.tickets import generate_orderposition
 
 from .apps import PDFRenderer
+from .exporters import _open_layout_background
 from .models import BadgeLayout, BadgeProduct
 
 
@@ -58,6 +60,24 @@ class BadgeLayoutViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return self.request.event.badge_layouts.all()
+
+    @action(detail=True, methods=['get'])
+    def background(self, request, **kwargs):
+        """Return the PDF the server uses as this layout's badge background."""
+        layout = self.get_object()
+        try:
+            background_file = _open_layout_background(layout)
+        except (OSError, TypeError, ValueError):
+            return Response({'detail': 'No badge background is available.'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            pdf_bytes = background_file.read()
+        finally:
+            background_file.close()
+        if not pdf_bytes:
+            return Response({'detail': 'No badge background is available.'}, status=status.HTTP_404_NOT_FOUND)
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="badge-background-{layout.pk}.pdf"'
+        return response
 
 
 class BadgeProductViewSet(viewsets.ReadOnlyModelViewSet):

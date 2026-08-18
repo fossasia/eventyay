@@ -1,10 +1,14 @@
-Event settings
-==============
-
-Use the event settings area to configure event series, payments, plugins,
-public display, tickets, email, taxes, and invoicing.
+Configuring an event
+====================
 
 .. toctree::
    :maxdepth: 2
 
-   ../../user/events/settings
+   subevents
+   ../payments/index
+   plugins
+   display
+   tickets
+   email
+   taxes
+   invoicing

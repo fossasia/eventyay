@@ -3,14 +3,8 @@
 {% load static %}
 {% load bootstrap3 %}
 {% block inside %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h1>{% trans "Installed plugins" %}</h1>
-            </div>
-            {% include "eventyay_common/event/component_link.html" %}
-        </div>
-    </nav>
+    {% trans "Installed plugins" as header_title %}
+    {% include "common/includes/header_nav.html" with header_title=header_title header_component_link="eventyay_common/event/component_link.html" %}
     <form action="" method="post" class="form-horizontal form-plugins">
         {% csrf_token %}
         {% if "success" in request.GET %}

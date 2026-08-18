@@ -12,7 +12,7 @@ from urllib.parse import urlparse, urlunparse
 
 import isoweek
 import jwt
-import pytz
+from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
@@ -902,7 +902,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         if context['list_type'] == 'calendar':
             self._set_month_year()
-            tz = pytz.timezone(self.request.event.settings.timezone)
+            tz = ZoneInfo(self.request.event.settings.timezone)
             _, ndays = calendar.monthrange(self.year, self.month)
             before = datetime(self.year, self.month, 1, 0, 0, 0, tzinfo=tz) - timedelta(days=1)
             after = datetime(self.year, self.month, ndays, 0, 0, 0, tzinfo=tz) + timedelta(days=1)
@@ -937,7 +937,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             context['years'] = range(now().year - 2, now().year + 3)
         elif context['list_type'] == 'week':
             self._set_week_year()
-            tz = pytz.timezone(self.request.event.settings.timezone)
+            tz = ZoneInfo(self.request.event.settings.timezone)
             week = isoweek.Week(self.year, self.week)
             before = datetime(
                 week.monday().year,
