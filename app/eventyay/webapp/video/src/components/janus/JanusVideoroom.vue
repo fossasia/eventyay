@@ -91,7 +91,8 @@
 				.mdi(:class="micMuted ? 'mdi-microphone-off' : 'mdi-microphone'")
 			button.control-button(
 				type="button",
-				:class="{ disabled: !cameraEnabled }",
+				:class="{ disabled: !cameraEnabled, loading: cameraToggleInProgress || videoPublishInProgress }",
+				:disabled="cameraToggleInProgress || videoPublishInProgress",
 				:title="cameraEnabled ? $t('JanusVideoroom:tool-video:off') : $t('JanusVideoroom:tool-video:on')",
 				@click="toggleCamera"
 			)
@@ -270,6 +271,8 @@ export default {
 			videoPublishInProgress: false,
 			videoPublishQueued: false,
 			videoPublishTimeout: null,
+			cameraToggleInProgress: false,
+			cameraUnpublishTimeout: null,
 			localCameraActive: false,
 			micMuted: this.automute,
 			videoInput: localStorage.videoInput || '',
@@ -408,6 +411,10 @@ export default {
 			}
 			if (this.videoPublishTimeout) {
 				window.clearTimeout(this.videoPublishTimeout)
+			}
+			if (this.cameraUnpublishTimeout) {
+				window.clearTimeout(this.cameraUnpublishTimeout)
+				this.cameraUnpublishTimeout = null
 			}
 	},
 	methods: {
@@ -626,6 +633,8 @@ export default {
 					this.publishVideoMedia()
 				}
 				this.subscribeToPublishers(msg.publishers || [])
+			} else if (event === 'event' && msg.unpublished === 'ok') {
+				this.finishCameraToggle()
 			} else {
 				this.handlePublisherEvent(msg)
 			}
@@ -811,6 +820,7 @@ export default {
 					action: 'publishVideoMedia:skip-not-joined',
 					hasHandle: Boolean(this.videoPublisherHandle),
 				})
+				this.finishCameraToggle()
 				return
 			}
 			if (this.videoPublishInProgress) {
@@ -922,6 +932,12 @@ export default {
 			this.stopLocalCameraTracks()
 			if (this.videoPublisherHandle?.webrtcStuff?.pc) {
 				this.videoPublisherHandle.send({message: {request: 'unpublish'}})
+				if (this.cameraUnpublishTimeout) {
+					window.clearTimeout(this.cameraUnpublishTimeout)
+				}
+				this.cameraUnpublishTimeout = window.setTimeout(() => this.finishCameraToggle(), 2500)
+			} else {
+				this.finishCameraToggle()
 			}
 		},
 		microphoneConstraints(audioInput) {
@@ -970,10 +986,27 @@ export default {
 				this.videoPublishTimeout = null
 			}
 			this.videoPublishInProgress = false
+			if (this.cameraEnabled) {
+				this.finishCameraToggle()
+			}
 			if (this.videoPublishQueued) {
 				this.videoPublishQueued = false
 				this.$nextTick(this.publishVideoMedia)
 			}
+		},
+		startCameraToggle() {
+			this.cameraToggleInProgress = true
+			if (this.cameraUnpublishTimeout) {
+				window.clearTimeout(this.cameraUnpublishTimeout)
+				this.cameraUnpublishTimeout = null
+			}
+		},
+		finishCameraToggle() {
+			if (this.cameraUnpublishTimeout) {
+				window.clearTimeout(this.cameraUnpublishTimeout)
+				this.cameraUnpublishTimeout = null
+			}
+			this.cameraToggleInProgress = false
 		},
 		onLocalAudioStream(stream) {
 			this.localAudioStream = stream
@@ -1053,6 +1086,10 @@ export default {
 			this.applyMicState()
 		},
 		toggleCamera() {
+			if (this.cameraToggleInProgress || this.videoPublishInProgress) {
+				return
+			}
+			this.startCameraToggle()
 			this.cameraEnabled = !this.cameraEnabled
 			localStorage.videoRequested = this.cameraEnabled
 			log('janus-video-publisher', 'debug', {
@@ -2150,6 +2187,11 @@ export default {
 				window.clearTimeout(this.videoPublishTimeout)
 				this.videoPublishTimeout = null
 			}
+			if (this.cameraUnpublishTimeout) {
+				window.clearTimeout(this.cameraUnpublishTimeout)
+				this.cameraUnpublishTimeout = null
+			}
+			this.cameraToggleInProgress = false
 			if (this.janus) {
 				this.janus.destroy({cleanupHandles: true})
 				this.janus = null
@@ -2477,19 +2519,31 @@ export default {
 			background: #3a4350
 		&:active
 			transform: scale(.96)
+		&:disabled
+			cursor: not-allowed
+			transform: none
 		&.muted,
 		&.disabled
 			background: #d93025
 		&.active
 			background: #1976d2
 		&.loading
+			cursor: wait
 			opacity: .55
+			.mdi
+				animation: camera-toggle-pulse .9s ease-in-out infinite alternate
 		&.leave
 			background: #d93025
 			border-radius: 24px
 			width: 64px
 			&:hover
 				background: #b3261e
+
+	@keyframes camera-toggle-pulse
+		from
+			opacity: .55
+		to
+			opacity: 1
 
 	&.size-tiny
 		.gallery
