@@ -1,40 +1,39 @@
 <template lang="pug">
-.c-emoji-picker
+.c-emoji-picker(ref="container")
 </template>
 <script>
-import { h, render } from 'preact'
-import 'emoji-mart/css/emoji-mart.css'
-import data from 'emoji-mart/data/twitter.json'
-import { NimblePicker } from 'emoji-mart'
+import data from '@emoji-mart/data'
+import { init, Picker } from 'emoji-mart'
+
+let dataInitialized = false
 
 export default {
 	emits: ['selected'],
-	mounted() {
-		const picker = h(NimblePicker, {
-			set: 'twitter',
+	async mounted() {
+		if (!dataInitialized) {
+			await init({ data })
+			dataInitialized = true
+		}
+		const picker = new Picker({
 			data,
-			onSelect: this.$emit.bind(this, 'selected'),
-			title: 'Emoji',
-			showPreview: true
+			onEmojiSelect: (emoji) => {
+				this.$emit('selected', emoji)
+			},
+			previewPosition: 'bottom',
+			theme: 'auto',
 		})
-		render(picker, this.$el)
+		this.$refs.container.appendChild(picker)
 	},
-	methods: {}
 }
 </script>
 <style lang="stylus">
 .c-emoji-picker
-	.emoji-mart-emoji
-		-webkit-tap-highlight-color: transparent
-		outline: none
-		&:focus-visible
-			outline: 2px solid var(--focus-color, $clr-primary)
-			outline-offset: 2px
-		span
-			image-rendering: -webkit-optimize-contrast
-	.emoji-mart-preview-data
-		overflow: hidden
-		text-overflow: ellipsis
-		white-space: nowrap
-		font-size: 0.5em
+	position: fixed
+	z-index: 901
+	em-emoji-picker
+		--border-radius: 8px
+		--font-family: inherit
+		--rgb-background: 255, 255, 255
+		--rgb-color: 51, 51, 51
+		--rgb-input: 238, 238, 238
 </style>

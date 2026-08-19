@@ -15,6 +15,7 @@
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_variables.css" %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "lightbox/css/lightbox.scss" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "pretixcontrol/css/advanced-filter.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_event_nav.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_component_nav_mobile.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_markdown_editor.css' %}" />
@@ -51,6 +52,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/sb-admin-2.js" %}"></script>
             <script type="module" src="{% static "pretixcontrol/js/ui/confirmDialog.js" %}"></script>
 		    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/main.js" %}"></script>
+            <script type="module" src="{% static "pretixcontrol/js/ui/advanced-filter.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/quota.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/subevent.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/question.js" %}"></script>
@@ -196,7 +198,7 @@
                                     {% for item in nav.children %}
                                         <li>
                                             <a {% if item.url %}href="{{ item.url }}"{% endif %}
-                                                    {% if item.external %}target="_blank"{% endif %}
+                                                    {% if item.external %}target="_blank" rel="noopener noreferrer"{% endif %}
                                                     {% if item.active %}class="active"{% endif %}>
                                                 {% if item.icon %}
                                                     <span class="fa fa-fw fa-{{ item.icon }}"></span>
@@ -308,7 +310,7 @@
                                 {% for nav in nav_items %}
                                     <li>
                                         <a href="{{ nav.url }}" {% if nav.active %}class="active"{% endif %}
-                                                {% if nav.external %}target="_blank"{% endif %}
+                                                {% if nav.external %}target="_blank" rel="noopener noreferrer"{% endif %}
                                                 {% if nav.children %}class="has-children"{% endif %}>
                                             {% if nav.icon %}
                                                 {% if "<svg" in nav.icon %}
@@ -327,7 +329,7 @@
                                                 {% for item in nav.children %}
                                                     <li>
                                                         <a href="{{ item.url }}"
-                                                                {% if item.external %}target="_blank"{% endif %}
+                                                                {% if item.external %}target="_blank" rel="noopener noreferrer"{% endif %}
                                                                 {% if item.active %}class="active"{% endif %}>
                                                             <span class="sidebar-text">{{ item.label }}</span>
                                                         </a>

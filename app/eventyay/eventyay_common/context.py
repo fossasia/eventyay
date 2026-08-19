@@ -7,6 +7,7 @@ from django.http import HttpRequest
 from django.urls import Resolver404, get_script_prefix, resolve
 from django_scopes import scope
 
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.eventyay_common.navigation import get_event_navigation, get_global_navigation, get_organizer_navigation
@@ -73,6 +74,10 @@ def _default_context(request: HttpRequest):
         'orga:event.dashboard',
         kwargs={'organizer': event.organizer.slug, 'event': event.slug},
     )
+    is_meetup = is_meetup_event(event)
+    ctx['is_meetup'] = is_meetup
+    ctx['is_meetup_event'] = is_meetup
+
     ctx['is_video_enabled'] = is_video_enabled(event)
     ctx['is_talk_event_created'] = False
     if event.settings.create_for == EventCreatedFor.BOTH.value or event.settings.talk_schedule_public is not None:

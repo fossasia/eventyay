@@ -14,14 +14,8 @@
     {% endcompress %}
 {% endblock %}
 {% block inside %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h1>{% translate "Order forms" %}</h1>
-            </div>
-            {% include "pretixcontrol/event/component_link.html" %}
-        </div>
-    </nav>
+    {% translate "Order forms" as header_title %}
+    {% include "common/includes/header_nav.html" with header_title=header_title header_component_link="pretixcontrol/event/component_link.html" %}
     
     <form action="" method="post" class="form-horizontal order-forms-page" enctype="multipart/form-data">
         {% csrf_token %}
@@ -69,15 +63,8 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center">
-                                {% with twice_field=sform.order_email_asked_twice %}
-                                {% if twice_field %}
-                                <label class="checkbox-inline" title="{% translate 'Ask for the order email address twice' %}">
-                                    <input type="checkbox" name="{{ twice_field.html_name }}" id="{{ twice_field.auto_id }}" {% if twice_field.value %}checked{% endif %} aria-label="{% translate 'Ask for the order email address twice' %}">
-                                    {% translate "Ask twice" %}
-                                </label>
-                                {% endif %}
-                                {% endwith %}
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.customerfield' organizer=request.event.organizer.slug event=request.event.slug field='order_email' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for E-mail' %}" title="{% translate 'Settings for E-mail' %}"><i class="fa fa-cog fa-fw"></i></a>
                             </td>
                         </tr>
                         {% endif %}
@@ -106,7 +93,9 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.customerfield' organizer=request.event.organizer.slug event=request.event.slug field='order_phone' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Phone number' %}" title="{% translate 'Settings for Phone number' %}"><i class="fa fa-cog fa-fw"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -128,8 +117,6 @@
                     </tbody>
                 </table>
             </div>
-            {% bootstrap_field sform.checkout_email_helptext layout="control" %}
-            {% bootstrap_field sform.checkout_phone_helptext layout="control" %}
         </fieldset>
 
         <fieldset>

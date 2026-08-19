@@ -7,6 +7,17 @@ import MarkdownIt from 'markdown-it'
 import createDOMPurify from 'dompurify'
 import multimdTable from 'markdown-it-multimd-table'
 
+/**
+ * markdown-it v15 removed legacy md.utils.assign (use Object.assign).
+ * markdown-it-multimd-table still calls md.utils.assign during .use().
+ */
+function multimdTableCompat (md, options) {
+	if (typeof md.utils.assign !== 'function') {
+		md.utils.assign = Object.assign
+	}
+	return multimdTable(md, options)
+}
+
 /** @type {string[]} */
 export const EVENTYAY_RICH_TEXT_ALLOWED_TAGS = [
 	'a',
@@ -66,13 +77,13 @@ const markdownItWithHtml = new MarkdownIt({
 	html: true,
 	linkify: true,
 	breaks: true,
-}).use(multimdTable)
+}).use(multimdTableCompat)
 
 const markdownItNoHtml = new MarkdownIt({
 	html: false,
 	linkify: true,
 	breaks: true,
-}).use(multimdTable)
+}).use(multimdTableCompat)
 
 const PURIFY_CONFIG = {
 	ALLOWED_TAGS: EVENTYAY_RICH_TEXT_ALLOWED_TAGS,

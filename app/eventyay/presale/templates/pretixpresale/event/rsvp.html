@@ -1,0 +1,66 @@
+{% load i18n %}
+{% load eventurl %}
+{% load bootstrap3 %}
+
+<section class="meetup-rsvp" aria-label="{% trans 'Event registration' %}">
+
+    {% if attendee_already_registered %}
+        <div class="meetup-rsvp-status registered" role="status">
+            <i class="fa fa-check-circle" aria-hidden="true"></i>
+            <div>
+                <strong>{% trans "You're registered!" %}</strong><br>
+                <small>{% trans "You're all set for this event. We look forward to seeing you!" %}</small>
+            </div>
+        </div>
+
+    {% elif rsvp_registration_closed %}
+        <div class="meetup-rsvp-status closed" role="alert">
+            <i class="fa fa-ban" aria-hidden="true"></i>
+            <div>
+                <strong>{% trans "Registration is closed" %}</strong><br>
+                <small>{% trans "This event has reached its maximum number of registrations." %}</small>
+            </div>
+        </div>
+
+    {% elif request.user.is_authenticated %}
+        <div class="meetup-rsvp-block">
+            <div class="meetup-rsvp-text">
+                <strong>{% trans "Reserve your spot" %}</strong><br>
+                <small>{% trans "Click the button below to register for this event." %}</small>
+            </div>
+            <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}" class="meetup-rsvp-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-block">
+                    {% trans "Register" %}
+                </button>
+            </form>
+        </div>
+
+    {% elif guest_checkout_allowed %}
+        <div class="meetup-rsvp-block">
+            <div class="meetup-rsvp-text">
+                <strong>{% trans "Register for this event" %}</strong>
+            </div>
+            <form method="post" action="{% eventurl request.event 'presale:event.rsvp' %}" novalidate class="meetup-rsvp-form">
+                {% csrf_token %}
+                {% bootstrap_form_errors rsvp_guest_form %}
+                {% bootstrap_field rsvp_guest_form.attendee_name %}
+                {% bootstrap_field rsvp_guest_form.attendee_email %}
+                <button type="submit" class="btn btn-primary btn-block">
+                    {% trans "Register" %}
+                </button>
+            </form>
+        </div>
+
+    {% else %}
+        <div class="meetup-rsvp-block">
+            <div class="meetup-rsvp-text">
+                <strong>{% trans "Registration required" %}</strong><br>
+                <small>{% trans "Please log in to register for this event." %}</small>
+            </div>
+            <a href="{% url 'auth.login' %}?next={{ request.path|urlencode }}" class="btn btn-primary btn-block">
+                {% trans "Log in" %}
+            </a>
+        </div>
+    {% endif %}
+</section>

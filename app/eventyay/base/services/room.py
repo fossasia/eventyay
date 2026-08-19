@@ -59,7 +59,7 @@ def end_view(view: RoomView, delete=False):
     return c, is_last
 
 
-async def get_viewers(event: Event, room: Room):
+async def get_viewers(event: Event, room: Room, *, include_private=False):
     users = await get_public_users(
         # We're doing an ORM query in an async method, but it's okay, since it is not going to be evaluated but
         # lazily passed to get_public_users which will use it as a subquery :)
@@ -67,7 +67,7 @@ async def get_viewers(event: Event, room: Room):
         event_id=event.pk,
         include_banned=False,
         trait_badges_map=event.config.get('trait_badges_map'),
-        require_show_publicly=True,
+        require_show_publicly=not include_private,
     )
     return users
 
@@ -83,7 +83,25 @@ def validate_room_config_patch(room, body):
         data=body,
         partial=True,
     )
+    if "module_config" in body:
+        _sanitize_jitsi_config(body["module_config"])
     return partial_validated_update(serializer, body)
+
+
+def _sanitize_jitsi_config(module_config):
+    if not isinstance(module_config, list):
+        return
+    for module in module_config:
+        if not isinstance(module, dict):
+            continue
+        if module.get("type") != "call.jitsi":
+            continue
+        config = module.setdefault("config", {})
+        if not isinstance(config, dict):
+            config = {}
+            module["config"] = config
+        for key in ("domain", "jwt_enabled", "app_id", "key_id", "app_secret"):
+            config.pop(key, None)
 
 
 def uses_schedule_driven_stage(module_config):

@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Q
@@ -37,6 +38,12 @@ from .auth import User
 logger = logging.getLogger(__name__)
 
 
+class TeamPermissionError(PermissionDenied):
+    """Raised when team access permission checks fail to preserve administrator access."""
+
+    pass
+
+
 def check_access_permissions(organizer):
     """We run this method when team permissions are changed, inside a transaction.
 
@@ -46,8 +53,7 @@ def check_access_permissions(organizer):
     warnings = []
     teams = organizer.teams.all().annotate(member_count=models.Count('members')).filter(member_count__gt=0)
     if not [t for t in teams if t.can_change_teams]:
-        # TODO: Should use a concrete exception type
-        raise Exception(
+        raise TeamPermissionError(
             _(
                 'There must be at least one team with the permission to change teams, '
                 'as otherwise nobody can create new teams or grant permissions to existing teams.'
@@ -71,8 +77,7 @@ def check_access_permissions(organizer):
     for event in organizer.events.all():
         event_teams = teams.filter(models.Q(limit_events=event) | models.Q(all_events=True)).distinct()
         if not event_teams:
-            # TODO: Should use a concrete exception type
-            raise Exception(
+            raise TeamPermissionError(
                 str(
                     _(
                         'There must be at least one team with access to every event. '
@@ -210,7 +215,6 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
         this organizer, so you don't have to prefix your cache keys. In addition, the cache
         is being cleared every time the organizer changes.
         """
-        # FIXME: This "cache" module is missing.
         from eventyay.base.cache import ObjectRelatedCache
 
         return ObjectRelatedCache(self)
@@ -382,6 +386,13 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     can_manage_gift_cards = models.BooleanField(default=False, verbose_name=_('Can manage gift cards'))
 
     can_change_event_settings = models.BooleanField(default=False, verbose_name=_('Can change event settings'))
+    can_change_config = models.BooleanField(
+        default=False,
+        verbose_name=_('Can change config'),
+        help_text=_(
+            'Edit in-video Event Config such as theme, connection limits, and BBB defaults.'
+        ),
+    )
     can_change_items = models.BooleanField(default=False, verbose_name=_('Can change product settings'))
     can_view_orders = models.BooleanField(default=False, verbose_name=_('Can view orders'))
     can_change_orders = models.BooleanField(default=False, verbose_name=_('Can change orders'))
@@ -400,6 +411,22 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     )
     can_view_vouchers = models.BooleanField(default=False, verbose_name=_('Can view vouchers'))
     can_change_vouchers = models.BooleanField(default=False, verbose_name=_('Can change vouchers'))
+
+    TEAMSHIFTS_ROLE_CHOICES = [
+        ('coordinator', _('Event Coordinator')),
+        ('lead', _('Team Lead')),
+    ]
+
+    teamshifts_role = models.CharField(
+        max_length=20,
+        choices=TEAMSHIFTS_ROLE_CHOICES,
+        default='',
+        blank=True,
+        verbose_name=_('TeamShifts role'),
+    )
+    all_teamshifts_roles = models.BooleanField(default=False, verbose_name=_('All teamshifts roles'))
+    limit_teamshifts_roles = models.JSONField(default=list, blank=True, verbose_name=_('Limit teamshifts roles'))
+    hide_teamshifts_emails = models.BooleanField(default=False, verbose_name=_('Hide email addresses'))
 
     def __str__(self) -> str:
         return _('%(name)s on %(object)s') % {
@@ -567,57 +594,31 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     )
 
 
-    can_video_create_stages = models.BooleanField(
+    can_video_manage_content = models.BooleanField(
         default=False,
-        verbose_name=_('Video: Can create stages'),
-        help_text=_('Allows creating livestream stages inside Eventyay Video.'),
-    )
-    can_video_create_channels = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can create channels'),
-        help_text=_('Allows creating chat/video channels inside Eventyay Video.'),
-    )
-    can_video_direct_message = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can send direct messages'),
-        help_text=_('Grants permission to open new direct message conversations.'),
-    )
-    can_video_manage_announcements = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can create announcements'),
-        help_text=_('Allows posting announcements in the Eventyay Video interface.'),
-    )
-    can_video_view_users = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can view users'),
-        help_text=_('Allows access to the user directory in Eventyay Video.'),
-    )
-    can_video_manage_users = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can message, ban, and silence users'),
+        verbose_name=_('Video: Can manage rooms and content'),
         help_text=_(
-            'Allows moderating users (ban, silence, reactivate) and deleting chat messages.'
+            'Create and edit stages, chat/video channels, exhibition booths, and poster '
+            'sessions; edit and delete rooms.'
         ),
     )
-    can_video_manage_rooms = models.BooleanField(
+    can_video_moderate = models.BooleanField(
         default=False,
-        verbose_name=_('Video: Can create and edit rooms'),
-        help_text=_('Allows editing and deleting rooms inside Eventyay Video.'),
-    )
-    can_video_manage_polls_questions = models.BooleanField(
-        default=False,
-        verbose_name=_('Video: Can manage polls and questions'),
-        help_text=_('Allows managing polls and questions in rooms inside Eventyay Video.'),
+        verbose_name=_('Video: Can moderate users and engagement'),
+        help_text=_(
+            'Announce globally and in rooms; list and moderate users; moderate chat; '
+            'see room viewers; manage polls and Q&A; access BBB recordings.'
+        ),
     )
     can_video_manage_kiosks = models.BooleanField(
         default=False,
-        verbose_name=_('Video: Can create and edit kiosks'),
-        help_text=_('Allows managing kiosk displays inside Eventyay Video.'),
+        verbose_name=_('Video: Can manage kiosks'),
+        help_text=_('Allows creating and editing kiosk displays inside Eventyay Video.'),
     )
-    can_video_manage_configuration = models.BooleanField(
+    can_video_view_analytics = models.BooleanField(
         default=False,
-        verbose_name=_('Video: Can edit event configuration'),
-        help_text=_('Allows editing the global Eventyay Video configuration.'),
+        verbose_name=_('Video: Can view analytics'),
+        help_text=_('Allows viewing Eventyay Video statistics and analytics dashboards.'),
     )
 
     @cached_property

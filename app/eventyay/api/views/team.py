@@ -15,8 +15,12 @@ from rest_framework.response import Response
 from eventyay.api.documentation import build_expand_docs, build_search_docs
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.team import TeamInviteSerializer, TeamSerializer
-from eventyay.base.models.organizer import Team, TeamInvite
-from eventyay.base.models.organizer import check_access_permissions
+from eventyay.base.models.organizer import (
+    Team,
+    TeamInvite,
+    TeamPermissionError,
+    check_access_permissions,
+)
 from eventyay.base.models.auth import User
 
 
@@ -74,7 +78,7 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             with transaction.atomic():
                 super().perform_update(serializer)
                 check_access_permissions(self.request.organizer)
-        except Exception as e:
+        except TeamPermissionError as e:
             raise exceptions.ValidationError(str(e))
 
     def perform_destroy(self, instance):
@@ -84,7 +88,7 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
                 instance.logged_actions().delete()
                 super().perform_destroy(instance)
                 check_access_permissions(organizer)
-        except Exception as e:
+        except TeamPermissionError as e:
             raise exceptions.ValidationError(str(e))
 
     @extend_schema(
@@ -178,7 +182,7 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
                         "email": user_to_remove.email,
                     },
                 )
-        except Exception as e:
+        except TeamPermissionError as e:
             raise exceptions.ValidationError(str(e))
 
         return Response(status=status.HTTP_204_NO_CONTENT)

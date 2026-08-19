@@ -63,7 +63,21 @@ logger = logging.getLogger(__name__)
 
 
 def serialize_room_config(room_or_rooms, many=False):
-    return RoomConfigSerializer(room_or_rooms, many=many).data
+    data = RoomConfigSerializer(room_or_rooms, many=many).data
+    _strip_jitsi_secrets(data, many=many)
+    return data
+
+
+def _strip_jitsi_secrets(data, many=False):
+    rooms = data if many else [data]
+    for room in rooms:
+        for module in room.get("module_config") or []:
+            if module.get("type") != "call.jitsi":
+                continue
+            config = module.get("config")
+            if isinstance(config, dict):
+                for key in ("domain", "jwt_enabled", "app_id", "key_id", "app_secret"):
+                    config.pop(key, None)
 
 
 class RoomModule(BaseModule):
@@ -72,6 +86,13 @@ class RoomModule(BaseModule):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.current_views = {}
+
+    def _room_from_viewer_event(self, body):
+        room_id = str(body.get("_room"))
+        for room in self.current_views:
+            if str(room.pk) == room_id:
+                return room
+        return None
 
     @staticmethod
     def _is_private_url(url):
@@ -225,18 +246,19 @@ class RoomModule(BaseModule):
         )
         await self._update_view_count(self.room, actual_view_count)
 
-        if self.consumer.user.show_publicly:
-            await get_channel_layer().group_send(
-                GROUP_ROOM_VIEWERS.format(id=self.room.pk),
-                {
-                    "type": "room.viewer.added",
-                    "user": self.consumer.user.serialize_public(
-                        trait_badges_map=self.consumer.event.config.get(
-                            "trait_badges_map"
-                        )
-                    ),
-                },
-            )
+        await get_channel_layer().group_send(
+            GROUP_ROOM_VIEWERS.format(id=self.room.pk),
+            {
+                "type": "room.viewer.added",
+                "user": self.consumer.user.serialize_public(
+                    trait_badges_map=self.consumer.event.config.get(
+                        "trait_badges_map"
+                    )
+                ),
+                "_show_publicly": bool(self.consumer.user.show_publicly),
+                "_room": str(self.room.pk),
+            },
+        )
 
         data = {}
 
@@ -252,6 +274,10 @@ class RoomModule(BaseModule):
             data["viewers"] = await get_viewers(
                 self.consumer.event,
                 self.room,
+                include_private=await self.consumer.event.has_organizer_role_async(
+                    user=self.consumer.user,
+                    room=self.room,
+                ),
             )
 
         await self.consumer.send_success(data)
@@ -290,12 +316,14 @@ class RoomModule(BaseModule):
             )
             del self.current_views[room]
             await self._update_view_count(room, actual_view_count)
-            if self.consumer.user.show_publicly and is_last:
+            if is_last:
                 await get_channel_layer().group_send(
                     GROUP_ROOM_VIEWERS.format(id=room.pk),
                     {
                         "type": "room.viewer.removed",
                         "user_id": str(self.consumer.user.id),
+                        "_show_publicly": bool(self.consumer.user.show_publicly),
+                        "_room": str(room.pk),
                     },
                 )
 
@@ -401,6 +429,7 @@ class RoomModule(BaseModule):
         [
             Permission.EVENT_ROOMS_CREATE_STAGE,
             Permission.EVENT_ROOMS_CREATE_BBB,
+            Permission.EVENT_ROOMS_CREATE_JITSI,
             Permission.EVENT_ROOMS_CREATE_CHAT,
             Permission.EVENT_ROOMS_CREATE_EXHIBITION,
             Permission.ROOM_UPDATE,
@@ -427,19 +456,45 @@ class RoomModule(BaseModule):
 
     @event("viewer.added")
     async def push_viewer_added(self, body):
+        room = self._room_from_viewer_event(body)
+        if (
+            not body.get("_show_publicly", True)
+            and not await self.consumer.event.has_organizer_role_async(
+                user=self.consumer.user,
+                room=room,
+            )
+        ):
+            return
         await self.consumer.send_json(
             [
                 body["type"],
-                {k: v for k, v in body.items() if k != "type"},
+                {
+                    k: v
+                    for k, v in body.items()
+                    if k != "type" and not k.startswith("_")
+                },
             ]
         )
 
     @event("viewer.removed")
     async def push_viewer_removed(self, body):
+        room = self._room_from_viewer_event(body)
+        can_view_private = await self.consumer.event.has_organizer_role_async(
+            user=self.consumer.user,
+            room=room,
+        )
+        if body.get("_visibility_changed") and can_view_private:
+            return
+        if not body.get("_show_publicly", True) and not can_view_private:
+            return
         await self.consumer.send_json(
             [
                 body["type"],
-                {k: v for k, v in body.items() if k != "type"},
+                {
+                    k: v
+                    for k, v in body.items()
+                    if k != "type" and not k.startswith("_")
+                },
             ]
         )
 

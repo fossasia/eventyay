@@ -524,6 +524,14 @@ class ItemsTest(ItemFormTest):
         resp = self.client.get('/control/event/%s/%s/items/' % (self.orga1.slug, self.event1.slug))
         assert 'T-Shirt' in resp.content.decode()
 
+    def test_create_negative_price_rejected(self):
+        self.client.post(
+            '/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug),
+            {'name_0': 'Invalid Item', 'default_price': '-500.00', 'tax_rate': '19.00'},
+        )
+        resp = self.client.get('/control/event/%s/%s/items/' % (self.orga1.slug, self.event1.slug))
+        assert 'Invalid Item' not in resp.content.decode()
+
     def test_update(self):
         doc = self.get_doc('/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item2.id))
         d = extract_form_fields(doc.select('.container-fluid form')[0])
@@ -543,6 +551,26 @@ class ItemsTest(ItemFormTest):
         )
         self.item1.refresh_from_db()
         assert self.item1.default_price == Decimal('23.00')
+
+    def test_update_negative_price_rejected(self):
+        old_price = self.item1.default_price
+        doc = self.get_doc('/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item1.id))
+        d = extract_form_fields(doc.select('.container-fluid form')[0])
+        d.update(
+            {
+                'name_0': 'Standard',
+                'default_price': '-500.00',
+                'active': 'yes',
+                'allow_cancel': 'yes',
+                'sales_channels': 'web',
+            }
+        )
+        self.client.post(
+            '/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item1.id),
+            d,
+        )
+        self.item1.refresh_from_db()
+        assert self.item1.default_price == old_price
 
     def test_update_validate_giftcard(self):
         doc = self.get_doc('/control/event/%s/%s/items/%d/' % (self.orga1.slug, self.event1.slug, self.item2.id))
@@ -884,6 +912,23 @@ class ItemsTest(ItemFormTest):
             i = Item.objects.get(name__icontains='New Item')
             q = Quota.objects.get(name__icontains='New Quota')
             assert q.items.filter(pk=i.pk).exists()
+
+    def test_create_defaults_available_until(self):
+        self.event1.date_to = datetime.datetime(2013, 12, 28, 18, 0, tzinfo=datetime.timezone.utc)
+        self.event1.save()
+        doc = self.get_doc('/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug))
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['name_0'] = 'Timed ticket'
+        form_data['default_price'] = '2.00'
+        form_data['quota_option'] = 'none'
+        doc = self.post_doc(
+            '/control/event/%s/%s/items/add' % (self.orga1.slug, self.event1.slug),
+            form_data,
+        )
+        assert doc.select('.alert-success')
+        with scopes_disabled():
+            item = Item.objects.get(name__icontains='Timed ticket')
+            assert item.available_until == self.event1.date_to
 
     def test_order_forms_save_does_not_reset_common_settings(self):
         self.event1.settings.set('frontpage_text', LazyI18nString({'en': 'Presale intro text'}))

@@ -6,12 +6,14 @@
         </a>
         {% if has_ticket_access %}
             <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
-                <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+                <i class="fa fa-ticket"></i> {% if is_meetup %}{% translate "Registrations" %}{% else %}{% translate "Tickets" %}{% endif %}
             </a>
         {% endif %}
+        {% if not is_meetup %}
         <a href="{% url 'orga:event.dashboard' organizer=request.event.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
             <i class="fa fa-group"></i> {% translate "Talks" %}
         </a>
+        {% endif %}
         {% if has_video_access %}
             <a class="header-nav btn btn-outline-success"
                href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'

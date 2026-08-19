@@ -38,8 +38,10 @@ from .exhibitor import (
 )
 from .feedback import Feedback
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
+from .global_plugin_config import GlobalPluginConfig
 from .invoices import Invoice, InvoiceLine, invoice_filename
 from .janus import JanusServer
+from .jitsi import JitsiServer
 from .log import ActivityLog, LogEntry
 from .mail import MailTemplate, MailTemplateRoles, QueuedMail
 from .mixins import FileCleanupMixin, GenerateCode, LogMixin, OrderedModel, PretalxModel, TimestampedModel
@@ -164,6 +166,7 @@ __all__ = [
     'GiftCard',
     'GiftCardAcceptance',
     'GiftCardTransaction',
+    'GlobalPluginConfig',
     'GlobalSettings',
     'Invoice',
     'InvoiceAddress',
@@ -177,6 +180,7 @@ __all__ = [
     'ProductMetaValue',
     'ProductVariation',
     'JanusServer',
+    'JitsiServer',
     'LogEntry',
     'LogMixin',
     'LoggedModel',

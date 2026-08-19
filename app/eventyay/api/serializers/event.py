@@ -8,16 +8,17 @@ from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django_countries.serializers import CountryFieldMixin
-from pytz import common_timezones
+from eventyay.timezones import common_timezones
 from rest_framework.fields import ChoiceField, Field
 from rest_framework.relations import SlugRelatedField
 
 from eventyay.api.serializers.fields import UploadedFileOrURLField
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
 from eventyay.api.serializers.settings import SettingsSerializer
-from eventyay.base.models import Device, Event, TaxRule, TeamAPIToken
+from eventyay.base.models import Device, Event, GlobalPluginConfig, TaxRule, TeamAPIToken
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import SubEventProduct, SubEventProductVariation
+from eventyay.base.plugins import get_all_plugins
 from eventyay.base.services.seating import (
     SeatProtected,
     generate_seats,
@@ -74,8 +75,6 @@ class SeatCategoryMappingField(Field):
 
 class PluginsField(Field):
     def to_representation(self, obj):
-        from eventyay.base.plugins import get_all_plugins
-
         return sorted(
             [
                 p.module
@@ -246,8 +245,6 @@ class EventSerializer(I18nAwareModelSerializer):
         return {'seat_category_mapping': result}
 
     def validate_plugins(self, value):
-        from eventyay.base.plugins import get_all_plugins
-
         plugins_available = {
             p.module
             for p in get_all_plugins(self.instance)
@@ -277,6 +274,10 @@ class EventSerializer(I18nAwareModelSerializer):
         product_meta_properties = validated_data.pop('product_meta_properties', None)
         validated_data.pop('seat_category_mapping', None)
         plugins = validated_data.pop('plugins', list(settings.EVENTYAY_PLUGINS_DEFAULT))
+        global_defaults = GlobalPluginConfig.get_default_enabled_modules()
+        globally_disabled = GlobalPluginConfig.get_disabled_modules()
+        plugins = [m for m in dict.fromkeys(plugins + global_defaults) if m not in globally_disabled]
+
         tz = validated_data.pop('timezone', None)
         event = super().create(validated_data)
 

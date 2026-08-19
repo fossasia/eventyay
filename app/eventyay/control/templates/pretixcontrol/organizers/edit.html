@@ -43,7 +43,7 @@
                 {% bootstrap_field sform.event_team_provisioning layout="control" %}
             </fieldset>
             <fieldset>
-                <legend>{% trans "Organizer page" %}</legend>
+                <legend>{% trans "Design" %}</legend>
                 {% bootstrap_field sform.organizer_logo_image layout="control" %}
                 {% bootstrap_field sform.organizer_header_image layout="control" %}
                 {% bootstrap_field sform.organizer_header_image_large layout="control" %}
@@ -51,19 +51,6 @@
                 {% bootstrap_field sform.event_list_type layout="control" %}
                 {% bootstrap_field sform.event_list_availability layout="control" %}
                 {% bootstrap_field sform.organizer_link_back layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Community" %}</legend>
-                {% bootstrap_field sform.community_follow_enabled layout="control" %}
-                {% bootstrap_field sform.community_show_follower_count layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Localization" %}</legend>
-                {% bootstrap_field sform.locales layout="control" %}
-                {% bootstrap_field sform.region layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Shop design" %}</legend>
                 <p class="help-block">
                     {% blocktrans trimmed %}
                         These settings will be used for the organizer page as well as for the default settings
@@ -81,6 +68,16 @@
                 {% bootstrap_field sform.hover_button_color layout="control" %}
                 {% bootstrap_field sform.theme_round_borders layout="control" %}
                 {% bootstrap_field sform.primary_font layout="control" %}
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Community" %}</legend>
+                {% bootstrap_field sform.community_follow_enabled layout="control" %}
+                {% bootstrap_field sform.community_show_follower_count layout="control" %}
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Localization" %}</legend>
+                {% bootstrap_field sform.locales layout="control" %}
+                {% bootstrap_field sform.region layout="control" %}
             </fieldset>
             <fieldset>
                 <legend>{% trans "Video area" %}</legend>

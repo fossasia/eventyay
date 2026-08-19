@@ -33,6 +33,7 @@ RES_LAYOUT = {
     'name': 'Foo',
     'default': True,
     'allow_customization': False,
+    'allow_badge_editing': False,
     'product_assignments': [{'product': 1}],
     'layout': [{'a': 2}],
     'ask_user_fields': [],
@@ -84,3 +85,19 @@ def test_api_detail(env, client):
         ).content.decode('utf-8')
     )
     assert response == res
+
+
+@pytest.mark.django_db
+def test_api_background_download(env, client):
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    response = client.get(
+        '/api/v1/organizers/{}/events/{}/badgelayouts/{}/background/'.format(
+            env[0].organizer.slug,
+            env[0].slug,
+            env[2].pk,
+        )
+    )
+    assert response.status_code in (200, 404)
+    if response.status_code == 200:
+        assert response['Content-Type'] == 'application/pdf'
+        assert response.content[:4] == b'%PDF'

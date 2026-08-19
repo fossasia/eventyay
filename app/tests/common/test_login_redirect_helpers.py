@@ -3,6 +3,7 @@ from http import HTTPStatus
 from unittest.mock import MagicMock
 
 from django.http import HttpResponseRedirect, JsonResponse
+from django.urls import resolve, reverse
 
 from eventyay.common.views.helpers import (
     build_login_url_with_next,
@@ -35,7 +36,7 @@ def test_login_redirect_with_next_browser_redirect(rf):
     response = login_redirect_with_next(request)
 
     assert isinstance(response, HttpResponseRedirect)
-    assert response.url.startswith('/common/login/')
+    assert response.url.startswith('/login/')
     assert 'next=' in response.url
     assert 'online-video%2Fjoin' in response.url or 'online-video/join' in response.url
 
@@ -51,14 +52,36 @@ def test_login_redirect_with_next_ajax_returns_login_url(rf):
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     payload = json.loads(response.content.decode())
     assert 'login_url' in payload
-    assert payload['login_url'].startswith('/common/login/')
+    assert payload['login_url'].startswith('/login/')
     assert 'next=' in payload['login_url']
 
 
 def test_build_login_url_with_next():
     url = build_login_url_with_next('/wm/event/online-video/join/')
-    assert url.startswith('/common/login/')
+    assert url.startswith('/login/')
     assert 'next=' in url
+
+
+def test_login_named_route_uses_short_url():
+    assert reverse('auth.login') == '/login/'
+
+
+def test_legacy_common_login_redirect_preserves_next(rf):
+    request = rf.get('/common/login/?next=/wm/event/online-video/join/')
+    match = resolve('/common/login/')
+    response = match.func(request, *match.args, **match.kwargs)
+
+    assert response.status_code == HTTPStatus.MOVED_PERMANENTLY
+    assert response.url == '/login/?next=/wm/event/online-video/join/'
+
+
+def test_legacy_common_login_2fa_redirect_preserves_next(rf):
+    request = rf.get('/common/login/2fa/?next=/wm/event/control/')
+    match = resolve('/common/login/2fa/')
+    response = match.func(request, *match.args, **match.kwargs)
+
+    assert response.status_code == HTTPStatus.MOVED_PERMANENTLY
+    assert response.url == '/login/2fa/?next=/wm/event/control/'
 
 
 def test_redirect_or_json_redirect_ajax(rf):

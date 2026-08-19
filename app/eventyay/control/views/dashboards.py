@@ -2,7 +2,8 @@ from datetime import timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-import pytz
+import datetime
+
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import (
@@ -31,6 +32,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext, pgettext
 
 from eventyay.base.decimal import round_decimal
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import (
     Product,
     ProductCategory,
@@ -46,7 +48,7 @@ from eventyay.base.models import (
     WaitingListEntry,
 )
 from eventyay.base.services.quotas import QuotaAvailability
-from eventyay.base.settings import is_event_series_creation_enabled
+from eventyay.base.settings import is_event_series_creation_enabled, is_meetup_creation_enabled
 from eventyay.base.timeline import timeline_for_event
 from eventyay.control.forms.event import CommentForm
 from eventyay.control.signals import (
@@ -295,7 +297,10 @@ def quota_widgets(sender, subevent=None, lazy=False, **kwargs):
 def shop_state_widget(sender, **kwargs):
     request = kwargs.get('request')
     is_common = bool(request and request.path.startswith('/common/'))
-    label = _('Event is') if is_common else _('Ticket shop is')
+    if is_meetup_event(sender):
+        label = _('Meetup is') if is_common else _('Registration is')
+    else:
+        label = _('Event is') if is_common else _('Ticket shop is')
     url_name = 'eventyay_common:event.live' if is_common else 'control:event.live'
     if is_common:
         state = (
@@ -540,14 +545,19 @@ def event_index_widgets_lazy(request, organizer, event):
         except SubEvent.DoesNotExist:
             pass
 
+    can_view_orders = request.user.has_event_permission(
+        request.organizer, request.event, 'can_view_orders', request=request
+    )
+
     widgets = []
-    for r, result in event_dashboard_widgets.send(
-        sender=request.event,
-        subevent=subevent,
-        lazy=False,
-        request=request,
-    ):
-        widgets.extend(result)
+    if can_view_orders:
+        for r, result in event_dashboard_widgets.send(
+            sender=request.event,
+            subevent=subevent,
+            lazy=False,
+            request=request,
+        ):
+            widgets.extend(result)
 
     return JsonResponse({'widgets': widgets})
 
@@ -618,7 +628,7 @@ def widgets_for_event_qs(request, qs, user, nmax, lazy=False):
     for event in events:
         if not lazy:
             tzname = event.cache.get_or_set('timezone', lambda: event.settings.timezone)
-            tz = pytz.timezone(tzname)
+            tz = ZoneInfo(tzname)
             if event.has_subevents:
                 if event.min_from is None:
                     dr = pgettext('subevent', 'No dates')
@@ -756,6 +766,7 @@ def user_index(request):
         'widgets': rearrange(widgets),
         'can_create_event': request.user.teams.filter(can_create_events=True).exists(),
         'event_series_creation_enabled': is_event_series_creation_enabled(request),
+        'meetup_creation_enabled': is_meetup_creation_enabled(request),
         'upcoming': widgets_for_event_qs(
             request,
             annotated_event_query(request, lazy=True)

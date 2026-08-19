@@ -21,11 +21,13 @@ from i18nfield.forms import (
     I18nTextarea,
     I18nTextInput,
 )
-from pytz import common_timezones, timezone
+from zoneinfo import ZoneInfo
+from eventyay.timezones import common_timezones, localize_datetime
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
+from eventyay.base.meetup import add_video_field_errors, build_video_form_fields
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
@@ -101,8 +103,8 @@ class EventWizardFoundationForm(forms.Form):
         widget=MultipleLanguagesWidget,
         help_text=_(
             "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
-            "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
-            "event's default language instead."
+            "these languages. Drag and drop selected languages to reorder them — the first language (bold border) "
+            "is used as your event's default language."
         ),
     )
     has_subevents = forms.BooleanField(
@@ -129,13 +131,15 @@ class EventWizardFoundationForm(forms.Form):
         organizer_count = qs.count()
         is_required = organizer_count > 1
 
+        select2_url = reverse('control:organizers.select2') + '?can_create=1'
+
         self.fields['organizer'] = forms.ModelChoiceField(
             label=_('Organizer'),
             queryset=qs,
             widget=Select2(
                 attrs={
                     'data-model-select2': 'generic',
-                    'data-select2-url': reverse('control:organizers.select2') + '?can_create=1',
+                    'data-select2-url': select2_url,
                     'data-placeholder': _('Organizer'),
                 }
             ),
@@ -176,6 +180,7 @@ class EventWizardBasicsForm(I18nModelForm):
     locale = forms.ChoiceField(
         choices=settings.LANGUAGES,
         label=_('Default language'),
+        required=False,
     )
     tax_rate = forms.DecimalField(
         label=_('Sales tax rate'),
@@ -284,15 +289,20 @@ class EventWizardBasicsForm(I18nModelForm):
 
     def clean(self):
         data = super().clean()
+        if not data.get('locale') and self.locales:
+            data['locale'] = self.locales[0]
         if data.get('locale') not in self.locales:
-            raise ValidationError(
-                {'locale': _('Your default locale must also be enabled for your event (see box above).')}
-            )
+            if self.locales:
+                data['locale'] = self.locales[0]
+            else:
+                raise ValidationError(
+                    {'locale': _('Your default locale must also be enabled for your event (see box above).')}
+                )
         if data.get('timezone') not in common_timezones:
             raise ValidationError({'timezone': _('Your default locale must be specified.')})
 
         # change timezone
-        zone = timezone(data.get('timezone'))
+        zone = ZoneInfo(data.get('timezone'))
         data['date_from'] = self.reset_timezone(zone, data.get('date_from'))
         data['date_to'] = self.reset_timezone(zone, data.get('date_to'))
         data['presale_start'] = self.reset_timezone(zone, data.get('presale_start'))
@@ -300,8 +310,8 @@ class EventWizardBasicsForm(I18nModelForm):
         return data
 
     @staticmethod
-    def reset_timezone(tz, dt):
-        return tz.localize(dt.replace(tzinfo=None)) if dt is not None else None
+    def reset_timezone(zone, dt):
+        return localize_datetime(dt, zone)
 
     def clean_slug(self):
         slug = self.cleaned_data['slug']
@@ -807,8 +817,6 @@ class OrderFormSettingsForm(EventSettingsForm):
         'require_registered_account_for_tickets',
         'include_wikimedia_username',
         'checkout_show_copy_answers_button',
-        'checkout_email_helptext',
-        'checkout_phone_helptext',
     ]
 
     def __init__(self, *args, **kwargs):
@@ -829,6 +837,30 @@ class OrderFormSettingsForm(EventSettingsForm):
             set_system_question_field_overrides(self.obj, field_id, {})
 
         return result
+
+
+class OrderFormCustomerFieldSettingsForm(SettingsForm):
+    FIELD_LABELS = {
+        'order_email': _('E-mail'),
+        'order_phone': _('Phone number'),
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.field_id = kwargs.pop('field_id', None)
+        
+        if self.field_id == 'order_email':
+            self.auto_fields = [
+                'order_email_asked_twice',
+                'checkout_email_helptext',
+            ]
+        elif self.field_id == 'order_phone':
+            self.auto_fields = [
+                'checkout_phone_helptext',
+            ]
+        else:
+            self.auto_fields = []
+            
+        super().__init__(*args, **kwargs)
 
 
 class OrderFormDefaultFieldSettingsForm(forms.Form):
@@ -1605,25 +1637,25 @@ class WidgetCodeForm(forms.Form):
 
 class EventDeleteForm(forms.Form):
     error_messages = {
-        'slug_wrong': _('The slug you entered was not correct.'),
+        'name_wrong': _('The event name you entered was not correct.'),
     }
-    slug = forms.CharField(
+    name = forms.CharField(
         max_length=255,
-        label=_('Event slug'),
+        label=_('Event name'),
     )
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
         super().__init__(*args, **kwargs)
 
-    def clean_slug(self):
-        slug = self.cleaned_data.get('slug')
-        if slug != self.event.slug:
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if name != str(self.event.name):
             raise forms.ValidationError(
-                self.error_messages['slug_wrong'],
-                code='slug_wrong',
+                self.error_messages['name_wrong'],
+                code='name_wrong',
             )
-        return slug
+        return name
 
 
 class QuickSetupForm(I18nForm):
@@ -1631,6 +1663,23 @@ class QuickSetupForm(I18nForm):
         label=_('Event currency'),
         choices=Event.CURRENCY_CHOICES,
         required=True,
+    )
+    tax_name = I18nFormField(
+        label=_('Tax name'),
+        help_text=_('e.g. VAT'),
+        required=False,
+        widget=I18nTextInput,
+    )
+    tax_rate = forms.DecimalField(
+        label=_('Tax rate (in %)'),
+        required=False,
+        max_digits=10,
+        decimal_places=2,
+    )
+    tax_price_includes_tax = forms.BooleanField(
+        label=_('The configured product prices include the tax amount'),
+        required=False,
+        initial=True,
     )
     show_quota_left = forms.BooleanField(
         label=_('Show number of tickets left'),
@@ -1714,6 +1763,14 @@ class QuickSetupForm(I18nForm):
         if cleaned_data.get('payment_banktransfer__enabled'):
             provider = BankTransfer(self.obj)
             cleaned_data = provider.settings_form_clean(cleaned_data)
+        
+        tax_name = cleaned_data.get('tax_name')
+        tax_rate = cleaned_data.get('tax_rate')
+        if tax_name and tax_rate is None:
+            self.add_error('tax_rate', _('Please enter a tax rate.'))
+        elif tax_rate is not None and not tax_name:
+            self.add_error('tax_name', _('Please enter a tax name.'))
+            
         return cleaned_data
 
 
@@ -1739,6 +1796,12 @@ class QuickSetupProductForm(I18nForm):
         required=False,
     )
 
+    def clean_default_price(self):
+        value = self.cleaned_data.get('default_price')
+        if value is not None and value < 0:
+            raise ValidationError(_('The price must not be negative.'))
+        return value
+
 
 class BaseQuickSetupProductFormSet(I18nFormSetMixin, forms.BaseFormSet):
     def __init__(self, *args, **kwargs):
@@ -1763,3 +1826,61 @@ class ProductMetaPropertyForm(forms.ModelForm):
         widgets = {'default': forms.TextInput()}
 
 
+class ConfirmTextForm(I18nForm):
+    text = I18nFormField(
+        widget=I18nTextarea,
+        widget_kwargs={'attrs': {'rows': '2'}},
+    )
+
+
+class BaseConfirmTextFormSet(I18nFormSetMixin, forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        event = kwargs.pop('event', None)
+        if event:
+            kwargs['locales'] = event.settings.get('locales')
+        super().__init__(*args, **kwargs)
+
+
+ConfirmTextFormset = formset_factory(
+    ConfirmTextForm,
+    formset=BaseConfirmTextFormSet,
+    can_order=True,
+    can_delete=True,
+    extra=0,
+)
+
+
+class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
+    """Event basics for meetups: currency is implicit, video stream is inline."""
+
+    registration_limit = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label=_('Registration limit'),
+        help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.update(
+            build_video_form_fields(
+                type_help_text=_('Optional: configure a live video stream for this meetup.')
+            )
+        )
+        currency_field = self.fields.get('currency')
+        if currency_field is not None:
+            currency_field.required = False
+            if not self.initial.get('currency'):
+                self.initial['currency'] = self._default_currency()
+
+    @staticmethod
+    def _default_currency():
+        return getattr(settings, 'DEFAULT_CURRENCY', 'USD')
+
+    def clean_currency(self):
+        return self.cleaned_data.get('currency', '') or self._default_currency()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        add_video_field_errors(self, cleaned_data.get('video_type'), cleaned_data.get('video_url'))
+        return cleaned_data

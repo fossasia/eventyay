@@ -8,9 +8,19 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext_lazy as _
-from pytz import common_timezones
+from django_scopes import scope
+
+from eventyay.timezones import common_timezones
 
 from eventyay.base.forms import I18nModelForm, SettingsForm
+from eventyay.base.meetup import (
+    add_video_field_errors,
+    apply_video_configuration,
+    build_video_form_fields,
+    get_rsvp_product_and_quota,
+    get_video_config_initial,
+    is_meetup_event,
+)
 from eventyay.base.models import Event
 from eventyay.base.settings import validate_event_settings
 from eventyay.common.language import get_language_choices_native_with_ui_name
@@ -73,6 +83,10 @@ class EventCommonSettingsForm(SettingsForm):
         settings_dict = self.get_initial_settings()
         settings_dict.update(data)
         validate_event_settings(self.event, settings_dict)
+
+        if is_meetup_event(self.event):
+            add_video_field_errors(self, data.get('video_type'), data.get('video_url'))
+
         return data
 
     def save(self):
@@ -103,6 +117,22 @@ class EventCommonSettingsForm(SettingsForm):
                     logger.error(f'Crop failed for {image_field}. Data keys: {[k for k in self.data.keys() if "crop" in k]}. Error: {e}')
                     crop_box = None
                 self.cleaned_data[image_field] = self._save_optimized(new_value, image_field, crop_box)
+
+        if is_meetup_event(self.event):
+            if 'video_type' in self.cleaned_data:
+                apply_video_configuration(
+                    self.event,
+                    self.cleaned_data.get('video_type'),
+                    self.cleaned_data.get('video_url', ''),
+                )
+
+            if 'registration_limit' in self.cleaned_data:
+                reg_limit = self.cleaned_data.get('registration_limit')
+                product, quota = get_rsvp_product_and_quota(self.event)
+                if quota and quota.size != reg_limit:
+                    with scope(organizer=self.event.organizer):
+                        quota.size = reg_limit
+                        quota.save(update_fields=['size'])
 
         return super().save()
 
@@ -151,6 +181,21 @@ class EventCommonSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs['obj']
         super().__init__(*args, **kwargs)
+
+        # Meetup video stream support
+        if is_meetup_event(self.event):
+            self.fields.update(build_video_form_fields())
+            self.initial.update(get_video_config_initial(self.event))
+
+            self.fields['registration_limit'] = forms.IntegerField(
+                required=False,
+                min_value=1,
+                label=_('Registration limit'),
+                help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
+            )
+            product, quota = get_rsvp_product_and_quota(self.event)
+            if quota and quota.size is not None:
+                self.initial['registration_limit'] = quota.size
         localized_language_choices = get_language_choices_native_with_ui_name()
         for fname in ('locales', 'content_locales'):
             if fname in self.fields:

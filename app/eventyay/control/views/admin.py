@@ -600,7 +600,8 @@ class SubmissionListView(AdministratorPermissionRequiredMixin, ListView):
         ctx['submissions'] = [
             {
                 'title': s.title,
-                'speakers': ', '.join(sp.get_display_name() for sp in s.speakers.all()),
+                'speakers': [{'name': sp.get_display_name(), 'code': sp.code} for sp in s.speakers.all()],
+                'speakers_string': ', '.join(sp.get_display_name() for sp in s.speakers.all()),
                 'event': s.event.name,
                 'session_type': s.submission_type.name if s.submission_type else '',
                 'proposal_state': s.state,
@@ -609,6 +610,7 @@ class SubmissionListView(AdministratorPermissionRequiredMixin, ListView):
                 'code': s.code,
                 'track': s.track.name if s.track else '',
                 'tags': ', '.join(t.tag for t in s.tags.all()),
+                'tags_list': [t.tag for t in s.tags.all()],
             }
             for s in ctx['submissions']
         ]

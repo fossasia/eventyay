@@ -11,13 +11,13 @@
             <div class="mt-3">
                 <div class="clearfix">
                     <h2 class="pull-left" style="margin: 0;">{{ organizer.name }} {% translate "Teams" %}</h2>
-                    <button type="button" class="btn btn-primary pull-right" data-toggle="collapse" data-target="#create-team-form">
+                    <button type="button" class="btn btn-primary pull-right" data-toggle="collapse" data-target="#create-team-form" aria-controls="create-team-form" aria-expanded="{{ team_create_form.errors|yesno:'true,false' }}">
                         <i class="fa fa-plus"></i> {% translate "Create a team" %}
                     </button>
                 </div>
                 <p class="text-muted" style="clear: both; padding-top: 10px;">{% translate "Edit permissions for existing teams. Click 'Edit' to expand the permissions form." %}</p>
 
-                <div id="create-team-form" class="collapse">
+                <div id="create-team-form" class="collapse {% if team_create_form.errors %}in{% endif %}">
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <h3 class="panel-title">{% translate "Create a new team" %}</h3>

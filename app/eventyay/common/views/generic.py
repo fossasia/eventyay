@@ -1,7 +1,6 @@
 import datetime as dt
 import logging
 from contextlib import suppress
-from urllib.parse import quote
 
 from django.contrib import messages
 from django.contrib.auth import login
@@ -28,6 +27,7 @@ from eventyay.common.exceptions import SendMailException
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_file_url_path, is_file_url, is_http_url
+from eventyay.common.views.helpers import build_login_url_with_next
 from eventyay.common.views.mixins import (
     Filterable,
     PaginationMixin,
@@ -206,8 +206,7 @@ class CRUDView(PaginationMixin, Filterable, View):
             and self.request.user.is_anonymous
             and 'cfp' in self.request.resolver_match.namespaces
         ):
-            params = '&' + self.request.GET.urlencode() if self.request.GET else ''
-            return redirect(self.request.event.urls.login + f'?next={quote(self.request.path)}' + params)
+            return redirect(build_login_url_with_next(self.request.get_full_path()))
         raise Http404()
 
     def dispatch(self, request, *args, **kwargs):

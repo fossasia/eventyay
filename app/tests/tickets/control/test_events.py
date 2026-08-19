@@ -3,11 +3,11 @@ import json
 import time
 from decimal import Decimal
 
-import pytz
+from zoneinfo import ZoneInfo
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
-from pytz import timezone
+
 
 from eventyay.base.models import Event, Order, Organizer, Team, User
 from eventyay.base.models.organizer import OrganizerBillingModel
@@ -145,6 +145,28 @@ class EventsTest(SoupTest):
             assert q.name == 'Tickets'
             assert q.size == 300
             assert q.items.count() == 2
+
+    def test_quick_setup_defaults_available_until(self):
+        self.event1.date_to = datetime.datetime(2013, 12, 28, 18, 0, tzinfo=datetime.timezone.utc)
+        self.event1.save()
+        doc = self.get_doc('/control/event/%s/%s/quickstart/' % (self.orga1.slug, self.event1.slug))
+        doc.select('[name=contact_mail]')[0]['value'] = 'test@example.org'
+        doc.select('[name=form-TOTAL_FORMS]')[0]['value'] = '1'
+        doc.select('[name=form-INITIAL_FORMS]')[0]['value'] = '1'
+        doc.select('[name=form-MIN_NUM_FORMS]')[0]['value'] = '0'
+        doc.select('[name=form-MAX_NUM_FORMS]')[0]['value'] = '1000'
+        doc.select('[name=form-0-name_0]')[0]['value'] = 'Normal ticket'
+        doc.select('[name=form-0-default_price]')[0]['value'] = '13.90'
+        doc.select('[name=form-0-quota]')[0]['value'] = '100'
+
+        doc = self.post_doc(
+            '/control/event/%s/%s/quickstart/' % (self.orga1.slug, self.event1.slug),
+            extract_form_fields(doc.select('.container-fluid form')[0]),
+        )
+        assert len(doc.select('.alert-success')) > 0
+        with scopes_disabled():
+            product = self.event1.items.get()
+            assert product.available_until == self.event1.date_to
 
     def test_quick_setup_single_quota(self):
         doc = self.get_doc('/control/event/%s/%s/quickstart/' % (self.orga1.slug, self.event1.slug))
@@ -620,7 +642,7 @@ class EventsTest(SoupTest):
         assert doc.select('.slug-widget-prefix')[0].text.endswith('/mrm/')
         assert doc.select('#event-slug-random-generate')[0]['data-rng-url'].endswith('/organizer/mrm/slugrng')
 
-    def test_create_invalid_default_language(self):
+    def test_create_invalid_default_language_fallback(self):
         doc = self.post_doc(
             '/control/events/add',
             {
@@ -638,20 +660,162 @@ class EventsTest(SoupTest):
                 'event_wizard-prefix': 'event_wizard',
                 'basics-name_0': '33C3',
                 'basics-name_1': '33C3',
-                'basics-slug': '33c3',
-                'basics-date_from': '2016-12-27 10:00:00',
-                'basics-date_to': '2016-12-30 19:00:00',
+                'basics-slug': '33c3-invalid-lang',
+                'basics-date_from_0': '2016-12-27',
+                'basics-date_from_1': '10:00:00',
+                'basics-date_to_0': '2016-12-30',
+                'basics-date_to_1': '19:00:00',
                 'basics-location_0': 'Hamburg',
                 'basics-location_1': 'Hamburg',
                 'basics-currency': 'EUR',
                 'basics-tax_rate': '',
                 'basics-locale': 'en',
                 'basics-timezone': 'Europe/Berlin',
-                'basics-presale_start': '2016-11-01 10:00:00',
-                'basics-presale_end': '2016-11-30 18:00:00',
+                'basics-presale_start_0': '2016-11-01',
+                'basics-presale_start_1': '10:00:00',
+                'basics-presale_end_0': '2016-11-30',
+                'basics-presale_end_1': '18:00:00',
             },
         )
-        assert doc.select('.has-error')
+        self.post_doc(
+            '/control/events/add',
+            {
+                'event_wizard-current_step': 'copy',
+                'event_wizard-prefix': 'event_wizard',
+                'copy-copy_from_event': '',
+            },
+        )
+        with scopes_disabled():
+            ev = Event.objects.get(slug='33c3-invalid-lang')
+            assert ev.settings.locale == 'de'
+
+    def test_create_event_first_locale_becomes_default(self):
+        self.post_doc(
+            '/control/events/add',
+            {
+                'event_wizard-current_step': 'foundation',
+                'event_wizard-prefix': 'event_wizard',
+                'foundation-organizer': self.orga1.pk,
+                'foundation-locales': ('de', 'en'),
+            },
+        )
+
+        self.post_doc(
+            '/control/events/add',
+            {
+                'event_wizard-current_step': 'basics',
+                'event_wizard-prefix': 'event_wizard',
+                'basics-name_0': 'Default Lang Event',
+                'basics-slug': 'default-lang-event',
+                'basics-date_from_0': '2026-12-27',
+                'basics-date_from_1': '10:00:00',
+                'basics-date_to_0': '2026-12-30',
+                'basics-date_to_1': '19:00:00',
+                'basics-location_0': 'Berlin',
+                'basics-currency': 'EUR',
+                'basics-timezone': 'Europe/Berlin',
+            },
+        )
+
+        self.post_doc(
+            '/control/events/add',
+            {
+                'event_wizard-current_step': 'copy',
+                'event_wizard-prefix': 'event_wizard',
+                'copy-copy_from_event': '',
+            },
+        )
+
+        with scopes_disabled():
+            ev = Event.objects.get(slug='default-lang-event')
+            assert ev.settings.locales == ['de', 'en']
+            assert ev.settings.locale == 'de'
+
+    def test_create_event_reordering_sets_default(self):
+        self.post_doc(
+            '/control/events/add',
+            {
+                'event_wizard-current_step': 'foundation',
+                'event_wizard-prefix': 'event_wizard',
+                'foundation-organizer': self.orga1.pk,
+                'foundation-locales': ('en', 'de'),
+            },
+        )
+
+        self.post_doc(
+            '/control/events/add',
+            {
+                'event_wizard-current_step': 'basics',
+                'event_wizard-prefix': 'event_wizard',
+                'basics-name_0': 'Reordered Lang Event',
+                'basics-slug': 'reordered-lang-event',
+                'basics-date_from_0': '2026-12-27',
+                'basics-date_from_1': '10:00:00',
+                'basics-date_to_0': '2026-12-30',
+                'basics-date_to_1': '19:00:00',
+                'basics-location_0': 'Berlin',
+                'basics-currency': 'EUR',
+                'basics-locale': 'de',  # Set by drag-and-drop tray in JS
+                'basics-timezone': 'Europe/Berlin',
+            },
+        )
+
+        self.post_doc(
+            '/control/events/add',
+            {
+                'event_wizard-current_step': 'copy',
+                'event_wizard-prefix': 'event_wizard',
+                'copy-copy_from_event': '',
+            },
+        )
+
+        with scopes_disabled():
+            ev = Event.objects.get(slug='reordered-lang-event')
+            assert ev.settings.locale == 'de'
+
+    def test_create_event_without_locales_returns_validation_error(self):
+        response = self.client.post(
+            '/common/events/add',
+            {
+                'foundation-organizer': self.orga1.pk,
+                'basics-locale': 'en',
+                'basics-name_0': 'No Locales',
+                'basics-slug': 'no-locales-test',
+                'basics-date_from_0': '2016-12-27',
+                'basics-date_from_1': '10:00:00',
+                'basics-date_to_0': '2016-12-30',
+                'basics-date_to_1': '19:00:00',
+                'basics-location_0': 'Berlin',
+                'basics-currency': 'EUR',
+                'basics-timezone': 'Europe/Berlin',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        foundation_form = response.context['foundation_form']
+        self.assertIn('locales', foundation_form.errors)
+
+    def test_create_event_defaults_locale_from_selected_languages(self):
+        response = self.client.post(
+            '/common/events/add',
+            {
+                'foundation-organizer': self.orga1.pk,
+                'foundation-locales': 'en',
+                'basics-locale': '',
+                'basics-name_0': 'Default English',
+                'basics-slug': 'default-english-event',
+                'basics-date_from_0': '2016-12-27',
+                'basics-date_from_1': '10:00:00',
+                'basics-date_to_0': '2016-12-30',
+                'basics-date_to_1': '19:00:00',
+                'basics-location_0': 'Berlin',
+                'basics-currency': 'EUR',
+                'basics-timezone': 'Europe/Berlin',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        with scopes_disabled():
+            ev = Event.objects.get(slug='default-english-event')
+            assert ev.settings.locale == 'en'
 
     def test_create_duplicate_slug(self):
         doc = self.post_doc(
@@ -751,11 +915,11 @@ class EventsTest(SoupTest):
             assert ev.location == LazyI18nString({'de': 'Hamburg', 'en': 'Hamburg'})
             assert Team.objects.filter(limit_events=ev, members=self.user).exists()
 
-            berlin_tz = timezone('Europe/Berlin')
-            assert ev.date_from == berlin_tz.localize(datetime.datetime(2016, 12, 27, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.date_to == berlin_tz.localize(datetime.datetime(2016, 12, 30, 19, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_start == berlin_tz.localize(datetime.datetime(2016, 11, 1, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_end == berlin_tz.localize(datetime.datetime(2016, 11, 30, 18, 0, 0)).astimezone(pytz.utc)
+            berlin_tz = ZoneInfo('Europe/Berlin')
+            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.date_to == datetime.datetime(2016, 12, 30, 19, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_start == datetime.datetime(2016, 11, 1, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_end == datetime.datetime(2016, 11, 30, 18, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
 
             assert ev.tax_rules.filter(rate=Decimal('19.00')).exists()
 
@@ -889,11 +1053,11 @@ class EventsTest(SoupTest):
             assert Team.objects.filter(limit_events=ev, members=self.user).exists()
             assert ev.items.count() == 1
 
-            berlin_tz = timezone('Europe/Berlin')
-            assert ev.date_from == berlin_tz.localize(datetime.datetime(2016, 12, 27, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.date_to == berlin_tz.localize(datetime.datetime(2016, 12, 30, 19, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_start == berlin_tz.localize(datetime.datetime(2016, 11, 1, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_end == berlin_tz.localize(datetime.datetime(2016, 11, 30, 18, 0, 0)).astimezone(pytz.utc)
+            berlin_tz = ZoneInfo('Europe/Berlin')
+            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.date_to == datetime.datetime(2016, 12, 30, 19, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_start == datetime.datetime(2016, 11, 1, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_end == datetime.datetime(2016, 11, 30, 18, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
 
             assert ev.tax_rules.filter(rate=Decimal('19.00')).count() == 1
             i = ev.items.get()
@@ -968,11 +1132,11 @@ class EventsTest(SoupTest):
             assert Team.objects.filter(limit_events=ev, members=self.user).exists()
             assert ev.items.count() == 1
 
-            berlin_tz = timezone('Europe/Berlin')
-            assert ev.date_from == berlin_tz.localize(datetime.datetime(2016, 12, 27, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.date_to == berlin_tz.localize(datetime.datetime(2016, 12, 30, 19, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_start == berlin_tz.localize(datetime.datetime(2016, 11, 1, 10, 0, 0)).astimezone(pytz.utc)
-            assert ev.presale_end == berlin_tz.localize(datetime.datetime(2016, 11, 30, 18, 0, 0)).astimezone(pytz.utc)
+            berlin_tz = ZoneInfo('Europe/Berlin')
+            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.date_to == datetime.datetime(2016, 12, 30, 19, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_start == datetime.datetime(2016, 11, 1, 10, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
+            assert ev.presale_end == datetime.datetime(2016, 11, 30, 18, 0, 0, tzinfo=berlin_tz).astimezone(datetime.timezone.utc)
 
             assert ev.tax_rules.filter(rate=Decimal('19.00')).count() == 1
 
@@ -1029,7 +1193,7 @@ class EventsTest(SoupTest):
             assert ev.organizer == self.orga1
             assert ev.location == LazyI18nString({'en': 'Hamburg'})
             assert Team.objects.filter(limit_events=ev, members=self.user).exists()
-            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=pytz.utc)
+            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=datetime.timezone.utc)
             assert ev.date_to is None
             assert ev.presale_start is None
             assert ev.presale_end is None
@@ -1087,7 +1251,7 @@ class EventsTest(SoupTest):
             assert ev.location == LazyI18nString({'en': 'Hamburg'})
             team = Team.objects.filter(limit_events=ev, members=self.user).first()
             assert team == self.team2
-            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=pytz.utc)
+            assert ev.date_from == datetime.datetime(2016, 12, 27, 10, 0, 0, tzinfo=datetime.timezone.utc)
             assert ev.date_to is None
             assert ev.presale_start is None
             assert ev.presale_end is None

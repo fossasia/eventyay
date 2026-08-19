@@ -58,6 +58,8 @@ from eventyay.core.permissions import (
     ORGANIZER_ROLES,
     SYSTEM_ROLES,
     Permission,
+    default_grants,
+    default_roles,
     normalize_permission_value,
     traits_match_required,
 )
@@ -75,6 +77,7 @@ from eventyay.talk_rules.event import (
     can_change_event_settings,
     can_create_events,
     has_any_permission,
+    has_talk_permission,
     is_event_visible,
 )
 
@@ -98,87 +101,6 @@ def event_logo_path(instance, filename):
     return path_with_hash(filename, base_path=f'{instance.slug}/img/')
 
 
-def default_roles():
-    attendee = [
-        Permission.EVENT_VIEW,
-        Permission.EVENT_EXHIBITION_CONTACT,
-        Permission.EVENT_CHAT_DIRECT,
-    ]
-    viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
-    participant = viewer + [
-        Permission.ROOM_CHAT_JOIN,
-        Permission.ROOM_CHAT_SEND,
-        Permission.ROOM_QUESTION_READ,
-        Permission.ROOM_QUESTION_ASK,
-        Permission.ROOM_QUESTION_VOTE,
-        Permission.ROOM_POLL_READ,
-        Permission.ROOM_POLL_VOTE,
-        Permission.ROOM_ROULETTE_JOIN,
-        Permission.ROOM_BBB_JOIN,
-        Permission.ROOM_JANUSCALL_JOIN,
-        Permission.ROOM_ZOOM_JOIN,
-    ]
-    room_creator = [Permission.EVENT_ROOMS_CREATE_CHAT]
-    room_owner = participant + [
-        Permission.ROOM_INVITE,
-        Permission.ROOM_DELETE,
-    ]
-    speaker = participant + [
-        Permission.ROOM_BBB_MODERATE,
-        Permission.ROOM_JANUSCALL_MODERATE,
-        Permission.ROOM_POLL_EARLY_RESULTS,
-    ]
-    moderator = speaker + [
-        Permission.ROOM_VIEWERS,
-        Permission.ROOM_CHAT_MODERATE,
-        Permission.ROOM_ANNOUNCE,
-        Permission.ROOM_BBB_RECORDINGS,
-        Permission.ROOM_QUESTION_MODERATE,
-        Permission.ROOM_POLL_EARLY_RESULTS,
-        Permission.ROOM_POLL_MANAGE,
-        Permission.EVENT_ANNOUNCE,
-    ]
-    admin = (
-        moderator
-        + room_creator
-        + [
-            Permission.EVENT_UPDATE,
-            Permission.ROOM_DELETE,
-            Permission.ROOM_UPDATE,
-            Permission.EVENT_ROOMS_CREATE_BBB,
-            Permission.EVENT_ROOMS_CREATE_STAGE,
-            Permission.EVENT_ROOMS_CREATE_EXHIBITION,
-            Permission.EVENT_ROOMS_CREATE_POSTER,
-            Permission.EVENT_USERS_LIST,
-            Permission.EVENT_USERS_MANAGE,
-            Permission.EVENT_GRAPHS,
-            Permission.EVENT_CONNECTIONS_UNLIMITED,
-        ]
-    )
-    apiuser = admin + [Permission.EVENT_API, Permission.EVENT_SECRETS]
-    scheduleuser = [Permission.EVENT_API]
-    return {
-        'attendee': attendee,
-        'viewer': viewer,
-        'participant': participant,
-        'room_creator': room_creator,
-        'room_owner': room_owner,
-        'speaker': speaker,
-        'moderator': moderator,
-        'admin': admin,
-        'apiuser': apiuser,
-        'scheduleuser': scheduleuser,
-    }
-
-
-def default_grants():
-    return {
-        'attendee': ['attendee'],
-        'admin': ['admin'],
-        'scheduleuser': [],
-    }
-
-
 FEATURE_FLAGS = [
     'schedule-control',
     'iframe-player',
@@ -187,6 +109,7 @@ FEATURE_FLAGS = [
     'page.landing',
     'zoom',
     'janus',
+    'jitsi',
     'polls',
     'poster',
     'conftool',
@@ -848,6 +771,7 @@ class Event(
         speakers = '{base}speakers/'
         settings = edit_settings = '{base}settings/'
         review_settings = '{settings}review/'
+        feedback_settings = '{settings}feedback/'
         mail_settings = edit_mail_settings = '{settings}mail'
         widget_settings = '{settings}widget'
         import_export_settings = '{settings}import-export/'
@@ -916,6 +840,7 @@ class Event(
         # The permission names change when we move the code to a different app.
         rules_permissions = {
             'orga_access': has_any_permission,
+            'talk_orga_access': has_talk_permission,
             'view': is_event_visible | has_any_permission,
             'update': can_change_event_settings,
             'create': can_create_events,
@@ -1086,7 +1011,6 @@ class Event(
         this event, so you don't have to prefix your cache keys. In addition, the cache
         is being cleared every time the event or one of its related objects change.
         """
-        # FIXME: This "cache" module is missing.
         from eventyay.base.cache import ObjectRelatedCache
 
         return ObjectRelatedCache(self)
@@ -1462,6 +1386,32 @@ class Event(
             augmented.setdefault(role, [f'eventyay-video-event-{slug}-{trait_name.replace("_", "-")}'])
         return augmented
 
+    def _get_default_roles(self):
+        """Return ``default_roles()``, cached on this Event for its instance lifetime."""
+        cached = getattr(self, '_cached_default_roles', None)
+        if cached is None:
+            cached = default_roles()
+            self._cached_default_roles = cached
+        return cached
+
+    def _permissions_for_role(self, role_name, event_roles=None):
+        """
+        Resolve a role's permission list.
+
+        Prefer the event's stored ``roles`` JSON, then ``default_roles()`` (includes
+        ``admin`` / attendee stacks), then ``SYSTEM_ROLES`` for built-in video roles.
+        Using only ``SYSTEM_ROLES`` as fallback wrongly drops ``admin`` because that
+        role is not defined there.
+        """
+        if event_roles is None:
+            event_roles = self.roles if self.roles is not None else {}
+        if role_name in event_roles and event_roles[role_name] is not None:
+            return event_roles[role_name]
+        defaults = self._get_default_roles()
+        if role_name in defaults:
+            return defaults[role_name]
+        return SYSTEM_ROLES.get(role_name, [])
+
     def has_permission_implicit(
         self,
         *,
@@ -1471,7 +1421,7 @@ class Event(
         allow_empty_traits=True,
     ):
         event_trait_grants = self._get_trait_grants_with_defaults()
-        event_roles = self.roles if self.roles is not None else default_roles()
+        event_roles = self.roles if self.roles is not None else self._get_default_roles()
 
         if traits is None:
             traits = []
@@ -1479,14 +1429,14 @@ class Event(
         admin_mode_active = 'admin' in traits
         if admin_mode_active:
             for role_name in ORGANIZER_ROLES:
-                role_permissions = event_roles.get(role_name, SYSTEM_ROLES.get(role_name, []))
+                role_permissions = self._permissions_for_role(role_name, event_roles)
                 role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
                 if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
                     return True
 
         attendee_traits = event_trait_grants.get('attendee', ['attendee'])
         if traits_match_required(traits, attendee_traits) and (attendee_traits or allow_empty_traits):
-            role_permissions = event_roles.get('attendee', SYSTEM_ROLES.get('attendee', []))
+            role_permissions = self._permissions_for_role('attendee', event_roles)
             role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
             role_permissions_str.append(normalize_permission_value(Permission.EVENT_CHAT_DIRECT))
             if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
@@ -1496,7 +1446,7 @@ class Event(
             if role == 'attendee':
                 continue
             if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
-                role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
+                role_permissions = self._permissions_for_role(role, event_roles)
                 role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
                 if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
                     return True
@@ -1505,13 +1455,67 @@ class Event(
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
                 if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
-                    role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
+                    role_permissions = self._permissions_for_role(role, event_roles)
                     role_permissions_str = [normalize_permission_value(rp) for rp in role_permissions]
                     if any(normalize_permission_value(p) in role_permissions_str for p in permissions):
                         return True
 
         # Return False if no permission was granted
         return False
+
+    def has_organizer_role_implicit(self, *, traits, room=None):
+        event_trait_grants = self._get_trait_grants_with_defaults()
+
+        if traits is None:
+            traits = []
+
+        if 'admin' in traits:
+            return True
+
+        for role, required_traits in event_trait_grants.items():
+            if (
+                role in ORGANIZER_ROLES
+                and traits_match_required(traits, required_traits)
+                and required_traits
+            ):
+                return True
+
+        if room:
+            room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
+            for role, required_traits in room_trait_grants.items():
+                if (
+                    role in ORGANIZER_ROLES
+                    and traits_match_required(traits, required_traits)
+                    and required_traits
+                ):
+                    return True
+
+        return False
+
+    def has_organizer_role(self, *, user, room=None):
+        if user.is_banned:  # pragma: no cover
+            return False
+
+        if self.has_organizer_role_implicit(
+            traits=user.traits or [],
+            room=room,
+        ):
+            return True
+
+        return bool(ORGANIZER_ROLES.intersection(user.get_role_grants(room)))
+
+    async def has_organizer_role_async(self, *, user, room=None):
+        if user.is_banned:  # pragma: no cover
+            return False
+
+        if self.has_organizer_role_implicit(
+            traits=user.traits or [],
+            room=room,
+        ):
+            return True
+
+        roles = await user.get_role_grants_async(room)
+        return bool(ORGANIZER_ROLES.intersection(roles))
 
     def has_permission(self, *, user, permission: Permission, room=None):
         """
@@ -1537,12 +1541,13 @@ class Event(
             return True
 
         roles = user.get_role_grants(room)
-        event_roles = self.roles if self.roles is not None else default_roles()
+        event_roles = self.roles if self.roles is not None else self._get_default_roles()
         for r in roles:
-            role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
+            role_perms = self._permissions_for_role(r, event_roles)
             role_perms_str = [normalize_permission_value(rp) for rp in role_perms]
             if any(normalize_permission_value(p) in role_perms_str for p in permission):
                 return True
+        return False
 
     async def has_permission_async(self, *, user, permission: Permission, room=None):
         """
@@ -1568,12 +1573,13 @@ class Event(
             return True
 
         roles = await user.get_role_grants_async(room)
-        event_roles = self.roles if self.roles is not None else default_roles()
+        event_roles = self.roles if self.roles is not None else self._get_default_roles()
         for r in roles:
-            role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
+            role_perms = self._permissions_for_role(r, event_roles)
             role_perms_str = [normalize_permission_value(rp) for rp in role_perms]
             if any(normalize_permission_value(p) in role_perms_str for p in permission):
                 return True
+        return False
 
     def get_all_permissions(self, user):
         result = defaultdict(set)
@@ -1584,14 +1590,13 @@ class Event(
 
         # Ensure trait_grants and roles are not None
         event_trait_grants = self._get_trait_grants_with_defaults()
-        event_roles = self.roles if self.roles is not None else default_roles()
+        event_roles = self.roles if self.roles is not None else self._get_default_roles()
 
         user_traits = user.traits or []
 
         for role, required_traits in event_trait_grants.items():
             if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
-                role_perms = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                result[self].update(role_perms)
+                result[self].update(self._permissions_for_role(role, event_roles))
 
         # Admin mode in the ticket/talk system is represented by the ``admin`` trait on the video side.
         # When admin mode is ON, the user has the ``admin`` trait and should retain full access.
@@ -1600,8 +1605,7 @@ class Event(
         if admin_mode_active:
             # Grant all video manager permissions when admin mode is active
             for role_name in ORGANIZER_ROLES:
-                role_perms = event_roles.get(role_name, SYSTEM_ROLES.get(role_name, []))
-                result[self].update(role_perms)
+                result[self].update(self._permissions_for_role(role_name, event_roles))
 
         attendee_traits = event_trait_grants.get('attendee', ['attendee'])
         if traits_match_required(user_traits, attendee_traits) and (attendee_traits or allow_empty_traits):
@@ -1611,10 +1615,10 @@ class Event(
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
                 if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
-                    result[room].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
+                    result[room].update(self._permissions_for_role(role, event_roles))
 
         for grant in user.room_grants.select_related('room'):
-            result[grant.room].update(event_roles.get(grant.role, SYSTEM_ROLES.get(grant.role, [])))
+            result[grant.room].update(self._permissions_for_role(grant.role, event_roles))
         if user.is_silenced:
             for key in result.keys():
                 result[key] &= MAX_PERMISSIONS_IF_SILENCED
@@ -2213,6 +2217,7 @@ class Event(
 
         self.bbbserver_set.update(event_exclusive=None)
         self.janusserver_set.update(event_exclusive=None)
+        self.jitsiserver_set.update(event_exclusive=None)
         self.turnserver_set.update(event_exclusive=None)
 
         self.vouchers.all().delete()
@@ -2249,6 +2254,65 @@ class Event(
             cfp.delete()
         self.submitter_access_codes.all().delete()
         self.submission_types.all().delete()
+
+    @scopes_disabled()
+    @transaction.atomic
+    def delete_talk_data(self):
+        from django.core.exceptions import ObjectDoesNotExist
+
+        from eventyay.base.models.mail import QueuedMail
+        from eventyay.base.models.profile import SpeakerProfile
+        from eventyay.base.models.feedback import Feedback
+        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.resource import Resource
+        from eventyay.base.models.slot import TalkSlot
+
+        answers = Answer.objects.filter(question__event=self)
+        for answer in answers.only('pk', 'answer_file').iterator():
+            try:
+                answer._delete_files()
+            except Exception:
+                logger.error("Failed to delete files for Answer %s", answer.pk, exc_info=True)
+        answers.delete()
+        AnswerOption.objects.filter(question__event=self).delete()
+
+        TalkSlot.objects.filter(schedule__event=self).delete()
+        Feedback.objects.filter(talk__event=self).delete()
+
+        resources = Resource.objects.filter(submission__event=self)
+        for resource in resources.only('pk', 'resource').iterator():
+            try:
+                resource._delete_files()
+            except Exception:
+                logger.error("Failed to delete files for Resource %s", resource.pk, exc_info=True)
+        resources.delete()
+
+        SpeakerProfile.objects.filter(event=self).delete()
+
+        # Clear unsent (outbox) emails linked to this event
+        QueuedMail.objects.filter(event=self, sent__isnull=True).delete()
+
+        self.talkquestions.all().delete()
+        self.submissions.all().delete()
+        self.rooms.all().delete()
+        self.tracks.all().delete()
+        self.tags.all().delete()
+        self.schedules.all().delete()
+        try:
+            cfp = self.cfp
+        except ObjectDoesNotExist:
+            cfp = None
+        if cfp is not None and cfp.pk is not None:
+            cfp.delete()
+            try:
+                del self.__dict__['cfp']
+            except KeyError:
+                pass
+        self.submitter_access_codes.all().delete()
+        self.submission_types.all().delete()
+        self.score_categories.all().delete()
+        self.review_phases.all().delete()
+        self.build_initial_data()
 
     def set_active_plugins(self, modules, allow_restricted=False):
         from eventyay.base.plugins import get_all_plugins
@@ -2369,6 +2433,7 @@ class Event(
             self.content_locale_array = ','.join(content_locales_list)
             self.settings.set('content_locales', content_locales_list)
         if locales_list or content_locales is not None or default_locale:
+            self.save()
             self._clear_language_caches()
 
     @cached_property
@@ -2740,9 +2805,9 @@ class Event(
         """Returns all :class:`~eventyay.base.models.organizer.Team` objects
         that concern this event."""
 
-        return self.organizer.teams.all().filter(
-            models.Q(all_events=True) | models.Q(models.Q(all_events=False) & models.Q(limit_events__in=[self]))
-        )
+        return self.organizer.teams.filter(
+            models.Q(all_events=True) | models.Q(models.Q(all_events=False) & models.Q(limit_events=self))
+        ).distinct()
 
     @cached_property
     def reviewers(self):
@@ -2938,9 +3003,11 @@ class Event(
 
     def build_initial_data(self):
         from eventyay.base.models import CfP, MailTemplateRoles, Schedule
+        from django_scopes import scope
 
-        if not hasattr(self, 'cfp'):
-            CfP.objects.create(event=self, default_type=self._get_default_submission_type())
+        with scope(event=self):
+            if not CfP.objects.filter(event=self).exists():
+                CfP.objects.create(event=self, default_type=self._get_default_submission_type())
 
         with scope(event=self):
             if not self.schedules.filter(version__isnull=True).exists():

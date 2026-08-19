@@ -81,16 +81,43 @@ _CHECKIN_CORE_ALLOWLIST = (
     ('POST', 'api-v1:upload'),
     ('GET', 'badges:api-badge-download'),
     ('GET', 'plugins:badges:api-badge-download'),
+    ('GET', 'badges:badge-preview'),
+    ('GET', 'plugins:badges:badge-preview'),
+    # Badge layout picker for staff / kiosk print prompts
+    ('GET', 'api-v1:badgelayout-list'),
+    ('GET', 'api-v1:badgelayout-detail'),
+    ('GET', 'api-v1:badgelayout-background'),
+    ('GET', 'api-v1:badgelayouts-list'),
+    ('GET', 'api-v1:badgelayouts-detail'),
+    ('GET', 'api-v1:badgelayouts-background'),
+    ('GET', 'api-v1:badgeproduct-list'),
+    ('GET', 'api-v1:badgeproduct-detail'),
+    ('GET', 'api-v1:badgeitems-list'),
+    ('GET', 'api-v1:badgeitems-detail'),
 )
 
 # Badge Station (kiosk): scan, check-in, search, badge download.
 _BADGE_STATION_ALLOWLIST = _CHECKIN_CORE_ALLOWLIST
 
-# Check-In Staff: live registration (product list, order create, mark paid) — may move to embedded widget later.
+# Check-In Staff: live registration + offline sync (orders delta, revoked secrets, badge layouts).
 _CHECKIN_STAFF_EXTRA_ALLOWLIST = (
     ('GET', 'api-v1:product-list'),
     ('POST', 'api-v1:order-list'),
     ('POST', 'api-v1:order-mark-paid'),
+    # Offline sync: incremental orders + revocation list (Badge Station / NoSync stays excluded).
+    ('GET', 'api-v1:order-list'),
+    ('GET', 'api-v1:revokedsecrets-list'),
+    # Offline badge print: layout JSON synced separately from per-attendee pdf_data.
+    ('GET', 'api-v1:badgelayout-list'),
+    ('GET', 'api-v1:badgelayout-detail'),
+    ('GET', 'api-v1:badgelayout-background'),
+    ('GET', 'api-v1:badgelayouts-list'),
+    ('GET', 'api-v1:badgelayouts-detail'),
+    ('GET', 'api-v1:badgelayouts-background'),
+    ('GET', 'api-v1:badgeproduct-list'),
+    ('GET', 'api-v1:badgeproduct-detail'),
+    ('GET', 'api-v1:badgeitems-list'),
+    ('GET', 'api-v1:badgeitems-detail'),
 )
 
 
@@ -98,7 +125,8 @@ class EventyayCheckinSecurityProfile(AllowListSecurityProfile):
     identifier = 'eventyay_checkin'
     verbose_name = _('Check-In Staff')
     usage_description = _(
-        'Ticket check-in, attendee search and edits, live registration, and badge printing.'
+        'Ticket check-in, attendee search and edits, live registration, badge printing, '
+        'and offline sync of orders, revoked secrets, and badge layouts.'
     )
     includes_profiles = ('eventyay_checkin_online_kiosk',)
     allowlist = _CHECKIN_CORE_ALLOWLIST + _CHECKIN_STAFF_EXTRA_ALLOWLIST
@@ -108,7 +136,8 @@ class EventyayCheckinNoSyncSecurityProfile(AllowListSecurityProfile):
     identifier = 'eventyay_checkin_online_kiosk'
     verbose_name = _('Badge Station (kiosk)')
     usage_description = _(
-        'Kiosk badge printing: scan tickets, check in attendees, and print badges. No live registration.'
+        'Kiosk badge printing: scan tickets, check in attendees, and print badges. '
+        'Online only — no order sync, revoked-secret sync, or live registration.'
     )
     allowlist = _BADGE_STATION_ALLOWLIST
 
