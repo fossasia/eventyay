@@ -454,7 +454,7 @@ export default {
 				public_schedule_only: m.public_schedule_only || 'Only available on the public schedule once a schedule is released and public.',
 				export: m.export || 'Export',
 				current: m.current || 'current',
-				now: m.now || 'Now ->',
+				now: m.now || 'Now',
 				now_disabled: m.now_disabled || 'Go to now is only available on the current day',
 				list_view: m.list_view || 'List View',
 				calendar_view: m.calendar_view || 'Calendar View',
