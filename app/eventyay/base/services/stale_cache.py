@@ -224,6 +224,24 @@ def get_cached_schedule_detail(event_id, schedule_id, expand_key, user_scope, lo
     return data, etag
 
 
+def video_spa_schedule_cache_keys(event_id, schedule_id, featured_key):
+    version = get_schedule_cache_version(event_id)
+    prefix = f'api:video-spa:{event_id}:v{version}:{schedule_id}:{featured_key}'
+    return f'{prefix}:hot', f'{prefix}:stale'
+
+
+def get_cached_video_spa_schedule(event_id, schedule_id, featured_key, loader):
+    hot_key, stale_key = video_spa_schedule_cache_keys(event_id, schedule_id, featured_key)
+    return get_stale_cached(
+        hot_key,
+        stale_key,
+        loader,
+        SCHEDULE_HOT_TTL,
+        SCHEDULE_STALE_TTL,
+        log_context=f'video spa schedule {schedule_id} event {event_id}',
+    )
+
+
 def get_cached_talk_slots_list(event_id, user_scope, expand_key, filter_key, locale_key, loader):
     hot_key, stale_key = talk_slots_list_cache_keys(
         event_id, user_scope, expand_key, filter_key, locale_key

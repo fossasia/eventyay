@@ -193,6 +193,13 @@ class CachedCatalogListMixin:
         pagination_class = getattr(self, 'pagination_class', api_settings.DEFAULT_PAGINATION_CLASS)
         if pagination_class is not None:
             return False
+        request = getattr(self, 'request', None)
+        if request is not None:
+            params = getattr(request, 'query_params', getattr(request, 'GET', {}))
+            # Search/ordering still apply in filter_queryset(); do not reuse the
+            # unfiltered catalog entry for those responses.
+            if params.get('search') or params.get('ordering'):
+                return False
         return True
 
     def list(self, request, *args, **kwargs):

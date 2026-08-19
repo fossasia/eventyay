@@ -23,6 +23,7 @@ from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
+from eventyay.base.services.stale_cache import get_cached_video_spa_schedule
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
@@ -88,17 +89,20 @@ class VideoSPAView(View):
                 if not schedule:
                     schedule = event.current_schedule or event.wip_schedule
 
-                schedule_data = (
-                    schedule.build_data(
-                        all_talks=False,
-                        enrich=True,
-                        include_featured_speaker_metadata=are_featured_submissions_visible(
-                            AnonymousUser(), event
+                featured = are_featured_submissions_visible(AnonymousUser(), event)
+                schedule_data = None
+                if schedule:
+                    featured_key = 'feat' if featured else 'nofeat'
+                    schedule_data = get_cached_video_spa_schedule(
+                        event.pk,
+                        schedule.pk,
+                        featured_key,
+                        lambda: schedule.build_data(
+                            all_talks=False,
+                            enrich=True,
+                            include_featured_speaker_metadata=featured,
                         ),
                     )
-                    if schedule
-                    else None
-                )
                 schedule_version = schedule.version if schedule else None
                 schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
 

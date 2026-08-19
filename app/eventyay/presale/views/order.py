@@ -132,7 +132,19 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
                 order__code=self.kwargs['order'],
                 positionid=self.kwargs['position'],
             )
-            .select_related('order', 'order__event')
+            .select_related(
+                'order',
+                'order__event',
+                'product',
+                'product__category',
+                'variation',
+                'subevent',
+            )
+            .prefetch_related(
+                'addons',
+                'addons__product',
+                'addons__variation',
+            )
             .first()
         )
         if p:

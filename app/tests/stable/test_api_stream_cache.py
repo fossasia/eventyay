@@ -282,6 +282,27 @@ def test_schedule_retrieve_cache_skips_orga_view():
     assert view._schedule_cache_scope() is None
 
 
+@override_settings(CACHES=LOCMEM_CACHE)
+def test_video_spa_schedule_cache_avoids_repeat_build():
+    from django.core.cache import cache
+
+    from eventyay.base.services.stale_cache import get_cached_video_spa_schedule
+
+    cache.clear()
+    calls = []
+
+    def loader():
+        calls.append(1)
+        return {'talks': [{'id': 1}]}
+
+    first = get_cached_video_spa_schedule(7, 11, 'feat', loader)
+    second = get_cached_video_spa_schedule(7, 11, 'feat', loader)
+    featured_off = get_cached_video_spa_schedule(7, 11, 'nofeat', loader)
+    assert first == second == {'talks': [{'id': 1}]}
+    assert featured_off == first
+    assert calls == [1, 1]
+
+
 def test_talk_slots_filter_key_includes_ordering():
     from django.test import RequestFactory
 
@@ -323,8 +344,14 @@ def test_catalog_list_cache_skips_paginated_viewsets():
         event = SimpleNamespace(pk=1)
         request = SimpleNamespace(query_params={})
 
+    class SearchedCatalog(CachedCatalogListMixin):
+        catalog_name = 'tracks'
+        event = SimpleNamespace(pk=1)
+        request = SimpleNamespace(query_params={'search': 'keynote'})
+
     assert PaginatedCatalog().uses_catalog_list_cache() is False
     assert UnpaginatedCatalog().uses_catalog_list_cache() is True
+    assert SearchedCatalog().uses_catalog_list_cache() is False
     assert CachedCatalogListMixin.pagination_class is None
     assert TrackViewSet.pagination_class is None
 
