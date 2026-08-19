@@ -564,7 +564,13 @@ class GlobalSettingsForm(SettingsForm):
                 'etherpad_api_key',
                 'etherpad_pad_name_pattern',
             ]),
+            ('voxbento', _('VoxBento'), [
+                'voxbento_base_url',
+                'voxbento_client_id',
+                'voxbento_client_secret',
+            ]),
         ]
+
 
     def clean_etherpad_pad_name_pattern(self):
         pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
