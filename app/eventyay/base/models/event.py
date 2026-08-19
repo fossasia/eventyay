@@ -110,6 +110,7 @@ FEATURE_FLAGS = [
     'zoom',
     'janus',
     'jitsi',
+    'loungemesh',
     'polls',
     'poster',
     'conftool',

@@ -26,6 +26,7 @@ import ROOM_TYPES from 'lib/room-types'
 import { isRoomTypeAvailable } from 'lib/room-type-permissions'
 
 const JITSI_ROOM_TYPE = ROOM_TYPES.find(type => type.id === 'channel-jitsi')
+const LOUNGEMESH_ROOM_TYPE = ROOM_TYPES.find(type => type.id === 'channel-loungemesh')
 
 export default {
 	components: { Prompt },
@@ -71,6 +72,16 @@ export default {
 					icon: JITSI_ROOM_TYPE.icon,
 					moduleType: JITSI_ROOM_TYPE.startingModule,
 					permission: 'world:rooms.create.jitsi'
+				})
+			}
+			if (LOUNGEMESH_ROOM_TYPE && isRoomTypeAvailable(LOUNGEMESH_ROOM_TYPE.id, this.hasPermission, this.isAdminMode)) {
+				types.push({
+					id: 'loungemesh',
+					roomTypeId: LOUNGEMESH_ROOM_TYPE.id,
+					label: LOUNGEMESH_ROOM_TYPE.name,
+					icon: LOUNGEMESH_ROOM_TYPE.icon,
+					moduleType: LOUNGEMESH_ROOM_TYPE.startingModule,
+					permission: 'world:rooms.create.loungemesh'
 				})
 			}
 			return types

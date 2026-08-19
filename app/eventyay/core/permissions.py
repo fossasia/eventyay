@@ -14,6 +14,7 @@ class Permission(Enum):
     EVENT_ROOMS_CREATE_JITSI = "event:rooms.create.jitsi"
     EVENT_ROOMS_CREATE_EXHIBITION = "event:rooms.create.exhibition"
     EVENT_ROOMS_CREATE_POSTER = "event:rooms.create.poster"
+    EVENT_ROOMS_CREATE_LOUNGEMESH = "event:rooms.create.loungemesh"
     EVENT_USERS_LIST = "event:users.list"
     EVENT_USERS_MANAGE = "event:users.manage"
     EVENT_KIOSKS_MANAGE = "event:kiosks.manage"
@@ -39,6 +40,8 @@ class Permission(Enum):
     ROOM_JITSI_JOIN = "room:jitsi.join"
     ROOM_JITSI_MODERATE = "room:jitsi.moderate"
     ROOM_ZOOM_JOIN = "room:zoom.join"
+    ROOM_LOUNGEMESH_JOIN = "room:loungemesh.join"
+    ROOM_LOUNGEMESH_MODERATE = "room:loungemesh.moderate"
     ROOM_QUESTION_READ = "room:question.read"
     ROOM_QUESTION_ASK = "room:question.ask"
     ROOM_QUESTION_VOTE = "room:question.vote"
@@ -66,6 +69,7 @@ VIDEO_CONTENT_MANAGER_PERMISSIONS = [
     Permission.EVENT_ROOMS_CREATE_JITSI.value,
     Permission.EVENT_ROOMS_CREATE_EXHIBITION.value,
     Permission.EVENT_ROOMS_CREATE_POSTER.value,
+    Permission.EVENT_ROOMS_CREATE_LOUNGEMESH.value,
     Permission.ROOM_UPDATE.value,
     Permission.ROOM_DELETE.value,
 ]
@@ -114,6 +118,7 @@ LEGACY_VIDEO_ROLE_PERMISSIONS: dict[str, list[str]] = {
         Permission.EVENT_ROOMS_CREATE_CHAT.value,
         Permission.EVENT_ROOMS_CREATE_BBB.value,
         Permission.EVENT_ROOMS_CREATE_JITSI.value,
+        Permission.EVENT_ROOMS_CREATE_LOUNGEMESH.value,
     ],
     'video_announcement_manager': [
         Permission.EVENT_ANNOUNCE.value,
@@ -199,16 +204,19 @@ def default_roles():
         Permission.ROOM_JANUSCALL_JOIN,
         Permission.ROOM_JITSI_JOIN,
         Permission.ROOM_ZOOM_JOIN,
+        Permission.ROOM_LOUNGEMESH_JOIN,
     ]
     room_creator = [Permission.EVENT_ROOMS_CREATE_CHAT]
     room_owner = participant + [
         Permission.ROOM_INVITE,
         Permission.ROOM_DELETE,
         Permission.ROOM_JITSI_MODERATE,
+        Permission.ROOM_LOUNGEMESH_MODERATE,
     ]
     speaker = participant + [
         Permission.ROOM_BBB_MODERATE,
         Permission.ROOM_JANUSCALL_MODERATE,
+        Permission.ROOM_LOUNGEMESH_MODERATE,
         Permission.ROOM_POLL_EARLY_RESULTS,
     ]
     moderator = speaker + [
@@ -234,6 +242,7 @@ def default_roles():
             Permission.EVENT_ROOMS_CREATE_STAGE,
             Permission.EVENT_ROOMS_CREATE_EXHIBITION,
             Permission.EVENT_ROOMS_CREATE_POSTER,
+            Permission.EVENT_ROOMS_CREATE_LOUNGEMESH,
             Permission.EVENT_USERS_LIST,
             Permission.EVENT_USERS_MANAGE,
             Permission.EVENT_KIOSKS_MANAGE,

@@ -1,0 +1,20 @@
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+
+{% block video_admin_content %}
+<h1 class="page-header">{% trans "LoungeMesh" %}</h1>
+<p>
+  {% trans "Control whether organizers can create LoungeMesh rooms and which session features they may enable." %}
+</p>
+<form method="post" class="form-horizontal">
+  {% csrf_token %}
+  <div class="form-body">
+    {{ form.as_p }}
+  </div>
+  <div class="video-admin-btn-row">
+    <button type="submit" class="btn btn-primary">
+      <span class="fa fa-save"></span> {% trans "Save" %}
+    </button>
+  </div>
+</form>
+{% endblock %}

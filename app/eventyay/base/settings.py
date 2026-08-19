@@ -61,6 +61,16 @@ settings_hierarkey.add_default('etherpad_base_url', '', str)
 settings_hierarkey.add_default('etherpad_api_key', '', str)
 settings_hierarkey.add_default('etherpad_pad_name_pattern', '{event}-{submission}-{token}', str)
 
+settings_hierarkey.add_default('loungemesh_enabled', False, bool)
+settings_hierarkey.add_default('loungemesh_url', 'https://loungemesh.com', str)
+settings_hierarkey.add_default('loungemesh_jitsi_app_id', '', str)
+settings_hierarkey.add_default('loungemesh_jitsi_app_secret', '', str)
+settings_hierarkey.add_default(
+    'loungemesh_organizer_features',
+    '["notes", "whiteboard", "poll", "chat", "screenshare", "reactions", "lobby"]',
+    list,
+)
+
 # Telemetry settings for anonymous usage data collection
 # These are used by GlobalSettingsObject via settings_hierarkey
 settings_hierarkey.add_default('telemetry_enabled', False, bool)

@@ -39,6 +39,14 @@ const ROOM_TYPES = [{
 	videoChannel: true,
 	behindFeatureFlag: 'jitsi'
 }, {
+	id: 'channel-loungemesh',
+	icon: 'webcam',
+	name: 'LoungeMesh',
+	description: 'A spatial video lounge for informal hallway-style conversation, embedded from LoungeMesh.',
+	startingModule: 'call.loungemesh',
+	videoChannel: true,
+	behindFeatureFlag: 'loungemesh'
+}, {
 	id: 'channel-text',
 	icon: 'pound',
 	name: 'Text Channel',

@@ -20,6 +20,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
 from eventyay.base.models import SystemLog, Event
+from eventyay.base.services.loungemesh import (
+    apply_loungemesh_embed_headers,
+    get_loungemesh_settings,
+)
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.base.models.auth import ShortToken
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
@@ -145,6 +149,7 @@ class AppView(View):
             source,
             re.IGNORECASE | re.MULTILINE,
         )
+        loungemesh = get_loungemesh_settings()
         source = source.replace(
             "<body>",
             "<script>window.eventyay={}</script><body>".format(
@@ -165,6 +170,8 @@ class AppView(View):
                             "systemlog": reverse("live:systemlog"),
                         },
                         "features": event.feature_flags,
+                        "loungemeshUrl": loungemesh["url"],
+                        "loungemeshOrganizerFeatures": loungemesh["organizer_features"],
                         "externalAuthUrl": event.external_auth_url,
                         "locale": event.locale,
                         "date_locale": event.config.get("date_locale", "en-ie"),
@@ -195,7 +202,12 @@ class AppView(View):
         source = re.sub("<html[^>]*>", f'<html lang="{event.locale}">', source)
 
         r = HttpResponse(source, content_type="text/html")
-        if "cross-origin-isolation" in event.feature_flags:
+        apply_loungemesh_embed_headers(r)
+        # require-corp blocks third-party LoungeMesh iframes unless they send CORP.
+        if (
+            "cross-origin-isolation" in event.feature_flags
+            and "loungemesh" not in event.feature_flags
+        ):
             r["Cross-Origin-Resource-Policy"] = "cross-origin"
             r["Cross-Origin-Embedder-Policy"] = "require-corp"
             r["Cross-Origin-Opener-Policy"] = "same-origin"

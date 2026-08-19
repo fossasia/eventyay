@@ -43,6 +43,7 @@ from .invoices import Invoice, InvoiceLine, invoice_filename
 from .janus import JanusServer
 from .jitsi import JitsiServer
 from .log import ActivityLog, LogEntry
+from .loungemesh import LoungeMeshAccessToken
 from .mail import MailTemplate, MailTemplateRoles, QueuedMail
 from .mixins import FileCleanupMixin, GenerateCode, LogMixin, OrderedModel, PretalxModel, TimestampedModel
 from .notifications import NotificationSetting
@@ -184,6 +185,7 @@ __all__ = [
     'LogEntry',
     'LogMixin',
     'LoggedModel',
+    'LoungeMeshAccessToken',
     'MailTemplate',
     'MailTemplateRoles',
     'Membership',

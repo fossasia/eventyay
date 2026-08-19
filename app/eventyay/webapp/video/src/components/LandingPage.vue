@@ -283,7 +283,8 @@ export default {
 				'call.bigbluebutton',
 				'call.zoom',
 				'call.janus',
-				'call.jitsi'
+				'call.jitsi',
+				'call.loungemesh'
 			]
 			return this.rooms.filter(r => r.schedule_data || r.modules?.some(m => videoModuleTypes.includes(m.type))).map(room => {
 				const sessionInfo = this.currentSessionPerRoom?.[room.id]

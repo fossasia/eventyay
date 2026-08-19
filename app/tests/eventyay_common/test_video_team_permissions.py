@@ -66,6 +66,7 @@ def test_content_manager_trait_grants_exhibition_and_poster(event):
         permissions=[
             Permission.EVENT_ROOMS_CREATE_EXHIBITION,
             Permission.EVENT_ROOMS_CREATE_POSTER,
+            Permission.EVENT_ROOMS_CREATE_LOUNGEMESH,
             Permission.ROOM_UPDATE,
         ],
     )

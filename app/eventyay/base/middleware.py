@@ -265,6 +265,12 @@ class SecurityMiddleware(MiddlewareMixin):
             ws_origins.append(f'{ws_scheme}://{split.netloc}')
         return http_origins, ws_origins
 
+    @staticmethod
+    def _loungemesh_frame_src():
+        from eventyay.base.services.loungemesh import loungemesh_embed_origins
+
+        return list(loungemesh_embed_origins())
+
     def process_response(self, request, resp):
         if settings.DEBUG and resp.status_code >= 400:
             # Don't use CSP on debug error page as it breaks of Django's fancy error
@@ -313,6 +319,7 @@ class SecurityMiddleware(MiddlewareMixin):
                 'https://www.youtube.com',
                 'https://www.youtube-nocookie.com',  # Privacy-enhanced YouTube embeds
                 'https:',  # Allow all HTTPS iframes
+                *self._loungemesh_frame_src(),
             ],
             'style-src': [
                 '{static}',
@@ -353,7 +360,7 @@ class SecurityMiddleware(MiddlewareMixin):
 
         # Allow inline scripts ONLY for video pages (Venueless integration requires it)
         # VideoSPAView injects inline <script> tags with window.venueless configuration
-        if request.path.startswith('/video/'):
+        if request.path.startswith('/video/') or '/video/' in request.path:
             h['script-src-elem'] = [
                 '{static}',
                 "'unsafe-eval'",  # Required for Vue.js and buntpapier libraries

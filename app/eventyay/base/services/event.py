@@ -18,6 +18,12 @@ from eventyay.base.models.chat import Channel
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
 from eventyay.base.services.jitsi import user_can_create_jitsi_room_during_development
+from eventyay.base.services.loungemesh import (
+    LOUNGEMESH_MODULE_TYPE,
+    get_loungemesh_settings,
+    loungemesh_is_available,
+    sanitize_loungemesh_config,
+)
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.core.permissions import Permission
 
@@ -272,6 +278,10 @@ def get_room_config(room, permissions, *, current_stream=_UNSET):
                 cfg.pop("app_id", None)
                 cfg.pop("key_id", None)
                 cfg.pop("app_secret", None)
+        elif module["type"] == LOUNGEMESH_MODULE_TYPE:
+            cfg = module_config.get("config")
+            if isinstance(cfg, dict):
+                module_config["config"] = sanitize_loungemesh_config(cfg)
         elif module["type"] == "chat.native":
             # Strip webhook secrets — these are server-side only
             cfg = module_config.get("config")
@@ -309,6 +319,8 @@ def get_event_config_for_user(event, user):
             {"default": {"enabled": False, "policy_url": None}},
         ),
         "onsite_traits": cfg.get("onsite_traits", []),
+        "loungemesh_organizer_features": get_loungemesh_settings()["organizer_features"],
+        "loungemesh_enabled": loungemesh_is_available(event),
     }
     # Build permission strings and include world:* aliases for event:* permissions for frontend compatibility
     event_perm_values = [
@@ -497,6 +509,21 @@ async def create_room(event, data, creator):
             )
         m = [m for m in data.get("modules", []) if m["type"] == "call.janus"][0]
         m["config"] = {}
+    elif types == {LOUNGEMESH_MODULE_TYPE}:
+        if not await event.has_permission_async(
+            user=creator, permission=Permission.EVENT_ROOMS_CREATE_LOUNGEMESH
+        ):
+            raise ValidationError(
+                "This user is not allowed to create a room of this type.",
+                code="denied",
+            )
+        if not loungemesh_is_available(event):
+            raise ValidationError(
+                "LoungeMesh is not enabled.",
+                code="denied",
+            )
+        m = [m for m in data.get("modules", []) if m["type"] == LOUNGEMESH_MODULE_TYPE][0]
+        m["config"] = sanitize_loungemesh_config(m.get("config"))
     elif types == set():
         if not await event.has_permission_async(
             user=creator, permission=Permission.ROOM_UPDATE
