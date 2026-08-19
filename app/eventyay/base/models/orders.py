@@ -52,6 +52,7 @@ from eventyay.base.banlist import banned
 from eventyay.base.decimal import round_decimal
 from eventyay.base.email import get_email_context
 from eventyay.base.i18n import language
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import User
 from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.services.locking import NoLockManager
@@ -1916,11 +1917,19 @@ class OrderPayment(models.Model):
                 )
 
         if send_mail and self.order.sales_channel in self.order.event.settings.mail_sales_channel_placed_paid:
-            self._send_paid_mail(invoice, user, mail_text)
-            if self.order.event.settings.mail_send_order_paid_attendee:
+            if is_meetup_event(self.order.event):
+                self._send_meetup_registration_mail(user)
+                send_attendee_mail = self.order.event.settings.mail_send_meetup_registration_attendee
+                send_attendee_mail_fn = self._send_meetup_registration_mail_attendee
+            else:
+                self._send_paid_mail(invoice, user, mail_text)
+                send_attendee_mail = self.order.event.settings.mail_send_order_paid_attendee
+                send_attendee_mail_fn = self._send_paid_mail_attendee
+
+            if send_attendee_mail:
                 for p in self.order.positions.all():
                     if p.addon_to_id is None and p.attendee_email and p.attendee_email != self.order.email:
-                        self._send_paid_mail_attendee(p, user)
+                        send_attendee_mail_fn(p, user)
 
     def _send_paid_mail_attendee(self, position, user):
         from eventyay.base.services.mail import SendMailException
@@ -1964,6 +1973,49 @@ class OrderPayment(models.Model):
                 )
             except SendMailException:
                 logger.exception('Order paid email could not be sent')
+
+    def _send_meetup_registration_mail(self, user):
+        from eventyay.base.services.mail import SendMailException
+
+        with language(self.order.locale, self.order.event.settings.region):
+            email_template = self.order.event.settings.mail_text_meetup_registration
+            email_context = get_email_context(event=self.order.event, order=self.order)
+            email_subject = _('Your registration: %(code)s') % {'code': self.order.code}
+            try:
+                self.order.send_mail(
+                    email_subject,
+                    email_template,
+                    email_context,
+                    'eventyay.event.order.email.meetup_registration',
+                    user,
+                    invoices=[],
+                    attach_tickets=False,
+                    attach_ical=self.order.event.settings.mail_attach_ical,
+                )
+            except SendMailException:
+                logger.exception('Meetup registration email could not be sent')
+
+    def _send_meetup_registration_mail_attendee(self, position, user):
+        from eventyay.base.services.mail import SendMailException
+
+        with language(self.order.locale, self.order.event.settings.region):
+            email_template = self.order.event.settings.mail_text_meetup_registration_attendee
+            email_context = get_email_context(event=self.order.event, order=self.order, position=position)
+            email_subject = _('Your registration: %(code)s') % {'code': self.order.code}
+            try:
+                self.order.send_mail(
+                    email_subject,
+                    email_template,
+                    email_context,
+                    'eventyay.event.order.email.meetup_registration',
+                    user,
+                    invoices=[],
+                    position=position,
+                    attach_tickets=False,
+                    attach_ical=self.order.event.settings.mail_attach_ical,
+                )
+            except SendMailException:
+                logger.exception('Meetup registration email could not be sent to attendee')
 
     @property
     def refunded_amount(self):
