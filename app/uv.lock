@@ -1213,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#c46f6d76d64a92c17ee376c9eda02d6717bcaaa5" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#a484dcc394967c45f43b033b981de703373ba6e2" }
 dependencies = [
     { name = "requests" },
 ]
@@ -1385,7 +1385,6 @@ dependencies = [
     { name = "pycparser" },
     { name = "pycryptodome" },
     { name = "pydantic" },
-    { name = "pydantic-core" },
     { name = "pydantic-settings" },
     { name = "pygments" },
     { name = "pyjwt" },
@@ -1623,7 +1622,6 @@ requires-dist = [
     { name = "pycparser", specifier = ">=2.23" },
     { name = "pycryptodome", specifier = ">=3.20.0" },
     { name = "pydantic", specifier = ">=2.13.3" },
-    { name = "pydantic-core", specifier = ">=2.48.0" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "pyenchant", marker = "extra == 'docs'", specifier = ">=3.3.0" },
     { name = "pygments", specifier = ">=2.19.1" },
