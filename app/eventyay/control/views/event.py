@@ -36,10 +36,11 @@ from django.views.generic.detail import SingleObjectMixin
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
 
-from eventyay.timezones import localize_datetime
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
+from eventyay.base.meetup import is_meetup_event
 from eventyay.common.sanitizers import sanitize_email_html
+from eventyay.timezones import localize_datetime
 from eventyay.base.models import (
     Event,
     LogEntry,
@@ -764,6 +765,9 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             'mail_text_order_free',
             'mail_send_order_free_attendee',
             'mail_text_order_free_attendee',
+            'mail_text_meetup_registration',
+            'mail_send_meetup_registration_attendee',
+            'mail_text_meetup_registration_attendee',
             'mail_text_resend_link',
             'mail_text_resend_all_links',
             'mail_text_order_changed',
@@ -851,6 +855,14 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
         if preview_product not in MailSettingsForm.base_context:
             return HttpResponseBadRequest(_('invalid product'))
 
+        # Meetup-only templates must not be previewed on non-meetup events.
+        meetup_only = {
+            'mail_text_meetup_registration',
+            'mail_text_meetup_registration_attendee',
+        }
+        if preview_product in meetup_only and not is_meetup_event(request.event):
+            return HttpResponseBadRequest(_('invalid product'))
+
         regex = r'^' + re.escape(preview_product) + r'_(?P<idx>[\d+])$'
         msgs = {}
         for k, v in request.POST.items():
@@ -914,14 +926,26 @@ class MailSettingsRendererPreview(MailSettingsPreview):
 class EditorEmailPreview(EventPermissionRequiredMixin, View):
     """AJAX endpoint for previewing email body HTML from the Tiptap email editor.
 
-    Accepts a JSON POST body ``{ "html": "<p>...</p>", "locale": "en" }``,
-    sanitizes the HTML, expands ``{placeholder}`` tokens with sample values,
-    and returns ``{ "html": "<p>...</p>" }``.
+    Supports two request formats:
+
+    1. JSON body ``{ "html": "<p>...</p>", "locale": "en" }`` — used by the
+       toolbar popup preview button.  Returns ``{ "html": "<p>...</p>" }``.
+
+    2. Form-encoded body with ``body_<locale>`` fields (one per locale) — used
+       by the tab-based Edit/Preview component (richtextPreview.js).
+       Returns ``{ "previews": { "en": "...", "de": "..." } }``.
     """
 
     permission = ('can_change_orders', 'can_change_event_settings')
 
     def post(self, request, *args, **kwargs):
+        content_type = request.content_type or ''
+
+        if 'application/json' in content_type:
+            return self._handle_json(request)
+        return self._handle_form(request)
+
+    def _handle_json(self, request):
         try:
             payload = json.loads(request.body)
         except (json.JSONDecodeError, UnicodeDecodeError):
@@ -936,10 +960,33 @@ class EditorEmailPreview(EventPermissionRequiredMixin, View):
             return HttpResponseBadRequest('locale must be a string')
 
         safe_html = sanitize_email_html(raw_html)
-        preview_html = expand_email_preview_placeholders(
-            safe_html, request.event, locale=locale or None
-        )
+        preview_html = expand_email_preview_placeholders(safe_html, request.event, locale=locale or None)
         return JsonResponse({'html': preview_html})
+
+    def _handle_form(self, request):
+        event = request.event
+        previews = {}
+
+        for key, values in request.POST.lists():
+            if not key.startswith('body_') or not values:
+                continue
+            locale = key[5:]
+            body = values[0]
+            if not body:
+                continue
+            safe_html = sanitize_email_html(body)
+            previews[locale] = expand_email_preview_placeholders(safe_html, event, locale=locale)
+
+        if not previews:
+            body = request.POST.get('body', '')
+            if body:
+                safe_html = sanitize_email_html(body)
+                event_locales = list(event.settings.locales)
+                previews[event_locales[0] if event_locales else 'en'] = expand_email_preview_placeholders(
+                    safe_html, event
+                )
+
+        return JsonResponse({'previews': previews})
 
 
 class TicketSettingsPreview(EventPermissionRequiredMixin, View):
