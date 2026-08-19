@@ -1,30 +1,35 @@
 <template lang="pug">
 bunt-input-outline-container.c-rich-text-editor(ref="outline", :label="label")
-	.toolbar
-		.buttongroup
-			bunt-icon-button(:class="{active: isActive('bold')}", @click="cmd('toggleBold')", v-tooltip="$t('RichTextEditor:bold:tooltip')") format-bold
-			bunt-icon-button(:class="{active: isActive('italic')}", @click="cmd('toggleItalic')", v-tooltip="$t('RichTextEditor:italic:tooltip')") format-italic
-			bunt-icon-button(:class="{active: isActive('underline')}", @click="cmd('toggleUnderline')", v-tooltip="$t('RichTextEditor:underline:tooltip')") format-underline
-			bunt-icon-button(:class="{active: isActive('strike')}", @click="cmd('toggleStrike')", v-tooltip="$t('RichTextEditor:strike:tooltip')") format-strikethrough-variant
-		.buttongroup
-			bunt-icon-button(:class="{active: isActive('heading', {level: 1})}", @click="cmdWith('toggleHeading', {level: 1})", v-tooltip="$t('RichTextEditor:h1:tooltip')") format-header-1
-			bunt-icon-button(:class="{active: isActive('heading', {level: 2})}", @click="cmdWith('toggleHeading', {level: 2})", v-tooltip="$t('RichTextEditor:h2:tooltip')") format-header-2
-			bunt-icon-button(:class="{active: isActive('heading', {level: 3})}", @click="cmdWith('toggleHeading', {level: 3})", v-tooltip="$t('RichTextEditor:h3:tooltip')") format-header-3
-			bunt-icon-button(:class="{active: isActive('heading', {level: 4})}", @click="cmdWith('toggleHeading', {level: 4})", v-tooltip="$t('RichTextEditor:h4:tooltip')") format-header-4
-			bunt-icon-button(:class="{active: isActive('blockquote')}", @click="cmd('toggleBlockquote')", v-tooltip="$t('RichTextEditor:blockquote:tooltip')") format-quote-open
-			bunt-icon-button(:class="{active: isActive('codeBlock')}", @click="cmd('toggleCodeBlock')", v-tooltip="$t('RichTextEditor:code:tooltip')") code-tags
-		.buttongroup
-			bunt-icon-button(:class="{active: isActive('orderedList')}", @click="cmd('toggleOrderedList')", v-tooltip="$t('RichTextEditor:list-ordered:tooltip')") format-list-numbered
-			bunt-icon-button(:class="{active: isActive('bulletList')}", @click="cmd('toggleBulletList')", v-tooltip="$t('RichTextEditor:list-bullet:tooltip')") format-list-bulleted
-		.buttongroup
-			bunt-icon-button(:class="{active: isActive({textAlign: 'left'})}", @click="cmdWith('setTextAlign', 'left')", v-tooltip="$t('RichTextEditor:align-left:tooltip')") format-align-left
-			bunt-icon-button(:class="{active: isActive({textAlign: 'center'})}", @click="cmdWith('setTextAlign', 'center')", v-tooltip="$t('RichTextEditor:align-center:tooltip')") format-align-center
-			bunt-icon-button(:class="{active: isActive({textAlign: 'right'})}", @click="cmdWith('setTextAlign', 'right')", v-tooltip="$t('RichTextEditor:align-right:tooltip')") format-align-right
-		.buttongroup
-			bunt-icon-button(@click="insertLink", v-tooltip="$t('RichTextEditor:link:tooltip')") link-variant
-			bunt-icon-button(@click="triggerImageUpload", v-tooltip="$t('RichTextEditor:image:tooltip')") image
-		.buttongroup
-			bunt-icon-button(@click="clearFormatting", v-tooltip="$t('RichTextEditor:clean:tooltip')") format-clear
+	.tiptap-toolbar(role="toolbar", aria-label="Text formatting")
+		button.tiptap-btn(:class="{'is-active': isActive('bold')}", type="button", title="Bold", aria-label="Bold", @click.prevent="cmd('toggleBold')")
+			b B
+		button.tiptap-btn(:class="{'is-active': isActive('italic')}", type="button", title="Italic", aria-label="Italic", @click.prevent="cmd('toggleItalic')")
+			i I
+		button.tiptap-btn(:class="{'is-active': isActive('underline')}", type="button", title="Underline", aria-label="Underline", @click.prevent="cmd('toggleUnderline')")
+			u U
+		button.tiptap-btn(:class="{'is-active': isActive('strike')}", type="button", title="Strikethrough", aria-label="Strikethrough", @click.prevent="cmd('toggleStrike')")
+			s S
+		span.tiptap-separator(aria-hidden="true")
+		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 1})}", type="button", title="Heading 1", aria-label="Heading 1", @click.prevent="cmdWith('toggleHeading', {level: 1})") H1
+		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 2})}", type="button", title="Heading 2", aria-label="Heading 2", @click.prevent="cmdWith('toggleHeading', {level: 2})") H2
+		button.tiptap-btn(:class="{'is-active': isActive('heading', {level: 3})}", type="button", title="Heading 3", aria-label="Heading 3", @click.prevent="cmdWith('toggleHeading', {level: 3})") H3
+		button.tiptap-btn(:class="{'is-active': isActive('blockquote')}", type="button", title="Blockquote", aria-label="Blockquote", @click.prevent="cmd('toggleBlockquote')") ❝
+		button.tiptap-btn(:class="{'is-active': isActive('codeBlock')}", type="button", title="Code block", aria-label="Code block", @click.prevent="cmd('toggleCodeBlock')") &lt;/&gt;
+		span.tiptap-separator(aria-hidden="true")
+		button.tiptap-btn(:class="{'is-active': isActive('bulletList')}", type="button", title="Bullet list", aria-label="Bullet list", @click.prevent="cmd('toggleBulletList')") &#8226;&#8212;
+		button.tiptap-btn(:class="{'is-active': isActive('orderedList')}", type="button", title="Numbered list", aria-label="Numbered list", @click.prevent="cmd('toggleOrderedList')") 1.&#8212;
+		span.tiptap-separator(aria-hidden="true")
+		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'left'})}", type="button", title="Align left", aria-label="Align left", @click.prevent="cmdWith('setTextAlign', 'left')") &#8676;
+		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'center'})}", type="button", title="Align center", aria-label="Align center", @click.prevent="cmdWith('setTextAlign', 'center')") &#8652;
+		button.tiptap-btn(:class="{'is-active': isActive({textAlign: 'right'})}", type="button", title="Align right", aria-label="Align right", @click.prevent="cmdWith('setTextAlign', 'right')") &#8677;
+		span.tiptap-separator(aria-hidden="true")
+		span.tiptap-link-menu(ref="linkMenuRef")
+			button.tiptap-btn(type="button", title="Insert link", aria-label="Insert link", @click.prevent="insertLink") &#128279;
+		button.tiptap-btn(type="button", title="Insert image", aria-label="Insert image", @click.prevent="triggerImageUpload") &#128247;
+		span.tiptap-separator(aria-hidden="true")
+		button.tiptap-btn(type="button", title="Clear formatting", aria-label="Clear formatting", @click.prevent="clearFormatting") &#10005;
+		button.tiptap-btn(type="button", title="Undo", aria-label="Undo", @click.prevent="cmd('undo')") &#8630;
+		button.tiptap-btn(type="button", title="Redo", aria-label="Redo", @click.prevent="cmd('redo')") &#8631;
 	.editor-mount(ref="editorMount")
 	input(type="file", ref="imageInput", accept="image/png, image/gif, image/jpeg, image/bmp, image/x-icon", style="display:none", @change="handleImageUpload")
 	.uploading(v-if="uploading")
@@ -208,25 +213,6 @@ watch(() => props.modelValue, (newVal) => {
 		align-items: center
 		justify-content: center
 
-	.toolbar
-		border-bottom: 1px solid #ccc
-		display: flex
-		flex-direction: row
-		flex-wrap: wrap
-		padding: 4px
-		flex: 0 0 auto
-		.buttongroup
-			margin-right: 16px
-		.bunt-icon-button
-			border-radius: 8px
-			margin-right: 2px
-			.bunt-icon
-				color: rgba(0, 0, 0, 0.5)
-		.active
-			background: #f0f0f0
-		.active .bunt-icon
-			color: var(--clr-primary)
-
 	.editor-mount
 		flex: 1 1 auto
 		min-height: 0
@@ -282,4 +268,56 @@ watch(() => props.modelValue, (newVal) => {
 			color: #adb5bd
 			pointer-events: none
 			height: 0
+
+// ── Toolbar (matches tickets/email Tiptap editor) ──────────────────────────
+
+.tiptap-toolbar
+	display: flex
+	flex-wrap: wrap
+	align-items: center
+	gap: 2px
+	padding: 4px 6px
+	border-bottom: 1px solid #dee2e6
+	background: #f8f9fa
+	border-radius: 4px 4px 0 0
+	flex: 0 0 auto
+
+.tiptap-btn
+	display: inline-flex
+	align-items: center
+	justify-content: center
+	min-width: 30px
+	height: 28px
+	padding: 0 6px
+	border: 1px solid transparent
+	border-radius: 3px
+	background: transparent
+	color: #495057
+	font-size: 13px
+	line-height: 1
+	cursor: pointer
+	white-space: nowrap
+	transition: background 0.1s, color 0.1s, border-color 0.1s
+	&:hover
+		background: #e9ecef
+		border-color: #ced4da
+	&.is-active
+		background: rgba(13, 110, 253, 0.1)
+		border-color: rgba(13, 110, 253, 0.4)
+		color: #0d6efd
+	&[disabled]
+		opacity: 0.4
+		cursor: default
+
+.tiptap-separator
+	display: inline-block
+	width: 1px
+	height: 20px
+	background: #dee2e6
+	margin: 0 3px
+	vertical-align: middle
+
+.tiptap-link-menu
+	position: relative
+	display: inline-block
 </style>
