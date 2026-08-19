@@ -575,8 +575,14 @@ class GlobalSettingsForm(SettingsForm):
                 ])
             )
 
-
-
+        if 'hubspot' in settings.INSTALLED_APPS:
+            self.field_groups.append(
+                ('hubspot', _('HubSpot'), [
+                    'hubspot_client_id',
+                    'hubspot_client_secret',
+                    'hubspot_property_sync_ttl_minutes',
+                ])
+            )
 
     def clean_voxbento_base_url(self):
         url = (self.cleaned_data.get('voxbento_base_url') or '').strip()
@@ -586,7 +592,6 @@ class GlobalSettingsForm(SettingsForm):
             if not url.startswith('http://') and not url.startswith('https://'):
                 url = 'https://' + url
         return url
-
     def clean_etherpad_pad_name_pattern(self):
 
         pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
