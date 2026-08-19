@@ -566,6 +566,15 @@ class GlobalSettingsForm(SettingsForm):
             ]),
         ]
 
+        if 'hubspot' in settings.INSTALLED_APPS:
+            self.field_groups.append(
+                ('hubspot', _('HubSpot'), [
+                    'hubspot_client_id',
+                    'hubspot_client_secret',
+                    'hubspot_property_sync_ttl_minutes',
+                ])
+            )
+
     def clean_etherpad_pad_name_pattern(self):
         pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
         if pattern and '{submission}' not in pattern and '{token}' not in pattern:

@@ -458,6 +458,7 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
     def clean(self):
         data = super().clean()
         existing_ids = [score['score'].id for score in self.label_fields]
+        seen_values = {}
         for score_id in [*existing_ids, *self.new_label_ids]:
             value = data.get(f'value_{score_id}')
             label = data.get(f'label_{score_id}')
@@ -469,6 +470,17 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
                 self.add_error(f'value_{score_id}', _('Please provide a numeric score.'))
             elif not value_empty and not label:
                 self.add_error(f'label_{score_id}', _('Please provide a label for the score.'))
+
+            if not value_empty:
+                seen_values.setdefault(value, []).append(score_id)
+
+        for val, ids in seen_values.items():
+            if len(ids) > 1:
+                for score_id in ids[1:]:
+                    self.add_error(
+                        f'value_{score_id}',
+                        _('Duplicate score values are not allowed within the same category.')
+                    )
         return data
 
     def save(self, *args, **kwargs):
