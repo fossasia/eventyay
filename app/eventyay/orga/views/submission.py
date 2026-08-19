@@ -1223,6 +1223,21 @@ class AllFeedbacksList(EventPermissionRequired, PaginationMixin, ListView):
         return Feedback.objects.order_by('-pk').select_related('talk').filter(talk__event=self.request.event)
 
 
+class FeedbackExportView(EventPermissionRequired, View):
+    permission_required = 'base.orga_list_submission'
+
+    def get(self, request, *args, **kwargs):
+        fmt = request.GET.get('format', 'csv')
+        from eventyay.base.exporters.feedback import FeedbackCSVExporter, FeedbackJSONExporter
+
+        exporter_cls = FeedbackJSONExporter if fmt == 'json' else FeedbackCSVExporter
+        exporter = exporter_cls(request.event)
+        filename, content_type, content = exporter.render()
+        response = HttpResponse(content, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+
 class TagView(OrgaCRUDView):
     model = Tag
     form_class = TagForm

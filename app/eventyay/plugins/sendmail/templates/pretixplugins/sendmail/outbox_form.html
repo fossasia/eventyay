@@ -120,7 +120,37 @@
                 {% bootstrap_field form.new_attachment layout="horizontal" %}
 
                 {% bootstrap_field form.subject layout='horizontal' %}
-                {% bootstrap_field form.message layout='horizontal' %}
+                <div class="form-group"
+                     data-email-preview-wrapper
+                     data-email-preview-url="{% url 'control:event.editor.email.preview' organizer=request.event.organizer.slug event=request.event.slug %}">
+                    <label class="col-md-3 control-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+                    <div class="col-md-9">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active">
+                                <a data-toggle="tab" href="#outbox_message_edit">
+                                    <i class="fa fa-pencil-square-o fa-fw"></i> {% translate "Edit" %}
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a data-toggle="tab" href="#outbox_message_preview" data-email-preview-tab>
+                                    <i class="fa fa-tv fa-fw"></i> {% translate "Preview" %}
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content">
+                            <div id="outbox_message_edit" class="tab-pane fade in active">
+                                {% bootstrap_field form.message show_label=False form_group_class="" %}
+                            </div>
+                            <div id="outbox_message_preview" class="tab-pane">
+                                <div class="mail-preview-group">
+                                    {% for locale in request.event.settings.locales %}
+                                        <div lang="{{ locale }}" class="mail-preview well"></div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Scheduling -->
                 {% if form.scheduled_at %}
