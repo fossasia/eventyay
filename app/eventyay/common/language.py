@@ -36,7 +36,6 @@ def get_current_language_information():
 
 
 def get_language_choices_native_with_ui_name(codes=None) -> list[tuple[str, str]]:
-    translated_names = dict(settings.LANGUAGES)
     codes_in_order = [code for code, __ in settings.LANGUAGES]
 
     if codes is not None:
@@ -45,7 +44,7 @@ def get_language_choices_native_with_ui_name(codes=None) -> list[tuple[str, str]
 
     with translation.override('en'):
         english_names = {
-            code: str(dict(settings.LANGUAGES).get(code, settings.LANGUAGES_INFORMATION.get(code, {}).get('name', code)))
+            code: str(settings.LANGUAGES_INFORMATION.get(code, {}).get('name', code))
             for code in codes_in_order
         }
     sorted_codes = sorted(codes_in_order, key=lambda code: (english_names.get(code, code).casefold(), code))
@@ -53,12 +52,12 @@ def get_language_choices_native_with_ui_name(codes=None) -> list[tuple[str, str]
     choices = []
     for code in sorted_codes:
         language_info = settings.LANGUAGES_INFORMATION.get(code, {})
-        natural_name = language_info.get('natural_name') or str(translated_names.get(code, code))
-        translated_name = str(translated_names.get(code, language_info.get('name', code)))
-        if natural_name.strip().casefold() == translated_name.strip().casefold():
+        natural_name = language_info.get('natural_name') or english_names.get(code, code)
+        english_name = english_names.get(code, code)
+        if natural_name.strip().casefold() == english_name.strip().casefold():
             label = natural_name
         else:
-            label = f'{natural_name} ({translated_name})'
+            label = f'\u200e{natural_name} ({english_name})'
         choices.append((code, label))
     return choices
 

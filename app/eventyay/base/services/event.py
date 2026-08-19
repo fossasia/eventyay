@@ -160,8 +160,88 @@ async def notify_schedule_change(event_id):
     )
 
 
-def get_room_config(room, permissions):
+def serialize_stream_schedule(current):
+    """Serialize a StreamSchedule instance for API/websocket payloads."""
+    from eventyay.base.services import room as room_service
+
+    serializer = getattr(room_service, 'serialize_current_stream', None)
+    if serializer is not None:
+        return serializer(current)
+
+    def isoformat(value):
+        return value.isoformat() if value else None
+
+    return {
+        'id': current.pk,
+        'room': current.room_id,
+        'title': current.title,
+        'url': current.url,
+        'start_time': isoformat(current.start_time),
+        'end_time': isoformat(current.end_time),
+        'stream_type': current.stream_type,
+        'config': current.config,
+        'created_at': isoformat(current.created_at),
+        'updated_at': isoformat(current.updated_at),
+    }
+
+
+def get_room_current_stream_data(room, current=None):
+    """Return current stream payload for websocket room config.
+
+    Uses Redis-backed cache when available (#4992); falls back to a direct DB
+    lookup so this PR can merge independently.
+    """
+    if current is not None:
+        return serialize_stream_schedule(current)
+
+    from eventyay.base.services import room as room_service
+
+    getter = getattr(room_service, 'get_cached_current_stream_data', None)
+    if getter is not None:
+        return getter(room)
+    current = room.get_current_stream()
+    if not current:
+        return None
+    return serialize_stream_schedule(current)
+
+
+def batch_room_current_stream_data(rooms):
+    """Return current stream payloads for many rooms using one DB query."""
+    from django.utils.timezone import now
+
+    from eventyay.base.models.stream_schedule import StreamSchedule
+
+    room_ids = [room.pk for room in rooms]
+    if not room_ids:
+        return {}
+
+    at_time = now()
+    schedules = StreamSchedule.objects.filter(
+        room_id__in=room_ids,
+        start_time__lte=at_time,
+        end_time__gt=at_time,
+    ).order_by('room_id', 'start_time')
+
+    active_by_room = {}
+    for schedule in schedules:
+        if schedule.room_id not in active_by_room:
+            active_by_room[schedule.room_id] = schedule
+
+    return {
+        room_id: serialize_stream_schedule(schedule)
+        for room_id, schedule in active_by_room.items()
+    }
+
+
+_UNSET = object()
+
+
+def get_room_config(room, permissions, *, current_stream=_UNSET):
     str_permissions = [p if isinstance(p, str) else getattr(p, "value", p) for p in permissions]
+    if current_stream is _UNSET:
+        stream_data = get_room_current_stream_data(room)
+    else:
+        stream_data = current_stream
     room_config = {
         "id": str(room.id),
         "name": room.name,
@@ -173,6 +253,7 @@ def get_room_config(room, permissions):
         "force_join": room.force_join,
         "modules": [],
         "schedule_data": room.schedule_data or None,
+        "currentStream": stream_data,
     }
 
     if hasattr(room, "current_roomviews"):
@@ -252,9 +333,14 @@ def get_event_config_for_user(event, user):
     }
 
     rooms = get_rooms(event, user)
+    stream_data_by_room = batch_room_current_stream_data(rooms)
     for room in rooms:
         result["rooms"].append(
-            get_room_config(room, permissions[event] | permissions[room])
+            get_room_config(
+                room,
+                permissions[event] | permissions[room],
+                current_stream=stream_data_by_room.get(room.pk),
+            )
         )
     return result
 
@@ -452,7 +538,9 @@ async def create_room(event, data, creator):
 async def get_room_config_for_user(room: str, event_id: str, user):
     room = await get_room(id=room, event_id=event_id)
     permissions = await database_sync_to_async(room.event.get_all_permissions)(user)
-    return get_room_config(room, permissions[room] | permissions[room.event])
+    return await database_sync_to_async(get_room_config)(
+        room, permissions[room] | permissions[room.event]
+    )
 
 
 @database_sync_to_async
