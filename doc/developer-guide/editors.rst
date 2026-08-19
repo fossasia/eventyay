@@ -226,6 +226,81 @@ button calls this URL and displays the result in a ``<dialog>`` modal.
 URL name: ``control:event.editor.email.preview``
 
 
+Tab-based Edit/Preview (``static/common/js/richtextPreview.js``)
+------------------------------------------------------------------
+
+The toolbar's built-in Preview button (see above) opens a popup ``<dialog>``.
+Some areas instead render an "Edit" / "Preview" tab pair next to the field
+(e.g. the Talks/CfP Call for Team Members description, custom email
+templates) so the preview stays visible alongside the editor rather than in a
+modal.
+
+``static/common/js/richtextPreview.js`` implements this tab-based behaviour
+once, in core, so plugins do not need to ship their own copy. It is loaded on
+every ``control``, ``orga``, and ``eventyay_common`` page (same pattern as
+``dropdown.js``) and activates purely through data attributes — no Python or
+JS wiring is required beyond adding the markup.
+
+**Rich text preview** (single field, single locale):
+
+.. code-block:: html
+
+   <div data-richtext-preview-wrapper data-richtext-preview-url="{% url 'myapp:description_preview' %}">
+     <ul class="nav nav-tabs" role="tablist">
+       <li role="presentation" class="active">
+         <a data-toggle="tab" href="#description_edit">Edit</a>
+       </li>
+       <li role="presentation">
+         <a data-toggle="tab" href="#description_preview" data-richtext-preview-tab>Preview</a>
+       </li>
+     </ul>
+     <div class="tab-content">
+       <div id="description_edit" class="tab-pane fade in active">
+         {% bootstrap_field form.description show_label=False form_group_class="" %}
+       </div>
+       <div id="description_preview" class="tab-pane">
+         <div class="richtext-preview"></div>
+       </div>
+     </div>
+   </div>
+
+Clicking the Preview tab POSTs the current textarea value as ``content`` to
+``data-richtext-preview-url`` and expects a JSON response
+``{ "html": "<p>...</p>" }``, which replaces the contents of
+``.richtext-preview``.
+
+**Email preview** (multi-locale, one textarea per language):
+
+.. code-block:: html
+
+   <div data-email-preview-wrapper data-email-preview-url="{% url 'myapp:email_preview' %}">
+     ...
+     <a data-toggle="tab" href="#message_preview" data-email-preview-tab>Preview</a>
+     ...
+     <div id="message_preview" class="tab-pane">
+       <div class="mail-preview-group">
+         {% for locale in event.settings.locales %}
+           <div lang="{{ locale }}" class="mail-preview"></div>
+         {% endfor %}
+       </div>
+     </div>
+   </div>
+
+Clicking the Preview tab POSTs one ``body_<locale>`` field per ``<textarea
+lang="...">`` found inside the wrapper and expects
+``{ "previews": { "en": "<p>...</p>", "de": "<p>...</p>" } }``, which fills
+each ``.mail-preview[lang=...]`` block.
+
+Both variants require a plugin-supplied backend view, since the preview
+content (available placeholders, sample values, permission checks) is
+context-specific. The JS layer only handles the AJAX round-trip and DOM
+update; it does not assume a specific view class.
+
+This mechanism is independent from the toolbar preview button
+(``data-tiptap-preview-url`` / ``control:event.editor.email.preview``) and can
+be used with plain textareas as well — Tiptap enhancement is optional.
+
+
 Placeholder Variables
 ---------------------
 

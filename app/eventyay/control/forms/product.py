@@ -81,6 +81,12 @@ def clean_free_price_bounds(cleaned_data, form=None):
             raise forms.ValidationError({'free_price_max': [msg]})
 
 
+def clean_default_price(value):
+    if value is not None and value < 0:
+        raise forms.ValidationError(_('The price must not be negative.'))
+    return value
+
+
 class CategoryForm(I18nModelForm):
     class Meta:
         model = ProductCategory
@@ -547,6 +553,9 @@ class ProductCreateForm(I18nModelForm):
 
         return instance
 
+    def clean_default_price(self):
+        return clean_default_price(self.cleaned_data.get('default_price'))
+
     def clean(self):
         cleaned_data = super().clean()
 
@@ -689,6 +698,9 @@ class ProductUpdateForm(I18nModelForm):
         self.fields['category'].widget.choices = self.fields['category'].choices
         if not self.instance.has_variations:
             self.fields.pop('allow_user_variation_change', None)
+
+    def clean_default_price(self):
+        return clean_default_price(self.cleaned_data.get('default_price'))
 
     def clean(self):
         d = super().clean()
@@ -858,6 +870,9 @@ class ProductVariationForm(I18nModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         change_decimal_field(self.fields['default_price'], self.event.currency)
+
+    def clean_default_price(self):
+        return clean_default_price(self.cleaned_data.get('default_price'))
 
     def clean(self):
         cleaned_data = super().clean()
