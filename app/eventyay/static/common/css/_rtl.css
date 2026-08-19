@@ -154,12 +154,8 @@ html.rtl {
   }
 }
 /* Not grouping under the html.rtl tag as these input fields will appear in multilingual events as part of use of django-i18nfield */
-input[lang="ar"],
-textarea[lang="ar"],
 div[lang="ar"],
 pre[lang="ar"],
-input[lang="he"],
-textarea[lang="he"],
 div[lang="he"],
 pre[lang="he"] {
   direction: rtl;
