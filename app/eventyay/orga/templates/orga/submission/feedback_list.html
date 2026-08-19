@@ -8,7 +8,16 @@
 {% block submission_content %}
     {% for entry in feedback %}
         <div class="card mb-2">
-            <div class="card-body pb-0">{{ entry.review|rich_text }}</div>
+            <div class="card-body pb-0">
+                {% if entry.rating %}
+                    <div class="feedback-rating mb-2" aria-label="{% translate 'Rating' %}: {{ entry.rating }} / 5" title="{% translate 'Rating' %}: {{ entry.rating }} / 5">
+                        {% for i in "12345"|make_list %}
+                            <span class="{% if forloop.counter <= entry.rating %}text-warning{% else %}text-muted{% endif %}">★</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {{ entry.review|rich_text }}
+            </div>
         </div>
     {% empty %}
         {{ phrases.schedule.no_feedback }}
