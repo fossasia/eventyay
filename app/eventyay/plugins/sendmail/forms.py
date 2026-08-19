@@ -173,14 +173,10 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         )
         message_placeholders = ['event', 'order', 'position_or_address']
         placeholder_names = sorted(get_available_placeholders(self.event, message_placeholders).keys())
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
-        )
         self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
-            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
+            widget_kwargs={'placeholders': placeholder_names},
             required=True,
             locales=event.settings.get('locales'),
         )
@@ -543,14 +539,10 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             initial=self.instance.subject
         )
         placeholder_names = sorted(get_available_placeholders(self.event, base_placeholders).keys())
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug},
-        )
         self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
-            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
+            widget_kwargs={'placeholders': placeholder_names},
             required=False,
             locales=list(allowed_locales),
             initial=self.instance.message,
@@ -640,10 +632,6 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
         team_placeholders = ['event', 'team']
         placeholder_names = sorted(get_available_placeholders(self.event, team_placeholders).keys())
         placeholder_text = _("Available placeholders: ") + ', '.join(f"{{{key}}}" for key in placeholder_names)
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug},
-        )
 
         self.fields['subject'] = I18nFormField(
             label=_('Subject'),
@@ -655,7 +643,7 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
         self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
-            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
+            widget_kwargs={'placeholders': placeholder_names},
             required=True,
             locales=locales,
             help_text=placeholder_text,

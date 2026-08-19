@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import EmailMessage
 from django.core.validators import validate_email
-from django.db import IntegrityError
+from django.db import IntegrityError, OperationalError, ProgrammingError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
 from django.urls import reverse_lazy
@@ -19,7 +19,8 @@ from python_http_client.exceptions import HTTPError
 
 from eventyay.api.models import OAuthApplication
 from eventyay.base.email import CustomSMTPBackend, SendGridEmail
-from eventyay.base.models import LogEntry, OrderPayment, OrderRefund
+from eventyay.base.models import Event, GlobalPluginConfig, LogEntry, OrderPayment, OrderRefund
+from eventyay.base.plugins import get_all_plugins
 from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.settings import GlobalSettingsObject
@@ -332,6 +333,94 @@ class LogDetailView(AdministratorPermissionRequiredMixin, View):
         if data is None:
             data = {}
         return JsonResponse({'data': data})
+
+
+class GlobalPluginManagementView(AdministratorPermissionRequiredMixin, TemplateView):
+    template_name = 'pretixcontrol/global_plugins.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_plugins = get_all_plugins(include_inactive=True)
+
+        try:
+            configs = {c.module: c for c in GlobalPluginConfig.objects.all()}
+        except (ProgrammingError, OperationalError):
+            configs = {}
+
+        plugin_rows = []
+        for plugin in all_plugins:
+            module = plugin.module
+            config = configs.get(module)
+            plugin_rows.append({
+                'module': module,
+                'name': str(plugin.name),
+                'description': str(getattr(plugin, 'description', '')),
+                'version': getattr(plugin, 'version', ''),
+                'category': str(getattr(plugin, 'category', '')),
+                'is_active': config.is_active if config else True,
+                'enable_by_default': config.enable_by_default if config else False,
+                'show_in_organizer_list': config.show_in_organizer_list if config else True,
+            })
+
+        context['plugin_rows'] = plugin_rows
+        return context
+
+    def post(self, request, *args, **kwargs):
+        all_plugins = get_all_plugins(include_inactive=True)
+        known_modules = {p.module for p in all_plugins}
+        newly_disabled = set()
+        platform_managed = set()
+
+        try:
+            for module in known_modules:
+                is_active = request.POST.get(f'is_active_{module}') == 'on'
+                enable_by_default = request.POST.get(f'enable_by_default_{module}') == 'on'
+                show_in_organizer_list = request.POST.get(f'show_in_organizer_list_{module}') == 'on'
+
+                if not is_active:
+                    enable_by_default = False
+                    show_in_organizer_list = False
+                    newly_disabled.add(module)
+                elif not show_in_organizer_list:
+                    platform_managed.add(module)
+
+                GlobalPluginConfig.objects.update_or_create(
+                    module=module,
+                    defaults={
+                        'is_active': is_active,
+                        'enable_by_default': enable_by_default,
+                        'show_in_organizer_list': show_in_organizer_list,
+                    },
+                )
+        except (ProgrammingError, OperationalError):
+            messages.error(request, _('Plugin configuration table is not available. Please run migrations.'))
+            return redirect(reverse('eventyay_admin:admin.global.plugins'))
+
+        if newly_disabled:
+            self._strip_disabled_from_events(newly_disabled)
+        if platform_managed:
+            self._ensure_enabled_on_all_events(platform_managed)
+
+        messages.success(request, _('Plugin settings have been saved.'))
+        return redirect(reverse('eventyay_admin:admin.global.plugins'))
+
+    @staticmethod
+    def _strip_disabled_from_events(disabled_modules: set[str]):
+        for event in Event.objects.exclude(plugins='').exclude(plugins__isnull=True).iterator():
+            current = [p for p in event.plugins.split(',') if p]
+            filtered = [p for p in current if p not in disabled_modules]
+            if len(filtered) != len(current):
+                event.plugins = ','.join(filtered)
+                event.save(update_fields=['plugins'])
+
+    @staticmethod
+    def _ensure_enabled_on_all_events(modules: set[str]):
+        for event in Event.objects.iterator():
+            current = [p for p in (event.plugins or '').split(',') if p]
+            missing = [m for m in modules if m not in current]
+            if missing:
+                event.plugins = ','.join(current + missing)
+                event.save(update_fields=['plugins'])
 
 
 class PaymentDetailView(AdministratorPermissionRequiredMixin, View):
