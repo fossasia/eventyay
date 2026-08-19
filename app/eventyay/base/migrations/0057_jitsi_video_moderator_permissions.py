@@ -34,7 +34,7 @@ def add_jitsi_permissions_to_video_moderator(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('base', '0053_jitsiserver'),
+        ('base', '0056_global_plugin_config'),
     ]
 
     operations = [
