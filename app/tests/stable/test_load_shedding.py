@@ -141,9 +141,18 @@ def test_heavy_celery_tasks_routed_to_longrunning():
         'eventyay.base.services.orderimport.*',
         'eventyay.features.importers.tasks.*',
         'eventyay.base.services.tickets.generate',
+        'eventyay.base.services.tickets.invalidate_cache',
         'pretalx.agenda.export_schedule_html',
     ):
         assert routes[name]['queue'] == 'longrunning'
+
+
+def test_badge_async_fallback_uses_tickets_generate_task():
+    from eventyay.base.services.tickets import generate
+    from eventyay.plugins.badges import api as badges_api
+
+    assert badges_api.generate is generate
+    assert hasattr(generate, 'apply_async')
 
 
 def test_404_skips_session_save():

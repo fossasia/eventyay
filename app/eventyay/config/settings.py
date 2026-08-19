@@ -1125,6 +1125,7 @@ CELERY_TASK_ROUTES = {
     'eventyay.base.services.orderimport.*': {'queue': 'longrunning'},
     'eventyay.features.importers.tasks.*': {'queue': 'longrunning'},
     'eventyay.base.services.tickets.generate': {'queue': 'longrunning'},
+    'eventyay.base.services.tickets.invalidate_cache': {'queue': 'longrunning'},
     # Registered name in eventyay.agenda.tasks (legacy pretalx namespace).
     'pretalx.agenda.export_schedule_html': {'queue': 'longrunning'},
 }
