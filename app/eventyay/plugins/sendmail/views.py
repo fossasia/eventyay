@@ -16,6 +16,7 @@ from django.utils.translation import ngettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 
 from eventyay.base.i18n import language
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import Order, OrderPosition
@@ -218,6 +219,11 @@ class MailTemplatesView(EventSettingsViewMixin, EventSettingsFormView):
     template_name = 'pretixplugins/sendmail/mail_templates.html'
     form_class = MailContentSettingsForm
     permission = 'can_change_event_settings'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_meetup_event'] = is_meetup_event(self.request.event)
+        return context
 
     def form_invalid(self, form):
         messages.error(
