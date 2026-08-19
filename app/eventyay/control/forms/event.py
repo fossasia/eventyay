@@ -131,13 +131,15 @@ class EventWizardFoundationForm(forms.Form):
         organizer_count = qs.count()
         is_required = organizer_count > 1
 
+        select2_url = reverse('control:organizers.select2') + '?can_create=1'
+
         self.fields['organizer'] = forms.ModelChoiceField(
             label=_('Organizer'),
             queryset=qs,
             widget=Select2(
                 attrs={
                     'data-model-select2': 'generic',
-                    'data-select2-url': reverse('control:organizers.select2') + '?can_create=1',
+                    'data-select2-url': select2_url,
                     'data-placeholder': _('Organizer'),
                 }
             ),
@@ -1635,25 +1637,25 @@ class WidgetCodeForm(forms.Form):
 
 class EventDeleteForm(forms.Form):
     error_messages = {
-        'slug_wrong': _('The slug you entered was not correct.'),
+        'name_wrong': _('The event name you entered was not correct.'),
     }
-    slug = forms.CharField(
+    name = forms.CharField(
         max_length=255,
-        label=_('Event slug'),
+        label=_('Event name'),
     )
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
         super().__init__(*args, **kwargs)
 
-    def clean_slug(self):
-        slug = self.cleaned_data.get('slug')
-        if slug != self.event.slug:
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if name != str(self.event.name):
             raise forms.ValidationError(
-                self.error_messages['slug_wrong'],
-                code='slug_wrong',
+                self.error_messages['name_wrong'],
+                code='name_wrong',
             )
-        return slug
+        return name
 
 
 class QuickSetupForm(I18nForm):
@@ -1794,6 +1796,12 @@ class QuickSetupProductForm(I18nForm):
         required=False,
     )
 
+    def clean_default_price(self):
+        value = self.cleaned_data.get('default_price')
+        if value is not None and value < 0:
+            raise ValidationError(_('The price must not be negative.'))
+        return value
+
 
 class BaseQuickSetupProductFormSet(I18nFormSetMixin, forms.BaseFormSet):
     def __init__(self, *args, **kwargs):
@@ -1844,6 +1852,13 @@ ConfirmTextFormset = formset_factory(
 
 class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
     """Event basics for meetups: currency is implicit, video stream is inline."""
+
+    registration_limit = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label=_('Registration limit'),
+        help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -936,7 +936,7 @@ class SubmissionStatsMixin:
             )
             for submission_type in self.request.event.submission_types.filter(deadline__isnull=False)
         ]
-        if self.request.event.cfp.deadline:
+        if hasattr(self.request.event, 'cfp') and self.request.event.cfp.deadline:
             deadlines.append(
                 (
                     self.request.event.cfp.deadline.astimezone(self.request.event.tz).strftime('%Y-%m-%d'),
@@ -1221,6 +1221,21 @@ class AllFeedbacksList(EventPermissionRequired, PaginationMixin, ListView):
 
     def get_queryset(self):
         return Feedback.objects.order_by('-pk').select_related('talk').filter(talk__event=self.request.event)
+
+
+class FeedbackExportView(EventPermissionRequired, View):
+    permission_required = 'base.orga_list_submission'
+
+    def get(self, request, *args, **kwargs):
+        fmt = request.GET.get('format', 'csv')
+        from eventyay.base.exporters.feedback import FeedbackCSVExporter, FeedbackJSONExporter
+
+        exporter_cls = FeedbackJSONExporter if fmt == 'json' else FeedbackCSVExporter
+        exporter = exporter_cls(request.event)
+        filename, content_type, content = exporter.render()
+        response = HttpResponse(content, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 
 class TagView(OrgaCRUDView):

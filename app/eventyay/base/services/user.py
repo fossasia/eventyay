@@ -1140,17 +1140,19 @@ def list_users(
     trait_badges_map=None,
     include_banned=True,
     include_admin_info=False,
+    include_private=False,
 ) -> object:
     qs = (
         User.objects.filter(
             event_id=event_id,
-            show_publicly=True,
             deleted=False,
             type=User.UserType.PERSON,
         )
         .exclude(profile__display_name__isnull=True)
         .exclude(profile__display_name__exact="")
     )
+    if not include_private:
+        qs = qs.filter(show_publicly=True)
     if not include_banned:
         qs = qs.exclude(moderation_state=User.ModerationState.BANNED)
     if badge:

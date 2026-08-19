@@ -73,6 +73,7 @@ urlpatterns = [
         include(
             [
                 path("delete", event.EventDelete.as_view(), name="event.delete"),
+                path("delete_talk_data", event.EventDeleteTalkData.as_view(), name="event.delete_talk_data"),
                 path("reset/", auth.ResetView.as_view(), name="event.auth.reset"),
                 path(
                     "reset/<token>",
@@ -91,6 +92,11 @@ urlpatterns = [
                     'settings/review/',
                     event.EventReviewSettings.as_view(),
                     name='settings.review',
+                ),
+                path(
+                    'settings/feedback/',
+                    event.FeedbackSettings.as_view(),
+                    name='settings.feedback',
                 ),
                 path(
                     'settings/review/phase/<int:pk>/',
@@ -221,6 +227,11 @@ urlpatterns = [
                     'submissions/feedback/',
                     submission.AllFeedbacksList.as_view(),
                     name='submissions.feedback',
+                ),
+                path(
+                    'submissions/feedback/export/',
+                    submission.FeedbackExportView.as_view(),
+                    name='submissions.feedback.export',
                 ),
                 *submission.TagView.get_urls(
                     url_base='submissions/tags',

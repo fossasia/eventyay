@@ -1,10 +1,10 @@
 <template lang="pug">
 div.c-audio-translation
 		bunt-select(
-		name="audio-translation",
+		:name="selectName",
 		v-model="internalSelectedLanguage",
 		:options="languageOptions",
-		label="Audio Translation"
+		:label="label"
 )
 </template>
 <script>
@@ -21,6 +21,10 @@ export default {
 		selectedLanguage: {
 			type: String,
 			default: 'Original'
+		},
+		label: {
+			type: String,
+			default: 'Audio Translation'
 		}
 	},
 	data() {
@@ -29,6 +33,12 @@ export default {
 			languageOptions: [],
 			isSyncingSelection: false
 		}
+	},
+	computed: {
+		selectName() {
+			const slug = (this.label || 'audio-translation').toLowerCase().replace(/\s+/g, '-')
+			return `audio-translation-${slug}`
+		},
 	},
 	watch: {
 		languages: {
@@ -75,15 +85,17 @@ export default {
 
 <style scoped>
 .c-audio-translation {
-	height: 65px;
+	flex: 0 1 180px;
+	min-width: 140px;
+	max-width: 220px;
 	padding-top: 3px;
-	margin-right: 5px;
 }
 
 @media (max-width: 992px) {
   .c-audio-translation {
-    width: 50%;
-    margin-right: 5px;
+    flex: 1 1 140px;
+    min-width: 120px;
+    max-width: none;
   }
 }
 

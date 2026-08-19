@@ -133,7 +133,7 @@
 								.col-md-8
 									select.form-control(v-model="selectedMemberIds[role.id]")
 										option(:value="undefined" disabled) {{ $t('Select a member to assign') }}
-										option(v-for="vol in availableMembersByRole[role.id]", :key="vol.id", :value="vol.id") {{ vol.name }} ({{ vol.email }})
+										option(v-for="vol in availableMembersByRole[role.id]", :key="vol.id", :value="vol.id") {{ vol.name }}{{ vol.email ? ` (${vol.email})` : '' }}
 								.col-md-4
 									button.assign-btn(type="button", @click="assignMember(role.id)", :disabled="assigningWaiting") {{ $t('Assign') }}
 					
@@ -255,7 +255,7 @@ const availabilities = reactive<{ rooms: Record<string, AvailabilityEntry[]>; ta
   rooms: {},
   talks: {},
 })
-const availableMembersByRole = ref<Record<string, { id: number; name: string; email: string }[]>>({})
+const availableMembersByRole = ref<Record<string, { id: number; name: string; email?: string }[]>>({})
 const warnings = reactive<Record<string, Warning[]>>({})
 const currentDay = ref<Moment | null>(null)
 const draggedSession = ref<SessionData | null>(null)

@@ -158,6 +158,8 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
 
     def get_cfp_tiles(self, _now, can_change_submissions=False):
         result = []
+        if not hasattr(self.request.event, 'cfp'):
+            return result
         if self.request.event.cfp.is_open:
             result.append(
                 {
