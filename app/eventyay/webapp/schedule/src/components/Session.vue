@@ -33,7 +33,7 @@ component.c-linear-schedule-session(
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
 		template(v-if="hasShiftRoles")
 			.roles-list
-				.role-item(v-for="role in session.roles", :key="role.id")
+				.role-item(v-for="(role, index) in session.roles", :key="role.id ?? index")
 					.role-header
 						span.role-name
 							| {{ roleName(role) }}
@@ -41,7 +41,7 @@ component.c-linear-schedule-session(
 						span.role-badge(:class="'badge-' + getCapacityStatus(role)") {{ assignedList(role).length }}/{{ role.capacity }} assigned
 					.role-assignees
 						span(v-for="(user, i) in assignedList(role)", :key="user.id || i")
-							i.fa.fa-user.mr-1
+							i.fa.fa-user.mr-1(aria-hidden="true")
 							| {{ user.name }}{{ i < assignedList(role).length - 1 ? ', ' : '' }}
 						span.text-muted(v-if="!assignedList(role).length") None
 					.shift-manage
@@ -454,7 +454,10 @@ export default {
 			return getAssignedList(role).some(user => user.id === this.currentUserId)
 		},
 		isRoleFull (role) {
-			return getAssignedList(role).length >= (role.capacity || 0)
+			const capacity = Number(role?.capacity)
+			if (!Number.isFinite(capacity)) return false
+			if (capacity <= 0) return true
+			return getAssignedList(role).length >= capacity
 		},
 		canClaimRole (role) {
 			if (!this.currentUserId) return false
@@ -514,8 +517,8 @@ export default {
 			const role = this.confirmRole
 			if (!role) return
 			const url = this.confirmAction === 'drop'
-				? withdrawUrl(this.eventUrl, this.session, role)
-				: claimUrl(this.eventUrl, this.session, role)
+				? withdrawUrl(this.eventUrl, this.session)
+				: claimUrl(this.eventUrl, this.session)
 			return this.postRoleAction(url, role)
 		},
 		gridMetaTitle (text) {

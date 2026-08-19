@@ -1,6 +1,9 @@
+export function isShiftSchedule (scheduleData) {
+	return scheduleData?.mode === 'shifts' || scheduleData?.schedule?.mode === 'shifts'
+}
+
 export function resolveMode (scheduleData) {
-	if (scheduleData && scheduleData.mode === 'shifts') return 'shifts'
-	return 'talks'
+	return isShiftSchedule(scheduleData) ? 'shifts' : 'talks'
 }
 
 export function getCapabilities (mode) {
@@ -20,10 +23,6 @@ export function getCapabilities (mode) {
 	}
 }
 
-export function isShiftSchedule (scheduleData) {
-	return scheduleData?.mode === 'shifts' || scheduleData?.schedule?.mode === 'shifts'
-}
-
 export function isShiftSession (session) {
 	return Array.isArray(session?.roles) && session.roles.length > 0
 }
@@ -39,8 +38,8 @@ export function getAssignedList (role) {
 
 export function getCapacityStatus (role) {
 	const assigned = getAssignedList(role)
-	const capacity = role?.capacity || 0
-	if (capacity && assigned.length >= capacity) return 'full'
+	const capacity = Number(role?.capacity)
+	if (Number.isFinite(capacity) && capacity > 0 && assigned.length >= capacity) return 'full'
 	if (assigned.length > 0) return 'partial'
 	return 'empty'
 }
@@ -60,12 +59,12 @@ export function getShiftId (session) {
 	return Number.isNaN(parsed) ? raw : parsed
 }
 
-export function claimUrl (eventUrl, session, role) {
+export function claimUrl (eventUrl, session) {
 	const base = (eventUrl || '').replace(/\/?$/, '/')
 	return `${base}teamshifts/shifts/${getShiftId(session)}/claim/`
 }
 
-export function withdrawUrl (eventUrl, session, role) {
+export function withdrawUrl (eventUrl, session) {
 	const base = (eventUrl || '').replace(/\/?$/, '/')
 	return `${base}teamshifts/shifts/${getShiftId(session)}/withdraw/`
 }

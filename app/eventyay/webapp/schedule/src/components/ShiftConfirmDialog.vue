@@ -1,7 +1,7 @@
 <template lang="pug">
 dialog.pretalx-modal.shift-confirm-modal(ref="modal", @click="onBackdrop", @cancel.prevent="cancel")
 	.dialog-inner(@click.stop="")
-		button.close-button(type="button", @click="cancel") ✕
+		button.close-button(type="button", aria-label="Close dialog", @click="cancel") ✕
 		h3 {{ title }}
 		p.shift-confirm-lead {{ lead }}
 		dl.shift-confirm-facts(v-if="details.length")
