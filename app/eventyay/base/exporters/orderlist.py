@@ -15,13 +15,14 @@ from django.db.models import (
     Max,
     Min,
     OuterRef,
+    Value,
     Prefetch,
     Q,
     Subquery,
     Sum,
     When,
 )
-from django.db.models.functions import Coalesce, TruncDate
+from django.db.models.functions import Coalesce, NullIf, TruncDate
 from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone, now
@@ -746,7 +747,11 @@ class OrderListExporter(MultiSheetListExporter):
             order__event__in=self.events,
         )
         wikimedia_query = User.objects.filter(
-        email=OuterRef('order__email')
+        email=Coalesce(
+            NullIf(OuterRef('attendee_email'), Value('')),
+            NullIf(OuterRef('addon_to__attendee_email'), Value('')),
+            NullIf(OuterRef('order__email'), Value('')),
+        )
         ).values('wikimedia_username')[:1]
         qs = (
             base_qs.annotate(

@@ -416,9 +416,19 @@ def test_order_position_list_exporter_matches_combined_positions_sheet(env):
 @pytest.mark.django_db
 def test_order_position_list_exporter_includes_sso_username(env):
     event, user, order, ticket = env
-    user.email = order.email
+
+    position = OrderPosition.objects.filter(
+        order=order,
+        product=ticket,
+        canceled=False,
+    ).first()
+
+    user.email = 'attendee@example.com'
     user.wikimedia_username = 'TestSSOUser'
     user.save(update_fields=['email', 'wikimedia_username'])
+
+    position.attendee_email = 'attendee@example.com'
+    position.save(update_fields=['attendee_email'])
 
     exporter = OrderPositionListExporter(event)
     rows = [
