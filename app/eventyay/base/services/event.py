@@ -538,7 +538,9 @@ async def create_room(event, data, creator):
 async def get_room_config_for_user(room: str, event_id: str, user):
     room = await get_room(id=room, event_id=event_id)
     permissions = await database_sync_to_async(room.event.get_all_permissions)(user)
-    return get_room_config(room, permissions[room] | permissions[room.event])
+    return await database_sync_to_async(get_room_config)(
+        room, permissions[room] | permissions[room.event]
+    )
 
 
 @database_sync_to_async
