@@ -1,5 +1,6 @@
 import moment from 'lib/timetravelMoment'
 import config from '../../config'
+import { MEDIA_ROOM_MODULE_TYPES } from 'lib/room-types'
 
 // Thin adapter: loads schedule data and provides enriched sessions.
 // Filtering/export/timezone are handled by the shared ScheduleView/ScheduleToolbar.
@@ -100,8 +101,7 @@ export default {
 		},
 		sessions (state, getters, rootState) {
 			if (!state.schedule) return
-			const videoModuleTypes = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi', 'call.loungemesh']
-			const videoRooms = new Set((rootState.rooms || []).filter(r => r.modules?.some(m => videoModuleTypes.includes(m.type))).map(r => r.pretalx_id ? String(r.pretalx_id) : null).filter(Boolean))
+			const videoRooms = new Set((rootState.rooms || []).filter(r => r.modules?.some(m => MEDIA_ROOM_MODULE_TYPES.includes(m.type))).map(r => r.pretalx_id ? String(r.pretalx_id) : null).filter(Boolean))
 			const sessions = []
 			for (const session of state.schedule.talks) {
 				const roomId = session.room ? String(session.room) : null

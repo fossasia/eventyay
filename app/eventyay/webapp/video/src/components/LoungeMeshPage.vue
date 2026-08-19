@@ -45,9 +45,6 @@ export default {
 		loaded() {
 			this.loading = false
 		},
-		/**
-		 * @throws when loungemesh.room_url fails
-		 */
 		async loadJoinUrl() {
 			this.loading = true
 			this.error = null

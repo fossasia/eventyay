@@ -16,7 +16,8 @@ class LoungeMeshModule(BaseModule):
         module_required='call.loungemesh',
     )
     async def room_url(self, body):
-        if not self.consumer.user.profile.get('display_name'):
+        profile = self.consumer.user.profile or {}
+        if not profile.get('display_name'):
             raise ConsumerException('loungemesh.join.missing_profile')
         moderator = await self.consumer.event.has_permission_async(
             user=self.consumer.user,

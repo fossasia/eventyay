@@ -2,23 +2,25 @@ from __future__ import annotations
 
 from datetime import timedelta
 import json
-from typing import Any
-from urllib.parse import urlencode, urlparse
+from typing import TypedDict
+from urllib.parse import urlencode
 
 import jwt
 from django.apps import apps
+from django.http import HttpResponse
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models.loungemesh import LoungeMeshAccessToken
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.common.urls import get_url_origin
 
 LOUNGEMESH_MODULE_TYPE = 'call.loungemesh'
 LOUNGEMESH_PLUGIN_MODULE = 'eventyay_loungemesh'
 DEFAULT_LOUNGEMESH_URL = 'https://loungemesh.com'
 TOKEN_TTL = timedelta(hours=2)
 
-ORGANIZER_FEATURE_KEYS: tuple[str, ...] = (
+FEATURE_KEYS: tuple[str, ...] = (
     'notes',
     'whiteboard',
     'poll',
@@ -28,22 +30,20 @@ ORGANIZER_FEATURE_KEYS: tuple[str, ...] = (
     'lobby',
 )
 
-ROOM_DEFAULT_FEATURE_KEYS: tuple[str, ...] = (
-    'notes',
-    'whiteboard',
-    'poll',
-    'chat',
-    'screenshare',
-    'reactions',
-    'lobby',
-)
+
+class LoungeMeshSettings(TypedDict):
+    enabled: bool
+    url: str
+    jitsi_app_id: str
+    jitsi_app_secret: str
+    organizer_features: list[str]
 
 
 def default_organizer_features() -> list[str]:
-    return list(ORGANIZER_FEATURE_KEYS)
+    return list(FEATURE_KEYS)
 
 
-def get_loungemesh_settings() -> dict[str, Any]:
+def get_loungemesh_settings() -> LoungeMeshSettings:
     gs = GlobalSettingsObject().settings
     features = gs.get('loungemesh_organizer_features', default=default_organizer_features())
     if isinstance(features, str):
@@ -53,7 +53,7 @@ def get_loungemesh_settings() -> dict[str, Any]:
             features = default_organizer_features()
     if not isinstance(features, list):
         features = default_organizer_features()
-    allowed = [key for key in features if key in ORGANIZER_FEATURE_KEYS]
+    allowed = [key for key in features if key in FEATURE_KEYS]
     return {
         'enabled': bool(gs.get('loungemesh_enabled', default=False)),
         'url': (gs.get('loungemesh_url', default=DEFAULT_LOUNGEMESH_URL) or DEFAULT_LOUNGEMESH_URL).rstrip('/'),
@@ -63,25 +63,18 @@ def get_loungemesh_settings() -> dict[str, Any]:
     }
 
 
-def origin_from_url(url: str) -> str | None:
-    parsed = urlparse((url or '').strip())
-    if parsed.scheme not in {'http', 'https'} or not parsed.netloc:
-        return None
-    return f'{parsed.scheme}://{parsed.netloc}'
-
-
 def loungemesh_embed_origins() -> tuple[str, ...]:
     settings = get_loungemesh_settings()
     origins: list[str] = []
     for url in (DEFAULT_LOUNGEMESH_URL, settings['url']):
-        origin = origin_from_url(url)
+        origin = get_url_origin(url)
         if origin and origin not in origins:
             origins.append(origin)
     return tuple(origins)
 
 
-def loungemesh_permissions_policy() -> str:
-    quoted = ' '.join(f'"{origin}"' for origin in loungemesh_embed_origins())
+def loungemesh_permissions_policy(origins: tuple[str, ...] | None = None) -> str:
+    quoted = ' '.join(f'"{origin}"' for origin in (origins if origins is not None else loungemesh_embed_origins()))
     allow = f'(self {quoted})' if quoted else '(self)'
     return (
         f'camera={allow}, microphone={allow}, display-capture={allow}, '
@@ -89,9 +82,9 @@ def loungemesh_permissions_policy() -> str:
     )
 
 
-def apply_loungemesh_embed_headers(response):
-    response['Permissions-Policy'] = loungemesh_permissions_policy()
+def apply_loungemesh_embed_headers(response: HttpResponse) -> HttpResponse:
     origins = loungemesh_embed_origins()
+    response['Permissions-Policy'] = loungemesh_permissions_policy(origins)
     if not origins:
         return response
     existing = getattr(response, '_csp_update', None) or {}
@@ -111,18 +104,11 @@ def plugin_is_installed() -> bool:
 def plugin_enabled_for_event(event) -> bool:
     if not plugin_is_installed():
         return True
-    plugin_list = getattr(event, 'plugin_list', None)
-    if isinstance(plugin_list, list):
-        return LOUNGEMESH_PLUGIN_MODULE in plugin_list
-    plugins = getattr(event, 'plugins', '') or ''
-    return LOUNGEMESH_PLUGIN_MODULE in plugins.split(',')
+    return LOUNGEMESH_PLUGIN_MODULE in event.plugin_list
 
 
 def loungemesh_is_available(event) -> bool:
-    settings = get_loungemesh_settings()
-    if not settings['enabled']:
-        return False
-    return plugin_enabled_for_event(event)
+    return get_loungemesh_settings()['enabled'] and plugin_enabled_for_event(event)
 
 
 def jitsi_room_name(event, room) -> str:
@@ -133,19 +119,17 @@ def organizer_feature_allowlist() -> set[str]:
     return set(get_loungemesh_settings()['organizer_features'])
 
 
-def sanitize_loungemesh_config(config: dict[str, Any] | None) -> dict[str, Any]:
+def sanitize_loungemesh_config(config: dict | None) -> dict:
     raw = config if isinstance(config, dict) else {}
     allowed = organizer_feature_allowlist()
-    features: dict[str, bool] = {}
     incoming = raw.get('features')
     if not isinstance(incoming, dict):
-        incoming = {key: bool(raw.get(key)) for key in ROOM_DEFAULT_FEATURE_KEYS if key in raw}
-    for key in ROOM_DEFAULT_FEATURE_KEYS:
-        features[key] = bool(incoming.get(key)) and key in allowed
-    url_override = (raw.get('url') or '').strip()
-    clean: dict[str, Any] = {'features': features}
-    if url_override:
-        clean['url'] = url_override
+        incoming = {key: bool(raw.get(key)) for key in FEATURE_KEYS if key in raw}
+    features = {key: bool(incoming.get(key)) and key in allowed for key in FEATURE_KEYS}
+    clean: dict = {'features': features}
+    origin = get_url_origin((raw.get('url') or '').strip())
+    if origin:
+        clean['url'] = (raw.get('url') or '').strip().rstrip('/')
     return clean
 
 
@@ -160,30 +144,29 @@ def sanitize_loungemesh_modules(module_config: list | None) -> None:
         module['config'] = sanitize_loungemesh_config(module.get('config'))
 
 
-def room_has_loungemesh_module(room) -> bool:
+def loungemesh_module(room) -> dict | None:
     for module in room.module_config or []:
-        if module.get('type') == LOUNGEMESH_MODULE_TYPE:
-            return True
-    return False
+        if isinstance(module, dict) and module.get('type') == LOUNGEMESH_MODULE_TYPE:
+            return module
+    return None
+
+
+def room_has_loungemesh_module(room) -> bool:
+    return loungemesh_module(room) is not None
 
 
 def room_feature_config(room) -> dict[str, bool]:
-    for module in room.module_config or []:
-        if module.get('type') != LOUNGEMESH_MODULE_TYPE:
-            continue
-        return sanitize_loungemesh_config(module.get('config')).get('features', {})
-    return sanitize_loungemesh_config({}).get('features', {})
+    module = loungemesh_module(room)
+    config = module.get('config') if module else {}
+    return sanitize_loungemesh_config(config).get('features', {})
 
 
 def room_base_url(room) -> str:
-    settings = get_loungemesh_settings()
-    for module in room.module_config or []:
-        if module.get('type') != LOUNGEMESH_MODULE_TYPE:
-            continue
-        override = (module.get('config') or {}).get('url')
-        if override:
-            return str(override).rstrip('/')
-    return settings['url']
+    module = loungemesh_module(room)
+    override = ((module or {}).get('config') or {}).get('url')
+    if get_url_origin(str(override or '')):
+        return str(override).rstrip('/')
+    return get_loungemesh_settings()['url']
 
 
 def issue_jitsi_jwt(*, display_name: str, jitsi_room: str, moderator: bool, features: dict[str, bool]) -> str | None:
@@ -212,19 +195,15 @@ def issue_jitsi_jwt(*, display_name: str, jitsi_room: str, moderator: bool, feat
 
 
 def issue_opaque_token(event, room, user, *, moderator: bool) -> LoungeMeshAccessToken:
-    display_name = ''
-    profile = getattr(user, 'profile', None)
-    if isinstance(profile, dict):
-        display_name = profile.get('display_name') or ''
-    token = LoungeMeshAccessToken.objects.create(
+    profile = user.profile if isinstance(user.profile, dict) else {}
+    return LoungeMeshAccessToken.objects.create(
         event=event,
         room=room,
         user=user,
         is_moderator=moderator,
-        display_name=display_name,
+        display_name=profile.get('display_name') or '',
         expires=now() + TOKEN_TTL,
     )
-    return token
 
 
 def verify_loungemesh_token(raw_token: str) -> LoungeMeshAccessToken | None:
@@ -240,7 +219,7 @@ def verify_loungemesh_token(raw_token: str) -> LoungeMeshAccessToken | None:
         return token
 
 
-def token_exchange_payload(access: LoungeMeshAccessToken) -> dict[str, Any]:
+def token_exchange_payload(access: LoungeMeshAccessToken) -> dict:
     with scope(event=access.event):
         if not loungemesh_is_available(access.event):
             return {}
@@ -270,7 +249,6 @@ def issue_join_url(event, room, user, *, moderator: bool) -> str | None:
     if not room_has_loungemesh_module(room):
         return None
     token = issue_opaque_token(event, room, user, moderator=moderator)
-    jitsi_room = jitsi_room_name(event, room)
     query = urlencode(
         {
             'token': token.token,
@@ -278,4 +256,4 @@ def issue_join_url(event, room, user, *, moderator: bool) -> str | None:
             'room': str(room.pk),
         }
     )
-    return f'{room_base_url(room)}/join/{jitsi_room}?{query}'
+    return f'{room_base_url(room)}/join/{jitsi_room_name(event, room)}?{query}'

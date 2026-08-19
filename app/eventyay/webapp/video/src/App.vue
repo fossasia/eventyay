@@ -53,9 +53,13 @@ import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
 import Notifications from 'components/notifications'
 import GreetingPrompt from 'components/profile/GreetingPrompt'
+import { LIVESTREAM_MODULE_TYPES, MEDIA_ROOM_MODULE_TYPES, VIDEO_CHANNEL_MODULE_TYPES } from 'lib/room-types'
 
-const mediaModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom', 'call.jitsi', 'call.loungemesh']
-const stageToolModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.janus']
+const mediaModules = MEDIA_ROOM_MODULE_TYPES
+const exclusiveBackgroundModules = new Set(
+	[...VIDEO_CHANNEL_MODULE_TYPES].filter(type => type !== 'call.janus')
+)
+const stageToolModules = [...LIVESTREAM_MODULE_TYPES, 'call.janus']
 const chatbarModules = ['chat.native', 'question', 'poll']
 
 export default {
@@ -360,7 +364,7 @@ export default {
 				return
 			}
 			this.$store.dispatch('changeRoom', newRoom)
-			const isExclusive = module => module.type === 'call.bigbluebutton' || module.type === 'call.zoom' || module.type === 'call.jitsi' || module.type === 'call.loungemesh'
+			const isExclusive = module => exclusiveBackgroundModules.has(module.type)
 			if (!this.$mq.above.m) return // no background rooms for mobile
 			if (this.call) return // When a DM call is running, we never want background media
 			const newRoomHasMedia = newRoom && newRoom.modules && newRoom.modules.some(module => mediaModules.includes(module.type))

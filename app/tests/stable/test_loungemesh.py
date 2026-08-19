@@ -15,7 +15,6 @@ from eventyay.base.services.loungemesh import (
     issue_opaque_token,
     loungemesh_embed_origins,
     loungemesh_permissions_policy,
-    origin_from_url,
     sanitize_loungemesh_config,
     token_exchange_payload,
     verify_loungemesh_token,
@@ -44,6 +43,19 @@ def test_sanitize_strips_disallowed_features():
     assert cleaned['features']['notes'] is True
     assert cleaned['features']['whiteboard'] is False
     assert cleaned['features']['poll'] is False
+
+
+@pytest.mark.django_db
+def test_sanitize_drops_non_http_url_override():
+    _enable_loungemesh(features=['notes'])
+    cleaned = sanitize_loungemesh_config(
+        {'url': 'javascript:alert(1)', 'features': {'notes': True}}
+    )
+    assert 'url' not in cleaned
+    cleaned_http = sanitize_loungemesh_config(
+        {'url': 'https://loungemesh.example/app', 'features': {'notes': True}}
+    )
+    assert cleaned_http['url'] == 'https://loungemesh.example/app'
 
 
 @pytest.mark.django_db
@@ -187,10 +199,10 @@ def test_jitsi_jwt_omits_secret_when_unconfigured():
     )
 
 
-def test_origin_from_url_requires_http_scheme():
-    assert origin_from_url('https://loungemesh.com/join') == 'https://loungemesh.com'
-    assert origin_from_url('http://localhost:5173') == 'http://localhost:5173'
-    assert origin_from_url('javascript:alert(1)') is None
+def test_permissions_policy_uses_provided_origins():
+    policy = loungemesh_permissions_policy(('https://loungemesh.com',))
+    assert 'camera=(self "https://loungemesh.com")' in policy
+    assert 'microphone=(self "https://loungemesh.com")' in policy
 
 
 @pytest.mark.django_db

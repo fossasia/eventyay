@@ -204,9 +204,8 @@ class AppView(View):
         r = HttpResponse(source, content_type="text/html")
         apply_loungemesh_embed_headers(r)
         # require-corp blocks third-party LoungeMesh iframes unless they send CORP.
-        if (
-            "cross-origin-isolation" in event.feature_flags
-            and "loungemesh" not in event.feature_flags
+        if event.get_feature_flag("cross-origin-isolation") and not event.get_feature_flag(
+            "loungemesh"
         ):
             r["Cross-Origin-Resource-Policy"] = "cross-origin"
             r["Cross-Origin-Embedder-Policy"] = "require-corp"

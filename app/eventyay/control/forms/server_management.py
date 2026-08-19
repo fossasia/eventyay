@@ -21,7 +21,7 @@ from eventyay.base.models.event import (
 )
 from eventyay.base.services.loungemesh import (
     DEFAULT_LOUNGEMESH_URL,
-    ORGANIZER_FEATURE_KEYS,
+    FEATURE_KEYS,
     get_loungemesh_settings,
 )
 from eventyay.base.services.jitsi import normalize_server_url
@@ -302,7 +302,19 @@ class LoungeMeshSettingsForm(forms.Form):
         required=False,
         label=_('Features organizers may enable'),
         help_text=_('Organizers can only turn on these LoungeMesh features for a room.'),
-        choices=[(key, key) for key in ORGANIZER_FEATURE_KEYS],
+        choices=[
+            (key, label)
+            for key, label in {
+                'notes': _('Shared notes'),
+                'whiteboard': _('Whiteboard'),
+                'poll': _('Polls'),
+                'chat': _('Chat'),
+                'screenshare': _('Screenshare'),
+                'reactions': _('Reactions'),
+                'lobby': _('Lobby / waiting room'),
+            }.items()
+            if key in FEATURE_KEYS
+        ],
         widget=forms.CheckboxSelectMultiple,
     )
 

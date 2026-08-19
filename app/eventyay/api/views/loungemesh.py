@@ -21,7 +21,3 @@ class LoungeMeshTokenAPIView(APIView):
         if not payload:
             return Response({'error': 'forbidden'}, status=403)
         return Response(payload)
-
-
-class LoungeMeshTokenRefreshView(LoungeMeshTokenAPIView):
-    pass

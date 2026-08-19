@@ -36,7 +36,7 @@ from .views import (
     webhooks,
 )
 from .views.stripe import stripe_webhook_view
-from .views.loungemesh import LoungeMeshTokenAPIView, LoungeMeshTokenRefreshView
+from .views.loungemesh import LoungeMeshTokenAPIView
 
 
 def talks_to_submissions_redirect(request, event, subpath):
@@ -239,7 +239,7 @@ urlpatterns = [
     path('loungemesh/token/', LoungeMeshTokenAPIView.as_view(), name='loungemesh.token'),
     path(
         'loungemesh/token/refresh/',
-        LoungeMeshTokenRefreshView.as_view(),
+        LoungeMeshTokenAPIView.as_view(),
         name='loungemesh.token.refresh',
     ),
     path(
