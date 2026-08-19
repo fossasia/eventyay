@@ -155,7 +155,6 @@ dependencies = [
     "pycparser>=2.23",
     "pycryptodome>=3.20.0",
     "pydantic>=2.13.3",
-    "pydantic-core>=2.48.0",
     "pydantic-settings>=2.15.0",
     "pygments>=2.19.1",
     "pyjwt>=2.13.0",
