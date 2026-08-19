@@ -9,6 +9,8 @@ const loadSettings = function() {
 }
 
 const notificationsSupported = typeof Notification !== 'undefined' // false on mobile safari
+const NOTIFICATION_POLL_INTERVAL = 30000
+const NOTIFICATION_POLL_JITTER_MAX = 15000
 
 export default {
 	namespaced: true,
@@ -20,7 +22,9 @@ export default {
 			notify: true,
 			playSounds: false
 		},
-		desktopNotifications: []
+		desktopNotifications: [],
+		externalPollInterval: null,
+		externalPollTimeout: null,
 	},
 	getters: {
 		showNotificationPermissionPrompt(state) {
@@ -31,11 +35,45 @@ export default {
 		}
 	},
 	mutations: {
+		setExternalPollInterval(state, intervalId) {
+			state.externalPollInterval = intervalId
+		},
+		setExternalPollTimeout(state, timeoutId) {
+			state.externalPollTimeout = timeoutId
+		},
 	},
 	actions: {
+		stopExternalPolling({state, commit}) {
+			if (state.externalPollTimeout) {
+				clearTimeout(state.externalPollTimeout)
+				commit('setExternalPollTimeout', null)
+			}
+			if (state.externalPollInterval) {
+				clearInterval(state.externalPollInterval)
+				commit('setExternalPollInterval', null)
+			}
+		},
+		startExternalPolling({commit, dispatch}) {
+			dispatch('stopExternalPolling')
+			const jitter = Math.random() * NOTIFICATION_POLL_JITTER_MAX
+			commit('setExternalPollTimeout', setTimeout(() => {
+				commit('setExternalPollTimeout', null)
+				dispatch('pollExternalsIfVisible')
+				commit('setExternalPollInterval', setInterval(
+					() => dispatch('pollExternalsIfVisible'),
+					NOTIFICATION_POLL_INTERVAL,
+				))
+			}, jitter))
+		},
+		pollExternalsIfVisible({dispatch}) {
+			if (document.hidden) {
+				return
+			}
+			dispatch('pollExternals')
+		},
 		// sets state from browser permission and localStorage
 		// TODO prevent switching of settings at app load
-		pollExternals({state, dispatch}) {
+		pollExternals({state}) {
 			state.permission = notificationsSupported && Notification.permission
 			state.permissionPromptDismissed = !!localStorage.notificationPermissionPromptDismissed
 			const settings = loadSettings()
