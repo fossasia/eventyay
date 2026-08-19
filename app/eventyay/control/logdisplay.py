@@ -563,6 +563,9 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.event.order.email.order_free': _(
             'An email has been sent to notify the user that the order has been received.'
         ),
+        'eventyay.event.order.email.meetup_registration': _(
+            'An email has been sent to confirm the meetup registration.'
+        ),
         'eventyay.event.order.email.order_paid': _(
             'An email has been sent to notify the user that payment has been received.'
         ),
