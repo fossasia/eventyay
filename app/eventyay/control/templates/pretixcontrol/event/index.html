@@ -10,7 +10,12 @@
 
 {% block title %}{{ request.event.name }}{% endblock %}
 {% block content %}
-    {% if request.event.has_subevents %}
+    {% if is_meetup_event %}
+        {% trans "Meetup" as date_text %}
+        {% with header_extra="<small class='event-date text-muted'>"|add:date_text|add:"</small>" %}
+            {% include "common/includes/header_nav.html" with header_title=request.event.name header_title_extra=header_extra header_component_link="pretixcontrol/event/component_link.html" %}
+        {% endwith %}
+    {% elif request.event.has_subevents %}
         {% trans "Event series" as date_text %}
         {% with header_extra="<small class='event-date text-muted'>"|add:date_text|add:"</small>" %}
             {% include "common/includes/header_nav.html" with header_title=request.event.name header_title_extra=header_extra header_component_link="pretixcontrol/event/component_link.html" %}

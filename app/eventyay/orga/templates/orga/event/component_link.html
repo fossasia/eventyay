@@ -6,7 +6,7 @@
         </a>
         {% if has_ticket_access %}
             <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
-                <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+                <i class="fa fa-ticket"></i> {% if is_meetup %}{% translate "Registrations" %}{% else %}{% translate "Tickets" %}{% endif %}
             </a>
         {% endif %}
         {% if not is_meetup %}
