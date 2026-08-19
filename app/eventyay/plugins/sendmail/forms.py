@@ -13,6 +13,7 @@ from eventyay.base.forms import PlaceholderValidator, SettingsForm
 from eventyay.common.forms.fields import I18nEmailBodyFormField
 from eventyay.common.forms.widgets import I18nEmailEditorWidget
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
+from eventyay.base.meetup import is_meetup_event
 from eventyay.control.forms import SplitDateTimeField
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
@@ -172,14 +173,10 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         )
         message_placeholders = ['event', 'order', 'position_or_address']
         placeholder_names = sorted(get_available_placeholders(self.event, message_placeholders).keys())
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
-        )
         self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
-            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
+            widget_kwargs={'placeholders': placeholder_names},
             required=True,
             locales=event.settings.get('locales'),
         )
@@ -288,6 +285,22 @@ class MailContentSettingsForm(SettingsForm):
         required=False,
     )
     mail_text_order_free_attendee = I18nFormField(
+        label=_('Text sent to attendees'),
+        required=False,
+        widget=I18nTextarea,
+    )
+
+    mail_text_meetup_registration = I18nFormField(
+        label=_('Text sent to registration contact address'),
+        required=False,
+        widget=I18nTextarea,
+    )
+    mail_send_meetup_registration_attendee = forms.BooleanField(
+        label=_('Send an email to attendees'),
+        help_text=MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP,
+        required=False,
+    )
+    mail_text_meetup_registration_attendee = I18nFormField(
         label=_('Text sent to attendees'),
         required=False,
         widget=I18nTextarea,
@@ -417,6 +430,8 @@ class MailContentSettingsForm(SettingsForm):
         'mail_text_order_paid_attendee': ['event', 'order', 'position'],
         'mail_text_order_free': ['event', 'order'],
         'mail_text_order_free_attendee': ['event', 'order', 'position'],
+        'mail_text_meetup_registration': ['event', 'order'],
+        'mail_text_meetup_registration_attendee': ['event', 'order', 'position'],
         'mail_text_order_changed': ['event', 'order'],
         'mail_text_order_canceled': ['event', 'order'],
         'mail_text_order_expire_warning': ['event', 'order'],
@@ -440,6 +455,14 @@ class MailContentSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs.get('obj')
         super().__init__(*args, **kwargs)
+        self.base_context = dict(self.base_context)
+
+        if not is_meetup_event(self.event):
+            for field in ('mail_text_meetup_registration', 'mail_send_meetup_registration_attendee',
+                          'mail_text_meetup_registration_attendee'):
+                self.fields.pop(field, None)
+                self.base_context.pop(field, None)
+
         for k, v in self.base_context.items():
             if k in self.fields:
                 self._set_field_placeholders(k, v)
@@ -516,14 +539,10 @@ class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
             initial=self.instance.subject
         )
         placeholder_names = sorted(get_available_placeholders(self.event, base_placeholders).keys())
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug},
-        )
         self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
-            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
+            widget_kwargs={'placeholders': placeholder_names},
             required=False,
             locales=list(allowed_locales),
             initial=self.instance.message,
@@ -613,10 +632,6 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
         team_placeholders = ['event', 'team']
         placeholder_names = sorted(get_available_placeholders(self.event, team_placeholders).keys())
         placeholder_text = _("Available placeholders: ") + ', '.join(f"{{{key}}}" for key in placeholder_names)
-        preview_url = reverse(
-            'control:event.editor.email.preview',
-            kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug},
-        )
 
         self.fields['subject'] = I18nFormField(
             label=_('Subject'),
@@ -628,7 +643,7 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
         self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
             widget=I18nEmailEditorWidget,
-            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
+            widget_kwargs={'placeholders': placeholder_names},
             required=True,
             locales=locales,
             help_text=placeholder_text,

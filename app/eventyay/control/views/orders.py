@@ -94,7 +94,6 @@ from eventyay.base.services.invoices import (
 from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.mail import (
     SendMailException,
-    TolerantDict,
     render_mail,
 )
 from eventyay.base.services.orders import (
@@ -2441,38 +2440,28 @@ class OrderSendMail(EventPermissionRequiredMixin, OrderViewMixin, FormView):
 
     def form_valid(self, form):
         order = Order.objects.get(event=self.request.event, code=self.kwargs['code'].upper())
-        self.preview_output = {}
         with language(order.locale, self.request.event.settings.region):
             email_context = get_email_context(event=order.event, order=order)
         email_template = LazyI18nString(form.cleaned_data['message'])
-        email_subject = str(form.cleaned_data['subject']).format_map(TolerantDict(email_context))
-        email_content = render_mail(email_template, email_context)
-        if self.request.POST.get('action') == 'preview':
-            self.preview_output = {
-                'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': compile_email_body(email_content),
-            }
-            return self.get(self.request, *self.args, **self.kwargs)
-        else:
-            try:
-                order.send_mail(
-                    form.cleaned_data['subject'],
-                    email_template,
-                    email_context,
-                    'eventyay.event.order.email.custom_sent',
-                    self.request.user,
-                    auto_email=False,
-                )
-                messages.success(
-                    self.request,
-                    _('Your message has been queued and will be sent to {}.'.format(order.email)),
-                )
-            except SendMailException:
-                messages.error(
-                    self.request,
-                    _('Failed to send mail to the following user: {}'.format(order.email)),
-                )
-            return super(OrderSendMail, self).form_valid(form)
+        try:
+            order.send_mail(
+                form.cleaned_data['subject'],
+                email_template,
+                email_context,
+                'eventyay.event.order.email.custom_sent',
+                self.request.user,
+                auto_email=False,
+            )
+            messages.success(
+                self.request,
+                _('Your message has been queued and will be sent to %(email)s.') % {'email': order.email},
+            )
+        except SendMailException:
+            messages.error(
+                self.request,
+                _('Failed to send mail to the following user: %(email)s.') % {'email': order.email},
+            )
+        return super(OrderSendMail, self).form_valid(form)
 
     def get_success_url(self):
         return reverse(
@@ -2486,8 +2475,34 @@ class OrderSendMail(EventPermissionRequiredMixin, OrderViewMixin, FormView):
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        ctx['preview_output'] = getattr(self, 'preview_output', None)
+        ctx['order_mail_preview_url'] = reverse(
+            'control:event.order.sendmail.preview',
+            kwargs={
+                'event': self.request.event.slug,
+                'organizer': self.request.event.organizer.slug,
+                'code': self.kwargs['code'],
+            },
+        )
         return ctx
+
+
+class OrderMailPreview(EventPermissionRequiredMixin, OrderViewMixin, View):
+    permission = 'can_change_orders'
+
+    def post(self, request, *args, **kwargs):
+        order = self.order
+        position = None
+        if kwargs.get('position'):
+            position = get_object_or_404(
+                OrderPosition,
+                order=order,
+                pk=kwargs['position'],
+                attendee_email__isnull=False,
+            )
+        with language(order.locale, request.event.settings.region):
+            email_context = get_email_context(event=order.event, order=order, position=position)
+        email_content = render_mail(LazyI18nString(request.POST.get('content', '')), email_context)
+        return JsonResponse({'html': compile_email_body(email_content)})
 
 
 class OrderPositionSendMail(OrderSendMail):
@@ -2512,37 +2527,40 @@ class OrderPositionSendMail(OrderSendMail):
             pk=self.kwargs['position'],
             attendee_email__isnull=False,
         )
-        self.preview_output = {}
         with language(position.order.locale, self.request.event.settings.region):
             email_context = get_email_context(event=position.order.event, order=position.order, position=position)
         email_template = LazyI18nString(form.cleaned_data['message'])
-        email_subject = str(form.cleaned_data['subject']).format_map(TolerantDict(email_context))
-        email_content = render_mail(email_template, email_context)
-        if self.request.POST.get('action') == 'preview':
-            self.preview_output = {
-                'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': compile_email_body(email_content),
-            }
-            return self.get(self.request, *self.args, **self.kwargs)
-        else:
-            try:
-                position.send_mail(
-                    form.cleaned_data['subject'],
-                    email_template,
-                    email_context,
-                    'eventyay.event.order.position.email.custom_sent',
-                    self.request.user,
-                )
-                messages.success(
-                    self.request,
-                    _('Your message has been queued and will be sent to {}.'.format(position.attendee_email)),
-                )
-            except SendMailException:
-                messages.error(
-                    self.request,
-                    _('Failed to send mail to the following user: {}'.format(position.attendee_email)),
-                )
-            return super(OrderSendMail, self).form_valid(form)
+        try:
+            position.send_mail(
+                form.cleaned_data['subject'],
+                email_template,
+                email_context,
+                'eventyay.event.order.position.email.custom_sent',
+                self.request.user,
+            )
+            messages.success(
+                self.request,
+                _('Your message has been queued and will be sent to %(email)s.') % {'email': position.attendee_email},
+            )
+        except SendMailException:
+            messages.error(
+                self.request,
+                _('Failed to send mail to the following user: %(email)s.') % {'email': position.attendee_email},
+            )
+        return super(OrderSendMail, self).form_valid(form)
+
+    def get_context_data(self, *args, **kwargs):
+        ctx = super().get_context_data(*args, **kwargs)
+        ctx['order_mail_preview_url'] = reverse(
+            'control:event.order.position.sendmail.preview',
+            kwargs={
+                'event': self.request.event.slug,
+                'organizer': self.request.event.organizer.slug,
+                'code': self.kwargs['code'],
+                'position': self.kwargs['position'],
+            },
+        )
+        return ctx
 
 
 class OrderEmailHistory(EventPermissionRequiredMixin, OrderViewMixin, ListView):

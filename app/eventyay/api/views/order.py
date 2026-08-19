@@ -45,6 +45,7 @@ from eventyay.api.serializers.order import (
     SimulatedOrderSerializer,
 )
 from eventyay.base.i18n import language
+from eventyay.base.meetup import is_meetup_event
 from eventyay.base.models import (
     CachedCombinedTicket,
     CachedTicket,
@@ -676,6 +677,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             if send_mail:
                 payment = order.payments.last()
+                is_meetup = is_meetup_event(request.event)
                 free_flow = (
                     payment
                     and order.total == Decimal('0.00')
@@ -683,7 +685,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                     and not order.require_approval
                     and payment.provider == 'free'
                 )
-                if free_flow:
+                if is_meetup:
+                    email_template = request.event.settings.mail_text_meetup_registration
+                    log_entry = 'eventyay.event.order.email.meetup_registration'
+                    email_attendees = request.event.settings.mail_send_meetup_registration_attendee
+                    email_attendees_template = request.event.settings.mail_text_meetup_registration_attendee
+                elif free_flow:
                     email_template = request.event.settings.mail_text_order_free
                     log_entry = 'eventyay.event.order.email.order_free'
                     email_attendees = request.event.settings.mail_send_order_free_attendee
@@ -714,7 +721,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                                 log_entry,
                             )
 
-                if not free_flow and order.status == Order.STATUS_PAID and payment:
+                if not is_meetup and not free_flow and order.status == Order.STATUS_PAID and payment:
                     payment._send_paid_mail(invoice, None, '')
                     if self.request.event.settings.mail_send_order_paid_attendee:
                         for p in order.positions.all():
