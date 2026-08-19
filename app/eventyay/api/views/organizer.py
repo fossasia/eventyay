@@ -32,6 +32,7 @@ from eventyay.api.serializers.organizer import (
     OrganizerFollowersResponseSerializer,
     OrganizerFollowResponseSerializer,
     OrganizerSerializer,
+    OrganizerSetDefaultResponseSerializer,
     OrganizerSettingsSerializer,
     OrganizerUnfollowResponseSerializer,
     SeatingPlanSerializer,
@@ -159,6 +160,32 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
         organizer = self.get_object()
         deleted = OrganizerFollower.objects.filter(user=request.user, organizer=organizer).delete()[0]
         return Response({'following': False, 'deleted': deleted > 0}, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary='Set Default Organizer',
+        description='Sets this organizer as the default organizer for the currently authenticated user.',
+        tags=['organizers'],
+        auth=[{'cookieAuth': []}, {'oauth2': ['write']}],
+        request=None,
+        responses={
+            200: OrganizerSetDefaultResponseSerializer,
+            401: OrganizerErrorResponseSerializer,
+            403: OrganizerErrorResponseSerializer,
+        },
+    )
+    @action(detail=True, methods=['post'], url_path='set-default')
+    def set_default(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({'detail': _('Authentication required.')}, status=status.HTTP_401_UNAUTHORIZED)
+        organizer = self.get_object()
+        if not request.user.teams.filter(organizer=organizer).exists():
+            return Response(
+                {'detail': _('You cannot set an organizer as default if you are not a member.')},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        request.user.default_organizer = organizer
+        request.user.save(update_fields=['default_organizer'])
+        return Response({'status': 'ok', 'default_organizer': organizer.slug}, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary='Show Organizer Follower Status',

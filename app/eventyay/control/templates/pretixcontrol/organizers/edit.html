@@ -37,6 +37,9 @@
                     {% bootstrap_field form.domain layout="control" %}
                 {% endif %}
                 {% endcomment %}
+                {% if form.set_as_default %}
+                    {% bootstrap_field form.set_as_default layout="control" %}
+                {% endif %}
                 {% bootstrap_field sform.imprint_url layout="control" %}
                 {% bootstrap_field sform.contact_mail layout="control" %}
                 {% bootstrap_field sform.organizer_info_text layout="control" %}
