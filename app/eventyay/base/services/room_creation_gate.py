@@ -20,6 +20,21 @@ def module_config_contains_server_backed_room(module_config):
     )
 
 
+def newly_added_server_backed_room_modules(old_module_config, new_module_config):
+    old_types = {
+        module.get("type")
+        for module in old_module_config or []
+        if isinstance(module, dict)
+    }
+    return [
+        module
+        for module in new_module_config or []
+        if isinstance(module, dict)
+        and module.get("type") in SERVER_BACKED_ROOM_MODULE_TYPES
+        and module.get("type") not in old_types
+    ]
+
+
 def has_server_room_development_admin_trait(traits):
     # TODO(server-room-dev-gate): Remove when server-backed room creation is released to normal roles.
     return "admin" in (traits or [])

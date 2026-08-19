@@ -7,6 +7,7 @@ from eventyay.base.models.room import Room
 from eventyay.base.services.room_creation_gate import (
     has_server_room_development_admin_trait,
     module_config_contains_server_backed_room,
+    newly_added_server_backed_room_modules,
     server_backed_room_create_permissions,
 )
 from eventyay.core.permissions import Permission
@@ -124,15 +125,18 @@ class RoomPermissions(permissions.BasePermission):
         permission = None
         traits = request.auth.get("traits")
         module_config = request.data.get("module_config")
-        if (
-            request.method in ("PATCH", "PUT")
-            and module_config_contains_server_backed_room(module_config)
-        ):
+        newly_added_server_modules = newly_added_server_backed_room_modules(
+            obj.module_config,
+            module_config,
+        )
+        if request.method in ("PATCH", "PUT") and newly_added_server_modules:
             if not (
                 has_server_room_development_admin_trait(traits)
                 and request.event.has_permission_implicit(
                     traits=traits,
-                    permissions=server_backed_room_create_permissions(module_config),
+                    permissions=server_backed_room_create_permissions(
+                        newly_added_server_modules
+                    ),
                 )
             ):
                 return False

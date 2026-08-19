@@ -37,7 +37,7 @@ from eventyay.base.services.room import (
     validate_room_config_patch,
 )
 from eventyay.base.services.room_creation_gate import (
-    module_config_contains_server_backed_room,
+    newly_added_server_backed_room_modules,
     user_can_create_server_backed_room_during_development,
 )
 from eventyay.core.permissions import Permission
@@ -556,10 +556,11 @@ class RoomModule(BaseModule):
     @command("config.patch")
     @room_action(permission_required=Permission.ROOM_UPDATE)
     async def config_patch(self, body):
-        if (
-            "module_config" in body
-            and module_config_contains_server_backed_room(body["module_config"])
-        ):
+        newly_added_server_modules = newly_added_server_backed_room_modules(
+            self.room.module_config,
+            body.get("module_config"),
+        )
+        if "module_config" in body and newly_added_server_modules:
             if not await user_can_create_server_backed_room_during_development(
                 self.consumer.user
             ):
