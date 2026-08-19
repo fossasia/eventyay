@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-speaker-detail
-	detail-back-nav(:event-url="eventUrl")
+	detail-back-nav(:event-url="eventUrl", hide-back)
 		detail-top-actions(
 			:export-options="speakerExportOptions",
 			:qrcodes-url="speakerQrcodesUrl")
