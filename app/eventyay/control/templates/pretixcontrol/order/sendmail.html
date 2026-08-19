@@ -17,22 +17,34 @@
             {% csrf_token %}
             {% bootstrap_field form.sendto layout='horizontal' %}
             {% bootstrap_field form.subject layout='horizontal' %}
-            {% bootstrap_field form.message layout='horizontal' %}
-            {% if request.method == "POST" %}
-                <fieldset>
-                    <legend>{% trans "E-mail preview" %}</legend>
-                    <div class="tab-pane mail-preview-group">
-                        <div lang="{{ order.locale }}" class="mail-preview">
-                            <strong>{{ preview_output.subject }}</strong><br><br>
-                            {{ preview_output.html|safe }}
+            <div class="form-group"
+                 data-richtext-preview-wrapper
+                 data-richtext-preview-url="{{ order_mail_preview_url }}">
+                <label class="col-md-3 control-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+                <div class="col-md-9">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li role="presentation" class="active">
+                            <a data-toggle="tab" href="#order_message_edit">
+                                <i class="fa fa-pencil-square-o fa-fw"></i> {% trans "Edit" %}
+                            </a>
+                        </li>
+                        <li role="presentation">
+                            <a data-toggle="tab" href="#order_message_preview" data-richtext-preview-tab>
+                                <i class="fa fa-tv fa-fw"></i> {% trans "Preview" %}
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div id="order_message_edit" class="tab-pane fade in active">
+                            {% bootstrap_field form.message show_label=False form_group_class="" %}
+                        </div>
+                        <div id="order_message_preview" class="tab-pane">
+                            <div class="richtext-preview well"></div>
                         </div>
                     </div>
-                </fieldset>
-            {% endif %}
+                </div>
+            </div>
             <div class="form-group submit-group">
-                <button type="submit" class="btn btn-default btn-save pull-left" name="action" value="preview">
-                {% trans "Preview email" %}
-                </button>
                 <button type="submit" class="btn btn-primary btn-save">
                     {% trans "Send" %}
                 </button>
