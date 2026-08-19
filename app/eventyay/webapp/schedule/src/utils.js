@@ -262,6 +262,7 @@ export function talkToSession (talk, {
 		stream_url: talk.stream_url || null,
 		stream_type: talk.stream_type || null,
 		roles: talk.roles || null,
+		talkId: talk.id,
 	}
 	if (includePopularity) {
 		base.fav_count = normalizePopularityCount(talk)

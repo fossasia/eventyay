@@ -239,12 +239,17 @@ export default {
 			remoteApiUrl: computed(() => this.remoteApiUrl),
 			buntTeleportTarget: computed(() => this.$refs.teleportTarget),
 			onSessionLinkClick: (event, session) => {
+				if (this.schedule?.mode === 'shifts') {
+					event.preventDefault()
+					return
+				}
 				if (this.onHomeServer) return
 				event.preventDefault()
 
 				this.showSessionDetails(session, event)
 			},
 			generateSessionLinkUrl: ({eventUrl, session}) => {
+				if (this.schedule?.mode === 'shifts') return undefined
 				if (!this.onHomeServer) return `#session/${session.id}/`
 				return `${eventUrl}${wipLinkPrefix()}talk/${session.id}/`
 			},
@@ -713,6 +718,9 @@ export default {
 				this.scheduleUnavailable = true
 				return
 			}
+		}
+		if (this.schedule?.mode === 'shifts') {
+			this.favsReadOnly = true
 		}
 		// Read toolbar metadata (version, exporters) injected by Django
 		const metaEl = document.getElementById('pretalx-schedule-meta')
