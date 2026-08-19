@@ -139,7 +139,7 @@ def test_stream_schedule_cache_invalidation_runs_on_commit(event, django_capture
     room_service.get_cached_current_stream_data(room)
     assert cache.get(key) is not None
 
-    with django_capture_on_commit_callbacks:
+    with django_capture_on_commit_callbacks():
         with transaction.atomic():
             schedule.url = 'https://example.com/new.m3u8'
             schedule.save(update_fields=['url'])
@@ -249,7 +249,7 @@ def test_catalog_cache_invalidates_on_track_save(event, django_capture_on_commit
     get_cached_catalog_list(event.pk, 'tracks', 'all', loader)
     assert calls == [1]
 
-    with django_capture_on_commit_callbacks:
+    with django_capture_on_commit_callbacks():
         Track.objects.create(event=event, name={'en': 'New Track'}, color='#ff0000')
 
     get_cached_catalog_list(event.pk, 'tracks', 'all', loader)
