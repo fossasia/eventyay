@@ -53,7 +53,8 @@ class DefaultOrganizerTest(SoupTest):
     def test_user_single_organizer_auto_default(self):
         assert self.user.get_default_organizer() == self.orga1
         self.user.refresh_from_db()
-        assert self.user.default_organizer == self.orga1
+        # Verify get_default_organizer is a pure getter and did not mutate DB
+        assert self.user.default_organizer is None
 
     @scopes_disabled()
     def test_user_multiple_organizers_fallback_first_added(self):
@@ -68,9 +69,10 @@ class DefaultOrganizerTest(SoupTest):
         self.user.default_organizer = None
         self.user.save(update_fields=['default_organizer'])
 
+        # Fallback dynamically resolves to first team's organizer without DB mutation
         assert self.user.get_default_organizer() == self.orga1
         self.user.refresh_from_db()
-        assert self.user.default_organizer == self.orga1
+        assert self.user.default_organizer is None
 
     @scopes_disabled()
     def test_user_explicit_default_organizer(self):
@@ -210,6 +212,36 @@ class DefaultOrganizerTest(SoupTest):
 
         assert self.user.default_organizer == self.orga2
         assert self.user2.default_organizer == self.orga1
+
+    @scopes_disabled()
+    def test_uncheck_set_as_default_clears_default(self):
+        team2 = Team.objects.create(
+            organizer=self.orga2,
+            name='Core Team 2',
+            can_create_events=True,
+            can_change_organizer_settings=True,
+        )
+        team2.members.add(self.user)
+
+        self.user.default_organizer = self.orga2
+        self.user.save(update_fields=['default_organizer'])
+
+        form = OrganizerUpdateForm(
+            instance=self.orga2,
+            data={'name': self.orga2.name, 'slug': self.orga2.slug, 'set_as_default': False},
+            user=self.user,
+        )
+        assert form.is_valid()
+        if not form.cleaned_data.get('set_as_default'):
+            if self.user.default_organizer_id == self.orga2.id:
+                self.user.default_organizer = None
+                self.user.save(update_fields=['default_organizer'])
+
+        self.user.refresh_from_db()
+        assert self.user.default_organizer is None
+        assert self.user.get_default_organizer() == self.orga1
+        self.user.refresh_from_db()
+        assert self.user.default_organizer is None
 
     @scopes_disabled()
     def test_remove_from_default_organizer_fallback(self):

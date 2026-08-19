@@ -194,7 +194,6 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
                 if self.request.user.default_organizer_id == self.object.id:
                     self.request.user.default_organizer = None
                     self.request.user.save(update_fields=['default_organizer'])
-                    self.request.user.get_default_organizer()
 
         if change_css:
             # Force CSS regeneration even if a checksum exists.

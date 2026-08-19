@@ -904,28 +904,13 @@ class OrganizerBillingModel(models.Model):
 
 
 @receiver(m2m_changed, sender=Team.members.through)
+@scopes_disabled()
 def handle_team_members_changed(sender, instance, action, reverse, pk_set, **kwargs):
-    if action == 'post_add':
-        if reverse:
-            user = instance
-            if not user.default_organizer_id:
-                first_team = user.teams.order_by('created', 'id').select_related('organizer').first()
-                if first_team and first_team.organizer:
-                    user.default_organizer = first_team.organizer
-                    user.save(update_fields=['default_organizer'])
-        else:
-            team = instance
-            if pk_set:
-                for user in User.objects.filter(pk__in=pk_set, default_organizer__isnull=True):
-                    user.get_default_organizer()
-
-    elif action in ('post_remove', 'post_clear'):
+    if action in ('post_remove', 'post_clear'):
         if reverse:
             user = instance
             if user.default_organizer_id and not user.teams.filter(organizer_id=user.default_organizer_id).exists():
-                next_team = user.teams.order_by('created', 'id').select_related('organizer').first()
-                user.default_organizer = next_team.organizer if next_team else None
-                user.save(update_fields=['default_organizer'])
+                User.objects.filter(pk=user.pk).update(default_organizer=None)
         else:
             team = instance
             users_to_check = (
@@ -933,8 +918,10 @@ def handle_team_members_changed(sender, instance, action, reverse, pk_set, **kwa
                 if pk_set
                 else User.objects.filter(default_organizer=team.organizer)
             )
-            for user in users_to_check:
-                if not user.teams.filter(organizer=team.organizer).exists():
-                    next_team = user.teams.order_by('created', 'id').select_related('organizer').first()
-                    user.default_organizer = next_team.organizer if next_team else None
-                    user.save(update_fields=['default_organizer'])
+            users_with_other_teams = set(
+                Team.objects.filter(organizer=team.organizer, members__in=users_to_check)
+                .values_list('members', flat=True)
+            )
+            users_to_clear = [u.pk for u in users_to_check if u.pk not in users_with_other_teams]
+            if users_to_clear:
+                User.objects.filter(pk__in=users_to_clear).update(default_organizer=None)

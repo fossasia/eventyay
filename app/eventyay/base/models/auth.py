@@ -646,29 +646,23 @@ class User(
 
         return Organizer.objects.filter(id__in=self.teams.filter(q).values_list('organizer', flat=True))
 
+    @scopes_disabled()
     def get_default_organizer(self, can_create_events=False):
         """
         Returns the user's default organizer.
         If default_organizer is set and valid (the user still belongs to it), returns it.
-        If default_organizer is invalid or unset, finds the first organizer the user was added to,
-        sets it as default_organizer (persisting it if self.pk exists), and returns it.
-        If the user belongs to no organizers, returns None.
+        If default_organizer is invalid or unset, dynamically returns the first organizer the user
+        was added to (or None if the user belongs to no organizers), without mutating the database.
         """
         if not self.pk:
             return None
 
-        user_team_organizer_ids = list(self.teams.values_list('organizer_id', flat=True))
-
         if self.default_organizer_id:
-            if self.default_organizer_id in user_team_organizer_ids:
-                if can_create_events:
-                    if self.teams.filter(organizer_id=self.default_organizer_id, can_create_events=True).exists():
-                        return self.default_organizer
-                else:
+            if self.teams.filter(organizer_id=self.default_organizer_id).exists():
+                if not can_create_events or self.teams.filter(
+                    organizer_id=self.default_organizer_id, can_create_events=True
+                ).exists():
                     return self.default_organizer
-            else:
-                self.default_organizer = None
-                self.save(update_fields=['default_organizer'])
 
         # Fallback to the first organizer the user was added to
         teams_qs = self.teams.all()
@@ -676,13 +670,7 @@ class User(
             teams_qs = teams_qs.filter(can_create_events=True)
 
         first_team = teams_qs.order_by('created', 'id').select_related('organizer').first()
-        if first_team and first_team.organizer:
-            if not can_create_events:
-                self.default_organizer = first_team.organizer
-                self.save(update_fields=['default_organizer'])
-            return first_team.organizer
-
-        return None
+        return first_team.organizer if first_team else None
 
 
     def has_active_staff_session(self, session_key=None):
