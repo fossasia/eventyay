@@ -39,7 +39,7 @@ class GuestRsvpForm(forms.Form):
 def has_rsvp_order(event, email) -> bool:
     if not email:
         return False
-    with scope(event=event):
+    with scope(organizer=event.organizer):
         return event.orders.filter(email__iexact=email, status__in=RSVP_ORDER_STATUSES).exists()
 
 
@@ -114,50 +114,50 @@ class MeetupRsvpView(EventViewMixin, View):
         return view.get(request, *self.args, **self.kwargs)
 
     def _create_rsvp_order(self, request, product, email, name):
-        # Check quota availability before creating the order
-        with scope(event=request.event):
-            quota = product.quotas.first()
-            if quota is not None:
-                avail, _ = quota.availability()
-                if avail != Quota.AVAILABILITY_OK:
-                    return None
+        with transaction.atomic():
+            _, rsvp_quota = get_rsvp_product_and_quota(request.event)
+            with scope(organizer=request.event.organizer):
+                if rsvp_quota is not None:
+                    quota = Quota.objects.select_for_update().get(pk=rsvp_quota.pk)
+                    avail, count = quota.availability()
+                    if avail != Quota.AVAILABILITY_OK:
+                        return None
 
-        with scope(event=request.event), transaction.atomic():
-            order = Order(
-                status=Order.STATUS_PENDING,
-                event=request.event,
-                email=email,
-                locale=getattr(request, 'LANGUAGE_CODE', 'en'),
-                total=Decimal('0.00'),
-                datetime=now(),
-                sales_channel='web',
-                require_approval=False,
-                testmode=request.event.testmode,
-                meta_info='{}',
-            )
-            order.set_expires(now(), [])
-            order.save()
+                order = Order(
+                    status=Order.STATUS_PENDING,
+                    event=request.event,
+                    email=email,
+                    locale=getattr(request, 'LANGUAGE_CODE', 'en'),
+                    total=Decimal('0.00'),
+                    datetime=now(),
+                    sales_channel='web',
+                    require_approval=False,
+                    testmode=request.event.testmode,
+                    meta_info='{}',
+                )
+                order.set_expires(now(), [])
+                order.save()
 
-            position = OrderPosition(
-                order=order,
-                product=product,
-                price=Decimal('0.00'),
-                tax_rate=Decimal('0.00'),
-                tax_value=Decimal('0.00'),
-                positionid=1,
-                attendee_name_parts={'_legacy': name},
-                attendee_email=email,
-            )
-            position.secret = secrets.token_hex(16)
-            position.pseudonymization_id = secrets.token_hex(8)
-            position.save()
+                position = OrderPosition(
+                    order=order,
+                    product=product,
+                    price=Decimal('0.00'),
+                    tax_rate=Decimal('0.00'),
+                    tax_value=Decimal('0.00'),
+                    positionid=1,
+                    attendee_name_parts={'_legacy': name},
+                    attendee_email=email,
+                )
+                position.secret = secrets.token_hex(16)
+                position.pseudonymization_id = secrets.token_hex(8)
+                position.save()
 
-            payment = order.payments.create(
-                state=OrderPayment.PAYMENT_STATE_CREATED,
-                provider='free',
-                amount=Decimal('0.00'),
-            )
-            payment.confirm(send_mail=True, lock=False)
+                payment = order.payments.create(
+                    state=OrderPayment.PAYMENT_STATE_CREATED,
+                    provider='free',
+                    amount=Decimal('0.00'),
+                )
+                payment.confirm(send_mail=True, lock=False)
 
-            order.refresh_from_db()
+                order.refresh_from_db()
         return order

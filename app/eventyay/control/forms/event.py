@@ -27,7 +27,7 @@ from eventyay.timezones import common_timezones, localize_datetime
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
-from eventyay.base.meetup import add_video_field_errors, build_video_form_fields
+from eventyay.base.meetup import add_video_field_errors, build_video_form_fields, is_meetup_event
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
@@ -131,13 +131,15 @@ class EventWizardFoundationForm(forms.Form):
         organizer_count = qs.count()
         is_required = organizer_count > 1
 
+        select2_url = reverse('control:organizers.select2') + '?can_create=1'
+
         self.fields['organizer'] = forms.ModelChoiceField(
             label=_('Organizer'),
             queryset=qs,
             widget=Select2(
                 attrs={
                     'data-model-select2': 'generic',
-                    'data-select2-url': reverse('control:organizers.select2') + '?can_create=1',
+                    'data-select2-url': select2_url,
                     'data-placeholder': _('Organizer'),
                 }
             ),
@@ -1313,6 +1315,25 @@ class MailSettingsForm(SettingsForm):
         widget=I18nTextarea,
     )
 
+    mail_text_meetup_registration = I18nFormField(
+        label=_('Text sent to registration contact address'),
+        required=False,
+        widget=I18nTextarea,
+    )
+    mail_send_meetup_registration_attendee = forms.BooleanField(
+        label=_('Send an email to attendees'),
+        help_text=_(
+            'If the registration contains attendees with email addresses different from the person who '
+            'registers, the following email will be sent out to the attendees.'
+        ),
+        required=False,
+    )
+    mail_text_meetup_registration_attendee = I18nFormField(
+        label=_('Text sent to attendees'),
+        required=False,
+        widget=I18nTextarea,
+    )
+
     mail_text_order_changed = I18nFormField(
         label=_('Text'),
         required=False,
@@ -1423,6 +1444,8 @@ class MailSettingsForm(SettingsForm):
         'mail_text_order_paid_attendee': ['event', 'order', 'position'],
         'mail_text_order_free': ['event', 'order'],
         'mail_text_order_free_attendee': ['event', 'order', 'position'],
+        'mail_text_meetup_registration': ['event', 'order'],
+        'mail_text_meetup_registration_attendee': ['event', 'order', 'position'],
         'mail_text_order_changed': ['event', 'order'],
         'mail_text_order_canceled': ['event', 'order'],
         'mail_text_order_expire_warning': ['event', 'order'],
@@ -1449,8 +1472,15 @@ class MailSettingsForm(SettingsForm):
         self.fields['mail_html_renderer'].choices = [
             (r.identifier, r.verbose_name) for r in event.get_html_mail_renderers().values()
         ]
+
+        if not is_meetup_event(event):
+            for field in ('mail_text_meetup_registration', 'mail_send_meetup_registration_attendee',
+                          'mail_text_meetup_registration_attendee'):
+                self.fields.pop(field, None)
+
         for k, v in self.base_context.items():
-            self._set_field_placeholders(k, v)
+            if k in self.fields:
+                self._set_field_placeholders(k, v)
 
         for k, v in list(self.fields.items()):
             if k.endswith('_attendee') and not event.settings.attendee_emails_asked:
@@ -1830,6 +1860,12 @@ class QuickSetupProductForm(I18nForm):
         required=False,
     )
 
+    def clean_default_price(self):
+        value = self.cleaned_data.get('default_price')
+        if value is not None and value < 0:
+            raise ValidationError(_('The price must not be negative.'))
+        return value
+
 
 class BaseQuickSetupProductFormSet(I18nFormSetMixin, forms.BaseFormSet):
     def __init__(self, *args, **kwargs):
@@ -1880,6 +1916,13 @@ ConfirmTextFormset = formset_factory(
 
 class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
     """Event basics for meetups: currency is implicit, video stream is inline."""
+
+    registration_limit = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label=_('Registration limit'),
+        help_text=_('Maximum number of attendees who can RSVP. Leave empty for unlimited registrations.'),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

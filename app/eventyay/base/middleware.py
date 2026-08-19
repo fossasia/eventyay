@@ -2,6 +2,7 @@ import zoneinfo
 from collections import OrderedDict
 from urllib.parse import urlsplit
 
+from django.apps import apps
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
 from django.middleware.common import CommonMiddleware
@@ -17,6 +18,7 @@ from django.utils.translation.trans_real import (
 )
 
 from eventyay.base.i18n import get_language_without_region
+from eventyay.base.models import GlobalPluginConfig
 from eventyay.base.settings import global_settings_object
 from eventyay.common.urls import get_url_origin
 from eventyay.multidomain.urlreverse import (
@@ -435,3 +437,18 @@ class CustomCommonMiddleware(CommonMiddleware):
         if request.method in ('POST', 'PUT', 'PATCH'):
             raise Http404('Please append a / at the end of the URL')
         return new_path
+
+
+class GloballyDisabledPluginMiddleware(MiddlewareMixin):
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        module = getattr(view_func, '__module__', None)
+        if not module:
+            return None
+
+        app_config = apps.get_containing_app_config(module)
+        if app_config is None or not hasattr(app_config, 'EventyayPluginMeta'):
+            return None
+
+        if app_config.name in GlobalPluginConfig.get_disabled_modules():
+            raise Http404
+        return None
