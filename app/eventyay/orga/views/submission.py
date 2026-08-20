@@ -419,6 +419,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                 event=self.request.event,
                 prefix='speaker',
                 include_biography=True,
+                draft_save=self.request.POST.get('state') == SubmissionStates.DRAFT,
             )
 
     @cached_property
