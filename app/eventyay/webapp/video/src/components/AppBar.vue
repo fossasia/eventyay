@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-app-bar
 	.left
-		button.hamburger(v-if="showActions", type="button", @click.stop="$emit('toggleSidebar')", aria-label="Toggle navigation")
+		button.hamburger(v-if="showActions", type="button", @click.stop="$emit('toggleSidebar')", :aria-label="$t('AppBar:toggle-navigation')")
 			span.bar
 			span.bar
 			span.bar
@@ -35,15 +35,15 @@
 				transition(name="dropdown-reveal")
 					.profile-dropdown(v-if="profileMenuOpen", role="menu", @click.stop)
 						.visibility-row(v-if="!isAnonymous")
-							span.visibility-label Profile visibility
-							span.visibility-badge(:class="isPublic ? 'badge-public' : 'badge-private'") {{ isPublic ? 'Public' : 'Private' }}
+							span.visibility-label {{ $t('AppBar:visibility:label') }}
+							span.visibility-badge(:class="isPublic ? 'badge-public' : 'badge-private'") {{ isPublic ? $t('AppBar:visibility:public') : $t('AppBar:visibility:private') }}
 						div.menu-separator(v-if="!isAnonymous")
 						template(v-for="item in menuItems", :key="item.key")
 							div.menu-separator(v-if="item.separatorBefore")
 							a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
 								span.menu-item-icon(v-if="item.icon" aria-hidden="true")
 									i(:class="iconClasses[item.icon]")
-								span.menu-item-label {{ item.label }}
+								span.menu-item-label {{ $t(`AppBar:menu:${item.key}`) }}
 </template>
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
