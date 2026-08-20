@@ -1,4 +1,11 @@
+function getPasswordToggleLabels() {
+    const labelsEl = document.getElementById('password-toggle-labels');
+    return labelsEl ? JSON.parse(labelsEl.textContent) : {};
+}
+
 export function autoWrapPasswordFields(root = document) {
+    const passwordToggleLabels = getPasswordToggleLabels();
+    
     root.querySelectorAll('input[type="password"]').forEach(input => {
         // Skip if already inside a .password-input-wrapper (e.g. signup form manual wraps)
         if (input.closest('.password-input-wrapper')) return;
@@ -15,7 +22,7 @@ export function autoWrapPasswordFields(root = document) {
         wrapper.appendChild(input);
         
         // Get translation string
-        const showLabel = window.passwordToggleLabels?.show || 'Show password';
+        const showLabel = passwordToggleLabels.show || 'Show password';
 
         // Create toggle button
         const btn = document.createElement('button');
@@ -55,8 +62,9 @@ export function initPasswordToggles(root = document) {
             const iconEyeSlash = this.querySelector('.icon-eye-slash');
             
             if (input && iconEye && iconEyeSlash) {
-                const showLabel = window.passwordToggleLabels?.show || 'Show password';
-                const hideLabel = window.passwordToggleLabels?.hide || 'Hide password';
+                const passwordToggleLabels = getPasswordToggleLabels();
+                const showLabel = passwordToggleLabels.show || 'Show password';
+                const hideLabel = passwordToggleLabels.hide || 'Hide password';
 
                 if (input.type === 'password') {
                     input.type = 'text';
