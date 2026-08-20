@@ -115,10 +115,16 @@ class JanusCallModule(BaseModule):
                         self.consumer.event
                     )
 
-            user_id = self._new_janus_room_id()
+            audio_user_id = self._new_janus_room_id()
+            video_user_id = self._new_janus_room_id()
             screenshare_user_id = self._new_janus_room_id()
             await redis.setex(
-                f"januscall:user:{user_id}",
+                f"januscall:user:{audio_user_id}",
+                3600 * 24,
+                str(self.consumer.user.pk),
+            )
+            await redis.setex(
+                f"januscall:user:{video_user_id}",
                 3600 * 24,
                 str(self.consumer.user.pk),
             )
@@ -131,7 +137,9 @@ class JanusCallModule(BaseModule):
         iceServers = turn_server.get_ice_servers() if turn_server else []
         return {
             "token": user_secret_token,
-            "sessionId": user_id,
+            "sessionId": audio_user_id,
+            "audioSessionId": audio_user_id,
+            "videoSessionId": video_user_id,
             "screenShareSessionId": screenshare_user_id,
             "server": room_data["server"],
             "roomId": room_data["roomId"],

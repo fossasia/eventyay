@@ -24,9 +24,19 @@ class FeedbackForm(ReadOnlyFlag, forms.ModelForm):
             self.instance.speaker = self.instance.talk.speakers.first()
         return super().save(*args, **kwargs)
 
+    def clean_rating(self):
+        rating = self.cleaned_data.get('rating')
+        if rating is not None and not (1 <= rating <= 5):
+            raise forms.ValidationError(_('Rating must be between 1 and 5.'))
+        return rating
+
     class Meta:
         model = Feedback
-        fields = ['speaker', 'review']
+        fields = ['speaker', 'rating', 'review']
         widgets = {
             'review': MarkdownWidget,
+            'rating': forms.RadioSelect(
+                choices=[(i, str(i)) for i in range(5, 0, -1)],
+                attrs={'class': 'star-rating-input'},
+            ),
         }
