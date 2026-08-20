@@ -23,12 +23,41 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git build-essential gettext make nodejs
 
+# Build mode: "production" (default) uses locked deps, "dev" refreshes plugins
+ARG BUILD_MODE=production
+# Cache buster for dev builds — pass a unique value (e.g. timestamp) to prevent
+# Docker from reusing stale dependency layers when BUILD_MODE=dev
+ARG CACHE_BUST=0
+
 # install python dependencies
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#non-editable-installs
+#
+# Production: use --locked to ensure reproducible builds from uv.lock.
+# Dev/staging: copy full project context and use --upgrade-package to fetch
+# the latest commit for each plugin from its configured branch.
+COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project --no-editable
+    if [ "$BUILD_MODE" = "dev" ]; then \
+      echo "=== Dev build: refreshing plugins (CACHE_BUST=$CACHE_BUST) ===" && \
+      uv sync --no-install-project --no-editable --refresh \
+        --upgrade-package eventyay-paypal \
+        --upgrade-package eventyay-stripe \
+        --upgrade-package eventyay-bitpay \
+        --upgrade-package eventyay-socialmedia \
+        --upgrade-package exhibition \
+        --upgrade-package eventyay-teamshifts \
+        --upgrade-package eventyay-interpretation \
+        --upgrade-package eventyay-hubspot; \
+    else \
+      echo "=== Production build: using locked dependencies ===" && \
+      uv sync --locked --no-install-project --no-editable; \
+    fi
+
+# Log installed plugin versions for build traceability
+RUN echo "=== Installed plugin versions ===" && \
+    uv pip freeze 2>/dev/null \
+      | grep -iE 'eventyay-paypal|eventyay-stripe|eventyay-bitpay|eventyay-socialmedia|exhibition|eventyay-teamshifts|eventyay-interpretation|eventyay-hubspot' \
+    || echo "(no plugins found — check build output above)"
 
 COPY Makefile Makefile
 
