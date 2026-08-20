@@ -1,3 +1,9 @@
+map $request_uri $scanner_limit_key {
+	~*^/(wp-admin(/|$)|wp-login(\.php)?$|phpmyadmin(/|$)|xmlrpc\.php$|\.env$|\.git(/|$)) $binary_remote_addr;
+	default "";
+}
+limit_req_zone $scanner_limit_key zone=scanner_limit:10m rate=10r/s;
+
 server {
 	server_name <SERVER_NAME>;
 
@@ -42,6 +48,15 @@ server {
 		set $cors_reject_preflight 0;
 	}
 
+	# Rate-limit scanner probes at server scope (ACCESS phase) before location handlers run.
+	limit_req zone=scanner_limit burst=20 nodelay;
+	limit_req_status 429;
+
+	# Drop common scanner probes. Paths are anchored so /.github is not blocked.
+	location ~* "^/(wp-admin(/|$)|wp-login(\.php)?$|phpmyadmin(/|$)|xmlrpc\.php$|\.env$|\.git(/|$))" {
+		return 444;
+	}
+
 	# WebSocket connections - route to daphne
 	location /ws/ {
 		proxy_pass http://127.0.0.1:8001;
@@ -55,6 +70,7 @@ server {
 		proxy_redirect off;
 		proxy_buffering off;
 		proxy_read_timeout 86400;
+		proxy_send_timeout 86400;
 	}
 
 	location ~ ^/e/(.*)$ {
@@ -128,5 +144,5 @@ server {
 		access_log off;
 		expires 30d;
 	}
-        listen 80;
+        listen 80 backlog=4096;
 }

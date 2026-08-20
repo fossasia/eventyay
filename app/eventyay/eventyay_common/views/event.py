@@ -200,7 +200,12 @@ class EventCreateView(TemplateView):
         return queryset
 
     def get_fallback_organizer(self):
-        return self.get_create_organizer_queryset().first()
+        queryset = self.get_create_organizer_queryset()
+        if self.request.user.is_authenticated:
+            default_org = self.request.user.get_default_organizer(can_create_events=True)
+            if default_org and queryset.filter(pk=default_org.pk).exists():
+                return default_org
+        return queryset.first()
 
     def get_organizer_slug_options(self):
         return {
@@ -233,6 +238,12 @@ class EventCreateView(TemplateView):
                 pass
         elif queryset.count() == 1:
             initial_form['organizer'] = queryset.first()
+        elif self.request.user.is_authenticated:
+            default_org = self.request.user.get_default_organizer(can_create_events=True)
+            if default_org and queryset.filter(pk=default_org.pk).exists():
+                initial_form['organizer'] = default_org
+            elif queryset.exists():
+                initial_form['organizer'] = queryset.first()
 
         return initial_form
 
