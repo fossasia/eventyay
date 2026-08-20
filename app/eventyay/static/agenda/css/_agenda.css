@@ -675,3 +675,125 @@ dialog.agenda-wip-preview-leave-dialog::backdrop {
 .rating-stars label:hover ~ label {
   color: #ffc107;
 }
+
+/* Youtube-style feedback form */
+.feedback-section {
+  margin-inline: 16px;
+}
+
+.youtube-comment-form textarea {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+  box-shadow: none;
+  resize: none;
+  overflow: hidden;
+  min-height: 38px;
+  background: transparent;
+  padding-left: 0;
+  width: 100%;
+}
+.youtube-comment-form textarea:focus {
+  border-bottom: 2px solid #000;
+  outline: none;
+}
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #6c757d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+.comment-item {
+  margin-bottom: 1.5rem;
+}
+.comment-actions .btn {
+  border: none;
+  padding: 0.25rem 0.5rem;
+  color: #606060;
+  background: transparent;
+  font-size: 0.9rem;
+}
+.comment-actions .btn:hover {
+  background-color: #f2f2f2;
+  border-radius: 16px;
+}
+.comment-actions .reply-btn {
+  font-weight: 500;
+}
+.rating-stars-inline .btn {
+  border: none;
+  padding: 0 5px;
+  font-size: 1.2rem;
+  background: transparent;
+  color: #ccc;
+  box-shadow: none;
+}
+.rating-stars-inline .btn.active, .rating-stars-inline .btn:hover {
+  color: #ffc107;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Modifier classes to remove inline styles */
+.reply-avatar {
+  width: 30px ;
+  height: 30px ;
+  font-size: 0.9rem ;
+}
+.comment-visibility-label {
+  font-size: 0.9rem;
+}
+.comment-author-name {
+  font-size: 0.95rem;
+}
+.comment-text-content {
+  font-size: 0.95rem;
+}
+.reply-item .comment-author-name {
+  font-size: 0.9rem;
+}
+.reply-item .comment-time {
+  font-size: 0.8rem;
+}
+
+.youtube-rating-stars {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+.youtube-rating-stars input[type="radio"] {
+  display: none;
+}
+.youtube-rating-stars label {
+  font-size: 1.25rem;
+  color: #ccc;
+  cursor: pointer;
+  margin: 0;
+  transition: color 0.2s;
+}
+.youtube-rating-stars label.active,
+.youtube-rating-stars label:hover {
+  color: #ffc107;
+}
+
+.dropdown-item-clean {
+  background: transparent;
+  border: none;
+  color: #212529;
+  box-shadow: none;
+  outline: none;
+}
+

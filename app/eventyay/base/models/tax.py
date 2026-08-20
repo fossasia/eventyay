@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.formats import localize
 from django.utils.timezone import get_current_timezone, now
@@ -190,6 +191,8 @@ class TaxRule(LoggedModel):
     def clean(self):
         if self.eu_reverse_charge and not self.home_country:
             raise ValidationError(_('You need to set your home country to use the reverse charge feature.'))
+        if self.rate is not None and (self.rate < 0 or self.rate > 100):
+            raise ValidationError({'rate': _('Tax rate must be between 0 and 100.')})
 
     def __str__(self):
         if self.price_includes_tax:

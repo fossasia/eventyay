@@ -36,7 +36,7 @@ from .exhibitor import (
     ExhibitorStaff,
     ExhibitorView,
 )
-from .feedback import Feedback
+from .feedback import Feedback, FeedbackReaction
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
 from .global_plugin_config import GlobalPluginConfig
 from .invoices import Invoice, InvoiceLine, invoice_filename
@@ -160,6 +160,7 @@ __all__ = [
     'ExhibitorStaff',
     'ExhibitorView',
     'Feedback',
+    'FeedbackReaction',
     'FileCleanupMixin',
     'Gate',
     'GenerateCode',

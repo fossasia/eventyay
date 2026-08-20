@@ -9,7 +9,7 @@ import jwt
 import vobject
 from django.conf import settings
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
@@ -23,6 +23,13 @@ from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.export_resources import public_resource_attachments, public_resource_links
 from eventyay.agenda.signals import register_recording_provider
+from eventyay.agenda.feedback_access import (
+    TicketCheckResult,
+    feedback_is_public_for_submission,
+    get_feedback_anonymous_mode,
+    user_can_give_feedback,
+    user_has_event_ticket,
+)
 from eventyay.agenda.views.utils import (
     WipAgendaPreviewPageMixin,
     build_enriched_schedule_json,
@@ -33,8 +40,7 @@ from eventyay.agenda.views.utils import (
 )
 from eventyay.base.models import (
     Event,
-    Order,
-    OrderPosition,
+    Feedback,
     Submission,
     SubmissionFavourite,
     SubmissionStates,
@@ -58,12 +64,6 @@ from eventyay.talk_rules.agenda import agenda_schedule_for_user, filter_agenda_s
 
 
 logger = logging.getLogger(__name__)
-
-
-class TicketCheckResult(StrEnum):
-    HAS_TICKET = 'has_ticket'
-    MISCONFIGURED = 'missing_configuration'
-    NO_TICKET = 'no_ticket'
 
 
 class VideoJoinError(StrEnum):
@@ -288,7 +288,75 @@ class TalkView(TalkMixin, TemplateView):
             )
         )
         ctx['speakers'] = self._build_speakers_context(speakers)
+        
+        # Add public feedback and form to context
+        if self.request.event.get_feature_flag('use_feedback'):
+            from django.db.models import Count, Q
+            
+            replies_qs = Feedback.objects.filter(is_public=True, status='published').select_related('author').annotate(
+                upvote_count=Count('reactions', filter=Q(reactions__is_upvote=True)),
+                downvote_count=Count('reactions', filter=Q(reactions__is_upvote=False))
+            )
+            ctx['public_feedback'] = self.submission.feedback.filter(
+                is_public=True, parent__isnull=True, status='published'
+            ).select_related('author').prefetch_related(
+                Prefetch('replies', queryset=replies_qs)
+            ).annotate(
+                upvote_count=Count('reactions', filter=Q(reactions__is_upvote=True)),
+                downvote_count=Count('reactions', filter=Q(reactions__is_upvote=False))
+            )
+            if self.request.user.is_authenticated and user_can_give_feedback(
+                self.request.user, self.submission
+            ):
+                from eventyay.submission.forms import FeedbackForm
+                ctx['feedback_form'] = FeedbackForm(talk=self.submission)
+            else:
+                ctx['feedback_form'] = None
+            ctx['can_give_feedback'] = (
+                self.request.user.is_authenticated
+                and user_can_give_feedback(self.request.user, self.submission)
+            )
+            ctx['can_moderate_feedback'] = (
+                self.request.user.is_authenticated
+                and self.request.user.has_perm('base.orga_update_submission', self.submission)
+            )
+            if ctx['can_moderate_feedback']:
+                ctx['banned_user_ids'] = list(self.request.event.banned_users.values_list('id', flat=True))
+            else:
+                ctx['banned_user_ids'] = []
+                
+            ctx['feedback_period_open'] = self.submission.does_accept_feedback
+            ctx['feedback_anonymous_mode'] = get_feedback_anonymous_mode(self.request.event)
+                 
+                
         return ctx
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return HttpResponse(status=HTTPStatus.FORBIDDEN)
+        if not user_can_give_feedback(request.user, self.submission):
+            messages.error(request, _('You cannot leave feedback on this session.'))
+            return HttpResponseRedirect(self.submission.urls.public)
+
+        from eventyay.submission.forms import FeedbackForm
+        form = FeedbackForm(talk=self.submission, data=request.POST)
+        if form.is_valid():
+            feedback = form.save(commit=False)
+            feedback.author = request.user
+            feedback.is_public = feedback_is_public_for_submission(
+                self.request.event,
+                form.cleaned_data.get('is_public'),
+            )
+            if feedback.is_public and self.request.event.get_feature_flag('feedback_require_review'):
+                feedback.status = 'pending'
+            feedback.save()
+            messages.success(self.request, _('Your feedback has been submitted.'))
+            return HttpResponseRedirect(self.submission.urls.public)
+            
+        # On error, render the page again with the form
+        ctx = self.get_context_data(**kwargs)
+        ctx['feedback_form'] = form
+        return self.render_to_response(ctx)
 
     @context
     @cached_property
@@ -654,7 +722,7 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         # If the logged-in user does not have "orga.view_schedule" permission, we check
         # if he/she owns a ticket.
         if not request.user.has_perm('agenda.view_schedule', event):
-            res = check_user_owning_ticket(request.user, event)
+            res = user_has_event_ticket(request.user, event)
             if res == TicketCheckResult.NO_TICKET:
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.NOT_ALLOWED)
             if res == TicketCheckResult.MISCONFIGURED:
@@ -707,37 +775,91 @@ def extract_event_info_from_url(url: str) -> tuple[str, _T, _T]:
     return None, None, None
 
 
-def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
-    """
-    Check if the user owns a valid ticket for this event using the local database, matching presale logic.
-    """
-    allowed_statuses = [Order.STATUS_PAID]
-    if event.settings.venueless_allow_pending:
-        allowed_statuses.append(Order.STATUS_PENDING)
-    with scope(organizer=event.organizer):
-        with scope(event=event):
-            if event.settings.venueless_all_products:
-                has_ticket = OrderPosition.objects.filter(
-                    order__event=event,
-                    order__email__iexact=user.email,
-                    order__status__in=allowed_statuses,
-                    product__admission=True,
-                    canceled=False,
-                    addon_to__isnull=True,
-                ).exists()
-            else:
-                allowed_products = event.settings.venueless_products or []
-                if not allowed_products:
-                    return TicketCheckResult.NO_TICKET
-                has_ticket = OrderPosition.objects.filter(
-                    order__event=event,
-                    order__email__iexact=user.email,
-                    order__status__in=allowed_statuses,
-                    product_id__in=allowed_products,
-                    canceled=False,
-                    addon_to__isnull=True,
-                ).exists()
+class TalkFeedbackReactView(TalkMixin, View):
+    permission_required = 'base.view_public_submission'
 
-    if has_ticket:
-        return TicketCheckResult.HAS_TICKET
-    return TicketCheckResult.NO_TICKET
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=HTTPStatus.UNAUTHORIZED)
+
+        feedback_id = kwargs.get('feedback_id')
+        feedback = get_object_or_404(
+            self.submission.feedback.filter(is_public=True),
+            id=feedback_id
+        )
+
+        action = request.POST.get('action')
+        if action not in ('upvote', 'downvote', 'remove'):
+            return JsonResponse({'error': 'Invalid action'}, status=HTTPStatus.BAD_REQUEST)
+
+        from eventyay.base.models import FeedbackReaction
+        if action == 'remove':
+            FeedbackReaction.objects.filter(feedback=feedback, user=request.user).delete()
+        else:
+            is_upvote = (action == 'upvote')
+            FeedbackReaction.objects.update_or_create(
+                feedback=feedback,
+                user=request.user,
+                defaults={'is_upvote': is_upvote}
+            )
+
+        upvotes = FeedbackReaction.objects.filter(feedback=feedback, is_upvote=True).count()
+        downvotes = FeedbackReaction.objects.filter(feedback=feedback, is_upvote=False).count()
+        return JsonResponse({'upvotes': upvotes, 'downvotes': downvotes})
+
+
+class TalkFeedbackPublicActionView(TalkMixin, View):
+    permission_required = 'base.view_public_submission'
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return HttpResponse(status=HTTPStatus.UNAUTHORIZED)
+
+        feedback_id = kwargs.get('feedback_id')
+        feedback = get_object_or_404(
+            self.submission.feedback,
+            id=feedback_id
+        )
+
+        action = request.POST.get('action')
+        
+        if action == 'report':
+            from django.db.models.functions import Coalesce
+            Feedback.objects.filter(pk=feedback.pk).update(
+                is_reported=True,
+                report_count=Coalesce(F('report_count'), 0) + 1,
+            )
+            messages.success(request, _('Feedback reported successfully.'))
+        else:
+            can_moderate = request.user.has_perm('base.orga_update_submission', self.submission)
+            
+            if action == 'delete' and (feedback.author == request.user or can_moderate):
+                feedback.status = 'deleted'
+                feedback.save(update_fields=['status'])
+                messages.success(request, _('Feedback deleted successfully.'))
+            elif action == 'delete':
+                messages.error(request, _('You do not have permission to delete this feedback.'))
+            elif not can_moderate:
+                messages.error(request, _('You do not have permission to perform this action.'))
+            elif action == 'hide':
+                feedback.status = 'hidden'
+                feedback.save(update_fields=['status'])
+                messages.success(request, _('Feedback hidden successfully.'))
+            elif action == 'ban':
+                if feedback.author:
+                    request.event.banned_users.add(feedback.author)
+                    feedback.status = 'deleted'
+                    feedback.save(update_fields=['status'])
+                    messages.success(request, _('User banned successfully.'))
+                else:
+                    messages.error(request, _('Cannot ban an anonymous user.'))
+            elif action == 'unban':
+                if feedback.author:
+                    request.event.banned_users.remove(feedback.author)
+                    messages.success(request, _('User unbanned successfully.'))
+                else:
+                    messages.error(request, _('Cannot unban an anonymous user.'))
+            else:
+                messages.error(request, _('Invalid action.'))
+
+        return HttpResponseRedirect(self.submission.urls.public + '#feedback')
