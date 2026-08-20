@@ -51,7 +51,11 @@
 			<tr>
 				<td class="event-name-col" data-label="{% translate 'Name' %}"><strong>
                     <a href='{% url "eventyay_common:organizer.dashboard" organizer=organizer.slug %}'>{{ organizer.name }}</a>
-                </strong></td>
+                </strong>
+                {% if default_organizer and organizer.pk == default_organizer.pk %}
+                    <span class="text-muted">({% translate "default" %})</span>
+                {% endif %}
+                </td>
                 <td data-label="{% translate 'Short form' %}" class="events-table__cell--no-border">{{ organizer.slug }}</td>
                 <td class="text-right flip">
                     <div class="action-buttons">

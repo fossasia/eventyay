@@ -968,11 +968,36 @@ const initFileInputWrappers = () => {
     })
 }
 
+const initRatingStars = () => {
+    document.querySelectorAll('.rating-stars input[type="radio"]:checked').forEach(radio => {
+        radio.setAttribute('data-checked', 'true')
+    })
+
+    document.addEventListener('click', (e) => {
+        if (e.target.matches('.rating-stars input[type="radio"]')) {
+            const radio = e.target
+            if (radio.hasAttribute('data-checked')) {
+                radio.checked = false
+                radio.removeAttribute('data-checked')
+            } else {
+                const container = radio.closest('.rating-stars')
+                if (container) {
+                    container.querySelectorAll('input[type="radio"]').forEach(r => {
+                        r.removeAttribute('data-checked')
+                    })
+                }
+                radio.setAttribute('data-checked', 'true')
+            }
+        }
+    })
+}
+
 /* Register handlers */
 onReady(() => {
     upgradeMarkdownEditors(document)
     startMarkdownEditorObserver()
     initFileInputWrappers()
+    initRatingStars()
     document
         .querySelectorAll("input[data-maxsize][type=file]")
         .forEach((element) => initFileSizeCheck(element))

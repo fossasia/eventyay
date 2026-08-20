@@ -46,10 +46,13 @@ class OrganizerSerializer(I18nAwareModelSerializer):
     is_following = serializers.SerializerMethodField(
         help_text='Whether the currently authenticated user is following this organizer.',
     )
+    is_default = serializers.SerializerMethodField(
+        help_text='Whether this organizer is the default organizer for the currently authenticated user.',
+    )
 
     class Meta:
         model = Organizer
-        fields = ('name', 'slug', 'follower_count', 'is_following')
+        fields = ('name', 'slug', 'follower_count', 'is_following', 'is_default')
 
     @extend_schema_field(serializers.IntegerField(allow_null=True))
     def get_follower_count(self, obj):
@@ -68,6 +71,16 @@ class OrganizerSerializer(I18nAwareModelSerializer):
             return OrganizerFollower.objects.filter(organizer=obj, user=request.user).exists()
         return False
 
+    @extend_schema_field(serializers.BooleanField())
+    def get_is_default(self, obj):
+        request = self.context.get('request')
+        if not (request and request.user and request.user.is_authenticated):
+            return False
+        if not hasattr(request.user, '_cached_default_organizer_id'):
+            default_org = request.user.get_default_organizer()
+            request.user._cached_default_organizer_id = default_org.id if default_org else None
+        return request.user._cached_default_organizer_id == obj.id
+
 
 class OrganizerFollowResponseSerializer(serializers.Serializer):
     following = serializers.BooleanField(read_only=True)
@@ -77,6 +90,11 @@ class OrganizerFollowResponseSerializer(serializers.Serializer):
 class OrganizerUnfollowResponseSerializer(serializers.Serializer):
     following = serializers.BooleanField(read_only=True)
     deleted = serializers.BooleanField(read_only=True)
+
+
+class OrganizerSetDefaultResponseSerializer(serializers.Serializer):
+    status = serializers.CharField(read_only=True)
+    default_organizer = serializers.CharField(read_only=True)
 
 
 class OrganizerFollowersResponseSerializer(serializers.Serializer):
