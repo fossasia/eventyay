@@ -21,7 +21,8 @@
 				svg(viewBox="0 0 10 10", :title="nowHoverTime")
 					path(d="M 0 0 L 10 5 L 0 10 z")
 			template(v-for="session of sessions")
-				session(
+				component(
+					:is="SessionComponent",
 					v-if="isProperSession(session)",
 					:session="session",
 					:now="now",
@@ -56,7 +57,8 @@
 						.timeslice(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
 						.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 					template(v-for="session of getChunkSessions(chunk)")
-						session(
+						component(
+							:is="SessionComponent",
 							v-if="isProperSession(session)",
 							:session="session",
 							:now="now",
@@ -85,16 +87,18 @@
 // - handle click on already selected day (needs some buntpapier hacking)
 // - optionally only show venueless rooms
 import moment from 'moment-timezone'
-import Session from './Session'
+import TalkSession from './Session'
+import ShiftSession from '../teamshifts-adapter/Session.vue'
 import GridBreak from './GridBreak'
 import { getLocalizedString } from '../utils'
+import { isShiftSchedule } from '../teamshifts-adapter'
 
 const getSliceName = function (date) {
 	return `slice-${date.format('MM-DD-HH-mm')}`
 }
 
 export default {
-	components: { Session, GridBreak },
+	components: { TalkSession, ShiftSession, GridBreak },
 	props: {
 		sessions: Array,
 		rooms: Array,
@@ -127,6 +131,7 @@ export default {
 		}
 	},
 	inject: {
+		scheduleData: { default: null },
 		translationMessages: { default: () => ({}) }
 	},
 	data () {
@@ -142,6 +147,10 @@ export default {
 		}
 	},
 	computed: {
+		SessionComponent () {
+			const data = this.scheduleData?.value ?? this.scheduleData
+			return isShiftSchedule(data) ? ShiftSession : TalkSession
+		},
 		favSet () {
 			return new Set(this.favs || [])
 		},

@@ -23,10 +23,18 @@
 							span.role-restricted-tag(v-if="role.is_restricted", :title="$t('Volunteers cannot self-claim this role; requires manual assignment.')") {{ $t('Restricted') }}
 						span.role-badge(:class="getCapacityClass(role)") {{ role.assigned.length }}/{{ role.capacity }} {{ $t('assigned') }}
 					.role-assignees
-						span(v-for="(user, i) in role.assigned", :key="user.id")
-							i.fa.fa-user.mr-1
-							| {{ user.name }}{{ i < role.assigned.length - 1 ? ', ' : '' }}
-						span.text-muted(v-if="!role.assigned.length") {{ $t('None') }}
+						template(v-if="role.assigned.length")
+							span.role-assignee(v-for="(user, i) in previewAssignees(role)", :key="user.id || i")
+								svg.role-user-icon(viewBox="0 0 24 24", aria-hidden="true")
+									path(fill="currentColor", d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z")
+								span.role-assignee-name {{ user.name }}
+							.role-assignees-more-wrap(v-if="hiddenAssigneeCount(role)")
+								button.role-assignees-more(
+									type="button",
+									:aria-expanded="openAssigneesRoleId != null ? 'true' : 'false'",
+									@click.stop="toggleAssigneesPopover(role, $event)",
+									@pointerdown.stop="") +{{ hiddenAssigneeCount(role) }} more
+						span.text-muted(v-else) {{ $t('None') }}
 			
 			template(v-if="caps.showClaimUI")
 				.shift-manage.mt-2(v-if="!isBreak")
@@ -62,15 +70,40 @@
 		.warning-icon.text-danger
 			span(v-if="warnings.length > 1") {{ warnings.length }}
 			i.fa.fa-exclamation-triangle
+	assignees-popover(
+		:open="openAssigneesRoleId != null",
+		:title="assigneesPopoverTitle",
+		:assignees="assigneesPopoverList",
+		:top="assigneesPopoverPos.top",
+		:left="assigneesPopoverPos.left",
+		:width="assigneesPopoverPos.width",
+		:max-height="assigneesPopoverPos.maxHeight")
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import { getLocalizedString } from '~/utils'
 import { getCapabilities, resolveMode, resolveSessionKind, getClaimedShiftIds, getCsrfToken, getClaimBaseUrl } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
 import type { RoleAssignment } from '~/schemas'
+import AssigneesPopover from './AssigneesPopover.vue'
+
+const ASSIGNEE_PREVIEW_LIMIT = 2
+
+function placeAssigneesPopover (anchorEl: HTMLElement) {
+  const rect = anchorEl.getBoundingClientRect()
+  const width = Math.min(280, Math.max(200, window.innerWidth - 16))
+  const maxHeight = Math.min(280, window.innerHeight - 16)
+  let left = rect.left
+  let top = rect.bottom + 6
+  if (left + width > window.innerWidth - 8) left = window.innerWidth - width - 8
+  if (left < 8) left = 8
+  if (top + 140 > window.innerHeight) {
+    top = Math.max(8, rect.top - 6 - Math.min(maxHeight, 200))
+  }
+  return { top, left, width, maxHeight }
+}
 
 interface Speaker {
   name: string
@@ -153,6 +186,52 @@ const getCapacityClass = (role: RoleAssignment) => {
   if (role.assigned.length === 0) return 'badge-empty'
   return 'badge-partial'
 }
+
+const openAssigneesRoleId = ref<number | string | null>(null)
+const assigneesPopoverList = ref<Array<{ id?: number | string, name: string }>>([])
+const assigneesPopoverTitle = ref('Assigned')
+const assigneesPopoverPos = ref({ top: 0, left: 0, width: 260, maxHeight: 280 })
+
+const previewAssignees = (role: RoleAssignment) => role.assigned.slice(0, ASSIGNEE_PREVIEW_LIMIT)
+const hiddenAssigneeCount = (role: RoleAssignment) => Math.max(0, role.assigned.length - ASSIGNEE_PREVIEW_LIMIT)
+
+const closeAssigneesPopover = () => {
+  openAssigneesRoleId.value = null
+  assigneesPopoverList.value = []
+}
+
+const toggleAssigneesPopover = (role: RoleAssignment, event: MouseEvent) => {
+  const roleId = role.id
+  if (openAssigneesRoleId.value === roleId) {
+    closeAssigneesPopover()
+    return
+  }
+  assigneesPopoverList.value = role.assigned
+  assigneesPopoverTitle.value = `Assigned (${role.assigned.length})`
+  assigneesPopoverPos.value = placeAssigneesPopover(event.currentTarget as HTMLElement)
+  openAssigneesRoleId.value = roleId
+}
+
+const onAssigneesDocPointerDown = (event: PointerEvent) => {
+  if (openAssigneesRoleId.value == null) return
+  const path = event.composedPath?.() || []
+  const inside = path.some((node) => {
+    const el = node as HTMLElement
+    return el?.classList?.contains?.('role-assignees-popover') || el?.classList?.contains?.('role-assignees-more')
+  })
+  if (inside) return
+  closeAssigneesPopover()
+  event.stopPropagation()
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', onAssigneesDocPointerDown, true)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onAssigneesDocPointerDown, true)
+})
+
 const hasSpeakersWithNames = computed(() => {
   return props.session.speakers && props.session.speakers.some(speaker => speaker.name)
 })
@@ -211,7 +290,7 @@ const style = computed(() => {
       } else if (totalAssigned === 0) {
         trackColor = '#dc3545'
       } else {
-        trackColor = '#ffc107'
+        trackColor = '#c9920a'
       }
     }
   }
@@ -452,9 +531,13 @@ sessionTextExpand()
 					color: $clr-white
 				.role-badge
 					font-size: 11px
-					padding: 2px 6px
-					border-radius: 12px
-					border: 1px solid
+					font-weight: 600
+					line-height: 1.3
+					padding: 3px 8px
+					border-radius: 999px
+					border: 1.5px solid
+					box-sizing: border-box
+					white-space: nowrap
 					&.badge-full
 						border-color: #28a745
 						color: #28a745
@@ -462,14 +545,41 @@ sessionTextExpand()
 						border-color: #dc3545
 						color: #dc3545
 					&.badge-partial
-						border-color: #ffc107
-						color: #ffc107
+						border-color: #c9920a
+						color: #c9920a
 			.role-assignees
+				position: relative
+				display: flex
+				flex-wrap: wrap
+				align-items: center
+				gap: 6px 12px
 				font-size: 12px
 				color: $clr-secondary-text-light
-				margin-top: 2px
-				i.fa
-					font-size: 10px
+				margin-top: 4px
+				.role-assignee
+					display: inline-flex
+					align-items: center
+					gap: 6px
+					min-width: 0
+				.role-assignee-name
+					min-width: 0
+				.role-user-icon
+					width: 11px
+					height: 11px
+					flex-shrink: 0
+				.role-assignees-more-wrap
+					position: relative
+				.role-assignees-more
+					border: none
+					background: transparent
+					color: var(--color-primary, #2185d0)
+					font-size: 12px
+					font-weight: 600
+					line-height: 1.3
+					padding: 0
+					cursor: pointer
+					&:hover
+						text-decoration: underline
 	.shift-manage
 		font-size: 12px
 		.btn

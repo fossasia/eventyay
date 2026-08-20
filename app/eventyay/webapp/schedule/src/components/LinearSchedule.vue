@@ -4,7 +4,8 @@
 		.bucket-label(:ref="getBucketName(date)", :data-date="date.toISOString()")
 			.day(v-if="showDayHeaders && (index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'days') > 0)")  {{ date.clone().tz(timezone).format('dddd, D MMMM') }}
 			template(v-for="session of sessions")
-				session(
+				component(
+					:is="SessionComponent",
 					v-if="isProperSession(session)",
 					:session="session",
 					:now="now",
@@ -24,10 +25,15 @@
 <script>
 import moment from 'moment-timezone'
 import { getLocalizedString, normalizePopularityCount } from '../utils'
-import Session from './Session'
+import TalkSession from './Session'
+import ShiftSession from '../teamshifts-adapter/Session.vue'
+import { isShiftSchedule } from '../teamshifts-adapter'
 
 export default {
-	components: { Session },
+	components: { TalkSession, ShiftSession },
+	inject: {
+		scheduleData: { default: null },
+	},
 	props: {
 		sessions: Array,
 		rooms: Array,
@@ -84,6 +90,10 @@ export default {
 		}
 	},
 	computed: {
+		SessionComponent () {
+			const data = this.scheduleData?.value ?? this.scheduleData
+			return isShiftSchedule(data) ? ShiftSession : TalkSession
+		},
 		popularitySortEnabled () {
 			return this.includePopularitySortKey || this.sortBy === 'popularity'
 		},

@@ -1,5 +1,12 @@
+export const SHIFT_STATUS_COLORS = {
+	full: '#28a745',
+	empty: '#dc3545',
+	partial: '#c9920a',
+}
+
 export function isShiftSchedule (scheduleData) {
-	return scheduleData?.mode === 'shifts' || scheduleData?.schedule?.mode === 'shifts'
+	const data = scheduleData?.value ?? scheduleData
+	return data?.mode === 'shifts' || data?.schedule?.mode === 'shifts'
 }
 
 export function resolveMode (scheduleData) {
@@ -36,6 +43,16 @@ export function getAssignedList (role) {
 	return []
 }
 
+export const ASSIGNEE_PREVIEW_LIMIT = 2
+
+export function previewAssignees (role) {
+	return getAssignedList(role).slice(0, ASSIGNEE_PREVIEW_LIMIT)
+}
+
+export function hiddenAssigneeCount (role) {
+	return Math.max(0, getAssignedList(role).length - ASSIGNEE_PREVIEW_LIMIT)
+}
+
 export function getCapacityStatus (role) {
 	const assigned = getAssignedList(role)
 	const capacity = Number(role?.capacity)
@@ -44,12 +61,30 @@ export function getCapacityStatus (role) {
 	return 'empty'
 }
 
+export function getShiftTrackColor (roles) {
+	if (!Array.isArray(roles) || !roles.length) {
+		return 'var(--pretalx-clr-primary)'
+	}
+	let totalCapacity = 0
+	let totalAssigned = 0
+	for (const role of roles) {
+		totalCapacity += role.capacity || 0
+		totalAssigned += getAssignedList(role).length
+	}
+	if (totalCapacity <= 0) return 'var(--pretalx-clr-primary)'
+	if (totalAssigned >= totalCapacity) return SHIFT_STATUS_COLORS.full
+	if (totalAssigned === 0) return SHIFT_STATUS_COLORS.empty
+	return SHIFT_STATUS_COLORS.partial
+}
+
 export function getCurrentUserId (scheduleData) {
-	return scheduleData?.schedule?.current_user_id ?? scheduleData?.current_user_id ?? null
+	const data = scheduleData?.value ?? scheduleData
+	return data?.schedule?.current_user_id ?? data?.current_user_id ?? null
 }
 
 export function getCurrentUserName (scheduleData) {
-	return scheduleData?.schedule?.current_user_name || scheduleData?.current_user_name || ''
+	const data = scheduleData?.value ?? scheduleData
+	return data?.schedule?.current_user_name || data?.current_user_name || ''
 }
 
 export function getShiftId (session) {

@@ -1,11 +1,5 @@
 <template lang="pug">
-component.c-linear-schedule-session(
-	:is="hasShiftRoles ? 'div' : 'a'",
-	:class="{faved, 'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending, 'has-fav-count': hasFavCount, 'is-shift-session': hasShiftRoles}",
-	:style="style",
-	:href="hasShiftRoles ? undefined : link",
-	@click="hasShiftRoles ? null : onSessionLinkClick($event, session)",
-	:target="hasShiftRoles ? undefined : linkTarget")
+a.c-linear-schedule-session(:class="{faved, 'has-date': showDate, 'short-session': isShortSession, 'grid-very-short': isGridVeryShort, 'schedule-pending-session': isSchedulePending, 'has-fav-count': hasFavCount}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
 	.time-box
 		.start.schedule-pending(v-if="isSchedulePending")
 			svg.schedule-pending-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", aria-hidden="true")
@@ -31,49 +25,26 @@ component.c-linear-schedule-session(
 			.session-type(v-if="sessionTypeLabel", :class="{'single-line-clamped': isGridVeryShort}", :title="gridMetaTitle(sessionTypeLabel)") {{ sessionTypeLabel }}
 		template(v-else)
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
-		template(v-if="hasShiftRoles")
-			.roles-list
-				.role-item(v-for="(role, index) in session.roles", :key="role.id ?? index")
-					.role-header
-						span.role-name
-							| {{ roleName(role) }}
-							span.role-restricted-tag(v-if="role.is_restricted") Restricted
-						span.role-badge(:class="'badge-' + getCapacityStatus(role)") {{ assignedList(role).length }}/{{ role.capacity }} assigned
-					.role-assignees
-						span(v-for="(user, i) in assignedList(role)", :key="user.id || i")
-							i.fa.fa-user.mr-1(aria-hidden="true")
-							| {{ user.name }}{{ i < assignedList(role).length - 1 ? ', ' : '' }}
-						span.text-muted(v-if="!assignedList(role).length") None
-					.shift-manage
-						template(v-if="isMyRole(role)")
-							button.btn.btn-sm.btn-danger(type="button", :disabled="claimBusy", @click.stop="openConfirm('drop', role)") Drop
-						template(v-else-if="canClaimRole(role)")
-							button.btn.btn-sm.btn-primary(type="button", :disabled="claimBusy", @click.stop="openConfirm('claim', role)") Sign Up
-						template(v-else-if="role.is_restricted")
-							span.text-muted Restricted
-						template(v-else-if="isRoleFull(role)")
-							span.text-muted Full
-		template(v-else)
-			.speakers-row(v-if="namedSpeakers.length")
-				.speakers(
-					ref="speakersRow",
-					:class="{'names-clamped': isShortSession}",
-					:aria-label="speakersAriaLabel")
-					span.speaker(v-for="(speaker, i) of namedSpeakers", :key="speaker.code || i")
-						img(
-							v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
-							:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
-							alt="",
-							aria-hidden="true")
-						span.speaker-label {{ speaker.name }}
-						span.speaker-separator(v-if="i + 1 < namedSpeakers.length", aria-hidden="true") ,
-				span.speakers-overflow-hint(
-					v-if="speakersHiddenCount > 0",
-					:aria-label="speakersOverflowLabel") {{ speakersOverflowHint }}
+		.speakers-row(v-if="namedSpeakers.length")
+			.speakers(
+				ref="speakersRow",
+				:class="{'names-clamped': isShortSession}",
+				:aria-label="speakersAriaLabel")
+				span.speaker(v-for="(speaker, i) of namedSpeakers", :key="speaker.code || i")
+					img(
+						v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+						:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+						alt="",
+						aria-hidden="true")
+					span.speaker-label {{ speaker.name }}
+					span.speaker-separator(v-if="i + 1 < namedSpeakers.length", aria-hidden="true") ,
+			span.speakers-overflow-hint(
+				v-if="speakersHiddenCount > 0",
+				:aria-label="speakersOverflowLabel") {{ speakersOverflowHint }}
 		.tags-box(v-if="showTags && session.tags && session.tags.length")
 			.tags(v-for="tag_item of session.tags")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
-		.abstract(v-if="showAbstract && !hasShiftRoles", v-html="abstractText")
+		.abstract(v-if="showAbstract", v-html="abstractText")
 		.bottom-info
 			.track(v-if="session.track", :class="{'single-line-clamped': isGridVeryShort}", :title="gridMetaTitle(getLocalizedString(session.track.name))") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room", :title="getLocalizedString(session.room.name)") {{ getLocalizedString(session.room.name) }}
@@ -91,28 +62,14 @@ component.c-linear-schedule-session(
 	.stream-indicator(v-if="canOpenStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
 			path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
-	.session-icons(v-if="!favsReadOnly && !hasShiftRoles")
+	.session-icons(v-if="!favsReadOnly")
 		fav-button(@toggleFav="toggleFav")
-	shift-confirm-dialog(
-		v-if="hasShiftRoles",
-		ref="shiftConfirm",
-		:title="confirmTitle",
-		:lead="confirmLead",
-		:details="confirmDetails",
-		:confirm-label="confirmLabel",
-		:confirm-class="confirmButtonClass",
-		:error="confirmError",
-		:busy="claimBusy",
-		@confirm="confirmRoleAction",
-		@cancel="closeConfirm")
 
 </template>
 <script>
 import MarkdownIt from 'markdown-it'
-import { getLocalizedString, getPrettyDuration, getSessionTime, getContrastColor, normalizePopularityCount, getSessionTypeLabel, getCsrfToken } from '../utils'
-import { isShiftSchedule, isShiftSession, getCapacityStatus, getAssignedList, getCurrentUserId, getCurrentUserName, claimUrl, withdrawUrl } from '../teamshifts-adapter'
+import { getLocalizedString, getPrettyDuration, getSessionTime, getContrastColor, normalizePopularityCount, getSessionTypeLabel } from '../utils'
 import FavButton from './FavButton.vue'
-import ShiftConfirmDialog from './ShiftConfirmDialog.vue'
 
 const markdownIt = MarkdownIt({
 	linkify: true,
@@ -185,8 +142,7 @@ export default {
 		translationMessages: { default: () => ({}) }
 	},
 	components: {
-		FavButton,
-		ShiftConfirmDialog,
+		FavButton
 	},
 	data () {
 		return {
@@ -194,13 +150,7 @@ export default {
 			getLocalizedString,
 			getSessionTime,
 			getContrastColor,
-			getCapacityStatus,
-			getAssignedList,
 			speakersHiddenCount: 0,
-			claimBusy: false,
-			confirmAction: null,
-			confirmRole: null,
-			confirmError: '',
 		}
 	},
 	computed: {
@@ -219,22 +169,8 @@ export default {
 			return this.generateSessionLinkUrl({eventUrl: this.eventUrl, session: this.session})
 		},
 		style () {
-			let trackColor = this.session.track?.color || 'var(--pretalx-clr-primary)'
-			if (this.hasShiftRoles) {
-				let totalCapacity = 0
-				let totalAssigned = 0
-				for (const role of this.session.roles) {
-					totalCapacity += role.capacity || 0
-					totalAssigned += getAssignedList(role).length
-				}
-				if (totalCapacity > 0) {
-					if (totalAssigned >= totalCapacity) trackColor = '#28a745'
-					else if (totalAssigned === 0) trackColor = '#dc3545'
-					else trackColor = '#ffc107'
-				}
-			}
 			return {
-				'--track-color': trackColor
+				'--track-color': this.session.track?.color || 'var(--pretalx-clr-primary)'
 			}
 		},
 		startTime () {
@@ -310,7 +246,6 @@ export default {
 			return getSessionTypeLabel(this.session.session_type)
 		},
 		hasAnyRightIcons () {
-			if (this.hasShiftRoles) return this.canOpenStream || this.session.do_not_record
 			return !this.favsReadOnly || this.canOpenStream || this.session.do_not_record
 		},
 		isShortSession () {
@@ -341,77 +276,6 @@ export default {
 		},
 		namedSpeakers () {
 			return (this.session.speakers || []).filter(s => (s.name || '').trim())
-		},
-		hasShiftRoles () {
-			return isShiftSchedule(this.scheduleData) && isShiftSession(this.session)
-		},
-		currentUserId () {
-			return getCurrentUserId(this.scheduleData)
-		},
-		currentUserName () {
-			return getCurrentUserName(this.scheduleData)
-		},
-		myAssignedRoleId () {
-			if (!this.currentUserId || !this.hasShiftRoles) return null
-			for (const role of this.session.roles) {
-				if (getAssignedList(role).some(user => user.id === this.currentUserId)) return role.id
-			}
-			return null
-		},
-		shiftTimeLabel () {
-			if (!this.session.start) return ''
-			const tz = this.effectiveTimezone
-			const locale = this.locale || 'en'
-			const date = this.session.start.clone().tz(tz).locale(locale).format('ddd, D MMM YYYY')
-			const startClock = getSessionTime(this.session, tz, locale, this.effectiveHasAmPm)
-			const startStr = startClock.ampm ? `${startClock.time} ${startClock.ampm}` : startClock.time
-			if (!this.session.end) return `${date}, ${startStr}`
-			const end = this.session.end.clone().tz(tz).locale(locale)
-			const endStr = this.effectiveHasAmPm ? `${end.format('h:mm')} ${end.format('A')}` : end.format('LT')
-			return `${date}, ${startStr} – ${endStr}`
-		},
-		shiftLocationLabel () {
-			return getLocalizedString(this.session.room?.name) || '—'
-		},
-		confirmTitle () {
-			return this.confirmAction === 'drop' ? 'Drop shift role' : 'Claim shift role'
-		},
-		confirmLead () {
-			if (this.confirmAction === 'drop') {
-				return 'Are you sure you want to drop this role? The slot will open again for other team members.'
-			}
-			return 'Are you sure you want to claim this role for this shift?'
-		},
-		confirmLabel () {
-			return this.confirmAction === 'drop' ? 'Drop' : 'Confirm'
-		},
-		confirmButtonClass () {
-			return this.confirmAction === 'drop' ? 'btn-danger' : 'btn-primary'
-		},
-		confirmDetails () {
-			const role = this.confirmRole
-			if (!role) return []
-			const rows = [
-				{ label: 'Shift', value: getLocalizedString(this.session.title) },
-				{ label: 'Role', value: this.roleName(role) },
-				{ label: 'Time', value: this.shiftTimeLabel },
-				{ label: 'Location', value: this.shiftLocationLabel },
-			]
-			if (this.confirmAction === 'drop') {
-				const mine = getAssignedList(role).find(user => user.id === this.currentUserId)
-				const selfAssigned = mine ? mine.self_assigned !== false && !mine.assigned_by_name : true
-				rows.push({
-					label: 'Status',
-					value: selfAssigned ? 'Self assigned' : `Organizer assigned${mine?.assigned_by_name ? ` by ${mine.assigned_by_name}` : ''}`,
-				})
-				rows.push({
-					label: 'Name',
-					value: mine?.name || this.currentUserName || '—',
-				})
-			} else if (this.currentUserName) {
-				rows.push({ label: 'Name', value: this.currentUserName })
-			}
-			return rows
 		},
 		speakersAriaLabel () {
 			return this.namedSpeakers.map(speaker => speaker.name).join(', ')
@@ -444,83 +308,6 @@ export default {
 		this._speakersResizeObserver?.disconnect?.()
 	},
 	methods: {
-		assignedList (role) {
-			return getAssignedList(role)
-		},
-		roleName (role) {
-			return getLocalizedString(role.name)
-		},
-		isMyRole (role) {
-			return getAssignedList(role).some(user => user.id === this.currentUserId)
-		},
-		isRoleFull (role) {
-			const capacity = Number(role?.capacity)
-			if (!Number.isFinite(capacity)) return false
-			if (capacity <= 0) return true
-			return getAssignedList(role).length >= capacity
-		},
-		canClaimRole (role) {
-			if (!this.currentUserId) return false
-			if (role.is_restricted) return false
-			if (this.isRoleFull(role)) return false
-			if (this.myAssignedRoleId) return false
-			return true
-		},
-		async postRoleAction (url, role) {
-			this.claimBusy = true
-			this.confirmError = ''
-			try {
-				const headers = {
-					'Content-Type': 'application/json',
-					Accept: 'application/json',
-					'X-Requested-With': 'XMLHttpRequest',
-				}
-				const csrf = getCsrfToken() || (document.cookie.match(/(?:^|; )csrftoken=([^;]+)/) || [])[1] || ''
-				if (csrf) headers['X-CSRFToken'] = csrf
-				const response = await fetch(url, {
-					method: 'POST',
-					headers,
-					credentials: 'same-origin',
-					body: JSON.stringify({ role_id: role.id }),
-				})
-				const data = await response.json().catch(() => ({}))
-				if (!response.ok) {
-					this.confirmError = data.error || 'Could not update this shift.'
-					return
-				}
-				if (Array.isArray(data.roles)) {
-					this.session.roles.splice(0, this.session.roles.length, ...data.roles)
-				} else {
-					window.location.reload()
-					return
-				}
-				this.closeConfirm()
-			} catch {
-				this.confirmError = 'Could not update this shift.'
-			} finally {
-				this.claimBusy = false
-			}
-		},
-		openConfirm (action, role) {
-			this.confirmAction = action
-			this.confirmRole = role
-			this.confirmError = ''
-			this.$nextTick(() => this.$refs.shiftConfirm?.show())
-		},
-		closeConfirm () {
-			this.$refs.shiftConfirm?.close()
-			this.confirmAction = null
-			this.confirmRole = null
-			this.confirmError = ''
-		},
-		confirmRoleAction () {
-			const role = this.confirmRole
-			if (!role) return
-			const url = this.confirmAction === 'drop'
-				? withdrawUrl(this.eventUrl, this.session)
-				: claimUrl(this.eventUrl, this.session)
-			return this.postRoleAction(url, role)
-		},
 		gridMetaTitle (text) {
 			if (!this.isGridVeryShort || !text) return null
 			return text
@@ -994,84 +781,6 @@ expandClampedSessionText()
 	&.has-fav-count
 		.info.has-icons
 			padding-right: 68px
-	&.is-shift-session
-		cursor: default
-		text-decoration: none
-		color: inherit
-		min-height: auto
-		.info
-			padding-right: 8px
-		.roles-list
-			display: flex
-			flex-direction: column
-			gap: 6px
-			margin-top: 6px
-			.role-item
-				border-top: 1px solid rgba(0, 0, 0, 0.12)
-				padding-top: 6px
-				.role-header
-					display: flex
-					justify-content: space-between
-					align-items: center
-					gap: 8px
-					font-size: 13px
-					font-weight: 600
-					.role-restricted-tag
-						margin-left: 6px
-						font-size: 10px
-						font-weight: 700
-						text-transform: uppercase
-						letter-spacing: 0.02em
-						padding: 1px 5px
-						border-radius: 3px
-						background-color: #6c757d
-						color: #fff
-					.role-badge
-						font-size: 11px
-						padding: 2px 6px
-						border-radius: 12px
-						border: 1px solid
-						white-space: nowrap
-						&.badge-full
-							border-color: #28a745
-							color: #28a745
-						&.badge-empty
-							border-color: #dc3545
-							color: #dc3545
-						&.badge-partial
-							border-color: #ffc107
-							color: #ffc107
-				.role-assignees
-					font-size: 12px
-					color: #6c757d
-					margin-top: 2px
-					i.fa
-						font-size: 10px
-						margin-right: 4px
-				.shift-manage
-					margin-top: 4px
-					.btn
-						display: inline-block
-						padding: 2px 8px
-						font-size: 12px
-						line-height: 1.4
-						border-radius: 4px
-						border: 1px solid transparent
-						cursor: pointer
-						&:disabled
-							opacity: 0.65
-							cursor: default
-					.btn-primary
-						background: #2185d0
-						border-color: #2185d0
-						color: #fff
-					.btn-danger
-						background: #d9534f
-						border-color: #d9534f
-						color: #fff
-					.text-muted
-						font-size: 11px
-						color: #888
 	&.grid-very-short
 		position: relative
 	&:hover
