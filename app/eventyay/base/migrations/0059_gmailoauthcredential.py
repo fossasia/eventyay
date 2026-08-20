@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0056_global_plugin_config'),
+        ('base', '0058_alter_locale_choices_native_names'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
