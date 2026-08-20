@@ -107,11 +107,11 @@
                             <td class="text-center"><span class="text-muted">—</span></td>
                             <td class="text-center"><span class="text-muted">—</span></td>
                             <td class="dnd-container text-center text-nowrap">
-                                <span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span>
                                 <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open"
                                    aria-label="{% translate 'See invoice settings' %}">
                                     {% translate "See invoice settings" %}
                                 </a>
+                                <span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span>
                             </td>
                         </tr>
                         {% endif %}
