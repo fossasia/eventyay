@@ -130,7 +130,7 @@ order                                 string                     Order code of t
 positionid                            integer                    Number of the position within the order
 canceled                              boolean                    Whether or not this position has been canceled. Note that
                                                                  by default, only non-canceled positions are shown.
-item                                  integer                    ID of the purchased item
+product                                  integer                    ID of the purchased product
 variation                             integer                    ID of the purchased variation (or ``null``)
 price                                 money (string)             Price of this position
 attendee_name                         string                     Specified attendee name for this position (or ``null``)
@@ -318,7 +318,7 @@ List of all orders
                 "order": "ABC12",
                 "positionid": 1,
                 "canceled": false,
-                "item": 1345,
+                "product": 1345,
                 "variation": null,
                 "price": "23.00",
                 "attendee_name": "Peter",
@@ -486,7 +486,7 @@ Fetching individual orders
             "order": "ABC12",
             "positionid": 1,
             "canceled": false,
-            "item": 1345,
+            "product": 1345,
             "variation": null,
             "price": "23.00",
             "attendee_name": "Peter",
@@ -829,10 +829,10 @@ Creating orders
   * ``positions``
 
       * ``positionid`` (optional, see below)
-      * ``item``
+      * ``product``
       * ``variation`` (optional)
       * ``price`` (optional, if set to ``null`` or missing the price will be computed from the given product)
-      * ``seat`` (The ``seat_guid`` attribute of a seat. Required when the specified ``item`` requires a seat, otherwise must be ``null``.)
+      * ``seat`` (The ``seat_guid`` attribute of a seat. Required when the specified ``product`` requires a seat, otherwise must be ``null``.)
       * ``attendee_name`` **or** ``attendee_name_parts`` (optional)
       * ``voucher`` (optional, the ``code`` attribute of a valid voucher)
       * ``attendee_email`` (optional)
@@ -922,7 +922,7 @@ Creating orders
         "positions": [
           {
             "positionid": 1,
-            "item": 1,
+            "product": 1,
             "variation": null,
             "price": "23.00",
             "attendee_name_parts": {
@@ -1164,6 +1164,43 @@ Order state operations
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order does not exist.
 
+
+
+.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/mark_refunded/
+
+   Marks a paid order as refunded.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/mark_refunded/ HTTP/1.1
+      Host: eventyay.com
+      Accept: application/json, text/javascript
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      {
+        "code": "ABC12",
+        "status": "c",
+        "email": "buyer@example.org"
+      }
+
+   :param organizer: The ``slug`` field of the organizer to modify
+   :param event: The ``slug`` field of the event to modify
+   :param code: The ``code`` field of the order to modify
+   :statuscode 200: no error
+   :statuscode 400: The order cannot be marked as refunded since the current order status does not allow it.
+   :statuscode 401: Authentication failure
+   :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
+   :statuscode 404: The requested order does not exist.
+
 .. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/extend/
 
    Extends the payment deadline of a pending order. If the order is already expired and quota is still
@@ -1314,7 +1351,7 @@ Generating invoices
 
    .. sourcecode:: http
 
-      HTTP/1.1 200 OK
+      HTTP/1.1 201 Created
       Vary: Accept
       Content-Type: application/json
 
@@ -1328,7 +1365,7 @@ Generating invoices
    :param organizer: The ``slug`` field of the organizer to modify
    :param event: The ``slug`` field of the event to modify
    :param code: The ``code`` field of the order to create an invoice for
-   :statuscode 200: no error
+   :statuscode 201: no error
    :statuscode 400: The invoice can not be created (invoicing disabled, the order already has an invoice, etc.)
    :statuscode 401: Authentication failure
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
@@ -1360,7 +1397,7 @@ Sending e-mails
    :param organizer: The ``slug`` field of the organizer to modify
    :param event: The ``slug`` field of the event to modify
    :param code: The ``code`` field of the order to send an email for
-   :statuscode 200: no error
+   :statuscode 204: no error
    :statuscode 400: The order does not have an email address associated
    :statuscode 401: Authentication failure
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
@@ -1404,7 +1441,7 @@ List of all order positions
             "order": "ABC12",
             "positionid": 1,
             "canceled": false,
-            "item": 1345,
+            "product": 1345,
             "variation": null,
             "price": "23.00",
             "attendee_name": "Peter",
@@ -1454,8 +1491,8 @@ List of all order positions
                            ``order__datetime,positionid``
    :query string order: Only return positions of the order with the given order code
    :query string search: Fuzzy search matching the attendee name, order code, invoice address name as well as to the beginning of the secret.
-   :query integer item: Only return positions with the purchased item matching the given ID.
-   :query integer item__in: Only return positions with the purchased item matching one of the given comma-separated IDs.
+   :query integer product: Only return positions with the purchased product matching the given ID.
+   :query integer product__in: Only return positions with the purchased product matching one of the given comma-separated IDs.
    :query integer variation: Only return positions with the purchased item variation matching the given ID.
    :query integer variation__in: Only return positions with one of the purchased item variation matching the given
                                  comma-separated IDs.
@@ -1510,7 +1547,7 @@ Fetching individual positions
         "order": "ABC12",
         "positionid": 1,
         "canceled": false,
-        "item": 1345,
+        "product": 1345,
         "variation": null,
         "price": "23.00",
         "attendee_name": "Peter",
@@ -1723,7 +1760,7 @@ Order payment endpoints
 
    The ``confirm`` operation now takes a ``send_email`` parameter.
 
-.. http:get:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/payments/
+.. http:get:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/payments/
 
    Returns a list of all payments for an order.
 
@@ -1731,7 +1768,7 @@ Order payment endpoints
 
    .. sourcecode:: http
 
-      GET /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/payments/ HTTP/1.1
+      GET /api/v1/organizers/bigevents/events/sampleconf/orders/123/payments/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
 
@@ -1770,7 +1807,7 @@ Order payment endpoints
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order does not exist.
 
-.. http:get:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/payments/(local_id)/
+.. http:get:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/payments/(local_id)/
 
    Returns information on one payment, identified by its order-local ID.
 
@@ -1778,7 +1815,7 @@ Order payment endpoints
 
    .. sourcecode:: http
 
-      GET /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/payments/1/ HTTP/1.1
+      GET /api/v1/organizers/bigevents/events/sampleconf/orders/123/payments/1/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
 
@@ -1810,7 +1847,7 @@ Order payment endpoints
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order or payment does not exist.
 
-.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/payments/(local_id)/confirm/
+.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/payments/(local_id)/confirm/
 
    Marks a payment as confirmed. Only allowed in states ``pending`` and ``created``.
 
@@ -1818,7 +1855,7 @@ Order payment endpoints
 
    .. sourcecode:: http
 
-      POST /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/payments/1/confirm/ HTTP/1.1
+      POST /api/v1/organizers/bigevents/events/sampleconf/orders/123/payments/1/confirm/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
       Content-Type: application/json
@@ -1852,7 +1889,7 @@ Order payment endpoints
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order or payment does not exist.
 
-.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/payments/(local_id)/cancel/
+.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/payments/(local_id)/cancel/
 
    Marks a payment as canceled. Only allowed in states ``pending`` and ``created``.
 
@@ -1860,7 +1897,7 @@ Order payment endpoints
 
    .. sourcecode:: http
 
-      POST /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/payments/1/cancel/ HTTP/1.1
+      POST /api/v1/organizers/bigevents/events/sampleconf/orders/123/payments/1/cancel/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
 
@@ -1889,7 +1926,7 @@ Order payment endpoints
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order or payment does not exist.
 
-.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/payments/(local_id)/refund/
+.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/payments/(local_id)/refund/
 
    Create and execute a manual refund. Only available in ``confirmed`` state. Returns a refund resource, not
    a payment resource!
@@ -1898,7 +1935,7 @@ Order payment endpoints
 
    .. sourcecode:: http
 
-      POST /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/payments/1/refund/ HTTP/1.1
+      POST /api/v1/organizers/bigevents/events/sampleconf/orders/123/payments/1/refund/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
       Content-Type: application/json
@@ -1934,7 +1971,7 @@ Order payment endpoints
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order or payment does not exist.
 
-.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/payments/
+.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/payments/
 
    Creates a new payment.
 
@@ -1948,7 +1985,7 @@ Order payment endpoints
 
    .. sourcecode:: http
 
-      POST /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/payments/ HTTP/1.1
+      POST /api/v1/organizers/bigevents/events/sampleconf/orders/123/payments/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
       Content-Type: application/json
@@ -1994,7 +2031,7 @@ Order payment endpoints
 Order refund endpoints
 ----------------------
 
-.. http:get:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/refunds/
+.. http:get:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/refunds/
 
    Returns a list of all refunds for an order.
 
@@ -2002,7 +2039,7 @@ Order refund endpoints
 
    .. sourcecode:: http
 
-      GET /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/refunds/ HTTP/1.1
+      GET /api/v1/organizers/bigevents/events/sampleconf/orders/123/refunds/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
 
@@ -2042,7 +2079,7 @@ Order refund endpoints
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order does not exist.
 
-.. http:get:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/refunds/(local_id)/
+.. http:get:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/refunds/(local_id)/
 
    Returns information on one refund, identified by its order-local ID.
 
@@ -2050,7 +2087,7 @@ Order refund endpoints
 
    .. sourcecode:: http
 
-      GET /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/refunds/1/ HTTP/1.1
+      GET /api/v1/organizers/bigevents/events/sampleconf/orders/123/refunds/1/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
 
@@ -2083,7 +2120,7 @@ Order refund endpoints
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order or refund does not exist.
 
-.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/refunds/
+.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/refunds/
 
    Creates a refund manually.
 
@@ -2094,7 +2131,7 @@ Order refund endpoints
 
    .. sourcecode:: http
 
-      POST /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/refunds/ HTTP/1.1
+      POST /api/v1/organizers/bigevents/events/sampleconf/orders/123/refunds/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
       Content-Type: application/json
@@ -2141,7 +2178,7 @@ Order refund endpoints
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order does not exist.
 
-.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/refunds/(local_id)/done/
+.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/refunds/(local_id)/done/
 
    Marks a refund as completed. Only allowed in states ``transit`` and ``created``.
 
@@ -2149,7 +2186,7 @@ Order refund endpoints
 
    .. sourcecode:: http
 
-      POST /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/refunds/1/done/ HTTP/1.1
+      POST /api/v1/organizers/bigevents/events/sampleconf/orders/123/refunds/1/done/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
 
@@ -2177,7 +2214,7 @@ Order refund endpoints
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order or refund does not exist.
 
-.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/refunds/(local_id)/process/
+.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/refunds/(local_id)/process/
 
    Acts on an external refund, either marks the order as canceled or pending. Only allowed in state ``external``.
 
@@ -2185,7 +2222,7 @@ Order refund endpoints
 
    .. sourcecode:: http
 
-      POST /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/refunds/1/done/ HTTP/1.1
+      POST /api/v1/organizers/bigevents/events/sampleconf/orders/123/refunds/1/done/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
       Content-Type: application/json
@@ -2216,7 +2253,7 @@ Order refund endpoints
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order or refund does not exist.
 
-.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(code)/refunds/(local_id)/cancel/
+.. http:post:: /api/v1/organizers/(organizer)/events/(event)/orders/(order)/refunds/(local_id)/cancel/
 
    Marks a refund as canceled. Only allowed in states ``transit``, ``external``, and ``created``.
 
@@ -2224,7 +2261,7 @@ Order refund endpoints
 
    .. sourcecode:: http
 
-      POST /api/v1/organizers/bigevents/events/sampleconf/orders/ABC12/refunds/1/cancel/ HTTP/1.1
+      POST /api/v1/organizers/bigevents/events/sampleconf/orders/123/refunds/1/cancel/ HTTP/1.1
       Host: eventyay.com
       Accept: application/json, text/javascript
 
