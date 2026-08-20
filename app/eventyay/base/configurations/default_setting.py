@@ -1462,9 +1462,10 @@ DEFAULT_SETTINGS = {
         'type': Decimal,
         'form_class': forms.DecimalField,
         'serializer_class': serializers.DecimalField,
-        'serializer_kwargs': dict(max_digits=10, decimal_places=2),
+        'serializer_kwargs': dict(max_digits=10, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(100)]),
         'form_kwargs': dict(
             label=_('Keep a percentual cancellation fee'),
+            validators=[MinValueValidator(0), MaxValueValidator(100)],
         ),
     },
     'cancel_allow_user_paid_adjust_fees': {
@@ -1753,6 +1754,47 @@ Your {event} team"""
         ),
     },
     'mail_send_order_free_attendee': {'type': bool, 'default': 'False'},
+    'mail_text_meetup_registration_attendee': {
+        'type': LazyI18nString,
+        'default': LazyI18nString.from_gettext(
+            gettext_noop(
+                """Hello {attendee_name},
+
+thank you for registering for {event}.
+
+You are successfully registered for the meetup. Here are the details of your registration:
+Event: {event}
+Organizer: {organizer}
+
+You can view the details and status of your registration here:
+{event_url}
+
+Best regards,
+Your {event} team"""
+            )
+        ),
+    },
+    'mail_text_meetup_registration': {
+        'type': LazyI18nString,
+        'default': LazyI18nString.from_gettext(
+            gettext_noop(
+                """Hello,
+
+thank you for registering for {event}.
+
+You are successfully registered for the meetup. Here are the details of your registration:
+Event: {event}
+Organizer: {organizer}
+
+You can view the details and status of your registration at:
+{event_url}
+
+Best regards,
+Your {event} team"""
+            )
+        ),
+    },
+    'mail_send_meetup_registration_attendee': {'type': bool, 'default': 'False'},
     'mail_text_order_placed_require_approval': {
         'type': LazyI18nString,
         'default': LazyI18nString.from_gettext(

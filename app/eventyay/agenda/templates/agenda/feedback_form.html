@@ -3,6 +3,7 @@
 {% load i18n %}
 
 {% load presale_locale %}
+{% load static %}
 {% block agenda_custom_header %}
     {% include "cfp/includes/forms_header.html" %}
 {% endblock %}
@@ -26,8 +27,30 @@
                 {% else %}
                     <form method="post">
                         {% csrf_token %}
-                        {{ form }}
-                        <button type="submit" class="btn-success float-right">{{ phrases.base.send }}</button>
+                        {% if form.speaker %}
+                            {{ form.speaker.as_field_group }}
+                        {% endif %}
+
+                        {{ form.review.as_field_group }}
+
+                        <div class="form-group mb-4 star-rating">
+                            <div class="rating-container">
+                                <label class="rating-label">
+                                    {% translate 'Rating' %}
+                                </label>
+                                <div class="rating-stars">
+                                    {% for radio in form.rating %}
+                                        {{ radio.tag }}
+                                        <label for="{{ radio.id_for_label }}" title="{{ radio.choice_label }} {% translate 'stars' %}">
+                                            ★
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {{ form.rating.errors }}
+                        </div>
+
+                        <button type="submit" class="btn btn-success float-right">{{ phrases.base.send }}</button>
                     </form>
                 {% endif %}
             </div>

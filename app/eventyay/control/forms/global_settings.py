@@ -3,7 +3,7 @@ from typing import List, Union
 
 from django import forms
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
@@ -366,7 +366,7 @@ class GlobalSettingsForm(SettingsForm):
                         decimal_places=2,
                         max_digits=10,
                         help_text=_('Percentage fee charged on ticket payments.'),
-                        validators=[MinValueValidator(0)],
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
                     ),
                 ),
                 (
@@ -424,7 +424,7 @@ class GlobalSettingsForm(SettingsForm):
                         decimal_places=2,
                         max_digits=10,
                         help_text=_('A percentage fee will be charged for each ticket sold.'),
-                        validators=[MinValueValidator(0)],
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
                     ),
                 ),
                 (
@@ -566,7 +566,34 @@ class GlobalSettingsForm(SettingsForm):
             ]),
         ]
 
+        if 'interpretation' in settings.INSTALLED_APPS:
+            self.field_groups.append(
+                ('voxbento', _('VoxBento'), [
+                    'voxbento_base_url',
+                    'voxbento_client_id',
+                    'voxbento_client_secret',
+                ])
+            )
+
+        if 'hubspot' in settings.INSTALLED_APPS:
+            self.field_groups.append(
+                ('hubspot', _('HubSpot'), [
+                    'hubspot_client_id',
+                    'hubspot_client_secret',
+                    'hubspot_property_sync_ttl_minutes',
+                ])
+            )
+
+    def clean_voxbento_base_url(self):
+        url = (self.cleaned_data.get('voxbento_base_url') or '').strip()
+        if url:
+            if url.endswith('/'):
+                url = url[:-1]
+            if not url.startswith('http://') and not url.startswith('https://'):
+                url = 'https://' + url
+        return url
     def clean_etherpad_pad_name_pattern(self):
+
         pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
         if pattern and '{submission}' not in pattern and '{token}' not in pattern:
             raise forms.ValidationError(

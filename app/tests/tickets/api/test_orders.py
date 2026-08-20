@@ -5002,8 +5002,6 @@ def test_position_update_question_handling(token_client, organizer, event, order
         answ = op.answers.get()
     assert answ.file
     assert answ.answer.startswith('file://')
-
-
 @pytest.mark.django_db
 def test_order_anonymize_event_not_ended(token_client, organizer, event, order):
     event.date_from = now() + datetime.timedelta(days=1)
@@ -5047,4 +5045,24 @@ def test_order_anonymize_permission(token_client, organizer, event, order, team)
         '/api/v1/organizers/{}/events/{}/orders/{}/anonymize/'.format(organizer.slug, event.slug, order.code)
     )
     assert resp.status_code == 403
+
+
+def test_order_serializers_without_context():
+    """
+    Regression test for #4311 where OpenAPI schema generation would crash due to
+    missing 'request' or 'event' in the serializer context.
+    """
+    from eventyay.api.serializers.order import (
+        CheckinListOrderPositionSerializer,
+        OrderCreateSerializer,
+        OrderSerializer,
+    )
+    import pytest
+    
+    try:
+        OrderSerializer(context={})
+        OrderCreateSerializer(context={})
+        CheckinListOrderPositionSerializer(context={})
+    except KeyError as e:
+        pytest.fail(f"Serializer raised KeyError when initialized without context: {e}")
 

@@ -1203,7 +1203,7 @@ dependencies = [
 [[package]]
 name = "eventyay-hubspot"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev#2f94688a781e71c193b983735e2471e1deb3b2a8" }
+source = { git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev#61d33822e99a54ac3492998ae126d1b25b01a929" }
 dependencies = [
     { name = "cryptography" },
     { name = "python-dotenv" },
@@ -1213,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#a484dcc394967c45f43b033b981de703373ba6e2" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#39daa298355a6bc0193eb9b4cd75a3d5a27e672b" }
 dependencies = [
     { name = "requests" },
 ]
