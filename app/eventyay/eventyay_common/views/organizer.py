@@ -50,6 +50,9 @@ class OrganizerList(OrganizerCreationPermissionMixin, PaginationMixin, ListView)
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
         ctx['can_create_organizer'] = self._can_create_organizer(self.request.user)
+        ctx['default_organizer'] = (
+            self.request.user.get_default_organizer() if self.request.user.is_authenticated else None
+        )
         return ctx
 
     @cached_property
@@ -69,9 +72,15 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
             raise PermissionDenied(_('You do not have permission to create organizers. Please contact an administrator.'))
         return super().dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     @transaction.atomic
     def form_valid(self, form):
         messages.success(self.request, _('New organizer is created.'))
+        had_default = bool(self.request.user.get_default_organizer())
         response = super().form_valid(form)
         team = Team.objects.create(
             organizer=form.instance,
@@ -102,6 +111,9 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
         )
         # Trigger webhook in talk to create organiser in talk component
         team.members.add(self.request.user)
+        if form.cleaned_data.get('set_as_default') or not had_default:
+            self.request.user.default_organizer = self.object
+            self.request.user.save(update_fields=['default_organizer'])
         return response
 
     def get_success_url(self) -> str:
@@ -198,6 +210,11 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
 
         return ctx
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         if not self.can_edit_general_info:
@@ -210,6 +227,16 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         if not self.can_edit_general_info:
             form.cleaned_data['name'] = self.object.name
             form.cleaned_data['slug'] = self.object.slug
+
+        if 'set_as_default' in form.cleaned_data:
+            if form.cleaned_data['set_as_default']:
+                if self.request.user.teams.filter(organizer=self.object).exists():
+                    self.request.user.default_organizer = self.object
+                    self.request.user.save(update_fields=['default_organizer'])
+            else:
+                if self.request.user.default_organizer_id == self.object.id:
+                    self.request.user.default_organizer = None
+                    self.request.user.save(update_fields=['default_organizer'])
 
         messages.success(self.request, _('Your changes have been saved.'))
         return super().form_valid(form)

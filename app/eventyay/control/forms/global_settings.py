@@ -594,6 +594,24 @@ class GlobalSettingsForm(SettingsForm):
 
         self._configure_gmail_field_requirements()
 
+        if 'interpretation' in settings.INSTALLED_APPS:
+            self.field_groups.append(
+                ('voxbento', _('VoxBento'), [
+                    'voxbento_base_url',
+                    'voxbento_client_id',
+                    'voxbento_client_secret',
+                ])
+            )
+
+        if 'hubspot' in settings.INSTALLED_APPS:
+            self.field_groups.append(
+                ('hubspot', _('HubSpot'), [
+                    'hubspot_client_id',
+                    'hubspot_client_secret',
+                    'hubspot_property_sync_ttl_minutes',
+                ])
+            )
+
     def _configure_gmail_field_requirements(self):
         vendor = self.data.get('email_vendor') if self.is_bound else self.obj.settings.get('email_vendor')
         if vendor != 'gmail_api':
@@ -603,7 +621,16 @@ class GlobalSettingsForm(SettingsForm):
         if 'gmail_client_secret' in self.fields:
             self.fields['gmail_client_secret'].required = True
 
+    def clean_voxbento_base_url(self):
+        url = (self.cleaned_data.get('voxbento_base_url') or '').strip()
+        if url:
+            if url.endswith('/'):
+                url = url[:-1]
+            if not url.startswith('http://') and not url.startswith('https://'):
+                url = 'https://' + url
+        return url
     def clean_etherpad_pad_name_pattern(self):
+
         pattern = (self.cleaned_data.get('etherpad_pad_name_pattern') or '').strip()
         if pattern and '{submission}' not in pattern and '{token}' not in pattern:
             raise forms.ValidationError(

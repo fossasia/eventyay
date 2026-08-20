@@ -663,15 +663,17 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        request = self.context.get('request')
+        if request:
+            if 'subevent' in request.query_params.getlist('expand'):
+                self.fields['subevent'] = SubEventSerializer(read_only=True)
 
-        if 'subevent' in self.context['request'].query_params.getlist('expand'):
-            self.fields['subevent'] = SubEventSerializer(read_only=True)
+            if 'product' in request.query_params.getlist('expand'):
+                self.fields['product'] = ProductSerializer(read_only=True)
 
-        if 'product' in self.context['request'].query_params.getlist('expand'):
-            self.fields['product'] = ProductSerializer(read_only=True)
-
-        if 'variation' in self.context['request'].query_params.getlist('expand'):
-            self.fields['variation'] = InlineProductVariationSerializer(read_only=True)
+            if 'variation' in request.query_params.getlist('expand'):
+                self.fields['variation'] = InlineProductVariationSerializer(read_only=True)
 
 
 class OrderPaymentTypeField(serializers.Field):
@@ -840,16 +842,17 @@ class OrderSerializer(I18nAwareModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.context['request'].query_params.get('pdf_data', 'false') == 'true':
-            self.fields['positions'].child.fields.pop('pdf_data', None)
+        if 'request' in self.context:
+            if not self.context['request'].query_params.get('pdf_data', 'false') == 'true':
+                self.fields['positions'].child.fields.pop('pdf_data', None)
 
-        for exclude_field in self.context['request'].query_params.getlist('exclude'):
-            p = exclude_field.split('.')
-            if p[0] in self.fields:
-                if len(p) == 1:
-                    del self.fields[p[0]]
-                elif len(p) == 2:
-                    self.fields[p[0]].child.fields.pop(p[1])
+            for exclude_field in self.context['request'].query_params.getlist('exclude'):
+                p = exclude_field.split('.')
+                if p[0] in self.fields:
+                    if len(p) == 1:
+                        del self.fields[p[0]]
+                    elif len(p) == 2:
+                        self.fields[p[0]].child.fields.pop(p[1])
 
     def validate_locale(self, l):
         if l not in set(k for k in self.instance.event.settings.locales):
@@ -1118,7 +1121,8 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['positions'].child.fields['voucher'].queryset = self.context['event'].vouchers.all()
+        if 'event' in self.context:
+            self.fields['positions'].child.fields['voucher'].queryset = self.context['event'].vouchers.all()
 
     class Meta:
         model = Order
@@ -1764,3 +1768,39 @@ class RevokedTicketSecretSerializer(I18nAwareModelSerializer):
     class Meta:
         model = RevokedTicketSecret
         fields = ('id', 'secret', 'created')
+
+
+class OrderActionSendEmailSerializer(serializers.Serializer):
+    send_email = serializers.BooleanField(
+        default=True,
+        help_text="Whether to send an email to the user about this action.",
+    )
+
+
+class OrderActionCancelSerializer(OrderActionSendEmailSerializer):
+    cancellation_fee = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+        help_text="Optional cancellation fee to retain.",
+    )
+
+
+class OrderActionDenySerializer(OrderActionSendEmailSerializer):
+    comment = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Optional comment to attach to the denial.",
+    )
+
+
+class OrderActionExtendSerializer(serializers.Serializer):
+    expires = serializers.DateField(
+        required=True,
+        help_text="New expiration date for the order.",
+    )
+    force = serializers.BooleanField(
+        default=False,
+        help_text="Force the extension even if there are quota issues.",
+    )
