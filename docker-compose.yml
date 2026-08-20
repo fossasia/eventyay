@@ -38,7 +38,8 @@ services:
     build: *app-build
     platform: linux/amd64
     container_name: eventyay-next-worker
-    entrypoint: celery -A eventyay worker -l info
+    # Dev: one worker on all queues. Production uses worker + worker-heavy (deployment/docker-compose.yml).
+    entrypoint: celery -A eventyay worker -l info -Q default,notifications,longrunning,background
     volumes:
       - ./app/eventyay:/usr/src/app/eventyay
       - ./plugins:/usr/src/plugins
