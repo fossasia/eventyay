@@ -12,6 +12,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import transaction
 from django.dispatch import receiver
 from django.forms import Form
@@ -327,6 +328,7 @@ class BasePaymentProvider:
                         help_text=_('Percentage of the order total.'),
                         localize=True,
                         required=False,
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
                     ),
                 ),
                 (
