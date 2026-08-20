@@ -1462,9 +1462,10 @@ DEFAULT_SETTINGS = {
         'type': Decimal,
         'form_class': forms.DecimalField,
         'serializer_class': serializers.DecimalField,
-        'serializer_kwargs': dict(max_digits=10, decimal_places=2),
+        'serializer_kwargs': dict(max_digits=10, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(100)]),
         'form_kwargs': dict(
             label=_('Keep a percentual cancellation fee'),
+            validators=[MinValueValidator(0), MaxValueValidator(100)],
         ),
     },
     'cancel_allow_user_paid_adjust_fees': {

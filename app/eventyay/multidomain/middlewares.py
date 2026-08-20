@@ -20,6 +20,7 @@ from django.utils.deprecation import MiddlewareMixin
 from django.utils.http import http_date
 from django_scopes import scopes_disabled
 
+from eventyay.base.middleware import should_skip_session_save
 from eventyay.base.models import Event, Organizer
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.multidomain.models import KnownDomain
@@ -124,6 +125,8 @@ class SessionMiddleware(BaseSessionMiddleware):
             else:
                 if accessed:
                     patch_vary_headers(response, ('Cookie',))
+                if should_skip_session_save(response, modified):
+                    return response
                 if modified or settings.SESSION_SAVE_EVERY_REQUEST:
                     if request.session.get_expire_at_browser_close():
                         max_age = None

@@ -3,8 +3,8 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
 class EventyayAnonRateThrottle(AnonRateThrottle):
     """
-    Limits the rate of API calls for anonymous clients.
-    Does NOT apply to authenticated users or API tokens (TeamToken/Device).
+    Opt-in throttle for anonymous clients on specific high-traffic endpoints.
+    Do not add to DEFAULT_THROTTLE_CLASSES — IP-based keys break behind NAT.
     """
     def get_cache_key(self, request, view):
         if request.user.is_authenticated or request.auth:
