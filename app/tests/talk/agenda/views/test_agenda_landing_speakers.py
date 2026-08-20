@@ -142,8 +142,10 @@ def test_speakers_page_lists_all_speakers_after_schedule_release(
     response = client.get(event.urls.speakers, follow=True)
 
     assert response.status_code == 200
-    schedule_data = json.loads(response.context['schedule_json'])
-    assert {s['code'] for s in schedule_data['speakers']} >= {speaker.code, other_speaker.code}
+    json_response = client.get(event.urls.speakers, {'format': 'json'})
+    assert json_response.status_code == 200
+    speakers = {item['code'] for item in json_response.json()['results']}
+    assert {speaker.code, other_speaker.code}.issubset(speakers)
 
 
 @pytest.mark.django_db
