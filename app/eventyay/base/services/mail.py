@@ -364,11 +364,14 @@ def mail_send_task(
 ) -> bool:
     email = CustomEmail(subject, body, sender, to=to, bcc=bcc, headers=headers)
     if html is not None:
-        html_message = SafeMIMEMultipart(_subtype='related', encoding=settings.DEFAULT_CHARSET)
         html_with_cid, cid_images = replace_images_with_cid_paths(html)
-        html_message.attach(SafeMIMEText(html_with_cid, 'html', settings.DEFAULT_CHARSET))
-        attach_cid_images(html_message, cid_images, verify_ssl=True)
-        email.attach_alternative(html_message, 'multipart/related')
+        if cid_images:
+            html_message = SafeMIMEMultipart(_subtype='related', encoding=settings.DEFAULT_CHARSET)
+            html_message.attach(SafeMIMEText(html_with_cid, 'html', settings.DEFAULT_CHARSET))
+            attach_cid_images(html_message, cid_images, verify_ssl=True)
+            email.attach_alternative(html_message, 'multipart/related')
+        else:
+            email.attach_alternative(html, 'text/html')
 
     if user:
         user = User.objects.get(pk=user)
