@@ -43,7 +43,11 @@
 			<tr>
 				<td><strong>
                     <a href="{% url "eventyay_common:organizer.dashboard" organizer=o.slug %}">{{ o.name }}</a>
-                </strong></td>
+                </strong>
+                {% if default_organizer and o.pk == default_organizer.pk %}
+                    <span class="text-muted">({% trans "default" %})</span>
+                {% endif %}
+                </td>
                 <td>{{ o.slug }}</td>
 			</tr>
 			{% endfor %}

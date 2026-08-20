@@ -68,11 +68,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         help_text=SHOW_FEATURED_SPEAKERS_HELP,
         required=True,
     )
-    use_feedback = forms.BooleanField(
-        label=_('Enable anonymous feedback'),
-        help_text=_('Attendees will be able to send in feedback after a session is over.'),
-        required=False,
-    )
     session_popularity_enabled = forms.BooleanField(
         label=_('Activate most popular session feature'),
         help_text=_('Enables session popularity (favourites) counts and sorting options in the schedule webapp.'),
@@ -196,7 +191,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         json_fields = {
             'show_featured': 'feature_flags',
             'show_featured_speakers': 'feature_flags',
-            'use_feedback': 'feature_flags',
             'session_popularity_enabled': 'feature_flags',
             'session_popularity_show_on_schedule': 'feature_flags',
             'header_pattern': 'display_settings',
@@ -295,6 +289,19 @@ class ReviewSettingsForm(
             'use_submission_comments': 'feature_flags',
         }
         hierarkey_fields = ('review_help_text',)
+
+
+class FeedbackSettingsForm(ReadOnlyFlag, JsonSubfieldMixin, forms.Form):
+    use_feedback = forms.BooleanField(
+        label=_('Enable anonymous feedback'),
+        help_text=_('Attendees will be able to send in feedback after a session is over.'),
+        required=False,
+    )
+
+    class Meta:
+        json_fields = {
+            'use_feedback': 'feature_flags',
+        }
 
 
 class WidgetSettingsForm(JsonSubfieldMixin, forms.Form):
@@ -451,6 +458,7 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
     def clean(self):
         data = super().clean()
         existing_ids = [score['score'].id for score in self.label_fields]
+        seen_values = {}
         for score_id in [*existing_ids, *self.new_label_ids]:
             value = data.get(f'value_{score_id}')
             label = data.get(f'label_{score_id}')
@@ -462,6 +470,17 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
                 self.add_error(f'value_{score_id}', _('Please provide a numeric score.'))
             elif not value_empty and not label:
                 self.add_error(f'label_{score_id}', _('Please provide a label for the score.'))
+
+            if not value_empty:
+                seen_values.setdefault(value, []).append(score_id)
+
+        for val, ids in seen_values.items():
+            if len(ids) > 1:
+                for score_id in ids[1:]:
+                    self.add_error(
+                        f'value_{score_id}',
+                        _('Duplicate score values are not allowed within the same category.')
+                    )
         return data
 
     def save(self, *args, **kwargs):

@@ -771,6 +771,7 @@ class Event(
         speakers = '{base}speakers/'
         settings = edit_settings = '{base}settings/'
         review_settings = '{settings}review/'
+        feedback_settings = '{settings}feedback/'
         mail_settings = edit_mail_settings = '{settings}mail'
         widget_settings = '{settings}widget'
         import_export_settings = '{settings}import-export/'
@@ -1461,6 +1462,60 @@ class Event(
 
         # Return False if no permission was granted
         return False
+
+    def has_organizer_role_implicit(self, *, traits, room=None):
+        event_trait_grants = self._get_trait_grants_with_defaults()
+
+        if traits is None:
+            traits = []
+
+        if 'admin' in traits:
+            return True
+
+        for role, required_traits in event_trait_grants.items():
+            if (
+                role in ORGANIZER_ROLES
+                and traits_match_required(traits, required_traits)
+                and required_traits
+            ):
+                return True
+
+        if room:
+            room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
+            for role, required_traits in room_trait_grants.items():
+                if (
+                    role in ORGANIZER_ROLES
+                    and traits_match_required(traits, required_traits)
+                    and required_traits
+                ):
+                    return True
+
+        return False
+
+    def has_organizer_role(self, *, user, room=None):
+        if user.is_banned:  # pragma: no cover
+            return False
+
+        if self.has_organizer_role_implicit(
+            traits=user.traits or [],
+            room=room,
+        ):
+            return True
+
+        return bool(ORGANIZER_ROLES.intersection(user.get_role_grants(room)))
+
+    async def has_organizer_role_async(self, *, user, room=None):
+        if user.is_banned:  # pragma: no cover
+            return False
+
+        if self.has_organizer_role_implicit(
+            traits=user.traits or [],
+            room=room,
+        ):
+            return True
+
+        roles = await user.get_role_grants_async(room)
+        return bool(ORGANIZER_ROLES.intersection(roles))
 
     def has_permission(self, *, user, permission: Permission, room=None):
         """

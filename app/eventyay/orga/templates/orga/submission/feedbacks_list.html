@@ -11,6 +11,17 @@
     {% trans "Attendee feedback" as header_title %}
     {% include "common/includes/header_nav.html" with header_title=header_title %}
 
+    <div class="mb-3">
+        <a href="{% url 'orga:submissions.feedback.export' organizer=request.event.organizer.slug event=request.event.slug %}?format=csv"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-download"></i> {% trans "Export CSV" %}
+        </a>
+        <a href="{% url 'orga:submissions.feedback.export' organizer=request.event.organizer.slug event=request.event.slug %}?format=json"
+           class="btn btn-outline-secondary btn-sm ml-2">
+            <i class="fa fa-download"></i> {% trans "Export JSON" %}
+        </a>
+    </div>
+
     {% regroup feedback|dictsort:"talk.title" by talk.title as feedbacks_list %}
 
     {% for submission in feedbacks_list %}
@@ -22,7 +33,16 @@
             {% has_event_perm "base.view_feedback_submission" request.user request entry.talk as can_see_feedback %}
             {% if can_see_feedback %}
                 <div class="card mb-2">
-                    <div class="card-body pb-0">{{ entry.review|rich_text }}</div>
+                    <div class="card-body pb-0">
+                        {% if entry.rating %}
+                            <div class="feedback-rating mb-2" aria-label="{% translate 'Rating' %}: {{ entry.rating }} / 5" title="{% translate 'Rating' %}: {{ entry.rating }} / 5">
+                                {% for i in "12345"|make_list %}
+                                    <span class="{% if forloop.counter <= entry.rating %}text-warning{% else %}text-muted{% endif %}">★</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {{ entry.review|rich_text }}
+                    </div>
                 </div>
             {% endif %}
         {% endfor %}

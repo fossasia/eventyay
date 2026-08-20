@@ -10,6 +10,8 @@ from django.core.exceptions import PermissionDenied
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Q
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
@@ -899,3 +901,27 @@ class OrganizerBillingModel(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.organizer.cache.clear()
+
+
+@receiver(m2m_changed, sender=Team.members.through)
+@scopes_disabled()
+def handle_team_members_changed(sender, instance, action, reverse, pk_set, **kwargs):
+    if action in ('post_remove', 'post_clear'):
+        if reverse:
+            user = instance
+            if user.default_organizer_id and not user.teams.filter(organizer_id=user.default_organizer_id).exists():
+                User.objects.filter(pk=user.pk).update(default_organizer=None)
+        else:
+            team = instance
+            users_to_check = (
+                User.objects.filter(pk__in=pk_set, default_organizer=team.organizer)
+                if pk_set
+                else User.objects.filter(default_organizer=team.organizer)
+            )
+            users_with_other_teams = set(
+                Team.objects.filter(organizer=team.organizer, members__in=users_to_check)
+                .values_list('members', flat=True)
+            )
+            users_to_clear = [u.pk for u in users_to_check if u.pk not in users_with_other_teams]
+            if users_to_clear:
+                User.objects.filter(pk__in=users_to_clear).update(default_organizer=None)

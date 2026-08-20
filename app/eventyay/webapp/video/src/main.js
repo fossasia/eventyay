@@ -138,7 +138,7 @@ async function init({ token, inviteToken }) {
     setInterval(() => store.commit('updateNow'), 60000)
   }, 60000 - (Date.now() % 60000))
 
-  setInterval(() => store.dispatch('notifications/pollExternals'), 1000)
+  store.dispatch('notifications/startExternalPolling')
   window.__venueless__release = RELEASE
 
   window.addEventListener('beforeinstallprompt', function (event) {
