@@ -36,6 +36,7 @@ if [ -d /usr/src/plugins ]; then
 fi
 
 python manage.py migrate
+python manage.py compilemessages
 
 # Start Vite dev servers for live frontend development when EVY_NPM_DEV=1
 if [ "$EVY_NPM_DEV" = "1" ]; then
