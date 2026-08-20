@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-talk-detail
-	detail-back-nav(hide-back)
+	detail-back-nav(:hide-back="true")
 		detail-top-actions(
 			:export-options="talkExportOptions",
 			:qrcodes-url="talkQrcodesUrl",
