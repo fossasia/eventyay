@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-app-bar
 	.left
-		button.hamburger(v-if="showActions", type="button", @click.stop="$emit('toggleSidebar')", aria-label="Toggle navigation")
+		button.hamburger(v-if="showActions", type="button", @click.stop="$emit('toggleSidebar')", :aria-label="$t('AppBar:toggle-navigation')")
 			span.bar
 			span.bar
 			span.bar
@@ -35,15 +35,15 @@
 				transition(name="dropdown-reveal")
 					.profile-dropdown(v-if="profileMenuOpen", role="menu", @click.stop)
 						.visibility-row(v-if="!isAnonymous")
-							span.visibility-label Profile visibility
-							span.visibility-badge(:class="isPublic ? 'badge-public' : 'badge-private'") {{ isPublic ? 'Public' : 'Private' }}
+							span.visibility-label {{ $t('AppBar:profile-visibility') }}
+							span.visibility-badge(:class="isPublic ? 'badge-public' : 'badge-private'") {{ isPublic ? $t('AppBar:public') : $t('AppBar:private') }}
 						div.menu-separator(v-if="!isAnonymous")
 						template(v-for="item in menuItems", :key="item.key")
 							div.menu-separator(v-if="item.separatorBefore")
 							a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
 								span.menu-item-icon(v-if="item.icon" aria-hidden="true")
 									i(:class="iconClasses[item.icon]")
-								span.menu-item-label {{ item.label }}
+								span.menu-item-label {{ $t(item.label) }}
 </template>
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
@@ -78,14 +78,14 @@ const ICON_CLASSES = {
 }
 
 const PROFILE_MENU_ITEMS = [
-	{ key: 'dashboard', label: 'Dashboard', icon: 'dashboard', externalPath: 'common/' },
-	{ key: 'orders', label: 'My Orders', externalPath: 'common/orders/', icon: 'orders' },
-	{ key: 'sessions', label: 'My Sessions', externalPath: 'common/sessions/', icon: 'tickets' },
-	{ key: 'events', label: 'My Events', externalPath: 'common/events/', icon: 'events' },
-	{ key: 'organizers', label: 'Organizers', externalPath: 'common/organizers/', icon: 'organizers' },
-	{ key: 'profile', label: 'Profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
-	{ key: 'account', label: 'Account', externalPath: 'common/account/general', icon: 'account' },
-	{ key: 'logout', label: 'Logout', action: 'logout', icon: 'logout', separatorBefore: true }
+	{ key: 'dashboard', label: 'AppBar:dashboard', icon: 'dashboard', externalPath: 'common/' },
+	{ key: 'orders', label: 'AppBar:my-orders', externalPath: 'common/orders/', icon: 'orders' },
+	{ key: 'sessions', label: 'AppBar:my-sessions', externalPath: 'common/sessions/', icon: 'tickets' },
+	{ key: 'events', label: 'AppBar:my-events', externalPath: 'common/events/', icon: 'events' },
+	{ key: 'organizers', label: 'AppBar:organizers', externalPath: 'common/organizers/', icon: 'organizers' },
+	{ key: 'profile', label: 'AppBar:profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
+	{ key: 'account', label: 'AppBar:account', externalPath: 'common/account/general', icon: 'account' },
+	{ key: 'logout', label: 'AppBar:logout', action: 'logout', icon: 'logout', separatorBefore: true }
 ]
 
 const emit = defineEmits(['toggleSidebar'])
