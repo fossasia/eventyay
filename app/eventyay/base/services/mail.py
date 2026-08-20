@@ -371,7 +371,7 @@ def mail_send_task(
             attach_cid_images(html_message, cid_images, verify_ssl=True)
             email.attach_alternative(html_message, 'multipart/related')
         else:
-            email.attach_alternative(html, 'text/html')
+            email.attach_alternative(html_with_cid, 'text/html')
 
     if user:
         user = User.objects.get(pk=user)
