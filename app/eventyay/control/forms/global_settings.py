@@ -3,7 +3,7 @@ from typing import List, Union
 
 from django import forms
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
@@ -366,7 +366,7 @@ class GlobalSettingsForm(SettingsForm):
                         decimal_places=2,
                         max_digits=10,
                         help_text=_('Percentage fee charged on ticket payments.'),
-                        validators=[MinValueValidator(0)],
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
                     ),
                 ),
                 (
@@ -424,7 +424,7 @@ class GlobalSettingsForm(SettingsForm):
                         decimal_places=2,
                         max_digits=10,
                         help_text=_('A percentage fee will be charged for each ticket sold.'),
-                        validators=[MinValueValidator(0)],
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
                     ),
                 ),
                 (
