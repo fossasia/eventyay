@@ -43,7 +43,7 @@
 							a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
 								span.menu-item-icon(v-if="item.icon" aria-hidden="true")
 									i(:class="iconClasses[item.icon]")
-								span.menu-item-label {{ $t(`AppBar:menu:${item.key}`) }}
+								span.menu-item-label {{ $t(item.labelKey) }}
 </template>
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
@@ -78,14 +78,14 @@ const ICON_CLASSES = {
 }
 
 const PROFILE_MENU_ITEMS = [
-	{ key: 'dashboard', label: 'Dashboard', icon: 'dashboard', externalPath: 'common/' },
-	{ key: 'orders', label: 'My Orders', externalPath: 'common/orders/', icon: 'orders' },
-	{ key: 'sessions', label: 'My Sessions', externalPath: 'common/sessions/', icon: 'tickets' },
-	{ key: 'events', label: 'My Events', externalPath: 'common/events/', icon: 'events' },
-	{ key: 'organizers', label: 'Organizers', externalPath: 'common/organizers/', icon: 'organizers' },
-	{ key: 'profile', label: 'Profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
-	{ key: 'account', label: 'Account', externalPath: 'common/account/general', icon: 'account' },
-	{ key: 'logout', label: 'Logout', action: 'logout', icon: 'logout', separatorBefore: true }
+	{ key: 'dashboard', labelKey: 'AppBar:menu:dashboard', icon: 'dashboard', externalPath: 'common/' },
+	{ key: 'orders', labelKey: 'AppBar:menu:orders', externalPath: 'common/orders/', icon: 'orders' },
+	{ key: 'sessions', labelKey: 'AppBar:menu:sessions', externalPath: 'common/sessions/', icon: 'tickets' },
+	{ key: 'events', labelKey: 'AppBar:menu:events', externalPath: 'common/events/', icon: 'events' },
+	{ key: 'organizers', labelKey: 'AppBar:menu:organizers', externalPath: 'common/organizers/', icon: 'organizers' },
+	{ key: 'profile', labelKey: 'AppBar:menu:profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
+	{ key: 'account', labelKey: 'AppBar:menu:account', externalPath: 'common/account/general', icon: 'account' },
+	{ key: 'logout', labelKey: 'AppBar:menu:logout', action: 'logout', icon: 'logout', separatorBefore: true }
 ]
 
 const emit = defineEmits(['toggleSidebar'])
