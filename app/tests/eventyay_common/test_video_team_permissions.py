@@ -307,6 +307,12 @@ def test_default_roles_are_shared_between_event_and_world():
     assert roles['video_content_manager'] == list(
         VIDEO_ROLE_PERMISSIONS['video_content_manager']
     )
+    flattened = {
+        permission.value if hasattr(permission, 'value') else permission
+        for perms in roles.values()
+        for permission in perms
+    }
+    assert not any('exhibition' in value for value in flattened)
 
 
 def test_system_and_organizer_roles_derive_from_video_maps():

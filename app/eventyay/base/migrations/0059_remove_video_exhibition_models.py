@@ -10,46 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='exhibitor',
-            name='event',
-        ),
-        migrations.RemoveField(
-            model_name='exhibitor',
-            name='highlighted_room',
-        ),
-        migrations.RemoveField(
-            model_name='exhibitor',
-            name='room',
-        ),
-        migrations.RemoveField(
-            model_name='exhibitorsocialmedialink',
-            name='exhibitor',
-        ),
-        migrations.RemoveField(
-            model_name='exhibitorlink',
-            name='exhibitor',
-        ),
-        migrations.RemoveField(
-            model_name='exhibitorview',
-            name='exhibitor',
-        ),
-        migrations.RemoveField(
-            model_name='exhibitorstaff',
-            name='exhibitor',
-        ),
-        migrations.AlterUniqueTogether(
-            name='exhibitorstaff',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='exhibitorstaff',
-            name='user',
-        ),
-        migrations.RemoveField(
-            model_name='exhibitorview',
-            name='user',
-        ),
+        # Child tables first so unique_together on ExhibitorStaff is not altered after its FKs are gone.
         migrations.DeleteModel(
             name='ContactRequest',
         ),
@@ -60,12 +21,12 @@ class Migration(migrations.Migration):
             name='ExhibitorLink',
         ),
         migrations.DeleteModel(
-            name='Exhibitor',
-        ),
-        migrations.DeleteModel(
             name='ExhibitorStaff',
         ),
         migrations.DeleteModel(
             name='ExhibitorView',
+        ),
+        migrations.DeleteModel(
+            name='Exhibitor',
         ),
     ]
