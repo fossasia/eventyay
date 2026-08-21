@@ -2,11 +2,27 @@ document.addEventListener("DOMContentLoaded", function() {
     const replyBtns = document.querySelectorAll('.reply-btn');
     replyBtns.forEach(function(btn) {
         btn.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            const formContainer = document.getElementById('reply-form-' + id);
+            const formId = this.getAttribute('data-form-id') || this.getAttribute('data-id');
+            const parentId = this.getAttribute('data-parent-id') || this.getAttribute('data-id');
+            const formContainer = document.getElementById('reply-form-' + formId);
             if (formContainer) {
+                const replyItem = this.closest('.reply-item');
+                if (replyItem) {
+                    replyItem.parentNode.insertBefore(formContainer, replyItem.nextSibling);
+                } else {
+                    const actionsContainer = this.closest('.comment-actions');
+                    if (actionsContainer) {
+                        actionsContainer.parentNode.insertBefore(formContainer, actionsContainer.nextSibling);
+                    }
+                }
+                const parentInput = formContainer.querySelector('input[name="parent"]');
+                if (parentInput && parentId) {
+                    parentInput.value = parentId;
+                }
                 formContainer.classList.remove('d-none');
                 formContainer.style.display = 'block';
+                const textarea = formContainer.querySelector('textarea');
+                if (textarea) textarea.focus();
             }
         });
     });

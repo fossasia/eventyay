@@ -287,20 +287,30 @@ class TalkView(TalkMixin, TemplateView):
             from django.db.models import Count, Q
             
             if self.request.event.get_feature_flag('feedback_show_public'):
-                replies_qs = Feedback.objects.filter(is_public=True, status='published').select_related('author').annotate(
+                all_published = Feedback.objects.filter(
+                    is_public=True, status='published', talk=self.submission
+                ).select_related('author').annotate(
                     upvote_count=Count('reactions', filter=Q(reactions__is_upvote=True)),
                     downvote_count=Count('reactions', filter=Q(reactions__is_upvote=False))
                 ).order_by('created')
-                ctx['public_feedback'] = self.submission.feedback.filter(
-                    is_public=True, parent__isnull=True, status='published'
-                ).select_related('author').prefetch_related(
-                    Prefetch('replies', queryset=replies_qs)
-                ).annotate(
-                    upvote_count=Count('reactions', filter=Q(reactions__is_upvote=True)),
-                    downvote_count=Count('reactions', filter=Q(reactions__is_upvote=False))
-                ).order_by('-created')
+                
+                feedback_dict = {fb.id: fb for fb in all_published}
+                top_level_feedback = []
+                
+                for fb in all_published:
+                    fb.cached_replies = []
+                    
+                for fb in all_published:
+                    if fb.parent_id:
+                        parent = feedback_dict.get(fb.parent_id)
+                        if parent:
+                            parent.cached_replies.append(fb)
+                    else:
+                        top_level_feedback.append(fb)
+                        
+                ctx['public_feedback'] = top_level_feedback
             else:
-                ctx['public_feedback'] = self.submission.feedback.none()
+                ctx['public_feedback'] = []
             if self.request.user.is_authenticated and user_can_give_feedback(
                 self.request.user, self.submission
             ):

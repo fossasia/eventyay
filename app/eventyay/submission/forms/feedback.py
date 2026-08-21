@@ -56,8 +56,6 @@ class FeedbackForm(ReadOnlyFlag, forms.ModelForm):
                 parent_feedback = Feedback.objects.get(id=parent_id)
                 if parent_feedback.talk_id != self.instance.talk_id:
                     raise forms.ValidationError(_('Parent feedback does not belong to this session.'))
-                if parent_feedback.parent_id is not None:
-                    raise forms.ValidationError(_('Cannot reply to a reply.'))
             except Feedback.DoesNotExist:
                 raise forms.ValidationError(_('Parent feedback does not exist.'))
         return parent_id

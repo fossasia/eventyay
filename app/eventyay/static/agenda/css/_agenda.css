@@ -711,7 +711,7 @@ dialog.agenda-wip-preview-leave-dialog::backdrop {
   flex-shrink: 0;
 }
 .comment-item {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 .comment-actions .btn {
   border: none;
