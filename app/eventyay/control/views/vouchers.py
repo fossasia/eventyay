@@ -1,11 +1,12 @@
 import io
+from collections import defaultdict
 
 from defusedcsv import csv
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import connection, transaction
-from django.db.models import Sum
+from django.db.models import Min, Q, Subquery
 from django.http import (
     Http404,
     HttpResponse,
@@ -33,7 +34,7 @@ from eventyay.base.models.vouchers import _generate_random_code
 from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.vouchers import vouchers_send
 from eventyay.base.views.tasks import AsyncFormView
-from eventyay.control.forms.filter import VoucherFilterForm, VoucherTagFilterForm, advanced_filter_count, advanced_filters_open_from_get
+from eventyay.control.forms.filter import VoucherFilterForm, advanced_filter_count, advanced_filters_open_from_get
 from eventyay.control.forms.vouchers import VoucherBulkForm, VoucherForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.signals import voucher_form_class
@@ -47,64 +48,55 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
     template_name = 'pretixcontrol/vouchers/index.html'
     permission = 'can_view_vouchers'
 
-    def get_queryset(self):
-        qs = Voucher.annotate_budget_used_orders(
-            self.request.event.vouchers.filter(waitinglistentries__isnull=True).select_related(
-                'product', 'variation', 'seat'
-            )
+    def get_filtered_queryset(self):
+        qs = self.request.event.vouchers.filter(waitinglistentries__isnull=True).select_related(
+            'product', 'variation', 'seat'
         )
         if self.filter_form and self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
 
         return qs.distinct()
 
-    @cached_property
-    def _active_tab(self):
-        return self.request.GET.get('tab', 'vouchers')
+    def get_queryset(self):
+        qs = self.get_filtered_queryset()
+        group_representatives = (
+            qs.exclude(tag='')
+            .order_by()
+            .values('tag')
+            .annotate(first_id=Min('pk'))
+            .values('first_id')
+        )
+        qs = qs.filter(Q(tag='') | Q(pk__in=Subquery(group_representatives)))
+        return Voucher.annotate_budget_used_orders(qs)
 
     @cached_property
     def filter_form(self):
-        if self._active_tab == 'vouchers' or self.request.GET.get('download') == 'yes':
-            return VoucherFilterForm(data=self.request.GET, event=self.request.event)
-        return None
-
-    @cached_property
-    def tags_filter_form(self):
-        if self._active_tab == 'tags':
-            return VoucherTagFilterForm(data=self.request.GET, event=self.request.event)
-        return None
-
-    def get_tags_queryset(self):
-        qs = self.request.event.vouchers.order_by('tag').filter(tag__isnull=False, waitinglistentries__isnull=True)
-
-        if self.tags_filter_form and self.tags_filter_form.is_valid():
-            qs = self.tags_filter_form.filter_qs(qs)
-
-        qs = qs.values('tag').annotate(total=Sum('max_usages'), redeemed=Sum('redeemed'))
-
-        return qs.distinct()
+        return VoucherFilterForm(data=self.request.GET, event=self.request.event)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
         ctx['advanced_filters_open'] = advanced_filters_open_from_get(self.filter_form)
-        ctx['advanced_filter_count'] = advanced_filter_count(self.filter_form) 
-        ctx['tags_filter_form'] = self.tags_filter_form
-        ctx['tab'] = self._active_tab
-        if ctx['tab'] == 'tags':
-            tags = self.get_tags_queryset()
-            for t in tags:
-                if t['total'] == 0:
-                    t['percentage'] = 0
-                else:
-                    t['percentage'] = int((t['redeemed'] / t['total']) * 100)
-            ctx['tags'] = tags
-        else:
-            ctx['tags'] = []
+        ctx['advanced_filter_count'] = advanced_filter_count(self.filter_form)
+        vouchers = list(ctx['vouchers'])
+        group_tags = {voucher.tag for voucher in vouchers if voucher.tag}
+        if group_tags:
+            grouped_vouchers = defaultdict(list)
+            for voucher in self.request.event.vouchers.filter(waitinglistentries__isnull=True, tag__in=group_tags):
+                grouped_vouchers[voucher.tag].append(voucher)
+            for voucher in vouchers:
+                if voucher.tag:
+                    voucher.group_vouchers = grouped_vouchers[voucher.tag]
+                    voucher.group_redeemed = sum(member.redeemed for member in voucher.group_vouchers)
+                    voucher.group_max_usages = sum(member.max_usages for member in voucher.group_vouchers)
 
         return ctx
 
     def get(self, request, *args, **kwargs):
+        if request.GET.get('tab') == 'tags':
+            query = request.GET.copy()
+            query.pop('tab')
+            return HttpResponseRedirect(f'{request.path}?{query.urlencode()}' if query else request.path)
         if request.GET.get('download', '') == 'yes':
             return self._download_csv()
         return super().get(request, *args, **kwargs)
@@ -130,7 +122,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
         ]
         writer.writerow(headers)
 
-        for v in self.get_queryset():
+        for v in Voucher.annotate_budget_used_orders(self.get_filtered_queryset()):
             if v.product:
                 if v.variation:
                     prod = '%s – %s' % (str(v.product), str(v.variation))
