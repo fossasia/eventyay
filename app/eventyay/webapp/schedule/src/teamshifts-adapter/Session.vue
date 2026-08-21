@@ -29,33 +29,34 @@ div.c-linear-schedule-session.is-shift-session(
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
 		.roles-list(v-if="session.roles && session.roles.length")
 			.role-item(v-for="(role, index) in session.roles", :key="role.id ?? index")
-				.role-header
-					span.role-name
-						| {{ roleName(role) }}
-						span.role-restricted-tag(v-if="role.is_restricted") Restricted
-					.shift-actions
-						.shift-manage
-							template(v-if="isMyRole(role)")
-								button.btn.btn-sm.btn-danger(type="button", :disabled="claimBusy", @click.stop="openConfirm('drop', role)") Drop
-							template(v-else-if="canClaimRole(role)")
-								button.btn.btn-sm.btn-primary(type="button", :disabled="claimBusy", @click.stop="openConfirm('claim', role)") Sign Up
-							template(v-else-if="role.is_restricted")
-								span.text-muted Restricted
-							template(v-else-if="isRoleFull(role)")
-								span.text-muted Full
+				.role-content
+					.role-name-group
+						span.role-name
+							| {{ roleName(role) }}
+							span.role-restricted-tag(v-if="role.is_restricted") Restricted
+						span.role-divider
 						span.role-badge(:class="'badge-' + getCapacityStatus(role)") {{ assignedList(role).length }}/{{ role.capacity }} assigned
-				.role-assignees
-					template(v-if="assignedList(role).length")
-						span.role-assignee(v-for="(user, i) in previewAssignees(role)", :key="user.id || i")
-							svg.role-user-icon(viewBox="0 0 24 24", aria-hidden="true")
-								path(fill="currentColor", d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z")
-							span.role-assignee-name {{ user.name }}
-						.role-assignees-more-wrap(v-if="hiddenAssigneeCount(role)")
-							button.role-assignees-more(
-								type="button",
-								:aria-expanded="openAssigneesRoleId != null ? 'true' : 'false'",
-								@click.stop="toggleAssigneesPopover(role, $event)") +{{ hiddenAssigneeCount(role) }} more
-					span.text-muted(v-if="!assignedList(role).length") None
+					.role-assignees
+						template(v-if="assignedList(role).length")
+							span.role-assignee(v-for="(user, i) in previewAssignees(role)", :key="user.id || i")
+								svg.role-user-icon(viewBox="0 0 24 24", aria-hidden="true")
+									path(fill="currentColor", d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z")
+								span.role-assignee-name {{ user.name }}
+							.role-assignees-more-wrap(v-if="hiddenAssigneeCount(role)")
+								button.role-assignees-more(
+									type="button",
+									:aria-expanded="openAssigneesRoleId != null ? 'true' : 'false'",
+									@click.stop="toggleAssigneesPopover(role, $event)") +{{ hiddenAssigneeCount(role) }} more
+						span.text-muted(v-if="!assignedList(role).length") None
+				.shift-actions
+					template(v-if="isMyRole(role)")
+						button.btn.btn-sm.btn-danger(type="button", :disabled="claimBusy", @click.stop="openConfirm('drop', role)") Drop
+					template(v-else-if="canClaimRole(role)")
+						button.btn.btn-sm.btn-primary(type="button", :disabled="claimBusy", @click.stop="openConfirm('claim', role)") Sign Up
+					template(v-else-if="role.is_restricted")
+						span.text-muted Restricted
+					template(v-else-if="isRoleFull(role)")
+						span.text-muted Full
 		.bottom-info
 			.track(v-if="session.track", :class="{'single-line-clamped': isGridVeryShort}", :title="gridMetaTitle(getLocalizedString(session.track.name))") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room", :title="getLocalizedString(session.room.name)") {{ getLocalizedString(session.room.name) }}
@@ -501,52 +502,39 @@ export default {
 		.role-item
 			border-top: 1px solid rgba(0, 0, 0, 0.12)
 			padding-top: 6px
-			.role-header
-				display: flex
-				justify-content: space-between
-				align-items: center
-				gap: 8px
-				font-size: 13px
-				font-weight: 600
-				.role-restricted-tag
-					margin-left: 6px
-					font-size: 10px
-					font-weight: 700
-					text-transform: uppercase
-					letter-spacing: 0.02em
-					padding: 1px 5px
-					border-radius: 3px
-					background-color: #6c757d
-					color: #fff
-				.shift-actions
+			display: flex
+			align-items: center
+			gap: 8px
+			.role-content
+				flex: 1 1 auto
+				min-width: 0
+				.role-name-group
 					display: flex
-					flex-direction: column
-					align-items: flex-end
-					gap: 4px
-					flex-shrink: 0
-					.shift-manage
-						.btn
-							display: inline-block
-							padding: 2px 8px
-							font-size: 12px
-							line-height: 1.4
-							border-radius: 4px
-							border: 1px solid transparent
-							cursor: pointer
-							&:disabled
-								opacity: 0.65
-								cursor: default
-						.btn-primary
-							background: #2185d0
-							border-color: #2185d0
-							color: #fff
-						.btn-danger
-							background: #d9534f
-							border-color: #d9534f
-							color: #fff
-						.text-muted
-							font-size: 11px
-							color: #888
+					align-items: center
+					gap: 0
+					font-size: 13px
+					font-weight: 600
+					.role-name
+						white-space: nowrap
+						overflow: hidden
+						text-overflow: ellipsis
+					.role-restricted-tag
+						margin-left: 6px
+						font-size: 10px
+						font-weight: 700
+						text-transform: uppercase
+						letter-spacing: 0.02em
+						padding: 1px 5px
+						border-radius: 3px
+						background-color: #6c757d
+						color: #fff
+					.role-divider
+						display: inline-block
+						width: 1px
+						height: 14px
+						background-color: rgba(0, 0, 0, 0.25)
+						margin: 0 8px
+						flex-shrink: 0
 					.role-badge
 						display: inline-block
 						font-size: 11px
@@ -566,39 +554,65 @@ export default {
 						&.badge-partial
 							border-color: #c9920a
 							color: #c9920a
-			.role-assignees
-				position: relative
-				display: flex
-				flex-wrap: wrap
-				align-items: center
-				gap: 6px 12px
-				font-size: 12px
-				color: #6c757d
-				margin-top: 4px
-				.role-assignee
-					display: inline-flex
-					align-items: center
-					gap: 6px
-					min-width: 0
-				.role-assignee-name
-					min-width: 0
-				.role-user-icon
-					width: 11px
-					height: 11px
-					flex-shrink: 0
-				.role-assignees-more-wrap
+				.role-assignees
 					position: relative
-				.role-assignees-more
-					border: none
-					background: transparent
-					color: #2185d0
+					display: flex
+					flex-wrap: wrap
+					align-items: center
+					gap: 6px 12px
 					font-size: 12px
-					font-weight: 600
-					line-height: 1.3
-					padding: 0
+					color: #6c757d
+					margin-top: 4px
+					.role-assignee
+						display: inline-flex
+						align-items: center
+						gap: 6px
+						min-width: 0
+					.role-assignee-name
+						min-width: 0
+					.role-user-icon
+						width: 11px
+						height: 11px
+						flex-shrink: 0
+					.role-assignees-more-wrap
+						position: relative
+					.role-assignees-more
+						border: none
+						background: transparent
+						color: #2185d0
+						font-size: 12px
+						font-weight: 600
+						line-height: 1.3
+						padding: 0
+						cursor: pointer
+						&:hover
+							text-decoration: underline
+			.shift-actions
+				display: flex
+				align-items: center
+				flex-shrink: 0
+				.btn
+					display: inline-block
+					padding: 2px 8px
+					font-size: 12px
+					line-height: 1.4
+					border-radius: 4px
+					border: 1px solid transparent
 					cursor: pointer
-					&:hover
-						text-decoration: underline
+					&:disabled
+						opacity: 0.65
+						cursor: default
+				.btn-primary
+					background: #2185d0
+					border-color: #2185d0
+					color: #fff
+				.btn-danger
+					background: #d9534f
+					border-color: #d9534f
+					color: #fff
+				.text-muted
+					font-size: 11px
+					color: #888
 	&:hover
 		.info
 			border: 1px solid var(--track-color)

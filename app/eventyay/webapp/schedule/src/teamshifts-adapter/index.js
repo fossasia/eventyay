@@ -65,15 +65,22 @@ export function getShiftTrackColor (roles) {
 	if (!Array.isArray(roles) || !roles.length) {
 		return 'var(--pretalx-clr-primary)'
 	}
-	let totalCapacity = 0
-	let totalAssigned = 0
+	let allFull = true
+	let anyEmpty = false
 	for (const role of roles) {
-		totalCapacity += role.capacity || 0
-		totalAssigned += getAssignedList(role).length
+		const capacity = Number(role.capacity) || 0
+		if (capacity <= 0) continue
+		const assigned = getAssignedList(role).length
+		if (assigned === 0) {
+			anyEmpty = true
+			break
+		}
+		if (assigned < capacity) {
+			allFull = false
+		}
 	}
-	if (totalCapacity <= 0) return 'var(--pretalx-clr-primary)'
-	if (totalAssigned >= totalCapacity) return SHIFT_STATUS_COLORS.full
-	if (totalAssigned === 0) return SHIFT_STATUS_COLORS.empty
+	if (anyEmpty) return SHIFT_STATUS_COLORS.empty
+	if (allFull) return SHIFT_STATUS_COLORS.full
 	return SHIFT_STATUS_COLORS.partial
 }
 

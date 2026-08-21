@@ -8,102 +8,29 @@
 	.info
 		.title-row(style="display: flex; justify-content: space-between; align-items: flex-start;")
 			.title(:class="{'title-clamped': isShortSession}") {{ getLocalizedString(session.title) }}
-			.card-actions(v-if="caps.showRoles && caps.canEdit && !isBreak && session.room")
-				button.btn.btn-link.p-0.mr-2(type="button", @pointerdown.stop, @click.stop="$emit('editSession', session)", :aria-label="$t('Edit')", :title="$t('Edit')")
-					i.fa.fa-pencil(aria-hidden="true")
-				button.btn.btn-link.p-0.text-danger(type="button", @pointerdown.stop, @click.stop="$emit('deleteSession', session)", :aria-label="$t('Delete')", :title="$t('Delete')")
-					i.fa.fa-trash(aria-hidden="true")
-		
-		template(v-if="caps.showRoles")
-			.roles-list(v-if="session.roles && session.roles.length")
-				.role-item(v-for="role in session.roles", :key="role.id")
-					.role-header
-						span.role-name
-							| {{ getLocalizedString(role.name) }}
-							span.role-restricted-tag(v-if="role.is_restricted", :title="$t('Volunteers cannot self-claim this role; requires manual assignment.')") {{ $t('Restricted') }}
-						span.role-badge(:class="getCapacityClass(role)") {{ role.assigned.length }}/{{ role.capacity }} {{ $t('assigned') }}
-					.role-assignees
-						template(v-if="role.assigned.length")
-							span.role-assignee(v-for="(user, i) in previewAssignees(role)", :key="user.id || i")
-								svg.role-user-icon(viewBox="0 0 24 24", aria-hidden="true")
-									path(fill="currentColor", d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z")
-								span.role-assignee-name {{ user.name }}
-							.role-assignees-more-wrap(v-if="hiddenAssigneeCount(role)")
-								button.role-assignees-more(
-									type="button",
-									:aria-expanded="openAssigneesRoleId != null ? 'true' : 'false'",
-									@click.stop="toggleAssigneesPopover(role, $event)",
-									@pointerdown.stop="") +{{ hiddenAssigneeCount(role) }} more
-						span.text-muted(v-else) {{ $t('None') }}
-			
-			template(v-if="caps.showClaimUI")
-				.shift-manage.mt-2(v-if="!isBreak")
-					template(v-if="isMyClaimed")
-						span.role-badge.badge-full.mr-2 {{ $t('Signed up') }}
-						form.ts-inline-form(:action="withdrawUrl", method="post")
-							input(type="hidden", name="csrfmiddlewaretoken", :value="csrfToken")
-							button.btn.btn-sm.btn-danger(type="submit", @click.stop, @pointerdown.stop) {{ $t('Drop shift') }}
-					template(v-else-if="hasClaimableSlot")
-						form.ts-inline-form(:action="claimUrl", method="post")
-							input(type="hidden", name="csrfmiddlewaretoken", :value="csrfToken")
-							button.btn.btn-sm.btn-primary(type="submit", @click.stop, @pointerdown.stop) {{ $t('Sign Up') }}
-					template(v-else)
-						span.text-muted(style="font-size:11px") {{ $t('Full / Restricted') }}
-			
-			.shift-manage.mt-2.text-right(v-else-if="!isBreak")
-				button.btn.btn-sm.btn-outline-primary(type="button", @pointerdown.stop, @click.stop="$emit('assignMembers', session)") {{ session.roles?.some(r => r.assigned.length < r.capacity) ? $t('Assign Members') : $t('Manage') }}
-		
-		template(v-else)
-			.speakers(v-if="hasSpeakersWithNames", :class="{'speakers-clamped': isShortSession}") {{ speakerNames }}
-			.pending-line(v-if="session.state === 'pending'")
-				i.fa.fa-exclamation-circle
-				span {{ $t('Pending proposal state') }}
-			.bottom-info(v-if="!isBreak && (session.track || session.do_not_record)")
-				.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
-				.do_not_record.no-print(v-if="session.do_not_record", :title="$t('This session will not be recorded.')", :aria-label="$t('This session will not be recorded.')")
-					svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
-						g(transform="translate(-9.3465481,-5.441411)")
-							rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
-							path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
-							path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
+		.speakers(v-if="hasSpeakersWithNames", :class="{'speakers-clamped': isShortSession}") {{ speakerNames }}
+		.pending-line(v-if="session.state === 'pending'")
+			i.fa.fa-exclamation-circle
+			span {{ $t('Pending proposal state') }}
+		.bottom-info(v-if="!isBreak && (session.track || session.do_not_record)")
+			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
+			.do_not_record.no-print(v-if="session.do_not_record", :title="$t('This session will not be recorded.')", :aria-label="$t('This session will not be recorded.')")
+				svg(viewBox="0 0 116.59076 116.59076", width="24px", height="24px", fill="none", xmlns="http://www.w3.org/2000/svg", aria-hidden="true")
+					g(transform="translate(-9.3465481,-5.441411)")
+						rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
+						path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
+						path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
 	.warning.no-print(v-if="warnings?.length")
 		.warning-icon.text-danger
 			span(v-if="warnings.length > 1") {{ warnings.length }}
 			i.fa.fa-exclamation-triangle
-	assignees-popover(
-		:open="openAssigneesRoleId != null",
-		:title="assigneesPopoverTitle",
-		:assignees="assigneesPopoverList",
-		:top="assigneesPopoverPos.top",
-		:left="assigneesPopoverPos.left",
-		:width="assigneesPopoverPos.width",
-		:max-height="assigneesPopoverPos.maxHeight")
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import { getLocalizedString } from '~/utils'
-import { getCapabilities, resolveMode, resolveSessionKind, getClaimedShiftIds, getCsrfToken, getClaimBaseUrl } from '~/teamshifts-adapter'
-import type { Capabilities } from '~/teamshifts-adapter/types'
-import type { RoleAssignment } from '~/schemas'
-import AssigneesPopover from './AssigneesPopover.vue'
-
-const ASSIGNEE_PREVIEW_LIMIT = 2
-
-function placeAssigneesPopover (anchorEl: HTMLElement) {
-  const rect = anchorEl.getBoundingClientRect()
-  const width = Math.min(280, Math.max(200, window.innerWidth - 16))
-  const maxHeight = Math.min(280, window.innerHeight - 16)
-  let left = rect.left
-  let top = rect.bottom + 6
-  if (left + width > window.innerWidth - 8) left = window.innerWidth - width - 8
-  if (left < 8) left = 8
-  if (top + 140 > window.innerHeight) {
-    top = Math.max(8, rect.top - 6 - Math.min(maxHeight, 200))
-  }
-  return { top, left, width, maxHeight }
-}
+import { resolveMode, resolveSessionKind } from '~/teamshifts-adapter'
 
 interface Speaker {
   name: string
@@ -131,8 +58,7 @@ interface Session {
   abstract?: string
   room?: string | number
   do_not_record?: boolean
-  roles?: RoleAssignment[]
-  [key: string]: string | number | boolean | Record<string, string> | Speaker[] | Track | Moment | RoleAssignment[] | null | undefined
+  [key: string]: string | number | boolean | Record<string, string> | Speaker[] | Track | Moment | null | undefined
 }
 
 interface Warning {
@@ -153,84 +79,10 @@ const emit = defineEmits<{
   (e: 'startDragging', payload: { session: Session; event: PointerEvent }): void
   (e: 'editSession', payload: Session): void
   (e: 'deleteSession', payload: Session): void
-  (e: 'assignMembers', payload: Session): void
 }>()
-const isBreak = computed(() => resolveSessionKind(mode, props.session) === 'break')
 
 const mode = resolveMode()
-const caps: Capabilities = getCapabilities(mode)
-const claimedShiftIds = computed(() => caps.showClaimUI ? getClaimedShiftIds() : new Set<number>())
-const isMyClaimed = computed(() => claimedShiftIds.value.has(Number(props.session.id)))
-
-const hasClaimableSlot = computed(() => {
-  if (!props.session.roles?.length) return false
-  return props.session.roles.some(
-    (r) => !r.is_restricted && r.assigned.length < r.capacity
-  )
-})
-
-const claimUrl = computed(() => {
-  const base = getClaimBaseUrl()
-  return base ? `${base}${props.session.id}/claim/` : ''
-})
-
-const withdrawUrl = computed(() => {
-  const base = getClaimBaseUrl()
-  return base ? `${base}${props.session.id}/withdraw/` : ''
-})
-
-const csrfToken = computed(() => caps.showClaimUI ? getCsrfToken() : '')
-
-const getCapacityClass = (role: RoleAssignment) => {
-  if (role.assigned.length >= role.capacity) return 'badge-full'
-  if (role.assigned.length === 0) return 'badge-empty'
-  return 'badge-partial'
-}
-
-const openAssigneesRoleId = ref<number | string | null>(null)
-const assigneesPopoverList = ref<Array<{ id?: number | string, name: string }>>([])
-const assigneesPopoverTitle = ref('Assigned')
-const assigneesPopoverPos = ref({ top: 0, left: 0, width: 260, maxHeight: 280 })
-
-const previewAssignees = (role: RoleAssignment) => role.assigned.slice(0, ASSIGNEE_PREVIEW_LIMIT)
-const hiddenAssigneeCount = (role: RoleAssignment) => Math.max(0, role.assigned.length - ASSIGNEE_PREVIEW_LIMIT)
-
-const closeAssigneesPopover = () => {
-  openAssigneesRoleId.value = null
-  assigneesPopoverList.value = []
-}
-
-const toggleAssigneesPopover = (role: RoleAssignment, event: MouseEvent) => {
-  const roleId = role.id
-  if (openAssigneesRoleId.value === roleId) {
-    closeAssigneesPopover()
-    return
-  }
-  assigneesPopoverList.value = role.assigned
-  assigneesPopoverTitle.value = `Assigned (${role.assigned.length})`
-  assigneesPopoverPos.value = placeAssigneesPopover(event.currentTarget as HTMLElement)
-  openAssigneesRoleId.value = roleId
-}
-
-const onAssigneesDocPointerDown = (event: PointerEvent) => {
-  if (openAssigneesRoleId.value == null) return
-  const path = event.composedPath?.() || []
-  const inside = path.some((node) => {
-    const el = node as HTMLElement
-    return el?.classList?.contains?.('role-assignees-popover') || el?.classList?.contains?.('role-assignees-more')
-  })
-  if (inside) return
-  closeAssigneesPopover()
-  event.stopPropagation()
-}
-
-onMounted(() => {
-  document.addEventListener('pointerdown', onAssigneesDocPointerDown, true)
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', onAssigneesDocPointerDown, true)
-})
+const isBreak = computed(() => resolveSessionKind(mode, props.session) === 'break')
 
 const hasSpeakersWithNames = computed(() => {
   return props.session.speakers && props.session.speakers.some(speaker => speaker.name)
@@ -239,7 +91,7 @@ const hasSpeakersWithNames = computed(() => {
 const speakerNames = computed(() => {
   if (!props.session.speakers) return ''
   return props.session.speakers
-    .filter(speaker => speaker.name) // Only include speakers with names
+    .filter(speaker => speaker.name)
     .map(speaker => speaker.name)
     .join(', ')
 })
@@ -261,7 +113,6 @@ const classes = computed(() => {
     ) {
       cls.push('unconfirmed')
     } else if (props.session.state !== 'confirmed') {
-      // covers null / undefined / empty state
       cls.push('unconfirmed')
     }
   }
@@ -273,34 +124,12 @@ const classes = computed(() => {
   return cls
 })
 
-
 const style = computed(() => {
-  let trackColor = props.session.track?.color || 'var(--color-primary)'
-  
-  if (caps.showRoles && props.session.roles && props.session.roles.length > 0) {
-    let totalCapacity = 0
-    let totalAssigned = 0
-    for (const role of props.session.roles) {
-      totalCapacity += role.capacity
-      totalAssigned += role.assigned?.length || 0
-    }
-    if (totalCapacity > 0) {
-      if (totalAssigned >= totalCapacity) {
-        trackColor = '#28a745'
-      } else if (totalAssigned === 0) {
-        trackColor = '#dc3545'
-      } else {
-        trackColor = '#c9920a'
-      }
-    }
-  }
-
-  return {
-    '--track-color': trackColor
-  }
+  const trackColor = props.session.track?.color || 'var(--color-primary)'
+  return { '--track-color': trackColor }
 })
 
-const startTime = computed< { time: string; ampm?: string } | undefined>(() => {
+const startTime = computed<{ time: string; ampm?: string } | undefined>(() => {
   const time: Moment | undefined = props.overrideStart || props.session.start
   if (!time) return undefined
 
@@ -505,89 +334,6 @@ sessionTextExpand()
 			.title.title-clamped, .speakers.speakers-clamped
 				sessionTextExpand()
 
-	.roles-list
-		display: flex
-		flex-direction: column
-		gap: 6px
-		margin-top: 6px
-		.role-item
-			border-top: 1px solid $clr-dividers-light
-			padding-top: 6px
-			.role-header
-				display: flex
-				justify-content: space-between
-				align-items: center
-				font-size: 13px
-				font-weight: 600
-				.role-restricted-tag
-					margin-left: 6px
-					font-size: 10px
-					font-weight: 700
-					text-transform: uppercase
-					letter-spacing: 0.02em
-					padding: 1px 5px
-					border-radius: 3px
-					background-color: #6c757d
-					color: $clr-white
-				.role-badge
-					font-size: 11px
-					font-weight: 600
-					line-height: 1.3
-					padding: 3px 8px
-					border-radius: 999px
-					border: 1.5px solid
-					box-sizing: border-box
-					white-space: nowrap
-					&.badge-full
-						border-color: #28a745
-						color: #28a745
-					&.badge-empty
-						border-color: #dc3545
-						color: #dc3545
-					&.badge-partial
-						border-color: #c9920a
-						color: #c9920a
-			.role-assignees
-				position: relative
-				display: flex
-				flex-wrap: wrap
-				align-items: center
-				gap: 6px 12px
-				font-size: 12px
-				color: $clr-secondary-text-light
-				margin-top: 4px
-				.role-assignee
-					display: inline-flex
-					align-items: center
-					gap: 6px
-					min-width: 0
-				.role-assignee-name
-					min-width: 0
-				.role-user-icon
-					width: 11px
-					height: 11px
-					flex-shrink: 0
-				.role-assignees-more-wrap
-					position: relative
-				.role-assignees-more
-					border: none
-					background: transparent
-					color: var(--color-primary, #2185d0)
-					font-size: 12px
-					font-weight: 600
-					line-height: 1.3
-					padding: 0
-					cursor: pointer
-					&:hover
-						text-decoration: underline
-	.shift-manage
-		font-size: 12px
-		.btn
-			padding: 2px 8px
-			font-size: 12px
-	.ts-inline-form
-		display: inline
-
 @media print
 	.c-linear-schedule-session.isbreak
 		border: 2px solid $clr-grey-300 !important
@@ -597,6 +343,4 @@ sessionTextExpand()
 		border-right: 2px solid var(--track-color) !important
 		border-top: 2px solid var(--track-color) !important
 		border-bottom: 2px solid var(--track-color) !important
-
-
 </style>

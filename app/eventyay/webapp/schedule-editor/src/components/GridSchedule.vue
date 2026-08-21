@@ -39,8 +39,13 @@
 <script lang="ts" setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import moment, { Moment } from 'moment-timezone'
-import Session from './Session.vue'
+import TalkSession from './Session.vue'
+import ShiftSession from '~/teamshifts-adapter/Session.vue'
+import { resolveMode } from '~/teamshifts-adapter'
 import { getLocalizedString } from '~/utils'
+
+const mode = resolveMode()
+const Session = mode === 'shifts' || mode === 'public-shifts' ? ShiftSession : TalkSession
 
 interface Room {
   id: string
