@@ -12,8 +12,9 @@
         {{ phrases.base.bad_request }}
         <br>
     </p>
-    </h2>
-    <h3>
+{% endblock error_message %}
+{% block error_details %}
+    <h5>
         <p class="ml-auto mr-auto text-center">
             {% blocktranslate trimmed %}
                 It looks as if the communication between you and eventyay went wrong in
@@ -22,7 +23,14 @@
                 Please return to the last page and try again!
             {% endblocktranslate %}
         </p>
-    </h3>
-    <h2>
-{% endblock error_message %}
+    </h5>
+    <div class="mt-4 text-center">
+        {% if request.user.is_authenticated %}
+            <a href="/" class="btn btn-white btn-lg shadow-sm"><i class="fa fa-home mr-2"></i>{% trans "Go to Homepage" %}</a>
+        {% else %}
+            <a href="{% url 'auth.login' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-white btn-lg shadow-sm mr-2 mb-2"><i class="fa fa-sign-in mr-2"></i>{% trans "Log in" %}</a>
+            <a href="/" class="btn btn-outline-white btn-lg mb-2"><i class="fa fa-home mr-2"></i>{% trans "Go to Homepage" %}</a>
+        {% endif %}
+    </div>
+{% endblock error_details %}
 {% block error_code %}400{% endblock error_code %}
