@@ -1,0 +1,230 @@
+// Print stylesheet overrides for pretixcontrol and eventyay_common
+@media print {
+  *,
+  *::before,
+  *::after {
+    text-shadow: none;
+    box-shadow: none;
+  }
+
+  html,
+  body {
+    color: #111;
+    background: #fff;
+    overflow: visible;
+    height: auto;
+    min-height: auto;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Reset layout wrappers to full width without sidebar offsets */
+  body #wrapper {
+    padding-top: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body #page-wrapper,
+  body:not(.sidebar-minimized) #page-wrapper,
+  body[data-event] #page-wrapper,
+  html.rtl body #page-wrapper,
+  html.rtl body.sidebar-minimized #page-wrapper {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: auto;
+    height: auto;
+    border-left: none;
+    float: none;
+    left: 0;
+    right: 0;
+    overflow: visible;
+  }
+
+  body #page-wrapper > .container-fluid,
+  body[data-event] #page-wrapper > .container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .row > [class*="col-"] {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+
+  /* Hide navigation, sidebars, buttons, toolbars, and action UI */
+  body nav.navbar,
+  nav.navbar.navbar-inverse,
+  .navbar-inverse,
+  nav.navbar,
+  .navbar,
+  body aside.sidebar,
+  aside.sidebar,
+  .sidebar,
+  #side-menu,
+  .navbar-default.sidebar,
+  .navigation-button,
+  .page-header-with-actions .btn,
+  .impersonate-warning,
+  .global-top-warning,
+  .advanced-filter-search,
+  .filter-form,
+  .submit-group,
+  .alert-warning .btn,
+  .alert-danger .btn,
+  .alert-info .btn,
+  .panel-footer,
+  .btn:not(.btn-print-keep),
+  .dropdown-menu,
+  #loadingmodal,
+  #ajaxerr,
+  .pagination,
+  footer {
+    display: none;
+    position: static;
+  }
+
+  .d-print-none {
+    display: none;
+  }
+
+
+  /* Suppress printing raw URLs on links/buttons */
+  a[href]:after,
+  a[href]::after,
+  a[href^="#"]:after,
+  a[href^="#"]::after,
+  a.event-public-text-link[href]::after {
+    content: "";
+  }
+
+  a,
+  a:visited {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  /* Retain clean structure and borders for panels and cards */
+  .panel {
+    border: 1px solid #ddd;
+    background-color: #fff;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 15px;
+  }
+
+  .panel-default > .panel-heading,
+  .panel-heading {
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    color: #333;
+  }
+
+  .panel-body {
+    background-color: #fff;
+  }
+
+  .dashboard .widget-container {
+    border: 1px solid #e0e0e0;
+    background: #f8f8f8;
+    min-height: auto;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .dashboard .numwidget .num {
+    color: #2185d0;
+  }
+
+  /* Responsive chart scaling in print */
+  .chart,
+  .chart svg,
+  #obd_chart svg,
+  #rev_chart svg,
+  #obp_chart svg {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .morris-hover {
+    display: none;
+  }
+
+  /* Keep desktop tabular layout for tables */
+  table.table,
+  table.tickets-table,
+  table.vouchers-table,
+  table.events-table {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  table.table thead,
+  table.tickets-table thead,
+  table.vouchers-table thead,
+  table.events-table thead {
+    display: table-header-group;
+  }
+
+  table.table tbody,
+  table.tickets-table tbody,
+  table.vouchers-table tbody,
+  table.events-table tbody {
+    display: table-row-group;
+  }
+
+  table.table tr,
+  table.tickets-table > tbody > tr,
+  table.vouchers-table > tbody > tr,
+  table.events-table > tbody > tr {
+    display: table-row;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  table.table th,
+  table.table td,
+  table.tickets-table > tbody > tr > td,
+  table.vouchers-table > tbody > tr > td,
+  table.events-table > tbody > tr > td {
+    display: table-cell;
+    background-color: #fff;
+    border-top: 1px solid #ddd;
+    padding: 6px 8px;
+  }
+
+  table.tickets-table tbody td::before,
+  table.vouchers-table tbody td::before,
+  table.events-table > tbody > tr > td::before {
+    display: none;
+  }
+
+  .label,
+  .badge {
+    border: 1px solid #bbb;
+    background-color: #f0f0f0;
+    color: #333;
+  }
+
+  @page {
+    size: auto;
+    margin: 10mm;
+  }
+}

@@ -532,3 +532,19 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   }
 
 }
+
+@media print {
+  body nav.navbar,
+  nav.navbar.navbar-inverse,
+  .navbar-inverse,
+  nav.navbar,
+  .navbar {
+    display: none;
+    position: static;
+  }
+
+  body #wrapper,
+  #wrapper {
+    padding-top: 0;
+  }
+}

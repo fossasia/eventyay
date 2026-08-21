@@ -253,3 +253,59 @@
 .dashboard-live {
   margin-top: 12px;
 }
+
+@media print {
+  #timeline-steps.stages {
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  #timeline-steps .step-links {
+    display: none;
+  }
+
+  .dashboard-list-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding-bottom: 15px;
+  }
+
+  .dashboard-list-metrics .dashboard-block-wrapper,
+  .dashboard-list-metrics .dashboard-block {
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .dashboard-block-addon {
+    border-top: 1px solid #ddd;
+  }
+
+  .dashboard-history {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .apexcharts-canvas {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    zoom: 0.85;
+  }
+
+  .apexcharts-canvas svg {
+    max-width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .apexcharts-toolbar,
+  .apexcharts-tooltip,
+  .resize-triggers {
+    display: none;
+  }
+}
