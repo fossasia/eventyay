@@ -3,15 +3,40 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{{ phrases.base.permission_denied }}{% endblock title %}
+{% block title %}{% trans "Access Denied" %}{% endblock title %}
 {% block error_image %}
-    <img loading="lazy" src="{% static "common/img/error_403.svg" %}" class="img" alt="{{ phrases.base.permission_denied }}">
+    <img loading="lazy" src="{% static "common/img/error_403.svg" %}" class="img" alt="{% trans 'Access Denied' %}">
 {% endblock error_image %}
 {% block error_message %}
-    {{ phrases.base.permission_denied }}
-    </h2>
-    <h5>
-        <p class="ml-auto mr-auto text-center">{{ phrases.base.permission_denied_long }}</p>
-    </h5>
+    {% if request.user.is_authenticated %}
+        {% trans "You do not have permission to access this page" %}
+    {% else %}
+        {% trans "You cannot access this page" %}
+    {% endif %}
 {% endblock error_message %}
+{% block error_details %}
+    <h5>
+        <p class="ml-auto mr-auto text-center">
+            {% if request.user.is_authenticated %}
+                {% blocktranslate trimmed %}
+                    This page is available only to users with the required role or permission.
+                    You may also be signed in with the wrong account.
+                {% endblocktranslate %}
+            {% else %}
+                {% blocktranslate trimmed %}
+                    This page may not exist, may no longer be available, or may require you to
+                    log in with an account that has the appropriate permission.
+                {% endblocktranslate %}
+            {% endif %}
+        </p>
+    </h5>
+    <div class="mt-4 text-center">
+        {% if request.user.is_authenticated %}
+            <a href="/" class="btn btn-white btn-lg shadow-sm"><i class="fa fa-home mr-2"></i>{% trans "Go to Homepage" %}</a>
+        {% else %}
+            <a href="{% url 'auth.login' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-white btn-lg shadow-sm mr-2 mb-2"><i class="fa fa-sign-in mr-2"></i>{% trans "Log in" %}</a>
+            <a href="/" class="btn btn-outline-white btn-lg mb-2"><i class="fa fa-home mr-2"></i>{% trans "Go to Homepage" %}</a>
+        {% endif %}
+    </div>
+{% endblock error_details %}
 {% block error_code %}403{% endblock error_code %}

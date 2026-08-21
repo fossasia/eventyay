@@ -3,15 +3,28 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{{ phrases.base.not_found }}{% endblock title %}
+{% block title %}{% trans "Page not found" %}{% endblock title %}
 {% block error_image %}
-    <img loading="lazy" src="{% static "common/img/error_403.svg" %}" class="img" alt="{{ phrases.base.not_found }}">
+    <img loading="lazy" src="{% static "common/img/error_403.svg" %}" class="img" alt="{% trans 'Page not found' %}">
 {% endblock error_image %}
 {% block error_message %}
-    {{ phrases.base.not_found }}
-    </h2>
-    <h5>
-        <p class="ml-auto mr-auto text-center">{{ phrases.base.not_found_long }}</p>
-    </h5>
+    {% trans "Page not found" %}
 {% endblock error_message %}
+{% block error_details %}
+    <h5>
+        <p class="ml-auto mr-auto text-center">
+            {% blocktranslate trimmed %}
+                The page you are looking for may have been removed, renamed, or the URL may be incorrect.
+            {% endblocktranslate %}
+        </p>
+    </h5>
+    <div class="mt-4 text-center">
+        {% if request.user.is_authenticated %}
+            <a href="/" class="btn btn-white btn-lg shadow-sm"><i class="fa fa-home mr-2"></i>{% trans "Go to Homepage" %}</a>
+        {% else %}
+            <a href="{% url 'auth.login' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-white btn-lg shadow-sm mr-2 mb-2"><i class="fa fa-sign-in mr-2"></i>{% trans "Log in" %}</a>
+            <a href="/" class="btn btn-outline-white btn-lg mb-2"><i class="fa fa-home mr-2"></i>{% trans "Go to Homepage" %}</a>
+        {% endif %}
+    </div>
+{% endblock error_details %}
 {% block error_code %}404{% endblock error_code %}
