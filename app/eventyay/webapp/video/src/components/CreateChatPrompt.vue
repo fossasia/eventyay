@@ -26,6 +26,7 @@ import ROOM_TYPES from 'lib/room-types'
 import { isRoomTypeAvailable } from 'lib/room-type-permissions'
 
 const JITSI_ROOM_TYPE = ROOM_TYPES.find(type => type.id === 'channel-jitsi')
+const BBB_ROOM_TYPE = ROOM_TYPES.find(type => type.id === 'channel-bbb')
 
 export default {
 	components: { Prompt },
@@ -53,13 +54,13 @@ export default {
 					permission: 'world:rooms.create.chat'
 				})
 			}
-			if (this.hasPermission('world:rooms.create.bbb')) {
+			if (BBB_ROOM_TYPE && isRoomTypeAvailable(BBB_ROOM_TYPE.id, this.hasPermission, this.isAdminMode)) {
 				types.push({
 					id: 'video',
-					roomTypeId: 'channel-bbb',
+					roomTypeId: BBB_ROOM_TYPE.id,
 					label: this.$t('CreateChatPrompt:type.video:label'),
 					icon: 'webcam',
-					moduleType: 'call.bigbluebutton',
+					moduleType: BBB_ROOM_TYPE.startingModule,
 					permission: 'world:rooms.create.bbb'
 				})
 			}

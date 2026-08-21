@@ -5,6 +5,11 @@ urlpatterns = [
     # Authentication URLs
     path("auth/profile/", views.ProfileView.as_view(), name="auth.profile"),
     path("auth/signup", views.SignupView.as_view(), name="auth.signup"),
+    path(
+        "servers/<str:server_type>/<uuid:pk>/toggle-active/",
+        views.VideoServerToggleActive.as_view(),
+        name="server.toggle-active",
+    ),
     # User Management URLs
     path("users/", views.UserList.as_view(), name="user.list"),
     path("users/<int:pk>/", views.UserUpdate.as_view(), name="user.update"),
