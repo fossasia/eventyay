@@ -239,6 +239,9 @@ class Voucher(LoggedModel):
             self.variation,
             seats_given=bool(self.seat),
         )
+        if self.price_mode == 'percent' and self.value is not None:
+            if self.value < 0 or self.value > 100:
+                raise ValidationError({'value': _('Percentage values must be between 0 and 100.')})
 
     @staticmethod
     def clean_product_properties(data, event, quota, product, variation, block_quota=False, seats_given=False):
