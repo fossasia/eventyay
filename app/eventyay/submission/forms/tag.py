@@ -13,11 +13,11 @@ class TagForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         super().__init__(*args, **kwargs)
 
     def clean_tag(self):
-        tag = self.cleaned_data['tag'].strip()
-        qs = self.event.tags.all()
+        tag = self.cleaned_data.get('tag', '').strip()
+        qs = self.event.tags.filter(tag__iexact=tag)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
-        if any(tag_obj.tag == tag for tag_obj in qs):
+        if qs.exists():
             raise forms.ValidationError(_('You already have a tag by this name!'))
         return tag
 
