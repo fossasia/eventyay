@@ -337,6 +337,8 @@ class CustomEmail(EmailMultiAlternatives):
         basetype, subtype = mimetype.split('/', 1)
         if basetype == 'multipart' and isinstance(content, SafeMIMEMultipart):
             return content
+        if basetype == 'text' and isinstance(content, SafeMIMEText):
+            return content
         return super()._create_mime_attachment(content, mimetype)
 
 
@@ -371,7 +373,7 @@ def mail_send_task(
             attach_cid_images(html_message, cid_images, verify_ssl=True)
             email.attach_alternative(html_message, 'multipart/related')
         else:
-            email.attach_alternative(html_with_cid, 'text/html')
+            email.attach_alternative(SafeMIMEText(html_with_cid, 'html', settings.DEFAULT_CHARSET), 'text/html')
 
     if user:
         user = User.objects.get(pk=user)
@@ -715,6 +717,7 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
         image_type = re.findall(r'data:image/(\w+);base64', image_type)[0]
         mime_image = MIMEImage(image_content, _subtype=image_type, _encoder=encoder_linelength)
         mime_image.add_header('Content-Transfer-Encoding', 'base64')
+        guess_subtype = image_type
     elif image_src.startswith('data:'):
         logger.warning('Non-image MIME element %s[%s]', cid_id, image_src)
         return None
@@ -728,6 +731,9 @@ def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -
         mime_image = MIMEImage(response.content, _subtype=guess_subtype)
 
     mime_image.add_header('Content-ID', f'<{cid_id}>')
+    
+    filename = f"{cid_id}.{guess_subtype}" if guess_subtype else cid_id
+    mime_image.add_header('Content-Disposition', 'inline', filename=filename)
 
     return mime_image
 
