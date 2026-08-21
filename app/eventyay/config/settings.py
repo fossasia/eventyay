@@ -443,6 +443,7 @@ _LIBRARY_MIDDLEWARES = (
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'eventyay.base.middleware.LoadSheddingMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -1138,6 +1139,14 @@ CELERY_WORKER_REDIRECT_STDOUTS = False
 CELERY_TASK_ROUTES = {
     'eventyay.base.services.notifications.*': {'queue': 'notifications'},
     'eventyay.api.webhooks.*': {'queue': 'notifications'},
+    'eventyay.plugins.badges.tasks.*': {'queue': 'longrunning'},
+    'eventyay.base.services.export.*': {'queue': 'longrunning'},
+    'eventyay.base.services.orderimport.*': {'queue': 'longrunning'},
+    'eventyay.features.importers.tasks.*': {'queue': 'longrunning'},
+    'eventyay.base.services.tickets.generate': {'queue': 'longrunning'},
+    'eventyay.base.services.tickets.invalidate_cache': {'queue': 'longrunning'},
+    # Registered name in eventyay.agenda.tasks (legacy pretalx namespace).
+    'pretalx.agenda.export_schedule_html': {'queue': 'longrunning'},
 }
 
 # The folder where static files are collected to. It is shared with Nginx.
@@ -1387,9 +1396,9 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'UNICODE_JSON': False,
-    # Throttling defaults
+    # User throttle is global (keyed by user/token, NAT-safe). Anonymous IP throttling
+    # is opt-in on high-traffic public endpoints only (streams, schedule).
     'DEFAULT_THROTTLE_CLASSES': [
-        'eventyay.api.throttles.EventyayAnonRateThrottle',
         'eventyay.api.throttles.EventyayUserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
@@ -1507,6 +1516,9 @@ if SENTRY_DSN:
     from sentry_sdk.integrations.celery import CeleryIntegration
     from sentry_sdk.integrations.django import DjangoIntegration
 
+    from django.core.exceptions import PermissionDenied
+    from django.http import Http404
+
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[CeleryIntegration(), DjangoIntegration()],
@@ -1514,6 +1526,7 @@ if SENTRY_DSN:
         debug=DEBUG,
         release=EVENTYAY_COMMIT if EVENTYAY_COMMIT != 'unknown' else None,
         environment=active_environment.value,
+        ignore_errors=[Http404, PermissionDenied],
     )
 
 # Multifactor authentication configuration

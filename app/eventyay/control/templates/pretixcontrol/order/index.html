@@ -78,6 +78,15 @@
                     <a href="{% url "control:event.order.mail_history" event=request.event.slug organizer=request.event.organizer.slug code=order.code %}" class="btn btn-default">
                         {% trans "View email history" %}
                     </a>
+                    {% if can_anonymize %}
+                        <a href="{% url 'control:event.order.anonymize' event=request.event.slug organizer=request.event.organizer.slug code=order.code %}" class="btn btn-default">
+                            {% trans "Anonymize ticket data" %}
+                        </a>
+                    {% else %}
+                        <button type="button" class="btn btn-default" disabled data-toggle="tooltip" title="{% trans "Order ticketing data cannot be anonymized before the associated event has ended." %}">
+                            {% trans "Anonymize ticket data" %}
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </form>

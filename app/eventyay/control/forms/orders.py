@@ -4,6 +4,7 @@ from decimal import Decimal
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.template.defaultfilters import floatformat
 from django.urls import reverse
@@ -682,6 +683,7 @@ class EventCancelForm(forms.Form):
         max_digits=10,
         decimal_places=2,
         required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
     keep_fees = forms.MultipleChoiceField(
         label=_('Keep fees'),
