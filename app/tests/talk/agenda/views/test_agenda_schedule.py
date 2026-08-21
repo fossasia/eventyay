@@ -111,11 +111,20 @@ def test_cannot_see_no_schedule(client, user, event, featured):
 @pytest.mark.django_db
 @pytest.mark.usefixtures('slot', 'other_slot')
 def test_speaker_list(client, event, speaker):
+    with scope(event=event):
+        event.talks_published = True
+        event.feature_flags['show_schedule'] = True
+        event.save(update_fields=['talks_published', 'feature_flags'])
     url = event.urls.speakers
     response = client.get(url, follow=True)
     assert response.status_code == 200
-    assert speaker.fullname in response.text
     assert 'pretalx-schedule-data' not in response.text
+    assert 'pretalx-speakers-meta' in response.text
+    assert 'view="speakers"' in response.text
+    json_response = client.get(url, {'format': 'json'})
+    assert json_response.status_code == 200
+    payload = json_response.json()
+    assert speaker.fullname in {item['name'] for item in payload['results']}
 
 
 @pytest.mark.django_db
