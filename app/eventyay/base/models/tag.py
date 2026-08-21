@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nTextField
 
 from eventyay.common.urls import EventUrls
+from eventyay.orga.utils.colors import get_contrast_color
 from eventyay.talk_rules.person import is_reviewer
 from eventyay.talk_rules.submission import (
     orga_can_change_submissions,
@@ -40,6 +41,10 @@ class Tag(PretalxModel):
     )
 
     log_prefix = 'eventyay.tag'
+
+    @property
+    def foreground_color(self):
+        return get_contrast_color(self.color)
 
     class Meta:
         rules_permissions = {
