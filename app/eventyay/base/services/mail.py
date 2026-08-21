@@ -370,8 +370,11 @@ def mail_send_task(
         if cid_images:
             html_message = SafeMIMEMultipart(_subtype='related', encoding=settings.DEFAULT_CHARSET)
             html_message.attach(SafeMIMEText(html_with_cid, 'html', settings.DEFAULT_CHARSET))
-            attach_cid_images(html_message, cid_images, verify_ssl=True)
-            email.attach_alternative(html_message, 'multipart/related')
+            attached_count = attach_cid_images(html_message, cid_images, verify_ssl=True)
+            if attached_count > 0:
+                email.attach_alternative(html_message, 'multipart/related')
+            else:
+                email.attach_alternative(SafeMIMEText(html_with_cid, 'html', settings.DEFAULT_CHARSET), 'text/html')
         else:
             email.attach_alternative(SafeMIMEText(html_with_cid, 'html', settings.DEFAULT_CHARSET), 'text/html')
 
@@ -678,7 +681,8 @@ def replace_images_with_cid_paths(body_html: str) -> tuple[str, list[str]]:
     return str(email), cid_images
 
 
-def attach_cid_images(msg: SafeMIMEMultipart, cid_images: Sequence[str], verify_ssl: bool = True):
+def attach_cid_images(msg: SafeMIMEMultipart, cid_images: Sequence[str], verify_ssl: bool = True) -> int:
+    attached_count = 0
     if cid_images and len(cid_images) > 0:
         msg.mixed_subtype = 'mixed'
         for key, image in enumerate(cid_images):
@@ -686,8 +690,10 @@ def attach_cid_images(msg: SafeMIMEMultipart, cid_images: Sequence[str], verify_
             try:
                 if mime_image := convert_image_to_cid(image, cid, verify_ssl):
                     msg.attach(mime_image)
+                    attached_count += 1
             except (ValueError, IndexError, requests.RequestException, ssl.SSLError):
                 logger.exception('ERROR attaching CID image %s[%s]', cid, image)
+    return attached_count
 
 
 def encoder_linelength(msg):
