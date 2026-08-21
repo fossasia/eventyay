@@ -175,6 +175,11 @@ class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
             return can_use_featured_exports(self.request.user, self.request.event)
         return False
 
+    def handle_no_permission(self):
+        if self.request.user.is_anonymous:
+            raise Http404()
+        return super().handle_no_permission()
+
     def dispatch(self, request, *args, **kwargs):
         self.ensure_wip_schedule_access(kwargs, request)
         return super().dispatch(request, *args, **kwargs)

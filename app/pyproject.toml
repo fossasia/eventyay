@@ -290,6 +290,7 @@ packages = ["eventyay"]
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "tests.tickets.settings"
 testpaths = ["tests"]
+norecursedirs = ["tests/video", "tests/talk"]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
