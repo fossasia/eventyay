@@ -33,13 +33,14 @@ VIDEO_TYPE_CHOICES = [
 VIDEO_MODULES = {
     VIDEO_TYPE_YOUTUBE: ('livestream.youtube', 'ytid'),
     VIDEO_TYPE_HLS: ('livestream.native', 'hls_url'),
-    VIDEO_TYPE_IFRAME: ('page.iframe', 'url'),
+    VIDEO_TYPE_IFRAME: ('livestream.iframe', 'url'),
 }
 
 VIDEO_TYPES_BY_MODULE = {
     module_type: (video_type, config_key) for video_type, (module_type, config_key) in VIDEO_MODULES.items()
 }
-VIDEO_TYPES_BY_MODULE['livestream.iframe'] = (VIDEO_TYPE_IFRAME, 'url')
+# Older meetup rooms stored embed URLs as page.iframe before that room type was removed.
+VIDEO_TYPES_BY_MODULE['page.iframe'] = (VIDEO_TYPE_IFRAME, 'url')
 
 URL_VIDEO_TYPES = (VIDEO_TYPE_HLS, VIDEO_TYPE_IFRAME)
 

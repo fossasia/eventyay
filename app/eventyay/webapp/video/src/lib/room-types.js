@@ -1,5 +1,4 @@
 import features from 'features'
-import { filterCreatableRoomTypes } from './legacy-room-types.js'
 
 const ROOM_TYPES = [{
 	id: 'stage',
@@ -46,12 +45,6 @@ const ROOM_TYPES = [{
 	description: 'This type of channel allows you to enable pure-text communication between your attendees.',
 	startingModule: 'chat.native'
 }, {
-	id: 'exhibition',
-	icon: 'domain',
-	name: 'Exhibition',
-	description: 'Using an exhibition room, sponsors or exhibitors can present themselves to your audience.',
-	startingModule: 'exhibition.native'
-}, {
 	id: 'posters',
 	icon: 'domain',
 	name: 'Poster Hall',
@@ -68,42 +61,18 @@ const ROOM_TYPES = [{
 	sidebarGroup: 'networking',
 	behindFeatureFlag: 'roulette'
 }, {
-	id: 'page-static',
-	icon: 'text-box-outline',
-	name: 'Page',
-	description: 'A page contains static content for your attendees.',
-	startingModule: 'page.static'
-}, {
-	id: 'page-iframe',
-	icon: 'text-box-outline',
-	name: 'IFrame',
-	description: 'Using IFrames, you can embed arbitrary web pages and web applications into eventyay.',
-	startingModule: 'page.iframe'
-}, {
 	id: 'page-landing',
 	icon: 'text-box-outline',
 	name: 'Landing Page',
 	description: 'The landing place module combines the most important content into one place for your attendees to see after they join.',
 	startingModule: 'page.landing',
 	behindFeatureFlag: 'page.landing'
-}, {
-	id: 'page-userlist',
-	icon: 'text-box-outline',
-	name: 'User List',
-	description: '',
-	startingModule: 'page.userlist'
 }]
 
 export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))
 export const NETWORKING_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.sidebarGroup === 'networking').map(type => type.startingModule))
 
-export function getCreatableRoomTypes() {
-	return filterCreatableRoomTypes(
-		ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
-	)
-}
-
-export default getCreatableRoomTypes()
+export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
 
 export function inferType(config) {
 	const modules = config.module_config.reduce((acc, module) => {

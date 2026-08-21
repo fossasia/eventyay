@@ -102,12 +102,10 @@ Interactive Features
 Exhibition
 ^^^^^^^^^^
 
-These components still render existing exhibition rooms. Exhibition is not a
-supported option when creating a new video room.
+Exhibition halls are no longer a video room type. Poster sessions still use:
 
-- ``components/Exhibition.vue`` - Exhibition hall view
-- ``components/ContactExhibitorPrompt.vue`` - Exhibitor contact form
 - ``components/PosterHall.vue`` - Poster session hall
+- ``components/ContactExhibitorPrompt.vue`` - Exhibitor contact form
 
 User Interface
 ^^^^^^^^^^^^^^
@@ -127,9 +125,6 @@ Content Display
 - ``components/MarkdownPage.vue`` - Full markdown page
 - ``components/RichTextContent.vue`` - Rich text display
 - ``components/RichTextEditor.vue`` - Quill-based rich text editor
-- ``components/StaticPage.vue`` - Legacy static content pages
-- ``components/IframePage.vue`` - Legacy embedded iframe pages
-- ``components/UserListPage.vue`` - Legacy user list pages
 
 Forms & Prompts
 ^^^^^^^^^^^^^^^

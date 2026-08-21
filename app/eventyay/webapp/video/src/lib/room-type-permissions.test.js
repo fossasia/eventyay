@@ -8,12 +8,6 @@ import { filterRoomTypesByPermission, isRoomTypeAvailable } from './room-type-pe
 const allow = (...granted) => permission => granted.includes(permission)
 const allowAll = () => true
 
-test('legacy room types cannot be created even with every permission', () => {
-	for (const typeId of ['exhibition', 'page-static', 'page-iframe', 'page-userlist']) {
-		assert.equal(isRoomTypeAvailable(typeId, allowAll, true), false)
-	}
-})
-
 test('supported room types stay available with the matching permission', () => {
 	assert.equal(isRoomTypeAvailable('stage', allow('world:rooms.create.stage')), true)
 	assert.equal(isRoomTypeAvailable('channel-bbb', allow('world:rooms.create.bbb')), true)
@@ -22,19 +16,31 @@ test('supported room types stay available with the matching permission', () => {
 	assert.equal(isRoomTypeAvailable('channel-jitsi', allow('world:rooms.create.jitsi'), false), false)
 })
 
-test('filterRoomTypesByPermission drops legacy types from create lists', () => {
+test('filterRoomTypesByPermission keeps only types the user can create', () => {
 	const filtered = filterRoomTypesByPermission([
 		{id: 'stage'},
 		{id: 'channel-bbb'},
 		{id: 'channel-text'},
-		{id: 'exhibition'},
-		{id: 'page-static'},
-		{id: 'page-iframe'},
-		{id: 'page-userlist'},
+	], allow('world:rooms.create.stage', 'world:rooms.create.chat'), false)
+	assert.deepEqual(filtered.map(type => type.id), [
+		'stage',
+		'channel-text',
+	])
+})
+
+test('filterRoomTypesByPermission with all permissions keeps the remaining types', () => {
+	const filtered = filterRoomTypesByPermission([
+		{id: 'stage'},
+		{id: 'channel-bbb'},
+		{id: 'channel-text'},
+		{id: 'posters'},
+		{id: 'page-landing'},
 	], allowAll, true)
 	assert.deepEqual(filtered.map(type => type.id), [
 		'stage',
 		'channel-bbb',
 		'channel-text',
+		'posters',
+		'page-landing',
 	])
 })

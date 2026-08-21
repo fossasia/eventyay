@@ -5,6 +5,11 @@ from asgiref.sync import async_to_sync
 from django.core.exceptions import ValidationError
 from django_scopes import scope
 
+from eventyay.base.meetup import (
+    VIDEO_TYPE_IFRAME,
+    get_video_config_from_modules,
+    get_video_module_config,
+)
 from eventyay.base.models import Room
 from eventyay.base.services import event as event_service
 from eventyay.base.services.room import (
@@ -128,3 +133,16 @@ def test_introduced_unsupported_room_module_types_ignores_existing_legacy_module
         {'page.static'}
     )
     assert introduced_unsupported_room_module_types([], [{'type': 'chat.native'}]) == frozenset()
+
+
+def test_meetup_iframe_uses_stage_livestream_module():
+    modules = get_video_module_config(VIDEO_TYPE_IFRAME, 'https://example.com/embed')
+    assert modules == [
+        {'type': 'livestream.iframe', 'config': {'url': 'https://example.com/embed'}}
+    ]
+    assert get_video_config_from_modules(
+        [{'type': 'page.iframe', 'config': {'url': 'https://old.example/embed'}}]
+    ) == {
+        'video_type': 'iframe',
+        'video_url': 'https://old.example/embed',
+    }

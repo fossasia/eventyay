@@ -28,8 +28,8 @@ The video frontend is a full-featured virtual event platform built with Vue 3, p
 - **Recordings**: On-demand video playback
 
 New rooms can be created as **Stage**, **Video Channel**, or **Text Channel**.
-Exhibition halls, static pages, iframe pages, and user lists are no longer offered
-during room creation. Existing rooms of those types continue to work.
+Exhibition halls, static pages, iframe pages, and user lists have been removed
+from the video room catalog. Meetup embed URLs use a stage iframe player instead.
 
 **Location**: ``app/eventyay/webapp/video/``
 
@@ -336,22 +336,6 @@ Live reactions system:
 Exhibition & Posters
 ~~~~~~~~~~~~~~~~~~~~
 
-Exhibition Component
-^^^^^^^^^^^^^^^^^^^^
-
-**File**: ``components/Exhibition.vue``
-
-Legacy virtual exhibition halls are still rendered for existing events:
-
-- Exhibitor booth grid
-- Booth details modal
-- Contact forms
-- Resource downloads
-- Live chat with exhibitors
-- Booth visit tracking
-
-This room type is no longer available on the create-room page.
-
 PosterHall Component
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -463,17 +447,6 @@ Markdown rendering:
 - Link handling
 - Image loading
 - Safe HTML output
-
-StaticPage & IframePage
-^^^^^^^^^^^^^^^^^^^^^^^
-
-**Files**: ``components/StaticPage.vue``, ``components/IframePage.vue``
-
-Static content display:
-- Custom HTML pages
-- Embedded iframes
-- Responsive containers
-- Security considerations
 
 Utility Components
 ~~~~~~~~~~~~~~~~~~

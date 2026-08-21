@@ -1,9 +1,4 @@
-import { isLegacyRoomTypeId } from './legacy-room-types.js'
-
 export function isRoomTypeAvailable(typeId, hasPermission, isAdminMode = false) {
-	if (isLegacyRoomTypeId(typeId)) {
-		return false
-	}
 	if (typeId === 'stage') {
 		return hasPermission('world:rooms.create.stage')
 	}
