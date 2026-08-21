@@ -28,25 +28,16 @@ UNSUPPORTED_CREATE_MODULE_TYPES = frozenset({
     'page.iframe',
     'page.userlist',
 })
-UNSUPPORTED_ROOM_TYPE_MESSAGE = (
-    'This room type can no longer be created. Existing rooms of this type still work.'
-)
+UNSUPPORTED_ROOM_TYPE_MESSAGE = 'This room type is no longer supported.'
 
 
-def introduced_unsupported_room_module_types(existing_modules, new_modules):
-    existing_types = {
+def contains_unsupported_room_module_types(modules):
+    types = {
         module.get('type')
-        for module in (existing_modules or [])
+        for module in (modules or [])
         if isinstance(module, dict)
     }
-    new_types = {
-        module.get('type')
-        for module in (new_modules or [])
-        if isinstance(module, dict)
-    }
-    return frozenset(
-        (new_types & UNSUPPORTED_CREATE_MODULE_TYPES) - existing_types
-    )
+    return types & UNSUPPORTED_CREATE_MODULE_TYPES
 
 
 @database_sync_to_async
@@ -107,9 +98,7 @@ def validate_room_config_patch(room, body):
     """
     if "module_config" in body:
         _sanitize_jitsi_config(body["module_config"])
-        if introduced_unsupported_room_module_types(
-            room.module_config, body["module_config"]
-        ):
+        if contains_unsupported_room_module_types(body["module_config"]):
             raise ValidationError(
                 UNSUPPORTED_ROOM_TYPE_MESSAGE,
                 code="unsupported_type",

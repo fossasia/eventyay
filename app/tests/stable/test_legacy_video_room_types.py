@@ -14,7 +14,7 @@ from eventyay.base.models import Room
 from eventyay.base.services import event as event_service
 from eventyay.base.services.room import (
     UNSUPPORTED_CREATE_MODULE_TYPES,
-    introduced_unsupported_room_module_types,
+    contains_unsupported_room_module_types,
     validate_room_config_patch,
 )
 
@@ -54,7 +54,7 @@ def test_create_room_rejects_removed_room_types(monkeypatch, module_type):
         async_to_sync(event_service.create_room)(
             event,
             {
-                'name': 'Legacy Room',
+                'name': 'Removed Room',
                 'description': 'should not be created',
                 'modules': [{'type': module_type}],
             },
@@ -87,52 +87,28 @@ def test_create_room_still_allows_text_channels(monkeypatch):
     'module_type',
     sorted(UNSUPPORTED_CREATE_MODULE_TYPES),
 )
-def test_config_patch_rejects_introducing_removed_room_types(event, module_type):
+def test_config_patch_rejects_removed_room_types(event, module_type):
     with scope(event=event):
-        room = Room.objects.create(event=event, name='Empty', module_config=[])
+        room = Room.objects.create(
+            event=event,
+            name='Removed',
+            module_config=[{'type': module_type, 'config': {}}],
+        )
         with pytest.raises(ValidationError) as exc:
             validate_room_config_patch(
                 room,
-                {'module_config': [{'type': module_type, 'config': {}}]},
+                {'module_config': [{'type': module_type, 'config': {'updated': True}}]},
             )
     assert exc.value.code == 'unsupported_type'
 
 
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    'module_type',
-    sorted(UNSUPPORTED_CREATE_MODULE_TYPES),
-)
-def test_config_patch_allows_updating_existing_legacy_rooms(event, module_type):
-    with scope(event=event):
-        room = Room.objects.create(
-            event=event,
-            name='Legacy',
-            module_config=[{'type': module_type, 'config': {}}],
-        )
-        validated_data, update_fields = validate_room_config_patch(
-            room,
-            {
-                'name': 'Still works',
-                'module_config': [{'type': module_type, 'config': {'updated': True}}],
-            },
-        )
-
-    assert validated_data['name'] == 'Still works'
-    assert 'module_config' in update_fields
-    assert validated_data['module_config'][0]['type'] == module_type
-
-
-def test_introduced_unsupported_room_module_types_ignores_existing_legacy_modules():
-    existing = [{'type': 'exhibition.native', 'config': {}}]
-    updated = [{'type': 'exhibition.native', 'config': {'name': 'Booth'}}]
-    asserted_new = [{'type': 'page.static', 'config': {}}]
-
-    assert introduced_unsupported_room_module_types(existing, updated) == frozenset()
-    assert introduced_unsupported_room_module_types(existing, asserted_new) == frozenset(
-        {'page.static'}
-    )
-    assert introduced_unsupported_room_module_types([], [{'type': 'chat.native'}]) == frozenset()
+def test_contains_unsupported_room_module_types():
+    assert contains_unsupported_room_module_types(
+        [{'type': 'exhibition.native', 'config': {}}]
+    ) == frozenset({'exhibition.native'})
+    assert contains_unsupported_room_module_types(
+        [{'type': 'chat.native', 'config': {}}]
+    ) == frozenset()
 
 
 def test_meetup_iframe_uses_stage_livestream_module():
@@ -140,9 +116,7 @@ def test_meetup_iframe_uses_stage_livestream_module():
     assert modules == [
         {'type': 'livestream.iframe', 'config': {'url': 'https://example.com/embed'}}
     ]
-    assert get_video_config_from_modules(
-        [{'type': 'page.iframe', 'config': {'url': 'https://old.example/embed'}}]
-    ) == {
+    assert get_video_config_from_modules(modules) == {
         'video_type': 'iframe',
-        'video_url': 'https://old.example/embed',
+        'video_url': 'https://example.com/embed',
     }

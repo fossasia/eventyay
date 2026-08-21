@@ -39,13 +39,10 @@ VIDEO_MODULES = {
 VIDEO_TYPES_BY_MODULE = {
     module_type: (video_type, config_key) for video_type, (module_type, config_key) in VIDEO_MODULES.items()
 }
-# Older meetup rooms stored embed URLs as page.iframe before that room type was removed.
-VIDEO_TYPES_BY_MODULE['page.iframe'] = (VIDEO_TYPE_IFRAME, 'url')
 
 URL_VIDEO_TYPES = (VIDEO_TYPE_HLS, VIDEO_TYPE_IFRAME)
 
 LIVESTREAM_MODULE_PREFIX = 'livestream.'
-EMBEDDED_PAGE_MODULE_TYPE = 'page.iframe'
 
 VIDEO_SETTINGS_KEYS = (
     'venueless_url',
@@ -83,7 +80,7 @@ def get_video_config_from_modules(module_config) -> dict:
 
 def _is_video_module(module) -> bool:
     module_type = (module or {}).get('type', '') or ''
-    return module_type.startswith(LIVESTREAM_MODULE_PREFIX) or module_type == EMBEDDED_PAGE_MODULE_TYPE
+    return module_type.startswith(LIVESTREAM_MODULE_PREFIX)
 
 
 def has_video_stream(event) -> bool:

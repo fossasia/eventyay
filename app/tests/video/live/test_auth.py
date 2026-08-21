@@ -38,7 +38,6 @@ async def test_auth_with_client_id(world, announcement, inactive_announcement):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert len(response[1]["announcements"]) == 1
@@ -142,7 +141,6 @@ async def test_auth_with_jwt_token(index, world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
 
@@ -183,7 +181,6 @@ async def test_update_user():
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         user_id = response[1]["user.config"]["id"]
@@ -228,7 +225,6 @@ async def test_update_user():
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert response[1]["user.config"]["profile"]["display_name"] == "Cool User"
@@ -276,7 +272,6 @@ async def test_auth_with_jwt_token_update_traits(world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert (
@@ -295,7 +290,6 @@ async def test_auth_with_jwt_token_update_traits(world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert (
@@ -328,7 +322,6 @@ async def test_auth_with_jwt_token_twice(world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert (
@@ -347,7 +340,6 @@ async def test_auth_with_jwt_token_twice(world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert (
@@ -371,7 +363,6 @@ async def test_fetch_user():
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         user_id = response[1]["user.config"]["id"]
@@ -467,7 +458,6 @@ async def test_auth_with_jwt_token_and_permission_traits(world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert set(response[1]["world.config"]["permissions"]) == {

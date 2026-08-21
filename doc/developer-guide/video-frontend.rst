@@ -349,17 +349,6 @@ Academic poster sessions:
 - Voting/feedback
 - Session scheduling
 
-ContactExhibitorPrompt Component
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**File**: ``components/ContactExhibitorPrompt.vue``
-
-Exhibitor contact form:
-- Send messages to exhibitors
-- Request meetings
-- Download materials
-- Track inquiries
-
 User Interface Components
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -431,7 +431,6 @@ class RoomModule(BaseModule):
             Permission.EVENT_ROOMS_CREATE_BBB,
             Permission.EVENT_ROOMS_CREATE_JITSI,
             Permission.EVENT_ROOMS_CREATE_CHAT,
-            Permission.EVENT_ROOMS_CREATE_EXHIBITION,
             Permission.ROOM_UPDATE,
         ]
     )

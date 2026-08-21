@@ -99,13 +99,10 @@ Interactive Features
 - ``components/Questions.vue`` - Q&A question list
 - ``components/Roulette.vue`` - Speed networking roulette
 
-Exhibition
-^^^^^^^^^^
-
-Exhibition halls are no longer a video room type. Poster sessions still use:
+Poster sessions
+^^^^^^^^^^^^^^^
 
 - ``components/PosterHall.vue`` - Poster session hall
-- ``components/ContactExhibitorPrompt.vue`` - Exhibitor contact form
 
 User Interface
 ^^^^^^^^^^^^^^

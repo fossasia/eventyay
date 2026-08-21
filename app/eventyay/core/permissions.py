@@ -12,13 +12,11 @@ class Permission(Enum):
     EVENT_ROOMS_CREATE_CHAT = "event:rooms.create.chat"
     EVENT_ROOMS_CREATE_BBB = "event:rooms.create.bbb"
     EVENT_ROOMS_CREATE_JITSI = "event:rooms.create.jitsi"
-    EVENT_ROOMS_CREATE_EXHIBITION = "event:rooms.create.exhibition"
     EVENT_ROOMS_CREATE_POSTER = "event:rooms.create.poster"
     EVENT_USERS_LIST = "event:users.list"
     EVENT_USERS_MANAGE = "event:users.manage"
     EVENT_KIOSKS_MANAGE = "event:kiosks.manage"
     EVENT_CHAT_DIRECT = "event:chat.direct"
-    EVENT_EXHIBITION_CONTACT = "event:exhibition.contact"
     EVENT_CONNECTIONS_UNLIMITED = "event:connections.unlimited"
     ROOM_ANNOUNCE = "room:announce"
     ROOM_VIEW = "room:view"
@@ -64,7 +62,6 @@ VIDEO_CONTENT_MANAGER_PERMISSIONS = [
     Permission.EVENT_ROOMS_CREATE_CHAT.value,
     Permission.EVENT_ROOMS_CREATE_BBB.value,
     Permission.EVENT_ROOMS_CREATE_JITSI.value,
-    Permission.EVENT_ROOMS_CREATE_EXHIBITION.value,
     Permission.EVENT_ROOMS_CREATE_POSTER.value,
     Permission.ROOM_UPDATE.value,
     Permission.ROOM_DELETE.value,
@@ -182,7 +179,6 @@ def default_roles():
     """Shared Event/World role → permission map (single source of truth)."""
     attendee = [
         Permission.EVENT_VIEW,
-        Permission.EVENT_EXHIBITION_CONTACT,
         Permission.EVENT_CHAT_DIRECT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
@@ -232,7 +228,6 @@ def default_roles():
             Permission.EVENT_ROOMS_CREATE_BBB,
             Permission.EVENT_ROOMS_CREATE_JITSI,
             Permission.EVENT_ROOMS_CREATE_STAGE,
-            Permission.EVENT_ROOMS_CREATE_EXHIBITION,
             Permission.EVENT_ROOMS_CREATE_POSTER,
             Permission.EVENT_USERS_LIST,
             Permission.EVENT_USERS_MANAGE,
