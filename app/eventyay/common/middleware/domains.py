@@ -17,6 +17,7 @@ from django.urls import resolve
 from django.utils.cache import patch_vary_headers
 from django.utils.http import http_date
 
+from eventyay.base.middleware import should_skip_session_save
 from eventyay.base.models import Event
 
 LOCAL_HOST_NAMES = ('testserver', 'localhost', '127.0.0.1')
@@ -203,6 +204,8 @@ class SessionMiddleware(BaseSessionMiddleware):
                 return response
             if accessed:
                 patch_vary_headers(response, ('Cookie',))
+            if should_skip_session_save(response, modified):
+                return response
             if modified or settings.SESSION_SAVE_EVERY_REQUEST:
                 max_age = None
                 expires = None

@@ -433,6 +433,7 @@ urlpatterns = [
                 url(r'^orders/(?P<code>[0-9A-Z]+)/approve', orders.OrderApprove.as_view(), name='event.order.approve'),
                 url(r'^orders/(?P<code>[0-9A-Z]+)/deny$', orders.OrderDeny.as_view(), name='event.order.deny'),
                 url(r'^orders/(?P<code>[0-9A-Z]+)/delete$', orders.OrderDelete.as_view(), name='event.order.delete'),
+                url(r'^orders/(?P<code>[0-9A-Z]+)/anonymize$', orders.OrderAnonymize.as_view(), name='event.order.anonymize'),
                 url(
                     r'^orders/(?P<code>[0-9A-Z]+)/info',
                     orders.OrderModifyInformation.as_view(),
