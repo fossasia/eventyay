@@ -289,7 +289,7 @@ class TalkView(TalkMixin, TemplateView):
                 replies_qs = Feedback.objects.filter(is_public=True, status='published').select_related('author').annotate(
                     upvote_count=Count('reactions', filter=Q(reactions__is_upvote=True)),
                     downvote_count=Count('reactions', filter=Q(reactions__is_upvote=False))
-                )
+                ).order_by('created')
                 ctx['public_feedback'] = self.submission.feedback.filter(
                     is_public=True, parent__isnull=True, status='published'
                 ).select_related('author').prefetch_related(
@@ -297,7 +297,7 @@ class TalkView(TalkMixin, TemplateView):
                 ).annotate(
                     upvote_count=Count('reactions', filter=Q(reactions__is_upvote=True)),
                     downvote_count=Count('reactions', filter=Q(reactions__is_upvote=False))
-                )
+                ).order_by('-created')
             else:
                 ctx['public_feedback'] = self.submission.feedback.none()
             if self.request.user.is_authenticated and user_can_give_feedback(
