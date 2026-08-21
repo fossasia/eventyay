@@ -39,6 +39,14 @@ const ROOM_TYPES = [{
 	videoChannel: true,
 	behindFeatureFlag: 'jitsi'
 }, {
+	id: 'channel-loungemesh',
+	icon: 'webcam',
+	name: 'LoungeMesh',
+	description: 'A spatial video lounge for informal hallway-style conversation, embedded from LoungeMesh.',
+	startingModule: 'call.loungemesh',
+	videoChannel: true,
+	behindFeatureFlag: 'loungemesh'
+}, {
 	id: 'channel-text',
 	icon: 'pound',
 	name: 'Text Channel',
@@ -93,8 +101,10 @@ const ROOM_TYPES = [{
 	startingModule: 'page.userlist'
 }]
 
+export const LIVESTREAM_MODULE_TYPES = ['livestream.native', 'livestream.youtube', 'livestream.iframe']
 export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))
 export const NETWORKING_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.sidebarGroup === 'networking').map(type => type.startingModule))
+export const MEDIA_ROOM_MODULE_TYPES = [...LIVESTREAM_MODULE_TYPES, ...VIDEO_CHANNEL_MODULE_TYPES]
 
 export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
 

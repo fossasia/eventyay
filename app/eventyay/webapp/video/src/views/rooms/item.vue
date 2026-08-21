@@ -11,6 +11,7 @@
 			AudioTranslationDropdown(v-if="showCoreLanguageDropdown", :key="`${room.id}-core`", :languages="coreLanguages", :selected-language="selectedCoreLanguage", label="Audio Translation", @languageChanged="handleCoreLanguageChange")
 			AudioTranslationDropdown(v-if="showPluginLanguageDropdown", :key="`${room.id}-plugin`", :languages="pluginLanguages", :selected-language="selectedPluginLanguage", label="Interpretation", @languageChanged="handlePluginLanguageChange")
 	media-source-placeholder(v-else-if="modules['call.bigbluebutton'] || modules['call.zoom'] || modules['call.jitsi']")
+	lounge-mesh-page(v-else-if="modules['call.loungemesh']", :module="modules['call.loungemesh']", :room="room")
 	roulette(v-else-if="modules['networking.roulette'] && $features.enabled('roulette')", :module="modules['networking.roulette']", :room="room")
 	landing-page(v-else-if="modules['page.landing']", :module="modules['page.landing']")
 	markdown-page(v-else-if="modules['page.markdown']", :module="modules['page.markdown']")
@@ -38,6 +39,7 @@ import LandingPage from 'components/LandingPage'
 import MarkdownPage from 'components/MarkdownPage'
 import StaticPage from 'components/StaticPage'
 import IframePage from 'components/IframePage'
+import LoungeMeshPage from 'components/LoungeMeshPage'
 import Exhibition from 'components/Exhibition'
 import ReactionsBar from 'components/ReactionsBar'
 import ReactionsOverlay from 'components/ReactionsOverlay'
@@ -62,6 +64,7 @@ export default {
 		MarkdownPage,
 		StaticPage,
 		IframePage,
+		LoungeMeshPage,
 		ReactionsBar,
 		ReactionsOverlay,
 		UserListPage,

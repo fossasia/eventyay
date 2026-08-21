@@ -152,7 +152,7 @@ export default {
 		},
 		canCreateChatRoom() {
 			return ROOM_TYPES
-				.filter(type => ['channel-text', 'channel-bbb', 'channel-jitsi'].includes(type.id))
+				.filter(type => ['channel-text', 'channel-bbb', 'channel-jitsi', 'channel-loungemesh'].includes(type.id))
 				.some(type => isRoomTypeAvailable(type.id, this.hasPermission, this.isAdminMode))
 		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access

@@ -356,7 +356,7 @@ class SecurityMiddleware(MiddlewareMixin):
 
         # Allow inline scripts ONLY for video pages (Venueless integration requires it)
         # VideoSPAView injects inline <script> tags with window.venueless configuration
-        if request.path.startswith('/video/'):
+        if request.path.startswith('/video/') or '/video/' in request.path:
             h['script-src-elem'] = [
                 '{static}',
                 "'unsafe-eval'",  # Required for Vue.js and buntpapier libraries

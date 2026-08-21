@@ -36,6 +36,7 @@ from .views import (
     webhooks,
 )
 from .views.stripe import stripe_webhook_view
+from .views.loungemesh import LoungeMeshTokenAPIView
 
 
 def talks_to_submissions_redirect(request, event, subpath):
@@ -235,6 +236,12 @@ urlpatterns = [
     path('upload', upload.UploadView.as_view(), name='upload'),
     path('me', user.MeView.as_view(), name='user.me'),
     path('version', version.VersionView.as_view(), name='version'),
+    path('loungemesh/token/', LoungeMeshTokenAPIView.as_view(), name='loungemesh.token'),
+    path(
+        'loungemesh/token/refresh/',
+        LoungeMeshTokenAPIView.as_view(),
+        name='loungemesh.token.refresh',
+    ),
     path(
         'billing-testing/<task>',
         BillingInvoicePreview.as_view(),

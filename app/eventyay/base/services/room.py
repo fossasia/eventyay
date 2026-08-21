@@ -17,6 +17,7 @@ from eventyay.base.models.room import (
     get_room_with_linked_sessions,
     partial_validated_update,
 )
+from eventyay.base.services.loungemesh import sanitize_loungemesh_modules
 from eventyay.base.services.user import get_public_users
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
@@ -85,6 +86,7 @@ def validate_room_config_patch(room, body):
     )
     if "module_config" in body:
         _sanitize_jitsi_config(body["module_config"])
+        sanitize_loungemesh_modules(body["module_config"])
     return partial_validated_update(serializer, body)
 
 

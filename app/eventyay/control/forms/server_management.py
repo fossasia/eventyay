@@ -19,6 +19,11 @@ from eventyay.base.models.event import (
     EventPlannedUsage as PlannedUsage,
     default_feature_flags,
 )
+from eventyay.base.services.loungemesh import (
+    DEFAULT_LOUNGEMESH_URL,
+    FEATURE_KEYS,
+    get_loungemesh_settings,
+)
 from eventyay.base.services.jitsi import normalize_server_url
 
 User = get_user_model()
@@ -278,6 +283,59 @@ class StreamingServerForm(HasSecretsMixin, forms.ModelForm):
             "url_output",
         )
         field_classes = {"token_secret": SecretKeyField}
+
+
+class LoungeMeshSettingsForm(forms.Form):
+    enabled = forms.BooleanField(
+        required=False,
+        label=_('Enable LoungeMesh'),
+        help_text=_('Allow organizers to create LoungeMesh rooms when the event feature flag is also enabled.'),
+    )
+    url = forms.URLField(
+        required=False,
+        label=_('LoungeMesh URL'),
+        help_text=_('Standalone LoungeMesh SPA, for example https://loungemesh.com'),
+    )
+    jitsi_app_id = forms.CharField(required=False, label=_('Jitsi app ID'))
+    jitsi_app_secret = SecretKeyField(required=False, label=_('Jitsi app secret'))
+    organizer_features = forms.MultipleChoiceField(
+        required=False,
+        label=_('Features organizers may enable'),
+        help_text=_('Organizers can only turn on these LoungeMesh features for a room.'),
+        choices=[
+            (key, label)
+            for key, label in {
+                'notes': _('Shared notes'),
+                'whiteboard': _('Whiteboard'),
+                'poll': _('Polls'),
+                'chat': _('Chat'),
+                'screenshare': _('Screenshare'),
+                'reactions': _('Reactions'),
+                'lobby': _('Lobby / waiting room'),
+            }.items()
+            if key in FEATURE_KEYS
+        ],
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        current = get_loungemesh_settings()
+        self.fields['enabled'].initial = current['enabled']
+        self.fields['url'].initial = current['url'] or DEFAULT_LOUNGEMESH_URL
+        self.fields['jitsi_app_id'].initial = current['jitsi_app_id']
+        self.fields['jitsi_app_secret'].initial = current['jitsi_app_secret']
+        self.fields['organizer_features'].initial = current['organizer_features']
+
+    def clean_jitsi_app_secret(self):
+        value = self.cleaned_data.get('jitsi_app_secret') or ''
+        if value.endswith(SECRET_REDACTED):
+            return get_loungemesh_settings()['jitsi_app_secret']
+        return value
+
+    def clean_url(self):
+        value = (self.cleaned_data.get('url') or '').strip()
+        return value or DEFAULT_LOUNGEMESH_URL
 
 
 class StreamKeyGeneratorForm(forms.Form):

@@ -32,6 +32,7 @@ import PageIframe from './types-edit/page-iframe'
 import ChannelBBB from './types-edit/channel-bbb'
 import ChannelJanus from './types-edit/channel-janus'
 import ChannelJitsi from './types-edit/channel-jitsi'
+import ChannelLoungemesh from './types-edit/channel-loungemesh'
 import ChannelZoom from './types-edit/channel-zoom'
 import ChannelRoulette from './types-edit/channel-roulette'
 import Posters from './types-edit/posters'
@@ -75,6 +76,7 @@ export default {
 				'channel-roulette': ChannelRoulette,
 				'channel-janus': ChannelJanus,
 				'channel-jitsi': ChannelJitsi,
+				'channel-loungemesh': ChannelLoungemesh,
 				'channel-zoom': ChannelZoom,
 				posters: Posters
 			}),

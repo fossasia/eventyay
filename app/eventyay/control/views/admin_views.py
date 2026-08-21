@@ -51,6 +51,7 @@ from eventyay.control.forms.server_management import (
     ConftoolSyncPostersForm,
     JanusServerForm,
     JitsiServerForm,
+    LoungeMeshSettingsForm,
     PlannedUsageFormSet,
     ProfileForm,
     SignupForm,
@@ -800,6 +801,24 @@ class StreamingServerDelete(AdminBase, DeleteView):
         self.object.delete()
         messages.success(self.request, _("Ok!"))
         return HttpResponseRedirect(success_url)
+
+
+class LoungeMeshSettingsView(AdminBase, FormView):
+    template_name = 'control/loungemesh_settings.html'
+    form_class = LoungeMeshSettingsForm
+    success_url = '/admin/video/loungemesh/'
+
+    def form_valid(self, form):
+        from eventyay.base.settings import GlobalSettingsObject
+
+        gs = GlobalSettingsObject().settings
+        gs.set('loungemesh_enabled', form.cleaned_data['enabled'])
+        gs.set('loungemesh_url', form.cleaned_data['url'])
+        gs.set('loungemesh_jitsi_app_id', form.cleaned_data['jitsi_app_id'])
+        gs.set('loungemesh_jitsi_app_secret', form.cleaned_data['jitsi_app_secret'])
+        gs.set('loungemesh_organizer_features', form.cleaned_data['organizer_features'])
+        messages.success(self.request, _('Ok!'))
+        return super().form_valid(form)
 
 
 class StreamkeyGenerator(AdminBase, FormView):

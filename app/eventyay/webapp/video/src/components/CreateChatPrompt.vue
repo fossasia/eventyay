@@ -25,7 +25,17 @@ import Prompt from 'components/Prompt'
 import ROOM_TYPES from 'lib/room-types'
 import { isRoomTypeAvailable } from 'lib/room-type-permissions'
 
-const JITSI_ROOM_TYPE = ROOM_TYPES.find(type => type.id === 'channel-jitsi')
+function optionalRoomTypeOption(roomType, permission, hasPermission, isAdminMode) {
+	if (!roomType || !isRoomTypeAvailable(roomType.id, hasPermission, isAdminMode)) return null
+	return {
+		id: roomType.id.replace(/^channel-/, ''),
+		roomTypeId: roomType.id,
+		label: roomType.name,
+		icon: roomType.icon,
+		moduleType: roomType.startingModule,
+		permission,
+	}
+}
 
 export default {
 	components: { Prompt },
@@ -63,16 +73,20 @@ export default {
 					permission: 'world:rooms.create.bbb'
 				})
 			}
-			if (JITSI_ROOM_TYPE && isRoomTypeAvailable(JITSI_ROOM_TYPE.id, this.hasPermission, this.isAdminMode)) {
-				types.push({
-					id: 'jitsi',
-					roomTypeId: JITSI_ROOM_TYPE.id,
-					label: JITSI_ROOM_TYPE.name,
-					icon: JITSI_ROOM_TYPE.icon,
-					moduleType: JITSI_ROOM_TYPE.startingModule,
-					permission: 'world:rooms.create.jitsi'
-				})
-			}
+			const jitsi = optionalRoomTypeOption(
+				ROOM_TYPES.find(type => type.id === 'channel-jitsi'),
+				'world:rooms.create.jitsi',
+				this.hasPermission,
+				this.isAdminMode
+			)
+			if (jitsi) types.push(jitsi)
+			const loungemesh = optionalRoomTypeOption(
+				ROOM_TYPES.find(type => type.id === 'channel-loungemesh'),
+				'world:rooms.create.loungemesh',
+				this.hasPermission,
+				this.isAdminMode
+			)
+			if (loungemesh) types.push(loungemesh)
 			return types
 		},
 		selectedType() {

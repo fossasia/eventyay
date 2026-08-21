@@ -583,6 +583,11 @@ def get_admin_navigation(request):
                 'active': is_active('/admin/video/jitsi'),
             },
             {
+                'label': _('LoungeMesh'),
+                'url': reverse('eventyay_admin:video_admin:loungemesh.settings'),
+                'active': is_active('/admin/video/loungemesh'),
+            },
+            {
                 'label': _('TURN servers'),
                 'url': reverse('eventyay_admin:video_admin:turnserver.list'),
                 'active': is_active('/admin/video/turns'),

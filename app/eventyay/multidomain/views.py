@@ -25,6 +25,7 @@ from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.agenda.views.utils import build_public_schedule_exporters
+from eventyay.base.services.loungemesh import apply_loungemesh_embed_headers, get_loungemesh_settings
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
 from eventyay.consts import SizeKey
 from eventyay.talk_rules.submission import are_featured_submissions_visible
@@ -75,6 +76,7 @@ class VideoSPAView(View):
             # Best effort reverse for optional endpoints
 
             cfg = event.config or {}
+            loungemesh = get_loungemesh_settings()
 
             with scope(event=event):
                 requested_version = request.GET.get('v') or request.GET.get('version')
@@ -118,6 +120,8 @@ class VideoSPAView(View):
                     'systemlog': safe_reverse('live:systemlog') or '',
                 },
                 'features': getattr(event, 'feature_flags', {}) or {},
+                'loungemeshUrl': loungemesh['url'],
+                'loungemeshOrganizerFeatures': loungemesh['organizer_features'],
                 'externalAuthUrl': getattr(event, 'external_auth_url', None),
                 'locale': event.locale,
                 'date_locale': cfg.get('date_locale', 'en-ie'),
@@ -255,6 +259,7 @@ class VideoSPAView(View):
 
         resp = HttpResponse(html_content, content_type='text/html')
         resp._csp_ignore = True  # Disable CSP for SPA (relies on dynamic inline scripts)
+        apply_loungemesh_embed_headers(resp)
         return resp
 
 
