@@ -22,22 +22,32 @@ from eventyay.base.services.user import get_public_users
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
 
-UNSUPPORTED_CREATE_MODULE_TYPES = frozenset({
-    'exhibition.native',
-    'page.static',
-    'page.iframe',
-    'page.userlist',
+SUPPORTED_ROOM_MODULE_TYPES = frozenset({
+    'livestream.native',
+    'livestream.youtube',
+    'livestream.iframe',
+    'chat.native',
+    'call.bigbluebutton',
+    'call.janus',
+    'call.zoom',
+    'call.jitsi',
+    'poster.native',
+    'page.landing',
+    'page.markdown',
+    'networking.roulette',
+    'question',
+    'poll',
 })
-UNSUPPORTED_ROOM_TYPE_MESSAGE = 'This room type is no longer supported.'
+UNSUPPORTED_ROOM_MODULE_TYPE_MESSAGE = 'This room module type is not supported.'
 
 
-def contains_unsupported_room_module_types(modules):
+def unsupported_room_module_types(modules):
     types = {
         module.get('type')
         for module in (modules or [])
-        if isinstance(module, dict)
+        if isinstance(module, dict) and module.get('type')
     }
-    return types & UNSUPPORTED_CREATE_MODULE_TYPES
+    return types - SUPPORTED_ROOM_MODULE_TYPES
 
 
 @database_sync_to_async
@@ -98,9 +108,9 @@ def validate_room_config_patch(room, body):
     """
     if "module_config" in body:
         _sanitize_jitsi_config(body["module_config"])
-        if contains_unsupported_room_module_types(body["module_config"]):
+        if unsupported_room_module_types(body["module_config"]):
             raise ValidationError(
-                UNSUPPORTED_ROOM_TYPE_MESSAGE,
+                UNSUPPORTED_ROOM_MODULE_TYPE_MESSAGE,
                 code="unsupported_type",
             )
     serializer = RoomConfigSerializer(

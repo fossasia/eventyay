@@ -333,8 +333,8 @@ Live reactions system:
 - Real-time synchronization
 - Custom reaction sets per event
 
-Exhibition & Posters
-~~~~~~~~~~~~~~~~~~~~
+Posters
+~~~~~~~
 
 PosterHall Component
 ^^^^^^^^^^^^^^^^^^^^
@@ -604,15 +604,6 @@ Chat state management:
 - User typing indicators
 - Message history
 - Channel subscriptions
-
-exhibition.js
-^^^^^^^^^^^^^
-
-Exhibition data:
-- Exhibitor information
-- Booth state
-- Contact requests
-- Visit tracking
 
 poll.js
 ^^^^^^^
@@ -961,7 +952,6 @@ Vue Router configuration with:
 - `/` - Event landing page
 - `/rooms/:roomId` - Individual rooms
 - `/schedule` - Event schedule
-- `/exhibitors/:exhibitorId` - Existing exhibitor booths
 - `/posters` - Poster sessions
 - `/profile` - User profile
 - `/settings` - User settings

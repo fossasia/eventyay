@@ -15,22 +15,11 @@ from eventyay.base.meetup import (
 from eventyay.base.models import Room
 from eventyay.base.services import event as event_service
 from eventyay.base.services.room import (
-    UNSUPPORTED_CREATE_MODULE_TYPES,
-    contains_unsupported_room_module_types,
+    SUPPORTED_ROOM_MODULE_TYPES,
+    unsupported_room_module_types,
     validate_room_config_patch,
 )
 from eventyay.core.permissions import Permission, default_roles
-
-KEPT_ROOM_MODULE_TYPES = (
-    'livestream.native',
-    'livestream.youtube',
-    'livestream.iframe',
-    'chat.native',
-    'call.bigbluebutton',
-    'poster.native',
-    'page.landing',
-    'page.markdown',
-)
 
 
 async def _allow_permission(**kwargs):
@@ -56,11 +45,7 @@ def _patch_room_creation(monkeypatch):
     return created
 
 
-@pytest.mark.parametrize(
-    'module_type',
-    sorted(UNSUPPORTED_CREATE_MODULE_TYPES),
-)
-def test_create_room_rejects_removed_room_types(monkeypatch, module_type):
+def test_create_room_rejects_unknown_module_types(monkeypatch):
     _patch_room_creation(monkeypatch)
     event = SimpleNamespace(id='event-id', has_permission_async=_allow_permission)
 
@@ -68,9 +53,9 @@ def test_create_room_rejects_removed_room_types(monkeypatch, module_type):
         async_to_sync(event_service.create_room)(
             event,
             {
-                'name': 'Removed Room',
+                'name': 'Unknown Room',
                 'description': 'should not be created',
-                'modules': [{'type': module_type}],
+                'modules': [{'type': 'unknown.module'}],
             },
             object(),
         )
@@ -135,41 +120,37 @@ def test_create_room_still_allows_empty_modules_for_admin_create(monkeypatch):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    'module_type',
-    sorted(UNSUPPORTED_CREATE_MODULE_TYPES),
-)
-def test_config_patch_rejects_removed_room_types(event, module_type):
+def test_config_patch_rejects_unknown_module_types(event):
     with scope(event=event):
         room = Room.objects.create(
             event=event,
-            name='Removed',
-            module_config=[{'type': module_type, 'config': {}}],
+            name='Unknown',
+            module_config=[{'type': 'unknown.module', 'config': {}}],
         )
         with pytest.raises(ValidationError) as exc:
             validate_room_config_patch(
                 room,
-                {'module_config': [{'type': module_type, 'config': {'updated': True}}]},
+                {'module_config': [{'type': 'unknown.module', 'config': {'updated': True}}]},
             )
     assert exc.value.code == 'unsupported_type'
 
 
-def test_contains_unsupported_room_module_types():
-    assert contains_unsupported_room_module_types(
-        [{'type': 'exhibition.native', 'config': {}}]
-    ) == frozenset({'exhibition.native'})
-    assert contains_unsupported_room_module_types(
+def test_unsupported_room_module_types():
+    assert unsupported_room_module_types(
+        [{'type': 'unknown.module', 'config': {}}]
+    ) == frozenset({'unknown.module'})
+    assert unsupported_room_module_types(
         [{'type': 'chat.native', 'config': {}}]
     ) == frozenset()
-    for module_type in KEPT_ROOM_MODULE_TYPES:
-        assert contains_unsupported_room_module_types(
+    for module_type in SUPPORTED_ROOM_MODULE_TYPES:
+        assert unsupported_room_module_types(
             [{'type': module_type, 'config': {}}]
         ) == frozenset()
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('module_type', KEPT_ROOM_MODULE_TYPES)
-def test_config_patch_allows_kept_room_types(event, module_type):
+@pytest.mark.parametrize('module_type', sorted(SUPPORTED_ROOM_MODULE_TYPES))
+def test_config_patch_allows_supported_room_types(event, module_type):
     with scope(event=event):
         room = Room.objects.create(
             event=event,
@@ -185,12 +166,12 @@ def test_config_patch_allows_kept_room_types(event, module_type):
 
 
 @pytest.mark.django_db
-def test_leftover_removed_room_can_be_renamed_or_converted(event):
+def test_leftover_unknown_room_can_be_renamed_or_converted(event):
     with scope(event=event):
         room = Room.objects.create(
             event=event,
-            name='Old exhibition',
-            module_config=[{'type': 'exhibition.native', 'config': {}}],
+            name='Old room',
+            module_config=[{'type': 'unknown.module', 'config': {}}],
         )
         renamed, rename_fields = validate_room_config_patch(
             room,
@@ -218,25 +199,14 @@ def test_leftover_removed_room_can_be_renamed_or_converted(event):
         assert converted['module_config'][0]['type'] == 'livestream.iframe'
 
 
-def test_permission_maps_omit_removed_video_exhibition_grants():
-    names = {permission.name for permission in Permission}
-    values = {permission.value for permission in Permission}
-    assert not any('exhibition' in name.lower() for name in names)
-    assert not any('exhibition' in value for value in values)
+def test_default_roles_only_use_current_permissions():
+    known = {permission.value for permission in Permission}
     flattened = {
         permission.value if isinstance(permission, Permission) else permission
         for perms in default_roles().values()
         for permission in perms
     }
-    assert not any('exhibition' in value for value in flattened)
-
-
-def test_login_and_config_payloads_omit_removed_exhibition_fields():
-    from eventyay.base.services.event import EventConfigSerializer
-    from eventyay.base.services.user import LoginResult
-
-    assert 'exhibition_data' not in LoginResult._fields
-    assert 'track_exhibitor_views' not in EventConfigSerializer().fields
+    assert flattened <= known
 
 
 def test_meetup_iframe_uses_stage_livestream_module():

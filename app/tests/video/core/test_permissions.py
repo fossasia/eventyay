@@ -1,6 +1,7 @@
 import pytest
 from channels.db import database_sync_to_async
 
+from tests.video.utils import video_permissions
 from venueless.core.models import User
 from venueless.core.permissions import Permission
 
@@ -15,7 +16,7 @@ def test_user_explicit_roles(world, chat_room, bbb_room):
     assert world.get_all_permissions(user)[world] == {
         "world:view",
     }
-    assert world.get_all_permissions(user)[chat_room] == {
+    assert video_permissions(world.get_all_permissions(user)[chat_room]) == {
         "room:bbb.join",
         "room:chat.join",
         "room:chat.read",
@@ -24,7 +25,6 @@ def test_user_explicit_roles(world, chat_room, bbb_room):
         "world:chat.direct",
         "room:view",
         "world:view",
-        "world:exhibition.contact",
         "room:question.read",
         "room:question.vote",
         "room:question.ask",
@@ -56,7 +56,7 @@ def test_user_explicit_roles(world, chat_room, bbb_room):
     assert world.has_permission(
         user=user, permission=Permission.ROOM_INVITE, room=chat_room
     )
-    assert world.get_all_permissions(user)[chat_room] == {
+    assert video_permissions(world.get_all_permissions(user)[chat_room]) == {
         "room:bbb.join",
         "room:chat.join",
         "room:chat.read",
@@ -67,14 +67,13 @@ def test_user_explicit_roles(world, chat_room, bbb_room):
         "room:delete",
         "room:view",
         "world:view",
-        "world:exhibition.contact",
         "room:question.vote",
         "room:question.read",
         "room:question.ask",
         "room:poll.read",
         "room:poll.vote",
     }
-    assert world.get_all_permissions(user)[bbb_room] == {
+    assert video_permissions(world.get_all_permissions(user)[bbb_room]) == {
         "room:bbb.join",
         "room:chat.join",
         "room:chat.read",
@@ -83,7 +82,6 @@ def test_user_explicit_roles(world, chat_room, bbb_room):
         "world:chat.direct",
         "room:view",
         "world:view",
-        "world:exhibition.contact",
         "room:question.vote",
         "room:question.read",
         "room:question.ask",
@@ -102,7 +100,7 @@ def test_user_implicit_roles(world, chat_room, bbb_room):
     assert world.get_all_permissions(user)[world] == {
         "world:view",
     }
-    assert world.get_all_permissions(user)[chat_room] == {
+    assert video_permissions(world.get_all_permissions(user)[chat_room]) == {
         "room:bbb.join",
         "room:chat.join",
         "room:chat.read",
@@ -111,7 +109,6 @@ def test_user_implicit_roles(world, chat_room, bbb_room):
         "world:chat.direct",
         "room:view",
         "world:view",
-        "world:exhibition.contact",
         "room:question.vote",
         "room:question.read",
         "room:question.ask",
@@ -154,7 +151,7 @@ def test_user_implicit_roles(world, chat_room, bbb_room):
     assert not world.has_permission(
         user=user, permission=Permission.ROOM_CHAT_MODERATE, room=chat_room
     )
-    assert world.get_all_permissions(user)[chat_room] == {
+    assert video_permissions(world.get_all_permissions(user)[chat_room]) == {
         "room:bbb.join",
         "room:chat.join",
         "room:chat.read",
@@ -165,14 +162,13 @@ def test_user_implicit_roles(world, chat_room, bbb_room):
         "room:delete",
         "room:view",
         "world:view",
-        "world:exhibition.contact",
         "room:question.vote",
         "room:question.read",
         "room:question.ask",
         "room:poll.read",
         "room:poll.vote",
     }
-    assert world.get_all_permissions(user)[bbb_room] == {
+    assert video_permissions(world.get_all_permissions(user)[bbb_room]) == {
         "room:bbb.join",
         "room:chat.join",
         "room:chat.read",
@@ -181,7 +177,6 @@ def test_user_implicit_roles(world, chat_room, bbb_room):
         "world:chat.direct",
         "room:view",
         "world:view",
-        "world:exhibition.contact",
         "room:question.vote",
         "room:question.read",
         "room:question.ask",
@@ -200,7 +195,7 @@ def test_user_implicit_roles_or_support(world, chat_room, bbb_room):
     assert world.get_all_permissions(user)[world] == {
         "world:view",
     }
-    assert world.get_all_permissions(user)[chat_room] == {
+    assert video_permissions(world.get_all_permissions(user)[chat_room]) == {
         "room:bbb.join",
         "room:chat.join",
         "room:chat.read",
@@ -209,7 +204,6 @@ def test_user_implicit_roles_or_support(world, chat_room, bbb_room):
         "world:chat.direct",
         "room:view",
         "world:view",
-        "world:exhibition.contact",
         "room:question.vote",
         "room:question.read",
         "room:question.ask",

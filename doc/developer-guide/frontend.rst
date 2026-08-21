@@ -199,11 +199,6 @@ Vuex Store Modules (``src/store/``)
   - Unread counts
   - Message history
 
-**exhibition.js**
-  - Exhibitor data
-  - Contact requests
-  - Booth interactions
-
 **poll.js**
   - Poll data and votes
   - Real-time results

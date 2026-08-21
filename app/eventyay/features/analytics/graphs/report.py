@@ -507,7 +507,7 @@ class ReportGenerator:
                         ),
                         Paragraph(
                             "Counts the number of people currently either in a video room or live stream room."
-                            "Does not count people only watching static pages or pure-text channels.",
+                            " Does not count people only in text channels.",
                             self.stylesheet["Normal"],
                         ),
                         self._graph(fig),

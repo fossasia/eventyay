@@ -19,8 +19,8 @@ from eventyay.base.models.event import Event
 from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
 from eventyay.base.services.jitsi import user_can_create_jitsi_room_during_development
 from eventyay.base.services.room import (
-    UNSUPPORTED_CREATE_MODULE_TYPES,
-    UNSUPPORTED_ROOM_TYPE_MESSAGE,
+    UNSUPPORTED_ROOM_MODULE_TYPE_MESSAGE,
+    unsupported_room_module_types,
 )
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.core.permissions import Permission
@@ -393,9 +393,9 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
 
 async def create_room(event, data, creator):
     types = {m["type"] for m in data.get("modules", [])}
-    if types & UNSUPPORTED_CREATE_MODULE_TYPES:
+    if unsupported_room_module_types(data.get("modules", [])):
         raise ValidationError(
-            UNSUPPORTED_ROOM_TYPE_MESSAGE,
+            UNSUPPORTED_ROOM_MODULE_TYPE_MESSAGE,
             code="unsupported_type",
         )
     livestream_types = {

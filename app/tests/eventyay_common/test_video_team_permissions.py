@@ -312,7 +312,7 @@ def test_default_roles_are_shared_between_event_and_world():
         for perms in roles.values()
         for permission in perms
     }
-    assert not any('exhibition' in value for value in flattened)
+    assert flattened <= {permission.value for permission in Permission}
 
 
 def test_system_and_organizer_roles_derive_from_video_maps():

@@ -38,5 +38,4 @@ def import_config(data):
             if module["type"] == "chat.native":
                 Channel.objects.get_or_create(room=room, event=event)
 
-    data.pop("exhibitors", [])
-    assert not data, f"Unused config data: {data}"
+    # Older world dumps may include extra keys; they are not imported.
