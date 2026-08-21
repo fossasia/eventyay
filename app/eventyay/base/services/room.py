@@ -3,6 +3,7 @@ import sys
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
+from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
 from django.dispatch import receiver
 from django.utils.timezone import now
@@ -20,6 +21,32 @@ from eventyay.base.models.room import (
 from eventyay.base.services.user import get_public_users
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
+
+UNSUPPORTED_CREATE_MODULE_TYPES = frozenset({
+    'exhibition.native',
+    'page.static',
+    'page.iframe',
+    'page.userlist',
+})
+UNSUPPORTED_ROOM_TYPE_MESSAGE = (
+    'This room type can no longer be created. Existing rooms of this type still work.'
+)
+
+
+def introduced_unsupported_room_module_types(existing_modules, new_modules):
+    existing_types = {
+        module.get('type')
+        for module in (existing_modules or [])
+        if isinstance(module, dict)
+    }
+    new_types = {
+        module.get('type')
+        for module in (new_modules or [])
+        if isinstance(module, dict)
+    }
+    return frozenset(
+        (new_types & UNSUPPORTED_CREATE_MODULE_TYPES) - existing_types
+    )
 
 
 @database_sync_to_async
@@ -78,13 +105,20 @@ def validate_room_config_patch(room, body):
 
     Returns (validated_data, update_fields) on success, or (None, None) if invalid.
     """
+    if "module_config" in body:
+        _sanitize_jitsi_config(body["module_config"])
+        if introduced_unsupported_room_module_types(
+            room.module_config, body["module_config"]
+        ):
+            raise ValidationError(
+                UNSUPPORTED_ROOM_TYPE_MESSAGE,
+                code="unsupported_type",
+            )
     serializer = RoomConfigSerializer(
         get_room_with_linked_sessions(room),
         data=body,
         partial=True,
     )
-    if "module_config" in body:
-        _sanitize_jitsi_config(body["module_config"])
     return partial_validated_update(serializer, body)
 
 

@@ -24,9 +24,12 @@ The video frontend is a full-featured virtual event platform built with Vue 3, p
 - **Interactive Chat**: Real-time messaging with channels and DMs
 - **Audience Engagement**: Polls, Q&A, emoji reactions
 - **Networking**: Speed networking (roulette) and direct messaging
-- **Exhibition**: Virtual exhibition halls with exhibitor booths
 - **Posters**: Academic poster sessions with Q&A
 - **Recordings**: On-demand video playback
+
+New rooms can be created as **Stage**, **Video Channel**, or **Text Channel**.
+Exhibition halls, static pages, iframe pages, and user lists are no longer offered
+during room creation. Existing rooms of those types continue to work.
 
 **Location**: ``app/eventyay/webapp/video/``
 
@@ -338,13 +341,16 @@ Exhibition Component
 
 **File**: ``components/Exhibition.vue``
 
-Virtual exhibition hall:
+Legacy virtual exhibition halls are still rendered for existing events:
+
 - Exhibitor booth grid
 - Booth details modal
 - Contact forms
 - Resource downloads
 - Live chat with exhibitors
 - Booth visit tracking
+
+This room type is no longer available on the create-room page.
 
 PosterHall Component
 ^^^^^^^^^^^^^^^^^^^^
@@ -993,7 +999,7 @@ Vue Router configuration with:
 - `/` - Event landing page
 - `/rooms/:roomId` - Individual rooms
 - `/schedule` - Event schedule
-- `/exhibition` - Exhibition hall
+- `/exhibitors/:exhibitorId` - Existing exhibitor booths
 - `/posters` - Poster sessions
 - `/profile` - User profile
 - `/settings` - User settings

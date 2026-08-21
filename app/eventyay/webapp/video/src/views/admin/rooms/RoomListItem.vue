@@ -10,10 +10,13 @@ router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {
 			.room-type-badge(:class="badgeClass")
 				.mdi(:class="badgeIcon")
 				span {{ badgeLabel }}
+			.room-type-badge.legacy-room-badge(v-if="isLegacyType")
+				span Legacy
 </template>
 <script>
 import { ElementMixin, HandleDirective } from 'vue-slicksort'
 import { inferType } from 'lib/room-types'
+import { isLegacyRoomTypeId } from 'lib/legacy-room-types'
 
 export default {
 	directives: { handle: HandleDirective },
@@ -36,6 +39,9 @@ export default {
 		},
 		badgeClass () {
 			return this.inferredType ? `type-${this.inferredType.id}` : 'type-mystery'
+		},
+		isLegacyType () {
+			return isLegacyRoomTypeId(this.inferredType?.id)
 		}
 	}
 }
@@ -120,4 +126,8 @@ export default {
 			background-color: $clr-green-300
 			color: $clr-green-800
 			border-color: $clr-green-300
+		&.legacy-room-badge
+			background-color: $clr-orange-100
+			color: $clr-orange-900
+			border-color: $clr-orange-100
 </style>

@@ -1,4 +1,5 @@
 import features from 'features'
+import { filterCreatableRoomTypes } from './legacy-room-types.js'
 
 const ROOM_TYPES = [{
 	id: 'stage',
@@ -26,7 +27,7 @@ const ROOM_TYPES = [{
 	id: 'channel-zoom',
 	icon: 'webcam',
 	name: 'Video Channel (Zoom)',
-	description: 'This room type allows you to embed a zoom meeting or webinar directly into venueless.',
+	description: 'This room type allows you to embed a Zoom meeting or webinar directly into eventyay.',
 	startingModule: 'call.zoom',
 	videoChannel: true,
 	behindFeatureFlag: 'zoom'
@@ -76,7 +77,7 @@ const ROOM_TYPES = [{
 	id: 'page-iframe',
 	icon: 'text-box-outline',
 	name: 'IFrame',
-	description: 'Using IFrames, you can embed arbitrary web pages and web applications into venueless.',
+	description: 'Using IFrames, you can embed arbitrary web pages and web applications into eventyay.',
 	startingModule: 'page.iframe'
 }, {
 	id: 'page-landing',
@@ -96,7 +97,13 @@ const ROOM_TYPES = [{
 export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))
 export const NETWORKING_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.sidebarGroup === 'networking').map(type => type.startingModule))
 
-export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
+export function getCreatableRoomTypes() {
+	return filterCreatableRoomTypes(
+		ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
+	)
+}
+
+export default getCreatableRoomTypes()
 
 export function inferType(config) {
 	const modules = config.module_config.reduce((acc, module) => {

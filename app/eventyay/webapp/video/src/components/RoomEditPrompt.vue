@@ -27,6 +27,9 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 					.current-type(v-if="inferredType")
 						.mdi(:class="[`mdi-${inferredType.icon}`]")
 						span {{ inferredType.name }}
+						span.legacy-badge(v-if="isLegacyType") Legacy
+					.legacy-notice(v-if="isLegacyType")
+						p This room type is no longer offered when creating rooms. Existing rooms still work. You can keep this room or change it to a supported type.
 					.type-picker
 						.type-option(
 							v-for="type of availableRoomTypes",
@@ -76,6 +79,7 @@ import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import Prompt from 'components/Prompt'
 import ROOM_TYPES, { inferType } from 'lib/room-types'
+import { isLegacyRoomTypeId } from 'lib/legacy-room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import { PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 import Stage from 'views/admin/rooms/types-edit/stage'
@@ -144,6 +148,9 @@ export default {
 		inferredType () {
 			if (!this.config) return null
 			return inferType(this.config)
+		},
+		isLegacyType () {
+			return isLegacyRoomTypeId(this.inferredType?.id)
 		},
 		localizedName: {
 			get () {
@@ -321,6 +328,25 @@ export default {
 			color: $clr-secondary-text-light
 			.mdi
 				font-size: 20px
+			.legacy-badge
+				font-size: 11px
+				font-weight: 600
+				letter-spacing: 0.02em
+				text-transform: uppercase
+				padding: 2px 8px
+				border-radius: 999px
+				background-color: $clr-orange-100
+				color: $clr-orange-900
+		.legacy-notice
+			margin: 0 0 12px
+			padding: 10px 12px
+			border-radius: 4px
+			background-color: $clr-orange-100
+			p
+				margin: 0
+				font-size: 13px
+				line-height: 18px
+				color: $clr-secondary-text-light
 	.type-picker
 		display: flex
 		flex-direction: column

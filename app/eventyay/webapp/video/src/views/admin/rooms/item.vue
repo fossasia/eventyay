@@ -17,6 +17,7 @@
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
 				h1 {{ inferredType ? inferredType.name : 'Mystery Room' }} :
 					span.room-name(v-html="$emojify(config.name)")
+					span.legacy-badge(v-if="isLegacyType") Legacy
 				.actions
 					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") Edit
 			edit-form(:config="config")
@@ -34,6 +35,7 @@ import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import RoomEditPrompt from 'components/RoomEditPrompt'
 import { inferType } from 'lib/room-types'
+import { isLegacyRoomTypeId } from 'lib/legacy-room-types'
 import EditForm from './EditForm'
 
 export default {
@@ -55,6 +57,9 @@ export default {
 		...mapGetters(['hasPermission']),
 		inferredType() {
 			return inferType(this.config)
+		},
+		isLegacyType() {
+			return isLegacyRoomTypeId(this.inferredType?.id)
 		}
 	},
 	async created() {
@@ -118,6 +123,17 @@ export default {
 			font-weight: 500
 			margin: 1px 16px 0 0
 			ellipsis()
+			.legacy-badge
+				margin-left: 10px
+				vertical-align: middle
+				font-size: 11px
+				font-weight: 600
+				letter-spacing: 0.02em
+				text-transform: uppercase
+				padding: 2px 8px
+				border-radius: 999px
+				background-color: $clr-orange-100
+				color: $clr-orange-900
 			.room-name
 				margin-left: 8px
 				font-size: 24px
