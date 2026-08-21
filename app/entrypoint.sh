@@ -37,8 +37,6 @@ fi
 
 python manage.py migrate
 python manage.py compilemessages -i .venv
-# Match ownership of generated .mo files to their .po siblings so host bind-mounts
-# stay writable on Linux/macOS (container runs as root; .po files carry host ownership).
 find /usr/src/app/eventyay/locale -name "*.mo" -exec sh -c 'chown --reference="${1%.mo}.po" "$1" 2>/dev/null || true' _ {} \;
 
 # Start Vite dev servers for live frontend development when EVY_NPM_DEV=1
