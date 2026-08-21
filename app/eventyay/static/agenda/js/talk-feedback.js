@@ -11,18 +11,6 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    const cancelBtns = document.querySelectorAll('.cancel-reply-btn');
-    cancelBtns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            const formContainer = document.getElementById('reply-form-' + id);
-            if (formContainer) {
-                formContainer.classList.add('d-none');
-                formContainer.style.display = 'none';
-            }
-        });
-    });
-
     const reactBtns = document.querySelectorAll('.react-btn');
     reactBtns.forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -55,25 +43,6 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         });
     });
-    
-    // Main comment input focus to show actions
-    const mainCommentInput = document.querySelector('.main-comment-input');
-    const mainActionContainer = document.querySelector('.comment-action-container');
-    const mainCancelBtn = document.querySelector('.comment-action-container button[type="reset"]');
-    
-    if (mainCommentInput && mainActionContainer) {
-        mainCommentInput.addEventListener('focus', function() {
-            mainActionContainer.classList.remove('d-none');
-            mainActionContainer.classList.add('d-flex');
-        });
-        if (mainCancelBtn) {
-            mainCancelBtn.addEventListener('click', function() {
-                mainCommentInput.value = '';
-                mainActionContainer.classList.add('d-none');
-                mainActionContainer.classList.remove('d-flex');
-            });
-        }
-    }
 
     // Star rating interaction
     const starContainers = document.querySelectorAll('.youtube-rating-stars');
@@ -123,5 +92,54 @@ document.addEventListener("DOMContentLoaded", function() {
     const forms = document.querySelectorAll('.reply-form-container');
     forms.forEach(function(f) {
         f.style.display = 'none';
+    });
+
+    // Read more toggles
+    const textContents = document.querySelectorAll('.comment-text-collapsed');
+    textContents.forEach(function(content) {
+        if (content.scrollHeight > content.clientHeight) {
+            const btn = content.nextElementSibling;
+            if (btn && btn.classList.contains('read-more-btn')) {
+                btn.classList.remove('d-none');
+                btn.addEventListener('click', function() {
+                    const expanded = this.getAttribute('data-expanded') === 'true';
+                    const readMoreText = this.getAttribute('data-read-more');
+                    const showLessText = this.getAttribute('data-show-less');
+                    
+                    if (expanded) {
+                        content.classList.add('comment-text-collapsed');
+                        this.textContent = readMoreText;
+                        this.setAttribute('data-expanded', 'false');
+                    } else {
+                        content.classList.remove('comment-text-collapsed');
+                        this.textContent = showLessText;
+                        this.setAttribute('data-expanded', 'true');
+                    }
+                });
+            }
+        }
+    });
+
+    // Replies toggles
+    const repliesToggles = document.querySelectorAll('.replies-toggle-btn');
+    repliesToggles.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.classList.toggle('d-none');
+                const expanded = this.getAttribute('data-expanded') === 'true';
+                const icon = this.querySelector('i');
+                if (expanded) {
+                    this.setAttribute('data-expanded', 'false');
+                    icon.classList.remove('fa-caret-up');
+                    icon.classList.add('fa-caret-down');
+                } else {
+                    this.setAttribute('data-expanded', 'true');
+                    icon.classList.remove('fa-caret-down');
+                    icon.classList.add('fa-caret-up');
+                }
+            }
+        });
     });
 });

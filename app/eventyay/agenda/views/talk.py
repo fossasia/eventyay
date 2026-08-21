@@ -26,6 +26,7 @@ from eventyay.agenda.signals import register_recording_provider
 from eventyay.agenda.feedback_access import (
     TicketCheckResult,
     feedback_is_public_for_submission,
+    feedback_period_open,
     get_feedback_anonymous_mode,
     user_can_give_feedback,
     user_has_event_ticket,
@@ -320,7 +321,7 @@ class TalkView(TalkMixin, TemplateView):
             else:
                 ctx['banned_user_ids'] = []
                 
-            ctx['feedback_period_open'] = self.submission.does_accept_feedback
+            ctx['feedback_period_open'] = feedback_period_open(self.submission)
             ctx['feedback_anonymous_mode'] = get_feedback_anonymous_mode(self.request.event)
                  
                 

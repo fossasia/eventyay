@@ -357,7 +357,14 @@ class FeedbackSettingsForm(ReadOnlyFlag, JsonSubfieldMixin, forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         if not cleaned_data.get('use_feedback'):
-            for field in ['feedback_who_can_comment', 'feedback_enable_time', 'feedback_anonymous_mode']:
+            for field in [
+                'feedback_close_after_days',
+                'feedback_who_can_comment', 
+                'feedback_enable_time', 
+                'feedback_show_public',
+                'feedback_require_review',
+                'feedback_anonymous_mode'
+            ]:
                 if field in self.errors:
                     del self.errors[field]
                 cleaned_data[field] = self.fields[field].initial
