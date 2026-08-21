@@ -54,9 +54,12 @@ jobs:
           version: latest
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y gettext
 
       - name: Record current plugin pins
         id: old_pins
@@ -158,7 +161,7 @@ jobs:
 
       - name: Create or update PR
         if: steps.changelog.outputs.has_changes == 'true' && inputs.dry_run != 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: chore/update-plugin-pins
