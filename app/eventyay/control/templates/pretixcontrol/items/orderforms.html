@@ -64,7 +64,6 @@
                                 </div>
                             </td>
                             <td class="dnd-container text-center text-nowrap">
-                                <span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span>
                                 <a href="{% url 'control:event.products.orderforms.customerfield' organizer=request.event.organizer.slug event=request.event.slug field='order_email' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for E-mail' %}" title="{% translate 'Settings for E-mail' %}"><i class="fa fa-cog fa-fw"></i></a>
                             </td>
                         </tr>
@@ -94,7 +93,6 @@
                                 </div>
                             </td>
                             <td class="dnd-container text-center text-nowrap">
-                                <span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span>
                                 <a href="{% url 'control:event.products.orderforms.customerfield' organizer=request.event.organizer.slug event=request.event.slug field='order_phone' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Phone number' %}" title="{% translate 'Settings for Phone number' %}"><i class="fa fa-cog fa-fw"></i></a>
                             </td>
                         </tr>
@@ -111,7 +109,6 @@
                                    aria-label="{% translate 'See invoice settings' %}">
                                     {% translate "See invoice settings" %}
                                 </a>
-                                <span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span>
                             </td>
                         </tr>
                         {% endif %}
