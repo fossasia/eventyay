@@ -24,6 +24,7 @@
             {% block error_image %}{% endblock error_image %}
             {% block content %}
                 <h2>{% block error_message %}{% endblock error_message %}</h2>
+                {% block error_details %}{% endblock error_details %}
                 <h4 class="mt-4">HTTP {% block error_code %}{% endblock error_code %}</h4>
             {% endblock content %}
         </div>
