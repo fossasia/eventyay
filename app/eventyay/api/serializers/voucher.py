@@ -114,4 +114,8 @@ class VoucherSerializer(I18nAwareModelSerializer):
                 self.instance.pk if self.instance else None,
             )
 
+        if full_data.get('price_mode') == 'percent' and full_data.get('value') is not None:
+            if full_data.get('value') < 0 or full_data.get('value') > 100:
+                raise ValidationError({'value': ['Percentage values must be between 0 and 100.']})
+
         return data

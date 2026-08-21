@@ -409,3 +409,21 @@ def test_custom_rules_country_rate(event):
     assert tr.tax_rate_for(ia) == Decimal('100.00')
     assert not tr.is_reverse_charge(ia)
     assert tr._tax_applicable(ia)
+
+from django.core.exceptions import ValidationError as DjangoValidationError
+
+@pytest.mark.django_db
+def test_tax_rate_validation(event):
+    tr = TaxRule(event=event, rate=Decimal('0.00'), price_includes_tax=True, name="Zero")
+    tr.full_clean()  # Should not raise
+
+    tr = TaxRule(event=event, rate=Decimal('100.00'), price_includes_tax=True, name="Hundred")
+    tr.full_clean()  # Should not raise
+
+    tr = TaxRule(event=event, rate=Decimal('-1.00'), price_includes_tax=True, name="Negative")
+    with pytest.raises(DjangoValidationError):
+        tr.full_clean()
+
+    tr = TaxRule(event=event, rate=Decimal('101.00'), price_includes_tax=True, name="Over Hundred")
+    with pytest.raises(DjangoValidationError):
+        tr.full_clean()

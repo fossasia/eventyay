@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import (
     Count,
     Exists,
@@ -55,6 +55,7 @@ from eventyay.base.decimal import round_decimal
 from eventyay.base.email import get_email_context
 from eventyay.base.exporter import BaseExporter
 from eventyay.base.i18n import language
+from eventyay.base.services.anonymize import anonymize_order, is_order_event_ended
 from eventyay.base.models import (
     CachedCombinedTicket,
     CachedFile,
@@ -495,6 +496,7 @@ class OrderDetail(OrderView):
         ctx['download_buttons'] = self.download_buttons
         ctx['payment_refund_sum'] = self.order.payment_refund_sum
         ctx['pending_sum'] = self.order.pending_sum
+        ctx['can_anonymize'] = is_order_event_ended(self.order)
         return ctx
 
     @cached_property
@@ -784,6 +786,42 @@ class OrderDelete(OrderView):
                 'order': self.order,
             },
         )
+
+
+class OrderAnonymize(OrderView):
+    permission = 'can_change_orders'
+
+    def get(self, *args, **kwargs):
+        if not is_order_event_ended(self.order):
+            messages.error(
+                self.request,
+                _('Order ticketing data cannot be anonymized before the associated event has ended.')
+            )
+            return redirect(self.get_order_url())
+        return render(
+            self.request,
+            'pretixcontrol/order/anonymize.html',
+            {
+                'order': self.order,
+            },
+        )
+
+    def post(self, *args, **kwargs):
+        try:
+            anonymize_order(self.order, user=self.request.user)
+            messages.success(
+                self.request,
+                _('The ticket sales and personal attendee data for this order have been anonymized.')
+            )
+        except ValidationError as e:
+            messages.error(
+                self.request,
+                e.message if hasattr(e, 'message') else (e.messages[0] if hasattr(e, 'messages') else str(e))
+            )
+        except DatabaseError:
+            logger.exception('Failed to anonymize order %s', self.order.code)
+            messages.error(self.request, _('An error occurred while anonymizing the order ticketing data.'))
+        return redirect(self.get_order_url())
 
 
 class OrderDeny(OrderView):
