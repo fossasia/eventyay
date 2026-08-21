@@ -187,9 +187,12 @@
                             {% endfor %}
                             {% if filter_form.track %}<td class="col-track">{{ submission.track.name }}</td>{% endif %}
                             {% if filter_form.tags %}<td class="col-tags">
-                                <div class="d-flex flex-wrap">
+                                <div class="d-flex flex-wrap review-tags-list align-items-center">
                                     {% for tag in submission.tags.all %}
-                                        <span class="badge" {% if tag.color %}style="background-color: {{ tag.color }}"{% endif %}>{{ tag.tag }}</span>
+                                        <span class="badge mr-1 mb-1 {% if forloop.counter > 2 %}tag-hidden{% endif %} {% if tag.foreground_color == 'white' %}text-white{% elif tag.foreground_color == 'black' %}text-dark{% endif %}" {% if tag.color %}style="--tag-color: {{ tag.color }}"{% endif %}>{{ tag.tag }}</span>
+                                        {% if forloop.counter == 2 and not forloop.last %}
+                                            <span class="tag-ellipsis text-muted ml-1">...</span>
+                                        {% endif %}
                                     {% endfor %}
                                 </div>
                             </td>{% endif %}

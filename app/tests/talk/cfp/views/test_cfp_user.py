@@ -654,11 +654,32 @@ def test_can_accept_invitation(orga_client, submission):
 def test_wrong_acceptance_link(orga_client, submission):
     assert submission.speakers.count() == 1
     response = orga_client.post(
-        submission.urls.accept_invitation + "olololol", follow=True
+        submission.urls.accept_invitation + "olololol", follow=False
     )
     submission.refresh_from_db()
-    assert response.status_code == 404
+    # Now correctly returns a 302 redirect with an error message instead of 404
+    assert response.status_code == 302
     assert submission.speakers.count() == 1
+
+
+@pytest.mark.django_db
+def test_anonymous_invite_acceptance_redirect(client, submission):
+    response = client.get(submission.urls.accept_invitation, follow=False)
+    assert response.status_code == 302
+    assert "login" in response.url
+    assert "next=" in response.url
+
+
+@pytest.mark.django_db
+def test_authenticated_user_without_permission_gets_403(client, submission, event, django_user_model):
+    user = django_user_model.objects.create_user(
+        email='testuser@example.com',
+        password='password123',
+    )
+    client.force_login(user)
+    # Trying to access the submission edit page should give 403 because they are not a speaker
+    response = client.get(submission.urls.edit, follow=False)
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db

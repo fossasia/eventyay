@@ -458,3 +458,23 @@ def test_wip_nav_tabs_link_to_wip_schedule_and_speakers(orga_client, event, spea
     assert response.status_code == 200
     assert wip_schedule_url in response.text
     assert wip_speakers_url in response.text
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('slot')
+def test_anon_cannot_export_featured_unpublished_schedule(client, event):
+    with scope(event=event):
+        event.feature_flags['show_schedule'] = False
+        event.save()
+        url = reverse('agenda:export', kwargs={'event': event.slug}) + '?featured=true'
+    response = client.get(url, follow=True)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_orga_can_export_featured_unpublished_schedule(orga_client, event):
+    with scope(event=event):
+        event.feature_flags['show_schedule'] = False
+        event.save()
+        url = reverse('agenda:export', kwargs={'event': event.slug}) + '?featured=true'
+    response = orga_client.get(url, follow=True)
+    assert response.status_code == 200
