@@ -3096,3 +3096,11 @@ button.btn-speaker-not-arrived {
 .feedback-confirm-dialog-btn-confirm {
   padding: 8px 16px;
 }
+
+.tag-hidden { display: none; }
+.review-tags-list:hover .tag-hidden { display: inline-block; }
+.review-tags-list:hover .tag-ellipsis { display: none; }
+
+.review-tags-list .badge {
+  background-color: var(--tag-color, #cccccc);
+}
