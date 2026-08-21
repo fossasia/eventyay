@@ -1,0 +1,39 @@
+{% extends "pretixcontrol/event/base.html" %}
+{% load i18n %}
+{% block title %}
+  {% trans "Anonymize ticket sales data" %}
+{% endblock %}
+{% block content %}
+  <h1>
+    {% trans "Anonymize ticket sales data" %}
+  </h1>
+  <div class="alert alert-warning">
+    <p>{% blocktrans trimmed %}
+      Do you really want to anonymize the ticketing and personal attendee data for order <strong>{{ order.code }}</strong>?
+    {% endblocktrans %}</p>
+    <ul>
+      <li>{% trans "Personal attendee names, emails, postal addresses, invoice address details, and form responses will be permanently anonymized or removed." %}</li>
+      <li>{% trans "The user account associated with this order will remain active and untouched." %}</li>
+      <li>{% trans "Accounting totals and non-personal ticket sales statistics will be retained for financial reporting." %}</li>
+      <li><strong>{% trans "This action cannot be undone." %}</strong></li>
+    </ul>
+  </div>
+
+  <form method="post" action="">
+    {% csrf_token %}
+    <div class="row checkout-button-row">
+      <div class="col-md-4">
+        <a class="btn btn-block btn-default btn-lg"
+           href="{% url 'control:event.order' event=request.event.slug organizer=request.event.organizer.slug code=order.code %}">
+          {% trans "No, take me back" %}
+        </a>
+      </div>
+      <div class="col-md-4 col-md-offset-4">
+        <button class="btn btn-block btn-danger btn-lg" type="submit">
+          {% trans "Yes, anonymize ticket data" %}
+        </button>
+      </div>
+      <div class="clearfix"></div>
+    </div>
+  </form>
+{% endblock %}

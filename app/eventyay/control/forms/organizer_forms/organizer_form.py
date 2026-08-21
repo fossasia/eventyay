@@ -18,9 +18,25 @@ class OrganizerForm(I18nModelForm):
         'duplicate_slug': _('This slug is already in use. Please choose a different one.'),
     }
 
+    set_as_default = forms.BooleanField(
+        label=_('Set as my default organizer'),
+        required=False,
+        help_text=_('Make this organizer your default account for creating events.'),
+    )
+
     class Meta:
         model = Organizer
         fields = ['name', 'slug']
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        if self.user and self.user.is_authenticated:
+            has_default = bool(self.user.get_default_organizer())
+            if 'set_as_default' not in self.initial:
+                self.fields['set_as_default'].initial = not has_default
+        else:
+            self.fields.pop('set_as_default', None)
 
     def clean_slug(self):
         slug = self.cleaned_data['slug']

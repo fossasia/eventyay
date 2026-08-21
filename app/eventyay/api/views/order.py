@@ -5,6 +5,8 @@ import os
 from decimal import Decimal
 
 import django_filters
+
+from django.core.exceptions import ValidationError as DjangoValidationError
 from zoneinfo import ZoneInfo
 from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Prefetch, Q
@@ -29,10 +31,22 @@ from rest_framework.mixins import CreateModelMixin
 from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.response import Response
 
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    OpenApiTypes,
+    extend_schema,
+    extend_schema_view,
+)
 from eventyay.api.models import OAuthAccessToken
+from eventyay.base.services.anonymize import anonymize_order
 from eventyay.api.serializers.order import (
     CheckinListOrderPositionSerializer,
     InvoiceSerializer,
+    OrderActionCancelSerializer,
+    OrderActionDenySerializer,
+    OrderActionExtendSerializer,
+    OrderActionSendEmailSerializer,
     OrderCreateSerializer,
     OrderPaymentCreateSerializer,
     OrderPaymentSerializer,
@@ -206,6 +220,175 @@ with scopes_disabled():
             return qs.annotate(has_pos=Exists(matching_positions)).filter(mainq)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List orders",
+        description="Returns a list of all orders within a given event.",
+        parameters=[
+            OpenApiParameter('exclude', OpenApiTypes.STR, OpenApiParameter.QUERY, many=True, description='Fields to exclude from the response (e.g. fees, payments, refunds, invoice_address).'),
+            OpenApiParameter('include_canceled_fees', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include canceled fees in the response (default false).'),
+            OpenApiParameter('include_canceled_positions', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include canceled positions in the response (default false).'),
+            OpenApiParameter('pdf_data', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include PDF generation data in positions (default false).'),
+            OpenApiParameter('X-Page-Generated', OpenApiTypes.DATETIME, OpenApiParameter.HEADER, response=[200], description='The server time at the beginning of the operation.'),
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=OrderSerializer(many=True),
+                description='Successful response.',
+            )
+        },
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve an order",
+        description="Returns the details of a specific order.",
+        parameters=[
+            OpenApiParameter('exclude', OpenApiTypes.STR, OpenApiParameter.QUERY, many=True, description='Fields to exclude from the response.'),
+            OpenApiParameter('include_canceled_fees', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include canceled fees in the response.'),
+            OpenApiParameter('include_canceled_positions', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include canceled positions in the response.'),
+            OpenApiParameter('pdf_data', OpenApiTypes.BOOL, OpenApiParameter.QUERY, description='Include PDF generation data in positions.'),
+        ],
+    ),
+    create=extend_schema(
+        summary="Create an order",
+        description="Places a new order.",
+        request=OrderCreateSerializer,
+        responses={
+            201: OrderSerializer,
+        }
+    ),
+    partial_update=extend_schema(
+        summary="Update an order",
+        description="Partially updates an existing order. Currently only modifying comment, checkin_attention, email, phone, locale, and invoice_address is supported.",
+        request=OrderSerializer,
+        responses={
+            200: OrderSerializer,
+        }
+    ),
+    destroy=extend_schema(
+        summary="Delete an order",
+        description="Deletes an order.",
+    ),
+    download=extend_schema(
+        summary="Download order tickets",
+        description="Downloads the tickets for this order. Returns either a binary file or a text/uri-list depending on the provider.",
+        parameters=[
+            OpenApiParameter('output', OpenApiTypes.STR, OpenApiParameter.PATH, required=True, description='The identifier of the ticket output provider.'),
+        ],
+        responses={
+            200: OpenApiTypes.BINARY,
+            403: OpenApiResponse(description="Downloads are not available for unpaid orders."),
+        },
+    ),
+    mark_paid=extend_schema(
+        summary="Mark order as paid",
+        description="Marks a pending order as paid.",
+        request=OrderActionSendEmailSerializer,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not pending or expired, or payment/quota errors."),
+        },
+    ),
+    mark_canceled=extend_schema(
+        summary="Cancel an order",
+        description="Cancels an order.",
+        request=OrderActionCancelSerializer,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not allowed to be canceled or cancellation errors."),
+        },
+    ),
+    reactivate=extend_schema(
+        summary="Reactivate an order",
+        description="Reactivates a canceled order.",
+        request=None,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not allowed to be reactivated or reactivation errors."),
+        },
+    ),
+    approve=extend_schema(
+        summary="Approve an order",
+        description="Approves a pending order.",
+        request=OrderActionSendEmailSerializer,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="Order errors."),
+            409: OpenApiResponse(description="Quota exceeded."),
+        },
+    ),
+    deny=extend_schema(
+        summary="Deny an order",
+        description="Denies a pending order.",
+        request=OrderActionDenySerializer,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="Order errors."),
+        },
+    ),
+    mark_pending=extend_schema(
+        summary="Mark order as pending",
+        description="Marks a paid order as pending.",
+        request=None,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not paid."),
+        },
+    ),
+    mark_expired=extend_schema(
+        summary="Mark order as expired",
+        description="Marks a pending order as expired.",
+        request=None,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not pending."),
+        },
+    ),
+    mark_refunded=extend_schema(
+        summary="Mark order as refunded",
+        description="Marks a paid order as refunded.",
+        request=None,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="The order is not paid."),
+        },
+    ),
+    create_invoice=extend_schema(
+        summary="Create an invoice",
+        description="Generates an invoice for the order.",
+        request=None,
+        responses={
+            201: InvoiceSerializer,
+            400: OpenApiResponse(description="Invoice cannot be generated or already exists."),
+        },
+    ),
+    resend_link=extend_schema(
+        summary="Resend order link",
+        description="Resends the order link email to the buyer.",
+        request=None,
+        responses={
+            204: OpenApiResponse(description="Mail sent successfully."),
+            400: OpenApiResponse(description="No email address associated."),
+            503: OpenApiResponse(description="Mail sending failed."),
+        },
+    ),
+    regenerate_secrets=extend_schema(
+        summary="Regenerate secrets",
+        description="Regenerates secrets for the order and its tickets.",
+        request=None,
+        responses={
+            200: OrderSerializer,
+        },
+    ),
+    extend=extend_schema(
+        summary="Extend order expiration",
+        description="Extends the expiration date of a pending order.",
+        request=OrderActionExtendSerializer,
+        responses={
+            200: OrderSerializer,
+            400: OpenApiResponse(description="Invalid date or order errors."),
+        },
+    ),
+)
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     queryset = Order.objects.none()
@@ -598,6 +781,20 @@ class OrderViewSet(viewsets.ModelViewSet):
             user=self.request.user,
             auth=self.request.auth,
         )
+        return self.retrieve(request, [], **kwargs)
+
+    @action(detail=True, methods=['POST'])
+    def anonymize(self, request, **kwargs):
+        order = self.get_object()
+        try:
+            anonymize_order(
+                order,
+                user=self.request.user if self.request.user.is_authenticated else None,
+                auth=self.request.auth,
+            )
+        except DjangoValidationError as e:
+            msg = e.message if hasattr(e, 'message') else (e.messages[0] if hasattr(e, 'messages') else str(e))
+            return Response({'detail': msg}, status=status.HTTP_400_BAD_REQUEST)
         return self.retrieve(request, [], **kwargs)
 
     @action(detail=True, methods=['POST'])
