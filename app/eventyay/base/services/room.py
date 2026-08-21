@@ -3,7 +3,6 @@ import sys
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
-from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
 from django.dispatch import receiver
 from django.utils.timezone import now
@@ -21,33 +20,6 @@ from eventyay.base.models.room import (
 from eventyay.base.services.user import get_public_users
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
-
-SUPPORTED_ROOM_MODULE_TYPES = frozenset({
-    'livestream.native',
-    'livestream.youtube',
-    'livestream.iframe',
-    'chat.native',
-    'call.bigbluebutton',
-    'call.janus',
-    'call.zoom',
-    'call.jitsi',
-    'poster.native',
-    'page.landing',
-    'page.markdown',
-    'networking.roulette',
-    'question',
-    'poll',
-})
-UNSUPPORTED_ROOM_MODULE_TYPE_MESSAGE = 'This room module type is not supported.'
-
-
-def unsupported_room_module_types(modules):
-    types = {
-        module.get('type')
-        for module in (modules or [])
-        if isinstance(module, dict) and module.get('type')
-    }
-    return types - SUPPORTED_ROOM_MODULE_TYPES
 
 
 @database_sync_to_async
@@ -106,18 +78,13 @@ def validate_room_config_patch(room, body):
 
     Returns (validated_data, update_fields) on success, or (None, None) if invalid.
     """
-    if "module_config" in body:
-        _sanitize_jitsi_config(body["module_config"])
-        if unsupported_room_module_types(body["module_config"]):
-            raise ValidationError(
-                UNSUPPORTED_ROOM_MODULE_TYPE_MESSAGE,
-                code="unsupported_type",
-            )
     serializer = RoomConfigSerializer(
         get_room_with_linked_sessions(room),
         data=body,
         partial=True,
     )
+    if "module_config" in body:
+        _sanitize_jitsi_config(body["module_config"])
     return partial_validated_update(serializer, body)
 
 

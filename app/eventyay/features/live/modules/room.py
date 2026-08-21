@@ -552,16 +552,9 @@ class RoomModule(BaseModule):
     @room_action(permission_required=Permission.ROOM_UPDATE)
     async def config_patch(self, body):
         old = await database_sync_to_async(serialize_room_config)(self.room)
-        try:
-            validated_data, update_fields = await database_sync_to_async(
-                validate_room_config_patch
-            )(self.room, body)
-        except ValidationError as e:
-            await self.consumer.send_error(
-                code=f"room.invalid.{e.code or 'invalid'}",
-                message=e.message if isinstance(e.message, str) else str(e),
-            )
-            return
+        validated_data, update_fields = await database_sync_to_async(
+            validate_room_config_patch
+        )(self.room, body)
         if validated_data is not None:
             for field in update_fields:
                 setattr(self.room, field, validated_data[field])
