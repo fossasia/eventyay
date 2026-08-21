@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
+from django.core.validators import validate_email, MinValueValidator, MaxValueValidator
 from django.db.models import Q
 from django.forms import CheckboxSelectMultiple, formset_factory
 from django.urls import reverse
@@ -27,7 +27,7 @@ from eventyay.timezones import common_timezones, localize_datetime
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
-from eventyay.base.meetup import add_video_field_errors, build_video_form_fields
+from eventyay.base.meetup import add_video_field_errors, build_video_form_fields, is_meetup_event
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
@@ -148,10 +148,15 @@ class EventWizardFoundationForm(forms.Form):
         )
         self.fields['organizer'].widget.choices = self.fields['organizer'].choices
 
-        # Auto-select if only one organizer exists
-        if organizer_count == 1:
-            self.fields['organizer'].initial = qs.first()
-            self.fields['organizer'].required = False
+        # Auto-select if only one organizer exists or user has default organizer
+        if 'organizer' not in self.initial:
+            if organizer_count == 1:
+                self.fields['organizer'].initial = qs.first()
+                self.fields['organizer'].required = False
+            elif self.user and self.user.is_authenticated:
+                default_org = self.user.get_default_organizer(can_create_events=True)
+                if default_org and qs.filter(pk=default_org.pk).exists():
+                    self.fields['organizer'].initial = default_org
 
     def clean(self):
         cleaned_data = super().clean()
@@ -190,6 +195,7 @@ class EventWizardBasicsForm(I18nModelForm):
             'detailed configuration later.'
         ),
         required=False,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
     team = forms.ModelChoiceField(
         label=_('Grant access to team'),
@@ -1315,6 +1321,25 @@ class MailSettingsForm(SettingsForm):
         widget=I18nTextarea,
     )
 
+    mail_text_meetup_registration = I18nFormField(
+        label=_('Text sent to registration contact address'),
+        required=False,
+        widget=I18nTextarea,
+    )
+    mail_send_meetup_registration_attendee = forms.BooleanField(
+        label=_('Send an email to attendees'),
+        help_text=_(
+            'If the registration contains attendees with email addresses different from the person who '
+            'registers, the following email will be sent out to the attendees.'
+        ),
+        required=False,
+    )
+    mail_text_meetup_registration_attendee = I18nFormField(
+        label=_('Text sent to attendees'),
+        required=False,
+        widget=I18nTextarea,
+    )
+
     mail_text_order_changed = I18nFormField(
         label=_('Text'),
         required=False,
@@ -1425,6 +1450,8 @@ class MailSettingsForm(SettingsForm):
         'mail_text_order_paid_attendee': ['event', 'order', 'position'],
         'mail_text_order_free': ['event', 'order'],
         'mail_text_order_free_attendee': ['event', 'order', 'position'],
+        'mail_text_meetup_registration': ['event', 'order'],
+        'mail_text_meetup_registration_attendee': ['event', 'order', 'position'],
         'mail_text_order_changed': ['event', 'order'],
         'mail_text_order_canceled': ['event', 'order'],
         'mail_text_order_expire_warning': ['event', 'order'],
@@ -1451,8 +1478,15 @@ class MailSettingsForm(SettingsForm):
         self.fields['mail_html_renderer'].choices = [
             (r.identifier, r.verbose_name) for r in event.get_html_mail_renderers().values()
         ]
+
+        if not is_meetup_event(event):
+            for field in ('mail_text_meetup_registration', 'mail_send_meetup_registration_attendee',
+                          'mail_text_meetup_registration_attendee'):
+                self.fields.pop(field, None)
+
         for k, v in self.base_context.items():
-            self._set_field_placeholders(k, v)
+            if k in self.fields:
+                self._set_field_placeholders(k, v)
 
         for k, v in list(self.fields.items()):
             if k.endswith('_attendee') and not event.settings.attendee_emails_asked:
@@ -1675,6 +1709,7 @@ class QuickSetupForm(I18nForm):
         required=False,
         max_digits=10,
         decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
     tax_price_includes_tax = forms.BooleanField(
         label=_('The configured product prices include the tax amount'),
@@ -1722,11 +1757,26 @@ class QuickSetupForm(I18nForm):
         ),
         required=False,
     )
+    payment_paypal__enabled = forms.BooleanField(
+        label=_('Payment via PayPal'),
+        help_text=_(
+            'PayPal is a widely used online payment service. To accept payments via PayPal, '
+            'the platform must have PayPal configured in global settings.'
+        ),
+        required=False,
+    )
     payment_banktransfer__enabled = forms.BooleanField(
         label=_('Payment by bank transfer'),
         help_text=_(
             'Your customers will be instructed to wire the money to your account. You can then import your '
             'bank statements to process the payments within eventyay, or mark them as paid manually.'
+        ),
+        required=False,
+    )
+    payment_manualpayment__enabled = forms.BooleanField(
+        label=_('Manual payment'),
+        help_text=_(
+            'Your customers will be instructed to pay the money manually. You can then mark them as paid.'
         ),
         required=False,
     )
@@ -1744,16 +1794,37 @@ class QuickSetupForm(I18nForm):
     payment_banktransfer_bank_details = btf['bank_details']
 
     def __init__(self, *args, **kwargs):
+        from eventyay.base.plugins import get_all_plugins
+
         self.obj = kwargs.pop('event', None)
         self.locales = self.obj.settings.get('locales') if self.obj else kwargs.pop('locales', None)
         kwargs['locales'] = self.locales
         super().__init__(*args, **kwargs)
-        plugins_active = self.obj.get_plugins()
-        if ('eventyay_stripe' not in plugins_active) or (not self.obj.settings.payment_stripe_client_id):
+        
+        plugins_available = {
+            p.module for p in get_all_plugins(self.obj)
+            if getattr(p, 'visible', True) and not p.name.startswith('.')
+        }
+
+        if 'eventyay.plugins.stripe' not in plugins_available:
             del self.fields['payment_stripe__enabled']
-        if 'eventyay.plugins.banktransfer' not in plugins_active:
+        if 'eventyay.plugins.paypal' not in plugins_available:
+            del self.fields['payment_paypal__enabled']
+            
+        if 'eventyay.plugins.banktransfer' not in plugins_available:
             del self.fields['payment_banktransfer__enabled']
-        self.fields['payment_banktransfer_bank_details'].required = False
+            del self.fields['payment_banktransfer_bank_details_type']
+            del self.fields['payment_banktransfer_bank_details_sepa_name']
+            del self.fields['payment_banktransfer_bank_details_sepa_iban']
+            del self.fields['payment_banktransfer_bank_details_sepa_bic']
+            del self.fields['payment_banktransfer_bank_details_sepa_bank']
+            del self.fields['payment_banktransfer_bank_details']
+        else:
+            self.fields['payment_banktransfer_bank_details'].required = False
+            
+        if 'eventyay.plugins.manualpayment' not in plugins_available:
+            del self.fields['payment_manualpayment__enabled']
+
         for f in self.fields.values():
             if 'data-required-if' in f.widget.attrs:
                 del f.widget.attrs['data-required-if']

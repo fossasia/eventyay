@@ -21,6 +21,13 @@
                         <em>{% translate "This review is for you personally, not for all speakers in this session." %}</em>
                     </div>
                 {% endif %}
+                {% if opinion.rating %}
+                    <div class="feedback-rating mb-2" aria-label="{% translate 'Rating' %}: {{ opinion.rating }} / 5" title="{% translate 'Rating' %}: {{ opinion.rating }} / 5">
+                        {% for i in "12345"|make_list %}
+                            <span class="{% if forloop.counter <= opinion.rating %}text-warning{% else %}text-muted{% endif %}">★</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
                 <i class="fa fa-quote-left quote" aria-hidden="true"></i>
                 <div class="feedback-text">{{ opinion.review|rich_text }}</div>
                 <i class="fa fa-quote-right quote float-right" aria-hidden="true"></i>
