@@ -49,6 +49,19 @@ class FeedbackForm(ReadOnlyFlag, forms.ModelForm):
             
         return feedback
 
+    def clean_parent(self):
+        parent_id = self.cleaned_data.get('parent')
+        if parent_id:
+            try:
+                parent_feedback = Feedback.objects.get(id=parent_id)
+                if parent_feedback.talk_id != self.instance.talk_id:
+                    raise forms.ValidationError(_('Parent feedback does not belong to this session.'))
+                if parent_feedback.parent_id is not None:
+                    raise forms.ValidationError(_('Cannot reply to a reply.'))
+            except Feedback.DoesNotExist:
+                raise forms.ValidationError(_('Parent feedback does not exist.'))
+        return parent_id
+
     def clean_rating(self):
         rating = self.cleaned_data.get('rating')
         if rating is not None and not (1 <= rating <= 5):

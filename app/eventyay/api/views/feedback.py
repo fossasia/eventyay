@@ -10,7 +10,35 @@ from eventyay.agenda.feedback_access import (
 )
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.feedback import FeedbackSerializer
+from eventyay.api.auth.permission import EventPermission
+from rest_framework.permissions import SAFE_METHODS
 from eventyay.base.models import Feedback
+
+class FeedbackPermission(EventPermission):
+    def _has_event_permission(
+        self, request, perm_holder, required_permission, event_slug, organizer_slug=None, *, allow_public_read=False
+    ):
+        request.event = self._resolve_event(event_slug, organizer_slug=organizer_slug)
+        if not request.event:
+            return False
+
+        request.organizer = request.event.organizer
+
+        if allow_public_read and request.method in SAFE_METHODS:
+            request.eventpermset = set()
+            return True
+            
+        if request.method == 'POST' and request.user.is_authenticated:
+            request.eventpermset = set()
+            return True
+
+        if not perm_holder.has_event_permission(
+            request.event.organizer, request.event, request=request
+        ):
+            return False
+
+        self._set_eventpermset(request, perm_holder)
+        return self._has_required_permission(required_permission, request.eventpermset)
 
 class FeedbackViewSet(
     PretalxViewSetMixin,
@@ -20,6 +48,7 @@ class FeedbackViewSet(
     mixins.ListModelMixin,
     viewsets.GenericViewSet,
 ):
+    permission_classes = (FeedbackPermission,)
     serializer_class = FeedbackSerializer
     queryset = Feedback.objects.none()
     allow_public_read = True

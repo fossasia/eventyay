@@ -1241,7 +1241,7 @@ class AllFeedbacksList(EventPermissionRequired, PaginationMixin, ListView):
         return context
 
 class FeedbackBulkAction(EventPermissionRequired, View):
-    permission_required = 'base.orga_list_submission'
+    permission_required = 'base.orga_update_submission'
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
@@ -1266,7 +1266,7 @@ class FeedbackBulkAction(EventPermissionRequired, View):
         return redirect(request.GET.get('next', request.event.orga_urls.feedback))
 
 class FeedbackUpdateStatus(EventPermissionRequired, View):
-    permission_required = 'base.orga_list_submission'
+    permission_required = 'base.orga_update_submission'
 
     def get(self, request, *args, **kwargs):
         feedback = get_object_or_404(Feedback, pk=self.kwargs['pk'], talk__event=request.event)
