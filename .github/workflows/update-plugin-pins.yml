@@ -58,6 +58,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y gettext
+
       - name: Record current plugin pins
         id: old_pins
         run: |
