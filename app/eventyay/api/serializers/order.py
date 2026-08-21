@@ -956,6 +956,13 @@ class OrderFeeCreateSerializer(I18nAwareModelSerializer):
             raise ValidationError('The specified tax rate does not belong to this event.')
         return tr
 
+    def validate(self, data):
+        data = super().validate(data)
+        if data.get('_treat_value_as_percentage') and data.get('value') is not None:
+            if data['value'] < 0 or data['value'] > 100:
+                raise ValidationError({'value': ['Percentage values must be between 0 and 100.']})
+        return data
+
 
 class OrderPositionCreateSerializer(I18nAwareModelSerializer):
     answers = AnswerCreateSerializer(many=True, required=False)
