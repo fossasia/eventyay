@@ -37,7 +37,10 @@
         <div class="form-group row">
             <label class="col-md-3 col-form-label">{% translate "Proposal title" %}</label>
             <div class="col-md-9">
-                <strong>{{ submission.title }}</strong>
+                <strong class="submission-title-with-track">
+                    <span class="color-square" style="--track-color: {{ submission.track.color|default:'#cccccc' }}"{% if submission.track %} title="{{ submission.track.name }}"{% endif %}></span>
+                    <span>{{ submission.title }}</span>
+                </strong>
             </div>
         </div>
 
@@ -57,16 +60,57 @@
             </div>
         {% endif %}
 
-        {% if submission.tags.all %}
-            <div class="form-group row">
-                <label class="col-md-3 col-form-label">{% translate "Tags" %}</label>
-                <div class="col-md-9">
-                    {% for tag in submission.tags.all %}
-                        <span class="badge" {% if tag.color %}style="background-color: {{ tag.color }}"{% endif %}>{{ tag.tag }}</span>
-                    {% endfor %}
+        <div class="form-group row">
+            <label class="col-md-3 col-form-label">{% translate "Tags" %}</label>
+            <div class="col-md-9 submission-tags-row">
+                <div id="submission-tags-display" class="submission-tags-display" data-no-tags-label="{% translate 'No tags' %}">
+                    {% if submission.tags.all %}
+                        {% for tag in submission.tags.all %}
+                            <span class="badge mr-1 mb-1 {% if tag.foreground_color == 'white' %}text-white{% elif tag.foreground_color == 'black' %}text-dark{% endif %}" {% if tag.color %}style="--tag-color: {{ tag.color }}"{% endif %} data-tag-id="{{ tag.id }}">{{ tag.tag }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="text-muted" id="no-tags-text">{% translate "No tags" %}</span>
+                    {% endif %}
                 </div>
+                {% if can_edit_submission %}
+                    {{ available_tags_json|json_script:"submission-tags-data" }}
+                    <details
+                        class="dropdown d-inline-block"
+                        id="tags-dropdown"
+                        aria-haspopup="menu"
+                        role="menu"
+                        data-tags-api="{{ request.event.api_urls.tags }}"
+                        data-submission-api="{{ request.event.api_urls.submissions }}{{ submission.code }}/"
+                        data-csrf-token="{{ csrf_token }}"
+                        data-no-tags-label="{% translate 'No tags' %}"
+                        data-no-match-label="{% translate 'No matching tags found' %}"
+                        data-default-color="#17a2b8"
+                    >
+                        <summary class="btn btn-sm btn-outline-info" role="button" title="{% translate 'Manage tags' %}" aria-label="{% translate 'Manage tags' %}">
+                            <i class="fa fa-plus" aria-hidden="true"></i>
+                        </summary>
+                        <div class="dropdown-content tags-dropdown-menu dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
+                            <div class="tags-dropdown-header">
+                                {% translate 'Manage tags' %}
+                            </div>
+                            <div class="tags-dropdown-search">
+                                <label class="sr-only" for="tags-search-input">{% translate 'Search tags' %}</label>
+                                <input type="search" class="form-control form-control-sm" id="tags-search-input" placeholder="{% translate 'Search tags...' %}" autocomplete="off">
+                            </div>
+                            <div class="dropdown-item-container" id="tags-list" role="group" aria-label="{% translate 'Tags' %}"></div>
+                            <div class="tags-dropdown-create" id="create-tag-container" hidden>
+                                <button type="button" class="btn btn-sm btn-link btn-block text-left" id="create-tag-btn">
+                                    <i class="fa fa-plus" aria-hidden="true"></i>
+                                    <span id="create-tag-label-prefix">{% translate 'Create tag' %}</span>
+                                    "<span id="create-tag-name"></span>"
+                                </button>
+                            </div>
+                            <div class="tags-dropdown-error text-danger" id="tags-error" hidden></div>
+                        </div>
+                    </details>
+                {% endif %}
             </div>
-        {% endif %}
+        </div>
 
         {% if submission.abstract %}
             <div class="form-group row">
@@ -246,3 +290,13 @@
         </div>
     </div>
 {% endblock submission_content %}
+
+{% block scripts %}
+    {{ block.super }}
+    {% has_event_perm 'base.update_submission' request.user request submission as can_manage_submission_tags %}
+    {% if can_manage_submission_tags %}
+        {% compress js %}
+            <script defer src="{% static 'orga/js/submission_tags.js' %}"></script>
+        {% endcompress %}
+    {% endif %}
+{% endblock scripts %}

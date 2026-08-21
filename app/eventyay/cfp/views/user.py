@@ -467,11 +467,25 @@ class SubmissionInviteAcceptView(LoggedInEventPageMixin, DetailView):
     context_object_name = 'submission'
 
     def get_object(self, queryset=None):
-        return get_object_or_404(
-            Submission,
-            code__iexact=self.kwargs['code'],
-            invitation_token__iexact=self.kwargs['invitation'],
-        )
+        try:
+            return Submission.objects.get(code__iexact=self.kwargs['code'])
+        except Submission.DoesNotExist:
+            raise Http404()
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_anonymous:
+            return get_login_redirect(request)
+            
+        try:
+            submission = Submission.objects.get(code__iexact=kwargs['code'])
+            if not submission.invitation_token or submission.invitation_token.lower() != kwargs['invitation'].lower():
+                messages.error(request, _('This invitation link is invalid or has expired.'))
+                return redirect(request.event.urls.user)
+        except Submission.DoesNotExist:
+            messages.error(request, _('This invitation link is invalid.'))
+            return redirect(request.event.urls.user)
+            
+        return super().dispatch(request, *args, **kwargs)
 
     @context
     @cached_property

@@ -47,3 +47,173 @@
     padding: 0.3em 0.6em;
     vertical-align: middle;
 }
+
+.submission-title-with-track {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+}
+
+.submission-title-with-track .color-square {
+    flex-shrink: 0;
+    margin-right: 0;
+    vertical-align: middle;
+    background-color: var(--track-color, #cccccc);
+}
+
+.submission-content-view .form-group .col-md-9.submission-tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+}
+
+.submission-tags-display {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+#tags-dropdown {
+    position: relative;
+}
+
+#tags-dropdown > summary {
+    list-style: none;
+}
+
+#tags-dropdown > summary::-webkit-details-marker {
+    display: none;
+}
+
+#tags-dropdown .tags-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    width: 300px;
+    max-width: min(360px, 90vw);
+    padding: 0;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 0.25rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
+    z-index: 1000;
+    /* Override shared dropdown max-content width that causes wrap. */
+    min-width: 300px;
+}
+
+.tags-dropdown-header {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.tags-dropdown-search {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+#tags-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.tags-dropdown-empty {
+    padding: 0.75rem;
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+/* Higher specificity so form-group label styles do not break the list. */
+.submission-content-view .form-group #tags-dropdown label.tag-dropdown-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    margin-bottom: 0;
+    padding: 0.55rem 0.75rem;
+    padding-right: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid #f0f0f0;
+    font-weight: 400;
+    text-align: left;
+    color: inherit;
+}
+
+#tags-dropdown .tag-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+#tags-dropdown .tag-dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+#tags-dropdown .tag-dropdown-item .tag-checkbox {
+    margin: 0.15rem 0 0;
+    flex-shrink: 0;
+}
+
+#tags-dropdown .tag-color-circle {
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    border-radius: 50%;
+    margin-top: 0.2rem;
+    display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background-color: var(--tag-color, #cccccc);
+}
+
+#tags-dropdown .tag-dropdown-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+#tags-dropdown .tag-dropdown-name {
+    line-height: 1.3;
+}
+
+#tags-dropdown .tag-dropdown-description {
+    font-size: 0.75rem;
+    line-height: 1.3;
+    margin-top: 0.15rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.tags-dropdown-create {
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+    padding: 0.25rem;
+}
+
+.tags-dropdown-create .btn {
+    white-space: normal;
+    text-align: left;
+    width: 100%;
+}
+
+.tags-dropdown-error {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    border-top: 1px solid #f5c2c7;
+    background: #f8d7da;
+}
+
+.submission-tags-display .badge {
+    background-color: var(--tag-color, #cccccc);
+}
