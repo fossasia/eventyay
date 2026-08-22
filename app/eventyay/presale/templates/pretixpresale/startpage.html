@@ -32,6 +32,38 @@
             </div>
         </section>
     {% else %}
+        <section class="startpage-hero-content" style="text-align: center; margin-bottom: 3rem; padding: 2rem 1rem;">
+            <h1>{% if global_settings.seo_homepage_title %}{{ global_settings.seo_homepage_title }}{% else %}Eventyay – Open Source Event Management Platform{% endif %}</h1>
+            <p class="lead" style="font-size: 1.25rem; color: #555; max-width: 800px; margin: 1rem auto;">
+                {% if global_settings.seo_homepage_description %}{{ global_settings.seo_homepage_description }}{% else %}
+                The comprehensive platform for all your event needs. Ticketing, Call for Speakers, Scheduling, Check-in, and more.
+                {% endif %}
+            </p>
+        </section>
+
+        <section class="startpage-features">
+            <div class="feature-card">
+                <i class="fa fa-ticket fa-3x" aria-hidden="true"></i>
+                <h3>{% trans "Ticketing" %}</h3>
+                <p>{% trans "Sell tickets, manage orders, and handle check-ins effortlessly." %}</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa fa-bullhorn fa-3x" aria-hidden="true"></i>
+                <h3>{% trans "Call for Speakers" %}</h3>
+                <p>{% trans "Accept submissions, review proposals, and build your schedule." %}</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa fa-calendar fa-3x" aria-hidden="true"></i>
+                <h3>{% trans "Schedules" %}</h3>
+                <p>{% trans "Create interactive schedules and allow attendees to plan their visit." %}</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa fa-code fa-3x" aria-hidden="true"></i>
+                <h3>{% trans "Open Source" %}</h3>
+                <p>{% trans "Built on open source technology. Fully customizable and transparent." %}</p>
+            </div>
+        </section>
+
         {% if featured_events %}
             <section class="startpage-events" aria-label="{% trans "Featured events" %}">
                 <h2>{% trans "Featured events" %}</h2>

@@ -141,6 +141,7 @@ def _common_base_context(request):
     )
 
     settings_obj = GlobalSettingsObject().settings
+    ctx['global_settings'] = settings_obj
     header_image = settings_obj.get('startpage_header_image', as_type=str, default='')
     if header_image.startswith('file://'):
         header_image = header_image[7:]

@@ -2670,6 +2670,76 @@ Your {event} team"""
             required=False,
         ),
     },
+    'seo_homepage_title': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Homepage title'),
+            required=False,
+        ),
+    },
+    'seo_homepage_description': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Homepage description'),
+            widget=forms.Textarea(attrs={'rows': 2}),
+            required=False,
+        ),
+    },
+    'seo_og_title': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Open Graph title'),
+            required=False,
+        ),
+    },
+    'seo_og_description': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Open Graph description'),
+            widget=forms.Textarea(attrs={'rows': 2}),
+            required=False,
+        ),
+    },
+    'seo_twitter_title': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Twitter title'),
+            required=False,
+        ),
+    },
+    'seo_twitter_description': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Twitter description'),
+            widget=forms.Textarea(attrs={'rows': 2}),
+            required=False,
+        ),
+    },
+    'seo_fallback_text': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'form_kwargs': dict(
+            label=_('Fallback SEO text'),
+            required=False,
+        ),
+    },
+    'seo_social_image': {
+        'default': None,
+        'type': File,
+    },
 }
 
 CSS_SETTINGS = {

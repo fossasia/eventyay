@@ -1,0 +1,27 @@
+{% extends "pretixcontrol/global_settings_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load getitem %}
+
+{% block inner %}
+    <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% bootstrap_form_errors form %}
+        
+        <fieldset>
+            <legend>{% translate "SEO & Metadata Settings" %}</legend>
+            <p class="help-block">
+                {% translate "Configure the default SEO tags and social sharing metadata for the Eventyay homepage." %}
+            </p>
+            {% for field in form %}
+                {% bootstrap_field field layout='control' %}
+            {% endfor %}
+        </fieldset>
+
+        <div class="form-group submit-group">
+            <button type="submit" class="btn btn-primary btn-save">
+                {% translate "Save" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}

@@ -519,6 +519,11 @@ def get_admin_navigation(request):
                     'active': (url.url_name == 'admin.global.update'),
                 },
                 {
+                    'label': _('SEO'),
+                    'url': reverse('eventyay_admin:admin.global.seo'),
+                    'active': (url.url_name == 'admin.global.seo'),
+                },
+                {
                     'label': _('Generate keys for SSO'),
                     'url': reverse('eventyay_admin:admin.global.sso'),
                     'active': (url.url_name == 'admin.global.sso'),
