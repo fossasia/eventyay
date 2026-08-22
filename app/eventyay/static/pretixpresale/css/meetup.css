@@ -214,6 +214,13 @@
     transition: transform 0.15s ease, z-index 0.15s ease;
     position: relative;
 }
+.attendee-avatars-stack .avatar-circle-stacked .avatar-circle-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
 .attendee-avatars-stack .avatar-circle-stacked:hover {
     transform: scale(1.12);
     z-index: 100;

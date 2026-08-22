@@ -93,8 +93,8 @@ def process_image(*, image, generate_thumbnail=False):
     img_without_exif = Image.new(img.mode, img.size)
     img_without_exif.putdata(img.getdata())
     max_dimensions = (
-        settings.IMAGE_DEFAULT_MAX_WIDTH,
-        settings.IMAGE_DEFAULT_MAX_HEIGHT,
+        getattr(settings, 'IMAGE_DEFAULT_MAX_WIDTH', 2000),
+        getattr(settings, 'IMAGE_DEFAULT_MAX_HEIGHT', 2000),
     )
     img_without_exif = ImageOps.exif_transpose(img_without_exif)
     img_without_exif.thumbnail(max_dimensions, resample=Resampling.LANCZOS)
