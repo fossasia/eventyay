@@ -281,6 +281,26 @@ def test_fit_fontsize_to_width_multiline_uses_longest_line():
     assert fitted == 12.0
 
 
+def test_resolve_textarea_font_multilingual():
+    from eventyay.base.pdf import Renderer, resolve_textarea_font
+    Renderer._register_fonts()
+
+    font, _ = resolve_textarea_font('Open Sans', 'Ada Lovelace')
+    assert font == 'Open Sans'
+
+    font, _ = resolve_textarea_font('Open Sans', '你好')
+    assert font == 'NotoSansCJK'
+
+    font, _ = resolve_textarea_font('Open Sans', '안녕하세요')
+    assert font == 'NotoSansKR'
+
+    font, _ = resolve_textarea_font('Open Sans', 'สวัสดี')
+    assert font == 'NotoSansThai'
+
+    font, _ = resolve_textarea_font('Open Sans', 'שָׁלוֹם')
+    assert font == 'NotoSansHebrew'
+
+
 def test_extract_layout_text_placeholders():
     assert extract_layout_text_placeholders('{question_1} {question_2}') == ['question_1', 'question_2']
     assert extract_layout_text_placeholders('Plain text') == []
