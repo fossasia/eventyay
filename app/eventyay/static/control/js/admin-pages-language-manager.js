@@ -16,7 +16,7 @@
     ]
 
     const normalizeLocale = (value) => String(value || '').toLowerCase()
-    const getContainer = (fieldEl) => fieldEl?.closest?.('.markdown-toastui-wrapper') || fieldEl
+    const getContainer = (fieldEl) => fieldEl?.closest?.('.markdown-toastui-wrapper') || fieldEl?.closest?.('.tiptap-wrapper') || fieldEl
 
     const getFieldValue = (fieldEl) => {
         if (!fieldEl) return ''

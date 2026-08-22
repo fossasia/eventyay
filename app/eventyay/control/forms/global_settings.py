@@ -10,6 +10,7 @@ from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 from eventyay.base.forms import SecretKeySettingsField, SecretKeySettingsWidget, SettingsForm
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, MEETUP_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
+from eventyay.common.forms.fields import I18nRichTextFormField
 
 
 class GlobalSettingsForm(SettingsForm):
@@ -109,16 +110,14 @@ class GlobalSettingsForm(SettingsForm):
                 ),
                 (
                     'banner_message',
-                    I18nFormField(
-                        widget=I18nTextarea,
+                    I18nRichTextFormField(
                         required=False,
                         label=_('Global message banner'),
                     ),
                 ),
                 (
                     'banner_message_detail',
-                    I18nFormField(
-                        widget=I18nTextarea,
+                    I18nRichTextFormField(
                         required=False,
                         label=_('Global message banner detail text'),
                     ),
@@ -683,7 +682,12 @@ class SSOConfigForm(SettingsForm):
 
 
 class StartPageSettingsForm(SettingsForm):
-    auto_fields = ['startpage_header_image', 'startpage_header_text']
+    auto_fields = ['startpage_header_image']
+
+    startpage_header_text = I18nRichTextFormField(
+        required=False,
+        label=_('Startpage Header Text'),
+    )
 
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()

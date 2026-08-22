@@ -137,6 +137,26 @@ class RichTextWidget(Textarea):
         super().__init__(attrs=attrs)
 
 
+class I18nRichTextEditorWidget(I18nTextarea):
+    """Tiptap-enhanced i18n textarea for simple rich text editing.
+
+    Wraps each locale textarea in a ``[data-tiptap-wrapper]`` container so the
+    shared editor bundle can mount one editor per language tab.
+    """
+
+    def __init__(self, locales, field, attrs=None, **kwargs):
+        attrs = attrs.copy() if attrs is not None else {}
+        attrs.setdefault('data-tiptap-profile', 'richtext')
+        super().__init__(locales=locales, field=field, attrs=attrs)
+
+    def format_output(self, rendered_widgets, id_):
+        wrapped = [
+            f'<div class="tiptap-wrapper" data-tiptap-wrapper="true">{widget}</div>'
+            for widget in rendered_widgets
+        ]
+        return super().format_output(wrapped, id_)
+
+
 class I18nEmailEditorWidget(I18nTextarea):
     """Tiptap email editor for i18n message fields in the Message center.
 
