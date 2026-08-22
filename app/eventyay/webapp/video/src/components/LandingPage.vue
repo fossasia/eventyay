@@ -181,7 +181,7 @@ export default {
 			return {
 				'--landing-hero-background-color': headerBackground,
 				'--landing-hero-text-color': headerText,
-				'--landing-hero-background-image': this.heroBackgroundImage ? `url("${this.heroBackgroundImage}")` : 'none'
+				'--landing-hero-background-image': this.heroBackgroundImage ? `url('${this.heroBackgroundImage}')` : 'none'
 			}
 		},
 		presaleHomeUrl() {
@@ -274,12 +274,11 @@ export default {
 			if (!this.rooms) return []
 			// Shared list used for both the inclusion filter and the hasVideo flag.
 			// Using the same constant avoids the bug where rooms with only
-			// livestream.youtube / livestream.iframe are shown as active but
+			// livestream.youtube rooms are shown as active but
 			// not marked as having video.
 			const videoModuleTypes = [
 				'livestream.native',
 				'livestream.youtube',
-				'livestream.iframe',
 				'call.bigbluebutton',
 				'call.zoom',
 				'call.janus',

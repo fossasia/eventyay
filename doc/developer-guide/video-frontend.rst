@@ -28,7 +28,7 @@ The video frontend is a full-featured virtual event platform built with Vue 3, p
 
 New rooms can be created as **Stage**, **Video Channel**, or **Text Channel**.
 Exhibition halls, poster halls, static pages, iframe pages, and user lists have been removed
-from the video room catalog. Meetup embed URLs use a stage iframe player instead.
+from the video room catalog. Stages use HLS or YouTube as stream sources.
 
 **Location**: ``app/eventyay/webapp/video/``
 
@@ -68,9 +68,9 @@ Technology Stack
   - Server-Sent Events for notifications
 
 **Internationalization**
-  - vue-i18n
-  - 8 languages supported
-  - JSON translation files
+  - i18next with gettext ``video.po`` catalogs (Weblate)
+  - Same UI languages as tickets/talk (Django ``LANGUAGES``)
+  - PO files under ``app/eventyay/locale/*/LC_MESSAGES/video.po``
 
 Application Structure
 ~~~~~~~~~~~~~~~~~~~~~
@@ -795,54 +795,48 @@ Internationalization
 Supported Languages
 ~~~~~~~~~~~~~~~~~~~
 
-**Location**: ``src/locales/``
+gettext catalogs live in ``app/eventyay/locale/<lang>/LC_MESSAGES/video.po``.
+English source strings are in ``en/LC_MESSAGES/video.po``. Translators work on
+the Weblate component ``eventyay/video`` (file mask
+``app/eventyay/locale/*/LC_MESSAGES/video.po``, monolingual base language ``en``).
 
-- **English (en)** - Complete
-- **German (de)** - Complete
-- **Spanish (es)** - Complete
-- **French (fr)** - Complete
-- **Portuguese (pt_BR)** - Complete
-- **Russian (ru)** - Complete
-- **Ukrainian (uk)** - Complete
-- **Arabic (ar)** - Complete
+Shipped Video UI languages match Django ``LANGUAGES`` (the same set as the
+tickets/talk language selector). Gettext files are created for every directory
+under ``app/eventyay/locale/*/LC_MESSAGES/``, next to ``django.po``.
+
+Extract new ``$t()`` keys into PO files from ``app/eventyay/webapp/video`` with
+``npm run i18n:extract``, or from ``app/`` with ``make localegen``.
 
 Implementation
 ~~~~~~~~~~~~~~
 
-**Library**: vue-i18n
+**Library**: i18next (Vue ``$t`` / ``$i18n``)
+
+The Vite gettext plugin loads ``video.po`` at build time. Missing translations
+fall back to English. Do not add JSON locale catalogs.
 
 **Usage in Components**:
 
 .. code-block:: vue
 
    <template>
-     <div>{{ $t('room.join') }}</div>
-     <button>{{ $t('chat.send_message') }}</button>
+     <div>{{ $t('Logout') }}</div>
+     <button>{{ $t('ChatInput:btn-send:tooltip') }}</button>
    </template>
-   
+
    <script>
    export default {
      methods: {
        showMessage() {
-         alert(this.$t('error.connection_lost'))
+         alert(this.$t('App:disconnected-warning:text'))
        }
      }
    }
    </script>
 
-**Pluralization**:
-
-.. code-block:: javascript
-
-   $t('message.count', { count: 5 })
-   // "5 messages" or "1 message"
-
-**Date Formatting**:
-
-.. code-block:: javascript
-
-   $d(new Date(), 'short')
-   // Locale-aware date formatting
+The AppBar language dropdown changes the UI in place and stores the choice in
+``localStorage.userLanguage``, the ``eventyay_language`` cookie, and (when
+logged in) the user locale via ``POST /common/account/locale``.
 
 Styling & Theming
 -----------------

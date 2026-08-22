@@ -1,24 +1,24 @@
 <template lang="pug">
 .c-admin-room
 	.error(v-if="error")
-		span We could not fetch the current configuration.
+		span {{ $t('We could not fetch the current configuration.') }}
 		span(v-if="errorCode")  ({{ errorCode }})
-		span(v-if="errorCode === 'protocol.denied'")  You likely lack admin permissions.
+		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	template(v-else-if="config")
 		template(v-if="!inferredType")
 			.ui-page-header
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
 				h1(v-html="$emojify(config.name)")
 			.mystery-room
-				p Room not instantiated.
-				bunt-button(@click="showRoomEditPrompt = true") Initiate room
+				p {{ $t('Room not instantiated.') }}
+				bunt-button(@click="showRoomEditPrompt = true") {{ $t('Initiate room') }}
 		template(v-else)
 			.ui-page-header
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
-				h1 {{ inferredType ? inferredType.name : 'Mystery Room' }} :
+				h1 {{ inferredTypeLabel }} :
 					span.room-name(v-html="$emojify(config.name)")
 				.actions
-					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") Edit
+					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") {{ $t('Edit') }}
 			edit-form(:config="config")
 	bunt-progress-circular(v-else, size="huge")
 	transition(name="prompt")
@@ -33,7 +33,7 @@
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import RoomEditPrompt from 'components/RoomEditPrompt'
-import { inferType } from 'lib/room-types'
+import { inferType, localizeRoomType } from 'lib/room-types'
 import EditForm from './EditForm'
 
 export default {
@@ -55,6 +55,11 @@ export default {
 		...mapGetters(['hasPermission']),
 		inferredType() {
 			return inferType(this.config)
+		},
+		inferredTypeLabel() {
+			this.$store.state.userLocale
+			if (!this.inferredType) return this.$t('Mystery Room')
+			return localizeRoomType(this.$t.bind(this), this.inferredType).name
 		}
 	},
 	async created() {

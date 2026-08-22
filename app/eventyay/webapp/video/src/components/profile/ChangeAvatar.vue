@@ -4,7 +4,7 @@
 		bunt-button.btn-randomize(@click="changeIdenticon") {{ $t('profile/ChangeAvatar:button-randomize:label') }}
 		span {{ $t('profile/ChangeAvatar:or') }}
 		upload-button.btn-upload(@change="fileSelected", accept="image/png, image/jpg, image/jpeg, .png, .jpg, .jpeg") {{ $t('profile/ChangeAvatar:button-upload:label') }}
-	.upload-info Maximum file size: 10 MB. Supported formats: PNG, JPG, JPEG. Minimum dimensions: 128x128 pixels.
+	.upload-info {{ uploadInfoText }}
 	.image-wrapper
 		.file-error(v-if="fileError")
 			.mdi.mdi-alert-octagon
@@ -53,6 +53,14 @@ const identiconUser = computed(() => ({
 	},
 }))
 
+const uploadInfoText = computed(() => {
+	proxy.$store?.state?.userLocale
+	return proxy.$t(
+		'Maximum file size: {{size}} MB. Supported formats: PNG, JPG, JPEG. Minimum dimensions: 128x128 pixels.',
+		{ size: MAX_FILE_SIZE_MB },
+	)
+})
+
 // Actions
 function changeIdenticon() {
 	fileError.value = null
@@ -73,7 +81,7 @@ function fileSelected(event) {
 	
 	// Validate file size (10MB max)
 	if (avatarFile.size > MAX_FILE_SIZE_BYTES) {
-		fileError.value = `File size exceeds ${MAX_FILE_SIZE_MB} MB. Please choose a smaller image.`
+		fileError.value = proxy.$t('File size exceeds {{size}} MB. Please choose a smaller image.', {size: MAX_FILE_SIZE_MB})
 		emit('blockSave', true)
 		event.target.value = ''
 		return
@@ -81,7 +89,7 @@ function fileSelected(event) {
 	
 	// Validate file format
 	if (!ALLOWED_FORMATS.includes(avatarFile.type)) {
-		fileError.value = 'Invalid file format. Only PNG, JPG, and JPEG images are allowed.'
+		fileError.value = proxy.$t('Invalid file format. Only PNG, JPG, and JPEG images are allowed.')
 		emit('blockSave', true)
 		event.target.value = ''
 		return

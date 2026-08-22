@@ -2,12 +2,12 @@
 .c-admin-rooms-new
 	.ui-page-header
 		bunt-icon-button(@click="type ? $router.replace({name: 'admin:rooms:new'}) : $router.replace({name: 'admin:rooms:index'})") arrow_left
-		h1 New room
-			template(v-if="chosenType")  : {{ chosenType.name }}
+		h1 {{ $t('New room') }}
+			template(v-if="chosenType")  : {{ chosenTypeLabel }}
 	.choose-type(v-if="!type", v-scrollbar.y="")
-		h2 Choose a room type
+		h2 {{ $t('Choose a room type') }}
 		.types
-			router-link.type(v-for="type of ROOM_TYPES", :to="{name: 'admin:rooms:new', params: {type: type.id}}")
+			router-link.type(v-for="type of displayRoomTypes", :to="{name: 'admin:rooms:new', params: {type: type.id}}")
 				.icon.mdi(:class="[`mdi-${type.icon}`]")
 				.text
 					.name {{ type.name }}
@@ -16,7 +16,7 @@
 </template>
 <script>
 import { mapGetters } from 'vuex'
-import ROOM_TYPES from 'lib/room-types'
+import ROOM_TYPES, { localizeRoomType } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import { PLAYBACK_MODE_ALWAYS_ON } from 'lib/stage-streams'
 import EditForm from './EditForm'
@@ -35,8 +35,16 @@ export default {
 		ROOM_TYPES() {
 			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode)
 		},
+		displayRoomTypes() {
+			this.$store.state.userLocale
+			return this.ROOM_TYPES.map(type => localizeRoomType(this.$t.bind(this), type))
+		},
 		chosenType() {
 			return this.ROOM_TYPES.find(t => t.id === this.type)
+		},
+		chosenTypeLabel() {
+			this.$store.state.userLocale
+			return this.chosenType ? localizeRoomType(this.$t.bind(this), this.chosenType).name : ''
 		},
 	},
 	watch: {

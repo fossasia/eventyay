@@ -1,19 +1,19 @@
 <template lang="pug">
 router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", :class="{'mystery': !inferredType}", draggable="false")
-	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? 'sorting is disabled while searching' : ''")
+	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="sortDisabledTooltip")
 	.name(v-html="$emojify(room.name)")
 	.badge-cell
 		.badges-wrapper
 			.room-type-badge.unscheduled-room-badge(v-if="room.is_unscheduled")
 				.mdi.mdi-calendar-remove
-				span Unscheduled
+				span {{ $t('Unscheduled') }}
 			.room-type-badge(:class="badgeClass")
 				.mdi(:class="badgeIcon")
 				span {{ badgeLabel }}
 </template>
 <script>
 import { ElementMixin, HandleDirective } from 'vue-slicksort'
-import { inferType } from 'lib/room-types'
+import { inferType, localizeRoomType } from 'lib/room-types'
 
 export default {
 	directives: { handle: HandleDirective },
@@ -29,13 +29,19 @@ export default {
 			return inferType({ module_config: this.room.module_config })
 		},
 		badgeLabel () {
-			return this.inferredType ? this.inferredType.name : 'Unconfigured'
+			this.$store.state.userLocale
+			if (!this.inferredType) return this.$t('Unconfigured')
+			return localizeRoomType(this.$t.bind(this), this.inferredType).name
 		},
 		badgeIcon () {
 			return this.inferredType ? `mdi-${this.inferredType.icon}` : 'mdi-help-circle-outline'
 		},
 		badgeClass () {
 			return this.inferredType ? `type-${this.inferredType.id}` : 'type-mystery'
+		},
+		sortDisabledTooltip () {
+			this.$store.state.userLocale
+			return this.disabled ? this.$t('Sorting is disabled while searching') : ''
 		}
 	}
 }
