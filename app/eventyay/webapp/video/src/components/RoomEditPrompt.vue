@@ -48,6 +48,7 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 					:is="typeComponents[inferredType.id]",
 					:config="config",
 					:modules="modules",
+					:room-id="config.id ? String(config.id) : null",
 					:creating="!wasConfigured"
 				)
 				sidebar-addons(
@@ -77,7 +78,7 @@ import api from 'lib/api'
 import Prompt from 'components/Prompt'
 import ROOM_TYPES, { inferType } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
-import { PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
+import { PLAYBACK_MODE_ALWAYS_ON } from 'lib/stage-streams'
 import Stage from 'views/admin/rooms/types-edit/stage'
 import ChannelBBB from 'views/admin/rooms/types-edit/channel-bbb'
 import ChannelJanus from 'views/admin/rooms/types-edit/channel-janus'
@@ -167,7 +168,7 @@ export default {
 	methods: {
 		getStartingModuleConfig (type) {
 			if (type.id === 'stage') {
-				return { playback_mode: PLAYBACK_MODE_SCHEDULE_DRIVEN }
+				return { playback_mode: PLAYBACK_MODE_ALWAYS_ON, hls_url: '' }
 			}
 			return {}
 		},
@@ -226,17 +227,25 @@ export default {
 		},
 		async save () {
 			this.saveError = null
+			const isStage = this.inferredType?.id === 'stage'
+			if (isStage && !this.$refs.settings?.validate()) return
 			this.$refs.settings?.beforeSave?.()
 			this.saving = true
 			try {
-				await api.call('room.config.patch', {
+				const pendingModuleConfig = this.config.module_config
+				const roomPatch = {
 					room: this.config.id,
 					name: this.config.name,
 					description: this.config.description,
 					picture: this.config.picture,
 					force_join: this.config.force_join,
-					module_config: this.config.module_config
-				})
+				}
+				if (!isStage) roomPatch.module_config = this.config.module_config
+				await api.call('room.config.patch', roomPatch)
+				if (isStage) {
+					this.config.module_config = pendingModuleConfig
+					await this.$refs.settings.saveStreamConfiguration(this.config.id)
+				}
 				this.saving = false
 				this.$emit('close')
 			} catch (err) {

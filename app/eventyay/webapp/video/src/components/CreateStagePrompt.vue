@@ -4,15 +4,7 @@ prompt.c-create-stage-prompt(@close="$emit('close')")
 		h1 {{ $t('CreateStagePrompt:headline:text') }}
 		form(@submit.prevent="create")
 			bunt-input(name="name", :label="$t('CreateStagePrompt:name:label')", icon="theater", :placeholder="$t('CreateStagePrompt:name:placeholder')", v-model="name", :validation="v$.name")
-			.stage-mode
-				.fieldset-label Stream type
-				.ui-radio-options
-					label.ui-radio-option(v-for="option in PLAYBACK_MODE_OPTIONS", :key="option.id")
-						input(type="radio", name="playbackMode", :value="option.id", v-model="playbackMode")
-						.radio-copy
-							.ui-radio-title {{ option.label }}
-							.ui-radio-description {{ option.description }}
-			.default-source(v-if="playbackMode === PLAYBACK_MODE_ALWAYS_ON")
+			.default-source
 				.stream-source
 					.fieldset-label Default stream source
 					.ui-radio-options
@@ -39,7 +31,6 @@ import Prompt from 'components/Prompt'
 import { required, url, youtubeid, normalizeYoutubeVideoId } from 'lib/validators'
 import {
 	PLAYBACK_MODE_ALWAYS_ON,
-	PLAYBACK_MODE_OPTIONS,
 	IFRAME_PROVIDER_HELP_TEXT,
 	getStreamSourceOptions
 } from 'lib/stage-streams'
@@ -51,7 +42,6 @@ export default {
 	data() {
 		return {
 			name: '',
-			playbackMode: PLAYBACK_MODE_ALWAYS_ON,
 			streamSource: 'hls',
 			url: '',
 			youtubeId: '',
@@ -59,8 +49,6 @@ export default {
 			description: '',
 			loading: false,
 			error: null,
-			PLAYBACK_MODE_ALWAYS_ON,
-			PLAYBACK_MODE_OPTIONS,
 			IFRAME_PROVIDER_HELP_TEXT,
 			streamSourceOptions: getStreamSourceOptions()
 		}
@@ -71,11 +59,11 @@ export default {
 	validations() {
 		const urlRules = {}
 		const youtubeRules = {}
-		if (this.playbackMode === PLAYBACK_MODE_ALWAYS_ON && ['hls', 'iframe'].includes(this.streamSource)) {
+		if (['hls', 'iframe'].includes(this.streamSource)) {
 			urlRules.required = required('Stream URL is required')
 			urlRules.url = url('must be a valid url')
 		}
-		if (this.playbackMode === PLAYBACK_MODE_ALWAYS_ON && this.streamSource === 'youtube') {
+		if (this.streamSource === 'youtube') {
 			youtubeRules.required = required('YouTube Video ID or URL is required')
 			youtubeRules.youtubeid = youtubeid('not a valid YouTube video ID or URL')
 		}
@@ -94,11 +82,7 @@ export default {
 		},
 		buildLivestreamModule() {
 			const config = {
-				playback_mode: this.playbackMode,
-			}
-			if (this.playbackMode !== PLAYBACK_MODE_ALWAYS_ON) {
-				// Schedule entries provide the concrete source type and URL at playback time.
-				return { type: 'livestream.native', config }
+				playback_mode: PLAYBACK_MODE_ALWAYS_ON,
 			}
 			if (this.streamSource === 'youtube') {
 				config.ytid = normalizeYoutubeVideoId(this.youtubeId) || this.youtubeId
@@ -175,7 +159,7 @@ export default {
 					resize: vertical
 					min-height: 64px
 					padding: 0 8px
-			.stage-mode, .stream-source
+			.stream-source
 				margin-top: 16px
 				.fieldset-label
 					font-size: 12px

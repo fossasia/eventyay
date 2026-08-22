@@ -1,6 +1,8 @@
+from asgiref.sync import async_to_sync
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from django.http import HttpResponse
+from django_scopes import scope
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import exceptions, pagination, status, viewsets
 from rest_framework.decorators import action
@@ -11,12 +13,18 @@ from rest_framework.response import Response
 from eventyay.api.documentation import build_search_docs
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
-from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
+from eventyay.api.serializers.stream_schedule import (
+    StageStreamConfigurationSerializer,
+    StreamScheduleSerializer,
+)
 from eventyay.api.throttles import EventyayUserRateThrottle, PublicStreamThrottle
 from eventyay.base.exporters.room_broadcast import (
     VideoRoomBroadcastConfigurationExporter,
 )
 from eventyay.base.models.room import Room
+from eventyay.base.models.stream_schedule import StreamSchedule
+from eventyay.base.services.event import notify_event_change
+from eventyay.base.services.room import broadcast_stream_change
 
 
 class RoomPagination(pagination.LimitOffsetPagination):
@@ -114,7 +122,12 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         description="Returns the currently active stream schedule for this room, if any.",
         responses={200: StreamScheduleSerializer, 404: None},
     )
-    @action(detail=True, methods=["get"], url_path="streams/current", throttle_classes=[PublicStreamThrottle, EventyayUserRateThrottle])
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="streams/current",
+        throttle_classes=[PublicStreamThrottle, EventyayUserRateThrottle],
+    )
     def current_stream(self, request, pk=None, **kwargs):
         room = self.get_object()
         current = room.get_current_stream()
@@ -137,3 +150,83 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             serializer = StreamScheduleSerializer(next_stream)
             return Response(serializer.data)
         return Response(status=404)
+
+    @extend_schema(
+        summary="Replace Stage Stream Configuration",
+        request=StageStreamConfigurationSerializer,
+        responses={200: StageStreamConfigurationSerializer},
+    )
+    @action(detail=True, methods=["put"], url_path="stream-configuration")
+    def stream_configuration(self, request, pk=None, **kwargs):
+        with scope(event=self.event):
+            requested_room = self.get_object()
+
+        with scope(event=self.event), transaction.atomic():
+            room = (
+                self.event.rooms.select_for_update()
+                .select_related("event")
+                .get(pk=requested_room.pk)
+            )
+            serializer = StageStreamConfigurationSerializer(
+                data=request.data,
+                context={"request": request, "room": room},
+            )
+            serializer.is_valid(raise_exception=True)
+            validated_data = serializer.validated_data
+
+            room.module_config = validated_data["module_config"]
+            room.save(update_fields=["module_config"])
+
+            schedules_data = validated_data["schedules"]
+            schedule_ids = {
+                schedule["id"] for schedule in schedules_data if "id" in schedule
+            }
+            existing_schedules = {
+                schedule.pk: schedule
+                for schedule in StreamSchedule.objects.select_for_update().filter(
+                    room=room
+                )
+            }
+            if not schedule_ids.issubset(existing_schedules):
+                raise exceptions.ValidationError(
+                    {"schedules": ["Stream schedule not found."]}
+                )
+
+            saved_schedules = []
+            for schedule_data in schedules_data:
+                item = dict(schedule_data)
+                schedule_id = item.pop("id", None)
+                schedule = (
+                    existing_schedules[schedule_id]
+                    if schedule_id is not None
+                    else StreamSchedule(room=room)
+                )
+                for field, value in item.items():
+                    setattr(schedule, field, value)
+                schedule.save(skip_validation=True)
+                saved_schedules.append(schedule)
+
+            StreamSchedule.objects.filter(room=room).exclude(
+                pk__in=[schedule.pk for schedule in saved_schedules]
+            ).delete()
+            room.log_action(
+                ".update", person=request.user, auth=request.auth, orga=True
+            )
+            current_stream = room.get_current_stream()
+
+            def notify_stream_configuration_saved():
+                async_to_sync(broadcast_stream_change)(
+                    room.pk, current_stream, reload=True
+                )
+                async_to_sync(notify_event_change)(self.event.pk)
+
+            transaction.on_commit(notify_stream_configuration_saved)
+
+        return Response(
+            {
+                "module_config": room.module_config,
+                "schedules": StreamScheduleSerializer(
+                    saved_schedules, many=True
+                ).data,
+            }
+        )

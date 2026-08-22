@@ -6,6 +6,7 @@ import pytest
 from asgiref.sync import async_to_sync
 from django.utils.timezone import now
 
+from eventyay.api.views import room as room_api_view
 from eventyay.base.models import Room
 from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.services import event as event_service
@@ -278,3 +279,187 @@ def test_clear_stream_schedules_keeps_schedules_when_stage_stays_schedule_driven
 )
 def test_uses_schedule_driven_stage(module_config, expected):
     assert room_service.uses_schedule_driven_stage(module_config) is expected
+
+
+def stream_configuration_url(event, room):
+    return (
+        f'/api/v1/organizers/{event.organizer.slug}/events/{event.slug}/'
+        f'rooms/{room.pk}/stream-configuration/'
+    )
+
+
+@pytest.mark.django_db
+def test_stream_configuration_saves_one_stream_and_clears_schedules(
+    event, organizer_client, monkeypatch, django_capture_on_commit_callbacks
+):
+    room = Room.objects.create(
+        event=event,
+        name='Stage',
+        module_config=[
+            {
+                'type': 'livestream.native',
+                'config': {'playback_mode': 'schedule_driven'},
+            }
+        ],
+    )
+    StreamSchedule.objects.create(
+        room=room,
+        title='Old stream',
+        url='https://example.com/old.m3u8',
+        start_time=now() + dt.timedelta(hours=1),
+        end_time=now() + dt.timedelta(hours=2),
+        stream_type='hls',
+    )
+    broadcasts = []
+    notifications = []
+
+    async def fake_broadcast(room_id, stream_schedule, reload=False):
+        broadcasts.append((room_id, stream_schedule, reload))
+
+    async def fake_notify(event_id):
+        notifications.append(event_id)
+
+    monkeypatch.setattr(room_api_view, 'broadcast_stream_change', fake_broadcast)
+    monkeypatch.setattr(room_api_view, 'notify_event_change', fake_notify)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = organizer_client.put(
+            stream_configuration_url(event, room),
+            data={
+                'module_config': [
+                    {
+                        'type': 'livestream.native',
+                        'config': {
+                            'playback_mode': 'always_on',
+                            'hls_url': 'https://example.com/live.m3u8',
+                        },
+                    }
+                ],
+                'schedules': [],
+            },
+            content_type='application/json',
+        )
+
+    assert response.status_code == 200
+    room.refresh_from_db()
+    assert room.module_config[0]['config'] == {
+        'playback_mode': 'always_on',
+        'hls_url': 'https://example.com/live.m3u8',
+    }
+    assert not StreamSchedule.objects.filter(room=room).exists()
+    assert broadcasts == [(room.pk, None, True)]
+    assert notifications == [event.pk]
+
+
+@pytest.mark.django_db
+def test_stream_configuration_rejects_overlap_without_partial_changes(
+    event, organizer_client
+):
+    original_module_config = [
+        {
+            'type': 'livestream.native',
+            'config': {
+                'playback_mode': 'always_on',
+                'hls_url': 'https://example.com/original.m3u8',
+            },
+        }
+    ]
+    room = Room.objects.create(
+        event=event,
+        name='Stage',
+        module_config=original_module_config,
+    )
+    original_schedule = StreamSchedule.objects.create(
+        room=room,
+        title='Existing stream',
+        url='https://example.com/existing.m3u8',
+        start_time=now() + dt.timedelta(hours=5),
+        end_time=now() + dt.timedelta(hours=6),
+        stream_type='hls',
+    )
+    start = now() + dt.timedelta(hours=1)
+
+    response = organizer_client.put(
+        stream_configuration_url(event, room),
+        data={
+            'module_config': [
+                {
+                    'type': 'livestream.native',
+                    'config': {'playback_mode': 'schedule_driven'},
+                }
+            ],
+            'schedules': [
+                {
+                    'url': 'https://example.com/first.m3u8',
+                    'start_time': start.isoformat(),
+                    'end_time': (start + dt.timedelta(hours=2)).isoformat(),
+                    'stream_type': 'hls',
+                    'config': {},
+                },
+                {
+                    'url': 'https://example.com/second.m3u8',
+                    'start_time': (start + dt.timedelta(hours=1)).isoformat(),
+                    'end_time': (start + dt.timedelta(hours=3)).isoformat(),
+                    'stream_type': 'hls',
+                    'config': {},
+                },
+            ],
+        },
+        content_type='application/json',
+    )
+
+    assert response.status_code == 400
+    room.refresh_from_db()
+    assert room.module_config == original_module_config
+    assert StreamSchedule.objects.filter(pk=original_schedule.pk).exists()
+
+
+@pytest.mark.django_db
+def test_stream_configuration_rejects_schedule_from_another_room(
+    event, organizer_client
+):
+    room = Room.objects.create(
+        event=event,
+        name='Stage',
+        module_config=[
+            {
+                'type': 'livestream.native',
+                'config': {'playback_mode': 'schedule_driven'},
+            }
+        ],
+    )
+    other_room = Room.objects.create(event=event, name='Other stage')
+    other_schedule = StreamSchedule.objects.create(
+        room=other_room,
+        url='https://example.com/other.m3u8',
+        start_time=now() + dt.timedelta(hours=1),
+        end_time=now() + dt.timedelta(hours=2),
+        stream_type='hls',
+    )
+
+    response = organizer_client.put(
+        stream_configuration_url(event, room),
+        data={
+            'module_config': [
+                {
+                    'type': 'livestream.native',
+                    'config': {'playback_mode': 'schedule_driven'},
+                }
+            ],
+            'schedules': [
+                {
+                    'id': other_schedule.pk,
+                    'url': other_schedule.url,
+                    'start_time': other_schedule.start_time.isoformat(),
+                    'end_time': other_schedule.end_time.isoformat(),
+                    'stream_type': other_schedule.stream_type,
+                    'config': {},
+                }
+            ],
+        },
+        content_type='application/json',
+    )
+
+    assert response.status_code == 400
+    assert StreamSchedule.objects.filter(pk=other_schedule.pk).exists()
+    assert not StreamSchedule.objects.filter(room=room).exists()
