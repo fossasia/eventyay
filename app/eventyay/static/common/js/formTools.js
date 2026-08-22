@@ -907,7 +907,6 @@ let _fileInputIdCounter = 0
 const initFileInputWrappers = () => {
     const i18nEl = document.getElementById('eventyay-file-input-i18n')
     const defaultChooseLabel = i18nEl?.dataset?.chooseFile || 'Choose file'
-    const defaultNoFileLabel = i18nEl?.dataset?.noFile || 'No file chosen'
 
     document.querySelectorAll('input[type="file"]').forEach((input) => {
         // Skip if already handled by the avatar template or already wrapped
@@ -923,8 +922,6 @@ const initFileInputWrappers = () => {
         input.dataset.eventyayFileWrapped = 'true'
 
         const chooseLabel = input.dataset.chooseFileLabel || defaultChooseLabel
-        const noFileText = input.dataset.noFileLabel || defaultNoFileLabel
-
         // Build the wrapper
         const wrapper = document.createElement('div')
         wrapper.className = 'eventyay-file-pick-wrapper'
@@ -944,8 +941,6 @@ const initFileInputWrappers = () => {
         // Filename display span
         const nameSpan = document.createElement('span')
         nameSpan.className = 'eventyay-file-name text-muted small ms-2'
-        nameSpan.dataset.noFile = noFileText
-        nameSpan.textContent = noFileText
 
         // Insert wrapper before the input, then move input inside
         input.parentNode.insertBefore(wrapper, input)
@@ -963,7 +958,7 @@ const initFileInputWrappers = () => {
         input.addEventListener('change', () => {
             nameSpan.textContent = (input.files && input.files.length > 0)
                 ? input.files[0].name
-                : noFileText
+                : ''
         })
     })
 }

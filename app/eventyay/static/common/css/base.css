@@ -71,8 +71,8 @@ summary.btn {
   user-select: none;
   text-decoration: none;
 
-  border: 1px solid var(--highlight-color);
-  background: var(--highlight-color);
+  border: 1px solid var(--highlight-color, var(--color-primary));
+  background: var(--highlight-color, var(--color-primary));
   color: white;
   transition:
     color 0.15s ease-in-out,

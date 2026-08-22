@@ -233,6 +233,9 @@ input[type="file"] {
   font-size: 0.875em;
   color: #6c757d;
   padding: 0.375rem 0.75rem;
+  &:empty {
+    display: none;
+  }
 }
 ::file-selector-button {
   margin-left: -6px;
