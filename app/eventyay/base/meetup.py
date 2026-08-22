@@ -1,15 +1,24 @@
+import logging
+import os
 from decimal import Decimal
 from urllib.parse import urljoin
 
 from django import forms
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import UploadedFile
 from django.core.validators import URLValidator
 from django.db import transaction
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
+from PIL import UnidentifiedImageError
+
+from eventyay.helpers.image_optimize import optimize_uploaded_image
+
+logger = logging.getLogger(__name__)
 
 EVENT_TYPE_SETTING = 'event_type'
 MEETUP_EVENT_TYPE = 'meetup'
@@ -248,7 +257,9 @@ def ensure_rsvp_product(event):
             )
             product.save()
 
-        quota = event.quotas.first()
+        quota = product.quotas.first()
+        if quota is None:
+            quota = event.quotas.filter(name=DEFAULT_QUOTA_NAME).first()
         if quota is None:
             quota = Quota(event=event, name=DEFAULT_QUOTA_NAME, size=None)
             quota.save()
@@ -273,16 +284,68 @@ def get_rsvp_product_and_quota(event):
         return product, quota
 
 
-def provision_meetup_event(event, video_type='', video_url='', request=None):
+def _save_meetup_preview_image(event, preview_image, crop_box=None):
+    if not isinstance(preview_image, UploadedFile):
+        return
+
+    setting_key = 'event_preview_image'
+    try:
+        result = optimize_uploaded_image(preview_image, setting_key, crop_box=crop_box)
+    except (OSError, ValueError, UnidentifiedImageError):
+        logger.warning('Could not optimize uploaded preview image for event %s', event.slug, exc_info=True)
+        preview_image.seek(0)
+        result = None
+
+    nonce = get_random_string(length=8)
+    clean_name, _ = os.path.splitext(preview_image.name or setting_key)
+    base_path = f'pub/{event.organizer.slug}/{event.slug}/{clean_name}.{nonce}'
+
+    if result:
+        optimized_name = f'{base_path}.{result.optimized_ext}'
+        optimized_path = default_storage.save(optimized_name, result.optimized)
+        original_name = f'{base_path}_original.{result.original_ext}'
+        try:
+            default_storage.save(original_name, result.original)
+            event.settings.set(f'{setting_key}_original_ext', result.original_ext)
+        except OSError:
+            pass
+        event.settings.set(setting_key, f'file://{optimized_path}')
+    else:
+        ext = os.path.splitext(preview_image.name)[1] if preview_image.name else '.jpg'
+        file_path = default_storage.save(f'{base_path}{ext}', preview_image)
+        event.settings.set(setting_key, f'file://{file_path}')
+
+
+def provision_meetup_event(
+    event,
+    video_type='',
+    video_url='',
+    request=None,
+    frontpage_text=None,
+    preview_image=None,
+    registration_limit=None,
+    crop_box=None,
+):
     event.settings.set(EVENT_TYPE_SETTING, MEETUP_EVENT_TYPE)
 
     event.live = True
     event.tickets_published = True
     event.save(update_fields=['live', 'tickets_published'])
 
+    if frontpage_text is not None:
+        event.settings.set('frontpage_text', frontpage_text)
+
+    if preview_image:
+        _save_meetup_preview_image(event, preview_image, crop_box=crop_box)
+
     ensure_video_credentials(event, request=request, force=True)
     apply_video_configuration(event, video_type, video_url)
-    ensure_rsvp_product(event)
+    product, quota = ensure_rsvp_product(event)
+
+    if quota and registration_limit is not None:
+        with scope(organizer=event.organizer):
+            quota.size = registration_limit
+            quota.save(update_fields=['size'])
 
     event.log_action(
         'eventyay.event.meetup.created',
