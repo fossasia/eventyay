@@ -165,7 +165,6 @@ export default defineConfig(({ mode }) => {
       exclude: [
         'janus-gateway',
         'janus-gateway/html/janus.js',
-        'pdfjs-dist',
         'buntpapier',
       ],
       esbuildOptions: {
@@ -196,7 +195,6 @@ export default defineConfig(({ mode }) => {
               // Consolidate WebRTC libs to a single chunk to avoid evaluation order races
               if (id.includes('janus-gateway') || id.includes('webrtc-adapter')) return 'vendor-rtc'
               if (id.includes('materialdesignicons-webfont') || id.match(/materialdesignicons/)) return 'vendor-mdi'
-              if (id.includes('pdfjs-dist')) return 'vendor-pdfjs'
               if (id.includes('moment') || id.includes('moment-timezone')) return 'vendor-moment'
               if (id.includes('lodash') || id.includes('lodash-es')) return 'vendor-lodash'
               if (id.includes('quill')) return 'vendor-quill'

@@ -140,6 +140,20 @@ class BaseQuestionsViewMixin:
                 if pos not in storage:
                     storage[pos] = []
                 storage[pos].append(f)
+
+        groups = list(storage.values())
+        if groups:
+            first_group = groups[0]
+            for i, group in enumerate(groups):
+                if i == 0:
+                    group[0].pos.show_copy_answers_main_button = False
+                    continue
+
+                group[0].pos.show_copy_answers_main_button = any(
+                    set(form.fields.keys()) & set(first_group[addonidx].fields.keys())
+                    for addonidx, form in enumerate(group) if addonidx < len(first_group)
+                )
+
         return storage
 
     def save(self):

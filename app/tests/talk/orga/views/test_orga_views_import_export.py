@@ -27,7 +27,7 @@ def test_import_export_page_contains_schedule_html_export_tab(orga_client, event
     """The Import/Export settings page renders the Schedule HTML export tab."""
     url = reverse(
         "orga:settings.import_export",
-        kwargs={"organiser": event.organiser.slug, "event": event.slug},
+        kwargs={"organizer": event.organiser.slug, "event": event.slug},
     )
     response = orga_client.get(url)
     assert response.status_code == 200
@@ -41,7 +41,7 @@ def test_import_export_settings_save_html_export(orga_client, event):
     """Posting save_schedule_html_export persists both fields to the event."""
     url = reverse(
         "orga:settings.import_export",
-        kwargs={"organiser": event.organiser.slug, "event": event.slug},
+        kwargs={"organizer": event.organiser.slug, "event": event.slug},
     )
     response = orga_client.post(
         url,
@@ -63,7 +63,7 @@ def test_import_export_settings_save_invalid_url(orga_client, event):
     """An invalid HTML export URL returns 400 and reports the field error."""
     url = reverse(
         "orga:settings.import_export",
-        kwargs={"organiser": event.organiser.slug, "event": event.slug},
+        kwargs={"organizer": event.organiser.slug, "event": event.slug},
     )
     response = orga_client.post(
         url,
@@ -83,10 +83,27 @@ def test_import_export_settings_html_export_fields_not_in_general_settings(orga_
     """The HTML export fields must not appear in the general Talk settings tab."""
     url = reverse(
         "orga:settings.event.view",
-        kwargs={"organiser": event.organiser.slug, "event": event.slug},
+        kwargs={"organizer": event.organiser.slug, "event": event.slug},
     )
     response = orga_client.get(url)
     assert response.status_code == 200
     content = response.content.decode()
     assert "export_html_on_release" not in content
     assert "html_export_url" not in content
+
+
+@pytest.mark.django_db
+def test_import_submissions_missing_file(event, orga_user):
+    """Calling import_submissions with a nonexistent CachedFile raises ImportExecutionError."""
+    from eventyay.base.services.talkimport import import_submissions, ImportExecutionError
+
+    with pytest.raises(ImportExecutionError) as exc_info:
+        import_submissions(
+            event=event.pk,
+            fileid="00000000-0000-0000-0000-000000000000",
+            settings={},
+            locale="en",
+            user_id=orga_user.pk,
+        )
+    assert "session file could not be found" in str(exc_info.value)
+
