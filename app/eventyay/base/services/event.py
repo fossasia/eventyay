@@ -263,7 +263,10 @@ def get_room_config(room, permissions, *, current_stream=_UNSET):
     for module in room.module_config:
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
-            module_config["config"] = {}
+            src = module.get("config") if isinstance(module.get("config"), dict) else {}
+            module_config["config"] = (
+                {"video_chat": True} if src.get("video_chat") else {}
+            )
         elif module["type"] == "call.jitsi":
             cfg = module_config.get("config")
             if isinstance(cfg, dict):

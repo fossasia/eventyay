@@ -78,6 +78,45 @@ def test_create_video_channel_does_not_inherit_video_chat_marker(monkeypatch):
     assert 'secret' not in module['config']
 
 
+def _public_bbb_room(config):
+    return SimpleNamespace(
+        id='room-id',
+        name='Lounge',
+        description='',
+        picture=None,
+        import_id=None,
+        pretalx_id=0,
+        force_join=False,
+        schedule_data=None,
+        module_config=[{'type': 'call.bigbluebutton', 'config': config}],
+        channel=None,
+    )
+
+
+def test_public_room_config_hides_bbb_settings_but_keeps_video_chat_flag():
+    config = event_service.get_room_config(
+        _public_bbb_room({
+            'record': True,
+            'secret': 'nope',
+            'prefer_server': 'abc',
+            'video_chat': True,
+        }),
+        [],
+        current_stream=None,
+    )
+    assert config['modules'][0]['type'] == 'call.bigbluebutton'
+    assert config['modules'][0]['config'] == {'video_chat': True}
+
+
+def test_public_room_config_strips_video_channel_bbb_settings():
+    config = event_service.get_room_config(
+        _public_bbb_room({'record': True, 'prefer_server': 'abc'}),
+        [],
+        current_stream=None,
+    )
+    assert config['modules'][0]['config'] == {}
+
+
 @pytest.mark.django_db
 def test_event_has_active_bbb_server(event):
     assert event_has_active_bbb_server(event) is False

@@ -119,10 +119,12 @@ export function mergeReorderedIds(allIds, subsetOrder) {
 export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
 
 export function inferType(config) {
+	if (!config) return
 	if (isVideoChat(config)) {
 		return ROOM_TYPES.find(type => type.id === VIDEO_CHAT_TYPE_ID)
 	}
-	const modules = config.module_config.reduce((acc, module) => {
+	const moduleConfig = Array.isArray(config.module_config) ? config.module_config : []
+	const modules = moduleConfig.reduce((acc, module) => {
 		acc[module.type] = module
 		return acc
 	}, {})
@@ -133,8 +135,8 @@ export function inferType(config) {
 	if (mediaRoomType) return mediaRoomType
 
 	// non-media rooms should only have one module
-	if (config.module_config.length === 1) {
-		return findByModule(config.module_config[0].type)
+	if (moduleConfig.length === 1) {
+		return findByModule(moduleConfig[0].type)
 	}
 }
 

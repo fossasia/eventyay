@@ -4,7 +4,7 @@
 		bunt-icon-button(@click="type ? $router.replace({name: 'admin:chat:new'}) : $router.replace({name: 'admin:chat:index'})") arrow_left
 		h1 New channel
 			template(v-if="chosenType")  : {{ chosenType.name }}
-	.error(v-if="!canCreate")
+	.error(v-if="connected && !canCreate")
 		span You do not have permission to create chat or video chat channels.
 	.choose-type(v-else-if="!type", v-scrollbar.y="")
 		h2 Choose a channel type
@@ -15,9 +15,10 @@
 					.name {{ channelType.name }}
 					.description {{ channelType.description }}
 	edit-form(v-else-if="config", :config="config", :creating="true")
+	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 import ROOM_TYPES, { chatCreationTypes } from 'lib/room-types'
 import { filterRoomTypesByPermission, isBbbConfigured } from 'lib/room-type-permissions'
 import EditForm from 'views/admin/rooms/EditForm'
@@ -32,6 +33,7 @@ export default {
 		}
 	},
 	computed: {
+		...mapState(['connected']),
 		...mapGetters(['hasPermission', 'isAdminMode']),
 		CHANNEL_TYPES() {
 			return filterRoomTypesByPermission(
@@ -49,7 +51,9 @@ export default {
 		}
 	},
 	watch: {
-		$route: 'updateType'
+		$route: 'updateType',
+		connected: 'updateType',
+		CHANNEL_TYPES: 'updateType'
 	},
 	created() {
 		this.updateType()
@@ -63,7 +67,7 @@ export default {
 		},
 		updateType() {
 			this.type = this.$route.params.type
-			if (!this.canCreate) return
+			if (!this.connected || !this.canCreate) return
 			if (!this.type) {
 				if (this.CHANNEL_TYPES.length === 1) {
 					this.$router.replace({name: 'admin:chat:new', params: {type: this.CHANNEL_TYPES[0].id}})
@@ -74,13 +78,15 @@ export default {
 				this.$router.replace({name: 'admin:chat:new'})
 				return
 			}
+			const startingModule = this.chosenType.startingModule
+			if (this.config?.module_config?.[0]?.type === startingModule) return
 			this.config = {
 				name: '',
 				description: '',
 				sorting_priority: '',
 				pretalx_id: '',
 				force_join: false,
-				module_config: [{type: this.chosenType.startingModule, config: this.getStartingModuleConfig(this.chosenType)}],
+				module_config: [{type: startingModule, config: this.getStartingModuleConfig(this.chosenType)}],
 			}
 		}
 	}

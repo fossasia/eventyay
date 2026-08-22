@@ -54,6 +54,7 @@ export default {
 	computed: {
 		...mapGetters(['hasPermission']),
 		inferredType() {
+			if (!this.config) return null
 			return inferType(this.config)
 		}
 	},
