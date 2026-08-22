@@ -112,8 +112,4 @@ export default {
 			background-color: $clr-grey-50
 			color: $clr-grey-800
 			border-color: $clr-grey-200
-		&.type-posters
-			background-color: $clr-green-300
-			color: $clr-green-800
-			border-color: $clr-green-300
 </style>

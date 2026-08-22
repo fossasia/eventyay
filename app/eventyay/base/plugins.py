@@ -33,6 +33,7 @@ class PluginType(Enum):
 # their Python module name here to have the beta badge shown automatically.
 BETA_PLUGINS: frozenset[str] = frozenset(
     [
+        'exhibition',
         'interpretation',
         'socialmedia',
         'teamshifts',

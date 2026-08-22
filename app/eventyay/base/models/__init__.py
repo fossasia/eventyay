@@ -65,7 +65,6 @@ from .organizer import (
 )
 from .organizer_follower import OrganizerFollower
 from .poll import Poll, PollOption, PollVote
-from .poster import Poster, PosterLink, PosterPresenter, PosterVote
 from .product import (
     Product,
     ProductAddOn,
@@ -188,10 +187,6 @@ __all__ = [
     'Poll',
     'PollOption',
     'PollVote',
-    'Poster',
-    'PosterLink',
-    'PosterPresenter',
-    'PosterVote',
     'PretalxModel',
     'PriceModeChoices',
     'Question',

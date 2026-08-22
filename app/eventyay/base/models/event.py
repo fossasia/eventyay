@@ -111,7 +111,6 @@ FEATURE_FLAGS = [
     'janus',
     'jitsi',
     'polls',
-    'poster',
     'conftool',
     'cross-origin-isolation',
 ]
@@ -1634,7 +1633,6 @@ class Event(
             ChatEvent,
             Membership,
             Poll,
-            PosterPresenter,
             Reaction,
             RoomView,
         )
@@ -1646,7 +1644,6 @@ class Event(
         self.bbb_calls.all().delete()
         ChatEvent.objects.filter(channel__event=self).delete()
         Membership.objects.filter(channel__event=self).delete()
-        PosterPresenter.objects.filter(poster__event=self).delete()
         Reaction.objects.filter(room__event=self).delete()
         RoomView.objects.filter(room__event=self).delete()
         EventView.objects.filter(event=self).delete()

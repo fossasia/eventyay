@@ -102,11 +102,6 @@ Interactive Features
 - ``components/Questions.vue`` - Q&A question list
 - ``components/Roulette.vue`` - Speed networking roulette
 
-Poster sessions
-^^^^^^^^^^^^^^^
-
-- ``components/PosterHall.vue`` - Poster session hall
-
 User Interface
 ^^^^^^^^^^^^^^
 

@@ -339,7 +339,7 @@ scope for this implementation.
 Quill (existing, video only)
 -----------------------------
 
-``webapp/video/`` uses Quill 2 for exhibitor/poster rich text and the chat
+``webapp/video/`` uses Quill 2 for the chat
 input.  Quill is an npm dependency of the video app only and is not shared
 with the rest of eventyay.  Migration to Tiptap is a future task.
 
