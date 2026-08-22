@@ -1090,7 +1090,6 @@ the eventyay team"""
                 "new": {"__redacted": True},
             }
         )
-        self.exhibitor_staff.all().delete()
         self.poster_presenter.all().delete()
         self.chat_channels.filter(channel__room__isnull=False).delete()
 
