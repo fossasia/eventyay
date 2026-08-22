@@ -103,7 +103,6 @@ def event_logo_path(instance, filename):
 
 FEATURE_FLAGS = [
     'schedule-control',
-    'iframe-player',
     'roulette',
     'muxdata',
     'page.landing',

@@ -1,14 +1,14 @@
 <template lang="pug">
 .c-auditlog
 	.ui-page-header
-		h1 Audit Log
-	bunt-input.search(name="search", placeholder="Search log", icon="search", v-model="search")
+		h1 {{ $t('Audit Log') }}
+	bunt-input.search(name="search", :placeholder="$t('Search log')", icon="search", v-model="search")
 	.auditlog-list
 		.header
-			.timestamp Timestamp
-			.user User
-			.type Action type
-			.data Data
+			.timestamp {{ $t('Timestamp') }}
+			.user {{ $t('User') }}
+			.type {{ $t('Action type') }}
+			.data {{ $t('Data') }}
 		RecycleScroller.tbody.bunt-scrollbar(v-if="filteredEntries", :items="filteredEntries", :item-size="48", v-slot="{item: entry}", v-scrollbar.y="")
 			div.logentry.table-row(@click.prevent="detailsPrompt = entry")
 				.timestamp {{ moment(entry.timestamp).format('L LT') }}

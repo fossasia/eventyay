@@ -84,6 +84,16 @@ scroll down, there is also a "Comments" section to discuss any questions with fe
 .. image:: ../../../../img/weblate6.png
    :class: screenshot
 
+Video UI strings live in a separate gettext domain, ``video.po``
+(``app/eventyay/locale/*/LC_MESSAGES/video.po``), one file per tickets/talk
+locale directory. The Video language selector uses the same Django
+``LANGUAGES`` list and ``eventyay_language`` cookie as the rest of the site.
+After adding ``$t()`` keys in
+``app/eventyay/webapp/video``, run ``make localegen`` from ``app/`` (or
+``npm run i18n:extract`` in the Video app) so new strings merge into those PO
+files. On Weblate, add or use the ``eventyay/video`` component with monolingual
+English source ``en/LC_MESSAGES/video.po``.
+
 .. _translate.eventyay.com: https://translate.eventyay.com
 .. _eventyay project page: https://translate.eventyay.com/projects/eventyay/
 .. _GitHub repository: https://github.com/fossasia/eventyay

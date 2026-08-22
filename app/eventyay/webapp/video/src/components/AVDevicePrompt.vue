@@ -43,7 +43,7 @@ export default {
 				await this.refreshVideo()
 			} catch (error) {
 				console.warn('Could not load video device settings.', error)
-				alert('Could not access camera or microphone, is another program on your machine using it right now?')
+				alert(this.$t('Could not access camera or microphone, is another program on your machine using it right now?'))
 			}
 		},
 		updateDevices(deviceInfos) {

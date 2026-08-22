@@ -24,9 +24,11 @@ export default {
 			error: null
 		}
 	},
-	validations: {
-		name: {
-			required: required('Name is required')
+	validations() {
+		return {
+			name: {
+				required: required(this.$t('Name is required'))
+			}
 		}
 	},
 	methods: {

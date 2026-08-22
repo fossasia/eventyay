@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-app-bar
 	.left
-		button.hamburger(v-if="showActions", type="button", @click.stop="$emit('toggleSidebar')", aria-label="Toggle navigation")
+		button.hamburger(v-if="showActions", type="button", @click.stop="$emit('toggleSidebar')", :aria-label="toggleNavigationLabel")
 			span.bar
 			span.bar
 			span.bar
@@ -25,6 +25,29 @@
 			)
 				i.fa.fa-id-card(aria-hidden="true")
 				span {{ $t('AppBar:admin-mode:end') }}
+		.language-menu(v-if="languages.length", ref="languageMenuEl")
+			button.language-toggle(
+				type="button"
+				:aria-label="languageToggleLabel"
+				:aria-expanded="String(languageMenuOpen)"
+				aria-haspopup="menu"
+				:class="{open: languageMenuOpen}"
+				@click.stop="toggleLanguageMenu"
+			)
+				i.fa.fa-globe(aria-hidden="true")
+				span.current-locale(aria-hidden="true") {{ currentLanguageCode }}
+				span.sr-only {{ currentLanguageLabel }}
+				i.fa.fa-caret-down(aria-hidden="true")
+			transition(name="dropdown-reveal")
+				.language-dropdown(v-if="languageMenuOpen", role="menu")
+					button.language-option(
+						v-for="option in languages"
+						:key="option.code"
+						type="button"
+						role="menuitem"
+						:class="{active: option.code === currentLanguage}"
+						@click="selectLanguage(option.code)"
+					) {{ option.nativeLabel }}
 		.user-section(v-if="showUser")
 			.user-menu(ref="userMenuEl")
 				div.user-profile(:class="{open: profileMenuOpen}", @click.stop="toggleProfileMenu")
@@ -35,8 +58,8 @@
 				transition(name="dropdown-reveal")
 					.profile-dropdown(v-if="profileMenuOpen", role="menu", @click.stop)
 						.visibility-row(v-if="!isAnonymous")
-							span.visibility-label Profile visibility
-							span.visibility-badge(:class="isPublic ? 'badge-public' : 'badge-private'") {{ isPublic ? 'Public' : 'Private' }}
+							span.visibility-label {{ $t('Profile visibility') }}
+							span.visibility-badge(:class="isPublic ? 'badge-public' : 'badge-private'") {{ isPublic ? $t('Public') : $t('Private') }}
 						div.menu-separator(v-if="!isAnonymous")
 						template(v-for="item in menuItems", :key="item.key")
 							div.menu-separator(v-if="item.separatorBefore")
@@ -52,6 +75,8 @@ import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import Avatar from 'components/Avatar'
 import config from 'config'
+import i18n from 'i18n'
+import { resolveLanguageOptions } from 'locales'
 
 const props = defineProps({
 	showActions: {
@@ -77,15 +102,15 @@ const ICON_CLASSES = {
 	profile: 'fa fa-user-circle'
 }
 
-const PROFILE_MENU_ITEMS = [
-	{ key: 'dashboard', label: 'Dashboard', icon: 'dashboard', externalPath: 'common/' },
-	{ key: 'orders', label: 'My Orders', externalPath: 'common/orders/', icon: 'orders' },
-	{ key: 'sessions', label: 'My Sessions', externalPath: 'common/sessions/', icon: 'tickets' },
-	{ key: 'events', label: 'My Events', externalPath: 'common/events/', icon: 'events' },
-	{ key: 'organizers', label: 'Organizers', externalPath: 'common/organizers/', icon: 'organizers' },
-	{ key: 'profile', label: 'Profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
-	{ key: 'account', label: 'Account', externalPath: 'common/account/general', icon: 'account' },
-	{ key: 'logout', label: 'Logout', action: 'logout', icon: 'logout', separatorBefore: true }
+const PROFILE_MENU_ITEM_DEFS = [
+	{ key: 'dashboard', icon: 'dashboard', externalPath: 'common/' },
+	{ key: 'orders', externalPath: 'common/orders/', icon: 'orders' },
+	{ key: 'sessions', externalPath: 'common/sessions/', icon: 'tickets' },
+	{ key: 'events', externalPath: 'common/events/', icon: 'events' },
+	{ key: 'organizers', externalPath: 'common/organizers/', icon: 'organizers' },
+	{ key: 'profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
+	{ key: 'account', externalPath: 'common/account/general', icon: 'account' },
+	{ key: 'logout', action: 'logout', icon: 'logout', separatorBefore: true }
 ]
 
 const emit = defineEmits(['toggleSidebar'])
@@ -151,9 +176,43 @@ const brandLogoUrl = computed(() => {
 })
 
 const profileMenuOpen = ref(false)
-const menuItems = ref(PROFILE_MENU_ITEMS)
+const languageMenuOpen = ref(false)
+const userLocale = computed(() => store.state.userLocale)
+const menuItems = computed(() => {
+	userLocale.value
+	const labels = {
+		dashboard: i18n.t('Dashboard'),
+		orders: i18n.t('My Orders'),
+		sessions: i18n.t('My Sessions'),
+		events: i18n.t('My Events'),
+		organizers: i18n.t('Organizers'),
+		profile: i18n.t('Profile'),
+		account: i18n.t('Account'),
+		logout: i18n.t('Logout'),
+	}
+	return PROFILE_MENU_ITEM_DEFS.map(item => ({
+		...item,
+		label: labels[item.key]
+	}))
+})
+const languageToggleLabel = computed(() => {
+	userLocale.value
+	return i18n.t('Language')
+})
+const toggleNavigationLabel = computed(() => {
+	userLocale.value
+	return i18n.t('Toggle navigation')
+})
 const iconClasses = ICON_CLASSES
 const userMenuEl = ref(null)
+const languageMenuEl = ref(null)
+const currentLanguage = computed(() => userLocale.value || i18n.resolvedLanguage || 'en')
+const languages = computed(() => resolveLanguageOptions(config.locales))
+const currentLanguageMeta = computed(() => {
+	return languages.value.find(locale => locale.code === currentLanguage.value) || languages.value[0]
+})
+const currentLanguageCode = computed(() => (currentLanguage.value || 'en').slice(0, 2).toUpperCase())
+const currentLanguageLabel = computed(() => currentLanguageMeta.value?.nativeLabel || currentLanguage.value)
 
 function getCsrfToken() {
 	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
@@ -257,9 +316,26 @@ function buildBaseSansVideo() {
 }
 function toggleProfileMenu() {
 	profileMenuOpen.value = !profileMenuOpen.value
+	if (profileMenuOpen.value) languageMenuOpen.value = false
 }
 function closeProfileMenu() {
 	profileMenuOpen.value = false
+}
+function toggleLanguageMenu() {
+	languageMenuOpen.value = !languageMenuOpen.value
+	if (languageMenuOpen.value) profileMenuOpen.value = false
+}
+function closeLanguageMenu() {
+	languageMenuOpen.value = false
+}
+async function selectLanguage(locale) {
+	closeLanguageMenu()
+	if (locale === currentLanguage.value) return
+	try {
+		await store.dispatch('updateUserLocale', locale)
+	} catch (error) {
+		console.error('Failed to change interface language', error)
+	}
 }
 function logout() {
 	localStorage.removeItem('token')
@@ -310,12 +386,20 @@ function getItemHref(item) {
 }
 
 function handleClickOutside(e) {
-	if (!profileMenuOpen.value) return
-	const el = userMenuEl.value
-	if (el && !el.contains(e.target)) closeProfileMenu()
+	if (profileMenuOpen.value) {
+		const el = userMenuEl.value
+		if (el && !el.contains(e.target)) closeProfileMenu()
+	}
+	if (languageMenuOpen.value) {
+		const el = languageMenuEl.value
+		if (el && !el.contains(e.target)) closeLanguageMenu()
+	}
 }
 function handleGlobalKeydown(e) {
-	if (e.key === 'Escape' && profileMenuOpen.value) closeProfileMenu()
+	if (e.key === 'Escape') {
+		if (profileMenuOpen.value) closeProfileMenu()
+		if (languageMenuOpen.value) closeLanguageMenu()
+	}
 }
 
 onMounted(() => {
@@ -361,6 +445,77 @@ onBeforeUnmount(() => {
 		align-self: stretch
 		gap: 4px
 		margin-left: auto
+	.language-menu
+		position: relative
+		align-self: stretch
+		display: flex
+		align-items: stretch
+	.language-toggle
+		appearance: none
+		background: none
+		border: none
+		padding: 0 12px
+		margin: 0
+		min-height: 48px
+		display: inline-flex
+		align-items: center
+		gap: 6px
+		font: inherit
+		font-size: 14px
+		color: var(--app-bar-text)
+		cursor: pointer
+		&:hover
+			background-color: rgba(0, 0, 0, 0.08)
+		&:focus-visible
+			outline: 2px solid var(--clr-primary)
+			outline-offset: -2px
+		&.open .fa-caret-down
+			transform: rotate(180deg)
+		.current-locale
+			font-weight: 500
+			letter-spacing: 0.02em
+		.fa-caret-down
+			font-size: 12px
+			transition: transform 0.15s ease-in-out
+	.language-dropdown
+		position: absolute
+		top: calc(100% + 2px)
+		right: 0
+		min-width: 180px
+		max-height: 320px
+		overflow-y: auto
+		background: white
+		color: #495057
+		border: 1px solid #e9ecef
+		border-radius: var(--size-border-radius, 0.25rem)
+		box-shadow: var(--shadow-light, 0 0 6px 1px rgb(0 0 0 / 0.1))
+		z-index: 120
+		padding: 4px 0
+	.language-option
+		appearance: none
+		background: none
+		border: none
+		display: block
+		width: 100%
+		text-align: left
+		padding: 8px 16px
+		font: inherit
+		color: inherit
+		cursor: pointer
+		&:hover, &.active
+			background-color: rgba(0, 0, 0, 0.06)
+		&.active
+			font-weight: 600
+	.sr-only
+		position: absolute
+		width: 1px
+		height: 1px
+		padding: 0
+		margin: -1px
+		overflow: hidden
+		clip: rect(0, 0, 0, 0)
+		white-space: nowrap
+		border: 0
 	.admin-session-actions
 		display: flex
 		align-items: stretch
