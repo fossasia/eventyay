@@ -602,11 +602,6 @@ def get_admin_navigation(request):
                 'url': reverse('eventyay_admin:video_admin:systemlog.list'),
                 'active': is_active('/admin/video/systemlog'),
             },
-            {
-                'label': _('Conftool posters'),
-                'url': reverse('eventyay_admin:video_admin:conftool.syncposters'),
-                'active': is_active('/admin/video/conftool/syncposters', exact=True),
-            },
             
             # {
             #     'label': _('Users'),

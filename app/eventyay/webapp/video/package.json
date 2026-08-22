@@ -42,7 +42,6 @@
     "moment-timezone": "^0.6.3",
     "mux-embed": "^5.18.1",
     "mux.js": "^6.3.0",
-    "pdfjs-dist": "^6.2.108",
     "preact": "^10.29.8",
     "quill": "^2.0.3",
     "random-js": "^2.1.0",

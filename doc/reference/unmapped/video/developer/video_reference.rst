@@ -59,19 +59,11 @@ Interactive Modules
    :members:
    :no-index:
 
-.. automodule:: eventyay.features.live.modules.exhibition
-   :members:
-   :no-index:
-
 .. automodule:: eventyay.features.live.modules.januscall
    :members:
    :no-index:
 
 .. automodule:: eventyay.features.live.modules.poll
-   :members:
-   :no-index:
-
-.. automodule:: eventyay.features.live.modules.poster
    :members:
    :no-index:
 

@@ -28,14 +28,6 @@ from .event import (
     SubEventMetaValue,
     generate_invite_token,
 )
-from .exhibitor import (
-    ContactRequest,
-    Exhibitor,
-    ExhibitorLink,
-    ExhibitorSocialMediaLink,
-    ExhibitorStaff,
-    ExhibitorView,
-)
 from .feedback import Feedback
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
 from eventyay.base.gmail.models import GmailOAuthCredential
@@ -74,7 +66,6 @@ from .organizer import (
 )
 from .organizer_follower import OrganizerFollower
 from .poll import Poll, PollOption, PollVote
-from .poster import Poster, PosterLink, PosterPresenter, PosterVote
 from .product import (
     Product,
     ProductAddOn,
@@ -146,7 +137,6 @@ __all__ = [
     'Checkin',
     'CheckinList',
     'Choices',
-    'ContactRequest',
     'Device',
     'Event',
     'Event_SettingsStore',
@@ -155,11 +145,6 @@ __all__ = [
     'EventMetaValue',
     'EventPlannedUsage',
     'EventView',
-    'Exhibitor',
-    'ExhibitorLink',
-    'ExhibitorSocialMediaLink',
-    'ExhibitorStaff',
-    'ExhibitorView',
     'Feedback',
     'FileCleanupMixin',
     'Gate',
@@ -203,10 +188,6 @@ __all__ = [
     'Poll',
     'PollOption',
     'PollVote',
-    'Poster',
-    'PosterLink',
-    'PosterPresenter',
-    'PosterVote',
     'PretalxModel',
     'PriceModeChoices',
     'Question',
