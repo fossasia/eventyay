@@ -14,7 +14,7 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
 from eventyay.celery_app import app
-from eventyay.base.models import Channel, ExhibitorView, PollVote, Room, RoomView, User
+from eventyay.base.models import Channel, PollVote, Room, RoomView, User
 from eventyay.base.models.event import EventView
 from eventyay.core.tasks import EventTask
 from eventyay.features.analytics.graphs.report import ReportGenerator
@@ -431,47 +431,6 @@ def generate_views(event, input=None):
                     (v.end or now())
                     .astimezone(ZoneInfo(event.timezone))
                     .strftime("%d.%m.%Y %H:%M:%S"),
-                    str(u.pk),
-                    u.token_id,
-                    u.profile.get("display_name"),
-                ]
-                + [
-                    (u.profile["fields"].get(n.get("id"), "") or "").strip()
-                    for n in event.config.get("profile_fields", [])
-                ]
-            )
-
-    ws = wb.create_sheet("Exhibitor views")
-    header = [
-        "Exhibition room",
-        "Exhibitor",
-        "Datetime",
-        "User ID",
-        "External ID",
-        "User name",
-    ]
-    for n in event.config.get("profile_fields", []):
-        header.append(n.get("label") or "")
-    ws.append(header)
-    rvq = (
-        ExhibitorView.objects.filter(
-            datetime__gte=begin,
-            datetime__lte=end,
-            exhibitor__event=event,
-        )
-        .select_related("exhibitor__room", "exhibitor", "user")
-        .order_by("datetime")
-    )
-    for v in rvq:
-        u = v.user
-        if u.profile.get("display_name"):
-            ws.append(
-                [
-                    v.exhibitor.room.name,
-                    v.exhibitor.name,
-                    v.datetime.astimezone(ZoneInfo(event.timezone)).strftime(
-                        "%d.%m.%Y %H:%M:%S"
-                    ),
                     str(u.pk),
                     u.token_id,
                     u.profile.get("display_name"),

@@ -27,7 +27,7 @@ bunt-input-outline-container.c-chat-input
 					.name {{ option.profile.display_name }}
 				button.load-more(v-if="autocomplete.nextPage", type="button", :disabled="autocomplete.loading", @click.stop="loadMoreMentionResults")
 					bunt-progress-circular(v-if="autocomplete.loading", size="small")
-					template(v-else) {{ $t('Exhibition:more:label') }}
+					template(v-else) {{ $t('ChatInput:load-more:label') }}
 			bunt-progress-circular(v-else, size="large", :page="true")
 </template>
 <script>

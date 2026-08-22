@@ -108,16 +108,8 @@ export default {
 			color: $clr-blue-grey-900
 			border-color: $clr-blue-grey-200
 		&.type-channel-text,
-		&.type-page-static,
-		&.type-page-iframe,
-		&.type-page-landing,
-		&.type-page-userlist
+		&.type-page-landing
 			background-color: $clr-grey-50
 			color: $clr-grey-800
 			border-color: $clr-grey-200
-		&.type-exhibition,
-		&.type-posters
-			background-color: $clr-green-300
-			color: $clr-green-800
-			border-color: $clr-green-300
 </style>
