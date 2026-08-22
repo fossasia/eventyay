@@ -5,7 +5,10 @@
 {% load static %}
 
 {% block custom_header %}
+    <link rel="stylesheet" type="text/css" href="{% static 'control/css/admin-pages-toastui.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_flags.css' %}" />
     <script type="text/javascript" src="{% static "move-email-elements/moveEmailElements.js" %}"></script>
+    <script type="text/javascript" src="{% static "control/js/global-settings-pages.js" %}"></script>
 {% endblock %}
 
 {% block inner %}

@@ -208,6 +208,7 @@ const initToastUiMarkdownTextarea = (textarea) => {
         }
     })()
 
+    const placeholderText = textarea.getAttribute('placeholder') || textarea.getAttribute('title') || ''
     const editor = new window.toastui.Editor({
         el: mount,
         height: textarea.dataset.editorHeight || '320px',
@@ -217,6 +218,7 @@ const initToastUiMarkdownTextarea = (textarea) => {
         usageStatistics: false,
         hideModeSwitch: true,
         autofocus: false,
+        placeholder: placeholderText,
         initialValue: String(textarea.value || ''),
         plugins: [underlinePlugin],
         toolbarItems: [
