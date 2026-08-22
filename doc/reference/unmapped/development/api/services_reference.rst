@@ -91,11 +91,6 @@ Interactive Features
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: eventyay.base.services.poster
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 .. automodule:: eventyay.base.services.question
    :members:
    :undoc-members:

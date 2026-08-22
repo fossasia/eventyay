@@ -59,12 +59,12 @@ def test_collect_user_video_traits_uses_consolidated_fields(event):
 
 
 @pytest.mark.django_db
-def test_content_manager_trait_grants_poster_and_room_edit(event):
+def test_content_manager_trait_grants_room_create_and_edit(event):
     trait = f'eventyay-video-event-{event.slug}-video-content-manager'
     assert event.has_permission_implicit(
         traits=[trait],
         permissions=[
-            Permission.EVENT_ROOMS_CREATE_POSTER,
+            Permission.EVENT_ROOMS_CREATE_STAGE,
             Permission.ROOM_UPDATE,
         ],
     )
