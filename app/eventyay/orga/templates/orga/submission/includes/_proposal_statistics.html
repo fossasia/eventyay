@@ -1,0 +1,59 @@
+{% load i18n %}
+{% load static %}
+
+{% if submission_timeline_data or submission_type_data or submission_track_data or submission_state_data or submission_language_data %}
+<section class="talks-dashboard-section" id="proposal-statistics">
+  <h2>{% translate "Proposal analytics" %}</h2>
+  <div id="global-data" class="d-none" data-url="{{ request.event.orga_urls.submissions }}?" data-mapping="{{ id_mapping }}" data-annotations="{{ timeline_annotations }}"></div>
+
+  {% if submission_timeline_data %}
+    <div class="card stats-timeline mb-4">
+      <div class="card-header">{% translate "Proposals by submission date" %}</div>
+      <div id="submission-timeline-data" class="d-none" data-timeline="{{ submission_timeline_data }}" data-label="{% translate "Proposals" %}"></div>
+      <div id="proposal-timeline" class="card-body"></div>
+    </div>
+  {% endif %}
+
+  <div class="row">
+    {% if submission_type_data %}
+      <div class="col-12 col-md-6 col-lg-4 mb-3 d-flex align-items-stretch">
+        <div class="card w-100 m-0">
+          <div class="card-header">{% translate "Proposals by session type" %}</div>
+          <div id="submission-type-data" class="d-none" data-states="{{ submission_type_data }}"></div>
+          <div id="submission-type" class="pie card-body"></div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if submission_track_data %}
+      <div class="col-12 col-md-6 col-lg-4 mb-3 d-flex align-items-stretch">
+        <div class="card w-100 m-0">
+          <div class="card-header">{% translate "Proposals by track" %}</div>
+          <div id="submission-track-data" class="d-none" data-states="{{ submission_track_data }}"></div>
+          <div id="submission-track" class="pie card-body"></div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if submission_state_data %}
+      <div class="col-12 col-md-6 col-lg-4 mb-3 d-flex align-items-stretch">
+        <div class="card w-100 m-0">
+          <div class="card-header">{% translate "Proposals by state" %}</div>
+          <div id="submission-state-data" class="d-none" data-states="{{ submission_state_data }}"></div>
+          <div id="submission-state" class="pie card-body"></div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if submission_language_data %}
+      <div class="col-12 col-md-6 col-lg-4 mb-3 d-flex align-items-stretch">
+        <div class="card w-100 m-0">
+          <div class="card-header">{% translate "Proposals by language" %}</div>
+          <div id="submission-language-data" class="d-none" data-states="{{ submission_language_data }}"></div>
+          <div id="submission-language" class="pie card-body"></div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}

@@ -1,16 +1,14 @@
 from django.db.models import Count, Q
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
-from django.template.defaultfilters import timeuntil
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 from django_context_decorator import context
 from django_scopes import scopes_disabled
-
-from django.http import Http404
 
 def legacy_orga_event_redirect(request, event):
     from eventyay.base.models import Event
@@ -37,13 +35,13 @@ def legacy_orga_event_redirect(request, event):
 
 from eventyay.base.models import Submission, SubmissionStates
 from eventyay.base.models.event import Event
-from eventyay.base.models.log import LogEntry
+from eventyay.base.models.log import ActivityLog, LogEntry
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.settings import is_event_series_creation_enabled, is_meetup_creation_enabled
 from eventyay.common.text.phrases import phrases
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
-from eventyay.event.stages import get_stages
+from eventyay.event.stages import get_stages, get_workflow_steps
 from eventyay.orga.views.submission import SubmissionStatsMixin
 from eventyay.talk_rules.submission import get_missing_reviews
 
@@ -156,240 +154,280 @@ class EventDashboardView(EventPermissionRequired, SubmissionStatsMixin, Template
     template_name = 'orga/event/dashboard.html'
     permission_required = 'base.talk_orga_access_event'
 
-    def get_cfp_tiles(self, _now, can_change_submissions=False):
-        result = []
-        if not hasattr(self.request.event, 'cfp'):
-            return result
-        if self.request.event.cfp.is_open:
-            result.append(
-                {
-                    'url': self.request.event.cfp.urls.public,
-                    'large': phrases.cfp.go_to_cfp,
-                    'priority': 20,
-                }
-            )
-        max_deadline = self.request.event.cfp.max_deadline
-        if max_deadline and _now < max_deadline:
-            result.append(
-                {
-                    'large': timeuntil(max_deadline),
-                    'small': _('until the CfP ends'),
-                    'priority': 40,
-                }
-            )
-            draft_proposals = Submission.all_objects.filter(
-                state=SubmissionStates.DRAFT, event=self.request.event
-            ).count()
-            if draft_proposals and can_change_submissions:
-                result.append(
-                    {
-                        'large': draft_proposals,
-                        'small': ngettext_lazy(
-                            'unsubmitted proposal draft',
-                            'unsubmitted proposal drafts',
-                            draft_proposals,
-                        ),
-                        'priority': 50,
-                        'url': self.request.event.orga_urls.send_drafts_reminder,
-                        'left': {
-                            'text': _('Send reminder'),
-                            'url': self.request.event.orga_urls.send_drafts_reminder,
-                            'color': 'info',
-                        },
-                    }
-                )
-        return result
-
-    def get_review_tiles(self, can_change_settings):
-        result = []
-        review_count = self.request.event.reviews.count()
-        if review_count:
-            active_reviewers = (
-                self.request.event.reviewers.filter(reviews__isnull=False).order_by('id').distinct().count()
-            )
-            result.append({'large': review_count, 'small': _('Reviews'), 'priority': 60})
-            result.append(
-                {
-                    'large': active_reviewers,
-                    'small': _('Active reviewers'),
-                    'url': (self.request.event.organizer.orga_urls.teams if can_change_settings else None),
-                    'priority': 60,
-                }
-            )
-        is_reviewer = self.request.event.teams.filter(members__in=[self.request.user], is_reviewer=True).exists()
-        if is_reviewer:
-            reviews_missing = get_missing_reviews(self.request.event, self.request.user).count()
-            if reviews_missing:
-                result.append(
-                    {
-                        'large': reviews_missing,
-                        'small': ngettext_lazy(
-                            'proposal is waiting for your review.',
-                            'proposals are waiting for your review.',
-                            reviews_missing,
-                        ),
-                        'url': self.request.event.orga_urls.reviews,
-                        'priority': 21,
-                    }
-                )
-        return result
-
     @context
     def history(self):
-        return LogEntry.objects.filter(event=self.request.event).select_related('user', 'event')[:20]
+        return ActivityLog.objects.filter(event=self.request.event).select_related('person', 'event')[:10]
+
+    def _get_action_items(self, event):
+        """Build action-required cards for items needing organiser attention."""
+        items = []
+        accepted_count = event.submissions.filter(state=SubmissionStates.ACCEPTED).count()
+        confirmed_count = event.submissions.filter(state=SubmissionStates.CONFIRMED).count()
+        talk_count = event.talks.count()
+        unscheduled = confirmed_count - talk_count if confirmed_count > talk_count else 0
+
+        if accepted_count:
+            items.append({
+                'title': _('Unconfirmed sessions'),
+                'description': ngettext_lazy(
+                    '%(count)d accepted session is waiting for speaker confirmation.',
+                    '%(count)d accepted sessions are waiting for speaker confirmation.',
+                    accepted_count,
+                ) % {'count': accepted_count},
+                'count': accepted_count,
+                'url': event.orga_urls.submissions + f'?state={SubmissionStates.ACCEPTED}',
+                'action_label': _('Review sessions'),
+                'color': 'warning',
+            })
+
+        if unscheduled:
+            items.append({
+                'title': _('Unscheduled sessions'),
+                'description': ngettext_lazy(
+                    '%(count)d confirmed session is not assigned to any slot.',
+                    '%(count)d confirmed sessions are not assigned to any slot.',
+                    unscheduled,
+                ) % {'count': unscheduled},
+                'count': unscheduled,
+                'url': event.orga_urls.schedule,
+                'action_label': _('Open schedule'),
+                'color': 'warning',
+            })
+
+        # Speakers with incomplete profiles (missing biography)
+        from eventyay.base.models.profile import SpeakerProfile
+
+        incomplete_speakers = SpeakerProfile.objects.filter(
+            event=event,
+            user__in=event.speakers,
+            biography__isnull=True,
+        ).count() + SpeakerProfile.objects.filter(
+            event=event,
+            user__in=event.speakers,
+            biography='',
+        ).count()
+        if incomplete_speakers:
+            items.append({
+                'title': _('Speakers incomplete'),
+                'description': ngettext_lazy(
+                    '%(count)d speaker is missing a biography.',
+                    '%(count)d speakers are missing a biography.',
+                    incomplete_speakers,
+                ) % {'count': incomplete_speakers},
+                'count': incomplete_speakers,
+                'url': event.orga_urls.speakers,
+                'action_label': _('Review speakers'),
+                'color': 'info',
+            })
+
+        # Pending reviews
+        is_reviewer = event.teams.filter(
+            members__in=[self.request.user], is_reviewer=True,
+        ).exists()
+        if is_reviewer:
+            reviews_missing = get_missing_reviews(event, self.request.user).count()
+            if reviews_missing:
+                items.append({
+                    'title': _('Pending reviews'),
+                    'description': ngettext_lazy(
+                        '%(count)d proposal is waiting for your review.',
+                        '%(count)d proposals are waiting for your review.',
+                        reviews_missing,
+                    ) % {'count': reviews_missing},
+                    'count': reviews_missing,
+                    'url': event.orga_urls.reviews,
+                    'action_label': _('Start reviewing'),
+                    'color': 'warning',
+                })
+
+        return items
+
+    def _get_kpi_cards(self, event):
+        """Build KPI metric cards for the At a Glance section."""
+        submission_count = event.submissions.count()
+        accepted_count = event.submissions.filter(state=SubmissionStates.ACCEPTED).count()
+        confirmed_count = event.submissions.filter(state=SubmissionStates.CONFIRMED).count()
+        talk_count = event.talks.count()
+        speaker_count = event.speakers.count()
+        review_count = event.reviews.count()
+        rejected_count = event.submissions.filter(state=SubmissionStates.REJECTED).count()
+        withdrawn_count = event.submissions.filter(state=SubmissionStates.WITHDRAWN).count()
+        emails_sent = event.queued_mails.filter(sent__isnull=False).count()
+
+        return [
+            {
+                'label': _('Submitted proposals'),
+                'value': submission_count,
+                'url': event.orga_urls.submissions,
+                'icon': 'inbox',
+            },
+            {
+                'label': _('Accepted proposals'),
+                'value': accepted_count,
+                'url': event.orga_urls.submissions + f'?state={SubmissionStates.ACCEPTED}',
+                'icon': 'check-circle',
+            },
+            {
+                'label': _('Confirmed sessions'),
+                'value': confirmed_count,
+                'url': event.orga_urls.submissions + f'?state={SubmissionStates.CONFIRMED}',
+                'icon': 'thumbs-up',
+            },
+            {
+                'label': _('Scheduled sessions'),
+                'value': talk_count,
+                'url': event.urls.schedule if event.current_schedule else '',
+                'icon': 'calendar',
+            },
+            {
+                'label': _('Speakers'),
+                'value': speaker_count,
+                'url': event.orga_urls.speakers + '?role=true',
+                'icon': 'users',
+            },
+            {
+                'label': _('Pending reviews'),
+                'value': review_count,
+                'url': event.orga_urls.reviews,
+                'icon': 'eye',
+            },
+            {
+                'label': _('Rejected proposals'),
+                'value': rejected_count,
+                'url': event.orga_urls.submissions + f'?state={SubmissionStates.REJECTED}',
+                'icon': 'times-circle',
+            },
+            {
+                'label': _('Withdrawn proposals'),
+                'value': withdrawn_count,
+                'url': event.orga_urls.submissions + f'?state={SubmissionStates.WITHDRAWN}',
+                'icon': 'undo',
+            },
+            {
+                'label': _('Emails sent'),
+                'value': emails_sent,
+                'url': event.orga_urls.sent_mails,
+                'icon': 'envelope',
+            },
+        ]
+
+    def _get_session_readiness(self, event):
+        """Build session readiness summary metrics."""
+        confirmed = event.submissions.filter(state=SubmissionStates.CONFIRMED).count()
+        talk_count = event.talks.count()
+        unscheduled = confirmed - talk_count if confirmed > talk_count else 0
+        canceled = event.submissions.filter(state=SubmissionStates.CANCELED).count()
+
+        return [
+            {
+                'label': _('Confirmed sessions'),
+                'value': confirmed,
+                'url': event.orga_urls.submissions + f'?state={SubmissionStates.CONFIRMED}',
+            },
+            {
+                'label': _('Scheduled sessions'),
+                'value': talk_count,
+                'url': event.urls.schedule if event.current_schedule else '',
+            },
+            {
+                'label': _('Unscheduled sessions'),
+                'value': unscheduled,
+                'url': event.orga_urls.schedule if unscheduled else '',
+                'color': 'warning' if unscheduled else '',
+            },
+            {
+                'label': _('Canceled sessions'),
+                'value': canceled,
+                'url': event.orga_urls.submissions + f'?state={SubmissionStates.CANCELED}' if canceled else '',
+                'color': 'danger' if canceled else '',
+            },
+        ]
+
+    def _get_speaker_readiness(self, event):
+        """Build speaker readiness summary metrics."""
+        from eventyay.base.models.profile import SpeakerProfile
+
+        speaker_users = event.speakers
+        total = speaker_users.count()
+
+        profiles = SpeakerProfile.objects.filter(event=event, user__in=speaker_users)
+        missing_bio = profiles.filter(Q(biography__isnull=True) | Q(biography='')).count()
+        missing_avatar = speaker_users.filter(
+            Q(avatar='') | Q(avatar__isnull=True),
+            Q(avatar_source='') | Q(avatar_source__isnull=True),
+        ).count()
+
+        # Speakers without any accepted/confirmed session
+        speakers_without_session = speaker_users.exclude(
+            submissions__event=event,
+            submissions__state__in=SubmissionStates.accepted_states,
+        ).count()
+
+        return [
+            {
+                'label': _('Total speakers'),
+                'value': total,
+                'url': event.orga_urls.speakers + '?role=true',
+            },
+            {
+                'label': _('Missing biography'),
+                'value': missing_bio,
+                'url': event.orga_urls.speakers,
+                'color': 'warning' if missing_bio else '',
+            },
+            {
+                'label': _('Missing profile image'),
+                'value': missing_avatar,
+                'url': event.orga_urls.speakers,
+                'color': 'warning' if missing_avatar else '',
+            },
+            {
+                'label': _('Speakers without session'),
+                'value': speakers_without_session,
+                'url': event.orga_urls.speakers + '?role=false',
+                'color': 'info' if speakers_without_session else '',
+            },
+        ]
 
     def get_context_data(self, **kwargs):
-        # Tiles can have priorities
-        # Priorities are meant to be between 0 and 100
-        # 0 is the first tile, the go-live tile
-        # 100+ is whatever can go to the very end
-        # actions should be between 10 and 30, with 20 being the "go to cfp" action
-        # general stats start at 50
         result = super().get_context_data(**kwargs)
         event = self.request.event
+
+        # Workflow timeline (new 7-step model)
+        result['workflow_steps'] = get_workflow_steps(event)
+
+        # Legacy timeline for backward compat (kept but not rendered by default)
         stages = get_stages(event)
         result['timeline'] = stages.values()
         result['go_to_target'] = 'schedule' if stages['REVIEW']['phase'] == 'done' else 'cfp'
-        _now = now()
-        today = _now
-        can_change_settings = self.request.user.has_perm('base.change_settings.event', event)
-        can_change_submissions = self.request.user.has_perm('base.orga_update_submission', event)
-        result['tiles'] = self.get_cfp_tiles(_now, can_change_submissions=can_change_submissions)
-        if today < event.date_from:
-            days = (event.date_from - today).days
-            result['tiles'].append(
-                {
-                    'large': days,
-                    'small': ngettext_lazy('day until event start', 'days until event start', days),
-                    'priority': 10,
-                }
-            )
-        elif today > event.date_to:
-            days = (today - event.date_from).days
-            result['tiles'].append(
-                {
-                    'large': days,
-                    'small': ngettext_lazy('day since event end', 'days since event end', days),
-                    'priority': 80,
-                }
-            )
-        elif event.date_to != event.date_from:
-            day = (today - event.date_from).days + 1
-            result['tiles'].append(
-                {
-                    'large': _('Day {number}').format(number=day),
-                    'small': _('of {total_days} days').format(total_days=(event.date_to - event.date_from).days + 1),
-                    'url': event.urls.schedule + f'#{today.isoformat()}',
-                    'priority': 10,
-                }
-            )
-        if event.current_schedule:
-            result['tiles'].append(
-                {
-                    'large': event.current_schedule.version,
-                    'small': _('current schedule'),
-                    'url': event.urls.schedule,
-                    'priority': 25,
-                }
-            )
 
-        talk_count = event.talks.count()
-        accepted_count = event.submissions.filter(state=SubmissionStates.ACCEPTED).count()
-        submission_count = event.submissions.count()
-        pending_state_submissions = event.submissions.filter(pending_state__isnull=False).count()
-        if talk_count or accepted_count:
-            confirmed_count = event.submissions.filter(state=SubmissionStates.CONFIRMED).count()
-            result['tiles'].append(
-                {
-                    # Don’t show 0 here for events that do not use the scheduling
-                    # component, instead show accepted + confirmed
-                    'large': talk_count or (accepted_count + confirmed_count),
-                    'small': ngettext_lazy('session', 'sessions', talk_count),
-                    'url': event.orga_urls.submissions
-                    + f'?state={SubmissionStates.ACCEPTED}&state={SubmissionStates.CONFIRMED}',
-                    'priority': 55,
-                    'right': {
-                        'text': str(_('unconfirmed')) + f': {accepted_count}',
-                        'url': event.orga_urls.submissions + f'?state={SubmissionStates.ACCEPTED}',
-                        'color': 'error' if accepted_count else 'info',
-                    },
-                    'left': {
-                        'text': str(_('confirmed')) + f': {confirmed_count}',
-                        'url': event.orga_urls.submissions,
-                        'color': 'success',
-                    },
-                }
-            )
-        elif submission_count:
-            count = event.submissions.count()
-            result['tiles'].append(
-                {
-                    'large': count,
-                    'small': ngettext_lazy('proposal', 'proposals', count),
-                    'url': event.orga_urls.submissions,
-                    'priority': 60,
-                }
-            )
-        if pending_state_submissions and pending_state_submissions > 0:
-            states = '&'.join(
-                [
-                    f'state=pending_state__{state}'
-                    for state, __ in SubmissionStates.get_choices()
-                    if state not in (SubmissionStates.DRAFT, SubmissionStates.DELETED)
-                ]
-            )
-            result['tiles'].append(
-                {
-                    'large': pending_state_submissions,
-                    'small': ngettext_lazy(
-                        'submission with pending changes',
-                        'submissions with pending changes',
-                        pending_state_submissions,
-                    ),
-                    'url': event.orga_urls.submissions + f'?{states}',
-                    'priority': 56,
-                }
-            )
-        submitter_count = event.submitters.count()
-        speaker_count = event.speakers.count()
-        rejected_count = event.submitters.filter(submissions__state=SubmissionStates.REJECTED).distinct().count()
-        if speaker_count:
-            result['tiles'].append(
-                {
-                    'large': speaker_count,
-                    'small': ngettext_lazy('speaker', 'speakers', speaker_count),
-                    'url': event.orga_urls.speakers + '?role=true',
-                    'priority': 56,
-                    'right': {
-                        'text': _('rejected') + f': {rejected_count}',
-                        'url': event.orga_urls.speakers + '?role=false',
-                        'color': 'error',
-                    },
-                    'left': {
-                        'text': phrases.submission.submitted + f': {submitter_count}',
-                        'url': event.orga_urls.speakers,
-                        'color': 'success',
-                    },
-                }
-            )
-        else:
-            result['tiles'].append(
-                {
-                    'large': submitter_count,
-                    'small': ngettext_lazy('submitter', 'submitters', submitter_count),
-                    'url': event.orga_urls.speakers,
-                    'priority': 60,
-                }
-            )
-        count = event.queued_mails.filter(sent__isnull=False).count()
-        result['tiles'].append(
-            {
-                'large': count,
-                'small': ngettext_lazy('sent email', 'sent emails', count),
-                'url': event.orga_urls.sent_mails,
-                'priority': 80,
-            }
-        )
-        result['tiles'] += self.get_review_tiles(can_change_settings=can_change_settings)
-        result['tiles'].sort(key=lambda tile: tile.get('priority') or 100)
+        can_change_settings = self.request.user.has_perm('base.change_settings.event', event)
+        result['can_change_settings'] = can_change_settings
+
+        # Action items
+        result['action_items'] = self._get_action_items(event)
+
+        # KPI cards (At a Glance)
+        result['kpi_cards'] = self._get_kpi_cards(event)
+
+        # Session readiness
+        result['session_readiness'] = self._get_session_readiness(event)
+
+        # Speaker readiness
+        result['speaker_readiness'] = self._get_speaker_readiness(event)
+
+        # Internal note
+        result['internal_note'] = event.settings.get('dashboard_internal_note', default='')
+
         return result
+
+
+class SaveInternalNoteView(EventPermissionRequired, View):
+    """AJAX endpoint to save the dashboard internal note."""
+
+    permission_required = 'base.talk_orga_access_event'
+
+    def post(self, request, *args, **kwargs):
+        note = request.POST.get('note', '')
+        request.event.settings.set('dashboard_internal_note', note)
+        return JsonResponse({'status': 'ok'})

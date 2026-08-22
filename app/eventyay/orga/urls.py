@@ -82,6 +82,7 @@ urlpatterns = [
                 ),
                 path('live', event.EventLive.as_view(), name='event.live'),
                 path('', dashboard.EventDashboardView.as_view(), name='event.dashboard'),
+                path('note/', dashboard.SaveInternalNoteView.as_view(), name='event.dashboard.note'),
                 path('history/', event.EventHistory.as_view(), name='event.history'),
                 path(
                     'settings/',

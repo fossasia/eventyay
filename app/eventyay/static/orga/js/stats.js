@@ -131,17 +131,101 @@ const getPieData = (id) => {
     }
 }
 
+const typeMapping = {
+    track: "track",
+    type: "submission_type",
+    state: "state",
+    language: "content_locale",
+}
+
+const handleChartSelection = (type, label) => {
+    if (!dataMapping[type]) return
+    const searchValue = dataMapping[type][label]
+    if (searchValue) {
+        searchUrl += "&" + typeMapping[type] + "=" + searchValue
+        window.location.href = searchUrl
+    }
+}
+
+const drawBarChart = (data, scope, type) => {
+    const id = scope + "-" + type
+    const element = document.getElementById(id)
+    if (!element || !data || !data.series || !data.series.length) return null
+
+    // Sort entries descending by value
+    const paired = data.labels.map((label, i) => ({ label, value: data.series[i] }))
+    paired.sort((a, b) => b.value - a.value)
+
+    const options = {
+        series: [{
+            name: "Count",
+            data: paired.map((item) => item.value),
+        }],
+        chart: {
+            height: Math.max(220, paired.length * 36),
+            width: "100%",
+            redrawOnParentResize: true,
+            type: "bar",
+            toolbar: { show: false },
+            events: {
+                dataPointSelection: (event, chartContext, config) => {
+                    const label = paired[config.dataPointIndex]?.label
+                    if (label) handleChartSelection(type, label)
+                },
+                dataPointMouseEnter: () => {
+                    element.style.cursor = "pointer"
+                },
+                dataPointMouseLeave: () => {
+                    element.style.cursor = "inherit"
+                },
+            },
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                distributed: true,
+                borderRadius: 4,
+                dataLabels: { position: "top" },
+            },
+        },
+        dataLabels: {
+            enabled: true,
+            offsetX: 20,
+            style: { fontSize: "12px", colors: ["#333"] },
+        },
+        xaxis: {
+            categories: paired.map((item) => item.label),
+            labels: { show: false },
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+        },
+        yaxis: {
+            labels: {
+                maxWidth: 160,
+                formatter: (val) => {
+                    if (typeof val === "string" && val.length > 20) return val.slice(0, 19) + "…"
+                    return val
+                },
+            },
+        },
+        legend: { show: false },
+        tooltip: {
+            y: {
+                formatter: (val) => val + " proposals/sessions",
+            },
+        },
+    }
+
+    let chart = new ApexCharts(element, options)
+    chart.render()
+    return chart
+}
+
 const drawPieChart = (data, scope, type) => {
     const id = scope + "-" + type
     const element = document.getElementById(id)
     if (!element || !data || !data.series || !data.series.length) return null
 
-    const typeMapping = {
-        track: "track",
-        type: "submission_type",
-        state: "state",
-        language: "content_locale",
-    }
     const options = {
         series: data.series,
         labels: data.labels,
@@ -152,13 +236,8 @@ const drawPieChart = (data, scope, type) => {
             type: "donut",
             events: {
                 dataPointSelection: (event, chartContext, config) => {
-                    if (!dataMapping[type]) return
                     const label = config.w.config.labels[config.dataPointIndex]
-                    const searchValue = dataMapping[type][label]
-                    if (searchValue) {
-                        searchUrl += "&" + typeMapping[type] + "=" + searchValue
-                        window.location.href = searchUrl
-                    }
+                    if (label) handleChartSelection(type, label)
                 },
                 dataPointMouseEnter: () => {
                     element.style.cursor = "pointer"
@@ -219,6 +298,14 @@ const drawPieChart = (data, scope, type) => {
     return chart
 }
 
+const renderCategoricalChart = (data, scope, type) => {
+    // If more than 6 categories exist, render a clean horizontal bar chart instead of a crowded donut
+    if (data.labels && data.labels.length > 6) {
+        return drawBarChart(data, scope, type)
+    }
+    return drawPieChart(data, scope, type)
+}
+
 let chartTypes = ["state"]
 if (dataMapping.type) chartTypes.push("type")
 if (dataMapping.track) chartTypes.push("track")
@@ -236,15 +323,15 @@ const renderAllCharts = () => {
         drawTimeline("talk-timeline", ["talk-timeline-data"])
     }
 
-    // Pie charts
+    // Categorical charts (donut for <=6 categories, sorted bar chart for >6)
     chartTypes.forEach((item) => {
         const subData = getPieData("submission-" + item + "-data")
         if (subData) {
-            drawPieChart(subData, "submission", item)
+            renderCategoricalChart(subData, "submission", item)
         }
         const talkData = getPieData("talk-" + item + "-data")
         if (talkData) {
-            drawPieChart(talkData, "talk", item)
+            renderCategoricalChart(talkData, "talk", item)
         }
     })
 }
