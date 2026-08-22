@@ -23,6 +23,8 @@ const setupImageInputs = () => {
         const initialSrc = image.getAttribute("src") || ""
         const clearCheckbox = wrapper.querySelector('input[type="checkbox"]')
 
+        let currentObjectUrl = null
+
         const showImage = (url) => {
             image.src = url
             if (link) {
@@ -33,6 +35,10 @@ const setupImageInputs = () => {
         }
 
         const restore = () => {
+            if (currentObjectUrl) {
+                URL.revokeObjectURL(currentObjectUrl)
+                currentObjectUrl = null
+            }
             if (initialSrc) {
                 showImage(initialSrc)
             } else {
@@ -53,9 +59,18 @@ const setupImageInputs = () => {
             }
             // Choosing a new file supersedes a pending "clear".
             if (clearCheckbox) clearCheckbox.checked = false
-            const reader = new FileReader()
-            reader.onload = (e) => showImage(e.target.result)
-            reader.readAsDataURL(file)
+            if (currentObjectUrl) {
+                URL.revokeObjectURL(currentObjectUrl)
+                currentObjectUrl = null
+            }
+            try {
+                currentObjectUrl = URL.createObjectURL(file)
+                showImage(currentObjectUrl)
+            } catch (err) {
+                const reader = new FileReader()
+                reader.onload = (e) => showImage(e.target.result)
+                reader.readAsDataURL(file)
+            }
         })
 
         if (clearCheckbox) {
