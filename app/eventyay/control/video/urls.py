@@ -45,8 +45,6 @@ urlpatterns = [
     # SystemLog Management URLs
     path("systemlog/", views.SystemLogList.as_view(), name="systemlog.list"),
     path("systemlog/<uuid:pk>/", views.SystemLogDetail.as_view(), name="systemlog.detail"),
-    # Conftool URLs
-    path("conftool/syncposters/", views.ConftoolSyncPosters.as_view(), name="conftool.syncposters"),
     # Default index view
     path("", views.IndexView.as_view(), name="index"),
 ]
