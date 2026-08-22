@@ -2,12 +2,27 @@
 
     $(document).ready(function () {
         moveElement('send_grid_api_key', 'email_vendor', 0)
+        moveElement('gmail_client_id', 'email_vendor', 2)
+        moveElement('gmail_client_secret', 'email_vendor', 2)
+        moveGmailPanel('email_vendor', 2)
         moveElement('smtp_host', 'email_vendor', 1)
         moveElement('smtp_port', 'email_vendor', 1)
         moveElement('smtp_username', 'email_vendor', 1)
         moveElement('smtp_password', 'email_vendor', 1)
         moveElement('smtp_use_tls', 'email_vendor', 1)
         moveElement('smtp_use_ssl', 'email_vendor', 1)
+
+        function toggleGmailPanel() {
+            var selected = document.querySelector('input[name="email_vendor"]:checked');
+            var panel = document.querySelector('.gmail-connection-panel');
+            if (!panel) {
+                return;
+            }
+            panel.style.display = selected && selected.value === 'gmail_api' ? '' : 'none';
+        }
+
+        $('input[name="email_vendor"]').on('change', toggleGmailPanel);
+        toggleGmailPanel();
     })
 
     /**
@@ -39,12 +54,26 @@
             var rootOfGroup = findParent(el, true)
             var des = document.getElementsByName(target)[target_pos]
             var rootOfDes = des.parentNode.parentNode
-            console.log(rootOfDes, rootOfGroup)
             $(rootOfGroup).detach();
             $(rootOfDes).append(rootOfGroup)
         } catch (e) {
             console.error("==================", e)
         }
 
+    }
+
+    function moveGmailPanel(target, target_pos) {
+        try {
+            var panel = document.querySelector('.gmail-connection-panel')
+            if (!panel) {
+                return
+            }
+            var des = document.getElementsByName(target)[target_pos]
+            var rootOfDes = des.parentNode.parentNode
+            $(panel).detach()
+            $(rootOfDes).append(panel)
+        } catch (e) {
+            console.error("==================", e)
+        }
     }
 })(jQuery);

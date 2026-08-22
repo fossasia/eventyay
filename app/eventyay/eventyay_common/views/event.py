@@ -37,6 +37,12 @@ from django.apps import apps
 from eventyay.timezones import localize_datetime
 
 from eventyay.base.i18n import language
+from eventyay.base.gmail.errors import (
+    GmailDailyLimitError,
+    GmailPermanentError,
+    GmailRateLimitError,
+    GmailTemporaryError,
+)
 from eventyay.base.meetup import (
     get_rsvp_product_and_quota,
     get_video_config_initial,
@@ -683,6 +689,16 @@ class EventUpdate(
         context['is_video_enabled'] = is_video_enabled(self.object)
         context['is_meetup_event'] = is_meetup_event(self.object)
         context['is_talk_event_created'] = False
+        from eventyay.base.gmail.models import GmailOAuthCredential
+
+        context['gmail_migration_pending'] = not GmailOAuthCredential.is_table_available()
+        context['gmail_credential'] = GmailOAuthCredential.get_active_for_event_safe(self.object)
+        gmail_kwargs = {'organizer': self.object.organizer.slug, 'event': self.object.slug}
+        context['gmail_callback_url'] = self.request.build_absolute_uri(
+            reverse('eventyay_common:event.gmail.callback', kwargs=gmail_kwargs)
+        )
+        context['gmail_connect_url'] = reverse('eventyay_common:event.gmail.connect', kwargs=gmail_kwargs)
+        context['gmail_disconnect_url'] = reverse('eventyay_common:event.gmail.disconnect', kwargs=gmail_kwargs)
         if (
             self.object.settings.create_for == EventCreatedFor.BOTH
             or self.object.settings.talk_schedule_public is not None
@@ -700,10 +716,19 @@ class EventUpdate(
             messages.error(self.request, _('Custom email gateway is not enabled.'))
             return
         vendor = event.settings.get('email_vendor', 'smtp')
-        if vendor == 'sendgrid' and not event.settings.get('send_grid_api_key'):
+        if vendor == 'gmail_api':
+            from eventyay.base.gmail.models import GmailOAuthCredential
+
+            if not GmailOAuthCredential.get_active_for_event(event):
+                messages.error(
+                    self.request,
+                    _('Gmail is selected but no account is connected. Connect Gmail in the email settings first.'),
+                )
+                return
+        elif vendor == 'sendgrid' and not event.settings.get('send_grid_api_key'):
             messages.error(self.request, _('SendGrid API key is missing. Please configure it and save.'))
             return
-        if vendor != 'sendgrid' and (not event.settings.get('smtp_host') or not event.settings.get('smtp_port')):
+        if vendor != 'sendgrid' and vendor != 'gmail_api' and (not event.settings.get('smtp_host') or not event.settings.get('smtp_port')):
             messages.error(self.request, _('SMTP host or port is missing. Please configure them and save.'))
             return
 
@@ -724,6 +749,16 @@ class EventUpdate(
                 self.request,
                 _('SendGrid test failed with HTTP error %(code)s. Check your API key and try again.')
                 % {'code': e.response.status_code if hasattr(e, 'response') and e.response is not None else '?'},
+            )
+        except (GmailRateLimitError, GmailTemporaryError) as e:
+            messages.warning(
+                self.request,
+                _('Gmail test email is temporarily delayed because of rate limits: %(err)s') % {'err': e},
+            )
+        except (GmailDailyLimitError, GmailPermanentError) as e:
+            messages.error(
+                self.request,
+                _('Gmail test email could not be sent: %(err)s') % {'err': e},
             )
         except (smtplib.SMTPException, OSError):
             logger.exception('Central SMTP test failed (event=%s)', event.slug)
