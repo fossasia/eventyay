@@ -277,23 +277,9 @@ def get_event_navigation(request: HttpRequest):
                 'active': 'event.orders.refunds' in url.url_name,
             },
         ]
-        if 'can_change_orders' in request.eventpermset:
-            children.append(
-                {
-                    'label': _('Import'),
-                    'url': reverse(
-                        'control:event.orders.import',
-                        kwargs={
-                            'event': request.event.slug,
-                            'organizer': request.event.organizer.slug,
-                        },
-                    ),
-                    'active': 'event.orders.import' in url.url_name,
-                }
-            )
         children.append(
             {
-                'label': _('Export'),
+                'label': _('Import / Export'),
                 'url': reverse(
                     'control:event.orders.export',
                     kwargs={
@@ -301,7 +287,11 @@ def get_event_navigation(request: HttpRequest):
                         'organizer': request.event.organizer.slug,
                     },
                 ),
-                'active': 'event.orders.export' in url.url_name,
+                'active': (
+                    'event.orders.export' in url.url_name
+                    or 'event.orders.import' in url.url_name
+                    or (url.namespace == 'plugins:banktransfer' and url.url_name in ('import', 'refunds.list', 'import.job'))
+                ),
             }
         )
         

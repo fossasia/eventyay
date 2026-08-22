@@ -47,8 +47,16 @@ def import_settings_from_form(form):
 
 
 class ImportView(EventPermissionRequiredMixin, TemplateView):
-    template_name = 'pretixcontrol/orders/import_start.html'
+    template_name = 'pretixcontrol/orders/import_export.html'
     permission = 'can_change_orders'
+
+    def get_context_data(self, **kwargs):
+        from eventyay.control.views.orders import get_banktransfer_import_context
+        ctx = super().get_context_data(**kwargs)
+        ctx['active_tab'] = self.request.GET.get('tab', 'import')
+        ctx['exporters'] = []
+        ctx.update(get_banktransfer_import_context(self.request))
+        return ctx
 
     def post(self, request, *args, **kwargs):
         if 'file' not in request.FILES:

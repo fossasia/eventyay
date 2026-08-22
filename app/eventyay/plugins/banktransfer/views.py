@@ -632,6 +632,12 @@ class OrganizerBanktransferView:
 class EventImportView(EventPermissionRequiredMixin, ImportView):
     permission = 'can_manage_bank_transfers'
 
+    def get(self, request, *args, **kwargs):
+        return redirect(reverse('control:event.orders.export', kwargs={
+            'event': self.request.event.slug,
+            'organizer': self.request.organizer.slug,
+        }) + '?tab=banktransfer')
+
 
 class OrganizerImportView(
     OrganizerBanktransferView,

@@ -14,50 +14,6 @@ def register_payment_provider(sender, **kwargs):
     return BankTransfer
 
 
-@receiver(nav_event, dispatch_uid='payment_banktransfer_nav')
-def control_nav_import(sender, request=None, **kwargs):
-    url = resolve(request.path_info)
-    if not request.user.has_event_permission(
-        request.organizer, request.event, 'can_manage_bank_transfers', request=request
-    ):
-        return []
-    return [
-        {
-            'label': _('Bank transfer'),
-            'url': reverse(
-                'plugins:banktransfer:import',
-                kwargs={
-                    'event': request.event.slug,
-                    'organizer': request.event.organizer.slug,
-                },
-            ),
-            'icon': 'university',
-            'children': [
-                {
-                    'label': _('Import bank data'),
-                    'url': reverse(
-                        'plugins:banktransfer:import',
-                        kwargs={
-                            'event': request.event.slug,
-                            'organizer': request.event.organizer.slug,
-                        },
-                    ),
-                    'active': (url.namespace == 'plugins:banktransfer' and url.url_name == 'import'),
-                },
-                {
-                    'label': _('Export refunds'),
-                    'url': reverse(
-                        'plugins:banktransfer:refunds.list',
-                        kwargs={
-                            'event': request.event.slug,
-                            'organizer': request.event.organizer.slug,
-                        },
-                    ),
-                    'active': (url.namespace == 'plugins:banktransfer' and url.url_name.startswith('refunds')),
-                },
-            ],
-        },
-    ]
 
 
 @receiver(nav_organizer, dispatch_uid='payment_banktransfer_organav')
@@ -71,7 +27,9 @@ def control_nav_orga_import(sender, request=None, **kwargs):
 @receiver(html_head, dispatch_uid='banktransfer_html_head')
 def html_head_presale(sender, request=None, **kwargs):
     url = resolve(request.path_info)
-    if url.namespace == 'plugins:banktransfer':
+    if url.namespace == 'plugins:banktransfer' or (
+        url.namespace == 'control' and url.url_name in ('event.orders.export', 'event.orders.import')
+    ):
         template = get_template('pretixplugins/banktransfer/control_head.html')
         return template.render({})
     else:
