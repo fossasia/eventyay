@@ -172,40 +172,47 @@ function getInitialLanguage() {
 
 export async function init(app) {
 	const initialLanguage = getInitialLanguage()
-	await i18next
-		.use({
-			type: 'backend',
-			init() {},
-			async read(language, namespace, callback) {
-				try {
-					const loader = resolveLocaleLoader(language)
-					if (!loader) {
-						throw new Error(`Missing locale bundle for "${language}"`)
+	try {
+		await i18next
+			.use({
+				type: 'backend',
+				init() {},
+				async read(language, namespace, callback) {
+					try {
+						const loader = resolveLocaleLoader(language)
+						if (!loader) {
+							console.warn('Missing video.po catalog for "%s", using source strings', language)
+							callback(null, {})
+							return
+						}
+						const locale = await loader()
+						callback(null, locale.default || {})
+					} catch (error) {
+						console.error('Failed to load video catalog for "%s"', language, error)
+						callback(null, {})
 					}
-					const locale = await loader()
-					callback(null, locale.default)
-				} catch (error) {
-					callback(error)
 				}
-			}
-		})
-		.use({
-			type: 'postProcessor',
-			name: 'themeOverwrites',
-			process(value, key) {
-				return config.theme?.textOverwrites?.[key[0]] ?? value
-			}
-		})
-		.init({
-			lng: initialLanguage,
-			fallbackLng: 'en',
-			returnEmptyString: false,
-			returnNull: false,
-			debug: ENV_DEVELOPMENT,
-			keySeparator: false,
-			nsSeparator: false,
-			postProcess: ['themeOverwrites']
-		})
+			})
+			.use({
+				type: 'postProcessor',
+				name: 'themeOverwrites',
+				process(value, key) {
+					return config.theme?.textOverwrites?.[key[0]] ?? value
+				}
+			})
+			.init({
+				lng: initialLanguage,
+				fallbackLng: 'en',
+				returnEmptyString: false,
+				returnNull: false,
+				debug: ENV_DEVELOPMENT,
+				keySeparator: false,
+				nsSeparator: false,
+				postProcess: ['themeOverwrites']
+			})
+	} catch (error) {
+		console.error('Failed to initialize Video translations', error)
+	}
 	app.config.globalProperties.$i18n = i18next
 	app.config.globalProperties.$t = i18next.t.bind(i18next)
 	app.config.globalProperties.$localize = localize
