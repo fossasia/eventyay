@@ -328,3 +328,61 @@ def order_overview(
         total['num'][l] = tuplesum(c.num[l] for c, i in products_by_category)
 
     return products_by_category, total
+
+
+def group_overview_by_classification(
+    products_by_category: List[Tuple[Any, List[Any]]],
+) -> List[Tuple[Any, List[Any]]]:
+    """
+    Regroup order overview rows by ticket/product classification.
+
+    Admission products are grouped under Tickets, non-admission products under Products.
+    Payment fees are kept in their own group at the end. Items that cannot be classified
+    are placed in an Uncategorized group.
+    """
+    fees_label = str(_('Fees'))
+    tickets_label = _('Tickets')
+    products_label = _('Products')
+    uncategorized_label = _('Uncategorized')
+
+    classification_groups = {
+        'tickets': DummyObject(),
+        'products': DummyObject(),
+        'uncategorized': DummyObject(),
+    }
+    classification_groups['tickets'].name = tickets_label
+    classification_groups['products'].name = products_label
+    classification_groups['uncategorized'].name = uncategorized_label
+
+    classified_items = {key: [] for key in classification_groups}
+    fees_group = None
+
+    for category, items in products_by_category:
+        if str(category.name) == fees_label:
+            fees_group = (category, items)
+            continue
+
+        for product in items:
+            if getattr(product, 'admission', None) is True:
+                classified_items['tickets'].append(product)
+            elif getattr(product, 'admission', None) is False:
+                classified_items['products'].append(product)
+            else:
+                classified_items['uncategorized'].append(product)
+
+    states = ('unapproved', 'canceled', 'paid', 'pending', 'expired', 'total')
+    result = []
+    for key in ('tickets', 'products', 'uncategorized'):
+        items = classified_items[key]
+        if not items:
+            continue
+        group = classification_groups[key]
+        group.num = {}
+        for state in states:
+            group.num[state] = tuplesum(product.num[state] for product in items)
+        result.append((group, items))
+
+    if fees_group:
+        result.append(fees_group)
+
+    return result

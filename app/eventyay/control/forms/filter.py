@@ -1904,23 +1904,21 @@ class OverviewFilterForm(FilterForm):
         empty_label=pgettext_lazy('subevent', 'All dates'),
     )
     date_axis = forms.ChoiceField(
-        label=_('Date filter'),
+        label=_('Filter by'),
         choices=(
-            ('', _('Filter by…')),
+            ('', _('All products')),
             ('order_date', _('Order date')),
             ('last_payment_date', _('Date of last successful payment')),
         ),
         required=False,
     )
     date_from = forms.DateField(
-        label=_('Date from'),
+        label=_('Start date'),
         required=False,
-        widget=DatePickerWidget,
     )
     date_until = forms.DateField(
-        label=_('Date until'),
+        label=_('End date'),
         required=False,
-        widget=DatePickerWidget,
     )
     browser_timezone = forms.CharField(
         widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
@@ -1951,6 +1949,18 @@ class OverviewFilterForm(FilterForm):
             self.fields['subevent'].widget.choices = self.fields['subevent'].choices
         elif 'subevent':
             del self.fields['subevent']
+
+        for field_name, placeholder in (
+            ('date_from', _('Start date')),
+            ('date_until', _('End date')),
+        ):
+            self.fields[field_name].widget = forms.DateInput(
+                attrs={
+                    'class': 'form-control datepickerfield',
+                    'autocomplete': 'off',
+                    'placeholder': placeholder,
+                }
+            )
 
 
 class TaskFilterForm(forms.Form):
