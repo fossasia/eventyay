@@ -79,8 +79,6 @@ import ROOM_TYPES, { inferType } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import { PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 import Stage from 'views/admin/rooms/types-edit/stage'
-import PageStatic from 'views/admin/rooms/types-edit/page-static'
-import PageIframe from 'views/admin/rooms/types-edit/page-iframe'
 import ChannelBBB from 'views/admin/rooms/types-edit/channel-bbb'
 import ChannelJanus from 'views/admin/rooms/types-edit/channel-janus'
 import ChannelJitsi from 'views/admin/rooms/types-edit/channel-jitsi'
@@ -117,8 +115,6 @@ export default {
 			allRoomTypes: ROOM_TYPES,
 			typeComponents: markRaw({
 				stage: Stage,
-				'page-static': PageStatic,
-				'page-iframe': PageIframe,
 				'page-landing': PageLanding,
 				'channel-bbb': ChannelBBB,
 				'channel-roulette': ChannelRoulette,

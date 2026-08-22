@@ -27,7 +27,6 @@ from .modules.announcement import AnnouncementModule
 from .modules.auth import AuthModule
 from .modules.bbb import BBBModule
 from .modules.chat import ChatModule
-from .modules.exhibition import ExhibitionModule
 from .modules.januscall import JanusCallModule
 from .modules.jitsi import JitsiModule
 from .modules.poll import PollModule
@@ -122,7 +121,6 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
             "zoom": ZoomModule(self),
             "januscall": JanusCallModule(self),
             "jitsi": JitsiModule(self),
-            "exhibition": ExhibitionModule(self),
             "poster": PosterModule(self),
             "question": QuestionModule(self),
             "poll": PollModule(self),

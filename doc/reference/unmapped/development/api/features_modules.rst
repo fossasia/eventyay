@@ -23,7 +23,6 @@ Live module handlers are in ``eventyay.features.live.modules`` package:
 - ``chat.py`` - Chat handling
 - ``poll.py`` - Poll functionality
 - ``bbb.py`` - BigBlueButton integration
-- ``exhibition.py`` - Exhibition features
 - ``poster.py`` - Poster sessions
 - ``question.py`` - Q&A management
 - ``roulette.py`` - Speed networking

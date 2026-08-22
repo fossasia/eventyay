@@ -26,7 +26,7 @@ const ROOM_TYPES = [{
 	id: 'channel-zoom',
 	icon: 'webcam',
 	name: 'Video Channel (Zoom)',
-	description: 'This room type allows you to embed a zoom meeting or webinar directly into venueless.',
+	description: 'This room type allows you to embed a Zoom meeting or webinar directly into eventyay.',
 	startingModule: 'call.zoom',
 	videoChannel: true,
 	behindFeatureFlag: 'zoom'
@@ -45,12 +45,6 @@ const ROOM_TYPES = [{
 	description: 'This type of channel allows you to enable pure-text communication between your attendees.',
 	startingModule: 'chat.native'
 }, {
-	id: 'exhibition',
-	icon: 'domain',
-	name: 'Exhibition',
-	description: 'Using an exhibition room, sponsors or exhibitors can present themselves to your audience.',
-	startingModule: 'exhibition.native'
-}, {
 	id: 'posters',
 	icon: 'domain',
 	name: 'Poster Hall',
@@ -67,30 +61,12 @@ const ROOM_TYPES = [{
 	sidebarGroup: 'networking',
 	behindFeatureFlag: 'roulette'
 }, {
-	id: 'page-static',
-	icon: 'text-box-outline',
-	name: 'Page',
-	description: 'A page contains static content for your attendees.',
-	startingModule: 'page.static'
-}, {
-	id: 'page-iframe',
-	icon: 'text-box-outline',
-	name: 'IFrame',
-	description: 'Using IFrames, you can embed arbitrary web pages and web applications into venueless.',
-	startingModule: 'page.iframe'
-}, {
 	id: 'page-landing',
 	icon: 'text-box-outline',
 	name: 'Landing Page',
 	description: 'The landing place module combines the most important content into one place for your attendees to see after they join.',
 	startingModule: 'page.landing',
 	behindFeatureFlag: 'page.landing'
-}, {
-	id: 'page-userlist',
-	icon: 'text-box-outline',
-	name: 'User List',
-	description: '',
-	startingModule: 'page.userlist'
 }]
 
 export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))

@@ -10,8 +10,6 @@ import Talk from '@schedule/components/TalkDetail'
 import Speakers from '@schedule/components/SpeakersList'
 import Speaker from '@schedule/components/SpeakerDetail'
 import PublicStars from '@schedule/components/PublicStars'
-import Exhibitor from 'views/exhibitors/item'
-import ContactRequests from 'views/contact-requests'
 import Preferences from 'views/preferences'
 import config from 'config'
 
@@ -127,18 +125,6 @@ const routes = [
 				})
 			},
 			{
-				path: 'exhibitors/:exhibitorId',
-				name: 'exhibitor',
-				component: Exhibitor,
-				props: true
-			},
-			{
-				path: 'contact-requests',
-				name: 'contactRequests',
-				component: ContactRequests,
-				props: true
-			},
-			{
 				path: 'preferences',
 				name: 'preferences',
 				component: Preferences
@@ -147,17 +133,6 @@ const routes = [
 				path: 'posters/:posterId',
 				name: 'poster',
 				component: () => import('views/posters/item'),
-				props: true
-			},
-			{
-				path: 'manage-exhibitors',
-				name: 'exhibitors',
-				component: () => import('views/exhibitor-manager')
-			},
-			{
-				path: 'manage-exhibitors/:exhibitorId',
-				name: 'exhibitors:exhibitor',
-				component: () => import('views/exhibitor-manager/exhibitor'),
 				props: true
 			},
 			{

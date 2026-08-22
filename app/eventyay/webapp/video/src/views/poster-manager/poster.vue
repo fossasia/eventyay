@@ -44,7 +44,7 @@
 								avatar(:user="presenter", :size="36")
 								span.display-name {{ presenter.profile.display_name }}
 							.actions
-								bunt-icon-button(v-if="hasPermission('world:rooms.create.exhibition')", @click="removePresenter(presenter)") delete-outline
+								bunt-icon-button(v-if="hasPermission('world:rooms.create.poster')", @click="removePresenter(presenter)") delete-outline
 					bunt-button(@click="showPresenterPrompt = true") {{ $t('poster-manager/poster:btn-add-presenter') }}
 					bunt-select(name="presentation-room", v-model="poster.presentation_room_id", :disabled="!hasPermission('world:rooms.create.poster')", :label="$t('poster-manager/poster:input-presentation-room:label')",  :options="presentationRoomOptions", option-label="name")
 					bunt-input(name="schedule-session", v-model="poster.schedule_session", :label="$t('poster-manager/poster:input-schedule-session:label')")
@@ -101,12 +101,11 @@ import Prompt from 'components/Prompt'
 import UserSelect from 'components/UserSelect'
 import UploadUrlInput from 'components/UploadUrlInput'
 import RichTextEditor from 'components/RichTextEditor'
-import ExhibitorPreview from 'views/exhibitors/item'
 
 const Delta = Quill.import('delta')
 
 export default {
-	components: { Avatar, ExhibitorPreview, Prompt, UploadUrlInput, UserSelect, RichTextEditor },
+	components: { Avatar, Prompt, UploadUrlInput, UserSelect, RichTextEditor },
 	props: {
 		create: Boolean,
 		posterId: String

@@ -11,17 +11,10 @@ export function isRoomTypeAvailable(typeId, hasPermission, isAdminMode = false) 
 	if (typeId === 'channel-text') {
 		return hasPermission('world:rooms.create.chat')
 	}
-	if (typeId === 'exhibition') {
-		return hasPermission('world:rooms.create.exhibition')
-	}
 	if (typeId === 'posters') {
 		return hasPermission('world:rooms.create.poster')
 	}
-	if (typeId === 'channel-roulette' || 
-		typeId === 'page-static' || 
-		typeId === 'page-iframe' || 
-		typeId === 'page-landing' || 
-		typeId === 'page-userlist') {
+	if (typeId === 'channel-roulette' || typeId === 'page-landing') {
 		return hasPermission('room:update')
 	}
 	return true
