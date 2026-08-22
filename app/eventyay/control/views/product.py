@@ -412,13 +412,16 @@ def reorder_questions(request, organizer, event):
     except (JSONDecodeError, KeyError, ValueError):
         return HttpResponseBadRequest('expected JSON: {ids:[]}')
 
-    input_questions = request.event.questions.filter(id__in=[i for i in ids if i.isdigit()])
+    digit_ids = [i for i in ids if i.isdigit()]
+    input_questions = request.event.questions.none()
+    if digit_ids:
+        input_questions = request.event.questions.filter(id__in=digit_ids)
 
-    if input_questions.count() != len([i for i in ids if i.isdigit()]):
-        raise Http404(_('Some of the provided question ids are invalid.'))
+        if input_questions.count() != len(digit_ids):
+            raise Http404(_('Some of the provided question ids are invalid.'))
 
-    if input_questions.count() != request.event.questions.count():
-        raise Http404(_('Not all questions have been selected.'))
+        if input_questions.count() != request.event.questions.count():
+            raise Http404(_('Not all questions have been selected.'))
 
     for q in input_questions:
         pos = ids.index(str(q.pk))
@@ -436,6 +439,9 @@ def reorder_questions(request, organizer, event):
         'zipcode',
         'city',
         'country',
+        'order_email',
+        'order_phone',
+        'name_address',
     ):
         if s in ids:
             system_question_order[s] = ids.index(s)
@@ -1816,6 +1822,17 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
             )
             for field_id in SYSTEM_QUESTION_FIELDS
         }
+
+        customer_field_ids = ['order_email', 'order_phone', 'name_address']
+        customer_field_order = []
+        for idx, field_id in enumerate(customer_field_ids):
+            if system_question_order and field_id in system_question_order and system_question_order[field_id] >= 0:
+                position = system_question_order[field_id]
+            else:
+                position = idx
+            customer_field_order.append((field_id, position))
+        customer_field_order.sort(key=lambda x: x[1])
+        ctx['ordered_customer_fields'] = [field_id for field_id, _ in customer_field_order]
 
         return ctx
 
