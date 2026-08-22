@@ -84,7 +84,6 @@ import ChannelJanus from 'views/admin/rooms/types-edit/channel-janus'
 import ChannelJitsi from 'views/admin/rooms/types-edit/channel-jitsi'
 import ChannelZoom from 'views/admin/rooms/types-edit/channel-zoom'
 import ChannelRoulette from 'views/admin/rooms/types-edit/channel-roulette'
-import Posters from 'views/admin/rooms/types-edit/posters'
 import PageLanding from 'views/admin/rooms/types-edit/page-landing'
 import SidebarAddons from 'views/admin/rooms/types-edit/SidebarAddons'
 
@@ -121,7 +120,6 @@ export default {
 				'channel-janus': ChannelJanus,
 				'channel-jitsi': ChannelJitsi,
 				'channel-zoom': ChannelZoom,
-				posters: Posters
 			})
 		}
 	},

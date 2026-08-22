@@ -32,7 +32,6 @@ import ChannelJanus from './types-edit/channel-janus'
 import ChannelJitsi from './types-edit/channel-jitsi'
 import ChannelZoom from './types-edit/channel-zoom'
 import ChannelRoulette from './types-edit/channel-roulette'
-import Posters from './types-edit/posters'
 import PageLanding from './types-edit/page-landing'
 import StreamSchedule from './StreamSchedule'
 import SidebarAddons from './types-edit/SidebarAddons'
@@ -72,7 +71,6 @@ export default {
 				'channel-janus': ChannelJanus,
 				'channel-jitsi': ChannelJitsi,
 				'channel-zoom': ChannelZoom,
-				posters: Posters
 			}),
 			saving: false,
 			error: null,

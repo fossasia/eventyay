@@ -25,7 +25,6 @@ from eventyay.core.utils.json import CustomJSONEncoder
 from eventyay.base.models.chat import ChatEvent, Membership
 from eventyay.base.models.feedback import Feedback
 from eventyay.base.models.poll import Poll
-from eventyay.base.models.poster import PosterPresenter
 from eventyay.base.models.room import Reaction, RoomView
 from eventyay.base.models.storage_model import StoredFile
 
@@ -39,7 +38,6 @@ FEATURE_FLAGS = [
     "zoom",
     "janus",
     "polls",
-    "poster",
     "conftool",
     "cross-origin-isolation",
 ]
@@ -256,7 +254,6 @@ class World(VersionedModel):
         self.bbb_calls.all().delete()
         ChatEvent.objects.filter(channel__world=self).delete()
         Membership.objects.filter(channel__world=self).delete()
-        PosterPresenter.objects.filter(poster__world=self).delete()
         Reaction.objects.filter(room__world=self).delete()
         RoomView.objects.filter(room__world=self).delete()
         WorldView.objects.filter(world=self).delete()

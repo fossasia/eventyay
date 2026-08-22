@@ -64,10 +64,6 @@ transition(name="sidebar")
 					.notifications(v-if="channel.notifications") {{ channel.notifications }}
 					bunt-icon-button(tooltip="remove", :tooltip-fixed="true", @click.prevent.stop="$store.dispatch('chat/leaveChannel', {channelId: channel.id})") close
 			.buffer
-			template(v-if="worldHasPosters && hasPermission('world:rooms.create.poster')")
-				.group-title {{ $t('RoomsSidebar:posters-headline:text') }}
-				.admin
-					router-link(:to="{name: 'posters'}") {{ $t('RoomsSidebar:posters-manage:label') }}
 			template(v-if="hasPermission('world:users.list') || hasPermission('world:update') || hasPermission('world:announce') || hasPermission('room:update') || hasPermission('world:kiosks.manage') || isAdminMode")
 				.group-title {{ $t('RoomsSidebar:admin-headline:text') }}
 				.admin
@@ -222,9 +218,6 @@ export default {
 		},
 		worldHasTextChannels() {
 			return this.rooms.some(room => room.modules.length === 1 && room.modules[0].type === 'chat.native')
-		},
-		worldHasPosters() {
-			return this.rooms.some(room => room.modules.length === 1 && room.modules[0].type === 'poster.native')
 		},
 	},
 	watch: {

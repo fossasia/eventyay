@@ -296,10 +296,3 @@ class BBBMoveRoomForm(forms.Form):
         label=_('Target Server'),
         queryset=BBBServer.objects.filter(active=True).order_by("url"),
     )
-
-
-class ConftoolSyncPostersForm(forms.Form):
-    event = forms.ModelChoiceField(
-        label=_('Event ID'),
-        queryset=Event.objects.filter(config__conftool_password__isnull=False),
-    )

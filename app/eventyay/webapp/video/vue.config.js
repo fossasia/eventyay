@@ -46,7 +46,7 @@ module.exports = {
 			]
 		}
 	},
-	transpileDependencies: ['buntpapier', 'color', 'pdfjs-dist'],
+	transpileDependencies: ['buntpapier', 'color'],
 	configureWebpack: {
 		resolve: {
 			symlinks: false, // don't flatten symlinks (for npm link)
