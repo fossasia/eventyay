@@ -551,6 +551,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.get(self.request, *self.args, **self.kwargs)
         if created and not self.new_speaker_form.is_valid():
+            messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
 
         self.object = form.instance
