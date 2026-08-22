@@ -98,6 +98,18 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
                 'icon': 'wrench',
             },
             {
+                'label': _('Event status'),
+                'url': reverse(
+                    'eventyay_common:event.live',
+                    kwargs={
+                        'event': event.slug,
+                        'organizer': event.organizer.slug,
+                    },
+                ),
+                'active': (url.url_name == 'event.live'),
+                'icon': 'tachometer',
+            },
+            {
                 'label': _('Plugins'),
                 'url': reverse(
                     'eventyay_common:event.plugins',
