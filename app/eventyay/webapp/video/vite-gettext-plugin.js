@@ -13,8 +13,14 @@ export default function loadGettext() {
 			const sanitized = src.replaceAll('#~|', '#~#|')
 			const mapped = await gettextToI18next(lang, sanitized)
 			const translations = JSON.parse(mapped)
+			const isEnglish = lang === 'en' || lang.startsWith('en_') || lang.startsWith('en-')
 			const filtered = Object.fromEntries(
-				Object.entries(translations).filter(([, value]) => value !== '')
+				Object.entries(translations).filter(([key, value]) => {
+					if (value === '' || value == null) return false
+					// Untranslated gettext entries often copy msgid; keep those only for English.
+					if (!isEnglish && value === key) return false
+					return true
+				})
 			)
 			return {
 				code: `export default ${JSON.stringify(filtered)}`,

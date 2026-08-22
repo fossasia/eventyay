@@ -160,6 +160,56 @@ function resolveLocaleLoader(language) {
 	return null
 }
 
+function isEnglishLocale(language) {
+	const django = toDjangoLanguage(language)
+	return django === 'en' || String(django).startsWith('en-')
+}
+
+function usableTranslations(catalog, language) {
+	const keepMsgidCopies = isEnglishLocale(language)
+	return Object.fromEntries(
+		Object.entries(catalog).filter(([key, value]) => {
+			if (value == null || value === '') return false
+			if (!keepMsgidCopies && value === key) return false
+			return true
+		})
+	)
+}
+
+async function loadRawCatalog(language) {
+	const loader = resolveLocaleLoader(language)
+	if (!loader) return null
+	const locale = await loader()
+	return locale.default || {}
+}
+
+let englishCatalogPromise
+
+async function loadEnglishCatalog() {
+	if (!englishCatalogPromise) {
+		englishCatalogPromise = loadRawCatalog('en').then((catalog) => usableTranslations(catalog || {}, 'en'))
+	}
+	return englishCatalogPromise
+}
+
+async function loadCatalogForLanguage(language) {
+	const english = await loadEnglishCatalog()
+	if (isEnglishLocale(language)) {
+		return english
+	}
+	const raw = await loadRawCatalog(language)
+	if (!raw) {
+		if (ENV_DEVELOPMENT) {
+			console.warn('Missing video.po catalog for "%s", falling back to English', language)
+		}
+		return english
+	}
+	return {
+		...english,
+		...usableTranslations(raw, language),
+	}
+}
+
 function getInitialLanguage() {
 	const stored = toDjangoLanguage(getStoredLanguage())
 	const cookie = toDjangoLanguage(getLanguageFromCookie())
@@ -179,17 +229,15 @@ export async function init(app) {
 				init() {},
 				async read(language, namespace, callback) {
 					try {
-						const loader = resolveLocaleLoader(language)
-						if (!loader) {
-							console.warn('Missing video.po catalog for "%s", using source strings', language)
-							callback(null, {})
-							return
-						}
-						const locale = await loader()
-						callback(null, locale.default || {})
+						callback(null, await loadCatalogForLanguage(language))
 					} catch (error) {
 						console.error('Failed to load video catalog for "%s"', language, error)
-						callback(null, {})
+						try {
+							callback(null, await loadEnglishCatalog())
+						} catch (fallbackError) {
+							console.error('Failed to load English video catalog', fallbackError)
+							callback(null, {})
+						}
 					}
 				}
 			})
@@ -203,6 +251,7 @@ export async function init(app) {
 			.init({
 				lng: initialLanguage,
 				fallbackLng: 'en',
+				preload: ['en'],
 				returnEmptyString: false,
 				returnNull: false,
 				debug: ENV_DEVELOPMENT,
