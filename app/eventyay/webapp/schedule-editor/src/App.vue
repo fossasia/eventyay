@@ -117,6 +117,13 @@
 				#session-editor(@click.stop="")
 					h3.session-editor-title
 						span {{ $t('Assign Members for ') }} {{ getLocalizedString(assigningSession.title) }}
+						button.modal-close-btn(type="button", @click="closeAssignModal", :aria-label="$t('Close')")
+							i.fa.fa-times(aria-hidden="true")
+					
+					.assign-modal-error(v-if="assignModalError")
+						span {{ assignModalError }}
+						button.assign-modal-error-dismiss(type="button", @click="assignModalError = ''", :aria-label="$t('Dismiss')")
+							i.fa.fa-times(aria-hidden="true")
 					
 					.data.assign-data
 						.assign-role(v-for="role in assigningSession.roles", :key="role.id")
@@ -136,9 +143,6 @@
 										option(v-for="vol in availableMembersByRole[role.id]", :key="vol.id", :value="vol.id") {{ vol.name }}{{ vol.email ? ` (${vol.email})` : '' }}
 								.col-md-4
 									button.assign-btn(type="button", @click="assignMember(role.id)", :disabled="assigningWaiting") {{ $t('Assign') }}
-					
-					.button-row
-						bunt-button(@click="closeAssignModal") {{ $t('Close') }}
 
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
@@ -147,7 +151,8 @@
 import { ref, reactive, computed, onMounted, onUnmounted, onBeforeMount, nextTick } from 'vue'
 import moment, { Moment } from 'moment-timezone'
 import GridSchedule from '~/components/GridSchedule.vue'
-import Session from '~/components/Session.vue'
+import TalkSession from '~/components/Session.vue'
+import ShiftSession from '~/teamshifts-adapter/Session.vue'
 import api from '~/api'
 import { resolveMode, getCapabilities } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
@@ -246,6 +251,7 @@ const props = defineProps<{
 
 const mode = resolveMode()
 const caps: Capabilities = getCapabilities(mode)
+const Session = mode === 'shifts' || mode === 'public-shifts' ? ShiftSession : TalkSession
 
 const eventSlug = ref<string | null>(null)
 const organizerSlug = ref<string | null>(null)
@@ -263,6 +269,7 @@ const editorSession = ref<SessionData | null>(null)
 const editorSessionWaiting = ref<boolean>(false)
 const assigningSession = ref<SessionData | null>(null)
 const assigningWaiting = ref<boolean>(false)
+const assignModalError = ref<string>('')
 const selectedMemberIds = ref<Record<string, number | undefined>>({})
 const isUnassigning = ref<boolean>(false)
 const locales = ref<string[]>(['en'])
@@ -678,19 +685,24 @@ async function deleteSessionById(id: number): Promise<boolean> {
 }
 
 async function openAssignModal(session: SessionData | Talk): Promise<void> {
+  assignModalError.value = ''
   assigningSession.value = { ...session } as SessionData
   if (assigningSession.value.roles && assigningSession.value.roles.length > 0) {
-    const promises = []
     for (const role of assigningSession.value.roles) {
       selectedMemberIds.value[String(role.id)] = undefined
-      promises.push(loadMembers(role.id))
     }
-    await Promise.all(promises)
+    const firstRoleId = assigningSession.value.roles[0].id
+    await loadMembers(firstRoleId)
+    const members = availableMembersByRole.value[String(firstRoleId)] || []
+    for (const role of assigningSession.value.roles) {
+      availableMembersByRole.value[String(role.id)] = members
+    }
   }
 }
 
 function closeAssignModal(): void {
   assigningSession.value = null
+  assignModalError.value = ''
   selectedMemberIds.value = {}
   availableMembersByRole.value = {}
 }
@@ -701,7 +713,7 @@ async function loadMembers(roleId: number): Promise<void> {
     availableMembersByRole.value[String(roleId)] = response.members ?? []
   } catch (error) {
     console.error('Failed to fetch members', error)
-    window.alert($t('Failed to load members. Please try again.'))
+    assignModalError.value = $t('Failed to load members. Please try again.')
   }
 }
 
@@ -727,7 +739,7 @@ async function assignMember(roleId: number): Promise<void> {
     selectedMemberIds.value[String(roleId)] = undefined
   } catch (error) {
     console.error('Failed to assign member', error)
-    window.alert($t('Failed to assign member. Please try again.'))
+    assignModalError.value = $t('Failed to assign member. Please try again.')
   } finally {
     assigningWaiting.value = false
   }
@@ -753,7 +765,7 @@ async function unassignMember(roleId: number, userId: number): Promise<void> {
     await fetchAdditionalScheduleData()
   } catch (error) {
     console.error('Failed to unassign member', error)
-    window.alert($t('Failed to unassign member. Please try again.'))
+    assignModalError.value = $t('Failed to unassign member. Please try again.')
   } finally {
     assigningWaiting.value = false
   }
@@ -1171,20 +1183,38 @@ onUnmounted(() => {
 	width: 100%
 	height: 100%
 	background-color: rgba(0, 0, 0, 0.5)
+	display: flex
+	align-items: center
+	justify-content: center
+	padding: 24px
 
 	#session-editor
 		background-color: $clr-white
 		border-radius: 4px
 		padding: 32px 40px
-		position: absolute
-		top: 50%
-		left: 50%
-		transform: translate(-50%, -50%)
 		width: 680px
+		max-height: calc(100vh - 48px)
+		overflow-y: auto
+		position: relative
 
 		.session-editor-title
 			font-size: 22px
 			margin-bottom: 16px
+			display: flex
+			justify-content: space-between
+			align-items: center
+			.modal-close-btn
+				background: none
+				border: none
+				font-size: 20px
+				color: #666
+				cursor: pointer
+				padding: 4px 8px
+				line-height: 1
+				border-radius: 4px
+				&:hover
+					color: #333
+					background-color: rgba(0, 0, 0, 0.05)
 		.button-row
 			display: flex
 			width: 100%
@@ -1252,6 +1282,27 @@ onUnmounted(() => {
 				margin-bottom: 24px
 			.assign-new
 				align-items: center
+		.assign-modal-error
+			display: flex
+			align-items: center
+			justify-content: space-between
+			gap: 8px
+			padding: 10px 14px
+			margin-bottom: 16px
+			background-color: #fdecea
+			border: 1px solid #f5c6cb
+			border-radius: 4px
+			color: #721c24
+			font-size: 14px
+			.assign-modal-error-dismiss
+				background: none
+				border: none
+				color: #721c24
+				cursor: pointer
+				padding: 2px 6px
+				font-size: 14px
+				&:hover
+					opacity: 0.7
 		.member-chip
 			display: inline-flex
 			align-items: center
