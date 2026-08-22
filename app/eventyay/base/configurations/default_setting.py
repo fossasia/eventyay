@@ -2611,15 +2611,6 @@ Your {event} team"""
     'seating_minimal_distance': {'default': '0', 'type': float},
     'seating_allow_blocked_seats_for_channel': {'default': [], 'type': list},
     'seating_distance_within_row': {'default': 'False', 'type': bool},
-    'checkout_show_copy_answers_button': {
-        'default': 'True',
-        'type': bool,
-        'form_class': forms.BooleanField,
-        'serializer_class': serializers.BooleanField,
-        'form_kwargs': dict(
-            label=_('Show button to copy user input from other products'),
-        ),
-    },
     'startpage_header_image': {
         'default': None,
         'type': File,

@@ -199,12 +199,8 @@ class VideoRoomBroadcastConfigurationExporter(ListExporter):
             return "zoom"
         if "chat.native" in module_types:
             return "chat"
-        if "exhibition.native" in module_types:
-            return "exhibition"
         if "poster.native" in module_types:
             return "poster"
         if "page.landing" in module_types:
             return "landing_page"
-        if "page.iframe" in module_types:
-            return "iframe_page"
         return ""

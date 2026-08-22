@@ -1203,7 +1203,7 @@ dependencies = [
 [[package]]
 name = "eventyay-hubspot"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev#61d33822e99a54ac3492998ae126d1b25b01a929" }
+source = { git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev#e6dfabd3829939edd4bebe06343b98bf651d820a" }
 dependencies = [
     { name = "cryptography" },
     { name = "python-dotenv" },
@@ -1213,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#39daa298355a6bc0193eb9b4cd75a3d5a27e672b" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#11470b144be80f24ade972aeafdc655870eae443" }
 dependencies = [
     { name = "cryptography" },
     { name = "requests" },
@@ -1227,7 +1227,7 @@ source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#a6d9c
 [[package]]
 name = "eventyay-socialmedia"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev#ee1058674ea7abf9c150e271916c2de51e3bff3e" }
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev#6eba5f687dab09e2ad92ab968cbf8249046d6071" }
 dependencies = [
     { name = "mastodon-py" },
 ]
@@ -1243,7 +1243,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev#512c35d425355b70ac3478aa4e6661359daca701" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev#f0ff452507a772765f82b0974a379bcb7b3a93ec" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1727,7 +1727,7 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev#fcd5854b87556100341d688158bc14e8d94f9c45" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev#96446c91e5b3398e35f561a7c7760e59278b76d1" }
 
 [[package]]
 name = "faker"

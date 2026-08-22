@@ -78,27 +78,6 @@ Networking
 .. autoclass:: eventyay.base.models.RoulettePairing
    :members:
 
-Exhibitors
-----------
-
-.. autoclass:: eventyay.base.models.Exhibitor
-   :members:
-
-.. autoclass:: eventyay.base.models.ExhibitorView
-   :members:
-
-.. autoclass:: eventyay.base.models.ExhibitorStaff
-   :members:
-
-.. autoclass:: eventyay.base.models.ExhibitorLink
-   :members:
-
-.. autoclass:: eventyay.base.models.ExhibitorSocialMediaLink
-   :members:
-
-.. autoclass:: eventyay.base.models.ContactRequest
-   :members:
-
 Posters
 -------
 

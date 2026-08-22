@@ -119,6 +119,17 @@ def event_copy_data_receiver(sender, other, question_map, product_map, voucher_m
             else:
                 ask_user_fields.append(field)
         bl.ask_user_fields_data = ask_user_fields
+        
+        required_badge_fields = []
+        for field in bl.required_badge_fields_data:
+            if field.startswith('question_'):
+                newq = question_map.get(int(field[9:]))
+                if newq:
+                    required_badge_fields.append('question_{}'.format(newq.pk))
+            else:
+                required_badge_fields.append(field)
+        bl.required_badge_fields_data = required_badge_fields
+        
         bl.save()
 
         if bl.background and bl.background.name:
@@ -145,11 +156,16 @@ def badge_question_form_fields(sender, position, **kwargs):
     if not choices:
         return {}
 
+    from eventyay.plugins.badges.utils import get_badge_layout_for_position
+    layout = get_badge_layout_for_position(sender, position)
+    required_keys = layout.required_badge_fields_data if layout else []
+
     return {
         BADGE_HIDDEN_FIELDS_KEY: BadgeOptionsField(
             label=_('Badge options'),
             choices=choices,
             hidden_initial=get_badge_hidden_fields(position),
+            required_keys=required_keys,
         )
     }
 
