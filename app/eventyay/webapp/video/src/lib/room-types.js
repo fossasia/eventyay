@@ -41,9 +41,10 @@ const ROOM_TYPES = [{
 }, {
 	id: 'channel-text',
 	icon: 'pound',
-	name: 'Text Channel',
-	description: 'This type of channel allows you to enable pure-text communication between your attendees.',
-	startingModule: 'chat.native'
+	name: 'Chat Channel',
+	description: 'A chat channel for text communication between attendees. Managed separately from rooms.',
+	startingModule: 'chat.native',
+	managementArea: 'chat'
 }, {
 	id: 'posters',
 	icon: 'domain',
@@ -71,6 +72,30 @@ const ROOM_TYPES = [{
 
 export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))
 export const NETWORKING_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.sidebarGroup === 'networking').map(type => type.startingModule))
+export const CHAT_CHANNEL_TYPE_ID = 'channel-text'
+
+export function isChatManagementType(type) {
+	return type?.id === CHAT_CHANNEL_TYPE_ID || type?.managementArea === 'chat'
+}
+
+export function isChatChannel(roomOrConfig) {
+	const modules = roomOrConfig?.module_config || roomOrConfig?.modules || []
+	return Array.isArray(modules) && modules.length === 1 && modules[0]?.type === 'chat.native'
+}
+
+export function roomCreationTypes(types) {
+	return types.filter(type => !isChatManagementType(type))
+}
+
+export function chatCreationTypes(types) {
+	return types.filter(type => isChatManagementType(type))
+}
+
+export function mergeReorderedIds(allIds, subsetOrder) {
+	const subset = new Set(subsetOrder.map(String))
+	const queue = subsetOrder.map(String)
+	return allIds.map(id => subset.has(String(id)) ? queue.shift() : String(id))
+}
 
 export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
 

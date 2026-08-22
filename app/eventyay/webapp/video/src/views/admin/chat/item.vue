@@ -1,43 +1,36 @@
 <template lang="pug">
-.c-admin-room
+.c-admin-chat-item
 	.error(v-if="error")
 		span We could not fetch the current configuration.
 		span(v-if="errorCode")  ({{ errorCode }})
 		span(v-if="errorCode === 'protocol.denied'")  You likely lack admin permissions.
 	template(v-else-if="config")
-		template(v-if="!inferredType")
-			.ui-page-header
-				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
-				h1(v-html="$emojify(config.name)")
-			.mystery-room
-				p Room not instantiated.
-				bunt-button(@click="showRoomEditPrompt = true") Initiate room
-		template(v-else)
-			.ui-page-header
-				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
-				h1 {{ inferredType ? inferredType.name : 'Mystery Room' }} :
-					span.room-name(v-html="$emojify(config.name)")
-				.actions
-					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") Edit
-			edit-form(:config="config")
+		.ui-page-header
+			bunt-icon-button(@click="$router.push({name: 'admin:chat:index'})") arrow_left
+			h1 Chat Channel :
+				span.room-name(v-html="$emojify(config.name)")
+			.actions
+				bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") Edit
+		edit-form(:config="config")
 	bunt-progress-circular(v-else, size="huge")
 	transition(name="prompt")
 		RoomEditPrompt(
 			v-if="showRoomEditPrompt && config",
+			mode="chat",
 			:room="{id: config.id}",
 			@close="closeRoomEditPrompt",
-			@deleted="roomDeleted"
+			@deleted="channelDeleted"
 		)
 </template>
 <script>
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import RoomEditPrompt from 'components/RoomEditPrompt'
-import { inferType, isChatChannel } from 'lib/room-types'
-import EditForm from './EditForm'
+import { isChatChannel } from 'lib/room-types'
+import EditForm from 'views/admin/rooms/EditForm'
 
 export default {
-	name: 'AdminRoom',
+	name: 'AdminChatItem',
 	components: { EditForm, RoomEditPrompt },
 	props: {
 		roomId: String
@@ -52,10 +45,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission']),
-		inferredType() {
-			return inferType(this.config)
-		}
+		...mapGetters(['hasPermission'])
 	},
 	async created() {
 		await this.ensureConnectedAndFetch()
@@ -66,7 +56,6 @@ export default {
 	methods: {
 		async ensureConnectedAndFetch() {
 			if (this.$store.state.connected) return this.fetchConfig()
-			// wait until websocket joined before calling
 			this._unwatchConnected = this.$store.watch(
 				state => state.connected,
 				(connected) => {
@@ -83,8 +72,8 @@ export default {
 				this.error = null
 				this.errorCode = null
 				this.config = await api.call('room.config.get', {room: this.roomId})
-				if (isChatChannel(this.config)) {
-					this.$router.replace({name: 'admin:chat:item', params: {roomId: this.roomId}})
+				if (!isChatChannel(this.config)) {
+					this.$router.replace({name: 'admin:rooms:item', params: {roomId: this.roomId}})
 				}
 			} catch (error) {
 				this.error = error
@@ -96,14 +85,14 @@ export default {
 			this.showRoomEditPrompt = false
 			this.fetchConfig()
 		},
-		roomDeleted() {
-			this.$router.replace({name: 'admin:rooms:index'})
+		channelDeleted() {
+			this.$router.replace({name: 'admin:chat:index'})
 		}
 	}
 }
 </script>
 <style lang="stylus">
-.c-admin-room
+.c-admin-chat-item
 	display: flex
 	flex-direction: column
 	background: $clr-white
@@ -126,7 +115,6 @@ export default {
 				font-size: 24px
 				line-height: 56px
 				font-weight: 600
-				// TODO decopypaste
 				.emoji
 					display: inline-block
 					vertical-align: middle
@@ -137,18 +125,4 @@ export default {
 		.actions
 			display: flex
 			flex: none
-			.bunt-button:not(:last-child)
-				margin-right: 16px
-	.mystery-room
-		flex: auto
-		display: flex
-		flex-direction: column
-		justify-content: center
-		align-items: center
-		gap: 12px
-		padding: 24px
-		p
-			margin: 0
-			font-size: 16px
-			color: $clr-secondary-text-light
 </style>

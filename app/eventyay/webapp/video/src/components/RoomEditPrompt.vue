@@ -2,14 +2,14 @@
 prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 	.content
 		.prompt-header
-			h2 Edit Room
+			h2 {{ mode === 'chat' ? 'Edit Chat Channel' : 'Edit Room' }}
 		bunt-progress-circular(v-if="loading", size="large")
 		.error(v-else-if="error")
 			p {{ error }}
 			bunt-button(@click="fetchConfig") Retry
 		template(v-else-if="config")
 			.edit-body(v-scrollbar.y="")
-				.reset-section(v-if="wasConfigured")
+				.reset-section(v-if="wasConfigured && mode !== 'chat'")
 					.section-header
 						h3 Reset Room
 						bunt-button.btn-reset(
@@ -22,7 +22,7 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 						.confirmation-actions
 							bunt-button.btn-cancel(@click="confirmingReset = false") Cancel
 							bunt-button.btn-reset(@click="resetRoom", :loading="resetting", :error-message="resetError") Confirm reset
-				.type-section
+				.type-section(v-if="mode !== 'chat'")
 					h3 Room Type
 					.current-type(v-if="inferredType")
 						.mdi(:class="[`mdi-${inferredType.icon}`]")
@@ -58,14 +58,15 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 				)
 				.danger-zone(v-if="wasConfigured && hasPermission('room:delete')")
 					h3 Danger Zone
-					p #[b Deleting this room will remove it from the schedule, but the sessions will remain safe.] Sessions assigned to this room will no longer have a room assigned.
+					p(v-if="mode === 'chat'") #[b Deleting this chat channel] removes it for attendees. Messages in this channel will no longer be available.
+					p(v-else) #[b Deleting this room will remove it from the schedule, but the sessions will remain safe.] Sessions assigned to this room will no longer have a room assigned.
 					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") Delete
 					.delete-confirmation(v-else)
 						p Please type #[b {{ localizedRoomName }}] to confirm deletion.
-						bunt-input(name="deletingRoomName", label="Room name", v-model="deletingRoomName", @keypress.enter="deleteRoom")
+						bunt-input(name="deletingRoomName", :label="mode === 'chat' ? 'Channel name' : 'Room name'", v-model="deletingRoomName", @keypress.enter="deleteRoom")
 						.confirmation-actions
 							bunt-button.btn-cancel(@click="cancelDelete") Cancel
-							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") Delete this room
+							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ mode === 'chat' ? 'Delete this chat channel' : 'Delete this room' }}
 			.edit-actions
 				bunt-button.btn-cancel(@click="$emit('close')") Cancel
 				bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") Save
@@ -75,7 +76,7 @@ import { markRaw } from 'vue'
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import Prompt from 'components/Prompt'
-import ROOM_TYPES, { inferType } from 'lib/room-types'
+import ROOM_TYPES, { inferType, roomCreationTypes } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import { PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
 import Stage from 'views/admin/rooms/types-edit/stage'
@@ -94,6 +95,10 @@ export default {
 		room: {
 			type: Object,
 			required: true
+		},
+		mode: {
+			type: String,
+			default: 'room'
 		}
 	},
 	emits: ['close', 'deleted'],
@@ -128,7 +133,11 @@ export default {
 	computed: {
 		...mapGetters(['hasPermission', 'isAdminMode']),
 		availableRoomTypes () {
-			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode)
+			return filterRoomTypesByPermission(
+				roomCreationTypes(this.allRoomTypes),
+				this.hasPermission,
+				this.isAdminMode
+			)
 		},
 		modules () {
 			if (!this.config) return {}

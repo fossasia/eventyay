@@ -27,9 +27,11 @@ The video frontend is a full-featured virtual event platform built with Vue 3, p
 - **Posters**: Academic poster sessions with Q&A
 - **Recordings**: On-demand video playback
 
-New rooms can be created as **Stage**, **Video Channel**, or **Text Channel**.
-Exhibition halls, static pages, iframe pages, and user lists have been removed
-from the video room catalog. Meetup embed URLs use a stage iframe player instead.
+New rooms can be created as **Stage** or **Video Channel**. Chat channels are
+managed separately under the organiser **Chat** area and are not part of the
+room creation catalog. Exhibition halls, static pages, iframe pages, and user
+lists have been removed from the video room catalog. Meetup embed URLs use a
+stage iframe player instead.
 
 **Location**: ``app/eventyay/webapp/video/``
 
@@ -126,6 +128,8 @@ Collapsible sidebar showing:
 - Direct messages
 - Pinned rooms
 - Search functionality
+- Organiser administration, including **Rooms** and a dedicated **Chat**
+  area for chat channel management
 
 Dashboard Layout
 ^^^^^^^^^^^^^^^^

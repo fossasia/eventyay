@@ -16,7 +16,7 @@
 </template>
 <script>
 import { mapGetters } from 'vuex'
-import ROOM_TYPES from 'lib/room-types'
+import ROOM_TYPES, { roomCreationTypes } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import { PLAYBACK_MODE_ALWAYS_ON } from 'lib/stage-streams'
 import EditForm from './EditForm'
@@ -33,7 +33,11 @@ export default {
 	computed: {
 		...mapGetters(['hasPermission', 'isAdminMode']),
 		ROOM_TYPES() {
-			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode)
+			return filterRoomTypesByPermission(
+				roomCreationTypes(this.allRoomTypes),
+				this.hasPermission,
+				this.isAdminMode
+			)
 		},
 		chosenType() {
 			return this.ROOM_TYPES.find(t => t.id === this.type)
@@ -55,6 +59,10 @@ export default {
 		updateType() {
 			this.type = this.$route.params.type
 			if (!this.type) return
+			if (this.type === 'channel-text') {
+				this.$router.replace({name: 'admin:chat:new'})
+				return
+			}
 			if (!this.chosenType) {
 				this.$router.replace({name: 'admin:rooms:new'})
 				return

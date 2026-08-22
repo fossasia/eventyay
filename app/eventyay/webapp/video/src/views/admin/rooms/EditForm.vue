@@ -5,10 +5,13 @@
 			.generic-settings
 				bunt-input(name="name", v-model="localizedName", label="Name", :validation="v$.config.name")
 				bunt-input(name="description", v-model="localizedDescription", label="Description")
-				div(:title="config.has_linked_sessions ? \"Room has linked sessions and can't be marked unscheduled\" : ''")
+				div(
+					v-if="!isChat",
+					:title="config.has_linked_sessions ? \"Room has linked sessions and can't be marked unscheduled\" : ''"
+				)
 					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", label="Unscheduled room (hide from schedule/sessions)", :disabled="config.has_linked_sessions")
 				template(v-if="inferredType")
-					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
+					bunt-checkbox(v-if="isChat", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile chats only)")
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating", :interpretation-admin="interpretationAdmin")
 			stream-schedule(ref="streamSchedule", v-if="showStreamSchedule", :config="config", :room-id="config.id ? String(config.id) : null", :room-name="localizedName", :open-create-on-mount="openStreamScheduleCreateOnMount", @opened-create-on-mount="clearOpenStreamScheduleCreateQuery", @create-requires-room="createRoomForStreamSchedule")
 			sidebar-addons(v-if="inferredType && inferredType.id === 'stage'", :config="config", :modules="modules", :creating="creating")
@@ -23,7 +26,7 @@ import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import { required } from 'lib/validators'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
-import ROOM_TYPES, { inferType } from 'lib/room-types'
+import ROOM_TYPES, { inferType, isChatChannel } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import { PLAYBACK_MODE_SCHEDULE_DRIVEN, getStagePlaybackMode } from 'lib/stage-streams'
 import Stage from './types-edit/stage'
@@ -100,6 +103,9 @@ export default {
 		},
 		inferredType() {
 			return inferType(this.config)
+		},
+		isChat() {
+			return isChatChannel(this.config)
 		},
 		stagePlaybackMode() {
 			if (!this.modules) return null
@@ -215,7 +221,11 @@ export default {
 						openScheduleAfterCreate
 						? { schedule: 'new' }
 						: undefined
-					this.$router.push({name: 'admin:rooms:item', params: {roomId}, query})
+					this.$router.push({
+						name: this.isChat ? 'admin:chat:item' : 'admin:rooms:item',
+						params: {roomId},
+						query
+					})
 				}
 			} catch (error) {
 				console.error(error)
