@@ -53,13 +53,6 @@ const ROOM_TYPES = [{
 	startingModule: 'call.bigbluebutton',
 	managementArea: 'chat'
 }, {
-	id: 'posters',
-	icon: 'domain',
-	name: 'Poster Hall',
-	description: 'Hang your posters high!',
-	startingModule: 'poster.native',
-	behindFeatureFlag: 'poster'
-}, {
 	id: 'channel-roulette',
 	icon: 'webcam',
 	name: 'Random video calls',

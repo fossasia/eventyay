@@ -24,7 +24,6 @@ The video frontend is a full-featured virtual event platform built with Vue 3, p
 - **Interactive Chat**: Real-time messaging with channels and DMs
 - **Audience Engagement**: Polls, Q&A, emoji reactions
 - **Networking**: Speed networking (roulette) and direct messaging
-- **Posters**: Academic poster sessions with Q&A
 - **Recordings**: On-demand video playback
 
 New rooms can be created as **Stage** or **Video Channel**. Chat channels and
@@ -337,22 +336,6 @@ Live reactions system:
 - Reaction counts
 - Real-time synchronization
 - Custom reaction sets per event
-
-Posters
-~~~~~~~
-
-PosterHall Component
-^^^^^^^^^^^^^^^^^^^^
-
-**File**: ``components/PosterHall.vue``
-
-Academic poster sessions:
-- Poster grid display
-- Poster detail view
-- Author chat
-- File downloads
-- Voting/feedback
-- Session scheduling
 
 User Interface Components
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -957,7 +940,6 @@ Vue Router configuration with:
 - `/` - Event landing page
 - `/rooms/:roomId` - Individual rooms
 - `/schedule` - Event schedule
-- `/posters` - Poster sessions
 - `/profile` - User profile
 - `/settings` - User settings
 

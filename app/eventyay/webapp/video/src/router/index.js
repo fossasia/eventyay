@@ -130,31 +130,6 @@ const routes = [
 				component: Preferences
 			},
 			{
-				path: 'posters/:posterId',
-				name: 'poster',
-				component: () => import('views/posters/item'),
-				props: true
-			},
-			{
-				path: 'manage-posters',
-				name: 'posters',
-				component: () => import('views/poster-manager')
-			},
-			{
-				path: 'manage-posters/create',
-				name: 'posters:create-poster',
-				component: () => import('views/poster-manager/poster'),
-				props: {
-					create: true
-				}
-			},
-			{
-				path: 'manage-posters/:posterId',
-				name: 'posters:poster',
-				component: () => import('views/poster-manager/poster'),
-				props: true
-			},
-			{
 				path: 'event',
 				name: 'admin',
 				component: () => import('views/admin')
