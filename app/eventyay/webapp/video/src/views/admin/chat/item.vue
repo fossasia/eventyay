@@ -7,7 +7,7 @@
 	template(v-else-if="config")
 		.ui-page-header
 			bunt-icon-button(@click="$router.push({name: 'admin:chat:index'})") arrow_left
-			h1 Chat Channel :
+			h1 {{ inferredType ? inferredType.name : 'Channel' }} :
 				span.room-name(v-html="$emojify(config.name)")
 			.actions
 				bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") Edit
@@ -26,7 +26,7 @@
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import RoomEditPrompt from 'components/RoomEditPrompt'
-import { isChatChannel } from 'lib/room-types'
+import { inferType, isChatManagedRoom } from 'lib/room-types'
 import EditForm from 'views/admin/rooms/EditForm'
 
 export default {
@@ -45,7 +45,11 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission'])
+		...mapGetters(['hasPermission']),
+		inferredType() {
+			if (!this.config) return null
+			return inferType(this.config)
+		}
 	},
 	async created() {
 		await this.ensureConnectedAndFetch()
@@ -72,7 +76,7 @@ export default {
 				this.error = null
 				this.errorCode = null
 				this.config = await api.call('room.config.get', {room: this.roomId})
-				if (!isChatChannel(this.config)) {
+				if (!isChatManagedRoom(this.config)) {
 					this.$router.replace({name: 'admin:rooms:item', params: {roomId: this.roomId}})
 				}
 			} catch (error) {

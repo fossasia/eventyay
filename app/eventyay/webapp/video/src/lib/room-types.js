@@ -46,6 +46,13 @@ const ROOM_TYPES = [{
 	startingModule: 'chat.native',
 	managementArea: 'chat'
 }, {
+	id: 'channel-video-chat',
+	icon: 'webcam',
+	name: 'Video Chat',
+	description: 'A live video chat powered by BigBlueButton. Only available when a BBB server is configured for this event.',
+	startingModule: 'call.bigbluebutton',
+	managementArea: 'chat'
+}, {
 	id: 'posters',
 	icon: 'domain',
 	name: 'Poster Hall',
@@ -73,14 +80,26 @@ const ROOM_TYPES = [{
 export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))
 export const NETWORKING_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.sidebarGroup === 'networking').map(type => type.startingModule))
 export const CHAT_CHANNEL_TYPE_ID = 'channel-text'
+export const VIDEO_CHAT_TYPE_ID = 'channel-video-chat'
 
 export function isChatManagementType(type) {
-	return type?.id === CHAT_CHANNEL_TYPE_ID || type?.managementArea === 'chat'
+	return type?.id === CHAT_CHANNEL_TYPE_ID || type?.id === VIDEO_CHAT_TYPE_ID || type?.managementArea === 'chat'
 }
 
 export function isChatChannel(roomOrConfig) {
 	const modules = roomOrConfig?.module_config || roomOrConfig?.modules || []
 	return Array.isArray(modules) && modules.length === 1 && modules[0]?.type === 'chat.native'
+}
+
+export function isVideoChat(roomOrConfig) {
+	const modules = roomOrConfig?.module_config || roomOrConfig?.modules || []
+	if (!Array.isArray(modules)) return false
+	const bbb = modules.find(module => module?.type === 'call.bigbluebutton')
+	return !!bbb && bbb.config?.video_chat === true
+}
+
+export function isChatManagedRoom(roomOrConfig) {
+	return isChatChannel(roomOrConfig) || isVideoChat(roomOrConfig)
 }
 
 export function roomCreationTypes(types) {
@@ -100,6 +119,9 @@ export function mergeReorderedIds(allIds, subsetOrder) {
 export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
 
 export function inferType(config) {
+	if (isVideoChat(config)) {
+		return ROOM_TYPES.find(type => type.id === VIDEO_CHAT_TYPE_ID)
+	}
 	const modules = config.module_config.reduce((acc, module) => {
 		acc[module.type] = module
 		return acc

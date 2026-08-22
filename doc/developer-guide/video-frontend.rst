@@ -27,9 +27,10 @@ The video frontend is a full-featured virtual event platform built with Vue 3, p
 - **Posters**: Academic poster sessions with Q&A
 - **Recordings**: On-demand video playback
 
-New rooms can be created as **Stage** or **Video Channel**. Chat channels are
-managed separately under the organiser **Chat** area and are not part of the
-room creation catalog. Exhibition halls, static pages, iframe pages, and user
+New rooms can be created as **Stage** or **Video Channel**. Chat channels and
+BBB **Video Chat** (when a BigBlueButton server is configured) are managed
+separately under the organiser **Chat** area and are not part of the room
+creation catalog. Exhibition halls, static pages, iframe pages, and user
 lists have been removed from the video room catalog. Meetup embed URLs use a
 stage iframe player instead.
 

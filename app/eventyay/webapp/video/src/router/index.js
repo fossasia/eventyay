@@ -192,7 +192,7 @@ const routes = [
 				component: () => import('views/admin/chat/index')
 			},
 			{
-				path: 'event/chat/new',
+				path: 'event/chat/new/:type?',
 				name: 'admin:chat:new',
 				component: () => import('views/admin/chat/new')
 			},

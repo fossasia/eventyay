@@ -32,7 +32,7 @@
 <script>
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
-import { isChatChannel, mergeReorderedIds } from 'lib/room-types'
+import { isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
 import RoomListItem from './RoomListItem'
@@ -82,7 +82,7 @@ export default {
 			return `/api/v1/organizers/${organizer}/events/${event}/rooms/export-broadcast-configuration/?_format=${encodeURIComponent(format)}`
 		},
 		visibleRooms(rooms) {
-			return rooms.filter(room => !isChatChannel(room))
+			return rooms.filter(room => !isChatManagedRoom(room))
 		},
 		isRoomVisible(room) {
 			if (!this.search) return true

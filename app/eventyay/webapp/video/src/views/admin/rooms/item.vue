@@ -33,7 +33,7 @@
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import RoomEditPrompt from 'components/RoomEditPrompt'
-import { inferType, isChatChannel } from 'lib/room-types'
+import { inferType, isChatManagedRoom } from 'lib/room-types'
 import EditForm from './EditForm'
 
 export default {
@@ -83,7 +83,7 @@ export default {
 				this.error = null
 				this.errorCode = null
 				this.config = await api.call('room.config.get', {room: this.roomId})
-				if (isChatChannel(this.config)) {
+				if (isChatManagedRoom(this.config)) {
 					this.$router.replace({name: 'admin:chat:item', params: {roomId: this.roomId}})
 				}
 			} catch (error) {

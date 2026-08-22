@@ -59,8 +59,8 @@ export default {
 		updateType() {
 			this.type = this.$route.params.type
 			if (!this.type) return
-			if (this.type === 'channel-text') {
-				this.$router.replace({name: 'admin:chat:new'})
+			if (this.type === 'channel-text' || this.type === 'channel-video-chat') {
+				this.$router.replace({name: 'admin:chat:new', params: {type: this.type}})
 				return
 			}
 			if (!this.chosenType) {

@@ -2,7 +2,7 @@
 prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 	.content
 		.prompt-header
-			h2 {{ mode === 'chat' ? 'Edit Chat Channel' : 'Edit Room' }}
+			h2 {{ promptTitle }}
 		bunt-progress-circular(v-if="loading", size="large")
 		.error(v-else-if="error")
 			p {{ error }}
@@ -58,7 +58,7 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 				)
 				.danger-zone(v-if="wasConfigured && hasPermission('room:delete')")
 					h3 Danger Zone
-					p(v-if="mode === 'chat'") #[b Deleting this chat channel] removes it for attendees. Messages in this channel will no longer be available.
+					p(v-if="mode === 'chat'") #[b Deleting this channel] removes it for attendees. Messages and calls in this channel will no longer be available.
 					p(v-else) #[b Deleting this room will remove it from the schedule, but the sessions will remain safe.] Sessions assigned to this room will no longer have a room assigned.
 					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") Delete
 					.delete-confirmation(v-else)
@@ -66,7 +66,7 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 						bunt-input(name="deletingRoomName", :label="mode === 'chat' ? 'Channel name' : 'Room name'", v-model="deletingRoomName", @keypress.enter="deleteRoom")
 						.confirmation-actions
 							bunt-button.btn-cancel(@click="cancelDelete") Cancel
-							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ mode === 'chat' ? 'Delete this chat channel' : 'Delete this room' }}
+							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") {{ mode === 'chat' ? 'Delete this channel' : 'Delete this room' }}
 			.edit-actions
 				bunt-button.btn-cancel(@click="$emit('close')") Cancel
 				bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") Save
@@ -122,6 +122,7 @@ export default {
 				stage: Stage,
 				'page-landing': PageLanding,
 				'channel-bbb': ChannelBBB,
+				'channel-video-chat': ChannelBBB,
 				'channel-roulette': ChannelRoulette,
 				'channel-janus': ChannelJanus,
 				'channel-jitsi': ChannelJitsi,
@@ -149,6 +150,10 @@ export default {
 		inferredType () {
 			if (!this.config) return null
 			return inferType(this.config)
+		},
+		promptTitle () {
+			if (this.mode !== 'chat') return 'Edit Room'
+			return this.inferredType?.name ? `Edit ${this.inferredType.name}` : 'Edit Channel'
 		},
 		localizedName: {
 			get () {

@@ -105,6 +105,7 @@ export default {
 			color: $clr-blue-900
 			border-color: $clr-blue-50
 		&.type-channel-bbb,
+		&.type-channel-video-chat,
 		&.type-channel-janus,
 		&.type-channel-zoom,
 		&.type-channel-roulette

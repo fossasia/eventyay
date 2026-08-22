@@ -23,7 +23,7 @@ prompt.c-create-chat-prompt(@close="$emit('close')")
 import {mapGetters} from 'vuex'
 import Prompt from 'components/Prompt'
 import ROOM_TYPES from 'lib/room-types'
-import { isRoomTypeAvailable } from 'lib/room-type-permissions'
+import { isBbbConfigured, isRoomTypeAvailable } from 'lib/room-type-permissions'
 
 const JITSI_ROOM_TYPE = ROOM_TYPES.find(type => type.id === 'channel-jitsi')
 
@@ -53,10 +53,10 @@ export default {
 					permission: 'world:rooms.create.chat'
 				})
 			}
-			if (this.hasPermission('world:rooms.create.bbb')) {
+			if (this.hasPermission('world:rooms.create.bbb') && isBbbConfigured(this.$store.state.world)) {
 				types.push({
 					id: 'video',
-					roomTypeId: 'channel-bbb',
+					roomTypeId: 'channel-video-chat',
 					label: this.$t('CreateChatPrompt:type.video:label'),
 					icon: 'webcam',
 					moduleType: 'call.bigbluebutton',
@@ -109,13 +109,21 @@ export default {
 			}
 
 			// Verify permission for selected type
-			if (!isRoomTypeAvailable(this.selectedType.roomTypeId, this.hasPermission, this.isAdminMode)) {
+			if (!isRoomTypeAvailable(
+				this.selectedType.roomTypeId,
+				this.hasPermission,
+				this.isAdminMode,
+				{bbbAvailable: isBbbConfigured(this.$store.state.world)}
+			)) {
 				this.error = this.$t('CreateChatPrompt:error:no-permission') || 'You do not have permission to create channels.'
 				return
 			}
 
 			this.loading = true
-			const modules = [{ type: this.selectedType.moduleType }]
+			const modules = [{
+				type: this.selectedType.moduleType,
+				config: this.selectedType.roomTypeId === 'channel-video-chat' ? {video_chat: true} : {}
+			}]
 			let room
 			try {
 				({ room } = await this.$store.dispatch('createRoom', {

@@ -89,7 +89,7 @@ transition(name="sidebar")
 import { mapState, mapGetters } from 'vuex'
 import theme from 'theme'
 import ROOM_TYPES, { NETWORKING_MODULE_TYPES, VIDEO_CHANNEL_MODULE_TYPES, inferRoomType, inferType } from 'lib/room-types'
-import { isRoomTypeAvailable } from 'lib/room-type-permissions'
+import { isBbbConfigured, isRoomTypeAvailable } from 'lib/room-type-permissions'
 import Avatar from 'components/Avatar'
 import ChannelBrowser from 'components/ChannelBrowser'
 import CreateStagePrompt from 'components/CreateStagePrompt'
@@ -146,9 +146,10 @@ export default {
 			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission, this.isAdminMode)
 		},
 		canCreateChatRoom() {
+			const bbbAvailable = isBbbConfigured(this.$store.state.world)
 			return ROOM_TYPES
-				.filter(type => ['channel-text', 'channel-bbb', 'channel-jitsi'].includes(type.id))
-				.some(type => isRoomTypeAvailable(type.id, this.hasPermission, this.isAdminMode))
+				.filter(type => ['channel-text', 'channel-video-chat', 'channel-jitsi'].includes(type.id))
+				.some(type => isRoomTypeAvailable(type.id, this.hasPermission, this.isAdminMode, {bbbAvailable}))
 		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {

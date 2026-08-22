@@ -4,10 +4,10 @@
 		.actions
 			h2 Chat
 			bunt-link-button.btn-create(
-				v-if="hasPermission('world:rooms.create.chat')",
+				v-if="canCreate",
 				:to="{name: 'admin:chat:new'}"
-			) Create a new chat channel
-		bunt-input.search(name="search", placeholder="Search chat channels", icon="search", v-model="search")
+			) Create a new channel
+		bunt-input.search(name="search", placeholder="Search channels", icon="search", v-model="search")
 	.error(v-if="error")
 		span Failed to load chat channels.
 		span(v-if="errorCode")  ({{ errorCode }})
@@ -31,7 +31,8 @@
 <script>
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
-import { isChatChannel, mergeReorderedIds } from 'lib/room-types'
+import ROOM_TYPES, { chatCreationTypes, isChatManagedRoom, mergeReorderedIds } from 'lib/room-types'
+import { isBbbConfigured, isRoomTypeAvailable } from 'lib/room-type-permissions'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
 import RoomListItem from 'views/admin/rooms/RoomListItem'
@@ -69,11 +70,19 @@ export default {
 		if (this._unwatchConnected) this._unwatchConnected()
 	},
 	computed: {
-		...mapGetters(['hasPermission'])
+		...mapGetters(['hasPermission', 'isAdminMode']),
+		canCreate() {
+			return chatCreationTypes(ROOM_TYPES).some(type => isRoomTypeAvailable(
+				type.id,
+				this.hasPermission,
+				this.isAdminMode,
+				{bbbAvailable: isBbbConfigured(this.$store.state.world)}
+			))
+		}
 	},
 	methods: {
 		visibleChannels(rooms) {
-			return rooms.filter(room => isChatChannel(room))
+			return rooms.filter(room => isChatManagedRoom(room))
 		},
 		isChannelVisible(room) {
 			if (!this.search) return true

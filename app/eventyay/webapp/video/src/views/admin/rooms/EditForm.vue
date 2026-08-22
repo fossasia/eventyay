@@ -6,7 +6,7 @@
 				bunt-input(name="name", v-model="localizedName", label="Name", :validation="v$.config.name")
 				bunt-input(name="description", v-model="localizedDescription", label="Description")
 				div(
-					v-if="!isChat",
+					v-if="!isChatManaged",
 					:title="config.has_linked_sessions ? \"Room has linked sessions and can't be marked unscheduled\" : ''"
 				)
 					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", label="Unscheduled room (hide from schedule/sessions)", :disabled="config.has_linked_sessions")
@@ -26,7 +26,7 @@ import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import { required } from 'lib/validators'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
-import ROOM_TYPES, { inferType, isChatChannel } from 'lib/room-types'
+import ROOM_TYPES, { inferType, isChatChannel, isChatManagedRoom } from 'lib/room-types'
 import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import { PLAYBACK_MODE_SCHEDULE_DRIVEN, getStagePlaybackMode } from 'lib/stage-streams'
 import Stage from './types-edit/stage'
@@ -71,6 +71,7 @@ export default {
 				stage: Stage,
 				'page-landing': PageLanding,
 				'channel-bbb': ChannelBBB,
+				'channel-video-chat': ChannelBBB,
 				'channel-roulette': ChannelRoulette,
 				'channel-janus': ChannelJanus,
 				'channel-jitsi': ChannelJitsi,
@@ -106,6 +107,9 @@ export default {
 		},
 		isChat() {
 			return isChatChannel(this.config)
+		},
+		isChatManaged() {
+			return isChatManagedRoom(this.config)
 		},
 		stagePlaybackMode() {
 			if (!this.modules) return null
@@ -222,7 +226,7 @@ export default {
 						? { schedule: 'new' }
 						: undefined
 					this.$router.push({
-						name: this.isChat ? 'admin:chat:item' : 'admin:rooms:item',
+						name: this.isChatManaged ? 'admin:chat:item' : 'admin:rooms:item',
 						params: {roomId},
 						query
 					})
