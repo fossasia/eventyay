@@ -30,10 +30,14 @@ document.addEventListener("DOMContentLoaded", function() {
     const reactBtns = document.querySelectorAll('.react-btn');
     reactBtns.forEach(function(btn) {
         btn.addEventListener('click', function() {
-            const action = this.getAttribute('data-action');
+            let action = this.getAttribute('data-action');
+            if (this.classList.contains('active-vote')) {
+                action = 'remove';
+            }
             const url = this.getAttribute('data-url');
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
             const container = this.closest('.d-flex');
+            const originalAction = this.getAttribute('data-action');
 
             const formData = new FormData();
             formData.append('action', action);
@@ -51,6 +55,26 @@ document.addEventListener("DOMContentLoaded", function() {
                     alert(data.error);
                     return;
                 }
+                
+                // Reset both buttons
+                const upvoteBtn = container.querySelector('[data-action="upvote"]');
+                const downvoteBtn = container.querySelector('[data-action="downvote"]');
+                const upvoteIcon = upvoteBtn.querySelector('i');
+                const downvoteIcon = downvoteBtn.querySelector('i');
+                
+                upvoteBtn.classList.remove('active-vote');
+                upvoteIcon.className = 'fa fa-thumbs-o-up';
+                downvoteBtn.classList.remove('active-vote');
+                downvoteIcon.className = 'fa fa-thumbs-o-down';
+                
+                if (action === 'upvote') {
+                    upvoteBtn.classList.add('active-vote');
+                    upvoteIcon.className = 'fa fa-thumbs-up text-success';
+                } else if (action === 'downvote') {
+                    downvoteBtn.classList.add('active-vote');
+                    downvoteIcon.className = 'fa fa-thumbs-down text-danger';
+                }
+
                 container.querySelector('.upvote-count').textContent = data.upvotes;
                 container.querySelector('.downvote-count').textContent = data.downvotes;
             })

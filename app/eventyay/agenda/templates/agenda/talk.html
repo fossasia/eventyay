@@ -123,11 +123,11 @@
                             </div>
                             <button class="read-more-btn d-none" data-expanded="false" data-read-more="{% translate 'Read more' %}" data-show-less="{% translate 'Show less' %}">{% translate "Read more" %}</button>
                             <div class="comment-actions d-flex align-items-center">
-                                <button class="btn react-btn mr-1" data-action="upvote" data-id="{{ fb.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=fb.id %}">
-                                    <i class="fa fa-thumbs-up"></i> <span class="upvote-count ml-1">{{ fb.upvote_count|default:"" }}</span>
+                                <button class="btn react-btn mr-1 {% if fb.user_vote == True %}active-vote{% endif %}" data-action="upvote" data-id="{{ fb.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=fb.id %}">
+                                    <i class="fa {% if fb.user_vote == True %}fa-thumbs-up text-success{% else %}fa-thumbs-o-up{% endif %}"></i> <span class="upvote-count ml-1">{{ fb.upvote_count|default:"" }}</span>
                                 </button>
-                                <button class="btn react-btn mr-2" data-action="downvote" data-id="{{ fb.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=fb.id %}">
-                                    <i class="fa fa-thumbs-down"></i> <span class="downvote-count ml-1">{{ fb.downvote_count|default:"" }}</span>
+                                <button class="btn react-btn mr-2 {% if fb.user_vote == False %}active-vote{% endif %}" data-action="downvote" data-id="{{ fb.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=fb.id %}">
+                                    <i class="fa {% if fb.user_vote == False %}fa-thumbs-down text-danger{% else %}fa-thumbs-o-down{% endif %}"></i> <span class="downvote-count ml-1">{{ fb.downvote_count|default:"" }}</span>
                                 </button>
                                 {% if feedback_form %}
                                     <button class="btn reply-btn" data-form-id="{{ fb.id }}" data-parent-id="{{ fb.id }}">

@@ -297,8 +297,18 @@ class TalkView(TalkMixin, TemplateView):
                 feedback_dict = {fb.id: fb for fb in all_published}
                 top_level_feedback = []
                 
+                user_reactions = {}
+                if self.request.user.is_authenticated:
+                    from eventyay.base.models.feedback import FeedbackReaction
+                    reactions = FeedbackReaction.objects.filter(
+                        user=self.request.user,
+                        feedback__in=all_published
+                    )
+                    user_reactions = {r.feedback_id: r.is_upvote for r in reactions}
+
                 for fb in all_published:
                     fb.cached_replies = []
+                    fb.user_vote = user_reactions.get(fb.id)
                     
                 for fb in all_published:
                     if fb.parent_id:
