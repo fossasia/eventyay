@@ -334,6 +334,7 @@ class SecurityMiddleware(MiddlewareMixin):
                 '{static}',
                 '{media}',
                 'data:',
+                'blob:',
                 'https://*.stripe.com',
                 'https://twemoji.maxcdn.com',
                 'https://www.gravatar.com',
