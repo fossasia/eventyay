@@ -3,7 +3,11 @@
 	.header
 		.actions
 			h2 Rooms
-			bunt-link-button.btn-create(:to="{name: 'admin:rooms:new'}") Create a new room
+			VideoProviderDropdown(
+				label="Create Room",
+				:show-empty-message="true",
+				@select="createRoomWithProvider"
+			)
 		.right-actions
 			.export-actions(v-if="canExportBroadcastConfiguration")
 				a.export-button(:href="exportUrl('xlsx')") Export XLSX
@@ -29,16 +33,16 @@
 		bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
-// TODO show inferred type
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
+import VideoProviderDropdown from 'components/VideoProviderDropdown'
 import RoomListItem from './RoomListItem'
 
 export default {
 	name: 'AdminRooms',
-	components: { SlickList, RoomListItem },
+	components: { SlickList, RoomListItem, VideoProviderDropdown },
 	data() {
 		return {
 			rooms: null,
@@ -108,6 +112,9 @@ export default {
 				console.error(e)
 			}
 		},
+		createRoomWithProvider(provider) {
+			this.$router.push({name: 'admin:rooms:new', params: {type: provider.roomTypeId}})
+		},
 		async onListSort(newList) {
 			if (this.search) return
 			const previousRooms = [...this.rooms]
@@ -142,6 +149,8 @@ export default {
 				margin-right: 16px
 			.btn-create
 				themed-button-primary()
+			.c-video-provider-dropdown
+				margin-right: 8px
 		.right-actions
 			display: flex
 			align-items: center
