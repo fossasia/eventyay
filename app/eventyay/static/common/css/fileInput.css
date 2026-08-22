@@ -1,0 +1,7 @@
+input[type="file"]:not(.file-input-has-selection) {
+  color: transparent;
+}
+
+input[type="file"].file-input-has-selection {
+  color: inherit;
+}
