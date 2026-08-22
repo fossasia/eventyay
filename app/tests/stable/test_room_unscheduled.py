@@ -15,8 +15,6 @@ def test_video_content_manager_grants_room_create_and_edit_permissions():
     assert Permission.EVENT_ROOMS_CREATE_STAGE.value in perms
     assert Permission.EVENT_ROOMS_CREATE_CHAT.value in perms
     assert Permission.EVENT_ROOMS_CREATE_BBB.value in perms
-    assert Permission.EVENT_ROOMS_CREATE_EXHIBITION.value in perms
-    assert Permission.EVENT_ROOMS_CREATE_POSTER.value in perms
     assert Permission.ROOM_UPDATE.value in perms
     assert Permission.ROOM_DELETE.value in perms
 

@@ -98,7 +98,7 @@ def generate_services_doc():
         'Payment & Invoicing': ['invoices', 'mail'],
         'Check-in & Tickets': ['checkin', 'tickets'],
         'Video & Streaming': ['bbb', 'janus', 'turn', 'room', 'chat'],
-        'Interactive Features': ['poll', 'poster', 'question', 'roulette'],
+        'Interactive Features': ['poll', 'question', 'roulette'],
         'Exhibition': ['exhibition', 'reactions'],
         'User & Auth': ['auth', 'user'],
         'Event Management': ['event', 'cancelevent'],

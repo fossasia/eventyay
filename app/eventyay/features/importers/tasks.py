@@ -9,7 +9,6 @@ from eventyay.celery_app import app
 from eventyay.base.services.event import notify_schedule_change
 from eventyay.core.tasks import EventTask
 from eventyay.features.importers.conftool import (
-    create_posters_from_conftool,
     fetch_schedule_from_conftool,
 )
 from eventyay.base.models.storage_model import StoredFile
@@ -47,10 +46,3 @@ def conftool_update_schedule(event):
     event.save()
     async_to_sync(notify_schedule_change)(event.id)
     return sf.pk
-
-
-@app.task(base=EventTask)
-def conftool_sync_posters(event):
-    u = event.config.get("conftool_url")
-    p = event.config.get("conftool_password")
-    create_posters_from_conftool(event, u, p)
