@@ -356,6 +356,75 @@ def test_catalog_list_cache_skips_paginated_viewsets():
     assert TrackViewSet.pagination_class is None
 
 
+def test_room_list_stays_paginated_and_uncached():
+    from eventyay.api.mixins import CachedCatalogListMixin
+    from eventyay.api.views.room import RoomPagination, RoomViewSet
+
+    assert RoomViewSet.pagination_class is RoomPagination
+    assert not issubclass(RoomViewSet, CachedCatalogListMixin)
+
+
+@pytest.mark.django_db
+@override_settings(CACHES=LOCMEM_CACHE)
+def test_schedule_cache_invalidates_on_room_save(event):
+    from unittest.mock import patch
+
+    with patch('eventyay.base.services.stale_cache.bump_schedule_cache_version_on_commit') as bump:
+        Room.objects.create(event=event, name='Hall A')
+
+    bump.assert_called_with(event.pk)
+
+
+@pytest.mark.django_db
+@override_settings(CACHES=LOCMEM_CACHE)
+def test_schedule_cache_skips_speaker_profile_without_released_slot(event, user):
+    from unittest.mock import patch
+    from django_scopes import scope
+
+    from eventyay.base.models.profile import SpeakerProfile
+
+    with patch('eventyay.base.services.stale_cache.bump_schedule_cache_version_on_commit') as bump:
+        with scope(event=event):
+            SpeakerProfile.objects.create(user=user, event=event, biography='Draft bio')
+
+    bump.assert_not_called()
+
+
+@pytest.mark.django_db
+@override_settings(CACHES=LOCMEM_CACHE)
+def test_schedule_cache_invalidates_on_speaker_profile_save(event, user):
+    from unittest.mock import patch
+    from django_scopes import scope
+
+    from eventyay.base.models import Schedule, Submission, SubmissionType, TalkSlot
+    from eventyay.base.models.profile import SpeakerProfile
+
+    with scope(event=event):
+        submission_type = SubmissionType.objects.create(event=event, name='Talk')
+        submission = Submission.objects.create(
+            event=event,
+            title='Keynote',
+            submission_type=submission_type,
+        )
+        submission.speakers.add(user)
+        room = Room.objects.create(event=event, name='Main')
+        schedule = Schedule.objects.create(event=event, version='v1')
+        TalkSlot.objects.create(
+            room=room,
+            schedule=schedule,
+            submission=submission,
+            is_visible=True,
+        )
+        profile = SpeakerProfile.objects.create(user=user, event=event, biography='Old bio')
+
+    with patch('eventyay.base.services.stale_cache.bump_schedule_cache_version_on_commit') as bump:
+        with scope(event=event):
+            profile.biography = 'Updated bio'
+            profile.save(update_fields=['biography'])
+
+    bump.assert_called_with(event.pk)
+
+
 def test_talk_slots_cached_list_returns_paginated_envelope():
     from types import SimpleNamespace
     from unittest.mock import MagicMock, patch
