@@ -70,6 +70,7 @@ transition(name="sidebar")
 					router-link.room(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')") {{ $t('RoomsSidebar:admin-announcements:label') }}
 					router-link.room(:to="{name: 'admin:users'}", v-if="hasPermission('world:users.list')") {{ $t('RoomsSidebar:admin-users:label') }}
 					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('RoomsSidebar:admin-rooms:label') }}
+					router-link.room(:to="{name: 'admin:chat:index'}", v-if="hasPermission('room:update')") {{ $t('RoomsSidebar:admin-chat:label') }}
 					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:kiosks.manage')") {{ $t('RoomsSidebar:admin-kiosks:label') }}
 					router-link.room(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}") {{ $t('RoomsSidebar:admin-config:label') }}
 					router-link.room(v-if="isAdminMode", :to="{name: 'admin:video-admin'}") Video Admin
@@ -84,7 +85,7 @@ transition(name="sidebar")
 import { mapState, mapGetters } from 'vuex'
 import theme from 'theme'
 import ROOM_TYPES, { NETWORKING_MODULE_TYPES, VIDEO_CHANNEL_MODULE_TYPES, inferRoomType, inferType } from 'lib/room-types'
-import { isRoomTypeAvailable } from 'lib/room-type-permissions'
+import { isBbbConfigured, isRoomTypeAvailable } from 'lib/room-type-permissions'
 import Avatar from 'components/Avatar'
 import ChannelBrowser from 'components/ChannelBrowser'
 import CreateStagePrompt from 'components/CreateStagePrompt'
@@ -141,9 +142,10 @@ export default {
 			return this.networkingRoomType && isRoomTypeAvailable(this.networkingRoomType.id, this.hasPermission, this.isAdminMode)
 		},
 		canCreateChatRoom() {
+			const bbbAvailable = isBbbConfigured(this.$store.state.world)
 			return ROOM_TYPES
-				.filter(type => ['channel-text', 'channel-bbb', 'channel-jitsi'].includes(type.id))
-				.some(type => isRoomTypeAvailable(type.id, this.hasPermission, this.isAdminMode))
+				.filter(type => ['channel-text', 'channel-video-chat', 'channel-jitsi'].includes(type.id))
+				.some(type => isRoomTypeAvailable(type.id, this.hasPermission, this.isAdminMode, {bbbAvailable}))
 		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {

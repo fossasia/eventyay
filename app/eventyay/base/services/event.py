@@ -17,6 +17,7 @@ from eventyay.base.models.audit import AuditLog
 from eventyay.base.models.chat import Channel
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
+from eventyay.base.services.bbb import event_has_active_bbb_server
 from eventyay.base.services.jitsi import user_can_create_jitsi_room_during_development
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.core.permissions import Permission
@@ -262,7 +263,10 @@ def get_room_config(room, permissions, *, current_stream=_UNSET):
     for module in room.module_config:
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
-            module_config["config"] = {}
+            src = module.get("config") if isinstance(module.get("config"), dict) else {}
+            module_config["config"] = (
+                {"video_chat": True} if src.get("video_chat") else {}
+            )
         elif module["type"] == "call.jitsi":
             cfg = module_config.get("config")
             if isinstance(cfg, dict):
@@ -308,6 +312,7 @@ def get_event_config_for_user(event, user):
             {"default": {"enabled": False, "policy_url": None}},
         ),
         "onsite_traits": cfg.get("onsite_traits", []),
+        "bbb_available": event_has_active_bbb_server(event),
     }
     # Build permission strings and include world:* aliases for event:* permissions for frontend compatibility
     event_perm_values = [
@@ -465,8 +470,13 @@ async def create_room(event, data, creator):
                 code="denied",
             )
         m = [m for m in data.get("modules", []) if m["type"] == "call.bigbluebutton"][0]
-        m["config"] = event.config.get("bbb_defaults", {})
-        m["config"].pop("secret", None)  # legacy
+        incoming = m.get("config") if isinstance(m.get("config"), dict) else {}
+        bbb_config = dict((event.config or {}).get("bbb_defaults") or {})
+        bbb_config.pop("secret", None)  # legacy
+        bbb_config.pop("video_chat", None)
+        if incoming.get("video_chat"):
+            bbb_config["video_chat"] = True
+        m["config"] = bbb_config
     elif types == {"call.jitsi"}:
         if not await user_can_create_jitsi_room_during_development(creator):
             raise ValidationError(

@@ -41,9 +41,17 @@ const ROOM_TYPES = [{
 }, {
 	id: 'channel-text',
 	icon: 'pound',
-	name: 'Text Channel',
-	description: 'This type of channel allows you to enable pure-text communication between your attendees.',
-	startingModule: 'chat.native'
+	name: 'Chat Channel',
+	description: 'A chat channel for text communication between attendees. Managed separately from rooms.',
+	startingModule: 'chat.native',
+	managementArea: 'chat'
+}, {
+	id: 'channel-video-chat',
+	icon: 'webcam',
+	name: 'Video Chat',
+	description: 'A live video chat powered by BigBlueButton. Only available when a BBB server is configured for this event.',
+	startingModule: 'call.bigbluebutton',
+	managementArea: 'chat'
 }, {
 	id: 'channel-roulette',
 	icon: 'webcam',
@@ -64,11 +72,52 @@ const ROOM_TYPES = [{
 
 export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))
 export const NETWORKING_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.sidebarGroup === 'networking').map(type => type.startingModule))
+export const CHAT_CHANNEL_TYPE_ID = 'channel-text'
+export const VIDEO_CHAT_TYPE_ID = 'channel-video-chat'
+
+export function isChatManagementType(type) {
+	return type?.id === CHAT_CHANNEL_TYPE_ID || type?.id === VIDEO_CHAT_TYPE_ID || type?.managementArea === 'chat'
+}
+
+export function isChatChannel(roomOrConfig) {
+	const modules = roomOrConfig?.module_config || roomOrConfig?.modules || []
+	return Array.isArray(modules) && modules.length === 1 && modules[0]?.type === 'chat.native'
+}
+
+export function isVideoChat(roomOrConfig) {
+	const modules = roomOrConfig?.module_config || roomOrConfig?.modules || []
+	if (!Array.isArray(modules)) return false
+	const bbb = modules.find(module => module?.type === 'call.bigbluebutton')
+	return !!bbb && bbb.config?.video_chat === true
+}
+
+export function isChatManagedRoom(roomOrConfig) {
+	return isChatChannel(roomOrConfig) || isVideoChat(roomOrConfig)
+}
+
+export function roomCreationTypes(types) {
+	return types.filter(type => !isChatManagementType(type))
+}
+
+export function chatCreationTypes(types) {
+	return types.filter(type => isChatManagementType(type))
+}
+
+export function mergeReorderedIds(allIds, subsetOrder) {
+	const subset = new Set(subsetOrder.map(String))
+	const queue = subsetOrder.map(String)
+	return allIds.map(id => subset.has(String(id)) ? queue.shift() : String(id))
+}
 
 export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
 
 export function inferType(config) {
-	const modules = config.module_config.reduce((acc, module) => {
+	if (!config) return
+	if (isVideoChat(config)) {
+		return ROOM_TYPES.find(type => type.id === VIDEO_CHAT_TYPE_ID)
+	}
+	const moduleConfig = Array.isArray(config.module_config) ? config.module_config : []
+	const modules = moduleConfig.reduce((acc, module) => {
 		acc[module.type] = module
 		return acc
 	}, {})
@@ -79,8 +128,8 @@ export function inferType(config) {
 	if (mediaRoomType) return mediaRoomType
 
 	// non-media rooms should only have one module
-	if (config.module_config.length === 1) {
-		return findByModule(config.module_config[0].type)
+	if (moduleConfig.length === 1) {
+		return findByModule(moduleConfig[0].type)
 	}
 }
 

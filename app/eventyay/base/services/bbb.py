@@ -59,6 +59,12 @@ def get_presentation_xml(presentation):
     )
 
 
+def event_has_active_bbb_server(event) -> bool:
+    return BBBServer.objects.filter(active=True).filter(
+        Q(event_exclusive=event) | Q(event_exclusive__isnull=True)
+    ).exists()
+
+
 def choose_server(event, room=None, prefer_server=None):
     servers = BBBServer.objects.filter(active=True)
 
