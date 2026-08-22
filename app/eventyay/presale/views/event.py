@@ -1188,6 +1188,17 @@ class JoinOnlineVideoView(EventViewMixin, View):
             order_list = list(
                 Order.objects.filter(filters)
                 .select_related('event')
+                .prefetch_related(
+                    'positions',
+                    'positions__product',
+                    'positions__product__category',
+                    'positions__variation',
+                    'positions__addons',
+                    'positions__addons__product',
+                    'positions__addons__variation',
+                    'positions__answers',
+                    'positions__answers__question',
+                )
                 .order_by('-datetime')
                 .distinct()
             )
