@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
@@ -49,6 +50,11 @@ class BadgeLayoutSettingsForm(forms.Form):
         label=_('Badge fields'),
         widget=forms.CheckboxSelectMultiple,
     )
+    required_badge_fields = forms.MultipleChoiceField(
+        required=False,
+        label=_('Required badge fields'),
+        widget=forms.CheckboxSelectMultiple,
+    )
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
@@ -76,6 +82,8 @@ class BadgeLayoutSettingsForm(forms.Form):
         self.fields['allow_badge_editing'].initial = self.layout.allow_badge_editing
         self.fields['ask_user_fields'].choices = choices
         self.fields['ask_user_fields'].initial = initial_keys
+        self.fields['required_badge_fields'].choices = choices
+        self.fields['required_badge_fields'].initial = [key for key in self.layout.required_badge_fields_data if key in valid_keys]
 
         if not choices:
             self.fields['allow_customization'].disabled = True
@@ -90,11 +98,19 @@ class BadgeLayoutSettingsForm(forms.Form):
             cleaned_data['allow_customization'] = False
             cleaned_data['allow_badge_editing'] = False
             cleaned_data['ask_user_fields'] = []
+            cleaned_data['required_badge_fields'] = []
             return cleaned_data
 
         if not cleaned_data.get('allow_customization'):
             cleaned_data['ask_user_fields'] = []
+            cleaned_data['required_badge_fields'] = []
             cleaned_data['allow_badge_editing'] = False
+
+        # Ensure required fields are also in ask_user_fields
+        required_fields = set(cleaned_data.get('required_badge_fields', []))
+        ask_user = set(cleaned_data.get('ask_user_fields', []))
+        if required_fields - ask_user:
+            cleaned_data['ask_user_fields'] = list(ask_user | required_fields)
 
         return cleaned_data
 
@@ -106,18 +122,34 @@ class BadgeLayoutSettingsForm(forms.Form):
         self.layout.allow_customization = self.cleaned_data['allow_customization']
         self.layout.allow_badge_editing = self.cleaned_data['allow_badge_editing']
         self.layout.ask_user_fields_data = self.cleaned_data['ask_user_fields']
-        self.layout.save(update_fields=['allow_customization', 'allow_badge_editing', 'ask_user_fields'])
+        self.layout.required_badge_fields_data = self.cleaned_data['required_badge_fields']
+        self.layout.save(update_fields=['allow_customization', 'allow_badge_editing', 'ask_user_fields', 'required_badge_fields'])
         return self.layout
 
 
+class BadgeOptionsWidget(forms.CheckboxSelectMultiple):
+    def __init__(self, *args, required_keys=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.required_keys = set(required_keys)
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+        if str(value) in self.required_keys:
+            option['attrs']['disabled'] = True
+            option['attrs']['checked'] = True
+        return option
+
+
 class BadgeOptionsField(forms.MultipleChoiceField):
-    widget = forms.CheckboxSelectMultiple
+    widget = BadgeOptionsWidget
     badge_option = True
 
-    def __init__(self, *args, hidden_initial=None, **kwargs):
+    def __init__(self, *args, hidden_initial=None, required_keys=(), **kwargs):
+        kwargs['widget'] = self.widget(required_keys=required_keys)
         super().__init__(*args, required=False, **kwargs)
         self._choice_order = [str(value) for value, _label in self.choices]
         self.initial = self.get_meta_initial(hidden_initial)
+        self.required_keys = set(required_keys)
 
     def get_meta_initial(self, hidden_values):
         if isinstance(hidden_values, str):
@@ -131,5 +163,9 @@ class BadgeOptionsField(forms.MultipleChoiceField):
         return format_badge_option_labels(visible_labels)
 
     def clean(self, value):
+        value = value or []
+        if isinstance(value, (list, tuple)):
+            value = list(set(value) | self.required_keys)
+            
         selected_values = set(super().clean(value))
         return [choice for choice in self._choice_order if choice not in selected_values]

@@ -310,3 +310,13 @@ class TestPublicScheduleThrottle:
         """PublicScheduleThrottle must use the public_schedule scope."""
         from eventyay.api.throttles import PublicScheduleThrottle
         assert PublicScheduleThrottle.scope == 'public_schedule'
+
+
+class TestThrottleSettings:
+
+    def test_global_throttle_excludes_ip_anon(self):
+        from django.conf import settings
+
+        classes = settings.REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES']
+        assert 'EventyayAnonRateThrottle' not in classes
+        assert 'eventyay.api.throttles.EventyayUserRateThrottle' in classes

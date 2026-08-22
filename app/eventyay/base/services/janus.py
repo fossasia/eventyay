@@ -200,7 +200,7 @@ async def videoroom_add_token_if_exists(server, room_data, token, audiobridge=Fa
 
 
 async def create_videoroom(
-    server, room_id, init_token, audiobridge=False, bitrate=200_000
+    server, room_id, init_token, audiobridge=False, bitrate=1_500_000
 ):
     seed = get_random_string(16)
     async with _janus_websocket(server) as websocket:

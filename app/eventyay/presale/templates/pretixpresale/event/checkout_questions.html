@@ -62,12 +62,10 @@
                             {% if pos.variation %}
                                 – {{ pos.variation.value|event_localize }}
                             {% endif %}
-                            {% if forloop.counter > 1 %}
+                            {% if forloop.counter > 1 and pos.show_copy_answers_main_button %}
                                 <span class="text-right flip">
-                                    {% if event.settings.checkout_show_copy_answers_button %}
                                         <button type="button" data-id="{{ forloop.counter0 }}" name="copy"
                                                 class="js-copy-answers btn btn-default btn-xs">{% trans "Copy answers from above" %}</button>
-                                    {% endif %}
                                     <i class="fa fa-angle-down collapse-indicator" aria-hidden="true"></i>
                                 </span>
                             {% else %}
@@ -130,7 +128,7 @@
                                 {% if form.pos.product != pos.product %}
                                     {# Add-Ons #}
                                     <legend>
-                                        {% if form.show_copy_answers_to_addon_button and event.settings.checkout_show_copy_answers_button %}
+                                        {% if form.show_copy_answers_to_addon_button %}
                                             <span class="pull-right flip">
                                                 <button type="button" data-id="{{ forloop.parentloop.counter0 }}" data-addonid="{{ forloop.counter0 }}" name="copy" class="js-copy-answers-addon btn btn-default btn-xs">{% trans "Copy answers" %}</button>
                                             </span>

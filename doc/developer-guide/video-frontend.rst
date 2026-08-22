@@ -24,9 +24,11 @@ The video frontend is a full-featured virtual event platform built with Vue 3, p
 - **Interactive Chat**: Real-time messaging with channels and DMs
 - **Audience Engagement**: Polls, Q&A, emoji reactions
 - **Networking**: Speed networking (roulette) and direct messaging
-- **Exhibition**: Virtual exhibition halls with exhibitor booths
-- **Posters**: Academic poster sessions with Q&A
 - **Recordings**: On-demand video playback
+
+New rooms can be created as **Stage**, **Video Channel**, or **Text Channel**.
+Exhibition halls, poster halls, static pages, iframe pages, and user lists have been removed
+from the video room catalog. Meetup embed URLs use a stage iframe player instead.
 
 **Location**: ``app/eventyay/webapp/video/``
 
@@ -330,46 +332,6 @@ Live reactions system:
 - Real-time synchronization
 - Custom reaction sets per event
 
-Exhibition & Posters
-~~~~~~~~~~~~~~~~~~~~
-
-Exhibition Component
-^^^^^^^^^^^^^^^^^^^^
-
-**File**: ``components/Exhibition.vue``
-
-Virtual exhibition hall:
-- Exhibitor booth grid
-- Booth details modal
-- Contact forms
-- Resource downloads
-- Live chat with exhibitors
-- Booth visit tracking
-
-PosterHall Component
-^^^^^^^^^^^^^^^^^^^^
-
-**File**: ``components/PosterHall.vue``
-
-Academic poster sessions:
-- Poster grid display
-- Poster detail view
-- Author chat
-- File downloads
-- Voting/feedback
-- Session scheduling
-
-ContactExhibitorPrompt Component
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**File**: ``components/ContactExhibitorPrompt.vue``
-
-Exhibitor contact form:
-- Send messages to exhibitors
-- Request meetings
-- Download materials
-- Track inquiries
-
 User Interface Components
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -457,17 +419,6 @@ Markdown rendering:
 - Link handling
 - Image loading
 - Safe HTML output
-
-StaticPage & IframePage
-^^^^^^^^^^^^^^^^^^^^^^^
-
-**Files**: ``components/StaticPage.vue``, ``components/IframePage.vue``
-
-Static content display:
-- Custom HTML pages
-- Embedded iframes
-- Responsive containers
-- Security considerations
 
 Utility Components
 ~~~~~~~~~~~~~~~~~~
@@ -636,15 +587,6 @@ Chat state management:
 - User typing indicators
 - Message history
 - Channel subscriptions
-
-exhibition.js
-^^^^^^^^^^^^^
-
-Exhibition data:
-- Exhibitor information
-- Booth state
-- Contact requests
-- Visit tracking
 
 poll.js
 ^^^^^^^
@@ -993,8 +935,6 @@ Vue Router configuration with:
 - `/` - Event landing page
 - `/rooms/:roomId` - Individual rooms
 - `/schedule` - Event schedule
-- `/exhibition` - Exhibition hall
-- `/posters` - Poster sessions
 - `/profile` - User profile
 - `/settings` - User settings
 
