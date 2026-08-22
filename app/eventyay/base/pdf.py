@@ -1116,21 +1116,13 @@ class Renderer:
         if not lines:
             return float(max_fontsize)
 
-        tokens = []
-        for line in lines:
-            words = line.split()
-            if words:
-                tokens.extend(words)
-            else:
-                tokens.append(line)
-
         width_pt = float(width_mm) * mm
         size = float(max_fontsize)
         min_size = float(min_fontsize)
         while size > min_size:
             fits = True
-            for token in tokens:
-                if pdfmetrics.stringWidth(token, font_name, size) > width_pt:
+            for line in lines:
+                if pdfmetrics.stringWidth(line, font_name, size) > width_pt:
                     fits = False
                     break
             if fits:
