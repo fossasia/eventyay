@@ -1,13 +1,13 @@
 <template lang="pug">
 .c-admin-config
 	nav.admin-nav
-		h1 Configuration
-		router-link(:to="{name: 'admin:config'}") Event
-		router-link(:to="{name: 'admin:config:registration'}") User Profile
-		router-link(:to="{name: 'admin:config:privacy'}") Privacy
-		router-link(:to="{name: 'admin:config:token-generator'}") Token Generator
-		router-link(:to="{name: 'admin:config:audit-log'}") Audit Log
-		router-link(:to="{name: 'admin:config:reports'}") Reports
+		h1 {{ $t('Configuration') }}
+		router-link(:to="{name: 'admin:config'}") {{ $t('Event') }}
+		router-link(:to="{name: 'admin:config:registration'}") {{ $t('User Profile') }}
+		router-link(:to="{name: 'admin:config:privacy'}") {{ $t('Privacy') }}
+		router-link(:to="{name: 'admin:config:token-generator'}") {{ $t('Token Generator') }}
+		router-link(:to="{name: 'admin:config:audit-log'}") {{ $t('Audit Log') }}
+		router-link(:to="{name: 'admin:config:reports'}") {{ $t('Reports') }}
 	router-view
 </template>
 <script>

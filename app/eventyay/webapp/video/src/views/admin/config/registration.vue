@@ -1,41 +1,41 @@
 <template lang="pug">
 .c-registrationconfig
 	.ui-page-header
-		h1 User Profile
+		h1 {{ $t('User Profile') }}
 	scrollbars(y)
 		bunt-progress-circular(size="huge", v-if="!error && !config")
-		.error(v-if="error") We could not fetch the current configuration.
+		.error(v-if="error") {{ $t('We could not fetch the current configuration.') }}
 		bunt-tabs(v-if="config")
-			bunt-tab(header="Social Connections", v-scrollbar.y="")
+			bunt-tab(:header="$t('Social Connections')", v-scrollbar.y="")
 				.ui-form-body
-					p Let users connect to the following social networks when they first visit your event. Connecting to a social network fills the user's profile with data available from the social connection, like name, avatar and link to the social network profile.
-					bunt-checkbox(name="social-twitter", v-model="socialTwitter") Twitter
-					bunt-checkbox(name="social-linkedin", v-model="socialLinkedIn") LinkedIn
-					bunt-checkbox(name="social-gravatar", v-model="socialGravatar") Gravatar
-			bunt-tab(header="Additional Fields", v-scrollbar.y="")
+					p {{ $t("Let users connect to the following social networks when they first visit your event. Connecting to a social network fills the user's profile with data available from the social connection, like name, avatar and link to the social network profile.") }}
+					bunt-checkbox(name="social-twitter", v-model="socialTwitter") {{ $t('Twitter') }}
+					bunt-checkbox(name="social-linkedin", v-model="socialLinkedIn") {{ $t('LinkedIn') }}
+					bunt-checkbox(name="social-gravatar", v-model="socialGravatar") {{ $t('Gravatar') }}
+			bunt-tab(:header="$t('Additional Fields')", v-scrollbar.y="")
 				.additional-fields-form(v-if="config")
 					// TODO REORDER
 					table.additional-fields
 							thead
 								tr
-									th Name
-									th Type
-									th ID
+									th {{ $t('Name') }}
+									th {{ $t('Type') }}
+									th {{ $t('ID') }}
 									th
-									th Include in search queries
+									th {{ $t('Include in search queries') }}
 									th
 							tbody
 								tr(v-for="(field, index) in config.profile_fields")
 									td
-										bunt-input(v-model="field.label", label="Label", name="label")
+										bunt-input(v-model="field.label", :label="$t('Label')", name="label")
 									td
-										bunt-select(v-model="field.type", label="Type", name="type", :options="['text', 'textarea', 'select', 'link']")
+										bunt-select(v-model="field.type", :label="$t('Type')", name="type", :options="['text', 'textarea', 'select', 'link']")
 									td
 										//- ids are needed to match external tools' (pretix) supplied fields
-										bunt-input(v-model="field.id", label="ID", name="id")
+										bunt-input(v-model="field.id", :label="$t('ID')", name="id")
 									td
-										bunt-input(v-if="field.type === 'select'", v-model="field.choices", label="Choices (comma seperated)", name="choices")
-										bunt-select.link-network(v-if="field.type === 'link'", v-model="field.network", label="Link Type", name="link-type", :options="socialNetworks")
+										bunt-input(v-if="field.type === 'select'", v-model="field.choices", :label="$t('Choices (comma seperated)')", name="choices")
+										bunt-select.link-network(v-if="field.type === 'link'", v-model="field.network", :label="$t('Link Type')", name="link-type", :options="socialNetworks")
 											template(#default="{ option }")
 												.mdi(:class="`mdi-${option}`")
 												.label {{ option }}
@@ -46,14 +46,14 @@
 							tfoot
 								tr
 									td
-										bunt-button(@click="addField") Add field
+										bunt-button(@click="addField") {{ $t('Add field') }}
 									td
 									td
 									td
 									td
 									td
 	.ui-form-actions
-		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") Save
+		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ $t('Save') }}
 </template>
 <script>
 import api from 'lib/api'

@@ -3,17 +3,17 @@
 	.scroll-wrapper(v-scrollbar.y="")
 		.ui-form-body
 			.generic-settings
-				bunt-input(name="name", v-model="localizedName", label="Name", :validation="v$.config.name")
-				bunt-input(name="description", v-model="localizedDescription", label="Description")
-				div(:title="config.has_linked_sessions ? \"Room has linked sessions and can't be marked unscheduled\" : ''")
-					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", label="Unscheduled room (hide from schedule/sessions)", :disabled="config.has_linked_sessions")
+				bunt-input(name="name", v-model="localizedName", :label="$t('Name')", :validation="v$.config.name")
+				bunt-input(name="description", v-model="localizedDescription", :label="$t('Description')")
+				div(:title="unscheduledDisabledTitle")
+					bunt-checkbox(name="is_unscheduled", v-model="config.is_unscheduled", :label="$t('Unscheduled room (hide from schedule/sessions)')", :disabled="config.has_linked_sessions")
 				template(v-if="inferredType")
-					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
+					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", :label="$t('Force join on login (use for non-volatile, text-based chats only!!)')")
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules", :creating="creating", :interpretation-admin="interpretationAdmin")
 			stream-schedule(ref="streamSchedule", v-if="showStreamSchedule", :config="config", :room-id="config.id ? String(config.id) : null", :room-name="localizedName", :open-create-on-mount="openStreamScheduleCreateOnMount", @opened-create-on-mount="clearOpenStreamScheduleCreateQuery", @create-requires-room="createRoomForStreamSchedule")
 			sidebar-addons(v-if="inferredType && inferredType.id === 'stage'", :config="config", :modules="modules", :creating="creating")
 	.ui-form-actions
-		bunt-button.btn-save(@click="save", :loading="saving", :error="!!error") {{ creating ? 'create' : 'save' }}
+		bunt-button.btn-save(@click="save", :loading="saving", :error="!!error") {{ creating ? $t('Create') : $t('Save') }}
 		.errors {{ error || validationErrors.join(', ') }}
 </template>
 <script>
@@ -99,9 +99,14 @@ export default {
 		inferredType() {
 			return inferType(this.config)
 		},
+		unscheduledDisabledTitle() {
+			this.$store.state.userLocale
+			if (!this.config.has_linked_sessions) return ''
+			return this.$t('Room has linked sessions and cannot be marked unscheduled')
+		},
 		stagePlaybackMode() {
 			if (!this.modules) return null
-			const module = this.modules['livestream.native'] || this.modules['livestream.youtube'] || this.modules['livestream.iframe']
+			const module = this.modules['livestream.native'] || this.modules['livestream.youtube']
 			return getStagePlaybackMode(module)
 		},
 		showStreamSchedule() {
@@ -132,7 +137,7 @@ export default {
 		return {
 			config: {
 				name: {
-					required: required('name is required')
+					required: required(this.$t('name is required'))
 				},
 			},
 		}

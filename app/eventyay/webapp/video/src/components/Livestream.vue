@@ -19,14 +19,14 @@
 					.progress-indicator
 					.time(:style="{'--hovered-progress': hoveredProgress}") {{ formatTime(hoveredTime) }}
 				bunt-icon-button#btn-play(v-if="!offline", @click="toggleVideo") {{ playing ? 'pause' : 'play' }}
-				.live-indicator(v-if="!offline && isLive") live
+				.live-indicator(v-if="!offline && isLive") {{ $t('live') }}
 				.buffer
 				bunt-icon-button(v-if="hasAlternativeStreams", @click="showSourceChooser = !showSourceChooser") movie
 				bunt-icon-button(v-if="!offline && textTracks.length > 0", @click="toggleCaptions") {{ textTracks.some(t => t.mode === 'showing') ? 'closed-caption' : 'closed-caption-outline' }}
 				bunt-icon-button(v-else-if="!offline && module.config.subtitle_url", @click="openExternalSubtitles") closed-caption-outline
 				bunt-icon-button(v-if="!offline", @click="showLevelChooser = !showLevelChooser") {{ levelIcon }}
 				bunt-icon-button(v-if="!offline", @click="toggleVolume") {{ muted || volume === 0 ? 'volume_off' : 'volume_high' }}
-				input.volume-slider(v-if="!offline", type="range", step="any", min="0", max="1", aria-label="Volume", :value="volume", @input="onVolumeSlider", :style="{'--volume': volume}")
+				input.volume-slider(v-if="!offline", type="range", step="any", min="0", max="1", :aria-label="$t('Volume')", :value="volume", @input="onVolumeSlider", :style="{'--volume': volume}")
 				bunt-icon-button(v-if="!offline", @click="toggleFullscreen") {{ fullscreen ? 'fullscreen-exit' : 'fullscreen' }}
 			.source-chooser(v-if="showSourceChooser", @click.stop="")
 				.source(@click="chooseSource(null)", :class="{chosen: !chosenAlternative}") {{ $t('Livestream:default-source:text') }}
@@ -35,7 +35,7 @@
 				.track(@click="chooseTextTrack(null)", :class="{chosen: !textTracks.some(t => t.mode === 'showing')}") {{ $t('Livestream:captions-off:text') }}
 				.track(v-for="track of textTracks", :class="{chosen: track.mode === 'showing'}", @click="chooseTextTrack(track)") {{ track.label }}
 			.level-chooser(v-if="showLevelChooser", @click.stop="")
-				.level(@click="chooseLevel(null)", :class="{chosen: !manualLevel}") Auto
+				.level(@click="chooseLevel(null)", :class="{chosen: !manualLevel}") {{ $t('Auto') }}
 				.level(v-for="level of levels", :class="{chosen: level === manualLevel, auto: level === autoLevel}", @click="chooseLevel(level)") {{ level.height + 'p' }}
 </template>
 <script>
