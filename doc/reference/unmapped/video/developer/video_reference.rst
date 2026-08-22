@@ -67,10 +67,6 @@ Interactive Modules
    :members:
    :no-index:
 
-.. automodule:: eventyay.features.live.modules.poster
-   :members:
-   :no-index:
-
 .. automodule:: eventyay.features.live.modules.question
    :members:
    :no-index:

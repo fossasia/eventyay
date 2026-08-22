@@ -45,13 +45,6 @@ const ROOM_TYPES = [{
 	description: 'This type of channel allows you to enable pure-text communication between your attendees.',
 	startingModule: 'chat.native'
 }, {
-	id: 'posters',
-	icon: 'domain',
-	name: 'Poster Hall',
-	description: 'Hang your posters high!',
-	startingModule: 'poster.native',
-	behindFeatureFlag: 'poster'
-}, {
 	id: 'channel-roulette',
 	icon: 'webcam',
 	name: 'Random video calls',
