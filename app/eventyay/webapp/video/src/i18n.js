@@ -1,6 +1,7 @@
 /* global ENV_DEVELOPMENT */
 import i18next from 'i18next'
 import config from 'config'
+import {isEnglishLocale, mergeCatalogWithEnglish, toDjangoLanguage, usableTranslations} from './i18n-catalog.js'
 
 export default i18next
 
@@ -110,11 +111,6 @@ export async function persistLanguage(language) {
 	await syncLanguageToServer(djangoLanguage)
 }
 
-function toDjangoLanguage(language) {
-	if (!language) return language
-	return String(language).replaceAll('_', '-').toLowerCase()
-}
-
 function toGettextLocale(language) {
 	const django = toDjangoLanguage(language)
 	const separator = django.indexOf('-')
@@ -160,22 +156,6 @@ function resolveLocaleLoader(language) {
 	return null
 }
 
-function isEnglishLocale(language) {
-	const django = toDjangoLanguage(language)
-	return django === 'en' || String(django).startsWith('en-')
-}
-
-function usableTranslations(catalog, language) {
-	const keepMsgidCopies = isEnglishLocale(language)
-	return Object.fromEntries(
-		Object.entries(catalog).filter(([key, value]) => {
-			if (value == null || value === '') return false
-			if (!keepMsgidCopies && value === key) return false
-			return true
-		})
-	)
-}
-
 async function loadRawCatalog(language) {
 	const loader = resolveLocaleLoader(language)
 	if (!loader) return null
@@ -194,20 +174,11 @@ async function loadEnglishCatalog() {
 
 async function loadCatalogForLanguage(language) {
 	const english = await loadEnglishCatalog()
-	if (isEnglishLocale(language)) {
-		return english
+	const raw = isEnglishLocale(language) ? english : await loadRawCatalog(language)
+	if (!raw && !isEnglishLocale(language) && ENV_DEVELOPMENT) {
+		console.warn('Missing video.po catalog for "%s", falling back to English', language)
 	}
-	const raw = await loadRawCatalog(language)
-	if (!raw) {
-		if (ENV_DEVELOPMENT) {
-			console.warn('Missing video.po catalog for "%s", falling back to English', language)
-		}
-		return english
-	}
-	return {
-		...english,
-		...usableTranslations(raw, language),
-	}
+	return mergeCatalogWithEnglish(english, raw, language)
 }
 
 function getInitialLanguage() {

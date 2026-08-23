@@ -289,7 +289,7 @@ msgid "Create random video calls"
 msgstr "Create random video calls"
 
 msgid "CreateChatPrompt:error:no-permission"
-msgstr "CreateChatPrompt:error:no-permission"
+msgstr "You do not have permission to create channels."
 
 msgid "CreateChatPrompt:headline:text"
 msgstr "Create a new channel"
@@ -1132,7 +1132,7 @@ msgid "User Profile"
 msgstr "User Profile"
 
 msgid "User:"
-msgstr "User:"
+msgstr "User"
 
 msgid "User:label:deleted"
 msgstr "Deleted User"
@@ -1393,7 +1393,7 @@ msgid "profile/GreetingPrompt:step-avatar:heading"
 msgstr "Choose your look"
 
 msgid "profile/GreetingPrompt:step-avatar:text"
-msgstr "profile/GreetingPrompt:step-avatar:text"
+msgstr "Pick an identicon or upload a picture."
 
 msgid "profile/GreetingPrompt:step-display-name:heading"
 msgstr "What are you called?"
@@ -1410,7 +1410,7 @@ msgstr ""
 "We will show your name to other attendees if you interact with them, e.g. in a chat. You do not need to use your real name. After this, you can optionally choose a picture."
 
 msgid "profile/GreetingPrompt:step-fields:heading"
-msgstr "profile/GreetingPrompt:step-fields:heading"
+msgstr "Additional information"
 
 msgid "profile/GreetingPrompt:step-fields:text"
 msgstr "And lastly, why not add some optional information to your profile? Don't worry, you can always edit anything in your profile later."
@@ -1482,13 +1482,13 @@ msgid "unban"
 msgstr "unban"
 
 msgid "undefined:action"
-msgstr "undefined:action"
+msgstr ""
 
 msgid "undefined:headline"
-msgstr "undefined:headline"
+msgstr ""
 
 msgid "undefined:text"
-msgstr "undefined:text"
+msgstr ""
 
 msgid "unsilence"
 msgstr "unsilence"
