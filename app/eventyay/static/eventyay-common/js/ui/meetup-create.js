@@ -109,7 +109,7 @@ export function initLocationToggles() {
 
     function updateLocationVisibility() {
         const checked = document.querySelector('input[name="basics-location_type"]:checked');
-        const val = checked ? checked.value : 'in_person';
+        const val = checked ? checked.value : 'hybrid';
 
         if (val === 'in_person') {
             if (physicalGroup) physicalGroup.classList.remove('hidden');

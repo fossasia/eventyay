@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.core.validators import validate_email, MinValueValidator, MaxValueValidator
 from django.db.models import Q
 from django.forms import CheckboxSelectMultiple, formset_factory
@@ -1938,7 +1939,7 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
     location_type = forms.ChoiceField(
         label=_('Location'),
         choices=LOCATION_TYPE_CHOICES,
-        initial=LOCATION_IN_PERSON,
+        initial=LOCATION_HYBRID,
         widget=forms.RadioSelect,
         required=False,
     )
@@ -1988,10 +1989,12 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
 
         if self.initial.get('video_type') and self.initial.get('location'):
             self.initial['location_type'] = LOCATION_HYBRID
-        elif self.initial.get('video_type'):
+        elif self.initial.get('video_type') and not self.initial.get('location'):
             self.initial['location_type'] = LOCATION_VIRTUAL
-        else:
+        elif self.initial.get('location') and not self.initial.get('video_type'):
             self.initial['location_type'] = LOCATION_IN_PERSON
+        else:
+            self.initial['location_type'] = LOCATION_HYBRID
 
         if self.initial.get('registration_limit'):
             self.initial['capacity_type'] = CAPACITY_LIMITED
@@ -2043,7 +2046,7 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        loc_type = cleaned_data.get('location_type') or LOCATION_IN_PERSON
+        loc_type = cleaned_data.get('location_type') or LOCATION_HYBRID
 
         if loc_type == LOCATION_VIRTUAL:
             cleaned_data.update({
