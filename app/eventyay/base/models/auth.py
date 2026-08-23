@@ -1015,9 +1015,12 @@ the eventyay team"""
         if not thumbnail:
             image = self.avatar
         else:
-            image = self.avatar_thumbnail_tiny if thumbnail == 'tiny' else self.avatar_thumbnail
-            if not image:
-                image = create_thumbnail(self.avatar, thumbnail)
+            if str(self.avatar.name).lower().endswith('.svg'):
+                image = self.avatar
+            else:
+                image = self.avatar_thumbnail_tiny if thumbnail == 'tiny' else self.avatar_thumbnail
+                if not image:
+                    image = create_thumbnail(self.avatar, thumbnail)
 
         if not image:
             return ''

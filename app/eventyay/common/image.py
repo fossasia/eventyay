@@ -40,6 +40,10 @@ def validate_image(f):
     else:
         file = BytesIO(f['content'])
 
+    filename = getattr(f, 'name', '')
+    if str(filename).lower().endswith('.svg'):
+        return
+
     try:
         try:
             formats = getattr(settings, 'PILLOW_FORMATS_QUESTIONS_IMAGE', None)
@@ -78,6 +82,9 @@ def process_image(*, image, generate_thumbnail=False):
     by reducing its file size and stripping its metadata.
     Image must be an ImageFieldFile, e.g. user.avatar.
     """
+    if str(image.name).lower().endswith('.svg'):
+        return
+
     try:
         img = Image.open(image)
     except Exception:
@@ -121,6 +128,9 @@ def create_thumbnail(image, size):
     if not image.instance._meta.get_field(thumbnail_field_name):
         return
 
+    if str(image.name).lower().endswith('.svg'):
+        return None
+
     try:
         img = Image.open(image, formats=('PNG', 'JPEG', 'GIF'))
         img.load()
@@ -144,6 +154,9 @@ def create_thumbnail(image, size):
 def get_thumbnail(image, size):
     thumbnail_field_name = get_thumbnail_field_name(image, size)
     if not (image.instance._meta.get_field(thumbnail_field_name)):
+        return image
+
+    if str(image.name).lower().endswith('.svg'):
         return image
 
     thumbnail_field = getattr(image.instance, thumbnail_field_name)

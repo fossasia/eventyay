@@ -60,6 +60,12 @@ def get_sizes(size, imgsize):
 
 
 def create_thumbnail(sourcename, size):
+    if str(sourcename).lower().endswith('.svg'):
+        t = Thumbnail.objects.create(source=sourcename, size=size)
+        t.thumb.name = sourcename
+        t.save(update_fields=['thumb'])
+        return t
+
     source = default_storage.open(sourcename)
     image = Image.open(BytesIO(source.read()))
     try:
