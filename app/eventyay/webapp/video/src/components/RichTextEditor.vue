@@ -51,6 +51,33 @@ import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
+
+const CustomTextAlign = TextAlign.extend({
+	addGlobalAttributes() {
+		return [
+			{
+				types: this.options.types,
+				attributes: {
+					textAlign: {
+						default: this.options.defaultAlignment,
+						parseHTML: element => {
+							if (element.classList.contains('text-left')) return 'left'
+							if (element.classList.contains('text-center')) return 'center'
+							if (element.classList.contains('text-right')) return 'right'
+							return element.style.textAlign || this.options.defaultAlignment
+						},
+						renderHTML: attributes => {
+							if (!attributes.textAlign || attributes.textAlign === this.options.defaultAlignment) {
+								return {}
+							}
+							return { class: `text-${attributes.textAlign}` }
+						},
+					},
+				},
+			},
+		]
+	},
+})
 import api from 'lib/api'
 import i18n from 'i18n'
 import ErrorDialog from 'components/ErrorDialog'
@@ -101,7 +128,7 @@ const insertLink = () => {
 	if (url === '') {
 		editorInstance.chain().focus().unsetLink().run()
 	} else {
-		editorInstance.chain().focus().setLink({ href: url, target: '_blank' }).run()
+		editorInstance.chain().focus().setLink({ href: url, target: '_blank', rel: 'noopener noreferrer' }).run()
 	}
 }
 
@@ -147,9 +174,9 @@ onMounted(() => {
 		extensions: [
 			StarterKit,
 			Image.configure({ inline: false, allowBase64: false }),
-			Link.configure({ openOnClick: false, autolink: true }),
+			Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
 			Underline,
-			TextAlign.configure({ types: ['heading', 'paragraph'] }),
+			CustomTextAlign.configure({ types: ['heading', 'paragraph'] }),
 		],
 		content: props.modelValue || '',
 		editorProps: {

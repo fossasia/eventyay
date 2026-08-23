@@ -42,6 +42,7 @@ import Document from '@tiptap/extension-document'
 import Paragraph from '@tiptap/extension-paragraph'
 import Text from '@tiptap/extension-text'
 import History from '@tiptap/extension-history'
+import Placeholder from '@tiptap/extension-placeholder'
 import EmojiRegex from 'emoji-regex'
 import api from 'lib/api'
 import { nativeToUrl } from 'lib/emoji'
@@ -146,7 +147,8 @@ export default {
 					left: coords.left - Math.max(0, 240 - (editorRect.width + 60 - (coords.left - editorRect.x))) + 'px',
 					bottom: window.innerHeight - coords.top + 8 + 'px',
 				}
-			} catch {
+			} catch (error) {
+				console.warn('ChatInput: mention dropdown position failed', error)
 				return null
 			}
 		},
@@ -213,6 +215,9 @@ export default {
 				EmojiNode,
 				MentionNode,
 				ChatKeymap,
+				Placeholder.configure({
+					placeholder: this.$t('ChatInput:input:placeholder'),
+				}),
 			],
 			editorProps: {
 				attributes: {

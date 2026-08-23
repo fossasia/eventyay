@@ -30,7 +30,7 @@ export default {
 
 			// Regular HTML string
 			return DOMPurify.sanitize(this.content, {
-				ADD_ATTR: ['target'],
+				ADD_ATTR: ['target', 'rel'],
 			})
 		},
 	},
@@ -43,11 +43,16 @@ export default {
 			// Don't intercept right-click
 			if (event.button !== undefined && event.button !== 0) return
 			// Don't intercept external or same-page links
-			const url = new URL(a.href)
+			let url
+			try {
+				url = new URL(a.href)
+			} catch {
+				return
+			}
 			if (window.location.pathname === url.pathname) return
 			if (window.location.hostname !== url.hostname) return
 			event.preventDefault()
-			router.push(url.pathname + url.hash)
+			router.push(url.pathname + url.search + url.hash)
 		},
 	},
 }
