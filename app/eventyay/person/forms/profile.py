@@ -15,6 +15,7 @@ from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
+from eventyay.common.image import clear_avatar_thumbnails
 from eventyay.common.forms.fields import (
     ImageField,
     NewPasswordConfirmationField,
@@ -278,14 +279,10 @@ class SpeakerProfileForm(
             value = self.cleaned_data.get(user_attribute)
             if user_attribute == 'avatar':
                 if value is False:
+                    clear_avatar_thumbnails(self.user)
                     self.user.avatar = None
-                    # Clear thumbnails when removing avatar
-                    self.user.avatar_thumbnail = None
-                    self.user.avatar_thumbnail_tiny = None
                 elif value:
-                    # Clear old thumbnails before assigning new avatar
-                    self.user.avatar_thumbnail = None
-                    self.user.avatar_thumbnail_tiny = None
+                    clear_avatar_thumbnails(self.user)
                     self.user.avatar = value
             elif value is None and user_attribute == 'get_gravatar':
                 # Only reset get_gravatar if the field was actually present on

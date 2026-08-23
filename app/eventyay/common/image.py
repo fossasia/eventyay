@@ -18,6 +18,44 @@ THUMBNAIL_SIZES = {
     'default': (460, 460),
 }
 
+AVATAR_THUMBNAIL_FIELDS = ('avatar_thumbnail', 'avatar_thumbnail_tiny')
+
+
+def thumbnail_matches_avatar(avatar_name, thumbnail_name, size):
+    if not avatar_name or not thumbnail_name or size not in THUMBNAIL_SIZES:
+        return False
+    if str(avatar_name).lower().endswith('.svg'):
+        return False
+    avatar_path = Path(avatar_name)
+    thumbnail_path = Path(thumbnail_name)
+    return (
+        thumbnail_path.stem == f'{avatar_path.stem}_thumbnail_{size}'
+        and thumbnail_path.suffix == avatar_path.suffix
+    )
+
+
+def clear_avatar_thumbnails(instance):
+    """Delete raster thumbnail files when the main avatar is replaced or removed."""
+    for field_name in AVATAR_THUMBNAIL_FIELDS:
+        thumbnail = getattr(instance, field_name, None)
+        if thumbnail:
+            thumbnail.delete(save=False)
+        setattr(instance, field_name, None)
+
+
+def invalidate_speaker_avatar_caches(user):
+    """Drop cached speaker schedule JSON after avatar URLs may have changed."""
+    if not user.code:
+        return
+
+    from eventyay.agenda.views.utils import clear_schedule_caches
+    from eventyay.base.models import Event
+    from eventyay.base.models.profile import SpeakerProfile
+
+    event_ids = SpeakerProfile.objects.filter(user_id=user.pk).values_list('event_id', flat=True)
+    for event in Event.objects.filter(pk__in=event_ids):
+        clear_schedule_caches(event, speaker=user)
+
 gravatar_csp = partial(
     csp_update,
     {
@@ -160,6 +198,13 @@ def get_thumbnail(image, size):
         return image
 
     thumbnail_field = getattr(image.instance, thumbnail_field_name)
-    if not thumbnail_field or not thumbnail_field.storage.exists(thumbnail_field.path):
+    if thumbnail_field and thumbnail_field.name:
+        if not thumbnail_matches_avatar(image.name, thumbnail_field.name, size):
+            thumbnail_field.delete(save=False)
+            setattr(image.instance, thumbnail_field_name, None)
+            thumbnail_field = None
+        elif not thumbnail_field.storage.exists(thumbnail_field.name):
+            thumbnail_field = None
+    if not thumbnail_field:
         return create_thumbnail(image, size)
     return thumbnail_field

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from eventyay.common.image import clear_avatar_thumbnails
+
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions
@@ -228,8 +230,8 @@ class SpeakerUpdateSerializer(SpeakerOrgaSerializer):
             setattr(instance.user, key, value)
             instance.user.save(update_fields=[key])
         if avatar:
-            instance.avatar.save(Path(avatar.name).name, avatar, save=False)
-            instance.save(update_fields=('avatar',))
+            clear_avatar_thumbnails(instance.user)
+            instance.user.avatar.save(Path(avatar.name).name, avatar, save=True)
             instance.user.process_image('avatar', generate_thumbnail=True)
         return instance
 
