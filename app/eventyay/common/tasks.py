@@ -35,10 +35,8 @@ def task_process_image(*, model: str, pk: int, field: str, generate_thumbnail: b
         if not image:
             return
 
-        try:
-            process_image(image=image, generate_thumbnail=generate_thumbnail)
-        except Exception as e:  # pragma: no cover
-            logger.error('Could not process image %s: %s', image.path, e)
+        if not process_image(image=image, generate_thumbnail=generate_thumbnail):
+            logger.error('Could not process image %s', image.name)
 
 
 @app.task(name='pretalx.cleanup_file')

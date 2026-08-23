@@ -67,6 +67,10 @@ export const NETWORKING_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.si
 
 export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
 
+export function getRoomTypeById(id) {
+	return ROOM_TYPES.find(type => type.id === id) || null
+}
+
 export function inferType(config) {
 	const modules = config.module_config.reduce((acc, module) => {
 		acc[module.type] = module

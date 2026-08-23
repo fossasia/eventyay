@@ -44,7 +44,7 @@ from eventyay.base.models import (
     TaxRule,
 )
 from eventyay.common.views.helpers import build_login_url_with_next
-from eventyay.base.models.checkin import CheckinList
+from eventyay.base.models.checkin import Checkin, CheckinList
 from eventyay.base.models.orders import (
     CachedCombinedTicket,
     InvoiceAddress,
@@ -97,6 +97,37 @@ from eventyay.presale.views.robots import NoSearchIndexViewMixin
 logger = logging.getLogger(__name__)
 
 
+def record_video_join_checkin(event, position, include_pending):
+    """Record video-join check-in without blocking repeat JWT redirects."""
+    list_name = gettext('Eventyay Video')
+    if Checkin.objects.filter(
+        position_id=position.pk,
+        list__event=event,
+        list__name=list_name,
+        type=Checkin.TYPE_ENTRY,
+    ).exists():
+        return
+
+    cl = CheckinList.objects.get_or_create(
+        event=event,
+        subevent=position.subevent,
+        name=list_name,
+        defaults={
+            'all_products': True,
+            'include_pending': include_pending,
+        },
+    )[0]
+    try:
+        perform_checkin(position, cl, {})
+    except Exception:
+        logger.exception(
+            'Error during Eventyay Video check-in',
+            extra={
+                'event_id': getattr(event, 'id', None),
+                'position_id': getattr(position, 'id', None),
+            },
+        )
+
 
 class OrderDetailMixin(NoSearchIndexViewMixin):
     @cached_property
@@ -132,7 +163,19 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
                 order__code=self.kwargs['order'],
                 positionid=self.kwargs['position'],
             )
-            .select_related('order', 'order__event')
+            .select_related(
+                'order',
+                'order__event',
+                'product',
+                'product__category',
+                'variation',
+                'subevent',
+            )
+            .prefetch_related(
+                'addons',
+                'addons__product',
+                'addons__variation',
+            )
             .first()
         )
         if p:
@@ -237,26 +280,11 @@ class OrderPositionJoin(OrderProtectedActionMixin, EventViewMixin, OrderPosition
 
         token = jwt.encode(payload, request.event.settings.venueless_secret, algorithm='HS256')
 
-        cl = CheckinList.objects.get_or_create(
-            event=request.event,
-            subevent=self.position.subevent,
-            name=gettext('Eventyay Video'),
-            defaults={
-                'all_products': True,
-                'include_pending': request.event.settings.venueless_allow_pending,
-            },
-        )[0]
-        try:
-            perform_checkin(self.position, cl, {})
-        except Exception:
-            logger.exception(
-                'Error during Eventyay Video check-in',
-                extra={
-                    'event_id': getattr(request.event, 'id', None),
-                    'order_code': getattr(getattr(self, 'order', None), 'code', None),
-                    'position_id': getattr(self.position, 'id', None),
-                },
-            )
+        record_video_join_checkin(
+            request.event,
+            self.position,
+            request.event.settings.venueless_allow_pending,
+        )
 
         if kwargs.get('view_schedule') == 'True':
             redirect_url = request.event.settings.venueless_talk_schedule_url

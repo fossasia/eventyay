@@ -41,6 +41,39 @@ function getApiBase () {
 	return config?.api?.base || ''
 }
 
+function getScheduleWidgetUrls () {
+	const eventUrl = window.eventyay?.eventUrl || ''
+	if (!eventUrl) return []
+	const base = eventUrl.endsWith('/') ? eventUrl : `${eventUrl}/`
+	const version = window.eventyay?.scheduleMeta?.version
+	const versionPath = version ? `v/${encodeURIComponent(version)}/` : ''
+	return [
+		`${base}schedule/${versionPath}widgets/schedule.json?enrich=1`,
+		`${base}schedule/${versionPath}widget/v2.json?enrich=1`,
+	]
+}
+
+async function fetchVideoSchedule () {
+	for (const url of getScheduleWidgetUrls()) {
+		let response
+		try {
+			response = await fetch(url, { credentials: 'same-origin' })
+		} catch {
+			continue
+		}
+		if (response.status === 404) return null
+		if (!response.ok) continue
+		try {
+			const data = await response.json()
+			if (data?.schedule_unavailable) return null
+			return data
+		} catch {
+			continue
+		}
+	}
+	return null
+}
+
 // Listen for cross-tab localStorage changes so favs stay in sync when the
 // user stars/unstars sessions in the schedule (agenda) tab.
 let _storageListenerBound = false
@@ -231,6 +264,11 @@ export default {
 				commit('setErrorLoading', null)
 				if (window.eventyay?.schedule) {
 					commit('setSchedule', window.eventyay.schedule)
+				} else {
+					const data = await fetchVideoSchedule()
+					if (data) {
+						commit('setSchedule', data)
+					}
 				}
 				if (window.eventyay?.scheduleMeta) {
 					commit('setScheduleMeta', window.eventyay.scheduleMeta)
