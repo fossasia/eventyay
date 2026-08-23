@@ -372,11 +372,14 @@ def recompress_image_field(image, *, generate_thumbnail=False):
     except Exception:
         new_size = None
 
+    size_kb = f'{size / 1024:.2f} KB'
+    new_size_kb = f'{new_size / 1024:.2f} KB' if isinstance(new_size, int) else 'unknown'
+
     logger.info(
-        'Recompressed image %s (%s -> %s bytes)',
+        'Recompressed image %s (%s -> %s)',
         image.name,
-        size,
-        new_size if new_size is not None else 'unknown',
+        size_kb,
+        new_size_kb,
     )
     return True
 

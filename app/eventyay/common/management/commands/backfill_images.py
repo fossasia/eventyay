@@ -81,8 +81,9 @@ class Command(BaseCommand):
 
                     if dry_run:
                         stats['dry_run'] += 1
+                        location = getattr(image, 'path', 'remote storage')
                         self.stdout.write(
-                            f'WOULD compress {model.__name__} pk={instance.pk} file={image.name} size={size}'
+                            f'WOULD compress {model.__name__} pk={instance.pk} name={image.name} location={location} size={size / 1024:.2f} KB'
                         )
                         continue
 
@@ -90,9 +91,18 @@ class Command(BaseCommand):
                         stats['compressed'] += 1
                         if model is User:
                             invalidate_speaker_avatar_caches(instance)
+                        try:
+                            new_size = image.size
+                        except Exception:
+                            new_size = 'unknown'
+                        location = getattr(image, 'path', 'remote storage')
+                        
+                        size_kb = f'{size / 1024:.2f} KB'
+                        new_size_kb = f'{new_size / 1024:.2f} KB' if isinstance(new_size, int) else 'unknown'
+                        
                         self.stdout.write(
                             self.style.SUCCESS(
-                                f'Compressed {model.__name__} pk={instance.pk} file={image.name} ({size} bytes)'
+                                f'Compressed {model.__name__} pk={instance.pk} name={image.name} location={location} (size: {size_kb} -> {new_size_kb})'
                             )
                         )
                     else:
