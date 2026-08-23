@@ -20,15 +20,8 @@ from eventyay.common.forms.widgets import (
     RichTextWidget,
 )
 from eventyay.common.sanitizers import sanitize_email_html, sanitize_rich_text
+from eventyay.common.image import IMAGE_EXTENSIONS, validate_image
 from eventyay.common.templatetags.filesize import filesize
-
-IMAGE_EXTENSIONS = {
-    '.png': ['image/png', '.png'],
-    '.jpg': ['image/jpeg', '.jpg'],
-    '.jpeg': ['image/jpeg', '.jpeg'],
-    '.gif': ['image/gif', '.gif'],
-    '.svg': ['image/svg+xml', '.svg'],
-}
 
 
 class GlobalValidator:
@@ -125,6 +118,12 @@ class ExtensionFileField(ExtensionFileInput, SizeFileInput, FileField):
 class ImageField(ExtensionFileInput, SizeFileInput, FileField):
     widget = ImageInput
     extensions = IMAGE_EXTENSIONS
+
+    def clean(self, value, initial=None):
+        value = super().clean(value, initial)
+        if value:
+            validate_image(value)
+        return value
 
 
 class RichTextField(CharField):

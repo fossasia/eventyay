@@ -107,3 +107,16 @@ def test_optimize_uploaded_image_preserves_animated_gif():
     assert opt_img.size == (4000, 4000)
     assert getattr(opt_img, 'is_animated', False)
     assert result.optimized_ext == 'gif'
+
+def test_optimize_uploaded_image_bypasses_svg():
+    svg_content = b'<svg width="10" height="10"></svg>'
+    upload = SimpleUploadedFile(
+        name='test.svg',
+        content=svg_content,
+        content_type='image/svg+xml',
+    )
+    result = optimize_uploaded_image(upload, 'logo_image')
+    assert result.optimized_ext == 'svg'
+    assert result.original_ext == 'svg'
+    assert result.optimized.read() == svg_content
+    assert result.original.read() == svg_content
