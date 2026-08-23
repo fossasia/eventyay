@@ -10,6 +10,7 @@ from eventyay.common.image import (
     create_thumbnail,
     get_thumbnail,
     process_image,
+    recompress_image_field,
     thumbnail_matches_avatar,
     validate_image,
 )
@@ -172,6 +173,11 @@ def test_noisy_jpeg_compression_and_thumbs(tmp_path):
     
     assert tiny_size < 20000, f"Tiny thumb is {tiny_size} bytes, expected < 20000"
     assert default_size < 80000, f"Default thumb is {default_size} bytes, expected < 80000"
+
+
+def test_recompress_image_field_skips_svg():
+    image = DummyImage('avatar.svg')
+    assert recompress_image_field(image) is False
 
 
 def test_create_thumbnail_svg():

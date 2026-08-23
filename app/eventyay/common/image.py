@@ -205,6 +205,21 @@ def validate_image(f):
         f.seek(0)
 
 
+def _open_raster_image(image):
+    if getattr(image, 'path', None):
+        opened = Image.open(image.path)
+        opened.load()
+        return opened
+
+    file_obj = image.open('rb')
+    try:
+        opened = Image.open(file_obj)
+        opened.load()
+        return opened
+    finally:
+        file_obj.close()
+
+
 def process_image(*, image, generate_thumbnail=False):
     """
     This function receives an image that has been uploaded, and processes it
@@ -215,9 +230,9 @@ def process_image(*, image, generate_thumbnail=False):
         return
 
     try:
-        img = Image.open(image)
+        img = _open_raster_image(image)
     except Exception:
-        logger.exception("Failed to process image")
+        logger.exception('Failed to process image %s', getattr(image, 'name', image))
         return
 
     if getattr(img, 'is_animated', False):
@@ -278,10 +293,9 @@ def create_thumbnail(image, size):
         return None
 
     try:
-        img = Image.open(image, formats=RASTER_THUMBNAIL_FORMATS)
-        img.load()
+        img = _open_raster_image(image)
     except Exception:
-        logger.exception("Thumbnail creation failed")
+        logger.exception('Thumbnail creation failed for %s', getattr(image, 'name', image))
 
         return None
     img.thumbnail(THUMBNAIL_SIZES[size], resample=Resampling.LANCZOS)
@@ -307,6 +321,47 @@ def create_thumbnail(image, size):
         ContentFile(img_byte_array.getvalue()),
     )
     return thumbnail_field
+
+
+def recompress_image_field(image, *, generate_thumbnail=False):
+    """
+    Re-run raster compression and optional thumbnail generation in-place.
+
+    Returns True when the file was processed, False when skipped or failed.
+    """
+    if not image or not getattr(image, 'name', None):
+        return False
+    if is_svg_filename(image.name):
+        return False
+
+    try:
+        size = image.size
+    except Exception:
+        logger.exception('Could not read size for image %s', image.name)
+        return False
+
+    if not getattr(image, 'path', None):
+        logger.warning('Skipping in-place compression for remote-only image %s', image.name)
+        return False
+
+    try:
+        process_image(image=image, generate_thumbnail=generate_thumbnail)
+    except Exception:
+        logger.exception('Failed to recompress image %s', image.name)
+        return False
+
+    try:
+        new_size = image.size
+    except Exception:
+        new_size = None
+
+    logger.info(
+        'Recompressed image %s (%s -> %s bytes)',
+        image.name,
+        size,
+        new_size if new_size is not None else 'unknown',
+    )
+    return True
 
 
 def get_thumbnail(image, size):
