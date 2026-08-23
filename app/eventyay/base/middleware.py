@@ -343,6 +343,7 @@ class SecurityMiddleware(MiddlewareMixin):
             + img_src,
             'font-src': [
                 '{static}',
+                'data:',
                 'https://fonts.gstatic.com',  # fix Google Fonts
                 *vite_http,
             ],
