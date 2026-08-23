@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from eventyay.common.image import clear_avatar_thumbnails
+from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS, clear_avatar_thumbnails, validate_image
 
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
@@ -221,6 +221,18 @@ class SpeakerOrgaSerializer(AvailabilitiesMixin, SpeakerSerializer):
 @register_serializer(versions=CURRENT_VERSIONS)
 class SpeakerUpdateSerializer(SpeakerOrgaSerializer):
     avatar = UploadedFileField(required=False, source='speaker.user')
+
+    def validate_avatar(self, avatar):
+        if not avatar:
+            return avatar
+        extension = Path(avatar.name).suffix.lower()
+        if extension not in ALLOWED_IMAGE_EXTENSIONS:
+            allowed_formats = ', '.join(sorted(ALLOWED_IMAGE_EXTENSIONS))
+            raise exceptions.ValidationError(
+                f"The file type '{extension}' is not supported. Please upload one of: {allowed_formats}."
+            )
+        validate_image(avatar)
+        return avatar
 
     def update(self, instance, validated_data):
         avatar = validated_data.pop('avatar', None)

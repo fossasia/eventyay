@@ -1,9 +1,11 @@
 import logging
+import re
 from functools import partial
 from io import BytesIO
 from pathlib import Path
 
 from csp.decorators import csp_update
+from defusedxml import ElementTree as DefusedElementTree
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
@@ -11,12 +13,39 @@ from django.utils.translation import gettext_lazy as _
 from PIL import Image, ImageOps
 from PIL.Image import MAX_IMAGE_PIXELS, DecompressionBombError, Resampling
 
+from eventyay.common.templatetags.filesize import filesize
+
 logger = logging.getLogger(__name__)
 
 THUMBNAIL_SIZES = {
     'tiny': (64, 64),
     'default': (460, 460),
 }
+
+IMAGE_EXTENSIONS = {
+    '.png': ['image/png', '.png'],
+    '.jpg': ['image/jpeg', '.jpg'],
+    '.jpeg': ['image/jpeg', '.jpeg'],
+    '.gif': ['image/gif', '.gif'],
+    '.svg': ['image/svg+xml', '.svg'],
+    '.webp': ['image/webp', '.webp'],
+}
+
+ALLOWED_IMAGE_EXTENSIONS = frozenset(IMAGE_EXTENSIONS)
+
+RASTER_THUMBNAIL_FORMATS = ('PNG', 'JPEG', 'GIF', 'WEBP')
+
+FORBIDDEN_SVG_TAGS = frozenset(
+    {
+        'script',
+        'foreignobject',
+        'iframe',
+        'embed',
+        'object',
+        'audio',
+        'video',
+    }
+)
 
 AVATAR_THUMBNAIL_FIELDS = ('avatar_thumbnail', 'avatar_thumbnail_tiny')
 
@@ -65,9 +94,74 @@ gravatar_csp = partial(
 )
 
 
+def is_svg_filename(filename):
+    return str(filename).lower().endswith('.svg')
+
+
+def _read_uploaded_file(f):
+    if hasattr(f, 'temporary_file_path'):
+        with open(f.temporary_file_path(), 'rb') as uploaded:
+            return uploaded.read()
+    if hasattr(f, 'read'):
+        if hasattr(f, 'seek') and callable(f.seek):
+            f.seek(0)
+        content = f.read()
+        if hasattr(f, 'seek') and callable(f.seek):
+            f.seek(0)
+        return content
+    return f['content']
+
+
+def _svg_local_tag(tag):
+    return tag.rsplit('}', 1)[-1].lower()
+
+
+def _validate_svg_content(content):
+    max_size = getattr(settings, 'IMAGE_SVG_MAX_SIZE', 1024 * 1024)
+    if len(content) > max_size:
+        raise ValidationError(
+            _('SVG files must be smaller than {size}. Please simplify the image or upload a PNG/JPEG instead.').format(
+                size=filesize(max_size),
+            )
+        )
+
+    lowered = content.lower()
+    if b'<script' in lowered or b'javascript:' in lowered:
+        raise ValidationError(_('This SVG file contains disallowed content and cannot be uploaded.'))
+
+    try:
+        root = DefusedElementTree.fromstring(content)
+    except DefusedElementTree.ParseError as exc:
+        raise ValidationError(
+            _('Upload a valid SVG image. The file you uploaded was either not an SVG or a corrupted SVG.')
+        ) from exc
+
+    if _svg_local_tag(root.tag) != 'svg':
+        raise ValidationError(
+            _('Upload a valid SVG image. The file you uploaded was either not an SVG or a corrupted SVG.')
+        )
+
+    for element in root.iter():
+        if _svg_local_tag(element.tag) in FORBIDDEN_SVG_TAGS:
+            raise ValidationError(_('This SVG file contains disallowed content and cannot be uploaded.'))
+        for attr_name, attr_value in element.attrib.items():
+            attr_name_lower = attr_name.lower()
+            if attr_name_lower.startswith('on'):
+                raise ValidationError(_('This SVG file contains disallowed content and cannot be uploaded.'))
+            if attr_name_lower in {'href', 'xlink:href'} and re.match(
+                r'^\s*javascript:', attr_value, flags=re.IGNORECASE
+            ):
+                raise ValidationError(_('This SVG file contains disallowed content and cannot be uploaded.'))
+
+
 def validate_image(f):
     if f is None:
         return None
+
+    filename = getattr(f, 'name', '')
+    if is_svg_filename(filename):
+        _validate_svg_content(_read_uploaded_file(f))
+        return
 
     if hasattr(f, 'temporary_file_path'):
         file = f.temporary_file_path()
@@ -78,13 +172,9 @@ def validate_image(f):
     else:
         file = BytesIO(f['content'])
 
-    filename = getattr(f, 'name', '')
-    if str(filename).lower().endswith('.svg'):
-        return
-
     try:
         try:
-            formats = getattr(settings, 'PILLOW_FORMATS_QUESTIONS_IMAGE', None)
+            formats = getattr(settings, 'PILLOW_FORMATS_QUESTIONS_IMAGE', None) or RASTER_THUMBNAIL_FORMATS
             image = Image.open(file, formats=formats)
             # verify() must be called immediately after the constructor.
             image.verify()
@@ -120,13 +210,19 @@ def process_image(*, image, generate_thumbnail=False):
     by reducing its file size and stripping its metadata.
     Image must be an ImageFieldFile, e.g. user.avatar.
     """
-    if str(image.name).lower().endswith('.svg'):
+    if is_svg_filename(image.name):
         return
 
     try:
         img = Image.open(image)
     except Exception:
         logger.exception("Failed to process image")
+        return
+
+    if getattr(img, 'is_animated', False):
+        if generate_thumbnail:
+            for size in THUMBNAIL_SIZES:
+                create_thumbnail(image, size)
         return
 
     extension = '.jpg'
@@ -166,11 +262,11 @@ def create_thumbnail(image, size):
     if not image.instance._meta.get_field(thumbnail_field_name):
         return
 
-    if str(image.name).lower().endswith('.svg'):
+    if is_svg_filename(image.name):
         return None
 
     try:
-        img = Image.open(image, formats=('PNG', 'JPEG', 'GIF'))
+        img = Image.open(image, formats=RASTER_THUMBNAIL_FORMATS)
         img.load()
     except Exception:
         logger.exception("Thumbnail creation failed")
@@ -194,7 +290,7 @@ def get_thumbnail(image, size):
     if not (image.instance._meta.get_field(thumbnail_field_name)):
         return image
 
-    if str(image.name).lower().endswith('.svg'):
+    if is_svg_filename(image.name):
         return image
 
     thumbnail_field = getattr(image.instance, thumbnail_field_name)

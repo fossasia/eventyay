@@ -16,6 +16,7 @@ from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.image import clear_avatar_thumbnails
+from eventyay.common.templatetags.filesize import filesize
 from eventyay.common.forms.fields import (
     ImageField,
     NewPasswordConfirmationField,
@@ -202,6 +203,15 @@ class SpeakerProfileForm(
             if 'avatar' in self.fields:
                 self.fields['avatar'].required = False
                 self.fields['avatar'].widget.is_required = False
+                svg_limit = filesize(getattr(settings, 'IMAGE_SVG_MAX_SIZE', 1024 * 1024))
+                self.fields['avatar'].help_text = ' '.join(
+                    part
+                    for part in (
+                        self.fields['avatar'].help_text,
+                        _('SVG files are limited to {size}.').format(size=svg_limit),
+                    )
+                    if part
+                )
 
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
