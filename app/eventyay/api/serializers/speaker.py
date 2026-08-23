@@ -236,6 +236,11 @@ class SpeakerUpdateSerializer(SpeakerOrgaSerializer):
 
     def update(self, instance, validated_data):
         avatar = validated_data.pop('avatar', None)
+        if not avatar and 'speaker' in validated_data and 'user' in validated_data['speaker']:
+            avatar = validated_data['speaker'].pop('user', None)
+        if not avatar and 'user' in validated_data and 'avatar' in validated_data['user']:
+            avatar = validated_data['user'].pop('avatar', None)
+
         user_fields = validated_data.pop('user', None) or {}
         instance = super().update(instance, validated_data)
         for key, value in user_fields.items():

@@ -61,9 +61,14 @@ def get_sizes(size, imgsize):
 
 def create_thumbnail(sourcename, size):
     if str(sourcename).lower().endswith('.svg'):
+        source = default_storage.open(sourcename)
+        content = source.read()
+        
+        checksum = hashlib.md5(content).hexdigest()
+        name = checksum + '.' + size.replace('^', 'c') + '.svg'
+        
         t = Thumbnail.objects.create(source=sourcename, size=size)
-        t.thumb.name = sourcename
-        t.save(update_fields=['thumb'])
+        t.thumb.save(name, ContentFile(content))
         return t
 
     source = default_storage.open(sourcename)

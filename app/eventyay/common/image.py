@@ -57,10 +57,7 @@ def thumbnail_matches_avatar(avatar_name, thumbnail_name, size):
         return False
     avatar_path = Path(avatar_name)
     thumbnail_path = Path(thumbnail_name)
-    return (
-        thumbnail_path.stem == f'{avatar_path.stem}_thumbnail_{size}'
-        and thumbnail_path.suffix == avatar_path.suffix
-    )
+    return thumbnail_path.stem == f'{avatar_path.stem}_thumbnail_{size}'
 
 
 def clear_avatar_thumbnails(instance):
@@ -80,9 +77,13 @@ def invalidate_speaker_avatar_caches(user):
     from eventyay.agenda.views.utils import clear_schedule_caches
     from eventyay.base.models import Event
     from eventyay.base.models.profile import SpeakerProfile
+    from django_scopes import scopes_disabled
 
-    event_ids = SpeakerProfile.objects.filter(user_id=user.pk).values_list('event_id', flat=True)
-    for event in Event.objects.filter(pk__in=event_ids):
+    with scopes_disabled():
+        event_ids = list(SpeakerProfile.objects.filter(user_id=user.pk).values_list('event_id', flat=True))
+        events = list(Event.objects.filter(pk__in=event_ids))
+
+    for event in events:
         clear_schedule_caches(event, speaker=user)
 
 gravatar_csp = partial(
@@ -145,11 +146,11 @@ def _validate_svg_content(content):
         if _svg_local_tag(element.tag) in FORBIDDEN_SVG_TAGS:
             raise ValidationError(_('This SVG file contains disallowed content and cannot be uploaded.'))
         for attr_name, attr_value in element.attrib.items():
-            attr_name_lower = attr_name.lower()
+            attr_name_lower = _svg_local_tag(attr_name)
             if attr_name_lower.startswith('on'):
                 raise ValidationError(_('This SVG file contains disallowed content and cannot be uploaded.'))
-            if attr_name_lower in {'href', 'xlink:href'} and re.match(
-                r'^\s*javascript:', attr_value, flags=re.IGNORECASE
+            if attr_name_lower in {'href', 'src', 'xlink:href'} and re.match(
+                r'^\s*(javascript|data):', attr_value, flags=re.IGNORECASE
             ):
                 raise ValidationError(_('This SVG file contains disallowed content and cannot be uploaded.'))
 
@@ -225,10 +226,13 @@ def process_image(*, image, generate_thumbnail=False):
                 create_thumbnail(image, size)
         return
 
-    extension = '.jpg'
-    if img.mode.lower() in ('rgba', 'la', 'pa'):
-        extension = '.png'
-    elif img.mode != 'RGB':
+    extension = Path(image.name).suffix.lower()
+    if extension not in ('.jpg', '.jpeg', '.png', '.webp'):
+        extension = '.jpg'
+        if img.mode.lower() in ('rgba', 'la', 'pa'):
+            extension = '.png'
+
+    if extension in ('.jpg', '.jpeg') and img.mode != 'RGB':
         img = img.convert('RGB')
 
     img_without_exif = Image.new(img.mode, img.size)
@@ -241,7 +245,15 @@ def process_image(*, image, generate_thumbnail=False):
     img_without_exif.thumbnail(max_dimensions, resample=Resampling.LANCZOS)
 
     # Overwrite the original image with the processed one
-    img_without_exif.save(image.path, quality='web_high' if extension == '.jpg' else 95)
+    save_kwargs = {}
+    if extension in ('.jpg', '.jpeg'):
+        save_kwargs = {'quality': 'web_high'}
+    elif extension == '.webp':
+        save_kwargs = {'quality': 95}
+    elif extension == '.png':
+        save_kwargs = {'optimize': True}
+
+    img_without_exif.save(image.path, **save_kwargs)
 
     if generate_thumbnail:
         for size in THUMBNAIL_SIZES:
@@ -274,10 +286,22 @@ def create_thumbnail(image, size):
         return None
     img.thumbnail(THUMBNAIL_SIZES[size], resample=Resampling.LANCZOS)
     thumbnail_field = getattr(image.instance, thumbnail_field_name)
-    thumbnail_name = Path(image.name).stem + f'_thumbnail_{size}' + Path(image.name).suffix
+
+    extension = '.jpg'
+    save_format = 'JPEG'
+    save_kwargs = {'quality': 80, 'progressive': True, 'optimize': True}
+
+    if img.mode.lower() in ('rgba', 'la', 'pa'):
+        extension = '.png'
+        save_format = 'PNG'
+        save_kwargs = {'optimize': True}
+    elif img.mode != 'RGB':
+        img = img.convert('RGB')
+
+    thumbnail_name = Path(image.name).stem + f'_thumbnail_{size}' + extension
     # Write the image to a BytesIO object
     img_byte_array = BytesIO()
-    img.save(img_byte_array, format=img.format)
+    img.save(img_byte_array, format=save_format, **save_kwargs)
     thumbnail_field.save(
         thumbnail_name,
         ContentFile(img_byte_array.getvalue()),

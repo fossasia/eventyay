@@ -53,6 +53,15 @@ def test_validate_image_svg_rejects_script():
     with pytest.raises(ValidationError, match='disallowed content'):
         validate_image(upload)
 
+def test_validate_image_svg_rejects_data_uri():
+    svg_content = b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><a xlink:href="data:text/html,test">test</a></svg>'
+    upload = SimpleUploadedFile(
+        name='data.svg',
+        content=svg_content,
+        content_type='image/svg+xml',
+    )
+    with pytest.raises(ValidationError, match='disallowed content'):
+        validate_image(upload)
 
 def test_validate_image_webp():
     try:
@@ -94,6 +103,77 @@ def test_process_image_svg():
     # Should return early without exceptions
     process_image(image=image, generate_thumbnail=True)
 
+def test_process_image_webp(tmp_path):
+    from PIL import Image
+    image_path = tmp_path / 'avatar.webp'
+    img = Image.new('RGB', (800, 800), color='red')
+    img.save(image_path, format='WEBP')
+
+    class DummyImageFile:
+        def __init__(self, path):
+            self.path = str(path)
+            self.name = 'avatar.webp'
+
+    process_image(image=DummyImageFile(image_path), generate_thumbnail=False)
+    
+    processed = Image.open(image_path)
+    assert processed.format == 'WEBP'
+
+def test_noisy_jpeg_compression_and_thumbs(tmp_path):
+    from PIL import Image
+    import os
+    import random
+    
+    image_path = tmp_path / 'avatar.jpg'
+    img = Image.new('RGB', (2000, 2000))
+    # generate a somewhat noisy image to prevent over-compression by solid colors
+    # we don't need a full loop, just random blocks is enough to simulate detail
+    import PIL.ImageDraw as ImageDraw
+    draw = ImageDraw.Draw(img)
+    for i in range(100):
+        x0 = random.randint(0, 1900)
+        y0 = random.randint(0, 1900)
+        draw.rectangle([x0, y0, x0+100, y0+100], fill=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+        
+    img.save(image_path, format='JPEG', quality=100)
+    
+    original_size = os.path.getsize(image_path)
+    
+    class DummyFieldSave:
+        def __init__(self, name):
+            self.name = name
+            
+        def save(self, name, content):
+            with open(tmp_path / name, 'wb') as f:
+                f.write(content.read())
+
+    class DummyInstanceSave:
+        _meta = DummyMeta()
+        def __init__(self):
+            self.avatar_thumbnail_tiny = DummyFieldSave('avatar_thumbnail_tiny')
+            self.avatar_thumbnail = DummyFieldSave('avatar_thumbnail')
+            self.avatar_thumbnail_tiny_thumbnail_tiny = DummyFieldSave('dummy') # satisfy hasattr check
+
+    class DummyImageFileSave:
+        def __init__(self, path):
+            self.path = str(path)
+            self.name = 'avatar.jpg'
+            self.instance = DummyInstanceSave()
+            self.field = DummyField('avatar')
+
+    dummy_image = DummyImageFileSave(image_path)
+    process_image(image=dummy_image, generate_thumbnail=True)
+    
+    processed_size = os.path.getsize(image_path)
+    assert processed_size < original_size
+    
+    tiny_size = os.path.getsize(tmp_path / 'avatar_thumbnail_tiny.jpg')
+    default_size = os.path.getsize(tmp_path / 'avatar_thumbnail_default.jpg')
+    
+    assert tiny_size < 20000, f"Tiny thumb is {tiny_size} bytes, expected < 20000"
+    assert default_size < 80000, f"Default thumb is {default_size} bytes, expected < 80000"
+
+
 def test_create_thumbnail_svg():
     image = DummyImage('avatar.svg')
     thumb = create_thumbnail(image, 'tiny')
@@ -109,6 +189,7 @@ def test_thumbnail_matches_avatar():
     assert thumbnail_matches_avatar('avatars/ab/CODE.png', 'avatars/cd/CODE_thumbnail_tiny.png', 'tiny')
     assert not thumbnail_matches_avatar('avatars/ab/CODE.svg', 'avatars/cd/CODE_thumbnail_tiny.png', 'tiny')
     assert not thumbnail_matches_avatar('avatars/ab/CODE.png', 'avatars/cd/OLD_thumbnail_tiny.png', 'tiny')
+    assert thumbnail_matches_avatar('avatars/ab/CODE.png', 'avatars/cd/CODE_thumbnail_tiny.jpg', 'tiny')
 
 
 class DummyThumbnailField:
