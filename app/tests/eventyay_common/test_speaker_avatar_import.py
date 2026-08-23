@@ -3,7 +3,7 @@ import datetime as dt
 from unittest.mock import MagicMock, patch
 
 import pytest
-from django_scopes import scope, scopes_disabled
+from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, User
 from eventyay.base.services.talkimport import (
@@ -16,6 +16,8 @@ from eventyay.base.services.talkimport import (
 @pytest.fixture
 def _event():
     with scopes_disabled():
+        from django.utils.timezone import now
+
         from eventyay.base.models.organizer import Organizer, Team
 
         org = Organizer.objects.create(name='Test Org', slug='testorg')
@@ -28,7 +30,7 @@ def _event():
             can_change_event_settings=True,
             can_change_submissions=True,
         )
-        today = dt.date.today()
+        today = now()
         event = Event.objects.create(
             name='Avatar Import Test',
             is_public=True,
