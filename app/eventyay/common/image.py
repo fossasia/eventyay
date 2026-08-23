@@ -35,6 +35,8 @@ ALLOWED_IMAGE_EXTENSIONS = frozenset(IMAGE_EXTENSIONS)
 
 RASTER_THUMBNAIL_FORMATS = ('PNG', 'JPEG', 'GIF', 'WEBP')
 
+REWRITABLE_ORIGINAL_EXTENSIONS = frozenset({'.jpg', '.jpeg', '.png', '.webp'})
+
 FORBIDDEN_SVG_TAGS = frozenset(
     {
         'script',
@@ -220,36 +222,7 @@ def _open_raster_image(image):
         file_obj.close()
 
 
-def process_image(*, image, generate_thumbnail=False):
-    """
-    This function receives an image that has been uploaded, and processes it
-    by reducing its file size and stripping its metadata.
-    Image must be an ImageFieldFile, e.g. user.avatar.
-    """
-    if is_svg_filename(image.name):
-        return
-
-    try:
-        img = _open_raster_image(image)
-    except Exception:
-        logger.exception('Failed to process image %s', getattr(image, 'name', image))
-        return
-
-    if getattr(img, 'is_animated', False):
-        if generate_thumbnail:
-            for size in THUMBNAIL_SIZES:
-                create_thumbnail(image, size)
-        return
-
-    extension = Path(image.name).suffix.lower()
-    if extension not in ('.jpg', '.jpeg', '.png', '.webp'):
-        extension = '.jpg'
-        if img.mode.lower() in ('rgba', 'la', 'pa'):
-            extension = '.png'
-
-    if extension in ('.jpg', '.jpeg') and img.mode != 'RGB':
-        img = img.convert('RGB')
-
+def _prepare_original_image(img):
     img_without_exif = Image.new(img.mode, img.size)
     img_without_exif.putdata(img.getdata())
     max_dimensions = (
@@ -258,21 +231,66 @@ def process_image(*, image, generate_thumbnail=False):
     )
     img_without_exif = ImageOps.exif_transpose(img_without_exif)
     img_without_exif.thumbnail(max_dimensions, resample=Resampling.LANCZOS)
+    return img_without_exif
 
-    # Overwrite the original image with the processed one
-    save_kwargs = {}
+
+def _original_save_params(extension, img):
     if extension in ('.jpg', '.jpeg'):
-        save_kwargs = {'quality': 'web_high'}
-    elif extension == '.webp':
-        save_kwargs = {'quality': 95}
-    elif extension == '.png':
-        save_kwargs = {'optimize': True}
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        return img, 'JPEG', {'quality': 85, 'optimize': True, 'progressive': True}
+    if extension == '.webp':
+        return img, 'WEBP', {'quality': 95}
+    if extension == '.png':
+        return img, 'PNG', {'optimize': True}
+    raise ValueError(f'Unsupported original extension: {extension}')
 
-    img_without_exif.save(image.path, **save_kwargs)
+
+def _generate_thumbnails(image):
+    for size in THUMBNAIL_SIZES:
+        create_thumbnail(image, size)
+
+
+def process_image(*, image, generate_thumbnail=False):
+    """
+    This function receives an image that has been uploaded, and processes it
+    by reducing its file size and stripping its metadata.
+    Image must be an ImageFieldFile, e.g. user.avatar.
+
+    Returns True when processing completed (including intentional skips such as
+    animated GIF originals), False when the image could not be processed.
+    """
+    if is_svg_filename(image.name):
+        return False
+
+    try:
+        img = _open_raster_image(image)
+    except Exception:
+        logger.exception('Failed to process image %s', getattr(image, 'name', image))
+        return False
+
+    if getattr(img, 'is_animated', False):
+        if generate_thumbnail:
+            _generate_thumbnails(image)
+        return True
+
+    extension = Path(image.name).suffix.lower()
+    if extension not in REWRITABLE_ORIGINAL_EXTENSIONS:
+        if generate_thumbnail:
+            _generate_thumbnails(image)
+        return True
+
+    try:
+        prepared = _prepare_original_image(img)
+        prepared, save_format, save_kwargs = _original_save_params(extension, prepared)
+        prepared.save(image.path, format=save_format, **save_kwargs)
+    except Exception:
+        logger.exception('Failed to save processed image %s', getattr(image, 'name', image))
+        return False
 
     if generate_thumbnail:
-        for size in THUMBNAIL_SIZES:
-            create_thumbnail(image, size)
+        _generate_thumbnails(image)
+    return True
 
 
 def get_thumbnail_field_name(image, size):
@@ -344,10 +362,9 @@ def recompress_image_field(image, *, generate_thumbnail=False):
         logger.warning('Skipping in-place compression for remote-only image %s', image.name)
         return False
 
-    try:
-        process_image(image=image, generate_thumbnail=generate_thumbnail)
-    except Exception:
-        logger.exception('Failed to recompress image %s', image.name)
+    processed = process_image(image=image, generate_thumbnail=generate_thumbnail)
+    if not processed:
+        logger.error('Failed to recompress image %s', image.name)
         return False
 
     try:

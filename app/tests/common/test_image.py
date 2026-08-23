@@ -101,8 +101,35 @@ class DummyImage:
 
 def test_process_image_svg():
     image = DummyImage('avatar.svg')
-    # Should return early without exceptions
-    process_image(image=image, generate_thumbnail=True)
+    assert process_image(image=image, generate_thumbnail=True) is False
+
+
+def test_process_image_gif_skips_original_rewrite(tmp_path):
+    from PIL import Image
+
+    image_path = tmp_path / 'avatar.gif'
+    img = Image.new('RGB', (400, 400), color='green')
+    img.save(image_path, format='GIF')
+
+    class DummyImageFile:
+        def __init__(self, path):
+            self.path = str(path)
+            self.name = 'avatar.gif'
+
+    assert process_image(image=DummyImageFile(image_path), generate_thumbnail=False) is True
+    assert Image.open(image_path).format == 'GIF'
+
+
+def test_recompress_image_field_returns_false_when_processing_fails():
+    class BrokenImage:
+        name = 'avatar.jpg'
+        path = '/does/not/exist/avatar.jpg'
+
+        @property
+        def size(self):
+            return 1024 * 1024
+
+    assert recompress_image_field(BrokenImage()) is False
 
 def test_process_image_webp(tmp_path):
     from PIL import Image
