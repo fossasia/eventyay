@@ -30,7 +30,7 @@ from rest_framework.views import APIView
 
 from eventyay.api.auth.permission import EventPermission
 from eventyay.api.documentation import build_expand_docs, build_search_docs
-from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.mixins import CachedCatalogListMixin, PretalxViewSetMixin, prefetch_submission_relations
 from eventyay.api.serializers.legacy import (
     LegacySubmissionOrgaSerializer,
     LegacySubmissionReviewerSerializer,
@@ -352,33 +352,19 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         if not self.event:
             # This is just during api doc creation
             return self.queryset
-        queryset = (
-            submissions_for_user(self.event, self.request.user)
-            .select_related("event", "track", "submission_type")
-            .prefetch_related("speakers", "slots")
-            .order_by("code")
+        queryset = submissions_for_user(self.event, self.request.user).order_by('code')
+        expanded_fields = list(
+            self.check_expanded_fields(
+                'speakers.user',
+                'answers.question',
+                'answers.question.tracks',
+                'answers.question.submission_types',
+                'slots.room',
+                'answers',
+                'resources',
+            )
         )
-        if self.check_expanded_fields("speakers.user"):
-            queryset = queryset.prefetch_related("speakers__profiles")
-        # answers: the serializer filters via .filter(question__event=…) which
-        # crosses a FK boundary and bypasses the prefetch cache unless question
-        # is also prefetched.  Only add the prefetch when the expand is present.
-        if fields := self.check_expanded_fields(
-            "answers.question",
-            "answers.question.tracks",
-            "answers.question.submission_types",
-            "slots.room",
-        ):
-            prefetch_fields = [field.replace(".", "__") for field in fields]
-            # "answers.question" implies we need answers prefetched first.
-            if any(f.startswith("answers") for f in prefetch_fields):
-                prefetch_fields = ["answers"] + prefetch_fields
-            queryset = queryset.prefetch_related(*prefetch_fields)
-        elif self.check_expanded_fields("answers"):
-            queryset = queryset.prefetch_related("answers")
-        if self.check_expanded_fields("resources"):
-            queryset = queryset.prefetch_related("resources")
-        return queryset
+        return prefetch_submission_relations(queryset, self.event, expanded_fields)
 
     def perform_destroy(self, request, *args, **kwargs):
         self.get_object().remove(force=True, person=self.request.user)
@@ -555,11 +541,14 @@ def favourites_merge_view(request, event):
     partial_update=extend_schema(summary='Update Tags (Partial Update)'),
     destroy=extend_schema(summary='Delete Tags'),
 )
-class TagViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
+class TagViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = TagSerializer
     queryset = Tag.objects.none()
     endpoint = 'tags'
     search_fields = ('tag',)
+    allow_public_read = True
+    catalog_name = 'tags'
+    catalog_max_age = 3600
 
     def get_queryset(self):
         return self.event.tags.all().order_by('pk')
@@ -698,11 +687,14 @@ class SubmissionFavouriteDeprecatedView(View):
     partial_update=extend_schema(summary='Update Submission Types (Partial Update)'),
     destroy=extend_schema(summary='Delete Submission Types'),
 )
-class SubmissionTypeViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
+class SubmissionTypeViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = SubmissionTypeSerializer
     queryset = SubmissionType.objects.none()
     endpoint = 'submission-types'
     search_fields = ('name',)
+    allow_public_read = True
+    catalog_name = 'submission-types'
+    catalog_max_age = 3600
 
     def get_queryset(self):
         return self.event.submission_types.all()
@@ -716,11 +708,14 @@ class SubmissionTypeViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     partial_update=extend_schema(summary='Update Tracks (Partial Update)'),
     destroy=extend_schema(summary='Delete Tracks'),
 )
-class TrackViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
+class TrackViewSet(CachedCatalogListMixin, PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = TrackSerializer
     queryset = Track.objects.none()
     endpoint = 'tracks'
     search_fields = ('name',)
+    allow_public_read = True
+    catalog_name = 'tracks'
+    catalog_max_age = 3600
 
     def get_queryset(self):
         return self.event.tracks.all()

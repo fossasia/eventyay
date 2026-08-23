@@ -149,3 +149,10 @@ class SecurityMiddlewareTest(TestCase):
 
         img_src = get_csp_directive_values(response['Content-Security-Policy'], 'img-src')
         assert 'https://cdn.example.com' in img_src
+
+    @override_settings(SITE_URL='https://example.com')
+    def test_security_middleware_allows_data_fonts(self):
+        response = self.build_response('/', view_name='presale:index')
+
+        font_src = get_csp_directive_values(response['Content-Security-Policy'], 'font-src')
+        assert 'data:' in font_src
