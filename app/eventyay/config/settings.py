@@ -1275,6 +1275,9 @@ LOGGING = {
         'handlers': [_adaptive_console_handler],
     },
     'formatters': _LOGGING_FORMATTERS,
+    'filters': {
+        'one_line_warning': {'()': 'eventyay.helpers.security.OneLineWarningFilter'},
+    },
     'handlers': _LOGGING_HANDLERS,
     'loggers': {
         'django.db.backends': {
@@ -1296,6 +1299,11 @@ LOGGING = {
         'eventyay': {
             'handlers': [_adaptive_console_handler],
             'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        'django.security.DisallowedHost': {
+            'handlers': [_adaptive_console_handler],
+            'filters': ['one_line_warning'],
             'propagate': False,
         },
     },
