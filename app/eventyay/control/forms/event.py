@@ -27,7 +27,18 @@ from eventyay.timezones import common_timezones, localize_datetime
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
-from eventyay.base.meetup import add_video_field_errors, build_video_form_fields, is_meetup_event
+from eventyay.base.meetup import (
+    CAPACITY_LIMITED,
+    CAPACITY_TYPE_CHOICES,
+    CAPACITY_UNLIMITED,
+    LOCATION_HYBRID,
+    LOCATION_IN_PERSON,
+    LOCATION_TYPE_CHOICES,
+    LOCATION_VIRTUAL,
+    add_video_field_errors,
+    build_video_form_fields,
+    is_meetup_event,
+)
 from eventyay.consts import SizeKey
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
@@ -1919,23 +1930,6 @@ ConfirmTextFormset = formset_factory(
     can_delete=True,
     extra=0,
 )
-
-
-LOCATION_IN_PERSON = 'in_person'
-LOCATION_VIRTUAL = 'virtual'
-LOCATION_HYBRID = 'hybrid'
-LOCATION_TYPE_CHOICES = [
-    (LOCATION_IN_PERSON, _('In-Person')),
-    (LOCATION_VIRTUAL, _('Virtual')),
-    (LOCATION_HYBRID, _('Both (Hybrid)')),
-]
-
-CAPACITY_UNLIMITED = 'unlimited'
-CAPACITY_LIMITED = 'limited'
-CAPACITY_TYPE_CHOICES = [
-    (CAPACITY_UNLIMITED, _('Unlimited')),
-    (CAPACITY_LIMITED, _('Limited')),
-]
 
 
 class MeetupEventWizardBasicsForm(EventWizardBasicsForm):

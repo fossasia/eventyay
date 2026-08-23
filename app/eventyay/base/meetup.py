@@ -39,6 +39,22 @@ VIDEO_TYPE_CHOICES = [
     (VIDEO_TYPE_IFRAME, _('Embed URL / iframe')),
 ]
 
+LOCATION_IN_PERSON = 'in_person'
+LOCATION_VIRTUAL = 'virtual'
+LOCATION_HYBRID = 'hybrid'
+LOCATION_TYPE_CHOICES = [
+    (LOCATION_IN_PERSON, _('In-Person')),
+    (LOCATION_VIRTUAL, _('Virtual')),
+    (LOCATION_HYBRID, _('Both (Hybrid)')),
+]
+
+CAPACITY_UNLIMITED = 'unlimited'
+CAPACITY_LIMITED = 'limited'
+CAPACITY_TYPE_CHOICES = [
+    (CAPACITY_UNLIMITED, _('Unlimited')),
+    (CAPACITY_LIMITED, _('Limited')),
+]
+
 VIDEO_MODULES = {
     VIDEO_TYPE_YOUTUBE: ('livestream.youtube', 'ytid'),
     VIDEO_TYPE_HLS: ('livestream.native', 'hls_url'),
