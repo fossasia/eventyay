@@ -22,6 +22,7 @@
 			:fullscreenTarget="$refs.scheduleRoot",
 			:days="computedDays",
 			:currentDay="currentDay",
+			:now="resolvedNow",
 			:sessionsMode="sessionsMode",
 			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",

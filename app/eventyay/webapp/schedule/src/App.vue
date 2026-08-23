@@ -347,6 +347,9 @@ export default {
 			if (!this.eventUrl) return ''
 			return `${this.eventUrl.replace(/\/$/, '')}/video/rooms/`
 		},
+		resolvedNow() {
+			return this.scheduleData?.now || this.now || moment()
+		},
 		scheduleMaxWidth () {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + (this.schedule.rooms?.length || 0) * 365) : this.scrollParentWidth
 		},
@@ -945,13 +948,12 @@ export default {
 			// skips the currentDay watcher — forceScrollDay handles that case.
 			this.forceScrollDay++
 		},
-		goToNow () {
-			const today = this.now.clone().tz(this.currentTimezone).format('YYYY-MM-DD')
-			const todayExists = (this.allDays || this.days || []).some(day => day.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === today)
+		goToNow() {
+			const todayMoment = this.resolvedNow.clone().tz(this.currentTimezone).startOf('day')
+			const today = todayMoment.format('YYYY-MM-DD')
+			const todayExists = this.allDays.some(day => day.format('YYYY-MM-DD') === today)
 			if (!todayExists) return
-			if (this.currentDay !== today) {
-				this.selectDay(today)
-			}
+			this.changeDay(todayMoment)
 			this.$nextTick(() => {
 				this.$refs.scheduleDisplay?.scrollToNow?.()
 			})
