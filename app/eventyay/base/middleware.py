@@ -482,7 +482,7 @@ def request_prefers_json_api(request):
 
 
 def is_load_shed_exempt(path):
-    if path.startswith('/healthcheck'):
+    if path.startswith('/healthcheck') or '/video/assets/' in path:
         return True
     return bool(CHECKIN_EXEMPT_RE.search(path))
 
