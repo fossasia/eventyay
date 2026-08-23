@@ -1,7 +1,7 @@
 import importlib.util
 import os
 import sys
-import datetime
+from datetime import timedelta
 from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
@@ -161,7 +161,7 @@ class BaseSettings(_BaseSettings):
     # Set to 1 to enable Vite dev servers with HMR for live frontend development.
     npm_dev: bool = False
     fetch_ecb_rates: bool = True
-    cache_tickets_hours: int = 24
+    cache_tickets_hours: int = Field(default=24, ge=1)
 
     @classmethod
     def settings_customise_sources(
@@ -258,7 +258,7 @@ DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
 DATABASE_REPLICA = 'default'
 FETCH_ECB_RATES = conf.fetch_ecb_rates
-CACHE_TICKETS_MAX_AGE = datetime.timedelta(hours=conf.cache_tickets_hours)
+CACHE_TICKETS_MAX_AGE = timedelta(hours=conf.cache_tickets_hours)
 
 DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'
