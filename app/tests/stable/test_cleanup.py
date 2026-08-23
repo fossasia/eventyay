@@ -27,7 +27,9 @@ def test_clean_cached_tickets(cleanup_event):
     assert isinstance(settings.CACHE_TICKETS_MAX_AGE, timedelta)
 
     with scope(organizer=cleanup_event.organizer):
-        item = cleanup_event.items.create(name='Early-bird ticket', category=None, default_price=23, admission=True)
+        product = cleanup_event.products.create(
+            name='Early-bird ticket', category=None, default_price=23, admission=True
+        )
         order = Order.objects.create(
             code='FOO',
             event=cleanup_event,
@@ -40,7 +42,7 @@ def test_clean_cached_tickets(cleanup_event):
         )
         order_position = OrderPosition.objects.create(
             order=order,
-            item=item,
+            product=product,
             price=14,
         )
 
