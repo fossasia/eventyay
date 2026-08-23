@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS, clear_avatar_thumbnails, validate_image
+from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS, validate_image
 
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
@@ -252,9 +252,19 @@ class SpeakerUpdateSerializer(SpeakerOrgaSerializer):
             setattr(instance.user, key, value)
             instance.user.save(update_fields=[key])
         if avatar:
-            clear_avatar_thumbnails(instance.user)
+            old_thumbnails_to_delete = []
+            for field_name in ('avatar_thumbnail', 'avatar_thumbnail_tiny'):
+                thumbnail = getattr(instance.user, field_name, None)
+                if thumbnail and thumbnail.name:
+                    old_thumbnails_to_delete.append(thumbnail)
+
+            instance.user.avatar_thumbnail = None
+            instance.user.avatar_thumbnail_tiny = None
             instance.user.avatar.save(Path(avatar.name).name, avatar, save=True)
             instance.user.process_image('avatar', generate_thumbnail=True)
+
+            for thumbnail in old_thumbnails_to_delete:
+                thumbnail.delete(save=False)
         return instance
 
     def validate_email(self, value):

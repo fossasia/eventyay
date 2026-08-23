@@ -15,7 +15,6 @@ from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
-from eventyay.common.image import clear_avatar_thumbnails
 from eventyay.common.templatetags.filesize import filesize
 from eventyay.common.forms.fields import (
     ImageField,
@@ -285,15 +284,25 @@ class SpeakerProfileForm(
         return data
 
     def save(self, **kwargs):
+        avatar_changed = 'avatar' in self.changed_data
+        old_thumbnails_to_delete = []
+        if avatar_changed:
+            for field_name in ('avatar_thumbnail', 'avatar_thumbnail_tiny'):
+                thumbnail = getattr(self.user, field_name, None)
+                if thumbnail and thumbnail.name:
+                    old_thumbnails_to_delete.append(thumbnail)
+
         for user_attribute in self.user_fields:
             value = self.cleaned_data.get(user_attribute)
             if user_attribute == 'avatar':
                 if value is False:
-                    clear_avatar_thumbnails(self.user)
                     self.user.avatar = None
+                    self.user.avatar_thumbnail = None
+                    self.user.avatar_thumbnail_tiny = None
                 elif value:
-                    clear_avatar_thumbnails(self.user)
                     self.user.avatar = value
+                    self.user.avatar_thumbnail = None
+                    self.user.avatar_thumbnail_tiny = None
             elif value is None and user_attribute == 'get_gravatar':
                 # Only reset get_gravatar if the field was actually present on
                 # the form (i.e. Gravatar is enabled). If the field was popped
@@ -314,8 +323,11 @@ class SpeakerProfileForm(
         self.instance.user = self.user
         result = super().save(**kwargs)
 
-        if self.user.avatar and 'avatar' in self.changed_data:
-            self.user.process_image('avatar', generate_thumbnail=True)
+        if avatar_changed:
+            if self.user.avatar:
+                self.user.process_image('avatar', generate_thumbnail=True)
+            for thumbnail in old_thumbnails_to_delete:
+                thumbnail.delete(save=False)
         for key, value in self.cleaned_data.items():
             if key.startswith('question_'):
                 self.save_questions(key, value)
