@@ -101,7 +101,7 @@ class DummyImage:
 
 def test_process_image_svg():
     image = DummyImage('avatar.svg')
-    assert process_image(image=image, generate_thumbnail=True) is False
+    assert process_image(image=image, generate_thumbnail=True) is True
 
 
 def test_process_image_gif_skips_original_rewrite(tmp_path):

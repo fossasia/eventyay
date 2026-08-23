@@ -261,7 +261,7 @@ def process_image(*, image, generate_thumbnail=False):
     animated GIF originals), False when the image could not be processed.
     """
     if is_svg_filename(image.name):
-        return False
+        return True
 
     try:
         img = _open_raster_image(image)
