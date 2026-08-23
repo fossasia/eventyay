@@ -39,6 +39,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager, scope, scopes_disabled
 from i18nfield.fields import I18nCharField, I18nTextField
+from redis.exceptions import RedisError
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
 from eventyay.base.models.base import LoggedModel
@@ -2347,17 +2348,23 @@ class Event(
     @cached_property
     def locales(self) -> list[str]:
         """Is a list of active event locales."""
-        if hasattr(self, 'settings') and 'locales' in self.settings._cache():
-            if locales := self.settings.get('locales', as_type=list):
-                return locales
+        try:
+            if hasattr(self, 'settings') and 'locales' in self.settings._cache():
+                if locales := self.settings.get('locales', as_type=list):
+                    return locales
+        except RedisError:
+            logger.warning('Event settings cache unavailable while reading locales for %s', self.slug)
         return [code for code in self.locale_array.split(',') if code]
 
     @cached_property
     def content_locales(self) -> list[str]:
         """Is a list of active content locales."""
-        if hasattr(self, 'settings') and 'content_locales' in self.settings._cache():
-            if locales := self.settings.get('content_locales', as_type=list):
-                return locales
+        try:
+            if hasattr(self, 'settings') and 'content_locales' in self.settings._cache():
+                if locales := self.settings.get('content_locales', as_type=list):
+                    return locales
+        except RedisError:
+            logger.warning('Event settings cache unavailable while reading content locales for %s', self.slug)
         fallback = [code for code in self.content_locale_array.split(',') if code]
         return fallback or self.locales
 
