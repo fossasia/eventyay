@@ -1272,6 +1272,9 @@ LOGGING = {
         'handlers': [_adaptive_console_handler],
     },
     'formatters': _LOGGING_FORMATTERS,
+    'filters': {
+        'one_line_warning': {'()': 'eventyay.helpers.security.OneLineWarningFilter'},
+    },
     'handlers': _LOGGING_HANDLERS,
     'loggers': {
         'django.db.backends': {
@@ -1293,6 +1296,11 @@ LOGGING = {
         'eventyay': {
             'handlers': [_adaptive_console_handler],
             'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        'django.security.DisallowedHost': {
+            'handlers': [_adaptive_console_handler],
+            'filters': ['one_line_warning'],
             'propagate': False,
         },
     },
@@ -1443,6 +1451,10 @@ TALK_BASE_PATH = ''
 LOGIN_REDIRECT_URL = '/common/account/general'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
+IMAGE_SVG_MAX_SIZE = 1 * 1024 * 1024
+IMAGE_DEFAULT_MAX_WIDTH = 1920
+IMAGE_DEFAULT_MAX_HEIGHT = 1080
+IMAGE_BACKFILL_MIN_SIZE_KB = 500
 
 BYTES_IN_MB = 1024 * 1024
 

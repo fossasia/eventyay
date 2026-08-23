@@ -1,5 +1,5 @@
 <template lang="pug">
-router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", :class="{'mystery': !inferredType}", draggable="false")
+router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", draggable="false")
 	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? 'sorting is disabled while searching' : ''")
 	.name(v-html="$emojify(room.name)")
 	.badge-cell
@@ -7,15 +7,25 @@ router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {
 			.room-type-badge.unscheduled-room-badge(v-if="room.is_unscheduled")
 				.mdi.mdi-calendar-remove
 				span Unscheduled
-			.room-type-badge(:class="badgeClass")
+			.room-type-badge(v-if="inferredType", :class="badgeClass")
 				.mdi(:class="badgeIcon")
 				span {{ badgeLabel }}
+			VideoProviderDropdown(
+				v-else,
+				label="Add Video",
+				variant="action",
+				placement="bottom-end",
+				@select="addVideo"
+			)
 </template>
 <script>
 import { ElementMixin, HandleDirective } from 'vue-slicksort'
 import { inferType } from 'lib/room-types'
+import { getConfiguredRoomLabel } from 'lib/video-providers'
+import VideoProviderDropdown from 'components/VideoProviderDropdown'
 
 export default {
+	components: { VideoProviderDropdown },
 	directives: { handle: HandleDirective },
 	mixins: [ElementMixin],
 	props: {
@@ -24,18 +34,26 @@ export default {
 	computed: {
 		inferredType () {
 			// Only treat rooms as configured when they have module_config.
-			// Unconfigured rooms should stay visibly "mystery" in the list.
 			if (!Array.isArray(this.room?.module_config) || this.room.module_config.length === 0) return null
 			return inferType({ module_config: this.room.module_config })
 		},
 		badgeLabel () {
-			return this.inferredType ? this.inferredType.name : 'Unconfigured'
+			return getConfiguredRoomLabel(this.inferredType)
 		},
 		badgeIcon () {
-			return this.inferredType ? `mdi-${this.inferredType.icon}` : 'mdi-help-circle-outline'
+			return `mdi-${this.inferredType.icon}`
 		},
 		badgeClass () {
-			return this.inferredType ? `type-${this.inferredType.id}` : 'type-mystery'
+			return `type-${this.inferredType.id}`
+		}
+	},
+	methods: {
+		addVideo (provider) {
+			this.$router.push({
+				name: 'admin:rooms:item',
+				params: { roomId: this.room.id },
+				query: { provider: provider.roomTypeId }
+			})
 		}
 	}
 }
@@ -45,8 +63,6 @@ export default {
 	display: flex
 	align-items: center
 	color: $clr-primary-text-light
-	&.mystery
-		border-left: 3px solid $clr-orange
 	.handle
 		user-select: none
 		cursor: row-resize
@@ -71,7 +87,7 @@ export default {
 		align-items: center
 		gap: 4px
 		flex: none
-		max-width: 220px
+		max-width: 260px
 		padding: 4px 10px
 		border-radius: 999px
 		font-size: 12px
@@ -88,10 +104,6 @@ export default {
 			overflow: hidden
 			text-overflow: ellipsis
 			display: block
-		&.type-mystery
-			background-color: $clr-orange-100
-			color: $clr-orange-900
-			border-color: $clr-orange-100
 		&.unscheduled-room-badge
 			background-color: $clr-cyan-100
 			color: $clr-cyan-900
@@ -102,6 +114,7 @@ export default {
 			border-color: $clr-blue-50
 		&.type-channel-bbb,
 		&.type-channel-janus,
+		&.type-channel-jitsi,
 		&.type-channel-zoom,
 		&.type-channel-roulette
 			background-color: $clr-blue-grey-200

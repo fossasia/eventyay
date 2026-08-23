@@ -23,10 +23,10 @@ prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 							bunt-button.btn-cancel(@click="confirmingReset = false") Cancel
 							bunt-button.btn-reset(@click="resetRoom", :loading="resetting", :error-message="resetError") Confirm reset
 				.type-section
-					h3 Room Type
+					h3 Video option
 					.current-type(v-if="inferredType")
 						.mdi(:class="[`mdi-${inferredType.icon}`]")
-						span {{ inferredType.name }}
+						span {{ currentTypeLabel }}
 					.type-picker
 						.type-option(
 							v-for="type of availableRoomTypes",
@@ -75,9 +75,13 @@ import { markRaw } from 'vue'
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import Prompt from 'components/Prompt'
-import ROOM_TYPES, { inferType } from 'lib/room-types'
-import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
-import { PLAYBACK_MODE_SCHEDULE_DRIVEN } from 'lib/stage-streams'
+import { getRoomTypeById, inferType } from 'lib/room-types'
+import {
+	getAvailableVideoProviders,
+	getConfiguredRoomLabel,
+	applyVideoProviderToConfig,
+} from 'lib/video-providers'
+import features from 'features'
 import Stage from 'views/admin/rooms/types-edit/stage'
 import ChannelBBB from 'views/admin/rooms/types-edit/channel-bbb'
 import ChannelJanus from 'views/admin/rooms/types-edit/channel-janus'
@@ -111,7 +115,6 @@ export default {
 			deletingRoomName: '',
 			deleting: false,
 			deleteError: null,
-			allRoomTypes: ROOM_TYPES,
 			typeComponents: markRaw({
 				stage: Stage,
 				'page-landing': PageLanding,
@@ -126,7 +129,23 @@ export default {
 	computed: {
 		...mapGetters(['hasPermission', 'isAdminMode']),
 		availableRoomTypes () {
-			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission, this.isAdminMode)
+			const videoTypes = getAvailableVideoProviders(
+				this.hasPermission,
+				this.isAdminMode,
+				(flag) => features.enabled(flag)
+			).map(provider => {
+				const type = getRoomTypeById(provider.roomTypeId)
+				if (!type) return null
+				return {
+					...type,
+					name: provider.label,
+					description: provider.description
+				}
+			}).filter(Boolean)
+			if (this.inferredType && !videoTypes.some(type => type.id === this.inferredType.id)) {
+				return [this.inferredType, ...videoTypes]
+			}
+			return videoTypes
 		},
 		modules () {
 			if (!this.config) return {}
@@ -157,18 +176,15 @@ export default {
 		},
 		localizedRoomName () {
 			return this.$localize(this.config?.name)
+		},
+		currentTypeLabel () {
+			return getConfiguredRoomLabel(this.inferredType)
 		}
 	},
 	async created () {
 		await this.fetchConfig()
 	},
 	methods: {
-		getStartingModuleConfig (type) {
-			if (type.id === 'stage') {
-				return { playback_mode: PLAYBACK_MODE_SCHEDULE_DRIVEN }
-			}
-			return {}
-		},
 		async fetchConfig () {
 			this.loading = true
 			this.error = null
@@ -185,7 +201,7 @@ export default {
 		},
 		changeType (type) {
 			if (this.inferredType && this.inferredType.id === type.id) return
-			this.config.module_config = [{ type: type.startingModule, config: this.getStartingModuleConfig(type) }]
+			applyVideoProviderToConfig(this.config, type)
 		},
 		async resetRoom () {
 			this.resetError = null
