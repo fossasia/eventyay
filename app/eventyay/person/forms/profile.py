@@ -15,6 +15,7 @@ from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
+from eventyay.common.templatetags.filesize import filesize
 from eventyay.common.forms.fields import (
     ImageField,
     NewPasswordConfirmationField,
@@ -201,6 +202,15 @@ class SpeakerProfileForm(
             if 'avatar' in self.fields:
                 self.fields['avatar'].required = False
                 self.fields['avatar'].widget.is_required = False
+                svg_limit = filesize(getattr(settings, 'IMAGE_SVG_MAX_SIZE', 1024 * 1024))
+                self.fields['avatar'].help_text = ' '.join(
+                    part
+                    for part in (
+                        self.fields['avatar'].help_text,
+                        _('SVG files are limited to {size}.').format(size=svg_limit),
+                    )
+                    if part
+                )
 
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
@@ -274,19 +284,25 @@ class SpeakerProfileForm(
         return data
 
     def save(self, **kwargs):
+        avatar_changed = 'avatar' in self.changed_data
+        old_thumbnails_to_delete = []
+        if avatar_changed:
+            for field_name in ('avatar_thumbnail', 'avatar_thumbnail_tiny'):
+                thumbnail = getattr(self.user, field_name, None)
+                if thumbnail and thumbnail.name:
+                    old_thumbnails_to_delete.append(thumbnail)
+
         for user_attribute in self.user_fields:
             value = self.cleaned_data.get(user_attribute)
             if user_attribute == 'avatar':
                 if value is False:
                     self.user.avatar = None
-                    # Clear thumbnails when removing avatar
                     self.user.avatar_thumbnail = None
                     self.user.avatar_thumbnail_tiny = None
                 elif value:
-                    # Clear old thumbnails before assigning new avatar
+                    self.user.avatar = value
                     self.user.avatar_thumbnail = None
                     self.user.avatar_thumbnail_tiny = None
-                    self.user.avatar = value
             elif value is None and user_attribute == 'get_gravatar':
                 # Only reset get_gravatar if the field was actually present on
                 # the form (i.e. Gravatar is enabled). If the field was popped
@@ -307,8 +323,11 @@ class SpeakerProfileForm(
         self.instance.user = self.user
         result = super().save(**kwargs)
 
-        if self.user.avatar and 'avatar' in self.changed_data:
-            self.user.process_image('avatar', generate_thumbnail=True)
+        if avatar_changed:
+            if self.user.avatar:
+                self.user.process_image('avatar', generate_thumbnail=True)
+            for thumbnail in old_thumbnails_to_delete:
+                thumbnail.delete(save=False)
         for key, value in self.cleaned_data.items():
             if key.startswith('question_'):
                 self.save_questions(key, value)
