@@ -1,4 +1,6 @@
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nCharField
@@ -131,3 +133,12 @@ class SubmissionType(OrderedModel, PretalxModel):
     def get_order_queryset(event):
         """Return the queryset used for ordering."""
         return event.submission_types.all()
+
+
+@receiver(post_save, sender=SubmissionType)
+@receiver(post_delete, sender=SubmissionType)
+def invalidate_submission_type_catalog_cache(sender, instance, **kwargs):
+    from eventyay.base.services.stale_cache import invalidate_catalog_cache
+
+    event_id = instance.event_id
+    transaction.on_commit(lambda: invalidate_catalog_cache(event_id, 'submission-types'))
