@@ -1,18 +1,18 @@
-import datetime as dt
 
 import pytest
 from django import forms
+from django.utils.timezone import now
 from django.utils.translation import gettext, override
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Answer, Submission
-from eventyay.base.models.event import Organizer, Event
+from eventyay.base.models.event import Event, Organizer
 from eventyay.base.models.question import (
+    AnswerOption,
     TalkQuestion,
+    TalkQuestionRequired,
     TalkQuestionTarget,
     TalkQuestionVariant,
-    TalkQuestionRequired,
-    AnswerOption,
 )
 from eventyay.submission.forms.question import TalkQuestionsForm
 
@@ -25,8 +25,8 @@ def event(db):
             name="Test Event",
             slug="test-dep-evt",
             email="t@t.com",
-            date_from=dt.date.today(),
-            date_to=dt.date.today(),
+            date_from=now(),
+            date_to=now(),
             organizer=org,
         )
 
