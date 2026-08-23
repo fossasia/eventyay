@@ -1,3 +1,4 @@
+import logging
 import sys
 
 from asgiref.sync import async_to_sync
@@ -17,9 +18,111 @@ from eventyay.base.models.room import (
     get_room_with_linked_sessions,
     partial_validated_update,
 )
+from eventyay.base.services.stale_cache import invalidate_next_stream_cache
+from eventyay.base.services.stale_cache import (
+    NONE_SENTINEL,
+    cache_delete,
+    deserialize_none_sentinel,
+    get_stale_cached,
+)
 from eventyay.base.services.user import get_public_users
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
+
+
+logger = logging.getLogger(__name__)
+
+CURRENT_STREAM_MAX_CACHE_TTL = 60
+CURRENT_STREAM_STALE_CACHE_TTL = 3600
+NEXT_STREAM_MAX_CACHE_TTL = 300
+NEXT_STREAM_STALE_CACHE_TTL = 3600
+CURRENT_STREAM_HTTP_MAX_AGE = 30
+NEXT_STREAM_HTTP_MAX_AGE = 60
+
+
+def current_stream_cache_key(room_id):
+    return f'stream:current:{room_id}'
+
+
+def current_stream_stale_cache_key(room_id):
+    return f'stream:current:{room_id}:stale'
+
+
+def next_stream_cache_key(room_id):
+    return f'stream:next:{room_id}'
+
+
+def next_stream_stale_cache_key(room_id):
+    return f'stream:next:{room_id}:stale'
+
+
+def invalidate_current_stream_cache(room_id):
+    cache_delete(current_stream_cache_key(room_id), current_stream_stale_cache_key(room_id))
+    invalidate_next_stream_cache(room_id)
+
+
+def _deserialize_cached_stream(cached):
+    return deserialize_none_sentinel(cached)
+
+
+def _load_current_stream_from_db(room):
+    current = room.get_current_stream()
+    if not current:
+        return NONE_SENTINEL
+
+    data = serialize_current_stream(current)
+    return data
+
+
+def get_cached_current_stream_data(room):
+    """Return serialized current stream for a room, or None if idle."""
+    cached = get_stale_cached(
+        current_stream_cache_key(room.pk),
+        current_stream_stale_cache_key(room.pk),
+        lambda: _load_current_stream_from_db(room),
+        CURRENT_STREAM_MAX_CACHE_TTL,
+        CURRENT_STREAM_STALE_CACHE_TTL,
+        log_context=f'current stream room {room.pk}',
+    )
+    return _deserialize_cached_stream(cached)
+
+
+def _load_next_stream_from_db(room):
+    upcoming = room.get_next_stream()
+    if not upcoming:
+        return NONE_SENTINEL
+    return serialize_current_stream(upcoming)
+
+
+def get_cached_next_stream_data(room):
+    """Return serialized next stream for a room, or None if none scheduled."""
+    cached = get_stale_cached(
+        next_stream_cache_key(room.pk),
+        next_stream_stale_cache_key(room.pk),
+        lambda: _load_next_stream_from_db(room),
+        NEXT_STREAM_MAX_CACHE_TTL,
+        NEXT_STREAM_STALE_CACHE_TTL,
+        log_context=f'next stream room {room.pk}',
+    )
+    return _deserialize_cached_stream(cached)
+
+
+def serialize_current_stream(current):
+    def isoformat(value):
+        return value.isoformat() if value else None
+
+    return {
+        'id': current.pk,
+        'room': current.room_id,
+        'title': current.title,
+        'url': current.url,
+        'start_time': isoformat(current.start_time),
+        'end_time': isoformat(current.end_time),
+        'stream_type': current.stream_type,
+        'config': current.config,
+        'created_at': isoformat(current.created_at),
+        'updated_at': isoformat(current.updated_at),
+    }
 
 
 @database_sync_to_async
@@ -271,7 +374,6 @@ async def broadcast_stream_change(room_id, stream_schedule, reload=False):
 @receiver(signal=periodic_task)
 @scopes_disabled()
 def check_stream_schedule_changes(sender, **kwargs):
-    from django.core.cache import cache
 
     # Keep the last broadcast marker stable across periodic runs to avoid repeated rebroadcasts.
     cache_timeout = None
