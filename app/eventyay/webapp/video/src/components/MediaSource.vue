@@ -319,9 +319,10 @@ async function applyYoutubeTranslation(transConfig) {
 	} else {
 		// Remove translation audio iframe
 		languageIframeUrl.value = null;
-		// Unmute the main player using postMessage after a short delay
+		// Restore the main player unless the organiser asked to start muted
 		setTimeout(() => {
 			if (updateToken !== translationUpdateToken) return;
+			if (module.value?.config?.startMuted) return;
 			unmuteYouTubePlayer();
 		}, 100);
 	}
@@ -346,6 +347,10 @@ onBeforeUnmount(() => {
 	// TODO move to store?
 	if (props.room) api.call('room.leave', { room: props.room.id });
 });
+
+function hasAudioOnlyYoutubeTranslation() {
+	return Boolean(youtubeTranslation.value?.url && !youtubeTranslation.value?.useVideo);
+}
 
 function muteYouTubePlayer() {
 	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
@@ -585,8 +590,10 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 					break;
 				}
 				const config = module.value.config || {};
-				const shouldStartMuted = mute || !!config.startMuted;
-				const shouldAutoplay = autoplay.value && !config.hideControls && shouldStartMuted;
+				const shouldStartMuted = Boolean(
+					mute || config.startMuted || hasAudioOnlyYoutubeTranslation()
+				);
+				const shouldAutoplay = Boolean(autoplay.value && !config.hideControls);
 				iframeUrl = getYoutubeUrl(
 					ytid,
 					shouldAutoplay,
@@ -657,8 +664,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		if (isYouTube) {
 			iframe.onload = () => {
 				subscribeToYouTubePlayerEvents();
-				// If translation is already selected, mute the main player (if audio-only)
-				if (youtubeTranslation.value?.url && !youtubeTranslation.value?.useVideo) {
+				if (hasAudioOnlyYoutubeTranslation()) {
 					setTimeout(() => muteYouTubePlayer(), 1000);
 				}
 			};
