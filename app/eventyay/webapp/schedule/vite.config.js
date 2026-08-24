@@ -39,7 +39,7 @@ export default defineConfig({
 		__SERVER_FORWARD_CONSOLE__: 'false',
 	},
 	plugins: [
-		createGettextPlugin('schedule', path.resolve(__dirname)),
+		createGettextPlugin('schedule'),
 		vue({
 			template: {
 				compilerOptions: {

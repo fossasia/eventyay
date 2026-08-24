@@ -1,3 +1,12 @@
+export function unescapePoString(value) {
+	return String(value || '')
+		.replaceAll('\\n', '\n')
+		.replaceAll('\\t', '\t')
+		.replaceAll('\\r', '\r')
+		.replaceAll('\\"', '"')
+		.replaceAll('\\\\', '\\')
+}
+
 export function parsePo(content) {
 	const entries = []
 	const parts = String(content || '').split(/\nmsgid /)
@@ -24,15 +33,8 @@ export function parsePo(content) {
 				break
 			}
 		}
-		const msgid = idChunks.join('').replaceAll('\\n', '\n')
-		if (msgid) entries.push([msgid, strChunks.join('').replaceAll('\\n', '\n')])
+		const msgid = unescapePoString(idChunks.join(''))
+		if (msgid) entries.push([msgid, unescapePoString(strChunks.join(''))])
 	}
 	return Object.fromEntries(entries)
-}
-
-export function unescapePoString(value) {
-	return String(value || '')
-		.replaceAll('\\n', '\n')
-		.replaceAll('\\t', '\t')
-		.replaceAll('\\"', '"')
 }

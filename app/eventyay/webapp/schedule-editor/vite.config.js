@@ -21,7 +21,7 @@ export default {
 	},
 	base: process.env.BASE_URL || '/',
 	plugins: [
-		createGettextPlugin('schedule-editor', path.resolve(__dirname)), vue()
+		createGettextPlugin('schedule-editor'), vue()
 	],
 	css: {
 		preprocessorMaxWorkers: 0,

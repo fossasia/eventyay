@@ -72,7 +72,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       exportJanusGateway(),
-      createGettextPlugin('video', dirname),
+      createGettextPlugin('video'),
       vue(),
       ReactivityTransform(),
       // Enable PWA only in production builds (avoid SW claim issues during dev)

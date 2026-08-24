@@ -68,6 +68,12 @@ for (const {domain, sampleKey, sampleValue, namespaced} of DOMAINS) {
 		await runtime.init({lng: 'hi'})
 		assert.equal(runtime.translate(sampleKey), sampleValue)
 		assert.notEqual(runtime.translate(sampleKey), '')
+		if (domain === 'video') {
+			assert.equal(
+				english['Click "Add Stream Schedule" to create one.'],
+				'Click "Add Stream Schedule" to create one.'
+			)
+		}
 	})
 }
 
