@@ -7,12 +7,15 @@
     <link rel="stylesheet" href="{% static 'pretixcontrol/css/admin-page.css' %}">
 {% endblock %}
 {% block content %}
-    <h1 class="admin-dashboard-title">
-        <span>{% trans "Admin Dashboard" %}</span>
-        <a href="?refresh=1" class="btn btn-default btn-sm">
-            <i class="fa fa-refresh"></i> {% trans "Refresh Data" %}
-        </a>
-    </h1>
+    <div class="admin-dashboard-title">
+        <h1>{% trans "Admin Dashboard" %}</h1>
+        <form method="post" action="{% url 'eventyay_admin:admin.dashboard' %}" class="form-inline">
+            {% csrf_token %}
+            <button type="submit" name="action" value="refresh" class="btn btn-default btn-sm">
+                <i class="fa fa-refresh"></i> {% trans "Refresh Data" %}
+            </button>
+        </form>
+    </div>
     <p>{% trans "Overview of platform activity across users, events, orders, and programme." %}</p>
     <section class="admin-section" aria-labelledby="admin-overview-heading">
         <h2 id="admin-overview-heading" class="sr-only">{% trans "Platform overview" %}</h2>
@@ -940,12 +943,12 @@
                             <div class="col-md-4 col-sm-6">
                                 <ul class="list-unstyled">
                                     <li>
-                                        <a href="{% url 'api-swagger-ui' %}" target="_blank">
+                                        <a href="{% url 'api-swagger-ui' %}" target="_blank" rel="noopener noreferrer">
                                             {% trans "Swagger UI (Interactive API)" %}
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="{% url 'api-schema' %}" target="_blank">
+                                        <a href="{% url 'api-schema' %}" target="_blank" rel="noopener noreferrer">
                                             {% trans "OpenAPI Schema (JSON)" %}
                                         </a>
                                     </li>

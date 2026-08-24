@@ -2,6 +2,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.admin-dashboard-title h1 {
+  margin: 0;
+}
+
+.admin-dashboard-title form {
+  margin: 0;
 }
 
 .admin-dashboard-title .btn {

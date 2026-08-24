@@ -6,6 +6,8 @@ from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialAccount, SocialApp
+from allauth.socialaccount.providers import registry
 from cron_descriptor import Options, get_description
 from django.conf import settings
 from django.contrib import messages
@@ -77,12 +79,8 @@ logger = logging.getLogger(__name__)
 class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = 'pretixcontrol/admin/dashboard.html'
 
-    def get_context_data(self, **kwargs) -> dict:
-        ctx = super().get_context_data(**kwargs)
-        n = now()
-        email_stats = None
-
-        if self.request.GET.get('refresh') == '1':
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('action') == 'refresh' or 'refresh' in request.POST:
             cache.delete_many([
                 'admin_dashboard_events_pending_setup',
                 'admin_dashboard_orders_top5',
@@ -91,6 +89,13 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                 'admin_dashboard_sso_stats',
                 'admin_dashboard_api_stats',
             ])
+            messages.success(request, _('Dashboard cache refreshed successfully.'))
+        return redirect('eventyay_admin:admin.dashboard')
+
+    def get_context_data(self, **kwargs) -> dict:
+        ctx = super().get_context_data(**kwargs)
+        n = now()
+        email_stats = None
 
         # User KPIs
         user_stats = User.objects.aggregate(
@@ -221,7 +226,7 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                     products = list(event.products.all())
                     has_products = bool(products)
                     has_paid_products = any(p.default_price > 0 for p in products)
-                    has_payment_provider = str(event.pk) in payment_enabled_event_ids or event.pk in payment_enabled_event_ids
+                    has_payment_provider = str(event.pk) in payment_enabled_event_ids
                     if not has_products or (has_paid_products and not has_payment_provider):
                         event.has_products = has_products
                         res.append(event)
@@ -492,8 +497,6 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
                     ctx['sso_section_enabled'] = True
 
                     def _get_sso():
-                        from allauth.socialaccount.models import SocialAccount
-                        from allauth.socialaccount.providers import registry
                         db_counts = {
                             item['provider']: item['count']
                             for item in SocialAccount.objects.values('provider').annotate(count=Count('id'))
@@ -578,7 +581,6 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
 
                 sso_ok = None
                 if apps.is_installed('allauth.socialaccount'):
-                    from allauth.socialaccount.models import SocialApp
                     try:
                         sso_ok = SocialApp.objects.exists() or bool(getattr(settings, 'SOCIALACCOUNT_PROVIDERS', None))
                     except DatabaseError:
