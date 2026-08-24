@@ -801,6 +801,10 @@ dialog.agenda-wip-preview-leave-dialog::backdrop {
   outline: none;
 }
 
+.comment-dropdown-toggle {
+  box-shadow: none;
+}
+
 .comment-text-collapsed {
   display: -webkit-box;
   -webkit-line-clamp: 4;

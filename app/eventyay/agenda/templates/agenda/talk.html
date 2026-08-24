@@ -63,7 +63,7 @@
 
                             
                             <div class="d-flex align-items-end form-group mb-0">
-                                <textarea name="{{ feedback_form.review.name }}" class="form-control youtube-comment-input main-comment-input flex-grow-1" rows="1" placeholder="{% translate 'Add a comment...' %}" required id="{{ feedback_form.review.id_for_label }}" style="resize: none;"></textarea>
+                                <textarea name="{{ feedback_form.review.name }}" class="form-control youtube-comment-input main-comment-input flex-grow-1" rows="1" placeholder="{% translate 'Add a comment...' %}" required id="{{ feedback_form.review.id_for_label }}"></textarea>
                                 <button type="submit" class="btn btn-link p-1 mb-0" title="{% translate 'Send' %}">
                                     <i class="fa fa-paper-plane text-primary"></i>
                                 </button>
@@ -138,7 +138,7 @@
                                 {% endif %}
                                 {% if request.user.is_authenticated %}
                                     <details class="dropdown d-inline-block ml-2" aria-haspopup="menu" role="menu">
-                                        <summary class="btn btn-sm btn-link text-muted p-0 border-0" style="box-shadow: none;">
+                                        <summary class="btn btn-sm btn-link text-muted p-0 border-0 comment-dropdown-toggle">
                                             <i class="fa fa-ellipsis-v"></i>
                                         </summary>
                                         <div class="dropdown-content dropdown-content-se shadow-sm">
@@ -186,7 +186,7 @@
                                                 <input type="hidden" name="parent" value="{{ fb.id }}">
                                                 <input type="hidden" name="is_public" value="{% if feedback_anonymous_mode == 'always' %}False{% else %}True{% endif %}">
                                                 <div class="d-flex align-items-end form-group mb-0">
-                                                    <textarea name="{{ feedback_form.review.name }}" class="form-control youtube-comment-input flex-grow-1" rows="1" placeholder="{% translate 'Add a reply...' %}" required style="resize: none;"></textarea>
+                                                    <textarea name="{{ feedback_form.review.name }}" class="form-control youtube-comment-input flex-grow-1" rows="1" placeholder="{% translate 'Add a reply...' %}" required></textarea>
                                                     <button type="submit" class="btn btn-link p-1 mb-0" title="{% translate 'Send' %}">
                                                         <i class="fa fa-paper-plane text-primary"></i>
                                                     </button>
