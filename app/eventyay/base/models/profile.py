@@ -1,6 +1,9 @@
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 
 from eventyay.common.social_links import SOCIAL_LINK_CHOICES, get_social_link_spec
 from eventyay.common.text.phrases import phrases
@@ -136,6 +139,26 @@ class SpeakerProfile(PretalxModel):
     def avatar_url(self):
         if self.event.cfp.request_avatar:
             return self.user.get_avatar_url(event=self.event)
+
+
+@receiver(post_save, sender=SpeakerProfile)
+@receiver(post_delete, sender=SpeakerProfile)
+def invalidate_schedule_cache_on_speaker_profile_change(sender, instance, **kwargs):
+    from eventyay.base.models.slot import TalkSlot
+    from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
+
+    event = instance.event
+    user_id = instance.user_id
+    if not event or not user_id:
+        return
+    with scope(event=event):
+        if not TalkSlot.objects.filter(
+            submission__speakers=user_id,
+            schedule__event_id=event.pk,
+            schedule__version__isnull=False,
+        ).exists():
+            return
+    bump_schedule_cache_version_on_commit(event.pk)
 
 
 class SpeakerSocialLink(models.Model):

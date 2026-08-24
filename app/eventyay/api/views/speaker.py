@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from eventyay.api.auth.permission import EventPermission
 from eventyay.api.documentation import build_expand_docs, build_search_docs
-from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.mixins import PretalxViewSetMixin, prefetch_speaker_profiles
 from eventyay.api.serializers.legacy import (
     LegacySpeakerOrgaSerializer,
     LegacySpeakerReviewerSerializer,
@@ -186,12 +186,10 @@ class SpeakerViewSet(
         if not self.event:
             # This is just during api doc creation
             return self.queryset
-        queryset = (
-            speaker_profiles_for_user(self.event, self.request.user, submissions=self.submissions_for_user)
-            .select_related('user', 'event')
-            .prefetch_related('user__submissions', 'user__answers', 'social_links')
-            .order_by('pk')
-        )
+        queryset = prefetch_speaker_profiles(
+            speaker_profiles_for_user(self.event, self.request.user, submissions=self.submissions_for_user),
+            self.event,
+        ).order_by('pk')
         if fields := self.check_expanded_fields(
             'answers.question',
             'answers.question.tracks',

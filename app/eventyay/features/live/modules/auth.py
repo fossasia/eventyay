@@ -145,7 +145,6 @@ class AuthModule(BaseModule):
                     "chat.channels": login_result.chat_channels,
                     "chat.read_pointers": read_pointers,
                     "chat.notification_counts": login_result.chat_notification_counts,
-                    "exhibition": login_result.exhibition_data,
                     "announcements": await get_announcements(
                         event=self.consumer.event.id, moderator=False
                     ),

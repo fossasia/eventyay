@@ -640,7 +640,6 @@ class EventSettingsForm(SettingsForm):
         'allow_modifications',
         'last_order_modification_date',
         'allow_modifications_after_checkin',
-        'checkout_show_copy_answers_button',
         'primary_color',
         'theme_color_success',
         'theme_color_danger',
@@ -822,7 +821,6 @@ class OrderFormSettingsForm(EventSettingsForm):
         'order_email_asked_twice',
         'require_registered_account_for_tickets',
         'include_wikimedia_username',
-        'checkout_show_copy_answers_button',
     ]
 
     def __init__(self, *args, **kwargs):

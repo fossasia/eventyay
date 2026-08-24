@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import sys
+from datetime import timedelta
 from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
@@ -160,6 +161,7 @@ class BaseSettings(_BaseSettings):
     # Set to 1 to enable Vite dev servers with HMR for live frontend development.
     npm_dev: bool = False
     fetch_ecb_rates: bool = True
+    cache_tickets_hours: int = Field(default=24, ge=1)
 
     @classmethod
     def settings_customise_sources(
@@ -256,6 +258,7 @@ DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
 DATABASE_REPLICA = 'default'
 FETCH_ECB_RATES = conf.fetch_ecb_rates
+CACHE_TICKETS_MAX_AGE = timedelta(hours=conf.cache_tickets_hours)
 
 DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'
@@ -1272,6 +1275,9 @@ LOGGING = {
         'handlers': [_adaptive_console_handler],
     },
     'formatters': _LOGGING_FORMATTERS,
+    'filters': {
+        'one_line_warning': {'()': 'eventyay.helpers.security.OneLineWarningFilter'},
+    },
     'handlers': _LOGGING_HANDLERS,
     'loggers': {
         'django.db.backends': {
@@ -1293,6 +1299,11 @@ LOGGING = {
         'eventyay': {
             'handlers': [_adaptive_console_handler],
             'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        'django.security.DisallowedHost': {
+            'handlers': [_adaptive_console_handler],
+            'filters': ['one_line_warning'],
             'propagate': False,
         },
     },
@@ -1443,6 +1454,10 @@ TALK_BASE_PATH = ''
 LOGIN_REDIRECT_URL = '/common/account/general'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
+IMAGE_SVG_MAX_SIZE = 1 * 1024 * 1024
+IMAGE_DEFAULT_MAX_WIDTH = 1920
+IMAGE_DEFAULT_MAX_HEIGHT = 1080
+IMAGE_BACKFILL_MIN_SIZE_KB = 500
 
 BYTES_IN_MB = 1024 * 1024
 
