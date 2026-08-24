@@ -1203,17 +1203,16 @@ dependencies = [
 [[package]]
 name = "eventyay-hubspot"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev#e6dfabd3829939edd4bebe06343b98bf651d820a" }
+source = { git = "https://github.com/fossasia/eventyay-hubspot.git?rev=dev#aa0516cc9d2230d878f897d1ef86462375239288" }
 dependencies = [
     { name = "cryptography" },
-    { name = "python-dotenv" },
     { name = "requests" },
 ]
 
 [[package]]
 name = "eventyay-interpretation"
-version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#11470b144be80f24ade972aeafdc655870eae443" }
+version = "0.1.0"
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#b082bbd7082a6a7e345c65d950b11a5fd6a1a378" }
 dependencies = [
     { name = "cryptography" },
     { name = "requests" },
@@ -1226,9 +1225,10 @@ source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#a6d9c
 
 [[package]]
 name = "eventyay-socialmedia"
-version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev#6eba5f687dab09e2ad92ab968cbf8249046d6071" }
+version = "0.1.0"
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev#0b573af4a714d376bce0a2cc12a350ff5dd5801b" }
 dependencies = [
+    { name = "cryptography" },
     { name = "mastodon-py" },
 ]
 
@@ -1243,7 +1243,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev#f0ff452507a772765f82b0974a379bcb7b3a93ec" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev#006f2582c67292455ba5649bcb4eeb0c130c4a02" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1726,8 +1726,8 @@ wheels = [
 
 [[package]]
 name = "exhibition"
-version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev#96446c91e5b3398e35f561a7c7760e59278b76d1" }
+version = "0.1.0"
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev#54ba7615d34016c966b728f6559bae7eb8dd1204" }
 
 [[package]]
 name = "faker"
