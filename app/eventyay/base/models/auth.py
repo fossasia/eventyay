@@ -39,7 +39,7 @@ from webauthn.helpers.structs import PublicKeyCredentialDescriptor
 
 from eventyay.base.i18n import language
 from eventyay.base.models.cache import VersionedModel
-from eventyay.common.image import create_thumbnail
+from eventyay.common.image import get_thumbnail
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
 from eventyay.helpers.urls import build_absolute_uri
@@ -263,6 +263,14 @@ class User(
     )
     avatar_thumbnail = models.ImageField(null=True, blank=True, upload_to='avatars/')
     avatar_thumbnail_tiny = models.ImageField(null=True, blank=True, upload_to='avatars/')
+    default_organizer = models.ForeignKey(
+        'Organizer',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='default_for_users',
+        verbose_name=_('Default organizer'),
+    )
     get_gravatar = models.BooleanField(
         default=False,
         verbose_name=_('Retrieve profile picture via gravatar'),
@@ -367,7 +375,15 @@ class User(
 
         # Check if we need to get the profile picture from gravatar
         update_gravatar = not update_fields or 'get_gravatar' in update_fields
+        should_invalidate_avatar_caches = not is_new and (
+            update_fields is None
+            or {'avatar', 'avatar_thumbnail', 'avatar_thumbnail_tiny'} & set(update_fields)
+        )
         super().save(*args, **kwargs)
+        if should_invalidate_avatar_caches:
+            from eventyay.common.image import invalidate_speaker_avatar_caches
+
+            invalidate_speaker_avatar_caches(self)
         if account_hash_invalidate or account_hash_refresh:
             from eventyay.base.services.user import (
                 invalidate_account_hash_cache_for_emails,
@@ -637,6 +653,32 @@ class User(
             q |= Q(**{p: True})
 
         return Organizer.objects.filter(id__in=self.teams.filter(q).values_list('organizer', flat=True))
+
+    @scopes_disabled()
+    def get_default_organizer(self, can_create_events=False):
+        """
+        Returns the user's default organizer.
+        If default_organizer is set and valid (the user still belongs to it), returns it.
+        If default_organizer is invalid or unset, dynamically returns the first organizer the user
+        was added to (or None if the user belongs to no organizers), without mutating the database.
+        """
+        if not self.pk:
+            return None
+
+        if self.default_organizer_id:
+            if self.teams.filter(organizer_id=self.default_organizer_id).exists():
+                if not can_create_events or self.teams.filter(
+                    organizer_id=self.default_organizer_id, can_create_events=True
+                ).exists():
+                    return self.default_organizer
+
+        # Fallback to the first organizer the user was added to
+        teams_qs = self.teams.all()
+        if can_create_events:
+            teams_qs = teams_qs.filter(can_create_events=True)
+
+        first_team = teams_qs.order_by('created', 'id').select_related('organizer').first()
+        return first_team.organizer if first_team else None
 
 
     def has_active_staff_session(self, session_key=None):
@@ -981,12 +1023,22 @@ the eventyay team"""
         if not thumbnail:
             image = self.avatar
         else:
-            image = self.avatar_thumbnail_tiny if thumbnail == 'tiny' else self.avatar_thumbnail
-            if not image:
-                image = create_thumbnail(self.avatar, thumbnail)
+            if str(self.avatar.name).lower().endswith('.svg'):
+                image = self.avatar
+            else:
+                image = get_thumbnail(self.avatar, thumbnail)
 
         if not image:
             return ''
+
+        if not thumbnail and image.name and not image.storage.exists(image.name):
+            for size in ('default', 'tiny'):
+                fallback = get_thumbnail(self.avatar, size)
+                if fallback and fallback.name and fallback.storage.exists(fallback.name):
+                    image = fallback
+                    break
+            else:
+                return ''
 
         # Build base URL with cache-busting
         try:
@@ -1056,8 +1108,6 @@ the eventyay team"""
                 "new": {"__redacted": True},
             }
         )
-        self.exhibitor_staff.all().delete()
-        self.poster_presenter.all().delete()
         self.chat_channels.filter(channel__room__isnull=False).delete()
 
         for dm_channel in self.chat_channels.filter(channel__room__isnull=True):
@@ -1130,6 +1180,7 @@ the eventyay team"""
             d["client_state"] = self.client_state
         if include_personal_data:
             d["wikimedia_username"] = self.wikimedia_username
+            d["show_publicly"] = bool(self.show_publicly)
         return d
 
     @property

@@ -133,7 +133,6 @@ def is_meetup_creation_enabled(request=None) -> bool:
     return result
 
 
-
 class SettingsSandbox:
     """
     Transparently proxied access to event settings, handling your prefixes for you.

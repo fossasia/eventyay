@@ -37,8 +37,10 @@
 </form>
 {% else %}
 <p>
-    {% trans "This organizer account can not be deleted as it already contains
-    orders, invoices, or devices." %}
+    {% blocktrans trimmed %}
+    This organizer account can not be deleted as it already contains
+    orders, invoices, or devices.
+    {% endblocktrans %}
 </p>
 <p>
     {% blocktrans trimmed %}

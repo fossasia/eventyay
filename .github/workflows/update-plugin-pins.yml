@@ -1,0 +1,187 @@
+name: Update Plugin Pins
+
+# Manually triggered workflow to update plugin dependency pins for production.
+# Fetches latest commits from configured plugin branches, regenerates uv.lock,
+# validates the build, and opens/updates a PR with the changes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Show what would change without creating a PR'
+        required: false
+        default: 'false'
+        type: boolean
+  # Uncomment below to enable weekly auto-update (Monday 09:00 UTC):
+  # schedule:
+  #   - cron: '0 9 * * 1'
+
+# List of internal plugin packages to update.
+# These correspond to the git-based dependencies in pyproject.toml.
+env:
+  PLUGINS: >-
+    eventyay-paypal
+    eventyay-stripe
+    eventyay-bitpay
+    eventyay-socialmedia
+    exhibition
+    eventyay-teamshifts
+    eventyay-interpretation
+    eventyay-hubspot
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update_plugins:
+    name: Update plugin pins and open PR
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Checkout dev branch
+        uses: actions/checkout@v7
+        with:
+          ref: dev
+          # Full history needed for branch operations
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: latest
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y gettext
+
+      - name: Record current plugin pins
+        id: old_pins
+        run: |
+          echo "=== Current plugin pins in uv.lock ==="
+          {
+            echo "pins<<EOF"
+            for plugin in $PLUGINS; do
+              # Extract the commit hash from the lock file source line
+              hash=$(grep -A2 "name = \"$plugin\"" uv.lock \
+                | grep 'source = { git' \
+                | grep -oP '#\K[0-9a-f]+' \
+                || echo "not-found")
+              echo "$plugin=$hash"
+            done
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upgrade plugin dependencies
+        run: |
+          echo "=== Upgrading plugin dependencies ==="
+          UPGRADE_ARGS=""
+          for plugin in $PLUGINS; do
+            UPGRADE_ARGS="$UPGRADE_ARGS --upgrade-package $plugin"
+          done
+          uv lock $UPGRADE_ARGS
+
+      - name: Record new plugin pins
+        id: new_pins
+        run: |
+          echo "=== New plugin pins in uv.lock ==="
+          {
+            echo "pins<<EOF"
+            for plugin in $PLUGINS; do
+              hash=$(grep -A2 "name = \"$plugin\"" uv.lock \
+                | grep 'source = { git' \
+                | grep -oP '#\K[0-9a-f]+' \
+                || echo "not-found")
+              echo "$plugin=$hash"
+            done
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          echo "=== Plugin version changes ==="
+          {
+            echo "body<<EOF"
+            echo "## Plugin Pin Updates"
+            echo ""
+            echo "| Plugin | Old Commit | New Commit | Changed |"
+            echo "|--------|-----------|-----------|---------|"
+
+            changed=false
+            while IFS= read -r old_line; do
+              plugin="${old_line%%=*}"
+              old_hash="${old_line#*=}"
+              new_hash=$(echo "${{ steps.new_pins.outputs.pins }}" \
+                | grep "^${plugin}=" | cut -d= -f2)
+              if [ "$old_hash" = "$new_hash" ]; then
+                status="No"
+              else
+                status="**Yes**"
+                changed=true
+              fi
+              echo "| $plugin | \`${old_hash:0:12}\` | \`${new_hash:0:12}\` | $status |"
+            done <<< "${{ steps.old_pins.outputs.pins }}"
+
+            echo ""
+            if [ "$changed" = "true" ]; then
+              echo "At least one plugin has been updated."
+            else
+              echo "No plugins changed — all pins are already at the latest commits."
+            fi
+            echo "EOF"
+
+            if [ "$changed" = "true" ]; then
+              echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            fi
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Validate updated dependencies
+        if: steps.changelog.outputs.has_changes == 'true'
+        run: |
+          echo "=== Validating updated lock file ==="
+          uv sync --group test --no-editable
+          echo "=== Running test collection ==="
+          uv run pytest --collect-only tests/ -q
+
+      - name: Show dry run results
+        if: inputs.dry_run == 'true'
+        run: |
+          echo "${{ steps.changelog.outputs.body }}"
+          echo ""
+          echo "Dry run complete — no PR will be created."
+
+      - name: Create or update PR
+        if: steps.changelog.outputs.has_changes == 'true' && inputs.dry_run != 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/update-plugin-pins
+          base: dev
+          title: 'chore: update plugin dependency pins'
+          body: |
+            ${{ steps.changelog.outputs.body }}
+
+            ---
+
+            This PR was automatically generated by the `update-plugin-pins` workflow.
+
+            **Review checklist:**
+            - [ ] Verify the plugin commit changes are expected
+            - [ ] Confirm CI tests pass
+            - [ ] Merge to update production plugin pins
+          commit-message: 'chore: update plugin dependency pins in uv.lock'
+          labels: dependencies
+          delete-branch: true
+
+      - name: No changes summary
+        if: steps.changelog.outputs.has_changes != 'true'
+        run: echo "All plugins are already at latest commits. No PR needed."

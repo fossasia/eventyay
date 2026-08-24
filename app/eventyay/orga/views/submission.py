@@ -605,6 +605,24 @@ class SubmissionContentView(SubmissionContent):
             return ['base.orga_list_submission']  # View permission for reviewers
         return ['base.create_submission']
 
+    @context
+    def available_tags_json(self):
+        tags = []
+        for tag in self.request.event.tags.all().order_by('tag'):
+            description = tag.description
+            if description is not None and not isinstance(description, str):
+                description = str(description)
+            tags.append(
+                {
+                    'id': tag.id,
+                    'tag': tag.tag,
+                    'color': tag.color,
+                    'foreground_color': tag.foreground_color,
+                    'description': description or '',
+                }
+            )
+        return tags
+
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
     model = Submission
@@ -1221,6 +1239,21 @@ class AllFeedbacksList(EventPermissionRequired, PaginationMixin, ListView):
 
     def get_queryset(self):
         return Feedback.objects.order_by('-pk').select_related('talk').filter(talk__event=self.request.event)
+
+
+class FeedbackExportView(EventPermissionRequired, View):
+    permission_required = 'base.orga_list_submission'
+
+    def get(self, request, *args, **kwargs):
+        fmt = request.GET.get('format', 'csv')
+        from eventyay.base.exporters.feedback import FeedbackCSVExporter, FeedbackJSONExporter
+
+        exporter_cls = FeedbackJSONExporter if fmt == 'json' else FeedbackCSVExporter
+        exporter = exporter_cls(request.event)
+        filename, content_type, content = exporter.render()
+        response = HttpResponse(content, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 
 class TagView(OrgaCRUDView):

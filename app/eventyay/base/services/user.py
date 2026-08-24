@@ -940,7 +940,7 @@ def end_view(view: EventView, delete=False):
 
 LoginResult = namedtuple(
     "LoginResult",
-    "user event_config chat_channels chat_notification_counts exhibition_data view",
+    "user event_config chat_channels chat_notification_counts view",
 )
 
 
@@ -957,7 +957,6 @@ def login(
     invite_token=None,
 ) -> LoginResult:
     from .chat import ChatService
-    from .exhibition import ExhibitionService
     from .event import get_event_config_for_user
 
     user = get_user(
@@ -996,7 +995,6 @@ def login(
             user.pk, is_volatile=False
         ),
         chat_notification_counts=ChatService(event).get_notification_counts(user.pk),
-        exhibition_data=ExhibitionService(event).get_exhibition_data_for_user(user.pk),
         view=view,
     )
 
@@ -1140,17 +1138,19 @@ def list_users(
     trait_badges_map=None,
     include_banned=True,
     include_admin_info=False,
+    include_private=False,
 ) -> object:
     qs = (
         User.objects.filter(
             event_id=event_id,
-            show_publicly=True,
             deleted=False,
             type=User.UserType.PERSON,
         )
         .exclude(profile__display_name__isnull=True)
         .exclude(profile__display_name__exact="")
     )
+    if not include_private:
+        qs = qs.filter(show_publicly=True)
     if not include_banned:
         qs = qs.exclude(moderation_state=User.ModerationState.BANNED)
     if badge:

@@ -2768,7 +2768,7 @@ h2 .user-name-display img {
     gap: 0.35rem;
     min-width: 0;
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible;
   }
 
   /* td.nowrap forces a min-content width larger than the card at ~320px,
@@ -3021,6 +3021,14 @@ button.btn-speaker-not-arrived {
   .speaker-action-label--short {
     display: inline;
   }
+}
+
+.tag-hidden { display: none; }
+.review-tags-list:hover .tag-hidden { display: inline-block; }
+.review-tags-list:hover .tag-ellipsis { display: none; }
+
+.review-tags-list .badge {
+  background-color: var(--tag-color, #cccccc);
 }
 
 @media print {
