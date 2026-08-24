@@ -605,6 +605,24 @@ class SubmissionContentView(SubmissionContent):
             return ['base.orga_list_submission']  # View permission for reviewers
         return ['base.create_submission']
 
+    @context
+    def available_tags_json(self):
+        tags = []
+        for tag in self.request.event.tags.all().order_by('tag'):
+            description = tag.description
+            if description is not None and not isinstance(description, str):
+                description = str(description)
+            tags.append(
+                {
+                    'id': tag.id,
+                    'tag': tag.tag,
+                    'color': tag.color,
+                    'foreground_color': tag.foreground_color,
+                    'description': description or '',
+                }
+            )
+        return tags
+
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
     model = Submission

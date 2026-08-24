@@ -22,7 +22,6 @@ const ADMIN_SECTIONS = [
 	{ label: 'Streaming servers', path: 'streamingservers/' },
 	{ label: 'Stream keys', path: 'streamkey/' },
 	{ label: 'System logs', path: 'systemlog/' },
-	{ label: 'Conftool posters', path: 'conftool/syncposters/' },
 	{ label: 'Profile', path: 'auth/profile/' }
 ]
 const ADMIN_PATHS = new Set(ADMIN_SECTIONS.map(item => item.path))

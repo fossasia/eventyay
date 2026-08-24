@@ -50,9 +50,10 @@ def searchable_scrolling_checkbox_widget():
 
 
 class BadgeRenderer(Renderer):
-    def __init__(self, event, layout, bgf, ask_user_fields=None):
+    def __init__(self, event, layout, bgf, ask_user_fields=None, required_fields=None):
         super().__init__(event, layout, bgf)
         self.ask_user_fields = {str(value) for value in (ask_user_fields or [])}
+        self.required_fields = {str(value) for value in (required_fields or [])}
 
     def _get_layout_hidden_fields(self, op: OrderPosition):
         if not self.ask_user_fields:
@@ -62,7 +63,10 @@ class BadgeRenderer(Renderer):
         if hidden_fields is None:
             hidden_fields = {str(value) for value in get_badge_hidden_fields(op)}
             op._badge_hidden_fields_cache = hidden_fields
-        return {field for field in hidden_fields if field in self.ask_user_fields}
+            
+        effective = {field for field in hidden_fields if field in self.ask_user_fields}
+        effective -= self.required_fields
+        return effective
 
     def _get_text_content(self, op: OrderPosition, order: Order, o: dict, inner=False):
         content = normalize_badge_content_key(o.get('content'))
@@ -148,6 +152,7 @@ def _renderer(event, layout, version):
         layout.layout_data,
         bgf,
         ask_user_fields=(layout.ask_user_fields_data if layout.allow_customization else []),
+        required_fields=layout.required_badge_fields_data,
     )
     _renderer_cache[cache_key] = renderer
     return renderer

@@ -9,6 +9,7 @@ from channels.testing import WebsocketCommunicator
 from django.utils.timezone import now
 
 from tests.utils import get_token
+from tests.video.utils import video_permissions
 from venueless.core.models import User
 from venueless.core.models.room import AnonymousInvite
 from venueless.core.services.user import get_user_by_token_id
@@ -38,7 +39,6 @@ async def test_auth_with_client_id(world, announcement, inactive_announcement):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert len(response[1]["announcements"]) == 1
@@ -120,10 +120,10 @@ async def test_auth_with_jwt_token(index, world):
         await c.send_json_to(["authenticate", {"token": token}])
         response = await c.receive_json_from()
         assert response[0] == "authenticated"
-        assert set(response[1]["world.config"]["permissions"]) == {
+        assert video_permissions(response[1]["world.config"]["permissions"]) == {
             "world:view",
         }
-        assert set(response[1]["world.config"]["rooms"][0]["permissions"]) == {
+        assert video_permissions(response[1]["world.config"]["rooms"][0]["permissions"]) == {
             "room:view",
             "room:chat.read",
             "room:chat.join",
@@ -142,7 +142,6 @@ async def test_auth_with_jwt_token(index, world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
 
@@ -183,7 +182,6 @@ async def test_update_user():
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         user_id = response[1]["user.config"]["id"]
@@ -228,7 +226,6 @@ async def test_update_user():
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert response[1]["user.config"]["profile"]["display_name"] == "Cool User"
@@ -276,7 +273,6 @@ async def test_auth_with_jwt_token_update_traits(world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert (
@@ -295,7 +291,6 @@ async def test_auth_with_jwt_token_update_traits(world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert (
@@ -328,7 +323,6 @@ async def test_auth_with_jwt_token_twice(world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert (
@@ -347,7 +341,6 @@ async def test_auth_with_jwt_token_twice(world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         assert (
@@ -371,7 +364,6 @@ async def test_fetch_user():
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
         user_id = response[1]["user.config"]["id"]
@@ -467,10 +459,9 @@ async def test_auth_with_jwt_token_and_permission_traits(world):
             "chat.channels",
             "chat.read_pointers",
             "chat.notification_counts",
-            "exhibition",
             "announcements",
         }
-        assert set(response[1]["world.config"]["permissions"]) == {
+        assert video_permissions(response[1]["world.config"]["permissions"]) == {
             "world:view",
             "room:view",
             "room:chat.read",
@@ -485,7 +476,6 @@ async def test_auth_with_jwt_token_and_permission_traits(world):
             "room:announce",
             "world:announce",
             "world:chat.direct",
-            "world:exhibition.contact",
             "room:poll.vote",
             "room:poll.read",
             "room:poll.manage",
@@ -494,7 +484,7 @@ async def test_auth_with_jwt_token_and_permission_traits(world):
             "room:question.moderate",
             "room:question.ask",
         }
-        assert set(response[1]["world.config"]["rooms"][0]["permissions"]) == {
+        assert video_permissions(response[1]["world.config"]["rooms"][0]["permissions"]) == {
             "room:view",
             "room:chat.read",
             "room:chat.join",
@@ -1067,10 +1057,10 @@ async def test_anonymous_invite(client, world, stream_room, bbb_room):
         assert response[0] == "authenticated"
         assert len(response[1]["world.config"]["rooms"]) == 1
         assert response[1]["world.config"]["rooms"][0]["id"] == str(stream_room.id)
-        assert set(response[1]["world.config"]["permissions"]) == {
+        assert video_permissions(response[1]["world.config"]["permissions"]) == {
             "world:view",
         }
-        assert set(response[1]["world.config"]["rooms"][0]["permissions"]) == {
+        assert video_permissions(response[1]["world.config"]["rooms"][0]["permissions"]) == {
             "room:view",
             "room:question.vote",
             "room:question.read",

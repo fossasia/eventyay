@@ -1,0 +1,62 @@
+input[type="file"]:not(.file-input-has-selection) {
+  color: transparent;
+}
+
+input[type="file"].file-input-has-selection {
+  color: inherit;
+}
+
+.eventyay-file-pick-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius);
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+}
+
+.eventyay-file-pick-wrapper:focus-within {
+  border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-focus);
+}
+
+.eventyay-file-pick-wrapper label {
+  margin-bottom: 0;
+  padding: 0.375rem 0.75rem;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+  background-color: #e9ecef;
+  border-right: 1px solid var(--color-border);
+}
+
+.eventyay-file-pick-wrapper label:hover {
+  background-color: #dde0e3;
+}
+
+.eventyay-file-pick-wrapper input[type="file"],
+.eventyay-file-pick-wrapper input[type="file"]:disabled {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.eventyay-file-name {
+  padding: 0.375rem 0.75rem;
+  color: #6c757d;
+  font-size: 0.875em;
+}
+
+.eventyay-file-name:empty {
+  display: none;
+}

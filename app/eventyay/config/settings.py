@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import sys
+from datetime import timedelta
 from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
@@ -160,6 +161,7 @@ class BaseSettings(_BaseSettings):
     # Set to 1 to enable Vite dev servers with HMR for live frontend development.
     npm_dev: bool = False
     fetch_ecb_rates: bool = True
+    cache_tickets_hours: int = Field(default=24, ge=1)
 
     @classmethod
     def settings_customise_sources(
@@ -256,6 +258,7 @@ DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
 DATABASE_REPLICA = 'default'
 FETCH_ECB_RATES = conf.fetch_ecb_rates
+CACHE_TICKETS_MAX_AGE = timedelta(hours=conf.cache_tickets_hours)
 
 DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'
@@ -443,6 +446,7 @@ _LIBRARY_MIDDLEWARES = (
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'eventyay.base.middleware.LoadSheddingMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -1138,6 +1142,14 @@ CELERY_WORKER_REDIRECT_STDOUTS = False
 CELERY_TASK_ROUTES = {
     'eventyay.base.services.notifications.*': {'queue': 'notifications'},
     'eventyay.api.webhooks.*': {'queue': 'notifications'},
+    'eventyay.plugins.badges.tasks.*': {'queue': 'longrunning'},
+    'eventyay.base.services.export.*': {'queue': 'longrunning'},
+    'eventyay.base.services.orderimport.*': {'queue': 'longrunning'},
+    'eventyay.features.importers.tasks.*': {'queue': 'longrunning'},
+    'eventyay.base.services.tickets.generate': {'queue': 'longrunning'},
+    'eventyay.base.services.tickets.invalidate_cache': {'queue': 'longrunning'},
+    # Registered name in eventyay.agenda.tasks (legacy pretalx namespace).
+    'pretalx.agenda.export_schedule_html': {'queue': 'longrunning'},
 }
 
 # The folder where static files are collected to. It is shared with Nginx.
@@ -1263,6 +1275,9 @@ LOGGING = {
         'handlers': [_adaptive_console_handler],
     },
     'formatters': _LOGGING_FORMATTERS,
+    'filters': {
+        'one_line_warning': {'()': 'eventyay.helpers.security.OneLineWarningFilter'},
+    },
     'handlers': _LOGGING_HANDLERS,
     'loggers': {
         'django.db.backends': {
@@ -1284,6 +1299,11 @@ LOGGING = {
         'eventyay': {
             'handlers': [_adaptive_console_handler],
             'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        'django.security.DisallowedHost': {
+            'handlers': [_adaptive_console_handler],
+            'filters': ['one_line_warning'],
             'propagate': False,
         },
     },
@@ -1387,9 +1407,9 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'UNICODE_JSON': False,
-    # Throttling defaults
+    # User throttle is global (keyed by user/token, NAT-safe). Anonymous IP throttling
+    # is opt-in on high-traffic public endpoints only (streams, schedule).
     'DEFAULT_THROTTLE_CLASSES': [
-        'eventyay.api.throttles.EventyayAnonRateThrottle',
         'eventyay.api.throttles.EventyayUserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
@@ -1434,6 +1454,10 @@ TALK_BASE_PATH = ''
 LOGIN_REDIRECT_URL = '/common/account/general'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
+IMAGE_SVG_MAX_SIZE = 1 * 1024 * 1024
+IMAGE_DEFAULT_MAX_WIDTH = 1920
+IMAGE_DEFAULT_MAX_HEIGHT = 1080
+IMAGE_BACKFILL_MIN_SIZE_KB = 500
 
 BYTES_IN_MB = 1024 * 1024
 
@@ -1507,6 +1531,9 @@ if SENTRY_DSN:
     from sentry_sdk.integrations.celery import CeleryIntegration
     from sentry_sdk.integrations.django import DjangoIntegration
 
+    from django.core.exceptions import PermissionDenied
+    from django.http import Http404
+
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[CeleryIntegration(), DjangoIntegration()],
@@ -1514,6 +1541,7 @@ if SENTRY_DSN:
         debug=DEBUG,
         release=EVENTYAY_COMMIT if EVENTYAY_COMMIT != 'unknown' else None,
         environment=active_environment.value,
+        ignore_errors=[Http404, PermissionDenied],
     )
 
 # Multifactor authentication configuration

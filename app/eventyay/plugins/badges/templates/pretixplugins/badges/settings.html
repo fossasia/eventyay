@@ -71,6 +71,7 @@
                   <thead>
                     <tr>
                       <th>{% trans 'Field' %}</th>
+                      <th class="text-center">{% trans 'Required' %}</th>
                       <th class="text-right flip">{% trans 'Ask user' %}</th>
                     </tr>
                   </thead>
@@ -79,6 +80,16 @@
                       <tr>
                         <td>
                           <label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                        </td>
+                        <td class="text-center">
+                          {% for req_choice in form.required_badge_fields %}
+                            {% if req_choice.data.value == choice.data.value %}
+                              <label class="toggle-switch" for="{{ req_choice.id_for_label }}" aria-label="{% blocktrans trimmed with field=choice.choice_label %}Require {{ field }}{% endblocktrans %}">
+                                {{ req_choice.tag }}
+                                <span class="toggle-slider"></span>
+                              </label>
+                            {% endif %}
+                          {% endfor %}
                         </td>
                         <td class="text-right flip">
                           <label class="toggle-switch" for="{{ choice.id_for_label }}" aria-label="{% blocktrans trimmed with field=choice.choice_label %}Ask user for {{ field }}{% endblocktrans %}">
@@ -92,6 +103,9 @@
                 </table>
               </div>
               {% for error in form.ask_user_fields.errors %}
+                <p class="help-block text-danger">{{ error }}</p>
+              {% endfor %}
+              {% for error in form.required_badge_fields.errors %}
                 <p class="help-block text-danger">{{ error }}</p>
               {% endfor %}
             {% else %}
@@ -131,6 +145,17 @@
 
       $('#id_allow_customization').on('change', toggleBadgeCustomizationFields);
       toggleBadgeCustomizationFields();
+
+      $('input[name="required_badge_fields"]').on('change', function() {
+        const val = $(this).val();
+        const $askUser = $('input[name="ask_user_fields"][value="' + val + '"]');
+        if ($(this).is(':checked')) {
+          $askUser.prop('checked', true).prop('disabled', true);
+        } else {
+          $askUser.prop('disabled', false);
+        }
+      });
+      $('input[name="required_badge_fields"]').trigger('change');
     });
   </script>
 {% endblock %}
