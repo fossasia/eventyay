@@ -59,10 +59,13 @@ class TeamForm(forms.ModelForm):
             if "can_manage_social_media" in self.fields:
                 del self.fields["can_manage_social_media"]
 
-        has_exhibition = False
+        self.exhibition_event_ids = []
         if apps.is_installed('exhibition'):
-            has_exhibition = organizer.events.filter(plugins__regex=EXHIBITION_PLUGIN_REGEX).exists()
+            self.exhibition_event_ids = list(
+                organizer.events.filter(plugins__regex=EXHIBITION_PLUGIN_REGEX).values_list('pk', flat=True)
+            )
 
+        has_exhibition = bool(self.exhibition_event_ids)
         self.exhibition_plugin_enabled = has_exhibition
         if not has_exhibition:
             for f in EXHIBITION_FIELDS:
