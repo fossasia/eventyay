@@ -41,6 +41,23 @@ def test_locales(event, locale_array, count):
 
 
 @pytest.mark.django_db
+def test_locales_fall_back_when_redis_cache_times_out(event, monkeypatch):
+    from redis.exceptions import TimeoutError as RedisTimeoutError
+
+    event.locale_array = 'en,de'
+    event.save()
+    event.settings.set('locales', ['fr'])
+    event.__dict__.pop('locales', None)
+
+    monkeypatch.setattr(
+        event.settings,
+        '_cache',
+        lambda: (_ for _ in ()).throw(RedisTimeoutError('Timeout reading from socket')),
+    )
+    assert event.locales == ['en', 'de']
+
+
+@pytest.mark.django_db
 def test_initial_data(event):
     with scope(event=event):
         assert event.cfp
