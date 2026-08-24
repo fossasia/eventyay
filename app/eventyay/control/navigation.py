@@ -425,84 +425,6 @@ def get_admin_navigation(request):
         return []
     nav = [
         {
-            'label': _('Admin Dashboard'),
-            'url': reverse('eventyay_admin:admin.dashboard'),
-            'active': 'dashboard' in url.url_name,
-            'icon': 'dashboard',
-        },
-        {
-            'label': _('All Events'),
-            'url': reverse('eventyay_admin:admin.events'),
-            'active': 'events' in url.url_name,
-            'icon': 'calendar',
-        },
-        {
-            'label': _('All Organizers'),
-            'url': reverse('eventyay_admin:admin.organizers'),
-            'active': 'organizers' in url.url_name,
-            'icon': 'group',
-        },
-        {
-            'label': _('All Attendees'),
-            'url': reverse('eventyay_admin:admin.attendees'),
-            'active': 'attendees' in url.url_name,
-            'icon': 'ticket',
-        },
-        {
-            'label': _('All Sessions'),
-            'url': reverse('eventyay_admin:admin.submissions'),
-            'active': 'submissions' in url.url_name,
-            'icon': 'sticky-note-o',
-        },
-        {
-            'label': _('All Orders'),
-            'url': reverse('eventyay_admin:admin.orders'),
-            'active': 'orders' in url.url_name,
-            'icon': 'shopping-cart',
-        },
-        {
-            'label': _('Task management'),
-            'url': reverse('eventyay_admin:admin.task_management'),
-            'active': 'task_management' in url.url_name,
-            'icon': 'tasks',
-        },
-        {
-            'label': _('Pages'),
-            'url': reverse('eventyay_admin:admin.pages'),
-            'active': 'pages' in url.url_name,
-            'icon': 'file-text',
-        },
-        {
-            'label': _('Start page'),
-            'url': reverse('eventyay_admin:admin.startpage'),
-            'active': (url.url_name == 'admin.startpage'),
-            'icon': 'home',
-        },
-        {
-            'label': _('Users'),
-            'url': reverse('eventyay_admin:admin.users'),
-            'active': False,
-            'icon': 'user',
-            'children': [
-                {
-                    'label': _('All users'),
-                    'url': reverse('eventyay_admin:admin.users'),
-                    'active': ('users' in url.url_name),
-                },
-                {
-                    'label': _('Admin sessions'),
-                    'url': reverse('eventyay_admin:admin.user.sudo.list'),
-                    'active': ('sudo' in url.url_name),
-                },
-            ],
-        },
-        {
-            'label': _('Vouchers'),
-            'url': reverse('eventyay_admin:admin.vouchers'),
-            'active': 'vouchers' in url.url_name,
-            'icon': 'tags',
-        },
-        {
             'label': _('Global settings'),
             'url': reverse('eventyay_admin:admin.global.settings'),
             'active': False,
@@ -512,6 +434,21 @@ def get_admin_navigation(request):
                     'label': _('Settings'),
                     'url': reverse('eventyay_admin:admin.global.settings'),
                     'active': (url.url_name == 'admin.global.settings'),
+                },
+                {
+                    'label': _('System information'),
+                    'url': reverse('eventyay_admin:admin.config'),
+                    'active': 'config' in url.url_name,
+                },
+                {
+                    'label': _('Pages'),
+                    'url': reverse('eventyay_admin:admin.pages'),
+                    'active': 'pages' in url.url_name,
+                },
+                {
+                    'label': _('Start page'),
+                    'url': reverse('eventyay_admin:admin.startpage'),
+                    'active': (url.url_name == 'admin.startpage'),
                 },
                 {
                     'label': _('Update check'),
@@ -536,83 +473,73 @@ def get_admin_navigation(request):
             ],
         },
         {
-            'label': _('System information'),
-            'url': reverse('eventyay_admin:admin.config'),
-            'active': 'config' in url.url_name,
-            'icon': 'cog',
+            'label': _('Task management'),
+            'url': reverse('eventyay_admin:admin.task_management'),
+            'active': 'task_management' in url.url_name,
+            'icon': 'tasks',
         },
     ]
 
-    # --- Inject Video Admin navigation (now part of admin sidebar) -------------
-    if request.user.is_authenticated and request.user.is_staff:
-        path = request.path.rstrip('/')
-        video_root = '/admin/video'
-        def is_active(prefix, exact=False):
-            if exact:
-                return path == prefix.rstrip('/')
-            return path == prefix.rstrip('/') or path.startswith(prefix.rstrip('/') + '/')
+    # --- Inject Video navigation (now part of admin sidebar) ------------------
+    user = request.user
+    if user.is_authenticated and user.is_staff:
+        is_video_route = 'video_admin' in url.namespaces
         video_children = [
             {
                 'label': _('Dashboard'),
                 'url': reverse('eventyay_admin:video_admin:index'),
-                'active': is_active('/admin/video', exact=True),
+                'active': is_video_route and url.url_name == 'index',
             },
             {
                 'label': _('Events'),
                 'url': reverse('eventyay_admin:video_admin:event.list'),
-                'active': is_active('/admin/video/events'),
+                'active': is_video_route and url.url_name.startswith('event.'),
             },
             {
                 'label': _('BBB servers'),
                 'url': reverse('eventyay_admin:video_admin:bbbserver.list'),
-                'active': is_active('/admin/video/bbbs') and 'moveroom' not in path,
+                'active': is_video_route and url.url_name.startswith('bbbserver.') and url.url_name != 'bbbserver.moveroom',
             },
             {
                 'label': _('Move BBB room'),
                 'url': reverse('eventyay_admin:video_admin:bbbserver.moveroom'),
-                'active': is_active('/admin/video/bbbs/moveroom', exact=True),
+                'active': is_video_route and url.url_name == 'bbbserver.moveroom',
             },
             {
                 'label': _('Janus servers'),
                 'url': reverse('eventyay_admin:video_admin:janusserver.list'),
-                'active': is_active('/admin/video/janus'),
+                'active': is_video_route and url.url_name.startswith('janusserver.'),
             },
             {
                 'label': _('Jitsi servers'),
                 'url': reverse('eventyay_admin:video_admin:jitsiserver.list'),
-                'active': is_active('/admin/video/jitsi'),
+                'active': is_video_route and url.url_name.startswith('jitsiserver.'),
             },
             {
                 'label': _('TURN servers'),
                 'url': reverse('eventyay_admin:video_admin:turnserver.list'),
-                'active': is_active('/admin/video/turns'),
+                'active': is_video_route and url.url_name.startswith('turnserver.'),
             },
             {
                 'label': _('Streaming servers'),
                 'url': reverse('eventyay_admin:video_admin:streamingserver.list'),
-                'active': is_active('/admin/video/streamingservers'),
+                'active': is_video_route and url.url_name.startswith('streamingserver.'),
             },
             {
                 'label': _('Streamkey generator'),
                 'url': reverse('eventyay_admin:video_admin:streamkey'),
-                'active': is_active('/admin/video/streamkey', exact=True),
+                'active': is_video_route and url.url_name == 'streamkey',
             },
             {
                 'label': _('System log'),
                 'url': reverse('eventyay_admin:video_admin:systemlog.list'),
-                'active': is_active('/admin/video/systemlog'),
+                'active': is_video_route and url.url_name.startswith('systemlog.'),
             },
-            
-            # {
-            #     'label': _('Users'),
-            #     'url': f'{video_root}/users/',
-            #     'active': is_active(f'{video_root}/users'),
-            # },
         ]
-        parent_active = any(c['active'] for c in video_children) or is_active(video_root)
+        parent_active = any(c['active'] for c in video_children)
         nav.append(
             {
-                'label': _('Video Admin'),
+                'label': _('Video'),
                 'url': reverse('eventyay_admin:video_admin:index'),
                 'active': parent_active,
                 'icon': 'video-camera',
@@ -620,6 +547,65 @@ def get_admin_navigation(request):
             }
         )
     # --------------------------------------------------------------------------
+
+    nav.extend(
+        [
+            {
+                'label': _('All Events'),
+                'url': reverse('eventyay_admin:admin.events'),
+                'active': 'events' in url.url_name,
+                'icon': 'calendar',
+            },
+            {
+                'label': _('All Organizers'),
+                'url': reverse('eventyay_admin:admin.organizers'),
+                'active': 'organizers' in url.url_name,
+                'icon': 'group',
+            },
+            {
+                'label': _('All Attendees'),
+                'url': reverse('eventyay_admin:admin.attendees'),
+                'active': 'attendees' in url.url_name,
+                'icon': 'ticket',
+            },
+            {
+                'label': _('All Sessions'),
+                'url': reverse('eventyay_admin:admin.submissions'),
+                'active': 'submissions' in url.url_name,
+                'icon': 'sticky-note-o',
+            },
+            {
+                'label': _('All Orders'),
+                'url': reverse('eventyay_admin:admin.orders'),
+                'active': 'orders' in url.url_name,
+                'icon': 'shopping-cart',
+            },
+            {
+                'label': _('Users'),
+                'url': reverse('eventyay_admin:admin.users'),
+                'active': False,
+                'icon': 'user',
+                'children': [
+                    {
+                        'label': _('All users'),
+                        'url': reverse('eventyay_admin:admin.users'),
+                        'active': ('users' in url.url_name),
+                    },
+                    {
+                        'label': _('Admin sessions'),
+                        'url': reverse('eventyay_admin:admin.user.sudo.list'),
+                        'active': ('sudo' in url.url_name),
+                    },
+                ],
+            },
+            {
+                'label': _('Vouchers'),
+                'url': reverse('eventyay_admin:admin.vouchers'),
+                'active': 'voucher' in url.url_name,
+                'icon': 'tags',
+            },
+        ]
+    )
 
     merge_in(
         nav,
