@@ -245,7 +245,7 @@ def test_fit_fontsize_to_width_shrinks_unbreakable_text():
     assert fitted >= 4.0
 
 
-def test_fit_fontsize_to_width_keeps_wrappable_text_at_max():
+def test_fit_fontsize_to_width_shrinks_multiword_text():
     Renderer._register_fonts()
     fitted = Renderer._fit_fontsize_to_width(
         'Very Long Attendee Name Example',
@@ -254,7 +254,8 @@ def test_fit_fontsize_to_width_keeps_wrappable_text_at_max():
         width_mm=30,
     )
 
-    assert fitted == 12.0
+    assert fitted < 12.0
+    assert fitted >= 4.0
 
 
 def test_fit_fontsize_to_width_keeps_short_text_at_max():
@@ -279,6 +280,26 @@ def test_fit_fontsize_to_width_multiline_uses_longest_line():
     )
 
     assert fitted == 12.0
+
+
+def test_resolve_textarea_font_multilingual():
+    from eventyay.base.pdf import Renderer, resolve_textarea_font
+    Renderer._register_fonts()
+
+    font, _ = resolve_textarea_font('Open Sans', 'Ada Lovelace')
+    assert font == 'Open Sans'
+
+    font, _ = resolve_textarea_font('Open Sans', '你好')
+    assert font == 'NotoSansCJK'
+
+    font, _ = resolve_textarea_font('Open Sans', '안녕하세요')
+    assert font == 'NotoSansKR'
+
+    font, _ = resolve_textarea_font('Open Sans', 'สวัสดี')
+    assert font == 'NotoSansThai'
+
+    font, _ = resolve_textarea_font('Open Sans', 'שָׁלוֹם')
+    assert font == 'NotoSansHebrew'
 
 
 def test_extract_layout_text_placeholders():
