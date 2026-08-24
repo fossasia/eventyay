@@ -9,6 +9,8 @@ localegen:
 	./manage.py makemessages --keep-pot --ignore "eventyay/helpers/*" --ignore "eventyay/webapp/*" $(LNGS)
 	./manage.py makemessages --keep-pot -d djangojs --ignore "eventyay/helpers/*" --ignore "eventyay/static/jsi18n/*" --ignore "eventyay/static.dist/*" --ignore "data/*" --ignore "eventyay/static/rrule/*" --ignore "build/*" --ignore "eventyay/webapp/*" --ignore "*/node_modules/*" --ignore "*/dist/*" $(LNGS)
 	npm run i18n:extract --prefix=eventyay/webapp/video
+	npm run i18n:extract --prefix=eventyay/webapp/schedule
+	npm run i18n:extract --prefix=eventyay/webapp/schedule-editor
 
 staticfiles: jsi18n
 	./manage.py collectstatic --noinput

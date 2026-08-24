@@ -466,7 +466,7 @@ export default {
 					}
 
 					if (!errorMessage) {
-						errorMessage = 'Bad Request';
+						errorMessage = this.$t('Bad Request');
 					}
 
 					throw new Error(errorMessage);

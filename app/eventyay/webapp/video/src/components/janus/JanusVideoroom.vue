@@ -1782,7 +1782,7 @@ export default {
 					local: false,
 					screen: false,
 					user: feed.user,
-					label: feed.user?.profile?.display_name || 'Participant',
+					label: feed.user?.profile?.display_name || this.$t('Participant'),
 					hasVideo: false,
 					muted: true,
 					audioLevel: 0,
@@ -2061,9 +2061,11 @@ export default {
 		},
 		feedLabel(feed) {
 			if (feed.feedType === 'screen') {
-				return feed.user?.profile?.display_name ? `${feed.user.profile.display_name}'s screen` : 'Shared screen'
+				return feed.user?.profile?.display_name
+					? this.$t("{{name}}'s screen", {name: feed.user.profile.display_name})
+					: this.$t('Shared screen')
 			}
-			return feed.user?.profile?.display_name || 'Participant'
+			return feed.user?.profile?.display_name || this.$t('Participant')
 		},
 		stopLocalCameraTracks() {
 			this.localCameraActive = false

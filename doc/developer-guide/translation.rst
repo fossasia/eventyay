@@ -84,15 +84,16 @@ scroll down, there is also a "Comments" section to discuss any questions with fe
 .. image:: ../../../../img/weblate6.png
    :class: screenshot
 
-Video UI strings live in a separate gettext domain, ``video.po``
-(``app/eventyay/locale/*/LC_MESSAGES/video.po``), one file per tickets/talk
-locale directory. The Video language selector uses the same Django
-``LANGUAGES`` list and ``eventyay_language`` cookie as the rest of the site.
-After adding ``$t()`` keys in
-``app/eventyay/webapp/video``, run ``make localegen`` from ``app/`` (or
-``npm run i18n:extract`` in the Video app) so new strings merge into those PO
-files. On Weblate, add or use the ``eventyay/video`` component with monolingual
-English source ``en/LC_MESSAGES/video.po``.
+Video UI strings live in ``video.po``, public schedule widget strings in
+``schedule.po``, and organiser schedule-editor strings in
+``schedule-editor.po`` (``app/eventyay/locale/*/LC_MESSAGES/``). Each Vue
+app loads those catalogs with i18next, always layering English under the
+selected language so empty Weblate strings never show raw keys. After adding
+``$t()`` keys, run ``make localegen`` from ``app/`` (or ``npm run i18n:extract``
+in the relevant app). Extract updates English plus any locale that already
+has that domain file; other languages belong in the Weblate/catalog PR.
+On Weblate, use monolingual English sources ``en/LC_MESSAGES/video.po``,
+``schedule.po``, and ``schedule-editor.po``.
 
 .. _translate.eventyay.com: https://translate.eventyay.com
 .. _eventyay project page: https://translate.eventyay.com/projects/eventyay/

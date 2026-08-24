@@ -34,7 +34,7 @@ Architecture
 
 **Styling**: Stylus with custom theming
 
-**i18n**: i18next with gettext ``video.po`` files
+**i18n**: i18next with gettext ``video.po`` / ``schedule.po`` / ``schedule-editor.po`` files
 
 Core Application Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -254,19 +254,20 @@ Internationalization
 ~~~~~~~~~~~~~~~~~~~~
 
 **Supported Languages**: same UI languages as tickets/talk (Django ``LANGUAGES``).
-Catalogs live in ``app/eventyay/locale/*/LC_MESSAGES/video.po``.
+Catalogs live in ``app/eventyay/locale/*/LC_MESSAGES/{video,schedule,schedule-editor}.po``.
+Untranslated locales always fall back to English; they never show raw keys.
 
-**Implementation**: i18next loading gettext ``video.po`` catalogs (Weblate)
+**Implementation**: i18next loading gettext catalogs (Weblate)
 
 **Usage**:
 
 .. code-block:: javascript
 
    // In components
-   this.$t('key.path')
+   this.$t('Search')
    
    // In templates
-   {{ $t('key.path') }}
+   {{ $t('Save') }}
 
 Styling & Theming
 ~~~~~~~~~~~~~~~~~

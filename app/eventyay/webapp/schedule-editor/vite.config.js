@@ -73,6 +73,13 @@ export default {
 		include: ['fuzzysearch', 'popper.js', 'resize-observer-polyfill'],
 	},
 	server: {
-	  port: '8080'
+	  port: '8080',
+	  fs: {
+		allow: [
+			path.resolve(__dirname),
+			path.resolve(__dirname, '../../locale'),
+			path.resolve(__dirname, '../i18n'),
+		]
+	  }
 	}
 }

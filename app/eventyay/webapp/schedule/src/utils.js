@@ -1,4 +1,6 @@
+import i18next from 'i18next'
 import moment from 'moment-timezone'
+import {trackLocale} from '../../i18n/locale.js'
 import { getVideoEmbedUrl } from './videoEmbed.js'
 
 export { getVideoEmbedUrl }
@@ -30,16 +32,19 @@ export function findScrollParent (node) {
 	return findScrollParent(node.parentNode)
 }
 export function getPrettyDuration (start, end) {
+	trackLocale()
+	const minLabel = i18next.t('min')
+	const hourLabel = i18next.t('h')
 	let minutes = end.diff(start, 'minutes')
 	if (minutes <= 60) {
-		return `${minutes}min`
+		return `${minutes}${minLabel}`
 	}
 	const hours = Math.floor(minutes / 60)
 	minutes = minutes % 60
 	if (minutes) {
-		return `${hours}h${minutes}min`
+		return `${hours}${hourLabel}${minutes}${minLabel}`
 	}
-	return `${hours}h`
+	return `${hours}${hourLabel}`
 }
 
 export function getSessionTime(session, timezone, locale, hasAmPm) {

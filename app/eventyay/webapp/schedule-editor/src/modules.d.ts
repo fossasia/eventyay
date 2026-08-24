@@ -15,3 +15,8 @@ declare module '~/lib/i18n' {
   const plugin: (locale: string) => Promise<Plugin>
   export default plugin
 }
+
+declare module '*.po' {
+  const catalog: Record<string, string>
+  export default catalog
+}

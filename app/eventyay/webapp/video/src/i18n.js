@@ -1,14 +1,25 @@
 /* global ENV_DEVELOPMENT */
 import i18next from 'i18next'
 import config from 'config'
-import {isEnglishLocale, mergeCatalogWithEnglish, toDjangoLanguage, usableTranslations} from './i18n-catalog.js'
+import {
+	createEnglishCatalogLoader,
+	isEnglishLocale,
+	loadCatalogForLanguage as mergeLoadedCatalog,
+	loadRawCatalog,
+	toDjangoLanguage,
+} from '../../i18n/load.js'
+import {createTranslate, notifyLocaleChange, trackLocale} from '../../i18n/locale.js'
 
 export default i18next
+export {notifyLocaleChange}
 
 export const LANGUAGE_COOKIE_NAME = 'eventyay_language'
 const localeLoaders = import.meta.glob('../../../locale/*/LC_MESSAGES/video.po')
 
+export const translate = createTranslate(i18next)
+
 export function localize(string) {
+	trackLocale()
 	if (!string) return ''
 	if (typeof string === 'string') return string
 	for (const lang of i18next.languages || []) {
@@ -111,74 +122,14 @@ export async function persistLanguage(language) {
 	await syncLanguageToServer(djangoLanguage)
 }
 
-function toGettextLocale(language) {
-	const django = toDjangoLanguage(language)
-	const separator = django.indexOf('-')
-	if (separator < 0) return django
-	const head = django.slice(0, separator)
-	const rest = django.slice(separator + 1)
-	if (rest.length > 2) {
-		return `${head}_${rest.charAt(0).toUpperCase()}${rest.slice(1).toLowerCase()}`
-	}
-	return `${head}_${rest.toUpperCase()}`
-}
-
-const GETTEXT_DIR_ALIASES = {
-	uk: ['ua'],
-	'fa-ir': ['fa'],
-	'ja-jp': ['ja'],
-	'en-us': ['en'],
-	'en-gb': ['en'],
-	'en-au': ['en'],
-	'en-ca': ['en'],
-}
-
-function resolveLocaleLoader(language) {
-	if (!language) return null
-	const django = toDjangoLanguage(language)
-	const gettextLocale = toGettextLocale(django)
-	const [base] = django.split('-')
-	const candidates = new Set([
-		language,
-		django,
-		gettextLocale,
-		django.replaceAll('-', '_'),
-		...(GETTEXT_DIR_ALIASES[django] || []),
-	])
-	if (base) candidates.add(base)
-
-	for (const candidate of candidates) {
-		const path = `../../../locale/${candidate}/LC_MESSAGES/video.po`
-		if (localeLoaders[path]) {
-			return localeLoaders[path]
-		}
-	}
-	return null
-}
-
-async function loadRawCatalog(language) {
-	const loader = resolveLocaleLoader(language)
-	if (!loader) return null
-	const locale = await loader()
-	return locale.default || {}
-}
-
-let englishCatalogPromise
-
-async function loadEnglishCatalog() {
-	if (!englishCatalogPromise) {
-		englishCatalogPromise = loadRawCatalog('en').then((catalog) => usableTranslations(catalog || {}, 'en'))
-	}
-	return englishCatalogPromise
-}
+const loadEnglishCatalog = createEnglishCatalogLoader(localeLoaders)
 
 async function loadCatalogForLanguage(language) {
-	const english = await loadEnglishCatalog()
-	const raw = isEnglishLocale(language) ? english : await loadRawCatalog(language)
-	if (!raw && !isEnglishLocale(language) && ENV_DEVELOPMENT) {
+	const catalog = await mergeLoadedCatalog(localeLoaders, language, loadEnglishCatalog)
+	if (!isEnglishLocale(language) && ENV_DEVELOPMENT && !(await loadRawCatalog(localeLoaders, language))) {
 		console.warn('Missing video.po catalog for "%s", falling back to English', language)
 	}
-	return mergeCatalogWithEnglish(english, raw, language)
+	return catalog
 }
 
 function getInitialLanguage() {
@@ -233,7 +184,8 @@ export async function init(app) {
 	} catch (error) {
 		console.error('Failed to initialize Video translations', error)
 	}
+	notifyLocaleChange()
 	app.config.globalProperties.$i18n = i18next
-	app.config.globalProperties.$t = i18next.t.bind(i18next)
+	app.config.globalProperties.$t = translate
 	app.config.globalProperties.$localize = localize
 }

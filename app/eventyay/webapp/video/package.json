@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.vue",
     "lint:fix": "eslint . --ext .js,.vue --fix",
-    "i18n:extract": "node scripts/i18n-po.mjs extract",
+    "i18n:extract": "node ../i18n/extract.mjs extract --domain video",
+    "test:i18n": "node --test src/i18n-catalog.test.js ../i18n/catalog.test.js ../i18n/load.test.js",
     "analyze": "ANALYZE=true vite build"
   },
   "dependencies": {
