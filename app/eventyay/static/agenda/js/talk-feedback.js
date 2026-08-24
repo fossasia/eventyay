@@ -35,7 +35,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 action = 'remove';
             }
             const url = this.getAttribute('data-url');
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfInput) {
+                return;
+            }
+            const csrfToken = csrfInput.value;
             const container = this.closest('.d-flex');
             const originalAction = this.getAttribute('data-action');
 
@@ -179,6 +183,15 @@ document.addEventListener("DOMContentLoaded", function() {
                     icon.classList.remove('fa-caret-down');
                     icon.classList.add('fa-caret-up');
                 }
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-confirm-message]').forEach(function(button) {
+        button.addEventListener('click', function(event) {
+            const message = this.getAttribute('data-confirm-message');
+            if (message && !window.confirm(message)) {
+                event.preventDefault();
             }
         });
     });

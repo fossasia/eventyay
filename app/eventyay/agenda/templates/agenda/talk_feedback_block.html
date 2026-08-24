@@ -1,3 +1,5 @@
+{% load i18n %}
+{% load rich_text %}
     {% if request.event|get_feature_flag:"use_feedback" and not is_html_export %}
         <div class="mt-5 pt-4 border-top feedback-section">
             <h3 class="mb-4">{{ phrases.agenda.feedback }}</h3>
@@ -13,12 +15,14 @@
                             </div>
                             <div class="mb-3">{{ fb.review|rich_text }}</div>
                             <div class="d-flex align-items-center">
+                                {% if request.user.is_authenticated %}
                                 <button class="btn btn-sm btn-outline-secondary mr-2 react-btn" data-action="upvote" data-id="{{ fb.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=fb.id %}">
                                     <i class="fa fa-thumbs-up"></i> <span class="upvote-count">{{ fb.upvote_count }}</span>
                                 </button>
                                 <button class="btn btn-sm btn-outline-secondary mr-2 react-btn" data-action="downvote" data-id="{{ fb.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=fb.id %}">
                                     <i class="fa fa-thumbs-down"></i> <span class="downvote-count">{{ fb.downvote_count }}</span>
                                 </button>
+                                {% endif %}
                                 {% if feedback_form %}
                                     <button class="btn btn-sm btn-outline-primary mr-2 reply-btn" data-id="{{ fb.id }}">
                                         <i class="fa fa-reply"></i> {% translate "Reply" %}
@@ -36,7 +40,7 @@
                                                     {% translate 'Report' %}
                                                 </button>
                                                 {% if fb.author == request.user or request.user.has_perm('base.orga_update_submission', submission) %}
-                                                    <button type="submit" name="action" value="delete" class="dropdown-item dropdown-item-clean" onclick="return confirm('{% translate "Are you sure you want to delete this comment?" %}');">
+                                                    <button type="submit" name="action" value="delete" class="dropdown-item dropdown-item-clean" data-confirm-message="{% translate 'Are you sure you want to delete this comment?' %}">
                                                         {% translate 'Delete' %}
                                                     </button>
                                                 {% endif %}
@@ -49,7 +53,7 @@
                                                             {% translate 'Unban User' %}
                                                         </button>
                                                     {% elif fb.author %}
-                                                        <button type="submit" name="action" value="ban" class="dropdown-item dropdown-item-clean">
+                                                        <button type="submit" name="action" value="ban" class="dropdown-item dropdown-item-clean" data-confirm-message="{% translate 'Are you sure you want to ban this user?' %}">
                                                             {% translate 'Ban User' %}
                                                         </button>
                                                     {% endif %}
@@ -70,12 +74,14 @@
                                             </div>
                                             <div class="mb-2">{{ reply.review|rich_text }}</div>
                                             <div class="d-flex align-items-center">
+                                                {% if request.user.is_authenticated %}
                                                 <button class="btn btn-sm btn-outline-secondary mr-2 react-btn" data-action="upvote" data-id="{{ reply.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=reply.id %}">
                                                     <i class="fa fa-thumbs-up"></i> <span class="upvote-count">{{ reply.upvote_count }}</span>
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-secondary mr-2 react-btn" data-action="downvote" data-id="{{ reply.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=reply.id %}">
                                                     <i class="fa fa-thumbs-down"></i> <span class="downvote-count">{{ reply.downvote_count }}</span>
                                                 </button>
+                                                {% endif %}
                                                 {% if request.user.is_authenticated %}
                                                     <details class="dropdown d-inline-block ml-2" aria-haspopup="menu" role="menu">
                                                         <summary class="btn btn-sm btn-link text-muted p-0 border-0" style="box-shadow: none;">
@@ -88,7 +94,7 @@
                                                                     {% translate 'Report' %}
                                                                 </button>
                                                                 {% if reply.author == request.user or request.user.has_perm('base.orga_update_submission', submission) %}
-                                                                    <button type="submit" name="action" value="delete" class="dropdown-item dropdown-item-clean" onclick="return confirm('{% translate "Are you sure you want to delete this comment?" %}');">
+                                                                    <button type="submit" name="action" value="delete" class="dropdown-item dropdown-item-clean" data-confirm-message="{% translate 'Are you sure you want to delete this comment?' %}">
                                                                         {% translate 'Delete' %}
                                                                     </button>
                                                                 {% endif %}
@@ -101,7 +107,7 @@
                                                                             {% translate 'Unban User' %}
                                                                         </button>
                                                                     {% elif reply.author %}
-                                                                        <button type="submit" name="action" value="ban" class="dropdown-item dropdown-item-clean">
+                                                                        <button type="submit" name="action" value="ban" class="dropdown-item dropdown-item-clean" data-confirm-message="{% translate 'Are you sure you want to ban this user?' %}">
                                                                             {% translate 'Ban User' %}
                                                                         </button>
                                                                     {% endif %}
@@ -117,7 +123,7 @@
                             {% endif %}
 
                             {% if feedback_form %}
-                                <div class="reply-form-container mt-3" id="reply-form-{{ fb.id }}" class="d-none">
+                                <div class="reply-form-container mt-3 d-none" id="reply-form-{{ fb.id }}">
                                     <form method="post" action="">
                                         {% csrf_token %}
                                         <input type="hidden" name="parent" value="{{ fb.id }}">
@@ -188,4 +194,3 @@
             {% endif %}
         </div>
     {% endif %}
-

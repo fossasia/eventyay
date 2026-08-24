@@ -15,6 +15,7 @@ from eventyay.agenda.feedback_access import (
 @pytest.mark.django_db
 def test_feedback_period_open_after_session_finished(past_slot, event):
     with scope(event=event):
+        event.feature_flags['use_feedback'] = True
         event.feature_flags['feedback_enable_time'] = 'finished'
         event.feature_flags['feedback_close_after_days'] = 0
         event.save(update_fields=['feature_flags'])
@@ -24,6 +25,7 @@ def test_feedback_period_open_after_session_finished(past_slot, event):
 @pytest.mark.django_db
 def test_feedback_period_closed_after_deadline(past_slot, event):
     with scope(event=event):
+        event.feature_flags['use_feedback'] = True
         event.feature_flags['feedback_enable_time'] = 'finished'
         event.feature_flags['feedback_close_after_days'] = 1
         event.save(update_fields=['feature_flags'])
@@ -36,6 +38,7 @@ def test_feedback_period_closed_after_deadline(past_slot, event):
 @pytest.mark.django_db
 def test_feedback_period_closed_before_session_ends(slot, event):
     with scope(event=event):
+        event.feature_flags['use_feedback'] = True
         event.feature_flags['feedback_enable_time'] = 'finished'
         event.save(update_fields=['feature_flags'])
         slot.start = now() + dt.timedelta(hours=1)
@@ -47,6 +50,7 @@ def test_feedback_period_closed_before_session_ends(slot, event):
 @pytest.mark.django_db
 def test_user_without_ticket_cannot_give_feedback(past_slot, user, event):
     with scope(event=event):
+        event.feature_flags['use_feedback'] = True
         event.feature_flags['feedback_who_can_comment'] = 'attendees'
         event.feature_flags['feedback_close_after_days'] = 0
         event.save(update_fields=['feature_flags'])
@@ -57,6 +61,7 @@ def test_user_without_ticket_cannot_give_feedback(past_slot, user, event):
 @pytest.mark.django_db
 def test_user_with_ticket_can_give_feedback(past_slot, user, event, monkeypatch):
     with scope(event=event):
+        event.feature_flags['use_feedback'] = True
         event.feature_flags['feedback_who_can_comment'] = 'attendees'
         event.feature_flags['feedback_close_after_days'] = 0
         event.save(update_fields=['feature_flags'])
@@ -71,6 +76,7 @@ def test_user_with_ticket_can_give_feedback(past_slot, user, event, monkeypatch)
 @pytest.mark.django_db
 def test_registered_user_can_give_feedback_without_ticket(past_slot, user, event):
     with scope(event=event):
+        event.feature_flags['use_feedback'] = True
         event.feature_flags['feedback_who_can_comment'] = 'registered'
         event.feature_flags['feedback_close_after_days'] = 0
         event.save(update_fields=['feature_flags'])
@@ -82,6 +88,7 @@ def test_talk_page_shows_closed_message_after_deadline(
     django_assert_num_queries, past_slot, client, user, event
 ):
     with scope(event=event):
+        event.feature_flags['use_feedback'] = True
         event.feature_flags['feedback_who_can_comment'] = 'registered'
         event.feature_flags['feedback_close_after_days'] = 1
         event.save(update_fields=['feature_flags'])
@@ -100,6 +107,7 @@ def test_talk_page_hides_comment_form_for_non_attendee(
     django_assert_num_queries, past_slot, client, user, event
 ):
     with scope(event=event):
+        event.feature_flags['use_feedback'] = True
         event.feature_flags['feedback_who_can_comment'] = 'attendees'
         event.feature_flags['feedback_close_after_days'] = 0
         event.save(update_fields=['feature_flags'])

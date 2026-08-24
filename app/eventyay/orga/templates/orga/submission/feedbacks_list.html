@@ -39,29 +39,24 @@
         </div>
     </div>
 
-    <form method="post" action="{% url 'orga:submissions.feedback.bulk' organizer=request.event.organizer.slug event=request.event.slug %}?next={{ request.get_full_path|urlencode }}">
+    <form method="post" class="feedback-bulk-form" action="{% url 'orga:submissions.feedback.bulk' organizer=request.event.organizer.slug event=request.event.slug %}?next={{ request.get_full_path|urlencode }}">
         {% csrf_token %}
         {% if current_tab == 'pending' %}
-            <div class="mb-3" id="bulk-action-container" style="display: none;">
-                <span class="mr-2">{% translate "Select action" %}:</span>
-                <button type="submit" name="action" value="approve" class="btn btn-outline-primary btn-sm mr-1">
+            <div class="mb-3 batch-select-actions-feedback batch-select-actions-disabled"
+                 data-batch-disabled-reason-none="{% translate 'Select at least one comment.' %}">
+                <span class="mr-2" data-batch-count-label data-base-label="{% translate 'Select action' %}">{% translate "Select action" %}</span>
+                <button type="submit" name="action" value="approve" data-batch-action class="btn btn-outline-primary btn-sm mr-1" disabled>
                     <i class="fa fa-check"></i> {% translate "Approve" %}
                 </button>
-                <button type="submit" name="action" value="hide" class="btn btn-outline-warning btn-sm mr-1">
+                <button type="submit" name="action" value="hide" data-batch-action class="btn btn-outline-warning btn-sm mr-1" disabled>
                     <i class="fa fa-eye-slash"></i> {% translate "Hide" %}
                 </button>
-                <button type="submit" name="action" value="delete" class="btn btn-outline-danger btn-sm">
+                <button type="submit" name="action" value="delete" data-batch-action class="btn btn-outline-danger btn-sm" disabled data-confirm-message="{% translate 'Are you sure you want to delete the selected comments?' %}">
                     <i class="fa fa-trash"></i> {% translate "Delete" %}
                 </button>
+                <span class="text-muted ml-2" data-batch-action-hint hidden></span>
             </div>
         {% endif %}
-
-        <script>
-            function updateBulkActionVisibility() {
-                const checked = document.querySelectorAll('input[name=feedback_ids]:checked').length > 0;
-                document.getElementById('bulk-action-container').style.display = checked ? 'block' : 'none';
-            }
-        </script>
 
         <div class="table-responsive">
             <table class="table table-hover table-sm">
@@ -69,7 +64,7 @@
                     <tr>
                         {% if current_tab == 'pending' %}
                             <th class="text-center" style="width: 1%;">
-                                <input type="checkbox" id="selectAll" onclick="document.querySelectorAll('input[name=feedback_ids]').forEach(cb => cb.checked = this.checked); updateBulkActionVisibility();">
+                                <input type="checkbox" data-toggle-table id="selectAll" aria-label="{% translate 'Select all' %}">
                             </th>
                         {% endif %}
                         <th>{% translate "COMMENT" %}</th>
@@ -86,7 +81,7 @@
                         <tr>
                             {% if current_tab == 'pending' %}
                                 <td class="text-center">
-                                    <input type="checkbox" name="feedback_ids" value="{{ entry.pk }}" onchange="updateBulkActionVisibility();">
+                                    <input type="checkbox" name="feedback_ids" value="{{ entry.pk }}" class="feedback-batch-select-checkbox" aria-label="{% translate 'Select comment' %}">
                                 </td>
                             {% endif %}
                             <td>

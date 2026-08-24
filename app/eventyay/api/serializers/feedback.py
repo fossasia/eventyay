@@ -5,9 +5,18 @@ from eventyay.base.models import Feedback, User
 
 
 class AuthorSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = ('code', 'name', 'avatar')
+
+    def get_name(self, obj):
+        return obj.get_display_name()
+
+    def get_avatar(self, obj):
+        return obj.avatar_url or ''
 
 
 class FeedbackReplySerializer(I18nAwareModelSerializer):

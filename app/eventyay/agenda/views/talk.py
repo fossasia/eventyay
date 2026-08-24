@@ -800,8 +800,8 @@ class TalkFeedbackReactView(TalkMixin, View):
 
         feedback_id = kwargs.get('feedback_id')
         feedback = get_object_or_404(
-            self.submission.feedback.filter(is_public=True),
-            id=feedback_id
+            self.submission.feedback.filter(is_public=True, status='published'),
+            id=feedback_id,
         )
 
         action = request.POST.get('action')
@@ -832,13 +832,22 @@ class TalkFeedbackPublicActionView(TalkMixin, View):
             return HttpResponse(status=HTTPStatus.UNAUTHORIZED)
 
         feedback_id = kwargs.get('feedback_id')
-        feedback = get_object_or_404(
-            self.submission.feedback,
-            id=feedback_id
-        )
-
         action = request.POST.get('action')
-        
+        can_moderate = request.user.has_perm('base.orga_update_submission', self.submission)
+
+        if action == 'report':
+            feedback = get_object_or_404(
+                self.submission.feedback.filter(is_public=True, status='published'),
+                id=feedback_id,
+            )
+        elif can_moderate:
+            feedback = get_object_or_404(self.submission.feedback, id=feedback_id)
+        else:
+            feedback = get_object_or_404(
+                self.submission.feedback.filter(author=request.user),
+                id=feedback_id,
+            )
+
         if action == 'report':
             from django.db.models.functions import Coalesce
             Feedback.objects.filter(pk=feedback.pk).update(
@@ -847,8 +856,6 @@ class TalkFeedbackPublicActionView(TalkMixin, View):
             )
             messages.success(request, _('Feedback reported successfully.'))
         else:
-            can_moderate = request.user.has_perm('base.orga_update_submission', self.submission)
-            
             if action == 'delete' and (feedback.author == request.user or can_moderate):
                 feedback.status = 'deleted'
                 feedback.save(update_fields=['status'])

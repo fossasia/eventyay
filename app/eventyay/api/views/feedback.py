@@ -24,10 +24,10 @@ class FeedbackPermission(EventPermission):
 
         request.organizer = request.event.organizer
 
-        if allow_public_read and request.method in SAFE_METHODS:
+        if request.user.is_authenticated and request.method in SAFE_METHODS:
             request.eventpermset = set()
             return True
-            
+
         if request.method == 'POST' and request.user.is_authenticated:
             request.eventpermset = set()
             return True
@@ -51,7 +51,6 @@ class FeedbackViewSet(
     permission_classes = (FeedbackPermission,)
     serializer_class = FeedbackSerializer
     queryset = Feedback.objects.none()
-    allow_public_read = True
     
     # We don't define endpoint = 'feedback' if we just register it in router.
     # But PretalxViewSetMixin might use self.endpoint.
