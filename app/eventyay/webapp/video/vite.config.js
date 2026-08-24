@@ -134,8 +134,10 @@ export default defineConfig(({ mode }) => {
     resolve: {
       extensions: ['.js', '.json', '.vue'],
       preserveSymlinks: true,
-      dedupe: ['vue'],
+      dedupe: ['vue', 'i18next'],
       alias: [
+        { find: 'i18next', replacement: path.resolve(dirname, 'node_modules/i18next') },
+        { find: 'vue', replacement: path.resolve(dirname, 'node_modules/vue') },
         { find: 'lodash', replacement: 'lodash-es' },
         { find: '~', replacement: path.resolve(dirname, 'src') },
         { find: /^buntpapier$/, replacement: path.resolve(dirname, 'node_modules/buntpapier/src/index.js') },
