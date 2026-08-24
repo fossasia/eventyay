@@ -118,7 +118,7 @@ function walkSourceFiles(dir, files = []) {
 
 function collectLiteralKeys(appRoot) {
 	const keys = {}
-	const callRe = /(?:\$t|translate|i18next\.t|i18n\.t)\(\s*(['"])((?:\\.|.)*?)(\1)/g
+	const callRe = /(?:\$t|translate|i18next\.t|i18n\.t)\(\s*(['"])((?:\\.|(?!\1)[^\\])*)(\1)/g
 	for (const file of walkSourceFiles(path.join(appRoot, 'src'))) {
 		const text = readFileSync(file, 'utf8')
 		callRe.lastIndex = 0

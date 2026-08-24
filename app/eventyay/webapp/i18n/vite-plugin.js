@@ -10,10 +10,14 @@ async function loadGettextConv(appRoot) {
 }
 
 export function createGettextPlugin(domain, appRoot = process.cwd()) {
-	const fileRegex = new RegExp(`locale\\/(.*)\\/LC_MESSAGES\\/${domain}\\.po$`)
+	// Video embeds schedule components, so any app may import more than one domain.
+	const domains = ['video', 'schedule', 'schedule-editor']
+	if (domain && !domains.includes(domain)) domains.push(domain)
+	const fileRegex = new RegExp(`locale/([^/]+)/LC_MESSAGES/(?:${domains.join('|')})\\.po$`)
 	let convPromise
 	return {
 		name: `load-${domain}-gettext`,
+		enforce: 'pre',
 		async transform(src, id) {
 			if (!fileRegex.test(id)) return null
 			if (!convPromise) convPromise = loadGettextConv(appRoot)
