@@ -103,8 +103,13 @@ $(function () {
     });
 
     if ($sidebar.length) {
+        let sidebarScrollRaf = null;
         $sidebar.on('scroll', function () {
-            saveSidebarScroll();
+            if (sidebarScrollRaf !== null) return;
+            sidebarScrollRaf = window.requestAnimationFrame(function () {
+                sidebarScrollRaf = null;
+                saveSidebarScroll();
+            });
         });
         $(document).on('click', function (e) {
             if (!isMobileView() || $body.hasClass('sidebar-minimized')) return;

@@ -481,17 +481,9 @@ def get_admin_navigation(request):
     ]
 
     # --- Inject Video navigation (now part of admin sidebar) ------------------
-    user = getattr(request, 'user', None)
-    if user and user.is_authenticated and user.is_staff:
-        is_video_route = (getattr(url, 'namespaces', None) and 'video_admin' in url.namespaces) or (
-            url.url_name and (
-                url.url_name == 'index'
-                or url.url_name == 'streamkey'
-                or url.url_name.startswith(
-                    ('event.', 'bbbserver.', 'janusserver.', 'jitsiserver.', 'turnserver.', 'streamingserver.', 'systemlog.')
-                )
-            )
-        )
+    user = request.user
+    if user.is_authenticated and user.is_staff:
+        is_video_route = 'video_admin' in url.namespaces
         video_children = [
             {
                 'label': _('Dashboard'),
