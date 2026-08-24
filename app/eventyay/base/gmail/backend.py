@@ -42,7 +42,7 @@ class GmailAPIEmail:
     def _send_single(self, email) -> int:
         from eventyay.base.gmail.oauth import build_gmail_service, classify_http_error
 
-        recipient_count = len(email.to or []) + len(email.bcc or [])
+        recipient_count = len(email.to or []) + len(email.cc or []) + len(email.bcc or [])
         if recipient_count <= 0:
             recipient_count = 1
 
@@ -114,4 +114,4 @@ class GmailAPIEmail:
     def retry_countdown(self) -> int:
         if self.credential.rate_limit_exceeded():
             return self.credential.seconds_until_rate_limit_reset()
-        return min(self.credential.seconds_until_daily_reset(), 3600)
+        return min(self.credential.seconds_until_daily_reset(), 300)

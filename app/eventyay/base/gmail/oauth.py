@@ -80,7 +80,10 @@ def exchange_authorization_code(*, code: str, redirect_uri: str) -> dict:
         timeout=30,
     )
     response.raise_for_status()
-    return response.json()
+    data = response.json()
+    if GMAIL_SEND_SCOPE not in data.get('scope', ''):
+        raise ValueError(_('The required Gmail send permission was not granted.'))
+    return data
 
 
 def fetch_sender_email(access_token: str) -> str:

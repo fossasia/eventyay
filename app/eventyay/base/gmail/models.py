@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import models
 from django.db.utils import OperationalError, ProgrammingError
-from django.utils.timezone import now
+from django.utils.timezone import localdate, localtime, now
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.gmail.constants import (
@@ -161,7 +161,7 @@ class GmailOAuthCredential(LoggedModel):
         return getattr(settings, 'GMAIL_RATE_LIMIT_PER_MINUTE', DEFAULT_GMAIL_RATE_LIMIT_PER_MINUTE)
 
     def _reset_daily_counter_if_needed(self):
-        today = date.today()
+        today = localdate()
         if self.daily_send_count_date != today:
             self.daily_send_count = 0
             self.daily_send_count_date = today
@@ -176,8 +176,9 @@ class GmailOAuthCredential(LoggedModel):
 
     def record_send(self, count: int = 1):
         self._reset_daily_counter_if_needed()
-        self.daily_send_count += count
+        self.daily_send_count = models.F('daily_send_count') + count
         self.save(update_fields=['daily_send_count'])
+        self.refresh_from_db(fields=['daily_send_count'])
         self._increment_rate_counter(count)
 
     def _rate_cache_key(self) -> str:
@@ -200,8 +201,9 @@ class GmailOAuthCredential(LoggedModel):
         return max(1, int((next_minute - current).total_seconds()))
 
     def seconds_until_daily_reset(self) -> int:
-        tomorrow = now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-        return max(60, int((tomorrow - now()).total_seconds()))
+        current_local = localtime()
+        tomorrow_local = current_local.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        return max(60, int((tomorrow_local - current_local).total_seconds()))
 
     def set_last_error(self, message: str):
         self.last_error = message[:2000]

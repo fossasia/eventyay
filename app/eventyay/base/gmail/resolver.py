@@ -27,8 +27,10 @@ def _build_smtp_backend(*, host, port, username, password, use_tls, use_ssl, tim
 def get_fallback_mail_backend(*, event=None, timeout=None, exclude_vendor=None):
     gs = GlobalSettingsObject()
 
-    if event is not None and (event.settings.smtp_use_custom or exclude_vendor == 'gmail_api'):
+    if event is not None and event.settings.smtp_use_custom:
         vendor = event.settings.get('email_vendor')
+        if exclude_vendor and vendor == exclude_vendor:
+            vendor = None
         if vendor == 'sendgrid' and event.settings.get('send_grid_api_key'):
             return SendGridEmail(api_key=event.settings.send_grid_api_key)
         if vendor == 'smtp' and event.settings.get('smtp_host') and event.settings.get('smtp_port'):
@@ -71,13 +73,13 @@ def get_gmail_mail_backend(*, event=None, timeout=None, force_custom=False):
         if event.settings.get('email_vendor') == 'gmail_api':
             credential = GmailOAuthCredential.get_active_for_event(event)
             if not credential:
-                raise ValueError("Gmail API is selected for this event, but no active credential exists.")
+                return None
     elif event is None or not event.settings.smtp_use_custom:
         gs = GlobalSettingsObject()
         if gs.settings.get('email_vendor') == 'gmail_api':
             credential = GmailOAuthCredential.get_active_global()
             if not credential:
-                raise ValueError("Gmail API is selected globally, but no active credential exists.")
+                return None
 
     if not credential:
         return None

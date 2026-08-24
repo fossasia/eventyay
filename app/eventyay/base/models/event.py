@@ -1046,7 +1046,7 @@ class Event(
         or by returning a custom one based on the event's settings.
         """
         from eventyay.base.email import CustomSMTPBackend, SendGridEmail
-        from eventyay.base.gmail.resolver import get_fallback_mail_backend, get_gmail_mail_backend
+        from eventyay.base.gmail.resolver import get_gmail_mail_backend
 
         gs = GlobalSettingsObject()
 

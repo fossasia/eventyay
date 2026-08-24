@@ -53,6 +53,7 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
         )
         context['gmail_connect_url'] = reverse('eventyay_admin:admin.global.gmail.connect')
         context['gmail_disconnect_url'] = reverse('eventyay_admin:admin.global.gmail.disconnect')
+        context['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
         return context
 
     def form_valid(self, form):
@@ -63,11 +64,6 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
     def form_invalid(self, form):
         messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
         return super().form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['test_email_feedback'] = self.request.session.pop('admin_test_email_feedback', None)
-        return ctx
 
     def get_success_url(self):
         return reverse('eventyay_admin:admin.global.settings')

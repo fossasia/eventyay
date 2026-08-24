@@ -21,7 +21,7 @@ Configuration
 1. Create a Google Cloud project and enable the Gmail API.
 2. Configure an OAuth client (Web application) with the redirect URI shown in the admin **Global settings → Email** tab.
 3. In Eventyay, open **Global settings → Email**, choose **Gmail / Google Workspace API**, and save the OAuth client ID and secret.
-4. Click **Connect Gmail account** and authorize Gmail send plus email read access (``gmail.send`` and ``userinfo.email`` scopes).
+4. Click **Connect Gmail account** and authorize Gmail send and user email access (``gmail.send`` and ``userinfo.email`` scopes).
 5. Optionally configure SMTP or SendGrid as a fallback provider.
 
 Event-level custom gateways can also use Gmail when **Use custom email gateway** is enabled in the unified event email settings.

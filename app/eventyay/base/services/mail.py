@@ -547,7 +547,7 @@ def mail_send_task(
             try:
                 self.retry(
                     max_retries=5,
-                    countdown=min(countdown * (2 ** self.request.retries), 3600),
+                    countdown=min(countdown * (2 ** self.request.retries), 300),
                 )
             except MaxRetriesExceededError:
                 if order:
@@ -850,7 +850,7 @@ def get_mail_backend(timeout=None):
     or by returning a custom one based on the system's settings.
     """
     from eventyay.base.email import CustomSMTPBackend, SendGridEmail
-    from eventyay.base.gmail.resolver import get_fallback_mail_backend, get_gmail_mail_backend
+    from eventyay.base.gmail.resolver import get_gmail_mail_backend
 
     gs = GlobalSettingsObject()
     smtp_host = gs.settings.smtp_host

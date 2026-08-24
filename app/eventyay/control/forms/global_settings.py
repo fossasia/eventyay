@@ -181,7 +181,7 @@ class GlobalSettingsForm(SettingsForm):
                     SecretKeySettingsField(
                         required=False,
                         label=_('Sendgrid token'),
-                        widget=forms.TextInput(attrs={
+                        widget=SecretKeySettingsWidget(attrs={
                             'placeholder': 'SG.xxxxxxxx',
                             'data-display-dependency': '#id_email_vendor_0',
                         }),
@@ -592,8 +592,6 @@ class GlobalSettingsForm(SettingsForm):
             ]),
         ]
 
-        self._configure_gmail_field_requirements()
-
         if 'interpretation' in settings.INSTALLED_APPS:
             self.field_groups.append(
                 ('voxbento', _('VoxBento'), [
@@ -612,14 +610,7 @@ class GlobalSettingsForm(SettingsForm):
                 ])
             )
 
-    def _configure_gmail_field_requirements(self):
-        vendor = self.data.get('email_vendor') if self.is_bound else self.obj.settings.get('email_vendor')
-        if vendor != 'gmail_api':
-            return
-        if 'gmail_client_id' in self.fields:
-            self.fields['gmail_client_id'].required = True
-        if 'gmail_client_secret' in self.fields:
-            self.fields['gmail_client_secret'].required = True
+
 
     def clean_voxbento_base_url(self):
         url = (self.cleaned_data.get('voxbento_base_url') or '').strip()
