@@ -46,7 +46,7 @@
 				bunt-switch(name="loop", v-model="loop", :label="$t('Loop')")
 				bunt-switch(name="modestBranding", v-model="modestBranding", :label="$t('Enable Modest Branding')")
 				bunt-switch(name="startMuted", v-model="startMuted", :label="$t('Start muted')")
-				bunt-switch(name="hideControls", v-model="hideControls", :label="$t('Hide Controls')", :hint="$t('Note: Hiding controls disables autoplay (browsers require muted autoplay, but users cannot unmute without controls)')")
+				bunt-switch(name="hideControls", v-model="hideControls", :label="$t('Hide Controls')", :hint="$t('Note: Hiding controls disables autoplay so the stream can start with sound when the viewer clicks play.')")
 				bunt-switch(name="noRelated", v-model="noRelated", :label="$t('Limit related videos to same channel')")
 				bunt-switch(name="disableKb", v-model="disableKb", :label="$t('Disable Keyboard Controls')")
 				bunt-switch(name="showInfo", v-model="showInfo", :label="$t('Hide Video Info')")
@@ -89,7 +89,6 @@ function getDefaultStreamConfig(streamSource, playbackMode = PLAYBACK_MODE_ALWAY
 	} else if (streamSource === 'youtube') {
 		config.ytid = ''
 		config.languageUrls = []
-		config.startMuted = true
 	}
 	return config
 }
