@@ -10,12 +10,12 @@
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
 				h1(v-html="$emojify(config.name)")
 			.mystery-room
-				p Room not instantiated.
-				bunt-button(@click="showRoomEditPrompt = true") Initiate room
+				p This room does not have a video option yet.
+				VideoProviderDropdown(label="Add Video", variant="action", @select="addVideoProvider")
 		template(v-else)
 			.ui-page-header
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
-				h1 {{ inferredType ? inferredType.name : 'Mystery Room' }} :
+				h1 {{ roomTypeLabel }} :
 					span.room-name(v-html="$emojify(config.name)")
 				.actions
 					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") Edit
@@ -33,12 +33,19 @@
 import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import RoomEditPrompt from 'components/RoomEditPrompt'
-import { inferType } from 'lib/room-types'
+import VideoProviderDropdown from 'components/VideoProviderDropdown'
+import { getRoomTypeById, inferType } from 'lib/room-types'
+import {
+	applyVideoProviderToConfig,
+	getAvailableVideoProviders,
+	getConfiguredRoomLabel,
+} from 'lib/video-providers'
+import features from 'features'
 import EditForm from './EditForm'
 
 export default {
 	name: 'AdminRoom',
-	components: { EditForm, RoomEditPrompt },
+	components: { EditForm, RoomEditPrompt, VideoProviderDropdown },
 	props: {
 		roomId: String
 	},
@@ -52,9 +59,20 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'isAdminMode']),
 		inferredType() {
+			if (!this.config) return null
 			return inferType(this.config)
+		},
+		roomTypeLabel() {
+			return getConfiguredRoomLabel(this.inferredType)
+		},
+		availableProviders() {
+			return getAvailableVideoProviders(
+				this.hasPermission,
+				this.isAdminMode,
+				(flag) => features.enabled(flag)
+			)
 		}
 	},
 	async created() {
@@ -83,11 +101,43 @@ export default {
 				this.error = null
 				this.errorCode = null
 				this.config = await api.call('room.config.get', {room: this.roomId})
+				await this.applyProviderFromQuery()
 			} catch (error) {
 				this.error = error
 				this.errorCode = error?.code || error?.message || String(error)
 				console.error(error)
 			}
+		},
+		async applyProvider(roomTypeId) {
+			if (this.inferredType) return
+			if (!this.availableProviders.some(provider => provider.roomTypeId === roomTypeId)) return
+			const type = getRoomTypeById(roomTypeId)
+			if (!type) return
+			const previousModuleConfig = this.config.module_config
+			applyVideoProviderToConfig(this.config, type)
+			try {
+				const updated = await api.call('room.config.patch', {
+					room: this.config.id,
+					module_config: this.config.module_config
+				})
+				Object.assign(this.config, updated)
+			} catch (error) {
+				this.config.module_config = previousModuleConfig
+				console.error('Failed to apply video provider: %o', error)
+			}
+		},
+		async applyProviderFromQuery() {
+			const roomTypeId = this.$route.query.provider
+			if (!roomTypeId) return
+			await this.applyProvider(roomTypeId)
+			if (this.$route.query.provider) {
+				const query = { ...this.$route.query }
+				delete query.provider
+				this.$router.replace({ query })
+			}
+		},
+		addVideoProvider(provider) {
+			return this.applyProvider(provider.roomTypeId)
 		},
 		closeRoomEditPrompt() {
 			this.showRoomEditPrompt = false

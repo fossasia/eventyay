@@ -1,5 +1,7 @@
 from django.core.validators import RegexValidator
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nCharField, I18nTextField
@@ -90,3 +92,12 @@ class Track(OrderedModel, PretalxModel):
         optional) form of the track name.
         """
         return f'{self.id}-{slugify(self.name)}'
+
+
+@receiver(post_save, sender=Track)
+@receiver(post_delete, sender=Track)
+def invalidate_track_catalog_cache(sender, instance, **kwargs):
+    from eventyay.base.services.stale_cache import invalidate_catalog_cache
+
+    event_id = instance.event_id
+    transaction.on_commit(lambda: invalidate_catalog_cache(event_id, 'tracks'))

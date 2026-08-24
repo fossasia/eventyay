@@ -33,9 +33,10 @@ def clean_cached_files(sender, **kwargs):
 @receiver(signal=periodic_task)
 @scopes_disabled()
 def clean_cached_tickets(sender, **kwargs):
-    for cf in CachedTicket.objects.filter(created__lte=now() - timedelta(hours=settings.CACHE_TICKETS_HOURS)):
+    cutoff = now() - settings.CACHE_TICKETS_MAX_AGE
+    for cf in CachedTicket.objects.filter(created__lte=cutoff):
         cf.delete()
-    for cf in CachedCombinedTicket.objects.filter(created__lte=now() - timedelta(hours=settings.CACHE_TICKETS_HOURS)):
+    for cf in CachedCombinedTicket.objects.filter(created__lte=cutoff):
         cf.delete()
     for cf in CachedTicket.objects.filter(created__lte=now() - timedelta(minutes=30), file__isnull=True):
         cf.delete()

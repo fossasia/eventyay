@@ -598,8 +598,10 @@ export default {
 				if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
 				const data = await res.json()
 				this.speakersFromApi = append ? this.speakersFromApi.concat(data.results) : data.results
+				const base = (this.eventUrl || '').replace(/\/?$/, '/')
+				const baseUrl = new URL(base || window.location.href, window.location.origin)
 				this.nextPageUrl = data.next
-					? new URL(data.next, this.eventUrl || window.location.origin).toString()
+					? new URL(data.next, baseUrl).toString()
 					: null
 			} catch (e) {
 				if (e.name !== 'AbortError') {
