@@ -46,7 +46,7 @@
 				bunt-switch(name="loop", v-model="loop", label="Loop")
 				bunt-switch(name="modestBranding", v-model="modestBranding", label="Enable Modest Branding")
 				bunt-switch(name="startMuted", v-model="startMuted", label="Start muted")
-				bunt-switch(name="hideControls", v-model="hideControls", label="Hide Controls", hint="Note: Hiding controls disables autoplay (browsers require muted autoplay, but users can't unmute without controls)")
+				bunt-switch(name="hideControls", v-model="hideControls", label="Hide Controls", hint="Note: Hiding controls disables autoplay so the stream can start with sound when the viewer clicks play.")
 				bunt-switch(name="noRelated", v-model="noRelated", label="Limit related videos to same channel")
 				bunt-switch(name="disableKb", v-model="disableKb", label="Disable Keyboard Controls")
 				bunt-switch(name="showInfo", v-model="showInfo", label="Hide Video Info")
@@ -91,7 +91,6 @@ function getDefaultStreamConfig(streamSource, playbackMode = PLAYBACK_MODE_ALWAY
 	} else if (streamSource === 'youtube') {
 		config.ytid = ''
 		config.languageUrls = []
-		config.startMuted = true
 	} else if (streamSource === 'iframe') {
 		config.url = ''
 	}
