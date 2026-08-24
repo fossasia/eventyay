@@ -1,5 +1,5 @@
 import Vuex from 'vuex'
-import i18n, { persistLanguage, notifyLocaleChange } from 'i18n'
+import { persistLanguage, changeLanguage } from 'i18n'
 import { jwtDecode } from 'jwt-decode'
 import api, { initApi } from 'lib/api'
 import { doesTraitsMatchGrants } from 'lib/traitGrants'
@@ -402,8 +402,7 @@ export default new Vuex.Store({
 		},
 		async updateUserLocale({state}, locale) {
 			await persistLanguage(locale)
-			await i18n.changeLanguage(locale)
-			notifyLocaleChange()
+			await changeLanguage(locale)
 			state.userLocale = locale
 		},
 		updateUserTimezone({state}, timezone) {

@@ -1,18 +1,23 @@
-import {shallowRef} from 'vue'
-
-export const localeRevision = shallowRef(0)
+let revision = 0
+const listeners = new Set()
 
 export function notifyLocaleChange() {
-	localeRevision.value += 1
+	revision += 1
+	for (const listener of listeners) listener(revision)
 }
 
-export function trackLocale() {
-	void localeRevision.value
+export function subscribeLocale(listener) {
+	listeners.add(listener)
+	return () => listeners.delete(listener)
 }
 
-export function createTranslate(i18n) {
+export function localeRevisionValue() {
+	return revision
+}
+
+export function createTranslate(i18n, track = localeRevisionValue) {
 	return function translate(key, options) {
-		trackLocale()
+		track()
 		return i18n.t(key, options)
 	}
 }

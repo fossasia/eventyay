@@ -1,32 +1,36 @@
 /* global ENV_DEVELOPMENT */
 import i18next from 'i18next'
 import config from 'config'
-import {
-	createEnglishCatalogLoader,
-	isEnglishLocale,
-	loadCatalogForLanguage as mergeLoadedCatalog,
-	loadRawCatalog,
-	toDjangoLanguage,
-} from '../../i18n/load.js'
-import {createTranslate, notifyLocaleChange, trackLocale} from '../../i18n/locale.js'
+import {createVueGettextRuntime} from '../../i18n/vue-runtime.js'
+import {notifyLocaleChange, toDjangoLanguage} from '../../i18n/index.js'
 
 export default i18next
 export {notifyLocaleChange}
 
 export const LANGUAGE_COOKIE_NAME = 'eventyay_language'
-const localeLoaders = import.meta.glob('../../../locale/*/LC_MESSAGES/video.po')
+const runtime = createVueGettextRuntime({
+	domain: 'video',
+	i18next,
+	localeLoaders: import.meta.glob('../../../locale/*/LC_MESSAGES/video.po'),
+	debug: ENV_DEVELOPMENT,
+	warnOnMissing: Boolean(ENV_DEVELOPMENT),
+	extraPlugins: [
+		{
+			type: 'postProcessor',
+			name: 'themeOverwrites',
+			process(value, key) {
+				return config.theme?.textOverwrites?.[key[0]] ?? value
+			},
+		},
+	],
+	extraInitOptions: {
+		postProcess: ['themeOverwrites'],
+	},
+})
 
-export const translate = createTranslate(i18next)
-
-export function localize(string) {
-	trackLocale()
-	if (!string) return ''
-	if (typeof string === 'string') return string
-	for (const lang of i18next.languages || []) {
-		if (string[lang]) return string[lang]
-	}
-	return Object.values(string)[0] || ''
-}
+export const translate = runtime.translate
+export const localize = runtime.localize
+export const changeLanguage = runtime.changeLanguage
 
 function getStoredLanguage() {
 	try {
@@ -122,16 +126,6 @@ export async function persistLanguage(language) {
 	await syncLanguageToServer(djangoLanguage)
 }
 
-const loadEnglishCatalog = createEnglishCatalogLoader(localeLoaders)
-
-async function loadCatalogForLanguage(language) {
-	const catalog = await mergeLoadedCatalog(localeLoaders, language, loadEnglishCatalog)
-	if (!isEnglishLocale(language) && ENV_DEVELOPMENT && !(await loadRawCatalog(localeLoaders, language))) {
-		console.warn('Missing video.po catalog for "%s", falling back to English', language)
-	}
-	return catalog
-}
-
 function getInitialLanguage() {
 	const stored = toDjangoLanguage(getStoredLanguage())
 	const cookie = toDjangoLanguage(getLanguageFromCookie())
@@ -143,49 +137,10 @@ function getInitialLanguage() {
 }
 
 export async function init(app) {
-	const initialLanguage = getInitialLanguage()
 	try {
-		await i18next
-			.use({
-				type: 'backend',
-				init() {},
-				async read(language, namespace, callback) {
-					try {
-						callback(null, await loadCatalogForLanguage(language))
-					} catch (error) {
-						console.error('Failed to load video catalog for "%s"', language, error)
-						try {
-							callback(null, await loadEnglishCatalog())
-						} catch (fallbackError) {
-							console.error('Failed to load English video catalog', fallbackError)
-							callback(null, {})
-						}
-					}
-				}
-			})
-			.use({
-				type: 'postProcessor',
-				name: 'themeOverwrites',
-				process(value, key) {
-					return config.theme?.textOverwrites?.[key[0]] ?? value
-				}
-			})
-			.init({
-				lng: initialLanguage,
-				fallbackLng: 'en',
-				preload: ['en'],
-				returnEmptyString: false,
-				returnNull: false,
-				debug: ENV_DEVELOPMENT,
-				keySeparator: false,
-				nsSeparator: false,
-				postProcess: ['themeOverwrites']
-			})
+		await runtime.init({lng: getInitialLanguage()})
 	} catch (error) {
 		console.error('Failed to initialize Video translations', error)
 	}
-	notifyLocaleChange()
-	app.config.globalProperties.$i18n = i18next
-	app.config.globalProperties.$t = translate
-	app.config.globalProperties.$localize = localize
+	runtime.install(app)
 }

@@ -34,7 +34,7 @@ Architecture
 
 **Styling**: Stylus with custom theming
 
-**i18n**: i18next with gettext ``video.po`` / ``schedule.po`` / ``schedule-editor.po`` files
+**i18n**: shared ``webapp/i18n`` gettext runtime (``video.po`` / ``schedule.po`` / ``schedule-editor.po``)
 
 Core Application Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

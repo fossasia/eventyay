@@ -31,7 +31,7 @@ Architecture
 
 **Styling**: Stylus preprocessor
 
-**i18n**: i18next with gettext ``schedule-editor.po`` and English fallbacks
+**i18n**: shared ``webapp/i18n`` gettext runtime with ``schedule-editor.po`` and English fallbacks
 
 Key Features
 ~~~~~~~~~~~~
@@ -152,8 +152,9 @@ TypeScript schemas and types for:
 Internationalization
 ~~~~~~~~~~~~~~~~~~~~
 
-**Implementation**: i18next loading gettext ``schedule-editor.po`` catalogs,
-with the same English-fallback merge as Video and the public schedule widget.
+**Implementation**: shared ``app/eventyay/webapp/i18n`` runtime loading gettext
+``schedule-editor.po`` catalogs, with the same English-fallback merge as Video
+and the public schedule widget.
 
 **Catalogs**: ``app/eventyay/locale/*/LC_MESSAGES/schedule-editor.po``
 

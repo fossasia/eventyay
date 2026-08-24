@@ -8,7 +8,7 @@
     "build": "vite build",
     "analyze": "ANALYZE=true npm run build",
     "i18n:extract": "node ../i18n/extract.mjs extract --domain schedule",
-    "test:i18n": "node --test ../i18n/catalog.test.js ../i18n/load.test.js src/i18n-catalog.test.js"
+    "test:i18n": "node --test \"../i18n/*.test.js\""
   },
   "main": "./dist/pretalx-schedule.js",
   "type": "module",

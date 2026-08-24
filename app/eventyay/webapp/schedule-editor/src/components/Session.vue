@@ -66,9 +66,8 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue'
-import i18next from 'i18next'
 import moment, { Moment } from 'moment-timezone'
-import {trackLocale} from '../../../i18n/locale.js'
+import { translate } from '~/lib/i18n'
 import { getLocalizedString } from '~/utils'
 import { getCapabilities, resolveMode, resolveSessionKind, getClaimedShiftIds, getCsrfToken, getClaimBaseUrl } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
@@ -248,11 +247,10 @@ const isShortSession = computed<boolean>(() => {
 })
 
 const durationPretty = computed<string | undefined>(() => {
-  trackLocale()
   const minutes = durationMinutes.value
   if (!minutes) return undefined
-  const minLabel = i18next.t('min')
-  const hourLabel = i18next.t('h')
+  const minLabel = translate('min')
+  const hourLabel = translate('h')
 
   if (minutes <= 60) {
     return `${minutes}${minLabel}`

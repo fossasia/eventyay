@@ -152,8 +152,7 @@ import api from '~/api'
 import { resolveMode, getCapabilities } from '~/teamshifts-adapter'
 import type { Capabilities } from '~/teamshifts-adapter/types'
 import { getLocalizedString } from '~/utils'
-import i18next from 'i18next'
-import {createTranslate} from '../../i18n/locale.js'
+import {translate as $t} from '~/lib/i18n'
 import type { AvailabilityEntry, RoleAssignment, ScheduleRole } from '~/schemas';
 
 interface Speaker {
@@ -294,7 +293,6 @@ function onTimeDensityChange (): void {
   localStorage.setItem('schedule-time-density-minutes', String(timeDensityMinutes.value))
 }
 
-const $t = createTranslate(i18next) as (key: string, options?: Record<string, unknown>) => string
 
 const translations = computed(() => ({
   filterSessions: caps.showRoles ? $t('Filter shifts') : $t('Filter sessions'),

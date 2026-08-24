@@ -4,7 +4,7 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {isEnglishLocale, mergeCatalogWithEnglish, usableTranslations} from './catalog.js'
+import {isEnglishLocale, mergeCatalogWithEnglish, toDjangoLanguage, usableTranslations} from './catalog.js'
 
 test('usableTranslations drops empty and msgid copies except in English', () => {
 	const catalog = {
@@ -51,4 +51,11 @@ test('English-as-msgid schedule keys still fall back when a locale is empty', ()
 	const hindi = mergeCatalogWithEnglish(english, {Search: '', min: 'min'}, 'hi')
 	assert.equal(hindi.Search, 'Search')
 	assert.equal(hindi.min, 'min')
+})
+
+test('toDjangoLanguage normalizes underscores and case', () => {
+	assert.equal(toDjangoLanguage('en_GB'), 'en-gb')
+	assert.equal(toDjangoLanguage('de_Formal'), 'de-formal')
+	assert.equal(isEnglishLocale('en_US'), true)
+	assert.equal(isEnglishLocale('de'), false)
 })

@@ -3,7 +3,7 @@ import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import BuntpapierStylus from 'buntpapier/stylus.js'
-import gettext from './vite-gettext-plugin.js'
+import {createGettextPlugin} from '../i18n/vite-plugin.js'
 
 const stylusOptions = {
 	paths: [
@@ -39,7 +39,7 @@ export default defineConfig({
 		__SERVER_FORWARD_CONSOLE__: 'false',
 	},
 	plugins: [
-		gettext(),
+		createGettextPlugin('schedule', path.resolve(__dirname)),
 		vue({
 			template: {
 				compilerOptions: {

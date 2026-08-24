@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import visualizer from 'rollup-plugin-visualizer'
 import path from 'node:path'
 import eslint from 'vite-plugin-eslint'
-import gettext from './vite-gettext-plugin.js'
+import {createGettextPlugin} from '../i18n/vite-plugin.js'
 
 const dirname = import.meta.dirname
 const stylusOptions = {
@@ -72,7 +72,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       exportJanusGateway(),
-      gettext(),
+      createGettextPlugin('video', dirname),
       vue(),
       ReactivityTransform(),
       // Enable PWA only in production builds (avoid SW claim issues during dev)
