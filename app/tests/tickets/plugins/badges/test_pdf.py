@@ -108,3 +108,45 @@ def test_render_nup_large_export_merge(tmp_path):
 
     pdf = PdfReader(outbuffer)
     assert len(pdf.pages) == (num_badges + badges_per_page - 1) // badges_per_page
+
+
+@pytest.mark.django_db
+def test_generate_pdf_multilingual_all_languages(env):
+    event, order, shirt = env
+    event.badge_layouts.create(name='Default', default=True)
+
+    multilingual_attendees = [
+        ("Ada Lovelace", "Engineer", "FOSSASIA"),
+        ("Jürgen Müller-Straße", "Entwickler", "Tech GmbH"),
+        ("José María González", "Diseñador", "Eventos S.A."),
+        ("مرحبا بك في إيفينتياي", "مهندس", "مؤسسة"),
+        ("नमस्ते एंटीग्रेविटी", "डेवलपर", "ओपन सोर्स"),
+        ("山田太郎 こんにちは", "エンジニア", "株式会社"),
+        ("홍길동 안녕하세요", "개발자", "한국"),
+        ("张伟 欢迎参加", "工程师", "科技公司"),
+        ("張偉 歡迎參加", "工程師", "科技公司"),
+        ("สมชาย สวัสดีครับ", "นักพัฒนา", "ประเทศไทย"),
+        ("שָׁלוֹם וברכה", "מפתח", "ישראל"),
+        ("Ada مرحبا नमस्ते 山田太郎 홍길동 张伟 สมชาย שָׁלוֹם", "Multi-Dev", "Global"),
+    ]
+
+    positions = []
+    for idx, (name, title, company) in enumerate(multilingual_attendees, 1):
+        pos = OrderPosition.objects.create(
+            order=order,
+            item=shirt,
+            price=12,
+            attendee_name_parts={'full_name': name},
+            company=company,
+            job_title=title,
+            secret=f'SEC-ML-{idx}',
+        )
+        positions.append(pos)
+
+    from eventyay.plugins.badges.exporters import render_pdf
+    pdf_buffer = render_pdf(event, positions, OPTIONS['one'])
+    pdf_bytes = pdf_buffer.read()
+
+    assert len(pdf_bytes) > 5000
+    reader = PdfReader(BytesIO(pdf_bytes))
+    assert len(reader.pages) == len(multilingual_attendees)
