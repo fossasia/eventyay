@@ -114,6 +114,15 @@ def optimize_uploaded_image(
     _, original_ext = os.path.splitext(uploaded.name or 'upload')
     original_ext = (original_ext.lstrip('.') or 'jpg').lower()
 
+    if original_ext == 'svg':
+        logger.info('Bypassing optimization for SVG image')
+        return OptimizedImages(
+            optimized=ContentFile(raw),
+            original=ContentFile(raw),
+            optimized_ext='svg',
+            original_ext='svg',
+        )
+
     image = Image.open(BytesIO(raw))
     try:
         image.load()
