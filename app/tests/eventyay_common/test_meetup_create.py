@@ -189,7 +189,7 @@ def test_meetup_create_post_with_cover_image(orga_client, organizer):
         'basics-location_type': 'in_person',
         'basics-location_0': 'Design Studio 4B',
         'basics-capacity_type': 'unlimited',
-        'basics-event_preview_image': test_image,
+        'basics-logo_image': test_image,
     }
     response = orga_client.post(url, data)
     assert response.status_code == 302
@@ -199,8 +199,9 @@ def test_meetup_create_post_with_cover_image(orga_client, organizer):
         assert event is not None
         assert str(event.name) == 'Design Systems Meetup'
         assert is_meetup_event(event) is True
-        preview_img = event.settings.get('event_preview_image', as_type=str, default='')
-        assert preview_img.startswith('file://')
+        header_img = event.settings.get('logo_image', as_type=str, default='')
+        assert header_img.startswith('file://')
+        assert bool(event.visible_header_image_url) is True
 
 
 @pytest.mark.django_db

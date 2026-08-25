@@ -1964,12 +1964,12 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
         help_text=_('Describe what this meetup is about, agenda, speakers, etc.'),
         widget_kwargs={'attrs': {'rows': '4', 'placeholder': _('Tell attendees about your meetup...')}},
     )
-    event_preview_image = ExtFileField(
-        label=_('Cover image'),
+    logo_image = ExtFileField(
+        label=_('Header image'),
         ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
         max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         required=False,
-        help_text=_('Upload a cover image for your meetup card and header.'),
+        help_text=_('Upload a header image for your meetup banner and card.'),
     )
 
     def __init__(self, *args, **kwargs):
@@ -2010,8 +2010,8 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
     def _default_currency():
         return getattr(settings, 'DEFAULT_CURRENCY', 'USD')
 
-    def clean_event_preview_image(self):
-        img = self.cleaned_data.get('event_preview_image')
+    def clean_logo_image(self):
+        img = self.cleaned_data.get('logo_image')
         if img and isinstance(img, UploadedFile):
             from PIL import Image, UnidentifiedImageError
             try:

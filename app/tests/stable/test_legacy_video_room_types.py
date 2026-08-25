@@ -1,21 +1,15 @@
 from eventyay.base.meetup import (
+    VIDEO_TYPE_CHOICES,
     VIDEO_TYPE_HLS,
-    VIDEO_TYPE_IFRAME,
     VIDEO_TYPE_YOUTUBE,
     get_video_config_from_modules,
     get_video_module_config,
 )
 
 
-def test_meetup_iframe_uses_stage_livestream_module():
-    modules = get_video_module_config(VIDEO_TYPE_IFRAME, 'https://example.com/embed')
-    assert modules == [
-        {'type': 'livestream.iframe', 'config': {'url': 'https://example.com/embed'}}
-    ]
-    assert get_video_config_from_modules(modules) == {
-        'video_type': 'iframe',
-        'video_url': 'https://example.com/embed',
-    }
+def test_meetup_video_type_choices():
+    choice_keys = [k for k, _ in VIDEO_TYPE_CHOICES]
+    assert choice_keys == ['', VIDEO_TYPE_YOUTUBE, VIDEO_TYPE_HLS]
 
 
 def test_meetup_youtube_and_hls_streams_are_unchanged():

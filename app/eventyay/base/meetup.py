@@ -30,13 +30,11 @@ DEFAULT_QUOTA_NAME = 'RSVP'
 
 VIDEO_TYPE_YOUTUBE = 'youtube'
 VIDEO_TYPE_HLS = 'hls'
-VIDEO_TYPE_IFRAME = 'iframe'
 
 VIDEO_TYPE_CHOICES = [
     ('', _('No video stream')),
     (VIDEO_TYPE_YOUTUBE, _('YouTube')),
     (VIDEO_TYPE_HLS, _('HLS stream')),
-    (VIDEO_TYPE_IFRAME, _('Embed URL / iframe')),
 ]
 
 LOCATION_IN_PERSON = 'in_person'
@@ -58,14 +56,13 @@ CAPACITY_TYPE_CHOICES = [
 VIDEO_MODULES = {
     VIDEO_TYPE_YOUTUBE: ('livestream.youtube', 'ytid'),
     VIDEO_TYPE_HLS: ('livestream.native', 'hls_url'),
-    VIDEO_TYPE_IFRAME: ('livestream.iframe', 'url'),
 }
 
 VIDEO_TYPES_BY_MODULE = {
     module_type: (video_type, config_key) for video_type, (module_type, config_key) in VIDEO_MODULES.items()
 }
 
-URL_VIDEO_TYPES = (VIDEO_TYPE_HLS, VIDEO_TYPE_IFRAME)
+URL_VIDEO_TYPES = (VIDEO_TYPE_HLS,)
 
 LIVESTREAM_MODULE_PREFIX = 'livestream.'
 
@@ -160,7 +157,7 @@ def build_video_form_fields(type_help_text=None) -> dict:
             required=False,
             max_length=255,
             label=_('Video URL / stream identifier'),
-            help_text=_('YouTube video URL, HLS stream URL, or embed URL.'),
+            help_text=_('YouTube video URL or HLS stream URL.'),
         ),
     }
 
@@ -300,20 +297,20 @@ def get_rsvp_product_and_quota(event):
         return product, quota
 
 
-def _save_meetup_preview_image(event, preview_image, crop_box=None):
-    if not isinstance(preview_image, UploadedFile):
+def _save_meetup_header_image(event, header_image, crop_box=None):
+    if not isinstance(header_image, UploadedFile):
         return
 
-    setting_key = 'event_preview_image'
+    setting_key = 'logo_image'
     try:
-        result = optimize_uploaded_image(preview_image, setting_key, crop_box=crop_box)
+        result = optimize_uploaded_image(header_image, setting_key, crop_box=crop_box)
     except (OSError, ValueError, UnidentifiedImageError):
-        logger.warning('Could not optimize uploaded preview image for event %s', event.slug, exc_info=True)
-        preview_image.seek(0)
+        logger.warning('Could not optimize uploaded header image for event %s', event.slug, exc_info=True)
+        header_image.seek(0)
         result = None
 
     nonce = get_random_string(length=8)
-    clean_name, _ = os.path.splitext(preview_image.name or setting_key)
+    clean_name, _ = os.path.splitext(header_image.name or setting_key)
     base_path = f'pub/{event.organizer.slug}/{event.slug}/{clean_name}.{nonce}'
 
     if result:
@@ -327,8 +324,8 @@ def _save_meetup_preview_image(event, preview_image, crop_box=None):
             pass
         event.settings.set(setting_key, f'file://{optimized_path}')
     else:
-        ext = os.path.splitext(preview_image.name)[1] if preview_image.name else '.jpg'
-        file_path = default_storage.save(f'{base_path}{ext}', preview_image)
+        ext = os.path.splitext(header_image.name)[1] if header_image.name else '.jpg'
+        file_path = default_storage.save(f'{base_path}{ext}', header_image)
         event.settings.set(setting_key, f'file://{file_path}')
 
 
@@ -338,7 +335,7 @@ def provision_meetup_event(
     video_url='',
     request=None,
     frontpage_text=None,
-    preview_image=None,
+    header_image=None,
     registration_limit=None,
     crop_box=None,
 ):
@@ -351,8 +348,8 @@ def provision_meetup_event(
     if frontpage_text is not None:
         event.settings.set('frontpage_text', frontpage_text)
 
-    if preview_image:
-        _save_meetup_preview_image(event, preview_image, crop_box=crop_box)
+    if header_image:
+        _save_meetup_header_image(event, header_image, crop_box=crop_box)
 
     ensure_video_credentials(event, request=request, force=True)
     apply_video_configuration(event, video_type, video_url)

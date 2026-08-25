@@ -602,10 +602,10 @@ class EventCreateView(TemplateView):
             if self.is_meetup_request:
                 crop_box = None
                 try:
-                    crop_x = int(float(self.request.POST.get('basics-event_preview_image_crop_x', '')))
-                    crop_y = int(float(self.request.POST.get('basics-event_preview_image_crop_y', '')))
-                    crop_w = int(float(self.request.POST.get('basics-event_preview_image_crop_w', '')))
-                    crop_h = int(float(self.request.POST.get('basics-event_preview_image_crop_h', '')))
+                    crop_x = int(float(self.request.POST.get('basics-logo_image_crop_x', '')))
+                    crop_y = int(float(self.request.POST.get('basics-logo_image_crop_y', '')))
+                    crop_w = int(float(self.request.POST.get('basics-logo_image_crop_w', '')))
+                    crop_h = int(float(self.request.POST.get('basics-logo_image_crop_h', '')))
                     if crop_w > 0 and crop_h > 0 and crop_x >= 0 and crop_y >= 0:
                         crop_box = (crop_x, crop_y, crop_x + crop_w, crop_y + crop_h)
                 except (OverflowError, ValueError, TypeError):
@@ -617,7 +617,7 @@ class EventCreateView(TemplateView):
                     video_url=basics_data.get('video_url', ''),
                     request=self.request,
                     frontpage_text=basics_data.get('frontpage_text'),
-                    preview_image=basics_form.cleaned_data.get('event_preview_image'),
+                    header_image=basics_form.cleaned_data.get('logo_image'),
                     registration_limit=basics_data.get('registration_limit'),
                     crop_box=crop_box,
                 )
