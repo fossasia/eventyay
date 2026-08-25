@@ -1939,7 +1939,7 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
     location_type = forms.ChoiceField(
         label=_('Location'),
         choices=LOCATION_TYPE_CHOICES,
-        initial=LOCATION_HYBRID,
+        initial=LOCATION_IN_PERSON,
         widget=forms.RadioSelect,
         required=False,
     )
@@ -1969,7 +1969,7 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
         ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
         max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         required=False,
-        help_text=_('Upload a header image for your meetup banner and card.'),
+        help_text=_('Upload a header image for your meetup banner and card. Recommended size: 1920 × 640 px.'),
     )
 
     def __init__(self, *args, **kwargs):
@@ -1994,7 +1994,7 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
         elif self.initial.get('location') and not self.initial.get('video_type'):
             self.initial['location_type'] = LOCATION_IN_PERSON
         else:
-            self.initial['location_type'] = LOCATION_HYBRID
+            self.initial['location_type'] = LOCATION_IN_PERSON
 
         if self.initial.get('registration_limit'):
             self.initial['capacity_type'] = CAPACITY_LIMITED
@@ -2046,7 +2046,7 @@ class MeetupEventWizardBasicsForm(EventWizardBasicsForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        loc_type = cleaned_data.get('location_type') or LOCATION_HYBRID
+        loc_type = cleaned_data.get('location_type') or LOCATION_IN_PERSON
 
         if loc_type == LOCATION_VIRTUAL:
             cleaned_data.update({
