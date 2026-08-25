@@ -19,7 +19,7 @@ $(function () {
             var $tablink = $("<a>").attr("role", "tab")
                 .attr("data-toggle", "tab")
                 .attr("href", "#" + tid)
-                .text($fieldset.find("legend").text())
+                .text($fieldset.children("legend").text())
                 .appendTo($tabli);
             if ($fieldset.find(".has-error, .alert-danger").length > 0) {
                 $tablink.append(" ");
@@ -38,7 +38,7 @@ $(function () {
                     $tablink.click();
                 }
             });
-            $fieldset.find("legend").remove();
+            $fieldset.children("legend").remove();
             $fieldset.addClass("tab-pane").attr("id", tid);
             if (location.hash && ($fieldset.find(location.hash).length || location.hash === "#" + tid + "-open") && hash_preselect === null) {
                 hash_preselect = i;
