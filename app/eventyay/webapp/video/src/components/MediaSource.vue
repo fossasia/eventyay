@@ -304,13 +304,8 @@ async function applyYoutubeTranslation(transConfig) {
 			languageIframeUrl.value = getLanguageIframeUrl(audioSource);
 		}
 
-		// Recreate the main player with mute=1 instead of sending a delayed mute
-		// command, which can race with YouTube translation iframe navigation.
-		if (iframeEl.value) {
-			iframeEl.value.remove();
-			iframeEl.value = null;
-			await initializeIframe(false);
-		}
+		// The main player is already loaded when changing translations dynamically.
+		muteYouTubePlayer();
 
 		if (mainPlayerPaused.value) {
 			setTimeout(() => {
@@ -352,6 +347,22 @@ onBeforeUnmount(() => {
 
 function hasAudioOnlyYoutubeTranslation() {
 	return Boolean(youtubeTranslation.value?.url && !youtubeTranslation.value?.useVideo);
+}
+
+function muteYouTubePlayer() {
+	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
+	try {
+		subscribeToYouTubePlayerEvents();
+		iframeEl.value.contentWindow.postMessage(
+			'{"event":"command","func":"mute","args":""}',
+			'*'
+		);
+	} catch (error) {
+		console.warn('Failed to mute embedded YouTube player', {
+			roomId: props.room?.id,
+			error,
+		});
+	}
 }
 
 function getYoutubeConfig() {
