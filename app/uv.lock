@@ -1212,7 +1212,7 @@ dependencies = [
 [[package]]
 name = "eventyay-interpretation"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#b082bbd7082a6a7e345c65d950b11a5fd6a1a378" }
+source = { git = "https://github.com/fossasia/eventyay-interpretation.git?rev=dev#d955f4cfb0eafdf07b595e89a12d7994d002edd0" }
 dependencies = [
     { name = "cryptography" },
     { name = "requests" },
@@ -1226,10 +1226,11 @@ source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#a6d9c
 [[package]]
 name = "eventyay-socialmedia"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev#0b573af4a714d376bce0a2cc12a350ff5dd5801b" }
+source = { git = "https://github.com/fossasia/eventyay-socialmedia.git?rev=dev#ae002153af2c99978878706f30a55029f2e7ce92" }
 dependencies = [
     { name = "cryptography" },
     { name = "mastodon-py" },
+    { name = "requests-oauthlib" },
 ]
 
 [[package]]
@@ -1243,7 +1244,7 @@ dependencies = [
 [[package]]
 name = "eventyay-teamshifts"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev#006f2582c67292455ba5649bcb4eeb0c130c4a02" }
+source = { git = "https://github.com/fossasia/eventyay-teamshifts.git?rev=dev#a98c9af0063c9bae51678648a503cc053bc27d93" }
 
 [[package]]
 name = "eventyay-unified"
@@ -1727,18 +1728,18 @@ wheels = [
 [[package]]
 name = "exhibition"
 version = "0.1.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev#54ba7615d34016c966b728f6559bae7eb8dd1204" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=dev#5ff49d9d8ac5e23958897ed71fd9ed59c0912b6e" }
 
 [[package]]
 name = "faker"
-version = "40.36.0"
+version = "40.37.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/98/d2/026af1e002bbc6df534d1f8262b18ec79a974f928e9290bfbfdfe7c7b2af/faker-40.36.0.tar.gz", hash = "sha256:754048c76c03afa7de83eee8f4bcee3cf668cbb7d995f54a4e9678db7f110308", size = 2025903, upload-time = "2026-07-24T21:11:33.088Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f6/fb/35acc76128d5ee8983d940da871cc8eba876e7b0e9e6bd402ecd7104dcdc/faker-40.37.0.tar.gz", hash = "sha256:a92dff7f310e61fb544c61720e15edb2e7448bc33d15a321a99e9ab7b94abf54", size = 2025920, upload-time = "2026-08-21T16:33:16.261Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/9a/b947ed175ce9a0dcb070ccf3607f0ce8720cfb5ed1a36166a150b2acd5af/faker-40.36.0-py3-none-any.whl", hash = "sha256:82b9497d9cfe017048075bcf969298a74b1b6e39f5e4dad1211085d1133f7b62", size = 2062829, upload-time = "2026-07-24T21:11:31.37Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/22/bf589b6b2c7527047f55450358fbe5961aeaadf168d6b51a1a1c67da497f/faker-40.37.0-py3-none-any.whl", hash = "sha256:ddbafa55c94d5b69c08ced3a7f202614204a02e07ba6548c729b8d18acc0b490", size = 2062853, upload-time = "2026-08-21T16:33:14.516Z" },
 ]
 
 [[package]]
@@ -2566,11 +2567,11 @@ wheels = [
 
 [[package]]
 name = "publicsuffixlist"
-version = "1.0.2.20260819"
+version = "1.0.2.20260821"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/70/44/f564dbcd254a9d0922744900905c17cceea71cc68c49f6e207170ccb3a38/publicsuffixlist-1.0.2.20260819.tar.gz", hash = "sha256:6345b40a9ed4cb892c10a2cd00f54622e0a4f1a142b929aac4e4d439a71d00bb", size = 108926, upload-time = "2026-08-19T03:54:04.045Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/61/b4/50577ffe90de235263342c2b07993681b5395818a30a99fcede54069fe93/publicsuffixlist-1.0.2.20260821.tar.gz", hash = "sha256:ba6454a4959216e2d080fd2ab2f498d96916c9072cc6ba735f7d16df6aaefbe1", size = 108942, upload-time = "2026-08-21T03:56:31.186Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/9b/4c4f429b7ffd0e021bba62fa8536d15189659117eaa9dcc862af208f0d05/publicsuffixlist-1.0.2.20260819-py2.py3-none-any.whl", hash = "sha256:dc7292f0b44085c3e02578d2961e60cdba9eb64a829af3b8ad7f6e5463f00d24", size = 108641, upload-time = "2026-08-19T03:54:02.957Z" },
+    { url = "https://files.pythonhosted.org/packages/de/fd/224f6e4d143decf2f4d01200eb728e167b1fb7075e25029563bbe52374dd/publicsuffixlist-1.0.2.20260821-py2.py3-none-any.whl", hash = "sha256:1242f7d2923d44e21eb8341fe1368645e331bda4b606403cf319dddace036504", size = 108704, upload-time = "2026-08-21T03:56:30.047Z" },
 ]
 
 [[package]]
