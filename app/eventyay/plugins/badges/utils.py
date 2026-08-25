@@ -20,6 +20,7 @@ BADGE_TICKET_PROVIDER = 'badge'
 BADGE_LAYOUT_PERSISTED_FIELDS = (
     'layout',
     'ask_user_fields',
+    'required_badge_fields',
     'allow_customization',
     'allow_badge_editing',
     'background',
@@ -65,6 +66,7 @@ def get_badge_layout_renderer_token(layout):
     return (
         layout.layout or '',
         layout.ask_user_fields or '',
+        layout.required_badge_fields or '',
         bool(layout.allow_customization),
         bool(getattr(layout, 'allow_badge_editing', False)),
         background,
@@ -264,6 +266,17 @@ def validate_badge_hidden_fields(event, position, hidden_fields):
         raise ValidationError(
             _('Invalid badge field keys: {keys}').format(keys=', '.join(invalid_keys))
         )
+        
+    layout = _badge_customization_layout(event, position)
+    required_keys = set(layout.required_badge_fields_data)
+    hidden_required = required_keys & set(normalized)
+    if hidden_required:
+        raise ValidationError(
+            _('Badge field(s) {keys} are required and cannot be hidden.').format(
+                keys=', '.join(sorted(hidden_required))
+            )
+        )
+        
     return normalized
 
 

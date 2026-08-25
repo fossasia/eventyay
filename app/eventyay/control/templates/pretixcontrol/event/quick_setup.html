@@ -227,6 +227,19 @@
                         </div>
                     </div>
                 {% endif %}
+                {% if form.payment_paypal__enabled %}
+                    {% bootstrap_field form.payment_paypal__enabled layout="control" label_class="sr-only" field_class="col-md-12" %}
+                    <div data-display-dependency="#id_payment_paypal__enabled">
+                        <div class="alert alert-info">
+                            {% blocktrans trimmed %}
+                                After the setup, please go to the Payment area and set up the PayPal connection.
+                            {% endblocktrans %}
+                        </div>
+                    </div>
+                {% endif %}
+                {% if form.payment_manualpayment__enabled %}
+                    {% bootstrap_field form.payment_manualpayment__enabled layout="control" label_class="sr-only" field_class="col-md-12" %}
+                {% endif %}
                 <p>&nbsp;</p>
             </div>
         </fieldset>

@@ -940,7 +940,7 @@ def end_view(view: EventView, delete=False):
 
 LoginResult = namedtuple(
     "LoginResult",
-    "user event_config chat_channels chat_notification_counts exhibition_data view",
+    "user event_config chat_channels chat_notification_counts view",
 )
 
 
@@ -957,7 +957,6 @@ def login(
     invite_token=None,
 ) -> LoginResult:
     from .chat import ChatService
-    from .exhibition import ExhibitionService
     from .event import get_event_config_for_user
 
     user = get_user(
@@ -996,7 +995,6 @@ def login(
             user.pk, is_volatile=False
         ),
         chat_notification_counts=ChatService(event).get_notification_counts(user.pk),
-        exhibition_data=ExhibitionService(event).get_exhibition_data_for_user(user.pk),
         view=view,
     )
 

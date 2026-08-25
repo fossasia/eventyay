@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import time
 
 from django.conf import settings
@@ -49,3 +50,13 @@ def assert_session_valid(request: HttpRequest) -> bool:
 
     request.session[KEY_LAST_LOGIN_CHECK] = int(time.time())
     return True
+
+
+class OneLineWarningFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.exc_info = None
+        record.exc_text = None
+        record.levelno = logging.WARNING
+        record.levelname = 'WARNING'
+        return True
+

@@ -39,6 +39,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager, scope, scopes_disabled
 from i18nfield.fields import I18nCharField, I18nTextField
+from redis.exceptions import RedisError
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
 from eventyay.base.models.base import LoggedModel
@@ -111,7 +112,6 @@ FEATURE_FLAGS = [
     'janus',
     'jitsi',
     'polls',
-    'poster',
     'conftool',
     'cross-origin-isolation',
 ]
@@ -1627,18 +1627,13 @@ class Event(
 
     def clear_data(self):
         """
-        Clears all personal information. It generally leaves structure such as rooms and exhibitors intact, but to make
-        sure all personal data is scrubbed, it also clears all uploaded files, which includes things like exhibitor
-        logos.
+        Clears all personal information. It generally leaves structure such as rooms intact, but to make
+        sure all personal data is scrubbed, it also clears all uploaded files.
         """
         from eventyay.base.models import (
             ChatEvent,
-            ContactRequest,
-            ExhibitorStaff,
-            ExhibitorView,
             Membership,
             Poll,
-            PosterPresenter,
             Reaction,
             RoomView,
         )
@@ -1650,10 +1645,6 @@ class Event(
         self.bbb_calls.all().delete()
         ChatEvent.objects.filter(channel__event=self).delete()
         Membership.objects.filter(channel__event=self).delete()
-        ExhibitorStaff.objects.filter(exhibitor__event=self).delete()
-        PosterPresenter.objects.filter(poster__event=self).delete()
-        ContactRequest.objects.filter(exhibitor__event=self).delete()
-        ExhibitorView.objects.filter(exhibitor__event=self).delete()
         Reaction.objects.filter(room__event=self).delete()
         RoomView.objects.filter(room__event=self).delete()
         EventView.objects.filter(event=self).delete()
@@ -1731,45 +1722,18 @@ class Event(
         self.external_auth_url = old.external_auth_url
         self.save()
 
-        room_map = {}
         for r in old.rooms.all():
             try:
                 has_channel = r.channel
             except Exception:
                 has_channel = False
 
-            old_id = r.pk
             r.pk = None
             r.event = self
             r.module_config = clone_stored_files(struct=r.module_config)
             r.save()
-            room_map[old_id] = r
             if has_channel:
                 Channel.objects.create(room=r, event=self)
-        for r in old.rooms.prefetch_related('exhibitors', 'exhibitors__links', 'exhibitors__social_media_links'):
-            for ex in r.exhibitors.all():
-                old_links = list(ex.links.all())
-                old_smlinks = list(ex.social_media_links.all())
-
-                ex.pk = None
-                ex.event = self
-                ex.room = room_map[ex.room_id]
-                if ex.highlighted_room_id:
-                    ex.highlighted_room = room_map[ex.highlighted_room_id]
-                clone_stored_files(inst=ex, attrs=['logo', 'banner_list', 'banner_detail'])
-                ex.text_content = clone_stored_files(struct=ex.text_content)
-                ex.save()
-
-                for link in old_smlinks:
-                    link.pk = None
-                    link.exhibitor = ex
-                    link.save()
-
-                for link in old_links:
-                    link.pk = None
-                    clone_stored_files(inst=link, attrs=['url'])
-                    link.exhibitor = ex
-                    link.save()
 
     def get_payment_providers(self, cached=False) -> dict:
         """
@@ -2384,17 +2348,23 @@ class Event(
     @cached_property
     def locales(self) -> list[str]:
         """Is a list of active event locales."""
-        if hasattr(self, 'settings') and 'locales' in self.settings._cache():
-            if locales := self.settings.get('locales', as_type=list):
-                return locales
+        try:
+            if hasattr(self, 'settings') and 'locales' in self.settings._cache():
+                if locales := self.settings.get('locales', as_type=list):
+                    return locales
+        except RedisError:
+            logger.warning('Event settings cache unavailable while reading locales for %s', self.slug)
         return [code for code in self.locale_array.split(',') if code]
 
     @cached_property
     def content_locales(self) -> list[str]:
         """Is a list of active content locales."""
-        if hasattr(self, 'settings') and 'content_locales' in self.settings._cache():
-            if locales := self.settings.get('content_locales', as_type=list):
-                return locales
+        try:
+            if hasattr(self, 'settings') and 'content_locales' in self.settings._cache():
+                if locales := self.settings.get('content_locales', as_type=list):
+                    return locales
+        except RedisError:
+            logger.warning('Event settings cache unavailable while reading content locales for %s', self.slug)
         fallback = [code for code in self.content_locale_array.split(',') if code]
         return fallback or self.locales
 

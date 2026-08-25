@@ -141,7 +141,8 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             return
         self.fields['submission_type'].queryset = self.event.submission_types.all()
         self.fields['track'].queryset = self.event.tracks.all()
-        self.fields['tags'].queryset = self.event.tags.all()
+        # many=True fields are wrapped in ManyRelatedField; the live queryset lives on child_relation.
+        self.fields['tags'].child_relation.queryset = self.event.tags.all()
 
         if not self.event.get_feature_flag('use_tracks'):
             self.fields.pop('track', None)
@@ -250,6 +251,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def create(self, validated_data):
         if not self.event:
             raise serializers.ValidationError('Event is required for submissions.')
+        tags_provided = 'tags' in validated_data
         tags_data = validated_data.pop('tags', [])
         image = validated_data.pop('image', None)
         validated_data['event'] = self.event
@@ -260,7 +262,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
 
         submission = super().create(validated_data)
 
-        if tags_data:
+        if tags_provided:
             submission.tags.set(tags_data)
         if image:
             submission.image.save(Path(image.name).name, image, save=True)
@@ -271,6 +273,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def update(self, instance, validated_data):
         if not self.event:
             raise serializers.ValidationError('Event is required for submissions.')
+        tags_provided = 'tags' in validated_data
         tags_data = validated_data.pop('tags', [])
         image = validated_data.pop('image', None)
         validated_data['event'] = self.event
@@ -289,7 +292,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
 
         submission = super().update(instance, validated_data)
 
-        if tags_data:
+        if tags_provided:
             submission.tags.set(tags_data)
         if image:
             submission.image.save(Path(image.name).name, image)
@@ -371,7 +374,8 @@ class SubmissionOrgaSerializer(SubmissionSerializer):
         super().__init__(*args, **kwargs)
         self.fields['reviews'].required = False
         if self.event:
-            self.fields['assigned_reviewers'].queryset = self.event.reviewers
+            # many=True → update child_relation queryset
+            self.fields['assigned_reviewers'].child_relation.queryset = self.event.reviewers
 
     def validate_content_locale(self, value):
         if self.event and value not in self.event.content_locales:

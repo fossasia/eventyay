@@ -15,7 +15,6 @@
 			h2 Tracking and statistics
 			bunt-checkbox(v-model="config.track_room_views", label="Track room views", name="track_room_views")
 			bunt-checkbox(v-model="config.track_world_views", label="Track world views", name="track_world_views")
-			bunt-checkbox(v-model="config.track_exhibitor_views", label="Track exhibitor views", name="track_exhibitor_views")
 			h2 Settings for newly-created BBB rooms
 			bunt-checkbox(v-model="config.bbb_defaults.record", label="Allow recording", name="record")
 			bunt-checkbox(v-model="config.bbb_defaults.hide_presentation", label="Hide presentation when users join", name="hide_presentation")
@@ -82,7 +81,6 @@ async function save() {
 		const patch = {
 			connection_limit: config.value.connection_limit,
 			bbb_defaults: config.value.bbb_defaults,
-			track_exhibitor_views: config.value.track_exhibitor_views,
 			track_room_views: config.value.track_room_views,
 			track_world_views: config.value.track_world_views
 		}

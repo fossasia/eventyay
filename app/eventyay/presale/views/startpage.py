@@ -1,5 +1,3 @@
-import datetime
-
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
@@ -75,18 +73,15 @@ class StartPageView(TemplateView):
                 ctx['events'] = [e for e in qs if not e.has_component_testmode]
                 return ctx
 
-            today_start = timezone.make_aware(
-                datetime.datetime.combine(timezone.localdate(), datetime.time.min),
-                timezone.get_current_timezone(),
-            )
+            today_datetime = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
             base_qs = (
                 Event.objects.select_related('organizer')
                 .prefetch_related('_settings_objects')
                 .filter(live=True, testmode=False)
                 .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
             )
-            future_filter = Q(date_to__gte=today_start) | Q(date_to__isnull=True, date_from__gte=today_start)
-            past_filter = Q(date_to__lt=today_start) | Q(date_to__isnull=True, date_from__lt=today_start)
+            future_filter = Q(date_to__gte=today_datetime) | Q(date_to__isnull=True, date_from__gte=today_datetime)
+            past_filter = Q(date_to__lt=today_datetime) | Q(date_to__isnull=True, date_from__lt=today_datetime)
 
             featured_qs = base_qs.filter(startpage_featured=True).filter(future_filter).order_by('date_from')[:8]
             upcoming_qs = (
@@ -163,16 +158,13 @@ class UpcomingEventsView(PaginationMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        today_start = timezone.make_aware(
-            datetime.datetime.combine(timezone.localdate(), datetime.time.min),
-            timezone.get_current_timezone(),
-        )
+        today_datetime = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
         qs = (
             Event.objects.select_related('organizer')
             .prefetch_related('_settings_objects')
             .filter(live=True)
             .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            .filter(Q(date_to__gte=today_start) | Q(date_to__isnull=True, date_from__gte=today_start))
+            .filter(Q(date_to__gte=today_datetime) | Q(date_to__isnull=True, date_from__gte=today_datetime))
             .filter(testmode=False)
             .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
             .order_by('date_from')
@@ -194,16 +186,13 @@ class PastEventsView(PaginationMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        today_start = timezone.make_aware(
-            datetime.datetime.combine(timezone.localdate(), datetime.time.min),
-            timezone.get_current_timezone(),
-        )
+        today_datetime = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
         qs = (
             Event.objects.select_related('organizer')
             .prefetch_related('_settings_objects')
             .filter(live=True)
             .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-            .filter(Q(date_to__lt=today_start) | Q(date_to__isnull=True, date_from__lt=today_start))
+            .filter(Q(date_to__lt=today_datetime) | Q(date_to__isnull=True, date_from__lt=today_datetime))
             .filter(testmode=False)
             .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
             .order_by('-date_from')
@@ -225,10 +214,7 @@ class FollowedEventsView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_common_base_context(self.request))
-        today_start = timezone.make_aware(
-            datetime.datetime.combine(timezone.localdate(), datetime.time.min),
-            timezone.get_current_timezone(),
-        )
+        today_datetime = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
 
         followed_org_ids = OrganizerFollower.objects.filter(
             user=self.request.user
@@ -244,7 +230,7 @@ class FollowedEventsView(TemplateView):
                     live=True,
                 )
                 .filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-                .filter(Q(date_to__gte=today_start) | Q(date_to__isnull=True, date_from__gte=today_start))
+                .filter(Q(date_to__gte=today_datetime) | Q(date_to__isnull=True, date_from__gte=today_datetime))
                 .filter(testmode=False)
                 .exclude(_settings_objects__key='talks_testmode', _settings_objects__value='True')
                 .select_related('organizer')

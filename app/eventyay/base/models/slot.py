@@ -8,7 +8,9 @@ from zoneinfo import ZoneInfo
 
 import vobject
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager
@@ -239,3 +241,12 @@ class TalkSlot(PretalxModel):
         cal.add('prodid').value = f'-//pretalx//{netloc}//{self.submission.code if self.submission else self.pk}'
         self.build_ical(cal)
         return cal
+
+
+@receiver(post_save, sender=TalkSlot)
+@receiver(post_delete, sender=TalkSlot)
+def invalidate_schedule_cache_on_slot_change(sender, instance, **kwargs):
+    from eventyay.base.services.stale_cache import bump_schedule_cache_version_on_commit
+
+    if instance.schedule.version:
+        bump_schedule_cache_version_on_commit(instance.schedule.event_id)

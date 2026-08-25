@@ -1431,9 +1431,11 @@ class VideoAccessAuthenticator(View):
                 event.slug,
                 event.settings.venueless_url,
             )
+            return
 
-        # If the saved URL points to a different host than the current request (e.g., prod domain),
-        # adjust it to the current host so local development goes to localhost.
+        if not settings.DEBUG:
+            return
+
         try:
             saved = urlparse(str(event.settings.venueless_url))
             current_host = request.get_host()

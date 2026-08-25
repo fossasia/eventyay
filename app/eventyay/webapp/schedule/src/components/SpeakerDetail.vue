@@ -7,7 +7,7 @@
 	.speaker-wrapper(v-if="speakerDetailReady")
 		.speaker-header
 			.speaker-avatar
-				img(v-if="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :src="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :alt="resolvedSpeaker.name")
+				img(v-if="resolvedSpeakerAvatar", :src="resolvedSpeakerAvatar", :alt="resolvedSpeaker.name")
 				.avatar-placeholder(v-else)
 					svg(viewBox="0 0 24 24")
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
@@ -148,6 +148,15 @@ export default {
 				}
 			}
 			return null
+		},
+		resolvedSpeakerAvatar() {
+			const speaker = this.resolvedSpeaker
+			if (!speaker) return null
+			return speaker.avatar_thumbnail_default
+				|| speaker.avatar_thumbnail_tiny
+				|| speaker.avatar
+				|| speaker.avatar_url
+				|| null
 		},
 		resolvedSessions() {
 			if (this.sessions?.length) return this.sessions
