@@ -303,12 +303,14 @@ async function applyYoutubeTranslation(transConfig) {
 			// Create hidden translation audio iframe first
 			languageIframeUrl.value = getLanguageIframeUrl(audioSource);
 		}
-		
-		// Mute the main player using postMessage after a short delay
-		setTimeout(() => {
-			if (updateToken !== translationUpdateToken) return;
-			muteYouTubePlayer();
-		}, 500);
+
+		// Recreate the main player with mute=1 instead of sending a delayed mute
+		// command, which can race with YouTube translation iframe navigation.
+		if (iframeEl.value) {
+			iframeEl.value.remove();
+			iframeEl.value = null;
+			await initializeIframe(false);
+		}
 
 		if (mainPlayerPaused.value) {
 			setTimeout(() => {
@@ -350,22 +352,6 @@ onBeforeUnmount(() => {
 
 function hasAudioOnlyYoutubeTranslation() {
 	return Boolean(youtubeTranslation.value?.url && !youtubeTranslation.value?.useVideo);
-}
-
-function muteYouTubePlayer() {
-	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
-	try {
-		subscribeToYouTubePlayerEvents();
-		iframeEl.value.contentWindow.postMessage(
-			'{"event":"command","func":"mute","args":""}',
-			'*'
-		);
-	} catch (error) {
-		console.warn('Failed to mute embedded YouTube player', {
-			roomId: props.room?.id,
-			error,
-		});
-	}
 }
 
 function disconnectWhepTranslation() {
@@ -664,9 +650,6 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		if (isYouTube) {
 			iframe.onload = () => {
 				subscribeToYouTubePlayerEvents();
-				if (hasAudioOnlyYoutubeTranslation()) {
-					setTimeout(() => muteYouTubePlayer(), 1000);
-				}
 			};
 		}
 	} catch (error) {
@@ -900,19 +883,29 @@ function getLanguageIframeUrl(languageUrl) {
 	if (!languageUrl) return null;
 	const config = module.value?.config || {};
 	const origin = window.location.origin;
-	const params = new URLSearchParams({
-		enablejsapi: '1',
-		autoplay: '1',
-		mute: '0', // Ensure translation audio is not muted
-		modestbranding: '1',
-		loop: '1',
-		controls: '0',
-		disablekb: '1',
-		rel: '0',
-		showinfo: '0',
-		playlist: languageUrl,
-		origin, // Required when using enablejsapi=1 (fixes Error 153)
-	});
+	const params = new URLSearchParams();
+	params.append('autoplay', autoplay.value ? '1' : '0');
+	params.append('mute', config.startMuted ? '1' : '0');
+	params.append('enablejsapi', '1');
+	params.append('origin', origin); // Required when using enablejsapi=1 (fixes Error 153)
+	params.append('controls', '0'); // Translation audio is always hidden.
+
+	if (config.noRelated) {
+		params.append('rel', '0');
+	}
+	if (config.showInfo) {
+		params.append('showinfo', '0');
+	}
+	if (config.disableKb) {
+		params.append('disablekb', '1');
+	}
+	if (config.loop) {
+		params.append('loop', '1');
+		params.append('playlist', languageUrl);
+	}
+	if (config.modestBranding) {
+		params.append('modestbranding', '1');
+	}
 
 	const domain = config.enablePrivacyEnhancedMode
 		? 'www.youtube-nocookie.com'
