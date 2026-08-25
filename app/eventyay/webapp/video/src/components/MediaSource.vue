@@ -324,7 +324,7 @@ async function applyYoutubeTranslation(transConfig) {
 		// Restore the main player unless the organiser asked to start muted
 		setTimeout(() => {
 			if (updateToken !== translationUpdateToken) return;
-			if (module.value?.config?.startMuted) return;
+			if (getYoutubeConfig().startMuted) return;
 			unmuteYouTubePlayer();
 		}, 100);
 	}
@@ -352,6 +352,15 @@ onBeforeUnmount(() => {
 
 function hasAudioOnlyYoutubeTranslation() {
 	return Boolean(youtubeTranslation.value?.url && !youtubeTranslation.value?.useVideo);
+}
+
+function getYoutubeConfig() {
+	const streamType = isScheduleDrivenStage.value ? props.room?.currentStream?.stream_type : null;
+	const currentStream = streamType === STREAM_TYPE_YOUTUBE ? props.room?.currentStream : null;
+	return {
+		...(currentStream?.config || {}),
+		...(module.value?.config || {}),
+	};
 }
 
 function disconnectWhepTranslation() {
@@ -575,7 +584,7 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 					iframeError.value = new Error('Invalid YouTube video ID');
 					break;
 				}
-				const config = module.value.config || {};
+				const config = getYoutubeConfig();
 				const shouldStartMuted = Boolean(
 					mute || config.startMuted || hasAudioOnlyYoutubeTranslation()
 				);
@@ -881,7 +890,7 @@ function getYoutubeUrl(
 function getLanguageIframeUrl(languageUrl) {
 	// Checks if the languageUrl is not provided then return null
 	if (!languageUrl) return null;
-	const config = module.value?.config || {};
+	const config = getYoutubeConfig();
 	const origin = window.location.origin;
 	const params = new URLSearchParams();
 	params.append('autoplay', autoplay.value ? '1' : '0');
