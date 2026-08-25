@@ -616,48 +616,10 @@ DEFAULT_IMAGES = OrderedDict([])
 
 @receiver(layout_image_variables, dispatch_uid='pretix_base_layout_image_variables_questions')
 def images_from_questions(sender, *args, **kwargs):
-    def get_answer(op, order, event, question_id, etag):
-        a = None
-        if op.addon_to:
-            if 'answers' in getattr(op.addon_to, '_prefetched_objects_cache', {}):
-                try:
-                    a = [a for a in op.addon_to.answers.all() if a.question_id == question_id][0]
-                except IndexError:
-                    pass
-            else:
-                a = op.addon_to.answers.filter(question_id=question_id).first()
-
-        if 'answers' in getattr(op, '_prefetched_objects_cache', {}):
-            try:
-                a = [a for a in op.answers.all() if a.question_id == question_id][0]
-            except IndexError:
-                pass
-        else:
-            a = op.answers.filter(question_id=question_id).first()
-
-        if (
-            not a
-            or not a.file
-            or not any(
-                a.file.name.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tif', '.tiff')
-            )
-        ):
-            return None
-        else:
-            if etag:
-                return hashlib.sha1(a.file.name.encode()).hexdigest()
-            return a.file
-
-    d = {}
-    for q in sender.questions.all():
-        if q.type != Question.TYPE_FILE:
-            continue
-        d[f'question_{q.identifier}'] = {
-            'label': _('Question: {question}').format(question=q.question),
-            'evaluate': partial(get_answer, question_id=q.pk, etag=False),
-            'etag': partial(get_answer, question_id=q.pk, etag=True),
-        }
-    return d
+    # Question-image options are disabled for badges.
+    # The imagearea element type is kept for future use (e.g. logos) but
+    # file-type question answers are not offered in the editor dropdown.
+    return {}
 
 
 @receiver(layout_text_variables, dispatch_uid='pretix_base_layout_text_variables_questions')
@@ -758,6 +720,8 @@ def get_variables(event):
 
 
 def font_supports_text(font_name, text):
+    if font_name == 'AND':
+        return False
     try:
         font_obj = pdfmetrics.getFont(font_name)
     except KeyError:
@@ -766,28 +730,93 @@ def font_supports_text(font_name, text):
     char_to_glyph = getattr(face, 'charToGlyph', None) if face is not None else None
     if char_to_glyph is None:
         return False
-    return all(ord(char) < 32 or ord(char) in char_to_glyph for char in text)
+    for char in text:
+        ch_ord = ord(char)
+        if ch_ord < 32:
+            continue
+        glyph = char_to_glyph.get(ch_ord)
+        if glyph is None or glyph == 0:
+            return False
+    return True
+
+
+# Script detection patterns for font selection
+_ARABIC_RE = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]')
+_DEVANAGARI_RE = re.compile(r'[\u0900-\u097F]')
+_CJK_RE = re.compile(
+    r'[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u31F0-\u31FF'
+    r'\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]'
+)
+_HANGUL_RE = re.compile(r'[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]')
+_THAI_RE = re.compile(r'[\u0E00-\u0E7F]')
+_HEBREW_RE = re.compile(r'[\u0590-\u05FF\uFB1D-\uFB4F]')
+
+
+def _detect_scripts(text):
+    """Return a set of script identifiers present in *text*."""
+    scripts = set()
+    if _ARABIC_RE.search(text):
+        scripts.add('arabic')
+    if _DEVANAGARI_RE.search(text):
+        scripts.add('devanagari')
+    if _CJK_RE.search(text):
+        scripts.add('cjk')
+    if _HANGUL_RE.search(text):
+        scripts.add('korean')
+    if _THAI_RE.search(text):
+        scripts.add('thai')
+    if _HEBREW_RE.search(text):
+        scripts.add('hebrew')
+    return scripts
+
+
+# Mapping of detected script to the font name registered in _register_fonts().
+_SCRIPT_FONT_MAP = {
+    'arabic': 'NotoNaskhArabic',
+    'devanagari': 'NotoSansDevanagari',
+    'cjk': 'NotoSansCJK',
+    'korean': 'NotoSansKR',
+    'thai': 'NotoSansThai',
+    'hebrew': 'NotoSansHebrew',
+}
 
 
 def resolve_textarea_font(font, text_content):
     """
-    Pick a font (and optionally transliterate) so ticket text can be drawn.
+    Pick a font so ticket text can be drawn without glyph loss.
 
-    Prefer switching to the broader AND font before transliterating attendee-visible
-    text with ``text_unidecode``.
+    Uses script-aware detection to select the right font for CJK, Thai,
+    Hebrew, Arabic, Devanagari and other scripts before falling back.
     """
-    if not text_content or font_supports_text(font, text_content):
+    if not text_content:
         return font, text_content
-    if font_supports_text('AND', text_content):
-        return 'AND', text_content
 
-    import text_unidecode
+    if font != 'AND' and font_supports_text(font, text_content):
+        return font, text_content
 
-    transliterated = text_unidecode.unidecode(text_content)
-    if transliterated and font_supports_text(font, transliterated):
-        return font, transliterated
-    if transliterated and font_supports_text('AND', transliterated):
-        return 'AND', transliterated
+    # Try a script-specific font if text is single-script.
+    scripts = _detect_scripts(text_content)
+    if len(scripts) == 1:
+        script_key = next(iter(scripts))
+        candidate = _SCRIPT_FONT_MAP.get(script_key)
+        if candidate:
+            target = candidate + ' B' if ' B' in font else candidate
+            if font_supports_text(target, text_content):
+                return target, text_content
+            if font_supports_text(candidate, text_content):
+                return candidate, text_content
+
+    for script_key in scripts:
+        candidate = _SCRIPT_FONT_MAP.get(script_key)
+        if candidate:
+            target = candidate + ' B' if ' B' in font else candidate
+            if font_supports_text(target, text_content):
+                return target, text_content
+            if font_supports_text(candidate, text_content):
+                return candidate, text_content
+
+    # For multi-script text, preserve requested font (Open Sans) as base font.
+    # Script runs are wrapped in <font name="..."> tags in _draw_textarea().
     return font, text_content
 
 
@@ -831,6 +860,21 @@ class Renderer:
             pdfmetrics.registerFont(TTFont('NotoSansDevanagari B', finders.find('fonts/NotoSansDevanagari-Bold.ttf')))
         except (FileNotFoundError, OSError) as exc:
             logger.warning("Failed to register fallback fonts: %s", exc)
+
+        # Optional multilingual fonts (CJK, Korean, Thai, Hebrew)
+        multilingual_fonts = [
+            ('NotoSansCJK', 'fonts/NotoSansSC-Regular.ttf', 'CJK'),
+            ('NotoSansKR', 'fonts/NotoSansKR-Regular.ttf', 'Korean'),
+            ('NotoSansThai', 'fonts/NotoSansThai-Regular.ttf', 'Thai'),
+            ('NotoSansHebrew', 'fonts/NotoSansHebrew-Regular.ttf', 'Hebrew'),
+        ]
+        for font_name, font_path, label in multilingual_fonts:
+            try:
+                font_file = finders.find(font_path)
+                if font_file:
+                    pdfmetrics.registerFont(TTFont(font_name, font_file))
+            except (FileNotFoundError, OSError, TypeError, ValueError) as exc:
+                logger.warning('Failed to register %s font: %s', label, exc)
 
 
 
@@ -1129,16 +1173,24 @@ class Renderer:
         except Exception:
             logger.exception(f'Reshaping/Bidi fixes failed on string {repr(text)}')
 
-        import re
         arabic_pattern = re.compile(r'([\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+)')
         devanagari_pattern = re.compile(r'([\u0900-\u097F]+)')
-        
+        cjk_pattern = re.compile(r'([\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u31F0-\u31FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]+)')
+        korean_pattern = re.compile(r'([\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]+)')
+        thai_pattern = re.compile(r'([\u0E00-\u0E7F]+)')
+        hebrew_pattern = re.compile(r'([\u0590-\u05FF\uFB1D-\uFB4F]+)')
+
         if o.get('bold'):
             text = arabic_pattern.sub(r'<font name="NotoNaskhArabic B">\1</font>', text)
             text = devanagari_pattern.sub(r'<font name="NotoSansDevanagari B">\1</font>', text)
         else:
             text = arabic_pattern.sub(r'<font name="NotoNaskhArabic">\1</font>', text)
             text = devanagari_pattern.sub(r'<font name="NotoSansDevanagari">\1</font>', text)
+
+        text = cjk_pattern.sub(r'<font name="NotoSansCJK">\1</font>', text)
+        text = korean_pattern.sub(r'<font name="NotoSansKR">\1</font>', text)
+        text = thai_pattern.sub(r'<font name="NotoSansThai">\1</font>', text)
+        text = hebrew_pattern.sub(r'<font name="NotoSansHebrew">\1</font>', text)
 
 
         p = Paragraph(text, style=style)
