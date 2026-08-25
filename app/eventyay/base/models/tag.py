@@ -1,9 +1,12 @@
 from django.core.validators import RegexValidator
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nTextField
 
 from eventyay.common.urls import EventUrls
+from eventyay.orga.utils.colors import get_contrast_color
 from eventyay.talk_rules.person import is_reviewer
 from eventyay.talk_rules.submission import (
     orga_can_change_submissions,
@@ -41,6 +44,10 @@ class Tag(PretalxModel):
 
     log_prefix = 'eventyay.tag'
 
+    @property
+    def foreground_color(self):
+        return get_contrast_color(self.color)
+
     class Meta:
         rules_permissions = {
             'list': orga_can_view_submissions,
@@ -62,3 +69,12 @@ class Tag(PretalxModel):
     @property
     def log_parent(self):
         return self.event
+
+
+@receiver(post_save, sender=Tag)
+@receiver(post_delete, sender=Tag)
+def invalidate_tag_catalog_cache(sender, instance, **kwargs):
+    from eventyay.base.services.stale_cache import invalidate_catalog_cache
+
+    event_id = instance.event_id
+    transaction.on_commit(lambda: invalidate_catalog_cache(event_id, 'tags'))

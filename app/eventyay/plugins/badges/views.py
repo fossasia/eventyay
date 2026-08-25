@@ -134,6 +134,7 @@ class LayoutSettingsView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, 
                 'allow_customization': form.cleaned_data['allow_customization'],
                 'allow_badge_editing': form.cleaned_data['allow_badge_editing'],
                 'ask_user_fields': form.cleaned_data['ask_user_fields'],
+                'required_badge_fields': form.cleaned_data['required_badge_fields'],
             },
         )
         messages.success(self.request, _('Your badge layout settings have been saved.'))
@@ -363,6 +364,7 @@ class LayoutEditorView(BaseEditorView):
             override_layout or self.get_current_layout(),
             bgf,
             ask_user_fields=(self.layout.ask_user_fields_data if self.layout.allow_customization else []),
+            required_fields=self.layout.required_badge_fields_data,
         )
         p = canvas.Canvas(buffer, pagesize=pagesizes.A4)
         r.draw_page(p, op.order, op)

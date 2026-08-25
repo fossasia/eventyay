@@ -12,9 +12,7 @@ from venueless.core.models import (
     BBBServer,
     Channel,
     ChatEvent,
-    Exhibitor,
     Membership,
-    Poster,
     RoulettePairing,
     RouletteRequest,
 )
@@ -61,8 +59,6 @@ def test_delete_user(world, chat_room):
     )
     assert os.path.exists(sf_avatar.file.path)
 
-    exhibitor = Exhibitor.objects.create(name="Foo", room=chat_room, world=world)
-    poster = Poster.objects.create(title="Foo", parent_room=chat_room, world=world)
     public_channel = Channel.objects.get_or_create(room=chat_room, world=world)[0]
     dm_channel = Channel.objects.get_or_create(world=world, room=None)[0]
 
@@ -92,8 +88,6 @@ def test_delete_user(world, chat_room):
     should_be_deleted_after_u1_is_deleted.append(
         RoulettePairing.objects.create(room=chat_room, user1=u2, user2=u1)
     )
-    should_be_deleted_after_u1_is_deleted.append(exhibitor.staff.create(user=u1))
-    should_be_deleted_after_u1_is_deleted.append(poster.presenters.create(user=u1))
     assert update_user(
         "sample",
         str(u1.pk),

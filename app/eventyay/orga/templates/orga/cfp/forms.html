@@ -217,9 +217,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Abstract">
+                                    aria-label="{% translate 'Toggle active state for Abstract' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Abstract">
+                                        aria-label="{% translate 'Active toggle for Abstract' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -229,7 +229,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Abstract">
+                                        aria-label="{% translate 'Required status for Abstract' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -263,9 +263,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Description">
+                                    aria-label="{% translate 'Toggle active state for Description' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Description">
+                                        aria-label="{% translate 'Active toggle for Description' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -275,7 +275,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Description">
+                                        aria-label="{% translate 'Required status for Description' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -309,9 +309,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Notes">
+                                    aria-label="{% translate 'Toggle active state for Notes' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Notes">
+                                        aria-label="{% translate 'Active toggle for Notes' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -321,7 +321,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Notes">
+                                        aria-label="{% translate 'Required status for Notes' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -349,9 +349,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Track">
+                                    aria-label="{% translate 'Toggle active state for Track' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Track">
+                                        aria-label="{% translate 'Active toggle for Track' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -361,7 +361,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Track">
+                                        aria-label="{% translate 'Required status for Track' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -394,9 +394,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Duration">
+                                    aria-label="{% translate 'Toggle active state for Duration' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Duration">
+                                        aria-label="{% translate 'Active toggle for Duration' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -406,7 +406,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Duration">
+                                        aria-label="{% translate 'Required status for Duration' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -492,9 +492,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Content Locale">
+                                    aria-label="{% translate 'Toggle active state for Content Locale' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Content Locale">
+                                        aria-label="{% translate 'Active toggle for Content Locale' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -505,7 +505,7 @@
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
                                         {% if field.value == 'do_not_ask' %}disabled{% endif %}
-                                        aria-label="Required status for Content Locale">
+                                        aria-label="{% translate 'Required status for Content Locale' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -543,9 +543,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Session image">
+                                    aria-label="{% translate 'Toggle active state for Session image' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Session image">
+                                        aria-label="{% translate 'Active toggle for Session image' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -555,7 +555,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Session image">
+                                        aria-label="{% translate 'Required status for Session image' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -663,9 +663,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Recording opt-out">
+                                    aria-label="{% translate 'Toggle active state for Recording opt-out' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Recording opt-out">
+                                        aria-label="{% translate 'Active toggle for Recording opt-out' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -675,7 +675,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Recording opt-out">
+                                        aria-label="{% translate 'Required status for Recording opt-out' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -702,9 +702,9 @@
                                 </th>
                                 <td class="text-center">
                                     <label class="toggle-switch" data-field-id="{{ item.field.auto_id }}"
-                                        aria-label="Toggle active state for {{ item.question.question }}">
+                                        aria-label="{% translate 'Toggle active state for' %} {{ item.question.question }}">
                                         <input type="checkbox" {% if item.field.value != 'do_not_ask' %}checked{% endif %}
-                                            aria-label="Active toggle for {{ item.question.question }}">
+                                            aria-label="{% translate 'Active toggle for' %} {{ item.question.question }}">
                                         <span class="toggle-slider"></span>
                                     </label>
                                     <input type="hidden" name="{{ item.field.html_name }}" value="{{ item.field.value }}"
@@ -714,7 +714,7 @@
                                     <div class="required-status-wrapper" data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}">
                                         <select class="required-status-dropdown" data-field-id="{{ item.field.auto_id }}"
                                             data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}"
-                                            aria-label="Required status for {{ item.question.question }}">
+                                            aria-label="{% translate 'Required status for' %} {{ item.question.question }}">
                                             <option value="optional" {% if item.field.value == 'optional' or item.field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                             <option value="required" {% if item.field.value == 'required' %}selected{% endif %}>
                                                 Required</option>
@@ -843,9 +843,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Biography">
+                                    aria-label="{% translate 'Toggle active state for Biography' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Biography">
+                                        aria-label="{% translate 'Active toggle for Biography' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -855,7 +855,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Biography">
+                                        aria-label="{% translate 'Required status for Biography' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -890,9 +890,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Profile picture">
+                                    aria-label="{% translate 'Toggle active state for Profile picture' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Profile picture">
+                                        aria-label="{% translate 'Active toggle for Profile picture' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -902,7 +902,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Profile picture">
+                                        aria-label="{% translate 'Required status for Profile picture' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -940,9 +940,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Profile picture source">
+                                    aria-label="{% translate 'Toggle active state for Profile picture source' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Profile picture source">
+                                        aria-label="{% translate 'Active toggle for Profile picture source' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -952,7 +952,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Profile picture source">
+                                        aria-label="{% translate 'Required status for Profile picture source' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -980,9 +980,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Profile picture license">
+                                    aria-label="{% translate 'Toggle active state for Profile picture license' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Profile picture license">
+                                        aria-label="{% translate 'Active toggle for Profile picture license' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -992,7 +992,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Profile picture license">
+                                        aria-label="{% translate 'Required status for Profile picture license' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -1020,9 +1020,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Availability">
+                                    aria-label="{% translate 'Toggle active state for Availability' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Availability">
+                                        aria-label="{% translate 'Active toggle for Availability' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -1032,7 +1032,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Availability">
+                                        aria-label="{% translate 'Required status for Availability' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -1060,9 +1060,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Additional speakers">
+                                    aria-label="{% translate 'Toggle active state for Additional speakers' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Additional speakers">
+                                        aria-label="{% translate 'Active toggle for Additional speakers' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -1072,7 +1072,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Additional speakers">
+                                        aria-label="{% translate 'Required status for Additional speakers' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>Required</option>
                                     </select>
@@ -1096,9 +1096,9 @@
                             <th>{% translate "Social Media" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Social Media">
+                                    aria-label="{% translate 'Toggle active state for Social Media' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Social Media">
+                                        aria-label="{% translate 'Active toggle for Social Media' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -1108,7 +1108,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Social Media">
+                                        aria-label="{% translate 'Required status for Social Media' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>Required</option>
                                     </select>
@@ -1140,9 +1140,9 @@
                                 </th>
                                 <td class="text-center">
                                     <label class="toggle-switch" data-field-id="{{ item.field.auto_id }}"
-                                        aria-label="Toggle active state for {{ item.question.question }}">
+                                        aria-label="{% translate 'Toggle active state for' %} {{ item.question.question }}">
                                         <input type="checkbox" {% if item.field.value != 'do_not_ask' %}checked{% endif %}
-                                            aria-label="Active toggle for {{ item.question.question }}">
+                                            aria-label="{% translate 'Active toggle for' %} {{ item.question.question }}">
                                         <span class="toggle-slider"></span>
                                     </label>
                                     <input type="hidden" name="{{ item.field.html_name }}" value="{{ item.field.value }}"
@@ -1152,7 +1152,7 @@
                                     <div class="required-status-wrapper" data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}">
                                         <select class="required-status-dropdown" data-field-id="{{ item.field.auto_id }}"
                                             data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}"
-                                            aria-label="Required status for {{ item.question.question }}">
+                                            aria-label="{% translate 'Required status for' %} {{ item.question.question }}">
                                             <option value="optional" {% if item.field.value == 'optional' or item.field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                             <option value="required" {% if item.field.value == 'required' %}selected{% endif %}>
                                                 Required</option>
@@ -1229,9 +1229,9 @@
                                 </th>
                                 <td class="text-center">
                                     <label class="toggle-switch" data-field-id="{{ item.field.auto_id }}"
-                                        aria-label="Toggle active state for {{ item.question.question }}">
+                                        aria-label="{% translate 'Toggle active state for' %} {{ item.question.question }}">
                                         <input type="checkbox" {% if item.field.value != 'do_not_ask' %}checked{% endif %}
-                                            aria-label="Active toggle for {{ item.question.question }}">
+                                            aria-label="{% translate 'Active toggle for' %} {{ item.question.question }}">
                                         <span class="toggle-slider"></span>
                                     </label>
                                     <input type="hidden" name="{{ item.field.html_name }}" value="{{ item.field.value }}"
@@ -1241,7 +1241,7 @@
                                     <div class="required-status-wrapper" data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}">
                                         <select class="required-status-dropdown" data-field-id="{{ item.field.auto_id }}"
                                             data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}"
-                                            aria-label="Required status for {{ item.question.question }}">
+                                            aria-label="{% translate 'Required status for' %} {{ item.question.question }}">
                                             <option value="optional" {% if item.field.value == 'optional' or item.field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                             <option value="required" {% if item.field.value == 'required' %}selected{% endif %}>
                                                 Required</option>

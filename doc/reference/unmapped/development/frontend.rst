@@ -99,13 +99,6 @@ Interactive Features
 - ``components/Questions.vue`` - Q&A question list
 - ``components/Roulette.vue`` - Speed networking roulette
 
-Exhibition
-^^^^^^^^^^
-
-- ``components/Exhibition.vue`` - Exhibition hall view
-- ``components/ContactExhibitorPrompt.vue`` - Exhibitor contact form
-- ``components/PosterHall.vue`` - Poster session hall
-
 User Interface
 ^^^^^^^^^^^^^^
 
@@ -124,8 +117,6 @@ Content Display
 - ``components/MarkdownPage.vue`` - Full markdown page
 - ``components/RichTextContent.vue`` - Rich text display
 - ``components/RichTextEditor.vue`` - Quill-based rich text editor
-- ``components/StaticPage.vue`` - Static content pages
-- ``components/IframePage.vue`` - Embedded iframe pages
 
 Forms & Prompts
 ^^^^^^^^^^^^^^^
@@ -199,11 +190,6 @@ Vuex Store Modules (``src/store/``)
   - Chat messages and channels
   - Unread counts
   - Message history
-
-**exhibition.js**
-  - Exhibitor data
-  - Contact requests
-  - Booth interactions
 
 **poll.js**
   - Poll data and votes

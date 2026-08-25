@@ -8,7 +8,6 @@ import chat from './chat'
 import question from './question'
 import poll from './poll'
 import roulette from './roulette'
-import exhibition from './exhibition'
 import schedule from './schedule'
 import notifications from './notifications'
 import moment from 'lib/timetravelMoment'
@@ -188,7 +187,6 @@ export default new Vuex.Store({
 				commit('chat/setJoinedChannels', serverState['chat.channels'])
 				commit('chat/setReadPointers', serverState['chat.read_pointers'])
 				commit('chat/setNotificationCounts', serverState['chat.notification_counts'])
-				commit('exhibition/setData', serverState.exhibition)
 				commit('announcement/setAnnouncements', serverState.announcements)
 				commit('updateRooms', serverState['world.config'].rooms)
 				// TODO ?
@@ -528,7 +526,6 @@ export default new Vuex.Store({
 		chat,
 		question,
 		poll,
-		exhibition,
 		schedule,
 		roulette,
 		notifications
