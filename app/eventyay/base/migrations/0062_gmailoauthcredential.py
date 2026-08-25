@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0060_remove_video_poster_models'),
+        ('base', '0061_price_max_digits_currency_support'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
