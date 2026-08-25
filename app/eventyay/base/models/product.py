@@ -125,7 +125,7 @@ class SubEventProduct(models.Model):
 
     subevent = models.ForeignKey('SubEvent', on_delete=models.CASCADE)
     product = models.ForeignKey('Product', on_delete=models.CASCADE)
-    price = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField(max_digits=13, decimal_places=2, null=True, blank=True)
     disabled = models.BooleanField(default=False, verbose_name=_('Disable product for this date'))
 
     def delete(self, *args, **kwargs):
@@ -154,7 +154,7 @@ class SubEventProductVariation(models.Model):
 
     subevent = models.ForeignKey('SubEvent', on_delete=models.CASCADE)
     variation = models.ForeignKey('ProductVariation', on_delete=models.CASCADE)
-    price = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField(max_digits=13, decimal_places=2, null=True, blank=True)
     disabled = models.BooleanField(default=False)
 
     def delete(self, *args, **kwargs):
@@ -349,7 +349,7 @@ class Product(AdmissionValidityBoundMixin, LoggedModel):
             'variations. If a variation does not have a special price or if you do not have variations, '
             'this price will be used.'
         ),
-        max_digits=7,
+        max_digits=13,
         decimal_places=2,
         null=True,
         validators=[MinValueValidator(Decimal('0.00'))],
@@ -370,7 +370,7 @@ class Product(AdmissionValidityBoundMixin, LoggedModel):
         help_text=_(
             'The minimum price a user has to enter. If left empty, the default price will be used as the minimum.'
         ),
-        max_digits=7,
+        max_digits=13,
         decimal_places=2,
         null=True,
         blank=True,
@@ -380,7 +380,7 @@ class Product(AdmissionValidityBoundMixin, LoggedModel):
         help_text=_(
             'The maximum price a user can enter. If left empty, there is no upper limit.'
         ),
-        max_digits=7,
+        max_digits=13,
         decimal_places=2,
         null=True,
         blank=True,
@@ -544,7 +544,7 @@ class Product(AdmissionValidityBoundMixin, LoggedModel):
         verbose_name=_('Original price'),
         blank=True,
         null=True,
-        max_digits=7,
+        max_digits=13,
         decimal_places=2,
         help_text=_(
             'If set, this will be displayed next to the current price to show that the current price is a '
@@ -875,7 +875,7 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
     position = models.PositiveIntegerField(default=0, verbose_name=_('Position'))
     default_price = models.DecimalField(
         decimal_places=2,
-        max_digits=7,
+        max_digits=13,
         null=True,
         blank=True,
         verbose_name=_('Default price'),
@@ -885,7 +885,7 @@ class ProductVariation(AdmissionValidityBoundMixin, models.Model):
         verbose_name=_('Original price'),
         blank=True,
         null=True,
-        max_digits=7,
+        max_digits=13,
         decimal_places=2,
         help_text=_(
             'If set, this will be displayed next to the current price to show that the current price is a '
