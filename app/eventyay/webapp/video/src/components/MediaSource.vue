@@ -885,7 +885,8 @@ function getLanguageIframeUrl(languageUrl) {
 	const origin = window.location.origin;
 	const params = new URLSearchParams();
 	params.append('autoplay', autoplay.value ? '1' : '0');
-	params.append('mute', config.startMuted ? '1' : '0');
+	// Start muted applies to the main video, never to interpretation audio.
+	params.append('mute', '0');
 	params.append('enablejsapi', '1');
 	params.append('origin', origin); // Required when using enablejsapi=1 (fixes Error 153)
 	params.append('controls', '0'); // Translation audio is always hidden.
