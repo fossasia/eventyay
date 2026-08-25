@@ -105,11 +105,5 @@ export default {
 	h1, h2, h3, h4, h5, h6
 		margin: 0 16px
 
-	// Text-align support (set by Tiptap TextAlign extension)
-	[style*="text-align: center"], .text-center
-		text-align: center
-	[style*="text-align: right"], .text-right
-		text-align: right
-	[style*="text-align: left"], .text-left
-		text-align: left
+
 </style>

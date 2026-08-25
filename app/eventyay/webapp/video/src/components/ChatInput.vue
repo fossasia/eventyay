@@ -285,6 +285,9 @@ export default {
 					} else if (node.content) {
 						traverse(node.content)
 					}
+					if (node.type === 'paragraph') {
+						text += '\n'
+					}
 				}
 			}
 			traverse(json.content)

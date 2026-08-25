@@ -51,6 +51,9 @@ import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
+import api from 'lib/api'
+import i18n from 'i18n'
+import ErrorDialog from 'components/ErrorDialog'
 
 const CustomTextAlign = TextAlign.extend({
 	addGlobalAttributes() {
@@ -78,9 +81,6 @@ const CustomTextAlign = TextAlign.extend({
 		]
 	},
 })
-import api from 'lib/api'
-import i18n from 'i18n'
-import ErrorDialog from 'components/ErrorDialog'
 
 const props = defineProps({
 	modelValue: String,
@@ -103,7 +103,7 @@ let emitTimeout = null
 
 // Toolbar helpers — read from editorState to stay reactive
 const isActive = (nameOrAttrs, attrs) => {
-	if (!editorInstance) return false
+	if (!editorState.value || !editorInstance) return false
 	if (typeof nameOrAttrs === 'string') {
 		return editorInstance.isActive(nameOrAttrs, attrs)
 	}
