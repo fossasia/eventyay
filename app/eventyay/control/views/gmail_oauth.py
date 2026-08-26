@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 
 from django.contrib import messages
+from django.core.signing import BadSignature, SignatureExpired
 from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -55,7 +56,7 @@ class GmailOAuthCallbackView(AdministratorPermissionRequiredMixin, View):
 
         try:
             payload = load_oauth_state(state)
-        except Exception:
+        except (BadSignature, SignatureExpired):
             messages.error(request, _('The Google authorization session expired. Please try again.'))
             return redirect(reverse('eventyay_admin:admin.global.settings'))
 
@@ -164,7 +165,7 @@ class EventGmailOAuthCallbackView(EventPermissionRequiredMixin, View):
 
         try:
             payload = load_oauth_state(state)
-        except Exception:
+        except (BadSignature, SignatureExpired):
             messages.error(request, _('The Google authorization session expired. Please try again.'))
             return redirect(next_url)
 

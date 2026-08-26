@@ -1,6 +1,7 @@
 import logging
 from datetime import date, timedelta
 
+import requests
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
@@ -133,7 +134,6 @@ class GmailOAuthCredential(LoggedModel):
         self.is_active = False
         
         try:
-            import requests
             refresh_token = self.get_refresh_token()
             if refresh_token:
                 requests.post('https://oauth2.googleapis.com/revoke', params={'token': refresh_token}, timeout=5)

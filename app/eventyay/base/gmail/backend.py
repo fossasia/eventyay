@@ -75,29 +75,28 @@ class GmailAPIEmail:
             return 1
         except Exception as exc:
             _, _, _, HttpError = require_google_api_dependencies()
-            if isinstance(exc, HttpError):
-                if exc.resp.status == 401:
-                    logger.warning("Got 401 from Gmail API, attempting to refresh token before permanent failure.")
-                    from eventyay.base.gmail.oauth import build_google_credentials
-                    from google.auth.transport.requests import Request
-                    try:
-                        creds = build_google_credentials(self.credential)
-                        creds.refresh(Request())
-                        self.credential.update_access_token(creds.token, creds.expiry)
-                        
-                        service = build_gmail_service(self.credential)
-                        service.users().messages().send(userId='me', body={'raw': encoded_message}).execute()
-                        self.credential.record_send(recipient_count)
-                        return 1
-                    except Exception as refresh_exc:
-                        logger.warning("Failed to refresh token after 401: %s", refresh_exc)
+            if isinstance(exc, HttpError) and exc.resp.status == 401:
+                logger.warning("Got 401 from Gmail API, attempting to refresh token before permanent failure.")
+                from eventyay.base.gmail.oauth import build_google_credentials
+                from google.auth.transport.requests import Request
+                try:
+                    creds = build_google_credentials(self.credential)
+                    creds.refresh(Request())
+                    self.credential.update_access_token(creds.token, creds.expiry)
+                    
+                    service = build_gmail_service(self.credential)
+                    service.users().messages().send(userId='me', body={'raw': encoded_message}).execute()
+                    self.credential.record_send(recipient_count)
+                    return 1
+                except Exception as refresh_exc:
+                    logger.warning("Failed to refresh token after 401: %s", refresh_exc)
 
-                self.credential.set_last_error(str(exc))
+            self.credential.set_last_error(str(exc))
+            if isinstance(exc, HttpError):
                 try:
                     classify_http_error(exc)
                 except (GmailPermanentError, GmailDailyLimitError) as limit_error:
                     return self._handle_limit(limit_error, email)
-            self.credential.set_last_error(str(exc))
             raise
 
     def _handle_limit(self, error, email) -> int:
