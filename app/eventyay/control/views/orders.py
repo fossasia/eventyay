@@ -118,7 +118,7 @@ from eventyay.base.services.system_questions import (
     get_system_question_base_states,
     get_system_question_product_overrides,
 )
-from eventyay.base.services.stats import order_overview
+from eventyay.base.services.stats import group_overview_by_classification, order_overview
 from eventyay.base.services.tickets import generate
 from eventyay.base.signals import (
     order_modified,
@@ -2651,7 +2651,7 @@ class OverView(EventPermissionRequiredMixin, TemplateView):
         ctx = super().get_context_data()
 
         if self.filter_form.is_valid():
-            ctx['products_by_category'], ctx['total'] = order_overview(
+            products_by_category, ctx['total'] = order_overview(
                 self.request.event,
                 subevent=self.filter_form.cleaned_data.get('subevent'),
                 date_filter=self.filter_form.cleaned_data['date_axis'],
@@ -2661,7 +2661,8 @@ class OverView(EventPermissionRequiredMixin, TemplateView):
                 browser_timezone=self.filter_form.cleaned_data.get('browser_timezone'),
             )
         else:
-            ctx['products_by_category'], ctx['total'] = order_overview(self.request.event, fees=True)
+            products_by_category, ctx['total'] = order_overview(self.request.event, fees=True)
+        ctx['items_by_classification'] = group_overview_by_classification(products_by_category)
         ctx['subevent_warning'] = (
             self.request.event.has_subevents
             and self.filter_form.is_valid()

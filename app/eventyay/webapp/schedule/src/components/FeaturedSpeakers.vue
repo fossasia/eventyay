@@ -90,12 +90,12 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				featured_speakers: this.showAll ? (m.speakers || 'Speakers') : (m.featured_speakers || 'Featured Speakers'),
-				speaker_fallback: m.speaker_fallback || 'Speaker',
-				sessions: m.sessions || 'Sessions',
-				view_profile: m.view_profile || 'View speaker profile',
-				more_speakers: m.more_speakers || 'More speakers',
-				schedule_pending: m.schedule_pending_secondary || 'Coming soon',
+				featured_speakers: this.showAll ? (m.speakers || this.$t('Speakers')) : (m.featured_speakers || this.$t('Featured Speakers')),
+				speaker_fallback: m.speaker_fallback || this.$t('Speaker'),
+				sessions: m.sessions || this.$t('Sessions'),
+				view_profile: m.view_profile || this.$t('View speaker profile'),
+				more_speakers: m.more_speakers || this.$t('More speakers'),
+				schedule_pending: m.schedule_pending_secondary || this.$t('Coming soon'),
 			}
 		},
 		moreSpeakersUrl() {

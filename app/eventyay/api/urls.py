@@ -15,6 +15,7 @@ from .views import (
     device,
     event,
     exporters,
+    feedback,
     mail,
     oauth,
     order,
@@ -100,11 +101,8 @@ event_router.register('rooms', room.RoomViewSet, basename='room')
 event_router.register('talkquestions', question.QuestionViewSet, basename='talkquestion')
 event_router.register('answers', question.AnswerViewSet, basename='answer')
 event_router.register('question-options', question.AnswerOptionViewSet, basename='question_option')
-event_router.register(
-    'speaker-information',
-    speaker_information.SpeakerInformationViewSet,
-    basename='speaker_information',
-)
+event_router.register('speaker-information', speaker_information.SpeakerInformationViewSet, basename='speaker_information')
+event_router.register('feedback', feedback.FeedbackViewSet, basename='feedback')
 
 checkinlist_router = routers.DefaultRouter()
 checkinlist_router.register(r'positions', checkin.CheckinListPositionViewSet, basename='checkinlistpos')
