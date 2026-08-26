@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0061_price_max_digits_currency_support'),
+        ('base', '0062_attendee_feedback_redesign'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
