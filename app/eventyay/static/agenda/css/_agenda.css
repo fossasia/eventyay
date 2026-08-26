@@ -675,3 +675,217 @@ dialog.agenda-wip-preview-leave-dialog::backdrop {
 .rating-stars label:hover ~ label {
   color: #ffc107;
 }
+
+/* Youtube-style feedback form */
+.feedback-section {
+  margin-inline: 16px;
+}
+
+.youtube-comment-form textarea {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+  box-shadow: none;
+  resize: none;
+  overflow: hidden;
+  min-height: 38px;
+  background: transparent;
+  padding-left: 0;
+  width: 100%;
+}
+.youtube-comment-form textarea:focus {
+  border-bottom: 2px solid #000;
+  outline: none;
+}
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #6c757d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+.comment-item {
+  margin-bottom: 1rem;
+}
+.comment-actions .btn {
+  border: none;
+  padding: 0.25rem 0.5rem;
+  color: #606060;
+  background: transparent;
+  font-size: 0.9rem;
+}
+.comment-actions .btn:hover {
+  background-color: #f2f2f2;
+  border-radius: 16px;
+}
+.comment-actions .reply-btn {
+  font-weight: 500;
+}
+.rating-stars-inline .btn {
+  border: none;
+  padding: 0 5px;
+  font-size: 1.2rem;
+  background: transparent;
+  color: #ccc;
+  box-shadow: none;
+}
+.rating-stars-inline .btn.active, .rating-stars-inline .btn:hover {
+  color: #ffc107;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Modifier classes to remove inline styles */
+.reply-avatar {
+  width: 24px ;
+  height: 24px ;
+  font-size: 0.75rem ;
+}
+.comment-visibility-label {
+  font-size: 0.9rem;
+}
+.comment-author-name {
+  font-size: 0.95rem;
+}
+.comment-text-content {
+  font-size: 0.95rem;
+}
+.comment-text-content p {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+.reply-item .comment-author-name {
+  font-size: 0.9rem;
+}
+.reply-item .comment-time {
+  font-size: 0.8rem;
+}
+
+.youtube-rating-stars {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+.youtube-rating-stars input[type="radio"] {
+  display: none;
+}
+.youtube-rating-stars label {
+  font-size: 1.25rem;
+  color: #ccc;
+  cursor: pointer;
+  margin: 0;
+  transition: color 0.2s;
+}
+.youtube-rating-stars label.active,
+.youtube-rating-stars label:hover {
+  color: #ffc107;
+}
+
+.dropdown-item-clean {
+  background: transparent;
+  border: none;
+  color: #212529;
+  box-shadow: none;
+  outline: none;
+}
+
+.comment-dropdown-toggle {
+  box-shadow: none;
+}
+
+.comment-text-collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.read-more-btn {
+  background: none;
+  border: none;
+  color: #606060;
+  font-weight: 500;
+  padding: 0;
+  margin-top: 2px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.read-more-btn:hover {
+  text-decoration: underline;
+}
+
+.replies-toggle-btn {
+  background: none;
+  border: none;
+  color: #065fd4;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0;
+  margin-top: 0;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+  position: relative;
+}
+.replies-toggle-btn::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: -32px;
+  width: 24px;
+  height: 24px;
+  border-left: 2px solid #adb5bd;
+  border-bottom: 2px solid #adb5bd;
+  border-bottom-left-radius: 12px;
+}
+.replies-toggle-btn:hover {
+  background: #e5f1fd;
+}
+.replies-toggle-btn[data-expanded="true"]::before {
+  border-bottom: none;
+  border-radius: 0;
+  height: calc(100% + 12px);
+}
+
+.replies-container {
+  position: relative;
+}
+
+.reply-item {
+  position: relative;
+}
+.reply-item::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: -32px;
+  width: 24px;
+  height: 24px;
+  border-left: 2px solid #adb5bd;
+  border-bottom: 2px solid #adb5bd;
+  border-bottom-left-radius: 12px;
+}
+.reply-item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: -8px;
+  left: -32px;
+  border-left: 2px solid #adb5bd;
+}
+

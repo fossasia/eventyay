@@ -1,24 +1,24 @@
 <template lang="pug">
 .c-admin-room
 	.error(v-if="error")
-		span We could not fetch the current configuration.
+		span {{ $t('We could not fetch the current configuration.') }}
 		span(v-if="errorCode")  ({{ errorCode }})
-		span(v-if="errorCode === 'protocol.denied'")  You likely lack admin permissions.
+		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	template(v-else-if="config")
 		template(v-if="!inferredType")
 			.ui-page-header
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
 				h1(v-html="$emojify(config.name)")
 			.mystery-room
-				p This room does not have a video option yet.
-				VideoProviderDropdown(label="Add Video", variant="action", @select="addVideoProvider")
+				p {{ $t('This room does not have a video option yet.') }}
+				VideoProviderDropdown(:label="$t('Add Video')", variant="action", @select="addVideoProvider")
 		template(v-else)
 			.ui-page-header
 				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
 				h1 {{ roomTypeLabel }} :
 					span.room-name(v-html="$emojify(config.name)")
 				.actions
-					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") Edit
+					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") {{ $t('Edit') }}
 			edit-form(:config="config")
 	bunt-progress-circular(v-else, size="huge")
 	transition(name="prompt")

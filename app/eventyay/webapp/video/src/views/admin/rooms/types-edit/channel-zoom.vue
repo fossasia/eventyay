@@ -1,8 +1,8 @@
 <template lang="pug">
 .c-channel-zoom-settings
-	bunt-input(v-model="module.config.meeting_number", label="Meeting ID", name="meeting_number")
-	bunt-input(v-model="module.config.password", label="Password", name="password")
-	bunt-checkbox(v-model="module.config.disable_chat", label="Disable chat", name="zoom_disable_chat")
+	bunt-input(v-model="module.config.meeting_number", :label="$t('Meeting ID')", name="meeting_number")
+	bunt-input(v-model="module.config.password", :label="$t('Password')", name="password")
+	bunt-checkbox(v-model="module.config.disable_chat", :label="$t('Disable chat')", name="zoom_disable_chat")
 	sidebar-addons(v-bind="$props")
 </template>
 <script>

@@ -28,7 +28,7 @@ from .event import (
     SubEventMetaValue,
     generate_invite_token,
 )
-from .feedback import Feedback
+from .feedback import Feedback, FeedbackReaction
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
 from .global_plugin_config import GlobalPluginConfig
 from .invoices import Invoice, InvoiceLine, invoice_filename
@@ -145,6 +145,7 @@ __all__ = [
     'EventPlannedUsage',
     'EventView',
     'Feedback',
+    'FeedbackReaction',
     'FileCleanupMixin',
     'Gate',
     'GenerateCode',

@@ -84,6 +84,17 @@ scroll down, there is also a "Comments" section to discuss any questions with fe
 .. image:: ../../../../img/weblate6.png
    :class: screenshot
 
+Video UI strings live in ``video.po``, public schedule widget strings in
+``schedule.po``, and organiser schedule-editor strings in
+``schedule-editor.po`` (``app/eventyay/locale/*/LC_MESSAGES/``). All three
+Vue apps share ``app/eventyay/webapp/i18n/``: the same catalog loader,
+English fallbacks, locale aliases, and Vue ``$t`` helper. After adding
+``$t()`` keys, run ``make localegen`` from ``app/`` (or
+``npm run i18n:extract`` in the relevant app). Extract updates English
+plus any locale that already has that domain file; other languages belong
+in the Weblate/catalog PR. On Weblate, use monolingual English sources
+``en/LC_MESSAGES/video.po``, ``schedule.po``, and ``schedule-editor.po``.
+
 .. _translate.eventyay.com: https://translate.eventyay.com
 .. _eventyay project page: https://translate.eventyay.com/projects/eventyay/
 .. _GitHub repository: https://github.com/fossasia/eventyay

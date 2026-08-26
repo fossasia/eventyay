@@ -31,7 +31,7 @@ Architecture
 
 **Styling**: Stylus preprocessor
 
-**i18n**: Custom i18next integration
+**i18n**: shared ``webapp/i18n`` gettext runtime with ``schedule-editor.po`` and English fallbacks
 
 Key Features
 ~~~~~~~~~~~~
@@ -152,20 +152,21 @@ TypeScript schemas and types for:
 Internationalization
 ~~~~~~~~~~~~~~~~~~~~
 
-**Implementation**: i18next
+**Implementation**: shared ``app/eventyay/webapp/i18n`` runtime loading gettext
+``schedule-editor.po`` catalogs, with the same English-fallback merge as Video
+and the public schedule widget.
 
-**Locales** (``locales/``):
-- English (en) - Complete
+**Catalogs**: ``app/eventyay/locale/*/LC_MESSAGES/schedule-editor.po``
 
-**Parser Configuration**: ``i18next-parser.config.cjs``
+**Extract**: ``npm run i18n:extract`` in ``app/eventyay/webapp/schedule-editor``
+(or ``make localegen`` from ``app/``).
 
 **Usage**:
 
-.. code-block:: typescript
+.. code-block:: vue
 
-         import { t } from './lib/i18n';
-      // In components
-      const title = t('schedule.edit_session');
+   {{ $t('Save') }}
+   :title="$t('Edit')"
 
 Styling
 ~~~~~~~

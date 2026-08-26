@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.vue",
     "lint:fix": "eslint . --ext .js,.vue --fix",
-    "i18n:extract": "npx i18next-parser 'src/**/*.vue' -c i18next-parser.config.cjs",
+    "i18n:extract": "node ../i18n/extract.mjs extract --domain video",
+    "test:i18n": "node --test \"../i18n/*.test.js\"",
     "analyze": "ANALYZE=true vite build"
   },
   "dependencies": {
@@ -44,7 +45,6 @@
     "mux.js": "^6.3.0",
     "preact": "^10.29.8",
     "quill": "^2.0.3",
-    "random-js": "^2.1.0",
     "register-service-worker": "^1.7.2",
     "roboto-fontface": "^0.10.0",
     "sanitize-html": "^2.17.7",
@@ -59,8 +59,6 @@
     "webrtc-adapter": "^9.0.6"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^29.0.3",
-    "@rollup/plugin-inject": "^5.0.5",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue-macros/reactivity-transform": "^3.1.2",
     "@vue/language-plugin-pug": "^3.3.11",
@@ -68,6 +66,7 @@
     "eslint-plugin-vue": "^10.10.0",
     "eslint-plugin-vue-pug": "^1.0.0-alpha.6",
     "globals": "^17.11.0",
+    "i18next-conv": "^17.0.0",
     "i18next-parser": "^9.4.0",
     "pug": "^3.0.4",
     "rollup-plugin-visualizer": "^7.1.1",

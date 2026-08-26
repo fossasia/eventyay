@@ -34,7 +34,7 @@
 									input.filter-checkbox(type="checkbox", :checked="item.selected", @change="toggleFilter(item)")
 									span.track-color-dot(v-if="item.color", :style="{backgroundColor: item.color}")
 									span.filter-dropdown-label(:style="item.color ? {'--track-color': item.color} : {}") {{ item.label }}
-							.filter-dropdown-empty(v-else) No {{ group.title.toLowerCase() }} available
+							.filter-dropdown-empty(v-else) {{ emptyFilterText(group) }}
 				.recording-filter-area(v-if="showRecordingFilter", ref="recordingDropdown")
 					button.toolbar-btn.icon-only.recording-btn(
 						:class="{active: recordingModel !== 'all'}",
@@ -79,7 +79,7 @@
 						label.filter-dropdown-item(v-for="item in languageGroup.data", :key="item.value")
 							input.filter-checkbox(type="checkbox", :checked="item.selected", @change="toggleFilter(item)")
 							span.filter-dropdown-label {{ item.label }}
-					.filter-dropdown-empty(v-else) No {{ languageGroup.title.toLowerCase() }} available
+					.filter-dropdown-empty(v-else) {{ emptyFilterText(languageGroup) }}
 			button.toolbar-btn.icon-only.fav-toggle(
 				v-if="favsCount",
 				:disabled="!favsCount",
@@ -227,7 +227,7 @@
 								span {{ option.label }}
 							.tz-divider
 							.tz-section-label {{ t.other_timezones }}
-							input.tz-search(v-model="tzSearch", placeholder="Search timezones...", @click.stop)
+							input.tz-search(v-model="tzSearch", :placeholder="$t('Search timezones…')", @click.stop)
 							.tz-scroll
 								.tz-option(
 									v-for="option in filteredOtherTimezones",
@@ -421,57 +421,57 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				no_matching_options: m.no_matching_options || 'Sorry, no matching options.',
-				other_timezones: m.other_timezones || 'Other Timezones',
-				view_changelog: m.view_changelog || 'View Changelog',
-				go_to_current_version: m.go_to_current_version || 'Go to current version',
-				reset_all_filters: m.reset_all_filters || 'Reset all filters',
-				sort_by: m.sort_by || 'Sort',
-				sort_by_room: m.sort_by_room || 'By room',
-				sort_by_title: m.sort_by_title || 'A–Z',
-				sort_by_title_desc: m.sort_by_title_desc || 'Z–A',
-				sort_by_popularity: m.sort_by_popularity || 'Most popular',
-					starred: m.starred || 'Starred',
-				show_talk_starrers: m.show_talk_starrers || 'Share starred sessions',
-				show_talk_starrers_tooltip: m.show_talk_starrers_tooltip || 'Make your starred sessions visible to others. You can open someone else\'s starred list only if they have enabled sharing.',
-				no_schedule_available: m.no_schedule_available || 'No schedule has been published yet. Please check back later.',
-				print: m.print || 'Print',
-				fullscreen: m.fullscreen || 'Fullscreen',
-				exit_fullscreen: m.exit_fullscreen || 'Exit Fullscreen',
-				latest: m.latest || 'Latest',
-				version_warning_editable: m.version_warning_editable || 'You are currently viewing the editable schedule version, which is unreleased and may change at any time.',
-				version_warning_wip: m.version_warning_wip || 'You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.',
-				version_warning_old: m.version_warning_old || 'You are currently viewing an older schedule version.',
-				add_to_calendar: m.add_to_calendar || 'Add to calendar',
-				public_schedule_only: m.public_schedule_only || 'Only available on the public schedule once a schedule is released and public.',
-				export: m.export || 'Export',
-				current: m.current || 'current',
-				list_view: m.list_view || 'List View',
-				calendar_view: m.calendar_view || 'Calendar View',
-				search: m.search || 'Search',
-				clear_search: m.clear_search || 'Clear search',
-				search_placeholder: m.search_placeholder || 'Search sessions…',
-				previous_days: m.previous_days || 'Previous days',
-				next_days: m.next_days || 'Next days',
-				filter_by_recording: m.filter_by_recording || 'Filter by recording',
-				all_sessions: m.all_sessions || 'All sessions',
-				recorded_only: m.recorded_only || 'Recorded only',
-				not_recorded: m.not_recorded || 'Not recorded',
-				sort_include_room: m.sort_include_room || 'Include room',
-				sort_include_datetime: m.sort_include_datetime || 'Include datetime',
-				sort_include_popularity: m.sort_include_popularity || 'Most popular first',
-				filters: m.filters || 'Filters',
-				more: m.more || 'More',
-				density_compact_view: m.density_compact_view || 'compact view',
-				density_default_view: m.density_default_view || 'default view',
-				density_comfortable_view: m.density_comfortable_view || 'comfortable view',
-				minutes: m.minutes || 'min',
-				list: (m.list_view || 'List').replace(' View', ''),
-				cal: (m.calendar_view || 'Cal').replace('endar View', '').replace(' View', ''),
+				no_matching_options: m.no_matching_options || this.$t('Sorry, no matching options.'),
+				other_timezones: m.other_timezones || this.$t('Other Timezones'),
+				view_changelog: m.view_changelog || this.$t('View Changelog'),
+				go_to_current_version: m.go_to_current_version || this.$t('Go to current version'),
+				reset_all_filters: m.reset_all_filters || this.$t('Reset all filters'),
+				sort_by: m.sort_by || this.$t('Sort'),
+				sort_by_room: m.sort_by_room || this.$t('By room'),
+				sort_by_title: m.sort_by_title || this.$t('A–Z'),
+				sort_by_title_desc: m.sort_by_title_desc || this.$t('Z–A'),
+				sort_by_popularity: m.sort_by_popularity || this.$t('Most popular'),
+					starred: m.starred || this.$t('Starred'),
+				show_talk_starrers: m.show_talk_starrers || this.$t('Share starred sessions'),
+				show_talk_starrers_tooltip: m.show_talk_starrers_tooltip || this.$t('Make your starred sessions visible to others. You can open someone else\'s starred list only if they have enabled sharing.'),
+				no_schedule_available: m.no_schedule_available || this.$t('No schedule has been published yet. Please check back later.'),
+				print: m.print || this.$t('Print'),
+				fullscreen: m.fullscreen || this.$t('Fullscreen'),
+				exit_fullscreen: m.exit_fullscreen || this.$t('Exit Fullscreen'),
+				latest: m.latest || this.$t('Latest'),
+				version_warning_editable: m.version_warning_editable || this.$t('You are currently viewing the editable schedule version, which is unreleased and may change at any time.'),
+				version_warning_wip: m.version_warning_wip || this.$t('You are currently viewing the unreleased schedule preview. It may change at any time and is not visible to the public.'),
+				version_warning_old: m.version_warning_old || this.$t('You are currently viewing an older schedule version.'),
+				add_to_calendar: m.add_to_calendar || this.$t('Add to calendar'),
+				public_schedule_only: m.public_schedule_only || this.$t('Only available on the public schedule once a schedule is released and public.'),
+				export: m.export || this.$t('Export'),
+				current: m.current || this.$t('current'),
+				list_view: m.list_view || this.$t('List View'),
+				calendar_view: m.calendar_view || this.$t('Calendar View'),
+				search: m.search || this.$t('Search'),
+				clear_search: m.clear_search || this.$t('Clear search'),
+				search_placeholder: m.search_placeholder || this.$t('Search sessions…'),
+				previous_days: m.previous_days || this.$t('Previous days'),
+				next_days: m.next_days || this.$t('Next days'),
+				filter_by_recording: m.filter_by_recording || this.$t('Filter by recording'),
+				all_sessions: m.all_sessions || this.$t('All sessions'),
+				recorded_only: m.recorded_only || this.$t('Recorded only'),
+				not_recorded: m.not_recorded || this.$t('Not recorded'),
+				sort_include_room: m.sort_include_room || this.$t('Include room'),
+				sort_include_datetime: m.sort_include_datetime || this.$t('Include datetime'),
+				sort_include_popularity: m.sort_include_popularity || this.$t('Most popular first'),
+				filters: m.filters || this.$t('Filters'),
+				more: m.more || this.$t('More'),
+				density_compact_view: m.density_compact_view || this.$t('compact view'),
+				density_default_view: m.density_default_view || this.$t('default view'),
+				density_comfortable_view: m.density_comfortable_view || this.$t('comfortable view'),
+				minutes: m.minutes || this.$t('min'),
+				list: this.$t('List'),
+				cal: this.$t('Calendar'),
 			}
 		},
 		timeDensityOptions() {
-			const minText = this.t.minutes || 'min'
+			const minText = this.t.minutes || this.$t('min')
 			return [
 				{ value: 5, label: `5 ${minText}` },
 				{ value: 15, label: `15 ${minText}` },
@@ -481,7 +481,7 @@ export default {
 		},
 		currentTimeDensityLabel() {
 			const current = this.timeDensityOptions.find(o => o.value === this.timeDensityMinutes)
-			return current ? current.label : '30 min'
+			return current ? current.label : `30 ${this.t.minutes}`
 		},
 		sortModel: {
 			get() { return this.sortBy },
@@ -692,6 +692,9 @@ export default {
 		this._versionBannerResizeObserver?.disconnect?.()
 	},
 	methods: {
+		emptyFilterText(group) {
+			return this.$t('No {{name}} available', {name: (group?.title || '').toLowerCase()})
+		},
 		toggleShareStarredSessions() {
 			this.$emit('update:shareStarredSessions', !this.shareStarredSessions)
 		},

@@ -328,3 +328,77 @@ def order_overview(
         total['num'][l] = tuplesum(c.num[l] for c, i in products_by_category)
 
     return products_by_category, total
+
+
+def group_overview_by_classification(
+    products_by_category: List[Tuple[Any, List[Any]]],
+) -> List[Tuple[Any, List[Any]]]:
+    """
+    Group order overview rows for the dashboard breakdown.
+
+    If the organizer has created custom product categories, keep those category
+    groups (and leave Fees at the end). Otherwise fall back to product type:
+    Admission → Tickets, Non-Admission → Products, unknown → Uncategorized.
+    """
+    fees_label = str(_('Fees'))
+    uncategorized_label = str(_('Uncategorized'))
+    tickets_label = _('Tickets')
+    products_label = _('Products')
+
+    fees_group = None
+    non_fee_groups = []
+    for category, items in products_by_category:
+        if str(category.name) == fees_label:
+            fees_group = (category, items)
+            continue
+        non_fee_groups.append((category, items))
+
+    def _is_custom_category(category) -> bool:
+        # Real organizer categories are persisted ProductCategory rows with an id.
+        # The synthetic "Uncategorized" bucket and Fees dummy object have no id.
+        if getattr(category, 'id', None) is None:
+            return False
+        return str(category.name) != uncategorized_label
+
+    has_custom_categories = any(_is_custom_category(category) for category, _items in non_fee_groups)
+    if has_custom_categories:
+        result = list(non_fee_groups)
+        if fees_group:
+            result.append(fees_group)
+        return result
+
+    classification_groups = {
+        'tickets': DummyObject(),
+        'products': DummyObject(),
+        'uncategorized': DummyObject(),
+    }
+    classification_groups['tickets'].name = tickets_label
+    classification_groups['products'].name = products_label
+    classification_groups['uncategorized'].name = _('Uncategorized')
+
+    classified_items = {key: [] for key in classification_groups}
+    for _category, items in non_fee_groups:
+        for product in items:
+            if getattr(product, 'admission', None) is True:
+                classified_items['tickets'].append(product)
+            elif getattr(product, 'admission', None) is False:
+                classified_items['products'].append(product)
+            else:
+                classified_items['uncategorized'].append(product)
+
+    states = ('unapproved', 'canceled', 'paid', 'pending', 'expired', 'total')
+    result = []
+    for key in ('tickets', 'products', 'uncategorized'):
+        items = classified_items[key]
+        if not items:
+            continue
+        group = classification_groups[key]
+        group.num = {}
+        for state in states:
+            group.num[state] = tuplesum(product.num[state] for product in items)
+        result.append((group, items))
+
+    if fees_group:
+        result.append(fees_group)
+
+    return result

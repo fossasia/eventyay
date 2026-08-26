@@ -2,25 +2,25 @@
 .c-admin-rooms
 	.header
 		.actions
-			h2 Rooms
+			h2 {{ $t('Rooms') }}
 			VideoProviderDropdown(
-				label="Create Room",
+				:label="$t('Create Room')",
 				:show-empty-message="true",
 				@select="createRoomWithProvider"
 			)
 		.right-actions
 			.export-actions(v-if="canExportBroadcastConfiguration")
-				a.export-button(:href="exportUrl('xlsx')") Export XLSX
-				a.export-button.secondary(:href="exportUrl('csv-excel')") CSV
-			bunt-input.search(name="search", placeholder="Search rooms", icon="search", v-model="search")
+				a.export-button(:href="exportUrl('xlsx')") {{ $t('Export XLSX') }}
+				a.export-button.secondary(:href="exportUrl('csv-excel')") {{ $t('CSV') }}
+			bunt-input.search(name="search", :placeholder="$t('Search rooms')", icon="search", v-model="search")
 	.error(v-if="error")
-		span Failed to load rooms.
+		span {{ $t('Failed to load rooms.') }}
 		span(v-if="errorCode")  ({{ errorCode }})
-		span(v-if="errorCode === 'protocol.denied'")  You likely lack admin permissions.
+		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	.rooms-list(v-else)
 		.header
 			.drag
-			.name Name
+			.name {{ $t('Name') }}
 		SlickList.tbody(v-if="rooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", helperClass="sorting-helper", v-scrollbar.y="", @update:list="onListSort")
 			RoomListItem(
 				v-for="(room, index) of rooms",

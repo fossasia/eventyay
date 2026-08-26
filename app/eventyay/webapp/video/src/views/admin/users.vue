@@ -1,20 +1,20 @@
 <template lang="pug">
 .c-admin-users
 	.header
-		h2 Users
-		bunt-input.search(name="search", placeholder="Search users", icon="search", v-model="search")
+		h2 {{ $t('Users') }}
+		bunt-input.search(name="search", :placeholder="$t('Search users')", icon="search", v-model="search")
 	.users-list
 		.header
 			.avatar
-			.id ID
-			.tokenid External ID
-			.name Name
-			.email Email
+			.id {{ $t('ID') }}
+			.tokenid {{ $t('External ID') }}
+			.name {{ $t('Name') }}
+			.email {{ $t('Email') }}
 			.ticket-info
-				span.ticket-info-head-order Order/
-				span.ticket-info-head-ticket Ticket code
-			.wikimedia Wikimedia
-			.state State
+				span.ticket-info-head-order {{ $t('Order/') }}
+				span.ticket-info-head-ticket {{ $t('Ticket code') }}
+			.wikimedia {{ $t('Wikimedia') }}
+			.state {{ $t('State') }}
 		RecycleScroller.tbody.bunt-scrollbar(v-if="filteredUsers", :items="filteredUsers", :item-size="56", v-slot="{item: user}", v-scrollbar.y="")
 			.user.table-row(
 				:class="{error: user.error, updating: user.updating}",
