@@ -3,20 +3,20 @@
 	.fatal-connection-error(v-if="fatalConnectionError")
 		template(v-if="fatalConnectionError.code === 'world.unknown_world'")
 			.mdi.mdi-help-circle
-			h1 {{ $t('App:fatal-connection-error:world.unknown_world:headline') }}
+			h1 {{ $t('Event not found') }}
 		template(v-else-if="fatalConnectionError.code === 'connection.replaced'")
 			.mdi.mdi-alert-octagon
-			h1 {{ $t('App:fatal-connection-error:connection.replaced:headline') }}
-			bunt-button(@click="reload") {{ $t('App:fatal-connection-error:connection.replaced:action') }}
+			h1 {{ $t('You opened this event on a new device or tab.') }}
+			bunt-button(@click="reload") {{ $t('Continue (disconnect other device)') }}
 		template(v-else-if="['auth.denied', 'auth.invalid_token', 'auth.missing_token', 'auth.expired_token'].includes(fatalConnectionError.code)")
 			.mdi.mdi-alert-octagon
-			h1 {{ $t('App:fatal-connection-error:' + fatalConnectionError.code + ':headline') }}
+			h1 {{ fatalAuthHeadline }}
 				br
-				small {{ $t('App:fatal-connection-error:' + fatalConnectionError.code + ':text') }}
-			bunt-button(v-if="fatalConnectionError.code != 'auth.missing_token'", @click="clearTokenAndReload") {{ $t('App:fatal-connection-error:' + fatalConnectionError.code + ':action') }}
+				small {{ fatalAuthText }}
+			bunt-button(v-if="fatalConnectionError.code != 'auth.missing_token'", @click="clearTokenAndReload") {{ fatalAuthAction }}
 		template(v-else)
-			h1 {{ $t('App:fatal-connection-error:else:headline') }}
-		p.code error code: {{ fatalConnectionError.code }}
+			h1 {{ $t('Connection refused') }}
+		p.code {{ $t('error code:') }} {{ fatalConnectionError.code }}
 	template(v-else-if="world")
 		// AppBar stays fixed; only main content shifts
 		app-bar(:show-actions="true", :show-user="true", @toggle-sidebar="toggleSidebar")
@@ -31,15 +31,15 @@
 			media-source(v-if="call", ref="channelCallSource", :call="call", :background="call.channel !== $route.params.channelId", :key="call.id", @close="$store.dispatch('chat/leaveCall')")
 			#media-source-iframes
 			notifications(:hasBackgroundMedia="isStreamInBackground")
-			.disconnected-warning(v-if="!connected") {{ $t('App:disconnected-warning:text') }}
+			.disconnected-warning(v-if="!connected") {{ $t('Connection lost! Trying to reconnect…') }}
 			transition(name="prompt")
 				greeting-prompt(v-if="!user.profile.greeted")
 			.native-permission-blocker(v-if="askingPermission")
 		rooms-sidebar(:show="showSidebar", @close="showSidebar = false")
 	.connecting(v-else-if="!currentFatalError")
 		bunt-progress-circular(size="huge")
-		.details(v-if="socketCloseCode == 1006") {{ $t('App:error-code:1006') }}
-		.details(v-if="socketCloseCode") {{ $t('App:error-code:text') }}: {{ socketCloseCode }}
+		.details(v-if="socketCloseCode == 1006") {{ $t("Connection failed. We'll retry, but if this error occurs repeatedly, the connection might be blocked by a firewall in your network or by a VPN on your device.") }}
+		.details(v-if="socketCloseCode") {{ $t('Error code') }}: {{ socketCloseCode }}
 	.fatal-error(v-if="currentFatalError") {{ currentFatalError.message || currentFatalError.code }}
 </template>
 <script>
@@ -148,6 +148,25 @@ export default {
 				if (backgroundFatal) return backgroundFatal
 			}
 			return this.fatalError?.roomId ? (this.room && this.fatalError.roomId === this.room.id ? this.fatalError : null) : this.fatalError
+		},
+		fatalAuthHeadline() {
+			return {
+				'auth.denied': this.$t('Access denied'),
+				'auth.invalid_token': this.$t('Your login is invalid'),
+				'auth.missing_token': this.$t('You are not logged in'),
+				'auth.expired_token': this.$t('Your login has expired'),
+			}[this.fatalConnectionError?.code] || this.$t('Authentication failed')
+		},
+		fatalAuthText() {
+			return {
+				'auth.denied': this.$t('You do not have permission to join this event.'),
+				'auth.invalid_token': this.$t('Please log in again to continue.'),
+				'auth.missing_token': this.$t('Log in to join this event.'),
+				'auth.expired_token': this.$t('Please log in again to continue.'),
+			}[this.fatalConnectionError?.code] || ''
+		},
+		fatalAuthAction() {
+			return this.$t('Try again')
 		},
 		room() {
 			const routeName = this.$route?.name

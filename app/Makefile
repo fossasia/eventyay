@@ -1,6 +1,8 @@
 all: localecompile staticfiles
 production: localecompile staticfiles compress
-LNGS := $(foreach d,$(shell find eventyay/locale -mindepth 1 -maxdepth 1 -type d),-l $(notdir $(d)))
+# English is the gettext source language (*.pot). Passing -l en recreates
+# locale/en/LC_MESSAGES/*.po, which Weblate reports as a duplicated source translation.
+LNGS := $(foreach d,$(shell find eventyay/locale -mindepth 1 -maxdepth 1 -type d ! -name en),-l $(notdir $(d)))
 
 localecompile:
 	./manage.py compilemessages --ignore ".venv"

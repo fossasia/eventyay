@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-standalone-viewers(v-if="roomViewers")
-	h1 {{ $t('standalone/Viewers:header', {count: roomViewers.length}) }}
+	h1 {{ roomViewers.length === 1 ? $t('One person is joining you online') : $t('{{ count }} people are joining you online', {count: roomViewers.length}) }}
 	.viewers(:class="{many: roomViewers.length > 92}")
 		.viewer(v-for="viewer in roomViewers")
 			avatar(:user="viewer", :size="64")

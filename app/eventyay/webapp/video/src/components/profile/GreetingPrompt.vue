@@ -3,8 +3,8 @@ prompt.c-profile-greeting-prompt(:allowCancel="false")
 	.content
 		connect-gravatar(v-if="showConnectGravatar", @change="setGravatar", @close="showConnectGravatar = false")
 		.step-connect-social(v-else-if="activeStep === 'connectSocial'")
-			h1 {{ $t('profile/GreetingPrompt:step-social:heading') }}
-			p {{ $t('profile/GreetingPrompt:step-social:text') }}
+			h1 {{ $t('Hi there!') }}
+			p {{ $t('Before you join others in this event, please set up your profile. We can get your profile information from one of your social media accounts, or you can fill in your profile by hand.') }}
 			bunt-button.social-connection.social-twitter(v-if="world.social_logins.includes('twitter')", @click="connectSocial('twitter')")
 				.mdi.mdi-twitter
 				.label {{ $t('Twitter') }}
@@ -16,31 +16,31 @@ prompt.c-profile-greeting-prompt(:allowCancel="false")
 					path(d="M10.8 2.699v9.45a2.699 2.699 0 005.398 0V5.862a8.101 8.101 0 11-8.423 1.913 2.702 2.702 0 00-3.821-3.821A13.5 13.5 0 1013.499 0 2.699 2.699 0 0010.8 2.699z")
 				.label {{ $t('Gravatar') }}
 			p.joiner {{ $t('or') }}
-			bunt-button.manual(@click="activeStep = 'displayName'") {{ $t('profile/GreetingPrompt:step-social:button-fill-manually:label') }}
+			bunt-button.manual(@click="activeStep = 'displayName'") {{ $t('Fill manually') }}
 		.step-display-name(v-else-if="activeStep === 'displayName'")
 			template(v-if="steps.includes('connectSocial')")
-				h1 {{ $t('profile/GreetingPrompt:step-display-name:heading') }}
-				p {{ $t('profile/GreetingPrompt:step-display-name:text') }}
+				h1 {{ $t('What are you called?') }}
+				p {{ $t('We will show your name to other attendees if you interact with them, e.g. in a chat. You do not need to use your real name.') }}
 			template(v-else)
-				h1 {{ $t('profile/GreetingPrompt:step-display-name~as-first-step:heading') }}
-				p {{ $t('profile/GreetingPrompt:step-display-name~as-first-step:text') }}
-			bunt-input.display-name(name="displayName", :label="`${$t('profile/GreetingPrompt:displayname:label')} *`", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
+				h1 {{ $t('Hi there!') }}
+				p {{ $t('Before you join others in this event, please set up your profile. We will show your name to other attendees if you interact with them, e.g. in a chat. You do not need to use your real name. After this, you can optionally choose a picture.') }}
+			bunt-input.display-name(name="displayName", :label="`${$t('Display name')} *`", v-model.trim="profile.display_name", :validation="v$.profile.display_name")
 		.step-avatar(v-else-if="activeStep === 'avatar'")
-			h1 {{ $t('profile/GreetingPrompt:step-avatar:heading') }}
-			p {{ $t('profile/GreetingPrompt:step-avatar:text') }}
+			h1 {{ $t('Choose your look') }}
+			p {{ $t('Pick an identicon or upload a picture.') }}
 			change-avatar(ref="step", v-model="profile.avatar", :profile="profile", @blockSave="blockSave = $event")
 		.step-display-language(v-else-if="activeStep === 'displayLanguage'")
-			h2 {{ $t('preferences/index:interface-language:header') }}
-			p {{ $t('preferences/index:interface-language:description') }}
+			h2 {{ $t('Interface Language') }}
+			p {{ $t('Please select your language. You can change it later in your profile.') }}
 			bunt-select#select-interface-language(name="interface-language", v-model="interfaceLanguage", :options="languages", option-value="code", option-label="nativeLabel")
 		.step-additional-fields(v-else-if="activeStep === 'additionalFields'")
-			h1 {{ $t('profile/GreetingPrompt:step-fields:heading') }}
-			p {{ $t('profile/GreetingPrompt:step-fields:text') }}
+			h1 {{ $t('Additional information') }}
+			p {{ $t("And lastly, why not add some optional information to your profile? Don't worry, you can always edit anything in your profile later.") }}
 			change-additional-fields(v-model="profile.fields")
 		.actions(v-if="activeStep !== 'connectSocial' && !showConnectGravatar")
-			bunt-button#btn-back(v-if="previousStep", @click="activeStep = previousStep") {{ $t('profile/GreetingPrompt:button-back:label') }}
-			bunt-button#btn-continue(v-if="nextStep", :class="{invalid: v$.$invalid && v$.$dirty}", :disabled="blockSave || v$.$invalid && v$.$dirty", :loading="processingStep", :key="activeStep", @click="toNextStep") {{ $t('profile/GreetingPrompt:button-continue:label') }}
-			bunt-button#btn-finish(v-else, :class="{invalid: v$.$invalid && v$.$dirty}", :loading="saving", :disabled="blockSave || v$.$invalid && v$.$dirty", @click="update") {{ $t('profile/GreetingPrompt:button-finish:label') }}
+			bunt-button#btn-back(v-if="previousStep", @click="activeStep = previousStep") {{ $t('back') }}
+			bunt-button#btn-continue(v-if="nextStep", :class="{invalid: v$.$invalid && v$.$dirty}", :disabled="blockSave || v$.$invalid && v$.$dirty", :loading="processingStep", :key="activeStep", @click="toNextStep") {{ $t('continue') }}
+			bunt-button#btn-finish(v-else, :class="{invalid: v$.$invalid && v$.$dirty}", :loading="saving", :disabled="blockSave || v$.$invalid && v$.$dirty", @click="update") {{ $t('finish') }}
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core'
