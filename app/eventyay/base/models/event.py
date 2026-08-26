@@ -104,7 +104,6 @@ def event_logo_path(instance, filename):
 
 FEATURE_FLAGS = [
     'schedule-control',
-    'iframe-player',
     'roulette',
     'muxdata',
     'page.landing',
@@ -610,6 +609,13 @@ class Event(
         verbose_name=_('Add video call'),
         help_text=_('Create Video platform for Event.'),
         default=False,
+    )
+    banned_users = models.ManyToManyField(
+        'User',
+        related_name='banned_events',
+        blank=True,
+        verbose_name=_('Banned users'),
+        help_text=_('Users who are banned from submitting feedback or interacting with this event.'),
     )
 
     # Fields for talk
