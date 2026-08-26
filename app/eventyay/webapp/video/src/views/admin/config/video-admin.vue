@@ -1,13 +1,13 @@
 <template lang="pug">
 .c-video-admin
 	.ui-page-header(v-if="isAdminMode")
-		h1 Video Admin
+		h1 {{ $t('Video Admin') }}
 	.video-admin-layout(v-if="isAdminMode")
-		aside.video-admin-sidebar(aria-label="Video admin settings")
+		aside.video-admin-sidebar(:aria-label="$t('Video admin settings')")
 			a(v-for="item in navItems", :key="item.path", :href="item.href", :class="{active: activePath === item.path}", @click.prevent="open(item.path)") {{ item.label }}
 		.video-admin-frame-wrap(:class="{loading: !frameReady}")
-			.loading-indicator(v-if="!frameReady") Loading...
-			iframe.video-admin-frame(ref="frame", :class="{ready: frameReady}", :src="frameSrc", title="Video Admin", @load="prepareFrame")
+			.loading-indicator(v-if="!frameReady") {{ $t('Loading...') }}
+			iframe.video-admin-frame(ref="frame", :class="{ready: frameReady}", :src="frameSrc", :title="$t('Video Admin')", @load="prepareFrame")
 </template>
 <script>
 const ADMIN_BASE = '/admin/video/'
@@ -22,7 +22,6 @@ const ADMIN_SECTIONS = [
 	{ label: 'Streaming servers', path: 'streamingservers/' },
 	{ label: 'Stream keys', path: 'streamkey/' },
 	{ label: 'System logs', path: 'systemlog/' },
-	{ label: 'Conftool posters', path: 'conftool/syncposters/' },
 	{ label: 'Profile', path: 'auth/profile/' }
 ]
 const ADMIN_PATHS = new Set(ADMIN_SECTIONS.map(item => item.path))
@@ -41,10 +40,20 @@ export default {
 			return this.$store.getters.isAdminMode
 		},
 		navItems() {
-			return ADMIN_SECTIONS.map(item => ({
-				...item,
-				href: this.embeddedAdminUrl(item.path)
-			}))
+			this.$store.state.userLocale
+			return [
+				{ path: '', label: this.$t('Dashboard'), href: this.embeddedAdminUrl('') },
+				{ path: 'events/', label: this.$t('Events'), href: this.embeddedAdminUrl('events/') },
+				{ path: 'bbbs/', label: this.$t('BBB servers'), href: this.embeddedAdminUrl('bbbs/') },
+				{ path: 'bbbs/moveroom/', label: this.$t('Move BBB room'), href: this.embeddedAdminUrl('bbbs/moveroom/') },
+				{ path: 'janus/', label: this.$t('Janus servers'), href: this.embeddedAdminUrl('janus/') },
+				{ path: 'jitsi/', label: this.$t('Jitsi servers'), href: this.embeddedAdminUrl('jitsi/') },
+				{ path: 'turns/', label: this.$t('TURN servers'), href: this.embeddedAdminUrl('turns/') },
+				{ path: 'streamingservers/', label: this.$t('Streaming servers'), href: this.embeddedAdminUrl('streamingservers/') },
+				{ path: 'streamkey/', label: this.$t('Stream keys'), href: this.embeddedAdminUrl('streamkey/') },
+				{ path: 'systemlog/', label: this.$t('System logs'), href: this.embeddedAdminUrl('systemlog/') },
+				{ path: 'auth/profile/', label: this.$t('Profile'), href: this.embeddedAdminUrl('auth/profile/') },
+			]
 		},
 		frameSrc() {
 			return this.embeddedAdminUrl(this.activePath)

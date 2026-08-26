@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from eventyay.common.image import ALLOWED_IMAGE_EXTENSIONS, validate_image
+
 from drf_spectacular.utils import extend_schema_field
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions
@@ -10,7 +12,7 @@ from rest_framework.serializers import (
     URLField,
 )
 
-from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.mixins import PretalxSerializer, filter_public_speaker_answers
 from eventyay.api.serializers.availability import (
     AvailabilitiesMixin,
     AvailabilitySerializer,
@@ -115,6 +117,11 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     def get_answers(self, obj):
         request = self.context.get('request')
         if self.event and request and not request.user.has_perm('base.orga_list_speakerprofile', self.event):
+            public_answers = filter_public_speaker_answers(obj.user, is_public_only=True)
+            if public_answers is not None:
+                if serializer := self.get_extra_flex_field('answers', public_answers):
+                    return serializer.data
+                return [answer.pk for answer in public_answers]
             qs = obj.answers.filter(
                 question__event=self.event,
                 question__target=TalkQuestionTarget.SPEAKER,
@@ -220,17 +227,44 @@ class SpeakerOrgaSerializer(AvailabilitiesMixin, SpeakerSerializer):
 class SpeakerUpdateSerializer(SpeakerOrgaSerializer):
     avatar = UploadedFileField(required=False, source='speaker.user')
 
+    def validate_avatar(self, avatar):
+        if not avatar:
+            return avatar
+        extension = Path(avatar.name).suffix.lower()
+        if extension not in ALLOWED_IMAGE_EXTENSIONS:
+            allowed_formats = ', '.join(sorted(ALLOWED_IMAGE_EXTENSIONS))
+            raise exceptions.ValidationError(
+                f"The file type '{extension}' is not supported. Please upload one of: {allowed_formats}."
+            )
+        validate_image(avatar)
+        return avatar
+
     def update(self, instance, validated_data):
         avatar = validated_data.pop('avatar', None)
+        if not avatar and 'speaker' in validated_data and 'user' in validated_data['speaker']:
+            avatar = validated_data['speaker'].pop('user', None)
+        if not avatar and 'user' in validated_data and 'avatar' in validated_data['user']:
+            avatar = validated_data['user'].pop('avatar', None)
+
         user_fields = validated_data.pop('user', None) or {}
         instance = super().update(instance, validated_data)
         for key, value in user_fields.items():
             setattr(instance.user, key, value)
             instance.user.save(update_fields=[key])
         if avatar:
-            instance.avatar.save(Path(avatar.name).name, avatar, save=False)
-            instance.save(update_fields=('avatar',))
+            old_thumbnails_to_delete = []
+            for field_name in ('avatar_thumbnail', 'avatar_thumbnail_tiny'):
+                thumbnail = getattr(instance.user, field_name, None)
+                if thumbnail and thumbnail.name:
+                    old_thumbnails_to_delete.append(thumbnail)
+
+            instance.user.avatar_thumbnail = None
+            instance.user.avatar_thumbnail_tiny = None
+            instance.user.avatar.save(Path(avatar.name).name, avatar, save=True)
             instance.user.process_image('avatar', generate_thumbnail=True)
+
+            for thumbnail in old_thumbnails_to_delete:
+                thumbnail.delete(save=False)
         return instance
 
     def validate_email(self, value):

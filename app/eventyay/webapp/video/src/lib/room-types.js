@@ -26,7 +26,7 @@ const ROOM_TYPES = [{
 	id: 'channel-zoom',
 	icon: 'webcam',
 	name: 'Video Channel (Zoom)',
-	description: 'This room type allows you to embed a zoom meeting or webinar directly into venueless.',
+	description: 'This room type allows you to embed a Zoom meeting or webinar directly into eventyay.',
 	startingModule: 'call.zoom',
 	videoChannel: true,
 	behindFeatureFlag: 'zoom'
@@ -45,19 +45,6 @@ const ROOM_TYPES = [{
 	description: 'This type of channel allows you to enable pure-text communication between your attendees.',
 	startingModule: 'chat.native'
 }, {
-	id: 'exhibition',
-	icon: 'domain',
-	name: 'Exhibition',
-	description: 'Using an exhibition room, sponsors or exhibitors can present themselves to your audience.',
-	startingModule: 'exhibition.native'
-}, {
-	id: 'posters',
-	icon: 'domain',
-	name: 'Poster Hall',
-	description: 'Hang your posters high!',
-	startingModule: 'poster.native',
-	behindFeatureFlag: 'poster'
-}, {
 	id: 'channel-roulette',
 	icon: 'webcam',
 	name: 'Random video calls',
@@ -67,36 +54,63 @@ const ROOM_TYPES = [{
 	sidebarGroup: 'networking',
 	behindFeatureFlag: 'roulette'
 }, {
-	id: 'page-static',
-	icon: 'text-box-outline',
-	name: 'Page',
-	description: 'A page contains static content for your attendees.',
-	startingModule: 'page.static'
-}, {
-	id: 'page-iframe',
-	icon: 'text-box-outline',
-	name: 'IFrame',
-	description: 'Using IFrames, you can embed arbitrary web pages and web applications into venueless.',
-	startingModule: 'page.iframe'
-}, {
 	id: 'page-landing',
 	icon: 'text-box-outline',
 	name: 'Landing Page',
 	description: 'The landing place module combines the most important content into one place for your attendees to see after they join.',
 	startingModule: 'page.landing',
 	behindFeatureFlag: 'page.landing'
-}, {
-	id: 'page-userlist',
-	icon: 'text-box-outline',
-	name: 'User List',
-	description: '',
-	startingModule: 'page.userlist'
 }]
 
 export const VIDEO_CHANNEL_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.videoChannel).map(type => type.startingModule))
 export const NETWORKING_MODULE_TYPES = new Set(ROOM_TYPES.filter(type => type.sidebarGroup === 'networking').map(type => type.startingModule))
 
 export default ROOM_TYPES.filter(type => !type.behindFeatureFlag || features.enabled(type.behindFeatureFlag))
+
+export function getRoomTypeById(id) {
+	return ROOM_TYPES.find(type => type.id === id) || null
+}
+
+export function localizeRoomType(t, type) {
+	if (!type) return type
+	const labels = {
+		stage: {
+			name: t('Stage'),
+			description: t('A stage allows you to present a live stream to your audience, optionally combined with chat and Q&A features.'),
+		},
+		'channel-bbb': {
+			name: t('Video Channel'),
+			description: t('A video channel allows you to connect with attendees in real time and host workshops or panels. The video channels are powered by BigBlueButton and support 25-80 people, depending on usage.'),
+		},
+		'channel-janus': {
+			name: t('Video Channel (beta)'),
+			description: t('A video channel allows you to connect with attendees in real time and host workshops or panels. The video channels are powered by Janus.'),
+		},
+		'channel-zoom': {
+			name: t('Video Channel (Zoom)'),
+			description: t('This room type allows you to embed a Zoom meeting or webinar directly into eventyay.'),
+		},
+		'channel-jitsi': {
+			name: t('Video Channel (Jitsi)'),
+			description: t('This room type allows you to connect with attendees through a Jitsi meeting.'),
+		},
+		'channel-text': {
+			name: t('Text Channel'),
+			description: t('This type of channel allows you to enable pure-text communication between your attendees.'),
+		},
+		'channel-roulette': {
+			name: t('Random video calls'),
+			description: t('Connect your attendees for short video calls in random combinations.'),
+		},
+		'page-landing': {
+			name: t('Landing Page'),
+			description: t('The landing place module combines the most important content into one place for your attendees to see after they join.'),
+		},
+	}
+	const localized = labels[type.id]
+	if (!localized) return type
+	return { ...type, ...localized }
+}
 
 export function inferType(config) {
 	const modules = config.module_config.reduce((acc, module) => {

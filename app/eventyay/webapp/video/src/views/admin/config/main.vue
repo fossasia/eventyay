@@ -1,43 +1,43 @@
 <template lang="pug">
 .c-mainconfig
 	.ui-page-header
-		h1 Event Config
+		h1 {{ $t('Event Config') }}
 	scrollbars(y)
 		bunt-progress-circular(size="huge", v-if="!config && !error")
-		.error(v-if="error") We could not fetch the current configuration.
+		.error(v-if="error") {{ $t('We could not fetch the current configuration.') }}
 		.ui-form-body(v-if="config")
-			h2 System details
-			bunt-input(v-model="config.connection_limit", label="Max connections", name="connection_limit", hint="Set to 0 to allow unlimited connections per user", :validation="v$.config.connection_limit")
+			h2 {{ $t('System details') }}
+			bunt-input(v-model="config.connection_limit", :label="$t('Max connections')", name="connection_limit", :hint="$t('Set to 0 to allow unlimited connections per user')", :validation="v$.config.connection_limit")
 			template(v-if="$features.enabled('conftool')")
-				h2 Conftool
-				bunt-input(v-model="config.conftool_url", label="Conftool REST API URL", name="conftool_url", :validation="v$.config.conftool_url")
-				bunt-input(v-model="config.conftool_password", label="Conftool REST API Password", name="conftool_password")
-			h2 Tracking and statistics
-			bunt-checkbox(v-model="config.track_room_views", label="Track room views", name="track_room_views")
-			bunt-checkbox(v-model="config.track_world_views", label="Track world views", name="track_world_views")
-			bunt-checkbox(v-model="config.track_exhibitor_views", label="Track exhibitor views", name="track_exhibitor_views")
-			h2 Settings for newly-created BBB rooms
-			bunt-checkbox(v-model="config.bbb_defaults.record", label="Allow recording", name="record")
-			bunt-checkbox(v-model="config.bbb_defaults.hide_presentation", label="Hide presentation when users join", name="hide_presentation")
-			bunt-checkbox(v-model="config.bbb_defaults.waiting_room", label="Put new users in waiting room first (needs to be set before first join)", name="waiting_room")
-			bunt-checkbox(v-model="config.bbb_defaults.auto_microphone", label="Auto-join users with microphone on (skip dialog asking how to join)", name="auto_microphone")
-			bunt-checkbox(v-model="config.bbb_defaults.auto_camera", label="Auto-join users with camera on", name="auto_camera")
-			bunt-checkbox(v-model="config.bbb_defaults.bbb_mute_on_start", label="Auto-mute users", name="bbb_mute_on_start")
-			bunt-checkbox(v-model="config.bbb_defaults.bbb_disable_cam", label="Disable camera for non-moderators", name="bbb_disable_cam")
-			bunt-checkbox(v-model="config.bbb_defaults.bbb_disable_chat", label="Disable public chat for non-moderators", name="bbb_disable_chat")
-			h2 Settings for stages
-			bunt-input-outline-container(label="hls.js config", :class="{error: v$.hlsConfig.$invalid}")
+				h2 {{ $t('Conftool') }}
+				bunt-input(v-model="config.conftool_url", :label="$t('Conftool REST API URL')", name="conftool_url", :validation="v$.config.conftool_url")
+				bunt-input(v-model="config.conftool_password", :label="$t('Conftool REST API Password')", name="conftool_password")
+			h2 {{ $t('Tracking and statistics') }}
+			bunt-checkbox(v-model="config.track_room_views", :label="$t('Track room views')", name="track_room_views")
+			bunt-checkbox(v-model="config.track_world_views", :label="$t('Track world views')", name="track_world_views")
+			h2 {{ $t('Settings for newly-created BBB rooms') }}
+			bunt-checkbox(v-model="config.bbb_defaults.record", :label="$t('Allow recording')", name="record")
+			bunt-checkbox(v-model="config.bbb_defaults.hide_presentation", :label="$t('Hide presentation when users join')", name="hide_presentation")
+			bunt-checkbox(v-model="config.bbb_defaults.waiting_room", :label="$t('Put new users in waiting room first (needs to be set before first join)')", name="waiting_room")
+			bunt-checkbox(v-model="config.bbb_defaults.auto_microphone", :label="$t('Auto-join users with microphone on (skip dialog asking how to join)')", name="auto_microphone")
+			bunt-checkbox(v-model="config.bbb_defaults.auto_camera", :label="$t('Auto-join users with camera on')", name="auto_camera")
+			bunt-checkbox(v-model="config.bbb_defaults.bbb_mute_on_start", :label="$t('Auto-mute users')", name="bbb_mute_on_start")
+			bunt-checkbox(v-model="config.bbb_defaults.bbb_disable_cam", :label="$t('Disable camera for non-moderators')", name="bbb_disable_cam")
+			bunt-checkbox(v-model="config.bbb_defaults.bbb_disable_chat", :label="$t('Disable public chat for non-moderators')", name="bbb_disable_chat")
+			h2 {{ $t('Settings for stages') }}
+			bunt-input-outline-container(:label="$t('hls.js config')", :class="{error: v$.hlsConfig.$invalid}")
 				template(#default="{focus, blur}")
 					textarea(@focus="focus", @blur="blur", v-model="hlsConfig")
 			.json-error-message {{ v$.hlsConfig.isJson.$message }}
 	.ui-form-actions
-		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") Save
+		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ $t('Save') }}
 		.errors {{ validationErrors.join(', ') }}
 </template>
 <script setup>
 import { ref, computed, onMounted, getCurrentInstance } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import api from 'lib/api'
+import i18n from 'i18n'
 import { required, integer, isJson, url } from 'lib/validators'
 
 const config = ref(null)
@@ -53,10 +53,10 @@ const validationErrors = computed(() => v$.value.$errors?.map(e => e.$message) |
 const rules = {
 	config: {
 		connection_limit: {
-			required: required('Max connections is required'),
-			integer: integer('Max connections must be a number')
+			required: required(i18n.t('Max connections is required')),
+			integer: integer(i18n.t('Max connections must be a number'))
 		},
-		conftool_url: {url: url('Conftool URL must be a URL')}
+		conftool_url: {url: url(i18n.t('Conftool URL must be a URL'))}
 	},
 	hlsConfig: { isJson: isJson() }
 }
@@ -82,7 +82,6 @@ async function save() {
 		const patch = {
 			connection_limit: config.value.connection_limit,
 			bbb_defaults: config.value.bbb_defaults,
-			track_exhibitor_views: config.value.track_exhibitor_views,
 			track_room_views: config.value.track_room_views,
 			track_world_views: config.value.track_world_views
 		}

@@ -31,7 +31,7 @@ Architecture
 
 **Styling**: Stylus with custom theming
 
-**i18n**: vue-i18n for internationalization
+**i18n**: i18next with gettext ``video.po`` files
 
 Core Application Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -99,13 +99,6 @@ Interactive Features
 - ``components/Questions.vue`` - Q&A question list
 - ``components/Roulette.vue`` - Speed networking roulette
 
-Exhibition
-^^^^^^^^^^
-
-- ``components/Exhibition.vue`` - Exhibition hall view
-- ``components/ContactExhibitorPrompt.vue`` - Exhibitor contact form
-- ``components/PosterHall.vue`` - Poster session hall
-
 User Interface
 ^^^^^^^^^^^^^^
 
@@ -124,8 +117,6 @@ Content Display
 - ``components/MarkdownPage.vue`` - Full markdown page
 - ``components/RichTextContent.vue`` - Rich text display
 - ``components/RichTextEditor.vue`` - Quill-based rich text editor
-- ``components/StaticPage.vue`` - Static content pages
-- ``components/IframePage.vue`` - Embedded iframe pages
 
 Forms & Prompts
 ^^^^^^^^^^^^^^^
@@ -200,11 +191,6 @@ Vuex Store Modules (``src/store/``)
   - Unread counts
   - Message history
 
-**exhibition.js**
-  - Exhibitor data
-  - Contact requests
-  - Booth interactions
-
 **poll.js**
   - Poll data and votes
   - Real-time results
@@ -264,17 +250,10 @@ Other Utilities
 Internationalization
 ~~~~~~~~~~~~~~~~~~~~
 
-**Supported Languages** (``src/locales/``):
-- English (en)
-- German (de)
-- Spanish (es)
-- French (fr)
-- Portuguese (pt_BR)
-- Russian (ru)
-- Ukrainian (uk)
-- Arabic (ar)
+**Supported Languages**: same UI languages as tickets/talk (Django ``LANGUAGES``).
+Catalogs live in ``app/eventyay/locale/*/LC_MESSAGES/video.po``.
 
-**Implementation**: vue-i18n with JSON translation files
+**Implementation**: i18next loading gettext ``video.po`` catalogs (Weblate)
 
 **Usage**:
 

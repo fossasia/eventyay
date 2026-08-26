@@ -1,0 +1,84 @@
+{% load i18n %}
+{% load rich_text %}
+
+<div class="comment-item reply-item d-flex mb-2" id="feedback-{{ reply.id }}">
+    <div class="mr-3">
+        <div class="comment-avatar reply-avatar">
+            {% if reply.author %}{{ reply.author.get_display_name|slice:":1"|upper|default:"U" }}{% else %}A{% endif %}
+        </div>
+    </div>
+    <div class="flex-grow-1">
+        <div class="d-flex align-items-baseline mb-0">
+            <strong class="mr-2 comment-author-name">{% if reply.author %}{{ reply.author.get_display_name }}{% else %}{{ phrases.agenda.anonymous|default:"Anonymous" }}{% endif %}</strong>
+            <small class="text-muted comment-time">{{ reply.created|timesince }} {% translate "ago" %}</small>
+        </div>
+        <div class="mb-0 comment-text-content comment-text-collapsed">
+            {{ reply.review|rich_text }}
+        </div>
+        <button class="read-more-btn d-none" data-expanded="false" data-read-more="{% translate 'Read more' %}" data-show-less="{% translate 'Show less' %}">{% translate "Read more" %}</button>
+        <div class="comment-actions d-flex align-items-center">
+            {% if request.user.is_authenticated %}
+            <button class="btn react-btn mr-1 {% if reply.user_vote == True %}active-vote{% endif %}" data-action="upvote" data-id="{{ reply.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=reply.id %}">
+                <i class="fa {% if reply.user_vote == True %}fa-thumbs-up text-success{% else %}fa-thumbs-o-up{% endif %}"></i> <span class="upvote-count ml-1">{{ reply.upvote_count|default:"" }}</span>
+            </button>
+            <button class="btn react-btn {% if reply.user_vote == False %}active-vote{% endif %}" data-action="downvote" data-id="{{ reply.id }}" data-url="{% url 'agenda:feedback.react' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=reply.id %}">
+                <i class="fa {% if reply.user_vote == False %}fa-thumbs-down text-danger{% else %}fa-thumbs-o-down{% endif %}"></i> <span class="downvote-count ml-1">{{ reply.downvote_count|default:"" }}</span>
+            </button>
+            {% endif %}
+            {% if feedback_form %}
+                <button class="btn reply-btn ml-2" data-form-id="{{ root_fb.id }}" data-parent-id="{{ reply.id }}">
+                    {% translate "Reply" %}
+                </button>
+            {% endif %}
+            {% if request.user.is_authenticated %}
+                <details class="dropdown d-inline-block ml-2" aria-haspopup="menu" role="menu">
+                    <summary class="btn btn-sm btn-link text-muted p-0 border-0 comment-dropdown-toggle">
+                        <i class="fa fa-ellipsis-v"></i>
+                    </summary>
+                    <div class="dropdown-content dropdown-content-se shadow-sm">
+                        <form method="post" action="{% url 'agenda:feedback.public_action' organizer=request.event.organizer.slug event=request.event.slug slug=submission.code feedback_id=reply.id %}" class="m-0 p-0">
+                            {% csrf_token %}
+                            <button type="submit" name="action" value="report" class="dropdown-item dropdown-item-clean">
+                                {% translate 'Report' %}
+                            </button>
+                            {% if reply.author == request.user or can_moderate_feedback %}
+                                <button type="submit" name="action" value="delete" class="dropdown-item dropdown-item-clean" data-confirm-message="{% translate 'Are you sure you want to delete this comment?' %}">
+                                {% translate 'Delete' %}
+                                </button>
+                            {% endif %}
+                            {% if can_moderate_feedback %}
+                                <button type="submit" name="action" value="hide" class="dropdown-item dropdown-item-clean">
+                                    {% translate 'Hide' %}
+                                </button>
+                                {% if reply.author %}
+                                    {% if reply.author.id in banned_user_ids %}
+                                        <button type="submit" name="action" value="unban" class="dropdown-item dropdown-item-clean">
+                                            {% translate 'Unban User' %}
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" name="action" value="ban" class="dropdown-item dropdown-item-clean" data-confirm-message="{% translate 'Are you sure you want to ban this user?' %}">
+                                            {% translate 'Ban User' %}
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        </form>
+                    </div>
+                </details>
+            {% endif %}
+        </div>
+
+        {% if reply.cached_replies %}
+            <div>
+                <button class="replies-toggle-btn" data-target="replies-{{ reply.id }}" data-expanded="false">
+                    <i class="fa fa-caret-down mr-2"></i> {{ reply.cached_replies|length }} {% if reply.cached_replies|length == 1 %}{% translate "reply" %}{% else %}{% translate "replies" %}{% endif %}
+                </button>
+                <div class="replies-container d-none" id="replies-{{ reply.id }}">
+                    {% for nested_reply in reply.cached_replies %}
+                        {% include "agenda/includes/feedback_reply.html" with reply=nested_reply root_fb=root_fb %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>

@@ -2,13 +2,13 @@
 .c-admin-kiosk
 	.header
 		.actions
-			h2 Kiosks
-			bunt-link-button.btn-create(:to="{name: 'admin:kiosks:new'}") Create a new kiosk
-		bunt-input.search(name="search", placeholder="Search kiosks", icon="search", v-model="search")
+			h2 {{ $t('Kiosks') }}
+			bunt-link-button.btn-create(:to="{name: 'admin:kiosks:new'}") {{ $t('Create a new kiosk') }}
+		bunt-input.search(name="search", :placeholder="$t('Search kiosks')", icon="search", v-model="search")
 	.kiosks-list
 		.header
-			.name Name
-			.room Room
+			.name {{ $t('Name') }}
+			.room {{ $t('Room') }}
 		.tbody(v-if="filteredKiosks", v-scrollbar.y="")
 			router-link.kiosk.table-row(v-for="kiosk of filteredKiosks", :to="{name: 'admin:kiosks:item', params: {kioskId: kiosk.id}}")
 				.name {{ kiosk.profile.display_name }}

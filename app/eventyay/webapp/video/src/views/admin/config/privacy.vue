@@ -1,30 +1,30 @@
 <template lang="pug">
 .c-privacyconfig
 	.ui-page-header
-		h1 Theme Config
+		h1 {{ $t('Theme Config') }}
 	scrollbars(y)
 		bunt-progress-circular(size="huge", v-if="!error && !config")
-		.error(v-if="error") We could not fetch the current configuration.
+		.error(v-if="error") {{ $t('We could not fetch the current configuration.') }}
 		template(v-if="config")
 			.ui-form-body
-				h3 IFrame Consent Blocker
-				p Enable or disable iframe blocking behaviour for matching domains and the default behaviour if no matching domains are found. Every iframe url domain that ends with a configured domain here will match. For example: configuring "youtube.com" on this page will match all iframes with "www.youtube.com".
+				h3 {{ $t('IFrame Consent Blocker') }}
+				p {{ $t('Enable or disable iframe blocking behaviour for matching domains and the default behaviour if no matching domains are found. Every iframe url domain that ends with a configured domain here will match. For example: configuring "youtube.com" on this page will match all iframes with "www.youtube.com".') }}
 			.iframe-domains
 				.header
-					.enabled Enable block
-					.domain For domain
-					.policy-link Privacy policy link
+					.enabled {{ $t('Enable block') }}
+					.domain {{ $t('For domain') }}
+					.policy-link {{ $t('Privacy policy link') }}
 					.actions
 				.iframe-domain(v-for="iframeDomain of iframeDomains")
 					bunt-checkbox.enabled(name="enabled", v-model="iframeDomain.enabled")
-					div.domain(v-if="iframeDomain.domain === 'default'") default
-					bunt-input.domain(v-else, name="domain", v-model="iframeDomain.domain", placeholder="example.com")
-					bunt-input.policy-link(name="policy-link", v-model="iframeDomain.policy_url", placeholder="https://example.com/privacy")
+					div.domain(v-if="iframeDomain.domain === 'default'") {{ $t('default') }}
+					bunt-input.domain(v-else, name="domain", v-model="iframeDomain.domain", :placeholder="$t('example.com')")
+					bunt-input.policy-link(name="policy-link", v-model="iframeDomain.policy_url", :placeholder="$t('https://example.com/privacy')")
 					.actions
 						bunt-icon-button(v-if="iframeDomain.domain !== 'default'", @click="removeIframeDomain(iframeDomain)") delete-outline
-				bunt-button.btn-add-domain(@click="addIframeDomain") Add domain
+				bunt-button.btn-add-domain(@click="addIframeDomain") {{ $t('Add domain') }}
 	.ui-form-actions
-		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") Save
+		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ $t('Save') }}
 		.errors {{ validationErrors.join(', ') }}
 </template>
 <script>

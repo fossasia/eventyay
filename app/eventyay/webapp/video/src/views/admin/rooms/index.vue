@@ -2,21 +2,25 @@
 .c-admin-rooms
 	.header
 		.actions
-			h2 Rooms
-			bunt-link-button.btn-create(:to="{name: 'admin:rooms:new'}") Create a new room
+			h2 {{ $t('Rooms') }}
+			VideoProviderDropdown(
+				:label="$t('Create Room')",
+				:show-empty-message="true",
+				@select="createRoomWithProvider"
+			)
 		.right-actions
 			.export-actions(v-if="canExportBroadcastConfiguration")
-				a.export-button(:href="exportUrl('xlsx')") Export XLSX
-				a.export-button.secondary(:href="exportUrl('csv-excel')") CSV
-			bunt-input.search(name="search", placeholder="Search rooms", icon="search", v-model="search")
+				a.export-button(:href="exportUrl('xlsx')") {{ $t('Export XLSX') }}
+				a.export-button.secondary(:href="exportUrl('csv-excel')") {{ $t('CSV') }}
+			bunt-input.search(name="search", :placeholder="$t('Search rooms')", icon="search", v-model="search")
 	.error(v-if="error")
-		span Failed to load rooms.
+		span {{ $t('Failed to load rooms.') }}
 		span(v-if="errorCode")  ({{ errorCode }})
-		span(v-if="errorCode === 'protocol.denied'")  You likely lack admin permissions.
+		span(v-if="errorCode === 'protocol.denied'")  {{ $t('You likely lack admin permissions.') }}
 	.rooms-list(v-else)
 		.header
 			.drag
-			.name Name
+			.name {{ $t('Name') }}
 		SlickList.tbody(v-if="rooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", helperClass="sorting-helper", v-scrollbar.y="", @update:list="onListSort")
 			RoomListItem(
 				v-for="(room, index) of rooms",
@@ -29,16 +33,16 @@
 		bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
-// TODO show inferred type
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
 import { mapGetters } from 'vuex'
 import { SlickList } from 'vue-slicksort'
+import VideoProviderDropdown from 'components/VideoProviderDropdown'
 import RoomListItem from './RoomListItem'
 
 export default {
 	name: 'AdminRooms',
-	components: { SlickList, RoomListItem },
+	components: { SlickList, RoomListItem, VideoProviderDropdown },
 	data() {
 		return {
 			rooms: null,
@@ -108,6 +112,9 @@ export default {
 				console.error(e)
 			}
 		},
+		createRoomWithProvider(provider) {
+			this.$router.push({name: 'admin:rooms:new', params: {type: provider.roomTypeId}})
+		},
 		async onListSort(newList) {
 			if (this.search) return
 			const previousRooms = [...this.rooms]
@@ -142,6 +149,8 @@ export default {
 				margin-right: 16px
 			.btn-create
 				themed-button-primary()
+			.c-video-provider-dropdown
+				margin-right: 8px
 		.right-actions
 			display: flex
 			align-items: center

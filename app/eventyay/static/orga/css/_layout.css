@@ -3022,3 +3022,85 @@ button.btn-speaker-not-arrived {
     display: inline;
   }
 }
+
+.feedback-comment-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.feedback-comment-cell__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.feedback-comment-cell__text > :last-child {
+  margin-bottom: 0;
+}
+
+.feedback-report-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background-color: #dc3545;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 0.1rem;
+}
+
+.feedback-confirm-dialog {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+  width: 450px;
+  max-width: 95vw;
+  background: #fff;
+  overflow: hidden;
+  color: #333;
+  z-index: 9999;
+}
+
+.feedback-confirm-dialog-title {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.feedback-confirm-dialog-message {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #555;
+}
+
+.feedback-confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.feedback-confirm-dialog-btn-cancel {
+  margin-right: 12px;
+  padding: 8px 16px;
+}
+
+.feedback-confirm-dialog-btn-confirm {
+  padding: 8px 16px;
+}
+
+.tag-hidden { display: none; }
+.review-tags-list:hover .tag-hidden { display: inline-block; }
+.review-tags-list:hover .tag-ellipsis { display: none; }
+
+.review-tags-list .badge {
+  background-color: var(--tag-color, #cccccc);
+}
