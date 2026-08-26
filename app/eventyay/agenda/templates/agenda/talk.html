@@ -217,7 +217,7 @@
         </div>
     {% endif %}
 
-    <script src="{% static 'agenda/js/talk-feedback.js' %}"></script>
+    <script type="module" src="{% static 'agenda/js/talk-feedback.js' %}"></script>
 </div>
 {% html_signal "eventyay.agenda.signals.html_below_session_pages" sender=request.event request=request submission=submission %}
 {% endblock agenda_content %}
