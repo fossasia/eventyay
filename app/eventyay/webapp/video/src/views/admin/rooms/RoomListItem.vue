@@ -15,6 +15,7 @@ router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {
 				label="Add Video",
 				variant="action",
 				placement="bottom-end",
+				strategy="fixed",
 				@select="addVideo"
 			)
 </template>

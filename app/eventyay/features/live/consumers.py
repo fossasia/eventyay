@@ -49,6 +49,7 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
         self.room_cache = {}
         self.channel_cache = {}
         self.components = {}
+        self.command_lock = asyncio.Lock()
         self.conn_time = 0
         self.last_conn_ping = 0
 
@@ -181,7 +182,11 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
             try:
                 await self._maybe_refresh(self.event, allowed_age=900)
                 await self._maybe_refresh(self.user, allowed_age=30)
-                await component.dispatch_command(content)
+                # Room command decorators temporarily store the selected room
+                # on a shared module instance. Serialize commands so a fast
+                # room transition cannot overwrite that state.
+                async with self.command_lock:
+                    await component.dispatch_command(content)
             except ConsumerException as e:
                 await self.send_error(e.code, e.message)
         else:
